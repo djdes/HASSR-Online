@@ -3,6 +3,7 @@
 import { ArrowRight, MessageCircle, X } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { cn } from "@/lib/utils";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import type { IncomingPopup } from "./use-incoming-messages";
 
 /**
@@ -24,6 +25,7 @@ export function IncomingMessagePopup({
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   className?: string;
 }) {
+  const locale = useSiteLocale();
   if (!popup) return null;
   return (
     <div
@@ -46,7 +48,7 @@ export function IncomingMessagePopup({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--app-indigo-deep,#3848c7)]">
-              Новое сообщение
+              {locale === "en" ? "New message" : "Новое сообщение"}
             </span>
             <span className="mt-0.5 block truncate text-[14px] font-semibold text-[var(--app-text,#0b1024)]">
               {popup.title}
@@ -57,7 +59,7 @@ export function IncomingMessagePopup({
               </span>
             ) : null}
             <span className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#5566f6]">
-              Открыть чат
+              {locale === "en" ? "Open chat" : "Открыть чат"}
               <ArrowRight className="size-3.5" />
             </span>
           </span>
@@ -66,7 +68,7 @@ export function IncomingMessagePopup({
           type="button"
           onClick={onDismiss}
           className="absolute right-2.5 top-2.5 rounded-lg p-1 text-[var(--app-text-faint,#9b9fb3)] transition-colors hover:bg-[var(--app-tint-indigo,#f5f6ff)] hover:text-[var(--app-text,#0b1024)]"
-          aria-label="Скрыть"
+          aria-label={locale === "en" ? "Dismiss" : "Скрыть"}
         >
           <X className="size-4" />
         </button>

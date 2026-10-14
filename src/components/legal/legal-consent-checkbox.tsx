@@ -1,5 +1,7 @@
 "use client";
 
+import { usePublicCopy } from "@/components/i18n/use-public-copy";
+
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -22,6 +24,7 @@ export function LegalConsentCheckbox({
   /** Пытались отправить без галки — подсветить. */
   highlight?: boolean;
 }) {
+  const t = usePublicCopy();
   const dark = tone === "dark";
   const link = cn(
     "underline underline-offset-2 transition-colors",
@@ -45,22 +48,18 @@ export function LegalConsentCheckbox({
         aria-describedby="legal-consent-text"
       />
       <span id="legal-consent-text">
-        Принимаю условия{" "}
+        {t("Принимаю условия")}{" "}
         <Link href="/oferta" target="_blank" className={link}>
-          оферты
-        </Link>{" "}
-        и{" "}
+          {t("оферты")}</Link>{" "}
+        {t("и")}{" "}
         <Link href="/terms" target="_blank" className={link}>
-          пользовательского соглашения
-        </Link>
-        , ознакомлен с{" "}
+          {t("пользовательского соглашения")}</Link>
+        {t(", ознакомлен с")}{" "}
         <Link href="/privacy" target="_blank" className={link}>
-          политикой конфиденциальности
-        </Link>{" "}
-        и даю{" "}
+          {t("политикой конфиденциальности")}</Link>{" "}
+        {t("и даю")}{" "}
         <Link href="/consent" target="_blank" className={link}>
-          согласие на обработку персональных данных
-        </Link>
+          {t("согласие на обработку персональных данных")}</Link>
       </span>
     </label>
   );

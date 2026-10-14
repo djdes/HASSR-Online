@@ -4,6 +4,8 @@ import { ArrowRight, Building2, CheckCircle2, Gift, Users } from "lucide-react";
 import { PromoPrice, type PersonalDiscount } from "@/components/pricing/promo-price";
 import type { PriceWithPromotion } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
+import type { SiteLocale } from "@/i18n/site-locale";
+import { localizedHref } from "@/i18n/site-locale";
 
 /**
  * Карточка тарифа — одна на лендинг и на кабинет.
@@ -18,6 +20,7 @@ import { cn } from "@/lib/utils";
  * импортирует клиентский `PlanUpgrade`. Любой хук здесь сломал бы это.
  */
 export function PlanCard({
+  locale = "ru",
   kind,
   name,
   from,
@@ -35,6 +38,7 @@ export function PlanCard({
   personal = null,
 }: {
   kind: "free" | "team" | "network";
+  locale?: SiteLocale;
   name: string;
   from: string;
   period: string;
@@ -103,6 +107,7 @@ export function PlanCard({
         </div>
         {price && (price.promotion || personal) ? (
           <PromoPrice
+            locale={locale}
             price={price}
             personal={personal}
             size="xl"
@@ -195,7 +200,7 @@ export function PlanCard({
           </span>
         ) : (
           <Link
-            href={ctaHref}
+            href={localizedHref(ctaHref, locale)}
             className={cn(
               "inline-flex w-full items-center justify-center gap-2 rounded-2xl font-medium transition-colors",
               touch ? "h-12 text-[16px] sm:h-11 sm:text-[15px]" : "h-11 text-[15px]",

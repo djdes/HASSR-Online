@@ -1,4 +1,7 @@
 import RegisterClient from "./register-client";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { siteLanguageAlternates } from "@/i18n/site-locale";
+import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   DEFAULT_OG_IMAGES,
   DEFAULT_TWITTER_CARD,
@@ -15,7 +18,7 @@ const DESC =
   `Создайте бесплатный аккаунт WeSetup за 5 минут. ${FREE_SEATS_LABEL} — бесплатно навсегда. Все ${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП включены.`;
 const URL = "https://wesetup.ru/register";
 
-export const metadata = {
+const russianMetadata = {
   title: TITLE,
   description: DESC,
   alternates: { canonical: URL },
@@ -36,6 +39,19 @@ export const metadata = {
   },
 };
 
+export async function generateMetadata() {
+  const locale = await getSiteLocale();
+  const title = locale === "en" ? "Create an account" : TITLE;
+  const description = locale === "en" ? `Create a free WeSetup account. Digital SanPiN and HACCP logs, free for up to ${FREE_MAX_USERS} employee${FREE_MAX_USERS === 1 ? "" : "s"}.` : DESC;
+  const url = locale === "en" ? "https://wesetup.ru/en/register" : URL;
+  return {
+    ...russianMetadata, title, description,
+    alternates: { canonical: url, languages: siteLanguageAlternates("/register") },
+    openGraph: { ...russianMetadata.openGraph, title, description, url, locale: locale === "en" ? "en_US" : "ru_RU", images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
+    twitter: { ...russianMetadata.twitter, title, description, images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_TWITTER_IMAGES },
+  };
+}
+
 /**
  * Пришли по ссылке с промокодом (/promo/CODE?s=cafe → /register?promo=…&s=…):
  * сферу подставляем в форму, промокод показываем плашкой — применится на
@@ -47,6 +63,7 @@ export default async function RegisterPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const locale = await getSiteLocale();
   const params = await searchParams;
   const pick = (key: string) => {
     const value = params[key];
@@ -59,7 +76,7 @@ export default async function RegisterPage({
     status?.ok === true
       ? {
           code: status.promo.code,
-          label: discountLabel({ source: "code", ...status.promo }),
+          label: discountLabel({ source: "code", ...status.promo }, locale),
         }
       : null;
   if (code || sphere) {

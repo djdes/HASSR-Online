@@ -12,6 +12,7 @@ import {
   type PriceWithPromotion,
 } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
+import type { SiteLocale } from "@/i18n/site-locale";
 
 /**
  * Цена подписки с акцией — один компонент на все витрины: лендинг,
@@ -56,23 +57,25 @@ const OLD_SIZE: Record<Size, string> = {
   xl: "text-[18px]",
 };
 
-export function formatPriceRub(value: number): string {
-  return `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;
+export function formatPriceRub(value: number, locale: SiteLocale = "ru"): string {
+  return `${new Intl.NumberFormat(locale === "en" ? "en-GB" : "ru-RU").format(value)} ₽`;
 }
 
 export function PromoBadge({
+  locale = "ru",
   promotion,
   tone = "light",
   className,
 }: {
   promotion: Pick<AppliedPromotion, "percent" | "endsAt" | "title">;
+  locale?: SiteLocale;
   tone?: "light" | "dark";
   className?: string;
 }) {
   return (
     <span
       data-promo-badge
-      title={`${promotion.title}. ${promotionEndHint(promotion)}`}
+      title={`${promotion.title}. ${promotionEndHint(promotion, locale)}`}
       className={cn(
         "inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[12px] font-medium leading-[1.4] tracking-normal",
         tone === "dark"
@@ -82,18 +85,20 @@ export function PromoBadge({
       )}
     >
       <BadgePercent aria-hidden className="size-3.5 shrink-0" />
-      {promotionBadgeLabel(promotion)}
+      {promotionBadgeLabel(promotion, locale)}
     </span>
   );
 }
 
 /** «Ваша скидка −10 % навсегда» / «Промокод X: −10 %». */
 export function PersonalDiscountBadge({
+  locale = "ru",
   discount,
   tone = "light",
   className,
 }: {
   discount: PersonalDiscount;
+  locale?: SiteLocale;
   tone?: "light" | "dark";
   className?: string;
 }) {
@@ -111,12 +116,13 @@ export function PersonalDiscountBadge({
       )}
     >
       <Icon aria-hidden className="size-3.5 shrink-0" />
-      {discountLabel(discount)}
+      {discountLabel(discount, locale)}
     </span>
   );
 }
 
 export function PromoPrice({
+  locale = "ru",
   price,
   personal = null,
   size = "sm",
@@ -127,6 +133,7 @@ export function PromoPrice({
   className,
 }: {
   price: Pick<PriceWithPromotion, "baseRub" | "priceRub" | "promotion">;
+  locale?: SiteLocale;
   /** Персональная скидка поверх акции — от price.priceRub. */
   personal?: PersonalDiscount | null;
   size?: Size;
@@ -153,7 +160,7 @@ export function PromoPrice({
     return (
       <span data-testid="promo-price" data-promo-active="false" className={cn("tabular-nums", className)}>
         <span data-promo-new className={cn(NEW_SIZE[size], newTone)}>
-          {formatPriceRub(price.priceRub)}
+          {formatPriceRub(price.priceRub, locale)}
         </span>
         {suffix}
       </span>
@@ -162,15 +169,15 @@ export function PromoPrice({
 
   const oldPrice = (
     <s data-promo-old className={cn("tabular-nums decoration-[1.5px]", OLD_SIZE[size], oldTone)}>
-      <span className="sr-only">{promotion ? "Без акции: " : "Без скидки: "}</span>
-      {formatPriceRub(price.baseRub)}
+      <span className="sr-only">{locale === "en" ? "Regular price: " : promotion ? "Без акции: " : "Без скидки: "}</span>
+      {formatPriceRub(price.baseRub, locale)}
     </s>
   );
   const newPrice = (
     <span className="whitespace-nowrap">
       <span data-promo-new className={cn("tabular-nums", NEW_SIZE[size], newTone)}>
-        <span className="sr-only">{personalActive ? "Со скидкой: " : "По акции: "}</span>
-        {formatPriceRub(finalRub)}
+        <span className="sr-only">{locale === "en" ? "Discounted price: " : personalActive ? "Со скидкой: " : "По акции: "}</span>
+        {formatPriceRub(finalRub, locale)}
       </span>
       {suffix}
     </span>
@@ -178,8 +185,8 @@ export function PromoPrice({
   const badgeTone = tone === "dark" ? "dark" : "light";
   const badges = showBadge ? (
     <>
-      {promotion ? <PromoBadge promotion={promotion} tone={badgeTone} /> : null}
-      {personalActive ? <PersonalDiscountBadge discount={personalActive} tone={badgeTone} /> : null}
+      {promotion ? <PromoBadge locale={locale} promotion={promotion} tone={badgeTone} /> : null}
+      {personalActive ? <PersonalDiscountBadge locale={locale} discount={personalActive} tone={badgeTone} /> : null}
     </>
   ) : null;
   const dataAttrs = {

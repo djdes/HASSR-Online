@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import {
   formatBytes,
   isImageAttachment,
@@ -31,6 +32,7 @@ export type UploadItem = {
 };
 
 export function useAttachmentUploads(options?: { guestId?: string | null }) {
+  const locale = useSiteLocale();
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const guestId = options?.guestId ?? null;
 
@@ -41,23 +43,23 @@ export function useAttachmentUploads(options?: { guestId?: string | null }) {
       setUploads((current) => {
         const room = SUPPORT_ATTACHMENT_MAX_COUNT - current.length;
         if (room <= 0) {
-          toast.error(`Не больше ${SUPPORT_ATTACHMENT_MAX_COUNT} файлов`);
+          toast.error(locale === "en" ? `Up to ${SUPPORT_ATTACHMENT_MAX_COUNT} files` : `Не больше ${SUPPORT_ATTACHMENT_MAX_COUNT} файлов`);
           return current;
         }
         const accepted = list.slice(0, room);
         if (accepted.length < list.length) {
-          toast.error(`Не больше ${SUPPORT_ATTACHMENT_MAX_COUNT} файлов`);
+          toast.error(locale === "en" ? `Up to ${SUPPORT_ATTACHMENT_MAX_COUNT} files` : `Не больше ${SUPPORT_ATTACHMENT_MAX_COUNT} файлов`);
         }
         const items: UploadItem[] = [];
         for (const file of accepted) {
           if (file.size > SUPPORT_ATTACHMENT_MAX_BYTES) {
-            toast.error(`«${file.name}» больше 50 МБ`);
+            toast.error(locale === "en" ? `“${file.name}” exceeds 50 MB` : `«${file.name}» больше 50 МБ`);
             continue;
           }
           const key = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
           items.push({
             key,
-            filename: file.name || "файл",
+            filename: file.name || (locale === "en" ? "file" : "файл"),
             sizeBytes: file.size,
             mimeType: file.type || "application/octet-stream",
             status: "uploading",
@@ -84,7 +86,7 @@ export function useAttachmentUploads(options?: { guestId?: string | null }) {
               );
             } catch (error) {
               toast.error(
-                error instanceof Error ? error.message : "Не удалось загрузить файл"
+                locale === "en" ? "Could not upload the file. Check its format and try again." : error instanceof Error ? error.message : "Не удалось загрузить файл"
               );
               setUploads((cur) => cur.filter((u) => u.key !== key));
             }
@@ -93,7 +95,7 @@ export function useAttachmentUploads(options?: { guestId?: string | null }) {
         return [...current, ...items];
       });
     },
-    [guestId]
+    [guestId, locale]
   );
 
   const remove = useCallback((key: string) => {
@@ -140,6 +142,7 @@ export function AttachButton({
   disabled?: boolean;
   className?: string;
 }) {
+  const locale = useSiteLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -161,8 +164,8 @@ export function AttachButton({
           className ??
           "flex size-11 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white text-[#6f7282] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#5566f6] disabled:opacity-50"
         }
-        aria-label="Прикрепить файл"
-        title="Прикрепить файл (или вставьте из буфера Ctrl+V)"
+        aria-label={locale === "en" ? "Attach a file" : "Прикрепить файл"}
+        title={locale === "en" ? "Attach a file (or paste with Ctrl+V)" : "Прикрепить файл (или вставьте из буфера Ctrl+V)"}
       >
         <Paperclip className="size-4" />
       </button>
@@ -178,6 +181,7 @@ export function AttachmentChips({
   uploads: UploadItem[];
   onRemove: (key: string) => void;
 }) {
+  const locale = useSiteLocale();
   if (uploads.length === 0) return null;
   return (
     <div className="mb-2 flex flex-wrap gap-1.5">
@@ -195,13 +199,13 @@ export function AttachmentChips({
           )}
           <span className="max-w-[160px] truncate">{u.filename}</span>
           <span className="shrink-0 text-[#9b9fb3]">
-            {formatBytes(u.sizeBytes)}
+            {formatBytes(u.sizeBytes, locale)}
           </span>
           <button
             type="button"
             onClick={() => onRemove(u.key)}
             className="rounded-full p-0.5 text-[#9b9fb3] transition-colors hover:bg-[#eef1ff] hover:text-[#0b1024]"
-            aria-label={`Убрать ${u.filename}`}
+            aria-label={`${locale === "en" ? "Remove" : "Убрать"} ${u.filename}`}
           >
             <X className="size-3" />
           </button>
@@ -220,6 +224,7 @@ export function MessageAttachments({
   /** true в синем пузыре клиента — ссылки белые. */
   light?: boolean;
 }) {
+  const locale = useSiteLocale();
   if (!attachments || attachments.length === 0) return null;
   return (
     <div className="mt-1.5 space-y-1.5">
@@ -255,7 +260,7 @@ export function MessageAttachments({
             <FileText className="size-3.5 shrink-0" />
             <span className="truncate">{a.filename}</span>
             <span className={light ? "shrink-0 text-white/70" : "shrink-0 text-[#9b9fb3]"}>
-              {formatBytes(a.sizeBytes)}
+              {formatBytes(a.sizeBytes, locale)}
             </span>
           </a>
         )

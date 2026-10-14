@@ -1,5 +1,9 @@
 "use client";
 
+import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import type { SiteLocale } from "@/i18n/site-locale";
+
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 type Recaptcha = {
@@ -20,7 +24,7 @@ declare global {
 
 let scriptPromise: Promise<Recaptcha> | undefined;
 
-function loadRecaptcha(): Promise<Recaptcha> {
+function loadRecaptcha(locale: SiteLocale): Promise<Recaptcha> {
   if (window.grecaptcha?.render) return Promise.resolve(window.grecaptcha);
   if (scriptPromise) return scriptPromise;
   scriptPromise = new Promise<Recaptcha>((resolve, reject) => {
@@ -32,7 +36,7 @@ function loadRecaptcha(): Promise<Recaptcha> {
       reject(new Error("Challenge script unavailable"));
     };
     const timer = setTimeout(fail, 15_000);
-    script.src = "https://www.recaptcha.net/recaptcha/api.js?render=explicit&onload=wesetupRecaptchaReady&hl=ru";
+    script.src = `https://www.recaptcha.net/recaptcha/api.js?render=explicit&onload=wesetupRecaptchaReady&hl=${locale}`;
     script.async = true;
     window.wesetupRecaptchaReady = () => {
       clearTimeout(timer);
@@ -54,6 +58,8 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
   onRetry: () => void;
   tone: "light" | "dark";
 }) {
+  const t = usePublicCopy();
+  const locale = useSiteLocale();
   const container = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -84,7 +90,7 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
         }
         clearTimeout(timeout);
         if (!active) return;
-        api = await loadRecaptcha();
+        api = await loadRecaptcha(locale);
         if (!active || !container.current) return;
         widgetId = api.render(container.current, {
           sitekey: config.siteKey,
@@ -120,22 +126,19 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
         try { api?.reset(widgetId); } catch { /* The iframe may already be detached. */ }
       }
     };
-  }, [onToken, tone]);
+  }, [onToken, tone, locale]);
 
   return (
     <div className="mt-3 w-full min-w-0" data-registration-challenge>
       <div ref={container} />
       {loading && (
         <p role="status" className={"text-[13px] " + (tone === "dark" ? "text-white/70" : "text-[#6f7282]")}>
-          Загружаем проверку…
-        </p>
+          {t("Загружаем проверку…")}</p>
       )}
       {error && (
         <div role="alert" className={"text-[13px] " + (tone === "dark" ? "text-[#ffb4ab]" : "text-[#a13a32]")}>
-          Не удалось пройти проверку. Попробуйте ещё раз.
-          <button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">
-            Повторить проверку
-          </button>
+          {t("Не удалось пройти проверку. Попробуйте ещё раз.")}<button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">
+            {t("Повторить проверку")}</button>
         </div>
       )}
     </div>
@@ -144,6 +147,7 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
 
 /** Independent tokens per form; any completed submission retires its token. */
 export function useRegistrationChallenge(tone: "light" | "dark" = "light") {
+  const t = usePublicCopy();
   const [token, setToken] = useState("");
   const [website, setWebsite] = useState("");
   const [revision, setRevision] = useState(0);
@@ -159,7 +163,7 @@ export function useRegistrationChallenge(tone: "light" | "dark" = "light") {
     element: (
       <>
         <div aria-hidden="true" className="hidden">
-          <label htmlFor={id}>Ваш сайт</label>
+          <label htmlFor={id}>{t("Ваш сайт")}</label>
           <input id={id} name="website" type="text" autoComplete="off" tabIndex={-1}
             value={website} onChange={(event) => setWebsite(event.target.value)} />
         </div>

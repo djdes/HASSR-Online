@@ -1,0 +1,250 @@
+TAP version 13
+# Subtest: шесть глав по ~6 с, ролик 0:36
+ok 1 - шесть глав по ~6 с, ролик 0:36
+  ---
+  duration_ms: 2.750497
+  type: 'test'
+  ...
+# Subtest: кадр — функция времени: chapterAt и finalFrameOf детерминированы
+ok 2 - кадр — функция времени: chapterAt и finalFrameOf детерминированы
+  ---
+  duration_ms: 0.563499
+  type: 'test'
+  ...
+# Subtest: interpolate: зажим по краям и линейность
+ok 3 - interpolate: зажим по краям и линейность
+  ---
+  duration_ms: 1.243199
+  type: 'test'
+  ...
+# Subtest: смена помещения: у каждой главы свой цвет и существующее фото
+ok 4 - смена помещения: у каждой главы свой цвет и существующее фото
+  ---
+  duration_ms: 0.8109
+  type: 'test'
+  ...
+# Subtest: движок — Remotion: Player в плеере, useCurrentFrame в композиции
+ok 5 - движок — Remotion: Player в плеере, useCurrentFrame в композиции
+  ---
+  duration_ms: 0.7922
+  type: 'test'
+  ...
+# Subtest: журналы в сценах — ровно из каталога
+ok 6 - журналы в сценах — ровно из каталога
+  ---
+  duration_ms: 5.109594
+  type: 'test'
+  ...
+# Subtest: короткая подпись главы: есть, одна строка, короче полной
+ok 7 - короткая подпись главы: есть, одна строка, короче полной
+  ---
+  duration_ms: 0.535299
+  type: 'test'
+  ...
+# Subtest: тексты экранов взяты из настоящих QR-форм
+ok 8 - тексты экранов взяты из настоящих QR-форм
+  ---
+  duration_ms: 5.694494
+  type: 'test'
+  ...
+# Subtest: подписи граф бланков — как в генераторе PDF
+ok 9 - подписи граф бланков — как в генераторе PDF
+  ---
+  duration_ms: 4.310195
+  type: 'test'
+  ...
+# Subtest: поля фритюра — из колонок пайплайна fryer_oil
+ok 10 - поля фритюра — из колонок пайплайна fryer_oil
+  ---
+  duration_ms: 0.809199
+  type: 'test'
+  ...
+# Subtest: отклонения из «Попробуйте сами» совпадают с продуктом
+ok 11 - отклонения из «Попробуйте сами» совпадают с продуктом
+  ---
+  duration_ms: 0.473599
+  type: 'test'
+  ...
+# Subtest: напоминания 12:00 / 17:00 / 21:00 — ступени крона compliance
+ok 12 - напоминания 12:00 / 17:00 / 21:00 — ступени крона compliance
+  ---
+  duration_ms: 0.3012
+  type: 'test'
+  ...
+# Subtest: пресеты «Что сделали» — из формы отклонения
+ok 13 - пресеты «Что сделали» — из формы отклонения
+  ---
+  duration_ms: 0.640199
+  type: 'test'
+  ...
+# Subtest: Russian copy is unchanged, English copy preserves surrounding spacing
+ok 14 - Russian copy is unchanged, English copy preserves surrounding spacing
+  ---
+  duration_ms: 2.301697
+  type: 'test'
+  ...
+# Subtest: all controlled QR demo and equipment product text has English copy
+ok 15 - all controlled QR demo and equipment product text has English copy
+  ---
+  duration_ms: 0.949299
+  type: 'test'
+  ...
+# Subtest: known API failures retain their meaning; unknown failures use localized copy
+ok 16 - known API failures retain their meaning; unknown failures use localized copy
+  ---
+  duration_ms: 0.339599
+  type: 'test'
+  ...
+# Subtest: English promotion deadline preserves the Moscow midnight boundary
+ok 17 - English promotion deadline preserves the Moscow midnight boundary
+  ---
+  duration_ms: 0.616999
+  type: 'test'
+  ...
+# Subtest: only explicit supported locale values are accepted
+ok 18 - only explicit supported locale values are accepted
+  ---
+  duration_ms: 1.877798
+  type: 'test'
+  ...
+# Subtest: translated public URLs round-trip without losing queries or hashes
+ok 19 - translated public URLs round-trip without losing queries or hashes
+  ---
+  duration_ms: 1.756998
+  type: 'test'
+  ...
+# Subtest: language URLs cannot target private routes, callbacks or other origins
+ok 20 - language URLs cannot target private routes, callbacks or other origins
+  ---
+  duration_ms: 0.432599
+  type: 'test'
+  ...
+# Subtest: language alternates use canonical HTTPS URLs
+ok 21 - language alternates use canonical HTTPS URLs
+  ---
+  duration_ms: 0.394
+  type: 'test'
+  ...
+# Subtest: раскладка: H, окно кода с тихой зоной 2 модуля, тонкая рамка, полоса со словом, знак по центру ≤ 20 %
+ok 22 - раскладка: H, окно кода с тихой зоной 2 модуля, тонкая рамка, полоса со словом, знак по центру ≤ 20 %
+  ---
+  duration_ms: 113.581672
+  type: 'test'
+  ...
+# Subtest: без полосы (наклейка лендинга): только окно с кодом и знаком — без рамки и слова
+ok 23 - без полосы (наклейка лендинга): только окно с кодом и знаком — без рамки и слова
+  ---
+  duration_ms: 1.765998
+  type: 'test'
+  ...
+# Subtest: jsPDF: плитка с рамкой — вектор, только серые операторы цвета, знак фигурами, одно слово
+ok 24 - jsPDF: плитка с рамкой — вектор, только серые операторы цвета, знак фигурами, одно слово
+  ---
+  duration_ms: 67.074824
+  type: 'test'
+  ...
+# Subtest: jsPDF: плитка в ячейке шапки — окно на всю ширину ячейки, код по центру окна, полоса снизу во всю ширину
+ok 25 - jsPDF: плитка в ячейке шапки — окно на всю ширину ячейки, код по центру окна, полоса снизу во всю ширину
+  ---
+  duration_ms: 38.558057
+  type: 'test'
+  ...
+# Subtest: jsPDF: слово — всегда свой DejaVu Sans Bold: и у бланка без настоящего жирного, и у журнала с засечками
+ok 26 - jsPDF: слово — всегда свой DejaVu Sans Bold: и у бланка без настоящего жирного, и у журнала с засечками
+  ---
+  duration_ms: 82.784406
+  type: 'test'
+  ...
+# Subtest: SVG: знак фигурами, только чёрный и белый, одно слово, без id и url(\#…)
+ok 27 - SVG: знак фигурами, только чёрный и белый, одно слово, без id и url(\#…)
+  ---
+  duration_ms: 15.105883
+  type: 'test'
+  ...
+# Subtest: PNG: модули на местах, под подложкой пусто, рамка и полоса чёрные, слово белое, только оттенки серого
+ok 28 - PNG: модули на местах, под подложкой пусто, рамка и полоса чёрные, слово белое, только оттенки серого
+  ---
+  duration_ms: 102.991584
+  type: 'test'
+  ...
+# Subtest: data URL и пропорции для клиента
+ok 29 - data URL и пропорции для клиента
+  ---
+  duration_ms: 22.198075
+  type: 'test'
+  ...
+# Subtest: real proxy denies documents and RSC before content, with a private Russian wait page
+ok 30 - real proxy denies documents and RSC before content, with a private Russian wait page
+  ---
+  duration_ms: 24.406573
+  type: 'test'
+  ...
+# Subtest: assets, API, callbacks and operational links survive a page cooldown
+ok 31 - assets, API, callbacks and operational links survive a page cooldown
+  ---
+  duration_ms: 10.598288
+  type: 'test'
+  ...
+# Subtest: document prefetch spoofing and forged sessions cannot reset a blocked IP
+ok 32 - document prefetch spoofing and forged sessions cannot reset a blocked IP
+  ---
+  duration_ms: 3.852996
+  type: 'test'
+  ...
+# Subtest: marked and markerless RSC fetches share a bounded budget and cooldown
+ok 33 - marked and markerless RSC fetches share a bounded budget and cooldown
+  ---
+  duration_ms: 60.846133
+  type: 'test'
+  ...
+# Subtest: subject uses verified accounts or a canonical trusted peer, never client identity hints
+ok 34 - subject uses verified accounts or a canonical trusted peer, never client identity hints
+  ---
+  duration_ms: 9.809289
+  type: 'test'
+  ...
+# Subtest: JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+ok 35 - JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+  ---
+  duration_ms: 68.962823
+  type: 'test'
+  ...
+# Subtest: English document keeps its explicit route and receives a trusted locale
+ok 36 - English document keeps its explicit route and receives a trusted locale
+  ---
+  duration_ms: 14.362984
+  type: 'test'
+  ...
+# Subtest: caller-supplied locale headers cannot change the locale of the requested URL
+ok 37 - caller-supplied locale headers cannot change the locale of the requested URL
+  ---
+  duration_ms: 4.520295
+  type: 'test'
+  ...
+# Subtest: English prefix never rewrites protected routes or callbacks
+ok 38 - English prefix never rewrites protected routes or callbacks
+  ---
+  duration_ms: 3.688096
+  type: 'test'
+  ...
+# Subtest: prefetching another language does not overwrite the visitor preference
+ok 39 - prefetching another language does not overwrite the visitor preference
+  ---
+  duration_ms: 0.891899
+  type: 'test'
+  ...
+# Subtest: English pages retain the navigation budget and show an English cooldown
+ok 40 - English pages retain the navigation budget and show an English cooldown
+  ---
+  duration_ms: 6.412793
+  type: 'test'
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1330.090121

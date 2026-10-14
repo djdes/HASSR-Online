@@ -54,8 +54,13 @@ function amountLabel(d: { kind: DiscountKind; value: number }): string {
  * −10 % навсегда», «Промокод START30: −30 %».
  */
 export function discountLabel(
-  d: Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime">
+  d: Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime">,
+  locale: "ru" | "en" = "ru",
 ): string {
+  if (locale === "en") {
+    if (d.source === "lifetime") return `Your lifetime discount ${amountLabel(d)}`;
+    return `Promo code ${d.code}: ${amountLabel(d)}${d.lifetime ? " for life" : ""}`;
+  }
   if (d.source === "lifetime") return `Ваша скидка ${amountLabel(d)} навсегда`;
   return `Промокод ${d.code}: ${amountLabel(d)}${d.lifetime ? " навсегда" : ""}`;
 }

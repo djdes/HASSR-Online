@@ -7,6 +7,7 @@ import { SEO_LANDINGS } from "@/components/landing/seo-journal-landing";
 import { CITY_ORDER } from "@/content/cities";
 import { COMPARISON_ORDER } from "@/content/comparisons";
 import { GLOSSARY } from "@/content/glossary";
+import { publicLocaleRoute, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
 
 /**
  * Dynamic sitemap for crawlers. Combines:
@@ -118,7 +119,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...CITY_ORDER.map((slug) => ({ url: `${SITE}/v/${slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 })),
   ];
 
-  return [
+  const pages: MetadataRoute.Sitemap = [
     ...staticPages,
     ...journalPages,
     ...featurePages,
@@ -127,4 +128,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...seoPages,
     ...contentPages,
   ];
+  return pages.flatMap((page) => {
+    const pathname = new URL(page.url).pathname;
+    if (!publicLocaleRoute(pathname)) return [page];
+    const alternates = { languages: siteLanguageAlternates(pathname) };
+    return [
+      { ...page, alternates },
+      { ...page, url: `${SITE}${localizedHref(pathname, "en")}`, alternates },
+    ];
+  });
 }

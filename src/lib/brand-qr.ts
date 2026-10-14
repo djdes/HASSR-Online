@@ -42,6 +42,8 @@ import { BRAND_QR_CAPTION_ASPECT, BRAND_QR_FRAME, BRAND_QR_STRIP } from "@/lib/b
 export type BrandQrOptions = {
   /** Рамка и полоса «Отсканировать» снизу. По умолчанию — есть. */
   caption?: boolean;
+  /** Locale of the built-in caption; QR payload and geometry stay unchanged. */
+  locale?: "ru" | "en";
 };
 
 export const BRAND_QR_CAPTION_TITLE = "Отсканировать";
@@ -184,7 +186,7 @@ export function brandQrLayout(url: string, options: BrandQrOptions = {}): BrandQ
     // Кегль — по ширине (поля `TITLE_SIDE`); строка «заглавная — хвост „р“» по центру полосы.
     const titleSize = Math.min((width * (1 - 2 * TITLE_SIDE)) / TITLE_EM, strip.h / (CAPS_ASCENT + DESCENT + 0.5));
     const baseline = stripY + (strip.h - (CAPS_ASCENT + DESCENT) * titleSize) / 2 + CAPS_ASCENT * titleSize;
-    title = { text: BRAND_QR_CAPTION_TITLE, x: width / 2, y: baseline, size: titleSize };
+    title = { text: options.locale === "en" ? "Scan me" : BRAND_QR_CAPTION_TITLE, x: width / 2, y: baseline, size: titleSize };
   }
 
   return {

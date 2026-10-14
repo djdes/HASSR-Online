@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import localFont from "next/font/local";
 import { ServiceWorkerRegister } from "@/components/layout/sw-register";
@@ -142,13 +144,14 @@ export async function generateViewport(): Promise<Viewport> {
   return inApp ? { ...BASE_VIEWPORT, viewportFit: "cover" } : BASE_VIEWPORT;
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getSiteLocale();
   return (
-    <html lang="ru">
+    <html lang={locale}>
       <head>
         {/* Иконки вкладки и домашнего экрана берёт App Router из
             src/app/icon.png и src/app/apple-icon.png — ручные <link>
@@ -167,6 +170,7 @@ export default function RootLayout({
         className={`${manrope.variable} antialiased overflow-x-clip`}
         suppressHydrationWarning
       >
+        <SiteLocaleProvider locale={locale}>
         <ScrollToTop />
         {/* Приложение WeSetup: значки строки состояния под цвет шапки на
             страницах вне оболочки (QR, удаление аккаунта, политика). */}
@@ -176,6 +180,7 @@ export default function RootLayout({
         <BuildVersionWatcher />
         <YandexMetrika />
         <CookieConsent />
+        </SiteLocaleProvider>
       </body>
     </html>
   );

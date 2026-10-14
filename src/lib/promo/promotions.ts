@@ -241,32 +241,37 @@ export function formatMskDateTime(date: Date): string {
  * читается как «весь день». Год не пишем: акции короткие, а текущий год
  * на сервере и в браузере мог бы разойтись на границе суток.
  */
-export function promotionEndLabel(endsAt: Date | string): string {
+export function promotionEndLabel(endsAt: Date | string, locale: "ru" | "en" = "ru"): string {
   const end = typeof endsAt === "string" ? new Date(endsAt) : endsAt;
   const p = mskParts(end);
+  const label = (day: number, month: number) => locale === "en"
+    ? `until ${day}${NBSP}${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month]}`
+    : `до ${day}${NBSP}${MONTHS_GENITIVE[month]}`;
   if (p.hours === 0 && p.minutes === 0) {
     const last = mskParts(new Date(end.getTime() - 60_000));
-    return `до ${last.day}${NBSP}${MONTHS_GENITIVE[last.month]}`;
+    return label(last.day, last.month);
   }
-  const day = `до ${p.day}${NBSP}${MONTHS_GENITIVE[p.month]}`;
+  const day = label(p.day, p.month);
   if (p.hours === 23 && p.minutes === 59) return day;
   return `${day}, ${pad(p.hours)}:${pad(p.minutes)}`;
 }
 
 /** Текст плашки: «−20 % до 10 октября». */
-export function promotionBadgeLabel(promotion: Pick<AppliedPromotion, "percent" | "endsAt">): string {
-  return `−${promotion.percent}${NBSP}% ${promotionEndLabel(promotion.endsAt)}`;
+export function promotionBadgeLabel(promotion: Pick<AppliedPromotion, "percent" | "endsAt">, locale: "ru" | "en" = "ru"): string {
+  return `−${promotion.percent}${NBSP}% ${promotionEndLabel(promotion.endsAt, locale)}`;
 }
 
 /**
  * Точный конец для подсказки, в тон плашке: конец в полночь — «до
  * 10.10.2026, 23:59» (последний день целиком), иначе — ровно время конца.
  */
-export function promotionEndHint(promotion: Pick<AppliedPromotion, "endsAt">): string {
+export function promotionEndHint(promotion: Pick<AppliedPromotion, "endsAt">, locale: "ru" | "en" = "ru"): string {
   const end = new Date(promotion.endsAt);
   const p = mskParts(end);
   const shown = p.hours === 0 && p.minutes === 0 ? new Date(end.getTime() - 60_000) : end;
-  return `Акция действует до ${formatMskDateTime(shown)} по Москве`;
+  return locale === "en"
+    ? `Promotion ends on ${formatMskDateTime(shown)} Moscow time`
+    : `Акция действует до ${formatMskDateTime(shown)} по Москве`;
 }
 
 /**

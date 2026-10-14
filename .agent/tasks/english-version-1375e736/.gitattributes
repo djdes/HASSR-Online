@@ -1,0 +1,2 @@
+# Preserve command logs verbatim.
+raw/*.log -whitespace

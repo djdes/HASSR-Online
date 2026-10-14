@@ -1,4 +1,6 @@
 import { Smartphone } from "lucide-react";
+import type { SiteLocale } from "@/i18n/site-locale";
+import { publicCopyFor } from "@/i18n/public-copy";
 
 /**
  * Заглушка мобильного приложения.
@@ -15,7 +17,9 @@ const STORES = ["App Store", "Google Play"] as const;
 
 export function AppStoresTeaser({
   tone = "footer",
+  locale = "ru",
 }: {
+  locale?: SiteLocale;
   /// "footer" — компактно в подвале, "card" — в настройках уведомлений.
   tone?: "footer" | "card";
 }) {
@@ -24,7 +28,7 @@ export function AppStoresTeaser({
   return (
     <div className={card ? "" : "mt-5"}>
       <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-        Приложение
+        {locale === "en" ? "Mobile app" : "Приложение"}
       </div>
       <p
         className={
@@ -32,8 +36,7 @@ export function AppStoresTeaser({
           (card ? "max-w-[520px]" : "max-w-[280px]")
         }
       >
-        Сотрудники будут вести журналы и получать уведомления прямо на
-        телефон. Запуск — {MOBILE_APP_LAUNCH_DATE}.
+        {locale === "en" ? <>Employees will be able to keep logs and receive notifications on their phones. Launch: {publicCopyFor(locale)(MOBILE_APP_LAUNCH_DATE)}.</> : <>Сотрудники будут вести журналы и получать уведомления прямо на телефон. Запуск — {MOBILE_APP_LAUNCH_DATE}.</>}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {STORES.map((store) => (
@@ -44,7 +47,7 @@ export function AppStoresTeaser({
             <Smartphone className="size-3.5" />
             {store}
             <span className="rounded-full bg-[#f5f6ff] px-1.5 py-0.5 text-[10.5px] text-[#3848c7]">
-              скоро
+              {locale === "en" ? "coming soon" : "скоро"}
             </span>
           </span>
         ))}

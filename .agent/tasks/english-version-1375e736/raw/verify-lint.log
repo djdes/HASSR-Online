@@ -1,0 +1,40 @@
+
+/var/www/wesetupru/data/recaptcha-release-20261013/repo/src/components/landing/qr-player/qr-player.tsx
+   88:19  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/var/www/wesetupru/data/recaptcha-release-20261013/repo/src/components/landing/qr-player/qr-player.tsx:88:19
+  86 |   // статичную подложку с тем же кадром — расхождения разметки нет.
+  87 |   const [mounted, setMounted] = useState(false);
+> 88 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  89 |
+  90 |   // Фото мест подгружаются заранее: к моменту смены главы кадр уже в кеше.
+  91 |   useEffect(() => {  react-hooks/set-state-in-effect
+  108:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/var/www/wesetupru/data/recaptcha-release-20261013/repo/src/components/landing/qr-player/qr-player.tsx:108:5
+  106 |   useEffect(() => {
+  107 |     if (!player) return;
+> 108 |     setPlaying(player.isPlaying());
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  109 |     const onPlay = () => setPlaying(true);
+  110 |     const onPause = () => setPlaying(false);
+  111 |     player.addEventListener("play", onPlay);                                                 react-hooks/set-state-in-effect
+
+/var/www/wesetupru/data/recaptcha-release-20261013/repo/src/lib/brand-qr.ts
+  7:51  warning  'BRAND_QR_STRIP' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+

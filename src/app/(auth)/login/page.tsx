@@ -1,4 +1,6 @@
 import LoginClient from "./login-client";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { siteLanguageAlternates } from "@/i18n/site-locale";
 import { MiniShellReset } from "@/components/layout/mini-shell-reset";
 import {
   DEFAULT_OG_IMAGES,
@@ -11,7 +13,7 @@ const DESC =
   "Вход в личный кабинет WeSetup. Электронные журналы СанПиН и ХАССП для общепита и пищевых производств.";
 const URL = "https://wesetup.ru/login";
 
-export const metadata = {
+const russianMetadata = {
   title: TITLE,
   description: DESC,
   alternates: { canonical: URL },
@@ -31,6 +33,19 @@ export const metadata = {
     images: DEFAULT_TWITTER_IMAGES,
   },
 };
+
+export async function generateMetadata() {
+  const locale = await getSiteLocale();
+  const title = locale === "en" ? "Sign in" : TITLE;
+  const description = locale === "en" ? "Sign in to WeSetup. Digital SanPiN and HACCP logs for food service and production." : DESC;
+  const url = locale === "en" ? "https://wesetup.ru/en/login" : URL;
+  return {
+    ...russianMetadata, title, description,
+    alternates: { canonical: url, languages: siteLanguageAlternates("/login") },
+    openGraph: { ...russianMetadata.openGraph, title, description, url, locale: locale === "en" ? "en_US" : "ru_RU", images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
+    twitter: { ...russianMetadata.twitter, title, description, images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_TWITTER_IMAGES },
+  };
+}
 
 export default function LoginPage() {
   return (

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decode } from "next-auth/jwt";
 import { pageNavigationGuard } from "@/lib/page-navigation-guard";
+import { publicLocaleRoute, SITE_LOCALE_COOKIE, SITE_LOCALE_HEADER } from "@/i18n/site-locale";
 import { pickSessionCookie } from "@/lib/auth-cookies";
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
@@ -36,6 +37,10 @@ function withRequestContext(
   const limited = pageNavigationGuard(req, verifiedUserId);
   if (limited) return limited;
   const headers = new Headers(req.headers);
+  const localized = publicLocaleRoute(req.nextUrl.pathname);
+  // Never trust a locale header supplied by the client. Only explicitly
+  // translated public paths can select English; private routes stay unchanged.
+  headers.set(SITE_LOCALE_HEADER, localized?.locale ?? "ru");
   for (const name of PARTNER_REQUEST_HEADERS) headers.delete(name);
   headers.set(PARTNER_HEADER_METHOD, req.method);
   headers.set(PARTNER_HEADER_PATH, req.nextUrl.pathname);
@@ -55,6 +60,11 @@ function withRequestContext(
     );
   }
   const res = NextResponse.next({ request: { headers } });
+  if (localized && req.headers.get("sec-fetch-dest") !== "empty") {
+    res.cookies.set(SITE_LOCALE_COOKIE, localized.locale, {
+      path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", secure: req.nextUrl.protocol === "https:",
+    });
+  }
   markMiniShell(req, res);
   // Страницы кабинета не кэшируем (раньше это делал отдельный корневой
   // middleware.ts, который в dev перекрывал этот файл целиком — и guard

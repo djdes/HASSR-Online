@@ -1,5 +1,8 @@
 "use client";
 
+import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+
 import { useEffect, useRef, useState } from "react";
 import { checkEmail, replaceDomain, type EmailCheck } from "@/lib/email-validation";
 
@@ -109,6 +112,8 @@ export function EmailHint({
   onApply: (suggestion: string) => void;
   tone?: "light" | "dark";
 }) {
+  const t = usePublicCopy();
+  const locale = useSiteLocale();
   const dark = tone === "dark";
   const errorColor = dark ? "text-[#ffb4ab]" : "text-[#a13a32]";
   const mutedColor = dark ? "text-white/60" : "text-[#6f7282]";
@@ -118,7 +123,7 @@ export function EmailHint({
   if (check.status === "typo") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + errorColor}>
-        {check.message}.{" "}
+        {locale === "en" ? "Please check the email address" : check.message}.{" "}
         <button
           type="button"
           onClick={() => onApply(check.suggestion)}
@@ -127,7 +132,7 @@ export function EmailHint({
             (dark ? "text-white" : "text-[#3848c7]")
           }
         >
-          Исправить на {check.suggestion}
+          {t("Исправить на ")}{check.suggestion}
         </button>
       </p>
     );
@@ -136,7 +141,7 @@ export function EmailHint({
   if (check.status === "invalid") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + errorColor}>
-        {check.message}
+        {t(check.message)}
       </p>
     );
   }
@@ -144,17 +149,14 @@ export function EmailHint({
   if (check.status === "ok" && domainState === "missing") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + errorColor}>
-        Такого домена не существует — проверьте адрес. Письмо с паролем на
-        него не дойдёт.
-      </p>
+        {t("Такого домена не существует — проверьте адрес. Письмо с паролем на него не дойдёт.")}</p>
     );
   }
 
   if (check.status === "ok" && domainState === "checking") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + mutedColor}>
-        Проверяем адрес…
-      </p>
+        {t("Проверяем адрес…")}</p>
     );
   }
 

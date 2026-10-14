@@ -1,4 +1,8 @@
 "use client";
+
+import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import { publicError } from "@/i18n/public-copy";
 import { phoneInputProps } from "@/lib/phone-input";
 
 import {
@@ -168,6 +172,8 @@ export function PublicSupportWidget() {
 }
 
 function SupportWidgetBody() {
+  const t = usePublicCopy();
+  const locale = useSiteLocale();
   const [open, setOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>("menu");
   /// Пульс у закрытого пузыря: до первого открытия или пока не истёк таймер.
@@ -233,7 +239,7 @@ function SupportWidgetBody() {
       : null,
     scope: guestIdState ? `guest:${guestIdState}` : "guest",
     chatVisible,
-    title: (status) => status.latest?.operatorName ?? "Поддержка WeSetup",
+    title: (status) => status.latest?.operatorName ?? t("Поддержка WeSetup"),
   });
   const { chirpFor } = incoming;
 
@@ -388,11 +394,11 @@ function SupportWidgetBody() {
 
   async function sendFeedback() {
     if (!type) {
-      toast.error("Выберите тип обращения");
+      toast.error(t("Выберите тип обращения"));
       return;
     }
     if (message.trim().length < 3) {
-      toast.error("Напишите, что случилось");
+      toast.error(t("Напишите, что случилось"));
       return;
     }
     if (!hasContact) {
@@ -400,7 +406,7 @@ function SupportWidgetBody() {
       return;
     }
     if (feedbackFiles.uploading) {
-      toast.error("Дождитесь загрузки файлов");
+      toast.error(t("Дождитесь загрузки файлов"));
       return;
     }
     setBusy(true);
@@ -419,14 +425,14 @@ function SupportWidgetBody() {
         }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось отправить");
+      if (!response.ok) throw new Error(data?.error ?? t("Не удалось отправить"));
       rememberContact({ email, phone });
       setSent(true);
       setMessage("");
       setType("");
       feedbackFiles.clear();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(publicError(locale, error instanceof Error ? error.message : null, "Не удалось отправить сообщение"));
     } finally {
       setBusy(false);
     }
@@ -442,7 +448,7 @@ function SupportWidgetBody() {
       return;
     }
     if (chatFiles.uploading) {
-      toast.error("Дождитесь загрузки файлов");
+      toast.error(t("Дождитесь загрузки файлов"));
       return;
     }
     setBusy(true);
@@ -462,7 +468,7 @@ function SupportWidgetBody() {
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.message) {
-        throw new Error(data?.error ?? "Не удалось отправить сообщение");
+        throw new Error(data?.error ?? t("Не удалось отправить сообщение"));
       }
       rememberContact({ email, phone });
       setMessages((current) => [...(current ?? []), data.message]);
@@ -476,7 +482,7 @@ function SupportWidgetBody() {
       setHasThread(true);
     } catch (error) {
       setDraft(body);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(publicError(locale, error instanceof Error ? error.message : null, "Не удалось отправить сообщение"));
     } finally {
       setBusy(false);
     }
@@ -496,7 +502,7 @@ function SupportWidgetBody() {
   );
 
   const savedLabel = saved
-    ? [saved.phone, saved.email].filter(Boolean).join(" и ")
+    ? [saved.phone, saved.email].filter(Boolean).join(t(" и "))
     : "";
   const phoneInvalid = contactError?.fields.includes("phone") ?? false;
   const emailInvalid = contactError?.fields.includes("email") ?? false;
@@ -522,10 +528,10 @@ function SupportWidgetBody() {
           className="fixed bottom-5 right-5 z-30 flex size-12 items-center justify-center rounded-full bg-[#5566f6] text-white shadow-[0_14px_30px_-10px_rgba(85,102,246,0.6)] ring-1 ring-white/25 transition-all duration-200 hover:scale-105 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25"
           aria-label={
             incoming.unread > 0
-              ? `Связаться с нами · новых сообщений: ${incoming.unread}`
-              : "Связаться с нами"
+              ? locale === "en" ? `Contact us · new messages: ${incoming.unread}` : `Связаться с нами · новых сообщений: ${incoming.unread}`
+              : t("Связаться с нами")
           }
-          title="Написать нам"
+          title={t("Написать нам")}
         >
           {attention && incoming.unread === 0 ? (
             <span
@@ -554,16 +560,15 @@ function SupportWidgetBody() {
               className="mb-1 inline-flex items-center gap-1 text-[12.5px] text-[#6f7282] transition-colors hover:text-[#3848c7]"
             >
               <ArrowLeft className="size-3.5" />
-              Назад
-            </button>
+              {t("Назад")}</button>
           ) : null}
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            {SCREEN_TITLES[screen]}
+            {t(SCREEN_TITLES[screen])}
           </div>
           <div className="mt-1 text-[12px] leading-snug text-[#6f7282]">
             {screen === "contact"
-              ? "Оставьте телефон или почту — ответим туда, даже если вы закроете сайт."
-              : "Отвечаем в рабочие часы, обычно в течение дня"}
+              ? t("Оставьте телефон или почту — ответим туда, даже если вы закроете сайт.")
+              : t("Отвечаем в рабочие часы, обычно в течение дня")}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
@@ -572,8 +577,8 @@ function SupportWidgetBody() {
               type="button"
               onClick={toggleMute}
               className="rounded-lg p-1 text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
-              aria-label={muted ? "Включить звук новых сообщений" : "Выключить звук новых сообщений"}
-              title={muted ? "Звук выключен" : "Звук при новом сообщении"}
+              aria-label={muted ? t("Включить звук новых сообщений") : t("Выключить звук новых сообщений")}
+              title={muted ? t("Звук выключен") : t("Звук при новом сообщении")}
             >
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </button>
@@ -582,7 +587,7 @@ function SupportWidgetBody() {
             type="button"
             onClick={close}
             className="rounded-lg p-1 text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
-            aria-label="Закрыть"
+            aria-label={t("Закрыть")}
           >
             <X className="size-4" />
           </button>
@@ -605,8 +610,8 @@ function SupportWidgetBody() {
                 setPhone(value);
                 setContactError(null);
               })}
-              placeholder="Телефон"
-              aria-label="Телефон"
+              placeholder={t("Телефон")}
+              aria-label={t("Телефон")}
               aria-invalid={phoneInvalid || undefined}
               autoComplete="tel"
               inputMode="tel"
@@ -630,19 +635,17 @@ function SupportWidgetBody() {
           </div>
           {contactError ? (
             <p role="alert" className="text-[13px] leading-snug text-[#a13a32]">
-              {contactError.message}
+              {t(contactError.message)}
             </p>
           ) : null}
           <button
             type="submit"
             className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
           >
-            Продолжить
-            <ArrowRight className="size-4" />
+            {t("Продолжить")}<ArrowRight className="size-4" />
           </button>
           <p className="text-[12px] leading-snug text-[#9b9fb3]">
-            Достаточно одного поля. Ничего, кроме ответа, по нему не придёт.
-          </p>
+            {t("Достаточно одного поля. Ничего, кроме ответа, по нему не придёт.")}</p>
         </form>
       ) : null}
 
@@ -657,7 +660,7 @@ function SupportWidgetBody() {
                 <Mail className="size-3.5 shrink-0 text-[#5566f6]" />
               )}
               <span className="min-w-0 flex-1 truncate">
-                Ответим на{" "}
+                {t("Ответим на")}{" "}
                 <span className="font-medium text-[#0b1024]">{savedLabel}</span>
               </span>
               <span aria-hidden="true" className="text-[#9b9fb3]">
@@ -668,8 +671,7 @@ function SupportWidgetBody() {
                 onClick={editContact}
                 className="shrink-0 font-medium text-[#3848c7] transition-colors hover:text-[#5566f6]"
               >
-                Изменить
-              </button>
+                {t("Изменить")}</button>
             </div>
           ) : null}
           <button
@@ -682,11 +684,9 @@ function SupportWidgetBody() {
             </span>
             <span className="min-w-0">
               <span className="block text-[14px] font-medium text-[#0b1024]">
-                Обратная связь
-              </span>
+                {t("Обратная связь")}</span>
               <span className="block text-[12px] text-[#6f7282]">
-                Вопрос, идея или предложение о сотрудничестве
-              </span>
+                {t("Вопрос, идея или предложение о сотрудничестве")}</span>
             </span>
           </button>
 
@@ -700,11 +700,9 @@ function SupportWidgetBody() {
             </span>
             <span className="min-w-0">
               <span className="block text-[14px] font-medium text-[#0b1024]">
-                Онлайн-чат
-              </span>
+                {t("Онлайн-чат")}</span>
               <span className="block text-[12px] text-[#6f7282]">
-                Переписка с оператором, история сохраняется
-              </span>
+                {t("Переписка с оператором, история сохраняется")}</span>
             </span>
           </button>
         </div>
@@ -714,22 +712,19 @@ function SupportWidgetBody() {
         sent ? (
           <div className="px-5 py-8 text-center">
             <p className="text-[14px] leading-[1.55] text-[#0b1024]">
-              Спасибо, получили. Ответим на оставленные контакты.
-            </p>
+              {t("Спасибо, получили. Ответим на оставленные контакты.")}</p>
             <button
               type="button"
               onClick={close}
               className="mt-4 inline-flex h-10 items-center rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
             >
-              Закрыть
-            </button>
+              {t("Закрыть")}</button>
           </div>
         ) : (
           <div className="relative space-y-4 overflow-y-auto px-5 py-4">
             <div className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Тип обращения
-              </div>
+                {t("Тип обращения")}</div>
               <div className="space-y-1.5">
                 {FEEDBACK_TYPES.map((item) => (
                   <label
@@ -749,7 +744,7 @@ function SupportWidgetBody() {
                       onChange={() => setType(item.value)}
                       className="size-4 accent-[#5566f6]"
                     />
-                    {item.label}
+                    {t(item.label)}
                   </label>
                 ))}
               </div>
@@ -762,7 +757,7 @@ function SupportWidgetBody() {
               onChange={(event) => setMessage(event.target.value)}
               onPaste={feedbackFiles.handlePaste}
               rows={5}
-              placeholder="Опишите подробнее — что нужно или что предлагаете"
+              placeholder={t("Опишите подробнее — что нужно или что предлагаете")}
               className="w-full resize-none rounded-2xl border border-[#dcdfed] px-3.5 py-3 text-[14px] leading-[1.55] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
 
@@ -784,12 +779,10 @@ function SupportWidgetBody() {
                   className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Отправить
-                </button>
+                  {t("Отправить")}</button>
               </div>
               <p className="mt-1.5 text-[11px] leading-snug text-[#9b9fb3]">
-                Можно приложить скриншот или файл — до 50 МБ, без исполняемых.
-              </p>
+                {t("Можно приложить скриншот или файл — до 50 МБ, без исполняемых.")}</p>
             </div>
           </div>
         )
@@ -801,13 +794,10 @@ function SupportWidgetBody() {
             {messages === null ? (
               <div className="flex items-center gap-2 text-[13px] text-[#9b9fb3]">
                 <Loader2 className="size-4 animate-spin" />
-                Загружаем переписку
-              </div>
+                {t("Загружаем переписку")}</div>
             ) : messages.length === 0 ? (
               <p className="py-6 text-center text-[13px] leading-snug text-[#6f7282]">
-                Напишите вопрос — ответим здесь же. Переписка сохраняется,
-                можно вернуться к ней позже.
-              </p>
+                {t("Напишите вопрос — ответим здесь же. Переписка сохраняется, можно вернуться к ней позже.")}</p>
             ) : (
               messages.map((item) => (
                 <div
@@ -859,7 +849,7 @@ function SupportWidgetBody() {
                   }
                 }}
                 rows={1}
-                placeholder="Сообщение"
+                placeholder={t("Сообщение")}
                 className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-[#dcdfed] px-3.5 py-3 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
               <button
@@ -872,7 +862,7 @@ function SupportWidgetBody() {
                     chatFiles.readyAttachments.length === 0)
                 }
                 className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-50"
-                aria-label="Отправить"
+                aria-label={t("Отправить")}
               >
                 {busy ? (
                   <Loader2 className="size-4 animate-spin" />

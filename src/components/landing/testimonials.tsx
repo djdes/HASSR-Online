@@ -1,4 +1,5 @@
 import { Star, UserRound } from "lucide-react";
+import type { SiteLocale } from "@/i18n/site-locale";
 
 import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landing/landing-section";
 import type { PublicReview } from "@/lib/balance/review-view";
@@ -17,13 +18,14 @@ const SHOWN = 3;
  * остальные секции (спека landing-pack-2026-09). Звёзды для выдачи
  * (AggregateRating) по-прежнему считаются по всем одобренным отзывам.
  */
-export function Testimonials({ reviews }: { reviews: PublicReview[] }) {
+export function Testimonials({ reviews, locale = "ru" }: { reviews: PublicReview[]; locale?: SiteLocale }) {
   if (reviews.length === 0) return null;
   const shown = reviews.slice(0, SHOWN);
 
   return (
     <section className={LANDING_SECTION_CLASS}>
-      <LandingSectionHeader title="Что говорят заведения" />
+      <LandingSectionHeader title={locale === "en" ? "What our customers say" : "Что говорят заведения"} />
+      {locale === "en" && <p className="mb-4 text-[13px] text-[#6f7282]">Customer reviews are shown in their original language.</p>}
       {/* Колонок столько, сколько отзывов: два отзыва в сетке на три
           оставляли пустую треть ряда. */}
       <ul
@@ -34,7 +36,7 @@ export function Testimonials({ reviews }: { reviews: PublicReview[] }) {
       >
         {shown.map((review) => (
           <li key={review.id}>
-            <TestimonialCard review={review} />
+            <TestimonialCard review={review} locale={locale} />
           </li>
         ))}
       </ul>
@@ -42,7 +44,7 @@ export function Testimonials({ reviews }: { reviews: PublicReview[] }) {
   );
 }
 
-function TestimonialCard({ review }: { review: PublicReview }) {
+function TestimonialCard({ review, locale }: { review: PublicReview; locale: SiteLocale }) {
   // Анонимный отзыв: без имени — и без инициалов «АО», которые читались бы
   // как «акционерное общество». Вместо монограммы — нейтральный значок.
   const initials = review.anonymous
@@ -58,7 +60,7 @@ function TestimonialCard({ review }: { review: PublicReview }) {
   return (
     <figure className="flex h-full flex-col rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6">
       {review.rating ? (
-        <div className="flex gap-1 text-[#5566f6]" aria-label={`Оценка ${review.rating} из 5`}>
+        <div className="flex gap-1 text-[#5566f6]" aria-label={locale === "en" ? `Rated ${review.rating} out of 5` : `Оценка ${review.rating} из 5`}>
           {Array.from({ length: 5 }, (_, i) => (
             <Star
               key={i}

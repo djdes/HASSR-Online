@@ -23,8 +23,8 @@ export function isImageAttachment(meta: {
   return meta.mimeType.startsWith("image/");
 }
 
-export function formatBytes(size: number): string {
-  if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} МБ`;
-  if (size >= 1024) return `${Math.round(size / 1024)} КБ`;
-  return `${size} Б`;
+export function formatBytes(size: number, locale: "ru" | "en" = "ru"): string {
+  if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} ${locale === "en" ? "MB" : "МБ"}`;
+  if (size >= 1024) return `${Math.round(size / 1024)} ${locale === "en" ? "KB" : "КБ"}`;
+  return `${size} ${locale === "en" ? "B" : "Б"}`;
 }

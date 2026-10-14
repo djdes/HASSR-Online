@@ -1,6 +1,7 @@
 import { brandQrSvg } from "@/lib/brand-qr";
 
 import type { QrMatrix } from "./qr-sticker";
+import type { SiteLocale } from "@/i18n/site-locale";
 
 /** SVG тянется по ширине родителя (у помощника — фиксированные px). */
 function fluid(svg: string): string {
@@ -13,7 +14,7 @@ function fluid(svg: string): string {
  * золотой наклейке подпись даёт её рамка, а наклейка в ролике — как её
  * печатает продукт, с полосой «Отсканировать».
  */
-export async function buildQrMatrix(text: string): Promise<QrMatrix> {
-  const [bare, printed] = await Promise.all([brandQrSvg(text, { caption: false }), brandQrSvg(text)]);
+export async function buildQrMatrix(text: string, locale: SiteLocale = "ru"): Promise<QrMatrix> {
+  const [bare, printed] = await Promise.all([brandQrSvg(text, { caption: false }), brandQrSvg(text, { locale })]);
   return { bare: fluid(bare), printed: fluid(printed) };
 }

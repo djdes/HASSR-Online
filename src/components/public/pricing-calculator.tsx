@@ -1,5 +1,8 @@
 "use client";
 
+import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -93,6 +96,8 @@ export function PricingCalculator({
   /// согласования состава деньги брать нельзя.
   paymentDisabled?: boolean;
 }) {
+  const t = usePublicCopy();
+  const locale = useSiteLocale();
   const SUBSCRIPTION_MONTHLY = subscriptionMonthly;
   // Default — Стандарт, как «most-popular anchor». Маркетинг: пользователь
   // приходит на лендинг, видит уже выбранный набор с реальной ценой —
@@ -129,11 +134,9 @@ export function PricingCalculator({
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7cf5c0]/20 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#116b2a]">
           <Package className="size-3.5" />
-          С оборудованием
-        </span>
+          {t("С оборудованием")}</span>
         <span className="text-[13px] text-[#6f7282]">
-          Подписка та же — выберите готовый набор
-        </span>
+          {t("Подписка та же — выберите готовый набор")}</span>
       </div>
 
       {/* BUNDLES — компактные строки. Родительская карточка тарифа узкая
@@ -169,20 +172,19 @@ export function PricingCalculator({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[14px] font-semibold tracking-[-0.005em] text-[#0b1024]">
-                    {bundle.name}
+                    {t(bundle.name)}
                   </span>
                   {bundle.popular ? (
                     <span className="inline-flex items-center gap-0.5 rounded-full bg-[#0b1024] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-white">
                       <Sparkles className="size-2.5" />
-                      Популярный
-                    </span>
+                      {t("Популярный")}</span>
                   ) : null}
                 </div>
                 <p className="mt-0.5 line-clamp-2 text-[12px] leading-[1.45] text-[#6f7282]">
-                  {bundle.hook}
+                  {t(bundle.hook)}
                 </p>
                 <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-[#9b9fb3]">
-                  {bundle.forWhom}
+                  {t(bundle.forWhom)}
                 </span>
               </div>
 
@@ -198,23 +200,23 @@ export function PricingCalculator({
       <div className="rounded-2xl bg-[#0b1024] p-5 text-white">
         <div className="flex items-baseline justify-between gap-3">
           <div className="text-[12px] uppercase tracking-[0.14em] text-white/60">
-            Подписка
-          </div>
+            {t("Подписка")}</div>
           <div className="text-right">
             <PromoPrice
+              locale={locale}
               price={applyPromotion(SUBSCRIPTION_MONTHLY, subscriptionPromotion)}
               size="md"
               tone="dark"
               className="justify-end"
-              suffix={<span className="ml-1 text-[12px] text-white/60">/мес</span>}
+              suffix={<span className="ml-1 text-[12px] text-white/60">{t("/мес")}</span>}
             />
           </div>
         </div>
         <div className="mt-3 flex items-baseline justify-between gap-3">
           <div className="text-[12px] uppercase tracking-[0.14em] text-white/60">
             {selectedBundleId
-              ? `Пакет «${BUNDLES.find((b) => b.id === selectedBundleId)?.name}»`
-              : "Единоразово"}
+              ? `${locale === "en" ? "Bundle" : "Пакет"} «${t(BUNDLES.find((b) => b.id === selectedBundleId)?.name ?? "")}»`
+              : t("Единоразово")}
           </div>
           <div className="text-right">
             <span className="text-[22px] font-semibold tracking-[-0.01em]">
@@ -222,8 +224,8 @@ export function PricingCalculator({
             </span>
             <span className="ml-1 text-[12px] text-white/60">
               {activeDevices > 0
-                ? `· ${activeDevices} ${plural(activeDevices, "позиция", "позиции", "позиций")}`
-                : "пусто"}
+                ? `· ${activeDevices} ${locale === "en" ? (activeDevices === 1 ? "item" : "items") : plural(activeDevices, "позиция", "позиции", "позиций")}`
+                : t("пусто")}
             </span>
           </div>
         </div>
@@ -238,16 +240,14 @@ export function PricingCalculator({
             aria-disabled="true"
             className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-[#eef0f6] px-5 text-[14px] font-medium text-[#9b9fb3]"
           >
-            Оплатить картой
-          </span>
+            {t("Оплатить картой")}</span>
           <a
             href="https://t.me/wesetupbot"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
           >
-            Состав комплекта согласуем в Telegram
-          </a>
+            {t("Состав комплекта согласуем в Telegram")}</a>
         </div>
       ) : (
         <>
@@ -255,8 +255,7 @@ export function PricingCalculator({
             href={`/order?plan=bundle&cfg=${encodeConfig(quantities)}`}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
-            Оплатить картой
-            <ArrowRight className="size-4" />
+            {t("Оплатить картой")}<ArrowRight className="size-4" />
           </a>
 
           <a
@@ -265,8 +264,7 @@ export function PricingCalculator({
             rel="noopener noreferrer"
             className="-mt-2 inline-flex items-center justify-center gap-1.5 self-center text-[12px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
           >
-            Или оформить в Telegram
-          </a>
+            {t("Или оформить в Telegram")}</a>
         </>
       )}
 
@@ -277,7 +275,7 @@ export function PricingCalculator({
         aria-controls="custom-equipment-picker"
         className="-mt-1 inline-flex items-center justify-center gap-1.5 self-center rounded-full px-3 py-1 text-[12px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
       >
-        {customExpanded ? "Скрыть конфигуратор" : "Подобрать вручную"}
+        {customExpanded ? t("Скрыть конфигуратор") : t("Подобрать вручную")}
         <ChevronDown
           className={`size-3.5 transition-transform ${customExpanded ? "rotate-180" : ""}`}
         />
@@ -291,9 +289,7 @@ export function PricingCalculator({
           className="space-y-2.5 border-t border-[#ececf4] pt-5"
         >
           <p className="text-[12px] text-[#9b9fb3]">
-            Выбираете каждую позицию вручную. Снимите галочку, если уже
-            есть своё оборудование.
-          </p>
+            {t("Выбираете каждую позицию вручную. Снимите галочку, если уже есть своё оборудование.")}</p>
           {DEVICES.map((d) => {
             const qty = quantities[d.id] ?? 0;
             const active = qty > 0;
@@ -316,7 +312,7 @@ export function PricingCalculator({
                       )
                     }
                     aria-pressed={active}
-                    aria-label={`Переключить ${d.title}`}
+                    aria-label={`${locale === "en" ? "Toggle" : "Переключить"} ${t(d.title)}`}
                     className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors ${
                       active
                         ? "border-[#5566f6] bg-[#5566f6] text-white"
@@ -330,28 +326,27 @@ export function PricingCalculator({
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <d.icon className="size-4 shrink-0 text-[#5566f6]" />
                       <span className="min-w-0 text-[14px] font-medium text-[#0b1024]">
-                        {d.title}
+                        {t(d.title)}
                       </span>
                       <span className="ml-auto whitespace-nowrap text-[13px] font-semibold text-[#0b1024]">
                         {formatRub(d.price)}
                         {d.mode === "per-unit" && (
                           <span className="text-[11px] font-normal text-[#9b9fb3]">
                             {" "}
-                            × шт
-                          </span>
+                            {t("× шт")}</span>
                         )}
                       </span>
                     </div>
                     {d.hint && (
                       <p className="mt-1 text-[12px] leading-[1.5] text-[#6f7282]">
-                        {d.hint}
+                        {t(d.hint)}
                       </p>
                     )}
                     {active && d.mode === "per-unit" && (
                       <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#dcdfed] bg-white p-1">
                         <button
                           type="button"
-                          aria-label="Убрать одну штуку"
+                          aria-label={t("Убрать одну штуку")}
                           onClick={() => setQty(d.id, qty - 1)}
                           className="flex size-7 items-center justify-center rounded-lg text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                         >
@@ -362,7 +357,7 @@ export function PricingCalculator({
                         </span>
                         <button
                           type="button"
-                          aria-label="Добавить одну штуку"
+                          aria-label={t("Добавить одну штуку")}
                           onClick={() => setQty(d.id, qty + 1)}
                           className="flex size-7 items-center justify-center rounded-lg text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                         >
@@ -382,8 +377,7 @@ export function PricingCalculator({
       ) : null}
 
       <p className="-mt-1 text-center text-[12px] text-[#9b9fb3]">
-        Привозим и ставим в течение 3 рабочих дней по Москве и области.
-      </p>
+        {t("Привозим и ставим в течение 3 рабочих дней по Москве и области.")}</p>
     </div>
   );
 }

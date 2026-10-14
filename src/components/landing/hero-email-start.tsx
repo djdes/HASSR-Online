@@ -1,8 +1,13 @@
 "use client";
 
+import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import { publicError } from "@/i18n/public-copy";
+import { localizedHref } from "@/i18n/site-locale";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
@@ -47,6 +52,8 @@ export function HeroEmailStart({
   /// шаги там слева, форма по центру под ними смотрелась отдельно).
   align?: "center" | "start";
 }) {
+  const t = usePublicCopy();
+  const locale = useSiteLocale();
   const router = useRouter();
   const field = useEmailField();
   const challenge = useRegistrationChallenge(tone);
@@ -72,7 +79,7 @@ export function HeroEmailStart({
     if (loading || !field.valid || !challenge.token) return;
     if (!consent) {
       setConsentMissing(true);
-      setError("Отметьте согласие с документами — без него аккаунт не создаётся");
+      setError(t("Отметьте согласие с документами — без него аккаунт не создаётся"));
       return;
     }
     const value = field.value.trim().toLowerCase();
@@ -101,6 +108,10 @@ export function HeroEmailStart({
       if (res.ok && data.created) {
         ymGoal("instant_register_done", goalParams);
         ymGoal("signup_created", goalParams);
+        if (locale === "en") {
+          window.location.assign("/dashboard?welcome=1");
+          return;
+        }
         router.push("/dashboard?welcome=1");
         router.refresh();
         return;
@@ -109,14 +120,14 @@ export function HeroEmailStart({
         // Аккаунт уже есть — уводим на вход с подсказкой и заполненной
         // почтой, чтобы человек не гадал, почему «не регистрируется».
         ymGoal("signup_exists", goalParams);
-        router.push(`/login?email=${encodeURIComponent(value)}&exists=1`);
+        router.push(localizedHref(`/login?email=${encodeURIComponent(value)}&exists=1`, locale));
         return;
       }
       ymGoal("signup_error", { ...goalParams, code: String(res.status) });
-      setError(data.error ?? "Не получилось — попробуйте ещё раз");
+      setError(publicError(locale, data.error, "Не получилось — попробуйте ещё раз"));
     } catch {
       ymGoal("signup_error", { ...goalParams, code: "network" });
-      setError("Сеть недоступна. Попробуйте ещё раз");
+      setError(t("Сеть недоступна. Попробуйте ещё раз"));
     } finally {
       challenge.reset();
       setLoading(false);
@@ -134,8 +145,7 @@ export function HeroEmailStart({
         }
       >
         <label htmlFor={inputId} className="sr-only">
-          Электронная почта
-        </label>
+          {t("Электронная почта")}</label>
         {/* Поле в обёртке с иконкой: голая рамка на светлом фоне первого
             экрана читалась как декоративная плашка, а не как место для
             ввода. Конверт слева и заметная высота возвращают ему вид
@@ -154,7 +164,7 @@ export function HeroEmailStart({
             value={field.value}
             onChange={(e) => field.setValue(e.target.value)}
             onFocus={() => ymGoal("email_field_focus", goalParams)}
-            placeholder="Ваш e-mail"
+            placeholder={t("Ваш e-mail")}
             autoComplete="email"
             inputMode="email"
             className={
@@ -182,11 +192,10 @@ export function HeroEmailStart({
           {loading ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Создаём аккаунт…
-            </>
+              {t("Создаём аккаунт…")}</>
           ) : (
             <>
-              {buttonLabel}
+              {t(buttonLabel)}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </>
           )}
@@ -241,7 +250,7 @@ export function HeroEmailStart({
           (dark ? "text-white/60" : "text-[#9b9fb3]")
         }
       >
-        Уже есть аккаунт?{" "}
+        {t("Уже есть аккаунт?")}{" "}
         <Link
           href="/login"
           className={
@@ -249,8 +258,7 @@ export function HeroEmailStart({
             (dark ? "text-white/90" : "text-[#3848c7]")
           }
         >
-          Войти
-        </Link>
+          {t("Войти")}</Link>
       </div>
     </div>
   );

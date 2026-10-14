@@ -1,4 +1,9 @@
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { publicCopyFor } from "@/i18n/public-copy";
+import { siteLanguageAlternates, type SiteLocale } from "@/i18n/site-locale";
+import { LanguageSwitch } from "@/components/i18n/language-switch";
+import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   ArrowRight,
   BellRing,
@@ -60,12 +65,12 @@ import {
 import { PlanCard } from "@/components/pricing/plan-card";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { getDisplayOffer } from "@/lib/promo/offer";
-import { JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { JOURNALS_TOTAL, JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
+const russianMetadata = {
   // Ключевик в начале, бренд в конце. Template корневого layout к
   // root-page.tsx НЕ применяется (проверено на проде — суффикс не
   // дублируется), поэтому «— WeSetup» пишем в строке вручную.
@@ -74,6 +79,21 @@ export const metadata = {
     `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. ${FREE_TIER_SHORT}.`,
   alternates: { canonical: "https://wesetup.ru/", types: { "application/rss+xml": [{ url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" }, { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" }] } },
 };
+
+export async function generateMetadata() {
+  const locale = await getSiteLocale();
+  const title = locale === "en" ? "Digital SanPiN and HACCP logs online — WeSetup" : russianMetadata.title;
+  const description = locale === "en"
+    ? `${JOURNALS_TOTAL} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. Free for ${FREE_MAX_USERS} employee${FREE_MAX_USERS === 1 ? "" : "s"}.`
+    : russianMetadata.description;
+  const url = `https://wesetup.ru${locale === "en" ? "/en" : "/"}`;
+  return {
+    ...russianMetadata, title: { absolute: title }, description,
+    alternates: { ...russianMetadata.alternates, canonical: url, languages: siteLanguageAlternates("/") },
+    openGraph: { title, description, url, locale: locale === "en" ? "en_US" : "ru_RU", siteName: "WeSetup", images: [locale === "en" ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"] },
+    twitter: { card: "summary_large_image" as const, title, description, images: [locale === "en" ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"] },
+  };
+}
 
 /*
  * Главная «упакована» (спека .agent/tasks/landing-pack-2026-09): первый
@@ -209,7 +229,7 @@ function emphasize(text: string) {
 }
 
 /** «Сегодня» для бланков в QR-ролике — по Москве. */
-function moscowSceneDay(now: Date) {
+function moscowSceneDay(now: Date, locale: SiteLocale) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Moscow",
     year: "numeric",
@@ -220,7 +240,7 @@ function moscowSceneDay(now: Date) {
   const year = pick("year");
   const month = pick("month");
   const day = pick("day");
-  const monthName = new Intl.DateTimeFormat("ru-RU", { month: "long", timeZone: "UTC" }).format(
+  const monthName = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ru-RU", { month: "long", timeZone: "UTC" }).format(
     new Date(Date.UTC(year, month - 1, 15))
   );
   return {
@@ -244,6 +264,14 @@ const OUTLINE_BUTTON_CLASS =
   "inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:text-[15px]";
 
 export default async function LandingPage() {
+  const locale = await getSiteLocale();
+  const en = locale === "en";
+  const t = publicCopyFor(locale);
+  const journalCountLabel = en ? `${JOURNALS_TOTAL} logs` : JOURNALS_TOTAL_LABEL;
+  const freeSeatsLabel = en ? `${FREE_MAX_USERS} employee${FREE_MAX_USERS === 1 ? "" : "s"}` : FREE_SEATS_LABEL;
+  const freePlanTitle = en ? `Free plan for ${freeSeatsLabel}` : FREE_PLAN_TITLE;
+  const freePlanNote = en ? `Free for ${freeSeatsLabel}, with unlimited entries.` : FREE_PLAN_NOTE;
+  const largeTeamNote = en ? `Each employee beyond ${SUBSCRIPTION_MAX_USERS}: +${EXTRA_USER_PRICE_RUB} RUB/month.` : LARGE_TEAM_NOTE;
   // В приложении лендинг с тарифами и кнопками оплаты не показываем
   // (правила магазинов) — сразу главный экран приложения.
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
@@ -306,8 +334,8 @@ export default async function LandingPage() {
   // QR-ролик: дата «сегодня» по Москве считается здесь, чтобы первый кадр
   // на сервере и после гидрации совпадал. QR на наклейках ролика и CTA —
   // настоящий, ведёт на этот блок.
-  const qrMatrix = await buildQrMatrix("https://wesetup.ru/#qr");
-  const sceneToday = moscowSceneDay(new Date());
+  const qrMatrix = await buildQrMatrix(en ? "https://wesetup.ru/en#qr" : "https://wesetup.ru/#qr", locale);
+  const sceneToday = moscowSceneDay(new Date(), locale);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -326,7 +354,7 @@ export default async function LandingPage() {
         url: "https://wesetup.ru",
         name: "WeSetup",
         publisher: { "@id": "https://wesetup.ru/#org" },
-        inLanguage: "ru-RU",
+        inLanguage: en ? "en" : "ru-RU",
       },
       {
         "@type": "SoftwareApplication",
@@ -338,17 +366,17 @@ export default async function LandingPage() {
         // отдельные native приложения. Когда они появятся, поменяем.
         operatingSystem: "Web",
         description:
-          `Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. ${JOURNALS_TOTAL_LABEL}, заполнение по QR-наклейкам на оборудовании, автозаполнение, PDF для Роспотребнадзора.`,
+          en ? `${journalCountLabel} for food service and food production. Equipment QR stickers, automatic entries and PDFs for Rospotrebnadzor inspections.` : `Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. ${JOURNALS_TOTAL_LABEL}, заполнение по QR-наклейкам на оборудовании, автозаполнение, PDF для Роспотребнадзора.`,
         // image — required для SoftwareApplication rich result в Google.
         // Раньше отдавали icon-512 (квадрат), но Google рекомендует
         // landscape для product/app rich-результатов. /og-default —
         // 1200×630 brand-hero, лучше карточка в выдаче.
-        image: ["https://wesetup.ru/og-default"],
+        image: [en ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"],
         offers: {
           "@type": "Offer",
           price: "0",
           priceCurrency: "RUB",
-          description: FREE_PLAN_TITLE,
+          description: freePlanTitle,
         },
         // Звёзды в выдаче: только из одобренных отзывов с оценкой, не меньше трёх.
         ...(rating ?? {}),
@@ -357,32 +385,32 @@ export default async function LandingPage() {
         "@type": "FAQPage",
         mainEntity: FAQ.map((item) => ({
           "@type": "Question",
-          name: item.q,
-          acceptedAnswer: { "@type": "Answer", text: item.a },
+          name: t(item.q),
+          acceptedAnswer: { "@type": "Answer", text: t(item.a) },
         })),
       },
       {
         "@type": "Product",
-        name: "WeSetup — электронные журналы СанПиН и ХАССП",
+        name: t("WeSetup — электронные журналы СанПиН и ХАССП"),
         description:
-          `${JOURNALS_TOTAL_LABEL} для общепита и пищевых производств. Заполнение по QR-коду с телефона, автозаполнение, PDF для проверок Роспотребнадзора.`,
+          en ? `${journalCountLabel} for food service and food production. QR entry from a phone, automatic entries and inspection PDFs.` : `${JOURNALS_TOTAL_LABEL} для общепита и пищевых производств. Заполнение по QR-коду с телефона, автозаполнение, PDF для проверок Роспотребнадзора.`,
         // image — required для Product rich result. Без него Google не
         // показывает Offer-карточку с ценой/доступностью в выдаче.
         // 1200×630 landscape лучше квадрата для Product rich snippet.
-        image: ["https://wesetup.ru/og-default"],
+        image: [en ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"],
         brand: { "@id": "https://wesetup.ru/#org" },
         offers: [
           {
             "@type": "Offer",
-            name: "Бесплатный",
+            name: t("Бесплатный"),
             price: "0",
             priceCurrency: "RUB",
-            description: `${FREE_SEATS_LABEL}, все ${JOURNALS_TOTAL_LABEL}, бессрочно`,
+            description: en ? `${freeSeatsLabel}, all ${journalCountLabel}, no time limit` : `${FREE_SEATS_LABEL}, все ${JOURNALS_TOTAL_LABEL}, бессрочно`,
             availability: "https://schema.org/InStock",
           },
           {
             "@type": "Offer",
-            name: monthly.title,
+            name: en ? "Subscription" : monthly.title,
             // Цена в разметке = цена на странице: в период акции — со
             // скидкой и с датой, до которой она действует.
             price: String(offer.priceRub),
@@ -394,9 +422,9 @@ export default async function LandingPage() {
               "@type": "UnitPriceSpecification",
               price: String(offer.priceRub),
               priceCurrency: "RUB",
-              unitText: "месяц",
+              unitText: t("месяц"),
             },
-            description: `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)} в подписке, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого; IoT-датчики, автозаполнение`,
+            description: en ? `Up to ${SUBSCRIPTION_MAX_USERS} employees, then +${EXTRA_USER_PRICE_RUB} RUB/month each; IoT sensors and automatic entries` : `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)} в подписке, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого; IoT-датчики, автозаполнение`,
             availability: "https://schema.org/InStock",
           },
         ],
@@ -419,45 +447,42 @@ export default async function LandingPage() {
           На телефоне кнопки и «Тарифы» — 48 px в высоту: в них попадают
           пальцем, а не курсором. */}
       <div className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2 sm:px-6 sm:py-5">
-          <Link href="/" className="text-[#0b1024]" aria-label="WeSetup — на главную">
+        <nav className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-5">
+          <Link href="/" className="text-[#0b1024]" aria-label={t("WeSetup — на главную")}>
             <BrandLogo height={30} className="sm:[--logo-h:26px]" title="" />
           </Link>
-          <div className="flex items-center gap-2 sm:gap-6">
+          <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-6">
+            <LanguageSwitch />
             <Link
               href="/journals-info"
-              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:inline"
+              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
-              Журналы
-            </Link>
+              {t("Журналы")}</Link>
             <Link
               href="/blog"
-              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:inline"
+              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
-              Блог
-            </Link>
+              {t("Блог")}</Link>
             {/* «Сколько это стоит» спрашивают раньше всего остального —
                 пункт стоит рядом с входом, а не в подвале. Якорь, а не
                 отдельная страница: тарифы тут же, ниже по этой же. */}
             <AnchorScrollLink
               href="#pricing"
-              className="nav-tariffs inline-flex h-12 items-center px-2 text-[16px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
+              className="nav-tariffs hidden h-12 items-center px-2 text-[16px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] min-[400px]:inline-flex sm:h-auto sm:px-0 sm:text-[14px]"
             >
-              Тарифы
-            </AnchorScrollLink>
+              {t("Тарифы")}</AnchorScrollLink>
             {isAuthed ? (
               <>
                 <Link
                   href={homeHref}
                   className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:h-10 sm:text-[14px]"
                 >
-                  Открыть кабинет
-                  <ArrowRight className="size-4" />
+                  {t("Открыть кабинет")}<ArrowRight className="size-4" />
                 </Link>
                 <Link
                   href={homeHref}
-                  title={session?.user?.name ?? "Профиль"}
-                  aria-label={`Профиль · ${session?.user?.name ?? ""}`}
+                  title={session?.user?.name ?? t("Профиль")}
+                  aria-label={`${t("Профиль")} · ${session?.user?.name ?? ""}`}
                   className="hidden size-10 items-center justify-center rounded-full border border-[#dcdfed] bg-[#f5f6ff] text-[12px] font-semibold text-[#3848c7] transition-colors hover:border-[#5566f6]/50 hover:bg-[#eef1ff] sm:inline-flex"
                 >
                   {userInitials}
@@ -472,10 +497,9 @@ export default async function LandingPage() {
                 <NavStartButton />
                 <Link
                   href="/login"
-                  className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-10 sm:text-[14px]"
+                  className="inline-flex h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-10 sm:text-[14px]"
                 >
-                  Войти
-                  <LogIn className="size-4 text-[#5566f6]" />
+                  {t("Войти")}<LogIn className="size-4 text-[#5566f6]" />
                 </Link>
               </>
             )}
@@ -520,10 +544,11 @@ export default async function LandingPage() {
               Google Fonts (см. layout.tsx) — держать ради одной строки
               ещё один self-hosted шрифт дороже, чем статика с кешем. */}
           <div className="hero-mark w-[210px] max-w-[64vw] sm:mx-auto sm:w-[340px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {en ? <p className="text-[13px] font-medium leading-snug text-[#3848c7] sm:text-[18px]">Listed in the Russian software registry</p> : (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/brand/registry-mark.svg"
-              alt="В реестре отечественного ПО"
+              alt={t("В реестре отечественного ПО")}
               width={340}
               height={73}
               // Картинка стоит выше H1 и попадает в первый экран, поэтому
@@ -535,15 +560,16 @@ export default async function LandingPage() {
               decoding="async"
               className="h-auto w-full"
             />
+            )}
           </div>
 
           {/* Headline — fluid scale: 26 px at 320 → 30 px at 390 → 72 px
               on desktop. «Электронные журналы» на телефоне — одной
               строкой (≈10.9em в Segoe UI при tracking -0.02em). */}
           <h1 className="hero-title mt-3 max-w-[920px] text-[clamp(1.625rem,7.6vw,4.5rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-[#0b1024] sm:mx-auto sm:mt-8">
-            Электронные журналы{" "}
+            {t("Электронные журналы")}{" "}
             <span className="relative inline-block">
-              <span className="relative z-10">СанПиН и ХАССП</span>
+              <span className="relative z-10">{t("СанПиН и ХАССП")}</span>
               <span
                 aria-hidden="true"
                 className="absolute inset-x-0 bottom-[0.08em] -z-0 h-[0.28em] bg-[#5566f6]/15"
@@ -566,7 +592,7 @@ export default async function LandingPage() {
                 <span className="mt-px inline-flex size-[22px] shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[#5566f6]">
                   <Check className="size-3" strokeWidth={3} />
                 </span>
-                <span>{emphasize(point)}</span>
+                <span>{emphasize(t(point))}</span>
               </li>
             ))}
           </ul>
@@ -581,39 +607,41 @@ export default async function LandingPage() {
               плашка. */}
           <AnchorScrollLink
             href="#pricing"
-            ariaLabel="Перейти к тарифам"
+            ariaLabel={t("Перейти к тарифам")}
             className="group mt-4 flex min-h-12 max-w-full flex-wrap items-center gap-x-1.5 text-left text-[16px] leading-[1.45] text-[#3c4053] sm:hidden"
           >
             <span>
-              {FREE_SEATS_LABEL} —{" "}
-              <span className="font-semibold text-[#0b1024]">бесплатно</span>,
+              {freeSeatsLabel} —{" "}
+              <span className="font-semibold text-[#0b1024]">{t("бесплатно")}</span>,
             </span>
             <span className="inline-flex flex-wrap items-center gap-1.5">
-              дальше от{" "}
+              {t("дальше от")}{" "}
               <PromoPrice
+                locale={locale}
                 price={offer}
-                suffix={<span className="font-semibold text-[#0b1024]">/мес</span>}
+                suffix={<span className="font-semibold text-[#0b1024]">{t("/мес")}</span>}
               />
               <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
             </span>
           </AnchorScrollLink>
           <AnchorScrollLink
             href="#pricing"
-            ariaLabel="Перейти к тарифам"
+            ariaLabel={t("Перейти к тарифам")}
             className="group mx-auto mt-6 hidden w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[14px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:flex"
           >
             <span>
-              {FREE_SEATS_LABEL} —{" "}
-              <span className="font-semibold text-[#0b1024]">бесплатно</span>
+              {freeSeatsLabel} —{" "}
+              <span className="font-semibold text-[#0b1024]">{t("бесплатно")}</span>
             </span>
             <span aria-hidden="true" className="text-[#c9cddd]">
               ·
             </span>
             <span className="inline-flex flex-wrap items-baseline gap-x-1">
-              дальше от{" "}
+              {t("дальше от")}{" "}
               <PromoPrice
+                locale={locale}
                 price={offer}
-                suffix={<span className="font-semibold text-[#0b1024]">/мес</span>}
+                suffix={<span className="font-semibold text-[#0b1024]">{t("/мес")}</span>}
               />
             </span>
             <ArrowRight className="size-3.5 shrink-0 text-[#3848c7] transition-transform group-hover:translate-x-0.5" />
@@ -628,11 +656,10 @@ export default async function LandingPage() {
                   href={homeHref}
                   className="group inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-semibold text-white shadow-[0_20px_50px_-20px_rgba(85,102,246,0.55)] transition-all hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_24px_55px_-18px_rgba(85,102,246,0.65)] sm:px-8"
                 >
-                  Открыть кабинет
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  {t("Открыть кабинет")}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <div className="text-[16px] text-[#6f7282] sm:text-[13px]">
-                  Вы вошли как {session?.user?.name ?? ""}
+                  {t("Вы вошли как ")}{session?.user?.name ?? ""}
                 </div>
               </>
             ) : (
@@ -642,15 +669,14 @@ export default async function LandingPage() {
                 <HeroEmailStart
                   place="hero"
                   layout="stack"
-                  buttonLabel="Попробовать бесплатно"
+                  buttonLabel={t("Попробовать бесплатно")}
                   showLoginLink={false}
                 />
                 {/* Гарантия — прямо в первом экране: снимать риск нужно
                     там же, где просим действие, а не через два экрана. */}
                 <div className="inline-flex items-center gap-2 text-[16px] font-medium text-[#116b2a] sm:text-[14px]">
                   <ShieldCheck className="size-4 shrink-0" />
-                  Гарантия возврата: 14 дней после оплаты.
-                </div>
+                  {t("Гарантия возврата: 14 дней после оплаты.")}</div>
               </>
             )}
           </div>
@@ -672,18 +698,13 @@ export default async function LandingPage() {
             <div className="max-w-[760px] px-1 sm:px-0">
               <div className="mb-3 inline-flex items-center gap-2 text-[13px] font-medium text-[#8b97ff]">
                 <ScanLine className="size-4" />
-                QR-код на оборудовании
-              </div>
+                {t("QR-код на оборудовании")}</div>
               <h2 className="text-[clamp(1.625rem,2.4vw+1rem,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
-                Отсканировал — и запись уже в журнале
-              </h2>
+                {t("Отсканировал — и запись уже в журнале")}</h2>
               {/* Одно предложение: где наклейки и что бывает при пропуске
                   рассказывают сами главы ролика, дублировать текстом не надо. */}
               <p className="mt-3 text-[15px] leading-[1.6] text-white/75 sm:text-[16px]">
-                Сотрудник сканирует наклейку на оборудовании, вводит PIN и
-                значение — строка встаёт в журнал по форме СанПиН. Без
-                приложения и пароля.
-              </p>
+                {t("Сотрудник сканирует наклейку на оборудовании, вводит PIN и значение — строка встаёт в журнал по форме СанПиН. Без приложения и пароля.")}</p>
             </div>
             <div className="mt-7 sm:mt-9">
               <QrPlayer qr={qrMatrix} today={sceneToday} />
@@ -699,8 +720,8 @@ export default async function LandingPage() {
           возможности — в подвале, ряд «Возможности». */}
       <section className={LANDING_SECTION_CLASS}>
         <LandingSectionHeader
-          title="Напомнит, заполнит и соберёт PDF для проверки"
-          lead="QR — только вход. Остальное сервис делает сам."
+          title={t("Напомнит, заполнит и соберёт PDF для проверки")}
+          lead={t("QR — только вход. Остальное сервис делает сам.")}
         />
         <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {CAPABILITIES.map((item) => (
@@ -714,10 +735,10 @@ export default async function LandingPage() {
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[17px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] group-hover:text-[#3848c7]">
-                    {item.title}
+                    {t(item.title)}
                   </span>
                   <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">
-                    {item.text}
+                    {t(item.text)}
                   </span>
                 </span>
               </Link>
@@ -734,8 +755,8 @@ export default async function LandingPage() {
           двумя кнопками. Ссылки нужны и для поиска. */}
       <section id="journals" className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}>
         <LandingSectionHeader
-          title="Журналы СанПиН и ХАССП для вашей сферы"
-          lead={`${JOURNALS_TOTAL_LABEL}: ежедневные санитарные и полный ХАССП. Выберите сферу — покажем журналы, приказы и чек-листы именно для неё.`}
+          title={t("Журналы СанПиН и ХАССП для вашей сферы")}
+          lead={en ? `${journalCountLabel}: daily sanitation checks and full HACCP records. Choose your business to see its logs, orders and checklists.` : `${JOURNALS_TOTAL_LABEL}: ежедневные санитарные и полный ХАССП. Выберите сферу — покажем журналы, приказы и чек-листы именно для неё.`}
         />
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
           {Object.values(NICHES).map((niche) => (
@@ -744,7 +765,7 @@ export default async function LandingPage() {
                 href={`/${niche.slug}`}
                 className="group flex h-full min-h-12 items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-white px-3.5 py-2.5 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] sm:px-4 sm:text-[15px]"
               >
-                <span className="min-w-0">{niche.navLabel}</span>
+                <span className="min-w-0">{t(niche.navLabel)}</span>
                 {/* Стрелка — с sm: на телефоне в две колонки она съедала
                     место, и половина названий переносилась. Рамка плитки и
                     так читается как кнопка. */}
@@ -754,14 +775,14 @@ export default async function LandingPage() {
           ))}
         </ul>
         <p className="mt-6 max-w-[860px] text-[16px] leading-[1.75] text-[#3c4053]">
-          Чаще всего ведут:{" "}
+          {t("Чаще всего ведут:")}{" "}
           {POPULAR_JOURNALS.map((journal, index) => (
             <span key={journal.code}>
               <Link
                 href={`/journals-info/${journal.code}`}
                 className="font-medium text-[#3848c7] underline decoration-[#3848c7]/30 underline-offset-4 transition-colors duration-150 hover:decoration-[#3848c7]"
               >
-                {journal.name}
+                {t(journal.name)}
               </Link>
               {index < POPULAR_JOURNALS.length - 1 ? ", " : "."}
             </span>
@@ -769,13 +790,12 @@ export default async function LandingPage() {
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:gap-3">
           <Link href="/journals-info" className={OUTLINE_BUTTON_CLASS}>
-            Все {JOURNALS_TOTAL_LABEL}
+            {t("Все ")}{journalCountLabel}
             <ArrowRight className="size-4 text-[#5566f6]" />
           </Link>
           <Link href="/blanki" className={OUTLINE_BUTTON_CLASS}>
             <Download className="size-4 text-[#5566f6]" />
-            Бланки журналов: PDF и Word
-          </Link>
+            {t("Бланки журналов: PDF и Word")}</Link>
         </div>
       </section>
 
@@ -786,7 +806,7 @@ export default async function LandingPage() {
       >
         {/* Абзаца под заголовком больше нет: что входит в подписку и
             оборудование, сказано в самих карточках. */}
-        <LandingSectionHeader title="Все журналы бесплатно. Платите за автоматизацию." />
+        <LandingSectionHeader title={t("Все журналы бесплатно. Платите за автоматизацию.")} />
 
         {/* Три карточки одной высоты. Подписка перечисляет только то,
             чего нет в бесплатном, — иначе половина списка дублируется.
@@ -798,38 +818,40 @@ export default async function LandingPage() {
           hardwareFromRub={hardwareFromRub}
         >
           <PlanCard
+            locale={locale}
             kind="free"
-            name="Бесплатный"
+            name={t("Бесплатный")}
             from="0 ₽"
-            period="навсегда"
+            period={t("навсегда")}
             points={[
-              FREE_SEATS_LABEL,
-              `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
-              "PDF для проверок, без карты",
+              freeSeatsLabel,
+              en ? `All ${journalCountLabel} for SanPiN and HACCP` : `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
+              t("PDF для проверок, без карты"),
             ]}
-            ctaLabel={viewerOnFreePlan ? "Текущий" : "Начать бесплатно"}
+            ctaLabel={viewerOnFreePlan ? t("Текущий") : t("Начать бесплатно")}
             ctaHref="#start"
             ctaDisabled={viewerOnFreePlan}
-            note={FREE_PLAN_NOTE}
+            note={freePlanNote}
             touch
           />
 
           <PlanCard
+            locale={locale}
             kind="team"
-            name={monthly.title}
+            name={en ? "Subscription" : monthly.title}
             from={formatRub(monthly.priceRub)}
             price={offer}
-            period="в месяц"
-            pointsIntro="Всё из Бесплатного, плюс:"
+            period={t("в месяц")}
+            pointsIntro={t("Всё из Бесплатного, плюс:")}
             points={[
-              `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}`,
-              "Свои IoT-датчики и автозаполнение",
-              "Приоритетная поддержка в Telegram",
+              en ? `Up to ${SUBSCRIPTION_MAX_USERS} employees` : `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}`,
+              t("Свои IoT-датчики и автозаполнение"),
+              t("Приоритетная поддержка в Telegram"),
             ]}
-            ctaLabel="Оплатить картой"
+            ctaLabel={t("Оплатить картой")}
             ctaHref="/order?plan=monthly"
             highlighted
-            badge="Популярный"
+            badge={t("Популярный")}
             touch
           />
         </EquipmentPricing>
@@ -839,15 +861,14 @@ export default async function LandingPage() {
             кнопка связи. Промолчать нельзя — человек оплатит и упрётся
             в лимит. */}
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span className="text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">{LARGE_TEAM_NOTE}</span>
+          <span className="text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">{largeTeamNote}</span>
           <a
             href="https://t.me/wesetupbot"
             target="_blank"
             rel="noopener noreferrer"
             className={`${OUTLINE_BUTTON_CLASS} shrink-0 sm:h-10 sm:px-4 sm:text-[14px]`}
           >
-            Связаться с поддержкой
-          </a>
+            {t("Связаться с поддержкой")}</a>
         </div>
 
         {/* ГАРАНТИЯ — одной строкой под тарифами. Раньше это был блок в
@@ -860,18 +881,15 @@ export default async function LandingPage() {
           <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between sm:gap-6">
             <div className="min-w-0">
               <div className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024]">
-                Не понравится — вернём деньги
-              </div>
+                {t("Не понравится — вернём деньги")}</div>
               <p className="mt-1 text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">
-                Вся сумма в течение 14 дней после оплаты, без вопросов и удержаний.
-              </p>
+                {t("Вся сумма в течение 14 дней после оплаты, без вопросов и удержаний.")}</p>
             </div>
             <Link
               href="/oferta"
               className="mt-1 inline-flex min-h-12 shrink-0 items-center gap-1.5 text-[16px] font-medium text-[#3848c7] underline-offset-4 hover:underline sm:mt-0 sm:text-[14px]"
             >
-              Условия в договоре-оферте
-              <ArrowRight className="size-4" />
+              {t("Условия в договоре-оферте")}<ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
@@ -879,16 +897,16 @@ export default async function LandingPage() {
 
       {/* Отзывы — только одобренные и разрешённые к публикации; нет таких —
           секции нет. Сеткой в общей колонке, а не каруселью во всю ширину. */}
-      <Testimonials reviews={publicReviews} />
+      <Testimonials reviews={publicReviews} locale={locale} />
 
       {/* FAQ */}
       <section className={LANDING_SECTION_CLASS}>
-        <LandingSectionHeader title="Вопросы и ответы" />
+        <LandingSectionHeader title={t("Вопросы и ответы")} />
         <div className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           {FAQ.map((item) => (
             <details key={item.q} className="group">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff] sm:px-5 sm:py-5 [&::-webkit-details-marker]:hidden">
-                <span>{item.q}</span>
+                <span>{t(item.q)}</span>
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#5566f6] transition-transform group-open:rotate-45">
                   <svg
                     viewBox="0 0 24 24"
@@ -904,7 +922,7 @@ export default async function LandingPage() {
                 </span>
               </summary>
               <div className="px-4 pb-5 text-[16px] leading-[1.6] text-[#3c4053] sm:px-5 sm:text-[15px]">
-                {item.a}
+                {t(item.a)}
               </div>
             </details>
           ))}
@@ -924,12 +942,9 @@ export default async function LandingPage() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-14">
             <div className="min-w-0 flex-1">
               <h2 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-                Повесьте QR — журналы будут вестись у оборудования
-              </h2>
+                {t("Повесьте QR — журналы будут вестись у оборудования")}</h2>
               <p className="mt-3 max-w-[560px] text-[16px] leading-[1.6] text-[#3c4053]">
-                Бесплатный тариф — без срока и без карты. Наклейки печатаются
-                из кабинета, сотрудникам не нужно ничего устанавливать.
-              </p>
+                {t("Бесплатный тариф — без срока и без карты. Наклейки печатаются из кабинета, сотрудникам не нужно ничего устанавливать.")}</p>
               <ol className="mt-6 grid gap-3 sm:grid-cols-3">
                 {QR_START_STEPS.map((step, index) => (
                   <li key={step.title} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4">
@@ -937,8 +952,8 @@ export default async function LandingPage() {
                       {index + 1}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-[16px] font-semibold leading-snug text-[#0b1024]">{step.title}</span>
-                      <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[14px]">{step.text}</span>
+                      <span className="block text-[16px] font-semibold leading-snug text-[#0b1024]">{t(step.title)}</span>
+                      <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[14px]">{t(step.text)}</span>
                     </span>
                   </li>
                 ))}
@@ -949,8 +964,7 @@ export default async function LandingPage() {
                     href={homeHref}
                     className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
                   >
-                    Открыть кабинет
-                    <ArrowRight className="size-4" />
+                    {t("Открыть кабинет")}<ArrowRight className="size-4" />
                   </Link>
                 ) : (
                   // Тот же одношаговый старт, что и в hero — человек
@@ -963,11 +977,10 @@ export default async function LandingPage() {
                 к ролику на этой странице. */}
             <div className="hidden w-[240px] shrink-0 lg:block">
               <div className="rotate-[-3deg] text-[30px]">
-                <QrSticker qr={qrMatrix} />
+                <QrSticker qr={qrMatrix} caption={en ? "Scan me" : undefined} />
               </div>
               <p className="mt-5 text-center text-[13px] leading-[1.5] text-[#6f7282]">
-                Наведите камеру телефона — так сотрудник открывает журнал.
-              </p>
+                {t("Наведите камеру телефона — так сотрудник открывает журнал.")}</p>
             </div>
           </div>
         </div>
