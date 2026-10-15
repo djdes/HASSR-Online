@@ -1,5 +1,6 @@
 "use client";
 
+import { formatChecklistTimestamp } from "@/lib/custom-checklist-display";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,7 @@ export function ChecklistEvidenceForm({ questionId, value = {}, requirements, on
         }} /> : null}{errors[`${questionId}:${key}`] ? <p role="alert" className="text-sm text-red-700">{errors[`${questionId}:${key}`]}</p> : null}</div>;
     })}
     {requirements.barcode || value.barcode ? <div className="space-y-2"><Input aria-label="QR-код или штрихкод" placeholder="Введите код" value={value.barcode ?? ""} maxLength={1000} readOnly={readOnly} onChange={e => patch({ barcode: e.target.value })} />{!readOnly ? <Button variant="outline" onClick={() => setScanner(true)}>Считать камерой</Button> : null}{errors[`${questionId}:barcode`] ? <p role="alert" className="text-sm text-red-700">{errors[`${questionId}:barcode`]}</p> : null}</div> : null}
-    {requirements.location || value.location ? <div className="space-y-2">{value.location ? <p className="text-sm">Геопозиция: {value.location.latitude.toFixed(6)}, {value.location.longitude.toFixed(6)} · {new Date(value.location.capturedAt).toLocaleString("ru-RU")}</p> : null}{!readOnly ? <Button variant="outline" disabled={busy} onClick={() => {
+    {requirements.location || value.location ? <div className="space-y-2">{value.location ? <p className="text-sm">Геопозиция: {value.location.latitude.toFixed(6)}, {value.location.longitude.toFixed(6)} · {formatChecklistTimestamp(value.location.capturedAt)}</p> : null}{!readOnly ? <Button variant="outline" disabled={busy} onClick={() => {
       if (!navigator.geolocation) { toast.error("Геопозиция не поддерживается браузером"); return; }
       setBusy(true); navigator.geolocation.getCurrentPosition(position => { patch({ location: { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: Math.min(position.coords.accuracy,100000), capturedAt: new Date(position.timestamp).toISOString() } }); setBusy(false); }, () => { setBusy(false); toast.error("Разрешите доступ к геопозиции в настройках браузера и повторите."); }, { enableHighAccuracy: true, timeout:15000, maximumAge:0 });
     }}>Добавить текущую геопозицию</Button> : null}{errors[`${questionId}:location`] ? <p role="alert" className="text-sm text-red-700">{errors[`${questionId}:location`]}</p> : null}</div> : null}

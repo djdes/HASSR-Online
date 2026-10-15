@@ -1,3 +1,4 @@
+import { formatChecklistTimestamp } from "./custom-checklist-display";
 import { NextResponse } from "next/server";
 import { db } from "./db";
 import { requireChecklistAccess } from "./custom-checklists.server";
@@ -17,6 +18,6 @@ export async function checklistPdfResponse(kind:"template"|"inspection",id:strin
   const ids=[...allChecklistQuestions(definition).flatMap(q=>(q.references??[]).map(ref=>ref.slice(5))),...(answers?checklistFileUses(definition,answers,evidence).map(use=>use.id):[])];
   const attachments=await db.checklistAttachment.findMany({where:{organizationId:auth.organizationId,id:{in:[...new Set(ids)]}},select:{id:true,fileName:true,mimeType:true,sizeBytes:true}});
   const title=inspection?.title??template!.title;
-  const bytes=await generateChecklistPdf({title,definition,answers,evidence,attachments,recordedResult:inspection?.status==="completed"?inspection.result:undefined,meta:inspection?[`Версия шаблона: ${inspection.templateVersion}`,`Начал: ${inspection.createdByName} · ${inspection.createdAt.toISOString()}`,inspection.completedAt?`Завершил: ${inspection.completedByName} · ${inspection.completedAt.toISOString()}`:"Черновик · последние сохранённые ответы"]:[`Версия шаблона: ${template!.version}`],imageBytes:async fileId=>attachments.some(a=>a.id===fileId)?(await db.checklistAttachment.findFirst({where:{id:fileId,organizationId:auth.organizationId},select:{content:true}}))?.content??null:null});
+  const bytes=await generateChecklistPdf({title,definition,answers,evidence,attachments,recordedResult:inspection?.status==="completed"?inspection.result:undefined,meta:inspection?[`Версия шаблона: ${inspection.templateVersion}`,`Начал: ${inspection.createdByName} · ${formatChecklistTimestamp(inspection.createdAt)}`,inspection.completedAt?`Завершил: ${inspection.completedByName} · ${formatChecklistTimestamp(inspection.completedAt)}`:"Черновик · последние сохранённые ответы"]:[`Версия шаблона: ${template!.version}`],imageBytes:async fileId=>attachments.some(a=>a.id===fileId)?(await db.checklistAttachment.findFirst({where:{id:fileId,organizationId:auth.organizationId},select:{content:true}}))?.content??null:null});
   return new NextResponse(Uint8Array.from(bytes).buffer,{headers:{"Content-Type":"application/pdf","Content-Disposition":`inline; filename="checklist-${id.replace(/[^a-zA-Z0-9_-]/g,"")}.pdf"`,"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
 }

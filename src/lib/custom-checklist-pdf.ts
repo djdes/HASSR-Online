@@ -1,3 +1,4 @@
+import { formatChecklistTimestamp } from "./custom-checklist-display";
 import { jsPDF } from "jspdf";
 import { registerUnicodeFont } from "./closing-documents/pdf-font";
 import { QUESTION_LABELS, type ChecklistDefinition, type ChecklistAnswers, type ChecklistQuestion } from "./custom-checklists";
@@ -54,7 +55,7 @@ export async function generateChecklistPdf({title,definition,answers,evidence = 
         const value=answers[question.id];if(question.type!=="info")line(`Ответ: ${checklistAnswerText(question,value)}`);
         if(question.type==="photo")for(const ref of Array.isArray(value)?value:typeof value==="string"?[value]:[]) {if(ref.startsWith("file:"))await file(ref);else if(ref.startsWith("data:image/"))image(ref,ref.startsWith("data:image/jpeg")?"image/jpeg":"image/png");}
         if(question.type==="signature" && typeof value==="string" && value.startsWith("data:image/"))image(value,value.startsWith("data:image/jpeg")?"image/jpeg":"image/png");
-        const proof=evidence[question.id];if(proof?.comment)line(`Комментарий: ${proof.comment}`);if(proof?.barcode)line(`Код: ${proof.barcode}`);if(proof?.location)line(`Геопозиция: ${proof.location.latitude}, ${proof.location.longitude}; точность ${Math.round(proof.location.accuracy)} м; ${proof.location.capturedAt}`);
+        const proof=evidence[question.id];if(proof?.comment)line(`Комментарий: ${proof.comment}`);if(proof?.barcode)line(`Код: ${proof.barcode}`);if(proof?.location)line(`Геопозиция: ${proof.location.latitude}, ${proof.location.longitude}; точность ${Math.round(proof.location.accuracy)} м; ${formatChecklistTimestamp(proof.location.capturedAt)}`);
         for(const ref of [...(proof?.photos??[]),...(proof?.videos??[]),...(proof?.audios??[])])await file(ref);
         const problem=result?.questions.find(item=>item.questionId===question.id)??checklistQuestionResult(question,value);if(problem.violation)line(problem.critical?"КРИТИЧЕСКОЕ НАРУШЕНИЕ":"Нарушение",10);
       }
