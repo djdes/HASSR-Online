@@ -1,6 +1,10 @@
 import { allChecklistQuestions, type ChecklistDefinition } from "./custom-checklists";
 
 export type ChecklistNodeKind = "section" | "category" | "question";
+export function removedChecklistConditions(before:ChecklistDefinition,after:ChecklistDefinition): {id:string;title:string}[] {
+  const current=new Map(allChecklistQuestions(after).map(question=>[question.id,question]));
+  return allChecklistQuestions(before).filter(question=>question.showIf&&current.has(question.id)&&!current.get(question.id)?.showIf).map(({id,title})=>({id,title}));
+}
 // Keep references in the same copied branch, and drop conditions whose parent
 // was removed or moved after its dependent. Never leave a dangling condition.
 export function repairChecklistReferences(definition: ChecklistDefinition): ChecklistDefinition {

@@ -1,13 +1,42 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checklistConditionMatches, checklistConditionSchema, checklistEvidenceSchema } from "./custom-checklist-rules";
-import { checklistDefinitionSchema, checklistScore, newChecklistQuestion, visibleChecklistQuestions, type ChecklistDefinition } from "./custom-checklists";
-import { evaluateChecklistRun, expandChecklistDefinition, pruneChecklistRun, validateChecklistRun } from "./custom-checklist-runtime";
+import { checklistConditionMatches, checklistConditionSchema, checklistEvidenceSchema, checklistConditionProblem } from "./custom-checklist-rules";
+import { checklistDefinitionSchema, checklistScore, defaultChecklistCondition, newChecklistQuestion, visibleChecklistQuestions, type ChecklistDefinition } from "./custom-checklists";
+import { evaluateChecklistRun, expandChecklistDefinition, pruneChecklistRun, resolveChecklistResult, validateChecklistRun } from "./custom-checklist-runtime";
 
 const def = (): ChecklistDefinition => ({ description: "", sections: [{ id: "s", title: "Кухня", active: true, categories: [{ id: "c", title: "Холодильник", active: true, repeatable: true, questions: [
   { ...newChecklistQuestion("temperature"), type: "number", min: -20, max: 20 },
   { ...newChecklistQuestion("reason"), type: "text", showIf: { questionId: "temperature", operator: "gt", value: 5 } },
 ] }] }] });
+
+test("choice conditions use actual options and default conditions are valid for every configurable type",()=>{
+  for(const type of ["yes_no","checkbox","choice","multi","number","scale","datetime"] as const){
+    const question={...newChecklistQuestion("q"),type,options:[{value:"existing",label:"Вариант",score:1}]};
+    const condition=defaultChecklistCondition(question);assert.equal(checklistConditionProblem(condition,type,question.options),null);
+    const definition=def();definition.sections[0].categories[0].questions=[{...question,logic:[{id:"r",condition,actions:{comment:true}}]}];assert.equal(checklistDefinitionSchema.safeParse(definition).success,true);
+  }
+  const definition=def();definition.sections[0].categories[0].questions=[{...newChecklistQuestion("choice"),type:"choice",options:[{value:"a",label:"А",score:1}],logic:[{id:"r",condition:{operator:"eq",value:"removed"},actions:{critical:true}}]}];
+  assert.equal(checklistDefinitionSchema.safeParse(definition).success,false);
+  definition.sections[0].categories[0].questions[0].logic![0].condition.value="a";assert.equal(checklistDefinitionSchema.safeParse(definition).success,true);
+});
+test("multiselect points average and sum omit excluded selections without erasing other answers",()=>{
+  const definition=def();const question={...newChecklistQuestion("multi"),type:"multi" as const,weight:1,options:[{value:"a",label:"А",score:1,points:8},{value:"b",label:"Б",score:0.25,points:2},{value:"na",label:"Не применимо",score:1,points:1000,excluded:true}]};
+  definition.sections[0].categories[0].questions=[question];
+  assert.deepEqual(checklistScore(definition,{multi:["a","b","na"]}),{earned:5,possible:8});
+  definition.sections[0].categories[0].questions[0].multiScoring="sum";assert.deepEqual(checklistScore(definition,{multi:["a","b","na"]}),{earned:10,possible:10});assert.deepEqual(checklistScore(definition,{multi:["na"]}),{earned:0,possible:0});
+  definition.sections[0].categories[0].questions=[{...question,weight:4,multiScoring:"average",options:question.options.map(option=>({value:option.value,label:option.label,score:option.score,excluded:option.excluded}))}];assert.deepEqual(checklistScore(definition,{multi:["a","b","na"]}),{earned:2.5,possible:4});
+  definition.sections[0].categories[0].questions=[{...newChecklistQuestion("one"),weight:0.1},{...newChecklistQuestion("two"),weight:0.2}];assert.deepEqual(checklistScore(definition,{one:"yes",two:"yes"}),{earned:0.3,possible:0.3});
+});
+test("completed results preserve the recorded score and visible questions with a legacy fallback",()=>{
+  const definition=def();definition.sections[0].categories[0].questions=[{...newChecklistQuestion("first"),weight:3},{...newChecklistQuestion("follow"),type:"text",showIf:{questionId:"first",value:"no"}}];
+  const recorded=evaluateChecklistRun(definition,{first:"no",follow:"Сохранённое пояснение"});
+  assert.equal(recorded.questions.length,2);
+  definition.sections[0].categories[0].questions[0].weight=99;
+  const view=resolveChecklistResult(definition,{first:"yes"},JSON.parse(JSON.stringify(recorded)));
+  assert.deepEqual(view,recorded);assert.equal(view.questions.length,2);assert.deepEqual(view.score,{earned:0,possible:3});
+  assert.deepEqual(resolveChecklistResult(definition,{first:"yes"},null).score,{earned:99,possible:99});
+  assert.deepEqual(resolveChecklistResult(definition,{first:"yes"},{score:{earned:NaN,possible:1}}).score,{earned:99,possible:99});
+});
 
 test("conditions distinguish absent answers from false and zero, and support inclusive ranges/date comparisons", () => {
   assert.equal(checklistConditionMatches({ operator: "any" }, false), true);

@@ -9,9 +9,9 @@ import { ChecklistQuestionForm } from "./checklist-question-form";
 import { ChecklistDescription } from "./checklist-evidence-form";
 import type { ChecklistDefinition, ChecklistAnswers } from "@/lib/custom-checklists";
 import type { ChecklistEvidence, ChecklistInstances } from "@/lib/custom-checklist-rules";
-import { expandChecklistDefinition, evaluateChecklistRun, validateChecklistRun } from "@/lib/custom-checklist-runtime";
+import { expandChecklistDefinition, evaluateChecklistRun, resolveChecklistResult, validateChecklistRun } from "@/lib/custom-checklist-runtime";
 
-type Inspection = { id: string; title: string; status: string; templateVersion: number; snapshot: ChecklistDefinition; answers: ChecklistAnswers; evidence: ChecklistEvidence; categoryInstances: ChecklistInstances; updatedAt: string; createdAt: string; createdByName: string; completedAt: string | null; completedByName: string | null };
+type Inspection = { id: string; title: string; status: string; templateVersion: number; snapshot: ChecklistDefinition; answers: ChecklistAnswers; evidence: ChecklistEvidence; categoryInstances: ChecklistInstances; result?:unknown; updatedAt: string; createdAt: string; createdByName: string; completedAt: string | null; completedByName: string | null };
 export function ChecklistInspectionClient({ id }: { id: string }) {
   const [inspection, setInspection] = useState<Inspection | null>(null);
   const [answers, setAnswers] = useState<ChecklistAnswers>({});
@@ -37,9 +37,9 @@ export function ChecklistInspectionClient({ id }: { id: string }) {
   }, [id]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    const warn = (event: BeforeUnloadEvent) => { if (!completed && current.current !== saved.current) event.preventDefault(); };
+    const warn = (event: BeforeUnloadEvent) => { if (!completed && (uploads>0 || current.current !== saved.current)) event.preventDefault(); };
     window.addEventListener("beforeunload",warn); return () => window.removeEventListener("beforeunload",warn);
-  }, [completed]);
+  }, [completed,uploads]);
   async function save(complete: boolean) {
     if (!inspection || busy || uploads || conflict) return;
     const expanded = expandChecklistDefinition(inspection.snapshot,instances);
@@ -59,7 +59,7 @@ export function ChecklistInspectionClient({ id }: { id: string }) {
   if (error) return <div role="alert" className="rounded-2xl bg-[#fff4f2] p-4 text-[#a13a32]">{error}<Button variant="outline" onClick={() => void load()}>Повторить</Button></div>;
   if (!inspection) return <p>Загрузка проверки…</p>;
   const definition = expandChecklistDefinition(inspection.snapshot,instances);
-  const result = evaluateChecklistRun(definition,answers);
+  const result = resolveChecklistResult(definition,answers,completed?inspection.result:undefined);
   const score = result.score;
   const repeatable = inspection.snapshot.sections.filter(s => s.active).flatMap(s => s.categories.filter(c => c.active && c.repeatable));
   return <div className="space-y-5"><PageHeader title={inspection.title} description={`Версия ${inspection.templateVersion} · ${completed ? "Завершённая проверка" : "Черновик"}`} actions={<div className="flex flex-wrap gap-2 print:hidden"><Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />Печать</Button><Button variant="outline" asChild><a href={`/api/checklists/inspections/${id}/pdf`} target="_blank" rel="noopener noreferrer">Скачать PDF</a></Button>{!completed ? <><Button variant="outline" disabled={busy || !!uploads || conflict} onClick={() => void save(false)}><Save className="size-4" />Сохранить черновик</Button><Button disabled={busy || !!uploads || conflict} onClick={() => void save(true)}><CheckCircle2 className="size-4" />Завершить проверку</Button></> : null}</div>} />
@@ -77,7 +77,7 @@ export function ChecklistInspectionClient({ id }: { id: string }) {
       setEvidence(previous => Object.fromEntries(Object.entries(previous).filter(([qid]) => !ids.has(qid))));
       setInstances(previous => ({...previous,[category.id]:previous[category.id].filter(item => item !== key)}));
     }}>Убрать № {index+2}</Button>)}</div>)}</section> : null}
-    <ChecklistQuestionForm definition={definition} answers={answers} onChange={setAnswers} evidence={evidence} onEvidenceChange={setEvidence} readOnly={completed || busy} errors={errors} upload={async (questionId,purpose,file) => {
+    <ChecklistQuestionForm definition={definition} answers={answers} onChange={setAnswers} evidence={evidence} onEvidenceChange={setEvidence} visibleIds={completed?result.questions.map(q=>q.questionId):undefined} readOnly={completed || busy} errors={errors} upload={async (questionId,purpose,file) => {
       if (file.size > 10*1024*1024) throw new Error("Файл до 10 МБ");
       setUploads(value => value+1);
       try { const form = new FormData(); form.set("file",file); form.set("inspectionId",id); form.set("questionId",questionId); form.set("purpose",purpose); form.set("instances",JSON.stringify(instances)); const response = await fetch("/api/checklists/attachments",{method:"POST",body:form}); const body = await response.json(); if(!response.ok) throw new Error(body.error || "Не удалось загрузить файл"); return body.attachment.ref as string; }

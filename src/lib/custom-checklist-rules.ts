@@ -61,12 +61,15 @@ export function checklistConditionMatches(condition: ChecklistCondition, answer:
   return false;
 }
 
-export function checklistConditionProblem(condition: ChecklistCondition, type: string): string | null {
+export function checklistConditionProblem(condition: ChecklistCondition, type: string, options?: readonly {value:string}[]): string | null {
   if (["any", "eq", "neq"].includes(condition.operator)) {
     if (condition.operator === "any") return null;
     if (["number", "scale"].includes(type) && typeof condition.value !== "number") return "Для числового вопроса укажите число";
     if (type === "checkbox" && typeof condition.value !== "boolean") return "Для чек-бокса укажите Да или Нет";
     if (type === "yes_no" && !["yes","no","na"].includes(String(condition.value))) return "Выберите Да, Нет или Не применимо";
+    if (type === "choice" && (typeof condition.value !== "string" || (options && !options.some(option=>option.value===condition.value)))) return "Выберите существующий вариант ответа для условия";
+    if (type === "multi" && (typeof condition.value === "number" ? !Number.isInteger(condition.value) || condition.value < 0 : typeof condition.value !== "string" || (options && !options.some(option=>option.value===condition.value)))) return "Укажите количество вариантов или существующий вариант ответа";
+    if (type === "text" && typeof condition.value !== "string") return "Для текстового ответа укажите текст условия";
     if (type === "datetime" && (typeof condition.value !== "string" || comparable(condition.value) === null)) return "Укажите корректную дату и время";
     return null;
   }

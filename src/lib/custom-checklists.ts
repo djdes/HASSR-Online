@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { checklistConditionMatches, checklistConditionProblem, checklistConditionSchema, checklistHasAnswer, checklistRuleSchema, checklistScalarSchema } from "./custom-checklist-rules";
+import { checklistConditionMatches, checklistConditionProblem, checklistConditionSchema, checklistHasAnswer, checklistRuleSchema, checklistScalarSchema, type ChecklistCondition } from "./custom-checklist-rules";
 
 export const CHECKLIST_CODE = "custom_checklists";
 export const QUESTION_TYPES = ["yes_no", "scale", "choice", "multi", "number", "checkbox", "datetime", "photo", "text", "info", "signature"] as const;
@@ -27,11 +27,11 @@ const questionSchema = z.object({
   if (new Set(question.options.map((option) => option.value)).size !== question.options.length) ctx.addIssue({ code: "custom", message: "Варианты должны иметь разные значения" });
   if (question.step && question.step > question.max - question.min) ctx.addIssue({ code: "custom", message: "Шаг не должен превышать диапазон" });
   if (question.type === "scale" && question.scaleScoring === "value" && (question.min < 0 || question.max <= 0)) ctx.addIssue({ code:"custom",message:"Для баллов по значению используйте неотрицательную шкалу с положительным максимумом" });
-  if (question.violation) { const problem = checklistConditionProblem(question.violation, question.type); if (problem) ctx.addIssue({ code: "custom", message: problem }); }
+  if (question.violation) { const problem = checklistConditionProblem(question.violation, question.type, question.options); if (problem) ctx.addIssue({ code: "custom", message: problem }); }
   if (new Set(question.logic?.map(rule => rule.id)).size !== (question.logic?.length ?? 0)) ctx.addIssue({ code: "custom", message: "Повторяющийся идентификатор логики" });
   for (const rule of question.logic ?? []) {
     if (["photo", "text", "info", "signature"].includes(question.type)) ctx.addIssue({ code: "custom", message: "Логика настраивается для основных типов вопросов" });
-    const problem = checklistConditionProblem(rule.condition, question.type); if (problem) ctx.addIssue({ code: "custom", message: problem });
+    const problem = checklistConditionProblem(rule.condition, question.type, question.options); if (problem) ctx.addIssue({ code: "custom", message: problem });
   }
 });
 export const checklistDefinitionSchema = z.object({
@@ -58,7 +58,7 @@ export const checklistDefinitionSchema = z.object({
         const condition = { ...question.showIf, operator: question.showIf.operator ?? "eq" };
         const parsed = checklistConditionSchema.safeParse(condition.operator ? { operator: condition.operator, value: condition.value, upper: condition.upper } : condition);
         if (!parsed.success) ctx.addIssue({ code: "custom", message: "Проверьте условие показа вопроса" });
-        else if (source) { const problem = checklistConditionProblem(parsed.data, source.type); if (problem) ctx.addIssue({ code: "custom", message: problem }); }
+        else if (source) { const problem = checklistConditionProblem(parsed.data, source.type, source.options); if (problem) ctx.addIssue({ code: "custom", message: problem }); }
         const depth = (depths.get(question.showIf.questionId) ?? 0) + 1;
         depths.set(question.id, depth);
         if (depth > 3) ctx.addIssue({ code: "custom", message: "Вложенность дополнительных вопросов — до трёх уровней" });
@@ -152,23 +152,34 @@ export function checklistScore(definition: ChecklistDefinition, answers: Checkli
     if (!checklistHasAnswer(value)) continue;
     if (question.logic?.some(rule => rule.actions.stop && rule.actions.zeroScore && checklistConditionMatches(rule.condition, value))) return { earned: 0, possible: 0 };
     if (question.type === "yes_no" && (question.excludedAnswers ?? ["na"]).includes(String(value) as "yes" | "no" | "na")) continue;
-    if (["choice", "multi"].includes(question.type) && question.options.some(option => option.excluded && (Array.isArray(value) ? value.includes(option.value) : value === option.value))) continue;
+    if (question.type === "choice" && question.options.some(option => option.excluded && value === option.value)) continue;
     const optionPoints = (option: ChecklistQuestion["options"][number]) => option.points ?? option.score * question.weight;
+    if (question.type === "multi" && Array.isArray(value)) {
+      const eligible = question.options.filter(option=>!option.excluded);
+      const selected = eligible.filter(option=>value.includes(option.value));
+      if(!selected.length) continue;
+      if(question.multiScoring === "sum") {possible += eligible.reduce((sum,option)=>sum+optionPoints(option),0);earned += selected.reduce((sum,option)=>sum+optionPoints(option),0);continue;}
+      if(question.options.some(option=>option.points !== undefined)) {possible += Math.max(question.weight,...eligible.map(optionPoints));earned += selected.reduce((sum,option)=>sum+optionPoints(option),0)/selected.length;continue;}
+      possible += question.weight;earned += selected.reduce((sum,option)=>sum+option.score,0)/selected.length*question.weight;continue;
+    }
     if (question.type === "yes_no" && question.answerPoints && typeof value === "string" && ["yes", "no", "na"].includes(value)) { possible += Math.max(question.weight, ...Object.values(question.answerPoints)); earned += question.answerPoints[value as "yes" | "no" | "na"]; continue; }
     if (question.type === "choice" && question.options.some(option => option.points !== undefined)) { possible += Math.max(question.weight, ...question.options.filter(option => !option.excluded).map(optionPoints)); earned += optionPoints(question.options.find(option => option.value === value) ?? { score: 0, value: "", label: "" }); continue; }
-    if (question.type === "multi" && question.multiScoring === "sum" && Array.isArray(value)) { possible += question.options.filter(option => !option.excluded).reduce((sum, option) => sum + optionPoints(option), 0); earned += question.options.filter(option => value.includes(option.value)).reduce((sum, option) => sum + optionPoints(option), 0); continue; }
     if (["number", "datetime"].includes(question.type) && question.violation) { possible += question.weight; earned += checklistConditionMatches(question.violation, value) ? 0 : question.weight; continue; }
     let score: number | null = null;
     if (question.type === "yes_no") score = value === "yes" ? 1 : 0;
     if (question.type === "checkbox") score = value === true ? 1 : 0;
     if (question.type === "scale" && typeof value === "number") score = question.scaleScoring === "value" ? value / question.max : (value - question.min) / (question.max - question.min);
     if (question.type === "choice") score = question.options.find((option) => option.value === value)?.score ?? 0;
-    if (question.type === "multi" && Array.isArray(value) && value.length) score = value.reduce((sum, answer) => sum + (question.options.find((option) => option.value === answer)?.score ?? 0), 0) / value.length;
     if (score !== null) { possible += question.weight; earned += Math.max(0, Math.min(1, score)) * question.weight; }
   }
-  return { earned: Math.round(earned * 100) / 100, possible };
+  return { earned: Math.round(earned * 100) / 100, possible:Math.round(possible*100)/100 };
 }
 
 export function newChecklistQuestion(questionId: string): ChecklistQuestion {
   return { id: questionId, title: "Новый вопрос", description: "", type: "yes_no", active: true, required: true, weight: 1, min: 0, max: 10, options: [] };
+}
+export function defaultChecklistCondition(question:ChecklistQuestion):ChecklistCondition {
+  if(question.type==="datetime"||question.type==="text")return {operator:"any"};
+  if(question.type==="multi")return {operator:"gte",value:1};
+  return {operator:"eq",value:question.type==="yes_no"?"no":question.type==="checkbox"?false:question.type==="choice"?question.options[0]?.value??"":["number","scale"].includes(question.type)?question.min:""};
 }

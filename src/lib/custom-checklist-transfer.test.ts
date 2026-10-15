@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { checklistPortableJson, parseChecklistJson, checklistXlsxSample, parseChecklistXlsx } from "./custom-checklist-transfer";
 import { allChecklistQuestions, checklistDefinitionSchema, newChecklistQuestion, type ChecklistDefinition } from "./custom-checklists";
-import { editChecklistStructure, moveChecklistNode } from "./custom-checklist-structure";
+import { editChecklistStructure, moveChecklistNode, removedChecklistConditions } from "./custom-checklist-structure";
 import { checklistAttachmentType, checklistByteRange } from "./custom-checklist-files";
 import { generateChecklistPdf } from "./custom-checklist-pdf";
 
@@ -13,6 +13,8 @@ test("structural copies remap internal parents, moves/deletions leave valid cond
   const category=copy.sections[0].categories[1];assert.notEqual(category.id,"c");assert.equal(category.questions[1].showIf?.questionId,category.questions[0].id);
   assert.equal(checklistDefinitionSchema.safeParse(copy).success,true);
   const moved=moveChecklistNode(copy,"question",category.questions[0].id,"empty");
+  assert.deepEqual(removedChecklistConditions(copy,moved).map(question=>question.id),[category.questions[1].id]);
+  assert.deepEqual(removedChecklistConditions(definition,copy),[]);
   assert.equal(allChecklistQuestions(moved).find(q=>q.id===category.questions[1].id)?.showIf,undefined);
   assert.equal(checklistDefinitionSchema.safeParse(moved).success,true);
   assert.equal(editChecklistStructure(definition,"question","parent","delete",uid).sections[0].categories[0].questions[0].showIf,undefined);

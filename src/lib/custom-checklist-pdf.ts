@@ -1,8 +1,8 @@
 import { jsPDF } from "jspdf";
 import { registerUnicodeFont } from "./closing-documents/pdf-font";
-import { visibleChecklistQuestions, QUESTION_LABELS, type ChecklistDefinition, type ChecklistAnswers, type ChecklistQuestion } from "./custom-checklists";
+import { QUESTION_LABELS, type ChecklistDefinition, type ChecklistAnswers, type ChecklistQuestion } from "./custom-checklists";
 import type { ChecklistEvidence } from "./custom-checklist-rules";
-import { checklistQuestionResult, evaluateChecklistRun } from "./custom-checklist-runtime";
+import { checklistQuestionResult, resolveChecklistResult } from "./custom-checklist-runtime";
 
 export function checklistAnswerText(question: ChecklistQuestion, value: unknown): string {
   if(value === undefined || value === "" || (Array.isArray(value) && !value.length)) return "—";
@@ -14,8 +14,8 @@ export function checklistAnswerText(question: ChecklistQuestion, value: unknown)
   return `${value}${question.unit ? ` ${question.unit}` : ""}`;
 }
 type PdfAttachment = { id:string; fileName:string; mimeType:string; sizeBytes:number };
-export async function generateChecklistPdf({title,definition,answers,evidence = {},meta = [],attachments = [],imageBytes}: {
-  title:string; definition:ChecklistDefinition; answers?:ChecklistAnswers; evidence?:ChecklistEvidence; meta?:string[]; attachments?:PdfAttachment[]; imageBytes?: (id:string) => Promise<Uint8Array | null>;
+export async function generateChecklistPdf({title,definition,answers,evidence = {},meta = [],attachments = [],imageBytes,recordedResult}: {
+  title:string; definition:ChecklistDefinition; answers?:ChecklistAnswers; evidence?:ChecklistEvidence; meta?:string[]; attachments?:PdfAttachment[]; imageBytes?: (id:string) => Promise<Uint8Array | null>;recordedResult?:unknown;
 }): Promise<Uint8Array> {
   const doc = new jsPDF({compress:true}); const font = registerUnicodeFont(doc); doc.setFont(font); let y = 18; let imageBudget = 20*1024*1024;
   const line = (text:string,size=10) => {
@@ -39,8 +39,9 @@ export async function generateChecklistPdf({title,definition,answers,evidence = 
   line(title,16);for(const text of meta)line(text,10);
   line(answers ? "Отчёт о проверке" : "Шаблон чек-листа",12);
   if(definition.description)line(definition.description);
-  if(answers){const result=evaluateChecklistRun(definition,answers);line(`Результат: ${result.score.earned} / ${result.score.possible} баллов. Нарушений: ${result.violations.length}.`);if(result.stopped)line(`Досрочное завершение: ${result.critical.map(q=>q.title).join(", ")}`);if(result.zeroScore)line("Результат обнулён по критическому нарушению.");}
-  const visible = answers ? new Set(visibleChecklistQuestions(definition,answers).map(q=>q.id)) : null;let number=0;
+  const result=answers?resolveChecklistResult(definition,answers,recordedResult):null;
+  if(result){line(`Результат: ${result.score.earned} / ${result.score.possible} баллов. Нарушений: ${result.violations.length}.`);if(result.stopped)line(`Досрочное завершение: ${result.critical.map(q=>q.title).join(", ")}`);if(result.zeroScore)line("Результат обнулён по критическому нарушению.");}
+  const visible = result ? new Set(result.questions.map(q=>q.questionId)) : null;let number=0;
   for(const section of definition.sections.filter(s=>s.active)) {
     if(visible && !section.categories.some(c=>c.questions.some(q=>visible.has(q.id))))continue;
     line(section.title,14);
@@ -55,7 +56,7 @@ export async function generateChecklistPdf({title,definition,answers,evidence = 
         if(question.type==="signature" && typeof value==="string" && value.startsWith("data:image/"))image(value,value.startsWith("data:image/jpeg")?"image/jpeg":"image/png");
         const proof=evidence[question.id];if(proof?.comment)line(`Комментарий: ${proof.comment}`);if(proof?.barcode)line(`Код: ${proof.barcode}`);if(proof?.location)line(`Геопозиция: ${proof.location.latitude}, ${proof.location.longitude}; точность ${Math.round(proof.location.accuracy)} м; ${proof.location.capturedAt}`);
         for(const ref of [...(proof?.photos??[]),...(proof?.videos??[]),...(proof?.audios??[])])await file(ref);
-        const problem=checklistQuestionResult(question,value);if(problem.violation)line(problem.critical?"КРИТИЧЕСКОЕ НАРУШЕНИЕ":"Нарушение",10);
+        const problem=result?.questions.find(item=>item.questionId===question.id)??checklistQuestionResult(question,value);if(problem.violation)line(problem.critical?"КРИТИЧЕСКОЕ НАРУШЕНИЕ":"Нарушение",10);
       }
     }
   }

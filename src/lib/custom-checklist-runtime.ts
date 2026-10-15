@@ -1,5 +1,6 @@
 import { allChecklistQuestions, checklistScore, validateChecklistAnswers, visibleChecklistQuestions, type ChecklistAnswers, type ChecklistDefinition, type ChecklistQuestion } from "./custom-checklists";
 import { checklistConditionMatches, checklistFileId, checklistHasAnswer, checklistInstancesSchema, type ChecklistEvidence, type ChecklistInstances } from "./custom-checklist-rules";
+import { z } from "zod";
 
 export class ChecklistRunError extends Error { name = "ChecklistRunError"; }
 export function expandChecklistDefinition(definition: ChecklistDefinition, instances: ChecklistInstances = {}): ChecklistDefinition {
@@ -48,6 +49,14 @@ export function checklistQuestionResult(question: ChecklistQuestion, answer: unk
 export function evaluateChecklistRun(definition: ChecklistDefinition, answers: ChecklistAnswers) {
   const questions = visibleChecklistQuestions(definition, answers).map(question => checklistQuestionResult(question, answers[question.id]));
   return { questions, violations: questions.filter(question => question.violation), critical: questions.filter(question => question.critical), stopped: questions.some(question => question.stop), zeroScore: questions.some(question => question.zeroScore), score: checklistScore(definition, answers) };
+}
+const recordedQuestionSchema=z.object({questionId:z.string().min(1).max(220),title:z.string().max(300),violation:z.boolean(),critical:z.boolean(),stop:z.boolean(),zeroScore:z.boolean(),requirements:z.object({comment:z.boolean(),photos:z.number().int().min(0).max(10),videos:z.number().int().min(0).max(3),audios:z.number().int().min(0).max(3),barcode:z.boolean(),location:z.boolean()})});
+const recordedResultSchema=z.object({questions:z.array(recordedQuestionSchema).max(1200),violations:z.array(recordedQuestionSchema).max(1200),critical:z.array(recordedQuestionSchema).max(1200),stopped:z.boolean(),zeroScore:z.boolean(),score:z.object({earned:z.number().finite().min(0),possible:z.number().finite().min(0)})});
+// Completed results are historical records, including the score and visibility.
+// Older runs without this record retain their original snapshot-based fallback.
+export function resolveChecklistResult(definition:ChecklistDefinition,answers:ChecklistAnswers,recorded?:unknown):ReturnType<typeof evaluateChecklistRun> {
+  const parsed=recordedResultSchema.safeParse(recorded);
+  return parsed.success?parsed.data:evaluateChecklistRun(definition,answers);
 }
 
 export function validateChecklistRun(definition: ChecklistDefinition, answers: ChecklistAnswers, evidence: ChecklistEvidence, completing: boolean) {

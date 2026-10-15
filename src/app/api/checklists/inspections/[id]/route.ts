@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { requireChecklistAccess } from "@/lib/custom-checklists.server";
 import { checklistAnswersSchema, checklistDefinitionSchema } from "@/lib/custom-checklists";
 import { checklistEvidenceSchema, checklistInstancesSchema } from "@/lib/custom-checklist-rules";
-import { ChecklistRunError, evaluateChecklistRun, expandChecklistDefinition, pruneChecklistRun, validateChecklistRun } from "@/lib/custom-checklist-runtime";
+import { ChecklistRunError, evaluateChecklistRun, expandChecklistDefinition, pruneChecklistRun, resolveChecklistResult, validateChecklistRun } from "@/lib/custom-checklist-runtime";
 import { validateChecklistStoredFiles } from "@/lib/custom-checklist-files.server";
 import { recordAuditLog } from "@/lib/audit-log";
 
@@ -18,7 +18,7 @@ export async function GET(_request: Request, ctx: Ctx) {
   const inspection = await db.checklistInspection.findFirst({ where: { id, organizationId: auth.organizationId, ...(auth.canManage ? {} : { createdById: auth.session.user.id }) } });
   if (!inspection) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
   const definition = expandChecklistDefinition(checklistDefinitionSchema.parse(inspection.snapshot), checklistInstancesSchema.parse(inspection.categoryInstances ?? {}));
-  const result = inspection.status === "completed" && inspection.result ? inspection.result : evaluateChecklistRun(definition, checklistAnswersSchema.parse(inspection.answers));
+  const result = resolveChecklistResult(definition,checklistAnswersSchema.parse(inspection.answers),inspection.status === "completed"?inspection.result:undefined);
   return NextResponse.json({ inspection, result, score: (result as { score?: unknown }).score }, { headers: { "Cache-Control": "private, no-store" } });
 }
 export async function PATCH(request: Request, ctx: Ctx) {

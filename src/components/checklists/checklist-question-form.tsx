@@ -14,6 +14,8 @@ import { ChecklistDescription, ChecklistEvidenceForm, ChecklistMedia, type Check
 function SignatureInput({ value, onChange, readOnly }: { value?: string; onChange: (value: string) => void; readOnly: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+  const moved = useRef(false);
+  const lastPoint = useRef({x:0,y:0});
   const emitted = useRef("");
   useEffect(() => {
     if (!canvas.current || value === emitted.current) return;
@@ -31,31 +33,37 @@ function SignatureInput({ value, onChange, readOnly }: { value?: string; onChang
     const element = event.currentTarget;
     const context = element.getContext("2d");
     if (!context) return;
-    element.setPointerCapture(event.pointerId); drawing.current = true;
+    element.setPointerCapture(event.pointerId); drawing.current = true; moved.current = false;
     const rect = element.getBoundingClientRect();
     context.strokeStyle = "#0b1024"; context.lineWidth = 2; context.lineCap = "round"; context.beginPath();
-    context.moveTo((event.clientX - rect.left) * 600 / rect.width, (event.clientY - rect.top) * 180 / rect.height);
+    lastPoint.current={x:(event.clientX - rect.left)*600/rect.width,y:(event.clientY-rect.top)*180/rect.height};
+    context.moveTo(lastPoint.current.x,lastPoint.current.y);
   }} onPointerMove={(event) => {
     if (!drawing.current || readOnly) return;
     const context = event.currentTarget.getContext("2d"); if (!context) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    context.lineTo((event.clientX - rect.left) * 600 / rect.width, (event.clientY - rect.top) * 180 / rect.height); context.stroke();
+    const point={x:(event.clientX-rect.left)*600/rect.width,y:(event.clientY-rect.top)*180/rect.height};
+    if(Math.hypot(point.x-lastPoint.current.x,point.y-lastPoint.current.y)<1)return;
+    moved.current=true;lastPoint.current=point;
+    context.lineTo(point.x,point.y); context.stroke();
   }} onPointerUp={(event) => {
     if (!drawing.current || readOnly) return;
-    drawing.current = false; emitted.current = event.currentTarget.toDataURL("image/png"); onChange(emitted.current);
+    drawing.current = false; if(!moved.current)return;
+    emitted.current = event.currentTarget.toDataURL("image/png"); onChange(emitted.current);
   }} onPointerCancel={() => { drawing.current = false; }} />
   {!readOnly ? <Button type="button" variant="outline" onClick={() => { canvas.current?.getContext("2d")?.clearRect(0, 0, 600, 180); emitted.current = ""; onChange(""); }}>Очистить подпись</Button> : null}</div>;
 }
 
-export function ChecklistQuestionForm({ definition, answers, onChange, readOnly = false, errors = {}, evidence, onEvidenceChange, upload }: {
+export function ChecklistQuestionForm({ definition, answers, onChange, readOnly = false, errors = {}, evidence, onEvidenceChange, upload, visibleIds }: {
   definition: ChecklistDefinition; answers: ChecklistAnswers; onChange: React.Dispatch<React.SetStateAction<ChecklistAnswers>>; readOnly?: boolean; errors?: Record<string, string>;
   evidence?: ChecklistEvidence; onEvidenceChange?: React.Dispatch<React.SetStateAction<ChecklistEvidence>>; upload?: ChecklistUpload;
+  visibleIds?:readonly string[];
 }) {
   const [previewEvidence, setPreviewEvidence] = useState<ChecklistEvidence>({});
   const [uploading, setUploading] = useState(false);
   const proof = evidence ?? previewEvidence;
   const changeProof = onEvidenceChange ?? setPreviewEvidence;
-  const visible = new Set(visibleChecklistQuestions(definition, answers).map((question) => question.id));
+  const visible = new Set(visibleIds ?? visibleChecklistQuestions(definition, answers).map((question) => question.id));
   const numbers = new Map([...visible].map((id, index) => [id,index + 1]));
   const readOnlyRef = useRef(readOnly);
   useEffect(() => { readOnlyRef.current = readOnly; }, [readOnly]);
