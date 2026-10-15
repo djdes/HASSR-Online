@@ -1,0 +1,53 @@
+{
+  "locale": "uz",
+  "sourceHash": "c8b30283ebb96c9db92414cbe512c50de78857a664d76b4cba9c73603b1c3631",
+  "title": "‘Shunchaki belgi uchun’ yuritilgan jurnallar endi o‘tmaydi: 2026-yil talablari",
+  "excerpt": "Bir xil haroratlar, doim ayni vaqtdagi qaydlar va dam olish kunlaridagi imzolar — rasmiyatchilik uchun yuritilayotgan yozuvlar belgisi. Jurnallarni haqiqiy ish jarayoniga mos yuritishni o‘rganing.",
+  "body": [
+    {
+      "type": "p",
+      "text": "Avvallari tekshiruvdan bir soat oldin jurnalni shoshilinch to‘ldirish yetarli tuyulardi. 2026-yilda Rospotrebnadzor ko‘rsatmalarida soxtalashtirish belgilari sanaladi, shu bois faqat qog‘oz uchun yuritilgan yozuvlarni aniqlash oson: haroratlar bir xil, vaqtlar muntazam, hatto dam olish kunlarida ham birorta qayd tushib qolmaydi."
+    },
+    {
+      "type": "h2",
+      "text": "Inspektor nimani ‘uydirma’ deb hisoblashi mumkin"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "+4,0 °C ko‘rsatkichi ketma-ket o‘nlab marta tabiiy o‘zgarishsiz yozilishi.",
+        "Muassasa amalda yopiq bo‘lgan dam olish kunlaridagi imzolar.",
+        "Omborda umuman hisobga olinmagan mahsulotni brak qilish.",
+        "Muassasa 22:00 da yopilsa-da, tozalashni 23:00 da qayd etish.",
+        "Xodim tabelda ko‘rsatilmagan bo‘lsa ham, uni smenaga qo‘yish."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "info",
+      "title": "Asosiy fikr",
+      "text": "Jurnallar endi ‘tekshiruv uchun qog‘ozbozlik’ emas, balki ishlab chiqarish haqidagi ma’lumot manbaidir. Ma’lumotlar haqiqatga mos kelmasa, oqibat jarima bilan cheklanmaydi: hamkorlar va xaridorlar ishonchini ham yo‘qotishingiz mumkin."
+    },
+    {
+      "type": "h2",
+      "text": "Hisobni qanday yaxshilash kerak"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Har bir jurnal uchun aniq mas’ul shaxsni belgilang; javobgarlikni shunchaki smenaga yuklamang.",
+        "O‘lchovlarni jarayonga yaqinlashtiring: muzlatkichlarga datchik, fritürga taymer, mahsulot qabulida tarozi ishlating.",
+        "Rost yozuvlarga imkon bering. +6 °C harorat sabab va tuzatuvchi harakat bilan qayd etilsa, buning o‘zi jarimaga asos bo‘lmaydi.",
+        "Jurnallarni tashqi ma’lumotlar bilan solishtiring: ish jadvali, yetkazib berishlar va kassa yozuvlari."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Elektron jurnal muammoning katta qismini hal qiladi: vaqt tamg‘asini avtomatik qo‘yadi, kech kiritilgan yozuvni belgilaydi va datchik ko‘rgan harorat o‘zgarishini qayd etadi."
+    }
+  ],
+  "tags": [
+    "SanPiN",
+    "Tekshiruvlar"
+  ]
+}

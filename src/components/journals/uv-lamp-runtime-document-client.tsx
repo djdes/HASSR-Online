@@ -1,7 +1,9 @@
 "use client";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { Archive, Plus, Trash2 } from "lucide-react";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import { CELL_FOCUS_CLASS } from "@/components/journals/journal-grid";
@@ -22,6 +24,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import {
   buildUvRuntimeDocumentTitle,
@@ -32,19 +36,12 @@ import {
   removeUvRuntimeSession,
   updateUvRuntimeSession,
   CONTROL_FREQUENCY_OPTIONS,
-  formatControlFrequencyLabel,
-  formatMonthLabel,
-  formatRuDateDash,
-  getDisinfectionConditionLabel,
-  getDisinfectionObjectLabel,
-  getRadiationModeLabel,
   getUvResponsibleTitleOptions,
   normalizeUvRuntimeDocumentConfig,
   normalizeUvRuntimeEntryData,
   toIsoDate,
   UV_AUTOFILL_DEFAULT_DURATION_MINUTES,
   UV_AUTOFILL_DEFAULT_START_TIME,
-  UV_LAMP_RUNTIME_PAGE_TITLE,
   type UvRuntimeDocumentConfig,
   type UvRuntimeEntryData,
   type UvSpecification,
@@ -52,7 +49,6 @@ import {
 import { MENU_ITEM_MUTED_CLASS } from "@/components/ui/menu-styles";
 import {
   EMPTY_SELECT_VALUE,
-  PositionSelectItems,
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 
@@ -159,6 +155,41 @@ function entryToRow(entry: EntryItem): GridRow {
   };
 }
 
+function displayDate(format: ReturnType<typeof useFormatter>, value: string | Date, style: "short" | "long" = "short") {
+  const dateOnly = typeof value === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null;
+  const date = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+    : value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : format.dateTime(date, {
+    dateStyle: style,
+    ...(dateOnly ? { timeZone: "UTC" } : {}),
+  });
+}
+
+function formatFrequencyLabel(t: ReturnType<typeof useTranslations<"uvLampRuntime">>, value: string) {
+  const match = /^(\d+)\s*раз(?:\(а\))? в (смену|день)$/i.exec(value);
+  if (!match) return value;
+  return t(match[2] === "смену" ? "frequencyShift" : "frequencyDay", { count: Number(match[1]) });
+}
+
+function UvPositionSelectItems({ users }: { users: UserItem[] }) {
+  const t = useTranslations("uvLampRuntime");
+  const options = useMemo(() => getUvResponsibleTitleOptions(users), [users]);
+  const label = (value: string) => {
+    const key = value === "Руководитель" ? "roleOwner"
+      : value === "Управляющий" ? "roleManager"
+      : value === "Шеф-повар" ? "roleChef"
+      : value === "Повар" ? "roleCook"
+      : value === "Официант" ? "roleWaiter"
+      : null;
+    return key ? t(key) : value;
+  };
+  return <>
+    {options.management.length > 0 ? <SelectGroup><SelectLabel>{t("management")}</SelectLabel>{options.management.map((value) => <SelectItem key={`m:${value}`} value={value}>{label(value)}</SelectItem>)}</SelectGroup> : null}
+    {options.staff.length > 0 ? <SelectGroup><SelectLabel>{t("staff")}</SelectLabel>{options.staff.map((value) => <SelectItem key={`s:${value}`} value={value}>{label(value)}</SelectItem>)}</SelectGroup> : null}
+  </>;
+}
+
 /**
  * U6: строки журнала — ТОЛЬКО реальные записи. Раньше мы разворачивали
  * весь период в виртуальные строки `virtual:<день>` с пустыми `--:--`,
@@ -192,6 +223,7 @@ function UvSpecEditDialog(props: {
   defaultCommissioningDate: string;
   onSave: (spec: UvSpecification) => Promise<void>;
 }) {
+  const t = useTranslations("uvLampRuntime");
   const [submitting, setSubmitting] = useState(false);
   const [air, setAir] = useState(props.spec.disinfectionAir);
   const [surface, setSurface] = useState(props.spec.disinfectionSurface);
@@ -229,27 +261,27 @@ function UvSpecEditDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Редактирование
+            {t("specEditTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 px-7 py-6">
           <div>
-            <div className="mb-3 text-[16px] font-medium text-black">Объект обеззараживания</div>
+            <div className="mb-3 text-[16px] font-medium text-black">{t("objectLabel")}</div>
             <div className="flex gap-6">
               <label className="flex items-center gap-2 text-[15px]">
                 <Switch checked={air} onCheckedChange={setAir} />
-                Воздух
+                {t("air")}
               </label>
               <label className="flex items-center gap-2 text-[15px]">
                 <Switch checked={surface} onCheckedChange={setSurface} />
-                Поверхность
+                {t("surface")}
               </label>
             </div>
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Вид микроорганизма</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("microorganismLabel")}</Label>
             <Input
               value={microorganism}
               onChange={(e) => setMicroorganism(e.target.value)}
@@ -258,7 +290,7 @@ function UvSpecEditDialog(props: {
           </div>
 
           <div>
-            <div className="mb-3 text-[16px] font-medium text-black">Режим облучения</div>
+            <div className="mb-3 text-[16px] font-medium text-black">{t("radiationModeLabel")}</div>
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-2 text-[15px]">
                 <input
@@ -268,7 +300,7 @@ function UvSpecEditDialog(props: {
                   onChange={() => setRadiationMode("continuous")}
                   className="size-4 accent-[#5566f6]"
                 />
-                Непрерывный
+                {t("continuous")}
               </label>
               <label className="flex items-center gap-2 text-[15px]">
                 <input
@@ -278,13 +310,13 @@ function UvSpecEditDialog(props: {
                   onChange={() => setRadiationMode("intermittent")}
                   className="size-4 accent-[#5566f6]"
                 />
-                Повторно-кратковременный
+                {t("intermittent")}
               </label>
             </div>
           </div>
 
           <div>
-            <div className="mb-3 text-[16px] font-medium text-black">Условия обеззараживания</div>
+            <div className="mb-3 text-[16px] font-medium text-black">{t("conditionLabel")}</div>
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-2 text-[15px]">
                 <input
@@ -294,7 +326,7 @@ function UvSpecEditDialog(props: {
                   onChange={() => setCondition("with_people")}
                   className="size-4 accent-[#5566f6]"
                 />
-                В присутствии людей
+                {t("withPeople")}
               </label>
               <label className="flex items-center gap-2 text-[15px]">
                 <input
@@ -304,13 +336,13 @@ function UvSpecEditDialog(props: {
                   onChange={() => setCondition("without_people")}
                   className="size-4 accent-[#5566f6]"
                 />
-                В отсутствии людей
+                {t("withoutPeople")}
               </label>
             </div>
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Ресурс рабочего времени лампы, часов</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("lampLifetimeLabel")}</Label>
             <Input
               type="number"
               inputMode="decimal"
@@ -318,11 +350,11 @@ function UvSpecEditDialog(props: {
               onChange={(e) => setLampHours(e.target.value)}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[16px]"
             />
-            <div className="text-[13px] text-[#999]">*срок замены отработавших ламп</div>
+            <div className="text-[13px] text-[#999]">{t("lampLifetimeHint")}</div>
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Дата ввода установки в эксплуатацию</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("commissioningDateLabel")}</Label>
             <Input
               type="date"
               value={commDate}
@@ -332,17 +364,17 @@ function UvSpecEditDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Введите минимальный интервал между сеансами</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("minimumIntervalLabel")}</Label>
             <Input
               value={minInterval}
               onChange={(e) => setMinInterval(e.target.value)}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[16px]"
             />
-            <div className="text-[13px] text-[#999]">*для повторно-кратковременного облучения</div>
+            <div className="text-[13px] text-[#999]">{t("minimumIntervalHint")}</div>
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Частота контроля работы установки</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("controlFrequencyLabel")}</Label>
             <Select value={frequency} onValueChange={setFrequency}>
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[16px]">
                 <SelectValue />
@@ -350,28 +382,28 @@ function UvSpecEditDialog(props: {
               <SelectContent>
                 {CONTROL_FREQUENCY_OPTIONS.map((opt) => (
                   <SelectItem key={opt} value={opt}>
-                    {formatControlFrequencyLabel(opt)}
+                    {formatFrequencyLabel(t, opt)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <div className="text-[13px] text-[#999]">*частота включений</div>
+            <div className="text-[13px] text-[#999]">{t("controlFrequencyHint")}</div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Типовое время включения</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("typicalStartLabel")}</Label>
               <Input
                 type="time"
                 value={autoStart}
                 onChange={(e) => setAutoStart(e.target.value)}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[16px]"
               />
-              <div className="text-[13px] text-[#999]">*используется при автозаполнении</div>
+              <div className="text-[13px] text-[#999]">{t("autofillHint")}</div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Типовая длительность сеанса, минут</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("typicalDurationLabel")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -381,7 +413,7 @@ function UvSpecEditDialog(props: {
                 onChange={(e) => setAutoDuration(e.target.value)}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[16px]"
               />
-              <div className="text-[13px] text-[#999]">*используется при автозаполнении</div>
+              <div className="text-[13px] text-[#999]">{t("autofillHint")}</div>
             </div>
           </div>
 
@@ -417,7 +449,7 @@ function UvSpecEditDialog(props: {
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -444,6 +476,7 @@ function UvRuntimeSettingsDialog(props: {
   }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("uvLampRuntime");
   const [submitting, setSubmitting] = useState(false);
   const [lampNumber, setLampNumber] = useState(props.initialConfig.lampNumber);
   const [areaName, setAreaName] = useState(props.initialConfig.areaName);
@@ -461,8 +494,6 @@ function UvRuntimeSettingsDialog(props: {
     },
     autoPick: "first",
   });
-
-  const options = useMemo(() => getUvResponsibleTitleOptions(props.users), [props.users]);
 
   useEffect(() => {
     if (!props.open) return;
@@ -504,8 +535,8 @@ function UvRuntimeSettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Учёт работы бактерицидной установки"
+        title={t("settingsTitle")}
+        description={t("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -513,7 +544,7 @@ function UvRuntimeSettingsDialog(props: {
       >
         <div className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Бактерицидная установка №</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("deviceNumber")}</Label>
             <Input
               value={lampNumber}
               onChange={(event) => setLampNumber(event.target.value)}
@@ -521,7 +552,7 @@ function UvRuntimeSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Наименование цеха/участка применения</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("areaName")}</Label>
             <Input
               value={areaName}
               onChange={(event) => setAreaName(event.target.value)}
@@ -529,7 +560,7 @@ function UvRuntimeSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Дата начала</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("documentDate")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -538,7 +569,7 @@ function UvRuntimeSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Должность ответственного</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("responsiblePosition")}</Label>
             <Select
               value={
                 responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -548,16 +579,16 @@ function UvRuntimeSettingsDialog(props: {
               onValueChange={settingsCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
-                <SelectValue placeholder="— Выберите значение —" />
+                <SelectValue placeholder={t("chooseValue")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>— Выберите значение —</SelectItem>
-                <PositionSelectItems users={props.users} groups={options} />
+                <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>{t("chooseValue")}</SelectItem>
+                <UvPositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Сотрудник</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("employee")}</Label>
             <Select
               value={responsibleUserId}
               onValueChange={settingsCascade.handleEmployeeChange}
@@ -565,7 +596,7 @@ function UvRuntimeSettingsDialog(props: {
               onOpenChange={settingsCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
-                <SelectValue placeholder="— Выберите значение —" />
+                <SelectValue placeholder={t("chooseValue")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -587,13 +618,13 @@ function UvRuntimeSettingsDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("settingsTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 px-7 py-6">
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Бактерицидная установка №</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("deviceNumber")}</Label>
             <Input
               value={lampNumber}
               onChange={(event) => setLampNumber(event.target.value)}
@@ -601,7 +632,7 @@ function UvRuntimeSettingsDialog(props: {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Наименование цеха/участка применения</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("areaName")}</Label>
             <Input
               value={areaName}
               onChange={(event) => setAreaName(event.target.value)}
@@ -609,7 +640,7 @@ function UvRuntimeSettingsDialog(props: {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Дата начала</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("documentDate")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -618,7 +649,7 @@ function UvRuntimeSettingsDialog(props: {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("responsiblePosition")}</Label>
             <Select
               value={
                 responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -628,16 +659,16 @@ function UvRuntimeSettingsDialog(props: {
               onValueChange={settingsCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>Выберите должность</SelectItem>
-                <PositionSelectItems users={props.users} groups={options} />
+                <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>{t("choosePosition")}</SelectItem>
+                <UvPositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("employee")}</Label>
             <Select
               value={responsibleUserId}
               onValueChange={settingsCascade.handleEmployeeChange}
@@ -645,7 +676,7 @@ function UvRuntimeSettingsDialog(props: {
               onOpenChange={settingsCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -667,7 +698,7 @@ function UvRuntimeSettingsDialog(props: {
               onClick={handleSave}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -692,6 +723,7 @@ function AddRowDialog(props: {
     responsibleTitle: string;
   }) => void;
 }) {
+  const t = useTranslations("uvLampRuntime");
   const [date, setDate] = useState(toIsoDate(new Date()));
   const [startHour, setStartHour] = useState("10");
   const [startMin, setStartMin] = useState("00");
@@ -710,8 +742,6 @@ function AddRowDialog(props: {
     autoPick: "first",
   });
 
-  const options = useMemo(() => getUvResponsibleTitleOptions(props.users), [props.users]);
-
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 
@@ -720,13 +750,13 @@ function AddRowDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Добавление новой строки
+            {t("addRowTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 px-7 py-6">
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Дата</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("date")}</Label>
             <Input
               type="date"
               value={date}
@@ -736,10 +766,10 @@ function AddRowDialog(props: {
           </div>
 
           <div>
-            <div className="mb-2 text-[16px] font-medium text-black">Время включения</div>
+            <div className="mb-2 text-[16px] font-medium text-black">{t("startTime")}</div>
             <div className="flex gap-3">
               <div className="flex-1 space-y-1">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Часы</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("hours")}</Label>
                 <Select value={startHour} onValueChange={setStartHour}>
                   <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
                     <SelectValue />
@@ -752,7 +782,7 @@ function AddRowDialog(props: {
                 </Select>
               </div>
               <div className="flex-1 space-y-1">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Минуты</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("minutes")}</Label>
                 <Select value={startMin} onValueChange={setStartMin}>
                   <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
                     <SelectValue />
@@ -768,10 +798,10 @@ function AddRowDialog(props: {
           </div>
 
           <div>
-            <div className="mb-2 text-[16px] font-medium text-black">Время выключения</div>
+            <div className="mb-2 text-[16px] font-medium text-black">{t("endTime")}</div>
             <div className="flex gap-3">
               <div className="flex-1 space-y-1">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Часы</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("hours")}</Label>
                 <Select value={endHour} onValueChange={setEndHour}>
                   <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
                     <SelectValue />
@@ -784,7 +814,7 @@ function AddRowDialog(props: {
                 </Select>
               </div>
               <div className="flex-1 space-y-1">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Минуты</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("minutes")}</Label>
                 <Select value={endMin} onValueChange={setEndMin}>
                   <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
                     <SelectValue />
@@ -800,22 +830,22 @@ function AddRowDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("responsiblePosition")}</Label>
             <Select
               value={responsibleTitle || EMPTY_SELECT_VALUE}
               onValueChange={addRowCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={props.users} groups={options} />
+                <UvPositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("employee")}</Label>
             <Select
               value={employeeId}
               onValueChange={addRowCascade.handleEmployeeChange}
@@ -823,7 +853,7 @@ function AddRowDialog(props: {
               onOpenChange={addRowCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle ? addRowCascade.candidates : props.users).map((user) => (
@@ -850,7 +880,7 @@ function AddRowDialog(props: {
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]"
             >
-              Добавить
+              {t("add")}
             </Button>
           </div>
         </div>
@@ -885,6 +915,7 @@ function SpecValueCell({
   /** Короткие значения вроде «1 раз в смену» не переносим (U7). */
   nowrap?: boolean;
 }) {
+  const t = useTranslations("uvLampRuntime");
   const filled = value.trim() !== "" && value.trim() !== "—";
 
   return (
@@ -897,7 +928,7 @@ function SpecValueCell({
         <button
           type="button"
           onClick={onEdit}
-          title={filled ? "Изменить значение спецификации" : "Заполнить обязательное поле спецификации"}
+          title={filled ? t("editValue") : t("fillRequired")}
           className={`${CELL_FOCUS_CLASS} h-full w-full px-3 py-1 text-center transition-colors duration-150 hover:bg-[#eef0ff] ${
             nowrap ? "whitespace-nowrap" : ""
           }`}
@@ -925,7 +956,14 @@ function SpecificationTable({
   onEdit: () => void;
   editable: boolean;
 }) {
+  const t = useTranslations("uvLampRuntime");
+  const format = useFormatter();
   const spec = config.spec;
+  const disinfectionObject = spec.disinfectionAir && spec.disinfectionSurface
+    ? t("airAndSurface")
+    : spec.disinfectionAir ? t("air") : spec.disinfectionSurface ? t("surface") : "—";
+  const radiationMode = t(spec.radiationMode === "continuous" ? "continuous" : "intermittent");
+  const condition = t(spec.disinfectionCondition === "with_people" ? "withPeople" : "withoutPeople");
 
   return (
     <div className="uv-spec-section">
@@ -950,16 +988,16 @@ function SpecificationTable({
               colSpan={4}
               className="border border-[#ccc] bg-[#f0f0f0] px-3 py-1.5 text-center text-[13px] font-bold leading-tight print:bg-white"
             >
-              Спецификация ультрафиолетовой бактерицидной установки
+              {t("specHeading")}
             </td>
           </tr>
           <tr>
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Объект обеззараживания (воздух или поверхность, или то и другое)
+              {t("objectTableLabel")}
             </td>
-            <SpecValueCell value={getDisinfectionObjectLabel(spec)} onEdit={onEdit} editable={editable} />
+            <SpecValueCell value={disinfectionObject} onEdit={onEdit} editable={editable} />
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Ресурс рабочего времени (срок замены отработавших ламп), часов
+              {t("lampLifetimeTableLabel")}
             </td>
             <SpecValueCell
               value={spec.lampLifetimeHours ? String(spec.lampLifetimeHours) : ""}
@@ -969,42 +1007,42 @@ function SpecificationTable({
           </tr>
           <tr>
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Вид микроорганизма (санитарно-показательный или иной)
+              {t("microorganismTableLabel")}
             </td>
             <SpecValueCell value={spec.microorganismType} onEdit={onEdit} editable={editable} />
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Дата ввода установки в эксплуатацию
+              {t("commissioningDateLabel")}
             </td>
             <SpecValueCell
-              value={spec.commissioningDate ? formatRuDateDash(spec.commissioningDate) : ""}
+              value={spec.commissioningDate ? displayDate(format, spec.commissioningDate) : ""}
               onEdit={onEdit}
               editable={editable}
             />
           </tr>
           <tr>
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Режим облучения (непрерывный или повторно-кратковременный)
+              {t("radiationModeTableLabel")}
             </td>
-            <SpecValueCell value={getRadiationModeLabel(spec.radiationMode)} onEdit={onEdit} editable={editable} />
+            <SpecValueCell value={radiationMode} onEdit={onEdit} editable={editable} />
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Минимальный интервал между сеансами (для повторно-кратковременной)
+              {t("minimumIntervalTableLabel")}
             </td>
             <SpecValueCell value={spec.minIntervalBetweenSessions} onEdit={onEdit} editable={editable} />
           </tr>
           <tr>
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Условия обеззараживания (в присутствии или отсутствии людей)
+              {t("conditionTableLabel")}
             </td>
             <SpecValueCell
-              value={getDisinfectionConditionLabel(spec.disinfectionCondition)}
+              value={condition}
               onEdit={onEdit}
               editable={editable}
             />
             <td className="border border-[#ccc] bg-[#f9f9f9] px-3 py-1 font-medium leading-tight">
-              Частота контроля работы установки (частота включений)
+              {t("controlFrequencyTableLabel")}
             </td>
             <SpecValueCell
-              value={formatControlFrequencyLabel(spec.controlFrequency)}
+              value={formatFrequencyLabel(t, spec.controlFrequency)}
               onEdit={onEdit}
               editable={editable}
               nowrap
@@ -1019,7 +1057,7 @@ function SpecificationTable({
           onClick={onEdit}
           className="text-[13px] text-[#5566f6] underline hover:no-underline"
         >
-          Настроить спецификацию
+          {t("configureSpecification")}
         </button>
       </div>
     </div>
@@ -1043,6 +1081,8 @@ const UV_MONTHLY_MIN_ROWS = 6;
  * бланк остался прежним.
  */
 function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; hours: number; remaining: number }[] }) {
+  const t = useTranslations("uvLampRuntime");
+  const format = useFormatter();
   const rowCount = Math.max(UV_MONTHLY_MIN_ROWS, monthlyData.length);
   const rowIndexes = Array.from({ length: rowCount }, (_, index) => index);
 
@@ -1057,13 +1097,13 @@ function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; ho
               colSpan={3}
               className="border border-[#ccc] bg-[#f0f0f0] px-3 py-1.5 text-center text-[13px] font-bold leading-tight print:bg-white"
             >
-              Суммарное количество отработанных часов бактерицидной установкой по месяцам
+              {t("monthlyTotal")}
             </th>
           </tr>
           <tr className="bg-[#f0f0f0]">
-            <th className="border border-[#ccc] px-3 py-1 text-left font-semibold leading-tight">Месяц, год</th>
-            <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">Количество часов</th>
-            <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">Остаточное количество часов</th>
+            <th className="border border-[#ccc] px-3 py-1 text-left font-semibold leading-tight">{t("monthYear")}</th>
+            <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">{t("hoursWorked")}</th>
+            <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">{t("hoursRemaining")}</th>
           </tr>
         </thead>
         <tbody>
@@ -1077,9 +1117,9 @@ function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; ho
             const blank = " ";
             return (
               <tr key={left?.month || `empty-${index}`}>
-                <td className={cell}>{left ? formatMonthLabel(left.month) : blank}</td>
-                <td className={num}>{left ? left.hours.toFixed(2).replace(".", ",") : blank}</td>
-                <td className={num}>{left ? left.remaining.toFixed(2).replace(".", ",") : blank}</td>
+                <td className={cell}>{left ? format.dateTime(new Date(`${left.month}-01T00:00:00Z`), { month: "long", year: "numeric", timeZone: "UTC" }) : blank}</td>
+                <td className={num}>{left ? format.number(left.hours, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : blank}</td>
+                <td className={num}>{left ? format.number(left.remaining, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : blank}</td>
               </tr>
             );
           })}
@@ -1092,13 +1132,15 @@ function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; ho
 
 /* ─── Main Document Client ─── */
 
-function rowSaveErrorMessage(error: unknown): string {
-  return error instanceof Error && error.message === NO_ROW_EMPLOYEE_MESSAGE
-    ? NO_ROW_EMPLOYEE_MESSAGE
-    : "Не удалось сохранить строку";
+function rowSaveErrorMessage(error: unknown, noEmployee: string, fallback: string): string {
+  return error instanceof Error && error.message === NO_ROW_EMPLOYEE_MESSAGE ? noEmployee : fallback;
 }
 
 export function UvLampRuntimeDocumentClient(props: Props) {
+  const t = useTranslations("uvLampRuntime");
+  const journalNames = useTranslations("journals.names");
+  const format = useFormatter();
+  const { controls: journalControls } = useJournalControls();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [specEditOpen, setSpecEditOpen] = useState(false);
@@ -1247,7 +1289,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     const deletable = rows.filter((row) => selectedRowIds.includes(row.id) && !row.id.startsWith("virtual:"));
     if (deletable.length === 0) return;
     const count = deletable.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: t("deleteSelectedQuestion"), description: t("deleteSelectedDescription", { count }), variant: "danger", confirmLabel: t("delete") }))) return;
 
     try {
       const response = await fetch(`/api/journal-documents/${props.documentId}/entries`, {
@@ -1257,25 +1299,25 @@ export function UvLampRuntimeDocumentClient(props: Props) {
       });
 
       if (!response.ok) {
-        throw new Error("Не удалось удалить выбранные строки");
+        throw new Error(t("deleteError"));
       }
 
       // U6: удалённая запись пропадает из таблицы целиком — пустых
       // строк-заготовок в бланке больше нет.
       setRows((current) => current.filter((row) => !selectedRowIds.includes(row.id)));
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(t("deleteSelectedSuccess", { count }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(humanizeFetchError(error, t("deleteError")));
     }
   }
 
   async function handleCloseJournal() {
     const confirmed = await confirmAsync({
-      title: "Закончить журнал?",
-      description: "Документ станет доступен только для чтения.",
+      title: t("finishQuestion"),
+      description: t("finishDescription"),
       variant: "warn",
-      confirmLabel: "Закончить",
+      confirmLabel: t("finishJournal"),
     });
     if (!confirmed) return;
 
@@ -1286,7 +1328,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось закрыть журнал");
+      toast.error(t("closeError"));
       return;
     }
 
@@ -1332,9 +1374,9 @@ export function UvLampRuntimeDocumentClient(props: Props) {
 
     try {
       await saveRow(newRow);
-      if (existing) toast.success("Добавлен ещё один сеанс за эту дату");
+      if (existing) toast.success(t("additionalSessionAdded"));
     } catch (error) {
-      toast.error(rowSaveErrorMessage(error));
+      toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError")));
     }
   }
 
@@ -1367,10 +1409,10 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     const row = rows.find((item) => item.id === rowId);
     if (!row) return;
     const confirmed = await confirmAsync({
-      title: "Удалить сеанс?",
-      description: `Сеанс №${sessionIndex + 1} за ${formatRuDateDash(row.date)} будет удалён из записи.`,
+      title: t("deleteSessionQuestion"),
+      description: t("deleteSessionDescription", { number: sessionIndex + 1, date: displayDate(format, row.date) }),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("delete"),
     });
     if (!confirmed) return;
 
@@ -1378,9 +1420,9 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     if (!updated) return;
     try {
       await saveRow(updated);
-      toast.success("Сеанс удалён");
+      toast.success(t("sessionDeleted"));
     } catch (error) {
-      toast.error(rowSaveErrorMessage(error));
+      toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError")));
     }
   }
 
@@ -1396,7 +1438,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     try {
       await saveRow(updated);
     } catch (error) {
-      toast.error(rowSaveErrorMessage(error));
+      toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError")));
     }
   }
 
@@ -1418,7 +1460,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     try {
       await saveRow(updated);
     } catch (error) {
-      toast.error(rowSaveErrorMessage(error));
+      toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError")));
     }
   }
 
@@ -1441,7 +1483,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
+      toast.error(t("saveSettingsError"));
       return;
     }
 
@@ -1458,7 +1500,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить спецификацию");
+      toast.error(t("saveSpecificationError"));
       return;
     }
 
@@ -1476,7 +1518,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
 
     if (!response.ok) {
       setAutoFill(!value);
-      toast.error("Не удалось сохранить настройку автозаполнения");
+      toast.error(t("saveAutofillError"));
       return;
     }
 
@@ -1494,7 +1536,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
 
       if (!autoFillResponse.ok) {
         const result = await autoFillResponse.json().catch(() => null);
-        toast.error(result?.error || "Не удалось применить автозаполнение");
+        toast.error(t("applyAutofillError"));
       }
     }
 
@@ -1525,7 +1567,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
         }}
         heading={
           <h1 className={DOC_HEADING_CLASS}>
-            Журнал учета работы УФ бактерицидной установки
+            {t(props.status === "active" ? "headingActive" : "headingClosed")}
           </h1>
         }
         onSettings={props.status === "active" ? () => setSettingsOpen(true) : undefined}
@@ -1534,7 +1576,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("finishJournal"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => void handleCloseJournal(),
                 },
@@ -1545,7 +1587,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
 
       {props.status !== "active" ? (
         <div className="mb-5">
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки времени." documentId={props.documentId} />
+          <JournalClosedBanner hint={t("closedHint")} documentId={props.documentId} />
         </div>
       ) : (
         <div className="mb-4 print:hidden">
@@ -1558,17 +1600,17 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                   Boolean(row.data.startTime && row.data.endTime)
               ).length
             }
-            label="отметка о работе установки за сегодня"
+            label={t("todayLabel")}
           />
         </div>
       )}
 
       {/* Полоса автозаполнения — сразу под строкой заголовка (эталон). */}
       {/* Настройка документа — право руководителя (сервер отвечал 403). */}
-      {props.status === "active" && canManageDocument && (
+      {props.status === "active" && canManageDocument && !journalControls.specialMode && (
         <div className={DOC_AUTOFILL_STRIP_CLASS}>
           <Switch checked={autoFill} onCheckedChange={(checked) => void handleAutoFillChange(checked)} />
-          <span className={DOC_AUTOFILL_LABEL_CLASS}>Автоматически заполнять журнал</span>
+          <span className={DOC_AUTOFILL_LABEL_CLASS}>{t("autofillLabel")}</span>
         </div>
       )}
 
@@ -1582,14 +1624,14 @@ export function UvLampRuntimeDocumentClient(props: Props) {
         onDelete={
           selectedDeletableCount > 0
             ? () => {
-                deleteSelectedRows().catch(() => toast.error("Ошибка удаления"));
+                deleteSelectedRows().catch(() => toast.error(t("deleteError")));
               }
             : undefined
         }
         hint={
           selectedDeletableCount > 0
-            ? "Записи наработки будут удалены без возможности отмены"
-            : "Автоматические строки удалить нельзя — в них ещё нет записи"
+            ? t("deleteRowsTitle")
+            : t("deleteAutomaticRowsTitle")
         }
       />
 
@@ -1622,7 +1664,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
       >
         <JournalDocumentHeader
           orgName={props.organizationName}
-          title="Журнал учета работы ультрафиолетовой бактерицидной установки"
+          title={journalNames("uv_lamp_runtime")}
           startedAt={props.dateFrom}
           finishedAt={props.status === "closed" ? props.dateTo : null}
           controlPeriodicity={props.controlPeriodicity}
@@ -1634,16 +1676,16 @@ export function UvLampRuntimeDocumentClient(props: Props) {
           применения жили лишь в print-only блоке. */}
       <div className={`${DOC_CAPS_TITLE_CLASS} text-center`}>
         <div className="text-[15px] font-bold uppercase leading-tight text-black">
-          Бактерицидная установка №{config.lampNumber}
+          {t("deviceHeading", { number: config.lampNumber })}
         </div>
         <div className="mt-4 text-[14px] font-bold leading-tight text-black">
-          {UV_LAMP_RUNTIME_PAGE_TITLE}
+          {journalNames("uv_lamp_runtime")}
         </div>
         <div className="mx-auto mt-1 w-fit min-w-[280px] max-w-full border-b border-[#333] px-4 pb-0.5 text-[13px] leading-tight text-black print:border-black">
           {config.areaName || " "}
         </div>
         <div className="mt-1 text-[11px] leading-tight text-[#e07b00] print:text-black">
-          (наименование цеха / участка применения)
+          {t("areaPrintLabel")}
         </div>
       </div>
 
@@ -1671,11 +1713,11 @@ export function UvLampRuntimeDocumentClient(props: Props) {
             const sessions = listUvRuntimeSessionSlots(row.data);
             return {
               id: row.id,
-              title: `№${index + 1} · ${formatRuDateDash(row.date)}`,
+              title: `№${index + 1} · ${displayDate(format, row.date)}`,
               subtitle: userMap[row.employeeId || fallbackEmployeeId] || undefined,
               badge: duration !== null ? (
                 <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-semibold text-[#5566f6]">
-                  {duration} мин
+                  {t("durationMinutes", { count: duration })}
                 </span>
               ) : undefined,
               leading: props.status === "active" ? (
@@ -1698,12 +1740,12 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                     onClick={() => void addSession(row.id)}
                     className="w-full rounded-xl border border-[#dcdfed] bg-[#f5f6ff] px-3 py-2 text-[13px] font-semibold text-[#5566f6] transition-colors duration-150 hover:bg-[#eef1ff]"
                   >
-                    + Ещё сеанс
+                    {t("moreSession")}
                   </button>
                 ) : undefined,
               fields: [
                 ...sessions.map((session, sessionIndex) => ({
-                  label: `Сеанс №${sessionIndex + 1}`,
+                  label: t("sessionNumber", { number: sessionIndex + 1 }),
                   value: (
                     <span className="flex flex-wrap items-center gap-2">
                       <span>
@@ -1718,7 +1760,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                             }
                             className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[12px] font-semibold text-[#5566f6] transition-colors duration-150 hover:bg-[#eef1ff]"
                           >
-                            изменить
+                            {t("edit")}
                           </button>
                           {sessions.length > 1 ? (
                             <button
@@ -1726,7 +1768,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                               onClick={() => void deleteSession(row.id, sessionIndex)}
                               className="rounded-full bg-[#fdf0f0] px-3 py-1 text-[12px] font-semibold text-[#e05a5a] transition-colors duration-150 hover:bg-[#fbe3e3]"
                             >
-                              удалить
+                              {t("delete")}
                             </button>
                           ) : null}
                         </>
@@ -1735,19 +1777,19 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                   ),
                 })),
                 {
-                  label: "Продолжительность",
-                  value: duration !== null ? `${duration} минут` : "",
+                  label: t("durationLabel"),
+                  value: duration !== null ? t("durationMinutes", { count: duration }) : "",
                   hideIfEmpty: true,
                 },
                 {
-                  label: "Ответственный",
+                  label: t("employeeResponsible"),
                   value: userMap[row.employeeId || fallbackEmployeeId] || "",
                   hideIfEmpty: true,
                 },
               ],
             };
           })}
-          emptyLabel="Записей не найдено."
+          emptyLabel={t("noRecords")}
         />
       ) : null}
 
@@ -1761,7 +1803,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
             className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]"
           >
             <Plus className="size-5" strokeWidth={2.5} />
-            Добавить
+            {t("add")}
           </Button>
         </div>
       )}
@@ -1805,21 +1847,21 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                   <Checkbox
                     checked={allSelected}
                     disabled={deletableRowIds.length === 0}
-                    aria-label="Выбрать все строки"
+                    aria-label={t("selectAllRows")}
                     onCheckedChange={(checked) =>
                       setSelectedRowIds(checked === true ? [...deletableRowIds] : [])
                     }
                   />
                 </th>
               )}
-              <th className="border border-[#eceef5] px-3 py-1 text-left font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">Дата</th>
-              <th className="border border-[#eceef5] px-3 py-1 text-center font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">Время ВКЛ</th>
-              <th className="border border-[#eceef5] px-3 py-1 text-center font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">Время ВЫКЛ</th>
+              <th className="border border-[#eceef5] px-3 py-1 text-left font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">{t("date")}</th>
+              <th className="border border-[#eceef5] px-3 py-1 text-center font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">{t("timeOnShort")}</th>
+              <th className="border border-[#eceef5] px-3 py-1 text-center font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">{t("timeOffShort")}</th>
               <th className="border border-[#eceef5] px-3 py-1 text-center font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">
-                Итого продолжительность работы, минут
+                {t("totalDuration")}
               </th>
               <th className="border border-[#eceef5] px-3 py-1 text-left font-semibold text-[#5b6075] print:border-[#ccc] leading-tight">
-                ФИО ответственного лица
+                {t("responsibleFullName")}
               </th>
             </tr>
           </thead>
@@ -1859,10 +1901,10 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                           rowSpan={sessions.length}
                           className="border border-[#eceef5] px-2 py-1 align-middle print:border-[#ccc] leading-tight"
                         >
-                          <div className="px-2 py-1 text-[14px] text-black">{formatRuDateDash(row.date)}</div>
+                          <div className="px-2 py-1 text-[14px] text-black">{displayDate(format, row.date)}</div>
                           {sessions.length > 1 && (
                             <div className="px-2 text-[11px] text-[#8b90a6] print:text-black">
-                              сеансов: {sessions.length}
+                              {t("sessionCount", { count: sessions.length })}
                             </div>
                           )}
                         </td>
@@ -1875,12 +1917,12 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                             // `--:--`. Флаг ловится в @media print (app-theme.css).
                             data-empty={session.startTime ? undefined : "true"}
                             value={session.startTime}
-                            aria-label={`Время включения, сеанс №${sessionIndex + 1}`}
+                            aria-label={t("sessionOnAria", { number: sessionIndex + 1 })}
                             onChange={(event) =>
                               editSessionTime(row.id, sessionIndex, { startTime: event.target.value })
                             }
                             onBlur={() => {
-                              saveRow(row).catch((error) => toast.error(rowSaveErrorMessage(error)));
+                              saveRow(row).catch((error) => toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError"))));
                             }}
                             className="mx-auto h-9 w-[110px] rounded-md border-[#dcdfed] text-center text-[13px]"
                           />
@@ -1895,12 +1937,12 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                               type="time"
                               data-empty={session.endTime ? undefined : "true"}
                               value={session.endTime}
-                              aria-label={`Время выключения, сеанс №${sessionIndex + 1}`}
+                              aria-label={t("sessionOffAria", { number: sessionIndex + 1 })}
                               onChange={(event) =>
                                 editSessionTime(row.id, sessionIndex, { endTime: event.target.value })
                               }
                               onBlur={() => {
-                                saveRow(row).catch((error) => toast.error(rowSaveErrorMessage(error)));
+                                saveRow(row).catch((error) => toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError"))));
                               }}
                               className="h-9 w-[110px] rounded-md border-[#dcdfed] text-center text-[13px]"
                             />
@@ -1910,8 +1952,8 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                           {props.status === "active" && sessions.length > 1 && (
                             <button
                               type="button"
-                              title="Удалить сеанс"
-                              aria-label={`Удалить сеанс №${sessionIndex + 1}`}
+                              title={t("deleteSessionTitle")}
+                              aria-label={t("deleteSessionAria", { number: sessionIndex + 1 })}
                               onClick={() => void deleteSession(row.id, sessionIndex)}
                               className="rounded-lg p-1.5 text-[#b0b4c8] transition-colors duration-150 hover:bg-[#fdf0f0] hover:text-[#e05a5a] print:hidden"
                             >
@@ -1932,7 +1974,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                               onClick={() => void addSession(row.id)}
                               className="mt-1 block w-full text-[12px] text-[#5566f6] underline transition-colors duration-150 hover:no-underline print:hidden"
                             >
-                              + Ещё сеанс
+                              {t("moreSession")}
                             </button>
                           )}
                         </td>
@@ -1951,13 +1993,13 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                                 );
                                 const updated = { ...row, employeeId: value };
                                 saveRow(updated, { id: row.id, employeeId: row.employeeId }).catch((error) =>
-                                  toast.error(rowSaveErrorMessage(error))
+                                  toast.error(rowSaveErrorMessage(error, t("noEmployeeError"), t("rowSaveError")))
                                 );
                                 return;
                               }}
                             >
                               <SelectTrigger className="h-9 rounded-md border-[#dcdfed] text-[13px]">
-                                <SelectValue placeholder="Выберите сотрудника" />
+                                <SelectValue placeholder={t("selectEmployee")} />
                               </SelectTrigger>
                               <SelectContent>
                                 {props.users.map((user) => (
@@ -1992,7 +2034,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
                 leading={1}
                 labelSpan={1}
                 trailing={4}
-                label="Добавить строку"
+                label={t("addRow")}
                 onClick={() => setAddRowOpen(true)}
               />
             ) : null}
@@ -2031,7 +2073,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
           defaultEmployeeId={fallbackEmployeeId}
           defaultResponsibleTitle={props.responsibleTitle || "Управляющий"}
           onAdd={(data) => {
-            handleAddRow(data).catch(() => toast.error("Ошибка добавления строки"));
+            handleAddRow(data).catch(() => toast.error(t("addRowError")));
           }}
         />
       )}
@@ -2048,11 +2090,11 @@ export function UvLampRuntimeDocumentClient(props: Props) {
           return (
             <CardEditSheet
               open
-              title={`Сеанс №${editingSession.sessionIndex + 1}`}
-              subtitle={row ? formatRuDateDash(row.date) : undefined}
+              title={t("sessionNumber", { number: editingSession.sessionIndex + 1 })}
+              subtitle={row ? displayDate(format, row.date) : undefined}
               fields={[
-                { type: "time", key: "startTime", label: "Время включения" },
-                { type: "time", key: "endTime", label: "Время выключения" },
+                { type: "time", key: "startTime", label: t("startTime") },
+                { type: "time", key: "endTime", label: t("endTime") },
               ]}
               values={{
                 startTime: session?.startTime ?? "",

@@ -1,23 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { batchErrorKey } from "./batch-presentation";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const STATUS_TRANSITIONS: Record<string, { label: string; next: string; variant?: "default" | "outline" | "destructive" }[]> = {
+export const STATUS_TRANSITIONS: Record<string, { next: "in_production" | "written_off" | "finished" | "shipped"; variant?: "default" | "outline" | "destructive" }[]> = {
   received: [
-    { label: "В производство", next: "in_production" },
-    { label: "Списать", next: "written_off", variant: "destructive" },
+    { next: "in_production" },
+    { next: "written_off", variant: "destructive" },
   ],
   in_production: [
-    { label: "Готово", next: "finished" },
-    { label: "Списать", next: "written_off", variant: "destructive" },
+    { next: "finished" },
+    { next: "written_off", variant: "destructive" },
   ],
   finished: [
-    { label: "Отгрузить", next: "shipped" },
-    { label: "Списать", next: "written_off", variant: "destructive" },
+    { next: "shipped" },
+    { next: "written_off", variant: "destructive" },
   ],
 };
 
@@ -27,14 +29,17 @@ interface Props {
 }
 
 export function BatchStatusActions({ batchId, currentStatus }: Props) {
+  const t = useTranslations("productionBatches");
   const router = useRouter();
   const [loading, setLoading] = useState("");
+  const [error, setError] = useState<ReturnType<typeof batchErrorKey> | null>(null);
 
-  const transitions = STATUS_TRANSITIONS[currentStatus] || [];
+  const transitions = Object.hasOwn(STATUS_TRANSITIONS, currentStatus) ? STATUS_TRANSITIONS[currentStatus] : [];
   if (transitions.length === 0) return null;
 
   async function changeStatus(newStatus: string) {
     setLoading(newStatus);
+    setError(null);
     try {
       const res = await fetch(`/api/batches/${batchId}`, {
         method: "PATCH",
@@ -43,11 +48,12 @@ export function BatchStatusActions({ batchId, currentStatus }: Props) {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Не удалось сохранить. Попробуйте ещё раз.");
+        setError(batchErrorKey(data?.error, res.status));
+        return;
       }
       router.refresh();
     } catch {
-      // ignore
+      setError("saveFailed");
     } finally {
       setLoading("");
     }
@@ -56,19 +62,20 @@ export function BatchStatusActions({ batchId, currentStatus }: Props) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Действия</CardTitle>
+        <CardTitle className="text-base">{t("actions.title")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2">
-          {transitions.map((t) => (
+        {error && <p role="alert" className="mb-2 text-sm text-destructive">{t(`errors.${error}`)}</p>}
+        <div className="flex flex-wrap gap-2">
+          {transitions.map((transition) => (
             <Button
-              key={t.next}
-              variant={t.variant || "default"}
-              onClick={() => changeStatus(t.next)}
+              key={transition.next}
+              variant={transition.variant || "default"}
+              onClick={() => changeStatus(transition.next)}
               disabled={!!loading}
             >
-              {loading === t.next && <Loader2 className="size-4 animate-spin" />}
-              {t.label}
+              {loading === transition.next && <Loader2 className="size-4 animate-spin" />}
+              {t(`actions.${transition.next}`)}
             </Button>
           ))}
         </div>

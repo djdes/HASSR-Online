@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   CalendarPlus,
@@ -20,6 +21,9 @@ import { toast } from "sonner";
 
 import { RecognizeFromPhoto, type RecognizeResult } from "@/components/ai/recognize-from-photo";
 import { MasterBrakerageDialog } from "@/components/master/master-brakerage-dialog";
+import { MasterBrakerageHistory } from "@/components/master/master-brakerage-history";
+import type { MasterBrakerageHistoryBatch } from "@/lib/master-brakerage-history";
+import { MasterObjectsPanel } from "@/components/master/master-objects-panel";
 import { MasterMenuTableDialog } from "@/components/master/master-menu-table-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { MenuRow } from "@/lib/finished-product-bulk";
@@ -48,7 +52,7 @@ const KIND_META: Record<
   { title: string; journal: string; noun: [string, string, string]; example: string; exampleFile: string }
 > = {
   dish: {
-    title: "Меню для бракеража готовой продукции",
+    title: "Справочник блюд",
     journal: "журналы бракеража готовой продукции (БЖГП)",
     noun: ["блюдо", "блюда", "блюд"],
     example: "Борщ со сметаной    250      08:30\nПлов с курицей      200/10   11:00\nКомпот из сухофруктов 200   07:30",
@@ -67,7 +71,6 @@ const KIND_META: Record<
 function countLabel(count: number, noun: [string, string, string]): string {
   return `${count} ${pluralRu(count, noun[0], noun[1], noun[2])}`;
 }
-
 /** «во всех 3 объектах» / «в 1 объекте». */
 function inObjects(count: number): string {
   if (count === 0) return "во всех объектах с кодом справочника (пока ни одного)";
@@ -96,13 +99,17 @@ export function MasterDirectoryClient({
   initialTab,
   initialDishes,
   initialProducts,
-  organizations,
+  organizations: initialOrganizations,
 }: {
   initialTab: MasterTab;
   initialDishes: SharedItem[];
   initialProducts: SharedItem[];
   organizations: Array<{ id: string; name: string }>;
 }) {
+  const router = useRouter();
+  const [interactive, setInteractive] = useState(false);
+  useEffect(() => { setInteractive(true); }, []);
+  const [organizations, setOrganizations] = useState(initialOrganizations);
   const [tab, setTab] = useState<MasterTab>(initialTab);
   const [lists, setLists] = useState<Record<SharedKind, SharedItem[]>>({
     dish: initialDishes,
@@ -116,6 +123,7 @@ export function MasterDirectoryClient({
   const [menuTableOpen, setMenuTableOpen] = useState(false);
   /** «Добавить в журналы на дату» — строки БЖГП во все пищеблоки пула. */
   const [brakerageOpen, setBrakerageOpen] = useState(false);
+  const [editingBrakerageBatch, setEditingBrakerageBatch] = useState<MasterBrakerageHistoryBatch | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const fileKind = useRef<SharedKind>("dish");
 
@@ -232,6 +240,7 @@ export function MasterDirectoryClient({
     const docs = json.documents ?? 0;
     setLists((prev) => ({ ...prev, [preview.kind]: preview.items }));
     setPreview(null);
+    if (preview.kind === "dish") { toast.success("Справочник сохранён. Для выгрузки в журналы выберите дату."); return; }
     toast.success(
       `Готово: список обновлён в ${orgs} ${pluralRu(orgs, "объекте", "объектах", "объектах")} (${docs} ${pluralRu(
         docs,
@@ -243,16 +252,16 @@ export function MasterDirectoryClient({
   }
 
   const tabs: Array<{ key: MasterTab; label: string; short: string; icon: typeof Package; count: number }> = [
-    { key: "menu", label: "Меню → БЖГП", short: "Меню", icon: UtensilsCrossed, count: lists.dish.length },
+    { key: "menu", label: "Справочник блюд", short: "Блюда", icon: UtensilsCrossed, count: lists.dish.length },
     { key: "raw", label: "Сырьё → Скоропорт", short: "Сырьё", icon: Package, count: lists.product.length },
-    { key: "objects", label: "Объекты", short: "Объекты", icon: Building2, count: organizations.length },
+    { key: "objects", label: "Подключённые объекты", short: "Объекты", icon: Building2, count: organizations.length },
   ];
 
   const pasteMeta = pasteKind ? KIND_META[pasteKind] : null;
   const previewMeta = preview ? KIND_META[preview.kind] : null;
 
   return (
-    <div className="space-y-5">
+    <fieldset disabled={!interactive} data-ready={interactive ? "true" : "false"} data-testid="master-directory-client" className="m-0 min-w-0 space-y-5 border-0 p-0">
       <input
         ref={fileInput}
         type="file"
@@ -303,9 +312,6 @@ export function MasterDirectoryClient({
         </div>
       </nav>
 
-      {tab === "menu" ? (
-        <BrakerageCard objectsCount={organizations.length} onOpen={() => setBrakerageOpen(true)} />
-      ) : null}
 
       {tab === "menu" || tab === "raw" ? (
         <ListPanel
@@ -317,9 +323,10 @@ export function MasterDirectoryClient({
           onUpload={pickFile}
           onPaste={openPaste}
           onPhotoItems={addFromPhoto}
+          onExport={tab === "menu" ? () => { setEditingBrakerageBatch(null); setBrakerageOpen(true); } : undefined}
         />
       ) : (
-        <ObjectsPanel organizations={organizations} />
+        <MasterObjectsPanel organizations={organizations} onChange={(items) => { setOrganizations(items); router.refresh(); }} />
       )}
 
       <MasterBrakerageDialog
@@ -327,14 +334,17 @@ export function MasterDirectoryClient({
         onOpenChange={setBrakerageOpen}
         menu={lists.dish}
         organizationsCount={organizations.length}
+        editingBatch={editingBrakerageBatch}
       />
 
-      <MasterMenuTableDialog
+      {tab === "menu" ? <MasterBrakerageHistory onEdit={(batch) => { setEditingBrakerageBatch(batch); setBrakerageOpen(true); }} /> : null}
+
+      {menuTableOpen ? <MasterMenuTableDialog
         open={menuTableOpen}
         items={lists.dish}
         onClose={() => setMenuTableOpen(false)}
         onSubmit={submitMenuTable}
-      />
+      /> : null}
 
       {/* Вставка списком (сырьё): текущий список уже в поле — правьте, удаляйте строки, добавляйте новые. */}
       <ConfirmDialog
@@ -379,61 +389,17 @@ export function MasterDirectoryClient({
         icon={Send}
         description={
           preview && previewMeta ? (
-            <>
+            preview.kind === "dish" ? <>Справочник блюд, {preview.source}. Сохранение не добавляет строки в журналы. Выгрузка выполняется отдельно, с выбором даты.</> : <>
               {previewMeta.title}, {preview.source}. После сохранения список получат {previewMeta.journal}{" "}
               {inObjects(organizations.length)}.
             </>
           ) : null
         }
-        confirmLabel="Сохранить и разослать"
+        confirmLabel={preview?.kind === "dish" ? "Сохранить справочник" : "Сохранить и разослать"}
       >
         {preview ? <PreviewBody preview={preview} /> : null}
       </ConfirmDialog>
-    </div>
-  );
-}
-
-/**
- * Главное действие вкладки меню: строки бракеража на дату — в БЖГП всех
- * пищеблоков. Меню ниже — справочник подсказок и «Взять меню».
- */
-function BrakerageCard({ objectsCount, onOpen }: { objectsCount: number; onOpen: () => void }) {
-  return (
-    <section
-      className="rounded-3xl border border-[#dfe3ff] bg-gradient-to-br from-[#f5f6ff] to-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6"
-      aria-labelledby="master-brakerage-title"
-    >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
-            <CalendarPlus className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <h2 id="master-brakerage-title" className="text-[18px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-              Бракераж на дату — во все пищеблоки
-            </h2>
-            <p className="mt-1 text-[13.5px] leading-[1.55] text-[#6f7282]">
-              Составьте список блюд на день — строки появятся в журнале бракеража готовой продукции{" "}
-              {objectsCount === 1 ? "подключённого пищеблока" : `всех ${objectsCount} ${pluralRu(objectsCount, "пищеблока", "пищеблоков", "пищеблоков")}`}{" "}
-              на выбранную дату.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpen}
-          disabled={objectsCount === 0}
-          className={cn(PRIMARY, "shrink-0")}
-          data-testid="master-brakerage-open"
-        >
-          <CalendarPlus className="size-4" />
-          Добавить в журналы на дату
-        </button>
-      </div>
-      {objectsCount === 0 ? (
-        <p className="mt-3 text-[12.5px] text-[#a13a32]">Пока ни один пищеблок не подключён к коду справочника.</p>
-      ) : null}
-    </section>
+    </fieldset>
   );
 }
 
@@ -530,6 +496,7 @@ function ListPanel({
   onUpload,
   onPaste,
   onPhotoItems,
+  onExport,
 }: {
   kind: SharedKind;
   items: SharedItem[];
@@ -539,6 +506,7 @@ function ListPanel({
   onPaste: (kind: SharedKind) => void;
   /** «С фото»: распознанные позиции → предпросмотр различий. */
   onPhotoItems: (kind: SharedKind, items: SharedItem[]) => Promise<RecognizeResult>;
+  onExport?: () => void;
 }) {
   const meta = KIND_META[kind];
   const [query, setQuery] = useState("");
@@ -558,7 +526,8 @@ function ListPanel({
   const visible = filtered.slice(0, limit);
 
   const actions = (
-    <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="flex flex-wrap gap-2">
+      {onExport ? <button type="button" onClick={onExport} disabled={items.length === 0 || objectsCount === 0} className={OUTLINE} data-testid="master-brakerage-open"><CalendarPlus className="size-4 text-[#5566f6]" />Выгрузить в журналы</button> : null}
       <button
         type="button"
         onClick={() => onUpload(kind)}
@@ -622,7 +591,7 @@ function ListPanel({
             {meta.title}
           </h1>
           <p className="mt-1.5 text-[14px] leading-[1.55] text-[#6f7282]">
-            Этот список получат {meta.journal} {inObjects(objectsCount)}.
+            {kind === "dish" ? "Добавьте блюда списком, из Excel или с фото. Для выгрузки в журналы отдельно выберите дату." : <>Этот список получат {meta.journal} {inObjects(objectsCount)}.</>}
           </p>
         </div>
         {items.length > 0 ? actions : null}
@@ -632,8 +601,7 @@ function ListPanel({
         <div className="mt-5 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-10 text-center sm:px-6">
           <div className="text-[15px] font-medium text-[#0b1024]">Список пока пуст</div>
           <p className="mx-auto mt-1.5 max-w-[460px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Загрузите файл или вставьте список — перед сохранением покажем, что добавится. После сохранения{" "}
-            {meta.journal} {inObjects(objectsCount)} получат его сразу.
+            {kind === "dish" ? "Загрузите файл, вставьте список или распознайте фото. Перед сохранением покажем изменения; выгрузка в журналы выполняется отдельно." : <>Загрузите файл или вставьте список — перед сохранением покажем, что добавится. После сохранения {meta.journal} {inObjects(objectsCount)} получат его сразу.</>}
           </p>
           <div className="mt-5 flex justify-center">{actions}</div>
           <div className="mx-auto mt-6 grid max-w-[640px] gap-3 text-left sm:grid-cols-2">
@@ -761,68 +729,5 @@ function ListPanel({
         </div>
       )}
     </section>
-  );
-}
-
-function ObjectsPanel({ organizations }: { organizations: Array<{ id: string; name: string }> }) {
-  return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <section className={CARD} aria-labelledby="master-objects">
-        <h1 id="master-objects" className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-          Подключённые объекты
-        </h1>
-        <p className="mt-1.5 text-[14px] leading-[1.55] text-[#6f7282]">
-          Эти объекты получают меню и сырьё из кабинета при каждом сохранении.
-        </p>
-        {organizations.length > 0 ? (
-          <ul className="mt-4 divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4]" data-testid="master-objects-list">
-            {organizations.map((org) => (
-              <li key={org.id} className="flex min-w-0 items-center gap-3 px-4 py-3 text-[14px] text-[#0b1024]">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
-                  <Building2 className="size-4" />
-                </span>
-                <span className="min-w-0 break-words">{org.name}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-8 text-center text-[13.5px] text-[#6f7282]">
-            Пока ни один объект не подключён к коду справочника.
-          </div>
-        )}
-      </section>
-      <section className={CARD} aria-labelledby="master-objects-howto">
-        <h2 id="master-objects-howto" className="text-[16px] font-semibold text-[#0b1024]">
-          Как подключить новый объект
-        </h2>
-        <ol className="mt-3 space-y-2.5 text-[13.5px] leading-[1.55] text-[#3c4053]">
-          <li className="flex gap-2.5">
-            <Step n={1} />
-            <span>
-              Руководитель объекта открывает документ журнала бракеража готовой продукции → «Настройки документа»
-              (или «Настройки» → «Мастер-кабинет справочников» → «Подключиться к коду другой организации»).
-            </span>
-          </li>
-          <li className="flex gap-2.5">
-            <Step n={2} />
-            <span>
-              В блоке «Общий справочник блюд» вводит код справочника (он в шапке кабинета) и нажимает «Привязать».
-            </span>
-          </li>
-          <li className="flex gap-2.5">
-            <Step n={3} />
-            <span>Меню и сырьё сразу появляются в его журналах. Своё, что объект вносил раньше, остаётся.</span>
-          </li>
-        </ol>
-      </section>
-    </div>
-  );
-}
-
-function Step({ n }: { n: number }) {
-  return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[12px] font-semibold tabular-nums text-[#3848c7]">
-      {n}
-    </span>
   );
 }

@@ -1,4 +1,35 @@
 import { JournalDocGuideOverlay } from "@/components/journals/journal-doc-guide";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import type { MessageNamespace } from "@/i18n/messages";
+
+const JOURNAL_MESSAGES: Record<string, readonly MessageNamespace[]> = {
+  daily_samples: ["genericRegister"],
+  vitaminization: ["genericRegister"],
+  ration_control: ["genericRegister"],
+  transport_temperature: ["genericRegister"],
+  tableware_breakage: ["genericRegister"],
+  pool_water_control: ["genericRegister"],
+  inventory_condition: ["genericRegister"],
+  instrument_sterilization: ["genericRegister"],
+  medical_waste_b: ["genericRegister"],
+  batch_release: ["genericRegister"],
+  glass_items_list: ["glassInventory"],
+  cold_equipment_control: ["coldEquipment"],
+  uv_lamp_runtime: ["uvLampRuntime"],
+  climate_control: ["climate"],
+  fryer_oil: ["fryerOil"],
+  cleaning: ["cleaningGrid"],
+  general_cleaning: ["cleaningGrid"],
+  sanitary_day_control: ["cleaningGrid"],
+  equipment_calibration: ["equipmentCalibration"],
+  finished_product: ["finishedProduct"],
+  perishable_rejection: ["perishableRejection"],
+  accident_journal: ["accidentJournal"],
+  breakdown_history: ["breakdownHistory"],
+  breakdownhistoryjournal: ["breakdownHistory"],
+  complaint_register: ["complaintRegister"],
+  complaintjournal: ["complaintRegister"],
+};
 
 /**
  * Shared layout for the `/journals/<code>` subtree.
@@ -21,7 +52,9 @@ import { JournalDocGuideOverlay } from "@/components/journals/journal-doc-guide"
  * сама компонента детектит по URL, что мы на странице документа, и
  * скрывается на других URL'ах. Контент гайда — из journal-doc-guides.ts.
  */
-export default function JournalCodeLayout({ children }: { children: React.ReactNode }) {
+export default async function JournalCodeLayout({ children, params }: { children: React.ReactNode; params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  const journalMessages = Object.hasOwn(JOURNAL_MESSAGES, code) ? JOURNAL_MESSAGES[code] : [];
   return (
     // Full-bleed белая подложка: `<main>` в (dashboard)/layout ограничен
     // 1800px, поэтому выходим из контейнера через w-screen + центрирование —
@@ -37,6 +70,7 @@ export default function JournalCodeLayout({ children }: { children: React.ReactN
        есть подложка растягивалась минимум на страницу независимо от
        объёма бланка и вместе с вертикальными паддингами выдавливала
        лишний пустой лист. Белая подложка нужна только экрану. */
+    <DomainMessagesBoundary namespaces={["journalFields", "journalForm", "journalWidgets", "hygiene", "reports", "journalDocGuides", "journalFillingGuides", ...journalMessages]}>
     <div className="relative left-1/2 -my-4 min-h-[calc(100vh-140px)] w-screen -translate-x-1/2 bg-white py-4 md:-my-6 md:py-6 print:min-h-0 print:py-0 md:print:py-0">
       {/* 1800px — раздел журналов идёт во всю ширину экрана (R1).
           Широкие таблицы журналов скроллятся внутри собственного
@@ -63,5 +97,6 @@ export default function JournalCodeLayout({ children }: { children: React.ReactN
         <JournalDocGuideOverlay />
       </div>
     </div>
+    </DomainMessagesBoundary>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { type ReactNode } from "react";
+import { NextIntlClientProvider, useLocale } from "next-intl";
 import type { SiteLocale } from "@/i18n/site-locale";
+import type { Messages } from "@/i18n/messages";
 
-const SiteLocaleContext = createContext<SiteLocale>("ru");
-
-export function SiteLocaleProvider({ locale, children }: { locale: SiteLocale; children: ReactNode }) {
-  return <SiteLocaleContext.Provider value={locale}>{children}</SiteLocaleContext.Provider>;
+export function SiteLocaleProvider({ locale, messages, timeZone, children }: { locale: SiteLocale; messages: Partial<Messages>; timeZone?: string; children: ReactNode }) {
+  return <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>{children}</NextIntlClientProvider>;
 }
 
 export function useSiteLocale(): SiteLocale {
-  return useContext(SiteLocaleContext);
+  return useLocale();
 }

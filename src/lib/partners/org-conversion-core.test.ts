@@ -169,6 +169,23 @@ test("перевод: последствия — оплата, места, ко�
   assert.match(consequences.next.join(" "), /Передать клиенту/);
 });
 
+test("conversion presentation carries stable keys and customer data beside legacy strings", () => {
+  const { consequences } = okConversion(conversion({ teamInOrganization: [
+    { userId: "u-team", name: "Ольга", livesHere: false, isMember: true },
+  ] }));
+  assert.ok(consequences.payment.length > 0);
+  assert.ok(consequences.presentation);
+  assert.ok(consequences.presentation.payment.some((line) => line.key === "subscriptionPaid"));
+  assert.ok(consequences.presentation.access.some((line) =>
+    line.key === "organizationRemoved" && line.params.organizationName === "Кафе Ромашка",
+  ));
+  assert.ok(consequences.presentation.access.some((line) =>
+    line.key === "teamAccess" && line.params.names === "Ольга",
+  ));
+  assert.ok(consequences.presentation.commission.some((line) => line.key === "bonusReward"));
+  assert.match(consequences.access.join(" "), /Кафе Ромашка/);
+});
+
 test("перевод: срок единицы биллинга — максимум аккаунта и зеркал его организаций", () => {
   const later = new Date("2027-01-20T09:00:00.000Z");
   const snapshot = conversion({
@@ -260,6 +277,10 @@ test("перевод: неоплаченный счёт с действующи�
   assert.equal(plan.ok, false);
   if (plan.ok) return;
   assert.deepEqual(plan.blockers.map((b) => b.code), ["pending_invoice"]);
+  assert.deepEqual(plan.blockers[0].presentation, {
+    key: "pending_invoice_due",
+    params: { invoiceId: "55", amountRub: 5970, dueDate: days(3).toISOString() },
+  });
   assert.match(plan.blockers[0].message, /счёт №55 на 5\s970 ₽/);
 });
 

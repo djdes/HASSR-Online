@@ -1,0 +1,66 @@
+{
+  "locale": "uz",
+  "sourceHash": "0a88a78e26be0da9dc374ff79b577b601062c61e4ff638a3a3887e1e0e481fb7",
+  "title": "2026-yilda SanPiN: nimalar o‘zgardi va nimalar avvalgidek qoldi",
+  "excerpt": "2026-yil 1-sentabrdan SanPiN 2.3/2.4.4282-26 3590-20 o‘rnini egallaydi: raqamlanish o‘zgaradi, talablar esa avvalgidek qoladi. Jurnallar, saqlash muddatlari va Rossiya Ma’muriy huquqbuzarliklar kodeksining 6.6-moddasidagi jarimalar haqida bilib oling.",
+  "body": [
+    {
+      "type": "p",
+      "text": "2026-yil 1-sentabrdan umumiy ovqatlanish uchun asosiy hujjat — avvalgi 2.3/2.4.3590-20 o‘rniga qabul qilingan SanPiN 2.3/2.4.4282-26. Bandlar raqami o‘zgardi, ammo asosiy talablar 2021-yildan beri o‘sha-o‘sha. Hozir nimalarni yodda tutish kerakligini ko‘rib chiqamiz."
+    },
+    {
+      "type": "h2",
+      "text": "Majburiy jurnallar"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Xodimlar salomatligi jurnali (gigiyena jurnali) — har bir smenada, har bir xodim uchun.",
+        "Tayyor mahsulotni brak qilish jurnali — har bir partiya uchun.",
+        "Sovutish uskunalari harorati jurnali — kuniga kamida ikki marta.",
+        "Xomashyoni qabul qilish nazorati — har bir qabulda.",
+        "Dezinfeksiya vositalaridan foydalanish jurnali — vosita har safar ishlatilganda."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Saqlash muddatlari"
+    },
+    {
+      "type": "p",
+      "text": "Eng kam saqlash muddati — 12 oy. HACCP bilan bog‘liq yozuvlar (auditlar, CAPA, kuzatuvchanlik) 3 yil saqlanadi. Oziq-ovqatdan zaharlanish gumoni bo‘lsa, avvalo oxirgi 12 oy yozuvlari ko‘riladi, shuning uchun ularni yo‘qotmaslik kerak."
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Muhim",
+      "text": "Rossiya Ma’muriy huquqbuzarliklar kodeksining 6.6-moddasiga ko‘ra, mansabdor shaxsga 30 000 rublgacha, yuridik shaxsga 100 000 rublgacha jarima solinishi mumkin. Majburiy jurnalning yo‘qligi asosiy talab buzilishi bilan bir xil baholanadi."
+    },
+    {
+      "type": "h2",
+      "text": "Inspektorlar ko‘p qayd etadigan kamchiliklar"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Mas’ul shaxs imzosi yo‘q: ruxsat yoki ishdan chetlatish familiyasiz qayd etilgan.",
+        "Smena o‘tkazib yuborilgan: dushanba uchun yozuv bor, seshanba uchun yo‘q.",
+        "Haroratlar shubhali darajada bir xil: +4, +4, +4, +4. Inspektor soxtalashtirishni bir necha soniyada payqaydi.",
+        "Partiya yuk xati bilan bog‘lanmagan: brak qaydida yetkazib beruvchi ma’lumotlari yo‘q."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "WeSetup qanday yordam beradi"
+    },
+    {
+      "type": "p",
+      "text": "Avtomatik to‘ldirish faqat xavfsiz joylarda ishlaydi: ish jadvali, lavozimlar va odatiy mahsulotlarda. Haqiqiy o‘lchov kerak bo‘lgan joylarda — harorat yoki mahsulotni brak qilishda — avtomatik to‘ldirish o‘chiriladi va haqiqiy qiymatsiz jurnalni yopib bo‘lmaydi."
+    }
+  ],
+  "tags": [
+    "SanPiN",
+    "Talablar",
+    "Jarimalar"
+  ]
+}

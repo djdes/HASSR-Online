@@ -38,7 +38,7 @@ export async function POST(
   const { taskId: taskIdRaw } = await ctx.params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId) || taskId <= 0) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
 
   let form: FormData;
@@ -46,7 +46,7 @@ export async function POST(
     form = await request.formData();
   } catch {
     return NextResponse.json(
-      { error: "Multipart-форма ожидается" },
+      { errorCode: "multipartRequired", error: "Multipart-форма ожидается" },
       { status: 400 }
     );
   }
@@ -62,20 +62,20 @@ export async function POST(
     typeof stepIndex !== "string"
   ) {
     return NextResponse.json(
-      { error: "Не хватает полей (file/token/stepId/stepIndex)" },
+      { errorCode: "photoFieldsMissing", error: "Не хватает полей (file/token/stepId/stepIndex)" },
       { status: 400 }
     );
   }
 
   if (!ALLOWED_TYPES.includes(file.type as AllowedType)) {
     return NextResponse.json(
-      { error: "Допустимы JPG / PNG / WebP" },
+      { errorCode: "photoType", error: "Допустимы JPG / PNG / WebP" },
       { status: 400 }
     );
   }
   if (file.size > MAX_SIZE) {
     return NextResponse.json(
-      { error: "Файл больше 5 МБ" },
+      { errorCode: "photoSize", error: "Файл больше 5 МБ" },
       { status: 400 }
     );
   }
@@ -86,7 +86,7 @@ export async function POST(
     include: { integration: true },
   });
   if (candidates.length === 0) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "taskNotFound", error: "Task not found" }, { status: 404 });
   }
   let link: (typeof candidates)[number] | null = null;
   for (const c of candidates) {
@@ -97,7 +97,7 @@ export async function POST(
     break;
   }
   if (!link) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
 
   const ext = EXT_BY_TYPE[file.type as AllowedType];
@@ -117,7 +117,7 @@ export async function POST(
   } catch (err) {
     console.error("[task-fill/photo] write failed", err);
     return NextResponse.json(
-      { error: "Не удалось сохранить файл" },
+      { errorCode: "photoSave", error: "Не удалось сохранить файл" },
       { status: 500 }
     );
   }

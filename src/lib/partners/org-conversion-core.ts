@@ -51,7 +51,17 @@ export const CONVERTED_SOURCE = "converted";
 
 // ---------------------------------------------------------------- общее
 
-export type Blocker = { code: BlockerCode; message: string };
+export type BlockerPresentation =
+  | { key: "pending_invoice"; params: { invoiceId: string; amountRub: number } }
+  | { key: "pending_invoice_due"; params: { invoiceId: string; amountRub: number; dueDate: string } }
+  | { key: "pending_card_payment"; params: { orderId: string; startedAt: string; availableAt: string } }
+  | { key: "recent_payment"; params: { orderId: string; minutes: number } }
+  | { key: "team_lives_here"; params: { names: string[] } }
+  | { key: "other_partner"; params: { partnerName: string } }
+  | { key: "owned_by_client"; params: { ownerEmail: string } }
+  | { key: "seat_limit"; params: { limit: number; total: number; organizationName: string } };
+
+export type Blocker = { code: BlockerCode; message: string; presentation?: BlockerPresentation };
 
 export type BlockerCode =
   | "not_partner"
@@ -85,7 +95,46 @@ export type Consequences = {
   commission: string[];
   access: string[];
   next: string[];
+  /** Stable display metadata for localized UI; legacy `message` strings remain for API compatibility. */
+  presentation?: ConsequencePresentation;
 };
+
+export type ConsequenceLine =
+  | { key: "subscriptionPaid"; params: { date: string } }
+  | { key: "subscriptionResponsibility" }
+  | { key: "accountPaidUntil"; params: { date: string } }
+  | { key: "recurringDisabled" }
+  | { key: "lifetimeDiscount"; params: { code: string } }
+  | { key: "balanceRetained"; params: { amount: number } }
+  | { key: "accountSeats"; params: { organizationCount: number; before: number; after: number } }
+  | { key: "organizationSeats"; params: { count: number } }
+  | { key: "seatLimit"; params: { limit: number } }
+  | { key: "rewardIntro" }
+  | { key: "rewardsByProgram" }
+  | { key: "subscriptionReward"; params: { percent: number; months: number } }
+  | { key: "subscriptionRewardNoLimit"; params: { percent: number } }
+  | { key: "bonusReward"; params: { amount: number; paymentNumber: number } }
+  | { key: "hardwareReward"; params: { percent: number } }
+  | { key: "preConversionNoReward" }
+  | { key: "organizationRemoved"; params: { organizationName: string } }
+  | { key: "partnerAccess" }
+  | { key: "clientControls" }
+  | { key: "teamAccess"; params: { names: string } }
+  | { key: "profileMoves"; params: { organizationName: string } }
+  | { key: "settingsUnchanged" }
+  | { key: "handoffOwner" }
+  | { key: "returnRules" }
+  | { key: "returnPayment" }
+  | { key: "returnPaidUntil"; params: { date: string } }
+  | { key: "returnRecurring" }
+  | { key: "returnSeats"; params: { total: number; current: number; organizationCount: number } }
+  | { key: "returnNewAccountSeats"; params: { count: number } }
+  | { key: "returnCommission" }
+  | { key: "returnOwner"; params: { organizationName: string } }
+  | { key: "returnInviteCancelled"; params: { email: string } };
+
+export type ConsequenceGroup = "payment" | "seats" | "commission" | "access" | "next";
+export type ConsequencePresentation = Record<ConsequenceGroup, ConsequenceLine[]>;
 
 /** «12 ноября 2026» по Москве. */
 export function formatMskDate(date: Date): string {
@@ -321,6 +370,9 @@ function orderBlockers(snapshot: ConversionSnapshot): Blocker[] {
   if (invoice) {
     blockers.push({
       code: "pending_invoice",
+      presentation: invoice.invoiceDueAt
+        ? { key: "pending_invoice_due", params: { invoiceId: String(invoice.id), amountRub: invoice.amountRub, dueDate: invoice.invoiceDueAt.toISOString() } }
+        : { key: "pending_invoice", params: { invoiceId: String(invoice.id), amountRub: invoice.amountRub } },
       message:
         `Выставлен счёт №${invoice.id} на ${rub(invoice.amountRub)}, он ещё не оплачен` +
         (invoice.invoiceDueAt ? ` (действует до ${formatMskDate(invoice.invoiceDueAt)})` : "") +
@@ -339,6 +391,9 @@ function orderBlockers(snapshot: ConversionSnapshot): Blocker[] {
     const until = new Date(card.createdAt.getTime() + PENDING_CARD_ORDER_WINDOW_MS);
     blockers.push({
       code: "pending_card_payment",
+      presentation: { key: "pending_card_payment", params: {
+        orderId: String(card.id), startedAt: card.createdAt.toISOString(), availableAt: until.toISOString(),
+      } },
       message:
         `${formatMskDateTime(card.createdAt)} начата оплата картой (заказ №${card.id}), ссылка на оплату ещё действует. ` +
         `Перевод станет доступен после ${formatMskDateTime(until)} или через 15 минут после оплаты.`,
@@ -351,6 +406,7 @@ function orderBlockers(snapshot: ConversionSnapshot): Blocker[] {
     const minutes = Math.max(1, Math.ceil((RECENT_PAYMENT_WINDOW_MS - (now - paid.paidAt.getTime())) / 60000));
     blockers.push({
       code: "recent_payment",
+      presentation: { key: "recent_payment", params: { orderId: String(paid.id), minutes } },
       message: `Только что прошла оплата (заказ №${paid.id}). Повторите перевод через ${minutes} мин.`,
     });
   }
@@ -415,6 +471,7 @@ export function conversionBlockers(snapshot: ConversionSnapshot): Blocker[] {
   if (livingTeam.length > 0) {
     blockers.push({
       code: "team_lives_here",
+      presentation: { key: "team_lives_here", params: { names: livingTeam.map((member) => member.name) } },
       message:
         `В этой организации числятся сотрудники вашей партнёрской команды: ${livingTeam.map((m) => m.name).join(", ")}. ` +
         "Пока их профиль здесь, перевести её нельзя.",
@@ -427,6 +484,7 @@ export function conversionBlockers(snapshot: ConversionSnapshot): Blocker[] {
     } else {
       blockers.push({
         code: "other_partner",
+        presentation: { key: "other_partner", params: { partnerName: snapshot.activeLink.brandName } },
         message:
           `У организации уже есть консультант ${quoted(snapshot.activeLink.brandName)}. ` +
           "Сначала отключите его: «Настройки → Консультант».",
@@ -508,32 +566,42 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
 
   // --- Оплата
   const payment: string[] = [];
+  const presentation: ConsequencePresentation = { payment: [], seats: [], commission: [], access: [], next: [] };
   const paid = isReallyPaid(billing.subscriptionPlan, billing.subscriptionEnd, now);
   if (paid && billing.subscriptionEnd) {
     payment.push(
       `Подписка оплачена до ${formatMskDate(billing.subscriptionEnd)} — этот срок остаётся у организации. ` +
         "Следующую оплату делает сама организация, не ваш аккаунт.",
     );
+    presentation.payment.push(
+      { key: "subscriptionPaid", params: { date: billing.subscriptionEnd.toISOString() } },
+      { key: "subscriptionResponsibility" },
+    );
   } else {
     payment.push("Дальше подписку этой организации оплачивает она сама, не ваш аккаунт.");
+    presentation.payment.push({ key: "subscriptionResponsibility" });
   }
   if (account) {
     const remaining = account.organizations.filter((o) => o.id !== organization.id && !o.isDemo && o.kind !== "directory");
     const accountEnd = maxDate([accountEndRaiseTo, account.subscriptionEnd, ...remaining.map((o) => o.subscriptionEnd)]);
     if (remaining.length > 0 && isReallyPaid(account.subscriptionPlan, accountEnd, now) && accountEnd) {
       payment.push(`Ваш аккаунт сохраняет свою оплату до ${formatMskDate(accountEnd)}.`);
+      presentation.payment.push({ key: "accountPaidUntil", params: { date: accountEnd.toISOString() } });
     }
   }
   if (organization.recurringActive) {
     payment.push("Автопродление с вашей карты для этой организации выключится.");
+    presentation.payment.push({ key: "recurringDisabled" });
   }
   if (account?.lifetimeDiscount) {
     payment.push(
       `Ваша скидка навсегда (${account.lifetimeDiscount.code}) остаётся на вашем аккаунте — к оплатам этой организации она больше не применяется.`,
     );
+    presentation.payment.push({ key: "lifetimeDiscount", params: { code: account.lifetimeDiscount.code } });
   }
   if (organization.balanceRub > 0) {
     payment.push(`Баллы на балансе организации (${rub(organization.balanceRub)}) остаются у неё.`);
+    presentation.payment.push({ key: "balanceRetained", params: { amount: organization.balanceRub } });
   }
 
   // --- Места
@@ -545,8 +613,10 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
       `Сотрудники организации (${organization.activeUsers}) больше не занимают места в вашем аккаунте: ` +
         `было ${before}, станет ${after}.`,
     );
+    presentation.seats.push({ key: "accountSeats", params: { organizationCount: organization.activeUsers, before, after } });
   } else {
     seats.push(`В организации ${employeesLabel(organization.activeUsers)}.`);
+    presentation.seats.push({ key: "organizationSeats", params: { count: organization.activeUsers } });
   }
   const stateAfter = organizationStateAfter(snapshot, billing);
   if (stateAfter.kind === "needs_decision") {
@@ -554,6 +624,7 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
       `Оплаченного срока у организации нет, а бесплатный тариф — на ${employeesGenitiveLabel(stateAfter.seatLimit ?? 1)}. ` +
         "Чтобы в работе остались все сотрудники, клиенту нужно оплатить подписку.",
     );
+    presentation.seats.push({ key: "seatLimit", params: { limit: stateAfter.seatLimit ?? 1 } });
   }
 
   // --- Комиссия
@@ -561,6 +632,21 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
     rewardTermsText(snapshot.rule),
     "С оплат, сделанных до перевода, вознаграждения нет.",
   ];
+  const hasRewardTerms = snapshot.rule.subscriptionPercent > 0 || snapshot.rule.bonusAmountRub > 0 || snapshot.rule.hardwarePercent > 0;
+  if (hasRewardTerms) presentation.commission.push({ key: "rewardIntro" });
+  if (snapshot.rule.subscriptionPercent > 0) {
+    presentation.commission.push(snapshot.rule.subscriptionMonths > 0
+      ? { key: "subscriptionReward", params: { percent: snapshot.rule.subscriptionPercent, months: snapshot.rule.subscriptionMonths } }
+      : { key: "subscriptionRewardNoLimit", params: { percent: snapshot.rule.subscriptionPercent } });
+  }
+  if (snapshot.rule.bonusAmountRub > 0) {
+    presentation.commission.push({ key: "bonusReward", params: { amount: snapshot.rule.bonusAmountRub, paymentNumber: snapshot.rule.bonusAfterPayments } });
+  }
+  if (snapshot.rule.hardwarePercent > 0) {
+    presentation.commission.push({ key: "hardwareReward", params: { percent: snapshot.rule.hardwarePercent } });
+  }
+  if (!hasRewardTerms) presentation.commission.push({ key: "rewardsByProgram" });
+  presentation.commission.push({ key: "preConversionNoReward" });
 
   // --- Доступ
   const access: string[] = [
@@ -569,26 +655,35 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
     "Оплачивать подписку и удалять организацию в режиме партнёра нельзя — это делает клиент.",
     "Руководители организации, как у любого клиента, могут отключить консультанта в своих настройках — тогда доступ к ней пропадёт.",
   ];
+  presentation.access.push(
+    { key: "organizationRemoved", params: { organizationName: organization.name } },
+    { key: "partnerAccess" },
+    { key: "clientControls" },
+  );
   if (teamMembers.length > 0) {
     access.push(
       `Сотрудники вашей партнёрской команды (${teamMembers.map((m) => m.name).join(", ")}) тоже будут работать с ней через партнёрский кабинет.`,
     );
+    presentation.access.push({ key: "teamAccess", params: { names: teamMembers.map((m) => m.name).join(", ") } });
   }
   if (homeMove) {
     access.push(
       `Ваш профиль переедет в ${quoted(homeMove.toOrganizationName)}: там вы будете оказываться после входа. ` +
         "На других устройствах нужно будет войти заново.",
     );
+    presentation.access.push({ key: "profileMoves", params: { organizationName: homeMove.toOrganizationName } });
   }
   access.push("Сотрудники организации, журналы и настройки не меняются.");
+  presentation.access.push({ key: "settingsUnchanged" });
 
   // --- Дальше
   const next = [
     "Передайте организацию владельцу: в карточке клиента — «Передать клиенту». Он задаст пароль и станет руководителем.",
     "Вернуть её в свой аккаунт можно в партнёрском кабинете («Сделать моей организацией»), пока владение не принято и организацию не оплачивали после перевода.",
   ];
+  presentation.next.push({ key: "handoffOwner" }, { key: "returnRules" });
 
-  return { ok: true, ops, consequences: { payment, seats, commission, access, next } };
+  return { ok: true, ops, consequences: { payment, seats, commission, access, next, presentation } };
 }
 
 // ---------------------------------------------------------------- возврат
@@ -696,6 +791,7 @@ export function returnBlockers(snapshot: ReturnSnapshot): Blocker[] {
   if (owner && !revocableInvite(owner)) {
     blockers.push({
       code: "owned_by_client",
+      presentation: { key: "owned_by_client", params: { ownerEmail: owner.email } },
       message: `Организацией уже владеет клиент (${owner.email}) — вернуть её нельзя.`,
     });
   }
@@ -709,6 +805,7 @@ export function returnBlockers(snapshot: ReturnSnapshot): Blocker[] {
   if (seat) {
     blockers.push({
       code: "seat_limit",
+      presentation: { key: "seat_limit", params: { limit: seat.limit, total: seat.total, organizationName: organization.name } },
       message:
         `В вашем аккаунте бесплатный тариф на ${employeesGenitiveLabel(seat.limit)}, а после возврата активных станет ${seat.total}. ` +
         `Оплатите подписку аккаунта, затем верните ${quoted(organization.name)}.`,
@@ -764,10 +861,14 @@ export function planReturn(snapshot: ReturnSnapshot): ReturnPlan {
   const payment: string[] = [
     "Организация войдёт в ваш аккаунт: подписку снова оплачиваете вы, по тарифу аккаунта.",
   ];
+  const presentation: ConsequencePresentation = { payment: [], seats: [], commission: [], access: [], next: [] };
+  presentation.payment.push({ key: "returnPayment" });
   if (isReallyPaid(organization.subscriptionPlan, organization.subscriptionEnd, now) && organization.subscriptionEnd) {
     payment.push(`Оплаченный срок организации (до ${formatMskDate(organization.subscriptionEnd)}) сохраняется.`);
+    presentation.payment.push({ key: "returnPaidUntil", params: { date: organization.subscriptionEnd.toISOString() } });
   }
   payment.push("Автопродление само не включится — его подключают при следующей оплате.");
+  presentation.payment.push({ key: "returnRecurring" });
 
   const seats: string[] = [];
   if (account) {
@@ -775,22 +876,30 @@ export function planReturn(snapshot: ReturnSnapshot): ReturnPlan {
       `Активных сотрудников в вашем аккаунте станет ${account.activeUsers + organization.activeUsers} ` +
         `(сейчас ${account.activeUsers}, в организации ${organization.activeUsers}).`,
     );
+    presentation.seats.push({
+      key: "returnSeats",
+      params: { total: account.activeUsers + organization.activeUsers, current: account.activeUsers, organizationCount: organization.activeUsers },
+    });
   } else {
     seats.push(`Для вас заведётся аккаунт с тарифом организации; активных сотрудников — ${organization.activeUsers}.`);
+    presentation.seats.push({ key: "returnNewAccountSeats", params: { count: organization.activeUsers } });
   }
 
   const commission = [
     "Сопровождение завершится: вознаграждение с будущих оплат организации начисляться не будет. Уже начисленное остаётся.",
   ];
+  presentation.commission.push({ key: "returnCommission" });
 
   const access = [
     `Вы снова владелец: ${quoted(organization.name)} появится в вашем списке организаций.`,
   ];
+  presentation.access.push({ key: "returnOwner", params: { organizationName: organization.name } });
   if (ops.revokeOwner) {
     access.push(
       `Приглашение владельцу (${ops.revokeOwner.email}) будет отменено — ссылка из письма перестанет работать.`,
     );
+    presentation.access.push({ key: "returnInviteCancelled", params: { email: ops.revokeOwner.email } });
   }
 
-  return { ok: true, ops, consequences: { payment, seats, commission, access, next: [] } };
+  return { ok: true, ops, consequences: { payment, seats, commission, access, next: [], presentation } };
 }

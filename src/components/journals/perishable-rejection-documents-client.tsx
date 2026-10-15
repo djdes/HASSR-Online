@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { perishableDate, perishableTitle } from "./perishable-rejection-presentation";
 import {
   DocumentActionsMenu,
   EmptyDocumentsState,
@@ -20,7 +23,6 @@ import {
 import { toast } from "sonner";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import { normalizePerishableRejectionConfig } from "@/lib/perishable-rejection-document";
-import { getJournalDocumentHeading } from "@/lib/journal-document-helpers";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -66,6 +68,10 @@ export function PerishableRejectionDocumentsClient({
   documents,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("perishableRejection");
+  const locale = useLocale() as Locale;
+  const current = useRef({ t, locale });
+  useEffect(() => { current.current = { t, locale }; }, [t, locale]);
   const [editingDocument, setEditingDocument] = useState<JournalListDocument | null>(null);
   const [title, setTitle] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -88,14 +94,14 @@ export function PerishableRejectionDocumentsClient({
       cfg.suppliers.length;
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: t("delete.description", { title: perishableTitle(document.title, document.dateFrom, locale, t) }),
       bullets: [
-        { label: `Записей бракеража: ${cfg.rows.length}`, tone: "warn" },
-        { label: `Позиций в справочниках документа: ${catalogSize}`, tone: "info" },
-        { label: `Журнал начат: ${document.startedAtLabel}`, tone: "info" },
+        { label: t("delete.records", { count: cfg.rows.length }), tone: "warn" },
+        { label: t("delete.catalog", { count: catalogSize }), tone: "info" },
+        { label: t("delete.started", { date: perishableDate(document.dateFrom, locale) }), tone: "info" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: null,
+      onSuccess: () => toast.success(current.current.t("delete.success", { title: perishableTitle(document.title, document.dateFrom, current.current.locale, current.current.t) })),
     });
   }
 
@@ -112,7 +118,7 @@ export function PerishableRejectionDocumentsClient({
       setEditingDocument(null);
       router.refresh();
     } catch {
-      toast.error("Не удалось сохранить настройки");
+      toast.error(current.current.t("errors.settings"));
     } finally {
       setIsSaving(false);
     }
@@ -121,7 +127,7 @@ export function PerishableRejectionDocumentsClient({
   return (
     <div className={JOURNAL_LIST_STACK_CLASS}>
       <JournalTopBar
-        heading={getJournalDocumentHeading(templateCode, activeTab === "closed")}
+        heading={t(activeTab === "closed" ? "closedTitle" : "title")}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={templateName}
@@ -143,12 +149,12 @@ export function PerishableRejectionDocumentsClient({
             className={JOURNAL_LIST_CARD_CLASS}
           >
             <Link href={`/journals/${templateCode}/documents/${document.id}`} className="min-w-0">
-              <div className={JOURNAL_CARD_TITLE_CLASS}>{document.title}
+              <div className={JOURNAL_CARD_TITLE_CLASS}>{perishableTitle(document.title, document.dateFrom, locale, t)}
               <SharedDocumentBadge shared={document.shared} /></div>
             </Link>
             <Link href={`/journals/${templateCode}/documents/${document.id}`} className={`${JOURNAL_CARD_SECTION_CLASS} justify-self-end`}>
-              <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
-              <div className={JOURNAL_CARD_VALUE_CLASS}>{document.startedAtLabel}</div>
+              <div className={JOURNAL_CARD_LABEL_CLASS}>{t("settings.start")}</div>
+              <div className={JOURNAL_CARD_VALUE_CLASS}>{perishableDate(document.dateFrom, locale)}</div>
             </Link>
             <DocumentActionsMenu
               size="sm"
@@ -165,15 +171,15 @@ export function PerishableRejectionDocumentsClient({
       <Dialog open={!!editingDocument} onOpenChange={(open) => !open && setEditingDocument(null)}>
         <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-            <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки документа</DialogTitle>
+            <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("settings.title")}</DialogTitle>
           </DialogHeader>
           <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
             <FloatingInputField
-              label="Название документа"
+              label={t("settings.name")}
               value={title}
               onChange={setTitle}
             />
-            <DateField label="Дата начала" value={dateFrom} onChange={setDateFrom} />
+            <DateField label={t("settings.start")} value={dateFrom} onChange={setDateFrom} />
           </div>
           <div className={JOURNAL_DIALOG_FOOTER_CLASS}>
             <div className={JOURNAL_DIALOG_ACTIONS_CLASS}>
@@ -182,7 +188,7 @@ export function PerishableRejectionDocumentsClient({
                 disabled={isSaving}
                 className={JOURNAL_DIALOG_SUBMIT_CLASS}
               >
-                {isSaving ? "Сохранение..." : "Сохранить"}
+                {isSaving ? t("actions.saving") : t("actions.save")}
               </Button>
             </div>
           </div>

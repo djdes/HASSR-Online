@@ -83,13 +83,17 @@ export async function POST(request: Request) {
   const errors = [...parsed.errors];
   if (parsed.rows.length === 0) {
     return NextResponse.json(
-      { error: errors[0]?.message ?? "В файле нет строк с сотрудниками", errors },
+      {
+        error: errors[0]?.message ?? "В файле нет строк с сотрудниками",
+        errorCode: errors[0]?.code === "missingColumns" ? "missingColumns" : "emptyRows",
+        errors,
+      },
       { status: 400 }
     );
   }
   if (parsed.rows.length > MAX_ROWS) {
     return NextResponse.json(
-      { error: `Больше ${MAX_ROWS} строк за раз — разбейте файл` },
+      { error: `Больше ${MAX_ROWS} строк за раз — разбейте файл`, errorCode: "tooManyRows", maxRows: MAX_ROWS },
       { status: 400 }
     );
   }
@@ -136,6 +140,8 @@ export async function POST(request: Request) {
     if (!position) {
       errors.push({
         line: row.line,
+        code: "positionNotFound",
+        params: { position: row.positionName },
         message: `Должность «${row.positionName}» не найдена. Создайте её в настройках или исправьте название.`,
       });
       continue;
@@ -146,6 +152,8 @@ export async function POST(request: Request) {
     if (rawPhone && !phone) {
       errors.push({
         line: row.line,
+        code: "invalidPhone",
+        params: { name: row.fullName, phone: rawPhone },
         message: `«${row.fullName}»: не разобрал телефон «${rawPhone}»`,
       });
       continue;
@@ -165,6 +173,8 @@ export async function POST(request: Request) {
       if (unknown.length > 0) {
         errors.push({
           line: row.line,
+          code: "unknownJournals",
+          params: { name: row.fullName, journals: unknown.join(", ") },
           message: `«${row.fullName}»: не знаю журнал ${unknown
             .map((name) => `«${name}»`)
             .join(", ")}`,
@@ -226,7 +236,12 @@ export async function POST(request: Request) {
 
     if (position.categoryKey !== "commission") {
       if (seatsLeft <= 0) {
-        errors.push({ line: row.line, message: `«${row.fullName}»: ${FREE_LIMIT_MESSAGE}` });
+        errors.push({
+          line: row.line,
+          code: "seatLimit",
+          params: { name: row.fullName },
+          message: `«${row.fullName}»: ${FREE_LIMIT_MESSAGE}`,
+        });
         seatBlocked += 1;
         continue;
       }

@@ -16,7 +16,8 @@ export const COLD_EQUIPMENT_DOCUMENT_TITLE =
  * Основание формы: печатается мелко по центру под названием на первой
  * странице PDF и стоит в «На основании» на странице журнала на сайте.
  */
-export const COLD_EQUIPMENT_LEGAL_BASIS = "Приложение № 2 к СанПиН 2.3/2.4.4282-26";
+export const COLD_EQUIPMENT_REGULATION = "2.3/2.4.4282-26";
+export const COLD_EQUIPMENT_LEGAL_BASIS = `Приложение № 2 к СанПиН ${COLD_EQUIPMENT_REGULATION}`;
 
 type EquipmentSeed = {
   name: string;
@@ -34,6 +35,15 @@ const DEFAULT_EQUIPMENT_SEEDS: EquipmentSeed[] = [
   { name: "Холодильник для масла", min: -6, max: -3 },
   { name: "Витрина", min: 2, max: 6 },
 ];
+
+/** Stable display key for untouched built-in fallback equipment; persisted names and ids are unchanged. */
+export function defaultColdEquipmentPresentationKey(item: Pick<ColdEquipmentConfigItem, "id" | "name" | "sourceEquipmentId">): string | undefined {
+  if (item.sourceEquipmentId !== null) return undefined;
+  const match = /^cold-equipment-default-(\d+)$/.exec(item.id);
+  const index = match ? Number(match[1]) : -1;
+  const seed = DEFAULT_EQUIPMENT_SEEDS[index];
+  return seed?.name === item.name ? `equipment${index}` : undefined;
+}
 
 export type ColdEquipmentConfigItem = {
   id: string;

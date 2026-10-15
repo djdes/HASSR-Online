@@ -1,6 +1,6 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 
 import { useMemo, useState } from "react";
@@ -62,6 +62,20 @@ const DEVICES: DeviceOption[] = HARDWARE_DEVICES.map((d) => ({
 
 const BUNDLES: BundlePreset[] = HARDWARE_BUNDLES;
 
+const BUNDLE_COPY_KEYS = {
+  solo: { name: "bundles.solo.name", hook: "bundles.solo.hook", forWhom: "bundles.solo.forWhom" },
+  standard: { name: "bundles.standard.name", hook: "bundles.standard.hook", forWhom: "bundles.standard.forWhom" },
+  network: { name: "bundles.network.name", hook: "bundles.network.hook", forWhom: "bundles.network.forWhom" },
+} as const satisfies Record<BundleId, { name: string; hook: string; forWhom: string }>;
+
+const DEVICE_COPY_KEYS = {
+  install: { title: "devices.install.title", hint: "devices.install.hint" },
+  temp: { title: "devices.temp.title", hint: "devices.temp.hint" },
+  thermo: { title: "devices.thermo.title", hint: "devices.thermo.hint" },
+  tablet: { title: "devices.tablet.title", hint: "devices.tablet.hint" },
+  nfc: { title: "devices.nfc.title", hint: "devices.nfc.hint" },
+} as const;
+
 function formatRub(n: number): string {
   return new Intl.NumberFormat("ru-RU").format(n) + " ₽";
 }
@@ -96,7 +110,7 @@ export function PricingCalculator({
   /// согласования состава деньги брать нельзя.
   paymentDisabled?: boolean;
 }) {
-  const t = usePublicCopy();
+  const t = useTranslations("publicUi.pricing");
   const locale = useSiteLocale();
   const SUBSCRIPTION_MONTHLY = subscriptionMonthly;
   // Default — Стандарт, как «most-popular anchor». Маркетинг: пользователь
@@ -134,9 +148,9 @@ export function PricingCalculator({
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7cf5c0]/20 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#116b2a]">
           <Package className="size-3.5" />
-          {t("С оборудованием")}</span>
+          {t("title")}</span>
         <span className="text-[13px] text-[#6f7282]">
-          {t("Подписка та же — выберите готовый набор")}</span>
+          {t("intro")}</span>
       </div>
 
       {/* BUNDLES — компактные строки. Родительская карточка тарифа узкая
@@ -172,19 +186,19 @@ export function PricingCalculator({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[14px] font-semibold tracking-[-0.005em] text-[#0b1024]">
-                    {t(bundle.name)}
+                    {t(BUNDLE_COPY_KEYS[bundle.id].name)}
                   </span>
                   {bundle.popular ? (
                     <span className="inline-flex items-center gap-0.5 rounded-full bg-[#0b1024] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-white">
                       <Sparkles className="size-2.5" />
-                      {t("Популярный")}</span>
+                      {t("popular")}</span>
                   ) : null}
                 </div>
                 <p className="mt-0.5 line-clamp-2 text-[12px] leading-[1.45] text-[#6f7282]">
-                  {t(bundle.hook)}
+                  {t(BUNDLE_COPY_KEYS[bundle.id].hook)}
                 </p>
                 <span className="mt-1 block text-[10px] uppercase tracking-[0.12em] text-[#9b9fb3]">
-                  {t(bundle.forWhom)}
+                  {t(BUNDLE_COPY_KEYS[bundle.id].forWhom)}
                 </span>
               </div>
 
@@ -200,7 +214,7 @@ export function PricingCalculator({
       <div className="rounded-2xl bg-[#0b1024] p-5 text-white">
         <div className="flex items-baseline justify-between gap-3">
           <div className="text-[12px] uppercase tracking-[0.14em] text-white/60">
-            {t("Подписка")}</div>
+            {t("subscription")}</div>
           <div className="text-right">
             <PromoPrice
               locale={locale}
@@ -208,15 +222,15 @@ export function PricingCalculator({
               size="md"
               tone="dark"
               className="justify-end"
-              suffix={<span className="ml-1 text-[12px] text-white/60">{t("/мес")}</span>}
+              suffix={<span className="ml-1 text-[12px] text-white/60">{t("perMonth")}</span>}
             />
           </div>
         </div>
         <div className="mt-3 flex items-baseline justify-between gap-3">
           <div className="text-[12px] uppercase tracking-[0.14em] text-white/60">
             {selectedBundleId
-              ? `${locale === "en" ? "Bundle" : "Пакет"} «${t(BUNDLES.find((b) => b.id === selectedBundleId)?.name ?? "")}»`
-              : t("Единоразово")}
+              ? t("bundleSummary", { name: t(BUNDLE_COPY_KEYS[selectedBundleId].name) })
+              : t("oneTime")}
           </div>
           <div className="text-right">
             <span className="text-[22px] font-semibold tracking-[-0.01em]">
@@ -224,8 +238,8 @@ export function PricingCalculator({
             </span>
             <span className="ml-1 text-[12px] text-white/60">
               {activeDevices > 0
-                ? `· ${activeDevices} ${locale === "en" ? (activeDevices === 1 ? "item" : "items") : plural(activeDevices, "позиция", "позиции", "позиций")}`
-                : t("пусто")}
+                ? t("itemCount", { count: activeDevices })
+                : t("empty")}
             </span>
           </div>
         </div>
@@ -240,14 +254,14 @@ export function PricingCalculator({
             aria-disabled="true"
             className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-[#eef0f6] px-5 text-[14px] font-medium text-[#9b9fb3]"
           >
-            {t("Оплатить картой")}</span>
+            {t("payByCard")}</span>
           <a
             href="https://t.me/wesetupbot"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
           >
-            {t("Состав комплекта согласуем в Telegram")}</a>
+            {t("confirmBundleInTelegram")}</a>
         </div>
       ) : (
         <>
@@ -255,7 +269,7 @@ export function PricingCalculator({
             href={`/order?plan=bundle&cfg=${encodeConfig(quantities)}`}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
-            {t("Оплатить картой")}<ArrowRight className="size-4" />
+            {t("payByCard")}<ArrowRight className="size-4" />
           </a>
 
           <a
@@ -264,7 +278,7 @@ export function PricingCalculator({
             rel="noopener noreferrer"
             className="-mt-2 inline-flex items-center justify-center gap-1.5 self-center text-[12px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
           >
-            {t("Или оформить в Telegram")}</a>
+            {t("orderInTelegram")}</a>
         </>
       )}
 
@@ -275,7 +289,7 @@ export function PricingCalculator({
         aria-controls="custom-equipment-picker"
         className="-mt-1 inline-flex items-center justify-center gap-1.5 self-center rounded-full px-3 py-1 text-[12px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
       >
-        {customExpanded ? t("Скрыть конфигуратор") : t("Подобрать вручную")}
+        {customExpanded ? t("hideConfigurator") : t("configureManually")}
         <ChevronDown
           className={`size-3.5 transition-transform ${customExpanded ? "rotate-180" : ""}`}
         />
@@ -289,10 +303,11 @@ export function PricingCalculator({
           className="space-y-2.5 border-t border-[#ececf4] pt-5"
         >
           <p className="text-[12px] text-[#9b9fb3]">
-            {t("Выбираете каждую позицию вручную. Снимите галочку, если уже есть своё оборудование.")}</p>
+            {t("manualDescription")}</p>
           {DEVICES.map((d) => {
             const qty = quantities[d.id] ?? 0;
             const active = qty > 0;
+            const deviceCopy = DEVICE_COPY_KEYS[d.id as keyof typeof DEVICE_COPY_KEYS]!;
             return (
               <div
                 key={d.id}
@@ -312,7 +327,7 @@ export function PricingCalculator({
                       )
                     }
                     aria-pressed={active}
-                    aria-label={`${locale === "en" ? "Toggle" : "Переключить"} ${t(d.title)}`}
+                    aria-label={t("toggleDevice", { device: t(deviceCopy.title) })}
                     className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors ${
                       active
                         ? "border-[#5566f6] bg-[#5566f6] text-white"
@@ -326,27 +341,27 @@ export function PricingCalculator({
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <d.icon className="size-4 shrink-0 text-[#5566f6]" />
                       <span className="min-w-0 text-[14px] font-medium text-[#0b1024]">
-                        {t(d.title)}
+                        {t(deviceCopy.title)}
                       </span>
                       <span className="ml-auto whitespace-nowrap text-[13px] font-semibold text-[#0b1024]">
                         {formatRub(d.price)}
                         {d.mode === "per-unit" && (
                           <span className="text-[11px] font-normal text-[#9b9fb3]">
                             {" "}
-                            {t("× шт")}</span>
+                            {t("perUnit")}</span>
                         )}
                       </span>
                     </div>
                     {d.hint && (
                       <p className="mt-1 text-[12px] leading-[1.5] text-[#6f7282]">
-                        {t(d.hint)}
+                        {t(deviceCopy.hint)}
                       </p>
                     )}
                     {active && d.mode === "per-unit" && (
                       <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#dcdfed] bg-white p-1">
                         <button
                           type="button"
-                          aria-label={t("Убрать одну штуку")}
+                          aria-label={t("removeOne")}
                           onClick={() => setQty(d.id, qty - 1)}
                           className="flex size-7 items-center justify-center rounded-lg text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                         >
@@ -357,7 +372,7 @@ export function PricingCalculator({
                         </span>
                         <button
                           type="button"
-                          aria-label={t("Добавить одну штуку")}
+                          aria-label={t("addOne")}
                           onClick={() => setQty(d.id, qty + 1)}
                           className="flex size-7 items-center justify-center rounded-lg text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                         >
@@ -377,16 +392,7 @@ export function PricingCalculator({
       ) : null}
 
       <p className="-mt-1 text-center text-[12px] text-[#9b9fb3]">
-        {t("Привозим и ставим в течение 3 рабочих дней по Москве и области.")}</p>
+        {t("delivery")}</p>
     </div>
   );
-}
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const last = n % 10;
-  const lastTwo = n % 100;
-  if (lastTwo >= 11 && lastTwo <= 14) return many;
-  if (last === 1) return one;
-  if (last >= 2 && last <= 4) return few;
-  return many;
 }

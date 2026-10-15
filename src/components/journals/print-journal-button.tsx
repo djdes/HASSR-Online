@@ -1,6 +1,7 @@
 "use client";
 
 import { Printer } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { printPage } from "@/lib/native-bridge";
 
@@ -19,12 +20,13 @@ type Props = {
 };
 
 export function PrintJournalButton({ label, className = "" }: Props) {
+  const t = useTranslations("journalControls.guidePage");
   return (
     <button
       type="button"
       onClick={() => void printPage()}
-      title="Распечатать журнал"
-      aria-label="Распечатать журнал"
+      title={t("printJournal")}
+      aria-label={label || t("printJournal")}
       className={`inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024] print:hidden ${className}`}
     >
       <Printer className="size-4" />

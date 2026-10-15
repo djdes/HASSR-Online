@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
 
@@ -45,7 +46,7 @@ const nextConfig: NextConfig = {
     // обрезает его на 10 МБ. Скан приказа к журналу — до 10 МБ
     // (journal-order-scans.ts), плюс обёртка multipart: без запаса файл
     // ровно в лимит приходил бы обрезанным.
-    proxyClientMaxBodySize: "12mb",
+    proxyClientMaxBodySize: "27mb",
   },
   typescript: {
     // Temporary deploy unblocker: unrelated dashboard pages still carry legacy Next build type errors.
@@ -285,4 +286,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default createNextIntlPlugin("./src/i18n/request.ts")(nextConfig);

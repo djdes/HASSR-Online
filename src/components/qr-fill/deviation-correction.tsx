@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 
@@ -29,6 +31,9 @@ type Props = {
 };
 
 export function DeviationCorrection({ title, hint, value, onChange }: Props) {
+  const { t } = useQrFillCopy();
+  const keys = ["correction.repeat", "correction.informed", "correction.technician", "correction.moved"] as const;
+  const selectedPreset = QR_FILL_CORRECTION_PRESETS.findIndex(preset => preset === value);
   // Блок появился (замер вышел за норму), а ответа ещё нет — сразу выбран
   // вариант по умолчанию. Снятый руками выбор не возвращаем до следующего показа.
   useEffect(() => {
@@ -43,18 +48,17 @@ export function DeviationCorrection({ title, hint, value, onChange }: Props) {
         <div className="min-w-0">
           <div className="text-[14px] font-semibold text-[#7a4a00]">{title}</div>
           <p className="mt-1 text-[13px] leading-relaxed text-[#7a4a00]">
-            {hint ?? "Руководитель получит уведомление."} Напишите, что вы
-            сделали — без этого замер не сохранится.
+            {hint ?? t("reading.managerNotified")} {t("correction.required")}
           </p>
         </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {QR_FILL_CORRECTION_PRESETS.map((preset) => {
+        {QR_FILL_CORRECTION_PRESETS.map((preset, index) => {
           const active = value.trim() === preset;
           return (
             <button
-              key={preset}
+              key={keys[index]}
               type="button"
               aria-pressed={active}
               onClick={() => onChange(active ? "" : preset)}
@@ -64,18 +68,18 @@ export function DeviationCorrection({ title, hint, value, onChange }: Props) {
                   : "border-[#f2d78a] bg-white text-[#0b1024] hover:border-[#5566f6]/50 hover:bg-[#f5f6ff]"
               }`}
             >
-              {preset}
+              {t(keys[index])}
             </button>
           );
         })}
       </div>
 
       <Textarea
-        value={value}
+        value={selectedPreset >= 0 ? t(keys[selectedPreset]) : value}
         onChange={(event) => onChange(event.target.value)}
         rows={2}
         maxLength={300}
-        placeholder="Или напишите своими словами"
+        placeholder={t("correction.placeholder")}
         className="mt-3 min-h-[72px] rounded-2xl border-[#f2d78a] bg-white px-4 py-3 text-[15px] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
       />
     </div>

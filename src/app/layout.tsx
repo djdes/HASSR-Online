@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages, pickMessages } from "@/i18n/messages";
 import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import localFont from "next/font/local";
@@ -11,10 +12,9 @@ import { NativeStatusBar } from "@/app/mini/_components/native-status-bar";
 import "./globals.css";
 import "./app-theme.css";
 import "./public-theme.css";
-import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
+import { publicMetadataFor } from "@/i18n/public-metadata";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
-import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -41,73 +41,9 @@ const manrope = localFont({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  // Safari на iPhone (и приложение WeSetup на iOS) сам превращал номера
-  // телефонов, даты и адреса в ссылки прямо в разметке — React видел
-  // чужую разметку и перерисовывал страницу (ошибка гидратации #418).
-  // Настоящие телефоны на сайте — это и так ссылки tel:.
-  formatDetection: { telephone: false, date: false, email: false, address: false },
-  alternates: {
-    types: {
-      "application/rss+xml": [
-        { url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" },
-        { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" },
-      ],
-    },
-  },
-  metadataBase: new URL("https://wesetup.ru"),
-  title: {
-    default:
-      "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
-    template: "%s — WeSetup",
-  },
-  description:
-    `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. ${FREE_TIER_SHORT}.`,
-  keywords: [
-    "электронные журналы",
-    "журналы СанПиН",
-    "журналы ХАССП",
-    "HACCP онлайн",
-    "гигиенический журнал",
-    "бракеражный журнал",
-    "журнал температурного режима",
-    "QR-код журнал",
-    "заполнение журналов по QR",
-    "Роспотребнадзор",
-    "общепит",
-  ],
-  applicationName: "WeSetup",
-  authors: [{ name: "WeSetup" }],
-  openGraph: {
-    type: "website",
-    locale: "ru_RU",
-    url: "https://wesetup.ru",
-    siteName: "WeSetup",
-    title:
-      "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
-    description:
-      `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. ${FREE_TIER_SHORT}.`,
-    images: [
-      {
-        url: "https://wesetup.ru/og-default",
-        width: 1200,
-        height: 630,
-        alt: "WeSetup — электронные журналы СанПиН и ХАССП",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Электронные журналы СанПиН и ХАССП — WeSetup",
-    description:
-      `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. ${FREE_TIER_SHORT}.`,
-    images: ["https://wesetup.ru/og-default"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return publicMetadataFor(await getSiteLocale());
+}
 
 /**
  * Явный viewport вместо неявного Next-дефолта: раньше поведение
@@ -150,6 +86,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getSiteLocale();
+  const messages = pickMessages(await loadMessages(locale), ["common", "language", "journals", "auth", "navigation", "journalControls", "notifications", "landingComponents", "publicSupport", "publicUi", "errorSurface", "loadingSurfaces"]);
   return (
     <html lang={locale}>
       <head>
@@ -170,7 +107,7 @@ export default async function RootLayout({
         className={`${manrope.variable} antialiased overflow-x-clip`}
         suppressHydrationWarning
       >
-        <SiteLocaleProvider locale={locale}>
+        <SiteLocaleProvider locale={locale} messages={messages}>
         <ScrollToTop />
         {/* Приложение WeSetup: значки строки состояния под цвет шапки на
             страницах вне оболочки (QR, удаление аккаунта, политика). */}

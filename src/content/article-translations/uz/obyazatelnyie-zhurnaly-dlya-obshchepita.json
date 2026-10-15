@@ -1,0 +1,16 @@
+{
+  "locale": "uz",
+  "sourceHash": "8335a90074686988ae280c836b9f579492625f4c1dd7921479ce7605cefeb48b",
+  "title": "Umumiy ovqatlanish uchun majburiy jurnallar: eng zarur to‘plam",
+  "excerpt": "SanPiN bo‘yicha asosiy to‘plam salomatlik, harorat, tayyor mahsulot sifati, qabul qilish, tozalash va dezinfeksiya vositalarini qamrab oladi. Tarmoqlar bilan ishlash yoki bolalar ovqatini tayyorlashda HACCP bo‘yicha qo‘shimcha jurnallar kerak bo‘ladi.",
+  "tags": ["Jurnallar", "SanPiN"],
+  "body": [
+    {"type":"p","text":"Kafe yoki boshqa muassasani noldan ochayotganingizda, qaysi jurnallar majburiy, qaysilari esa tavsiya etiladi, degan o‘rinli savol tug‘iladi. Javob mahsulotlar turiga bog‘liq, ammo asosiy to‘plam hamma uchun bir xil."},
+    {"type":"h2","text":"Asosiy minimum (SanPiN)"},
+    {"type":"ul","items":["Xodimlar salomatligi / gigiyenasi jurnali.","Sovutish uskunalari harorati jurnali.","Tayyor mahsulot sifatini baholash jurnali.","Xomashyoni qabul qilish va kirish nazorati jurnali.","Tozalash va dezinfeksiya jurnali.","Dezinfeksiya vositalarini hisobga olish jurnali.","UF-lampalarning ishlash jurnali (agar ishlatilsa)."]},
+    {"type":"h2","text":"Kengaytirilgan to‘plam (HACCP)"},
+    {"type":"ul","items":["Ichki audit jurnali.","Xodimlarni o‘qitish jurnali.","Tarozi va termometrlarni tekshirish jurnali.","Kuzatuvchanlik va kuzatuvchanlik sinovlari jurnali.","Da’vo va shikoyatlar jurnali.","Metall aralashmalarni nazorat qilish jurnali (ishlab chiqarish korxonalari uchun).","Shaxsiy himoya vositalarini berish jurnali."]},
+    {"type":"callout","tone":"tip","title":"Kengaytirilgan to‘plam qachon kerak","text":"Tarmoq xaridorlari, bolalar ovqati, shifoxonalarga yetkazib berish yoki onlayn savdo maydonchalari bilan ishlaganda. Korxona o‘sgani sari u hamkorlar auditida vaqtni tejaydi."},
+    {"type":"p","text":"WeSetup’da asosiy to‘plam bitta manzil uchun tarifga, kengaytirilgan to‘plam esa tarmoqlar va ishlab chiqarish korxonalari tariflariga kiradi. Tarifni almashtirish uchun jurnallarni boshidan yaratish shart emas."}
+  ]
+}

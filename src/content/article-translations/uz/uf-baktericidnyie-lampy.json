@@ -1,0 +1,15 @@
+{
+  "locale": "uz",
+  "sourceHash": "56591e0ad9577e8f02334815462919f167f73c951f97340d0f89b7fe56e11086",
+  "title": "UF-lampalar: ishlash vaqtini qayd etish va xizmat muddatidan oshirmaslik",
+  "excerpt": "Lampa 8 000–9 000 soat ishlaydi: yorug‘ligi o‘zgarmaydi, ammo zararsizlantirish ta’siri yo‘qoladi. Jurnalga nimalarni yozish, ishlash vaqtini qanday hisoblash va odamlar borida nega uni yoqmaslik kerak.",
+  "tags": ["UF-lampalar", "Xavfsizlik"],
+  "body": [
+    {"type":"p","text":"UF-bakteritsid lampa ishlab chiqarish xonasidagi havo va yuzalarda mikroblarni kamaytirishning arzon va samarali vositasidir. Ammo lampa abadiy ishlamaydi: har bir modelning xizmat muddati bor, odatda 8 000–9 000 soat. Shundan keyin u avvalgidek yonishi mumkin, lekin bakteritsid samarasi qolmaydi."},
+    {"type":"h2","text":"Nimalarni qayd etish kerak"},
+    {"type":"ul","items":["Yoqilgan va o‘chirilgan vaqt.","Jami ishlagan soatlar.","Lampa almashtirilgani, uning artikuli va sanasi.","Mas’ul xodimning imzosi."]},
+    {"type":"callout","tone":"warn","title":"Xavfsizlik","text":"Ochiq bakteritsid lampa xonada odamlar bo‘lmagandagina ishlashi mumkin. Odamlar bor paytda, smenalar orasida uni yoqish ko‘z va teriga shikast yetkazishi mumkin. Eshik blokirovkasi bor taymerli rele o‘rnating."},
+    {"type":"h2","text":"Qulayroq usul"},
+    {"type":"p","text":"Elektron jurnalda lampa hisoblagichga ega: yoqilganda taymer ishga tushadi, o‘chirilganda to‘xtaydi. Xizmat muddati tugashiga yaqinlashganda almashtirish vazifasi avtomatik yaratiladi. “Lampa hali yaxshi bo‘lsa kerak” deb taxmin qilishga hojat qolmaydi."}
+  ]
+}

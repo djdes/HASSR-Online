@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Bell, X } from "lucide-react";
 import { toast } from "sonner";
 import { openSupportChat } from "@/lib/support-chat-bus";
@@ -102,6 +103,8 @@ const TRIGGER_CLASS =
  * приложение его не передаёт и остаётся со своими размерами.
  */
 export function NotificationsBell({ triggerClassName }: { triggerClassName?: string } = {}) {
+  const locale = useLocale();
+  const t = useTranslations("notifications.ui");
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"unread" | "read">("unread");
   const [data, setData] = useState<ApiResponse>({
@@ -119,16 +122,27 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
   // Портал в body есть только на клиенте; до монтирования панель не рисуем.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const loadedLocale = useRef(locale);
+  const latestRequest = useRef(0);
 
   const load = useCallback(async () => {
+    if (loadedLocale.current !== locale) {
+      loadedLocale.current = locale;
+      setData({ unread: [], read: [], unreadCount: 0 });
+    }
+    const requestLocale = locale;
+    const requestId = ++latestRequest.current;
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (!res.ok) return;
       const j = (await res.json()) as {
+        locale?: string;
         unread: Array<Record<string, unknown>>;
         read: Array<Record<string, unknown>>;
         unreadCount: number;
       };
+      if (requestId !== latestRequest.current || loadedLocale.current !== requestLocale) return;
+      if (typeof j.locale === "string" && j.locale !== requestLocale) return;
       const normalise = (rows: Array<Record<string, unknown>>): NotificationRow[] =>
         rows.map((r) => ({
           id: r.id as string,
@@ -147,7 +161,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     // Poll /api/notifications on mount + every minute. setState inside load
@@ -277,7 +291,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
 
   async function markReadSelected() {
     if (plansForView.length === 0) {
-      toast.info("Отметьте уведомления (или подзадачи) слева.");
+      toast.info(t("selectReadPrompt"));
       return;
     }
     try {
@@ -297,14 +311,14 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
       if (failures > 0) {
         toast.error(
           failures === responses.length
-            ? "Не удалось отметить уведомления. Попробуйте ещё раз."
-            : `${failures} из ${responses.length} не сохранились.`
+            ? t("readFailedAll")
+            : t("readFailedSome", { count: failures, total: responses.length })
         );
       } else {
-        toast.success("Отмечено как прочитанное.");
+        toast.success(t("readSuccess"));
       }
     } catch {
-      toast.error("Сеть недоступна. Проверьте подключение.");
+      toast.error(t("networkError"));
     }
     setSelected(new Set());
     await load();
@@ -316,7 +330,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     // делаем — это симметрично к «Удалить все», другого UX нет.)
     const rowIds = Array.from(new Set(plansForView.map((p) => p.rowId)));
     if (rowIds.length === 0) {
-      toast.info("Отметьте уведомления, чтобы удалить.");
+      toast.info(t("selectDeletePrompt"));
       return;
     }
     try {
@@ -329,16 +343,18 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
       if (failures > 0) {
         toast.error(
           failures === responses.length
-            ? "Не удалось удалить. Попробуйте ещё раз."
-            : `${failures} из ${responses.length} не удалось удалить.`
+            ? t("deleteFailedAll")
+            : t("deleteFailedSome", { count: failures, total: responses.length })
         );
       } else {
         toast.success(
-          rowIds.length === 1 ? "Удалено." : `Удалено: ${rowIds.length}.`
+          rowIds.length === 1
+            ? t("deleteOneSuccess")
+            : t("deleteManySuccess", { count: rowIds.length })
         );
       }
     } catch {
-      toast.error("Сеть недоступна. Проверьте подключение.");
+      toast.error(t("networkError"));
     }
     setSelected(new Set());
     await load();
@@ -348,12 +364,12 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     try {
       const r = await fetch("/api/notifications", { method: "DELETE" });
       if (!r.ok) {
-        toast.error("Не удалось удалить. Попробуйте ещё раз.");
+        toast.error(t("deleteAllFailed"));
       } else {
-        toast.success("Все уведомления удалены.");
+        toast.success(t("deleteAllSuccess"));
       }
     } catch {
-      toast.error("Сеть недоступна. Проверьте подключение.");
+      toast.error(t("networkError"));
     }
     setSelected(new Set());
     await load();
@@ -363,7 +379,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     <>
       <button
         type="button"
-        aria-label="Уведомления"
+        aria-label={t("title")}
         onClick={() => (open ? closePanel() : openPanel())}
         className={triggerClassName ? `${TRIGGER_CLASS} ${triggerClassName}` : TRIGGER_CLASS}
       >
@@ -403,7 +419,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
             {/* HEADER */}
             <div className="flex items-center justify-between border-b border-[#ececf4] px-6 py-4">
               <div className="flex items-center gap-2 text-[22px] font-semibold tracking-[-0.01em]">
-                <span>Уведомления</span>
+                <span>{t("title")}</span>
                 {headerCount > 0 && (
                   <span className="inline-flex size-6 items-center justify-center rounded-full bg-[#ff3b30] text-[12px] font-semibold text-white">
                     {headerCount}
@@ -412,7 +428,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
               </div>
               <button
                 type="button"
-                aria-label="Закрыть"
+                aria-label={t("close")}
                 onClick={closePanel}
                 className="flex size-8 items-center justify-center rounded-xl text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
               >
@@ -429,7 +445,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                   tab === "unread" ? "text-[#0b1024]" : "text-[#9b9fb3]"
                 }`}
               >
-                Новые
+                {t("tabNew")}
                 {tab === "unread" && (
                   <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#5566f6]" />
                 )}
@@ -441,7 +457,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                   tab === "read" ? "text-[#0b1024]" : "text-[#9b9fb3]"
                 }`}
               >
-                Прочитанные
+                {t("tabRead")}
                 {tab === "read" && (
                   <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#5566f6]" />
                 )}
@@ -457,7 +473,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                     onClick={markReadSelected}
                     className="rounded-xl bg-[#eef1ff] px-4 py-2 text-[13px] font-medium text-[#3848c7] transition-colors hover:bg-[#e3e7ff]"
                   >
-                    Прочитать
+                    {t("readSelected")}
                   </button>
                 )}
                 <button
@@ -465,14 +481,14 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                   onClick={removeSelected}
                   className="rounded-xl bg-[#fff4f2] px-4 py-2 text-[13px] font-medium text-[#d2453d] transition-colors hover:bg-[#ffe6e1]"
                 >
-                  Удалить
+                  {t("deleteSelected")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmRemoveAllOpen(true)}
                   className="rounded-xl bg-[#fff4f2] px-4 py-2 text-[13px] font-medium text-[#d2453d] transition-colors hover:bg-[#ffe6e1]"
                 >
-                  Удалить все
+                  {t("deleteAll")}
                 </button>
               </div>
             )}
@@ -482,8 +498,8 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
               {rows.length === 0 ? (
                 <div className="py-6 text-[14px] text-[#9b9fb3]">
                   {tab === "unread"
-                    ? "Нет новых уведомлений."
-                    : "Нет прочитанных уведомлений."}
+                    ? t("emptyNew")
+                    : t("emptyRead")}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -498,7 +514,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                           <TriStateCheckbox
                             state={state}
                             onClick={() => toggleRow(row)}
-                            ariaLabel="Выделить всю задачу"
+                            ariaLabel={t("selectAllTask")}
                             className="mt-0.5"
                           />
                           <div className="min-w-0 text-[14px] font-medium leading-[1.45] text-[#0b1024]">
@@ -545,7 +561,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                                 >
                                   <input
                                     type="checkbox"
-                                    aria-label={`Прочитать ${item.label}`}
+                                    aria-label={t("readItem", { label: item.label })}
                                     checked={isChecked}
                                     onChange={(e) => {
                                       e.stopPropagation();
@@ -605,17 +621,17 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
           setConfirmRemoveAllOpen(false);
           await removeAll();
         }}
-        title="Удалить все уведомления?"
-        description="Список очистится полностью — и прочитанные, и непрочитанные."
+        title={t("deleteAllTitle")}
+        description={t("deleteAllDescription")}
         bullets={[
-          { label: "Вернуть удалённые уведомления нельзя", tone: "warn" },
+          { label: t("deleteAllIrreversible"), tone: "warn" },
           {
-            label: "Сами задачи и записи журналов не пострадают",
+            label: t("deleteAllDataSafe"),
             tone: "default",
           },
         ]}
-        confirmLabel="Удалить всё"
-        cancelLabel="Отмена"
+        confirmLabel={t("confirmDeleteAll")}
+        cancelLabel={t("cancel")}
         variant="danger"
       />
     </>

@@ -1,8 +1,12 @@
 "use client";
 
+import { useComplaintCopy } from "./use-complaint-copy";
+import { complaintDate, complaintTitle, complaintReceipt, complaintDecision } from "./complaint-presentation";
+
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Archive, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -15,7 +19,7 @@ import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/jou
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,8 +35,6 @@ import {
   COMPLAINT_RECEIPT_OPTIONS,
   COMPLAINT_REGISTER_TEMPLATE_CODE,
   COMPLAINT_REGISTER_TITLE,
-  formatComplaintDate,
-  getComplaintDecisionCell,
   normalizeComplaintConfig,
   type ComplaintDocumentConfig,
 } from "@/lib/complaint-document";
@@ -41,7 +43,6 @@ import {
   type RegisterDocumentRow,
 } from "@/lib/register-document";
 import { useMobileView } from "@/lib/use-mobile-view";
-import { formatCardDateTime } from "@/lib/journal-card-date";
 import {
   RecordCardsView,
   type RecordCardItem,
@@ -50,7 +51,6 @@ import {
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import { confirmDateInPeriod } from "@/components/journals/confirm-date-in-period";
 type EmployeeItem = {
@@ -90,6 +90,8 @@ function ComplaintRowDialog({
   titleSuffix?: string;
   onSave: (row: RegisterDocumentRow) => Promise<void>;
 }) {
+  const { t, locale, latest } = useComplaintCopy();
+  const periodT = useTranslations("journalControls.dateInPeriod");
   const today = localDayKey();
   const [draft, setDraft] = useState<RegisterDocumentRow>(() =>
     buildComplaintRow({ receiptDate: today, decisionDate: today })
@@ -120,13 +122,13 @@ function ComplaintRowDialog({
   async function handleSave() {
     // Дата вне периода не запрещена, но молча уезжала в чужой бланк
     // (жалоба за 21.09.2026 — в документ на 2027 год). Спрашиваем.
-    if (!(await confirmDateInPeriod(draft.values.receiptDate, period))) return;
+    if (!(await confirmDateInPeriod(draft.values.receiptDate, period, { locale, t: periodT }))) return;
     setSubmitting(true);
     try {
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await onSave(draft);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения строки"));
+    } catch {
+      toast.error(latest.current.t("errors.row"));
     } finally {
       setSubmitting(false);
     }
@@ -134,17 +136,19 @@ function ComplaintRowDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+      <DialogContent showCloseButton={false} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+        <DialogClose className="absolute right-4 top-4 rounded-full p-2" aria-label={t("actions.close")}><X className="size-5" /></DialogClose>
         <DialogHeader className="border-b px-12 py-10">
           <DialogTitle className="text-[22px] font-medium text-black">
-            {row ? `Редактирование строки${titleSuffix ? ` ${titleSuffix}` : ""}` : "Добавление новой строки"}
+            {row ? titleSuffix ? t("row.editProgress", { progress: titleSuffix }) : t("row.edit") : t("row.add")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-12 py-10">
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата поступления</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.receiptDate")}</Label>
             <Input
               type="date"
+              aria-label={t("fields.receiptDate")}
               value={draft.values.receiptDate || ""}
               onChange={(event) => setValue("receiptDate", event.target.value)}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
@@ -153,60 +157,66 @@ function ComplaintRowDialog({
           <div className="space-y-3">
             {/* Подпись была только для скринридера, и поле стояло без
                 заголовка — в отличие от соседних. */}
-            <Label className="text-[14px] text-[#73738a]">ФИО заявителя</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.applicantName")}</Label>
             <Input
+              aria-label={t("fields.applicantName")}
               value={draft.values.applicantName || ""}
               onChange={(event) => setValue("applicantName", event.target.value)}
-              placeholder="Введите ФИО заявителя"
+              placeholder={t("row.applicantPlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Форма поступления жалобы</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.complaintReceiptForm")}</Label>
             <Select
               value={draft.values.complaintReceiptForm || ""}
               onValueChange={(value) => setValue("complaintReceiptForm", value)}
             >
-              <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите из списка" />
+              <SelectTrigger aria-label={t("fields.complaintReceiptForm")} className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+                <SelectValue placeholder={t("row.selectPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
+                {draft.values.complaintReceiptForm && !COMPLAINT_RECEIPT_OPTIONS.some(option => option.value === draft.values.complaintReceiptForm) ? <SelectItem value={draft.values.complaintReceiptForm}>{draft.values.complaintReceiptForm}</SelectItem> : null}
                 {COMPLAINT_RECEIPT_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {complaintReceipt(option.value, t)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Реквизиты заявителя</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.applicantDetails")}</Label>
             <Textarea
+              aria-label={t("fields.applicantDetails")}
               value={draft.values.applicantDetails || ""}
               onChange={(event) => setValue("applicantDetails", event.target.value)}
               className="min-h-[160px] rounded-[18px] border-[#dfe1ec] px-6 py-4 text-[18px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Содержание жалобы</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.complaintContent")}</Label>
             <Textarea
+              aria-label={t("fields.complaintContent")}
               value={draft.values.complaintContent || ""}
               onChange={(event) => setValue("complaintContent", event.target.value)}
               className="min-h-[160px] rounded-[18px] border-[#dfe1ec] px-6 py-4 text-[18px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата решения</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.decisionDate")}</Label>
             <Input
               type="date"
+              aria-label={t("fields.decisionDate")}
               value={draft.values.decisionDate || ""}
               onChange={(event) => setValue("decisionDate", event.target.value)}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Решение, краткое содержание</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("fields.decisionSummary")}</Label>
             <Textarea
+              aria-label={t("fields.decisionSummary")}
               value={draft.values.decisionSummary || ""}
               onChange={(event) => setValue("decisionSummary", event.target.value)}
               className="min-h-[160px] rounded-[18px] border-[#dfe1ec] px-6 py-4 text-[18px]"
@@ -219,7 +229,7 @@ function ComplaintRowDialog({
               disabled={submitting}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : row ? "Сохранить" : "Добавить"}
+              {submitting ? t("actions.saving") : row ? t("actions.save") : t("actions.add")}
             </Button>
           </div>
         </div>
@@ -243,6 +253,7 @@ function SettingsDialog({
   onSave: (params: { title: string; dateFrom: string }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const { t, locale, latest } = useComplaintCopy();
   const [draftTitle, setDraftTitle] = useState(title);
   const [draftDate, setDraftDate] = useState(dateFrom);
   const [submitting, setSubmitting] = useState(false);
@@ -258,8 +269,8 @@ function SettingsDialog({
     try {
       await onSave({ title: draftTitle, dateFrom: draftDate });
       onOpenChange(false);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения настроек"));
+    } catch {
+      toast.error(latest.current.t("errors.settings"));
     } finally {
       setSubmitting(false);
     }
@@ -270,8 +281,8 @@ function SettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки документа"
-        description="Название документа и дата начала."
+        title={t("settings.title")}
+        description={t("settings.description")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -279,20 +290,20 @@ function SettingsDialog({
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
-          </Label>
+            {t("settings.name")}</Label>
           <Input
-            value={draftTitle}
+            aria-label={t("settings.name")}
+            value={complaintTitle(draftTitle, draftDate, locale, t)}
             onChange={(event) => setDraftTitle(event.target.value)}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
-          </Label>
+            {t("settings.start")}</Label>
           <Input
             type="date"
+            aria-label={t("settings.start")}
             value={draftDate}
             onChange={(event) => setDraftDate(event.target.value)}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
@@ -304,26 +315,28 @@ function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+      <DialogContent showCloseButton={false} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+        <DialogClose className="absolute right-4 top-4 rounded-full p-2" aria-label={t("actions.close")}><X className="size-5" /></DialogClose>
         <DialogHeader className="border-b px-14 py-12">
           <DialogTitle className="text-[22px] font-medium text-black">
-            Настройки документа
-          </DialogTitle>
+            {t("settings.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-8 px-14 py-12">
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("settings.name")}</Label>
             <Input
-              value={draftTitle}
+              aria-label={t("settings.name")}
+            value={complaintTitle(draftTitle, draftDate, locale, t)}
               onChange={(event) => setDraftTitle(event.target.value)}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата начала</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("settings.start")}</Label>
             <Input
               type="date"
-              value={draftDate}
+              aria-label={t("settings.start")}
+            value={draftDate}
               onChange={(event) => setDraftDate(event.target.value)}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
@@ -335,7 +348,7 @@ function SettingsDialog({
               disabled={submitting}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("actions.saving") : t("actions.save")}
             </Button>
           </div>
         </div>
@@ -355,6 +368,7 @@ function FinishDialog({
   title: string;
   onFinish: () => Promise<void>;
 }) {
+  const { t, latest } = useComplaintCopy();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleFinish() {
@@ -362,8 +376,8 @@ function FinishDialog({
     try {
       await onFinish();
       onOpenChange(false);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка завершения журнала"));
+    } catch {
+      toast.error(latest.current.t("errors.finish"));
     } finally {
       setSubmitting(false);
     }
@@ -371,10 +385,11 @@ function FinishDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+      <DialogContent showCloseButton={false} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+        <DialogClose className="absolute right-4 top-4 rounded-full p-2" aria-label={t("actions.close")}><X className="size-5" /></DialogClose>
         <DialogHeader className="border-b px-14 py-10">
           <DialogTitle className="pr-14 text-[22px] font-medium leading-[1.15] text-black">
-            {`Закончить журнал "${title}"`}
+            {t("finish.title", { title })}
           </DialogTitle>
         </DialogHeader>
         <div className="flex justify-end px-14 py-12">
@@ -384,7 +399,7 @@ function FinishDialog({
             disabled={submitting}
             className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
           >
-            {submitting ? "Завершение..." : "Закончить"}
+            {submitting ? t("actions.finishing") : t("actions.finishShort")}
           </Button>
         </div>
       </DialogContent>
@@ -402,6 +417,7 @@ export function ComplaintDocumentClient({
   initialConfig,
   useV2 = false,
 }: Props) {
+  const { t, locale, latest } = useComplaintCopy();
   // Период документа для предупреждения «дата вне периода». Конец —
   // из документа, а если его не передали — по правилу журнала (годовой).
   const documentPeriod = useMemo(
@@ -435,11 +451,12 @@ export function ComplaintDocumentClient({
 
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
-    title: `№${index + 1} · ${row.values.applicantName || "—"}`,
+    title: t("cards.title", { number: index + 1, name: row.values.applicantName || "—" }),
     // Общий формат карточек «дд.мм.гггг» (в бланке — через дефис).
-    subtitle: formatCardDateTime(row.values.receiptDate || "") || undefined,
+    subtitle: complaintDate(row.values.receiptDate || "", locale) || undefined,
     leading: (
       <Checkbox
+        aria-label={t("actions.selectRow", { number: index + 1 })}
         checked={selectedRowIds.includes(row.id)}
         onCheckedChange={(checked) =>
           setSelectedRowIds((current) =>
@@ -453,10 +470,10 @@ export function ComplaintDocumentClient({
       />
     ),
     fields: [
-      { label: "Форма поступления", value: row.values.complaintReceiptForm, hideIfEmpty: true },
-      { label: "Реквизиты заявителя", value: row.values.applicantDetails, hideIfEmpty: true },
-      { label: "Содержание жалобы", value: row.values.complaintContent, hideIfEmpty: true },
-      { label: "Решение", value: getComplaintDecisionCell(row), hideIfEmpty: true },
+      { label: t("cards.receiptForm"), value: complaintReceipt(row.values.complaintReceiptForm || "", t), hideIfEmpty: true },
+      { label: t("fields.applicantDetails"), value: row.values.applicantDetails, hideIfEmpty: true },
+      { label: t("fields.complaintContent"), value: row.values.complaintContent, hideIfEmpty: true },
+      { label: t("cards.decision"), value: complaintDecision(row, locale, t), hideIfEmpty: true },
     ],
     onClick: status === "active"
       ? () => {
@@ -473,8 +490,7 @@ export function ComplaintDocumentClient({
         }}
         className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white hover:bg-[#4b57ff]"
       >
-        Редактировать
-      </button>
+        {t("actions.edit")}</button>
     ) : null,
   }));
 
@@ -489,10 +505,8 @@ export function ComplaintDocumentClient({
       }),
     });
 
-    const result = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
-    }
+    await response.json().catch(() => null);
+    if (!response.ok) throw new Error("COMPLAINT_SAVE_FAILED");
 
     setDocumentTitle(nextTitle);
     setConfig(nextConfig);
@@ -536,13 +550,14 @@ export function ComplaintDocumentClient({
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные строки?",
-      description: "Записи из реестра обращений исчезнут безвозвратно.",
+      locale,
+      title: t("delete.rowsTitle"),
+      description: t("delete.description"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("actions.delete"),
       bullets: [
-        { label: `Строк будет удалено: ${count}`, tone: "warn" },
-        { label: `Останется строк: ${config.rows.length - count}`, tone: "default" },
+        { label: t("delete.count", { count }), tone: "warn" },
+        { label: t("delete.remaining", { count: config.rows.length - count }), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -552,7 +567,7 @@ export function ComplaintDocumentClient({
     };
     await persist(documentTitle, nextConfig);
     setSelectedRowIds([]);
-    toast.success(`Удалено строк: ${count}`);
+    toast.success(latest.current.t("delete.success", { count }));
   }
 
   async function handleSaveSettings(params: { title: string; dateFrom: string }) {
@@ -581,37 +596,37 @@ export function ComplaintDocumentClient({
   return (
     <>
       <div className="space-y-6 text-black">
-        <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+        <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("empty.title")} emptyBody={t("empty.body")} />
         {selectedRowIds.length > 0 && status === "active" && (
           <JournalSelectionBar
             count={selectedRowIds.length}
             onClear={() => setSelectedRowIds([])}
             onDelete={() =>
-              handleDeleteSelected().catch((error) =>
-                toast.error(humanizeFetchError(error, "Ошибка удаления строк"))
+              handleDeleteSelected().catch(() =>
+                toast.error(latest.current.t("errors.deleteRows"))
               )
             }
             deleting={isPending}
-            hint="Записи реестра обращений будут удалены без возможности отмены"
+            hint={t("delete.hint")}
           >
             <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
         )}
 
         <JournalDocumentShell
-          title={documentTitle}
-          subtitle={`Начат ${formatComplaintDate(dateFrom)}`}
+          title={complaintTitle(documentTitle, dateFrom, locale, t)}
+          subtitle={t("started", { date: complaintDate(dateFrom, locale) })}
           documentId={documentId}
           backHref={`/journals/${COMPLAINT_REGISTER_TEMPLATE_CODE}`}
           onSettings={() => setSettingsOpen(true)}
           closed={status !== "active"}
-          closedHint="Откройте журнал заново, чтобы добавлять и редактировать жалобы."
+          closedHint={t("finish.closedHint")}
           menuItems={
             status === "active"
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("actions.finish"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => setFinishOpen(true),
                   },
@@ -621,17 +636,17 @@ export function ComplaintDocumentClient({
           mobileView={mobileView}
           onMobileView={switchMobileView}
           cards={
-            <RecordCardsView items={cardItems} emptyLabel="Жалоб пока не зарегистрировано." />
+            <RecordCardsView items={cardItems} emptyLabel={t("empty.cards")} />
           }
           paperHeader={
             <JournalDocumentHeader
               orgName={organizationName}
-              title="Журнал регистрации жалоб"
+              title={t("title")}
               startedAt={dateFrom}
               finishedAt={status === "closed" ? config.finishedAt : null}
             />
           }
-          sheetTitle="Журнал регистрации жалоб"
+          sheetTitle={t("title")}
           sheetMinWidth={1520}
           toolbar={
             status === "active" ? (
@@ -644,8 +659,7 @@ export function ComplaintDocumentClient({
                 className={DOC_PRIMARY_BUTTON_CLASS}
               >
                 <Plus className="size-5" />
-                Добавить
-              </Button>
+                {t("actions.add")}</Button>
             ) : undefined
           }
         >
@@ -654,6 +668,7 @@ export function ComplaintDocumentClient({
               <tr>
                 <th className={`w-[42px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
                   <Checkbox
+                    aria-label={t("actions.selectAll")}
                     checked={allSelected}
                     onCheckedChange={(checked) =>
                       setSelectedRowIds(checked === true ? config.rows.map((row) => row.id) : [])
@@ -661,19 +676,16 @@ export function ComplaintDocumentClient({
                     disabled={status !== "active" || config.rows.length === 0}
                   />
                 </th>
-                <th className={`w-[90px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Рег. № п/п</th>
-                <th className={`w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Дата поступления</th>
-                <th className={`w-[190px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>ФИО заявителя</th>
+                <th className={`w-[90px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("columns.number")}</th>
+                <th className={`w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("fields.receiptDate")}</th>
+                <th className={`w-[190px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("fields.applicantName")}</th>
                 <th className={`w-[260px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Форма поступления жалобы (по почте, по телефону, по факсу, по электронной почте, в книге отзывов и предложений)
-                </th>
+                  {t("columns.receiptForm")}</th>
                 <th className={`w-[290px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Реквизиты заявителя, указанные в жалобе заявителя для отправки ответа
-                </th>
-                <th className={`w-[360px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Содержание жалобы</th>
+                  {t("columns.applicantDetails")}</th>
+                <th className={`w-[360px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("fields.complaintContent")}</th>
                 <th className={`w-[260px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Решение, дата, краткое содержание
-                </th>
+                  {t("columns.decision")}</th>
               </tr>
             </thead>
             <tbody>
@@ -692,7 +704,8 @@ export function ComplaintDocumentClient({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Checkbox
-                      checked={selectedRowIds.includes(row.id)}
+                      aria-label={t("actions.selectRow", { number: index + 1 })}
+        checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={(checked) =>
                         setSelectedRowIds((current) =>
                           checked === true
@@ -716,23 +729,22 @@ export function ComplaintDocumentClient({
                       }}
                       className="w-full text-left disabled:cursor-default"
                     >
-                      {formatComplaintDate(row.values.receiptDate || "") || "—"}
+                      {complaintDate(row.values.receiptDate || "", locale) || "—"}
                     </button>
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight`}>{row.values.applicantName || "—"}</td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight`}>{row.values.complaintReceiptForm || "—"}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight`}>{complaintReceipt(row.values.complaintReceiptForm || "", t) || "—"}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight whitespace-pre-wrap`}>{row.values.applicantDetails || "—"}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight whitespace-pre-wrap`}>{row.values.complaintContent || "—"}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight whitespace-pre-wrap`}>
-                    {getComplaintDecisionCell(row) || "—"}
+                    {complaintDecision(row, locale, t) || "—"}
                   </td>
                 </tr>
               ))}
               {config.rows.length === 0 && (
                 <tr>
                   <td colSpan={8} className={`${GRID_CELL_CLASS} px-4 py-10 text-center text-[18px] text-[#666a80]`}>
-                    Записей пока нет
-                  </td>
+                    {t("empty.title")}</td>
                 </tr>
               )}
               {status === "active" ? (
@@ -743,7 +755,7 @@ export function ComplaintDocumentClient({
                   leading={2}
                   labelSpan={2}
                   trailing={4}
-                  label="Добавить"
+                  label={t("actions.add")}
                   onClick={() => {
                     setEditingRow(null);
                     setRowDialogOpen(true);
@@ -783,7 +795,7 @@ export function ComplaintDocumentClient({
       <FinishDialog
         open={finishOpen}
         onOpenChange={setFinishOpen}
-        title={documentTitle}
+        title={complaintTitle(documentTitle, dateFrom, locale, t)}
         onFinish={handleFinish}
       />
     </>

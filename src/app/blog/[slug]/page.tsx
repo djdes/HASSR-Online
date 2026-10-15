@@ -2,6 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Clock } from "lucide-react";
 import { db } from "@/lib/db";
+import { localizeArticles } from "@/lib/article-localization-server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { formatDate as localizedDate, type Locale } from "@/i18n/locales";
+import { translatorFor } from "@/i18n/translator";
+import { localizedHref } from "@/i18n/site-locale";
+import { articleLanguageAlternates } from "@/lib/article-language-alternates";
+import { loadMessages } from "@/i18n/messages";
+import { journalTitle } from "@/i18n/journal-presentation";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { ArticleRenderer } from "@/components/public/article-renderer";
@@ -16,20 +24,19 @@ import {
   DEFAULT_TWITTER_CARD,
   } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
-import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
-import { employeesGenitiveLabel } from "@/lib/plan-catalog";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function formatDate(date: Date | null) {
+function formatDate(date: Date | null, locale: Locale) {
   if (!date) return "";
-  return new Intl.DateTimeFormat("ru-RU", {
+  return localizedDate(locale, date, "Europe/Moscow", {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(date);
+  });
 }
 
 export async function generateMetadata({
@@ -38,22 +45,27 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = await db.article.findUnique({
+  const locale = await getSiteLocale();
+  const t = await translatorFor(locale);
+  const source = await db.article.findUnique({
     where: { slug },
-    select: { title: true, excerpt: true, publishedAt: true },
+    select: { id: true, slug: true, body: true, tags: true, title: true, excerpt: true, publishedAt: true, translations: true },
   });
-  if (!article || !article.publishedAt) {
-    return { title: { absolute: "Статья не найдена — WeSetup" } };
+  if (!source || !source.publishedAt) {
+    return { title: { absolute: t("blogChrome.article.notFoundTitle") } };
   }
-  const url = `https://wesetup.ru/blog/${slug}`;
+  const [article] = await localizeArticles([source], locale);
+  const url = `https://wesetup.ru${localizedHref(`/blog/${slug}`, locale)}`;
   return {
     // article.title уже самостоятельный, layout.template добавит — WeSetup.
     title: article.title,
     description: article.excerpt,
-    alternates: { canonical: url },
+    keywords: article.displayTags,
+    alternates: { canonical: url, languages: articleLanguageAlternates(source, source.translations) },
+    ...(article.translationMissing ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: "article",
-      locale: "ru_RU",
+      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[article.contentLocale],
       siteName: "WeSetup",
       url,
       title: article.title,
@@ -76,10 +88,14 @@ export default async function BlogArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = await db.article.findUnique({
+  const source = await db.article.findUnique({
     where: { slug },
   });
-  if (!article || !article.publishedAt) notFound();
+  if (!source || !source.publishedAt) notFound();
+  const locale = await getSiteLocale();
+  const t = await translatorFor(locale);
+  const [article] = await localizeArticles([source], locale);
+  const messages = await loadMessages(locale);
 
   const body = isArticleBlockArray(article.body) ? article.body : [];
 
@@ -111,12 +127,14 @@ export default async function BlogArticlePage({
       if (!info) return null;
       return {
         code,
-        name: journalHeadline(
+        name: journalTitle(locale, messages.journals.names, code, journalHeadline(
           JOURNAL_SEO[code]?.title,
           ACTIVE_JOURNAL_CATALOG.find((j) => j.code === code)?.name,
           info.tagline
-        ),
-        tagline: info.tagline,
+        )),
+        tagline: Object.hasOwn(messages.journalInfoTaglines, code)
+          ? messages.journalInfoTaglines[code as keyof typeof messages.journalInfoTaglines]
+          : info.tagline,
       };
     })
     .filter((item): item is { code: string; name: string; tagline: string } => item !== null);
@@ -132,6 +150,8 @@ export default async function BlogArticlePage({
     orderBy: { publishedAt: "desc" },
     take: 30,
     select: {
+      id: true,
+      body: true,
       slug: true,
       title: true,
       excerpt: true,
@@ -141,7 +161,7 @@ export default async function BlogArticlePage({
     },
   });
   const currentTags = new Set(article.tags.map((t) => t.toLowerCase()));
-  const related = relatedRaw
+  const relatedSources = relatedRaw
     .map((r) => {
       const overlap = r.tags.reduce(
         (acc, t) => (currentTags.has(t.toLowerCase()) ? acc + 1 : acc),
@@ -157,6 +177,7 @@ export default async function BlogArticlePage({
       return bd - ad;
     })
     .slice(0, 3);
+  const related = await localizeArticles(relatedSources, locale);
 
   // E20: schema.org Article markup для расширенных snippet'ов в Google.
   // Per Google docs, Article requires `image` field — без него карточка
@@ -166,6 +187,7 @@ export default async function BlogArticlePage({
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
+    inLanguage: article.contentLocale,
     headline: article.title,
     description: article.excerpt,
     image: ["https://wesetup.ru/og-default"],
@@ -190,10 +212,10 @@ export default async function BlogArticlePage({
         height: 512,
       },
     },
-    keywords: article.tags.join(", "),
+    keywords: article.displayTags.join(", "),
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://wesetup.ru/blog/${slug}`,
+      "@id": `https://wesetup.ru${localizedHref(`/blog/${slug}`, locale)}`,
     },
   };
 
@@ -216,11 +238,11 @@ export default async function BlogArticlePage({
       <article className="mx-auto max-w-[760px] px-6 py-10 md:py-14">
         <PublicBreadcrumbs
           tone="light"
-          items={[{ name: "Блог", href: "/blog" }, { name: article.title }]}
+          items={[{ name: t("blogChrome.article.blogBreadcrumb"), href: localizedHref("/blog", locale) }, { name: article.title }]}
         />
 
         <div className="mt-6 flex flex-wrap items-center gap-2 text-[12px] text-[#6f7282]">
-          {article.tags.slice(0, 4).map((t) => (
+          {article.displayTags.slice(0, 4).map((t) => (
             <span
               key={t}
               className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[#3848c7]"
@@ -229,35 +251,34 @@ export default async function BlogArticlePage({
             </span>
           ))}
           <span className="inline-flex items-center gap-1">
-            <Clock className="size-3.5" /> {article.readMinutes} мин
+            <Clock className="size-3.5" /> {t("blogChrome.article.readMinutes", { minutes: article.readMinutes })}
           </span>
-          <span>· {formatDate(article.publishedAt)}</span>
+          <span>· {formatDate(article.publishedAt, locale)}</span>
         </div>
 
-        <h1 className="mt-4 text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
+        <h1 lang={article.contentLocale} className="mt-4 text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
           {article.title}
         </h1>
-        <p className="mt-5 text-[18px] leading-[1.6] text-[#3c4053]">
+        <p lang={article.contentLocale} className="mt-5 text-[18px] leading-[1.6] text-[#3c4053]">
           {article.excerpt}
         </p>
 
-        <div className="mt-10 border-t border-[#ececf4] pt-8">
+        <div lang={article.contentLocale} className="mt-10 border-t border-[#ececf4] pt-8">
           <ArticleRenderer blocks={body} />
         </div>
 
         <div className="mt-10 rounded-3xl bg-gradient-to-br from-[#0b1024] via-[#1a234a] to-[#3848c7] p-5 text-center text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)] sm:mt-14 sm:p-8">
           <div className="text-[22px] font-semibold tracking-tight">
-            Вести этот журнал в WeSetup бесплатно
+            {t("blogChrome.article.ctaTitle")}
           </div>
           <p className="mx-auto mt-2 max-w-[480px] text-[14px] text-white/70">
-            Все {JOURNALS_TOTAL_LABEL} СанПиН и ХАССП в одном кабинете. Бесплатный
-            тариф навсегда на {employeesGenitiveLabel(FREE_MAX_USERS)}, без привязки карты.
+            {t("blogChrome.article.ctaDescription", { journalCount: JOURNALS_TOTAL, employeeCount: FREE_MAX_USERS })}
           </p>
           <Link
-            href="/register"
+            href={localizedHref("/register", locale)}
             className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[14px] font-medium text-[#0b1024] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-0.5"
           >
-            Начать бесплатно
+            {t("blogChrome.article.ctaButton")}
             <ArrowRight className="size-4 text-[#5566f6]" />
           </Link>
         </div>
@@ -266,7 +287,7 @@ export default async function BlogArticlePage({
       {journalLinks.length > 0 && (
         <section className="mx-auto max-w-[1200px] px-4 pb-10 sm:px-6">
           <h2 className="text-[13px] font-medium uppercase tracking-[0.18em] text-[#6f7282]">
-            Журналы из статьи
+            {t("blogChrome.article.journalsHeading")}
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {journalLinks.map((item) => (
@@ -290,17 +311,17 @@ export default async function BlogArticlePage({
       {related.length > 0 && (
         <section className="mx-auto max-w-[1200px] px-4 pb-10 sm:px-6 sm:pb-16">
           <h2 className="text-[13px] font-medium uppercase tracking-[0.18em] text-[#6f7282]">
-            Читать дальше
+            {t("blogChrome.article.relatedHeading")}
           </h2>
           <div className="mt-4 grid gap-5 md:grid-cols-3">
             {related.map((r) => (
               <Link
                 key={r.slug}
-                href={`/blog/${r.slug}`}
+                href={localizedHref(`/blog/${r.slug}`, locale)}
                 className="group rounded-3xl border border-[#ececf4] bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/40"
               >
                 <div className="text-[12px] text-[#6f7282]">
-                  {formatDate(r.publishedAt)} · {r.readMinutes} мин
+                  {formatDate(r.publishedAt, locale)} · {t("blogChrome.article.readMinutes", { minutes: r.readMinutes })}
                 </div>
                 <div className="mt-2 text-[17px] font-semibold leading-snug group-hover:text-[#3848c7]">
                   {r.title}

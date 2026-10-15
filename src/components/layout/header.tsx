@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { BrandLogo } from "@/components/brand/logo";
 import { PartnerHint } from "@/components/partner/partner-hint";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -53,6 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { PersonalLanguageSelect } from "@/components/i18n/personal-language-select";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
 import { OfflineIndicator } from "@/components/layout/offline-indicator";
@@ -76,6 +78,7 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
+import { navigationSectionLabelKey } from "@/i18n/navigation-presentation";
 
 // Иконки разделов: сам перечень живёт в `lib/app-sections.ts` (один
 // список на сайт и мини-приложение), а компоненты lucide подставляются
@@ -99,7 +102,6 @@ const secondaryNavItems = headerNavSections().map((item) => ({
 }));
 
 const STAFF_NAV_ITEM_DEFAULT = {
-  label: "Сотрудники",
   href: "/settings/users",
   icon: Users,
 };
@@ -203,15 +205,17 @@ export function Header({
   partnerHint = null,
   canEditBranding = false,
 }: HeaderProps) {
+  const t = useTranslations("navigation");
+  const tJournals = useTranslations("journals");
   const pathname = usePathname();
   const headerUndo = useHeaderUndo();
   // Свои названия разделов организации («Настройки → Названия»).
   const customNames = useCustomNames();
+  const staffCustomName =
+    customSectionNameByHref(customNames, STAFF_NAV_ITEM_DEFAULT.href);
   const STAFF_NAV_ITEM = {
     ...STAFF_NAV_ITEM_DEFAULT,
-    label:
-      customSectionNameByHref(customNames, STAFF_NAV_ITEM_DEFAULT.href) ??
-      STAFF_NAV_ITEM_DEFAULT.label,
+    label: staffCustomName ?? t("header.staff"),
   };
   const fullAccess = hasFullWorkspaceAccess({ role: userRole, isRoot });
   // На телефоне меню профиля — лист снизу (как в приложениях), на
@@ -246,7 +250,7 @@ export function Header({
   // человек попадал на /login, оставаясь в аккаунте.
   const handleLogout = () => {
     signOutAndOpen("/login").catch(() => {
-      toast.error("Не удалось выйти. Проверьте связь и попробуйте ещё раз.");
+      toast.error(t("header.logoutFailed"));
     });
   };
 
@@ -278,10 +282,20 @@ export function Header({
   const inApp = useInsideMobileApp();
 
   const visibleSecondaryNavItems = fullAccess
-    ? secondaryNavItems.map((item) => ({
-        ...item,
-        label: customSectionNameByHref(customNames, item.href) ?? item.label,
-      }))
+    ? secondaryNavItems.map((item) => {
+        const customName = customSectionNameByHref(customNames, item.href);
+        const labelKey = navigationSectionLabelKey(item.href);
+        return {
+          ...item,
+          label:
+            customName ??
+            (item.href === "/journals"
+              ? tJournals("title")
+              : labelKey
+                ? t(labelKey)
+                : item.label),
+        };
+      })
     : [];
   // Пилюля в шапке показывает название активной точки — значит именно
   // на неё логично навести, чтобы уйти в соседнюю. Дублирует меню
@@ -323,7 +337,7 @@ export function Header({
         <Link
           href={homeHref}
           className="shrink-0 flex items-center gap-2 max-sm:min-h-11"
-          aria-label={`${organizationName || "WeSetup"} — на дашборд`}
+          aria-label={t("header.homeAria", { organization: organizationName || "WeSetup" })}
         >
           {organizationLogoUrl ? (
             <>
@@ -402,7 +416,7 @@ export function Header({
                       activeId={activeOrganizationId}
                       canCreate={false}
                       showSettings={fullAccess}
-                      label="Сменить организацию"
+                      label={t("profile.changeOrganization")}
                     />
                     {visibleSecondaryNavItems.length > 0 ? (
                       <div className="my-1.5 h-px bg-[#ececf4]" />
@@ -443,8 +457,8 @@ export function Header({
           {fullAccess ? (
             <Link
               href="/settings"
-              aria-label="Настройки"
-              title="Настройки"
+              aria-label={t("header.settings")}
+              title={t("header.settings")}
               data-nav-settings=""
               className={cn(
                 "ml-1 inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
@@ -492,7 +506,7 @@ export function Header({
             <>
               <Link
                 href="/control-board"
-                title="Панель контроля"
+                title={t("header.controlBoard")}
                 className={cn(
                   "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/control-board"
@@ -501,11 +515,11 @@ export function Header({
                 )}
               >
                 <ShieldCheck className="size-5 shrink-0" />
-                <span className="truncate">Доска</span>
+                <span className="truncate">{t("header.controlBoardShort")}</span>
               </Link>
               <Link
                 href="/journals-progress"
-                title="Прогресс журналов сегодня"
+                title={t("header.todayProgressTitle")}
                 className={cn(
                   "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/journals-progress"
@@ -514,11 +528,11 @@ export function Header({
                 )}
               >
                 <ClipboardList className="size-5 shrink-0" />
-                <span className="truncate">Прогресс</span>
+                <span className="truncate">{t("header.progressShort")}</span>
               </Link>
               <Link
                 href="/team"
-                title="Моя команда"
+                title={t("header.teamTitle")}
                 className={cn(
                   "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/team"
@@ -527,11 +541,11 @@ export function Header({
                 )}
               >
                 <Users className="size-5 shrink-0" />
-                <span className="truncate">Команда</span>
+                <span className="truncate">{t("header.teamShort")}</span>
               </Link>
               <Link
                 href="/verifications"
-                title="Проверка задач"
+                title={t("header.taskVerificationTitle")}
                 className={cn(
                   "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/verifications"
@@ -540,7 +554,7 @@ export function Header({
                 )}
               >
                 <ClipboardList className="size-5 shrink-0" />
-                <span className="truncate">Проверка</span>
+                <span className="truncate">{t("header.taskVerificationShort")}</span>
               </Link>
             </>
           ) : null}
@@ -556,7 +570,7 @@ export function Header({
           className="size-11 shrink-0 rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 sm:size-10 md:hidden hover:bg-[#5566f6]/[0.09] hover:text-[#5566f6]"
         >
           <Menu className="size-5" />
-          <span className="sr-only">Меню</span>
+          <span className="sr-only">{t("header.menu")}</span>
         </Button>
           {/* Меню разделов — тот же лист снизу, что у профиля, окон и
               меню действий: одна механика на весь телефон. Раньше это
@@ -566,7 +580,7 @@ export function Header({
           <BottomSheet
             open={mobileNavOpen}
             onClose={() => setMobileNavOpen(false)}
-            title="Меню"
+            title={t("header.menu")}
             footer={
               <button
                 type="button"
@@ -574,7 +588,7 @@ export function Header({
                 className="flex min-h-[52px] w-full items-center gap-3.5 rounded-2xl px-3.5 py-3 text-[17px] font-medium text-[#a13a32] transition-colors hover:bg-[#fff4f2]"
               >
                 <LogOut className="size-6 shrink-0" />
-                Выйти
+                {t("header.logout")}
               </button>
             }
           >
@@ -593,7 +607,7 @@ export function Header({
                     activeBuildingId={activeBuildingId}
                   />
                   <div className="px-3 pb-1 pt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-                    Разделы
+                    {t("header.sections")}
                   </div>
                 </>
               ) : null}
@@ -622,8 +636,8 @@ export function Header({
                 {fullAccess ? (
                   <Link
                     href="/settings"
-                    aria-label="Настройки"
-                    title="Настройки"
+                    aria-label={t("header.settings")}
+                    title={t("header.settings")}
                     data-nav-settings=""
                     className={cn(
                       "flex size-[52px] shrink-0 items-center justify-center rounded-2xl border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
@@ -676,38 +690,38 @@ export function Header({
           {partnerCabinet ? (
             <Link
               href="/partner"
-              aria-label="Партнёрский кабинет"
-              title={`Партнёрский кабинет · ${partnerCabinet.brandName}`}
+              aria-label={t("header.partnerCabinet")}
+              title={t("header.partnerTitle", { brand: partnerCabinet.brandName })}
               className="hidden h-10 shrink-0 items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-2.5 text-[14px] font-semibold text-[#5566f6] transition-colors duration-200 md:inline-flex xl:px-3 hover:bg-[#5566f6]/[0.09]"
             >
               <Handshake className="size-5 shrink-0" />
               {/* До xl — только иконка: рядом ещё «Панель платформы»,
                   настройки, выход и аватар, и две длинные подписи не
                   помещались. */}
-              <span className="hidden xl:inline">Партнёрский кабинет</span>
+              <span className="hidden xl:inline">{t("header.partnerCabinet")}</span>
             </Link>
           ) : null}
 
           {isRoot ? (
             <Link
               href="/root"
-              aria-label="Панель платформы"
-              title="Панель платформы"
+              aria-label={t("header.platformPanel")}
+              title={t("header.platformPanel")}
               className={cn(
                 "hidden h-10 shrink-0 items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-2.5 text-[14px] font-semibold text-[#5566f6] transition-colors duration-200 md:inline-flex xl:px-3 hover:bg-[#5566f6]/[0.09]",
                 pathname.startsWith("/root") && "bg-[#5566f6]/[0.09]"
               )}
             >
               <ShieldCheck className="size-5 shrink-0" />
-              <span className="hidden xl:inline">Панель платформы</span>
+              <span className="hidden xl:inline">{t("header.platformPanel")}</span>
             </Link>
           ) : null}
 
           <button
             type="button"
             onClick={handleLogout}
-            aria-label="Выйти"
-            title="Выйти"
+            aria-label={t("header.logout")}
+            title={t("header.logout")}
             className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#fff4f2] hover:text-[#d2453d]"
           >
             <LogOut className="size-5" />
@@ -719,7 +733,7 @@ export function Header({
               type="button"
               onClick={() => setProfileSheetOpen(true)}
               className="relative size-11 shrink-0 rounded-full p-0 sm:size-10"
-              aria-label="Профиль"
+              aria-label={t("header.profile")}
             >
               <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
                 <AvatarFallback className="bg-[#5566f6]/[0.09] text-[13px] font-semibold text-[#5566f6]">
@@ -733,7 +747,7 @@ export function Header({
               <Button
                 variant="ghost"
                 className="relative size-11 shrink-0 rounded-full p-0 sm:size-10"
-                aria-label="Профиль"
+                aria-label={t("header.profile")}
               >
                 {/* Аватар остаётся кругом (это аватар), но размер
                     согласован с остальными контролами шапки — size-10
@@ -746,6 +760,7 @@ export function Header({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-0">
+              <div className="px-3 py-2"><PersonalLanguageSelect /></div>
               {/* Шапка меню: кто вошёл + строка тарифа. Тариф здесь, а
                   не отдельной пилюлей в header'е: это редко нужная,
                   но важная справка — ровно формат меню аккаунта. */}
@@ -780,7 +795,7 @@ export function Header({
                   onOpenCreate={openCreateDialog}
                   showSettings={fullAccess}
                   onNavigate={() => setProfileMenuOpen(false)}
-                  label="Организации этого кабинета"
+                  label={t("profile.organizationSwitcher")}
                 />
                 {regularOrganizations.length > 1 || canCreateOrganization ? (
                   <DropdownMenuSeparator className="my-1" />
@@ -791,13 +806,13 @@ export function Header({
                         мастер-кабинеты справочников — /master. Владельцу
                         аккаунта под ними всегда «Создать мастер-кабинет». */}
                     <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                      Другие кабинеты
+                      {t("profile.otherCabinets")}
                     </div>
                     {partnerCabinet ? (
                       <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
                         <Link href="/partner">
                           <Handshake className="mr-2 size-4 text-[#5566f6]" />
-                          <span className="flex-1 truncate">Партнёрский кабинет</span>
+                          <span className="flex-1 truncate">{t("header.partnerCabinet")}</span>
                           <span className="max-w-[120px] truncate text-[11px] text-[#6f7282]">
                             {partnerCabinet.brandName}
                           </span>
@@ -808,7 +823,7 @@ export function Header({
                       <DropdownMenuItem
                         key={cabinet.id}
                         className="focus:bg-[#f5f6ff]"
-                        title="Мастер-кабинет справочников: меню и сырьё для пищеблоков"
+                        title={t("header.masterCabinetTitle")}
                         data-testid="profile-master-cabinet"
                         onSelect={(event) => {
                           // Меню не закрываем: видно, что идёт переключение,
@@ -827,12 +842,12 @@ export function Header({
                     {canCreateOrganization ? (
                       <DropdownMenuItem
                         className="text-[#5566f6] focus:bg-[#f5f6ff] focus:text-[#5566f6]"
-                        title="Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов"
+                        title={t("header.backOfficeTitle")}
                         data-testid="profile-create-master-cabinet"
                         onSelect={() => openCreateDialog("master-cabinet")}
                       >
                         <Plus className="mr-2 size-4" />
-                        Создать мастер-кабинет
+                        {t("profile.createMasterCabinet")}
                       </DropdownMenuItem>
                     ) : null}
                     <DropdownMenuSeparator className="my-1" />
@@ -843,7 +858,7 @@ export function Header({
                 <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
                   <Link href="/settings/balance">
                     <Coins className="mr-2 size-4 text-[#5566f6]" />
-                    <span className="flex-1">Баланс и бонусы</span>
+                    <span className="flex-1">{t("profile.balanceBonuses")}</span>
                     {balanceRub !== null ? (
                       <span className="text-[11px] tabular-nums text-[#3848c7]">
                         {balanceRub.toLocaleString("ru-RU")} ₽
@@ -855,7 +870,7 @@ export function Header({
                   <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
                     <Link href="/settings/subscription">
                       <CreditCard className="mr-2 size-4 text-[#5566f6]" />
-                      Тариф
+                      {t("profile.plan")}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -864,7 +879,7 @@ export function Header({
                   <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="mr-2 size-4" />
-                      Настройки
+                      {t("header.settings")}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -873,7 +888,7 @@ export function Header({
                   <DropdownMenuItem asChild className="md:hidden">
                     <Link href="/root">
                       <ShieldCheck className="mr-2 size-4" />
-                      Панель платформы
+                      {t("header.platformPanel")}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -886,7 +901,7 @@ export function Header({
                   закрывается: видно, как перекрасился кабинет. */}
               <div className="px-2 pb-2 pt-1.5" data-testid="profile-theme">
                 <div className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  Тема
+                  {t("profile.theme")}
                 </div>
                 <ThemeTilesMenu />
                 {canEditBranding ? (
@@ -897,7 +912,7 @@ export function Header({
                     <Link href={BRANDING_SETTINGS_HREF} data-testid="theme-branding-link">
                       <Palette className="size-3.5 text-[var(--app-indigo-deep)]" aria-hidden />
                       <span className="font-medium text-[var(--app-indigo-deep)]">
-                        Логотип и цвета
+                        {t("profile.branding")}
                       </span>
                     </Link>
                   </DropdownMenuItem>
@@ -912,7 +927,7 @@ export function Header({
                   className="text-[#a13a32] focus:bg-[#fff4f2] focus:text-[#a13a32]"
                 >
                   <LogOut className="mr-2 size-4" />
-                  Выйти
+                  {t("header.logout")}
                 </DropdownMenuItem>
               </div>
             </DropdownMenuContent>

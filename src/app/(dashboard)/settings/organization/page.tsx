@@ -1,3 +1,4 @@
+import { OrganizationSpecialModeCard } from "@/components/settings/organization-special-mode-card";
 import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -13,10 +14,13 @@ import { loadConversionPreview } from "@/lib/partners/org-conversion";
 import { readLegalProfile } from "@/lib/org-legal-profile";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader } from "@/components/ui/page-header";
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrganizationInfoPage() {
+  const t = await getTranslations("settingsManagement.organizationProfile");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -70,10 +74,11 @@ export default async function OrganizationInfoPage() {
   const badge = describeBadge({ badgeEnabled: org.badgeEnabled, badgeCode }, badgeStatus?.percent ?? null);
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsManagement"]}>
     <div className="space-y-5">
       <PageHeader
-        title="Информация об организации"
-        description="Юридические реквизиты, контакты, брендинг и общие настройки. Используются в договорах, печатных журналах, портале инспектора и в Telegram-уведомлениях."
+        title={t("page.title")}
+        description={t("page.description")}
       />
 
       {conversion ? (
@@ -89,18 +94,20 @@ export default async function OrganizationInfoPage() {
       ) : null}
 
       <PageGuide
-        title="Что заполнить в реквизитах"
+        title={t("guide.title")}
         storageKey="settings-organization-v1"
         bullets={[
-          { title: "Название и ИНН — обязательно", body: "Они идут в шапку каждого печатного журнала и в договоры с поставщиками. Без ИНН Роспотребнадзор не примет PDF." },
-          { title: "Адрес и телефон", body: "Место регистрации компании (для печатных форм) + контакт для инспекторов." },
-          { title: "Тип организации", body: "Влияет на пресеты журналов: ресторану предлагается одно, пекарне — другое. Можно поменять позже." },
+          { title: t("guide.nameTitle"), body: t("guide.nameBody") },
+          { title: t("guide.addressTitle"), body: t("guide.addressBody") },
+          { title: t("guide.sphereTitle"), body: t("guide.sphereBody") },
         ]}
         qa={[
-          { q: "Можно без ИНН?", a: "Технически да — кнопка «Сохранить» сработает. Но печатные журналы и договоры будут без ИНН в шапке. Не рекомендуется." },
-          { q: "Что такое brandColor?", a: "Цвет акцента вашего бренда (логотип, кнопки в Mini App). Хочется сделать white-label — задайте hex-код вашего корпоративного цвета." },
+          { q: t("guide.innQuestion"), a: t("guide.innAnswer") },
+          { q: t("guide.brandQuestion"), a: t("guide.brandAnswer") },
         ]}
       />
+
+      <OrganizationSpecialModeCard />
 
       <OrganizationInfoForm
         initial={{
@@ -136,5 +143,6 @@ export default async function OrganizationInfoPage() {
 
       <DeleteOrganizationCard organizationName={org.name} deletionRequestedAt={org.deletionRequestedAt?.toISOString() ?? null} />
     </div>
+    </DomainMessagesBoundary>
   );
 }

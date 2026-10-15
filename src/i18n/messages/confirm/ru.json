@@ -1,0 +1,17 @@
+{
+  "common": {
+    "delete": "Удалить",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "close": "Закрыть"
+  },
+  "journalControls": {
+    "confirm": {
+      "confirm": "Подтвердить",
+      "cancel": "Отмена",
+      "close": "Закрыть",
+      "typeInstruction": "Чтобы продолжить, введите <required>{phrase}</required>",
+      "mismatch": "Не совпало — введите точно так, как написано выше."
+    }
+  }
+}

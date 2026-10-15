@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { WEEKDAY_LABELS } from "@/lib/staff-days-off";
+import { useTranslations } from "next-intl";
 
 /**
  * Ряд чипов «Пн Вт Ср Чт Пт Сб Вс» — недельное правило выходных.
@@ -19,13 +19,16 @@ export function WeekdayChips(props: {
   ariaLabel?: string;
 }) {
   const size = props.size ?? "md";
+  const t = useTranslations("staffManagement.weekdays");
+  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
   return (
     <div
       role="group"
-      aria-label={props.ariaLabel ?? "Выходные дни недели"}
+      aria-label={props.ariaLabel ?? t("groupLabel")}
       className={cn("flex flex-wrap gap-1", props.className)}
     >
-      {WEEKDAY_LABELS.map((label, index) => {
+      {days.map((day, index) => {
+        const label = t(day);
         const active = props.value.includes(index);
         return (
           <button
@@ -33,7 +36,7 @@ export function WeekdayChips(props: {
             type="button"
             disabled={props.disabled}
             aria-pressed={active}
-            title={active ? `${label} — выходной` : `${label} — рабочий`}
+            title={active ? t("dayOff", { day: t(`${day}Full`) }) : t("workingDay", { day: t(`${day}Full`) })}
             onClick={() =>
               props.onChange(
                 active

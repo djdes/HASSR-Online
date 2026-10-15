@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
+import { useDocumentDisplayTitle } from "./journal-header-edit";
 
 type Props = ComponentProps<typeof Button> & {
   documentId: string;
@@ -13,12 +17,6 @@ type Props = ComponentProps<typeof Button> & {
   successMessage?: string;
   onClosed?: () => void;
 };
-
-const CLOSE_LABEL = "\u0417\u0430\u043a\u043e\u043d\u0447\u0438\u0442\u044c \u0436\u0443\u0440\u043d\u0430\u043b";
-const CLOSING_LABEL = "\u0417\u0430\u043a\u0440\u044b\u0442\u0438\u0435...";
-const CLOSED_TOAST = "\u0416\u0443\u0440\u043d\u0430\u043b \u0437\u0430\u043a\u0440\u044b\u0442";
-const CLOSE_ERROR =
-  "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043a\u0440\u044b\u0442\u044c \u0436\u0443\u0440\u043d\u0430\u043b";
 
 /**
  * Headless-версия «Закончить журнал» — для пунктов меню «⋯», где кнопка
@@ -29,7 +27,7 @@ export function useDocumentCloseAction({
   title,
   confirmMessage,
   confirmDescription,
-  successMessage = CLOSED_TOAST,
+  successMessage,
   onClosed,
   blocker,
 }: {
@@ -51,6 +49,9 @@ export function useDocumentCloseAction({
    */
   blocker?: () => { title: string; description?: string; bullets: string[] } | null;
 }) {
+  const t = useTranslations("journalControls.closeDocument");
+  const locale = useLocale();
+  const displayTitle = useDocumentDisplayTitle(title);
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
@@ -59,20 +60,22 @@ export function useDocumentCloseAction({
     const blocked = blocker?.();
     if (blocked) {
       await confirmAsync({
+      locale,
         title: blocked.title,
         description: blocked.description,
         bullets: blocked.bullets.map((label) => ({ label, tone: "warn" as const })),
         variant: "warn",
-        confirmLabel: "Понятно",
-        cancelLabel: "Закрыть",
+        confirmLabel: t("understood"),
+        cancelLabel: t("dismiss"),
       });
       return;
     }
     const confirmed = await confirmAsync({
-      title: confirmMessage || `${CLOSE_LABEL} "${title}"?`,
+      locale,
+      title: confirmMessage || t("confirmTitle", { title: displayTitle }),
       description: confirmDescription,
       variant: "warn",
-      confirmLabel: CLOSE_LABEL,
+      confirmLabel: t("close"),
     });
     if (!confirmed) return;
 
@@ -83,33 +86,35 @@ export function useDocumentCloseAction({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "closed" }),
       });
-      const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(result?.error || CLOSE_ERROR);
+        throw new Error(await readLocalizedApiError(response, locale, t("failed")));
       }
       onClosed?.();
-      toast.success(successMessage);
+      toast.success(successMessage ?? t("closed"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : CLOSE_ERROR);
+      toast.error(humanizeFetchError(error, t("failed"), t("networkError")));
     } finally {
       setIsClosing(false);
     }
   }
 
-  return { closeDocument, isClosing, closeLabel: CLOSE_LABEL };
+  return { closeDocument, isClosing, closeLabel: t("close") };
 }
 
 export function DocumentCloseButton({
   documentId,
   title,
   confirmMessage,
-  successMessage = CLOSED_TOAST,
+  successMessage,
   onClosed,
   onClick,
   disabled,
   ...buttonProps
 }: Props) {
+  const t = useTranslations("journalControls.closeDocument");
+  const locale = useLocale();
+  const displayTitle = useDocumentDisplayTitle(title);
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,11 +125,12 @@ export function DocumentCloseButton({
     }
 
     const message =
-      confirmMessage || `${CLOSE_LABEL} "${title}"?`;
+      confirmMessage || t("confirmTitle", { title: displayTitle });
     const confirmed = await confirmAsync({
+      locale,
       title: message,
       variant: "warn",
-      confirmLabel: CLOSE_LABEL,
+      confirmLabel: t("close"),
     });
     if (!confirmed) {
       return;
@@ -137,16 +143,15 @@ export function DocumentCloseButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "closed" }),
       });
-      const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(result?.error || CLOSE_ERROR);
+        throw new Error(await readLocalizedApiError(response, locale, t("failed")));
       }
 
       onClosed?.();
-      toast.success(successMessage);
+      toast.success(successMessage ?? t("closed"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : CLOSE_ERROR);
+      toast.error(humanizeFetchError(error, t("failed"), t("networkError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -159,7 +164,7 @@ export function DocumentCloseButton({
       onClick={handleClick}
       {...buttonProps}
     >
-      {isSubmitting ? CLOSING_LABEL : CLOSE_LABEL}
+      {isSubmitting ? t("closing") : t("close")}
     </Button>
   );
 }

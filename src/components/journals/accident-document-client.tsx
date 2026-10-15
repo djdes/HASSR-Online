@@ -1,5 +1,8 @@
 "use client";
 
+import { useAccidentCopy } from "./use-accident-copy";
+import { accidentDate, accidentDateTime, accidentTitle } from "./accident-presentation";
+
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
@@ -28,16 +31,8 @@ import {
   splitTimeValue,
 } from "@/components/journals/time-field";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ACCIDENT_DOCUMENT_HEADING,
   ACCIDENT_DOCUMENT_TITLE,
   createAccidentRow,
   normalizeAccidentDocumentConfig,
@@ -56,9 +51,8 @@ import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/jou
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { localDayKey } from "@/lib/entry-defaults";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+
 
 type Props = {
   documentId: string;
@@ -71,25 +65,6 @@ type Props = {
   useV2?: boolean;
 };
 
-function formatDateLabel(date: string) {
-  if (!date) return "";
-  const [year, month, day] = date.split("-");
-  if (!year || !month || !day) return date;
-  return `${day}-${month}-${year}`;
-}
-
-function formatDateTime(date: string, hour: string, minute: string) {
-  return `${formatDateLabel(date)}\n${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
-}
-
-function hourOptions() {
-  return Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
-}
-
-function minuteOptions() {
-  return Array.from({ length: 60 }, (_, index) => String(index).padStart(2, "0"));
-}
-
 function RowDialog(props: {
   open: boolean;
   onOpenChange: (value: boolean) => void;
@@ -98,6 +73,7 @@ function RowDialog(props: {
   titleSuffix?: string;
   onSave: (row: AccidentRow) => Promise<void>;
 }) {
+  const { t, latest } = useAccidentCopy();
   const [row, setRow] = useState<AccidentRow>(() => createAccidentRow());
   const [submitting, setSubmitting] = useState(false);
 
@@ -115,9 +91,9 @@ function RowDialog(props: {
     try {
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row);
-    } catch (error) {
+    } catch {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
-      toast.error(humanizeFetchError(error, "Ошибка сохранения строки"));
+      toast.error(latest.current.t("errors.row"));
     } finally {
       setSubmitting(false);
     }
@@ -129,10 +105,11 @@ function RowDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+              {props.initialRow ? (props.titleSuffix ? t("row.editProgress", { progress: props.titleSuffix }) : t("row.edit")) : t("row.add")}
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -142,10 +119,11 @@ function RowDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-8 py-6">
           <fieldset className="space-y-3 rounded-[18px] border border-[#e5e8f2] p-4">
-            <legend className="px-1 text-base font-medium">Дата и время аварии</legend>
+            <legend className="px-1 text-base font-medium">{t("columns.accidentTime")}</legend>
             <div className="relative">
               <Input
                 type="date"
+                aria-label={t("columns.accidentTime")}
                 value={row.accidentDate}
                 onChange={(event) => setValue("accidentDate", event.target.value)}
                 className="h-9 rounded-xl border-[#d7dbea] pr-12"
@@ -156,6 +134,7 @@ function RowDialog(props: {
                 «минуты» — четыре касания на аварию превращались в два
                 открытия списка на каждое время. */}
             <TimeField
+              label={t("columns.accidentTime")}
               value={joinTimeValue(row.accidentHour, row.accidentMinute)}
               onChange={(next) => {
                 const { hour, minute } = splitTimeValue(next);
@@ -169,40 +148,37 @@ function RowDialog(props: {
             value={row.locationName}
             onChange={(event) => setValue("locationName", event.target.value)}
             className="h-9 rounded-xl border-[#d7dbea]"
-            placeholder="Введите наименование помещения"
+            placeholder={t("row.locationPlaceholder")}
           />
 
           <div className="space-y-2">
             <Label className="text-base font-medium text-black">
-              Описание аварии (причины, возникновения, предпринятые действия для
-              ликвидации аварии и т.д.)
-            </Label>
+              {t("columns.description")}</Label>
             <Textarea
               value={row.accidentDescription}
               onChange={(event) => setValue("accidentDescription", event.target.value)}
               className="min-h-32 rounded-2xl border-[#d7dbea]"
-              placeholder="Описание аварии"
+              placeholder={t("row.descriptionPlaceholder")}
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-base font-medium text-black">
-              Наличие «потенциально небезопасной» пищевой продукции, предпринятые
-              действия с продукцией
-            </Label>
+              {t("columns.products")}</Label>
             <Textarea
               value={row.affectedProducts}
               onChange={(event) => setValue("affectedProducts", event.target.value)}
               className="min-h-32 rounded-2xl border-[#d7dbea]"
-              placeholder='Наличие «небезопасной» пищевой продукции'
+              placeholder={t("row.productsPlaceholder")}
             />
           </div>
 
           <fieldset className="space-y-3 rounded-[18px] border border-[#e5e8f2] p-4">
-            <legend className="px-1 text-base font-medium">Дата и время ликвидации</legend>
+            <legend className="px-1 text-base font-medium">{t("row.resolvedTime")}</legend>
             <div className="relative">
               <Input
                 type="date"
+                aria-label={t("row.resolvedTime")}
                 value={row.resolvedDate}
                 onChange={(event) => setValue("resolvedDate", event.target.value)}
                 className="h-9 rounded-xl border-[#d7dbea] pr-12"
@@ -213,6 +189,7 @@ function RowDialog(props: {
                 «минуты» — четыре касания на аварию превращались в два
                 открытия списка на каждое время. */}
             <TimeField
+              label={t("row.resolvedTime")}
               value={joinTimeValue(row.resolvedHour, row.resolvedMinute)}
               onChange={(next) => {
                 const { hour, minute } = splitTimeValue(next);
@@ -224,26 +201,23 @@ function RowDialog(props: {
 
           <div className="space-y-2">
             <Label className="text-base font-medium text-black">
-              ФИО лиц, ответственных за ликвидацию аварии и ее последствий
-            </Label>
+              {t("columns.people")}</Label>
             <Textarea
               value={row.responsiblePeople}
               onChange={(event) => setValue("responsiblePeople", event.target.value)}
               className="min-h-28 rounded-2xl border-[#d7dbea]"
-              placeholder="ФИО лиц"
+              placeholder={t("row.peoplePlaceholder")}
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-base font-medium text-black">
-              Мероприятия (корректирующие действия), предпринятые комиссией для
-              исключения возникновения аварии
-            </Label>
+              {t("columns.actions")}</Label>
             <Textarea
               value={row.correctiveActions}
               onChange={(event) => setValue("correctiveActions", event.target.value)}
               className="min-h-32 rounded-2xl border-[#d7dbea]"
-              placeholder="Мероприятия (корректирующие действия)"
+              placeholder={t("row.actionsPlaceholder")}
             />
           </div>
 
@@ -255,10 +229,10 @@ function RowDialog(props: {
               className="h-9 rounded-xl bg-[#5563ff] px-8 text-[13.5px] text-white hover:bg-[#4452ee]"
             >
               {submitting
-                ? "Сохранение..."
+                ? t("actions.saving")
                 : props.initialRow
-                  ? "Сохранить"
-                  : "Добавить"}
+                  ? t("actions.save")
+                  : t("actions.add")}
             </Button>
           </div>
         </div>
@@ -275,6 +249,7 @@ function SettingsDialog(props: {
   onSave: (payload: { title: string; dateFrom: string }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const { t, locale, latest } = useAccidentCopy();
   const [title, setTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   const [submitting, setSubmitting] = useState(false);
@@ -290,6 +265,8 @@ function SettingsDialog(props: {
     try {
       await props.onSave({ title: title.trim(), dateFrom });
       props.onOpenChange(false);
+    } catch {
+      toast.error(latest.current.t("errors.settings"));
     } finally {
       setSubmitting(false);
     }
@@ -300,8 +277,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа и дата начала."
+        title={t("settings.title")}
+        description={t("settings.description")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -309,18 +286,16 @@ function SettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
-          </Label>
+            {t("settings.name")}</Label>
           <Input
-            value={title}
+            value={accidentTitle(title, dateFrom, locale, t)}
             onChange={(event) => setTitle(event.target.value)}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
-          </Label>
+            {t("settings.start")}</Label>
           <Input
             type="date"
             value={dateFrom}
@@ -338,10 +313,10 @@ function SettingsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              Настройки документа
-            </DialogTitle>
+              {t("settings.title")}</DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -351,15 +326,15 @@ function SettingsDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-base text-[#6e7387]">Название документа</Label>
+            <Label className="text-base text-[#6e7387]">{t("settings.name")}</Label>
             <Input
-              value={title}
+              value={accidentTitle(title, dateFrom, locale, t)}
               onChange={(event) => setTitle(event.target.value)}
               className="h-9 rounded-xl border-[#d7dbea]"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-base text-[#6e7387]">Дата начала</Label>
+            <Label className="text-base text-[#6e7387]">{t("settings.start")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -374,7 +349,7 @@ function SettingsDialog(props: {
               disabled={submitting}
               className="h-9 rounded-xl bg-[#5563ff] px-8 text-[13.5px] text-white hover:bg-[#4452ee]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("actions.saving") : t("actions.save")}
             </Button>
           </div>
         </div>
@@ -391,6 +366,7 @@ function FinishDialog(props: {
   config: AccidentDocumentConfig;
   onFinished: () => void;
 }) {
+  const { t, latest } = useAccidentCopy();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleFinish() {
@@ -408,14 +384,13 @@ function FinishDialog(props: {
       });
 
       if (!response.ok) {
-        const result = await response.json().catch(() => null);
-        throw new Error(result?.error || "Не удалось закончить журнал");
+        throw new Error("ACCIDENT_CLOSE_FAILED");
       }
 
       props.onFinished();
       props.onOpenChange(false);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка"));
+    } catch {
+      toast.error(latest.current.t("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -427,10 +402,11 @@ function FinishDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              Закончить журнал &quot;{props.title}&quot;
+              {t("finish.title", { title: props.title })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -440,9 +416,7 @@ function FinishDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-8 py-6">
           <p className="text-sm text-[#6e7387]">
-            После завершения журнал перейдет в раздел закрытых и будет доступен
-            только для чтения.
-          </p>
+            {t("finish.description")}</p>
           <div className="flex justify-end">
             <Button
               type="button"
@@ -450,7 +424,7 @@ function FinishDialog(props: {
               disabled={submitting}
               className="h-9 rounded-xl bg-[#5563ff] px-8 text-[13.5px] text-white hover:bg-[#4452ee]"
             >
-              {submitting ? "Завершение..." : "Закончить журнал"}
+              {submitting ? t("actions.finishing") : t("actions.finish")}
             </Button>
           </div>
         </div>
@@ -465,6 +439,7 @@ export function AccidentDocumentClient(props: Props) {
   const [config, setConfig] = useState(() =>
     normalizeAccidentDocumentConfig(props.config)
   );
+  const { t, locale, latest } = useAccidentCopy();
   const [title, setTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
@@ -480,14 +455,11 @@ export function AccidentDocumentClient(props: Props) {
 
   const cardItems: RecordCardItem[] = rows.map((row, index) => ({
     id: row.id,
-    title: `№${index + 1} · ${formatDateTime(
-      row.accidentDate,
-      row.accidentHour,
-      row.accidentMinute
-    ).replace("\n", " ")}`,
+    title: `№${index + 1} · ${accidentDateTime(row.accidentDate, row.accidentHour, row.accidentMinute, locale).replace("\n", " ")}`,
     subtitle: row.locationName || "—",
     leading: (
       <Checkbox
+        aria-label={t("actions.selectRow", { number: index + 1 })}
         checked={selectedRowIds.includes(row.id)}
         onCheckedChange={(checked) =>
           setSelectedRowIds((current) =>
@@ -501,17 +473,17 @@ export function AccidentDocumentClient(props: Props) {
       />
     ),
     fields: [
-      { label: "Описание аварии", value: row.accidentDescription, hideIfEmpty: true },
-      { label: "Небезопасная продукция", value: row.affectedProducts, hideIfEmpty: true },
+      { label: t("row.descriptionPlaceholder"), value: row.accidentDescription, hideIfEmpty: true },
+      { label: t("cards.products"), value: row.affectedProducts, hideIfEmpty: true },
       {
-        label: "Ликвидирована",
-        value: formatDateTime(row.resolvedDate, row.resolvedHour, row.resolvedMinute).replace(
+        label: t("cards.resolved"),
+        value: accidentDateTime(row.resolvedDate, row.resolvedHour, row.resolvedMinute, locale).replace(
           "\n",
           " "
         ),
       },
-      { label: "Ответственные", value: row.responsiblePeople, hideIfEmpty: true },
-      { label: "Корректирующие действия", value: row.correctiveActions, hideIfEmpty: true },
+      { label: t("cards.people"), value: row.responsiblePeople, hideIfEmpty: true },
+      { label: t("cards.actions"), value: row.correctiveActions, hideIfEmpty: true },
     ],
     onClick: isActive
       ? () => {
@@ -528,8 +500,7 @@ export function AccidentDocumentClient(props: Props) {
         }}
         className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5563ff] px-4 text-[14px] font-medium text-white hover:bg-[#4452ee]"
       >
-        Редактировать
-      </button>
+        {t("actions.edit")}</button>
     ) : null,
   }));
 
@@ -548,9 +519,9 @@ export function AccidentDocumentClient(props: Props) {
         config: nextConfig,
       }),
     });
-    const result = await response.json().catch(() => null);
+    await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
+      throw new Error("ACCIDENT_SAVE_FAILED");
     }
     setTitle(nextTitle);
     setDateFrom(nextDateFrom);
@@ -590,16 +561,16 @@ export function AccidentDocumentClient(props: Props) {
   async function handleDeleteSelected() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ locale, title: t("delete.rowsTitle"), description: t("delete.description", { count }), variant: "danger", confirmLabel: t("actions.delete") }))) return;
     try {
       await persist(title, dateFrom, {
         ...config,
         rows: config.rows.filter((row) => !selectedRowIds.includes(row.id)),
       });
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.success(latest.current.t("delete.success", { count }));
+    } catch {
+      toast.error(latest.current.t("errors.deleteRows"));
     }
   }
 
@@ -614,33 +585,33 @@ export function AccidentDocumentClient(props: Props) {
           count={selectedRowIds.length}
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
-            handleDeleteSelected().catch((error) =>
-              toast.error(humanizeFetchError(error, "Ошибка"))
+            handleDeleteSelected().catch(() =>
+              toast.error(latest.current.t("errors.generic"))
             );
           }}
-          hint="Записи об авариях будут удалены без возможности отмены"
+          hint={t("delete.hint")}
         >
           <SelectionEditButton count={selectedRowIds.length} disabled={!isActive} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
       ) : null}
 
       <div className="space-y-8 py-4 sm:py-6">
-        <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+        <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("empty.title")} emptyBody={t("empty.body")} />
 
         <JournalDocumentShell
-          title={title || ACCIDENT_DOCUMENT_HEADING}
-          subtitle={`Начат ${formatDateLabel(dateFrom)}`}
+          title={accidentTitle(title, dateFrom, locale, t)}
+          subtitle={t("started", { date: accidentDate(dateFrom, locale) })}
           documentId={props.documentId}
           backHref="/journals/accident_journal"
           onSettings={() => setSettingsOpen(true)}
           closed={!isActive}
-          closedHint="Откройте журнал заново, чтобы добавлять и редактировать записи об авариях."
+          closedHint={t("finish.closedHint")}
           menuItems={
             isActive
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("actions.finish"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => setFinishOpen(true),
                   },
@@ -650,17 +621,17 @@ export function AccidentDocumentClient(props: Props) {
           mobileView={mobileView}
           onMobileView={switchMobileView}
           cards={
-            <RecordCardsView items={cardItems} emptyLabel="Аварий пока не зафиксировано." />
+            <RecordCardsView items={cardItems} emptyLabel={t("empty.cards")} />
           }
           paperHeader={
             <JournalDocumentHeader
-              orgName={props.organizationName || ORG_NAME_FALLBACK}
-              title={ACCIDENT_DOCUMENT_TITLE}
+              orgName={props.organizationName || t("organization")}
+              title={t("title")}
               startedAt={dateFrom}
               finishedAt={isActive ? null : config.finishedAt || dateFrom}
             />
           }
-          sheetTitle={ACCIDENT_DOCUMENT_TITLE}
+          sheetTitle={t("title")}
           sheetMinWidth={1650}
           toolbar={
             isActive ? (
@@ -673,8 +644,7 @@ export function AccidentDocumentClient(props: Props) {
                 }}
               >
                 <Plus className="size-5" />
-                Добавить
-              </Button>
+                {t("actions.add")}</Button>
             ) : undefined
           }
         >
@@ -683,6 +653,7 @@ export function AccidentDocumentClient(props: Props) {
               <tr>
                 <th className={`w-[44px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
                   <Checkbox
+                    aria-label={t("actions.selectAll")}
                     checked={allSelected}
                     onCheckedChange={(checked) =>
                       setSelectedRowIds(checked === true ? rows.map((row) => row.id) : [])
@@ -690,31 +661,21 @@ export function AccidentDocumentClient(props: Props) {
                     disabled={!isActive || rows.length === 0}
                   />
                 </th>
-                <th className={`w-[72px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>№ п/п</th>
+                <th className={`w-[72px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("columns.number")}</th>
                 <th className={`w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Дата и время аварии
-                </th>
+                  {t("columns.accidentTime")}</th>
                 <th className={`w-[210px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Наименование помещения, в котором зафиксирована авария
-                </th>
+                  {t("columns.location")}</th>
                 <th className={`w-[300px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Описание аварии (причины, возникновения, предпринятые действия для
-                  ликвидации аварии и т.д.)
-                </th>
+                  {t("columns.description")}</th>
                 <th className={`w-[280px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Наличие «потенциально небезопасной» пищевой продукции,
-                  предпринятые действия с продукцией
-                </th>
+                  {t("columns.products")}</th>
                 <th className={`w-[180px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Дата и время ликвидации аварии, допуск к работе
-                </th>
+                  {t("columns.resolvedTime")}</th>
                 <th className={`w-[210px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  ФИО лиц, ответственных за ликвидацию аварии и ее последствий
-                </th>
+                  {t("columns.people")}</th>
                 <th className={`w-[320px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Мероприятия (корректирующие действия), предпринятые комиссией для
-                  исключения возникновения аварии
-                </th>
+                  {t("columns.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -733,6 +694,7 @@ export function AccidentDocumentClient(props: Props) {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Checkbox
+                      aria-label={t("actions.selectRow", { number: index + 1 })}
                       checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={(checked) =>
                         setSelectedRowIds((current) =>
@@ -756,14 +718,14 @@ export function AccidentDocumentClient(props: Props) {
                         setRowDialogOpen(true);
                       }}
                     >
-                      {formatDateTime(row.accidentDate, row.accidentHour, row.accidentMinute)}
+                      {accidentDateTime(row.accidentDate, row.accidentHour, row.accidentMinute, locale)}
                     </button>
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.locationName}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.accidentDescription}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.affectedProducts}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight whitespace-pre-line`}>
-                    {formatDateTime(row.resolvedDate, row.resolvedHour, row.resolvedMinute)}
+                    {accidentDateTime(row.resolvedDate, row.resolvedHour, row.resolvedMinute, locale)}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.responsiblePeople}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.correctiveActions}</td>
@@ -772,8 +734,7 @@ export function AccidentDocumentClient(props: Props) {
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={9} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#80849a]`}>
-                    Строк пока нет
-                  </td>
+                    {t("empty.rows")}</td>
                 </tr>
               ) : null}
               {isActive ? (
@@ -784,7 +745,7 @@ export function AccidentDocumentClient(props: Props) {
                   leading={2}
                   labelSpan={2}
                   trailing={5}
-                  label="Добавить"
+                  label={t("actions.add")}
                   onClick={() => {
                     setEditingRow(null);
                     setRowDialogOpen(true);
@@ -833,7 +794,7 @@ export function AccidentDocumentClient(props: Props) {
       <FinishDialog
         open={finishOpen}
         onOpenChange={setFinishOpen}
-        title={title || ACCIDENT_DOCUMENT_TITLE}
+        title={accidentTitle(title, dateFrom, locale, t)}
         documentId={props.documentId}
         config={config}
         onFinished={() => startTransition(() => router.refresh())}

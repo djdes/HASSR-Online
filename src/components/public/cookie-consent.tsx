@@ -1,6 +1,6 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 
 import { useEffect, useState } from "react";
 import Link from "@/components/i18n/localized-link";
@@ -59,7 +59,7 @@ const APP_PREFIXES = [
  * fixed nav-rail внизу и баннер перекрыл бы навигацию.
  */
 export function CookieConsent() {
-  const t = usePublicCopy();
+  const t = useTranslations("publicUi.cookieConsent");
   const pathname = usePathname();
   const pagePath = pathname ? publicLocaleRoute(pathname)?.pathname ?? pathname : pathname;
   const [visible, setVisible] = useState(false);
@@ -119,7 +119,7 @@ export function CookieConsent() {
   return (
     <div
       role="region"
-      aria-label={t("Уведомление об использовании cookies")}
+      aria-label={t("ariaLabel")}
       style={{ bottom: "var(--safe-b)" }}
       className={
         "fixed left-1/2 z-50 w-[calc(100%-24px)] max-w-[600px] -translate-x-1/2 " +
@@ -133,20 +133,20 @@ export function CookieConsent() {
     >
       <p className="flex-1 text-[13px] leading-[1.5] text-[#6f7282]">
         <span className="hidden sm:inline">
-          {t("Мы используем cookies, чтобы сайт работал корректно и удобно.")}</span>
-        <span className="sm:hidden">{t("Мы используем cookies")}</span>{" "}
+          {t("longMessage")}</span>
+        <span className="sm:hidden">{t("shortMessage")}</span>{" "}
         <Link
           href="/privacy"
           className="text-[#3848c7] transition-colors hover:text-[#0b1024]"
         >
-          {t("Подробнее")}</Link>
+          {t("privacyLink")}</Link>
       </p>
       <button
         type="button"
         onClick={accept}
         className="h-9 shrink-0 rounded-xl bg-[#5566f6] px-5 text-[13px] font-medium text-white transition-colors hover:bg-[#4a5bf0] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
       >
-        {t("ОК")}</button>
+        {t("accept")}</button>
     </div>
   );
 }

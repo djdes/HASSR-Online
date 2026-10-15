@@ -28,7 +28,7 @@ export function normalizeQrFillMode(raw: unknown): QrFillMode {
 
 export type QrFillActorResult =
   | { ok: true; employee: { id: string; name: string; role: string | null } }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; errorCode?: string; errorParams?: Record<string, string | number> };
 
 export async function resolveQrFillActor(params: {
   mode: QrFillMode;
@@ -48,17 +48,17 @@ export async function resolveQrFillActor(params: {
     where: { id: params.employeeId, organizationId: params.organizationId, ...(params.includeCommission ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE) },
     select: { id: true, name: true, role: true, qrPinHash: true, qrPinFailedCount: true, qrPinLockedUntil: true },
   });
-  if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден" };
+  if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден", errorCode: "equipmentFill.errors.employeeNotFound" };
 
   if (params.mode === "auth") {
     const session = await getServerSession(authOptions);
-    if (!session) return { ok: false, status: 401, error: "Нужно войти в кабинет" };
+    if (!session) return { ok: false, status: 401, error: "Нужно войти в кабинет", errorCode: "equipmentFill.errors.loginRequired" };
     const actor = await db.user.findUnique({ where: { id: session.user.id }, select: { organizationId: true, role: true, canManageSettings: true } });
     if (!actor || actor.organizationId !== params.organizationId) {
-      return { ok: false, status: 403, error: "Вы вошли под аккаунтом другой организации" };
+      return { ok: false, status: 403, error: "Вы вошли под аккаунтом другой организации", errorCode: "equipmentFill.errors.otherOrganization" };
     }
     if (session.user.id !== employee.id && !isManagementRole(actor.role) && !actor.canManageSettings && session.user.isRoot !== true) {
-      return { ok: false, status: 403, error: "Записать можно только от своего имени" };
+      return { ok: false, status: 403, error: "Записать можно только от своего имени", errorCode: "equipmentFill.errors.ownNameOnly" };
     }
     return { ok: true, employee: { id: employee.id, name: employee.name, role: employee.role } };
   }
@@ -68,11 +68,11 @@ export async function resolveQrFillActor(params: {
   const pinRequired = params.mode === "pin" || (params.mode === "public" && Boolean(employee.qrPinHash));
   if (pinRequired && !params.pinVerified) {
     if (!employee.qrPinHash) {
-      return { ok: false, status: 403, error: "У сотрудника не задан PIN. Попросите руководителя задать его в карточке сотрудника." };
+      return { ok: false, status: 403, error: "У сотрудника не задан PIN. Попросите руководителя задать его в карточке сотрудника.", errorCode: "equipmentFill.errors.noPinHelp" };
     }
     if (employee.qrPinLockedUntil && employee.qrPinLockedUntil.getTime() > Date.now()) {
       const minutes = Math.ceil((employee.qrPinLockedUntil.getTime() - Date.now()) / 60_000);
-      return { ok: false, status: 423, error: `PIN заблокирован после ошибок. Попробуйте через ${minutes} мин.` };
+      return { ok: false, status: 423, error: `PIN заблокирован после ошибок. Попробуйте через ${minutes} мин.`, errorCode: "equipmentFill.errors.pinLocked", errorParams: { minutes } };
     }
     const pin = (params.pin ?? "").trim();
     const valid = /^\d{4,6}$/.test(pin) && (await bcrypt.compare(pin, employee.qrPinHash));
@@ -91,7 +91,7 @@ export async function resolveQrFillActor(params: {
         error:
           failed >= PIN_MAX_FAILURES
             ? "Неверный PIN 5 раз — вход заблокирован на 15 минут."
-            : `Неверный PIN. Осталось попыток: ${PIN_MAX_FAILURES - failed}.`,
+            : `Неверный PIN. Осталось попыток: ${PIN_MAX_FAILURES - failed}.`, errorCode: failed >= PIN_MAX_FAILURES ? "equipmentFill.errors.pinLockedNow" : "equipmentFill.errors.pinWrong", errorParams: { attempts: PIN_MAX_FAILURES - failed },
       };
     }
     if (employee.qrPinFailedCount > 0 || employee.qrPinLockedUntil) {

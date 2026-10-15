@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import Link from "next/link";
 import { Settings2 } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
@@ -31,6 +33,7 @@ export default async function RootAreaLayout({
   // without a valid root JWT, requireRoot() throws notFound() again as a
   // belt-and-braces safety net in case middleware is ever bypassed.
   const session = await requireRoot();
+  const t = await getTranslations("rootNavigation");
 
   const profile = await db.user.findUnique({
     where: { id: session.user.id },
@@ -44,6 +47,7 @@ export default async function RootAreaLayout({
     // actingAsOrganizationId. Без провайдера destructure undefined
     // → React error boundary → «Что-то пошло не так» на любой
     // /root/* странице где есть подобные кнопки.
+    <DomainMessagesBoundary namespaces={["rootNavigation"]}>
     <AuthSessionProvider session={session}>
     <SiteThemeProvider initialTheme={initialTheme}>
       <div
@@ -59,7 +63,7 @@ export default async function RootAreaLayout({
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 pt-4 sm:gap-4 sm:px-8 sm:pt-5">
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-[0.18em] text-white/60 sm:text-[12px]">
-              WeSetup · Platform
+              {t("platformBrand")}
             </div>
             <div className="mt-1 truncate text-[16px] font-semibold tracking-tight sm:text-[20px]">
               {session.user.name || session.user.email}
@@ -70,7 +74,7 @@ export default async function RootAreaLayout({
             className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white/10 px-3 py-1.5 text-[14px] transition-colors duration-150 hover:bg-white/20"
           >
             <Settings2 className="size-4" />
-            Выйти в приложение
+            {t("backToApp")}
           </Link>
         </div>
         <div className="mx-auto max-w-[1400px] px-4 pb-3 pt-3 sm:px-8">
@@ -85,5 +89,6 @@ export default async function RootAreaLayout({
       <Toaster />
     </SiteThemeProvider>
     </AuthSessionProvider>
+    </DomainMessagesBoundary>
   );
 }

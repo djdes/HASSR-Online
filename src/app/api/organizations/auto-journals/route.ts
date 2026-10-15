@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "@/lib/server-session";
@@ -163,6 +164,8 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Некорректный список" }, { status: 400 });
   }
   const organizationId = getActiveOrgId(session);
+  const blocked = await rejectJournalAutomation(organizationId);
+  if (blocked) return blocked;
 
   // Новый формат побеждает: он несёт обе половинки. Легаси `codes`
   // трактуем как «только автосоздание», не трогая автозаполнение —

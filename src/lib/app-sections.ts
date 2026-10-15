@@ -21,7 +21,8 @@
 
 import { hasCapability, type Capability } from "@/lib/permission-presets";
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
-import { getRouteTitle } from "@/lib/route-titles";
+import { getRouteTitle, type RouteTitleTranslator } from "@/lib/route-titles";
+import { navigationSectionLabelKey } from "@/i18n/navigation-presentation";
 
 export type AppSectionGroupId = "work" | "production" | "money" | "settings";
 
@@ -355,7 +356,14 @@ export const APP_SECTIONS: AppSection[] = [
 ];
 
 /** Название раздела: своё, если задано, иначе — из хлебных крошек. */
-export function appSectionLabel(section: AppSection): string {
+export function appSectionLabel(
+  section: AppSection,
+  tRoutes?: RouteTitleTranslator,
+  tLabel?: (key: NonNullable<ReturnType<typeof navigationSectionLabelKey>>) => string,
+): string {
+  const key = navigationSectionLabelKey(section.href);
+  if (key && tLabel) return tLabel(key);
+  if (tRoutes) return getRouteTitle(section.href, tRoutes) ?? section.label ?? section.href;
   return section.label ?? getRouteTitle(section.href) ?? section.href;
 }
 

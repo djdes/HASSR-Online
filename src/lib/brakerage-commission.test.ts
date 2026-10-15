@@ -87,7 +87,7 @@ test("плашка «сегодня»: считаем строки дня и ж�
     commissionMembers: [member],
     rows: [
       { productName: "Суп", productionDateTime: "2026-09-21 12:00" },
-      { productName: "Каша", productionDateTime: "2026-09-21 08:00", signatures: signed },
+      { productName: "Каша", productionDateTime: "2026-09-21 08:00", signatures: signed.map(signature => ({ ...signature, grade: "Отлично" })) },
       { productName: "Вчера", productionDateTime: "2026-09-20 18:00" },
     ],
   };

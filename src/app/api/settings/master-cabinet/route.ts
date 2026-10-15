@@ -16,6 +16,9 @@ import {
 import { createRateLimiter } from "@/lib/rate-limit";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
+import { db } from "@/lib/db";
+import { resolveLocale } from "@/i18n/locales";
+import { translatorFor } from "@/i18n/translator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,15 +135,21 @@ export async function POST(request: Request) {
   // Письмо — best-effort: ссылка приглашения есть и в ответе.
   let emailSent = true;
   try {
+    const [recipient, targetOrganization] = await Promise.all([
+      db.user.findUnique({ where: { id: result.user.id }, select: { locale: true } }),
+      db.organization.findUnique({ where: { id: result.masterOrganizationId }, select: { locale: true } }),
+    ]);
+    const locale = resolveLocale({ authenticated: true, userLocale: recipient?.locale, organizationLocale: targetOrganization?.locale });
+    const t = await translatorFor(locale);
     await sendInviteTokenEmail({
       to: result.user.email,
       name: result.user.name,
       organizationName: result.masterName,
       inviteUrl: result.inviteUrl,
       organizationId: result.masterOrganizationId,
-      subject: "Мастер-кабинет справочников WeSetup: установите пароль",
-      intro:
-        "Вы будете вести справочники для пищеблоков: загружаете меню и сырьё (из Excel, CSV или списком), а пищеблоки, подключённые по коду справочника, сразу получают их в журналы бракеража готовой продукции и скоропортящейся продукции. Журналы и сотрудники пищеблоков в кабинете не показываются — только эти два списка.",
+      locale,
+      subject: t("email.masterCabinet.subject", { organization: result.masterName }),
+      intro: t("email.masterCabinet.intro", { organization: result.masterName }),
     });
   } catch (err) {
     emailSent = false;

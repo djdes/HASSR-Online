@@ -1,0 +1,53 @@
+{
+  "locale": "en",
+  "sourceHash": "c8b30283ebb96c9db92414cbe512c50de78857a664d76b4cba9c73603b1c3631",
+  "title": "Journals kept ‘just for show’ no longer work: 2026 requirements",
+  "excerpt": "Identical temperatures, perfectly regular times, and weekend signatures are signs of paper-only recordkeeping. Learn how to make journals reflect real operations.",
+  "body": [
+    {
+      "type": "p",
+      "text": "In the past, a journal could be filled out hastily the hour before an inspection, and that seemed enough. In 2026, Rospotrebnadzor guidance identifies signs of falsification, making paper-only records easy to detect: identical temperatures, perfectly regular times, and no missed entries—even on weekends."
+    },
+    {
+      "type": "h2",
+      "text": "What an inspector may consider ‘made up’"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Dozens of consecutive readings at +4.0 °C with no natural variation.",
+        "Weekend signatures when the facility was actually closed.",
+        "Rejecting a product that was never even listed in inventory.",
+        "Cleaning recorded at 23:00 when the facility closes at 22:00.",
+        "A staff member assigned to a shift despite not appearing on the time sheet."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "info",
+      "title": "The key idea",
+      "text": "Journals are no longer ‘paperwork for inspection’; they are a source of data about operations. If the data contradict reality, the consequences go beyond a fine: partners and buyers may also lose trust."
+    },
+    {
+      "type": "h2",
+      "text": "How to improve recordkeeping"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Assign a named person to each journal rather than assigning it to a shift in general.",
+        "Move measurements closer to the process: use sensors in refrigerators, a timer for the fryer, and a scale at receiving.",
+        "Allow honest records. A temperature of +6 °C with an explanation is not by itself grounds for a penalty if the corrective action is documented.",
+        "Compare journals with external data: work schedules, deliveries, and cash-register records."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "An electronic journal addresses much of the problem: it adds timestamps automatically, flags late entries, and records temperature fluctuations as the sensor actually measures them."
+    }
+  ],
+  "tags": [
+    "SanPiN",
+    "Inspections"
+  ]
+}

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, ListChecks, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,6 +38,9 @@ type Props = {
  * Required-пункты блокируют submit (через onReadyChange).
  */
 export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
+  const t = useTranslations("taskFill");
+  const currentTranslations = useRef(t);
+  useEffect(() => { currentTranslations.current = t; }, [t]);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -96,11 +101,11 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
       if (!res.ok) {
         // Откатываем optimistic update.
         setChecks((c) => ({ ...c, [item.id]: !newValue }));
-        toast.error("Не удалось сохранить отметку");
+        toast.error(currentTranslations.current("checklist.saveError"));
       }
     } catch {
       setChecks((c) => ({ ...c, [item.id]: !newValue }));
-      toast.error("Сеть упала при сохранении");
+      toast.error(currentTranslations.current("checklist.networkError"));
     } finally {
       setSavingItemId(null);
     }
@@ -111,8 +116,7 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
       <div className="rounded-2xl border border-[#ececf4] bg-white p-5">
         <div className="flex items-center gap-3 text-[13px] text-[#9b9fb3]">
           <Loader2 className="size-4 animate-spin" />
-          Загружаю чек-лист…
-        </div>
+          {t("checklist.loading")}</div>
       </div>
     );
   }
@@ -151,12 +155,11 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold leading-tight text-[#0b1024] sm:text-[16px]">
-            Чек-лист действий
-          </div>
+            {t("checklist.title")}</div>
           <p className="mt-1 text-[12.5px] leading-snug text-[#6f7282] sm:text-[13px]">
             {allRequiredChecked
-              ? `Все обязательные пункты отмечены. ${checkedCount}/${totalCount} выполнено.`
-              : `Отметь действия по мере выполнения. ${requiredCheckedCount}/${requiredItems.length} обязательных.`}
+              ? t("checklist.complete", { completed: checkedCount, total: totalCount })
+              : t("checklist.progress", { completed: requiredCheckedCount, total: requiredItems.length })}
           </p>
         </div>
       </div>
@@ -182,6 +185,7 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
             <li key={item.id}>
               <button
                 type="button"
+                aria-pressed={checked}
                 onClick={() => toggle(item)}
                 disabled={saving}
                 className={`flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3.5 text-left transition-all sm:p-4 ${
@@ -212,8 +216,7 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
                     </span>
                     {item.required ? (
                       <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
-                        обязательно
-                      </span>
+                        {t("field.required")}</span>
                     ) : null}
                   </div>
                   {item.hint ? (
@@ -234,8 +237,7 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
       {/* Pending warning */}
       {!allRequiredChecked ? (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-[12.5px] leading-snug text-amber-900 sm:text-[13px]">
-          Сначала отметь все <strong>обязательные</strong> пункты — после этого
-          можно отправить форму.
+          {t("checklist.requiredHint")}
         </div>
       ) : null}
     </div>

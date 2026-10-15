@@ -62,12 +62,12 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Некорректные данные" },
+        { error: error.issues[0]?.message ?? "Некорректные данные", code: "invalid_request" },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { error: "Не удалось прочитать запрос" },
+      { error: "Не удалось прочитать запрос", code: "invalid_request" },
       { status: 400 }
     );
   }
@@ -79,18 +79,18 @@ export async function POST(request: Request) {
   const contact = normalizeContact(parsed);
   if (!contact.email && !contact.phone) {
     return NextResponse.json(
-      { error: "Оставьте телефон или почту — иначе некуда ответить" },
+      { error: "Оставьте телефон или почту — иначе некуда ответить", code: "missing_contact" },
       { status: 400 }
     );
   }
   if (contact.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contact.email)) {
-    return NextResponse.json({ error: "Проверьте адрес почты" }, { status: 400 });
+    return NextResponse.json({ error: "Проверьте адрес почты", code: "invalid_email" }, { status: 400 });
   }
 
   const ip = clientIp(request) ?? "unknown";
   if (!publicContactLimiter.consume(`feedback:${ip}`)) {
     return NextResponse.json(
-      { error: "Слишком много обращений подряд. Попробуйте через 10 минут" },
+      { error: "Слишком много обращений подряд. Попробуйте через 10 минут", code: "rate_limited" },
       { status: 429 }
     );
   }
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
       : null;
   if (attachments === null) {
     return NextResponse.json(
-      { error: "Вложения не прошли проверку — прикрепите файлы заново" },
+      { error: "Вложения не прошли проверку — прикрепите файлы заново", code: "invalid_attachments" },
       { status: 400 }
     );
   }

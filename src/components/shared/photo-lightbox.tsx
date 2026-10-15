@@ -1,4 +1,6 @@
 "use client";
+
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -37,6 +39,7 @@ export function PhotoLightbox({
   caption?: string;
   onClose: () => void;
 }) {
+  const { t } = useQrFillCopy();
   const [loaded, setLoaded] = useState(false);
   const [zoom, setZoom] = useState<ZoomState>(ZOOM_IDENTITY);
   // Жест идёт — плавность выключена, иначе картинка отстаёт от
@@ -202,7 +205,7 @@ export function PhotoLightbox({
       <button
         onClick={onClose}
         className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white"
-        aria-label="Закрыть"
+        aria-label={t("common.close")}
       >
         <X className="size-5" />
       </button>
@@ -252,8 +255,7 @@ export function PhotoLightbox({
       {/* Подсказка нужна один раз: жеста не видно, пока о нём не знаешь. */}
       {loaded && zoom.scale === MIN_ZOOM ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-[12px] text-white/45">
-          Двойное касание или щипок — приблизить
-        </div>
+          {t("photo.zoomHint")}</div>
       ) : null}
     </div>
   );

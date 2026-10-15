@@ -1,5 +1,6 @@
 "use client";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import { TOUR } from "@/lib/tour-anchors";
 
 import { useEffect, useMemo, useState } from "react";
@@ -55,6 +56,7 @@ import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-
 import { ControlPeriodicityField } from "@/components/journals/control-periodicity-field";
 import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useTranslations } from "next-intl";
 type UserItem = {
   id: string;
   name: string;
@@ -117,15 +119,6 @@ type Props = {
   useV2?: boolean;
 };
 
-/** «1 строка», «2 строки», «5 строк» — иначе выходило «2 строк». */
-function pluralRows(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return "строка";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "строки";
-  return "строк";
-}
-
 async function requestJson(url: string, init: RequestInit) {
   const response = await fetch(url, init);
   const result = await response.json().catch(() => null);
@@ -156,6 +149,7 @@ export function AddEmployeeDialog({
   includedEmployeeIds: string[];
   documentId: string;
 }) {
+  const t = useTranslations("journalWidgets.staff");
   const router = useRouter();
   const [pick, setPick] = useState<{ positionTitle: string; userId: string }>({
     positionTitle: "",
@@ -225,14 +219,14 @@ export function AddEmployeeDialog({
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           {/* На телефоне 30px занимали две строки и съедали пол-окна. */}
           <DialogTitle className="text-[20px] font-medium text-black sm:text-[30px]">
-            Добавление новой строки
+            {t("addEmployeeTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-5 py-6 sm:px-10 sm:py-8">
           {allAlreadyAdded ? null : (
             <>
               <p className="text-[15px] text-[#3c4053]">
-                Выберите соответствующую должность и сотрудника.
+                {t("choosePositionAndEmployee")}
               </p>
               <PositionEmployeePicker
                 users={availableUsers}
@@ -240,7 +234,7 @@ export function AddEmployeeDialog({
                 value={pick}
                 onChange={setPick}
                 disabled={availableUsers.length === 0}
-                emptyEmployeeHint="Все сотрудники этой должности уже в журнале — выберите другую должность."
+                emptyEmployeeHint={t("allInPositionAdded")}
                 triggerClassName="h-9 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]"
               />
               {!positionHasCandidates ? (
@@ -257,7 +251,7 @@ export function AddEmployeeDialog({
                   loading={isSubmitting}
                   className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white transition-colors duration-150 hover:bg-[#4b57ff]"
                 >
-                  Добавить
+                  {t("addEmployee")}
                 </Button>
               </div>
             </>
@@ -270,13 +264,13 @@ export function AddEmployeeDialog({
           <div className={allAlreadyAdded ? "" : "border-t border-[#ececf4] pt-5"}>
             <div className="text-[15px] font-semibold text-[#0b1024]">
               {allAlreadyAdded
-                ? "Все сотрудники организации уже в журнале"
-                : "Нужного человека нет в списке?"}
+                ? t("allOrganizationAdded")
+                : t("missingEmployeeQuestion")}
             </div>
             <p className="mt-1 text-[13.5px] leading-[1.45] text-[#6f7282]">
               {allAlreadyAdded
-                ? `В документе ${users.length} ${pluralRows(users.length)}, по одной на каждого. Заведите нового сотрудника, и его строка появится сразу.`
-                : "Заведите его прямо здесь, строка появится в журнале сразу."}
+                ? t("documentCountSentence", { count: users.length })
+                : t("quickAddEmployeeHint")}
             </p>
             <QuickAddEmployee
               className="mt-4"
@@ -304,6 +298,7 @@ function FillFromStaffDialog({
   users: UserItem[];
   includedEmployeeIds: string[];
 }) {
+  const t = useTranslations("journalWidgets.staff");
   const router = useRouter();
   const [category, setCategory] = useState("all");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -368,7 +363,7 @@ function FillFromStaffDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка заполнения из списка"));
+      toast.error(humanizeFetchError(error, t("fillFromListFailed")));
     } finally {
       setIsSubmitting(false);
     }
@@ -379,15 +374,13 @@ function FillFromStaffDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[690px]">
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <DialogTitle className="text-[22px] font-medium leading-[1.2] text-black">
-            Заполнение документа:
-            <br />
-            &quot;{documentTitle}&quot;
+            {t("fillDocumentTitle", { documentTitle })}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-5 py-6 sm:px-10 sm:py-8">
-          <div className="text-[18px] text-black">Добавить из категории:</div>
+          <div className="text-[18px] text-black">{t("addByCategory")}</div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("position")}</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
                 <SelectValue />
@@ -404,19 +397,13 @@ function FillFromStaffDialog({
 
           {remainingCount > 0 ? (
             <div className="rounded-xl border border-[#e2e6ff] bg-[#f7f8ff] px-4 py-3 text-[13.5px] leading-[1.45] text-[#3848c7]">
-              Будет добавлено: {remainingCount}{" "}
-              {remainingCount === 1
-                ? "новый сотрудник"
-                : remainingCount < 5
-                  ? "новых сотрудника"
-                  : "новых сотрудников"}
-              . Уже добавленные строки не дублируются.
+              {t("willAddCount", { count: remainingCount })}
             </div>
           ) : (
             <div className="rounded-xl border border-[#ffe6c9] bg-[#fff8ee] px-4 py-3 text-[13.5px] leading-[1.45] text-[#8a5a12]">
               {category === "all"
-                ? "Все сотрудники организации уже в журнале — добавлять некого."
-                : "Все сотрудники этой должности уже в журнале — выберите другую категорию."}
+                ? t("cannotAddAnyone")
+                : t("positionHasNoCandidates")}
             </div>
           )}
 
@@ -427,12 +414,12 @@ function FillFromStaffDialog({
               disabled={isSubmitting || remainingCount === 0}
               title={
                 remainingCount === 0
-                  ? "Нет сотрудников для добавления — все уже в журнале"
+                  ? t("noEmployeesToAdd")
                   : undefined
               }
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white transition-colors duration-150 hover:bg-[#4b57ff] disabled:opacity-50"
             >
-              {isSubmitting ? "Добавление..." : "Добавить"}
+              {isSubmitting ? t("adding") : t("addEmployee")}
             </Button>
           </div>
         </div>
@@ -476,6 +463,8 @@ function JournalSettingsDialog({
   extraConfig?: Record<string, unknown>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("journalWidgets.staff");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [name, setName] = useState(title);
   const [responsible, setResponsible] = useState(responsibleTitle || "");
@@ -520,11 +509,11 @@ function JournalSettingsDialog({
   async function handleSave() {
     if (periodEditable) {
       if (!from || !to) {
-        toast.error("Укажите период документа");
+        toast.error(t("periodRequired"));
         return;
       }
       if (from > to) {
-        toast.error("Дата начала не может быть позже даты окончания");
+        toast.error(t("dateOrderInvalid"));
         return;
       }
     }
@@ -581,7 +570,7 @@ function JournalSettingsDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения настроек журнала"));
+      toast.error(humanizeFetchError(error, t("saveSettingsFailed")));
     } finally {
       setIsSubmitting(false);
     }
@@ -591,28 +580,27 @@ function JournalSettingsDialog({
   const periodFields = periodEditable ? (
     <div className="space-y-2">
       <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-        Период документа
+        {t("period")}
       </Label>
       <div className="flex flex-wrap items-center gap-2">
         <Input
           type="date"
           value={from}
           onChange={(event) => setFrom(event.target.value)}
-          aria-label="Период документа: с"
+          aria-label={t("periodFrom")}
           className="h-10 w-[165px] rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
         />
-        <span className="text-[13.5px] text-[#6f7282]">по</span>
+        <span className="text-[13.5px] text-[#6f7282]">{t("periodTo")}</span>
         <Input
           type="date"
           value={to}
           onChange={(event) => setTo(event.target.value)}
-          aria-label="Период документа: по"
+          aria-label={t("periodToAria")}
           className="h-10 w-[165px] rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
         />
       </div>
       <p className="text-[12px] leading-snug text-[#6f7282]">
-        Сокращение периода спрячет записи за его пределами — перед
-        сохранением покажем, сколько их.
+        {t("shrinkPeriodWarning")}
       </p>
     </div>
   ) : null;
@@ -622,8 +610,8 @@ function JournalSettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки документа"
-        description="Название документа и ответственный сотрудник. Применяется ко всему периоду документа."
+        title={t("settings")}
+        description={t("settingsDescription")}
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -699,30 +687,30 @@ function JournalSettingsDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[765px]">
         <DialogHeader className="border-b px-14 py-12">
           <DialogTitle className="text-[22px] font-medium text-black">
-            Настройки документа
+            {t("settings")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-8 px-14 py-12">
           <div className="space-y-3">
             <Label htmlFor="journal-title" className="sr-only">
-              Название документа
+              {t("documentName")}
             </Label>
             <Input
               id="journal-title"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Введите название документа"
+              placeholder={t("documentNamePlaceholder")}
               className="h-22 rounded-3xl border-[#dfe1ec] px-8 text-[24px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность ответственного</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("responsiblePosition")}</Label>
             <Select
               value={responsible}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-22 rounded-3xl border-[#dfe1ec] bg-[#f3f4fb] px-8 text-[24px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -730,7 +718,7 @@ function JournalSettingsDialog({
             </Select>
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("employee")}</Label>
             <Select
               value={responsibleUser}
               onValueChange={cascade.handleEmployeeChange}
@@ -738,7 +726,7 @@ function JournalSettingsDialog({
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-22 rounded-3xl border-[#dfe1ec] bg-[#f3f4fb] px-8 text-[24px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsible ? cascade.candidates : users).map((user) => (
@@ -762,7 +750,7 @@ function JournalSettingsDialog({
               disabled={isSubmitting}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? tCommon("saving") : tCommon("save")}
             </Button>
           </div>
         </div>
@@ -798,10 +786,14 @@ export function StaffJournalToolbar({
   undo,
   useV2 = false,
 }: Props) {
+  const t = useTranslations("journalWidgets.staff");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   /** Право управлять журналами — то же, что проверяет PATCH документа. */
   const canManageDocument = useCanManageJournalDocument();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { controls } = useJournalControls();
+  hideAutoFill = hideAutoFill || controls.specialMode;
   const [checked, setChecked] = useState(autoFill);
   const [isSwitching, setIsSwitching] = useState(false);
   // Тумблер спрашивает всегда: включение — что заполним за прошедшие дни,
@@ -837,7 +829,7 @@ export function StaffJournalToolbar({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "apply_auto_fill" }),
         });
-        toast.success("Журнал заполнен по сотрудникам до сегодня");
+      toast.success(t("filledThroughToday"));
       } else if (revert) {
         // «Вернуть как было»: убираем ровно то, что проставил сайт.
         const result = (await requestJson(
@@ -866,7 +858,7 @@ export function StaffJournalToolbar({
       // Окно подтверждения закрываем в ЛЮБОМ случае: при отказе сервера
       // оно оставалось открытым поверх тоста, и человек жал «Да» ещё раз.
       setAutoFillDialog(null);
-      toast.error(humanizeFetchError(error, "Ошибка автозаполнения"));
+      toast.error(humanizeFetchError(error, t("autofillFailed")));
     } finally {
       setIsSwitching(false);
     }
@@ -945,7 +937,7 @@ export function StaffJournalToolbar({
               onClick={() => setSettingsOpen(true)}
               className="h-9 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3.5 text-[14px] font-semibold text-[#5566f6] shadow-none hover:bg-[#5566f6]/[0.09]"
             >
-              Настройки документа
+              {t("settings")}
             </Button>
             <DocumentCloseButton
               documentId={documentId}
@@ -953,7 +945,7 @@ export function StaffJournalToolbar({
               variant="outline"
               className="h-9 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3.5 text-[14px] font-semibold text-[#5566f6] shadow-none hover:bg-[#5566f6]/[0.09]"
             >
-              Закончить журнал
+              {t("closeJournal")}
             </DocumentCloseButton>
             </>
             )}
@@ -980,7 +972,7 @@ export function StaffJournalToolbar({
               className="data-[state=unchecked]:bg-[#d6d9ee]"
             />
             <span className={DOC_AUTOFILL_LABEL_CLASS}>
-              Автоматически заполнять журнал
+              {t("autofillLabel")}
             </span>
           </div>
         ) : null}
@@ -993,15 +985,15 @@ export function StaffJournalToolbar({
         onClose={() => setAutoFillDialog(null)}
         onConfirm={() => handleAutoFill(true)}
         icon={Wand2}
-        title="Заполнять журнал за вас?"
-        description="Сайт проставит отметки по сотрудникам сам. Вам останется проверить."
+        title={t("autofillEnableTitle")}
+        description={t("autofillEnableDescription")}
         bullets={[
-          { label: "Заполним с начала периода по сегодня", tone: "info" },
-          { label: "Дальше — каждый день сам, ночью" },
-          { label: "Пустые клетки заполнятся, ваши записи останутся" },
+          { label: t("autofillFromStart"), tone: "info" },
+          { label: t("autofillNightly") },
+          { label: t("autofillEmptyOnly") },
         ]}
-        confirmLabel="Да, заполнить"
-        cancelLabel="Нет"
+        confirmLabel={t("autofillEnableConfirm")}
+        cancelLabel={tCommon("no")}
       />
 
       <ConfirmDialog
@@ -1009,10 +1001,10 @@ export function StaffJournalToolbar({
         onClose={() => setAutoFillDialog(null)}
         onConfirm={() => handleAutoFill(false, revertOnDisable)}
         variant="warn"
-        title="Выключить автозаполнение?"
-        description="Дальше журнал заполняете вы."
-        confirmLabel="Да, выключить"
-        cancelLabel="Нет"
+        title={t("autofillDisableTitle")}
+        description={t("autofillDisableDescription")}
+        confirmLabel={t("autofillDisableConfirm")}
+        cancelLabel={tCommon("no")}
       >
         <label className="flex cursor-pointer items-start gap-2.5 rounded-2xl border border-[#dcdfed] bg-white p-3.5 transition-colors hover:border-[#5566f6]/40">
           <input
@@ -1023,10 +1015,10 @@ export function StaffJournalToolbar({
           />
           <span className="min-w-0 flex-1">
             <span className="block text-[13.5px] font-medium text-[#0b1024]">
-              Убрать то, что заполнилось само
+              {t("autofillUndoLabel")}
             </span>
             <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">
-              Ваши записи останутся на месте
+              {t("autofillUndoHint")}
             </span>
           </span>
         </label>
@@ -1078,6 +1070,7 @@ export function StaffJournalAddButton({
   includedEmployeeIds: string[];
   className?: string;
 }) {
+  const t = useTranslations("journalWidgets.staff");
   const [addOpen, setAddOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
 
@@ -1086,19 +1079,19 @@ export function StaffJournalAddButton({
   return (
     <div className={className ?? DOC_ADD_ROW_CLASS}>
       <ResponsiveMenu
-        title="Добавить"
+        title={t("addEmployee")}
         align="start"
         contentClassName="max-w-[calc(100vw-1rem)] rounded-2xl border-0 p-1.5 shadow-xl sm:min-w-[280px]"
         items={[
           {
             key: "add-employee",
-            label: "Добавить сотрудника",
+            label: t("addEmployee"),
             icon: <UserPlus className="size-4 text-[#3848c7]" />,
             onSelect: () => setAddOpen(true),
           },
           {
             key: "fill-from-staff",
-            label: "Заполнить из списка сотрудников",
+            label: t("fillFromStaffList"),
             icon: <Users className="size-4 text-[#3848c7]" />,
             onSelect: () => setFillOpen(true),
           },

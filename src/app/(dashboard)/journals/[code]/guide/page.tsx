@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { journalTitle } from "@/i18n/journal-presentation";
+import { customJournalName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/page-header";
 import { JournalGuide } from "@/components/journals/journal-guide";
 import { PrintJournalButton } from "@/components/journals/print-journal-button";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -24,6 +29,11 @@ export default async function JournalGuidePage({
 }) {
   const { code } = await params;
   const resolvedCode = resolveJournalCodeAlias(code);
+  const locale = await getSiteLocale();
+  const [t, messages] = await Promise.all([
+    getTranslations({ locale, namespace: "journalControls.guidePage" }),
+    loadMessages(locale),
+  ]);
 
   const template = await db.journalTemplate.findUnique({
     where: { code: resolvedCode },
@@ -60,7 +70,9 @@ export default async function JournalGuidePage({
       ? `/journals/${resolvedCode}`
       : `/journals/${resolvedCode}/new`;
 
-  const organizationName = organization?.name || ORG_NAME_FALLBACK;
+  const organizationName = organization?.name || t("organizationFallback");
+  const customNames = await getOrgCustomNames(session ? getActiveOrgId(session) : null);
+  const journalName = journalTitle(locale, messages.journals.names, resolvedCode, template.name, customJournalName(customNames, resolvedCode));
 
   return (
     <div
@@ -75,35 +87,35 @@ export default async function JournalGuidePage({
           {organizationName}
         </div>
         <div className="mt-1 text-[13px] text-black">
-          Инструкция по заполнению: {template.name}
+          {t("printTitle", { journal: journalName })}
         </div>
         <div className="mt-3 border-b border-black" />
       </div>
 
       <JournalPageCrumbs
         organizationName={organizationName}
-        journalName={template.name}
+        journalName={journalName}
         journalCode={resolvedCode}
         journalMenu={journalMenu}
-        tail={[{ label: "Инструкция" }]}
+        tail={[{ label: t("instruction") }]}
       />
 
       {/* Тёмный hero снят: инструкцию читают перед сменой, и полезный
           текст должен начинаться сразу, а не под баннером. */}
       <PageHeader
-        eyebrow="Инструкция для нового сотрудника"
-        title={template.name}
-        description="Прочитай эту страницу до того как начнёшь заполнять журнал. Она объясняет шаги, что взять с собой, типичные ошибки и требования СанПиН."
+        eyebrow={t("eyebrow")}
+        title={journalName}
+        description={t("description")}
         actions={
           <>
             {/* Инструкцию вешают на стену и выдают новичку на смену —
                 без печати страница остаётся только «прочитать с экрана». */}
-            <PrintJournalButton label="Распечатать" />
+            <PrintJournalButton label={t("print")} />
             <Link
               href={fillHref}
               className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
             >
-              К заполнению →
+              {t("fill")}
             </Link>
           </>
         }

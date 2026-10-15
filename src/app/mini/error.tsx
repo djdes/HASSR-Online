@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { RotateCcw, ShieldAlert } from "lucide-react";
 
 import { haptic } from "@/app/mini/_components/use-haptic";
+import { useTranslations } from "next-intl";
 
 /**
  * Экран ошибки Mini App.
@@ -22,6 +23,7 @@ export default function MiniError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("errorSurface");
   useEffect(() => {
     // Отдельная вибрация: человек мог отвести взгляд, пока грузилось.
     haptic("error");
@@ -47,14 +49,13 @@ export default function MiniError({
       </span>
       <div>
         <div className="text-[19px] font-semibold" style={{ color: "var(--mini-text)" }}>
-          Экран не открылся
+          {t("miniTitle")}
         </div>
         <p
           className="mt-1.5 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Обычно помогает повторить. Если не помогло — закройте и откройте
-          приложение заново; заполненное не потеряется.
+          {t("miniDescription")}
         </p>
       </div>
       <button
@@ -66,7 +67,7 @@ export default function MiniError({
         className="mini-btn-primary mini-press w-full"
       >
         <RotateCcw className="size-5" />
-        Повторить
+        {t("retry")}
       </button>
     </div>
   );

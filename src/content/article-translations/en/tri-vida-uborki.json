@@ -1,0 +1,17 @@
+{
+  "locale":"en","sourceHash":"62945a032b9b58c6f006d90ba760820d0afa3ce161beb040f0e1bec517a8a898",
+  "title":"Routine and deep cleaning: what to record in the journal",
+  "excerpt":"Daily, routine, and deep cleaning are three different processes, each with its own schedule and task list. Learn what to record so an inspector can tell them apart.",
+  "tags":["Cleaning","Journals"],
+  "body":[
+    {"type":"p","text":"“We cleaned it, so that’s fine” does not work. Sanitary rules distinguish three processes, each with its own schedule and list of tasks. They are often mixed together in journals, which makes the records less meaningful."},
+    {"type":"h2","text":"Daily cleaning (during the shift)"},
+    {"type":"p","text":"Wipe work surfaces, take out waste, replace cloths, and sanitize utensils. The person responsible is a cook or waiter; the journal entry records that the work was done."},
+    {"type":"h2","text":"Routine cleaning (at the end of the shift)"},
+    {"type":"p","text":"Clean floors, walls up to arm height, equipment, sinks, and washing tubs. Use detergents and disinfectants. Record the time, product, concentration, and signature."},
+    {"type":"h2","text":"Deep cleaning (monthly or as scheduled)"},
+    {"type":"p","text":"Carry out a full sanitation: clean walls up to the ceiling, the inside of refrigerators, extractor hoods, ceilings, and ventilation grilles. The manager approves the plan. Record the work in a report broken down by area."},
+    {"type":"callout","tone":"info","title":"Schedule rule","text":"Deep cleaning is not something to do “when you get around to it”; it belongs on a schedule with a specific date. Having no schedule is a separate inspection finding."},
+    {"type":"p","text":"In the electronic journal, the three types of cleaning use separate templates: daily cleaning is recorded with one click, routine cleaning follows a checklist, and deep cleaning opens a document with areas and signatures."}
+  ]
+}

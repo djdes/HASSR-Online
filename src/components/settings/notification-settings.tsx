@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -40,33 +41,22 @@ type BooleanPrefKey = "temperature" | "deviations" | "compliance" | "weeklyDiges
 
 const PREF_ITEMS: Array<{
   key: BooleanPrefKey;
-  label: string;
-  description: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   {
     key: "temperature",
-    label: "Отклонения температуры",
-    description: "Срабатывает когда IoT-датчик выходит за норму оборудования",
     icon: Thermometer,
   },
   {
     key: "deviations",
-    label: "Отклонения в журналах",
-    description: "Бракераж, гигиена, ККТ, невалидные записи",
     icon: AlertTriangle,
   },
   {
     key: "compliance",
-    label: "Незаполненные журналы",
-    description: "Ежедневный дайджест того, что надо заполнить",
     icon: ClipboardList,
   },
   {
     key: "weeklyDigest",
-    label: "Еженедельный отчёт на почту",
-    description:
-      "Понедельник, 08:00: заполнено и пропущено, отклонения, кто не отмечался, что истекает — письмом руководителю",
     icon: Mail,
   },
 ];
@@ -75,6 +65,9 @@ export function NotificationSettings({
   botUsername,
   linkToken,
 }: NotificationSettingsProps) {
+  const t = useTranslations("notificationSettings");
+  const feedback = useRef(t);
+  useEffect(() => { feedback.current = t; }, [t]);
   const router = useRouter();
   const [isLinked, setIsLinked] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs>({
@@ -93,12 +86,15 @@ export function NotificationSettings({
 
   useEffect(() => {
     fetch("/api/notifications/preferences")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("preferences-load");
+        return res.json();
+      })
       .then((data) => {
         setIsLinked(data.isLinked);
         setPrefs(data.prefs);
       })
-      .catch(() => toast.error("Ошибка загрузки настроек"))
+      .catch(() => toast.error(feedback.current("loadError")))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -110,10 +106,10 @@ export function NotificationSettings({
       });
       if (!res.ok) throw new Error();
       setIsLinked(false);
-      toast.success("Telegram отвязан");
+      toast.success(feedback.current("unlinkedSuccess"));
       router.refresh();
     } catch {
-      toast.error("Ошибка при отвязке Telegram");
+      toast.error(feedback.current("unlinkError"));
     } finally {
       setIsUnlinking(false);
     }
@@ -130,10 +126,10 @@ export function NotificationSettings({
         body: JSON.stringify(newPrefs),
       });
       if (!res.ok) throw new Error();
-      toast.success("Сохранено");
+      toast.success(feedback.current("saved"));
     } catch {
       setPrefs(oldPrefs);
-      toast.error("Ошибка сохранения");
+      toast.error(feedback.current("saveError"));
     }
   }
 
@@ -152,10 +148,10 @@ export function NotificationSettings({
         body: JSON.stringify(newPrefs),
       });
       if (!res.ok) throw new Error();
-      toast.success("Сохранено");
+      toast.success(feedback.current("saved"));
     } catch {
       setPrefs(oldPrefs);
-      toast.error("Ошибка сохранения");
+      toast.error(feedback.current("saveError"));
     }
   }
 
@@ -163,9 +159,9 @@ export function NotificationSettings({
     if (!startCommand) return;
     try {
       await navigator.clipboard.writeText(startCommand);
-      toast.success("Команда скопирована — вставьте её в @" + botUsername);
+      toast.success(feedback.current("copied", { username: botUsername }));
     } catch {
-      toast.error("Скопируйте вручную");
+      toast.error(feedback.current("copyError"));
     }
   }
 
@@ -198,14 +194,13 @@ export function NotificationSettings({
                   isLinked ? "bg-[#136b2a]" : "bg-[#a13a32]"
                 }`}
               />
-              {isLinked ? "Канал активен" : "Не подключено"}
+              {t(isLinked ? "active" : "notConnected")}
             </div>
             <h2 className="mt-4 text-[24px] font-semibold leading-[1.15] tracking-[-0.02em] text-[#0b1024]">
-              Telegram-бот уведомлений
+              {t("botTitle")}
             </h2>
             <p className="mt-3 max-w-[440px] text-[14px] leading-[1.6] text-[#6f7282]">
-              Получайте оповещения о температурных отклонениях,
-              незаполненных журналах и новых назначениях — прямо в Telegram.
+              {t("botDescription")}
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {isLinked ? (
@@ -216,7 +211,7 @@ export function NotificationSettings({
                   className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
                 >
                   <Unlink className="size-4" />
-                  {isUnlinking ? "Отвязка…" : "Отвязать Telegram"}
+                  {t(isUnlinking ? "unlinking" : "unlink")}
                 </button>
               ) : botLink ? (
                 <>
@@ -227,22 +222,22 @@ export function NotificationSettings({
                     className="group inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
                   >
                     <Send className="size-4" />
-                    Открыть @{botUsername}
+                    {t("openBot", { username: botUsername })}
                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                   </a>
                   <button
                     type="button"
                     onClick={copyStartCommand}
                     className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                    title="Скопировать команду /start <токен>"
+                    title={t("copyCommandTitle")}
                   >
                     <ClipboardCopy className="size-4" />
-                    Скопировать команду
+                    {t("copyCommand")}
                   </button>
                 </>
               ) : (
                 <div className="rounded-2xl border border-[#f0f1f8] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-                  Telegram-бот пока не настроен администратором.
+                  {t("botNotConfigured")}
                 </div>
               )}
             </div>
@@ -261,59 +256,42 @@ export function NotificationSettings({
           <div className="flex items-start justify-between gap-6">
             <div>
               <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">
-                Как привязать
+                {t("howTitle")}
               </h3>
               <p className="mt-2 max-w-[520px] text-[14px] text-[#6f7282]">
-                Если при нажатии «Start» в боте ничего не приходит — Telegram
-                не передал параметр. Отправьте боту команду вручную.
+                {t("howDescription")}
               </p>
             </div>
           </div>
           <ol className="mt-6 grid gap-4 md:grid-cols-3">
             <HowStep
               index={1}
-              title="Откройте бота"
-              body={
-                <>
-                  Нажмите кнопку{" "}
-                  <span className="font-medium text-[#0b1024]">
-                    «Открыть @{botUsername}»
-                  </span>{" "}
-                  выше. Откроется чат с ботом.
-                </>
-              }
+              title={t("stepOpenTitle")}
+              body={t.rich("stepOpenBody", {
+                username: botUsername,
+                strong: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+              })}
             />
             <HowStep
               index={2}
-              title="Отправьте команду"
-              body={
-                <>
-                  В чате с ботом отправьте{" "}
-                  <button
+              title={t("stepCommandTitle")}
+              body={t.rich("stepCommandBody", {
+                command: (chunks) => <button
                     type="button"
                     onClick={copyStartCommand}
                     className="group inline-flex items-center gap-1 rounded-lg border border-[#d6d9ee] bg-[#f5f6ff] px-2 py-0.5 font-mono text-[13px] text-[#5566f6] hover:bg-[#eef1ff]"
                   >
                     <Copy className="size-3" />
-                    /start&nbsp;...
-                  </button>{" "}
-                  (кнопка «Скопировать команду» положит её в буфер).
-                </>
-              }
+                    {chunks}
+                  </button>,
+              })}
             />
             <HowStep
               index={3}
-              title="Готово"
-              body={
-                <>
-                  Бот ответит{" "}
-                  <span className="font-medium text-[#0b1024]">
-                    «Аккаунт успешно привязан»
-                  </span>
-                  . Токен действителен 15 минут — если истёк, обновите
-                  страницу.
-                </>
-              }
+              title={t("stepDoneTitle")}
+              body={t.rich("stepDoneBody", {
+                strong: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+              })}
             />
           </ol>
         </section>
@@ -324,12 +302,10 @@ export function NotificationSettings({
         <header className="flex items-start justify-between gap-6 border-b border-[#f0f1f8] px-8 py-6">
           <div>
             <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">
-              Типы уведомлений
+              {t("typesTitle")}
             </h3>
             <p className="mt-1 text-[14px] text-[#6f7282]">
-              {isLinked
-                ? "Управляйте тем, какие события доходят до вашего чата."
-                : "Станут активны после привязки Telegram."}
+              {t(isLinked ? "typesLinked" : "typesUnlinked")}
             </p>
           </div>
         </header>
@@ -350,14 +326,15 @@ export function NotificationSettings({
                   </div>
                   <div>
                     <div className="text-[15px] font-medium text-[#0b1024]">
-                      {item.label}
+                      {t(`preferences.${item.key}.label`)}
                     </div>
                     <div className="mt-1 text-[13px] text-[#6f7282]">
-                      {item.description}
+                      {t(`preferences.${item.key}.description`)}
                     </div>
                   </div>
                 </div>
                 <SwitchToggle
+                  label={t(`preferences.${item.key}.label`)}
                   checked={value}
                   disabled={!isLinked}
                   onChange={(v) => handlePrefChange(item.key, v)}
@@ -374,9 +351,9 @@ export function NotificationSettings({
       {/* Footer note */}
       <section className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]" data-testid="quiet-hours">
         <header className="border-b border-[#f0f1f8] px-8 py-6">
-          <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">Тихие часы</h3>
+          <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">{t("quietTitle")}</h3>
           <p className="mt-1 text-[14px] text-[#6f7282]">
-            В это время Telegram молчит: напоминания и сводки придут, когда окно закончится. Отклонения температуры и инциденты приходят сразу. Время — по часовому поясу организации.
+            {t("quietDescription")}
           </p>
         </header>
         <div className="flex flex-wrap items-center gap-4 px-8 py-5">
@@ -388,10 +365,10 @@ export function NotificationSettings({
               className="size-4 accent-[#5566f6]"
               data-testid="quiet-toggle"
             />
-            Включить
+            {t("quietEnable")}
           </label>
           <label className="inline-flex items-center gap-2 text-[13px] text-[#6f7282]">
-            с
+            {t("quietFrom")}
             <input
               type="time"
               value={prefs.quietHours?.from ?? "22:00"}
@@ -400,7 +377,7 @@ export function NotificationSettings({
             />
           </label>
           <label className="inline-flex items-center gap-2 text-[13px] text-[#6f7282]">
-            до
+            {t("quietTo")}
             <input
               type="time"
               value={prefs.quietHours?.to ?? "08:00"}
@@ -412,12 +389,12 @@ export function NotificationSettings({
       </section>
 
       <section className="rounded-3xl border border-[#f0f1f8] bg-[#fafbff] p-6 text-[13px] text-[#6f7282]">
-        <div className="font-medium text-[#0b1024]">Полезно знать</div>
+        <div className="font-medium text-[#0b1024]">{t("notesTitle")}</div>
         <ul className="mt-3 grid gap-1.5 md:grid-cols-2">
-          <li>• Уведомления получают все владельцы организации.</li>
-          <li>• Чтобы отключить уведомления, отправьте боту команду <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[12px] text-[#5566f6]">/stop</code> или нажмите «Отвязать Telegram» выше.</li>
-          <li>• Историю отправленных сообщений хранит администратор платформы — если сообщение не дошло, напишите в поддержку.</li>
-          <li>• Бот не пишет первым — инициатива всегда с вашей стороны.</li>
+          <li>• {t("noteOwners")}</li>
+          <li>• {t.rich("noteStop", { command: (chunks) => <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[12px] text-[#5566f6]">{chunks}</code> })}</li>
+          <li>• {t("noteHistory")}</li>
+          <li>• {t("noteFirst")}</li>
         </ul>
       </section>
     </div>
@@ -426,10 +403,11 @@ export function NotificationSettings({
 
 /** Общая шапка страницы — одна и для skeleton'а, и для готового экрана. */
 function HeaderBlock() {
+  const t = useTranslations("notificationSettings");
   return (
     <PageHeader
-      title="Уведомления"
-      description="Telegram-канал уведомлений и предпочтения по типам событий."
+      title={t("title")}
+      description={t("description")}
     />
   );
 }
@@ -457,10 +435,12 @@ function HowStep({
 }
 
 function SwitchToggle({
+  label,
   checked,
   disabled,
   onChange,
 }: {
+  label: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (value: boolean) => void;
@@ -469,6 +449,7 @@ function SwitchToggle({
     <button
       type="button"
       role="switch"
+      aria-label={label}
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
@@ -492,6 +473,7 @@ function ChatPreview({
   linked: boolean;
   botUsername: string;
 }) {
+  const t = useTranslations("notificationSettings");
   return (
     <div className="relative h-full w-full rounded-2xl border border-[#f0f1f8] bg-[#fafbff] p-4">
       <div className="flex items-center gap-2 border-b border-[#f0f1f8] pb-3">
@@ -503,7 +485,7 @@ function ChatPreview({
             @{botUsername}
           </div>
           <div className="text-[11px] text-[#9b9fb3]">
-            {linked ? "в сети" : "ожидает привязки"}
+            {t(linked ? "previewOnline" : "previewWaiting")}
           </div>
         </div>
         <ExternalLink className="ml-auto size-4 text-[#9b9fb3]" />
@@ -513,17 +495,17 @@ function ChatPreview({
           <>
             <Bubble
               variant="bot"
-              body="🔔 Вам назначен журнал: Температурный режим"
+              body={t("previewAssigned")}
               time="10:02"
             />
             <Bubble
               variant="bot"
-              body="⚠️ Температура в холодильнике 1 вышла за норму: 9.8°C"
+              body={t("previewTemperature")}
               time="12:17"
             />
             <Bubble
               variant="bot"
-              body="📋 Сегодня не заполнены: 2 журнала"
+              body={t("previewIncomplete")}
               time="18:00"
             />
           </>
@@ -532,7 +514,7 @@ function ChatPreview({
             <Bubble variant="me" body="/start" time="..." />
             <Bubble
               variant="bot"
-              body="Для привязки откройте ссылку из настроек WeSetup"
+              body={t("previewConnect")}
               time="..."
               muted
             />
@@ -589,6 +571,9 @@ function Bubble({
  * должно — это чистая картинка-превью переписки.
  */
 function SmsAndAppTeaser() {
+  const t = useTranslations("notificationSettings");
+  const feedback = useRef(t);
+  useEffect(() => { feedback.current = t; }, [t]);
   // В самом приложении анонс «Приложение скоро в App Store» — бессмыслица:
   // push там настраиваются в «Профиле».
   const inApp = useInsideMobileApp();
@@ -610,11 +595,11 @@ function SmsAndAppTeaser() {
           message: "Интересуют SMS-уведомления — сообщите о запуске",
         }),
       });
-      if (!response.ok) throw new Error("Не удалось отправить");
+      if (!response.ok) throw new Error("sms-interest");
       setInterestSent(true);
-      toast.success("Спасибо, сообщим о запуске");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.success(feedback.current("smsSuccess"));
+    } catch {
+      toast.error(feedback.current("smsError"));
     } finally {
       setInterestBusy(false);
     }
@@ -634,20 +619,18 @@ function SmsAndAppTeaser() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[16px] font-semibold text-[#0b1024]">
-                  SMS-уведомления
+                  {t("smsTitle")}
                 </span>
                 <span className="rounded-full bg-[#fff4f2] px-2.5 py-0.5 text-[11px] font-medium text-[#a13a32]">
-                  В разработке
+                  {t("smsDevelopment")}
                 </span>
               </div>
               <p className="mt-1.5 max-w-[520px] text-[13.5px] leading-[1.55] text-[#6f7282]">
-                Напоминание о незаполненном журнале придёт даже тем, у кого
-                нет Telegram и почты. Для линейного персонала это часто
-                единственный работающий канал.
+                {t("smsDescription")}
               </p>
             </div>
           </div>
-          <SwitchToggle checked={false} disabled onChange={() => {}} />
+          <SwitchToggle label={t("smsTitle")} checked={false} disabled onChange={() => {}} />
         </div>
 
         {/* Кнопка интереса, а не просто «скоро»: она и человеку даёт
@@ -661,11 +644,10 @@ function SmsAndAppTeaser() {
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
           >
             {interestBusy ? <Loader2 className="size-4 animate-spin" /> : null}
-            {interestSent ? "Сообщим о запуске" : "Сообщить, когда заработает"}
+            {t(interestSent ? "smsSent" : "smsNotify")}
           </button>
           <span className="text-[12.5px] text-[#9b9fb3]">
-            Стоимость объявим при запуске — SMS оплачиваются отдельно от
-            тарифа.
+            {t("smsPricing")}
           </span>
         </div>
       </div>

@@ -60,11 +60,23 @@ const KNOWN_WRONG: Record<string, string> = {
   "hotmial.com": "hotmail.com",
 };
 
+export type EmailValidationIssueCode =
+  | "required"
+  | "tooLong"
+  | "whitespace"
+  | "missingAt"
+  | "multipleAt"
+  | "missingLocalPart"
+  | "missingDomain"
+  | "missingDomainDot"
+  | "malformedDomain"
+  | "invalidDomainCharacters"
+  | "invalidTld";
+
 export type EmailCheck =
-  | { status: "empty"; message: string }
-  | { status: "invalid"; message: string }
-  /// Домен почти наверняка набран с ошибкой — отправку блокируем.
-  | { status: "typo"; message: string; suggestion: string; certain?: boolean }
+  | { status: "empty"; code: "required"; message: string }
+  | { status: "invalid"; code: Exclude<EmailValidationIssueCode, "required">; message: string }
+  | { status: "typo"; code: "knownTypo" | "suggestedTypo"; message: string; suggestion: string; domain: string; certain?: boolean }
   | { status: "ok" };
 
 /** Расстояние Левенштейна — для поиска «почти таких же» доменов. */
@@ -101,21 +113,21 @@ export function checkEmail(rawValue: string): EmailCheck {
   const value = rawValue.trim().toLowerCase();
 
   if (!value) {
-    return { status: "empty", message: "Введите адрес электронной почты" };
+    return { status: "empty", code: "required", message: "Введите адрес электронной почты" };
   }
   if (value.length > 200) {
-    return { status: "invalid", message: "Адрес слишком длинный" };
+    return { status: "invalid", code: "tooLong", message: "Адрес слишком длинный" };
   }
   if (/\s/.test(value)) {
-    return { status: "invalid", message: "В адресе не должно быть пробелов" };
+    return { status: "invalid", code: "whitespace", message: "В адресе не должно быть пробелов" };
   }
 
   const at = value.indexOf("@");
   if (at === -1) {
-    return { status: "invalid", message: "В адресе не хватает символа @" };
+    return { status: "invalid", code: "missingAt", message: "В адресе не хватает символа @" };
   }
   if (value.indexOf("@", at + 1) !== -1) {
-    return { status: "invalid", message: "В адресе больше одной собаки" };
+    return { status: "invalid", code: "multipleAt", message: "В адресе больше одной собаки" };
   }
 
   const local = value.slice(0, at);
@@ -124,28 +136,30 @@ export function checkEmail(rawValue: string): EmailCheck {
   if (!local) {
     return {
       status: "invalid",
+      code: "missingLocalPart",
       message: "Перед @ должно быть имя ящика",
     };
   }
   if (!domain) {
-    return { status: "invalid", message: "После @ должен быть домен" };
+    return { status: "invalid", code: "missingDomain", message: "После @ должен быть домен" };
   }
   if (!domain.includes(".")) {
     return {
       status: "invalid",
+      code: "missingDomainDot",
       message: "В домене не хватает точки — например, mail.ru",
     };
   }
   if (domain.startsWith(".") || domain.endsWith(".") || domain.includes("..")) {
-    return { status: "invalid", message: "Домен набран с ошибкой" };
+    return { status: "invalid", code: "malformedDomain", message: "Домен набран с ошибкой" };
   }
   if (!/^[a-z0-9.-]+$/.test(domain)) {
-    return { status: "invalid", message: "В домене недопустимые символы" };
+    return { status: "invalid", code: "invalidDomainCharacters", message: "В домене недопустимые символы" };
   }
 
   const tld = domain.slice(domain.lastIndexOf(".") + 1);
   if (tld.length < 2 || /\d/.test(tld)) {
-    return { status: "invalid", message: "Домен набран с ошибкой" };
+    return { status: "invalid", code: "invalidTld", message: "Домен набран с ошибкой" };
   }
 
   // Явно неверные, но привычные написания.
@@ -153,6 +167,8 @@ export function checkEmail(rawValue: string): EmailCheck {
   if (known) {
     return {
       status: "typo",
+      code: "knownTypo",
+      domain,
       suggestion: known,
       message: `Домена ${domain} не существует. Возможно, вы имели в виду ${known}`,
       // Такого домена нет наверняка — в отличие от «похож на популярный».
@@ -166,6 +182,8 @@ export function checkEmail(rawValue: string): EmailCheck {
       if (distance(domain, candidate) <= 2) {
         return {
           status: "typo",
+          code: "suggestedTypo",
+          domain,
           suggestion: candidate,
           message: `Возможно, вы имели в виду ${candidate}`,
         };

@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy, useQrFeedback, qrResponseFeedback, type QrFeedback } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useEffect, useId, useRef, useState } from "react";
 import { KeyRound, Loader2 } from "lucide-react";
 
@@ -20,6 +22,7 @@ export type QrPinRequestInfo = {
   hasPin: boolean | null;
   status: PinRequestStatusLine | null;
   approvedNote: string | null;
+  approvedMessageCode?: string;
 };
 
 const PRIMARY_BUTTON =
@@ -48,6 +51,7 @@ export function useQrPinRequestInfo(target: QrObjectPinTarget) {
           hasPin: typeof data.hasPin === "boolean" ? data.hasPin : null,
           status: isStatusLine(data.status) ? data.status : null,
           approvedNote: typeof data.approvedNote === "string" ? data.approvedNote : null,
+          approvedMessageCode: typeof data.approvedMessageCode === "string" ? data.approvedMessageCode : undefined,
         });
       })
       // Нет связи — экран работает и без строки статуса.
@@ -69,13 +73,15 @@ export function QrPinRequestForm({
   onSent: (status: PinRequestStatusLine | null) => void;
   onCancel: () => void;
 }) {
+  const { t } = useQrFillCopy();
+  const feedback = useQrFeedback();
   const id = useId();
   const firstRef = useRef<HTMLInputElement>(null);
   const secondRef = useRef<HTMLInputElement>(null);
   const [pin, setPin] = useState("");
   const [pin2, setPin2] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<QrFeedback | null>(null);
   const change = requestKind === "change";
 
   async function submit(event: React.FormEvent) {
@@ -83,7 +89,7 @@ export function QrPinRequestForm({
     if (busy) return;
     const invalid = validatePinRequestInput({ pin, repeat: pin2 });
     if (invalid) {
-      setError(invalid);
+      setError({ key: validateQrPin(pin) ? "pin.invalid" : "pin.mismatch" });
       // Не совпал только повтор — стираем его; сам PIN не годится — оба.
       if (validateQrPin(pin) === null) {
         setPin2("");
@@ -103,12 +109,12 @@ export function QrPinRequestForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...target, pin, pin2, requestKind }),
       }).catch(() => null);
-      if (!response) throw new Error("Нет связи с сервером — проверьте интернет и попробуйте ещё раз.");
+      if (!response) { setError({ key: "pin.networkError" }); return; }
       const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; status?: unknown } | null;
-      if (!response.ok || data?.ok !== true) throw new Error(data?.error ?? "Не удалось отправить запрос. Попробуйте ещё раз.");
+      if (!response.ok || data?.ok !== true) { setError(qrResponseFeedback(data, "pin.requestError")); return; }
       onSent(isStatusLine(data.status) ? data.status : null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось отправить запрос. Попробуйте ещё раз.");
+    } catch {
+      setError({ key: "pin.requestError" });
     } finally {
       setBusy(false);
     }
@@ -118,19 +124,18 @@ export function QrPinRequestForm({
     <form onSubmit={submit} noValidate className="qp-card" data-testid="qr-pin-request" data-kind={requestKind}>
       {change ? (
         <p className="qp-hint" style={{ margin: "4px 2px 14px", color: "#3c4053" }}>
-          Новый PIN заработает после одобрения, до этого действует старый.
-        </p>
+          {t("pin.changeHint")}</p>
       ) : null}
       {error ? (
         <div className="qp-err" role="alert">
-          {error}
+          {feedback(error)}
         </div>
       ) : null}
       <div className="qp-head">
         <label className="qp-k" htmlFor={`${id}-pin`}>
-          {change ? "Новый PIN" : "Придумайте PIN"}
+          {change ? t("pin.newPin") : t("pin.createPin")}
         </label>
-        <span className="shrink-0 text-[17px] font-medium text-[#6f7282]">4–6 цифр</span>
+        <span className="shrink-0 text-[17px] font-medium text-[#6f7282]">{t("pin.lengthHint")}</span>
       </div>
       <input
         ref={firstRef}
@@ -148,8 +153,7 @@ export function QrPinRequestForm({
       />
       <div className="qp-head" style={{ marginTop: 16 }}>
         <label className="qp-k" htmlFor={`${id}-pin2`} style={{ fontSize: 20 }}>
-          Повторите PIN
-        </label>
+          {t("pin.repeat")}</label>
       </div>
       <input
         ref={secondRef}
@@ -165,32 +169,31 @@ export function QrPinRequestForm({
         onChange={(event) => setPin2(event.target.value.replace(/\D/g, ""))}
         placeholder="••••"
       />
-      {change ? null : <p className="qp-hint">Заработает после одобрения руководителя.</p>}
+      {change ? null : <p className="qp-hint">{t("pin.approvalHint")}</p>}
       <button type="submit" disabled={busy || pin.length < 4 || pin2.length < 4} className={`${PRIMARY_BUTTON} mt-4 h-14 text-[19px]`}>
         {busy ? <Loader2 className="size-5 animate-spin" /> : null}
-        Отправить запрос
-      </button>
+        {t("pin.sendRequest")}</button>
       <button type="button" onClick={onCancel} className={`${SECONDARY_BUTTON} mt-2`}>
-        Отмена
-      </button>
+        {t("common.cancel")}</button>
     </form>
   );
 }
 
 /** Запрос ушёл: что будет дальше. */
 export function QrPinRequestSent({ requestKind, onDone }: { requestKind: PinRequestKind; onDone: () => void }) {
+  const { t } = useQrFillCopy();
   const change = requestKind === "change";
   return (
     <div className="qp-card text-center" data-testid="qr-pin-request-sent">
-      <SuccessCheck label="Запрос отправлен" />
-      <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-[#0b1024]">Запрос отправлен</h2>
+      <SuccessCheck label={t("pin.requestSent")} />
+      <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("pin.requestSent")}</h2>
       <p className="qp-hint" style={{ color: "#3c4053" }}>
         {change
-          ? "Как только руководитель одобрит — входите с новым PIN. Пока действует старый."
-          : "Как только руководитель одобрит — войдите с этим PIN."}
+          ? t("pin.changeSentHint")
+          : t("pin.issueSentHint")}
       </p>
       <button type="button" onClick={onDone} className={`${SECONDARY_BUTTON} mt-5`}>
-        {change ? "Вернуться к вводу PIN" : "Готово"}
+        {change ? t("pin.backToPin") : t("common.done")}
       </button>
     </div>
   );
@@ -209,14 +212,23 @@ export function QrPinNoAccess({
   status: PinRequestStatusLine | null;
   onStatus: (status: PinRequestStatusLine | null) => void;
 }) {
+  const { t, scoped } = useQrFillCopy();
+  const feedback = useQrFeedback();
   const [view, setView] = useState<"idle" | "form" | "sent">("idle");
+  function localizedStatus(line: PinRequestStatusLine) {
+    const fallback = line.tone === "bad" ? "pin.rejected" : "pin.pending";
+    const descriptor = qrResponseFeedback({ errorCode: line.messageCode, errorParams: line.messageParams }, fallback);
+    return descriptor.key === "pin.rejected" && !descriptor.values
+      ? t("pin.rejected", { hasNote: "no", note: "" })
+      : feedback(descriptor);
+  }
   if (view === "sent") return <QrPinRequestSent requestKind="issue" onDone={() => setView("idle")} />;
   return (
     <div data-testid="qr-pin-no-access">
-      <div className="qp-note">Нужен личный PIN для подтверждения личности.</div>
+      <div className="qp-note">{t("pin.personalRequired")}</div>
       {status ? (
         <div className={status.tone === "bad" ? "qp-err" : "qp-ok-note"} role="status">
-          {status.text}
+          {scoped ? localizedStatus(status) : status.messageCode ? feedback(qrResponseFeedback({ errorCode: status.messageCode, errorParams: status.messageParams }, "pin.pending")) : status.text}
         </div>
       ) : null}
       {view === "form" ? (
@@ -233,12 +245,11 @@ export function QrPinNoAccess({
         <>
           <button type="button" onClick={() => setView("form")} className={`${PRIMARY_BUTTON} min-h-16 px-5 text-[21px]`}>
             <KeyRound className="size-6 shrink-0" />
-            Запросить доступ
-          </button>
+            {t("pin.requestAccess")}</button>
           <p className="qp-hint">
             {status?.tone === "wait"
-              ? "Забыли придуманный PIN? Отправьте запрос заново — он заменит прежний."
-              : "Вы придумаете PIN, руководитель его одобрит — и PIN заработает."}
+              ? t("pin.forgotPending")
+              : t("pin.issueExplanation")}
           </p>
         </>
       )}

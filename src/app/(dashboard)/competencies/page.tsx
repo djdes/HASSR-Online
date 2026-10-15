@@ -2,16 +2,8 @@ import { GraduationCap } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { CompetencyCell } from "@/components/competencies/competency-cell";
-import { getUserPositionLabel } from "@/lib/user-roles";
-
-const SKILLS = [
-  { key: "safety", label: "Безопасность" },
-  { key: "stability", label: "Стабильность" },
-  { key: "speed", label: "Скорость" },
-  { key: "haccp", label: "ХАССП" },
-  { key: "hygiene", label: "Гигиена" },
-  { key: "equipment", label: "Оборудование" },
-];
+import { getTranslations } from "next-intl/server";
+import { COMPETENCY_SKILLS, COMPETENCY_LEVELS, competencyPositionLabel } from "@/components/competencies/competency-presentation";
 
 const LEVEL_COLORS = [
   "bg-[#ececf4]",
@@ -19,10 +11,11 @@ const LEVEL_COLORS = [
   "bg-[#9fb3ff]",
   "bg-[#7cf5c0]",
 ];
-const LEVEL_LABELS = ["Не обучен", "Базовый", "Средний", "Продвинутый"];
 
 export default async function CompetenciesPage() {
   const session = await requireAuth();
+  const t = await getTranslations("competenciesManagement");
+  const roleLabels = { manager: t("roles.manager"), head_chef: t("roles.head_chef"), cook: t("roles.cook"), waiter: t("roles.waiter") };
   const orgId = getActiveOrgId(session);
 
   const [users, competencies] = await Promise.all([
@@ -54,26 +47,26 @@ export default async function CompetenciesPage() {
         <div className="flex items-center gap-2 text-[#5566f6]">
           <GraduationCap className="size-5" />
           <span className="text-[12px] font-medium uppercase tracking-[0.16em]">
-            Матрица компетенций
+            {t("matrixTitle")}
           </span>
         </div>
         <h1 className="mt-2 text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-          Обучение персонала
+          {t("title")}
         </h1>
         <p className="mt-1.5 text-[14px] text-[#6f7282]">
           {/* Раньше в шапке стояла одна шкала («Безопасно → Стабильно →
               Быстро»), а в легенде ниже — совсем другая. В данных
               хранится та, что в легенде, её и оставляем. */}
-          Уровни: {LEVEL_LABELS.join(" → ")}
+          {t("levelsSummary", { untrained: t("levels.0"), basic: t("levels.1"), intermediate: t("levels.2"), advanced: t("levels.3") })}
         </p>
       </div>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4">
-        {LEVEL_LABELS.map((label, i) => (
-          <div key={i} className="flex items-center gap-2 text-[12px] text-[#3c4053]">
-            <span className={`size-3.5 rounded-md ${LEVEL_COLORS[i]}`} />
-            <span>{label}</span>
+        {COMPETENCY_LEVELS.map((level) => (
+          <div key={level} className="flex items-center gap-2 text-[12px] text-[#3c4053]">
+            <span className={`size-3.5 rounded-md ${LEVEL_COLORS[level]}`} />
+            <span>{t(`levels.${level}`)}</span>
           </div>
         ))}
       </div>
@@ -83,13 +76,13 @@ export default async function CompetenciesPage() {
           <table className="w-full text-[14px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-[12px] uppercase tracking-wider text-[#6f7282]">
-                <th className="px-4 py-3 text-left font-medium">Сотрудник</th>
-                {SKILLS.map((s) => (
+                <th className="px-4 py-3 text-left font-medium">{t("employee")}</th>
+                {COMPETENCY_SKILLS.map((skill) => (
                   <th
-                    key={s.key}
+                    key={skill}
                     className="px-3 py-3 text-center font-medium"
                   >
-                    {s.label}
+                    {t(`skills.${skill}`)}
                   </th>
                 ))}
               </tr>
@@ -106,18 +99,19 @@ export default async function CompetenciesPage() {
                       {/* Под именем стоял код роли («cook»). Человеку
                           нужна должность, как она заведена в «Сотрудниках». */}
                       <p className="text-[12px] text-[#9b9fb3]">
-                        {getUserPositionLabel(user)}
+                        {competencyPositionLabel(user, roleLabels)}
                       </p>
                     </div>
                   </td>
-                  {SKILLS.map((skill) => {
-                    const comp = matrix[user.id]?.[skill.key];
+                  {COMPETENCY_SKILLS.map((skill) => {
+                    const comp = matrix[user.id]?.[skill];
                     const level = comp?.level ?? 0;
                     return (
-                      <td key={skill.key} className="px-3 py-3 text-center">
+                      <td key={skill} className="px-3 py-3 text-center">
                         <CompetencyCell
                           userId={user.id}
-                          skill={skill.key}
+                          userName={user.name}
+                          skill={skill}
                           level={level}
                         />
                       </td>
@@ -125,6 +119,7 @@ export default async function CompetenciesPage() {
                   })}
                 </tr>
               ))}
+              {users.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">{t("empty")}</td></tr>}
             </tbody>
           </table>
         </div>

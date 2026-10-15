@@ -1,5 +1,8 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
+
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -51,38 +54,38 @@ import { humanizeFetchError } from "@/lib/humanize-fetch-error";
  */
 
 const APPEARANCE_OPTS = [
-  { value: "excellent", label: "Отлично" },
-  { value: "good", label: "Хорошо" },
-  { value: "satisfactory", label: "Удовлетворительно" },
-  { value: "unsatisfactory", label: "Неудовлетворительно" },
-];
+  { value: "excellent", label: "grades.excellent" },
+  { value: "good", label: "grades.good" },
+  { value: "satisfactory", label: "grades.satisfactory" },
+  { value: "unsatisfactory", label: "grades.unsatisfactory" },
+] as const;
 
 const COOKING_METHODS = [
-  { value: "boiling", label: "Варка" },
-  { value: "frying", label: "Жарка" },
-  { value: "baking", label: "Запекание" },
-  { value: "stewing", label: "Тушение" },
-  { value: "steaming", label: "На пару" },
-  { value: "pasteurization", label: "Пастеризация" },
-  { value: "raw", label: "Без термообработки (салат, закуска)" },
-];
+  { value: "boiling", label: "pipeline.methods.boiling" },
+  { value: "frying", label: "pipeline.methods.frying" },
+  { value: "baking", label: "pipeline.methods.baking" },
+  { value: "stewing", label: "pipeline.methods.stewing" },
+  { value: "steaming", label: "pipeline.methods.steaming" },
+  { value: "pasteurization", label: "pipeline.methods.pasteurization" },
+  { value: "raw", label: "pipeline.methods.raw" },
+] as const;
 
 const DECISION_OPTS = [
   {
     value: "approved",
-    label: "Допустить к раздаче",
+    label: "pipeline.decisions.approved",
     tone: "ok",
     requiresReason: false,
   },
   {
     value: "rework",
-    label: "На доработку",
+    label: "pipeline.decisions.rework",
     tone: "warn",
     requiresReason: true,
   },
   {
     value: "rejected",
-    label: "Забраковать",
+    label: "pipeline.decisions.rejected",
     tone: "danger",
     requiresReason: true,
   },
@@ -95,39 +98,39 @@ type StepKind = "intro" | "cooking" | "tasting" | "decision";
 const STEPS: Array<{
   id: StepKind;
   num: number;
-  label: string;
-  shortLabel: string;
+  label: `pipeline.steps.${StepKind}`;
+  shortLabel: `pipeline.steps.${StepKind}Short`;
   icon: typeof ChefHat;
 }> = [
   {
     id: "intro",
     num: 1,
-    label: "Что готовим",
-    shortLabel: "Блюдо",
+    label: "pipeline.steps.intro",
+    shortLabel: "pipeline.steps.introShort",
     icon: ChefHat,
   },
   {
     id: "cooking",
     num: 2,
-    label: "Технологическая обработка",
-    shortLabel: "Обработка",
+    label: "pipeline.steps.cooking",
+    shortLabel: "pipeline.steps.cookingShort",
     icon: ThermometerSun,
   },
   {
     id: "tasting",
     num: 3,
-    label: "Бракераж — органолептика",
-    shortLabel: "Органолептика",
+    label: "pipeline.steps.tasting",
+    shortLabel: "pipeline.steps.tastingShort",
     icon: Sparkles,
   },
   {
     id: "decision",
     num: 4,
-    label: "Решение комиссии",
-    shortLabel: "Решение",
+    label: "pipeline.steps.decision",
+    shortLabel: "pipeline.steps.decisionShort",
     icon: ClipboardCheck,
   },
-];
+] as const;
 
 type FormState = {
   // Шаг 1 — что готовим
@@ -183,9 +186,11 @@ export function FinishedProductPipeline({
   rollingMode = true,
   dailyCountInitial = 0,
   rollingDailyCap = 50,
-  rollingContinueLabel = "Сохранить и следующее блюдо",
-  rollingDoneLabel = "Готово на сегодня",
+  rollingContinueLabel,
+  rollingDoneLabel,
 }: Props) {
+  const t = useTranslations("finishedProduct");
+  const locale = useLocale();
   const router = useRouter();
   const [step, setStep] = useState<StepKind>("intro");
   const [data, setData] = useState<FormState>(INITIAL_STATE);
@@ -232,34 +237,34 @@ export function FinishedProductPipeline({
   const stepErrors: Partial<Record<keyof FormState, string>> = useMemo(() => {
     const errs: Partial<Record<keyof FormState, string>> = {};
     if (step === "intro") {
-      if (!data.productName.trim()) errs.productName = "Укажи блюдо";
+      if (!data.productName.trim()) errs.productName = t("pipeline.errors.product");
     }
     if (step === "cooking") {
-      if (!data.cookingMethod) errs.cookingMethod = "Выбери метод обработки";
+      if (!data.cookingMethod) errs.cookingMethod = t("pipeline.errors.method");
       if (data.cookingMethod !== "raw") {
-        const t = parseFloat(data.cookingTemperature.replace(",", "."));
-        if (Number.isNaN(t)) {
-          errs.cookingTemperature = "Укажи температуру в °C";
-        } else if (t < 60 && data.cookingMethod !== "raw") {
+        const temperature = parseFloat(data.cookingTemperature.replace(",", "."));
+        if (Number.isNaN(temperature)) {
+          errs.cookingTemperature = t("pipeline.errors.temperature");
+        } else if (temperature < 60 && data.cookingMethod !== "raw") {
           // Не ошибка — но warning ниже UI'ем подсветит.
         }
       }
     }
     if (step === "tasting") {
-      if (!data.appearance) errs.appearance = "Оцени внешний вид";
-      if (!data.taste) errs.taste = "Оцени вкус";
-      if (!data.smell) errs.smell = "Оцени запах";
-      if (!data.consistency) errs.consistency = "Оцени консистенцию";
+      if (!data.appearance) errs.appearance = t("pipeline.errors.appearance");
+      if (!data.taste) errs.taste = t("pipeline.errors.taste");
+      if (!data.smell) errs.smell = t("pipeline.errors.smell");
+      if (!data.consistency) errs.consistency = t("pipeline.errors.consistency");
       // Температура подачи — soft-check, не блокируем но warning'аем.
     }
     if (step === "decision") {
-      if (!data.decision) errs.decision = "Выбери решение";
+      if (!data.decision) errs.decision = t("pipeline.errors.decision");
       if (data.decision && data.decision !== "approved" && !data.deviationReason.trim()) {
-        errs.deviationReason = "Опиши причину отклонения";
+        errs.deviationReason = t("pipeline.errors.reason");
       }
     }
     return errs;
-  }, [step, data]);
+  }, [step, data, t]);
 
   const stepValid = Object.keys(stepErrors).length === 0;
 
@@ -267,19 +272,19 @@ export function FinishedProductPipeline({
   const warnings: string[] = [];
   if (step === "cooking") {
     if (data.cookingMethod && data.cookingMethod !== "raw") {
-      const t = parseFloat(data.cookingTemperature.replace(",", "."));
-      if (!Number.isNaN(t) && t < 70 && t > 0) {
+      const temperature = parseFloat(data.cookingTemperature.replace(",", "."));
+      if (!Number.isNaN(temperature) && temperature < 70 && temperature > 0) {
         warnings.push(
-          `Температура ${t}°C ниже нормы для термообработки (≥ 70°C). Проверь или укажи причину в комментарии на финальном шаге.`,
+          t("pipeline.lowCooking", { temperature: String(temperature) }),
         );
       }
     }
   }
   if (step === "tasting") {
-    const t = parseFloat(data.servingTemperature.replace(",", "."));
-    if (!Number.isNaN(t) && data.cookingMethod !== "raw" && t < 65 && t > 0) {
+    const temperature = parseFloat(data.servingTemperature.replace(",", "."));
+    if (!Number.isNaN(temperature) && data.cookingMethod !== "raw" && temperature < 65 && temperature > 0) {
       warnings.push(
-        `Температура отпуска горячих блюд по СанПиН — не ниже 65°C. Сейчас ${t}°C. Проверь термометр.`,
+        t("pipeline.lowServing", { temperature: String(temperature) }),
       );
     }
   }
@@ -352,8 +357,7 @@ export function FinishedProductPipeline({
         }),
       });
       if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Ошибка при сохранении");
+        throw new Error(await readLocalizedApiError(response, locale, t("errors.save")));
       }
       const result = await response.json().catch(() => ({}));
       const rollingMeta = result?.rolling as
@@ -373,19 +377,19 @@ export function FinishedProductPipeline({
         setStep("intro");
         setNotice(
           rollingMeta.remaining !== undefined && rollingMeta.remaining <= 5
-            ? `Заполнено ${newCount}, осталось до лимита ${rollingMeta.remaining}.`
-            : `Заполнено ${newCount}. Готов к следующему блюду.`,
+            ? t("pipeline.remainingToast", { count: newCount, remaining: rollingMeta.remaining })
+            : t("pipeline.progressToast", { count: newCount }),
         );
         if (typeof window !== "undefined") {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
-        toast.success(`Блюдо #${newCount} принято`);
+        toast.success(t("pipeline.accepted", { count: newCount }));
         return;
       }
 
       if (rollingMode && continueRolling === true && rollingMeta?.capped) {
         setNotice(
-          `Достигнут лимит ${rollingDailyCap} записей в день. Запись сохранена, но новая задача не создана.`,
+          t("pipeline.capReached", { count: rollingDailyCap }),
         );
         router.push(`${journalsBasePath}/finished_product`);
         router.refresh();
@@ -395,7 +399,7 @@ export function FinishedProductPipeline({
       router.push(`${journalsBasePath}/finished_product`);
       router.refresh();
     } catch (err) {
-      setError(humanizeFetchError(err, "Ошибка при сохранении"));
+      setError(humanizeFetchError(err, t("errors.save"), t("errors.network")));
     } finally {
       setSubmitting(false);
       setSubmittingMode("default");
@@ -442,7 +446,7 @@ export function FinishedProductPipeline({
                   )}
                 </span>
                 <span className="hidden whitespace-nowrap text-[12px] font-semibold sm:inline">
-                  {s.shortLabel}
+                  {t(s.shortLabel)}
                 </span>
                 <span className="text-[10px] font-semibold opacity-70 sm:hidden">
                   {s.num}
@@ -479,10 +483,9 @@ export function FinishedProductPipeline({
       {rollingMode ? (
         <div className="flex items-center justify-between rounded-2xl border border-[#5566f6]/15 bg-[#f5f6ff]/50 px-4 py-2 text-[12px]">
           <span className="text-[#3848c7]">
-            Цикл бракеража — заполняй каждое готовое блюдо
-          </span>
+            {t("pipeline.title")}</span>
           <span className="rounded-full bg-white px-2.5 py-1 font-semibold tabular-nums text-[#3848c7] ring-1 ring-[#5566f6]/15">
-            За сегодня: {dailyCount} / {rollingDailyCap}
+            {t("pipeline.today", { count: dailyCount, limit: rollingDailyCap })}
           </span>
         </div>
       ) : null}
@@ -490,16 +493,16 @@ export function FinishedProductPipeline({
       {/* Step body */}
       <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6">
         <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-          Шаг {STEPS[stepIndex].num} из 4 — {STEPS[stepIndex].label}
+          {t("pipeline.step", { step: STEPS[stepIndex].num, title: t(STEPS[stepIndex].label) })}
         </h2>
 
         {step === "intro" ? (
           <div className="mt-4 space-y-4">
             <Field
-              label="Наименование блюда"
+              label={t("pipeline.product")}
               required
               error={stepErrors.productName}
-              hint="Например: «Щи из свежей капусты», «Котлета по-киевски»."
+              hint={t("pipeline.productHint")}
             >
               <input
                 type="text"
@@ -507,14 +510,14 @@ export function FinishedProductPipeline({
                 onChange={(e) =>
                   setData((d) => ({ ...d, productName: e.target.value }))
                 }
-                placeholder="Название блюда"
+                placeholder={t("pipeline.productPlaceholder")}
                 autoFocus
                 className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
               />
             </Field>
             <Field
-              label="Партия / № в учёте"
-              hint="Если есть номер партии или маркировка — впиши. Иначе пропусти."
+              label={t("pipeline.batch")}
+              hint={t("pipeline.batchHint")}
             >
               <input
                 type="text"
@@ -522,13 +525,13 @@ export function FinishedProductPipeline({
                 onChange={(e) =>
                   setData((d) => ({ ...d, batchNumber: e.target.value }))
                 }
-                placeholder="Например: B-2026-05-15-12"
+                placeholder={t("pipeline.batchPlaceholder")}
                 className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
               />
             </Field>
             <Field
-              label="Откуда сырьё"
-              hint="Откуда взяли продукт: со склада, из холодильника №2, по приёмке от поставщика."
+              label={t("pipeline.source")}
+              hint={t("pipeline.sourceHint")}
             >
               <input
                 type="text"
@@ -536,7 +539,7 @@ export function FinishedProductPipeline({
                 onChange={(e) =>
                   setData((d) => ({ ...d, sourceLabel: e.target.value }))
                 }
-                placeholder="Источник сырья"
+                placeholder={t("pipeline.sourcePlaceholder")}
                 className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
               />
             </Field>
@@ -546,7 +549,7 @@ export function FinishedProductPipeline({
         {step === "cooking" ? (
           <div className="mt-4 space-y-4">
             <Field
-              label="Метод тепловой обработки"
+              label={t("pipeline.method")}
               required
               error={stepErrors.cookingMethod}
             >
@@ -564,7 +567,7 @@ export function FinishedProductPipeline({
                         : "border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
                     }`}
                   >
-                    {m.label}
+                    {t(m.label)}
                   </button>
                 ))}
               </div>
@@ -572,10 +575,10 @@ export function FinishedProductPipeline({
 
             {data.cookingMethod && data.cookingMethod !== "raw" ? (
               <Field
-                label="Температура приготовления (°C)"
+                label={t("pipeline.cookingTemperature")}
                 required
                 error={stepErrors.cookingTemperature}
-                hint="По СанПиН — не ниже 70°C в толще продукта для большинства блюд."
+                hint={t("pipeline.cookingHint")}
               >
                 <input
                   type="text"
@@ -584,15 +587,15 @@ export function FinishedProductPipeline({
                   onChange={(e) =>
                     setData((d) => ({ ...d, cookingTemperature: e.target.value }))
                   }
-                  placeholder="например, 85"
+                  placeholder={t("pipeline.cookingPlaceholder")}
                   className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
                 />
               </Field>
             ) : null}
 
             <Field
-              label="Время начала готовки"
-              hint="Подставлено текущее, можно поменять."
+              label={t("pipeline.startTime")}
+              hint={t("pipeline.startHint")}
             >
               <input
                 type="time"
@@ -619,36 +622,34 @@ export function FinishedProductPipeline({
         {step === "tasting" ? (
           <div className="mt-4 space-y-4">
             <p className="text-[12.5px] leading-snug text-[#6f7282]">
-              Оцени каждый параметр отдельно. По СанПиН п. 2.5 — нужны 4
-              категории: внешний вид, запах, вкус, консистенция.
-            </p>
+              {t("pipeline.assessHint")}</p>
             <RatingPicker
-              label="Внешний вид"
+              label={t("pipeline.appearance")}
               value={data.appearance}
               error={stepErrors.appearance}
               onChange={(v) => setData((d) => ({ ...d, appearance: v }))}
             />
             <RatingPicker
-              label="Запах"
+              label={t("pipeline.smell")}
               value={data.smell}
               error={stepErrors.smell}
               onChange={(v) => setData((d) => ({ ...d, smell: v }))}
             />
             <RatingPicker
-              label="Вкус"
+              label={t("pipeline.taste")}
               value={data.taste}
               error={stepErrors.taste}
               onChange={(v) => setData((d) => ({ ...d, taste: v }))}
             />
             <RatingPicker
-              label="Консистенция"
+              label={t("pipeline.consistency")}
               value={data.consistency}
               error={stepErrors.consistency}
               onChange={(v) => setData((d) => ({ ...d, consistency: v }))}
             />
             <Field
-              label="Температура отпуска (°C)"
-              hint="Для горячих блюд — ≥ 65°C, для холодных закусок — ≤ 14°C."
+              label={t("pipeline.servingTemperature")}
+              hint={t("pipeline.servingHint")}
             >
               <input
                 type="text"
@@ -657,7 +658,7 @@ export function FinishedProductPipeline({
                 onChange={(e) =>
                   setData((d) => ({ ...d, servingTemperature: e.target.value }))
                 }
-                placeholder="например, 70"
+                placeholder={t("pipeline.servingPlaceholder")}
                 className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
               />
             </Field>
@@ -677,10 +678,10 @@ export function FinishedProductPipeline({
         {step === "decision" ? (
           <div className="mt-4 space-y-4">
             <Field
-              label="Решение"
+              label={t("pipeline.steps.decisionShort")}
               required
               error={stepErrors.decision}
-              hint="Если есть Удовлетворительно/Неудовлетворительно по органолептике — система предложила решение, можно поменять."
+              hint={t("pipeline.decisionHint")}
             >
               <div className="grid gap-2 sm:grid-cols-3">
                 {DECISION_OPTS.map((opt) => {
@@ -708,7 +709,7 @@ export function FinishedProductPipeline({
                         isSel ? tone : idle
                       }`}
                     >
-                      {opt.label}
+                      {t(opt.label)}
                     </button>
                   );
                 })}
@@ -717,10 +718,10 @@ export function FinishedProductPipeline({
 
             {data.decision && data.decision !== "approved" ? (
               <Field
-                label="Причина отклонения и принятые меры"
+                label={t("pipeline.reason")}
                 required
                 error={stepErrors.deviationReason}
-                hint="Что именно не понравилось и что сделали — дополнили специями / отправили на доработку / списали."
+                hint={t("pipeline.reasonHint")}
               >
                 <textarea
                   value={data.deviationReason}
@@ -728,15 +729,15 @@ export function FinishedProductPipeline({
                     setData((d) => ({ ...d, deviationReason: e.target.value }))
                   }
                   rows={3}
-                  placeholder="Например: «Пересолено — переделать соус»"
+                  placeholder={t("pipeline.reasonPlaceholder")}
                   className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
                 />
               </Field>
             ) : null}
 
             <Field
-              label="Дополнительные комментарии"
-              hint="Опционально — наблюдения, сравнение с эталоном, заметки для следующей смены."
+              label={t("pipeline.notes")}
+              hint={t("pipeline.notesHint")}
             >
               <textarea
                 value={data.notes}
@@ -750,40 +751,20 @@ export function FinishedProductPipeline({
             </Field>
 
             <div className="rounded-2xl bg-[#fafbff] p-3 text-[12px] text-[#6f7282]">
-              <strong>Сводка перед сохранением:</strong>
+              <strong>{t("pipeline.summary")}</strong>
               <div className="mt-1.5 space-y-0.5">
-                <div>
-                  • <strong>Блюдо:</strong>{" "}
-                  {data.productName || "(не указано)"}
-                </div>
-                {data.batchNumber ? (
-                  <div>
-                    • <strong>Партия:</strong> {data.batchNumber}
-                  </div>
-                ) : null}
-                <div>
-                  • <strong>Обработка:</strong>{" "}
-                  {COOKING_METHODS.find((m) => m.value === data.cookingMethod)
-                    ?.label ?? "(не указано)"}
-                  {data.cookingTemperature
-                    ? ` при ${data.cookingTemperature}°C`
-                    : ""}
-                </div>
-                <div>
-                  • <strong>Органолептика:</strong>{" "}
-                  {[data.appearance, data.smell, data.taste, data.consistency]
-                    .map(
-                      (r) =>
-                        APPEARANCE_OPTS.find((o) => o.value === r)?.label ?? "—",
-                    )
-                    .join(" · ")}
-                </div>
-                {data.servingTemperature ? (
-                  <div>
-                    • <strong>Температура отпуска:</strong>{" "}
-                    {data.servingTemperature}°C
-                  </div>
-                ) : null}
+                <div>{t("pipeline.summaryProduct", { name: data.productName || t("pipeline.notSpecified") })}</div>
+                {data.batchNumber ? <div>{t("pipeline.summaryBatch", { batch: data.batchNumber })}</div> : null}
+                <div>{(() => {
+                  const method = COOKING_METHODS.find(item => item.value === data.cookingMethod);
+                  const label = method ? t(method.label) : t("pipeline.notSpecified");
+                  return data.cookingTemperature ? t("pipeline.atTemperature", { method: label, temperature: data.cookingTemperature }) : t("pipeline.summaryMethod", { method: label });
+                })()}</div>
+                <div>{t("pipeline.summaryAssessment", { assessments: [data.appearance, data.smell, data.taste, data.consistency].map(value => {
+                  const option = APPEARANCE_OPTS.find(item => item.value === value);
+                  return option ? t(option.label) : "—";
+                }).join(" · ") })}</div>
+                {data.servingTemperature ? <div>{t("pipeline.summaryServing", { temperature: data.servingTemperature })}</div> : null}
               </div>
             </div>
           </div>
@@ -798,8 +779,7 @@ export function FinishedProductPipeline({
           onClick={back}
           disabled={stepIndex === 0 || submitting}
         >
-          <ArrowLeft className="size-4" /> Назад
-        </Button>
+          <ArrowLeft className="size-4" /> {t("pipeline.back")}</Button>
 
         {!isLastStep ? (
           <Button
@@ -808,7 +788,7 @@ export function FinishedProductPipeline({
             disabled={!stepValid || submitting}
             className="ml-auto"
           >
-            Далее <ArrowRight className="size-4" />
+            {t("pipeline.next")}<ArrowRight className="size-4" />
           </Button>
         ) : (
           <div className="ml-auto flex flex-wrap gap-2">
@@ -825,7 +805,7 @@ export function FinishedProductPipeline({
                   ) : (
                     <Save className="size-4" />
                   )}
-                  {rollingDoneLabel}
+                  {rollingDoneLabel ?? t("pipeline.doneToday")}
                 </Button>
                 <Button
                   type="button"
@@ -837,7 +817,7 @@ export function FinishedProductPipeline({
                   ) : (
                     <Save className="size-4" />
                   )}
-                  {rollingContinueLabel}
+                  {rollingContinueLabel ?? t("pipeline.saveNext")}
                 </Button>
               </>
             ) : (
@@ -851,8 +831,7 @@ export function FinishedProductPipeline({
                 ) : (
                   <Save className="size-4" />
                 )}
-                Сохранить
-              </Button>
+                {t("actions.save")}</Button>
             )}
           </div>
         )}
@@ -904,6 +883,7 @@ function RatingPicker({
   error?: string;
   onChange: (v: string) => void;
 }) {
+  const t = useTranslations("finishedProduct");
   return (
     <Field label={label} required error={error}>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -927,7 +907,7 @@ function RatingPicker({
                 isSel ? tone : idle
               }`}
             >
-              {opt.label}
+              {t(opt.label)}
             </button>
           );
         })}

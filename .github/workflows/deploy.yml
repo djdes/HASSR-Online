@@ -581,19 +581,23 @@ jobs:
             # Дальше на нём падали сиды (клиент ждёт колонок, которых нет),
             # и до перезапуска PM2 деплой не доходил — без внятной причины
             # в логе.
-            # --accept-data-loss: удаление колонок (trialWrites*, aiMonthly* —
-            # снятые лимиты бесплатного тарифа) без флага заставляет prisma
-            # ждать интерактивного подтверждения, и деплой зависал бы.
+            # Apply reviewed additive changes only; preserve custom partial
+            # indexes and stop rather than accepting destructive schema drift.
             set -o pipefail
-            if ! npx prisma db push --accept-data-loss 2>&1 | tail -15; then
-              echo "[FATAL] prisma db push не применился — деплой остановлен"
+            if ! node scripts/apply-safe-schema.cjs 2>&1 | tail -15; then
+              echo "[FATAL] безопасное обновление схемы не применилось — деплой остановлен"
               exit 1
             fi
             set +o pipefail
 
             echo "=== Seeding journal templates ==="
             if [ -f .env ]; then
+              set -o pipefail
               npx tsx prisma/seed.ts 2>&1 | tail -20
+              set +o pipefail
+              # Legacy business-data backfills require a separate reviewed run.
+              # A normal code release must not rewrite customer journal records.
+              if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
               echo "=== Seeding job positions (idempotent) ==="
               npx tsx prisma/seed-job-positions.ts 2>&1 | tail -5
               echo "=== Seeding journal fill modes + cleanup (idempotent) ==="
@@ -627,6 +631,9 @@ jobs:
               echo "=== Шапка «УТВЕРЖДАЮ»: должность и ФИО одного человека + помещения в пустых графиках ген. уборок (one-shot, PlatformSetting-guard) ==="
               npx tsx prisma/seed-fix-approver-mismatch.ts --dry-run 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch dry-run failed"
               npx tsx prisma/seed-fix-approver-mismatch.ts 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch failed — deploy continues"
+              else
+                echo "Legacy customer-data backfills skipped (explicit opt-in required)"
+              fi
             else
               echo ".env not found, skip seed"
             fi

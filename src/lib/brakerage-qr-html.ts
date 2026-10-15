@@ -2,6 +2,7 @@ import { formatRowSignatures, isSignatureOutdated } from "@/lib/brakerage-commis
 import type { BrakerageQrList, BrakerageQrRow } from "@/lib/brakerage-qr";
 import type { BrakerageQrRole } from "@/lib/brakerage-qr-role";
 import { esc, renderMessage } from "@/lib/journal-fill-html";
+import { brakerageTimeDigits, formatBrakerageDateTime } from "@/lib/brakerage-assessment";
 
 /**
  * Экраны QR бракеража поверх общей QR-формы (серверный HTML, работают без
@@ -58,6 +59,7 @@ const BK_LIST_CSS = `<style>
 .bk-f{margin:0 0 12px}
 .bk-l{display:block;font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6f7282;margin:0 0 6px 2px}
 .bk-v{font-size:19px;font-weight:600;color:#0b1024;margin:0 2px;font-variant-numeric:tabular-nums}
+.bk-n{font-size:26px!important;font-weight:700;line-height:1.25;color:#0b1024;overflow-wrap:anywhere}
 .bk-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bk-adm{margin:4px 0 8px}
 .bk-adm .segb{min-height:56px;font-size:17px}
@@ -78,7 +80,7 @@ function viewerNotice(role: BrakerageQrRole): string {
 
 /** Время 24 ч: текстовое поле «ЧЧ:ММ» — нативный time на iPhone с английской локалью показывает AM/PM. */
 function timeInput(name: string, value: string, label: string): string {
-  return `<input class="in" name="${esc(name)}" value="${esc(value)}" inputmode="numeric" maxlength="5" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" placeholder="ЧЧ:ММ" aria-label="${esc(label)}" autocomplete="off">`;
+  return `<input class="in" name="${esc(name)}" value="${esc(brakerageTimeDigits(value))}" inputmode="numeric" maxlength="4" pattern="([01][0-9]|2[0-3])[0-5][0-9]" placeholder="1430" aria-label="${esc(label)}" autocomplete="off" data-time-digits oninput="this.value=this.value.replace(/\\D/g,'').slice(0,4)"><small class="muted">4 цифры, например 1430</small>`;
 }
 
 function field(label: string, control: string): string {
@@ -109,13 +111,14 @@ export function renderBrakerageList(params: {
   deleteHref: (rowId: string) => string;
   error?: string | null;
 }): string {
-  const { list, role } = params;
+  const { role } = params;
+  const list = role.evaluator ? { ...params.list, rows: params.list.rows.filter(row => !row.fullyAssessed) } : params.list;
   const noun = params.isFinished ? "блюд" : "позиций";
   if (list.rows.length === 0) {
     return `${BK_LIST_CSS}${params.who}${params.tabs}${viewerNotice(role)}${renderMessage(
       "muted",
-      `За сегодня ${noun} пока нет. Их добавляет повар по этому же QR — или добавьте сами.`,
-      `<div class="sticky"><a class="btn" href="${esc(params.addHref)}">Добавить</a></div>`
+      role.evaluator ? "Все добавленные блюда оценены комиссией. Новые блюда появятся здесь после внесения в журнал." : `За сегодня ${noun} пока нет. Их добавляет сотрудник, который ведёт журнал.`,
+      !role.evaluator && !role.viewer ? `<div class="sticky"><a class="btn" href="${esc(params.addHref)}">Добавить</a></div>` : ""
     )}`;
   }
   const gradeLabel = (value: string) => list.gradeOptions.find((option) => option.value === value)?.label ?? value;
@@ -123,11 +126,10 @@ export function renderBrakerageList(params: {
   const cards = list.rows
     .map((row) => {
       const id = row.rowId;
-      const mine = row.signatures.find((signature) => signature.userId === params.employeeId);
       const title = role.editor
         ? field(params.isFinished ? "Блюдо" : "Продукт", `<input class="in" name="name:${esc(id)}" value="${esc(row.name)}" maxlength="200" aria-label="Наименование">`)
         : `<div class="bk-n" style="margin:0 2px 10px">${esc(row.name)}</div>`;
-      const head = `<div class="bk-h"><div class="bk-t">${row.fromYesterday ? "вчера" : "сегодня"}</div>${signatureBadge(row, params.timeZone, params.isFinished)}</div>`;
+      const head = `<div class="bk-h"><div class="bk-t">${esc(formatBrakerageDateTime(row.dayKey))}</div>${signatureBadge(row, params.timeZone, params.isFinished)}</div>`;
       const production = role.editor ? field(productionLabel, timeInput(`time:${id}`, row.time, productionLabel)) : valueField(productionLabel, row.time);
       const output = params.isFinished
         ? role.editor
@@ -135,17 +137,16 @@ export function renderBrakerageList(params: {
           : valueField("Выход, г", row.portionWeight)
         : "";
       const canGrade = role.editor || role.evaluator;
-      const grade = canGrade ? field("Оценка", seg(`grade:${id}`, list.gradeOptions, row.grade)) : valueField("Оценка", gradeLabel(row.grade));
+      const grade = canGrade ? field("Оценка", seg(`grade:${id}`, list.gradeOptions, role.evaluator ? "" : row.grade)) : valueField("Оценка", gradeLabel(row.grade));
       const rejection =
         params.isFinished && role.evaluator
           ? field("Время бракеража", timeInput(`rej:${id}`, row.rejectionTime, "Время бракеража"))
           : params.isFinished
             ? valueField("Время бракеража", row.rejectionTime)
             : "";
-      const admission =
-        role.evaluator && params.isFinished
-          ? `<p class="bk-sub">${mine ? "Ваше решение (подпишете заново)" : "Ваше решение — это подпись"}</p><div class="seg bk-adm" role="radiogroup"><label class="segb yes"><input type="radio" name="adm:${esc(id)}" value="yes" data-adm><span>Допущено</span></label><label class="segb no"><input type="radio" name="adm:${esc(id)}" value="no" data-adm><span>Не допущено</span></label></div>`
-          : "";
+      const admission = canGrade
+        ? field("Комментарий (обязателен при любой оценке, кроме «Отлично»)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к блюду ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
+        : "";
       const del = role.editor ? `<a class="bk-del" href="${esc(params.deleteHref(id))}">Удалить строку</a>` : "";
       return `<div class="obj bk">${head}${title}<div class="bk-g2">${production}${params.isFinished ? output : ""}</div>${grade}${rejection}${admission}${del}</div>`;
     })
@@ -154,7 +155,7 @@ export function renderBrakerageList(params: {
   const waiting = list.rows.filter((row) => row.signatures.length === 0).length;
   const readOnly = !role.evaluator && !role.editor;
   const lead = role.evaluator
-    ? `<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Проверьте блюдо и отметьте «Допущено» или «Не допущено» — это ваша подпись${params.isFinished ? ", в журнале она встанет на минуту позже времени бракеража" : ""}. Оценку и время бракеража можно поправить.</p>`
+    ? `<p class="today">Блюд в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать». Разрешение к реализации определяется оценками автоматически. При любой оценке, кроме «Отлично», добавьте комментарий. Оценку и время бракеража можно поправить; в журнале она встанет на минуту позже времени бракеража.</p>`
     : readOnly
       ? `${viewerNotice(role)}<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Блюда за сегодня — только просмотр.</p>`
       : `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`;
@@ -162,7 +163,7 @@ export function renderBrakerageList(params: {
     ? `<button class="btn" type="submit" name="action" value="save" data-sign-btn>${role.editor ? "Сохранить и подписать" : "Подписать"}</button>`
     : `<button class="btn" type="submit" name="action" value="save">Сохранить изменения</button>`;
   const script = role.evaluator
-    ? `<script>(function(){var f=document.getElementById("bk-form");if(!f)return;var b=f.querySelector("[data-sign-btn]");var base=b.textContent;function u(){var n=f.querySelectorAll("[data-adm]:checked").length;b.textContent=n>0?base+" · "+n:base;}f.addEventListener("change",function(e){var t=e.target;if(t&&t.type==="radio"){var g=f.querySelectorAll('input[name="'+t.name+'"]');for(var i=0;i<g.length;i++)g[i].parentNode.classList.toggle("on",g[i].checked);}u();});u();})();</script>`
+    ? `<script>(function(){var f=document.getElementById("bk-form");if(!f)return;var b=f.querySelector("[data-sign-btn]");var base=b.textContent;function u(){var chosen=f.querySelectorAll('input[name^="grade:"]:checked');b.textContent=chosen.length?base+" · "+chosen.length:base;var notes=f.querySelectorAll('textarea[name^="note:"]');for(var i=0;i<notes.length;i++){var id=notes[i].name.slice(5);var grade=f.querySelector('input[name="grade:'+CSS.escape(id)+'"]:checked');notes[i].required=!!grade&&grade.value.trim().toLocaleLowerCase('ru')!=="отлично";}}f.addEventListener("change",function(e){var t=e.target;if(t&&t.type==="radio"){var g=f.querySelectorAll('input[name="'+CSS.escape(t.name)+'"]');for(var i=0;i<g.length;i++)g[i].parentNode.classList.toggle("on",g[i].checked);}u();});u();})();</script>`
     : "";
   if (readOnly) {
     // Без формы: ни оценки, ни подписи — только карточки.

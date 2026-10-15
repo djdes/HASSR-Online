@@ -106,19 +106,26 @@ test("сумма пополнения: границы от 500 до 300 000 ₽ 
   assert.equal(parseTopupAmount(0).ok, false);
   assert.equal(parseTopupAmount(-500).ok, false);
   const min = parseTopupAmount(499);
+  assert.equal(!min.ok && min.code, "minimum");
   assert.equal(!min.ok && min.error.replace(/[  ]/g, " "), "Минимальная сумма — 500 ₽");
   const max = parseTopupAmount(300_001);
+  assert.equal(!max.ok && max.code, "maximum");
   assert.equal(!max.ok && max.error.replace(/[  ]/g, " "), "Максимальная сумма — 300 000 ₽");
 });
 
 test("сумма пополнения: копейки, дроби и нечисловое — отказ", () => {
   const cents = parseTopupAmount(1990.5);
+  assert.equal(!cents.ok && cents.code, "wholeRubles");
   assert.equal(!cents.ok && cents.error, "Сумма — целыми рублями, без копеек");
   assert.equal(parseTopupAmount("1990,50").ok, false);
+  const invalidNumeric = parseTopupAmount("bad");
+  assert.equal(!invalidNumeric.ok && invalidNumeric.code, "numeric");
   assert.equal(parseTopupAmount(Number.NaN).ok, false);
   assert.equal(parseTopupAmount(Number.POSITIVE_INFINITY).ok, false);
   assert.equal(parseTopupAmount("пять тысяч").ok, false);
   assert.equal(parseTopupAmount("").ok, false);
+  const missing = parseTopupAmount("");
+  assert.equal(!missing.ok && missing.code, "required");
   assert.equal(parseTopupAmount(null).ok, false);
   assert.equal(parseTopupAmount(undefined).ok, false);
   assert.equal(parseTopupAmount({ amountRub: 5000 }).ok, false);

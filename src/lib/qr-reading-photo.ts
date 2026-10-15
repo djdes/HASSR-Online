@@ -56,7 +56,7 @@ export function readingTariffsHref(input: {
 
 export type QrReadingPhotoAuth =
   | { ok: true; actor: QrReadingPhotoActor }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; errorCode?: string; errorParams?: Record<string, string | number> };
 
 async function loadObject(kind: QrObjectKind, objectId: string, token: string) {
   if (kind === "equipment") {
@@ -108,7 +108,7 @@ export async function authorizeQrReadingPhoto(input: {
   userAgent?: string | null;
 }): Promise<QrReadingPhotoAuth> {
   const object = await loadObject(input.kind, input.objectId, input.token);
-  if (!object) return { ok: false, status: 401, error: "QR-наклейка не подходит" };
+  if (!object) return { ok: false, status: 401, error: "QR-наклейка не подходит", errorCode: "equipmentFill.errors.invalidSticker" };
 
   const actor = await resolveObjectActor({
     mode: object.mode,
@@ -118,16 +118,16 @@ export async function authorizeQrReadingPhoto(input: {
     pass: input.pass,
     cookiePass: await readObjectPassCookie(object.organizationId),
   });
-  if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };
+  if (!actor.ok) return { ok: false, status: actor.status, error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams };
 
   const employee = await db.user.findFirst({
     where: { id: input.employeeId, organizationId: object.organizationId, ...ORG_ROSTER_WHERE },
     select: { id: true, name: true, role: true, canManageSettings: true },
   });
-  if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден" };
-  if (!canFillObject(object.fillerUserIds, employee)) return { ok: false, status: 403, error: OBJECT_FILLER_DENIED };
+  if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден", errorCode: "equipmentFill.errors.employeeNotFound" };
+  if (!canFillObject(object.fillerUserIds, employee)) return { ok: false, status: 403, error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" };
 
-  const [autofill, photo] = await Promise.all([hasPaidPlan(object.organizationId), getReadingPhotoSettings(object.organizationId)]);
+  const [autofill, photo] = await Promise.all([hasPaidPlan(object.organizationId), getReadingPhotoSettings(object.organizationId, input.kind === "equipment" ? "cold_equipment_control" : "climate_control")]);
   const userAgent =
     input.userAgent !== undefined ? input.userAgent : (await headers()).get("user-agent");
   return {

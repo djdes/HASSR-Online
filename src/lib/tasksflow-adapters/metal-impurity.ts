@@ -41,8 +41,8 @@ function buildForm(config: MetalImpurityDocumentConfig): TaskFormSchema {
     label: s.name,
   }));
   const fields: TaskFormField[] = [
-    { type: "select", key: "materialId", label: "Сырьё", required: true, options: materialOptions.length > 0 ? materialOptions : [{ value: "", label: "Не выбрано" }] },
-    { type: "select", key: "supplierId", label: "Поставщик", required: true, options: supplierOptions.length > 0 ? supplierOptions : [{ value: "", label: "Не выбрано" }] },
+    { type: "select", key: "materialId", label: "Сырьё", required: true, options: materialOptions.length > 0 ? materialOptions : [{ value: "", label: "Не выбрано", presentationKey: "fields.metal_impurity.materialId.options.__empty" }] },
+    { type: "select", key: "supplierId", label: "Поставщик", required: true, options: supplierOptions.length > 0 ? supplierOptions : [{ value: "", label: "Не выбрано", presentationKey: "fields.metal_impurity.supplierId.options.__empty" }] },
     { type: "text", key: "consumedQuantityKg", label: "Количество использованного сырья (кг)", required: true, maxLength: 50, placeholder: "100" },
     { type: "text", key: "impurityQuantityG", label: "Количество металлопримесей (г)", required: true, maxLength: 50, placeholder: "0" },
     { type: "text", key: "impurityCharacteristic", label: "Характеристика примесей", required: false, maxLength: 200, placeholder: "Например: стружка, скобы" },

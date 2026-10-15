@@ -1,8 +1,7 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
-import { publicError } from "@/i18n/public-copy";
 import { localizedHref } from "@/i18n/site-locale";
 
 import { useEffect, useState } from "react";
@@ -29,7 +28,7 @@ import {
  */
 export function HeroEmailStart({
   tone = "light",
-  buttonLabel = "Начать бесплатно",
+  buttonLabel,
   layout = "row",
   showLoginLink = true,
   place = "hero",
@@ -52,7 +51,8 @@ export function HeroEmailStart({
   /// шаги там слева, форма по центру под ними смотрелась отдельно).
   align?: "center" | "start";
 }) {
-  const t = usePublicCopy();
+  const t = useTranslations("landingComponents.heroEmail");
+  const errorT = useTranslations("publicUi.registrationErrors");
   const locale = useSiteLocale();
   const router = useRouter();
   const field = useEmailField();
@@ -79,7 +79,7 @@ export function HeroEmailStart({
     if (loading || !field.valid || !challenge.token) return;
     if (!consent) {
       setConsentMissing(true);
-      setError(t("Отметьте согласие с документами — без него аккаунт не создаётся"));
+      setError(t("consentRequired"));
       return;
     }
     const value = field.value.trim().toLowerCase();
@@ -108,12 +108,7 @@ export function HeroEmailStart({
       if (res.ok && data.created) {
         ymGoal("instant_register_done", goalParams);
         ymGoal("signup_created", goalParams);
-        if (locale === "en") {
-          window.location.assign("/dashboard?welcome=1");
-          return;
-        }
-        router.push("/dashboard?welcome=1");
-        router.refresh();
+        window.location.assign("/dashboard?welcome=1");
         return;
       }
       if (res.ok && data.exists) {
@@ -124,10 +119,23 @@ export function HeroEmailStart({
         return;
       }
       ymGoal("signup_error", { ...goalParams, code: String(res.status) });
-      setError(publicError(locale, data.error, "Не получилось — попробуйте ещё раз"));
+      const errorKeys = {
+        invalid_email: "invalidEmail",
+        consent_required: "consentRequired",
+        rate_limited: "rateLimited",
+        challenge_rejected: "challengeRejected",
+        challenge_unavailable: "challengeUnavailable",
+        email_domain_unavailable: "emailDomainUnavailable",
+        registration_failed: "registrationFailed",
+      } as const;
+      const errorCode =
+        typeof data.code === "string" && Object.hasOwn(errorKeys, data.code)
+          ? (data.code as keyof typeof errorKeys)
+          : "registration_failed";
+      setError(errorT(errorKeys[errorCode]));
     } catch {
       ymGoal("signup_error", { ...goalParams, code: "network" });
-      setError(t("Сеть недоступна. Попробуйте ещё раз"));
+      setError(t("networkError"));
     } finally {
       challenge.reset();
       setLoading(false);
@@ -145,7 +153,7 @@ export function HeroEmailStart({
         }
       >
         <label htmlFor={inputId} className="sr-only">
-          {t("Электронная почта")}</label>
+          {t("emailLabel")}</label>
         {/* Поле в обёртке с иконкой: голая рамка на светлом фоне первого
             экрана читалась как декоративная плашка, а не как место для
             ввода. Конверт слева и заметная высота возвращают ему вид
@@ -164,7 +172,7 @@ export function HeroEmailStart({
             value={field.value}
             onChange={(e) => field.setValue(e.target.value)}
             onFocus={() => ymGoal("email_field_focus", goalParams)}
-            placeholder={t("Ваш e-mail")}
+            placeholder={t("emailPlaceholder")}
             autoComplete="email"
             inputMode="email"
             className={
@@ -192,10 +200,10 @@ export function HeroEmailStart({
           {loading ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              {t("Создаём аккаунт…")}</>
+              {t("creatingAccount")}</>
           ) : (
             <>
-              {t(buttonLabel)}
+              {buttonLabel ?? t("startFree")}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </>
           )}
@@ -250,7 +258,7 @@ export function HeroEmailStart({
           (dark ? "text-white/60" : "text-[#9b9fb3]")
         }
       >
-        {t("Уже есть аккаунт?")}{" "}
+        {t("existingAccount")}{" "}
         <Link
           href="/login"
           className={
@@ -258,7 +266,7 @@ export function HeroEmailStart({
             (dark ? "text-white/90" : "text-[#3848c7]")
           }
         >
-          {t("Войти")}</Link>
+          {t("signIn")}</Link>
       </div>
     </div>
   );

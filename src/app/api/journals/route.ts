@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveLocale } from "@/i18n/locales";
 import { ZodError } from "zod";
 import type { Prisma } from "@prisma/client";
 import { getServerSession } from "@/lib/server-session";
@@ -411,9 +412,10 @@ export async function POST(request: Request) {
               role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
               isActive: true,
             },
-            select: { email: true },
+            select: { email: true, locale: true },
           })
-          .then((users) => {
+          .then(async (users) => {
+            const organization = await db.organization.findUnique({ where: { id: organizationId }, select: { locale: true } });
             for (const deviation of deviations) {
               for (const user of users) {
                 sendDeviationAlertEmail({
@@ -424,6 +426,7 @@ export async function POST(request: Request) {
                   details: deviation.details.replace(/<\/?b>/g, ""),
                   filledBy: filledByName,
                   organizationId,
+                  locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: organization?.locale }),
                 });
               }
             }

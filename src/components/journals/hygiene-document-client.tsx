@@ -1,10 +1,10 @@
 "use client";
 
-import { getJournalDocumentPeriodLabel } from "@/lib/journal-document-helpers";
 import { TOUR } from "@/lib/tour-anchors";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, Lock } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -43,7 +43,6 @@ import {
   HYGIENE_STATUS_OPTIONS,
   buildDateKeys,
   buildHygieneExampleEmployees,
-  formatMonthLabel,
   getDayNumber,
   getHygieneDefaultResponsibleTitle,
   getHygienePositionLabel,
@@ -57,13 +56,10 @@ import {
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
-import { PAST_DAY_LOCKED_MESSAGE } from "@/lib/closed-day";
 import {
-  FOREIGN_ROW_MESSAGE,
-  FUTURE_DAY_LOCKED_MESSAGE,
-  NOT_TODAY_MESSAGE,
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { useJournalUndo } from "@/lib/journal-undo";
 import { useCellPaint } from "@/lib/journal-cell-paint";
 import {
@@ -76,6 +72,7 @@ import {
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { HygieneV2Table } from "@/components/journals/hygiene-v2-table";
+import { formatHygienePeriodBounds } from "@/lib/hygiene-period-format";
 
 type Props = {
   documentId: string;
@@ -191,12 +188,14 @@ function HygieneCheckbox(props: {
 }
 
 function HygieneHeader({
+  title,
   pageLabel,
   organizationLabel,
   startedAt,
   finishedAt,
   controlPeriodicity,
 }: {
+  title: string;
   pageLabel: string;
   organizationLabel: string;
   startedAt?: string | null;
@@ -208,7 +207,7 @@ function HygieneHeader({
       <tbody>
         <JournalPaperHeaderRows
           orgName={organizationLabel}
-          title="ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)"
+          title={title}
           pageInfo={pageLabel}
           startedAt={startedAt}
           finishedAt={finishedAt}
@@ -251,6 +250,20 @@ const HYGIENE_TEMPERATURE_OPTIONS: Array<{
   { value: true, code: "да", label: "температура выше 37°C" },
 ];
 
+const REGISTER_NOTE_KEYS = [
+  "registerNotes.healthExam",
+  "registerNotes.respiratoryAndSkinCheck",
+  "registerNotes.contactCheck",
+  "registerNotes.skinExam",
+] as const;
+const REGISTER_LEGEND_KEYS = [
+  "legend.healthy",
+  "legend.dayOff",
+  "legend.sickLeave",
+  "legend.suspended",
+  "legend.vacation",
+] as const;
+
 function makeCellKey(employeeId: string, dateKey: string) {
   return `${employeeId}:${dateKey}`;
 }
@@ -265,24 +278,44 @@ function buildEntryMap(entries: Props["initialEntries"]) {
   return result;
 }
 
-async function requestJson(url: string, init: RequestInit) {
+async function requestJson(url: string, init: RequestInit, fallbackMessage: string) {
   const response = await fetch(url, init);
   const result = await response.json().catch(() => null);
 
   if (!response.ok) {
     throw new Error(
-      (result && typeof result.error === "string" && result.error) || "Операция не выполнена"
+      (result && typeof result.error === "string" && result.error) || fallbackMessage
     );
   }
 
   return result;
 }
 
-function getTemperatureLabel(entry?: HygieneEntryData) {
-  if (entry?.temperatureAbove37 === false) return "нет";
-  if (entry?.temperatureAbove37 === true) return "да";
+function getTemperatureLabel(entry: HygieneEntryData | undefined, no: string, yes: string) {
+  if (entry?.temperatureAbove37 === false) return no;
+  if (entry?.temperatureAbove37 === true) return yes;
   if (entry?.temperatureAbove37 === null && entry?.status === "day_off") return "-";
   return "";
+}
+
+function formatHygieneMonthLabel(from: string, to: string, locale: Locale) {
+  const parseDateOnly = (value: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    return match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : null;
+  };
+  const start = parseDateOnly(from);
+  const end = parseDateOnly(to);
+  if (!start || !end) return "";
+  const monthFormatter = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+    month: "long", year: "numeric", timeZone: "UTC",
+  });
+  if (start.getUTCFullYear() === end.getUTCFullYear() && start.getUTCMonth() === end.getUTCMonth()) {
+    return monthFormatter.format(start);
+  }
+  const dateFormatter = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+    day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC",
+  });
+  return `${dateFormatter.format(start)} — ${dateFormatter.format(end)}`;
 }
 
 function getNextStatus(current?: HygieneStatus | null) {
@@ -326,6 +359,19 @@ export function HygieneDocumentClient({
   viewer,
   hygieneFormVersion = 1,
 }: Props) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("hygiene");
+  const commonT = useTranslations("common");
+  const journalsT = useTranslations("journals");
+  const reportsT = useTranslations("reports");
+  const localizedStatusLabel = (value?: HygieneStatus | null) => {
+    if (value === "healthy") return t("statuses.healthy");
+    if (value === "day_off") return t("statuses.dayOff");
+    if (value === "sick_leave") return t("statuses.sickLeave");
+    if (value === "suspended") return t("statuses.suspended");
+    if (value === "vacation") return t("statuses.vacation");
+    return "";
+  };
   const router = useRouter();
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
   const [entryMap, setEntryMap] = useState<Record<string, HygieneEntryData>>(() =>
@@ -428,10 +474,10 @@ export function HygieneDocumentClient({
       (dateKey) => dateKey <= todayKey && !filledDates.has(dateKey)
     ).length;
     return missing > 0
-      ? `Не заполнено дней: ${missing}. После закрытия дописать их будет нельзя.`
+      ? t("bulk.missingDays", { count: missing })
       : undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialEntries, dateKeys.join(","), todayKey]);
+  }, [initialEntries, dateKeys.join(","), todayKey, t]);
   // Анкоры спотлайт-тура «Как заполнить?»: одна клетка осмотра и одна
   // температуры — у строки текущего пользователя (линейному сотруднику
   // чужие строки закрыты), иначе у первого сотрудника с именем (список
@@ -444,8 +490,10 @@ export function HygieneDocumentClient({
   const tourDateKey = dateKeys.includes(todayKey) ? todayKey : dateKeys[0];
   const organizationLabel = organizationName || ORG_NAME_FALLBACK;
   const responsibleLabel = responsibleTitle || getHygieneDefaultResponsibleTitle(employees);
-  const documentTitle = title || "Гигиенический журнал (сотрудники)";
-  const monthLabel = formatMonthLabel(dateFrom, dateTo);
+  const documentTitle = title || journalsT("names.hygiene");
+  const monthLabel = formatHygieneMonthLabel(dateFrom, dateTo, locale);
+  const periodBounds = formatHygienePeriodBounds(dateFrom, dateTo, locale);
+  const periodSubtitle = reportsT("period", periodBounds);
   const selectedCount = selectedEmployeeIds.length;
   const allSelected = rosterUsers.length > 0 && selectedCount === rosterUsers.length;
   const isActive = status === "active";
@@ -619,11 +667,9 @@ export function HygieneDocumentClient({
         /* строку пропускаем — счётчик покажет расхождение */
       }
     }
-    toast.success(
-      reverted === ids.length
-        ? `Возвращено: ${reverted}`
-        : `Возвращено: ${reverted} из ${ids.length}`
-    );
+    toast.success(reverted === ids.length
+      ? t("bulk.revertedAll", { count: reverted })
+      : t("bulk.revertedSome", { count: reverted, total: ids.length }));
   }
 
   async function markEveryoneHealthyToday() {
@@ -638,10 +684,10 @@ export function HygieneDocumentClient({
     if (targets.length === 0) return;
 
     const confirmed = await confirmAsync({
-      title: "Отметить всех «Здоров»?",
-      description: `Незаполненных сотрудников на сегодня: ${targets.length}. Каждому будет проставлен статус «Зд.». Отдельные отметки потом можно поменять.`,
+      title: t("bulk.markEveryoneTitle"),
+      description: t("bulk.markEveryoneDescription", { count: targets.length }),
       variant: "info",
-      confirmLabel: "Отметить",
+      confirmLabel: t("bulk.markEveryoneConfirm"),
     });
     if (!confirmed) return;
 
@@ -665,11 +711,9 @@ export function HygieneDocumentClient({
     // Запоминаем только реально проставленных: откат не должен трогать
     // тех, у кого сохранение не прошло.
     lastBulkRef.current = marked;
-    toast.success(
-      done === targets.length
-        ? `Отмечено: ${done}`
-        : `Отмечено: ${done} из ${targets.length}`
-    );
+    toast.success(done === targets.length
+      ? t("bulk.markedAll", { count: done })
+      : t("bulk.markedSome", { count: done, total: targets.length }));
   }
 
   async function persistEntry(
@@ -700,7 +744,7 @@ export function HygieneDocumentClient({
         if (!submit.response.ok) {
           throw new Error(
             (result && typeof result.error === "string" && result.error) ||
-              "Операция не выполнена"
+              t("errors.saveFailed")
           );
         }
       }
@@ -718,7 +762,7 @@ export function HygieneDocumentClient({
     } catch (error) {
       restoreCellsLocal(new Map([[key, previous]]));
       if (options?.silent) throw error;
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(humanizeFetchError(error, t("errors.saveFailed")));
     } finally {
       setSavingCellKey((current) => (current === key ? null : current));
     }
@@ -760,7 +804,8 @@ export function HygieneDocumentClient({
               data: cell.data,
             })),
           }),
-        }
+        },
+        t("errors.saveFailed")
       );
 
       const saved = typeof result?.saved === "number" ? result.saved : cells.length;
@@ -768,11 +813,11 @@ export function HygieneDocumentClient({
 
       if (saved === 0 && skipped > 0) {
         // Ничего не записалось — для истории отмены это провал шага.
-        throw new Error(PAST_DAY_LOCKED_MESSAGE);
+        throw new Error(t("errors.pastDaysLocked"));
       }
       if (skipped > 0) {
         toast.warning(
-          `Сохранено ${saved}, пропущено ${skipped}: ${PAST_DAY_LOCKED_MESSAGE.toLowerCase()}`
+          t("bulk.skippedLocked", { saved, skipped })
         );
       }
 
@@ -790,7 +835,7 @@ export function HygieneDocumentClient({
     } catch (error) {
       restoreCellsLocal(previous);
       if (options?.silent) throw error;
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(humanizeFetchError(error, t("errors.saveFailed")));
     }
   }
 
@@ -803,15 +848,14 @@ export function HygieneDocumentClient({
       selectedEmployeeIds.includes(entry.employeeId)
     ).length;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранных сотрудников из журнала?",
-      description:
-        "Строки исчезнут из журнала вместе со всеми отметками за период документа.",
+      title: t("bulk.deleteTitle"),
+      description: t("bulk.deleteDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: commonT("delete"),
       bullets: [
-        { label: `Строк сотрудников: ${selectedEmployeeIds.length}`, tone: "warn" },
-        { label: `Отметок будет удалено: ${marks}`, tone: "warn" },
-        { label: "Восстановить данные будет нельзя", tone: "warn" },
+        { label: t("bulk.deleteEmployeeCount", { count: selectedEmployeeIds.length }), tone: "warn" },
+        { label: t("bulk.deleteMarkCount", { count: marks }), tone: "warn" },
+        { label: t("bulk.deleteIrreversible"), tone: "warn" },
       ],
     });
     if (!confirmed) return;
@@ -824,18 +868,14 @@ export function HygieneDocumentClient({
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ employeeId }),
-          })
+          }, t("bulk.deleteError"))
         )
       );
-      toast.success(
-        `Удалено: ${selectedEmployeeIds.length} ${
-          selectedEmployeeIds.length === 1 ? "строка" : "строк"
-        }, отметок: ${marks}`
-      );
+      toast.success(t("bulk.deleteSuccess", { count: selectedEmployeeIds.length, marks }));
       setSelectedEmployeeIds([]);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка удаления строк"));
+      toast.error(humanizeFetchError(error, t("bulk.deleteError")));
     } finally {
       setIsDeleting(false);
     }
@@ -865,11 +905,11 @@ export function HygieneDocumentClient({
     // пускала руководство в любой день периода, и в журнале появлялись
     // отметки на послезавтра (см. FUTURE_DAY_LOCKED_MESSAGE). Сервер
     // отвечает на такую запись 403 — сетка не должна её предлагать.
-    if (todayKey !== "" && dateKey > todayKey) return FUTURE_DAY_LOCKED_MESSAGE;
-    if (isDayLocked(dateKey)) return PAST_DAY_LOCKED_MESSAGE;
+    if (todayKey !== "" && dateKey > todayKey) return t("errors.futureDayLocked");
+    if (isDayLocked(dateKey)) return t("errors.pastDaysLocked");
     if (viewerHasFullAccess || !viewer) return null;
-    if (employeeId !== viewer.id) return FOREIGN_ROW_MESSAGE;
-    if (todayKey !== "" && dateKey !== todayKey) return NOT_TODAY_MESSAGE;
+    if (employeeId !== viewer.id) return t("errors.foreignRow");
+    if (todayKey !== "" && dateKey !== todayKey) return t("errors.notToday");
     return null;
   }
 
@@ -880,10 +920,6 @@ export function HygieneDocumentClient({
   function refuseCell(employeeId: string, dateKey: string) {
     const reason = cellLockReason(employeeId, dateKey);
     if (reason) toast.error(reason);
-  }
-
-  function refusePastDay() {
-    toast.error(PAST_DAY_LOCKED_MESSAGE);
   }
 
   async function handleStatusClick(employeeId: string, dateKey: string) {
@@ -1032,7 +1068,11 @@ export function HygieneDocumentClient({
         ? HYGIENE_STATUS_OPTIONS.map((option) => ({
             key: option.value,
             code: option.code,
-            label: option.label,
+            label: option.value === "healthy" ? t("statuses.healthy")
+              : option.value === "day_off" ? t("statuses.dayOff")
+                : option.value === "sick_leave" ? t("statuses.sickLeave")
+                  : option.value === "suspended" ? t("statuses.suspended")
+                    : t("statuses.vacation"),
             active: current.status === option.value,
             onSelect: () => {
               applyMenuStatus(menu, option.value).catch(() => {});
@@ -1041,7 +1081,7 @@ export function HygieneDocumentClient({
         : HYGIENE_TEMPERATURE_OPTIONS.map((option) => ({
             key: String(option.value),
             code: option.code,
-            label: option.label,
+            label: option.value ? t("temperature.above37Option") : t("temperature.normalOption"),
             active: current.temperatureAbove37 === option.value,
             onSelect: () => {
               applyMenuTemperature(menu, option.value).catch(() => {});
@@ -1052,7 +1092,7 @@ export function HygieneDocumentClient({
       ...options,
       {
         key: "clear",
-        label: "Очистить",
+        label: t("document.clear"),
         danger: true,
         separatorBefore: true,
         onSelect: () => {
@@ -1072,10 +1112,10 @@ export function HygieneDocumentClient({
       <div className="bg-white text-black">
         <div className="screen-only space-y-4">
           <StaffJournalToolbar
-            subtitle={getJournalDocumentPeriodLabel("hygiene", dateFrom, dateTo)}
+            subtitle={periodSubtitle}
             documentId={documentId}
             closeWarning={closeWarning}
-            heading="Гигиенический журнал (сотрудники)"
+            heading={journalsT("names.hygiene")}
             title={documentTitle}
             status={status}
             autoFill={autoFill}
@@ -1098,7 +1138,7 @@ export function HygieneDocumentClient({
           />
 
           {!isActive ? (
-            <JournalClosedBanner hint="Журнал закрыт: новые отметки по QR в него не попадут." documentId={documentId} />
+            <JournalClosedBanner hint={t("document.closedQrHint")} documentId={documentId} />
           ) : null}
         </div>
 
@@ -1256,10 +1296,10 @@ export function HygieneDocumentClient({
             шапки) — свой mb здесь удваивал бы канон. */}
         <div className="screen-only space-y-4">
         <StaffJournalToolbar
-          subtitle={getJournalDocumentPeriodLabel("hygiene", dateFrom, dateTo)}
+          subtitle={periodSubtitle}
           documentId={documentId}
           closeWarning={closeWarning}
-          heading="Гигиенический журнал (сотрудники)"
+          heading={journalsT("names.hygiene")}
           title={documentTitle}
           status={status}
           autoFill={autoFill}
@@ -1293,12 +1333,12 @@ export function HygieneDocumentClient({
         <TodayProgressStrip
           filled={todayProgress.filled}
           total={todayProgress.total}
-          label="сотрудников"
+            label={t("document.employeesCountLabel")}
           onJumpToToday={scrollToTodayColumn}
         />
 
         {!isActive ? (
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки сотрудников." documentId={documentId} />
+          <JournalClosedBanner hint={t("document.closedEditHint")} documentId={documentId} />
         ) : null}
 
         {isActive ? (
@@ -1307,7 +1347,7 @@ export function HygieneDocumentClient({
             onClear={() => setSelectedEmployeeIds([])}
             onDelete={handleDeleteSelected}
             deleting={isDeleting}
-            hint="Сотрудники будут удалены из журнала вместе с отметками"
+            hint={t("document.selectionHint")}
           />
         ) : null}
 
@@ -1319,7 +1359,7 @@ export function HygieneDocumentClient({
           view={mobileView}
           axis={mobileAxis}
           axisAvailable={todayInPeriod}
-          entityLabel="По сотрудникам"
+          entityLabel={t("document.byEmployees")}
           dataTour={TOUR.viewToggle}
           onChange={(next) => {
             if (next.view === "table") {
@@ -1359,7 +1399,7 @@ export function HygieneDocumentClient({
                       }`
                     : undefined,
                   disabledReason: !isActive
-                    ? "журнал закрыт"
+                    ? t("document.closedStatusLabel")
                     : lockReason ?? undefined,
                   onPress: (event: React.MouseEvent) =>
                     openCellMenu(event, employee.id, todayKey, "status", true),
@@ -1384,11 +1424,11 @@ export function HygieneDocumentClient({
                   },
                 };
               })}
-            emptyLabel="В документе пока нет сотрудников."
+            emptyLabel={t("document.emptyEmployees")}
             bulkAction={
               isActive
                 ? {
-                    label: "Отметить всех «Зд.»",
+                    label: t("bulk.markEveryoneCardLabel"),
                     onRun: () => {
                       void markEveryoneHealthyToday();
                     },
@@ -1470,7 +1510,7 @@ export function HygieneDocumentClient({
                           entryMap[key]
                         );
                         const statusMeta = getStatusMeta(entry.status);
-                        const tempLabel = getTemperatureLabel(entry);
+                        const tempLabel = getTemperatureLabel(entry, commonT("no"), commonT("yes"));
                         const isSaving = savingCellKey === key;
                         const dayNum = getDayNumber(dateKey);
                         const lockReason = cellLockReason(employee.id, dateKey);
@@ -1489,7 +1529,7 @@ export function HygieneDocumentClient({
                             {locked ? (
                               <Lock
                                 className="size-3.5 shrink-0 text-[#9b9fb3]"
-                                aria-label={lockReason ?? PAST_DAY_LOCKED_MESSAGE}
+                                aria-label={lockReason ?? t("errors.pastDaysLocked")}
                               />
                             ) : null}
                             <button
@@ -1505,7 +1545,7 @@ export function HygieneDocumentClient({
                               // причину тостом, записать всё равно нельзя.
                               onClick={(event) => {
                                 if (locked) {
-                                  toast.info(lockReason ?? PAST_DAY_LOCKED_MESSAGE);
+                                  toast.info(lockReason ?? t("errors.pastDaysLocked"));
                                   return;
                                 }
                                 openCellMenu(
@@ -1533,18 +1573,18 @@ export function HygieneDocumentClient({
                                     {statusMeta.code}
                                   </span>
                                   <span className="ml-1.5 text-[#6f7282]">
-                                    {statusMeta.label}
+                                    {localizedStatusLabel(entry.status)}
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-[#9b9fb3]">— не заполнено</span>
+                        <span className="text-[#9b9fb3]">{t("document.emptyCell")}</span>
                               )}
                             </button>
                             <button
                               type="button"
                               onClick={(event) => {
                                 if (locked) {
-                                  toast.info(lockReason ?? PAST_DAY_LOCKED_MESSAGE);
+                                  toast.info(lockReason ?? t("errors.pastDaysLocked"));
                                   return;
                                 }
                                 openCellMenu(
@@ -1556,7 +1596,7 @@ export function HygieneDocumentClient({
                                 );
                               }}
                               disabled={!isActive}
-                              title={lockReason ?? "Температура >37°C"}
+                              title={lockReason ?? t("temperature.title")}
                               data-tour={
                                 employee.id === tourEmployeeId && dateKey === tourDateKey
                                   ? TOUR.temperatureCell
@@ -1566,15 +1606,14 @@ export function HygieneDocumentClient({
                                 locked ? "opacity-60" : ""
                               }`}
                             >
-                              T°: {tempLabel || "—"}
+                              {t("temperature.title")}: {tempLabel || "—"}
                             </button>
                           </div>
                         );
                       })}
                       {isActive ? (
                         <div className="pt-1 text-[11px] text-[#6f7282]">
-                          Нажмите на статус или T°, чтобы выбрать значение из
-                          списка.
+                          {t("document.cellHelp")}
                         </div>
                       ) : null}
                     </div>
@@ -1584,8 +1623,7 @@ export function HygieneDocumentClient({
             })}
           {printableEmployees.filter((employee) => employee.name).length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-              В документе пока нет сотрудников. Добавьте их через «+ Новая
-              строка» в меню документа.
+              {t("document.emptyEmployees")}
             </div>
           ) : null}
         </div>
@@ -1612,8 +1650,9 @@ export function HygieneDocumentClient({
         <div className="hygiene-page">
           <div>
             <div className={DOC_PAPER_HEADER_CLASS}>
-              <HygieneHeader
-                pageLabel="СТР. 1 ИЗ 1"
+            <HygieneHeader
+                title={t("form.title")}
+                pageLabel={t("form.page")}
                 organizationLabel={organizationLabel}
                 startedAt={dateFrom}
                 finishedAt={status === "closed" ? dateTo : null}
@@ -1658,25 +1697,25 @@ export function HygieneDocumentClient({
                     className={`w-[72px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                     rowSpan={2}
                   >
-                    № п/п
+                    {t("columns.number")}
                   </th>
                   <th
                     className={`w-[230px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                     rowSpan={2}
                   >
-                    Ф.И.О. работника
+                    {t("columns.employee")}
                   </th>
                   <th
                     className={`w-[290px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                     rowSpan={2}
                   >
-                    Должность
+                    {t("columns.position")}
                   </th>
                   <th
                     className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center text-[13px] font-semibold leading-tight`}
                     colSpan={dateKeys.length}
                   >
-                    Месяц {monthLabel}
+                    {t("columns.month", { monthLabel })}
                   </th>
                 </tr>
                 <tr>
@@ -1771,7 +1810,7 @@ export function HygieneDocumentClient({
                     </tr>
                     <tr>
                       <td colSpan={2} className={`${GRID_CELL_CLASS} px-2 py-0.5 text-center leading-tight`}>
-                        Температура сотрудника более 37°C?
+                        {t("temperature.question")}
                       </td>
                       {dateKeys.map((dateKey) => {
                         const key = makeCellKey(employee.id, dateKey);
@@ -1815,7 +1854,7 @@ export function HygieneDocumentClient({
                               )
                             }
                           >
-                            {getTemperatureLabel(entry)}
+                            {getTemperatureLabel(entry, commonT("no"), commonT("yes"))}
                           </td>
                         );
                       })}
@@ -1831,7 +1870,7 @@ export function HygieneDocumentClient({
                     leading={2}
                     labelSpan={2}
                     trailing={dateKeys.length}
-                    label="Добавить сотрудника"
+                    label={t("document.addEmployee")}
                     onClick={() => setAddRowOpen(true)}
                   />
                 ) : null}
@@ -1850,7 +1889,7 @@ export function HygieneDocumentClient({
                   {/* H3: у эталона левая ячейка служебной строки — серая,
                       как заголовки шапки, а не белая ячейка данных. */}
                   <td colSpan={2} className={`${GRID_HEAD_CELL_CLASS} px-2 py-0.5 text-center leading-tight`}>
-                    Должность ответственного за контроль
+                    {t("columns.responsiblePosition")}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-0.5 text-center leading-tight`}>{responsibleLabel}</td>
                   {dateKeys.map((dateKey) => (
@@ -1882,16 +1921,17 @@ export function HygieneDocumentClient({
                 не должно. Формулировка та же, что в графике выходных,
                 чтобы приём читался как один и тот же жест. */}
             <div className="screen-only mt-4 text-[12px] text-[#9b9fb3] print:hidden">
-              Зажмите левую кнопку и проведите по ячейкам, чтобы отметить
-              сразу несколько дней. Shift + клик — прямоугольник. Правая
-              кнопка — выбор статуса (Отп, Б/л). Ctrl+Z отменяет последнее
-              изменение, Ctrl+Shift+Z — повторяет.
+              {t.rich("document.paintHelp", {
+                shift: (chunks) => <strong>{chunks}</strong>,
+                undo: (chunks) => <kbd>{chunks}</kbd>,
+                redo: (chunks) => <kbd>{chunks}</kbd>,
+              })}
             </div>
 
             <div className={`hygiene-notes mt-6 ${DOC_NOTE_TEXT_CLASS}`}>
-              <div className="font-semibold">В журнал регистрируются результаты:</div>
-              {HYGIENE_REGISTER_NOTES.map((note) => (
-                <div key={note}>- {note}</div>
+              <div className="font-semibold">{t("registerNotes.heading")}</div>
+              {HYGIENE_REGISTER_NOTES.map((_, index) => (
+                <div key={REGISTER_NOTE_KEYS[index]}>- {t(REGISTER_NOTE_KEYS[index])}</div>
               ))}
             </div>
 
@@ -1899,19 +1939,18 @@ export function HygieneDocumentClient({
                 в журнале» — хвост фразы у эталона обычного начертания. */}
             <div className={`hygiene-reminder mt-5 ${DOC_NOTE_TEXT_CLASS}`}>
               <span className="font-semibold">
-                Список работников, отмеченных в журнале
+                {t("reminder.employeeList")}
               </span>{" "}
-              на день осмотра, должен соответствовать числу работников на этот
-              день в смену
+              {t("reminder.shiftMatch")}
             </div>
 
             <JournalLegendBlock
               variant="plain"
               autoPunctuation={false}
               className={`hygiene-legend ${DOC_LEGEND_CLASS} mt-5`}
-              items={HYGIENE_REGISTER_LEGEND.map((item) => ({
+              items={HYGIENE_REGISTER_LEGEND.map((_, index) => ({
                 symbol: "",
-                description: item,
+                description: t(REGISTER_LEGEND_KEYS[index]),
               }))}
             />
           </div>
@@ -1930,8 +1969,8 @@ export function HygieneDocumentClient({
           onClose={closeCellMenu}
           ariaLabel={
             cellMenu.kind === "status"
-              ? "Отметка о здоровье"
-              : "Отметка о температуре"
+              ? t("signatures.healthMenu")
+              : t("signatures.temperatureMenu")
           }
           items={buildCellMenuItems(cellMenu)}
         />

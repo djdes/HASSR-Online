@@ -15,7 +15,7 @@ const MAX_WEBHOOKS = 10;
 async function guard() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return { session, orgId: "", denied: NextResponse.json({ error: "Доступно руководителям" }, { status: 403 }) };
+    return { session, orgId: "", denied: NextResponse.json({ error: "Доступно руководителям", errorCode: "WEBHOOK_FORBIDDEN" }, { status: 403 }) };
   }
   return { session, orgId: getActiveOrgId(session), denied: null };
 }
@@ -43,11 +43,11 @@ export async function POST(request: Request) {
   if (denied) return denied;
   const body = (await request.json().catch(() => ({}))) as { url?: unknown; events?: unknown };
   const url = typeof body.url === "string" ? body.url.trim() : "";
-  if (!isValidWebhookUrl(url)) return NextResponse.json({ error: "Укажите адрес https://… на внешнем сервере" }, { status: 400 });
+  if (!isValidWebhookUrl(url)) return NextResponse.json({ error: "Укажите адрес https://… на внешнем сервере", errorCode: "WEBHOOK_INVALID_URL" }, { status: 400 });
   const events = Array.isArray(body.events) ? body.events.filter(isWebhookEvent) : [];
-  if (events.length === 0) return NextResponse.json({ error: "Выберите хотя бы одно событие" }, { status: 400 });
+  if (events.length === 0) return NextResponse.json({ error: "Выберите хотя бы одно событие", errorCode: "WEBHOOK_MISSING_EVENTS" }, { status: 400 });
   const count = await db.webhook.count({ where: { organizationId: orgId } });
-  if (count >= MAX_WEBHOOKS) return NextResponse.json({ error: `Не больше ${MAX_WEBHOOKS} подписок` }, { status: 429 });
+  if (count >= MAX_WEBHOOKS) return NextResponse.json({ error: `Не больше ${MAX_WEBHOOKS} подписок`, errorCode: "WEBHOOK_LIMIT", errorParams: { limit: MAX_WEBHOOKS } }, { status: 429 });
   const webhook = await db.webhook.create({
     data: { organizationId: orgId, url, secret: generateWebhookSecret(), events: events as WebhookEvent[], enabled: true, createdById: session.user.id },
   });

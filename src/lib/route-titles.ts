@@ -1,3 +1,105 @@
+import type { MessageContract } from "@/i18n/message-contract";
+import type { Locale } from "@/i18n/locales";
+
+export type RouteTitleKey = keyof MessageContract["navigation"]["routes"];
+export type RouteTitleTranslator = (key: RouteTitleKey) => string;
+
+// Stable path identity; Russian compatibility captions below are also search aliases.
+export const ROUTE_TITLE_KEYS = {
+  "/batches": "batches",
+  "/batches/new": "batches_new",
+  "/bonuses": "bonuses",
+  "/capa": "capa",
+  "/ideas": "ideas",
+  "/capa/new": "capa_new",
+  "/changes": "changes",
+  "/changes/new": "changes_new",
+  "/competencies": "competencies",
+  "/control-board": "control_board",
+  "/dashboard": "dashboard",
+  "/dashboard/catch-up": "dashboard_catch_up",
+  "/dashboard/compliance-audit": "dashboard_compliance_audit",
+  "/equipment-fill": "equipment_fill",
+  "/room-fill": "room_fill",
+  "/journals": "journals",
+  "/orders": "orders",
+  "/journals-progress": "journals_progress",
+  "/journals/new": "journals_new",
+  "/journals/traceability": "journals_traceability",
+  "/losses": "losses",
+  "/losses/new": "losses_new",
+  "/plans": "plans",
+  "/plans/new": "plans_new",
+  "/reports": "reports",
+  "/reports/by-user": "reports_by_user",
+  "/sanpin": "sanpin",
+  "/settings": "settings",
+  "/settings/accounting": "settings_accounting",
+  "/settings/api": "settings_api",
+  "/settings/areas": "settings_areas",
+  "/settings/audit": "settings_audit",
+  "/settings/auto-journals": "settings_auto_journals",
+  "/settings/backup": "settings_backup",
+  "/settings/appearance": "settings_appearance",
+  "/settings/security": "settings_security",
+  "/settings/calendar": "settings_calendar",
+  "/settings/webhooks": "settings_webhooks",
+  "/settings/balance": "settings_balance",
+  "/settings/buildings": "settings_buildings",
+  "/settings/compliance": "settings_compliance",
+  "/settings/consultant": "settings_consultant",
+  "/settings/equipment": "settings_equipment",
+  "/settings/equipment/qr-sheet": "settings_equipment_qr_sheet",
+  "/settings/qr-posters": "settings_qr_posters",
+  "/settings/experimental": "settings_experimental",
+  "/settings/inspector-portal": "settings_inspector_portal",
+  "/settings/integrations/tasksflow": "settings_integrations_tasksflow",
+  "/settings/integrations/mercury": "settings_integrations_mercury",
+  "/mercury": "mercury",
+  "/settings/journal-access": "settings_journal_access",
+  "/settings/journal-bonuses": "settings_journal_bonuses",
+  "/settings/journal-checklists": "settings_journal_checklists",
+  "/settings/journal-difficulty": "settings_journal_difficulty",
+  "/settings/journal-flow": "settings_journal_flow",
+  "/settings/journal-guides-tree": "settings_journal_guides_tree",
+  "/settings/journal-periods": "settings_journal_periods",
+  "/settings/journal-pipelines": "settings_journal_pipelines",
+  "/settings/journal-pipelines-tree": "settings_journal_pipelines_tree",
+  "/settings/journal-responsibles": "settings_journal_responsibles",
+  "/settings/journal-task-mode": "settings_journal_task_mode",
+  "/settings/journals": "settings_journals",
+  "/settings/journals-by-position": "settings_journals_by_position",
+  "/settings/names": "settings_names",
+  "/settings/journals/paper": "settings_journals_paper",
+  "/settings/notifications": "settings_notifications",
+  "/settings/onboarding": "settings_onboarding",
+  "/settings/onboarding-template": "settings_onboarding_template",
+  "/settings/onboarding/advanced": "settings_onboarding_advanced",
+  "/settings/organization": "settings_organization",
+  "/settings/partner": "settings_partner",
+  "/settings/permissions": "settings_permissions",
+  "/settings/phone": "settings_phone",
+  "/settings/position-staff-visibility": "settings_position_staff_visibility",
+  "/settings/print-agent": "settings_print_agent",
+  "/settings/products": "settings_products",
+  "/settings/role-presets": "settings_role_presets",
+  "/settings/schedule": "settings_schedule",
+  "/settings/staff-hierarchy": "settings_staff_hierarchy",
+  "/settings/services": "settings_services",
+  "/settings/subscription": "settings_subscription",
+  "/settings/task-visibility": "settings_task_visibility",
+  "/settings/kiosk": "settings_kiosk",
+  "/settings/master-cabinet": "settings_master_cabinet",
+  "/settings/users": "settings_users",
+  "/settings/users/invite": "settings_users_invite",
+  "/settings/workload-balance": "settings_workload_balance",
+  "/staff": "staff",
+  "/task-fill": "task_fill",
+  "/tasks": "tasks",
+  "/team": "team",
+  "/verifications": "verifications"
+} as const satisfies Record<string, RouteTitleKey>;
+
 /**
  * Человеческие названия маршрутов кабинета — для хлебных крошек и кнопки
  * «Назад» (`components/layout/page-nav.tsx`).
@@ -112,15 +214,17 @@ const DYNAMIC_ROUTE_TITLES: Array<[RegExp, string]> = [
 ];
 
 /** Подпись динамического экрана по шаблону пути; иначе null. */
-export function getDynamicRouteTitle(pathname: string): string | null {
+export function getDynamicRouteTitle(pathname: string, t?: RouteTitleTranslator): string | null {
   const clean = pathname.replace(/\/+$/, "") || "/";
-  return DYNAMIC_ROUTE_TITLES.find(([pattern]) => pattern.test(clean))?.[1] ?? null;
+  const title = DYNAMIC_ROUTE_TITLES.find(([pattern]) => pattern.test(clean))?.[1];
+  return title ? (t ? t("journal_scope") : title) : null;
 }
 
 /** Точное совпадение пути. Для динамических путей вернёт null. */
-export function getRouteTitle(pathname: string): string | null {
+export function getRouteTitle(pathname: string, t?: RouteTitleTranslator): string | null {
   const clean = pathname.replace(/\/+$/, "") || "/";
-  return ROUTE_TITLES[clean] ?? null;
+  if (!Object.hasOwn(ROUTE_TITLE_KEYS, clean)) return null;
+  return t ? t(ROUTE_TITLE_KEYS[clean as keyof typeof ROUTE_TITLE_KEYS]) : ROUTE_TITLES[clean];
 }
 
 /** Родительский путь: `/settings/buildings` → `/settings`, `/batches` → ``. */
@@ -140,11 +244,13 @@ function parentOf(pathname: string): string {
  */
 export function getSiblingRoutes(
   pathname: string,
+  t?: RouteTitleTranslator,
+  locale: Locale = "ru",
 ): { path: string; title: string }[] {
   const clean = pathname.replace(/\/+$/, "") || "/";
   const parent = parentOf(clean);
   return Object.entries(ROUTE_TITLES)
     .filter(([path]) => path !== clean && parentOf(path) === parent)
-    .map(([path, title]) => ({ path, title }))
-    .sort((a, b) => a.title.localeCompare(b.title, "ru"));
+    .map(([path]) => ({ path, title: getRouteTitle(path, t)! }))
+    .sort((a, b) => a.title.localeCompare(b.title, locale));
 }

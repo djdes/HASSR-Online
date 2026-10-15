@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, X } from "lucide-react";
 import { WhoRow } from "@/components/qr-fill/who-row";
@@ -16,7 +18,7 @@ export function EmployeePicker({
   value,
   onChange,
   fixedName = null,
-  label = "Кто снимает показания",
+  label: sourceLabel,
   hint = null,
 }: {
   employees: PickerEmployee[];
@@ -27,6 +29,8 @@ export function EmployeePicker({
   label?: string;
   hint?: string | null;
 }) {
+  const { t } = useQrFillCopy();
+  const label = sourceLabel ?? t("employee.label");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -58,7 +62,7 @@ export function EmployeePicker({
 
   return (
     <>
-      <WhoRow label={label} value={selected?.name ?? null} placeholder="Выберите своё имя" onAction={() => setOpen(true)}>
+      <WhoRow label={label} value={selected?.name ?? null} placeholder={t("employee.selectName")} onAction={() => setOpen(true)}>
         {hint && selected ? <p className="mt-1.5 text-[14px] text-[#9b9fb3]">{hint}</p> : null}
       </WhoRow>
       {open ? (
@@ -69,7 +73,7 @@ export function EmployeePicker({
           >
             <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-4">
               <span className="text-[19px] font-semibold text-[#0b1024]">{label}</span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Закрыть" className="flex size-10 items-center justify-center rounded-full bg-white text-[#6f7282] shadow-[0_0_0_1px_#ececf4]">
+              <button type="button" onClick={() => setOpen(false)} aria-label={t("common.close")} className="flex size-10 items-center justify-center rounded-full bg-white text-[#6f7282] shadow-[0_0_0_1px_#ececf4]">
                 <X className="size-5" />
               </button>
             </div>
@@ -81,8 +85,8 @@ export function EmployeePicker({
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Найти по фамилии"
-                  aria-label="Поиск сотрудника"
+                  placeholder={t("employee.searchPlaceholder")}
+                  aria-label={t("employee.searchLabel")}
                   autoComplete="off"
                   className="h-14 w-full rounded-[14px] border border-[#dcdfed] bg-white pl-12 pr-4 text-[18px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                 />
@@ -90,7 +94,7 @@ export function EmployeePicker({
             </div>
             <div className="flex-1 overflow-y-auto px-4 pb-[max(var(--safe-area-inset-bottom,env(safe-area-inset-bottom)),16px)]">
               {filtered.length === 0 ? (
-                <p className="py-6 text-center text-[16px] text-[#9b9fb3]">Никого не нашли. Попробуйте по-другому написать фамилию.</p>
+                <p className="py-6 text-center text-[16px] text-[#9b9fb3]">{t("employee.empty")}</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {filtered.map((employee) => {

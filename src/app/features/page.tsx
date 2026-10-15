@@ -1,4 +1,9 @@
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { isFeatureSlug, presentFeature } from "@/i18n/feature-presentation";
+import { featureMetadata } from "@/i18n/feature-metadata";
+import { createTranslator } from "use-intl/core";
 import {
   ArrowRight,
   Bell,
@@ -14,13 +19,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
-import { FEATURES_INFO, FEATURES_ORDER } from "@/content/features";
-import {
-  DEFAULT_OG_IMAGES,
-  DEFAULT_TWITTER_CARD,
-  DEFAULT_TWITTER_IMAGES,
-} from "@/lib/meta-defaults";
-import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { FEATURES_ORDER } from "@/content/features";
+
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 /**
  * Индекс возможностей — раньше `/features` отдавал 404.
@@ -38,30 +39,9 @@ import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const PAGE_TITLE = "Возможности WeSetup — электронные журналы ХАССП и СанПиН";
-const PAGE_DESC =
-  "Что умеет WeSetup: синхронизация с iiko и 1С, автозаполнение журналов, напоминания сотрудникам, контроль температур и доступ по ролям.";
-
-export const metadata = {
-  title: PAGE_TITLE,
-  description: PAGE_DESC,
-  alternates: { canonical: "https://wesetup.ru/features" },
-  openGraph: {
-    type: "website",
-    locale: "ru_RU",
-    siteName: "WeSetup",
-    url: "https://wesetup.ru/features",
-    title: PAGE_TITLE,
-    description: PAGE_DESC,
-    images: DEFAULT_OG_IMAGES,
-  },
-  twitter: {
-    card: DEFAULT_TWITTER_CARD,
-    title: PAGE_TITLE,
-    description: PAGE_DESC,
-    images: DEFAULT_TWITTER_IMAGES,
-  },
-};
+export async function generateMetadata() {
+  return featureMetadata(await getSiteLocale());
+}
 
 const ICON_MAP: Record<string, LucideIcon> = {
   QrCode,
@@ -75,10 +55,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Timer,
 };
 
-export default function FeaturesIndexPage() {
-  const features = FEATURES_ORDER.map((slug) => FEATURES_INFO[slug]).filter(
-    Boolean,
-  );
+export default async function FeaturesIndexPage() {
+  const locale = await getSiteLocale();
+  const messages = await loadMessages(locale);
+  const t = createTranslator({ locale, messages, namespace: "publicFeatures.index" });
+  const features = FEATURES_ORDER.filter(isFeatureSlug).map(slug => presentFeature(slug, messages));
 
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
@@ -93,15 +74,13 @@ export default function FeaturesIndexPage() {
           </div>
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-              <Sparkles className="size-3.5" /> Возможности
+              <Sparkles className="size-3.5" /> {t("eyebrow")}
             </div>
             <h1 className="mt-4 max-w-[780px] text-[40px] font-semibold leading-[1.08] tracking-[-0.02em] md:text-[56px]">
-              Что WeSetup делает за вас
+              {t("title")}
             </h1>
             <p className="mt-5 max-w-[720px] text-[16px] leading-[1.6] text-white/80 md:text-[18px]">
-              Журналы заполняются с телефона за минуты, часть — сама по
-              расписанию. Ниже — как это устроено: от синхронизации с учётной
-              системой до напоминаний сотруднику в смене.
+              {t("intro")}
             </p>
           </div>
         </div>
@@ -128,7 +107,7 @@ export default function FeaturesIndexPage() {
                   {feature.tagline}
                 </p>
                 <span className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#3848c7]">
-                  Подробнее
+                  {t("more")}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </Link>
@@ -138,25 +117,24 @@ export default function FeaturesIndexPage() {
 
         <div className="mt-12 rounded-3xl border border-[#ececf4] bg-[#fafbff] p-6 md:p-8">
           <h2 className="text-[22px] font-semibold tracking-[-0.01em]">
-            Смотрите сами журналы
+            {t("catalogTitle")}
           </h2>
           <p className="mt-1.5 max-w-[640px] text-[15px] leading-[1.6] text-[#6f7282]">
-            В каталоге — все {JOURNALS_TOTAL_LABEL} с образцами: что заполняется,
-            как часто и какая норма этого требует.
+            {t("catalogDescription", { journalCount: JOURNALS_TOTAL })}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href="/journals-info"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Каталог журналов
+              {t("catalogButton")}
               <ArrowRight className="size-4 text-[#5566f6]" />
             </Link>
             <Link
               href="/register"
               className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
             >
-              Попробовать бесплатно
+              {t("freeTrialButton")}
               <ArrowRight className="size-4" />
             </Link>
           </div>

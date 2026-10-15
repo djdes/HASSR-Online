@@ -62,6 +62,7 @@ async function sendInApp(msg: OutgoingInApp): Promise<SendOutcome> {
       title: msg.title,
       linkHref: msg.url,
       linkLabel: msg.url ? "Открыть" : null,
+      linkLabelKey: msg.url ? "open" : undefined,
       items: msg.body ? [{ id: "message", label: msg.body }] : [],
       push: false,
     });

@@ -439,6 +439,16 @@ const DEFAULT_ROOM_BLUEPRINTS = [
   },
 ] as const;
 
+/** Stable display key for untouched built-in rooms; caller must keep the stored name unchanged. */
+export function defaultCleaningRoomPresentationKey(room: Pick<CleaningRoomItem, "id" | "name" | "areaId">): string | undefined {
+  if (room.areaId) return undefined;
+  const match = /^cleaning-room-(\d+)-/.exec(room.id);
+  const index = match ? Number(match[1]) - 1 : -1;
+  const blueprint = DEFAULT_ROOM_BLUEPRINTS[index];
+  if (!blueprint || blueprint.name !== room.name) return undefined;
+  return ["guestArea", "washRoom", "hotKitchen", "bar"][index];
+}
+
 export const CLEANING_SCOPE_OPTIONS = Array.from(
   new Set(DEFAULT_ROOM_BLUEPRINTS.flatMap((item) => [...item.currentScope, ...item.generalScope]))
 );
@@ -1898,6 +1908,13 @@ export function countPinnedRooms(config: Pick<CleaningDocumentConfig, "cleanerBy
  *
  * Бросает Error с понятным сообщением для UI. Возвращает void.
  */
+export class CleaningConfigError extends Error {
+  constructor(public readonly code: "CLEANING_ROOMS_REQUIRED" | "CLEANING_STAFF_REQUIRED", message: string) {
+    super(message);
+    this.name = "CleaningConfigError";
+  }
+}
+
 export function validateCleaningDocumentConfig(
   config: CleaningDocumentConfig,
 ): void {
@@ -1909,8 +1926,8 @@ export function validateCleaningDocumentConfig(
   const hasRoomRows =
     (config.selectedRoomIds?.length ?? 0) > 0 || (config.rooms?.length ?? 0) > 0;
   if (!hasRoomRows) {
-    throw new Error(
-      "Режим «По комнатам» требует выбрать хотя бы одну комнату " +
+    throw new CleaningConfigError("CLEANING_ROOMS_REQUIRED",
+        "Режим «По комнатам» требует выбрать хотя бы одну комнату " +
         "(selectedRoomIds). Открой настройки документа и отметь " +
         "комнаты для уборки.",
     );
@@ -1924,8 +1941,8 @@ export function validateCleaningDocumentConfig(
     (config.cleaningResponsibles?.length ?? 0) > 0 ||
     Object.keys(config.cleanerByRoomId ?? {}).length > 0;
   if (!hasCleaners) {
-    throw new Error(
-      "Режим «По комнатам» требует хотя бы одного уборщика: выберите " +
+    throw new CleaningConfigError("CLEANING_STAFF_REQUIRED",
+        "Режим «По комнатам» требует хотя бы одного уборщика: выберите " +
         "уборщиков в пуле документа или назначьте их помещениям в " +
         "«Настройки → Помещения».",
     );

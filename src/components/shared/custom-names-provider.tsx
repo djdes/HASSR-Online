@@ -16,6 +16,7 @@ import {
   type CustomNames,
 } from "@/lib/custom-names";
 import { cn } from "@/lib/utils";
+import { useLocale, useTranslations } from "next-intl";
 
 /**
  * Свои названия организации на клиенте — единственный способ их получить.
@@ -75,7 +76,11 @@ export function useApplyCustomNames(): ApplyCustomNames {
 
 /** Название журнала для человека: своё, если задано, иначе официальное. */
 export function useJournalDisplayName(code: string, officialName: string): string {
-  return journalDisplayName(useCustomNames(), code, officialName);
+  const locale = useLocale();
+  const t = useTranslations("journals.names");
+  type NameKey = Parameters<typeof t>[0];
+  const translated = locale !== "ru" && t.has(code as NameKey) ? t(code as NameKey) : officialName;
+  return journalDisplayName(useCustomNames(), code, translated);
 }
 
 /**
@@ -115,10 +120,13 @@ export type CurrentJournalNames = {
 export function useCurrentJournalNames(): CurrentJournalNames | null {
   const current = useContext(CurrentJournalContext);
   const names = useCustomNames();
+  const locale = useLocale();
+  const t = useTranslations("journals.names");
+  type NameKey = Parameters<typeof t>[0];
   if (!current) return null;
   return {
     code: current.code,
-    officialName: current.officialName,
+    officialName: locale !== "ru" && t.has(current.code as NameKey) ? t(current.code as NameKey) : current.officialName,
     customName: customJournalName(names, current.code),
   };
 }
@@ -144,11 +152,13 @@ export function JournalHeadingName({
   suffix?: string | null;
 }) {
   const current = useCurrentJournalNames();
+  const t = useTranslations("journals");
+  const locale = useLocale();
   const actions = useContext(CurrentJournalContext)?.titleActions ?? null;
   if (!current?.customName) {
     return (
       <>
-        {fallback}
+        {locale !== "ru" && current ? <>{current.officialName}{suffix ?? null}</> : fallback}
         {actions}
       </>
     );
@@ -159,7 +169,7 @@ export function JournalHeadingName({
       {suffix ?? null}
       {actions}
       <span className={cn("mt-1 block", OFFICIAL_HINT_CLASS)} data-official-name="">
-        Официальное название: {current.officialName}
+        {t("officialName", { name: current.officialName })}
       </span>
     </>
   );
@@ -173,12 +183,13 @@ export function JournalHeadingName({
  */
 export function JournalOfficialNameNote({ className }: { className?: string }) {
   const current = useCurrentJournalNames();
+  const t = useTranslations("journals");
   if (!current?.customName) return null;
   return (
     <p className={cn("mt-1.5 print:hidden", OFFICIAL_HINT_CLASS, className)} data-official-name="">
       <span className="font-medium text-[#3c4053]">{current.customName}</span>
       {" · "}
-      Официальное название: {current.officialName}
+      {t("officialName", { name: current.officialName })}
     </p>
   );
 }

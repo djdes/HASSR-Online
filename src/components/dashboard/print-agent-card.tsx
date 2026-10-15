@@ -11,6 +11,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
+import { useLocale, useTranslations } from "next-intl";
+import { FORMAT_LOCALES } from "@/i18n/locales";
 
 /**
  * Блок «Онлайн принтер» на дашборде: состояние программы печати и
@@ -46,16 +48,18 @@ const REFRESH_MS = 20 * 1000;
 
 const STATUS: Record<
   Job["status"],
-  { label: string; className: string; icon: typeof CheckCircle2 }
+  { className: string; icon: typeof CheckCircle2 }
 > = {
-  pending: { label: "в очереди", className: "text-[#6f7282]", icon: Clock },
-  printing: { label: "печатается", className: "text-[#3848c7]", icon: Loader2 },
-  done: { label: "напечатано", className: "text-[#116b2a]", icon: CheckCircle2 },
-  error: { label: "ошибка", className: "text-[#a13a32]", icon: XCircle },
-  cancelled: { label: "отменено", className: "text-[#9b9fb3]", icon: XCircle },
+  pending: { className: "text-[#6f7282]", icon: Clock },
+  printing: { className: "text-[#3848c7]", icon: Loader2 },
+  done: { className: "text-[#116b2a]", icon: CheckCircle2 },
+  error: { className: "text-[#a13a32]", icon: XCircle },
+  cancelled: { className: "text-[#9b9fb3]", icon: XCircle },
 };
 
 export function PrintAgentCard() {
+  const t = useTranslations("printAgent.card");
+  const locale = useLocale();
   const [agents, setAgents] = useState<Agent[] | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
 
@@ -92,19 +96,17 @@ export function PrintAgentCard() {
             <Printer className="size-5" />
           </span>
           <div className="mt-3 text-[15px] font-medium text-[#0b1024]">
-            Принтер ещё не подключён
+            {t("disconnected")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-snug text-[#6f7282]">
-            Поставьте программу на компьютер, к которому подключён принтер, —
-            и любой журнал можно будет отправить на печать прямо с телефона.
-            Пригодится, когда проверка пришла без предупреждения.
+            {t("description")}
           </p>
           <Link
             href="/settings/print-agent"
             className="mt-4 inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
             <Download className="size-4" />
-            Скачать «Онлайн принтер»
+            {t("download")}
             <LinkPendingSpinner />
           </Link>
         </div>
@@ -115,8 +117,8 @@ export function PrintAgentCard() {
               key={agent.id}
               title={
                 agent.lastSeenAt
-                  ? `На связи: ${new Date(agent.lastSeenAt).toLocaleString("ru-RU")}`
-                  : "Ни разу не выходил на связь"
+                  ? t("lastSeen", { date: new Date(agent.lastSeenAt).toLocaleString(FORMAT_LOCALES[locale]) })
+                  : t("neverSeen")
               }
               className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] ${
                 agent.online
@@ -140,7 +142,7 @@ export function PrintAgentCard() {
             href="/settings/print-agent"
             className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
           >
-            Настроить
+            {t("configure")}
             <LinkPendingSpinner />
           </Link>
         </div>
@@ -148,15 +150,14 @@ export function PrintAgentCard() {
 
       {connected && online.length === 0 ? (
         <p className="rounded-2xl bg-[#fff8eb] px-4 py-2.5 text-[13px] leading-snug text-[#7a4a00]">
-          Программа не на связи. Задания копятся в очереди и распечатаются,
-          как только компьютер с принтером включится.
+          {t("offline")}
         </p>
       ) : null}
 
       {jobs.length > 0 ? (
         <div className="space-y-1">
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-            История печати
+            {t("history")}
           </div>
           {jobs.map((job) => {
             const s = STATUS[job.status];
@@ -178,10 +179,10 @@ export function PrintAgentCard() {
                   className={`shrink-0 text-[12px] ${s.className}`}
                   title={job.errorMsg ?? undefined}
                 >
-                  {s.label}
+                  {t(`status.${job.status}`)}
                 </span>
                 <span className="hidden shrink-0 text-[12px] tabular-nums text-[#9b9fb3] sm:inline">
-                  {new Date(job.createdAt).toLocaleString("ru-RU", {
+                  {new Date(job.createdAt).toLocaleString(FORMAT_LOCALES[locale], {
                     day: "2-digit",
                     month: "2-digit",
                     hour: "2-digit",

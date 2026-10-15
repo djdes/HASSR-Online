@@ -8,8 +8,13 @@ import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { withJournalDisplayNames } from "@/lib/custom-names";
+import { customJournalName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { journalTitle } from "@/i18n/journal-presentation";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
+import { createTranslator } from "use-intl/core";
 import {
   JOURNAL_SWITCHER_SHOW_ALL_HREF,
   buildJournalSwitcherMenu,
@@ -39,7 +44,10 @@ export type { JournalSwitcherMenu } from "@/lib/crumb-menu";
 
 /** Набор журналов организации со статусом «заполнен сегодня». */
 export const getJournalCrumbMenu = cache(
-  async (session: Session, currentCode?: string): Promise<JournalSwitcherMenu> => {
+  async (session: Session, currentCode?: string, locale?: Locale): Promise<JournalSwitcherMenu> => {
+    const selectedLocale = locale ?? await getSiteLocale();
+    const messages = await loadMessages(selectedLocale);
+    const t = createTranslator({ locale: selectedLocale, messages, namespace: "navigation.breadcrumbs" });
     const organizationId = getActiveOrgId(session);
     const isManager = hasFullWorkspaceAccess(session.user);
     const allowedCodes = await getAllowedJournalCodes(
@@ -75,11 +83,16 @@ export const getJournalCrumbMenu = cache(
 
     return buildJournalSwitcherMenu({
       // Свои названия организации; официальное остаётся для поиска.
-      templates: withJournalDisplayNames(templates, customNames),
+      templates: templates.map(template => ({
+        ...template,
+        officialName: template.name,
+        name: journalTitle(selectedLocale, messages.journals.names, template.code, template.name, customJournalName(customNames, template.code)),
+      })),
       disabledCodes,
       filledTemplateIds,
       currentCode,
       showAllHref: isManager ? JOURNAL_SWITCHER_SHOW_ALL_HREF : null,
+      t,
     });
   },
 );
@@ -99,7 +112,10 @@ export const getDocumentCrumbMenu = cache(
     currentDocumentId?: string,
     /** Точка: документы активной точки и общие; null — все. */
     buildingId: string | null = null,
+    locale?: Locale,
   ): Promise<CrumbMenuItem[]> => {
+    const selectedLocale = locale ?? await getSiteLocale();
+    const t = createTranslator({ locale: selectedLocale, messages: await loadMessages(selectedLocale), namespace: "navigation.breadcrumbs" });
     const documents = await db.journalDocument.findMany({
       where: {
         organizationId,
@@ -122,18 +138,19 @@ export const getDocumentCrumbMenu = cache(
       href: `/journals/${templateCode}/documents/${doc.id}`,
       status: doc.status === "active" ? ("ok" as const) : ("muted" as const),
       hint: doc.building
-        ? `${doc.building.name} · ${formatPeriodStart(doc.dateFrom)}`
+        ? `${doc.building.name} · ${formatPeriodStart(doc.dateFrom, selectedLocale)}`
         : buildingId
-          ? `Общий · ${formatPeriodStart(doc.dateFrom)}`
-          : formatPeriodStart(doc.dateFrom),
+          ? t("sharedPeriod", { period: formatPeriodStart(doc.dateFrom, selectedLocale) })
+          : formatPeriodStart(doc.dateFrom, selectedLocale),
       current: doc.id === currentDocumentId,
     }));
   },
 );
 
 /** «сен 2026» — период документа одной короткой подписью справа. */
-function formatPeriodStart(date: Date): string {
-  return new Intl.DateTimeFormat("ru-RU", {
+function formatPeriodStart(date: Date, locale: Locale): string {
+  // Preserve the previous timezone/calendar semantics; only the locale changes.
+  return new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
     month: "short",
     year: "numeric",
   }).format(date);

@@ -23,6 +23,15 @@ test("PDF-подвал: подпись партнёра + обязательна
   assert.ok(fallback.endsWith(PLATFORM_BADGE_TEXT));
 });
 
+test("PDF branding localizes platform copy while retaining partner signatures and names", () => {
+  const brandName = "Иванов O‘tkir";
+  const pdfSignature = "Сопровождение: O‘tkir — +7 900 000-00-00";
+  assert.equal(partnerPdfFooterText({ brandName, pdfSignature }, "en"), `${pdfSignature} · Powered by WeSetup`);
+  assert.equal(partnerPdfFooterText({ brandName, pdfSignature }, "uz"), `${pdfSignature} · WeSetup platformasida ishlaydi`);
+  assert.equal(partnerPdfFooterText({ brandName, pdfSignature: null }, "en"), `Support: ${brandName} · Powered by WeSetup`);
+  assert.equal(partnerPdfFooterText({ brandName, pdfSignature: null }, "uz"), `Qo‘llab-quvvatlash: ${brandName} · WeSetup platformasida ishlaydi`);
+});
+
 test("поле «ссылка или код»: URL, голый slug, 6-символьный код, мусор", () => {
   assert.deepEqual(parseAttachInput("https://wesetup.ru/p/ivanov-consult?utm=1"), {
     slug: "ivanov-consult",

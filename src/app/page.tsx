@@ -1,8 +1,11 @@
 import Link from "@/components/i18n/localized-link";
 import { getSiteLocale } from "@/i18n/site-locale-server";
-import { publicCopyFor } from "@/i18n/public-copy";
-import { siteLanguageAlternates, type SiteLocale } from "@/i18n/site-locale";
+import { translatorFor } from "@/i18n/translator";
+import type { Messages } from "@/i18n/messages";
+import { FORMAT_LOCALES } from "@/i18n/locales";
+import { localizedHref, siteLanguageAlternates, type SiteLocale } from "@/i18n/site-locale";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
+import { publicMetadataFor } from "@/i18n/public-metadata";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   ArrowRight,
@@ -26,13 +29,7 @@ import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
 import { NICHES } from "@/content/niches";
 import {
   catalogPlanIdFor,
-  employeesGenitiveLabel,
-  FREE_PLAN_NOTE,
-  FREE_PLAN_TITLE,
-  FREE_SEATS_LABEL,
-  FREE_TIER_SHORT,
   EXTRA_USER_PRICE_RUB,
-  LARGE_TEAM_NOTE,
   SUBSCRIPTION_MAX_USERS,
 } from "@/lib/plan-catalog";
 import { BrandLogo } from "@/components/brand/logo";
@@ -43,6 +40,7 @@ import {
 import { PublicFooter } from "@/components/public/public-chrome";
 import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-theme";
 import { QrPlayer } from "@/components/landing/qr-player/qr-player";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
 import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
@@ -59,39 +57,29 @@ import { jsonLdSafeString } from "@/lib/json-ld";
 import {
   readTariffs,
   fallbackTariffs,
-  formatRub,
   TARIFF_MONTHLY,
 } from "@/lib/tariffs";
 import { PlanCard } from "@/components/pricing/plan-card";
-import { PromoPrice } from "@/components/pricing/promo-price";
+import { PromoPrice, formatPriceRub } from "@/components/pricing/promo-price";
 import { getDisplayOffer } from "@/lib/promo/offer";
-import { JOURNALS_TOTAL, JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const russianMetadata = {
-  // Ключевик в начале, бренд в конце. Template корневого layout к
-  // root-page.tsx НЕ применяется (проверено на проде — суффикс не
-  // дублируется), поэтому «— WeSetup» пишем в строке вручную.
-  title: "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
-  description:
-    `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. ${FREE_TIER_SHORT}.`,
-  alternates: { canonical: "https://wesetup.ru/", types: { "application/rss+xml": [{ url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" }, { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" }] } },
-};
-
 export async function generateMetadata() {
   const locale = await getSiteLocale();
-  const title = locale === "en" ? "Digital SanPiN and HACCP logs online — WeSetup" : russianMetadata.title;
-  const description = locale === "en"
-    ? `${JOURNALS_TOTAL} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. Free for ${FREE_MAX_USERS} employee${FREE_MAX_USERS === 1 ? "" : "s"}.`
-    : russianMetadata.description;
-  const url = `https://wesetup.ru${locale === "en" ? "/en" : "/"}`;
+  const t = await translatorFor(locale);
+  const base = await publicMetadataFor(locale);
+  const title = t("landing.metadata.title");
+  const description = t("landing.metadata.description", { journalCount: JOURNALS_TOTAL, freeUsers: FREE_MAX_USERS });
+  const url = `https://wesetup.ru${localizedHref("/", locale)}`;
+  const image = `https://wesetup.ru/og/landing/${locale}`;
   return {
-    ...russianMetadata, title: { absolute: title }, description,
-    alternates: { ...russianMetadata.alternates, canonical: url, languages: siteLanguageAlternates("/") },
-    openGraph: { title, description, url, locale: locale === "en" ? "en_US" : "ru_RU", siteName: "WeSetup", images: [locale === "en" ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"] },
-    twitter: { card: "summary_large_image" as const, title, description, images: [locale === "en" ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"] },
+    ...base, title: { absolute: title }, description,
+    alternates: { ...base.alternates, canonical: url, languages: siteLanguageAlternates("/") },
+    openGraph: { title, description, url, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", images: [image] },
+    twitter: { card: "summary_large_image" as const, title, description, images: [image] },
   };
 }
 
@@ -114,38 +102,38 @@ const CAPABILITIES = [
   {
     icon: BellRing,
     slug: "reminders",
-    title: "Напоминания и тревоги",
-    text: "Журнал пропущен или температура вне нормы — Telegram и почта сообщат ответственному.",
+    title: "landing.capabilities.reminders.title",
+    text: "landing.capabilities.reminders.text",
   },
   {
     icon: Wand2,
     slug: "autofill",
-    title: "Автозаполнение",
-    text: "Гигиена, температуры, уборка — значения подставляются сами там, где это разрешено.",
+    title: "landing.capabilities.autofill.title",
+    text: "landing.capabilities.autofill.text",
   },
   {
     icon: FileText,
     slug: "paperless",
-    title: "PDF для проверки",
-    text: "Инспектору — PDF со всеми записями за нужный период, в один клик.",
+    title: "landing.capabilities.paperless.title",
+    text: "landing.capabilities.paperless.text",
   },
   {
     icon: Plug,
     slug: "sync-iiko-1c",
-    title: "iiko и 1С",
-    text: "Поставщики и поступления подтягиваются сами — в бракераж и входной контроль.",
+    title: "landing.capabilities.syncIiko1c.title",
+    text: "landing.capabilities.syncIiko1c.text",
   },
 ] as const;
 
 /** Самые частые журналы — ссылками в строку под сферами. */
-const POPULAR_JOURNALS: Array<{ code: string; name: string }> = [
-  { code: "hygiene", name: "гигиенический журнал" },
-  { code: "health_check", name: "журнал здоровья" },
-  { code: "cold_equipment_control", name: "температура холодильников" },
-  { code: "finished_product", name: "бракераж готовой продукции" },
-  { code: "cleaning", name: "журнал уборки" },
-  { code: "incoming_control", name: "входной контроль сырья" },
-];
+const POPULAR_JOURNALS = [
+  { code: "hygiene", name: "landing.popularJournals.hygiene" },
+  { code: "health_check", name: "landing.popularJournals.health_check" },
+  { code: "cold_equipment_control", name: "landing.popularJournals.cold_equipment_control" },
+  { code: "finished_product", name: "landing.popularJournals.finished_product" },
+  { code: "cleaning", name: "landing.popularJournals.cleaning" },
+  { code: "incoming_control", name: "landing.popularJournals.incoming_control" },
+] as const;
 
 /**
  * Вопросы — от возражений к справке. Было 12: «Можно попробовать
@@ -156,46 +144,46 @@ const POPULAR_JOURNALS: Array<{ code: string; name: string }> = [
  */
 const FAQ = [
   {
-    q: "Что если сервис не подойдёт — можно вернуть деньги?",
-    a: "Да. В течение 14 дней с оплаты подписки вернём всю сумму по заявлению на support@wesetup.ru — без вопросов и без удержаний. Условия возврата закреплены в договоре-оферте, это обязательство, а не рекламное обещание.",
+    q: "landing.faq.refund.question",
+    a: "landing.faq.refund.answer",
   },
   {
-    q: "Нужно ли сотрудникам ставить приложение или помнить пароль?",
-    a: "Нет. QR-наклейку сканирует обычная камера телефона — открывается страница нужного журнала. Сотрудник выбирает себя в списке и подтверждает запись личным PIN из 4–6 цифр. Приложение и вход в кабинет не нужны.",
+    q: "landing.faq.employeeAccess.question",
+    a: "landing.faq.employeeAccess.answer",
   },
   {
-    q: "Что будет, если сотрудник не отсканировал QR и не заполнил журнал?",
-    a: "Графа останется пустой, и сервис это увидит. Руководителю придёт напоминание в Telegram в 12:00, в 17:00 — повторное и письмо на почту, в 21:00 — срочное. По гигиеническому журналу в конце смены ответственные получают список тех, кто не отметился.",
+    q: "landing.faq.missedEntry.question",
+    a: "landing.faq.missedEntry.answer",
   },
   {
-    q: "Можно ли подделать запись по QR?",
-    a: "Запись подтверждается личным PIN сотрудника, после пяти неверных попыток ввод блокируется на 15 минут. Время ставит сервер, а в журнале действий остаётся, кто, когда и что записал. У каждого холодильника своя наклейка, и сменить оборудование в форме нельзя.",
+    q: "landing.faq.qrSecurity.question",
+    a: "landing.faq.qrSecurity.answer",
   },
   {
-    q: "Что такое электронный журнал для общепита?",
-    a: "Веб-сервис, куда сотрудники вносят те же записи, что раньше делали в бумажных журналах — гигиена, температура, бракераж и так далее. Электронная форма прямо разрешена СанПиН 2.3/2.4.4282-26 «Санитарно-эпидемиологические требования к организации общественного питания населения»: он действует с 1 сентября 2026 года и заменил прежний 2.3/2.4.3590-20.",
+    q: "landing.faq.electronicLogs.question",
+    a: "landing.faq.electronicLogs.answer",
   },
   {
-    q: "Как проходит проверка Роспотребнадзором?",
-    a: "Инспектору выгружается PDF со всеми записями за запрошенный период. Формат печати соответствует требованиям: ФИО, должность, электронная подпись, дата и ключевые значения.",
+    q: "landing.faq.inspection.question",
+    a: "landing.faq.inspection.answer",
   },
   {
-    q: "Есть ли синхронизация с iiko и 1С?",
-    a: "Да. Поставщики, продукты, поступления и бракераж подтягиваются автоматически, чтобы руками вбивать не приходилось. Настройка — около 30 минут вместе с нашим инженером.",
+    q: "landing.faq.integrations.question",
+    a: "landing.faq.integrations.answer",
   },
   {
-    q: "Что если пропадёт интернет?",
-    a: "Ничего страшного: интерфейс продолжает работать на планшете, записи сохраняются локально и автоматически уходят на сервер при появлении сети. Пропустить смену из-за проблем с WiFi нельзя.",
+    q: "landing.faq.offline.question",
+    a: "landing.faq.offline.answer",
   },
   {
-    q: "Безопасны ли мои данные?",
-    a: "Все журналы хранятся в защищённой PostgreSQL-базе на серверах в России. Резервные копии — каждые 6 часов. Передача — по HTTPS с TLS 1.3. Доступ — только по логину/паролю с ролевой моделью; PDF-выгрузка для проверок только с учётной записью администратора.",
+    q: "landing.faq.dataSecurity.question",
+    a: "landing.faq.dataSecurity.answer",
   },
   {
-    q: "Можно ли перенести данные из Excel/бумаги?",
-    a: "Да. Импорт сотрудников, оборудования и поставщиков — из Excel-таблицы. Старые бумажные записи остаются у вас, новые ведутся в WeSetup; можно опционально оцифровать архив за деньги.",
+    q: "landing.faq.import.question",
+    a: "landing.faq.import.answer",
   },
-];
+] as const;
 
 /**
  * Пункты первого экрана. Появляются по очереди — см. `.hero-point`.
@@ -206,9 +194,9 @@ const FAQ = [
  * левому краю, галочка стоит у первой строки.
  */
 const HERO_POINTS = [
-  "**Скан QR-кода** — и запись в журнале",
-  "**Автосоздание** и **автозаполнение** журналов",
-  "**Электронные и бумажные** журналы",
+  "landing.heroPoints.scan",
+  "landing.heroPoints.automation",
+  "landing.heroPoints.paper",
 ] as const;
 
 /**
@@ -240,7 +228,7 @@ function moscowSceneDay(now: Date, locale: SiteLocale) {
   const year = pick("year");
   const month = pick("month");
   const day = pick("day");
-  const monthName = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ru-RU", { month: "long", timeZone: "UTC" }).format(
+  const monthName = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], { month: "long", timeZone: "UTC" }).format(
     new Date(Date.UTC(year, month - 1, 15))
   );
   return {
@@ -254,9 +242,9 @@ function moscowSceneDay(now: Date, locale: SiteLocale) {
 
 /** Три шага финального блока: как завести QR у себя. */
 const QR_START_STEPS = [
-  { title: "Добавьте оборудование", text: "Холодильники, лампы, фритюрницы — в настройках, за пару минут." },
-  { title: "Распечатайте наклейки", text: "Лист QR-наклеек на обычном принтере — и на места." },
-  { title: "Сотрудники сканируют", text: "Камера телефона, PIN, значение — журнал ведётся сам." },
+  { title: "landing.qrSteps.equipment.title", text: "landing.qrSteps.equipment.text" },
+  { title: "landing.qrSteps.stickers.title", text: "landing.qrSteps.stickers.text" },
+  { title: "landing.qrSteps.scan.title", text: "landing.qrSteps.scan.text" },
 ] as const;
 
 /** Контурная кнопка-ссылка: 48 px на телефоне, как все кнопки главной. */
@@ -265,13 +253,15 @@ const OUTLINE_BUTTON_CLASS =
 
 export default async function LandingPage() {
   const locale = await getSiteLocale();
-  const en = locale === "en";
-  const t = publicCopyFor(locale);
-  const journalCountLabel = en ? `${JOURNALS_TOTAL} logs` : JOURNALS_TOTAL_LABEL;
-  const freeSeatsLabel = en ? `${FREE_MAX_USERS} employee${FREE_MAX_USERS === 1 ? "" : "s"}` : FREE_SEATS_LABEL;
-  const freePlanTitle = en ? `Free plan for ${freeSeatsLabel}` : FREE_PLAN_TITLE;
-  const freePlanNote = en ? `Free for ${freeSeatsLabel}, with unlimited entries.` : FREE_PLAN_NOTE;
-  const largeTeamNote = en ? `Each employee beyond ${SUBSCRIPTION_MAX_USERS}: +${EXTRA_USER_PRICE_RUB} RUB/month.` : LARGE_TEAM_NOTE;
+  const copy = await translatorFor(locale);
+  const nicheLabel = (slug: string) => {
+    const key = `publicNavigation.niches.${slug}` as `publicNavigation.niches.${keyof Messages["publicNavigation"]["niches"]}`;
+    return copy(key);
+  };
+  const freeSeatsLabel = copy("landing.pricing.freeSeatsLabel", { employeeCount: FREE_MAX_USERS });
+  const freePlanTitle = copy("landing.pricing.freePlanTitle", { employeeCount: FREE_MAX_USERS });
+  const freePlanNote = copy("landing.pricing.freePlanNote", { employeeCount: FREE_MAX_USERS });
+  const largeTeamNote = copy("landing.pricing.largeTeamNote", { employeeLimit: SUBSCRIPTION_MAX_USERS, extraUserPrice: EXTRA_USER_PRICE_RUB });
   // В приложении лендинг с тарифами и кнопками оплаты не показываем
   // (правила магазинов) — сразу главный экран приложения.
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
@@ -322,9 +312,16 @@ export default async function LandingPage() {
   const tariffs = await readTariffs().catch(() => fallbackTariffs());
   const monthly =
     tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
+  const monthlyTitle = monthly.title === fallbackTariffs().find((tariff) => tariff.key === TARIFF_MONTHLY)?.title
+    ? copy("landing.seo.subscriptionDefaultName") : monthly.title;
   // Цена с действующей акцией (ROOT → «Акции»): зачёркнутая старая и
   // новая — в первом экране, карточке и калькуляторе.
   const offer = await getDisplayOffer(monthly);
+  const heroPricing = copy.rich("landing.pricing.heroPhrase", {
+    employeeCount: FREE_MAX_USERS,
+    amount: formatPriceRub(offer.priceRub, locale),
+    price: () => <PromoPrice locale={locale} price={offer} />,
+  });
 
   // «от N ₽» в карточке оборудования — самый дешёвый готовый комплект.
   // Считаем, а не хардкодим: состав комплектов меняется в
@@ -334,7 +331,7 @@ export default async function LandingPage() {
   // QR-ролик: дата «сегодня» по Москве считается здесь, чтобы первый кадр
   // на сервере и после гидрации совпадал. QR на наклейках ролика и CTA —
   // настоящий, ведёт на этот блок.
-  const qrMatrix = await buildQrMatrix(en ? "https://wesetup.ru/en#qr" : "https://wesetup.ru/#qr", locale);
+  const qrMatrix = await buildQrMatrix(`https://wesetup.ru${localizedHref("/#qr", locale)}`, locale);
   const sceneToday = moscowSceneDay(new Date(), locale);
 
   const jsonLd = {
@@ -354,7 +351,7 @@ export default async function LandingPage() {
         url: "https://wesetup.ru",
         name: "WeSetup",
         publisher: { "@id": "https://wesetup.ru/#org" },
-        inLanguage: en ? "en" : "ru-RU",
+        inLanguage: FORMAT_LOCALES[locale],
       },
       {
         "@type": "SoftwareApplication",
@@ -366,12 +363,12 @@ export default async function LandingPage() {
         // отдельные native приложения. Когда они появятся, поменяем.
         operatingSystem: "Web",
         description:
-          en ? `${journalCountLabel} for food service and food production. Equipment QR stickers, automatic entries and PDFs for Rospotrebnadzor inspections.` : `Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. ${JOURNALS_TOTAL_LABEL}, заполнение по QR-наклейкам на оборудовании, автозаполнение, PDF для Роспотребнадзора.`,
+          copy("landing.seo.softwareDescription", { journalCount: JOURNALS_TOTAL }),
         // image — required для SoftwareApplication rich result в Google.
         // Раньше отдавали icon-512 (квадрат), но Google рекомендует
         // landscape для product/app rich-результатов. /og-default —
         // 1200×630 brand-hero, лучше карточка в выдаче.
-        image: [en ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"],
+        image: [`https://wesetup.ru/og/landing/${locale}`],
         offers: {
           "@type": "Offer",
           price: "0",
@@ -385,32 +382,32 @@ export default async function LandingPage() {
         "@type": "FAQPage",
         mainEntity: FAQ.map((item) => ({
           "@type": "Question",
-          name: t(item.q),
-          acceptedAnswer: { "@type": "Answer", text: t(item.a) },
+          name: copy(item.q),
+          acceptedAnswer: { "@type": "Answer", text: copy(item.a) },
         })),
       },
       {
         "@type": "Product",
-        name: t("WeSetup — электронные журналы СанПиН и ХАССП"),
+        name: copy("landing.productName"),
         description:
-          en ? `${journalCountLabel} for food service and food production. QR entry from a phone, automatic entries and inspection PDFs.` : `${JOURNALS_TOTAL_LABEL} для общепита и пищевых производств. Заполнение по QR-коду с телефона, автозаполнение, PDF для проверок Роспотребнадзора.`,
+          copy("landing.seo.productDescription", { journalCount: JOURNALS_TOTAL }),
         // image — required для Product rich result. Без него Google не
         // показывает Offer-карточку с ценой/доступностью в выдаче.
         // 1200×630 landscape лучше квадрата для Product rich snippet.
-        image: [en ? "https://wesetup.ru/og/english" : "https://wesetup.ru/og-default"],
+        image: [`https://wesetup.ru/og/landing/${locale}`],
         brand: { "@id": "https://wesetup.ru/#org" },
         offers: [
           {
             "@type": "Offer",
-            name: t("Бесплатный"),
+            name: copy("landing.freePlan"),
             price: "0",
             priceCurrency: "RUB",
-            description: en ? `${freeSeatsLabel}, all ${journalCountLabel}, no time limit` : `${FREE_SEATS_LABEL}, все ${JOURNALS_TOTAL_LABEL}, бессрочно`,
+            description: copy("landing.seo.freeOfferDescription", { employeeCount: FREE_MAX_USERS, journalCount: JOURNALS_TOTAL }),
             availability: "https://schema.org/InStock",
           },
           {
             "@type": "Offer",
-            name: en ? "Subscription" : monthly.title,
+            name: monthlyTitle,
             // Цена в разметке = цена на странице: в период акции — со
             // скидкой и с датой, до которой она действует.
             price: String(offer.priceRub),
@@ -422,9 +419,9 @@ export default async function LandingPage() {
               "@type": "UnitPriceSpecification",
               price: String(offer.priceRub),
               priceCurrency: "RUB",
-              unitText: t("месяц"),
+              unitText: copy("landing.month"),
             },
-            description: en ? `Up to ${SUBSCRIPTION_MAX_USERS} employees, then +${EXTRA_USER_PRICE_RUB} RUB/month each; IoT sensors and automatic entries` : `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)} в подписке, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого; IoT-датчики, автозаполнение`,
+            description: copy("landing.seo.subscriptionDescription", { employeeLimit: SUBSCRIPTION_MAX_USERS, extraUserPrice: EXTRA_USER_PRICE_RUB }),
             availability: "https://schema.org/InStock",
           },
         ],
@@ -448,7 +445,7 @@ export default async function LandingPage() {
           пальцем, а не курсором. */}
       <div className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <nav className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-5">
-          <Link href="/" className="text-[#0b1024]" aria-label={t("WeSetup — на главную")}>
+          <Link href="/" className="text-[#0b1024]" aria-label={copy("landing.homeLink")}>
             <BrandLogo height={30} className="sm:[--logo-h:26px]" title="" />
           </Link>
           <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-6">
@@ -457,12 +454,12 @@ export default async function LandingPage() {
               href="/journals-info"
               className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
-              {t("Журналы")}</Link>
+              {copy("landing.logsLink")}</Link>
             <Link
               href="/blog"
               className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
-              {t("Блог")}</Link>
+              {copy("landing.blogLink")}</Link>
             {/* «Сколько это стоит» спрашивают раньше всего остального —
                 пункт стоит рядом с входом, а не в подвале. Якорь, а не
                 отдельная страница: тарифы тут же, ниже по этой же. */}
@@ -470,19 +467,19 @@ export default async function LandingPage() {
               href="#pricing"
               className="nav-tariffs hidden h-12 items-center px-2 text-[16px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] min-[400px]:inline-flex sm:h-auto sm:px-0 sm:text-[14px]"
             >
-              {t("Тарифы")}</AnchorScrollLink>
+              {copy("landing.pricingLink")}</AnchorScrollLink>
             {isAuthed ? (
               <>
                 <Link
                   href={homeHref}
                   className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:h-10 sm:text-[14px]"
                 >
-                  {t("Открыть кабинет")}<ArrowRight className="size-4" />
+                  {copy("landing.openWorkspace")}<ArrowRight className="size-4" />
                 </Link>
                 <Link
                   href={homeHref}
-                  title={session?.user?.name ?? t("Профиль")}
-                  aria-label={`${t("Профиль")} · ${session?.user?.name ?? ""}`}
+                  title={session?.user?.name ?? copy("landing.profile")}
+                  aria-label={`${copy("landing.profile")} · ${session?.user?.name ?? ""}`}
                   className="hidden size-10 items-center justify-center rounded-full border border-[#dcdfed] bg-[#f5f6ff] text-[12px] font-semibold text-[#3848c7] transition-colors hover:border-[#5566f6]/50 hover:bg-[#eef1ff] sm:inline-flex"
                 >
                   {userInitials}
@@ -499,7 +496,7 @@ export default async function LandingPage() {
                   href="/login"
                   className="inline-flex h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-10 sm:text-[14px]"
                 >
-                  {t("Войти")}<LogIn className="size-4 text-[#5566f6]" />
+                  {copy("landing.signIn")}<LogIn className="size-4 text-[#5566f6]" />
                 </Link>
               </>
             )}
@@ -544,11 +541,11 @@ export default async function LandingPage() {
               Google Fonts (см. layout.tsx) — держать ради одной строки
               ещё один self-hosted шрифт дороже, чем статика с кешем. */}
           <div className="hero-mark w-[210px] max-w-[64vw] sm:mx-auto sm:w-[340px]">
-            {en ? <p className="text-[13px] font-medium leading-snug text-[#3848c7] sm:text-[18px]">Listed in the Russian software registry</p> : (
+            {locale !== "ru" ? <p className="text-[13px] font-medium leading-snug text-[#3848c7] sm:text-[18px]">{copy("landing.registry.softwareRegistryLabel")}</p> : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/brand/registry-mark.svg"
-              alt={t("В реестре отечественного ПО")}
+              alt={copy("landing.softwareRegistry")}
               width={340}
               height={73}
               // Картинка стоит выше H1 и попадает в первый экран, поэтому
@@ -567,14 +564,13 @@ export default async function LandingPage() {
               on desktop. «Электронные журналы» на телефоне — одной
               строкой (≈10.9em в Segoe UI при tracking -0.02em). */}
           <h1 className="hero-title mt-3 max-w-[920px] text-[clamp(1.625rem,7.6vw,4.5rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-[#0b1024] sm:mx-auto sm:mt-8">
-            {t("Электронные журналы")}{" "}
-            <span className="relative inline-block">
-              <span className="relative z-10">{t("СанПиН и ХАССП")}</span>
+            {copy.rich("landing.hero.title", { highlight: (chunks) => <span className="relative inline-block">
+              <span className="relative z-10">{chunks}</span>
               <span
                 aria-hidden="true"
                 className="absolute inset-x-0 bottom-[0.08em] -z-0 h-[0.28em] bg-[#5566f6]/15"
               />
-            </span>
+            </span> })}
           </h1>
 
           {/* Вместо абзаца — пункты, появляющиеся по очереди: человек на
@@ -592,7 +588,7 @@ export default async function LandingPage() {
                 <span className="mt-px inline-flex size-[22px] shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[#5566f6]">
                   <Check className="size-3" strokeWidth={3} />
                 </span>
-                <span>{emphasize(t(point))}</span>
+                <span>{emphasize(copy(point))}</span>
               </li>
             ))}
           </ul>
@@ -607,43 +603,18 @@ export default async function LandingPage() {
               плашка. */}
           <AnchorScrollLink
             href="#pricing"
-            ariaLabel={t("Перейти к тарифам")}
+            ariaLabel={copy("landing.viewPricing")}
             className="group mt-4 flex min-h-12 max-w-full flex-wrap items-center gap-x-1.5 text-left text-[16px] leading-[1.45] text-[#3c4053] sm:hidden"
           >
-            <span>
-              {freeSeatsLabel} —{" "}
-              <span className="font-semibold text-[#0b1024]">{t("бесплатно")}</span>,
-            </span>
-            <span className="inline-flex flex-wrap items-center gap-1.5">
-              {t("дальше от")}{" "}
-              <PromoPrice
-                locale={locale}
-                price={offer}
-                suffix={<span className="font-semibold text-[#0b1024]">{t("/мес")}</span>}
-              />
-              <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
-            </span>
+            <span>{heroPricing}</span>
+            <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
           </AnchorScrollLink>
           <AnchorScrollLink
             href="#pricing"
-            ariaLabel={t("Перейти к тарифам")}
+            ariaLabel={copy("landing.viewPricing")}
             className="group mx-auto mt-6 hidden w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[14px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:flex"
           >
-            <span>
-              {freeSeatsLabel} —{" "}
-              <span className="font-semibold text-[#0b1024]">{t("бесплатно")}</span>
-            </span>
-            <span aria-hidden="true" className="text-[#c9cddd]">
-              ·
-            </span>
-            <span className="inline-flex flex-wrap items-baseline gap-x-1">
-              {t("дальше от")}{" "}
-              <PromoPrice
-                locale={locale}
-                price={offer}
-                suffix={<span className="font-semibold text-[#0b1024]">{t("/мес")}</span>}
-              />
-            </span>
+            <span>{heroPricing}</span>
             <ArrowRight className="size-3.5 shrink-0 text-[#3848c7] transition-transform group-hover:translate-x-0.5" />
           </AnchorScrollLink>
 
@@ -656,10 +627,10 @@ export default async function LandingPage() {
                   href={homeHref}
                   className="group inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-semibold text-white shadow-[0_20px_50px_-20px_rgba(85,102,246,0.55)] transition-all hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_24px_55px_-18px_rgba(85,102,246,0.65)] sm:px-8"
                 >
-                  {t("Открыть кабинет")}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  {copy("landing.openWorkspace")}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <div className="text-[16px] text-[#6f7282] sm:text-[13px]">
-                  {t("Вы вошли как ")}{session?.user?.name ?? ""}
+                  {copy("landing.account.signedInAs", { name: session?.user?.name ?? "" })}
                 </div>
               </>
             ) : (
@@ -669,14 +640,14 @@ export default async function LandingPage() {
                 <HeroEmailStart
                   place="hero"
                   layout="stack"
-                  buttonLabel={t("Попробовать бесплатно")}
+                  buttonLabel={copy("landing.tryFree")}
                   showLoginLink={false}
                 />
                 {/* Гарантия — прямо в первом экране: снимать риск нужно
                     там же, где просим действие, а не через два экрана. */}
                 <div className="inline-flex items-center gap-2 text-[16px] font-medium text-[#116b2a] sm:text-[14px]">
                   <ShieldCheck className="size-4 shrink-0" />
-                  {t("Гарантия возврата: 14 дней после оплаты.")}</div>
+                  {copy("landing.refundGuarantee")}</div>
               </>
             )}
           </div>
@@ -698,16 +669,18 @@ export default async function LandingPage() {
             <div className="max-w-[760px] px-1 sm:px-0">
               <div className="mb-3 inline-flex items-center gap-2 text-[13px] font-medium text-[#8b97ff]">
                 <ScanLine className="size-4" />
-                {t("QR-код на оборудовании")}</div>
+                {copy("landing.qrEquipmentTitle")}</div>
               <h2 className="text-[clamp(1.625rem,2.4vw+1rem,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
-                {t("Отсканировал — и запись уже в журнале")}</h2>
+                {copy("landing.qrScanHeadline")}</h2>
               {/* Одно предложение: где наклейки и что бывает при пропуске
                   рассказывают сами главы ролика, дублировать текстом не надо. */}
               <p className="mt-3 text-[15px] leading-[1.6] text-white/75 sm:text-[16px]">
-                {t("Сотрудник сканирует наклейку на оборудовании, вводит PIN и значение — строка встаёт в журнал по форме СанПиН. Без приложения и пароля.")}</p>
+                {copy("landing.qrScanDescription")}</p>
             </div>
             <div className="mt-7 sm:mt-9">
-              <QrPlayer qr={qrMatrix} today={sceneToday} />
+              <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene"]}>
+                <QrPlayer qr={qrMatrix} today={sceneToday} />
+              </DomainMessagesBoundary>
             </div>
           </div>
         </div>
@@ -720,8 +693,8 @@ export default async function LandingPage() {
           возможности — в подвале, ряд «Возможности». */}
       <section className={LANDING_SECTION_CLASS}>
         <LandingSectionHeader
-          title={t("Напомнит, заполнит и соберёт PDF для проверки")}
-          lead={t("QR — только вход. Остальное сервис делает сам.")}
+          title={copy("landing.automationHeadline")}
+          lead={copy("landing.automationLead")}
         />
         <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {CAPABILITIES.map((item) => (
@@ -735,10 +708,10 @@ export default async function LandingPage() {
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[17px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] group-hover:text-[#3848c7]">
-                    {t(item.title)}
+                    {copy(item.title)}
                   </span>
                   <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">
-                    {t(item.text)}
+                    {copy(item.text)}
                   </span>
                 </span>
               </Link>
@@ -755,8 +728,8 @@ export default async function LandingPage() {
           двумя кнопками. Ссылки нужны и для поиска. */}
       <section id="journals" className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}>
         <LandingSectionHeader
-          title={t("Журналы СанПиН и ХАССП для вашей сферы")}
-          lead={en ? `${journalCountLabel}: daily sanitation checks and full HACCP records. Choose your business to see its logs, orders and checklists.` : `${JOURNALS_TOTAL_LABEL}: ежедневные санитарные и полный ХАССП. Выберите сферу — покажем журналы, приказы и чек-листы именно для неё.`}
+          title={copy("landing.logsForIndustry")}
+          lead={copy("landing.journals.sectionLead", { journalCount: JOURNALS_TOTAL })}
         />
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
           {Object.values(NICHES).map((niche) => (
@@ -765,7 +738,7 @@ export default async function LandingPage() {
                 href={`/${niche.slug}`}
                 className="group flex h-full min-h-12 items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-white px-3.5 py-2.5 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] sm:px-4 sm:text-[15px]"
               >
-                <span className="min-w-0">{t(niche.navLabel)}</span>
+                <span className="min-w-0">{nicheLabel(niche.slug)}</span>
                 {/* Стрелка — с sm: на телефоне в две колонки она съедала
                     место, и половина названий переносилась. Рамка плитки и
                     так читается как кнопка. */}
@@ -775,14 +748,14 @@ export default async function LandingPage() {
           ))}
         </ul>
         <p className="mt-6 max-w-[860px] text-[16px] leading-[1.75] text-[#3c4053]">
-          {t("Чаще всего ведут:")}{" "}
+          {copy("landing.popularLogsIntro")}{" "}
           {POPULAR_JOURNALS.map((journal, index) => (
             <span key={journal.code}>
               <Link
                 href={`/journals-info/${journal.code}`}
                 className="font-medium text-[#3848c7] underline decoration-[#3848c7]/30 underline-offset-4 transition-colors duration-150 hover:decoration-[#3848c7]"
               >
-                {t(journal.name)}
+                {copy(journal.name)}
               </Link>
               {index < POPULAR_JOURNALS.length - 1 ? ", " : "."}
             </span>
@@ -790,12 +763,12 @@ export default async function LandingPage() {
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:gap-3">
           <Link href="/journals-info" className={OUTLINE_BUTTON_CLASS}>
-            {t("Все ")}{journalCountLabel}
+            {copy("publicNavigation.allLogsLink", { journalCount: JOURNALS_TOTAL })}
             <ArrowRight className="size-4 text-[#5566f6]" />
           </Link>
           <Link href="/blanki" className={OUTLINE_BUTTON_CLASS}>
             <Download className="size-4 text-[#5566f6]" />
-            {t("Бланки журналов: PDF и Word")}</Link>
+            {copy("landing.logTemplates")}</Link>
         </div>
       </section>
 
@@ -806,7 +779,7 @@ export default async function LandingPage() {
       >
         {/* Абзаца под заголовком больше нет: что входит в подписку и
             оборудование, сказано в самих карточках. */}
-        <LandingSectionHeader title={t("Все журналы бесплатно. Платите за автоматизацию.")} />
+        <LandingSectionHeader title={copy("landing.freeLogsPayAutomation")} />
 
         {/* Три карточки одной высоты. Подписка перечисляет только то,
             чего нет в бесплатном, — иначе половина списка дублируется.
@@ -820,15 +793,15 @@ export default async function LandingPage() {
           <PlanCard
             locale={locale}
             kind="free"
-            name={t("Бесплатный")}
+            name={copy("landing.freePlan")}
             from="0 ₽"
-            period={t("навсегда")}
+            period={copy("landing.forever")}
             points={[
               freeSeatsLabel,
-              en ? `All ${journalCountLabel} for SanPiN and HACCP` : `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
-              t("PDF для проверок, без карты"),
+              copy("landing.pricing.freePlanAllJournals", { journalCount: JOURNALS_TOTAL }),
+              copy("landing.inspectionPdfNoCard"),
             ]}
-            ctaLabel={viewerOnFreePlan ? t("Текущий") : t("Начать бесплатно")}
+            ctaLabel={viewerOnFreePlan ? copy("landing.currentPlan") : copy("landing.startFree")}
             ctaHref="#start"
             ctaDisabled={viewerOnFreePlan}
             note={freePlanNote}
@@ -838,20 +811,20 @@ export default async function LandingPage() {
           <PlanCard
             locale={locale}
             kind="team"
-            name={en ? "Subscription" : monthly.title}
-            from={formatRub(monthly.priceRub)}
+            name={monthlyTitle}
+            from={formatPriceRub(monthly.priceRub, locale)}
             price={offer}
-            period={t("в месяц")}
-            pointsIntro={t("Всё из Бесплатного, плюс:")}
+            period={copy("landing.perMonth")}
+            pointsIntro={copy("landing.paidIncludes")}
             points={[
-              en ? `Up to ${SUBSCRIPTION_MAX_USERS} employees` : `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}`,
-              t("Свои IoT-датчики и автозаполнение"),
-              t("Приоритетная поддержка в Telegram"),
+              copy("landing.pricing.subscriptionEmployeeLimit", { employeeLimit: SUBSCRIPTION_MAX_USERS }),
+              copy("landing.iotAndAutofill"),
+              copy("landing.priorityTelegramSupport"),
             ]}
-            ctaLabel={t("Оплатить картой")}
+            ctaLabel={copy("landing.payByCard")}
             ctaHref="/order?plan=monthly"
             highlighted
-            badge={t("Популярный")}
+            badge={copy("landing.popularBadge")}
             touch
           />
         </EquipmentPricing>
@@ -868,7 +841,7 @@ export default async function LandingPage() {
             rel="noopener noreferrer"
             className={`${OUTLINE_BUTTON_CLASS} shrink-0 sm:h-10 sm:px-4 sm:text-[14px]`}
           >
-            {t("Связаться с поддержкой")}</a>
+            {copy("landing.contactSupport")}</a>
         </div>
 
         {/* ГАРАНТИЯ — одной строкой под тарифами. Раньше это был блок в
@@ -881,15 +854,15 @@ export default async function LandingPage() {
           <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between sm:gap-6">
             <div className="min-w-0">
               <div className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024]">
-                {t("Не понравится — вернём деньги")}</div>
+                {copy("landing.refundHeading")}</div>
               <p className="mt-1 text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">
-                {t("Вся сумма в течение 14 дней после оплаты, без вопросов и удержаний.")}</p>
+                {copy("landing.refundDetails")}</p>
             </div>
             <Link
               href="/oferta"
               className="mt-1 inline-flex min-h-12 shrink-0 items-center gap-1.5 text-[16px] font-medium text-[#3848c7] underline-offset-4 hover:underline sm:mt-0 sm:text-[14px]"
             >
-              {t("Условия в договоре-оферте")}<ArrowRight className="size-4" />
+              {copy("landing.refundTerms")}<ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
@@ -901,12 +874,12 @@ export default async function LandingPage() {
 
       {/* FAQ */}
       <section className={LANDING_SECTION_CLASS}>
-        <LandingSectionHeader title={t("Вопросы и ответы")} />
+        <LandingSectionHeader title={copy("landing.faqHeading")} />
         <div className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           {FAQ.map((item) => (
             <details key={item.q} className="group">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff] sm:px-5 sm:py-5 [&::-webkit-details-marker]:hidden">
-                <span>{t(item.q)}</span>
+                <span>{copy(item.q)}</span>
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#5566f6] transition-transform group-open:rotate-45">
                   <svg
                     viewBox="0 0 24 24"
@@ -922,7 +895,7 @@ export default async function LandingPage() {
                 </span>
               </summary>
               <div className="px-4 pb-5 text-[16px] leading-[1.6] text-[#3c4053] sm:px-5 sm:text-[15px]">
-                {t(item.a)}
+                {copy(item.a)}
               </div>
             </details>
           ))}
@@ -942,9 +915,9 @@ export default async function LandingPage() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-14">
             <div className="min-w-0 flex-1">
               <h2 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-                {t("Повесьте QR — журналы будут вестись у оборудования")}</h2>
+                {copy("landing.finalCtaHeading")}</h2>
               <p className="mt-3 max-w-[560px] text-[16px] leading-[1.6] text-[#3c4053]">
-                {t("Бесплатный тариф — без срока и без карты. Наклейки печатаются из кабинета, сотрудникам не нужно ничего устанавливать.")}</p>
+                {copy("landing.finalCtaDetails")}</p>
               <ol className="mt-6 grid gap-3 sm:grid-cols-3">
                 {QR_START_STEPS.map((step, index) => (
                   <li key={step.title} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4">
@@ -952,8 +925,8 @@ export default async function LandingPage() {
                       {index + 1}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-[16px] font-semibold leading-snug text-[#0b1024]">{t(step.title)}</span>
-                      <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[14px]">{t(step.text)}</span>
+                      <span className="block text-[16px] font-semibold leading-snug text-[#0b1024]">{copy(step.title)}</span>
+                      <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[14px]">{copy(step.text)}</span>
                     </span>
                   </li>
                 ))}
@@ -964,7 +937,7 @@ export default async function LandingPage() {
                     href={homeHref}
                     className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
                   >
-                    {t("Открыть кабинет")}<ArrowRight className="size-4" />
+                    {copy("landing.openWorkspace")}<ArrowRight className="size-4" />
                   </Link>
                 ) : (
                   // Тот же одношаговый старт, что и в hero — человек
@@ -977,10 +950,10 @@ export default async function LandingPage() {
                 к ролику на этой странице. */}
             <div className="hidden w-[240px] shrink-0 lg:block">
               <div className="rotate-[-3deg] text-[30px]">
-                <QrSticker qr={qrMatrix} caption={en ? "Scan me" : undefined} />
+                <QrSticker qr={qrMatrix} caption={copy("landing.qr.scanCaption")} />
               </div>
               <p className="mt-5 text-center text-[13px] leading-[1.5] text-[#6f7282]">
-                {t("Наведите камеру телефона — так сотрудник открывает журнал.")}</p>
+                {copy("landing.qrCameraInstruction")}</p>
             </div>
           </div>
         </div>

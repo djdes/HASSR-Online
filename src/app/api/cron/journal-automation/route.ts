@@ -1,3 +1,4 @@
+import { getJournalControls } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildingTargets } from "@/lib/active-building";
@@ -87,6 +88,8 @@ async function runForOrganization(
     codes: [],
     errors: [],
   };
+
+  if ((await getJournalControls(org.id)).specialMode) return result;
 
   // «Сегодня» — в зоне организации, а не процесса: на проде процесс живёт
   // в UTC, и с 00:00 до 03:00 МСК его «сегодня» — это ещё вчера.

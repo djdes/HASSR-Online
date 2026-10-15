@@ -1,0 +1,15 @@
+{
+  "locale": "en",
+  "sourceHash": "3f6c24415bfffd840cdff7d2c6a5bed4ec8bd147c42d228044b09263b0d8fe1d",
+  "title": "Food service sanitation rules: the practical minimum",
+  "excerpt": "A small café needs roughly ten logs and three or four procedures as its basic minimum. Six items address 80% of inspection findings; the rest is paperwork inherited from another era.",
+  "tags": ["SanPiN", "Practical guidance"],
+  "body": [
+    {"type":"p","text":"Sanitation rules for food service run to hundreds of pages. Reading them all can be discouraging. In practice, the mandatory minimum for a small establishment fits into about ten logs and three or four regular procedures."},
+    {"type":"h2","text":"The minimum set"},
+    {"type":"ul","items":["Employee health log.","Refrigeration equipment temperature log.","Finished-product quality assessment log.","Raw-material receipt and incoming inspection log.","Cleaning log and disinfectant log.","Production control programme and DDD log (disinfection, disinsection and deratization)."]},
+    {"type":"callout","tone":"info","title":"Why these items","text":"These six items cover 80% of inspectors' findings and 100% of situations involving an investigation of food poisoning."},
+    {"type":"h2","text":"What is unnecessary"},
+    {"type":"p","text":"Separate certificates, paper plans, and duplicate entries of the same data in different logs are all remnants of an era without a unified system. With electronic recordkeeping, one entry (for example, a goods receipt) can feed several logs, so nothing needs to be copied by hand."}
+  ]
+}

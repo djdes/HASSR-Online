@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { organizationError } from "./organization-presentation";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +19,9 @@ type Props = { organizationId: string; organizationName: string };
  * человек не дочитывает, что именно удаляется.
  */
 export function DeleteOrgButton({ organizationId, organizationName }: Props) {
+  const t = useTranslations("rootOrganizationManagement");
+  const currentCopy = useRef(t);
+  currentCopy.current = t;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -29,14 +34,15 @@ export function DeleteOrgButton({ organizationId, organizationName }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "Не удалось удалить организацию");
+        toast.error(organizationError(body, currentCopy.current, "delete.failed"));
+        return;
       }
-      toast.success(`Организация «${organizationName}» удалена.`);
+      toast.success(currentCopy.current("delete.success", { name: organizationName }));
       setConfirmOpen(false);
       router.push("/root");
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(currentCopy.current("delete.failed"));
     } finally {
       setBusy(false);
     }
@@ -52,21 +58,21 @@ export function DeleteOrgButton({ organizationId, organizationName }: Props) {
       className="h-11 rounded-2xl border-[#fecaca] bg-white px-4 text-[14px] text-[#dc2626] hover:bg-[#fef2f2] hover:text-[#b91c1c]"
     >
       {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-      Удалить организацию
-    </Button>
+      {t("delete.action")}</Button>
 
     <ConfirmDialog
       open={confirmOpen}
       onClose={() => setConfirmOpen(false)}
       onConfirm={remove}
       variant="danger"
-      title={`Удалить «${organizationName}»?`}
-      description="Организация и все её данные будут удалены безвозвратно."
+      title={t("delete.title", { name: organizationName })}
+      description={t("delete.description")}
       bullets={[
-        { label: "Сотрудники, журналы, документы и логи — вместе с ней", tone: "warn" },
-        { label: "Восстановить не получится" },
+        { label: t("delete.related"), tone: "warn" },
+        { label: t("delete.irreversible") },
       ]}
-      confirmLabel="Удалить"
+      cancelLabel={t("common.cancel")}
+        confirmLabel={t("delete.confirm")}
     />
     </>
   );

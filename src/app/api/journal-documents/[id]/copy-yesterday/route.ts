@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
@@ -91,6 +92,8 @@ export async function POST(
   const overwrite = Boolean(body?.overwrite);
 
   const organizationId = getActiveOrgId(session);
+  const blocked = await rejectJournalAutomation(organizationId);
+  if (blocked) return blocked;
   const doc = await db.journalDocument.findUnique({
     where: { id: documentId },
     select: {

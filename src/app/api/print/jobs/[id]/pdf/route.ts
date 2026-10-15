@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { authenticateAgent } from "@/lib/print-agent-auth";
+import { isLocale } from "@/i18n/locales";
+import { journalPdfErrorResponse } from "@/lib/journal-pdf-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,33 +37,35 @@ export async function GET(
       organizationId: agent.organizationId,
       status: "printing",
     },
-    select: { documentId: true },
+    select: { documentId: true, locale: true },
   });
 
   if (!job?.documentId) {
     return NextResponse.json({ error: "Задание не найдено" }, { status: 404 });
   }
 
+  // The queue's captured value wins over all current user/organization settings.
+  const locale = isLocale(job.locale) ? job.locale : "ru";
   try {
     const { buffer, fileName } = await generateJournalDocumentPdf({
       documentId: job.documentId,
       organizationId: agent.organizationId,
+      locale,
     });
     const uint8 = new Uint8Array(buffer);
     return new Response(uint8, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
+        "Content-Language": locale,
+        "Cache-Control": "private, no-store",
         "Content-Disposition": `attachment; filename="${fileName}"`,
         "Content-Length": String(uint8.length),
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Не удалось собрать PDF";
-    return NextResponse.json(
-      { error: message },
-      { status: message === "Документ не найден" ? 404 : 500 },
-    );
+    const missing = error instanceof Error && error.message === "Документ не найден";
+    if (!missing) console.error("[print-job-pdf] Generation failed", error);
+    return journalPdfErrorResponse(request, missing ? "DOCUMENT_NOT_FOUND" : "PDF_FAILED", locale);
   }
 }

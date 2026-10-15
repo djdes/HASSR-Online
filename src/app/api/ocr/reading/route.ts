@@ -9,6 +9,9 @@ import { readingTariffsHref } from "@/lib/qr-reading-photo";
 import { READING_PHOTO_TEXT, isReadingMetric } from "@/lib/reading-photos";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
+import { getJournalControls } from "@/lib/journal-controls.server";
+import { sensorCameraEnabled } from "@/lib/journal-controls";
+import { hasJournalAccess } from "@/lib/journal-acl";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +73,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   const orgId = getActiveOrgId(session);
+  const requestedJournalCode = new URL(request.url).searchParams.get("code");
+  if (!sensorCameraEnabled(await getJournalControls(orgId), requestedJournalCode)) {
+    return NextResponse.json({ error: "Считывание камерой отключено в настройках журнала", code: "camera_disabled" }, { status: 403 });
+  }
+  if (!(await hasJournalAccess(session.user, String(requestedJournalCode)))) {
+    return NextResponse.json({ error: "Нет доступа к журналу" }, { status: 403 });
+  }
   if (!(await hasPaidPlan(orgId))) {
     console.info(`[reading-photo] site recognize refused: free plan org=${orgId} user=${session.user.id}`);
     return NextResponse.json(
@@ -82,6 +92,8 @@ export async function POST(request: Request) {
   let metricRaw: FormDataEntryValue | null = null;
   try {
     const form = await request.formData();
+    const journalCode = form.get("journalCode");
+    if (journalCode !== requestedJournalCode) return NextResponse.json({ error: "Код журнала не совпадает" }, { status: 400 });
     const value = form.get("photo");
     file = value && typeof value === "object" ? (value as File) : null;
     metricRaw = form.get("metric");

@@ -49,7 +49,7 @@ export async function POST(
   const { taskId: taskIdRaw } = await ctx.params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId) || taskId <= 0) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
 
   let parsed: z.infer<typeof bodySchema>;
@@ -58,11 +58,11 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Invalid body" },
+        { errorCode: "invalidBody", error: err.issues[0]?.message ?? "Invalid body" },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return NextResponse.json({ errorCode: "invalidBody", error: "Invalid body" }, { status: 400 });
   }
 
   // HMAC verify через все candidates с тем же tasksflowTaskId — как в
@@ -72,7 +72,7 @@ export async function POST(
     include: { integration: true },
   });
   if (candidates.length === 0) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "taskNotFound", error: "Task not found" }, { status: 404 });
   }
   let link: (typeof candidates)[number] | null = null;
   for (const c of candidates) {
@@ -83,7 +83,7 @@ export async function POST(
     break;
   }
   if (!link) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
 
   // Вытащим имя сотрудника для AuditLog'а — он покажет «Иванов И.И.»

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Loader2, Mail, Printer, QrCode, Send, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,6 +16,8 @@ type Status = { active: boolean; createdAt: string | null; lastUsedAt: string | 
  * получает кликов), подтверждение перевыпуска — здесь же.
  */
 export function PersonalQrCard({ employeeId, employeeName }: { employeeId: string; employeeName: string }) {
+  const t = useTranslations("staffManagement.personalQr");
+  const locale = useLocale();
   const [status, setStatus] = useState<Status | null>(null);
   const [issued, setIssued] = useState<{ url: string; svg: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -40,13 +43,13 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
         body: JSON.stringify(send ? { send } : {}),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось выпустить QR");
+      if (!res.ok) throw new Error(t("issueFailed"));
       setIssued({ url: data.url, svg: data.svg });
       setStatus((prev) => (prev ? { ...prev, active: true, createdAt: new Date().toISOString(), lastUsedAt: null } : prev));
       setConfirmReissue(false);
-      toast.success(send === "telegram" ? "QR выпущен и отправлен в Telegram" : send === "email" ? "QR выпущен и отправлен на почту" : "Новый QR выпущен — старый больше не работает");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось выпустить QR");
+      toast.success(send === "telegram" ? t("sentTelegram") : send === "email" ? t("sentEmail") : t("issued"));
+    } catch {
+      toast.error(t("issueFailed"));
     } finally {
       setBusy(null);
     }
@@ -56,12 +59,12 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
     setBusy("revoke");
     try {
       const res = await fetch(`/api/staff/${employeeId}/personal-qr`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Не удалось отключить");
+      if (!res.ok) throw new Error(t("revokeFailed"));
       setIssued(null);
       setStatus((prev) => (prev ? { ...prev, active: false } : prev));
-      toast.success("Вход по личному QR отключён");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось отключить");
+      toast.success(t("revoked"));
+    } catch {
+      toast.error(t("revokeFailed"));
     } finally {
       setBusy(null);
     }
@@ -70,7 +73,7 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
   function print() {
     if (!issued) return;
     const safeName = employeeName.replace(/[<>&]/g, "");
-    const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Личный QR — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{display:block;margin:2mm auto;width:70mm;height:auto}</style></head><body><div class="card"><h1>${safeName}</h1><p>Личный вход в WeSetup</p>${issued.svg}<p>Отсканируйте камерой телефона и введите свой PIN.</p><p style="color:#9b9fb3">Храните при себе. Потеряли — попросите новый, этот перестанет работать.</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
+    const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><title>${t("printTitle")} — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{display:block;margin:2mm auto;width:70mm;height:auto}</style></head><body><div class="card"><h1>${safeName}</h1><p>${t("printHeading")}</p>${issued.svg}<p>${t("printScan")}</p><p style="color:#9b9fb3">${t("printKeepSafe")}</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
     // В приложении WeSetup новых окон нет — печатаем карточку системной печатью.
     if (getNativeBridge()) {
       void printHtml(html);
@@ -90,16 +93,14 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
           <QrCode className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-medium text-[#0b1024]">Личный QR-вход в кабинет</div>
+          <div className="text-[14px] font-medium text-[#0b1024]">{t("heading")}</div>
           <p className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
-            Сотрудник сканирует свой QR, вводит PIN — и он в кабинете. Удобно для заведующего производством: с галкой «Разрешение
-            менять настройки» открываются все настройки.
-            {status && !status.hasPin ? " Сначала задайте PIN ниже или выше — без него QR не пустит." : ""}
+            {t("description")}{status && !status.hasPin ? ` ${t("pinRequired")}` : ""}
           </p>
           {status?.active && !issued ? (
             <p className="mt-1 text-[12px] text-[#116b2a]">
-              Действует с {status.createdAt ? new Date(status.createdAt).toLocaleDateString("ru-RU") : "—"}
-              {status.lastUsedAt ? ` · последний вход ${new Date(status.lastUsedAt).toLocaleString("ru-RU")}` : ""}
+              {t("activeSince", { date: status.createdAt ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(status.createdAt)) : "—" })}
+              {status.lastUsedAt ? ` · ${t("lastUsed", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(status.lastUsedAt)) })}` : ""}
             </p>
           ) : null}
         </div>
@@ -114,13 +115,13 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
 
       {confirmReissue ? (
         <div className="mt-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-3 text-[13px] text-[#7a4a00]">
-          Старый QR перестанет работать. Выпустить новый?
+          {t("reissueConfirm")}
           <div className="mt-2 flex gap-2">
             <button type="button" disabled={disabled} onClick={() => void issue()} className="rounded-xl bg-[#5566f6] px-3 py-1.5 text-[13px] font-medium text-white hover:bg-[#4a5bf0]">
-              Да, выпустить
+              {t("yesIssue")}
             </button>
             <button type="button" onClick={() => setConfirmReissue(false)} className="rounded-xl border border-[#dcdfed] bg-white px-3 py-1.5 text-[13px]">
-              Отмена
+              {t("cancel")}
             </button>
           </div>
         </div>
@@ -130,7 +131,7 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
         {issued ? (
           <button type="button" onClick={print} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff]">
             <Printer className="size-4 text-[#5566f6]" />
-            Распечатать
+            {t("print")}
           </button>
         ) : (
           <button
@@ -141,25 +142,25 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
             className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-60"
           >
             {busy === "issue" ? <Loader2 className="size-4 animate-spin" /> : <QrCode className="size-4" />}
-            {status?.active ? "Выпустить новый QR" : "Выпустить QR"}
+            {status?.active ? t("issueNew") : t("issue")}
           </button>
         )}
         {status?.canTelegram ? (
           <button type="button" disabled={disabled} onClick={() => void issue("telegram")} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff] disabled:opacity-60">
             {busy === "telegram" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 text-[#5566f6]" />}
-            В Telegram
+            {t("telegram")}
           </button>
         ) : null}
         {status?.email ? (
           <button type="button" disabled={disabled} onClick={() => void issue("email")} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff] disabled:opacity-60">
             {busy === "email" ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4 text-[#5566f6]" />}
-            На почту
+            {t("email")}
           </button>
         ) : null}
         {status?.active ? (
           <button type="button" disabled={disabled} onClick={() => void revoke()} className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2] disabled:opacity-60">
             <ShieldOff className="size-4" />
-            Отключить
+            {t("revoke")}
           </button>
         ) : null}
       </div>

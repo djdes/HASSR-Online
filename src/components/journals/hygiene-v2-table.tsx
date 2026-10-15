@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowRight, QrCode } from "lucide-react";
 import {
   HYGIENE_V2_COLUMNS,
-  HYGIENE_V2_FORM_CAPTION,
   buildHygieneV2Rows,
   type HygieneV2Row,
 } from "@/lib/hygiene-v2";
@@ -28,22 +28,33 @@ type Props = {
 
 const ALL = "all";
 
+const COLUMN_MESSAGE_KEYS = {
+  n: "columns.number",
+  name: "columns.employee",
+  position: "columns.position",
+  temperature: "columns.temperatureSignature",
+  infection: "columns.infectionSignature",
+  respiratorySkin: "columns.respiratoryAndSkinSignature",
+  result: "columns.inspectionResult",
+  verifier: "columns.verifierSignature",
+} as const;
+
 function shortDay(dateKey: string) {
   const [, month, day] = dateKey.split("-");
   return `${day}.${month}`;
 }
 
-function SignatureCell({ mark }: { mark: string }) {
+function SignatureCell({ mark, signedLabel, notConfirmedLabel }: { mark: string; signedLabel: string; notConfirmedLabel: string }) {
   if (mark === "✓") {
     return (
-      <span className="text-[15px] font-semibold text-[#116b2a]" aria-label="подписано">
+      <span className="text-[15px] font-semibold text-[#116b2a]" aria-label={signedLabel}>
         ✓
       </span>
     );
   }
   if (mark === "✗") {
     return (
-      <span className="text-[15px] font-semibold text-[#a13a32]" aria-label="не подтверждено">
+      <span className="text-[15px] font-semibold text-[#a13a32]" aria-label={notConfirmedLabel}>
         ✗
       </span>
     );
@@ -51,25 +62,27 @@ function SignatureCell({ mark }: { mark: string }) {
   return <span className="text-[#9b9fb3]">—</span>;
 }
 
-function ResultCell({ row }: { row: HygieneV2Row }) {
+function ResultCell({ row, admittedLabel, suspendedLabel, pendingLabel }: { row: HygieneV2Row; admittedLabel: string; suspendedLabel: string; pendingLabel: string }) {
   if (row.resultKind === "admitted") {
     return (
       <span className="inline-flex rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]">
-        {row.result}
+        {admittedLabel}
       </span>
     );
   }
   if (row.resultKind === "suspended") {
     return (
       <span className="inline-flex rounded-full bg-[#fff4f2] px-2.5 py-1 text-[12px] font-medium text-[#a13a32]">
-        {row.result}
+        {suspendedLabel}
       </span>
     );
   }
-  return <span className="text-[12px] text-[#9b9fb3]">ждёт проверки</span>;
+  return <span className="text-[12px] text-[#9b9fb3]">{pendingLabel}</span>;
 }
 
 export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: Props) {
+  const t = useTranslations("hygiene");
+  const journalsT = useTranslations("journals");
   const rows = useMemo(
     () => buildHygieneV2Rows({ employees, entries, dateKeys }),
     [employees, entries, dateKeys]
@@ -99,22 +112,21 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
           <QrCode className="size-5" />
         </div>
         <p className="flex-1 text-[14px] leading-[1.55] text-[#3c4053]">
-          Сотрудники подписывают три графы по QR-коду журнала, ответственный ставит допуск по QR
-          «Гигиенический журнал (сотрудники) — допуск» (Настройки → QR-плакаты).
+          {t("table.instruction")}
         </p>
         <Link
           href={journalQrHref("hygiene")}
           className="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:self-auto"
         >
-          QR-плакаты
+          {t("table.qrPosters")}
           <ArrowRight className="size-4 text-[#5566f6]" />
         </Link>
       </div>
 
       {dayOptions.length > 0 ? (
-        <div className="screen-only -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 print:hidden" role="tablist" aria-label="День">
+        <div className="screen-only -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 print:hidden" role="tablist" aria-label={t("table.dayTabs")}>
           <button type="button" role="tab" aria-selected={day === ALL} className={chipClass(day === ALL)} onClick={() => setDay(ALL)}>
-            Весь период
+            {t("table.allPeriod")}
           </button>
           {dayOptions.map((dateKey) => (
             <button
@@ -125,7 +137,7 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
               className={chipClass(day === dateKey)}
               onClick={() => setDay(dateKey)}
             >
-              {dateKey === todayKey ? `Сегодня, ${shortDay(dateKey)}` : shortDay(dateKey)}
+              {dateKey === todayKey ? t("table.today", { dayLabel: shortDay(dateKey) }) : shortDay(dateKey)}
             </button>
           ))}
         </div>
@@ -135,16 +147,15 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
           форме заказчика и в PDF. Над пустым состоянием тоже, чтобы при
           переключении дней ничего не прыгало. */}
       <div className="space-y-2">
-        <p className="text-right text-[12px] leading-[1.4] text-[#6f7282]">{HYGIENE_V2_FORM_CAPTION}</p>
+        <p className="text-right text-[12px] leading-[1.4] text-[#6f7282]">{t("form.caption")}</p>
 
         {visibleRows.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
             <div className="text-[15px] font-medium text-[#0b1024]">
-              {day === ALL ? "Пока нет отметок" : "В этот день отметок нет"}
+              {day === ALL ? t("table.emptyPeriodTitle") : t("table.emptyDayTitle")}
             </div>
             <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-              Строка появится, когда сотрудник отсканирует QR-код журнала перед сменой и подпишет три
-              графы. Выходные, отпуска и больничные в журнал не попадают.
+              {t("table.emptyDescription")}
             </p>
           </div>
         ) : (
@@ -158,7 +169,9 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
                       scope="col"
                       className="border-b border-[#ececf4] px-3 py-3 text-left align-bottom text-[12px] font-medium leading-[1.35] text-[#6f7282]"
                     >
-                      {column.label}
+                      {column.key === "date"
+                        ? journalsT("date")
+                        : t(COLUMN_MESSAGE_KEYS[column.key as keyof typeof COLUMN_MESSAGE_KEYS])}
                     </th>
                   ))}
                 </tr>
@@ -174,16 +187,21 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
                     <td className="px-3 py-2.5 font-medium">{row.name}</td>
                     <td className="px-3 py-2.5 text-[#3c4053]">{row.position || "—"}</td>
                     <td className="px-3 py-2.5 text-center">
-                      <SignatureCell mark={row.temperature} />
+                      <SignatureCell mark={row.temperature} signedLabel={t("signatures.signed")} notConfirmedLabel={t("signatures.notConfirmed")} />
                     </td>
                     <td className="px-3 py-2.5 text-center">
-                      <SignatureCell mark={row.infection} />
+                      <SignatureCell mark={row.infection} signedLabel={t("signatures.signed")} notConfirmedLabel={t("signatures.notConfirmed")} />
                     </td>
                     <td className="px-3 py-2.5 text-center">
-                      <SignatureCell mark={row.respiratorySkin} />
+                      <SignatureCell mark={row.respiratorySkin} signedLabel={t("signatures.signed")} notConfirmedLabel={t("signatures.notConfirmed")} />
                     </td>
                     <td className="px-3 py-2.5">
-                      <ResultCell row={row} />
+                      <ResultCell
+                        row={row}
+                        admittedLabel={t("statuses.admitted")}
+                        suspendedLabel={t("statuses.suspendedResult")}
+                        pendingLabel={t("statuses.pending")}
+                      />
                     </td>
                     <td className="px-3 py-2.5 text-[13px] text-[#3c4053]">{row.verifier || "—"}</td>
                   </tr>

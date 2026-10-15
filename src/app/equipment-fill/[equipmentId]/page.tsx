@@ -16,10 +16,23 @@ import { getUserDisplayTitle } from "@/lib/user-roles";
 import { EquipmentFillClient } from "./equipment-fill-client";
 import { UvLampClient } from "./uv-lamp-client";
 import { isUvLampType } from "@/lib/uv-lamp";
+import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { decodeRouteParam } from "@/lib/route-param";
+import type { ReactNode } from "react";
+import { getServerSession } from "@/lib/server-session";
+import { authOptions } from "@/lib/auth";
+import { resolveLocale } from "@/i18n/locales";
+import { SITE_LOCALE_COOKIE } from "@/i18n/site-locale";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages, pickMessages } from "@/i18n/messages";
+import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
+import { QrFillPresentationProvider } from "@/components/qr-fill/qr-fill-presentation";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { customJournalName } from "@/lib/custom-names";
+import { normalizeUserRole } from "@/lib/user-roles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +64,7 @@ export default async function EquipmentFillPage({
 
   const verify = verifyEquipmentQrToken(token);
   if (!verify.ok || verify.equipmentId !== equipmentId) {
+    const messages = await loadMessages(await getSiteLocale());
     console.warn(
       `[qr-fill] sticker rejected kind=equipment reason=${verify.ok ? "id-mismatch" : verify.reason}`
     );
@@ -61,10 +75,10 @@ export default async function EquipmentFillPage({
             !
           </div>
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Ссылка недействительна
+            {messages.equipmentFill.page.invalidTitle}
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-            Наклейка повреждена или не подходит к этому оборудованию.
+            {messages.equipmentFill.page.invalidDescription}
           </p>
         </div>
       </main>
@@ -85,7 +99,7 @@ export default async function EquipmentFillPage({
           id: true,
           name: true,
           organizationId: true,
-          organization: { select: { name: true, timezone: true, qrFillMode: true } },
+          organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true } },
         },
       },
       sensorMappings: {
@@ -109,6 +123,15 @@ export default async function EquipmentFillPage({
   );
 
   const organizationId = equipment.area.organizationId;
+  const [session, jar, customNames] = await Promise.all([getServerSession(authOptions), cookies(), getOrgCustomNames(organizationId)]);
+  const locale = resolveLocale({ authenticated: Boolean(session), userLocale: session?.user.locale, cookieLocale: jar.get(SITE_LOCALE_COOKIE)?.value, organizationLocale: equipment.area.organization.locale });
+  const messages = await loadMessages(locale);
+  const wrap = (children: ReactNode) => <SiteLocaleProvider locale={locale} messages={pickMessages(messages, ["equipmentFill", "language"])} timeZone={equipment.area.organization.timezone || "Europe/Moscow"}><QrFillPresentationProvider locale={locale} messages={messages.equipmentFill} authenticated={Boolean(session)}>{children}</QrFillPresentationProvider></SiteLocaleProvider>;
+  const position = (person: Parameters<typeof getUserDisplayTitle>[0]) => {
+    if (person?.jobPosition?.name?.trim() || person?.positionTitle?.trim()) return getUserDisplayTitle(person);
+    const role = normalizeUserRole(person?.role);
+    return Object.hasOwn(messages.staffManagement.roleLabels, role) ? messages.staffManagement.roleLabels[role as keyof typeof messages.staffManagement.roleLabels] : getUserDisplayTitle(person);
+  };
   // Режим QR-форм организации: в «auth» без сессии — на вход и обратно.
   const qrMode = normalizeQrFillMode(equipment.area.organization.qrFillMode);
   let sessionEmployee: { id: string; name: string; positionTitle: string | null; canPickOthers: boolean } | null = null;
@@ -132,12 +155,13 @@ export default async function EquipmentFillPage({
       lampState(equipment.id, lampTz),
     ]);
     const list = sessionEmployee && !sessionEmployee.canPickOthers ? operators.filter((e) => e.id === sessionEmployee!.id) : operators;
-    return (
+    return wrap(
       <UvLampClient
         token={token}
         organizationName={equipment.area.organization.name}
         lamp={{ id: equipment.id, name: equipment.name, areaName: equipment.area.name }}
-        employees={list.map((e) => ({ id: e.id, name: e.name, positionTitle: getUserDisplayTitle(e) || null, hasPin: Boolean(e.qrPinHash) }))}
+        employees={list.map((e) => ({ id: e.id, name: e.name, positionTitle: position(e) || null, hasPin: Boolean(e.qrPinHash) }))}
+        journalTitle={customJournalName(customNames, UV_LAMP_RUNTIME_TEMPLATE_CODE) ?? messages.equipmentFill.uv.title}
         mode={qrMode}
         sessionEmployee={sessionEmployee}
         rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
@@ -172,7 +196,7 @@ export default async function EquipmentFillPage({
     // «Фото» у температуры — всем; автоввод показания со снимка — на платном тарифе.
     hasPaidPlan(organizationId),
     // «Фотофиксация показаний»: «Сфотографируйте показание» первым действием / выключена / фото обязательно.
-    getReadingPhotoSettings(organizationId),
+    getReadingPhotoSettings(organizationId, "cold_equipment_control"),
   ]);
 
   // Смены объекта на наклейке нет (владелец, 2026-09-22): замер — только у
@@ -184,11 +208,11 @@ export default async function EquipmentFillPage({
     day,
   });
 
-  return (
+  return wrap(
     <EquipmentFillClient
       token={token}
       organizationName={equipment.area.organization.name}
-      journalTitle="Температура холодильного оборудования"
+      journalTitle={customJournalName(customNames, "cold_equipment_control") ?? messages.equipmentFill.page.journalTitle}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone)}
       hasActiveDocument={targets.hasActiveDocument}
@@ -220,7 +244,7 @@ export default async function EquipmentFillPage({
       ).map((e) => ({
         id: e.id,
         name: e.name,
-        positionTitle: getUserDisplayTitle(e) || null,
+        positionTitle: position(e) || null,
         hasPin: Boolean(e.qrPinHash),
       }))}
     />

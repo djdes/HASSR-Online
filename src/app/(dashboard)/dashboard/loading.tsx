@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 
 import { usePathname } from "next/navigation";
 
@@ -18,8 +20,9 @@ import {
  * перестраивались в свою раскладку — им общий скелет страницы.
  */
 export default function DashboardLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   if (!isSectionRoot(usePathname(), "/dashboard")) {
-    return <PageSkeleton label="Загружаем страницу…" body="list" />;
+    return <PageSkeleton label={tLoading("page")} body="list" />;
   }
   return <DashboardSkeleton />;
 }
@@ -32,9 +35,10 @@ export default function DashboardLoading() {
  * последних записей.
  */
 function DashboardSkeleton() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем дашборд…</span>
+      <span className="sr-only">{tLoading("dashboard")}</span>
 
       <div data-skeleton="compliance-grid">
         <div className="flex min-h-12 items-center gap-2 py-1">

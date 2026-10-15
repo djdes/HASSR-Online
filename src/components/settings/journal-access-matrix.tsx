@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -11,9 +11,11 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { changedMatrixRows, matrixRowCodes, positionPresetMatches, setMatrixRow, toggleMatrixGrant, type AccessMatrix } from "@/lib/access-matrix-state";
 
 type AclRow = {
   templateCode: string;
@@ -39,24 +41,22 @@ type Props = {
   catalog: CatalogItem[];
 };
 
-type Matrix = Map<string, Map<string, boolean>>; // userId -> templateCode -> granted
+type Matrix = AccessMatrix;
 
 /**
- * Для быстрого назначения пакетов прав: нажал «Уборка → уборщикам» —
- * всем сотрудникам с должностью, совпадающей по keyword, назначились
- * все указанные журналы в одном клике. Список подобран по наиболее
- * частым реальным связкам кухни/общепита. Matching по `positionName`
- * подстрокой (lower-case).
+ * Р”Р»СЏ Р±С‹СЃС‚СЂРѕРіРѕ РЅР°Р·РЅР°С‡РµРЅРёСЏ РїР°РєРµС‚РѕРІ РїСЂР°РІ: РЅР°Р¶Р°Р» В«РЈР±РѕСЂРєР° в†’ СѓР±РѕСЂС‰РёРєР°РјВ» вЂ”
+ * РІСЃРµРј СЃРѕС‚СЂСѓРґРЅРёРєР°Рј СЃ РґРѕР»Р¶РЅРѕСЃС‚СЊСЋ, СЃРѕРІРїР°РґР°СЋС‰РµР№ РїРѕ keyword, РЅР°Р·РЅР°С‡РёР»РёСЃСЊ
+ * РІСЃРµ СѓРєР°Р·Р°РЅРЅС‹Рµ Р¶СѓСЂРЅР°Р»С‹ РІ РѕРґРЅРѕРј РєР»РёРєРµ. РЎРїРёСЃРѕРє РїРѕРґРѕР±СЂР°РЅ РїРѕ РЅР°РёР±РѕР»РµРµ
+ * С‡Р°СЃС‚С‹Рј СЂРµР°Р»СЊРЅС‹Рј СЃРІСЏР·РєР°Рј РєСѓС…РЅРё/РѕР±С‰РµРїРёС‚Р°. Matching РїРѕ `positionName`
+ * РїРѕРґСЃС‚СЂРѕРєРѕР№ (lower-case).
  */
 const PRESETS: Array<{
-  label: string;
+  id: "cleaning" | "temperature" | "health" | "receiving";
   icon?: string;
-  positionKeywords: string[];
   templateCodes: string[];
 }> = [
   {
-    label: "Уборка → уборщикам",
-    positionKeywords: ["уборщ", "клинер"],
+    id: "cleaning",
     templateCodes: [
       "cleaning",
       "general_cleaning",
@@ -68,8 +68,7 @@ const PRESETS: Array<{
     ],
   },
   {
-    label: "Температура → поварам",
-    positionKeywords: ["повар", "шеф", "кух"],
+    id: "temperature",
     templateCodes: [
       "climate_control",
       "cold_equipment_control",
@@ -79,13 +78,11 @@ const PRESETS: Array<{
     ],
   },
   {
-    label: "Здоровье → всем",
-    positionKeywords: [],
+    id: "health",
     templateCodes: ["hygiene", "health_check", "med_books"],
   },
   {
-    label: "Приёмка → товароведам",
-    positionKeywords: ["товаровед", "кладов", "снабж"],
+    id: "receiving",
     templateCodes: [
       "incoming_control",
       "incoming_raw_materials_control",
@@ -99,35 +96,26 @@ const PRESETS: Array<{
 function toMatrix(users: UserRow[]): Matrix {
   const m: Matrix = new Map();
   for (const u of users) {
-    const row = new Map<string, boolean>();
+    const row = new Set<string>();
     for (const acl of u.initialAccess) {
-      if (acl.canRead) row.set(acl.templateCode, true);
+      if (acl.canRead) row.add(acl.templateCode);
     }
     m.set(u.id, row);
   }
   return m;
 }
 
-function matrixDiff(base: Matrix, curr: Matrix): Set<string> {
-  const changed = new Set<string>();
-  for (const [userId, currRow] of curr.entries()) {
-    const baseRow = base.get(userId) ?? new Map();
-    if (currRow.size !== baseRow.size) {
-      changed.add(userId);
-      continue;
-    }
-    for (const [code, value] of currRow.entries()) {
-      if (baseRow.get(code) !== value) {
-        changed.add(userId);
-        break;
-      }
-    }
-  }
-  return changed;
-}
-
 export function JournalAccessMatrix({ users, catalog }: Props) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("settingsManagement.accessMatrices");
+  const tJournals = useTranslations("journals.names");
+  const tRoles = useTranslations("staffManagement.roleLabels");
+  type JournalNameKey = Parameters<typeof tJournals>[0];
+  type RoleKey = Parameters<typeof tRoles>[0];
+  const journalName = useCallback((item: CatalogItem) => locale !== "ru" && tJournals.has(item.code as JournalNameKey)
+    ? tJournals(item.code as JournalNameKey)
+    : item.name, [locale, tJournals]);
   const [base] = useState<Matrix>(() => toMatrix(users));
   const [curr, setCurr] = useState<Matrix>(() => toMatrix(users));
   const [query, setQuery] = useState("");
@@ -142,10 +130,10 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
       catalog.filter(
         (j) =>
           !q ||
-          j.name.toLowerCase().includes(q) ||
+          journalName(j).toLowerCase().includes(q) ||
           j.code.toLowerCase().includes(q)
       ),
-    [catalog, q]
+    [catalog, q, journalName]
   );
 
   const filteredUsers = useMemo(
@@ -159,52 +147,28 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
     [users, posFilter]
   );
 
-  const dirty = matrixDiff(base, curr);
+  const dirty = changedMatrixRows(base, curr);
 
   function toggleCell(userId: string, code: string) {
-    setCurr((prev) => {
-      const copy = new Map(prev);
-      const row = new Map(copy.get(userId) ?? new Map());
-      if (row.get(code)) {
-        row.delete(code);
-      } else {
-        row.set(code, true);
-      }
-      copy.set(userId, row);
-      return copy;
-    });
+    setCurr((prev) => toggleMatrixGrant(prev, userId, code));
   }
 
   function setRowAll(userId: string, value: boolean) {
-    setCurr((prev) => {
-      const copy = new Map(prev);
-      const row = new Map<string, boolean>();
-      if (value) {
-        for (const j of catalog) row.set(j.code, true);
-      }
-      copy.set(userId, row);
-      return copy;
-    });
+    setCurr((prev) => setMatrixRow(prev, userId, catalog.map((j) => j.code), value));
   }
 
   function applyPreset(preset: (typeof PRESETS)[number]) {
     setCurr((prev) => {
       const copy = new Map(prev);
       for (const u of users) {
-        if (preset.positionKeywords.length > 0) {
-          const pos = (u.positionName || "").toLowerCase();
-          const matched = preset.positionKeywords.some((kw) =>
-            pos.includes(kw)
-          );
-          if (!matched) continue;
-        }
-        const row = new Map(copy.get(u.id) ?? new Map<string, boolean>());
-        for (const code of preset.templateCodes) row.set(code, true);
+        if (!positionPresetMatches(preset.id, u.positionName || "")) continue;
+        const row = new Set(copy.get(u.id) ?? []);
+        for (const code of preset.templateCodes) row.add(code);
         copy.set(u.id, row);
       }
       return copy;
     });
-    toast.success(`Применён пресет: ${preset.label}`);
+    toast.success(t("toast.presetApplied", { preset: t(`presets.${preset.id}`) }));
   }
 
   async function save() {
@@ -214,8 +178,7 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
       let ok = 0;
       let failed = 0;
       for (const userId of dirty) {
-        const row = curr.get(userId) ?? new Map<string, boolean>();
-        const access = [...row.keys()].map((code) => ({
+        const access = matrixRowCodes(curr, userId).map((code) => ({
           templateCode: code,
           canRead: true,
           canWrite: true,
@@ -230,15 +193,13 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
         else failed += 1;
       }
       if (failed > 0) {
-        toast.error(`Сохранено ${ok}, ошибок ${failed}`);
+        toast.error(t("save.partial", { saved: ok, failed }));
       } else {
-        toast.success(
-          `Сохранено для ${ok} ${pluralPeople(ok)}`
-        );
+        toast.success(t("save.peopleSuccess", { count: ok }));
       }
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+    } catch {
+      toast.error(t("save.networkError"));
     } finally {
       setSaving(false);
     }
@@ -250,20 +211,20 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
       <section className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-5">
         <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
           <Sparkles className="size-3.5 text-[#5566f6]" />
-          Пресеты
+          {t("presets.title")}
         </div>
         <p className="mt-1 text-[12px] text-[#6f7282]">
-          Быстро назначить типовые пакеты — по подходящим должностям.
+          {t("presets.employeesDescription")}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {PRESETS.map((p) => (
             <button
-              key={p.label}
+              key={p.id}
               type="button"
               onClick={() => applyPreset(p)}
               className="inline-flex items-center gap-1.5 rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[12px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              {p.label}
+              {t(`presets.${p.id}`)}
             </button>
           ))}
         </div>
@@ -276,16 +237,12 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Фильтр журналов"
+            placeholder={t("filters.journalsPlaceholder")}
             className="h-10 rounded-2xl border-[#dcdfed] pl-9"
           />
         </div>
         <div className="flex gap-2">
-          {([
-            ["all", "Все"],
-            ["management", "Руководство"],
-            ["staff", "Сотрудники"],
-          ] as const).map(([k, label]) => (
+          {([["all", t("filters.all")], ["management", t("filters.management")], ["staff", t("filters.staff")]] as const).map(([k, label]) => (
             <button
               key={k}
               type="button"
@@ -307,20 +264,17 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
       <section className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="flex items-center gap-2 border-b border-[#ececf4] p-4">
           <Users className="size-4 text-[#5566f6]" />
-          <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            {filteredUsers.length} {pluralPeople(filteredUsers.length)} ·{" "}
-            {filteredCatalog.length} журнал{journalSuffix(filteredCatalog.length)}
-          </h2>
+          <h2 className="text-[15px] font-semibold text-[#0b1024]">{t("summary.peopleAndJournals", { count: filteredUsers.length, journalCount: filteredCatalog.length })}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-max border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-[#ececf4]">
                 <th className="sticky left-0 z-[1] bg-white px-3 py-2 text-left font-medium text-[#6f7282]">
-                  Сотрудник
+                  {t("table.employee")}
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-[#6f7282]">
-                  <span className="text-[11px]">Все / Снять</span>
+                  <span className="text-[11px]">{t("table.selectAll")}</span>
                 </th>
                 {filteredCatalog.map((j) => (
                   <th
@@ -329,9 +283,9 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
                   >
                     <div
                       className="mx-auto max-w-[80px] truncate text-[11px] leading-tight"
-                      title={j.name}
+                      title={journalName(j)}
                     >
-                      {j.name}
+                      {journalName(j)}
                     </div>
                   </th>
                 ))}
@@ -339,8 +293,8 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
             </thead>
             <tbody>
               {filteredUsers.map((u) => {
-                const row = curr.get(u.id) ?? new Map<string, boolean>();
-                const rowAllOn = filteredCatalog.every((j) => row.get(j.code));
+                const row = curr.get(u.id) ?? new Set<string>();
+                const rowAllOn = filteredCatalog.every((j) => row.has(j.code));
                 return (
                   <tr
                     key={u.id}
@@ -352,11 +306,11 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
                     <td className="sticky left-0 z-[1] min-w-[180px] bg-inherit px-3 py-2">
                       <div className="font-medium text-[#0b1024]">{u.name}</div>
                       <div className="text-[11px] text-[#6f7282]">
-                        {u.positionName ?? u.role}
+                        {u.positionName ?? (tRoles.has(u.role as RoleKey) ? tRoles(u.role as RoleKey) : u.role)}
                       </div>
                       {!u.journalAccessMigrated ? (
                         <div className="mt-0.5 text-[10px] text-[#b25f00]">
-                          (пока доступ ко всем — до первой правки)
+                          {t("table.legacyUserAccess")}
                         </div>
                       ) : null}
                     </td>
@@ -371,17 +325,17 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
                             : "border-[#dcdfed] bg-white text-[#3c4053] hover:bg-[#f5f6ff]"
                         )}
                       >
-                        {rowAllOn ? "Снять" : "Все"}
+                        {rowAllOn ? t("table.clear") : t("table.all")}
                       </button>
                     </td>
                     {filteredCatalog.map((j) => {
-                      const granted = !!row.get(j.code);
+                      const granted = row.has(j.code);
                       return (
                         <td key={j.code} className="px-1 py-1 text-center">
                           <button
                             type="button"
                             onClick={() => toggleCell(u.id, j.code)}
-                            title={j.name}
+                            title={journalName(j)}
                             className={cn(
                               "inline-flex size-7 items-center justify-center rounded-md border transition-colors",
                               granted
@@ -403,7 +357,7 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
                     colSpan={filteredCatalog.length + 2}
                     className="px-4 py-10 text-center text-[13px] text-[#9b9fb3]"
                   >
-                    Нет сотрудников под фильтр
+                    {t("table.emptyUsers")}
                   </td>
                 </tr>
               ) : null}
@@ -415,9 +369,7 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
       {/* Save bar */}
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-3xl border border-[#ececf4] bg-white/95 px-5 py-3 shadow-[0_12px_32px_-16px_rgba(11,16,36,0.18)] backdrop-blur">
         <div className="text-[13px] text-[#3c4053]">
-          {dirty.size === 0
-            ? "Изменений нет"
-            : `Изменено у ${dirty.size} ${pluralPeople(dirty.size)}`}
+          {dirty.size === 0 ? t("summary.unchanged") : t("summary.changedPeople", { count: dirty.size })}
         </div>
         <Button
           type="button"
@@ -426,29 +378,14 @@ export function JournalAccessMatrix({ users, catalog }: Props) {
           className="ml-auto h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
         >
           {saving ? (
-            <Loader2 className="size-4 animate-spin" />
+            <><Loader2 className="size-4 animate-spin" />{t("save.saving")}</>
           ) : (
             <Save className="size-4" />
           )}
-          Сохранить
+          {t("save.button")}
         </Button>
       </div>
     </div>
   );
 }
 
-function pluralPeople(n: number): string {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return "сотрудника";
-  if ([2, 3, 4].includes(m10) && ![12, 13, 14].includes(m100))
-    return "сотрудников";
-  return "сотрудников";
-}
-function journalSuffix(n: number): string {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return "";
-  if ([2, 3, 4].includes(m10) && ![12, 13, 14].includes(m100)) return "а";
-  return "ов";
-}

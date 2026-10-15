@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowDownToLine, Clock3 } from "lucide-react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -47,6 +48,7 @@ export function TimeEntryField({
   /** Вставка блока из Excel в ячейку времени — таблица разбирает сама. */
   onPaste?: (event: React.ClipboardEvent<HTMLInputElement>) => void;
 }) {
+  const t = useTranslations("journalControls.timeEntry");
   const [open, setOpen] = useState(false);
   const normalized = normalizeTypedTime(value);
   const bad = isBadTypedTime(value);
@@ -83,7 +85,7 @@ export function TimeEntryField({
           placeholder={placeholder}
           aria-label={ariaLabel}
           aria-invalid={bad || undefined}
-          title="Можно без двоеточия: 0830 или 830 → 08:30"
+          title={t("typingHint")}
           onChange={(event) => onChange(event.target.value)}
           onPaste={onPaste}
           onBlur={(event) => commit(event.target.value)}
@@ -97,15 +99,15 @@ export function TimeEntryField({
             <button
               type="button"
               className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 touch:min-w-8"
-              aria-label={`Выбрать время: ${ariaLabel}`}
-              title="Выбрать время"
+              aria-label={t("pickFor", { field: ariaLabel })}
+              title={t("pick")}
               data-testid={testId ? `${testId}-picker` : undefined}
             >
               <Clock3 className="size-4" />
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-[292px] p-3" data-testid="time-picker">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">Час</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">{t("hour")}</div>
             <div className="mt-1.5 grid grid-cols-6 gap-1">
               {HOURS.map((hour) => (
                 <button
@@ -123,7 +125,7 @@ export function TimeEntryField({
                 </button>
               ))}
             </div>
-            <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">Минуты</div>
+            <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">{t("minutes")}</div>
             <div className="mt-1.5 grid grid-cols-6 gap-1">
               {MINUTES.map((minute) => (
                 <button
@@ -152,7 +154,7 @@ export function TimeEntryField({
                 className="mt-3 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ArrowDownToLine className="size-4" />
-                Проставить всем ниже
+                {t("fillBelow")}
               </button>
             ) : null}
           </PopoverContent>
@@ -164,8 +166,8 @@ export function TimeEntryField({
           disabled={!canFillBelow}
           onClick={onFillBelow}
           className="flex size-10 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-35"
-          aria-label={`Проставить всем ниже: ${ariaLabel}`}
-          title="Проставить это время всем строкам ниже"
+          aria-label={t("fillBelowFor", { field: ariaLabel })}
+          title={t("fillBelowHint")}
           data-testid={testId ? `${testId}-fill-below` : undefined}
         >
           <ArrowDownToLine className="size-4" />

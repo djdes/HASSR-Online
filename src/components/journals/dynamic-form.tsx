@@ -1,4 +1,7 @@
 "use client";
+import { useLocale, useMessages, useTranslations } from "next-intl";
+import { presentJournalField, type JournalFieldCopy } from "@/i18n/journal-presentation";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,7 +10,7 @@ import { coveredTopEdge, scrollDeltaToReveal, stickyFooterStyle, useKeyboardStat
 import { isScannableField } from "@/lib/scannable-field";
 import { ScanToField } from "@/components/journals/scan-to-field";
 import { AlertTriangle, History, Wifi, Loader2 } from "lucide-react";
-import { describeDraftTime, draftStorageKey, filledCount } from "@/lib/form-draft";
+import { getDraftTimeDescription, draftStorageKey, filledCount } from "@/lib/form-draft";
 import { getJournalSpec } from "@/lib/journal-specs";
 import { useFormDraft } from "@/lib/use-form-draft";
 import {
@@ -167,9 +170,18 @@ export function DynamicForm({
   rollingMode = false,
   dailyCountInitial = 0,
   rollingDailyCap = 50,
-  rollingContinueLabel = "Сохранить и продолжить",
-  rollingDoneLabel = "Готово на сегодня",
+  rollingContinueLabel: customRollingContinueLabel,
+  rollingDoneLabel: customRollingDoneLabel,
 }: DynamicFormProps) {
+  const locale = useLocale();
+  const t = useTranslations();
+  const formT = useTranslations("journalForm");
+  const fieldCopy = useMessages().journalFields as Record<string, Record<string, JournalFieldCopy>> | undefined;
+  const rollingContinueLabel = customRollingContinueLabel ?? t("journals.saveContinue");
+  const rollingDoneLabel = customRollingDoneLabel ?? t("journals.doneToday");
+  const displayFields = useMemo(() => fields.map((field) =>
+    presentJournalField(field, locale === "ru" ? undefined : fieldCopy?.[templateCode]?.[field.key]),
+  ), [fields, locale, fieldCopy, templateCode]);
   const router = useRouter();
   // Автор записи. Нужен офлайн-очереди: она отправляет отложенное той
   // сессией, которая окажется активной, а на кухне телефон за смену
@@ -363,7 +375,7 @@ export function DynamicForm({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Ошибка получения данных с датчика");
+        throw new Error(data.error || formT("sensor.fetchError"));
       }
 
       updateField("temperature", data.temperature);
@@ -376,7 +388,7 @@ export function DynamicForm({
       });
     } catch (err) {
       setError(
-        humanizeFetchError(err, "Ошибка получения данных")
+        humanizeFetchError(err, formT("sensor.dataError"))
       );
     } finally {
       setIsFetchingSensor(false);
@@ -420,13 +432,13 @@ export function DynamicForm({
       for (const key of conditionallyRequiredKeys) {
         const v = formData[key];
         if (v === undefined || v === null || v === "") {
-          const f = fields.find((x) => x.key === key);
-          missing.push(f?.label ?? key);
+          const f = displayFields.find((x) => x.key === key);
+          missing.push(f?.displayLabel ?? key);
         }
       }
       if (missing.length > 0) {
         setError(
-          `Отклонение от нормы — обязательно заполни: ${missing.join(", ")}.`,
+          formT("validation.deviationMissing", { fields: missing.join(", ") }),
         );
         return;
       }
@@ -439,7 +451,7 @@ export function DynamicForm({
       journalSpec.photoRequired &&
       parsePhotoValue(formData.photoUrls).length === 0
     ) {
-      setError("Для этого журнала нужно приложить фото.");
+      setError(formT("validation.photoRequired"));
       return;
     }
 
@@ -501,10 +513,10 @@ export function DynamicForm({
           // «queued-photo:…» вместо доказательства.
           if (photoError instanceof MissingQueuedPhotoError) {
             serverAnswered = true;
-            throw new Error("Фото потерялось — снимите его заново");
+            throw new Error(formT("save.photoLost"));
           }
           throw photoError instanceof PhotoRejectedError
-            ? new Error("Фото не принято сервером — снимите другое")
+            ? new Error(formT("save.photoRejected"))
             : photoError;
         }
       }
@@ -522,7 +534,7 @@ export function DynamicForm({
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || "Ошибка при сохранении");
+        throw new Error(result.error || formT("save.serverError"));
       }
 
       // Запись принята — черновик больше не нужен.
@@ -554,8 +566,8 @@ export function DynamicForm({
         setError(null);
         setRollingNotice(
           rollingMeta.remaining !== undefined && rollingMeta.remaining <= 5
-            ? `Заполнено ${newCount}, осталось до лимита ${rollingMeta.remaining}.`
-            : `Заполнено ${newCount}. Готов к следующей записи.`,
+            ? formT("rolling.filledRemaining", { count: newCount, remaining: rollingMeta.remaining })
+            : formT("rolling.filledReady", { count: newCount }),
         );
         // Скроллим вверх чтобы пользователь увидел чистую форму.
         if (typeof window !== "undefined") {
@@ -566,7 +578,7 @@ export function DynamicForm({
 
       if (rollingMode && continueRolling === true && rollingMeta?.capped) {
         setRollingNotice(
-          `Достигнут лимит ${rollingDailyCap} записей в день. Запись сохранена, но новая задача не создана.`,
+          formT("rolling.limitReached", { limit: rollingDailyCap }),
         );
         // Редиректим как «Готово на сегодня».
         router.push(`${journalsBasePath}/${templateCode}`);
@@ -589,7 +601,7 @@ export function DynamicForm({
       ) {
         return;
       }
-      setError(humanizeFetchError(err, "Ошибка при сохранении"));
+      setError(humanizeFetchError(err, formT("save.error")));
     } finally {
       setIsSubmitting(false);
       setSubmittingMode("default");
@@ -636,9 +648,9 @@ export function DynamicForm({
       setFormData({});
       setError(null);
       setQueuedNotice(
-        "Записано на телефоне. Отправится само, когда появится связь — приложение можно закрыть.",
+        formT("save.offlineSaved"),
       );
-      toast.success("Записано. Отправится, когда появится связь");
+      toast.success(formT("save.offlineToast"));
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -676,7 +688,7 @@ export function DynamicForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSubmitting, rollingMode]);
 
-  const visibleFields = fields.filter(
+  const visibleFields = displayFields.filter(
     (field) => !field.auto && isFieldVisible(field)
   );
 
@@ -695,12 +707,22 @@ export function DynamicForm({
       const v = formData[key];
       if (v === undefined || v === null || v === "") {
         // Найдём label для дружелюбного сообщения.
-        const f = fields.find((x) => x.key === key);
-        missing.push(f?.label ?? key);
+        const f = displayFields.find((x) => x.key === key);
+        missing.push(f?.displayLabel ?? key);
       }
     }
     return missing;
-  }, [inDeviation, conditionallyRequiredKeys, formData, fields]);
+  }, [inDeviation, conditionallyRequiredKeys, formData, displayFields]);
+  const draftTime = draft.pending
+    ? getDraftTimeDescription(draft.pending.savedAt, new Date(), undefined, locale as Locale)
+    : null;
+  const draftSavedAtLabel = !draftTime || draftTime.key === "recently"
+    ? formT("draft.recently")
+    : draftTime.key === "dateAt"
+      ? formT("draft.dateAt", { date: draftTime.date, time: draftTime.time })
+      : draftTime.key === "todayAt"
+        ? formT("draft.todayAt", { time: draftTime.time })
+        : formT("draft.yesterdayAt", { time: draftTime.time });
 
   return (
     <form
@@ -729,11 +751,13 @@ export function DynamicForm({
             <History className="mt-0.5 size-5 shrink-0 text-[#5566f6]" />
             <div className="min-w-0">
               <div className="text-[14px] font-semibold leading-tight text-[#0b1024]">
-                Есть незаконченная запись
+                {formT("draft.title")}
               </div>
               <p className="mt-1 text-[13px] leading-snug text-[#3c4053]">
-                Сохранена {describeDraftTime(draft.pending.savedAt, new Date())}, заполнено полей:{" "}
-                {filledCount(draft.pending)}. Продолжить её или начать заново?
+                {formT("draft.savedAndCount", {
+                  savedAt: draftSavedAtLabel,
+                  count: filledCount(draft.pending),
+                })}{" "}{formT("draft.question")}
               </p>
             </div>
           </div>
@@ -743,14 +767,14 @@ export function DynamicForm({
               onClick={restoreDraft}
               className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
             >
-              Продолжить
+              {formT("draft.continue")}
             </button>
             <button
               type="button"
               onClick={draft.discard}
               className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Начать заново
+              {formT("draft.startOver")}
             </button>
           </div>
         </div>
@@ -776,12 +800,12 @@ export function DynamicForm({
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-700" />
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold leading-tight">
-              Внимание: отклонение от нормы
+              {formT("validation.deviationTitle")}
             </div>
             <p className="mt-1 text-[13px] leading-snug">{deviationHint}</p>
             {deviationMissingFields.length > 0 ? (
               <div className="mt-2 rounded-xl border border-amber-300 bg-white/60 p-2 text-[12.5px]">
-                <strong>Заполните обязательно:</strong>{" "}
+                <strong>{formT("validation.fillRequired")}</strong>{" "}
                 {deviationMissingFields.join(", ")}.
               </div>
             ) : null}
@@ -792,7 +816,7 @@ export function DynamicForm({
       {/* Photo OCR for incoming control */}
       {supportsPhotoOcr && (
         <div className="space-y-2">
-          <Label>Распознать с фото</Label>
+          <Label>{formT("product.recognizeFromPhoto")}</Label>
           <PhotoCapture onResult={handleOcrResult} />
         </div>
       )}
@@ -800,7 +824,7 @@ export function DynamicForm({
       {/* Product catalog quick-fill */}
       {supportsProductCatalog && (
         <div className="space-y-2">
-          <Label>Выбрать из справочника</Label>
+          <Label>{formT("product.chooseFromDirectory")}</Label>
           <Select
             value={catalogProductId}
             onValueChange={(productId) => {
@@ -820,7 +844,7 @@ export function DynamicForm({
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Быстрый выбор из каталога..." />
+              <SelectValue placeholder={formT("product.quickSelectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {products.map((product) => (
@@ -838,7 +862,7 @@ export function DynamicForm({
           </Select>
           {templateCode === "product_writeoff" && selectedCatalogProduct?.storageTemp && (
             <p className="text-[13px] text-muted-foreground">
-              Температура хранения: {selectedCatalogProduct.storageTemp}
+              {formT("product.storageTemperature", { temperature: selectedCatalogProduct.storageTemp })}
             </p>
           )}
         </div>
@@ -846,7 +870,7 @@ export function DynamicForm({
 
       {areas.length > 0 && !isJournal7to9 && (
         <div className="space-y-2">
-          <Label htmlFor="area">Участок</Label>
+          <Label htmlFor="area">{formT("area.label")}</Label>
           <Select
             value={areaId}
             onValueChange={(value) => {
@@ -855,7 +879,7 @@ export function DynamicForm({
             }}
           >
             <SelectTrigger id="area" className="w-full">
-              <SelectValue placeholder="Выберите участок" />
+              <SelectValue placeholder={formT("area.placeholder")} />
             </SelectTrigger>
             <SelectContent>
               {areas.map((area) => (
@@ -879,14 +903,14 @@ export function DynamicForm({
                   updateField(field.key, checked === true)
                 }
               />
-              <Label htmlFor={field.key}>{field.label}</Label>
+              <Label htmlFor={field.key}>{field.displayLabel}</Label>
               <FieldHint templateCode={templateCode} fieldKey={field.key} />
             </div>
           ) : (
             <>
               <div className="flex items-center gap-1.5">
                 <Label htmlFor={field.key}>
-                  {field.label}
+                  {field.displayLabel}
                   {field.required && (
                     <span className="text-destructive"> *</span>
                   )}
@@ -896,7 +920,7 @@ export function DynamicForm({
 
               {field.type === "photo" && (
                 <PhotoField
-                  label={field.label}
+                  label={field.displayLabel}
                   value={(formData[field.key] as string) ?? ""}
                   onChange={(next) => updateField(field.key, next)}
                   required={field.required}
@@ -909,7 +933,7 @@ export function DynamicForm({
                   id={field.key}
                   value={(formData[field.key] as string) ?? ""}
                   onChange={(e) => updateField(field.key, e.target.value)}
-                  placeholder="Фамилия и инициалы"
+                  placeholder={formT("fields.signaturePlaceholder")}
                   autoComplete="name"
                 />
               )}
@@ -965,7 +989,7 @@ export function DynamicForm({
                         ) : (
                           <Wifi className="size-4" />
                         )}
-                        {isFetchingSensor ? "Получение..." : "С датчика"}
+                        {isFetchingSensor ? formT("sensor.fetching") : formT("sensor.fromSensor")}
                       </Button>
                     )}
                   </div>
@@ -978,23 +1002,19 @@ export function DynamicForm({
                     <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm">
                       <div className="flex items-center gap-2 font-medium text-green-800">
                         <Wifi className="size-4" />
-                        Данные получены с IoT-датчика
+                        {formT("sensor.received")}
                       </div>
                       <div className="mt-2 space-y-1 text-green-700">
                         <p>
-                          Температура:{" "}
-                          <strong>{sensorInfo.temperature}°C</strong>
+                          <strong>{formT("sensor.temperature", { temperature: sensorInfo.temperature })}</strong>
                         </p>
                         {sensorInfo.humidity !== null && (
                           <p>
-                            Влажность:{" "}
-                            <strong>{sensorInfo.humidity}%</strong>
+                            <strong>{formT("sensor.humidity", { humidity: sensorInfo.humidity })}</strong>
                           </p>
                         )}
                         <p className="text-[13px] text-green-600">
-                          {new Date(sensorInfo.timestamp).toLocaleString(
-                            "ru-RU"
-                          )}
+                          {new Date(sensorInfo.timestamp).toLocaleString(FORMAT_LOCALES[locale as Locale])}
                         </p>
                       </div>
                     </div>
@@ -1019,10 +1039,10 @@ export function DynamicForm({
                   required={field.required}
                 >
                   <SelectTrigger id={field.key} className="w-full">
-                    <SelectValue placeholder="Выберите..." />
+                    <SelectValue placeholder={t("common.select")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {field.options.map((option) => (
+                    {field.displayOptions?.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -1044,7 +1064,7 @@ export function DynamicForm({
                   required={field.required}
                 >
                   <SelectTrigger id={field.key} className="w-full">
-                    <SelectValue placeholder="Выберите оборудование" />
+                    <SelectValue placeholder={formT("fields.equipmentPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {equipment.map((item) => (
@@ -1064,7 +1084,7 @@ export function DynamicForm({
                   required={field.required}
                 >
                   <SelectTrigger id={field.key} className="w-full">
-                    <SelectValue placeholder="Выберите сотрудника" />
+                    <SelectValue placeholder={formT("fields.employeePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map((emp) => (
@@ -1087,11 +1107,11 @@ export function DynamicForm({
       !fields.some((field) => field.type === "photo") ? (
         <div className="space-y-2">
           <PhotoField
-            label="Фото-подтверждение"
+            label={formT("validation.photoConfirmationLabel")}
             value={(formData.photoUrls as string) ?? ""}
             onChange={(next) => updateField("photoUrls", next)}
             required
-            hint="Без снимка запись не сохранится — этого требует журнал."
+            hint={formT("validation.photoRequiredHint")}
             offlineFallback={offlineCapable}
           />
         </div>
@@ -1102,14 +1122,15 @@ export function DynamicForm({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#3848c7]">
-                Цикл «пока не нажмёте Готово»
+                {formT("rolling.cycleTitle")}
               </div>
               <div className="mt-1 text-[13px] leading-snug text-[#3c4053]">
-                Заполните запись и жмите{" "}
-                <strong className="text-[#3848c7]">«{rollingContinueLabel}»</strong>{" "}
-                — система сразу создаст вам следующую такую же задачу.
-                Когда закончите смену — нажмите{" "}
-                <strong className="text-[#0b1024]">«{rollingDoneLabel}»</strong>.
+                {formT.rich("rolling.instructions", {
+                  continueLabel: rollingContinueLabel,
+                  doneLabel: rollingDoneLabel,
+                  continue: (chunks) => <strong className="text-[#3848c7]">{chunks}</strong>,
+                  done: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
+                })}
               </div>
               {rollingNotice ? (
                 <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-medium text-emerald-700">
@@ -1118,7 +1139,7 @@ export function DynamicForm({
               ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-3 py-2 text-[12px] font-medium text-[#3848c7] ring-1 ring-[#5566f6]/15">
-              За сегодня:{" "}
+              {formT("rolling.todayCount")}{" "}
               <span className="tabular-nums text-[16px] font-semibold">
                 {dailyCount}
               </span>
@@ -1135,7 +1156,7 @@ export function DynamicForm({
               disabled={isSubmitting}
               className="w-full sm:w-auto"
             >
-              Отмена
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -1145,7 +1166,7 @@ export function DynamicForm({
               className="w-full sm:w-auto"
             >
               {submittingMode === "rolling-done"
-                ? "Сохранение..."
+                ? t("common.saving")
                 : rollingDoneLabel}
             </Button>
             <Button
@@ -1155,7 +1176,7 @@ export function DynamicForm({
               className="w-full sm:flex-1"
             >
               {submittingMode === "rolling-continue"
-                ? "Сохранение..."
+                ? t("common.saving")
                 : rollingContinueLabel}
             </Button>
           </div>
@@ -1173,7 +1194,7 @@ export function DynamicForm({
           style={stickyFooterStyle(keyboard)}
         >
           <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-            {isSubmitting ? "Сохранение..." : "Сохранить запись"}
+            {isSubmitting ? t("common.saving") : t("journals.saveEntry")}
           </Button>
           <Button
             type="button"
@@ -1182,7 +1203,7 @@ export function DynamicForm({
             disabled={isSubmitting}
             className="w-full sm:w-auto"
           >
-            Отмена
+            {t("common.cancel")}
           </Button>
         </div>
       )}

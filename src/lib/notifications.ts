@@ -2,6 +2,12 @@ import { db } from "@/lib/db";
 import { publishToUser } from "@/lib/live-events";
 import { sendMobilePushInBackground } from "@/lib/mobile-push";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
+import { Prisma } from "@prisma/client";
+import { resolveLocale } from "@/i18n/locales";
+import {
+  asNotificationMessageParams, isNotificationMessageKey, notificationPresenter,
+  type NotificationMessageKey, type NotificationMessageMetadata, type NotificationMessageParams,
+} from "@/i18n/notification-messages";
 
 /**
  * Shape of a single check-box row inside a Notification.
@@ -19,6 +25,10 @@ export type NotificationItem = {
   /// ведёт сюда, а не на общий `linkHref` группы. Полезно когда у каждой
   /// подзадачи свой документ/журнал/раздел.
   href?: string;
+  labelKey?: NotificationMessageKey;
+  labelParams?: NotificationMessageParams;
+  hintKey?: NotificationMessageKey;
+  hintParams?: NotificationMessageParams;
 };
 
 export function asNotificationItems(raw: unknown): NotificationItem[] {
@@ -30,6 +40,10 @@ export function asNotificationItems(raw: unknown): NotificationItem[] {
       label: typeof v.label === "string" ? v.label : "",
       hint: typeof v.hint === "string" ? v.hint : undefined,
       href: typeof v.href === "string" ? v.href : undefined,
+      labelKey: isNotificationMessageKey(v.labelKey) ? v.labelKey : undefined,
+      labelParams: asNotificationMessageParams(v.labelParams),
+      hintKey: isNotificationMessageKey(v.hintKey) ? v.hintKey : undefined,
+      hintParams: asNotificationMessageParams(v.hintParams),
     }))
     .filter((it) => it.id && it.label);
 }
@@ -63,34 +77,34 @@ export function asDismissedItemIds(raw: unknown): Set<string> {
  * ночной крон, дописывающий по одному журналу, будил бы человека
  * десять раз подряд про одно и то же.
  */
-function pushNotification(args: {
+function pushNotification(args: NotificationMessageMetadata & {
   userId: string;
+  kind: string;
   title: string;
   dedupeKey: string;
   linkHref?: string | null;
   items: NotificationItem[];
 }): void {
-  const first = args.items[0]?.label;
-  const body =
-    args.items.length > 1
-      ? `${first} и ещё ${args.items.length - 1}`
-      : (first ?? "Откройте, чтобы посмотреть");
-  // Приложение WeSetup (Firebase) — отдельно от веб-push: сбой одного
-  // не должен отменять другой. Сама отправка в фоне и не бросает.
-  try {
-    sendMobilePushInBackground(
-      args.userId,
-      { title: args.title, body, url: toMiniUrl(args.linkHref), tag: args.dedupeKey },
-      "bell"
-    );
-  } catch (error) {
-    console.error("[notifications] mobile push failed", error);
-  }
   void (async () => {
     try {
+      const recipient = await db.user.findUnique({
+        where: { id: args.userId },
+        select: { locale: true, organization: { select: { locale: true } } },
+      });
+      const locale = resolveLocale({ authenticated: true, userLocale: recipient?.locale, organizationLocale: recipient?.organization.locale });
+      const presenter = await notificationPresenter(locale);
+      const presented = presenter.row(args);
+      const title = presented.title;
+      const body = presenter.pushBody(presented.items);
+      // Both transports are best-effort and remain independent.
+      try {
+        sendMobilePushInBackground(args.userId, { title, body, url: toMiniUrl(args.linkHref), tag: args.dedupeKey }, "bell");
+      } catch (error) {
+        console.error("[notifications] mobile push failed", error);
+      }
       const { sendPushToUser } = await import("@/lib/web-push");
       await sendPushToUser(args.userId, {
-        title: args.title,
+        title,
         body,
         url: toMiniUrl(args.linkHref),
         // Тег — тот же ключ дедупликации: повторное уведомление о том же
@@ -117,7 +131,7 @@ export function toMiniUrl(href?: string | null): string {
   return "/mini";
 }
 
-export async function upsertNotification(args: {
+export async function upsertNotification(args: NotificationMessageMetadata & {
   organizationId: string;
   userId: string;
   kind: string;
@@ -132,6 +146,11 @@ export async function upsertNotification(args: {
    */
   push?: boolean;
 }): Promise<void> {
+  const messageMetadata = {
+    messageKey: args.messageKey ?? null,
+    messageParams: args.messageParams ?? Prisma.DbNull,
+    linkLabelKey: args.linkLabelKey ?? null,
+  };
   const existing = await db.notification.findUnique({
     where: {
       userId_dedupeKey: { userId: args.userId, dedupeKey: args.dedupeKey },
@@ -143,6 +162,7 @@ export async function upsertNotification(args: {
         userId_dedupeKey: { userId: args.userId, dedupeKey: args.dedupeKey },
       },
       create: {
+        ...messageMetadata,
         organizationId: args.organizationId,
         userId: args.userId,
         kind: args.kind,
@@ -153,6 +173,7 @@ export async function upsertNotification(args: {
         items: args.items as unknown as object,
       },
       update: {
+        ...messageMetadata,
         title: args.title,
         linkHref: args.linkHref ?? null,
         linkLabel: args.linkLabel ?? null,
@@ -191,6 +212,7 @@ export async function upsertNotification(args: {
   await db.notification.update({
     where: { id: existing.id },
     data: {
+      ...messageMetadata,
       title: args.title,
       linkHref: args.linkHref ?? null,
       linkLabel: args.linkLabel ?? null,
@@ -206,7 +228,7 @@ export async function upsertNotification(args: {
  * organisation (manager/head_chef and legacy owner/technologist). New
  * employees trigger a notification to every boss, not just one.
  */
-export async function notifyManagement(args: {
+export async function notifyManagement(args: NotificationMessageMetadata & {
   organizationId: string;
   kind: string;
   dedupeKey: string;
@@ -237,6 +259,9 @@ export async function notifyManagement(args: {
         kind: args.kind,
         dedupeKey: args.dedupeKey,
         title: args.title,
+        messageKey: args.messageKey,
+        messageParams: args.messageParams,
+        linkLabelKey: args.linkLabelKey,
         linkHref: args.linkHref ?? null,
         linkLabel: args.linkLabel ?? null,
         items: args.items,

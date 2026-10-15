@@ -1,0 +1,15 @@
+{
+  "locale": "uz",
+  "sourceHash": "3f6c24415bfffd840cdff7d2c6a5bed4ec8bd147c42d228044b09263b0d8fe1d",
+  "title": "Umumiy ovqatlanish uchun sanitariya qoidalari: amalda zarur minimum",
+  "excerpt": "Kichik kafe uchun asosiy minimum — taxminan o‘nta jurnal va uch-to‘rtta muntazam tartib. Oltita band tekshiruvdagi e’tirozlarning 80 foizini qamrab oladi, qolganlari esa eski hujjatbozlik merosidir.",
+  "tags": ["SanPiN", "Amaliyot"],
+  "body": [
+    {"type":"p","text":"Umumiy ovqatlanish uchun sanitariya qoidalari yuzlab sahifadan iborat. Hammasini boshidan oxirigacha o‘qish kishining hafsalasini pir qilishi mumkin. Amalda kichik muassasa uchun majburiy minimum taxminan o‘nta jurnal va uch-to‘rtta muntazam tartibdan iborat."},
+    {"type":"h2","text":"Eng zarur to‘plam"},
+    {"type":"ul","items":["Xodimlar salomatligi jurnali.","Sovutish uskunalari harorati jurnali.","Tayyor mahsulot sifatini baholash jurnali.","Xomashyoni qabul qilish va kirish nazorati jurnali.","Tozalash jurnali va dezinfeksiya vositalari jurnali.","Ishlab chiqarish nazorati dasturi va DDD jurnali (dezinfeksiya, dezinseksiya va deratizatsiya)."]},
+    {"type":"callout","tone":"info","title":"Nega aynan shular","text":"Bu oltita band inspektorlar e’tirozlarining 80 foizini va ovqatdan zaharlanish holatlarini tekshirishdagi barcha vaziyatlarni qamrab oladi."},
+    {"type":"h2","text":"Nimalar ortiqcha"},
+    {"type":"p","text":"Alohida ma’lumotnomalar, qog‘ozdagi rejalar va bir xil ma’lumotni turli jurnallarga qayta yozish — bularning barchasi yagona tizim bo‘lmagan davrdan qolgan. Elektron hisobda bitta yozuv (masalan, mahsulot qabul qilingani) bir nechta jurnalga ma’lumot beradi, uni qayta ko‘chirish shart emas."}
+  ]
+}

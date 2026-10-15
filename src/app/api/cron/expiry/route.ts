@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveLocale } from "@/i18n/locales";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
@@ -83,18 +84,18 @@ async function handle(request: Request) {
       );
 
       // Email
+      const org = await db.organization.findUnique({
+        where: { id: orgId },
+        select: { name: true, locale: true },
+      });
+
       const users = await db.user.findMany({
         where: {
           organizationId: orgId,
           role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
           isActive: true,
         },
-        select: { email: true },
-      });
-
-      const org = await db.organization.findUnique({
-        where: { id: orgId },
-        select: { name: true },
+        select: { email: true, locale: true },
       });
 
       for (const user of users) {
@@ -103,6 +104,7 @@ async function handle(request: Request) {
           missingJournals: products.map((p) => `${p.product} — срок до ${new Date(p.expiryDate).toLocaleDateString("ru-RU")}`),
           organizationName: org?.name || "",
           organizationId: orgId,
+          locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: org?.locale }),
         }).catch((err) => console.error("Email expiry alert error:", err));
       }
     }

@@ -145,5 +145,7 @@ describe("cold-equipment adapter: «Обслуживание»/«Ремонт» 
     assert.deepEqual(form.prefilledStatuses, { t_b: "repair" });
     assert.deepEqual(form.prefilledOff, ["t_b#2"]);
     assert.match(form.notice ?? "", /Сегодня уже записано: 3 из 3/);
+    assert.equal(form.noticePresentationKey, "dynamic.coldEquipmentPrefilledNotice");
+    assert.deepEqual(form.noticePresentationValues, { count: 3, total: 3 });
   });
 });

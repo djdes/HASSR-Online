@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export function StaffTelegramInviteDialog(props: {
   error: string | null;
   invite: StaffTelegramInvitePayload | null;
 } & Close) {
+  const t = useTranslations("staffManagement.telegram");
   const { employee, mode, botUrl, onClose, open, pending, error, invite } = props;
   const [copied, setCopied] = useState(false);
 
@@ -58,14 +60,14 @@ export function StaffTelegramInviteDialog(props: {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Не удалось скопировать ссылку");
+      toast.error(t("copyFailed"));
     }
   }
 
   const title =
     mode === "rebind"
-      ? `Перепривязать TG для ${employee.name}`
-      : `Пригласить в TG: ${employee.name}`;
+      ? t("rebindTitle", { name: employee.name })
+      : t("inviteTitle", { name: employee.name });
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -74,7 +76,7 @@ export function StaffTelegramInviteDialog(props: {
           title,
           pending ? (
             <div className="py-8 text-center text-[14px] text-[#6f7282]">
-              Готовим ссылку Telegram...
+              {t("preparing")}
             </div>
           ) : error ? (
             <div className="space-y-4">
@@ -83,7 +85,7 @@ export function StaffTelegramInviteDialog(props: {
               </div>
               <div className="flex justify-end">
                 <Button type="button" onClick={onClose} className="h-11 rounded-xl">
-                  Закрыть
+                  {t("close")}
                 </Button>
               </div>
             </div>
@@ -91,14 +93,14 @@ export function StaffTelegramInviteDialog(props: {
             <div className="space-y-4">
               <div className="rounded-lg border border-[#eef0fb] bg-[#f8f9ff] p-3 text-[13px] leading-5 text-[#5464ff]">
                 {mode === "rebind"
-                  ? "Ссылка обновлена. Сотрудник увидит ее в уведомлениях сайта, а если Telegram уже был привязан — еще и в сообщении Telegram."
-                  : "Ссылка готова. Сотрудник увидит ее в уведомлениях сайта, а вы можете сразу передать ее вручную или показать QR."}
+                  ? t("rebindReady")
+                  : t("inviteReady")}
               </div>
               <div className="flex justify-center">
                 <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5">
                   <Image
                     src={invite.qrPngDataUrl}
-                    alt="QR-код приглашения в Telegram"
+                    alt={t("qrAlt")}
                     width={220}
                     height={brandQrHeightFor(220)}
                     className="h-auto"
@@ -119,7 +121,7 @@ export function StaffTelegramInviteDialog(props: {
                   className="h-11 rounded-xl px-3"
                 >
                   <Copy className="size-4" />
-                  {copied ? "Скопировано" : "Копировать"}
+                  {copied ? t("copied") : t("copy")}
                 </Button>
               </div>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -129,7 +131,7 @@ export function StaffTelegramInviteDialog(props: {
                   onClick={onClose}
                   className="h-11 rounded-xl"
                 >
-                  Готово
+                  {t("done")}
                 </Button>
                 <Button
                   type="button"
@@ -138,14 +140,14 @@ export function StaffTelegramInviteDialog(props: {
                 >
                   <a href={invite.inviteUrl} target="_blank" rel="noreferrer">
                     <ExternalLink className="mr-1.5 size-4" />
-                    Открыть Telegram
+                    {t("openTelegram")}
                   </a>
                 </Button>
                 {employee.telegramLinked && botUrl ? (
                   <Button type="button" variant="outline" asChild className="h-11 rounded-xl">
                     <a href={botUrl} target="_blank" rel="noreferrer">
                       <ExternalLink className="mr-1.5 size-4" />
-                      Открыть чат бота
+                      {t("openBotChat")}
                     </a>
                   </Button>
                 ) : null}
@@ -163,19 +165,18 @@ export function StaffUnlinkTelegramDialog(props: {
   pending?: boolean;
   onConfirm: () => void;
 } & Close) {
+  const t = useTranslations("staffManagement.telegram");
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
         {shell(
-          `Отвязать TG у "${props.employee.name}"`,
+          t("unlinkTitle", { name: props.employee.name }),
           <div className="space-y-3 text-[13px] leading-5 text-[#3c4053]">
             <p>
-              Телеграм отвяжется только от входа сотрудника. Данные и записи на
-              сайте останутся как есть.
+              {t("unlinkDescription")}
             </p>
             <p className="text-[#6f7282]">
-              После этого сотрудника можно будет заново привязать через
-              `Пригласить в TG`.
+              {t("unlinkNextStep")}
             </p>
           </div>,
           <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -186,7 +187,7 @@ export function StaffUnlinkTelegramDialog(props: {
               disabled={props.pending}
               className="h-11 rounded-xl"
             >
-              Отмена
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -194,7 +195,7 @@ export function StaffUnlinkTelegramDialog(props: {
               disabled={props.pending}
               className="h-11 rounded-xl bg-[#d2453d] text-white hover:bg-[#bd392f]"
             >
-              {props.pending ? "..." : "Отвязать TG"}
+              {props.pending ? "..." : t("unlink")}
             </Button>
           </div>
         )}

@@ -14,11 +14,12 @@ import { resolveQrObject } from "@/lib/qr-object-pass";
 import {
   parseQrObjectPinRequest,
   parseQrObjectPinTarget,
-  qrPinRequestScreen,
   type QrObjectPinTarget,
 } from "@/lib/qr-object-pin-request";
 import { createQrPinRequest, latestQrPinRequestFor } from "@/lib/qr-pin-requests";
 import { validatePinRequestInput } from "@/lib/qr-pin-requests-core";
+import { validateQrPin } from "@/lib/qr-pin-rules";
+import { qrPinRequestScreenWithMessages } from "@/lib/qr-object-pin-request";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
 import { isUvLampType } from "@/lib/uv-lamp";
@@ -48,7 +49,7 @@ type Place =
   | { type: "uv"; id: string; name: string; fillerUserIds: string[]; timezone: string }
   | { type: "room"; id: string; buildingId: string; fillerUserIds: string[]; timezone: string };
 
-const fail = (status: number, error: string) => ({ ok: false as const, response: NextResponse.json({ error }, { status }) });
+const fail = (status: number, error: string, key: string) => ({ ok: false as const, response: NextResponse.json({ error, errorCode: `equipmentFill.${key}` }, { status }) });
 
 async function loadPlace(target: QrObjectPinTarget): Promise<Place | null> {
   if (target.kind === "equipment") {
@@ -79,8 +80,8 @@ async function loadPlace(target: QrObjectPinTarget): Promise<Place | null> {
 /** Наклейка → организация, сотрудник из списка объекта. Вход через кабинет — без PIN, запрашивать нечего. */
 async function resolveRequester(target: QrObjectPinTarget) {
   const object = await resolveQrObject(target.kind, target.objectId, target.token);
-  if (!object) return fail(401, "QR-наклейка не подходит");
-  if (object.mode === "auth") return fail(409, "Здесь входят через кабинет — PIN не нужен.");
+  if (!object) return fail(401, "QR-наклейка не подходит", "errors.invalidSticker");
+  if (object.mode === "auth") return fail(409, "Здесь входят через кабинет — PIN не нужен.", "errors.authMode");
   const [employee, place] = await Promise.all([
     db.user.findFirst({
       where: { id: target.employeeId, organizationId: object.organizationId, ...ORG_ROSTER_WHERE },
@@ -88,15 +89,15 @@ async function resolveRequester(target: QrObjectPinTarget) {
     }),
     loadPlace(target),
   ]);
-  if (!employee) return fail(404, "Сотрудник не найден");
-  if (!place) return fail(404, "Объект не найден");
+  if (!employee) return fail(404, "Сотрудник не найден", "errors.employeeNotFound");
+  if (!place) return fail(404, "Объект не найден", "errors.objectNotFound");
   const allowed =
     place.type === "uv"
       ? (await listLampOperators({ organizationId: object.organizationId, fillerUserIds: place.fillerUserIds, documentResponsibleId: null })).some(
           (operator) => operator.id === employee.id
         )
       : canFillObject(place.fillerUserIds, employee);
-  if (!allowed) return fail(403, OBJECT_FILLER_DENIED);
+  if (!allowed) return fail(403, OBJECT_FILLER_DENIED, "errors.objectDenied");
   return { ok: true as const, organizationId: object.organizationId, employee: { id: employee.id, hasPin: Boolean(employee.qrPinHash) }, place };
 }
 
@@ -148,30 +149,30 @@ async function journalFor(place: Place, organizationId: string): Promise<{ journ
 /** Есть ли у сотрудника PIN и что с его последним запросом — строка статуса на экране. */
 export async function GET(request: Request) {
   const target = parseQrObjectPinTarget(Object.fromEntries(new URL(request.url).searchParams));
-  if (!target) return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+  if (!target) return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
   // Свой счётчик: проверка статуса не съедает лимит записей и PIN.
   if (!qrFillRateLimiter.consume(`${qrFillRateKey(clientIp(request), target.kind, target.objectId)}:pin-status`)) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
   const requester = await resolveRequester(target);
   if (!requester.ok) return requester.response;
   const latest = await latestQrPinRequestFor({ organizationId: requester.organizationId, userId: requester.employee.id });
   return NextResponse.json(
-    { hasPin: requester.employee.hasPin, ...qrPinRequestScreen(latest) },
+    { hasPin: requester.employee.hasPin, ...qrPinRequestScreenWithMessages(latest) },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
 
 export async function POST(request: Request) {
   const input = parseQrObjectPinRequest(await request.json().catch(() => null));
-  if (!input) return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+  if (!input) return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), input.kind, input.objectId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
   const requester = await resolveRequester(input);
   if (!requester.ok) return requester.response;
   const invalid = validatePinRequestInput({ pin: input.pin, repeat: input.pin2 });
-  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
+  if (invalid) return NextResponse.json({ error: invalid, errorCode: validateQrPin(input.pin) ? "equipmentFill.pin.invalid" : "equipmentFill.pin.mismatch" }, { status: 400 });
 
   const journal = await journalFor(requester.place, requester.organizationId);
   const created = await createQrPinRequest({
@@ -186,6 +187,6 @@ export async function POST(request: Request) {
     ip: clientIp(request),
     userAgent: request.headers.get("user-agent"),
   });
-  if (!created.ok) return NextResponse.json({ error: created.error }, { status: 400 });
-  return NextResponse.json({ ok: true, kind: input.requestKind, status: qrPinRequestScreen({ kind: input.requestKind, status: "pending" }).status });
+  if (!created.ok) return NextResponse.json({ error: created.error, errorCode: "equipmentFill.pin.requestError" }, { status: 400 });
+  return NextResponse.json({ ok: true, kind: input.requestKind, status: qrPinRequestScreenWithMessages({ kind: input.requestKind, status: "pending" }).status });
 }

@@ -34,12 +34,12 @@ export async function POST(request: Request) {
   const token = typeof body?.token === "string" ? body.token : "";
   const employeeId = typeof body?.employeeId === "string" ? body.employeeId : "";
   const logout = body?.logout === true;
-  if (!kind || !objectId || !token || (!employeeId && !logout)) return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+  if (!kind || !objectId || !token || (!employeeId && !logout)) return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), kind, objectId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
   const object = await resolveQrObject(kind, objectId, token);
-  if (!object) return NextResponse.json({ error: "QR-наклейка не подходит" }, { status: 401 });
+  if (!object) return NextResponse.json({ error: "QR-наклейка не подходит", errorCode: "equipmentFill.errors.invalidSticker" }, { status: 401 });
   const secure = (request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "")) === "https";
 
   if (logout) {
@@ -52,11 +52,11 @@ export async function POST(request: Request) {
   let pass: string | null = null;
   if (typeof body?.pin === "string" && body.pin.trim()) {
     const actor = await resolveQrFillActor({ mode: "pin", organizationId: object.organizationId, employeeId, pin: body.pin.trim() });
-    if (!actor.ok) return NextResponse.json({ error: actor.error }, { status: actor.status });
+    if (!actor.ok) return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
     // Отпечаток текущего PIN: руководитель сбросит PIN — пропуск погаснет.
     const user = await db.user.findUnique({ where: { id: employeeId }, select: { qrPinHash: true } });
     const pinFp = qrPinFingerprint(user?.qrPinHash);
-    if (!pinFp) return NextResponse.json({ error: "У сотрудника не задан PIN" }, { status: 403 });
+    if (!pinFp) return NextResponse.json({ error: "У сотрудника не задан PIN", errorCode: "equipmentFill.errors.noPin" }, { status: 403 });
     pass = mintQrPass({ employeeId, orgId: object.organizationId, flow: "any", pinFp });
   }
 

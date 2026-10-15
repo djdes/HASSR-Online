@@ -1,5 +1,15 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { finishedTitle, finishedColumn, finishedCell, finishedGrade, finishedChainCaption, finishedCloseBlocker, finishedTodaySignatures } from "./finished-product-presentation";
+import { FinishedProductGradeCell } from "./finished-product-grade-cell";
+import { BrakerageDateInput, BrakerageTimeInput } from "./brakerage-time-input";
+import { aggregateBrakerageAssessment, allCommissionMembersAssessed, brakerageCommentRequired, brakerageTimeDigits } from "@/lib/brakerage-assessment";
+import type { BrakerageSignEntry } from "@/lib/brakerage-signatures";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Archive,
@@ -23,7 +33,6 @@ import {
   DOC_EXTRA_BLOCK_CLASS,
   DOC_HEADING_CLASS,
   DOC_PAPER_CANVAS_CLASS,
-  DOC_PAPER_HEADER_CARDS_HIDDEN_CLASS,
   DOC_PAPER_HEADER_CLASS,
   JOURNAL_DIALOG_CONTENT_WIDE_CLASS,
   JOURNAL_DIALOG_HEADER_CLASS,
@@ -52,11 +61,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
   FINISHED_PRODUCT_ORGANOLEPTIC_DISH,
-  FINISHED_PRODUCT_QUALITY_GUIDE_TITLE,
   FINISHED_PRODUCT_TIME_DEFAULTS,
   FINISHED_PRODUCT_TIME_MINUTES_MAX,
   createFinishedProductRow,
-  finishedProductCellText,
   getFinishedProductOrganolepticOptions,
   normalizeFinishedProductDocumentConfig,
   type FinishedProductDocumentConfig,
@@ -119,17 +126,16 @@ import { mergeIntoList } from "@/lib/org-directory";
 import { useLiveEvents } from "@/lib/use-live-events";
 import {
   commissionRowStatus,
+  commissionRoleLabel,
   formatRowSignatures,
   hasCommission,
   isSignatureOutdated,
   normalizeRowSignatures,
-  closeBlockerForUnsigned,
   isCommissionMember,
   todaySignatureSummary,
-  todaySignatureText,
 } from "@/lib/brakerage-commission";
 import { orgTodayKey } from "@/lib/timezone";
-import { addMinutesToLocalDateTime, brakerageChainCaption, chainBrakerageTimes, deriveBrakerageTimes } from "@/lib/brakerage-times";
+import { addMinutesToLocalDateTime, chainBrakerageTimes, deriveBrakerageTimes } from "@/lib/brakerage-times";
 type Props = {
   documentId: string;
   title: string;
@@ -153,6 +159,7 @@ type Props = {
   useV2?: boolean;
   /** Кто открыл документ: член комиссии видит «Подписать» в полосе выделения. */
   currentUserId?: string | null;
+  commissionDeclined?: boolean;
 };
 
 /**
@@ -222,21 +229,8 @@ type FinishedProductColumn = {
   mustFill?: boolean;
 };
 
-const QUALITY_GUIDELINES = [
-  "Контроль за доброкачественностью пищи проводится органолептическим методом.",
-  "Осмотр лучше проводить при дневном свете, запах и вкус оценивать при характерной температуре блюда.",
-  "Для измерения температуры используйте только исправные термометры-зонды.",
-];
-
-const TEMPERATURE_GUIDELINES = [
-  ["A", "Натуральные рубленые изделия из мяса", "+85"],
-  ["B", "Изделия из фарша: котлеты, биточки, тефтели, зразы", "+90"],
-  ["C", "Мясо, рыба, ракообразные", "+68"],
-  ["D", "Домашняя птица, яйца, рыба, мясо измельченное", "+74"],
-  ["E", "Цельная говядина, баранина, рыба для холодного употребления", "+65"],
-  ["G", "Холодные блюда: салаты, десерты", "+2..+5"],
-  ["H", "Горячие блюда: супы, соусы", ">+75"],
-] as const;
+const QUALITY_GUIDELINES = ["quality.method", "quality.conditions", "quality.thermometers"] as const;
+const TEMPERATURE_GUIDELINES = [["A", "quality.A", "+85"], ["B", "quality.B", "+90"], ["C", "quality.C", "+68"], ["D", "quality.D", "+74"], ["E", "quality.E", "+65"], ["G", "quality.G", "+2..+5"], ["H", "quality.H", ">+75"]] as const;
 
 function nowDate() {
   return localDayKey();
@@ -248,6 +242,8 @@ function nowTime() {
 }
 
 function parseDateTime(value: string) {
+  if (!value.trim()) return { date: "", time: "" };
+  if (/^\d{1,2}:\d{2}$/.test(value)) return { date: nowDate(), time: value.padStart(5, "0") };
   const [date = nowDate(), time = nowTime()] = value.split(" ");
   return { date, time };
 }
@@ -270,23 +266,24 @@ function dateTimeMinutesAgo(minutesAgo: number): string {
  * изготовление стоит на 30 минут раньше, а точнее — одним касанием.
  */
 const PRODUCTION_OFFSETS = [
-  { minutes: 15, label: "−15 мин" },
-  { minutes: 30, label: "−30 мин" },
-  { minutes: 45, label: "−45 мин" },
-  { minutes: 60, label: "−1 ч" },
+  { minutes: 15 },
+  { minutes: 30 },
+  { minutes: 45 },
+  { minutes: 60 },
 ] as const;
 
 function QuickTimeChips({
   value,
   onChange,
   offsets,
-  nowLabel = "Сейчас",
+  nowLabel,
 }: {
   value: string;
   onChange: (next: string) => void;
-  offsets?: ReadonlyArray<{ minutes: number; label: string }>;
+  offsets?: ReadonlyArray<{ minutes: number; label?: string }>;
   nowLabel?: string;
 }) {
+  const t = useTranslations("finishedProduct");
   const active = (candidate: string) => candidate === value;
   const chip = (label: string, next: () => string, key: string) => {
     const current = active(next());
@@ -309,9 +306,9 @@ function QuickTimeChips({
   return (
     <div className="flex flex-wrap gap-1.5">
       {(offsets ?? []).map((offset) =>
-        chip(offset.label, () => dateTimeMinutesAgo(offset.minutes), `m${offset.minutes}`)
+        chip(offset.label ?? (offset.minutes === 60 ? t("time.hourAgo") : t("time.minutesAgo", { minutes: offset.minutes })), () => dateTimeMinutesAgo(offset.minutes), `m${offset.minutes}`)
       )}
-      {chip(nowLabel, () => dateTimeMinutesAgo(0), "now")}
+      {chip(nowLabel ?? t("time.now"), () => dateTimeMinutesAgo(0), "now")}
     </div>
   );
 }
@@ -387,8 +384,8 @@ function DateTimePair({
   const parts = parseDateTime(value);
   return (
     <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] gap-2">
-      <Input type="date" aria-label={dateLabel} className={DATE_TIME_INPUT_CLASS} value={parts.date} onChange={(e) => onChange(mergeDateTime(e.target.value, parts.time))} />
-      <Input type="time" aria-label={timeLabel} className={DATE_TIME_INPUT_CLASS} value={parts.time} onChange={(e) => onChange(mergeDateTime(parts.date, e.target.value))} />
+      <BrakerageDateInput aria-label={dateLabel} className={DATE_TIME_INPUT_CLASS} value={parts.date} required={Boolean(value.trim())} onChange={date => onChange(mergeDateTime(date, parts.time))} />
+      <BrakerageTimeInput aria-label={timeLabel} className={DATE_TIME_INPUT_CLASS} value={parts.time} required={Boolean(value.trim())} onChange={time => onChange(mergeDateTime(parts.date, time))} />
     </div>
   );
 }
@@ -406,7 +403,14 @@ export function FinishedProductDocumentClient({
   responsibleUserId = null,
   verifierUserId = null,
   currentUserId = null,
+  commissionDeclined = false,
 }: Props) {
+  const t = useTranslations("finishedProduct");
+  const locale = useLocale() as Locale;
+  const selectionT = useTranslations("journalControls.selection");
+  const displayTitle = finishedTitle(title, dateFrom, dateTo, locale, t);
+  const commissionT = useTranslations("journalControls.commissionDialog");
+  const commissionRoleLabels = { chair: commissionT("chair"), member: commissionT("member") };
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isSaving, setIsSaving] = useState(false);
@@ -414,6 +418,7 @@ export function FinishedProductDocumentClient({
   const draftPeople = { responsibleUserId, verifierUserId, commission: hasCommission(config) };
   /** «Подписываю как член комиссии (допущено)» в окне блюда — по умолчанию выключено. */
   const [signAsMember, setSignAsMember] = useState(false);
+  const [draftNoteEdited, setDraftNoteEdited] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   /** «Применить ко всем выделенным» — одно окно на несколько строк. */
@@ -425,8 +430,8 @@ export function FinishedProductDocumentClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const closeAction = useDocumentCloseAction({
     documentId,
-    title,
-    blocker: () => closeBlockerForUnsigned(config),
+    title: displayTitle,
+    blocker: () => finishedCloseBlocker(config, t),
   });
   const [isSigning, setIsSigning] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -463,10 +468,11 @@ export function FinishedProductDocumentClient({
   const readOnly = status === "closed";
   // «Ответственные = исполнитель + комиссия» (владелец, 2026-09-21).
   const responsibleName = responsibleUserId ? users.find((user) => user.id === responsibleUserId)?.name ?? "" : "";
+  const fallbackSignatureName = commissionDeclined && !hasCommission(config) ? responsibleName : "";
   const responsibleLine = [
-    responsibleName ? `Ответственные: ${responsibleName} (исполнитель)` : "",
+    responsibleName ? t("people.responsible", { name: responsibleName }) : "",
     config.commissionMembers.length > 0
-      ? `Комиссия: ${config.commissionMembers.map((member) => member.employeeName).join(", ")}`
+      ? t("people.commission", { names: config.commissionMembers.map(member => member.employeeName).join(", ") })
       : "",
   ]
     .filter(Boolean)
@@ -535,10 +541,10 @@ export function FinishedProductDocumentClient({
       })
       .catch(() => {
         inFlightRef.current = Math.max(0, inFlightRef.current - 1);
-        toast.error("Не удалось сохранить журнал — изменения остались только на экране");
+        toast.error(t("errors.saveScreenOnly"));
       })
       .finally(() => setIsAutoSaving(false));
-  }, [documentId, adoptServerRows, rememberRows]);
+  }, [documentId, adoptServerRows, rememberRows, t]);
 
   /** Применить новое состояние конфига и поставить его в очередь записи. */
   const commitConfig = useCallback(
@@ -567,7 +573,7 @@ export function FinishedProductDocumentClient({
    * Возвращает число подписанных строк или null при ошибке (тост уже показан).
    */
   const signRows = useCallback(
-    async (entries: Array<{ rowId: string; releaseAllowed?: "yes" | "no" }>): Promise<number | null> => {
+    async (entries: BrakerageSignEntry[]): Promise<number | null> => {
       if (!canSign || entries.length === 0) return null;
       setIsSigning(true);
       try {
@@ -579,34 +585,47 @@ export function FinishedProductDocumentClient({
         const response = await fetch(`/api/journal-documents/${documentId}/sign`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ entries }),
+          body: JSON.stringify({ entries: entries.map(entry => {
+            const row = config.rows.find(row => row.id === entry.rowId);
+            return { ...entry, grade: entry.grade ?? row?.organoleptic, note: entry.note ?? "", rejectionTime: entry.rejectionTime ?? (row?.rejectionTime ? brakerageTimeDigits(row.rejectionTime) : undefined) };
+          }) }),
         });
+        const errorResponse = response.clone();
         const body = (await response.json().catch(() => null)) as { signed?: number; config?: unknown; error?: string } | null;
-        if (!response.ok) throw new Error(body?.error || "Не удалось подписать");
+        if (!response.ok) throw new Error(await readLocalizedApiError(errorResponse, locale, t("errors.sign")));
         if (body?.config) {
           const fresh = normalizeFinishedProductDocumentConfig(body.config);
           rememberRows(fresh.rows);
           setConfig((prev) => ({ ...prev, rows: fresh.rows }));
         }
+        setSelectedRows(previous => previous.filter(id => !entries.some(entry => entry.rowId === id)));
         return body?.signed ?? entries.length;
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Не удалось подписать");
+        toast.error(humanizeFetchError(error, t("errors.sign"), t("errors.network")));
         return null;
       } finally {
         setIsSigning(false);
       }
     },
-    [canSign, documentId, flushConfigSave, rememberRows]
+    [canSign, documentId, flushConfigSave, rememberRows, locale, t, config.rows]
   );
 
   /** «Подписать» в полосе выделения. */
-  const signSelectedRows = useCallback(async () => {
-    if (selectedRows.length === 0) return;
-    const signed = await signRows(selectedRows.map((rowId) => ({ rowId })));
+  async function signSelectedRows() {
+    if (!canSign || selectedRows.length === 0) return;
+    const selected = config.rows.filter(row => selectedRows.includes(row.id) && !allCommissionMembersAssessed(row, config.commissionMembers));
+    const needsComment = selected.find(row => brakerageCommentRequired(row.organoleptic));
+    if (needsComment) {
+      openEditRow({ ...needsComment, note: "" });
+      setSignAsMember(true);
+      return;
+    }
+    if (!selected.length) { setSelectedRows([]); return; }
+    const signed = await signRows(selected.map(row => ({ rowId: row.id })));
     if (signed === null) return;
     setSelectedRows([]);
-    toast.success(`Подписано строк: ${signed}`);
-  }, [selectedRows, signRows]);
+    toast.success(t("commission.signedRows", { count: signed }));
+  }
 
   // Блюда с телефонов (QR) и подписи комиссии появляются здесь сами:
   // живое событие «журнал изменился» → перечитать строки документа.
@@ -627,11 +646,12 @@ export function FinishedProductDocumentClient({
   });
 
   // Карточки (телефон, Mini App) — те же колонки и подписи, что у таблицы.
-  const cardColumns = resolveColumns("finished_product", config);
-  const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
+  const cardColumns = resolveColumns("finished_product", config).map(column => finishedColumn(column, config, t));
+  const queueRows = canSign ? config.rows.filter(row => !allCommissionMembersAssessed(row, config.commissionMembers)) : config.rows;
+  const cardItems: RecordCardItem[] = queueRows.map((row, index) => ({
     id: row.id,
     title: `№${index + 1} · ${row.productName || "—"}`,
-    subtitle: row.productionDateTime || undefined,
+    subtitle: finishedCell(row, "production", config, t) || undefined,
     // Тап по карточке открывает ту же модалку, что и строка таблицы.
     onClick: readOnly ? undefined : () => openEditRow(row),
     leading: !readOnly ? (
@@ -655,8 +675,8 @@ export function FinishedProductDocumentClient({
         value: column.custom
           ? customCellValue(row, column.key)
           : column.key === "signatures" && hasCommission(config) && normalizeRowSignatures(row.signatures).length === 0
-            ? "Ждёт подписи комиссии"
-            : finishedProductCellText(row, column.key),
+            ? t("commission.waiting")
+            : finishedCell(row, column.key, config, t, { fallbackSignatureName }),
         hideIfEmpty: column.key !== "release",
       })),
   }));
@@ -788,7 +808,7 @@ export function FinishedProductDocumentClient({
    * (14 и 13) с заголовками в 2-3 строки, «Разрешение к реализации»
    * ~150px (13). Раньше ФИО-колонки были по 18 и съедали органолептику.
    */
-  const resolvedColumns = useMemo(() => resolveColumns("finished_product", config), [config]);
+  const resolvedColumns = useMemo(() => resolveColumns("finished_product", config).map(column => finishedColumn(column, config, t)), [config, t]);
   const columnByKey = useMemo(
     () => new Map(resolvedColumns.map((column) => [column.key, column])),
     [resolvedColumns]
@@ -879,8 +899,8 @@ export function FinishedProductDocumentClient({
     <>
       {leading}
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время изготовления</Label>
-              <DateTimePair dateLabel="Дата изготовления" timeLabel="Время изготовления" value={draftRow.productionDateTime} onChange={setProductionByUser} />
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.production")}</Label>
+              <DateTimePair dateLabel={t("fields.productionDate")} timeLabel={t("fields.productionTime")} value={draftRow.productionDateTime} onChange={setProductionByUser} />
               <QuickTimeChips
                 value={draftRow.productionDateTime}
                 offsets={PRODUCTION_OFFSETS}
@@ -888,7 +908,7 @@ export function FinishedProductDocumentClient({
               />
               {productionTimeAuto && !editingRowId ? (
                 <p className="text-[11.5px] leading-snug text-[#6f7282]" data-testid="production-time-menu-hint">
-                  Время изготовления — из меню «{draftRow.productName}». Исправьте, если сегодня иначе.
+                  {t("hints.menuTime", { menu: draftRow.productName })}
                 </p>
               ) : null}
               {chainTimes ? (
@@ -897,18 +917,18 @@ export function FinishedProductDocumentClient({
                   data-testid="brakerage-chain-caption"
                   aria-live="polite"
                 >
-                  {brakerageChainCaption({
+                  {finishedChainCaption({
                     productionDateTime: draftRow.productionDateTime,
                     releaseAllowed: draftRow.releaseAllowed,
                     offsets: config.timeDefaults,
-                  })}
+                  }, t)}
                 </p>
               ) : null}
             </div>
             {!chainTimes ? (
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Время снятия бракеража</Label>
-              <DateTimePair dateLabel="Дата снятия бракеража" timeLabel="Время снятия бракеража" value={draftRow.rejectionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, rejectionTime: next }))} />
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.rejection")}</Label>
+              <DateTimePair dateLabel={t("fields.rejectionDate")} timeLabel={t("fields.rejection")} value={draftRow.rejectionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, rejectionTime: next }))} />
               <QuickTimeChips
                 value={draftRow.rejectionTime}
                 onChange={(next) =>
@@ -920,17 +940,17 @@ export function FinishedProductDocumentClient({
                       addMinutesToLocalDateTime(next, config.timeDefaults.releaseAfterRejectionMinutes) || next,
                   }))
                 }
-                nowLabel={`Сейчас (разрешение — через ${config.timeDefaults.releaseAfterRejectionMinutes} мин)`}
+                nowLabel={t("time.nowRelease", { minutes: config.timeDefaults.releaseAfterRejectionMinutes })}
               />
             </div>
             ) : null}
             {withProductName ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Наименование изделия</Label>
-                <SuggestInput ariaLabel="Наименование изделия" value={draftRow.productName} options={productOptions} onChange={pickProductName} />
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.product")}</Label>
+                <SuggestInput ariaLabel={t("fields.product")} value={draftRow.productName} options={productOptions} onChange={pickProductName} />
                 {/* Последние блюда — одним касанием, без открытия списка. */}
                 {productOptions.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5" aria-label="Недавние наименования">
+                  <div className="flex flex-wrap gap-1.5" aria-label={t("fields.recentNames")}>
                     {productOptions.slice(0, 6).map((name) => {
                       const current = draftRow.productName === name;
                       return (
@@ -954,7 +974,7 @@ export function FinishedProductDocumentClient({
               </div>
             ) : null}
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Органолептическая оценка</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.organoleptic")}</Label>
               <Select
                 value={organolepticSelectValue}
                 onValueChange={(next) => {
@@ -964,25 +984,25 @@ export function FinishedProductDocumentClient({
                     return;
                   }
                   setOrganolepticCustom(false);
-                  setDraftRow((prev) => ({ ...prev, organoleptic: next }));
+                  setDraftRow((prev) => ({ ...prev, organoleptic: next, releaseAllowed: aggregateBrakerageAssessment(normalizeRowSignatures(prev.signatures), next).releaseAllowed }));
                 }}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]" aria-label="Органолептическая оценка">
-                  <SelectValue placeholder="— Выберите оценку —" />
+                <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]" aria-label={t("fields.organoleptic")}>
+                  <SelectValue placeholder={t("fields.chooseGrade")} />
                 </SelectTrigger>
                 <SelectContent>
                   {organolepticOptions.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                    <SelectItem key={option} value={option}>{finishedGrade(option, config, t)}</SelectItem>
                   ))}
-                  <SelectItem value={ORGANOLEPTIC_CUSTOM}>Своя формулировка…</SelectItem>
+                  <SelectItem value={ORGANOLEPTIC_CUSTOM}>{t("fields.customGrade")}</SelectItem>
                 </SelectContent>
               </Select>
               {organolepticSelectValue === ORGANOLEPTIC_CUSTOM ? (
                 <Input
                   className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                   value={draftRow.organoleptic}
-                  placeholder="Например: соответствует требованиям"
-                  aria-label="Своя формулировка оценки"
+                  placeholder={t("fields.customGradeHint")}
+                  aria-label={t("fields.customGradeLabel")}
                   autoFocus
                   onChange={(e) => setDraftRow((prev) => ({ ...prev, organoleptic: e.target.value }))}
                 />
@@ -990,7 +1010,7 @@ export function FinishedProductDocumentClient({
             </div>
             {isColumnVisible("temp") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("temp", "T°C внутри продукта")}</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("temp", t("fields.temperature"))}</Label>
                 <Input
                   className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                   value={draftRow.productTemp}
@@ -1001,21 +1021,21 @@ export function FinishedProductDocumentClient({
                 />
                 {productTempAuto && draftRow.productTemp.trim() !== "" ? (
                   <p className="text-[11.5px] leading-snug text-[#6f7282]" data-testid="product-temp-auto-hint">
-                    По прошлой записи «{draftRow.productName}». Исправьте, если сегодня иначе.
+                    {t("hints.previous", { name: draftRow.productName })}
                   </p>
                 ) : null}
               </div>
             ) : null}
             {withPortion && isColumnVisible("portion") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Вес выход, г</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.portion")}</Label>
                 <Input
                   className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                   value={draftRow.portionWeight}
                   inputMode="decimal"
                   maxLength={20}
-                  placeholder="Например: 150 или 200/10"
-                  aria-label="Вес выход, г"
+                  placeholder={t("fields.portionExample")}
+                  aria-label={t("fields.portion")}
                   onChange={(e) => {
                     setPortionAuto(false);
                     setDraftRow((prev) => ({ ...prev, portionWeight: e.target.value }));
@@ -1023,32 +1043,32 @@ export function FinishedProductDocumentClient({
                 />
                 <p className="text-[11.5px] leading-snug text-[#6f7282]" data-testid={portionAuto ? "portion-menu-hint" : undefined}>
                   {portionAuto && draftRow.portionWeight.trim() !== ""
-                    ? `Выход — из меню «${draftRow.productName}». Исправьте, если сегодня иначе.`
-                    : columnLabel("portion", "Результат взвешивания порционных блюд")}
+                    ? t("hints.menuPortion", { menu: draftRow.productName })
+                    : columnLabel("portion", t("fields.portionResult"))}
                 </p>
               </div>
             ) : null}
-            {isColumnVisible("note") ? (
+            {isColumnVisible("note") || brakerageCommentRequired(draftRow.organoleptic) ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("note", "Примечание")}</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("note", t("fields.note"))}{brakerageCommentRequired(draftRow.organoleptic) ? " *" : ""}</Label>
                 <Input
                   className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                   value={draftRow.note}
                   maxLength={500}
-                  aria-label="Примечание"
-                  onChange={(e) => setDraftRow((prev) => ({ ...prev, note: e.target.value }))}
+                  aria-label={t("fields.note")}
+                  onChange={(e) => { setDraftNoteEdited(true); setDraftRow((prev) => ({ ...prev, note: e.target.value })); }}
                 />
               </div>
             ) : null}
             {isColumnVisible("oxygen") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("oxygen", "Остаточный уровень кислорода, % об.")}</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("oxygen", t("fields.oxygen"))}</Label>
                 <Input className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" value={draftRow.oxygenLevel} onChange={(e) => setDraftRow((prev) => ({ ...prev, oxygenLevel: e.target.value }))} />
               </div>
             ) : null}
             {isColumnVisible("corrective") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("corrective", "Корректирующие действия")}</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("corrective", t("fields.corrective"))}</Label>
                 <Textarea className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]" value={draftRow.correctiveAction} onChange={(e) => setDraftRow((prev) => ({ ...prev, correctiveAction: e.target.value }))} />
               </div>
             ) : null}
@@ -1057,52 +1077,26 @@ export function FinishedProductDocumentClient({
                 карточке, ни на печати. */}
             {isColumnVisible("release_allowed") || isColumnVisible("release") ? (
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Разрешение к реализации</Label>
-              {/* Выбранный вариант — заливка + галочка + кольцо; невыбранный —
-                  белый с рамкой. Раньше оба были цветными, и было не понятно,
-                  какой из них нажат. */}
-              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Разрешение к реализации">
-                {(
-                  [
-                    ["yes", "Разрешено", "#136b2a", "rgba(19,107,42,0.18)"],
-                    ["no", "Не разрешено", "#d2453d", "rgba(210,69,61,0.18)"],
-                  ] as const
-                ).map(([value, label, fg, ring]) => {
-                  const active = draftRow.releaseAllowed === value;
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      onClick={() => setDraftRow((prev) => ({ ...prev, releaseAllowed: value }))}
-                      className={`flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3.5 text-[14px] font-medium transition-all duration-150 ${active ? "border-transparent text-white shadow-[0_8px_20px_-10px_rgba(11,16,36,0.35)]" : "border-[#dcdfed] bg-white text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"}`}
-                      style={active ? { backgroundColor: fg, boxShadow: `0 0 0 4px ${ring}` } : undefined}
-                    >
-                      {active ? <Check className="size-4" strokeWidth={3} /> : null}
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.release")}</Label>
+              <p className="rounded-xl bg-[#f5f6ff] px-3 py-2 text-[14px] font-semibold" data-auto-release>{t(draftRow.releaseAllowed === "no" ? "fields.notAllowed" : "fields.allowed")}</p>
             </div>
             ) : null}
             {!chainTimes ? (
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время разрешения</Label>
-              <DateTimePair dateLabel="Дата разрешения" timeLabel="Время разрешения" value={draftRow.releasePermissionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, releasePermissionTime: next }))} />
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("fields.releaseDateTime")}</Label>
+              <DateTimePair dateLabel={t("fields.releaseDate")} timeLabel={t("fields.releaseTime")} value={draftRow.releasePermissionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, releasePermissionTime: next }))} />
             </div>
             ) : null}
             {isColumnVisible("courier") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("courier", "Дата и время передачи блюд курьеру")}</Label>
-                <DateTimePair dateLabel="Дата передачи курьеру" timeLabel="Время передачи курьеру" value={draftRow.courierTransferTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, courierTransferTime: next }))} />
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("courier", t("fields.courierDateTime"))}</Label>
+                <DateTimePair dateLabel={t("fields.courierDate")} timeLabel={t("fields.courierTime")} value={draftRow.courierTransferTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, courierTransferTime: next }))} />
               </div>
             ) : null}
             {isColumnVisible("responsible") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("responsible", "Ответственный исполнитель")}</Label>
-                <SuggestInput ariaLabel="Ответственный исполнитель" value={draftRow.responsiblePerson} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, responsiblePerson: next }))} />
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("responsible", t("people.performer"))}</Label>
+                <SuggestInput ariaLabel={t("people.performer")} value={draftRow.responsiblePerson} options={personOptions} placeholder={t("people.choose")} onChange={(next) => setDraftRow((prev) => ({ ...prev, responsiblePerson: next }))} />
               </div>
             ) : null}
             {/* При составе комиссии бракераж подписывают её члены своим входом
@@ -1111,23 +1105,22 @@ export function FinishedProductDocumentClient({
             {withCommission ? (
               withProductName ? (
                 <div className="space-y-2" data-testid="commission-row-status">
-                  <Label className="text-[13px] font-medium text-[#3c4053]">Комиссия</Label>
+                  <Label className="text-[13px] font-medium text-[#3c4053]">{t("commission.title")}</Label>
                   <ul className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-[#fafbff]">
                     {draftCommissionStatus.map((member) => (
                       <li key={member.id} className="flex items-center gap-3 px-3.5 py-2.5">
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13.5px] font-medium text-[#0b1024]">{member.employeeName}</div>
-                          <div className="truncate text-[12px] text-[#6f7282]">{member.role}</div>
+                          <div className="truncate text-[12px] text-[#6f7282]">{commissionRoleLabel(member, commissionRoleLabels)}</div>
                         </div>
                         {member.signed ? (
                           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]">
                             <Check className="size-3.5" strokeWidth={3} />
-                            подписал{member.journalTime ? ` · ${member.journalTime}` : ""}
+                            {t("commission.signed")}{member.journalTime ? ` · ${member.journalTime}` : ""}
                           </span>
                         ) : (
                           <span className="inline-flex shrink-0 rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#7a4a00]">
-                            ждёт подписи
-                          </span>
+                            {t("commission.pending")}</span>
                         )}
                       </li>
                     ))}
@@ -1139,30 +1132,27 @@ export function FinishedProductDocumentClient({
                         onCheckedChange={(value) => {
                           const next = value === true;
                           setSignAsMember(next);
-                          // Подпись ставится с «допущено» — выбор в окне тот же.
-                          if (next) setDraftRow((prev) => ({ ...prev, releaseAllowed: "yes" }));
+                          if (next && brakerageCommentRequired(draftRow.organoleptic) && !draftNoteEdited) setDraftRow(previous => ({ ...previous, note: "" }));
                         }}
                         className="mt-0.5 size-5"
-                        aria-label="Подписываю как член комиссии (допущено)"
+                        aria-label={t("commission.signAsMember")}
                       />
                       <span className="min-w-0">
-                        <span className="block text-[13.5px] font-medium text-[#0b1024]">Подписываю как член комиссии (допущено)</span>
+                        <span className="block text-[13.5px] font-medium text-[#0b1024]">{t("commission.signAsMember")}</span>
                         <span className="block text-[12px] leading-snug text-[#6f7282]">
-                          После сохранения под блюдом появится ваша подпись — в журнале на минуту позже времени бракеража. Строка будет закрыта.
-                        </span>
+                          {t("commission.signHint")}</span>
                       </span>
                     </label>
                   ) : (
                     <p className="text-[12px] leading-snug text-[#6f7282]">
-                      Члены комиссии подписывают блюдо сами — по QR журнала (PIN) или галочкой в этом окне.
-                    </p>
+                      {t("commission.memberHint")}</p>
                   )}
                 </div>
               ) : null
             ) : isColumnVisible("inspector") ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{config.inspectorMode === "commission_signatures" ? "Подписи членов комиссии" : "Лицо, проводившее бракераж"}</Label>
-                <SuggestInput ariaLabel="Лицо, проводившее бракераж" value={draftRow.inspectorName} options={signerOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
+                <Label className="text-[13px] font-medium text-[#3c4053]">{config.inspectorMode === "commission_signatures" ? t("commission.signatures") : t("people.inspector")}</Label>
+                <SuggestInput ariaLabel={t("people.inspector")} value={draftRow.inspectorName} options={signerOptions} placeholder={t("people.choose")} onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
               </div>
             ) : null}
             {/* Свои колонки организации — и в окне строки: на телефоне
@@ -1200,6 +1190,7 @@ export function FinishedProductDocumentClient({
   };
 
   const headerMenu = useColumnHeaderMenu({
+    presentColumn: column => finishedColumn(column, config, t),
     code: "finished_product",
     config: config as unknown as Record<string, unknown>,
     enabled: !readOnly,
@@ -1242,7 +1233,7 @@ export function FinishedProductDocumentClient({
       startTransition(() => router.refresh());
       return true;
     } catch {
-      toast.error("Не удалось сохранить журнал");
+      toast.error(t("errors.saveJournal"));
       return false;
     } finally {
       setIsSaving(false);
@@ -1250,6 +1241,11 @@ export function FinishedProductDocumentClient({
   }
 
   function updateRow(id: string, patch: Partial<FinishedProductDocumentRow>) {
+    if (patch.organoleptic) {
+      const row = config.rows.find(row => row.id === id);
+      const assessment = aggregateBrakerageAssessment(normalizeRowSignatures(row?.signatures), patch.organoleptic);
+      patch = { ...patch, releaseAllowed: assessment.releaseAllowed, ...(assessment.releaseAllowed === "no" ? { releasePermissionTime: "" } : {}) };
+    }
     commitConfig({
       ...config,
       rows: config.rows.map((row) => (row.id === id ? { ...row, ...patch } : row)),
@@ -1258,17 +1254,16 @@ export function FinishedProductDocumentClient({
 
   /** Поля, которые имеет смысл менять у нескольких строк сразу. */
   const applyFields: ApplyToSelectedField[] = [
-    { key: "rejectionTime", label: columnLabel("rejection", "Время снятия бракеража"), type: "time" },
-    { key: "organoleptic", label: columnLabel("organoleptic", "Органолептическая оценка"), type: "select", options: organolepticOptions.map((value) => ({ value, label: value })) },
-    { key: "releaseAllowed", label: columnLabel("release", "Разрешение к реализации"), type: "select", options: [{ value: "yes", label: "Разрешено" }, { value: "no", label: "Не разрешено" }] },
-    { key: "releasePermissionTime", label: "Время разрешения к реализации", type: "time" },
-    { key: "portionWeight", label: "Вес выход, г", type: "text" },
-    { key: "courierTransferTime", label: columnLabel("courier", "Время передачи блюд курьеру"), type: "time" },
-    { key: "responsiblePerson", label: columnLabel("responsible", "Ответственный исполнитель"), type: "text", suggestions: personOptions },
+    { key: "rejectionTime", label: columnLabel("rejection", t("fields.rejection")), type: "time" },
+    { key: "organoleptic", label: columnLabel("organoleptic", t("fields.organoleptic")), type: "select", options: organolepticOptions.map((value) => ({ value, label: finishedGrade(value, config, t) })) },
+    { key: "releasePermissionTime", label: t("fields.releasePermissionTime"), type: "time" },
+    { key: "portionWeight", label: t("fields.portion"), type: "text" },
+    { key: "courierTransferTime", label: columnLabel("courier", t("fields.courierFull")), type: "time" },
+    { key: "responsiblePerson", label: columnLabel("responsible", t("people.performer")), type: "text", suggestions: personOptions },
     // С комиссией проверяющего не вписывают: подписи ставят её члены сами.
     ...(withCommission
       ? []
-      : [{ key: "inspectorName", label: columnLabel("inspector", "Лицо, проводившее бракераж"), type: "text", suggestions: signerOptions } as const]),
+      : [{ key: "inspectorName", label: columnLabel("inspector", t("people.inspector")), type: "text", suggestions: signerOptions } as const]),
   ];
 
   /** Поля «дата время»: из окна приходит только ЧЧ:ММ — дата берётся из строки (иначе сегодня). */
@@ -1297,11 +1292,12 @@ export function FinishedProductDocumentClient({
     };
     setConfig(nextConfig);
     await saveConfig(nextConfig);
-    toast.success(`Изменено строк: ${selectedRows.length}`);
+    toast.success(t("actions.changed", { count: selectedRows.length }));
   }
 
   /** Копия выделенных строк с временем «сейчас» — повторная партия того же блюда. */
   async function repeatSelectedRows() {
+    if (canSign) return;
     if (readOnly || selectedRows.length === 0) return;
     const copies = config.rows
       .filter((row) => selectedRows.includes(row.id))
@@ -1325,7 +1321,7 @@ export function FinishedProductDocumentClient({
     setConfig(nextConfig);
     await saveConfig(nextConfig);
     setSelectedRows(copies.map((row) => row.id));
-    toast.success(copies.length > 1 ? `Добавлено копий: ${copies.length}` : `Повторено: ${copies[0]?.productName || "строка"}`);
+    toast.success(copies.length > 1 ? t("actions.copied", { count: copies.length }) : t("actions.repeated", { name: copies[0]?.productName || t("actions.rowFallback") }));
   }
 
   async function removeSelectedRows() {
@@ -1338,22 +1334,23 @@ export function FinishedProductDocumentClient({
       (row) => selectedRows.includes(row.id) && normalizeRowSignatures(row.signatures).length > 0
     ).length;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные записи?",
-      description: "Записи бракеража исчезнут из журнала после сохранения.",
+      locale,
+      title: t("actions.deleteTitle"),
+      description: t("actions.deleteDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("actions.delete"),
       bullets: [
-        { label: `Записей будет удалено: ${selectedRows.length}`, tone: "warn" },
+        { label: t("actions.deleteCount", { count: selectedRows.length }), tone: "warn" },
         ...(signedCount > 0
-          ? [{ label: `Подписано комиссией: ${signedCount} — подписи останутся в журнале подписей`, tone: "warn" as const }]
+          ? [{ label: t("actions.deleteSigned", { count: signedCount }), tone: "warn" as const }]
           : []),
         names.length > 0
           ? {
-              label: `Изделия: ${names.slice(0, 4).join(", ")}${names.length > 4 ? " и др." : ""}`,
+              label: t("actions.products", { names: names.slice(0, 4).join(", "), more: names.length > 4 ? ` ${t("actions.more")}` : "" }),
               tone: "info" as const,
             }
-          : { label: "У выбранных записей не заполнено наименование", tone: "info" as const },
-        { label: `Останется записей: ${config.rows.length - selectedRows.length}`, tone: "default" },
+          : { label: t("actions.unnamedSelection"), tone: "info" as const },
+        { label: t("actions.remaining", { count: config.rows.length - selectedRows.length }), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -1367,19 +1364,21 @@ export function FinishedProductDocumentClient({
   /** «Добавить несколько изделий» — пачка пустых строк. */
   async function addSeveralRows() {
     const raw = await promptAsync({
-      title: "Добавить несколько изделий",
+      locale,
+      title: t("actions.addSeveral"),
       description:
-        "В таблицу добавятся пустые строки с текущей датой и временем — останется только вписать наименования.",
-      label: "Сколько строк добавить",
+        t("actions.addSeveralHint"),
+      label: t("actions.howMany"),
       type: "number",
       defaultValue: "3",
       placeholder: "3",
-      confirmLabel: "Добавить",
+      confirmLabel: t("actions.add"),
+      cancelLabel: t("actions.cancel"),
       validate: (value) => {
         const count = Number(value);
-        if (!value.trim()) return "Введите число";
-        if (!Number.isInteger(count) || count <= 0) return "Нужно целое число больше нуля";
-        if (count > BULK_ROWS_MAX) return `За один раз можно добавить не больше ${BULK_ROWS_MAX} строк`;
+        if (!value.trim()) return t("actions.enterNumber");
+        if (!Number.isInteger(count) || count <= 0) return t("actions.positiveInteger");
+        if (count > BULK_ROWS_MAX) return t("actions.maxRows", { count: BULK_ROWS_MAX });
         return null;
       },
     });
@@ -1397,10 +1396,11 @@ export function FinishedProductDocumentClient({
 
   /** «Добавить списком» — таблица «Наименование | Выход»: строка таблицы = строка журнала. */
   function addRowsFromTable() {
+    if (canSign) return;
     const items = dishYieldRowsToAdd(bulkRows);
     if (items.length === 0) return;
     if (items.length > BULK_ROWS_MAX) {
-      toast.error(`За один раз можно добавить не больше ${BULK_ROWS_MAX} строк`);
+      toast.error(t("actions.maxRows", { count: BULK_ROWS_MAX }));
       return;
     }
     const withYield = isColumnVisible("portion");
@@ -1426,7 +1426,7 @@ export function FinishedProductDocumentClient({
     void dishSuggestions.remember(items.map((item) => item.name));
     setBulkRows(emptyBulkDishRows(BULK_TABLE_START_ROWS));
     setBulkOpen(false);
-    toast.success(`Добавлено строк: ${items.length}`);
+    toast.success(t("actions.added", { count: items.length }));
   }
 
   /** Время бракеража = изготовление + N1, разрешение = бракераж + N2 («Константы времени»). */
@@ -1442,6 +1442,8 @@ export function FinishedProductDocumentClient({
   }
 
   function openAddRow() {
+    if (canSign) return;
+    setDraftNoteEdited(false);
     setEditingRowId(null);
     setOrganolepticCustom(false);
     setProductTempAuto(false);
@@ -1454,12 +1456,13 @@ export function FinishedProductDocumentClient({
   /** Правка существующей строки — та же модалка, засеянная её значениями. */
   function openEditRow(row: FinishedProductDocumentRow) {
     if (readOnly) return;
+    setDraftNoteEdited(false);
     setEditingRowId(row.id);
     setOrganolepticCustom(false);
     setProductTempAuto(false);
     resetMenuAuto();
-    setDraftRow({ ...row });
-    setSignAsMember(false);
+    setDraftRow({ ...row, ...(canSign ? { note: "" } : {}) });
+    setSignAsMember(canSign);
     setAddModalOpen(true);
   }
 
@@ -1488,6 +1491,19 @@ export function FinishedProductDocumentClient({
    * только наименование.
    */
   async function saveDraftRow(options: { keepOpen?: boolean } = {}) {
+    const fields = document.querySelectorAll<HTMLInputElement>("[data-time-digits], [data-brakerage-date]");
+    for (const field of fields) if (!field.reportValidity()) return;
+    if (brakerageCommentRequired(draftRow.organoleptic) && !draftRow.note.trim()) { toast.error("Добавьте комментарий к оценке блюда"); return; }
+    if (signAsMember && brakerageCommentRequired(draftRow.organoleptic) && !draftNoteEdited) { toast.error("Введите свой комментарий к оценке блюда"); return; }
+    if (canSign && !editingRowId) return;
+    if (signAsMember && canSign && withCommission) {
+      const signed = await signRows([{ rowId: draftRow.id, grade: draftRow.organoleptic, note: draftNoteEdited ? draftRow.note : "", rejectionTime: brakerageTimeDigits(draftRow.rejectionTime) }]);
+      if (signed === null) return;
+      toast.success(t("commission.signedDish", { name: draftRow.productName || t("commission.dishFallback") }));
+      setSignAsMember(false);
+      setAddModalOpen(false);
+      return;
+    }
     // Новая строка: бракераж и разрешение — цепочкой от изготовления.
     const savedRow = editingRowId ? draftRow : withChainedTimes(draftRow);
     const nextConfig = {
@@ -1497,13 +1513,7 @@ export function FinishedProductDocumentClient({
         : [...config.rows, savedRow],
     };
     setConfig(nextConfig);
-    const saved = await saveConfig(nextConfig);
-    // «Подписываю как член комиссии»: строка уже на сервере — подпись тем же
-    // эндпоинтом, что «Подписать выбранные», с «допущено».
-    if (saved && signAsMember && canSign && withCommission) {
-      const signed = await signRows([{ rowId: draftRow.id, releaseAllowed: "yes" }]);
-      if (signed !== null) toast.success(`Подписано: ${draftRow.productName || "блюдо"}`);
-    }
+    if (!await saveConfig(nextConfig)) return;
     setSignAsMember(false);
     void dishSuggestions.remember(
       [draftRow.productName],
@@ -1512,7 +1522,7 @@ export function FinishedProductDocumentClient({
     setProductTempAuto(false);
     setPortionAuto(false);
     if (options.keepOpen && !editingRowId) {
-      toast.success(`Записано: ${draftRow.productName || "без названия"}. Следующее изделие.`);
+      toast.success(t("actions.recordedNext", { name: draftRow.productName || t("actions.noName") }));
       setDraftRow({
         ...createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions),
         productionDateTime: draftRow.productionDateTime,
@@ -1544,7 +1554,7 @@ export function FinishedProductDocumentClient({
   return (
     <div className="text-black">
       <FocusTodayScroller
-        onCreate={!readOnly ? () => openAddRow() : undefined}
+        onCreate={!readOnly && !canSign ? () => openAddRow() : undefined}
       />
       {/* Q3: белая карточка-призрак (`rounded-[28px] shadow-sm py-5 sm:py-7`)
           вокруг шапки убрана — она давала под H1 пустой бордюр ~99px,
@@ -1553,14 +1563,14 @@ export function FinishedProductDocumentClient({
           className={DOC_TITLE_ROW_NO_STRIP_CLASS}
           backHref="/journals/finished_product"
           documentId={documentId}
-          heading={<h1 className={DOC_HEADING_CLASS}>{title}</h1>}
+          heading={<h1 className={DOC_HEADING_CLASS}>{displayTitle}</h1>}
           onSettings={!readOnly ? () => setSettingsOpen(true) : undefined}
           menuItems={
             !readOnly
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("actions.finish"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => void closeAction.closeDocument(),
                     disabled: closeAction.isClosing,
@@ -1579,14 +1589,14 @@ export function FinishedProductDocumentClient({
                 (row) => row.productionDateTime.slice(0, 10) === todayKey
               ).length
             }
-            label="запись бракеража за сегодня"
+            label={t("empty.todayRecord")}
           />
         </div>
       ) : null}
 
       {readOnly ? (
         <div className="mb-6">
-          <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи бракеража." documentId={documentId} />
+          <JournalClosedBanner hint={t("empty.closed")} documentId={documentId} />
         </div>
       ) : null}
 
@@ -1604,26 +1614,26 @@ export function FinishedProductDocumentClient({
       <div className={`${DOC_BODY_STACK_CLASS} ${DOC_PAPER_CANVAS_CLASS}`}>
 
 
-        {!readOnly && <div className={DOC_ADD_ROW_CLASS}>
+        {!readOnly && !canSign && <div className={DOC_ADD_ROW_CLASS}>
           <ResponsiveMenu
-            title="Добавить"
+            title={t("actions.add")}
             align="start"
             items={[
               {
                 key: "add-product",
-                label: "Добавить изделие",
+                label: t("actions.addProduct"),
                 icon: <Plus className="size-4 text-[#6f7282]" />,
                 onSelect: () => openAddRow(),
               },
               {
                 key: "add-several",
-                label: "Добавить несколько изделий",
+                label: t("actions.addSeveral"),
                 icon: <Plus className="size-4 text-[#6f7282]" />,
                 onSelect: () => void addSeveralRows(),
               },
               {
                 key: "add-bulk-list",
-                label: "Добавить списком",
+                label: t("actions.bulk"),
                 icon: <ListPlus className="size-4 text-[#6f7282]" />,
                 onSelect: () => {
                   setBulkRows(emptyBulkDishRows(BULK_TABLE_START_ROWS));
@@ -1632,20 +1642,20 @@ export function FinishedProductDocumentClient({
               },
             ]}
             trigger={
-              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]"><Plus className="size-5" strokeWidth={2.5} />Добавить<ChevronDown className="size-4" /></Button>
+              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]"><Plus className="size-5" strokeWidth={2.5} />{t("actions.add")}<ChevronDown className="size-4" /></Button>
             }
           />
           {/* Тот же обработчик, что у пункта «Добавить изделие» в дропдауне —
               на эталоне это отдельная кнопка рядом. */}
-          <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" onClick={() => openAddRow()}><Plus className="size-5" strokeWidth={2.5} />Добавить изделие</Button>
-          <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setCatalogOpen(true)}>Редактировать список изделий</Button>
+          <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" onClick={() => openAddRow()}><Plus className="size-5" strokeWidth={2.5} />{t("actions.addProduct")}</Button>
+          <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setCatalogOpen(true)}>{t("actions.editProductList")}</Button>
           <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setCommissionOpen(true)}>
             <Users className="size-4" />
-            Комиссия{config.commissionMembers.length > 0 ? ` · ${config.commissionMembers.length}` : ""}
+            {t("commission.title")}{config.commissionMembers.length > 0 ? ` · ${config.commissionMembers.length}` : ""}
           </Button>
           {/* Кнопки «Сохранить» нет: правки уезжают сами (см. commitConfig). */}
           {isAutoSaving || isSaving || isPending ? (
-            <span className="text-[13px] text-[#6f7282]">Сохранение…</span>
+            <span className="text-[13px] text-[#6f7282]">{t("actions.saving")}</span>
           ) : null}
         </div>}
         {responsibleLine ? (
@@ -1660,25 +1670,25 @@ export function FinishedProductDocumentClient({
               todaySummary.waiting > 0 ? "bg-[#fff8eb] text-[#9a5b00]" : "bg-[#ecfdf5] text-[#116b2a]"
             }`}
           >
-            {todaySignatureText(todaySummary, canSign)}
+            {finishedTodaySignatures(todaySummary, canSign, t)}
           </p>
         ) : null}
         <JournalSelectionBar
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
           onDelete={() => void removeSelectedRows()}
-          hint="Строки журнала будут удалены без возможности отмены"
+          hint={t("empty.deleteHint")}
         >
           <SelectionEditButton count={selectedRows.length} disabled={readOnly} onClick={() => seq.start(selectedRows)} />
           <SelectionApplyButton count={selectedRows.length} disabled={readOnly} onClick={() => setApplyOpen(true)} />
-          <SelectionRepeatButton count={selectedRows.length} disabled={readOnly} onClick={() => void repeatSelectedRows()} />
+          <SelectionRepeatButton count={selectedRows.length} disabled={readOnly || canSign} onClick={() => void repeatSelectedRows()} />
           {canSign ? <SelectionSignButton count={selectedRows.length} busy={isSigning} onClick={() => void signSelectedRows()} /> : null}
         </JournalSelectionBar>
         <ApplyToSelectedDialog open={applyOpen} onOpenChange={setApplyOpen} count={selectedRows.length} fields={applyFields} onApply={applyToSelectedRows} />
 
 
         {mobileView === "cards" ? (
-          <RecordCardsView items={cardItems} emptyLabel="Бракеража пока не зарегистрировано." />
+          <RecordCardsView items={cardItems} emptyLabel={t("empty.noInspections")} />
         ) : null}
         {headerMenu.element}
 
@@ -1706,7 +1716,7 @@ export function FinishedProductDocumentClient({
             <tbody>
               <JournalPaperHeaderRows
                 orgName={organizationName}
-                title="ЖУРНАЛ БРАКЕРАЖА ГОТОВОЙ ПИЩЕВОЙ ПРОДУКЦИИ"
+                title={t("title").toLocaleUpperCase(locale)}
                 startedAt={dateFrom}
                 finishedAt={readOnly ? dateTo : null}
                 controlPeriodicity={controlPeriodicity}
@@ -1719,7 +1729,7 @@ export function FinishedProductDocumentClient({
 
         {/* Кегль КАПС-заголовка — по эталону (finished_product-grid.png):
             ~14px bold, а не «плакат» на 30px. */}
-        <h2 className={`${DOC_CAPS_TITLE_CLASS} text-center text-[13px] font-bold uppercase leading-tight sm:text-[14px]`}>Журнал бракеража готовой пищевой продукции</h2>
+        <h2 className={`${DOC_CAPS_TITLE_CLASS} text-center text-[13px] font-bold uppercase leading-tight sm:text-[14px]`}>{t("title")}</h2>
           <table className="w-full table-fixed border-collapse text-[12.5px]">
             <colgroup>
               {/* P8: 26px, как в приёмке — служебная колонка чекбокса не
@@ -1753,13 +1763,13 @@ export function FinishedProductDocumentClient({
                   отмечает все строки листа, снятие очищает выделение. */}
               <th className={`${GRID_HEAD_CELL_CLASS} px-1 py-1.5 text-center leading-tight print:hidden`}>
                 <Checkbox
-                  checked={config.rows.length > 0 && selectedRows.length === config.rows.length}
+                  checked={queueRows.length > 0 && queueRows.every(row => selectedRows.includes(row.id))}
                   onCheckedChange={(value) =>
                     !readOnly &&
-                    setSelectedRows(value === true ? config.rows.map((row) => row.id) : [])
+                    setSelectedRows(value === true ? queueRows.map((row) => row.id) : [])
                   }
-                  disabled={readOnly || config.rows.length === 0}
-                  aria-label="Выбрать все строки"
+                  disabled={readOnly || queueRows.length === 0}
+                  aria-label={t("selection.all")}
                 />
               </th>
               {columns.map((column) => (
@@ -1770,14 +1780,14 @@ export function FinishedProductDocumentClient({
                 >
                   {column.label}
                   {column.mustFill ? (
-                    <span className="text-[#d43a2f]" title="Обязательно заполнять">
+                    <span className="text-[#d43a2f]" title={t("selection.required")}>
                       {" *"}
                     </span>
                   ) : null}
                 </th>
               ))}
             </tr></thead>
-            <tbody>{config.rows.map((row) => <tr key={row.id} data-focus-today={row.id === todayFocusRowId ? "" : undefined}>
+            <tbody>{config.rows.map((row) => <tr key={row.id} className={canSign && allCommissionMembersAssessed(row, config.commissionMembers) ? "hidden print:table-row" : undefined} data-focus-today={row.id === todayFocusRowId ? "" : undefined}>
               <td className={`${GRID_CELL_CLASS} px-1 py-1 text-center align-middle leading-tight print:hidden`}><Checkbox checked={selectedRows.includes(row.id)} onCheckedChange={(value) => !readOnly && setSelectedRows((prev) => value === true ? [...new Set([...prev, row.id])] : prev.filter((item) => item !== row.id))} disabled={readOnly} /></td>
               {columns.map((column) => (
                 <td key={column.key} className={`${GRID_CELL_CLASS} p-0.5 align-middle leading-tight`}>
@@ -1801,44 +1811,19 @@ export function FinishedProductDocumentClient({
                       employees={personOptions}
                     />
                   ) : column.key === "signatures" ? (
-                    <SignaturesCell row={row} commission={withCommission} />
+                    <SignaturesCell row={row} commission={withCommission} fallbackSignatureName={fallbackSignatureName} />
                   ) : column.key === "release" ? (
-                    <div className="flex flex-col items-center gap-0.5 py-0.5">
-                      <div className="flex flex-wrap items-center justify-center gap-1">
-                        {(["yes", "no"] as const).map((value) => (
-                          <button
-                            key={value}
-                            type="button"
-                            disabled={readOnly}
-                            onClick={() => {
-                              updateRow(row.id, { releaseAllowed: value });
-                              flushConfigSave();
-                            }}
-                            className={`whitespace-nowrap rounded-lg px-1.5 py-1 text-[11.5px] leading-none transition-colors duration-150 disabled:opacity-60 ${
-                              row.releaseAllowed === value
-                                ? value === "yes"
-                                  ? "bg-[#e9f7ee] font-semibold text-[#1f8a45]"
-                                  : "bg-[#fff2f1] font-semibold text-[#d43a2f]"
-                                : "text-[#9b9fb3] hover:bg-[#f5f6ff]"
-                            }`}
-                          >
-                            {value === "yes" ? "Разрешено" : "Не разрешено"}
-                          </button>
-                        ))}
-                      </div>
-                      {row.releaseAllowed !== "no" ? (
-                        <JournalCellInput
-                          value={row.releasePermissionTime}
-                          onChange={(event) => updateRow(row.id, { releasePermissionTime: event.target.value })}
-                          onBlur={flushConfigSave}
-                          className="rounded-none text-center"
-                          disabled={readOnly}
-                          aria-label="Время разрешения"
-                        />
-                      ) : null}
-                    </div>
+                    <div className="px-1.5 py-1 text-center text-[12px]">{finishedCell(row, "release", config, t)}</div>
+                  ) : column.key === "organoleptic" ? (
+                    <FinishedProductGradeCell value={row.organoleptic} config={config} onChange={value => {
+                      if (canSign || (brakerageCommentRequired(value) && !row.note.trim())) openEditRow({ ...row, organoleptic: value, releaseAllowed: aggregateBrakerageAssessment(normalizeRowSignatures(row.signatures), value).releaseAllowed });
+                      else updateRow(row.id, { organoleptic: value });
+                    }} onBlur={flushConfigSave} disabled={readOnly} />
+                  ) : ["production", "rejection", "courier"].includes(column.key) ? (
+                    <button type="button" className="w-full px-1.5 py-1 text-center text-[12.5px] tabular-nums" onClick={() => openEditRow(row)} disabled={readOnly}>{finishedCell(row, column.key, config, t)}</button>
                   ) : column.field ? (
                     <JournalCellInput
+                      aria-label={column.label}
                       value={row[column.field]}
                       onChange={(event) =>
                         updateRow(row.id, {
@@ -1846,35 +1831,12 @@ export function FinishedProductDocumentClient({
                         } as Partial<FinishedProductDocumentRow>)
                       }
                       onBlur={flushConfigSave}
-                      className={`rounded-none ${column.align === "center" ? "text-center" : ""}`}
+                      className={`rounded-none ${column.key === "name" ? "text-[15px] font-semibold" : ""} ${column.align === "center" ? "text-center" : ""}`}
                       disabled={readOnly}
                       list={column.list}
                     />
                   ) : (
-                    /* «Разрешение к реализации: Да/Нет» — не текст, а две
-                       кнопки: свободный ввод здесь только портил бы поле. */
-                    <div className="flex items-center justify-center gap-1 py-0.5">
-                      {(["yes", "no"] as const).map((value) => (
-                        <button
-                          key={value}
-                          type="button"
-                          disabled={readOnly}
-                          onClick={() => {
-                            updateRow(row.id, { releaseAllowed: value });
-                            flushConfigSave();
-                          }}
-                          className={`rounded-lg px-2 py-1 text-[12px] leading-none transition-colors duration-150 disabled:opacity-60 ${
-                            row.releaseAllowed === value
-                              ? value === "yes"
-                                ? "bg-[#e9f7ee] font-semibold text-[#1f8a45]"
-                                : "bg-[#fff2f1] font-semibold text-[#d43a2f]"
-                              : "text-[#9b9fb3] hover:bg-[#f5f6ff]"
-                          }`}
-                        >
-                          {value === "yes" ? "Да" : "Нет"}
-                        </button>
-                      ))}
-                    </div>
+                    <div className="px-1.5 py-1 text-center">{finishedCell(row, "release_allowed", config, t)}</div>
                   )}
                 </td>
               ))}
@@ -1894,12 +1856,12 @@ export function FinishedProductDocumentClient({
                 trailing = columns.length - 3. Сумма
                 3+1+(columns.length-3) = columns.length+1 — тот же colSpan,
                 что был раньше. */}
-            {!readOnly ? (
+            {!readOnly && !canSign ? (
               <JournalAddRow
                 leading={nameColumnIndex >= 0 ? nameColumnIndex + 1 : 1}
                 labelSpan={nameColumnIndex >= 0 ? 1 : Math.max(1, columns.length)}
                 trailing={nameColumnIndex >= 0 ? columns.length - nameColumnIndex - 1 : 0}
-                label="Добавить изделие"
+                label={t("actions.addProduct")}
                 onClick={() => openAddRow()}
               />
             ) : null}</tbody>
@@ -1915,7 +1877,7 @@ export function FinishedProductDocumentClient({
             Пустое примечание блок не рисует. */}
         {config.footerNote ? (
           <div className={`${DOC_EXTRA_BLOCK_CLASS} text-[12.5px] leading-[1.5]`}>
-            <div className="font-bold">Примечание:</div>
+            <div className="font-bold">{t("print.note")}</div>
             <div className="whitespace-pre-line">{config.footerNote}</div>
           </div>
         ) : null}
@@ -1935,13 +1897,13 @@ export function FinishedProductDocumentClient({
           >
             {/* Шеврона нет: на эталоне это обычная подчёркнутая ссылка-текст,
                 раскрытие остаётся по клику. */}
-            {FINISHED_PRODUCT_QUALITY_GUIDE_TITLE}
+            {t("qualityTitle")}
           </button>
           {guideOpen ? (
             <div className="mt-4 space-y-3 rounded-[16px] border border-[#ececf4] bg-[#fafbff] p-4 sm:p-5">
-              {QUALITY_GUIDELINES.map((item) => <p key={item} className="text-[13.5px] leading-[1.55] text-[#3c4053]">{item}</p>)}
+              {QUALITY_GUIDELINES.map((item) => <p key={item} className="text-[13.5px] leading-[1.55] text-[#3c4053]">{t(item)}</p>)}
               <div className={GRID_VIEWPORT_CLASS}>
-                <table className="w-full min-w-[520px] border-collapse text-[12.5px]"><thead><tr><th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>Группа</th><th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>Наименование продукта</th><th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>°C</th></tr></thead><tbody>{TEMPERATURE_GUIDELINES.map(([group, name, temperature]) => <tr key={group}><td className={`${GRID_CELL_CLASS} px-2 py-1 text-center font-semibold leading-tight`}>{group}</td><td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>{name}</td><td className={`${GRID_CELL_CLASS} px-2 py-1 text-center font-semibold leading-tight`}>{temperature}</td></tr>)}</tbody></table>
+                <table className="w-full min-w-[520px] border-collapse text-[12.5px]"><thead><tr><th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>{t("quality.group")}</th><th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>{t("quality.product")}</th><th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>°C</th></tr></thead><tbody>{TEMPERATURE_GUIDELINES.map(([group, name, temperature]) => <tr key={group}><td className={`${GRID_CELL_CLASS} px-2 py-1 text-center font-semibold leading-tight`}>{group}</td><td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>{t(name)}</td><td className={`${GRID_CELL_CLASS} px-2 py-1 text-center font-semibold leading-tight`}>{temperature}</td></tr>)}</tbody></table>
               </div>
             </div>
           ) : null}
@@ -1955,30 +1917,30 @@ export function FinishedProductDocumentClient({
         <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              {editingRowId ? `Изменение записи${seq.progress ? ` ${seq.progress}` : ""}` : "Добавление новой строки"}
+              {editingRowId ? t("actions.editRecord", { progress: seq.progress ? ` ${seq.progress}` : "" }) : t("actions.newRow")}
             </DialogTitle>
           </DialogHeader>
           {rowFields({ withProductName: true, chainTimes: !editingRowId })}
           <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto" onClick={closeRowModal}>Отмена</Button>
+            <Button type="button" variant="outline" className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto" onClick={closeRowModal}>{t("actions.cancel")}</Button>
             {!editingRowId ? (
               <Button
                 type="button"
                 variant="outline"
-                title="Сохранить это изделие и сразу открыть чистую строку с теми же временем, оценкой и людьми"
+                title={t("actions.saveNextHint")}
                 className="h-10 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#3848c7] shadow-none hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:w-auto"
                 onClick={() => { void saveDraftRow({ keepOpen: true }); }}
                 disabled={isSaving || !draftRow.productName.trim()}
               >
-                Сохранить и добавить ещё
-              </Button>
+                {t("actions.saveNext")}</Button>
             ) : null}
-            <Button type="button" className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto" onClick={() => { void saveDraftRow(); }} disabled={isSaving}>
-              {isSaving
-                ? "Сохранение…"
+            <Button type="button" className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto" onClick={() => { void saveDraftRow(); }} disabled={isSaving || isSigning}>
+              {isSigning ? selectionT("signing") : isSaving
+                ? t("actions.saving")
+                : signAsMember && canSign ? selectionT("sign")
                 : editingRowId
-                  ? "Сохранить"
-                  : "Добавить запись"}
+                  ? t("actions.save")
+                  : t("actions.addRecord")}
             </Button>
           </div>
         </DialogContent>
@@ -1996,8 +1958,8 @@ export function FinishedProductDocumentClient({
       <JournalSettingsModal
         open={readOnly ? false : settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Колонки таблицы и подпись внизу журнала."
+          title={t("settings.title")}
+          description={t("settings.description")}
           size="md"
           isSaving={isSaving}
           onSave={async () => {
@@ -2007,6 +1969,7 @@ export function FinishedProductDocumentClient({
           onCancel={() => setSettingsOpen(false)}
         >
           <JournalColumnsSettings
+            presentColumn={column => finishedColumn(column, config, t)}
             code="finished_product"
             config={config as unknown as Record<string, unknown>}
             canApplyToAll={canManageColumns}
@@ -2019,19 +1982,15 @@ export function FinishedProductDocumentClient({
 
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Константы времени
-            </Label>
+              {t("settings.timeDefaults")}</Label>
             <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
-              Какое время ставить в новой строке: изготовление — на {config.timeDefaults.productionMinutesAgo} мин раньше
-              момента, когда открыли окно; бракераж — через {config.timeDefaults.rejectionAfterProductionMinutes} мин после
-              изготовления; разрешение к реализации — через {config.timeDefaults.releaseAfterRejectionMinutes} мин после
-              бракеража. Время в строке всегда можно поправить вручную.
+              {t("settings.timeDescription", { production: config.timeDefaults.productionMinutesAgo, rejection: config.timeDefaults.rejectionAfterProductionMinutes, release: config.timeDefaults.releaseAfterRejectionMinutes })}
             </p>
             <div className="flex flex-wrap gap-3">
               {([
-                ["productionMinutesAgo", "Изготовление, мин назад"],
-                ["rejectionAfterProductionMinutes", "Бракераж — через N мин после изготовления"],
-                ["releaseAfterRejectionMinutes", "Разрешение к реализации — через N мин после бракеража"],
+                ["productionMinutesAgo", t("settings.productionOffset")],
+                ["rejectionAfterProductionMinutes", t("settings.rejectionOffset")],
+                ["releaseAfterRejectionMinutes", t("settings.releaseOffset")],
               ] as const).map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 text-[13px] text-[#6f7282]">
                   {label}
@@ -2056,14 +2015,9 @@ export function FinishedProductDocumentClient({
 
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Оценки
-            </Label>
+              {t("settings.grades")}</Label>
             <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
-              Варианты органолептической оценки. Пусто — стандартные:{" "}
-              {config.fieldNameMode === "semi"
-                ? "для полуфабрикатов (соответствует / требует доработки / не соответствует)"
-                : "для блюд (отлично / хорошо / удовлетворительно / неудовлетворительно)"}
-              .
+              {t("settings.gradeDescription", { options: t(config.fieldNameMode === "semi" ? "settings.semiOptions" : "settings.dishOptions") })}
             </p>
             <div className="space-y-1.5">
               {config.organolepticOptions.map((option, index) => (
@@ -2089,7 +2043,7 @@ export function FinishedProductDocumentClient({
                       }))
                     }
                     className="rounded-xl p-2 text-[#a13a32] hover:bg-[#fff4f2]"
-                    aria-label={`Удалить оценку «${option}»`}
+                    aria-label={t("settings.deleteGrade", { grade: option })}
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -2110,20 +2064,18 @@ export function FinishedProductDocumentClient({
                 }
                 className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
-                <Plus className="size-4" /> Добавить оценку
-              </button>
+                <Plus className="size-4" /> {t("settings.addGrade")}</button>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Сторонняя бракеражная комиссия
-            </Label>
+              {t("commission.external")}</Label>
             <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3 py-2.5 text-[13.5px]">
               <span className="min-w-0 flex-1 text-[#3c4053]">
                 {config.commissionMembers.length > 0
-                  ? config.commissionMembers.map((member) => `${member.employeeName} (${member.role})`).join(", ")
-                  : "Состав не задан — строки закрываются без подписи комиссии"}
+                  ? config.commissionMembers.map((member) => `${member.employeeName} (${commissionRoleLabel(member, commissionRoleLabels)})`).join(", ")
+                  : t("commission.notSet")}
               </span>
               <button
                 type="button"
@@ -2135,8 +2087,7 @@ export function FinishedProductDocumentClient({
                 }}
                 className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
-                Изменить состав
-              </button>
+                {t("commission.edit")}</button>
             </div>
           </div>
 
@@ -2144,8 +2095,7 @@ export function FinishedProductDocumentClient({
 
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Примечание под таблицей
-            </Label>
+              {t("settings.footer")}</Label>
             <Textarea
               value={config.footerNote}
               onChange={(e) =>
@@ -2175,16 +2125,14 @@ export function FinishedProductDocumentClient({
       <Dialog open={readOnly ? false : catalogOpen} onOpenChange={setCatalogOpen}>
         <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-            <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Список изделий</DialogTitle>
+            <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("catalog.title")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
             <p className="text-[13px] text-[#6f7282]">
-              Эти изделия появятся в выпадающем списке при добавлении строки журнала.
-            </p>
+              {t("catalog.description")}</p>
             {Array.from(new Set(config.itemsCatalog)).length === 0 ? (
               <p className="rounded-[14px] bg-[#f6f7fb] px-4 py-3 text-[13px] text-[#6f7282]">
-                Список пуст. Введите название изделия ниже и нажмите «+».
-              </p>
+                {t("catalog.empty")}</p>
             ) : null}
             {(() => {
               // Позиции из мастер-кабинета справочников (config.sharedCatalog) — с пометкой:
@@ -2195,8 +2143,7 @@ export function FinishedProductDocumentClient({
                 <>
                   {items.some((item) => sharedKeys.has(item.trim().toLowerCase())) ? (
                     <p className="rounded-[14px] bg-[#eef1ff] px-4 py-3 text-[13px] leading-relaxed text-[#3c4053]">
-                      Позиции с пометкой «Мастер-кабинет» присылает бэк-офис по коду справочника — меню удобнее менять там.
-                    </p>
+                      {t("catalog.masterHint")}</p>
                   ) : null}
                   {items.map((item) => (
                     <div key={item} className="flex items-center gap-2 rounded-xl border border-[#e6e6f0] px-3 py-2">
@@ -2204,21 +2151,19 @@ export function FinishedProductDocumentClient({
                       {sharedKeys.has(item.trim().toLowerCase()) ? (
                         <span
                           className="shrink-0 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]"
-                          title="Позицию прислал мастер-кабинет справочников. Если удалить её здесь, при следующей рассылке она вернётся."
+                          title={t("catalog.masterItemHint")}
                         >
-                          Мастер-кабинет
-                        </span>
+                          {t("catalog.master")}</span>
                       ) : null}
-                      <Button type="button" variant="ghost" title="Удалить изделие из списка" onClick={() => commitConfig({ ...config, itemsCatalog: config.itemsCatalog.filter((catalogItem) => catalogItem !== item) }, true)}><Trash2 className="size-4" /></Button>
+                      <Button type="button" variant="ghost" title={t("catalog.remove")} onClick={() => commitConfig({ ...config, itemsCatalog: config.itemsCatalog.filter((catalogItem) => catalogItem !== item) }, true)}><Trash2 className="size-4" /></Button>
                     </div>
                   ))}
                 </>
               );
             })()}
-            <div className="flex gap-2"><Input value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="Введите название нового изделия" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" /><Button className="h-10 rounded-lg bg-[#5566f6] px-4 text-white hover:bg-[#4a5bf0]" title="Добавить изделие в список" onClick={() => { if (!newItemName.trim()) return; commitConfig({ ...config, itemsCatalog: Array.from(new Set([...config.itemsCatalog, newItemName.trim()])) }, true); setNewItemName(""); }}><Plus className="size-4" /></Button></div>
-            <Button type="button" variant="outline" className="h-10 w-full rounded-xl border-[#dcdfed] text-[13.5px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]" onClick={() => setDirectoryOpen(true)} title="Добавить изделия из общего справочника организации">
-              <Database className="mr-1.5 size-4" /> Из справочника организации
-            </Button>
+            <div className="flex gap-2"><Input value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder={t("catalog.newPlaceholder")} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" /><Button className="h-10 rounded-lg bg-[#5566f6] px-4 text-white hover:bg-[#4a5bf0]" title={t("catalog.add")} onClick={() => { if (!newItemName.trim()) return; commitConfig({ ...config, itemsCatalog: Array.from(new Set([...config.itemsCatalog, newItemName.trim()])) }, true); setNewItemName(""); }}><Plus className="size-4" /></Button></div>
+            <Button type="button" variant="outline" className="h-10 w-full rounded-xl border-[#dcdfed] text-[13.5px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]" onClick={() => setDirectoryOpen(true)} title={t("catalog.fromOrganizationHint")}>
+              <Database className="mr-1.5 size-4" /> {t("catalog.fromOrganization")}</Button>
             <OrgDirectoryDialog
               open={directoryOpen}
               onClose={() => setDirectoryOpen(false)}
@@ -2240,10 +2185,13 @@ export function FinishedProductDocumentClient({
 function SignaturesCell({
   row,
   commission,
+  fallbackSignatureName,
 }: {
   row: FinishedProductDocumentRow;
   commission: boolean;
+  fallbackSignatureName?: string;
 }) {
+  const t = useTranslations("finishedProduct");
   const signatures = normalizeRowSignatures(row.signatures);
   if (signatures.length > 0) {
     return (
@@ -2251,9 +2199,8 @@ function SignaturesCell({
         {/* Время подписи — бракераж строки + 1 минута, как в печати. */}
         {formatRowSignatures(signatures, undefined, row)}
         {signatures.some((signature) => isSignatureOutdated(row, signature)) ? (
-          <div className="mt-0.5 text-[10.5px] text-[#b25c00]" title="Строку меняли после подписи">
-            изменено после подписи
-          </div>
+          <div className="mt-0.5 text-[10.5px] text-[#b25c00]" title={t("commission.outdatedTitle")}>
+            {t("commission.outdated")}</div>
         ) : null}
       </div>
     );
@@ -2262,11 +2209,10 @@ function SignaturesCell({
     return (
       <div className="px-1.5 py-1 text-center print:hidden">
         <span className="inline-flex rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11px] font-medium text-[#7a4a00]">
-          Ждёт подписи комиссии
-        </span>
+          {t("commission.waiting")}</span>
       </div>
     );
   }
   // Без подписей и без комиссии ячейка пустая: только настоящие подписи.
-  return <div className="px-1.5 py-1" />;
+  return <div className="px-1.5 py-1 text-center text-[12px]">{row.productName.trim() ? fallbackSignatureName : ""}</div>;
 }

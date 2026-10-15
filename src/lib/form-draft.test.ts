@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   DRAFT_TTL_MS,
   describeDraftTime,
+  getDraftTimeDescription,
   draftStorageKey,
   filledCount,
   hasMeaningfulValues,
@@ -67,5 +68,33 @@ describe("describeDraftTime", () => {
     assert.equal(describeDraftTime("2026-09-09T15:40:00.000Z", now, tz), "вчера в 18:40");
     assert.equal(describeDraftTime("2026-09-08T06:15:00.000Z", now, tz), "08.09 в 09:15");
     assert.equal(describeDraftTime("nope", now, tz), "недавно");
+  });
+});
+
+describe("getDraftTimeDescription", () => {
+  it("returns translated message keys and locale-formatted time values", () => {
+    const instant = new Date("2026-09-10T06:03:00.000Z");
+    const ru = getDraftTimeDescription(instant.toISOString(), now, "Europe/Moscow", "ru");
+    const en = getDraftTimeDescription(instant.toISOString(), now, "Europe/Moscow", "en");
+    const uz = getDraftTimeDescription(instant.toISOString(), now, "Europe/Moscow", "uz");
+    assert.equal(ru.key, "todayAt");
+    assert.equal(ru.time, "09:03");
+    assert.equal(en.key, "todayAt");
+    assert.match(en.time, /09:03/);
+    assert.equal(uz.key, "todayAt");
+    assert.match(uz.time, /09:03/);
+    assert.deepEqual(getDraftTimeDescription("invalid", now, "Europe/Moscow", "en"), { key: "recently" });
+  });
+
+  it("compares local calendar days across DST transitions and formats older dates by locale", () => {
+    const dstNow = new Date("2026-03-09T16:00:00.000Z");
+    const yesterday = getDraftTimeDescription("2026-03-09T03:30:00.000Z", dstNow, "America/New_York", "en");
+    assert.equal(yesterday.key, "yesterdayAt");
+    const older = getDraftTimeDescription("2026-03-07T17:00:00.000Z", dstNow, "America/New_York", "uz");
+    assert.equal(older.key, "dateAt");
+    if (older.key === "dateAt") {
+      assert.match(older.date, /07/);
+      assert.match(older.time, /12:00/);
+    }
   });
 });

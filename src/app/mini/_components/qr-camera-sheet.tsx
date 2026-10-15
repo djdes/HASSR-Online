@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
@@ -28,7 +30,8 @@ export function QrCameraSheet({
   /** Вернуть true, если код разобран и сканирование пора прекратить. */
   onResult: (text: string) => boolean;
 }) {
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useQrFillCopy();
+  const [error, setError] = useState<"scan.denied" | "scan.noCamera" | "scan.startError" | null>(null);
   const [starting, setStarting] = useState(false);
   const containerId = useRef(`mini-qr-${Math.random().toString(36).slice(2)}`);
 
@@ -96,10 +99,10 @@ export function QrCameraSheet({
         const text = `${name} ${String((e as { message?: string })?.message ?? e)}`;
         setError(
           /NotAllowedError|Permission|denied/i.test(text)
-            ? "Доступ к камере запрещён. Разрешите его в настройках браузера и откройте сканер снова."
+            ? "scan.denied"
             : /NotFoundError|no camera|not found/i.test(text)
-              ? "Камера не найдена."
-              : "Не удалось включить камеру.",
+              ? "scan.noCamera"
+              : "scan.startError",
         );
       }
     })();
@@ -125,16 +128,15 @@ export function QrCameraSheet({
       style={{ background: "rgba(11,16,36,0.97)" }}
       role="dialog"
       aria-modal="true"
-      aria-label="Сканирование QR-кода"
+      aria-label={t("scan.title")}
     >
       <div className="flex items-center justify-between px-4 pb-3 pt-[max(1rem,var(--mini-safe-t,0px))]">
         <span className="text-[17px] font-semibold text-white">
-          Наведите на QR-код
-        </span>
+          {t("scan.point")}</span>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Закрыть сканер"
+          aria-label={t("scan.close")}
           className="flex size-12 items-center justify-center rounded-2xl bg-white/10 text-white"
         >
           <X className="size-6" />
@@ -150,18 +152,16 @@ export function QrCameraSheet({
           />
           {starting ? (
             <p className="mt-4 text-center text-[14px] text-white/60">
-              Включаем камеру…
-            </p>
+              {t("scan.starting")}</p>
           ) : null}
           {error ? (
             <p role="alert" className="mt-4 text-center text-[14px] text-[#ff8f85]">
-              {error}
+              {t(error)}
             </p>
           ) : null}
           {!starting && !error ? (
             <p className="mt-4 text-center text-[13px] text-white/50">
-              Код на наклейке журнала или оборудования
-            </p>
+              {t("scan.hint")}</p>
           ) : null}
         </div>
       </div>

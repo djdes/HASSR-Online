@@ -2,6 +2,7 @@
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 
 import { useFabAction, useHasFabDock } from "@/components/layout/fab-dock";
@@ -40,25 +41,18 @@ type Message = {
   actionState?: "confirmed" | "cancelled";
   /** Итог выполнения («Заполнено ячеек: 12»). */
   actionResult?: string;
+  actionSucceeded?: boolean;
 };
 
-const STARTERS = [
-  "Что на этой странице?",
-  "Какая температура для холодильника готовых блюд?",
-  "Как часто менять масло во фритюре?",
-  "Что должно быть в журнале гигиены сотрудников?",
-];
+const STARTERS = ["starterPage", "starterTemperature", "starterOil", "starterHygiene"] as const;
 
 // v2: в сообщениях появились карточки действий, старый формат не читаем.
 const STORAGE_KEY = "wesetup-sanpin-chat-v2";
 
 /** Ответ через диспетчер занимает 10–60 секунд — статусы сменяются. */
-const WAIT_STAGES: Array<[number, string]> = [
-  [0, "Думаю…"],
-  [8_000, "Изучаю ваши данные…"],
-  [25_000, "Ещё немного, сверяюсь с нормативами…"],
-];
+const WAIT_STAGES = [[0, "thinking"], [8_000, "checkingData"], [25_000, "checkingRules"]] as const;
 const CLIENT_TIMEOUT_MS = 100_000;
+class AssistantRequestError extends Error {}
 
 /**
  * Floating-чат «AI помощник». Иконка в нижнем правом углу; клик —
@@ -71,12 +65,14 @@ const CLIENT_TIMEOUT_MS = 100_000;
  * ProjectsFlow, поэтому ответ занимает до минуты.
  */
 export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
+  const t = useTranslations("common.assistant");
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
-  const [waitLabel, setWaitLabel] = useState(WAIT_STAGES[0][1]);
+  const [waitLabel, setWaitLabel] = useState<(typeof WAIT_STAGES)[number][1]>(WAIT_STAGES[0][1]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
@@ -185,13 +181,13 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка AI");
+        throw new AssistantRequestError(response.status === 429 ? t("rateLimit") : response.status === 400 ? t("invalidRequest") : t("unavailable"));
       }
       setMessages((cur) => [
         ...cur,
         {
           role: "assistant",
-          content: data.reply || "(пустой ответ)",
+          content: data.reply || t("empty"),
           pendingAction: data.pendingAction ?? null,
         },
       ]);
@@ -200,16 +196,14 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
         setReplyPopup({
           id: String(Date.now()),
           threadId: null,
-          title: "ИИ-помощник ответил",
+          title: t("replied"),
           preview: previewOf(String(data.reply ?? ""), 0, 120),
           createdAt: new Date().toISOString(),
         });
       }
     } catch (err) {
       toast.error(
-        err instanceof Error && err.name !== "TimeoutError"
-          ? err.message
-          : "ИИ-помощник не ответил вовремя. Попробуйте ещё раз"
+        err instanceof AssistantRequestError ? err.message : err instanceof Error && err.name === "TimeoutError" ? t("timeout") : t("failed")
       );
       // Roll back the optimistic user message — keeps history clean.
       setMessages(messages);
@@ -236,7 +230,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
         | { ok: boolean; summary?: string; error?: string }
         | undefined;
       if (!response.ok || !result) {
-        throw new Error(data?.error ?? "Не удалось выполнить действие");
+        throw new Error(t("actionFailed"));
       }
       setMessages((cur) =>
         cur.map((m, i) =>
@@ -244,22 +238,21 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
             ? {
                 ...m,
                 actionState: "confirmed" as const,
+                actionSucceeded: result.ok,
                 actionResult: result.ok
-                  ? (result.summary ?? "Готово")
-                  : `Не выполнено: ${result.error ?? "ошибка"}`,
+                  ? (result.summary ?? t("done"))
+                  : t("actionFailedReason", { reason: result.error ?? t("actionFailed") }),
               }
             : m
         )
       );
       if (result.ok) {
-        toast.success(result.summary ?? "Готово");
+        toast.success(result.summary ?? t("done"));
       } else {
-        toast.error(result.error ?? "Не удалось выполнить действие");
+        toast.error(result.error ?? t("actionFailed"));
       }
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Не удалось выполнить действие"
-      );
+    } catch {
+      toast.error(t("actionFailed"));
     } finally {
       setConfirmBusy(false);
     }
@@ -275,14 +268,15 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
 
   async function reset() {
     const ok = await confirmAsync({
-      title: "Очистить переписку?",
+      locale,
+      title: t("resetTitle"),
       description:
-        "Все вопросы и ответы помощника с этого устройства будут стёрты.",
+        t("resetDescription"),
       bullets: [
-        { label: "Вернуть переписку нельзя", tone: "warn" },
-        { label: "Журналы и записи это не затрагивает", tone: "default" },
+        { label: t("resetWarning"), tone: "warn" },
+        { label: t("resetRecords"), tone: "default" },
       ],
-      confirmLabel: "Очистить",
+      confirmLabel: t("clear"),
       variant: "danger",
     });
     if (!ok) return;
@@ -301,8 +295,8 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
     {
       id: "sanpin-chat",
       order: 10,
-      label: "ИИ-помощник",
-      hint: "Спросить про СанПиН, ХАССП и ваши журналы",
+      label: t("title"),
+      hint: t("hint"),
       icon: Sparkles,
       tone: "brand",
       onSelect: () => setOpen(true),
@@ -329,8 +323,8 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
           onClick={() => setOpen(true)}
           style={fabBottom}
           className="fixed bottom-5 right-5 z-40 flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-[#5566f6] to-[#7a5cff] text-white shadow-[0_12px_28px_-10px_rgba(85,102,246,0.6)] transition-all hover:scale-105"
-          aria-label="ИИ-помощник по СанПиН"
-          title="ИИ-помощник"
+          aria-label={t("launcher")}
+          title={t("title")}
         >
           <Sparkles className="size-4" />
         </button>
@@ -348,10 +342,8 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                   <Bot className="size-5" />
                 </div>
                 <div>
-                  <div className="text-[15px] font-semibold">ИИ-помощник</div>
-                  <div className="text-[12px] text-white/80">
-                    СанПиН, ХАССП и ваши журналы
-                  </div>
+                  <div className="text-[15px] font-semibold">{t("title")}</div>
+                  <div className="text-[12px] text-white/80">{t("subtitle")}</div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -359,14 +351,12 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                   type="button"
                   onClick={() => void reset()}
                   className="rounded-lg px-2 py-1 text-[11px] text-white/70 hover:bg-white/10 hover:text-white"
-                >
-                  Очистить
-                </button>
+                >{t("clear")}</button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
                   className="rounded-lg p-2 text-white hover:bg-white/15"
-                  aria-label="Закрыть"
+                  aria-label={t("close")}
                 >
                   <X className="size-4" />
                 </button>
@@ -380,28 +370,20 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
             >
               {messages.length === 0 ? (
                 <div className="space-y-3 text-[13px] leading-relaxed text-[#3c4053]">
-                  <p>
-                    Я отвечу на вопросы о санитарных нормах, о вашей
-                    организации и о странице, где вы находитесь. Могу
-                    заполнить журнал или добавить сотрудника — с вашего
-                    подтверждения. Спросите, например:
-                  </p>
+                  <p>{t("intro")}</p>
                   <div className="grid gap-2">
                     {STARTERS.map((s) => (
                       <button
                         key={s}
                         type="button"
-                        onClick={() => send(s)}
+                        onClick={() => send(t(s))}
                         className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-3 py-2 text-left text-[13px] text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                       >
                         {s}
                       </button>
                     ))}
                   </div>
-                  <p className="rounded-xl bg-[#fff8eb] px-3 py-2 text-[12px] text-[#7a4a00]">
-                    Ответы ИИ — рекомендация. Окончательное решение принимает
-                    ваш технолог.
-                  </p>
+                  <p className="rounded-xl bg-[#fff8eb] px-3 py-2 text-[12px] text-[#7a4a00]">{t("advisory")}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -417,7 +399,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                   {busy ? (
                     <div className="flex items-center gap-2 text-[12px] text-[#6f7282]">
                       <Loader2 className="size-3 animate-spin" />
-                      {waitLabel}
+                      {t(waitLabel)}
                     </div>
                   ) : null}
                 </div>
@@ -437,7 +419,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ваш вопрос…"
+                  placeholder={t("question")}
                   className="h-11 flex-1 rounded-xl border border-[#dcdfed] bg-[#fafbff] px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                   disabled={busy}
                   maxLength={2000}
@@ -446,7 +428,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                   type="submit"
                   disabled={busy || !input.trim()}
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-50"
-                  aria-label="Отправить"
+                  aria-label={t("send")}
                 >
                   {busy ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -463,7 +445,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
   );
 }
 
-function MessageBubble({
+export function MessageBubble({
   message,
   confirmBusy,
   onConfirm,
@@ -474,6 +456,7 @@ function MessageBubble({
   onConfirm: (action: PendingAction) => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("common.assistant");
   const isUser = message.role === "user";
   const action = message.pendingAction;
   return (
@@ -515,18 +498,16 @@ function MessageBubble({
             {message.actionState === "confirmed" ? (
               <div
                 className={`mt-2.5 flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[12px] ${
-                  message.actionResult?.startsWith("Не выполнено")
+                  !(message.actionSucceeded ?? !message.actionResult?.startsWith("Не выполнено"))
                     ? "bg-[#fff4f2] text-[#a13a32]"
                     : "bg-[#ecfdf5] text-[#116b2a]"
                 }`}
               >
                 <Check className="size-3.5 shrink-0" />
-                {message.actionResult ?? "Готово"}
+                {message.actionResult ?? t("done")}
               </div>
             ) : message.actionState === "cancelled" ? (
-              <div className="mt-2.5 rounded-xl bg-[#f5f6ff] px-2.5 py-1.5 text-[12px] text-[#6f7282]">
-                Отменено
-              </div>
+              <div className="mt-2.5 rounded-xl bg-[#f5f6ff] px-2.5 py-1.5 text-[12px] text-[#6f7282]">{t("cancelled")}</div>
             ) : (
               <div className="mt-2.5 flex items-center gap-2">
                 <button
@@ -539,22 +520,16 @@ function MessageBubble({
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : (
                     <Check className="size-3.5" />
-                  )}
-                  Выполнить
-                </button>
+                  )}{t("execute")}</button>
                 <button
                   type="button"
                   disabled={confirmBusy}
                   onClick={onCancel}
                   className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
-                >
-                  Отмена
-                </button>
+                >{t("cancel")}</button>
               </div>
             )}
-            <p className="mt-2 text-[11px] leading-[1.4] text-[#9b9fb3]">
-              Действие выполнится только после вашего подтверждения.
-            </p>
+            <p className="mt-2 text-[11px] leading-[1.4] text-[#9b9fb3]">{t("confirmation")}</p>
           </div>
         ) : null}
       </div>

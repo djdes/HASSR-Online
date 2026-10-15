@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,7 @@ export function JournalSelectionBar({
   keepWhenEmpty = false,
   label,
 }: Props) {
+  const t = useTranslations("journalControls.selection");
   // Портал обязателен: страницы журналов лежат в full-bleed обёртке с
   // `-translate-x-1/2`, а transform у предка превращает `position: fixed`
   // в «прибит к контейнеру» — полоса уезжала при скролле. Рендерим в body.
@@ -86,14 +88,14 @@ export function JournalSelectionBar({
         <div
           className={JOURNAL_DOCUMENT_SELECTION_BAR_PILL_CLASS}
           role="region"
-          aria-label="Действия над выбранными строками"
+          aria-label={t("region")}
         >
           {count > 0 ? (
             <button
               type="button"
               onClick={onClear}
-              title="Снять выделение"
-              aria-label="Снять выделение"
+              title={t("clear")}
+              aria-label={t("clear")}
               className={
                 bottom
                   ? "-my-1.5 -ml-2 flex size-11 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none"
@@ -104,7 +106,7 @@ export function JournalSelectionBar({
             </button>
           ) : null}
           <span className="text-[14px] font-semibold tabular-nums text-[#0b1024]">
-            {label ?? `Выбрано: ${count}`}
+            {label ?? t("count", { count })}
           </span>
           {hint ? (
             <span className="hidden text-[13px] text-[#6f7282] sm:inline">{hint}</span>
@@ -117,11 +119,11 @@ export function JournalSelectionBar({
                 variant="outline"
                 onClick={onDelete}
                 disabled={deleting}
-                title="Удалить выделенные строки без возможности отмены"
+                title={t("deleteHint")}
                 className="h-10 gap-1.5 rounded-xl border-[#ffd7d3] bg-[#fff4f2] px-3.5 text-[14px] font-semibold text-[#ff3b30] shadow-none transition-colors duration-150 hover:bg-[#ffeae7] hover:text-[#ff3b30]"
               >
                 <Trash2 className="size-4" />
-                {deleting ? "Удаление…" : "Удалить"}
+                {deleting ? t("deleting") : t("delete")}
               </Button>
             ) : null}
           </div>

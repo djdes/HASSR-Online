@@ -56,6 +56,7 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
 
 /** Партнёр в любом режиме может писать сюда: это его собственные вещи. */
 export const PARTNER_WRITE_ALLOWLIST = [
+  "/api/profile/locale",
   "/api/auth",
   "/api/me",
   "/api/partner",

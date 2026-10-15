@@ -20,7 +20,8 @@
  */
 import { db } from "@/lib/db";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
-import { FILLING_GUIDES } from "@/lib/journal-filling-guides";
+import { getFillingGuide } from "@/lib/journal-filling-guides";
+import type { FillingGuideTranslators } from "@/lib/journal-filling-guide-copy";
 import { loadPipelineTree } from "@/lib/journal-pipeline-tree";
 import {
   EMPTY_SYNC_REPORT,
@@ -37,9 +38,11 @@ const COMMENT_FIELD = {
   type: "text" as const,
   key: "comment",
   label: "Комментарий (необязательно)",
+  presentationSource: "adapter" as const,
   multiline: true,
   maxLength: 500,
   placeholder: "Например: всё в порядке, замечаний нет",
+  placeholderPresentationKey: "dynamic.generic.CommentPlaceholder",
 };
 
 /**
@@ -55,7 +58,7 @@ const COMMENT_FIELD = {
  */
 function buildGenericForm(
   templateCode: string,
-  options: { requirePhoto: boolean; templateFields: unknown[] }
+  options: { requirePhoto: boolean; templateFields: unknown[]; guideTranslators?: FillingGuideTranslators }
 ): TaskFormSchema {
   // P0.1 closure: даже без pipeline-tree (когда orga ещё не открыла
   // editor), форма должна писать колонки журнала. Конвертируем поля
@@ -68,14 +71,17 @@ function buildGenericForm(
     if (tf) journalFields.push(tf);
   }
 
-  const guide = FILLING_GUIDES[templateCode];
+  const guide = getFillingGuide(templateCode, options.guideTranslators);
+  const sourceGuide = options.guideTranslators ? getFillingGuide(templateCode) : guide;
   if (!guide || !guide.steps || guide.steps.length === 0) {
     return {
       intro:
         journalFields.length > 0
           ? "Заполните колонки журнала и нажмите «Готово»."
           : "Подтвердите выполнение задачи. Можно оставить комментарий — он сохранится в журнал WeSetup как запись.",
+      introPresentationKey: journalFields.length > 0 ? "dynamic.genericNoGuideWithFields" : "dynamic.genericNoGuide",
       submitLabel: "Готово",
+      submitPresentationKey: "dynamic.genericDone",
       fields: [...journalFields, COMMENT_FIELD],
     };
   }
@@ -86,6 +92,8 @@ function buildGenericForm(
     steps.push({
       id: "materials",
       title: "Что взять с собой",
+      sourceTitle: "Что взять с собой",
+      titlePresentationKey: "dynamic.genericMaterialsTitle",
       detail: guide.materials.map((m) => `• ${m}`).join("\n"),
       hint: guide.summary,
       // Materials-шаг — это «прочитай и собери», фото не нужно.
@@ -97,6 +105,7 @@ function buildGenericForm(
     steps.push({
       id: `step-${i + 1}`,
       title: step.title,
+      sourceTitle: sourceGuide?.steps?.[i]?.title ?? step.title,
       detail: step.detail,
       requirePhoto: options.requirePhoto,
     });
@@ -104,7 +113,9 @@ function buildGenericForm(
   steps.push({
     id: "completion",
     title: "Завершение",
+    sourceTitle: "Завершение",
     detail: guide.completionCriteria,
+    titlePresentationKey: "dynamic.genericCompletionTitle",
     hint: guide.regulationRef,
     // Финальный шаг — резюме, фото не нужно (комментарий обязательнее).
     requirePhoto: false,
@@ -112,6 +123,7 @@ function buildGenericForm(
   return {
     intro: guide.summary,
     submitLabel: "Готово — записать в журнал",
+    submitPresentationKey: "dynamic.genericSubmit",
     pipeline: steps,
     fields: [...journalFields, COMMENT_FIELD],
   };
@@ -136,18 +148,22 @@ function templateFieldToTaskFormField(
     auto?: unknown;
     options?: unknown;
     placeholder?: unknown;
+    autofill?: unknown;
     multiline?: unknown;
     maxLength?: unknown;
     min?: unknown;
     max?: unknown;
     step?: unknown;
     unit?: unknown;
+    normalRange?: unknown;
   };
   if (typeof f.key !== "string" || typeof f.label !== "string") return null;
   if (f.auto === true) return null;
   const required = f.required === true;
   const placeholder =
     typeof f.placeholder === "string" ? f.placeholder : undefined;
+  const sourceLabel = f.label;
+  const autofill = f.autofill === "employeeName" || f.key === "employeeName" ? "employeeName" : undefined;
 
   switch (f.type) {
     case "text":
@@ -155,6 +171,9 @@ function templateFieldToTaskFormField(
         type: "text",
         key: f.key,
         label: f.label,
+        sourceLabel,
+        presentationSource: "template",
+        autofill,
         required,
         placeholder,
         multiline: f.multiline === true,
@@ -165,33 +184,42 @@ function templateFieldToTaskFormField(
         type: "number",
         key: f.key,
         label: f.label,
+        sourceLabel,
+        presentationSource: "template",
         required,
         unit: typeof f.unit === "string" ? f.unit : undefined,
         min: typeof f.min === "number" ? f.min : undefined,
         max: typeof f.max === "number" ? f.max : undefined,
         step: typeof f.step === "number" ? f.step : undefined,
+        normalRange: isNormalRange(f.normalRange) ? f.normalRange : undefined,
       };
     case "boolean":
-      return { type: "boolean", key: f.key, label: f.label };
+      return { type: "boolean", key: f.key, label: f.label, sourceLabel, presentationSource: "template" };
     case "date":
-      return { type: "date", key: f.key, label: f.label, required };
+      return { type: "date", key: f.key, label: f.label, sourceLabel, presentationSource: "template", required };
     case "select": {
       const options = Array.isArray(f.options)
         ? f.options
             .map((o: unknown) => {
               if (!o || typeof o !== "object") return null;
-              const opt = o as { value?: unknown; label?: unknown };
+              const opt = o as { value?: unknown; label?: unknown; presentationKey?: unknown };
               if (typeof opt.value !== "string" || typeof opt.label !== "string")
                 return null;
-              return { value: opt.value, label: opt.label };
+              return {
+                value: opt.value,
+                label: opt.label,
+                ...(typeof opt.presentationKey === "string" ? { presentationKey: opt.presentationKey } : {}),
+              };
             })
-            .filter((x): x is { value: string; label: string } => x !== null)
+            .filter((x): x is { value: string; label: string; presentationKey?: string } => x !== null)
         : [];
       if (options.length === 0) return null;
       return {
         type: "select",
         key: f.key,
         label: f.label,
+        sourceLabel,
+        presentationSource: "template",
         required,
         options,
       };
@@ -258,6 +286,7 @@ function buildFormFromPipelineTree(
     return {
       id: node.id,
       title: node.title,
+      sourceTitle: node.title,
       detail: node.detail ?? "",
       hint: node.hint ?? undefined,
       field,
@@ -278,16 +307,28 @@ function buildFormFromPipelineTree(
     title: "Завершение",
     detail:
       "Проверь что всё сделано и нажми «Готово — записать в журнал».",
+    sourceTitle: "Завершение",
+    titlePresentationKey: "dynamic.genericCompletionTitle",
+    detailPresentationKey: "dynamic.genericPipelineCompletionDetail",
     requirePhoto: false,
   });
 
   return {
     intro:
       "Pipeline настроен в /settings/journal-pipelines-tree. Если что-то не так — скажи менеджеру.",
+    introPresentationKey: "dynamic.genericPipelineIntro",
     submitLabel: "Готово — записать в журнал",
+    submitPresentationKey: "dynamic.genericSubmit",
     pipeline: steps,
     fields: [COMMENT_FIELD],
   };
+}
+
+function isNormalRange(value: unknown): value is { min?: number; max?: number } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const range = value as { min?: unknown; max?: unknown };
+  return (range.min === undefined || typeof range.min === "number") &&
+    (range.max === undefined || typeof range.max === "number");
 }
 
 const employeeIdFromRowKey = extractEmployeeId;
@@ -433,7 +474,7 @@ export function buildGenericAdapter(
         }
       }
 
-      return buildGenericForm(templateCode, { requirePhoto, templateFields });
+      return buildGenericForm(templateCode, { requirePhoto, templateFields, guideTranslators: input.guideTranslators });
     },
 
     async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {

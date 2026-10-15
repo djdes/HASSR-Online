@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
 import { ArrowLeft } from "lucide-react";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { getRouteTitle, getSiblingRoutes } from "@/lib/route-titles";
@@ -73,6 +75,7 @@ export function PageBackLink({
   fallbackHref?: string;
   className?: string;
 }) {
+  const t = useTranslations("common");
   const router = useRouter();
 
   function goBack() {
@@ -87,8 +90,8 @@ export function PageBackLink({
     <button
       type="button"
       onClick={goBack}
-      title="Назад"
-      aria-label="Назад"
+      title={t("back")}
+      aria-label={t("back")}
       className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-[#ececf4] bg-white text-[#6f7282] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:hidden ${className}`}
     >
       <ArrowLeft className="size-4" />
@@ -115,6 +118,9 @@ function isJournalCodeSubtree(pathname: string): boolean {
 }
 
 export function PageNav({ organizationName }: { organizationName: string }) {
+  const tRoutes = useTranslations("navigation.routes");
+  const tCrumbs = useTranslations("navigation.breadcrumbs");
+  const locale = useLocale() as Locale;
   const pathname = usePathname() || "/";
   const { override } = useContext(BreadcrumbContext);
   // Свои названия разделов организации — и в звене, и в списке соседей.
@@ -130,11 +136,11 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     let prefix = "";
     parts.forEach((segment, index) => {
       prefix += `/${segment}`;
-      const title = customSectionNameByHref(customNames, prefix) ?? getRouteTitle(prefix);
+      const title = customSectionNameByHref(customNames, prefix) ?? getRouteTitle(prefix, tRoutes);
       if (!title) return;
       const isLast = index === parts.length - 1;
       const here = prefix;
-      const siblings = getSiblingRoutes(here).map((sibling) => ({
+      const siblings = getSiblingRoutes(here, tRoutes, locale).map((sibling) => ({
         ...sibling,
         title: customSectionNameByHref(customNames, sibling.path) ?? sibling.title,
       }));
@@ -144,15 +150,15 @@ export function PageNav({ organizationName }: { organizationName: string }) {
         menu:
           siblings.length > 0
             ? [
-                { label: title, href: here, current: true },
-                ...siblings.map((s) => ({ label: s.title, href: s.path })),
+                { label: title, href: here, current: true, keywords: [getRouteTitle(here) ?? ""] },
+                ...siblings.map((s) => ({ label: s.title, href: s.path, keywords: [getRouteTitle(s.path) ?? ""] })),
               ]
             : undefined,
-        menuTitle: siblings.length > 0 ? "Соседние разделы" : undefined,
+        menuTitle: siblings.length > 0 ? tCrumbs("neighbors") : undefined,
       });
     });
     return result;
-  }, [pathname, customNames]);
+  }, [pathname, customNames, tRoutes, tCrumbs, locale]);
 
   const crumbs: Crumb[] = [
     { label: organizationName, href: "/dashboard" },

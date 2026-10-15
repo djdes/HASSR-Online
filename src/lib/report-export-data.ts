@@ -1,5 +1,8 @@
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { loadMessages } from "@/i18n/messages";
+import type { Locale } from "@/i18n/locales";
+import { journalTitle, presentJournalField, type JournalFieldCopy } from "@/i18n/journal-presentation";
 import {
   buildReportTable,
   type ReportField,
@@ -21,7 +24,10 @@ export async function loadReportTable(params: {
   dateFrom: string;
   dateTo: string;
   areaId?: string | null;
-}): Promise<{ templateName: string; timeZone: string; table: ReportTable } | null> {
+  locale?: Locale;
+}): Promise<{ templateName: string; timeZone: string; table: ReportTable; emptyMessage: string } | null> {
+  const locale = params.locale ?? "ru";
+  const messages = await loadMessages(locale);
   const template = await db.journalTemplate.findUnique({
     where: { code: params.templateCode },
     select: { id: true, name: true, fields: true },
@@ -84,10 +90,18 @@ export async function loadReportTable(params: {
   const fields = Array.isArray(template.fields)
     ? (template.fields as unknown as ReportField[])
     : [];
+  const fieldCopy = messages.journalFields as Record<string, Record<string, JournalFieldCopy>>;
+  const displayFields = fields.map((field) => {
+    const presented = presentJournalField({ ...field, label: field.label ?? field.key },
+      locale === "ru" ? undefined : fieldCopy[params.templateCode]?.[field.key]);
+    return { ...field, label: presented.displayLabel, options: presented.displayOptions };
+  });
 
   const table = buildReportTable({
-    fields,
+    fields: displayFields,
     timeZone,
+    locale,
+    copy: { ...messages.reports, yes: messages.common.yes, no: messages.common.no },
     documentEntries: documentEntries.map((entry) => ({
       date: entry.date,
       employeeName: entry.employee?.name ?? null,
@@ -102,5 +116,8 @@ export async function loadReportTable(params: {
     })),
   });
 
-  return { templateName: template.name, timeZone, table };
+  return {
+    templateName: journalTitle(locale, messages.journals.names, params.templateCode, template.name),
+    timeZone, table, emptyMessage: messages.reports.empty,
+  };
 }

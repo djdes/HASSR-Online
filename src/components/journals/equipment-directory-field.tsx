@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useTranslations } from "next-intl";
+
+import { useEffect, useRef, useState } from "react";
 import { Link2, Link2Off, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Label } from "@/components/ui/label";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import type { EquipmentDirectoryOption } from "@/lib/equipment-directory-link";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { isFetchNetworkError } from "@/lib/humanize-fetch-error";
 
 /**
  * Поле «наименование оборудования» для окон журналов ППР, поверки и
@@ -21,7 +23,7 @@ import { humanizeFetchError } from "@/lib/humanize-fetch-error";
  * завести в справочник.
  */
 export function EquipmentDirectoryField({
-  label = "Наименование оборудования",
+  label,
   value,
   sourceEquipmentId,
   directory,
@@ -39,6 +41,10 @@ export function EquipmentDirectoryField({
   documentId?: string;
   disabled?: boolean;
 }) {
+  const t = useTranslations("journalControls.equipmentDirectory");
+  const latest = useRef(t);
+  useEffect(() => { latest.current = t; }, [t]);
+  const fieldLabel = label ?? t("label");
   const [isLinking, setIsLinking] = useState(false);
   const linked = sourceEquipmentId
     ? directory.find((item) => item.id === sourceEquipmentId)
@@ -52,6 +58,7 @@ export function EquipmentDirectoryField({
   async function addToDirectory() {
     if (!documentId || !trimmed) return;
     setIsLinking(true);
+    let failureKey: "failed" | "forbidden" | "notFound" | "invalid" = "failed";
     try {
       const response = await fetch(
         `/api/journal-documents/${documentId}/equipment-directory`,
@@ -63,17 +70,18 @@ export function EquipmentDirectoryField({
       );
       const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(result?.error || "Не удалось добавить в справочник");
+        failureKey = response.status === 401 || response.status === 403 ? "forbidden" : response.status === 404 ? "notFound" : response.status === 400 ? "invalid" : "failed";
+        throw new Error(failureKey);
       }
       onChange(result.equipment.name, result.equipment.id);
       toast.success(
         result.created
-          ? "Добавлено в справочник «Оборудование» — у единицы появился QR-код"
-          : "Единица уже была в справочнике — строка связана с ней"
+          ? latest.current("created")
+          : latest.current("linked")
       );
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось добавить в справочник")
+        latest.current(isFetchNetworkError(error) ? "network" : failureKey)
       );
     } finally {
       setIsLinking(false);
@@ -83,7 +91,7 @@ export function EquipmentDirectoryField({
   if (linked) {
     return (
       <div className="space-y-2">
-        <Label className="text-[13px] font-medium text-[#3c4053]">{label}</Label>
+        <Label className="text-[13px] font-medium text-[#3c4053]">{fieldLabel}</Label>
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
           <Link2 className="size-4 shrink-0 text-[#5566f6]" />
           <span className="min-w-0 flex-1 text-[15px] text-[#0b1024]">
@@ -96,13 +104,12 @@ export function EquipmentDirectoryField({
               className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#3c4053] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
             >
               <Link2Off className="size-3.5" />
-              Отвязать
+              {t("unlink")}
             </button>
           ) : null}
         </div>
         <p className="text-[12px] leading-[1.5] text-[#6f7282]">
-          Название берётся из справочника «Оборудование»: переименуете там —
-          изменится и здесь.
+          {t("linkedHint")}
         </p>
       </div>
     );
@@ -110,12 +117,12 @@ export function EquipmentDirectoryField({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[13px] font-medium text-[#3c4053]">{label}</Label>
+      <Label className="text-[13px] font-medium text-[#3c4053]">{fieldLabel}</Label>
       <SuggestInput
-        ariaLabel={label}
+        ariaLabel={fieldLabel}
         value={value}
         options={directory.map((item) => item.name)}
-        placeholder="Выберите из справочника или впишите своё"
+        placeholder={t("placeholder")}
         onChange={(next) => {
           const found = directory.find(
             (item) => item.name.trim().toLowerCase() === next.trim().toLowerCase()
@@ -131,13 +138,13 @@ export function EquipmentDirectoryField({
           className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] disabled:opacity-60"
         >
           <Plus className="size-3.5" />
-          Добавить в справочник «Оборудование»
+          {t("add")}
         </button>
       ) : null}
       <p className="text-[12px] leading-[1.5] text-[#6f7282]">
         {trimmed && !matchedByName
-          ? "Своё название сохранится в журнале. В справочнике единица получит QR-код для заполнения с телефона."
-          : "Список — оборудование из /settings/equipment. Своё название тоже можно вписать."}
+          ? t("customHint")
+          : t("directoryHint")}
       </p>
     </div>
   );

@@ -33,11 +33,15 @@ export async function notifyHygieneDeclaration(params: {
           kind: "hygiene-admission",
           dedupeKey: `hygiene-admission:${hygieneDocumentId}:${todayKey}`,
           title: "Гигиенический журнал: сотрудники ждут допуска",
+          messageKey: "hygieneAdmission",
           linkHref,
           linkLabel: "Открыть журнал",
+          linkLabelKey: "openJournal",
           items: [
             {
               id: employee.id,
+              labelKey: decision.admitted ? "hygieneSigned" : "hygieneComplaints",
+              labelParams: { name: employee.name, complaints: decision.complaints.join(", ") },
               label: decision.admitted
                 ? `${employee.name} — подписал, ждёт допуска`
                 : `${employee.name} — жалобы: ${decision.complaints.join(", ")}`,

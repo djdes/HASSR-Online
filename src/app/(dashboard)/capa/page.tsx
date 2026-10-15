@@ -1,3 +1,6 @@
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { formatNumber } from "@/i18n/locales";
 import Link from "next/link";
 import { Clock, Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -5,30 +8,6 @@ import { resolveSectionName } from "@/lib/org-custom-names";
 import { db } from "@/lib/db";
 import { CapaAutoDetectButton } from "@/components/capa/auto-detect-button";
 
-const STATUS_INFO: Record<string, { label: string; className: string }> = {
-  open: { label: "Открыто", className: "bg-[#fff4f2] text-[#a13a32]" },
-  investigating: { label: "Расследование", className: "bg-[#fff8eb] text-[#b25f00]" },
-  corrective_action: { label: "Корректировка", className: "bg-[#eef1ff] text-[#3848c7]" },
-  verification: { label: "Верификация", className: "bg-[#f5f0ff] text-[#5d3ab3]" },
-  closed: { label: "Закрыто", className: "bg-[#ecfdf5] text-[#116b2a]" },
-};
-
-const PRIORITY_INFO: Record<string, { label: string; className: string }> = {
-  critical: { label: "Критический", className: "bg-[#a13a32] text-white" },
-  high: { label: "Высокий", className: "bg-[#d95f2a] text-white" },
-  medium: { label: "Средний", className: "bg-[#d9a02a] text-white" },
-  low: { label: "Низкий", className: "bg-[#9b9fb3] text-white" },
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  temperature: "Температура",
-  hygiene: "Гигиена",
-  packaging: "Упаковка",
-  quality: "Качество",
-  process: "Процесс",
-  equipment: "Оборудование",
-  other: "Другое",
-};
 
 function isSlaBreached(
   ticket: { createdAt: Date; slaHours: number; status: string },
@@ -43,6 +22,33 @@ function isSlaBreached(
 
 export default async function CapaPage() {
   const session = await requireAuth();
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "capaManagement" });
+  const STATUS_INFO: Record<string, { label: string; className: string }> = {
+    open: { label: t("statuses.open"), className: "bg-[#fff4f2] text-[#a13a32]" },
+    investigating: { label: t("statuses.investigating"), className: "bg-[#fff8eb] text-[#b25f00]" },
+    corrective_action: { label: t("statuses.corrective_action"), className: "bg-[#eef1ff] text-[#3848c7]" },
+    verification: { label: t("statuses.verification"), className: "bg-[#f5f0ff] text-[#5d3ab3]" },
+    closed: { label: t("statuses.closed"), className: "bg-[#ecfdf5] text-[#116b2a]" },
+  };
+
+  const PRIORITY_INFO: Record<string, { label: string; className: string }> = {
+    critical: { label: t("priorities.critical"), className: "bg-[#a13a32] text-white" },
+    high: { label: t("priorities.high"), className: "bg-[#d95f2a] text-white" },
+    medium: { label: t("priorities.medium"), className: "bg-[#d9a02a] text-white" },
+    low: { label: t("priorities.low"), className: "bg-[#9b9fb3] text-white" },
+  };
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    temperature: t("categories.temperature"),
+    hygiene: t("categories.hygiene"),
+    packaging: t("categories.packaging"),
+    quality: t("categories.quality"),
+    process: t("categories.process"),
+    equipment: t("categories.equipment"),
+    training: t("categories.training"),
+    other: t("categories.other"),
+  };
 
   const tickets: Awaited<ReturnType<typeof db.capaTicket.findMany>> =
     await db.capaTicket.findMany({
@@ -75,10 +81,10 @@ export default async function CapaPage() {
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
             {/* Своё название раздела организации, если его задали. */}
-            {await resolveSectionName(getActiveOrgId(session), "capa")}
+            {await resolveSectionName(getActiveOrgId(session), "capa", t("title"))}
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">
-            Корректирующие и предупреждающие действия (CAPA)
+            {t("description")}
           </p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-start">
@@ -88,7 +94,7 @@ export default async function CapaPage() {
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:w-auto sm:justify-start sm:self-start"
           >
             <Plus className="size-4" />
-            Новое нарушение
+            {t("newTitle")}
           </Link>
         </div>
       </div>
@@ -96,13 +102,13 @@ export default async function CapaPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="Открыто"
-          value={openCount}
+          label={t("stats.open")}
+          value={formatNumber(locale, openCount)}
           tone={hasCritical ? "warn" : "default"}
         />
-        <StatCard label="Критических" value={criticalCount} tone="critical" />
-        <StatCard label="Срок нарушен" value={slaBreached} tone="warn" />
-        <StatCard label="Закрыто за неделю" value={closedWeek} tone="success" />
+        <StatCard label={t("stats.critical")} value={formatNumber(locale, criticalCount)} tone="critical" />
+        <StatCard label={t("stats.overdue")} value={formatNumber(locale, slaBreached)} tone="warn" />
+        <StatCard label={t("stats.closedWeek")} value={formatNumber(locale, closedWeek)} tone="success" />
       </div>
 
       {/* Kanban columns — horizontal scroll on mobile */}
@@ -121,12 +127,12 @@ export default async function CapaPage() {
                     {info.label}
                   </span>
                   <span className="text-[12px] text-[#9b9fb3] tabular-nums">
-                    {statusTickets.length}
+                    {formatNumber(locale, statusTickets.length)}
                   </span>
                 </div>
                 <div className="space-y-2">
                   {statusTickets.slice(0, 10).map((ticket: Ticket) => {
-                    const pInfo = PRIORITY_INFO[ticket.priority] ?? PRIORITY_INFO.low;
+                    const pInfo = Object.hasOwn(PRIORITY_INFO, ticket.priority) ? PRIORITY_INFO[ticket.priority] : { label: ticket.priority, className: PRIORITY_INFO.low.className };
                     const breached = isSlaBreached(ticket, now);
 
                     return (
@@ -149,12 +155,12 @@ export default async function CapaPage() {
                         </div>
                         <div className="mt-2 flex items-center gap-2 text-[11px] text-[#6f7282]">
                           <span>
-                            {CATEGORY_LABELS[ticket.category] || ticket.category}
+                            {Object.hasOwn(CATEGORY_LABELS, ticket.category) ? CATEGORY_LABELS[ticket.category] : ticket.category}
                           </span>
                           {breached && (
                             <span className="flex items-center gap-0.5 text-[#a13a32]">
                               <Clock className="size-3" />
-                              SLA
+                              {t("sla")}
                             </span>
                           )}
                         </div>
@@ -163,7 +169,7 @@ export default async function CapaPage() {
                   })}
                   {statusTickets.length === 0 && (
                     <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-3 py-5 text-center text-[12px] text-[#9b9fb3]">
-                      Пусто
+                      {t("empty")}
                     </div>
                   )}
                 </div>
@@ -182,7 +188,7 @@ function StatCard({
   tone = "default",
 }: {
   label: string;
-  value: number;
+  value: string;
   tone?: "default" | "warn" | "critical" | "success";
 }) {
   const valueColor =

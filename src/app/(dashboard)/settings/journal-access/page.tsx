@@ -3,13 +3,16 @@ import { KeyRound } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
-import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { JOURNAL_ACCESS_CATALOG } from "@/lib/journal-access-catalog";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalAccessMatrix } from "@/components/settings/journal-access-matrix";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function JournalAccessMatrixPage() {
+  const t = await getTranslations("settingsManagement.accessMatrices");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -65,6 +68,7 @@ export default async function JournalAccessMatrixPage() {
   }
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsManagement", "journals", "staffManagement"]}>
     <div className="space-y-5">
       <div>
 
@@ -74,15 +78,9 @@ export default async function JournalAccessMatrixPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Журналы для сотрудников
+              {t("pages.employeesTitle")}
             </h1>
-            <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Кто из сотрудников какие журналы видит и заполняет. Клик по
-              ячейке — назначить или снять. Можно быстро дать «всю уборку
-              уборщикам» или «все температуры поварам» через пресеты сверху.
-              Пока у сотрудника нет ни одной галочки, он видит все журналы
-              (совместимость со старой логикой).
-            </p>
+            <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">{t("pages.employeesDescription")}</p>
           </div>
         </div>
       </div>
@@ -97,11 +95,12 @@ export default async function JournalAccessMatrixPage() {
           journalAccessMigrated: u.journalAccessMigrated,
           initialAccess: accessByUser.get(u.id) ?? [],
         }))}
-        catalog={sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name).map((j) => ({
+        catalog={sortJournalsByName(JOURNAL_ACCESS_CATALOG, (j) => j.name).map((j) => ({
           code: j.code,
           name: j.name,
         }))}
       />
     </div>
+    </DomainMessagesBoundary>
   );
 }

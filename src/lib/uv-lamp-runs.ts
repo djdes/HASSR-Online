@@ -201,7 +201,7 @@ export async function lampState(equipmentId: string, timeZone: string): Promise<
 export type LampToggleResult =
   | { ok: true; action: "on"; since: string }
   | { ok: true; action: "off"; hours: number; durationLabel: string; remainingHours: number | null; warn: "warn" | "over" | null }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; errorCode?: string; errorParams?: Record<string, string | number> };
 
 export async function toggleLamp(params: {
   organizationId: string;
@@ -215,32 +215,32 @@ export async function toggleLamp(params: {
     where: { id: params.lamp.id },
     select: { runningSince: true, runningUserId: true, lampLifetimeHours: true, lampUsedHours: true, lampWarnLevel: true },
   });
-  if (!current) return { ok: false, status: 404, error: "Лампа не найдена" };
+  if (!current) return { ok: false, status: 404, error: "Лампа не найдена", errorCode: "equipmentFill.errors.lampNotFound" };
 
   if (params.action === "on") {
     if (current.runningSince) {
-      return { ok: false, status: 409, error: `Лампа уже включена с ${hhmm(params.timeZone, current.runningSince)} — сначала нажмите «Я выключил».` };
+      return { ok: false, status: 409, error: `Лампа уже включена с ${hhmm(params.timeZone, current.runningSince)} — сначала нажмите «Я выключил».`, errorCode: "equipmentFill.errors.lampAlreadyOn", errorParams: { time: hhmm(params.timeZone, current.runningSince) } };
     }
     // Условный апдейт: два одновременных «включил» не создадут два сеанса.
     const updated = await db.equipment.updateMany({
       where: { id: params.lamp.id, runningSince: null },
       data: { runningSince: now, runningUserId: params.employee.id },
     });
-    if (updated.count === 0) return { ok: false, status: 409, error: "Лампу только что включили — обновите страницу." };
+    if (updated.count === 0) return { ok: false, status: 409, error: "Лампу только что включили — обновите страницу.", errorCode: "equipmentFill.errors.lampJustOn" };
     await db.equipmentRunSession.create({
       data: { equipmentId: params.lamp.id, organizationId: params.organizationId, startedAt: now, startedById: params.employee.id },
     });
     return { ok: true, action: "on", since: hhmm(params.timeZone, now) };
   }
 
-  if (!current.runningSince) return { ok: false, status: 409, error: "Лампа не включена — сначала нажмите «Я включил»." };
+  if (!current.runningSince) return { ok: false, status: 409, error: "Лампа не включена — сначала нажмите «Я включил».", errorCode: "equipmentFill.errors.lampNotOn" };
   const startedAt = current.runningSince;
   const startedById = current.runningUserId ?? params.employee.id;
   const cleared = await db.equipment.updateMany({
     where: { id: params.lamp.id, runningSince: startedAt },
     data: { runningSince: null, runningUserId: null },
   });
-  if (cleared.count === 0) return { ok: false, status: 409, error: "Лампу только что выключили — обновите страницу." };
+  if (cleared.count === 0) return { ok: false, status: 409, error: "Лампу только что выключили — обновите страницу.", errorCode: "equipmentFill.errors.lampJustOff" };
   const hours = sessionHours(startedAt, now);
   const usedHours = Math.round((current.lampUsedHours + hours) * 100) / 100;
   const level = lampWarnLevel(current.lampLifetimeHours, usedHours);

@@ -35,6 +35,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ...(item.releaseAllowed === "yes" || item.releaseAllowed === "no" ? { releaseAllowed: item.releaseAllowed } : {}),
       ...(typeof item.portionWeight === "string" ? { portionWeight: item.portionWeight.slice(0, 20) } : {}),
       ...(typeof item.note === "string" ? { note: item.note.slice(0, 500) } : {}),
+      ...(typeof item.rejectionTime === "string" ? { rejectionTime: item.rejectionTime.slice(0, 20) } : {}),
     }));
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } });
   const signer = await db.user.findFirst({

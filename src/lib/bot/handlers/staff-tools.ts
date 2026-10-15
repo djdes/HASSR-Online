@@ -1,16 +1,18 @@
 import type { Composer, Context } from "grammy";
 import type { InlineKeyboardButton } from "grammy/types";
 import { db } from "@/lib/db";
-import { escapeTelegramHtml as esc, personalizeMessage } from "@/lib/telegram";
+import { escapeTelegramHtml as esc } from "@/lib/telegram";
 import {
   getMiniAppBaseUrlFromEnv,
   buildMiniAppUrl,
 } from "@/lib/journal-obligation-links";
 import { buildTelegramWebAppKeyboard } from "@/lib/telegram-web-app";
-import { getUserRoleLabel } from "@/lib/user-roles";
 import { botCallbackRateLimiter } from "@/lib/rate-limit";
 import { listOpenJournalObligationsForUser } from "@/lib/journal-obligations";
 import { buildStaffObligationDigest } from "@/lib/telegram-obligation-digests";
+import { FORMAT_LOCALES, resolveLocale, type Locale } from "@/i18n/locales";
+import { loadMessages, type Messages } from "@/i18n/messages";
+import { createTranslator } from "use-intl/core";
 
 /**
  * Команды для линейного сотрудника. В отличие от /today/missing
@@ -30,7 +32,23 @@ type LinkedUser = {
   organizationId: string;
   role: string;
   isRoot: boolean;
+  locale?: string | null;
+  organization?: { locale?: string | null } | null;
 };
+
+function roleLabelFor(messages: Messages, locale: Locale, role: string): string {
+  const t = createTranslator({ locale, messages, namespace: "staffManagement.roleLabels" });
+  switch (role) {
+    case "manager": return t("manager");
+    case "head_chef": return t("head_chef");
+    case "cook": return t("cook");
+    case "waiter": return t("waiter");
+    case "owner": return t("owner");
+    case "technologist": return t("technologist");
+    case "operator": return t("operator");
+    default: return role;
+  }
+}
 
 async function resolveLinkedUser(
   chatId: number | string | undefined
@@ -48,8 +66,35 @@ async function resolveLinkedUser(
       organizationId: true,
       role: true,
       isRoot: true,
+      locale: true,
+      organization: { select: { locale: true } },
     },
   });
+}
+
+async function workdayCopy(user: LinkedUser | null) {
+  const locale = resolveLocale({
+    authenticated: Boolean(user),
+    userLocale: user?.locale,
+    organizationLocale: user?.organization?.locale,
+  });
+  const messages = await loadMessages(locale);
+  return { locale, messages };
+}
+
+function localizedGreeting(locale: Locale, messages: Messages, now = new Date()): string {
+  const t = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
+  const hour = now.getHours();
+  if (hour < 6) return t("greetingNight");
+  if (hour < 12) return t("greetingMorning");
+  if (hour < 18) return t("greetingDay");
+  return t("greetingEvening");
+}
+
+function localizedFirstName(locale: Locale, messages: Messages, name: string | null | undefined): string {
+  const t = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
+  const firstName = (name ?? "").trim().split(/\s+/)[0];
+  return esc(firstName || t("fallbackName"));
 }
 
 function utcDayStart(now: Date): Date {
@@ -93,16 +138,17 @@ export function shiftStatusActions(status: string): Array<"start" | "end"> {
   return ["start"];
 }
 
-const STATUS_LABEL = SHIFT_STATUS_LABEL;
-
 function buildShiftKeyboard(args: {
   shiftStatus: string;
   miniAppBaseUrl: string | null;
+  messages: Messages;
+  locale: Locale;
 }): { inline_keyboard: InlineKeyboardButton[][] } | undefined {
+  const t = createTranslator({ locale: args.locale, messages: args.messages, namespace: "telegramWorkday.shift.button" });
   const rows: InlineKeyboardButton[][] = [];
   if (args.shiftStatus === "working") {
     rows.push([
-      { text: "🛑 Закончить смену", callback_data: "shift-tg:end" },
+      { text: t("end"), callback_data: "shift-tg:end" },
     ]);
   } else if (args.shiftStatus === "ended" || args.shiftStatus === "absent") {
     // Завершено или пропущено — никаких inline-actions, только web_app.
@@ -119,13 +165,13 @@ function buildShiftKeyboard(args: {
     // (status='scheduled') и сразу staff-tools regex /^shift:(start|end)$/
     // перезаписывает на 'working'. Pass-3 review нашёл это как CRITICAL.
     rows.push([
-      { text: "🟢 Я вышел на смену", callback_data: "shift-tg:start" },
+      { text: t("start"), callback_data: "shift-tg:start" },
     ]);
   }
   if (args.miniAppBaseUrl) {
     const url = buildMiniAppUrl(args.miniAppBaseUrl, "/mini");
     if (url) {
-      rows.push([{ text: "📋 Открыть Кабинет", web_app: { url } }]);
+      rows.push([{ text: t("cabinet"), web_app: { url } }]);
     }
   }
   if (rows.length === 0) return undefined;
@@ -136,26 +182,45 @@ async function buildShiftReply(user: LinkedUser): Promise<{
   text: string;
   reply_markup?: { inline_keyboard: InlineKeyboardButton[][] };
 }> {
+  const { locale, messages } = await workdayCopy(user);
+  const t = createTranslator({ locale, messages, namespace: "telegramWorkday" });
   const today = utcDayStart(new Date());
   const shift = await db.workShift.findUnique({
     where: { userId_date: { userId: user.id, date: today } },
     select: { status: true, jobPosition: { select: { name: true } } },
   });
   const status = shift?.status ?? "none";
-  const positionLine = shift?.jobPosition?.name
-    ? `\nДолжность сегодня: <b>${esc(shift.jobPosition.name)}</b>`
-    : "";
-  const text = personalizeMessage(
-    `🕓 <b>{greeting}, {name}!</b>\n\n` +
-      `Статус смены: <b>${STATUS_LABEL[status] ?? esc(status)}</b>${positionLine}`,
-    { name: user.name }
-  );
+  const statusT = createTranslator({ locale, messages, namespace: "telegramWorkday.shift.status" });
+  const statusLabel = (() => {
+    switch (status) {
+      case "none": return statusT("none");
+      case "scheduled": return statusT("scheduled");
+      case "working": return statusT("working");
+      case "ended": return statusT("ended");
+      case "absent": return statusT("absent");
+      case "off": return statusT("off");
+      case "vacation": return statusT("vacation");
+      case "sick": return statusT("sick");
+      default: return t("common.unknownShiftStatus");
+    }
+  })();
+  const lines = [
+    t.markup("shift.greeting", { greeting: localizedGreeting(locale, messages), name: localizedFirstName(locale, messages, user.name), b: (chunks: string) => `<b>${chunks}</b>` }),
+    "",
+    t.markup("shift.statusLine", { status: statusLabel, b: (chunks: string) => `<b>${chunks}</b>` }),
+  ];
+  if (shift?.jobPosition?.name) {
+    lines.push(t.markup("shift.positionLine", { position: esc(shift.jobPosition.name), b: (chunks: string) => `<b>${chunks}</b>` }));
+  }
+  const text = lines.join("\n");
   const miniAppBaseUrl = getMiniAppBaseUrlFromEnv();
   return {
     text,
     reply_markup: buildShiftKeyboard({
       shiftStatus: status,
       miniAppBaseUrl,
+      messages,
+      locale,
     }),
   };
 }
@@ -163,7 +228,7 @@ async function buildShiftReply(user: LinkedUser): Promise<{
 async function applyShiftAction(
   user: LinkedUser,
   action: "start" | "end"
-): Promise<{ ok: boolean; status: string; message: string }> {
+): Promise<{ ok: boolean; status: string; message: "started" | "ended" | "mustStartFirst" }> {
   const today = utcDayStart(new Date());
   if (action === "start") {
     const result = await db.workShift.upsert({
@@ -177,7 +242,7 @@ async function applyShiftAction(
       },
       select: { status: true },
     });
-    return { ok: true, status: result.status, message: "Смена открыта" };
+    return { ok: true, status: result.status, message: "started" };
   }
   const existing = await db.workShift.findUnique({
     where: { userId_date: { userId: user.id, date: today } },
@@ -187,7 +252,7 @@ async function applyShiftAction(
     return {
       ok: false,
       status: existing?.status ?? "none",
-      message: "Сначала откройте смену",
+      message: "mustStartFirst",
     };
   }
   const updated = await db.workShift.update({
@@ -195,15 +260,17 @@ async function applyShiftAction(
     data: { status: "ended" },
     select: { status: true },
   });
-  return { ok: true, status: updated.status, message: "Смена закрыта" };
+  return { ok: true, status: updated.status, message: "ended" };
 }
 
 export function registerStaffToolsHandlers(composer: Composer<Context>): void {
   composer.command("shift", async (ctx) => {
     const user = await resolveLinkedUser(ctx.from?.id);
     if (!user) {
+      const { locale, messages } = await workdayCopy(null);
+      const t = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
       await ctx.reply(
-        "🔒 Ваш Telegram-чат пока не привязан к рабочему аккаунту. Попросите руководителя выслать ссылку-приглашение.",
+        t("notLinked"),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
@@ -224,40 +291,54 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
   composer.command("my_digest", async (ctx) => {
     const fromId = ctx.from?.id;
     if (!fromId) return;
+    const user = await resolveLinkedUser(fromId);
+    const { locale, messages } = await workdayCopy(user);
+    const commonT = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
+    const t = createTranslator({ locale, messages, namespace: "telegramWorkday.digest" });
     if (!botCallbackRateLimiter.consume(`${fromId}:my_digest`)) {
-      await ctx.reply("Слишком много запросов, подождите минуту.", {
+      await ctx.reply(commonT("rateLimited"), {
         parse_mode: "HTML",
       });
       return;
     }
-    const user = await resolveLinkedUser(fromId);
     if (!user) {
       await ctx.reply(
-        "🔒 Ваш Telegram-чат пока не привязан к рабочему аккаунту. Попросите руководителя выслать ссылку-приглашение.",
+        commonT("notLinked"),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
     }
     const obligations = await listOpenJournalObligationsForUser(user.id);
     const miniAppBaseUrl = getMiniAppBaseUrlFromEnv();
+    const presentation = {
+      openCount: (count: number) => t("openCount", { count }),
+      nextAction: (title: string) => t("nextAction", { title }),
+      noNextAction: t("noNextAction"),
+      todayHeading: t("todayHeading"),
+      obligationLine: (values: { title: string; location: string; description: string }) => t("obligationLine", values),
+      locationSuffix: (building: string) => t("locationSuffix", { building }),
+      descriptionSuffix: (description: string) => t("descriptionSuffix", { description }),
+      moreCount: (count: number) => t("moreCount", { count }),
+      openTask: t("openTask"),
+      openJournals: t("openJournals"),
+    };
     const digest = buildStaffObligationDigest({
       userId: user.id,
       openObligations: obligations,
       miniAppBaseUrl,
+      presentation,
     });
     if (!digest) {
+      const greeting = localizedGreeting(locale, messages, new Date());
       await ctx.reply(
-        personalizeMessage(
-          "✅ <b>{greeting}, {name}!</b>\n\nНа сегодня всё закрыто — отличная смена.",
-          { name: user.name }
-        ),
+        t.markup("allDone", { greeting, name: localizedFirstName(locale, messages, user.name), b: (chunks: string) => `<b>${chunks}</b>` }),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
     }
-    // digest.body содержит {greeting} {name} placeholder'ы из template —
-    // разворачиваем их personalizeMessage'ом перед отправкой.
-    const body = personalizeMessage(digest.body, { name: user.name });
+    const greeting = localizedGreeting(locale, messages);
+    const name = localizedFirstName(locale, messages, user.name);
+    const body = digest.body.replace("{greeting}", greeting).replace("{name}", name);
     const replyMarkup = digest.primaryCta
       ? buildTelegramWebAppKeyboard({
           label: digest.primaryCta.label,
@@ -273,11 +354,11 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
 
   composer.command("me", async (ctx) => {
     const user = await resolveLinkedUser(ctx.from?.id);
+    const locale = resolveLocale({ authenticated: Boolean(user), userLocale: user?.locale, organizationLocale: user?.organization?.locale });
+    const messages = await loadMessages(locale);
+    const t = createTranslator({ locale, messages, namespace: "telegram.bot.me" });
     if (!user) {
-      await ctx.reply(
-        "🔒 Ваш Telegram-чат пока не привязан к рабочему аккаунту. Попросите руководителя выслать ссылку-приглашение.",
-        { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
-      );
+      await ctx.reply(t("unlinked"), { parse_mode: "HTML", link_preview_options: { is_disabled: true } });
       return;
     }
     const fullUser = await db.user.findUnique({
@@ -290,17 +371,16 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
         organization: { select: { name: true } },
       },
     });
-    const position =
+    const customPosition =
       fullUser?.jobPosition?.name?.trim() ||
-      fullUser?.positionTitle?.trim() ||
-      getUserRoleLabel(user.role);
+      fullUser?.positionTitle?.trim();
+    const roleLabel = roleLabelFor(messages, locale, user.role);
+    const position = customPosition || roleLabel;
     const lines = [
-      `👤 <b>${esc(fullUser?.name ?? "—")}</b>`,
-      `Должность: ${esc(position)}`,
-      fullUser?.organization?.name
-        ? `Организация: ${esc(fullUser.organization.name)}`
-        : "",
-      fullUser?.email ? `Email: <code>${esc(fullUser.email)}</code>` : "",
+      t.markup("nameLine", { name: esc(fullUser?.name ?? "—"), b: (chunks: string) => `<b>${chunks}</b>` }),
+      t("positionLine", { position: esc(position) }),
+      fullUser?.organization?.name ? t("organizationLine", { organization: esc(fullUser.organization.name) }) : "",
+      fullUser?.email ? t.markup("emailLine", { email: esc(fullUser.email), code: (chunks: string) => `<code>${chunks}</code>` }) : "",
     ].filter(Boolean);
 
     const miniAppBaseUrl = getMiniAppBaseUrlFromEnv();
@@ -311,7 +391,7 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
       ...(url
         ? {
             reply_markup: buildTelegramWebAppKeyboard({
-              label: "⚙️ Настройки профиля",
+              label: t("button"),
               url,
             }),
           }
@@ -327,34 +407,51 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
   composer.callbackQuery("digest:refresh", async (ctx) => {
     const fromId = ctx.from?.id;
     if (!fromId) return;
+    const user = await resolveLinkedUser(fromId);
+    const { locale, messages } = await workdayCopy(user);
+    const commonT = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
+    const t = createTranslator({ locale, messages, namespace: "telegramWorkday.digest" });
     if (!botCallbackRateLimiter.consume(`${fromId}:digest-refresh`)) {
       await ctx.answerCallbackQuery({
-        text: "Слишком много обновлений, подождите минуту",
+        text: commonT("tooManyClicks"),
       });
       return;
     }
-    const user = await resolveLinkedUser(fromId);
     if (!user) {
       await ctx.answerCallbackQuery({
-        text: "Чат не привязан к аккаунту",
+        text: commonT("chatNotLinked"),
         show_alert: true,
       });
       return;
     }
     const obligations = await listOpenJournalObligationsForUser(user.id);
     const miniAppBaseUrl = getMiniAppBaseUrlFromEnv();
+    const presentation = {
+      openCount: (count: number) => t("openCount", { count }),
+      nextAction: (title: string) => t("nextAction", { title }),
+      noNextAction: t("noNextAction"),
+      todayHeading: t("todayHeading"),
+      obligationLine: (values: { title: string; location: string; description: string }) => t("obligationLine", values),
+      locationSuffix: (building: string) => t("locationSuffix", { building }),
+      descriptionSuffix: (description: string) => t("descriptionSuffix", { description }),
+      moreCount: (count: number) => t("moreCount", { count }),
+      openTask: t("openTask"),
+      openJournals: t("openJournals"),
+    };
     const digest = buildStaffObligationDigest({
       userId: user.id,
       openObligations: obligations,
       miniAppBaseUrl,
+      presentation,
     });
     if (!digest) {
       // Все задачи закрыты — заменяем body на success + убираем
       // refresh/snooze кнопки (нечего обновлять).
-      const successText = personalizeMessage(
-        "✅ <b>{greeting}, {name}!</b>\n\nНа сегодня всё закрыто — отличная смена.",
-        { name: user.name }
-      );
+      const successText = t.markup("allDone", {
+        greeting: localizedGreeting(locale, messages),
+        name: localizedFirstName(locale, messages, user.name),
+        b: (chunks: string) => `<b>${chunks}</b>`,
+      });
       try {
         await ctx.editMessageText(successText, {
           parse_mode: "HTML",
@@ -364,10 +461,12 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
       } catch {
         /* старое сообщение */
       }
-      await ctx.answerCallbackQuery({ text: "Всё закрыто ✓" });
+      await ctx.answerCallbackQuery({ text: t("allDoneCallback") });
       return;
     }
-    const body = personalizeMessage(digest.body, { name: user.name });
+    const body = digest.body
+      .replace("{greeting}", localizedGreeting(locale, messages))
+      .replace("{name}", localizedFirstName(locale, messages, user.name));
     const rows: Array<Array<Record<string, unknown>>> = [];
     if (digest.primaryCta) {
       rows.push([
@@ -378,8 +477,8 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
       ]);
     }
     rows.push([
-      { text: "🔄 Обновить", callback_data: "digest:refresh" },
-      { text: "🔕 Отложить на 1 час", callback_data: "notif:snooze:60" },
+      { text: t("refresh"), callback_data: "digest:refresh" },
+      { text: t("snooze"), callback_data: "notif:snooze:60" },
     ]);
     try {
       await ctx.editMessageText(body, {
@@ -395,7 +494,7 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
       /* old message */
     }
     await ctx.answerCallbackQuery({
-      text: `Открыто: ${obligations.length}`,
+      text: t("openCallbackCount", { count: obligations.length }),
     });
   });
 
@@ -405,9 +504,13 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
   composer.callbackQuery(/^notif:snooze:(\d+)$/, async (ctx) => {
     const fromId = ctx.from?.id;
     if (!fromId) return;
+    const user = await resolveLinkedUser(fromId);
+    const { locale, messages } = await workdayCopy(user);
+    const commonT = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
+    const digestT = createTranslator({ locale, messages, namespace: "telegramWorkday.digest" });
     if (!botCallbackRateLimiter.consume(`${fromId}:notif:snooze`)) {
       await ctx.answerCallbackQuery({
-        text: "Слишком много кликов, подождите минуту",
+        text: commonT("tooManyClicks"),
         show_alert: false,
       });
       return;
@@ -415,10 +518,9 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
     const rawMinutes = Number(ctx.match[1]);
     if (!Number.isFinite(rawMinutes)) return;
     const minutes = Math.min(24 * 60, Math.max(1, rawMinutes));
-    const user = await resolveLinkedUser(fromId);
     if (!user) {
       await ctx.answerCallbackQuery({
-        text: "Чат не привязан к аккаунту",
+        text: commonT("chatNotLinked"),
         show_alert: true,
       });
       return;
@@ -439,12 +541,12 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
         },
       },
     });
-    const until = snoozedUntil.toLocaleTimeString("ru-RU", {
+    const until = snoozedUntil.toLocaleTimeString(FORMAT_LOCALES[locale], {
       hour: "2-digit",
       minute: "2-digit",
     });
     await ctx.answerCallbackQuery({
-      text: `Отложено до ${until}`,
+      text: digestT("snoozedUntil", { time: until }),
       show_alert: false,
     });
     // Убираем кнопку «Отложить» из исходного сообщения (само сообщение
@@ -464,25 +566,33 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
   composer.callbackQuery(/^shift-tg:(start|end)$/, async (ctx) => {
     const fromId = ctx.from?.id;
     if (!fromId) return;
+    const user = await resolveLinkedUser(fromId);
+    const { locale, messages } = await workdayCopy(user);
+    const commonT = createTranslator({ locale, messages, namespace: "telegramWorkday.common" });
+    const actionT = createTranslator({ locale, messages, namespace: "telegramWorkday.shift.action" });
     if (!botCallbackRateLimiter.consume(`${fromId}:shift-tg`)) {
       await ctx.answerCallbackQuery({
-        text: "Слишком много кликов, подождите минуту",
+        text: commonT("tooManyClicks"),
         show_alert: false,
       });
       return;
     }
     const action = ctx.match[1] as "start" | "end";
-    const user = await resolveLinkedUser(fromId);
     if (!user) {
       await ctx.answerCallbackQuery({
-        text: "Чат не привязан к аккаунту",
+        text: commonT("chatNotLinked"),
         show_alert: true,
       });
       return;
     }
     const result = await applyShiftAction(user, action);
+    const actionMessage = result.message === "started"
+      ? actionT("started")
+      : result.message === "ended"
+        ? actionT("ended")
+        : actionT("mustStartFirst");
     await ctx.answerCallbackQuery({
-      text: result.message,
+      text: actionMessage,
       show_alert: !result.ok,
     });
     if (!result.ok) return;

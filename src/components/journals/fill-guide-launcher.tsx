@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+import type { MessageContract } from "@/i18n/message-contract";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
@@ -56,7 +58,7 @@ export function FillGuideLauncher({
   bottomOffset = 72,
   className,
   style,
-  label = "Инструкция",
+  label,
 }: {
   code: string;
   /** Название журнала в шапке окна; по умолчанию — из каталога. */
@@ -73,19 +75,25 @@ export function FillGuideLauncher({
   /** Подпись кнопки: на списке журнала — «Инструкция». */
   label?: string;
 }) {
+  const t = useTranslations("journalControls.list");
+  const tJournal = useTranslations("journals.names");
+  const tWalkthrough = useTranslations("journalControls.walkthroughs");
+  const tDocGuide = useTranslations("journalDocGuides");
   const router = useRouter();
   const narrow = useIsNarrowViewport();
   // Окно открывается у ЛЮБОГО журнала: свои шаги, если есть, иначе общие.
-  const steps = getJournalWalkthroughOrGeneric(code);
-  const guide = getJournalDocGuide(code);
+  const steps = useMemo(() => getJournalWalkthroughOrGeneric(code, tWalkthrough), [code, tWalkthrough]);
+  const guide = useMemo(() => getJournalDocGuide(code, tDocGuide), [code, tDocGuide]);
   // Своё название журнала организации — первым: инструкция открывается
   // рядом с заголовком, где журнал уже назван по-своему.
   const customName = customJournalName(useCustomNames(), code);
   const name =
     customName ??
     journalName ??
-    ACTIVE_JOURNAL_CATALOG.find((item) => item.code === code)?.name ??
-    "Журнал";
+    (tJournal.has(code as keyof MessageContract["journals"]["names"])
+      ? tJournal(code as keyof MessageContract["journals"]["names"])
+      : ACTIVE_JOURNAL_CATALOG.find((item) => item.code === code)?.name) ??
+    t("journal");
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -128,13 +136,13 @@ export function FillGuideLauncher({
       await waitForTourTarget(probe.anchor, probe.fallbackAnchor);
       const present = tourSteps.some((s) => findTourTarget(s.anchor, s.fallbackAnchor));
       if (!present) {
-        toast.info("На этой странице пока нечего показать — сначала создайте документ.");
+        toast.info(t("nothingToShow"));
         return;
       }
       setDialogOpen(false);
       setTour({ startId: stepId });
     },
-    [tourSteps]
+    [tourSteps, t]
   );
   const startTourRef = useRef(startTour);
   startTourRef.current = startTour;
@@ -169,7 +177,7 @@ export function FillGuideLauncher({
 
   function showStepHint(step: WalkthroughStep): string | null {
     if (step.page === "document" && page === "list" && !firstDocumentId) {
-      return "Сначала создайте документ";
+      return t("createFirst");
     }
     return null;
   }
@@ -192,8 +200,8 @@ export function FillGuideLauncher({
       mounted ? (
         <JournalGuideFab
           onClick={() => setDialogOpen(true)}
-          label={label}
-          ariaLabel="Как заполнить этот журнал"
+          label={label ?? t("guide")}
+          ariaLabel={t("guideAria")}
           bottomOffset={bottomOffset}
         />
       ) : null
@@ -205,7 +213,7 @@ export function FillGuideLauncher({
         style={style}
       >
         <BookOpenText className="size-4" />
-        {label}
+        {label ?? t("guide")}
       </button>
     );
 

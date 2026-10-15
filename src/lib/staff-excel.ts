@@ -166,12 +166,27 @@ function cell(value: unknown): string {
  * переставить столбцы местами или удалить справочные, и ронять из-за
  * этого импорт незачем.
  */
+export type StaffSheetErrorCode =
+  | "missingColumns"
+  | "missingName"
+  | "missingPosition"
+  | "positionNotFound"
+  | "invalidPhone"
+  | "unknownJournals"
+  | "seatLimit";
+export type StaffSheetError = {
+  line: number;
+  message: string;
+  code: StaffSheetErrorCode;
+  params?: Record<string, string>;
+};
+
 export function parseStaffSheet(rows: unknown[][]): {
   rows: StaffImportRow[];
-  errors: Array<{ line: number; message: string }>;
+  errors: StaffSheetError[];
 } {
   const result: StaffImportRow[] = [];
-  const errors: Array<{ line: number; message: string }> = [];
+  const errors: StaffSheetError[] = [];
   if (rows.length === 0) return { rows: result, errors };
 
   const header = (rows[0] ?? []).map((value) => cell(value).toLowerCase());
@@ -195,6 +210,7 @@ export function parseStaffSheet(rows: unknown[][]): {
   if (columnIndex.fullName < 0 || columnIndex.position < 0) {
     errors.push({
       line: 1,
+      code: "missingColumns",
       message:
         "В файле нет колонок «ФИО» и «Должность». Скачайте шаблон и заполните его.",
     });
@@ -215,11 +231,11 @@ export function parseStaffSheet(rows: unknown[][]): {
       continue;
     }
     if (!fullName) {
-      errors.push({ line, message: "Не заполнено ФИО" });
+      errors.push({ line, code: "missingName", message: "Не заполнено ФИО" });
       continue;
     }
     if (!positionName) {
-      errors.push({ line, message: `«${fullName}»: не указана должность` });
+      errors.push({ line, code: "missingPosition", params: { name: fullName }, message: `«${fullName}»: не указана должность` });
       continue;
     }
 

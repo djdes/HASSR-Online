@@ -1,9 +1,9 @@
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { BILLING_LIMIT_CODE, BILLING_PAY_HREF } from "@/lib/billing-period";
 import { isInsideMobileApp } from "@/lib/mobile-app";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { employeesLabel } from "@/lib/plan-catalog";
 
 /**
  * Ошибка API в toast. Лимит бесплатного тарифа (402 +
@@ -17,27 +17,22 @@ export function isBillingLimitError(data: unknown): boolean {
   );
 }
 
-export function toastApiError(data: unknown, fallback: string): void {
+type BillingErrorCopy = { limit: string; limitAction: string; pay: string };
+
+export function billingErrorPresentation(data: unknown, fallback: string, copy: BillingErrorCopy, inApp: boolean) {
   const d = (data && typeof data === "object" ? data : null) as {
     error?: unknown;
     payUrl?: unknown;
   } | null;
-  const message = typeof d?.error === "string" && d.error.trim() ? d.error : fallback;
   if (!isBillingLimitError(data)) {
-    toast.error(message);
-    return;
+    return { message: fallback };
   }
-  if (isInsideMobileApp()) {
-    toast.error(`Бесплатный тариф — ${employeesLabel(FREE_MAX_USERS)}.`, { id: "billing-limit" });
-    return;
+  if (inApp) {
+    return { message: copy.limit, id: "billing-limit" };
   }
   const href =
-    typeof d?.payUrl === "string" && d.payUrl.startsWith("/") ? d.payUrl : BILLING_PAY_HREF;
-  toast.error(message, {
-    id: "billing-limit",
-    duration: 12000,
-    action: { label: "Оплатить", onClick: () => window.location.assign(href) },
-  });
+    typeof d?.payUrl === "string" && d.payUrl.startsWith("/") && !d.payUrl.startsWith("//") && !d.payUrl.includes("\\") ? d.payUrl : BILLING_PAY_HREF;
+  return { message: copy.limitAction, id: "billing-limit", href, actionLabel: copy.pay };
 }
 
 /** Ошибка `fetch` с телом ответа — чтобы вызывающий мог прочитать `code`. */
@@ -51,10 +46,26 @@ export class ApiError extends Error {
 }
 
 /** Для `catch (error)`: ApiError → toast с кодом, остальное — текстом. */
-export function toastCaughtError(error: unknown, fallback: string): void {
-  if (error instanceof ApiError) {
-    toastApiError(error.data ?? { error: error.message }, fallback);
-    return;
+export function useBillingError() {
+  const t = useTranslations("common.billing");
+  function toastApiError(data: unknown, fallback: string): void {
+    const presentation = billingErrorPresentation(data, fallback, {
+      limit: t("limit", { count: FREE_MAX_USERS }),
+      limitAction: t("limitAction", { count: FREE_MAX_USERS }), pay: t("pay"),
+    }, isInsideMobileApp());
+    const { message, id, href, actionLabel } = presentation;
+    toast.error(message, {
+      ...(id ? { id } : {}),
+      ...(href ? { duration: 12000, action: { label: actionLabel!, onClick: () => window.location.assign(href) } } : {}),
+    });
   }
-  toast.error(error instanceof Error && error.message ? error.message : fallback);
+  function toastCaughtError(error: unknown, fallback: string): void {
+    if (error instanceof ApiError) {
+      // ApiError.message is already localized by the caller; legacy response text is not.
+      toastApiError(error.data, error.message || fallback);
+      return;
+    }
+    toast.error(error instanceof Error && error.message ? error.message : fallback);
+  }
+  return { toastApiError, toastCaughtError };
 }

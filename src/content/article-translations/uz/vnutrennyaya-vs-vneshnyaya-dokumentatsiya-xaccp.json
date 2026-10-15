@@ -1,0 +1,58 @@
+{
+  "locale": "uz",
+  "sourceHash": "270d20ec758c969e9501e0c40a42ce20514d044d7b21d9b11e7a093cb56ceb2f",
+  "title": "HACCP: ichki va tashqi hujjatlar — farqi nimada?",
+  "excerpt": "Jamoa qaysi hujjatlarni o‘zi tuzadi, qaysilarini esa yetkazib beruvchi yoki davlat organidan asl holida oladi? Ularni aralashtirish auditdagi muammolarning keng tarqalgan sababidir.",
+  "body": [
+    {
+      "type": "p",
+      "text": "Har qanday HACCP rejasida hujjatlarning ikki qatlami bor. Birinchisi — korxonaning o‘zi yaratadigan yozuvlar: siyosatlar, tartiblar, jurnallar va audit hisobotlari. Ikkinchisi — tashqaridan olinadigan hujjatlar: yetkazib beruvchi sertifikatlari, yuvish vositalari xavfsizligi pasportlari va laboratoriya xulosalari. Ularni aralashtirmang: saqlash muddati va tekshiruvdagi vazifasi har xil."
+    },
+    {
+      "type": "h2",
+      "text": "Ichki hujjatlar"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Oziq-ovqat xavfsizligi siyosati: rahbar imzolagan bir sahifalik hujjat.",
+        "HACCP rejasi: jarayon diagrammalari, xavflar tahlili, CCP nuqtalari va ularning chegaralari.",
+        "Oshxona ish yo‘riqnomalari: qo‘l yuvish, taxtakachlarni belgilash va ishlov haroratlari.",
+        "Jurnallar: gigiyena, harorat, tozalash, brak va xodimlarni o‘qitish.",
+        "Ichki audit hisobotlari va CAPA yozuvlari."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Tashqi hujjatlar"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Xomashyo va qadoqlash uchun deklaratsiya hamda sertifikatlar.",
+        "Yuvish va dezinfeksiya vositalarining xavfsizlik pasportlari.",
+        "Pest nazorati bo‘yicha pudratchi dalolatnomalari va sovutkich uskunasiga xizmat ko‘rsatish hisobotlari.",
+        "Suv va yuzalardan olingan surtmalarning laboratoriya tahlili bayonnomalari.",
+        "Yetkazib beruvchilar va tashuvchilar bilan tuzilgan shartnomalar."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Ko‘p uchraydigan xato",
+      "text": "Yetkazib beruvchi sertifikati kiruvchi nazorat jurnaliga tikib qo‘yiladi. Bu tekshiruvni chalkashtiradi: inspektor uchinchi tomon hujjatini topish uchun korxona yozuvlarini varaqlamasligi kerak."
+    },
+    {
+      "type": "h2",
+      "text": "Qanday saqlash kerak"
+    },
+    {
+      "type": "p",
+      "text": "Ichki hujjatlarni tahrirlar tarixi va imzolar ko‘rinadigan tizimda saqlang. Tashqi hujjatlarni alohida joylashtirib, yetkazib beruvchi va hujjatning amal qilish muddati bo‘yicha qidirish imkonini bering. WeSetup bu jarayonlarni ajratadi: tashqi hujjatlar uchun alohida bo‘lim va ruxsatlar daraxti bor."
+    }
+  ],
+  "tags": [
+    "HACCP",
+    "Hujjatlar boshqaruvi"
+  ]
+}

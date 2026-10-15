@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Building2, Check, CheckCircle2, FilePlus2, ListChecks, Send, UtensilsCrossed } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, Building2, CheckCircle2, FilePlus2, ListChecks, Send, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -13,28 +13,26 @@ import {
 import { TimeEntryField, isBadTypedTime } from "@/components/journals/time-entry-field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { BrakerageDateInput } from "@/components/journals/brakerage-time-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { normalizeTypedTime, setTimeForAll } from "@/lib/finished-product-bulk";
 import { FINISHED_PRODUCT_ORGANOLEPTIC_DISH } from "@/lib/finished-product-document";
 import type { MasterBrakerageResult } from "@/lib/master-brakerage";
+import type { MasterBrakerageHistoryBatch } from "@/lib/master-brakerage-history";
 import type { SharedItem } from "@/lib/master-directory";
 import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
+import { brakerageCommentRequired, brakerageRelease } from "@/lib/brakerage-assessment";
 
 /** Как MASTER_BRAKERAGE_ROWS_MAX на сервере: меню одного дня. */
 const ROWS_MAX = 200;
 const START_ROWS = 5;
 const ORGANOLEPTIC_DEFAULT = "__journal_default__";
 
-function todayKey(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-
 function formatDate(date: string): string {
   const [y, m, d] = date.split("-");
-  return y && m && d ? `${d}.${m}.${y}` : date;
+  return y && m && d ? `${d}-${m}-${y}` : date;
 }
 
 function kitchens(count: number): string {
@@ -62,27 +60,70 @@ export function MasterBrakerageDialog({
   onOpenChange,
   menu,
   organizationsCount,
+  editingBatch = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   menu: SharedItem[];
   organizationsCount: number;
+  editingBatch?: MasterBrakerageHistoryBatch | null;
 }) {
   const [rows, setRows] = useState<BulkDishRow[]>(() => emptyBulkDishRows(START_ROWS));
-  const [date, setDate] = useState(todayKey);
+  const [date, setDate] = useState("");
   const [commonTime, setCommonTime] = useState("");
   const [organoleptic, setOrganoleptic] = useState(ORGANOLEPTIC_DEFAULT);
-  const [releaseAllowed, setReleaseAllowed] = useState<"yes" | "no">("yes");
   const [productTemp, setProductTemp] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<MasterBrakerageResult | null>(null);
   const [result, setResult] = useState<MasterBrakerageResult | null>(null);
+  const [historyVersion, setHistoryVersion] = useState("");
+  const [scope, setScope] = useState<"" | "history" | "all" | "selected">("");
+  const [selectedOrganizations, setSelectedOrganizations] = useState<string[]>([]);
+  const returningFromPreview = useRef(false);
+  const recipients = editingBatch?.result?.organizations.filter(org => org.added > 0 && org.documentId) ?? [];
 
-  // Каждое открытие — свежая дата «сегодня», если её не меняли в этом окне.
   useEffect(() => {
-    if (open && !date) setDate(todayKey());
-  }, [open, date]);
+    if (!open) return;
+    if (returningFromPreview.current) { returningFromPreview.current = false; return; }
+    setScope("");
+    setSelectedOrganizations([]);
+    if (!editingBatch) {
+      setRows(menuToRows(menu)); setDate(""); setCommonTime("");
+      setOrganoleptic(ORGANOLEPTIC_DEFAULT); setProductTemp(""); setNote("");
+      return;
+    }
+    const input = editingBatch.input;
+    setRows(input.rows);
+    setDate(input.date);
+    setCommonTime(input.common.time);
+    setOrganoleptic(input.common.organoleptic || ORGANOLEPTIC_DEFAULT);
+
+    setProductTemp(input.common.productTemp);
+    setNote(input.common.note);
+    setHistoryVersion(editingBatch.updatedAt);
+  }, [open, editingBatch, menu]);
+
+  async function saveHistoryInput() {
+    if (organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) && !note.trim()) { toast.error("Добавьте комментарий к оценке блюда"); return; }
+    const dateInput = document.querySelector<HTMLInputElement>('[data-testid="master-brakerage-date"]');
+    if (dateInput && !dateInput.reportValidity()) return;
+    if (!editingBatch || !canSubmit || !scope || (scope === "selected" && !selectedOrganizations.length) || busy) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/master/brakerage/history/${editingBatch.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: payload(false), updatedAt: historyVersion, scope, organizationIds: selectedOrganizations }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Не удалось сохранить ввод");
+      setHistoryVersion(body.batch.updatedAt);
+      window.dispatchEvent(new Event("master-brakerage-changed"));
+      toast.success(`Изменения сохранены. Обновлено журналов: ${body.changed.length}. Предыдущая версия осталась в истории.`);
+      onOpenChange(false);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Не удалось сохранить ввод"); }
+    finally { setBusy(false); }
+  }
 
   /** Пустой выход строки — из меню мастера по наименованию (как у пищеблока). */
   const menuByName = useMemo(() => new Map(menu.map((item) => [item.name.trim().toLowerCase(), item])), [menu]);
@@ -98,7 +139,7 @@ export function MasterBrakerageDialog({
   const commonNormalized = normalizeTypedTime(commonTime);
   const withoutTime = named.filter((row) => !normalizeTypedTime(row.time) && !commonNormalized).length;
   const badTimes = rows.filter((row) => isBadTypedTime(row.time)).length + (isBadTypedTime(commonTime) ? 1 : 0);
-  const canSubmit = named.length > 0 && Boolean(date) && withoutTime === 0 && badTimes === 0 && organizationsCount > 0;
+  const canSubmit = named.length > 0 && Boolean(date) && withoutTime === 0 && badTimes === 0 && (editingBatch !== null || organizationsCount > 0);
 
   function payload(dryRun: boolean) {
     return {
@@ -108,7 +149,7 @@ export function MasterBrakerageDialog({
       common: {
         time: commonNormalized,
         organoleptic: organoleptic === ORGANOLEPTIC_DEFAULT ? "" : organoleptic,
-        releaseAllowed,
+        releaseAllowed: brakerageRelease(organoleptic),
         productTemp,
         note,
       },
@@ -130,11 +171,15 @@ export function MasterBrakerageDialog({
   }
 
   async function openPreview() {
+    if (organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) && !note.trim()) { toast.error("Добавьте комментарий к оценке блюда"); return; }
+    const dateInput = document.querySelector<HTMLInputElement>('[data-testid="master-brakerage-date"]');
+    if (dateInput && !dateInput.reportValidity()) return;
     if (!canSubmit || busy) return;
     setBusy(true);
     try {
       const next = await send(true);
       if (!next) return;
+      returningFromPreview.current = true;
       setPreview(next);
       onOpenChange(false);
     } finally {
@@ -145,8 +190,10 @@ export function MasterBrakerageDialog({
   async function commit() {
     const done = await send(false);
     if (!done) return;
+    returningFromPreview.current = false;
     setPreview(null);
     setResult(done);
+    window.dispatchEvent(new Event("master-brakerage-changed"));
     const { added, organizations, failed } = done.totals;
     const text = `Добавлено ${rowsLabel(added)} в ${kitchens(organizations)}`;
     if (failed > 0) toast.warning(`${text}; не удалось — ${kitchens(failed)}`);
@@ -159,7 +206,8 @@ export function MasterBrakerageDialog({
       <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
         {menu.length > 0
           ? `Взять ${menu.length} ${pluralRu(menu.length, "блюдо", "блюда", "блюд")} из меню кабинета — с выходом и временем, потом уберите лишнее.`
-          : "Меню кабинета пустое — впишите блюда или вставьте из Excel."}
+          : "Справочник кабинета пуст — впишите блюда или вставьте из Excel."}
+        {menu.length > ROWS_MAX ? ` За одну выгрузку — не более ${ROWS_MAX} блюд; сейчас выбраны первые ${ROWS_MAX}. Остальные выгрузите отдельно.` : ""}
       </p>
       <button
         type="button"
@@ -172,23 +220,33 @@ export function MasterBrakerageDialog({
         data-testid="master-brakerage-take-menu"
       >
         <UtensilsCrossed className="size-4" />
-        Взять меню
+        Взять из справочника
       </button>
     </div>
   );
 
   const commonFields = (
     <div className="min-w-0 space-y-5">
+      {editingBatch ? <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
+        <p className="text-[14px] font-medium text-[#0b1024]">Где применить исправления?</p>
+        <div role="radiogroup" aria-label="Где применить исправления" className="space-y-2 text-[13px] text-[#3c4053]">{([
+          ["all", "Во всех пищеблоках, получивших эту выгрузку"],
+          ["selected", "В выбранных пищеблоках"],
+          ["history", "Только в истории мастер-кабинета"],
+        ] as const).map(([value, label]) => <label key={value} className="flex items-start gap-2"><input type="radio" name="master-correction-scope" value={value} checked={scope === value} disabled={busy || (value !== "history" && !recipients.length)} onChange={() => setScope(value)} className="mt-0.5 accent-[#5566f6]" />{label}</label>)}</div>
+        {scope === "selected" ? <div className="max-h-48 space-y-2 overflow-auto rounded-2xl border border-[#ececf4] bg-white p-3">{recipients.map(org => <label key={org.organizationId} className="flex items-start gap-2 text-[13px]"><input type="checkbox" checked={selectedOrganizations.includes(org.organizationId)} disabled={busy} onChange={event => setSelectedOrganizations(ids => event.target.checked ? [...ids, org.organizationId] : ids.filter(id => id !== org.organizationId))} className="mt-0.5 accent-[#5566f6]" /><span className="break-words">{org.organizationName}</span></label>)}</div> : null}
+        <p className="text-[12.5px] leading-relaxed text-[#6f7282]">Подписанные и проверенные записи, а также закрытые журналы изменять нельзя. Если данные в пищеблоке конфликтуют с исправлениями, сохранение остановится без частичного обновления.</p>
+      </div> : null}
       <div className="space-y-2">
-        <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время изготовления</Label>
+        <Label className="text-[13px] font-medium text-[#3c4053]">На какую дату выгрузить блюда?</Label>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-          <Input
-            type="date"
+          <BrakerageDateInput
             aria-label="Дата изготовления"
             className="block h-11 w-full min-w-0 appearance-none rounded-xl border-[#dcdfed] px-3 text-left text-[15px]"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={setDate}
             data-testid="master-brakerage-date"
+            required
           />
           <TimeEntryField
             value={commonTime}
@@ -245,33 +303,7 @@ export function MasterBrakerageDialog({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-[13px] font-medium text-[#3c4053]">Разрешение к реализации</Label>
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Разрешение к реализации">
-          {(
-            [
-              ["yes", "Разрешено", "#136b2a", "rgba(19,107,42,0.18)"],
-              ["no", "Не разрешено", "#d2453d", "rgba(210,69,61,0.18)"],
-            ] as const
-          ).map(([value, label, fg, ring]) => {
-            const active = releaseAllowed === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setReleaseAllowed(value)}
-                className={`flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3.5 text-[14px] font-medium transition-all duration-150 ${active ? "border-transparent text-white shadow-[0_8px_20px_-10px_rgba(11,16,36,0.35)]" : "border-[#dcdfed] bg-white text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"}`}
-                style={active ? { backgroundColor: fg, boxShadow: `0 0 0 4px ${ring}` } : undefined}
-              >
-                {active ? <Check className="size-4" strokeWidth={3} /> : null}
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <p className="text-[13px] text-[#3c4053]">Разрешение к реализации: {brakerageRelease(organoleptic) === "no" ? "Не разрешено" : "Разрешено"}. Определяется оценкой автоматически.</p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -286,7 +318,7 @@ export function MasterBrakerageDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-[13px] font-medium text-[#3c4053]">Примечание</Label>
+          <Label className="text-[13px] font-medium text-[#3c4053]">Примечание{organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) ? " *" : ""}</Label>
           <Input
             className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
             value={note}
@@ -308,7 +340,7 @@ export function MasterBrakerageDialog({
       <FinishedProductBulkDialog
         open={open}
         onOpenChange={onOpenChange}
-        title="Добавить в журналы на дату"
+        title={editingBatch ? "Исправить выгрузку" : "Выгрузить справочник в журналы"}
         description={
           <>
             Блюда из таблицы появятся строками в журнале бракеража готовой продукции (БЖГП) каждого пищеблока на
@@ -329,10 +361,10 @@ export function MasterBrakerageDialog({
           />
         }
         commonFields={commonFields}
-        submitLabel={organizationsCount > 0 ? `Добавить в ${kitchens(organizationsCount)}` : "Нет подключённых пищеблоков"}
-        submitDisabled={!canSubmit}
+        submitLabel={editingBatch ? "Сохранить исправления" : organizationsCount > 0 ? `Выгрузить в ${kitchens(organizationsCount)}` : "Нет подключённых пищеблоков"}
+        submitDisabled={!canSubmit || (editingBatch !== null && (!scope || (scope === "selected" && !selectedOrganizations.length)))}
         submitting={busy}
-        onSubmit={() => void openPreview()}
+        onSubmit={() => void (editingBatch ? saveHistoryInput() : openPreview())}
         testId="master-brakerage-dialog"
       />
 

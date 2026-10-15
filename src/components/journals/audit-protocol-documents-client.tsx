@@ -33,8 +33,7 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -198,7 +197,7 @@ export function AuditProtocolDocumentsClient({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   const [deleteDocument, setDeleteDocument] = useState<DocumentItem | null>(null);
@@ -406,7 +405,7 @@ export function AuditProtocolDocumentsClient({
                       },
                       // Закрытый документ раньше уходил навсегда: вернуть
                       // его в активные было нечем.
-                      ...restoreMenuItems({ document, siblings: documents, restore }),
+                      ...restoreMenu({ document, siblings: documents }),
                       ...(document.status === "active"
                         ? [
                             {

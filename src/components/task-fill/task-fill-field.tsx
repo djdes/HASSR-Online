@@ -1,5 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { createElement } from "react";
+import { taskFillPhotoCopy, type TaskFillTranslator } from "@/lib/task-fill-messages";
+
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -13,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import type { TaskFormField } from "@/lib/tasksflow-adapters/task-form";
 import { StepButton } from "@/components/qr-fill/stepper";
-import { normFromLabel, stepNumber, stepTime } from "@/lib/quick-values";
+import { stepNumber, stepTime } from "@/lib/quick-values";
 import { fieldIcon, fieldIconTone } from "./field-icons";
 import dynamic from "next/dynamic";
 
@@ -33,6 +37,7 @@ const PhotoField = dynamic(() => import("@/components/journals/photo-field").the
 function validateNumberField(
   field: Extract<TaskFormField, { type: "number" }>,
   value: unknown,
+  t: TaskFillTranslator,
 ): {
   status: "neutral" | "ok" | "warn" | "error";
   hint: string | null;
@@ -42,26 +47,26 @@ function validateNumberField(
   }
   const num = typeof value === "number" ? value : Number(String(value).replace(",", "."));
   if (!Number.isFinite(num)) {
-    return { status: "error", hint: "Не похоже на число — введите цифрами" };
+    return { status: "error", hint: t("field.invalidNumber") };
   }
   const min = field.min;
   const max = field.max;
   if (typeof min === "number" && num < min) {
     return {
       status: "error",
-      hint: `Меньше нормы (минимум ${min}${field.unit ? " " + field.unit : ""}). Это нарушение — нужно действие.`,
+      hint: t("field.belowMin", { min, unit: field.unit ? " " + field.unit : "" }),
     };
   }
   if (typeof max === "number" && num > max) {
     return {
       status: "error",
-      hint: `Выше нормы (максимум ${max}${field.unit ? " " + field.unit : ""}). Это нарушение — нужно действие.`,
+      hint: t("field.aboveMax", { max, unit: field.unit ? " " + field.unit : "" }),
     };
   }
   if (typeof min === "number" && typeof max === "number") {
     return {
       status: "ok",
-      hint: `В норме (диапазон ${min}–${max}${field.unit ? " " + field.unit : ""})`,
+      hint: t("field.withinRange", { min, max, unit: field.unit ? " " + field.unit : "" }),
     };
   }
   return { status: "neutral", hint: null };
@@ -92,7 +97,7 @@ type Props = {
  * кликабельная toggle), но визуально та же.
  */
 export function TaskFillField({ field, value, onChange }: Props) {
-  const Icon = fieldIcon(field);
+  const t = useTranslations("taskFill");
   const tone = fieldIconTone(field);
 
   // Boolean — особый случай, label-карточка + чекбокс справа.
@@ -113,7 +118,7 @@ export function TaskFillField({ field, value, onChange }: Props) {
               : `${tone.bg} ${tone.fg}`
           }`}
         >
-          <Icon className="size-5" />
+          {createElement(fieldIcon(field), { className: "size-5" })}
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold leading-snug text-[#0b1024] sm:text-[15.5px]">
@@ -133,7 +138,7 @@ export function TaskFillField({ field, value, onChange }: Props) {
 
   // Live-валидация для number-полей.
   const numberStatus =
-    field.type === "number" ? validateNumberField(field, value) : null;
+    field.type === "number" ? validateNumberField(field, value, t) : null;
 
   // Цвет рамки карточки по статусу.
   const cardBorder =
@@ -152,7 +157,7 @@ export function TaskFillField({ field, value, onChange }: Props) {
         <span
           className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone.bg} ${tone.fg}`}
         >
-          <Icon className="size-[18px]" />
+          {createElement(fieldIcon(field), { className: "size-[18px]" })}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -173,7 +178,7 @@ export function TaskFillField({ field, value, onChange }: Props) {
       </div>
 
       {/* Input */}
-      <div className="mt-3">{renderInput(field, value, onChange)}</div>
+      <div className="mt-3">{renderInput(field, value, onChange, t)}</div>
 
       {/* Live validation status (number-поля) — text/select/date не
           получают дубль placeholder'а под полем: он уже виден внутри
@@ -204,6 +209,7 @@ function renderInput(
   field: TaskFormField,
   value: unknown,
   onChange: (v: unknown) => void,
+  t: TaskFillTranslator,
 ) {
   const id = `field-${field.key}`;
   const baseInputClass =
@@ -234,12 +240,12 @@ function renderInput(
 
     case "number": {
       // «−»/«+» по бокам: шаг ±1, пустое поле первым нажатием попадает в середину нормы из подписи.
-      const norm = normFromLabel(field.label);
+      const norm = field.normalRange;
       const current = value === null || value === undefined ? "" : String(value);
       const step = (delta: -1 | 1) => onChange(Number(stepNumber(current, delta, norm?.min, norm?.max)));
       return (
         <div className="flex items-center gap-2">
-          <StepButton delta={-1} size="md" label="Минус" onClick={() => step(-1)} />
+          <StepButton delta={-1} size="md" label={t("field.decrease")} onClick={() => step(-1)} />
           <Input
             id={id}
             type="number"
@@ -257,7 +263,7 @@ function renderInput(
             step={field.step}
             className={`${baseInputClass} min-w-0 flex-1 text-center font-semibold tabular-nums`}
           />
-          <StepButton delta={1} size="md" label="Плюс" onClick={() => step(1)} />
+          <StepButton delta={1} size="md" label={t("field.increase")} onClick={() => step(1)} />
         </div>
       );
     }
@@ -272,7 +278,7 @@ function renderInput(
             id={id}
             className="h-14 rounded-2xl border-[#dcdfed] px-4 text-[15.5px] focus:ring-4 focus:ring-[#5566f6]/15 focus:border-[#5566f6]"
           >
-            <SelectValue placeholder="Выбери из списка" />
+            <SelectValue placeholder={t("field.choose")} />
           </SelectTrigger>
           <SelectContent>
             {field.options.map((opt) => (
@@ -306,7 +312,7 @@ function renderInput(
       const current = (value as string) ?? "";
       return (
         <div className="flex items-center gap-2">
-          <StepButton delta={-1} size="md" label="Минус 5 минут" onClick={() => onChange(stepTime(current, -5))} />
+          <StepButton delta={-1} size="md" label={t("field.decreaseTime")} onClick={() => onChange(stepTime(current, -5))} />
           <Input
             id={id}
             type="time"
@@ -315,7 +321,7 @@ function renderInput(
             onChange={(e) => onChange(e.target.value)}
             className={`${baseInputClass} min-w-0 flex-1 font-semibold tabular-nums`}
           />
-          <StepButton delta={1} size="md" label="Плюс 5 минут" onClick={() => onChange(stepTime(current, 5))} />
+          <StepButton delta={1} size="md" label={t("field.increaseTime")} onClick={() => onChange(stepTime(current, 5))} />
         </div>
       );
     }
@@ -323,6 +329,7 @@ function renderInput(
     case "photo":
       return (
         <PhotoField
+          copy={taskFillPhotoCopy(t)}
           label={field.label}
           value={(value as string) ?? ""}
           onChange={(next) => onChange(next)}
@@ -336,7 +343,7 @@ function renderInput(
           id={id}
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Фамилия и инициалы"
+          placeholder={t("field.signaturePlaceholder")}
           autoComplete="name"
           className={baseInputClass}
         />
@@ -348,19 +355,19 @@ function renderInput(
 }
 
 function RequiredPill({ className = "" }: { className?: string }) {
+  const t = useTranslations("taskFill");
   return (
     <span
       className={`inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-rose-700 ${className}`}
     >
-      обязательно
-    </span>
+      {t("field.required")}</span>
   );
 }
 
 function OptionalPill() {
+  const t = useTranslations("taskFill");
   return (
     <span className="inline-flex items-center rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.08em] text-[#9b9fb3]">
-      по желанию
-    </span>
+      {t("field.optional")}</span>
   );
 }

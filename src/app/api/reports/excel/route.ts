@@ -3,29 +3,35 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadReportTable } from "@/lib/report-export-data";
-import { REPORT_EMPTY_MESSAGE } from "@/lib/report-export";
+import { resolveExportLocale } from "@/i18n/export-locale";
+import { translatorFor } from "@/i18n/translator";
+import { parseReportDate } from "@/lib/report-export";
 import ExcelJS from "exceljs";
 import { isManagementRole } from "@/lib/user-roles";
 
 export async function GET(request: Request) {
+  let t = await translatorFor("ru");
   try {
     const session = await getServerSession(authOptions);
+    const { searchParams } = new URL(request.url);
+    const locale = resolveExportLocale(searchParams.get("locale"), session?.user ?? {});
+    t = await translatorFor(locale ?? resolveExportLocale(null, session?.user ?? {})!);
     if (!session) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+      return NextResponse.json({ code: "REPORT_UNAUTHORIZED", error: t("reports.errors.unauthorized") }, { status: 401 });
     }
 
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+      return NextResponse.json({ code: "REPORT_MANAGEMENT_ONLY", error: t("reports.errors.managementOnly") }, { status: 403 });
     }
 
-    const { searchParams } = new URL(request.url);
+    if (!locale) return NextResponse.json({ code: "INVALID_LOCALE", error: t("language.invalid") }, { status: 400 });
     const templateCode = searchParams.get("templateCode");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     const areaId = searchParams.get("areaId");
 
     if (!templateCode || !from || !to) {
-      return NextResponse.json({ error: "templateCode, from, to обязательны" }, { status: 400 });
+      return NextResponse.json({ code: "REPORT_REQUIRED_PARAMETERS_EXCEL", error: t("reports.errors.requiredParametersExcel") }, { status: 400 });
     }
 
     // Раньше: new Date(to + "T23:59:59.999Z") при невалидном to давал
@@ -33,18 +39,18 @@ export async function GET(request: Request) {
     // получался за всё время существования org-и. Плюс не было
     // max-range: from=2020 to=2030 ок'и проходило, сервер генерил
     // огромный xlsx 5-10 минут блокируя worker.
-    const parsedFrom = Date.parse(from);
-    const parsedTo = Date.parse(to);
-    if (Number.isNaN(parsedFrom) || Number.isNaN(parsedTo)) {
-      return NextResponse.json({ error: "Некорректный формат даты" }, { status: 400 });
+    const parsedFrom = parseReportDate(from);
+    const parsedTo = parseReportDate(to);
+    if (parsedFrom === null || parsedTo === null) {
+      return NextResponse.json({ code: "REPORT_INVALID_DATE", error: t("reports.errors.invalidDate") }, { status: 400 });
     }
     if (parsedFrom > parsedTo) {
-      return NextResponse.json({ error: "Дата начала позже даты окончания" }, { status: 400 });
+      return NextResponse.json({ code: "REPORT_DATE_ORDER", error: t("reports.errors.dateOrder") }, { status: 400 });
     }
     const MAX_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
     if (parsedTo - parsedFrom > MAX_RANGE_MS) {
       return NextResponse.json(
-        { error: "Период отчёта не должен превышать 366 дней" },
+        { code: "REPORT_PERIOD_TOO_LONG", error: t("reports.errors.periodTooLong") },
         { status: 400 }
       );
     }
@@ -55,12 +61,13 @@ export async function GET(request: Request) {
       dateFrom: from,
       dateTo: to,
       areaId,
+      locale,
     });
 
     if (!loaded) {
-      return NextResponse.json({ error: "Шаблон не найден" }, { status: 404 });
+      return NextResponse.json({ code: "REPORT_TEMPLATE_NOT_FOUND", error: t("reports.errors.templateNotFound") }, { status: 404 });
     }
-    const { templateName, table } = loaded;
+    const { templateName, table, emptyMessage } = loaded;
 
     // Build workbook. Строки — документные записи журнала за период
     // (+ легаси JournalEntry, если есть), см. loadReportTable.
@@ -69,7 +76,7 @@ export async function GET(request: Request) {
     workbook.created = new Date();
 
     // Имя листа в Excel — до 31 символа и без спецсимволов []:*?/\
-    const sheetName = templateName.replace(/[[\]:*?/\\]/g, " ").slice(0, 31) || "Журнал";
+    const sheetName = templateName.replace(/[[\]:*?/\\]/g, " ").slice(0, 31) || t("reports.worksheet");
     const sheet = workbook.addWorksheet(sheetName);
 
     sheet.columns = table.headers.map((header, index) => ({
@@ -89,7 +96,7 @@ export async function GET(request: Request) {
     headerRow.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
 
     if (table.isEmpty) {
-      sheet.addRow([REPORT_EMPTY_MESSAGE]);
+      sheet.addRow([emptyMessage]);
     } else {
       for (const row of table.rows) sheet.addRow(row);
     }
@@ -107,10 +114,12 @@ export async function GET(request: Request) {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `${disposition}; filename="${filename}"`,
+        "Content-Language": locale,
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (error) {
     console.error("Excel export error:", error);
-    return NextResponse.json({ error: "Внутренняя ошибка" }, { status: 500 });
+    return NextResponse.json({ code: "REPORT_INTERNAL", error: t("reports.errors.internal") }, { status: 500 });
   }
 }

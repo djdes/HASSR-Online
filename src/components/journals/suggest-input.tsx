@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,6 +35,8 @@ export function SuggestInput({
   placeholder?: string;
   className?: string;
 }) {
+  const t = useTranslations("journalControls.suggestInput");
+  const optionsId = useId();
   const [open, setOpen] = useState(false);
   // Пока человек не начал печатать, показываем весь список, даже если в поле уже есть текст.
   const [typed, setTyped] = useState(false);
@@ -63,6 +67,7 @@ export function SuggestInput({
           role="combobox"
           aria-label={ariaLabel}
           aria-expanded={open}
+          aria-controls={open ? optionsId : undefined}
           aria-autocomplete="list"
           autoComplete="off"
           spellCheck={false}
@@ -108,7 +113,7 @@ export function SuggestInput({
         <button
           type="button"
           tabIndex={-1}
-          aria-label={open ? "Свернуть список" : "Показать всех"}
+          aria-label={open ? t("collapse") : t("showAll")}
           // mousedown с preventDefault — поле не теряет фокус при клике по стрелке.
           onMouseDown={(event) => {
             event.preventDefault();
@@ -124,7 +129,8 @@ export function SuggestInput({
         <ul
           ref={listRef}
           role="listbox"
-          aria-label={`${ariaLabel}: варианты`}
+          id={optionsId}
+          aria-label={t("options", { label: ariaLabel })}
           className="max-h-48 overflow-auto rounded-2xl border border-[#ececf4] bg-white p-1.5 shadow-[0_16px_40px_-24px_rgba(11,16,36,0.35)]"
         >
           {visible.map((option, index) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, Download, FileSpreadsheet, LayoutTemplate, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,7 +11,9 @@ import {
   type ImportedColumnsPreview,
   type JournalColumnTemplate,
 } from "@/lib/journal-column-templates";
-import type { JournalColumnsConfig } from "@/lib/journal-columns";
+import { resolveColumns, type JournalColumnsConfig, type ResolvedJournalColumn } from "@/lib/journal-columns";
+import { useExportLanguageChoice } from "./export-language-choice";
+import { downloadFile } from "@/lib/native-bridge";
 
 type Pending =
   | { kind: "template"; template: JournalColumnTemplate }
@@ -29,6 +32,7 @@ export function JournalColumnTemplatesBar({
   current,
   onApply,
   canManage,
+  presentColumn,
 }: {
   code: string;
   config: Record<string, unknown>;
@@ -36,7 +40,11 @@ export function JournalColumnTemplatesBar({
   current: JournalColumnsConfig;
   onApply: (columns: JournalColumnsConfig) => void;
   canManage: boolean;
+  presentColumn?: (column: ResolvedJournalColumn) => ResolvedJournalColumn;
 }) {
+  const t = useTranslations("journalControls.columnTemplates");
+  const locale = useLocale();
+  const chooseExportLanguage = useExportLanguageChoice();
   const [templates, setTemplates] = useState<JournalColumnTemplate[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
@@ -68,8 +76,21 @@ export function JournalColumnTemplatesBar({
 
   const pendingColumns =
     pending?.kind === "template" ? forDocument(pending.template.columns) : pending ? forDocument(pending.preview.columns) : null;
-  const change = pendingColumns ? describeTemplateChange(code, config, pendingColumns) : null;
+  const change = pendingColumns ? describeTemplateChange(code, config, pendingColumns, presentColumn) : null;
   const selected = templates.find((item) => item.id === selectedId) ?? null;
+  const displayTemplateName = (template: JournalColumnTemplate) => {
+    if (!template.builtIn) return template.name;
+    switch (template.id) {
+      case "builtin:appendix4": return t("templateNames.appendix4");
+      case "builtin:extended": return t("templateNames.extended");
+      case "builtin:standard": return t("templateNames.standard");
+      default: return template.name;
+    }
+  };
+  const displayColumnLabel = (key: string, fallback: string) => {
+    const column = resolveColumns(code, { ...config, columns: pendingColumns ?? current }).find((item) => item.key === key);
+    return column ? presentColumn?.(column).label ?? column.label : fallback;
+  };
 
   async function saveTemplate(name: string, columns: JournalColumnsConfig) {
     setBusy(true);
@@ -79,13 +100,12 @@ export function JournalColumnTemplatesBar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, name, columns }),
       });
-      const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(body?.error || "Не удалось сохранить шаблон");
-      toast.success(`Шаблон «${name}» сохранён`);
+      if (!response.ok) throw new Error();
+      toast.success(t("saveSuccess", { name }));
       setSaveName(null);
       await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить шаблон");
+    } catch {
+      toast.error(t("errors.save"));
     } finally {
       setBusy(false);
     }
@@ -98,11 +118,11 @@ export function JournalColumnTemplatesBar({
         method: "DELETE",
       });
       if (!response.ok) throw new Error();
-      toast.success(`Шаблон «${template.name}» удалён`);
+      toast.success(t("deleteSuccess", { name: template.name }));
       setSelectedId("");
       await load();
     } catch {
-      toast.error("Не удалось удалить шаблон");
+      toast.error(t("errors.delete"));
     } finally {
       setBusy(false);
     }
@@ -115,11 +135,11 @@ export function JournalColumnTemplatesBar({
       form.set("code", code);
       form.set("file", file);
       const response = await fetch("/api/settings/journal-column-templates/import", { method: "POST", body: form });
-      const body = (await response.json().catch(() => null)) as (ImportedColumnsPreview & { error?: string }) | null;
-      if (!response.ok || !body) throw new Error(body?.error || "Не удалось прочитать файл");
+      const body = (await response.json().catch(() => null)) as ImportedColumnsPreview | null;
+      if (!response.ok || !body) throw new Error();
       setPending({ kind: "import", preview: body, fileName: file.name });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось прочитать файл");
+    } catch {
+      toast.error(t("errors.readFile"));
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -133,7 +153,7 @@ export function JournalColumnTemplatesBar({
     <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
       <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
         <LayoutTemplate className="size-3.5 text-[#5566f6]" />
-        Шаблон колонок
+        {t("title")}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <select
@@ -145,13 +165,13 @@ export function JournalColumnTemplatesBar({
             setPending(template ? { kind: "template", template } : null);
           }}
           className="h-9 min-w-0 flex-1 rounded-xl border border-[#dcdfed] bg-white px-2 text-[13.5px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          aria-label="Выбрать шаблон колонок"
+          aria-label={t("chooseAria")}
         >
-          <option value="">Выберите шаблон…</option>
+          <option value="">{t("choosePlaceholder")}</option>
           {templates.map((template) => (
             <option key={template.id} value={template.id}>
-              {template.builtIn ? "" : "Свой: "}
-              {template.name}
+              {template.builtIn ? "" : t("customPrefix")}
+              {displayTemplateName(template)}
             </option>
           ))}
         </select>
@@ -161,8 +181,8 @@ export function JournalColumnTemplatesBar({
             onClick={() => void deleteTemplate(selected)}
             disabled={busy}
             className="rounded-xl p-2 text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2] disabled:opacity-50"
-            title="Удалить свой шаблон"
-            aria-label={`Удалить шаблон «${selected.name}»`}
+            title={t("deleteTitle")}
+            aria-label={t("deleteAria", { name: selected.name })}
           >
             <Trash2 className="size-4" />
           </button>
@@ -174,43 +194,47 @@ export function JournalColumnTemplatesBar({
           <div className="flex items-start gap-2 font-semibold">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             {pending.kind === "template"
-              ? `Колонки документа заменятся шаблоном «${pending.template.name}»`
-              : `Колонки документа заменятся формой из файла «${pending.fileName}»`}
+              ? t("alertTemplate", { name: displayTemplateName(pending.template) })
+              : t("alertFile", { fileName: pending.fileName })}
           </div>
           <ul className="list-disc space-y-0.5 pl-6 leading-snug">
             {pending.kind === "import" ? (
               <>
                 <li>
-                  Узнали колонок: {pending.preview.matched.length}
-                  {pending.preview.matched.length > 0 ? ` (${pending.preview.matched.map((item) => item.label).join(", ")})` : ""}
+                  {t("matched", {
+                    count: pending.preview.matched.length,
+                    labels: pending.preview.matched.length > 0
+                      ? ` (${pending.preview.matched.map((item) => displayColumnLabel(item.key, item.standardLabel)).join(", ")})`
+                      : "",
+                  })}
                 </li>
                 {pending.preview.custom.length > 0 ? (
-                  <li>Добавятся своими колонками: {pending.preview.custom.join(", ")}</li>
+                  <li>{t("customAdded", { labels: pending.preview.custom.join(", ") })}</li>
                 ) : null}
                 {pending.preview.skipped.length > 0 ? (
-                  <li>Не поместились (своих колонок не больше 12): {pending.preview.skipped.join(", ")}</li>
+                  <li>{t("skipped", { labels: pending.preview.skipped.join(", ") })}</li>
                 ) : null}
               </>
             ) : null}
-            {change.hide.length > 0 ? <li>Скроются: {change.hide.join(", ")}</li> : null}
-            {change.show.length > 0 ? <li>Появятся: {change.show.join(", ")}</li> : null}
-            {change.renamed > 0 ? <li>Переименуются колонок: {change.renamed}</li> : null}
-            {change.customRemoved.length > 0 ? <li>Уберутся свои колонки: {change.customRemoved.join(", ")}</li> : null}
-            <li>Записи в строках не удаляются: скрытую колонку можно включить снова.</li>
-            <li>Чтобы новые документы тоже открывались этой формой — «Применить ко всем документам…» ниже.</li>
+            {change.hide.length > 0 ? <li>{t("hidden", { labels: change.hide.join(", ") })}</li> : null}
+            {change.show.length > 0 ? <li>{t("shown", { labels: change.show.join(", ") })}</li> : null}
+            {change.renamed > 0 ? <li>{t("renamed", { count: change.renamed })}</li> : null}
+            {change.customRemoved.length > 0 ? <li>{t("customRemoved", { labels: change.customRemoved.join(", ") })}</li> : null}
+            <li>{t("recordsPreserved")}</li>
+            <li>{t("applyToAllHint")}</li>
           </ul>
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="button"
               onClick={() => {
                 if (pendingColumns) onApply(pendingColumns);
-                toast.success("Колонки заменены — не забудьте сохранить настройки");
+                toast.success(t("applySuccess"));
                 setPending(null);
                 setSelectedId("");
               }}
               className="inline-flex h-9 items-center rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              Заменить колонки
+              {t("apply")}
             </button>
             {pending.kind === "import" && canManage ? (
               <button
@@ -219,7 +243,7 @@ export function JournalColumnTemplatesBar({
                 onClick={() => void saveTemplate(pending.fileName.replace(/\.xlsx$/i, "").slice(0, JOURNAL_TEMPLATE_NAME_MAX), pending.preview.columns)}
                 className={buttonClass}
               >
-                <Save className="size-4" /> Сохранить как шаблон
+                <Save className="size-4" /> {t("saveAs")}
               </button>
             ) : null}
             <button
@@ -230,7 +254,7 @@ export function JournalColumnTemplatesBar({
               }}
               className="inline-flex h-9 items-center rounded-xl px-3 text-[13px] font-medium text-[#6f7282] transition-colors duration-150 hover:bg-white"
             >
-              Отмена
+              {t("cancel")}
             </button>
           </div>
         </div>
@@ -242,10 +266,10 @@ export function JournalColumnTemplatesBar({
             value={saveName}
             onChange={(event) => setSaveName(event.target.value)}
             maxLength={JOURNAL_TEMPLATE_NAME_MAX}
-            placeholder="Название шаблона"
+            placeholder={t("namePlaceholder")}
             autoFocus
             className="h-9 min-w-0 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13.5px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-            aria-label="Название шаблона"
+            aria-label={t("nameAria")}
           />
           <button
             type="button"
@@ -253,14 +277,14 @@ export function JournalColumnTemplatesBar({
             onClick={() => void saveTemplate(saveName.trim(), current)}
             className="inline-flex h-9 items-center rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-50"
           >
-            Сохранить
+            {t("save")}
           </button>
           <button
             type="button"
             onClick={() => setSaveName(null)}
             className="inline-flex h-9 items-center rounded-xl px-3 text-[13px] text-[#6f7282] hover:bg-white"
           >
-            Отмена
+              {t("cancel")}
           </button>
         </div>
       ) : null}
@@ -269,14 +293,24 @@ export function JournalColumnTemplatesBar({
         <div className="flex flex-wrap gap-2">
           {saveName === null ? (
             <button type="button" onClick={() => setSaveName("")} className={buttonClass}>
-              <Save className="size-4" /> Сохранить как шаблон
+              <Save className="size-4" /> {t("saveAs")}
             </button>
           ) : null}
           <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} className={buttonClass}>
-            <FileSpreadsheet className="size-4" /> Загрузить из Excel
+            <FileSpreadsheet className="size-4" /> {t("upload")}
           </button>
-          <a href={`/api/settings/journal-column-templates/import?code=${encodeURIComponent(code)}`} className={buttonClass}>
-            <Download className="size-4" /> Скачать образец
+          <a
+            href={`/api/settings/journal-column-templates/import?code=${encodeURIComponent(code)}&locale=${locale}`}
+            className={buttonClass}
+            onClick={(event) => {
+              if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              chooseExportLanguage(selectedLocale => {
+                void downloadFile(`/api/settings/journal-column-templates/import?code=${encodeURIComponent(code)}&locale=${selectedLocale}`);
+              }, t("downloadSample"));
+            }}
+          >
+            <Download className="size-4" /> {t("downloadSample")}
           </a>
           <input
             ref={fileRef}
@@ -291,8 +325,7 @@ export function JournalColumnTemplatesBar({
         </div>
       ) : null}
       <p className="text-[12px] leading-snug text-[#6f7282]">
-        Excel «по типовой форме»: первая строка таблицы — названия колонок, как в вашем бумажном журнале. Знакомые
-        колонки узнаются сами, остальные станут своими колонками.
+        {t("hint")}
       </p>
     </div>
   );

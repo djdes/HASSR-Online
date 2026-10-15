@@ -1,0 +1,19 @@
+{
+  "locale": "en",
+  "sourceHash": "cd44c646f205a6e2de3b017b1020d463796890fead3ab22cb06924f04bccc201",
+  "title": "iiko and 1C synchronization: what gets filled in automatically",
+  "excerpt": "Suppliers, product items, invoices, and write-offs sync automatically; readings and signatures still require a person. How to configure the integration without enabling automatic shift closure.",
+  "tags": ["Integrations", "iiko", "1C"],
+  "body": [
+    {"type":"p","text":"Manual data entry is a major source of errors in logs. A chef copies an invoice, gets a number wrong, and an inspector spots a mismatch between the finished-product check and warehouse records. Integrating iiko and 1C removes most of this risk."},
+    {"type":"h2","text":"What syncs"},
+    {"type":"ul","items":["Supplier directory—no need to add suppliers again.","Raw-material items, including units of measure and groups.","Goods receipts—each invoice appears in incoming inspection with one click.","Write-offs—finished-product rejection and disposal automatically create a posting in 1C."]},
+    {"type":"h2","text":"What still requires a person"},
+    {"type":"p","text":"Actual measurements: temperature at receipt, sensory assessment, and the responsible person's signature. These are deliberately not filled in automatically—the point of the log is that a real person took the measurements."},
+    {"type":"callout","tone":"warn","title":"Be careful with automatic closure","text":"Do not enable automatic log closure if the team is not working consistently. An open shift is a better reminder than a shift closed with zeros."},
+    {"type":"h2","text":"Configuration"},
+    {"type":"ol","items":["In WeSetup, open Settings → Integrations and select iiko or 1C.","Copy the API key from the external system's account.","Set the initial synchronization period—usually 30 days.","Check the product mapping: raw ingredients go to incoming inspection; finished products go to the finished-product log."]},
+    {"type":"h2","text":"What it changes"},
+    {"type":"p","text":"Based on our measurements among customers using the integration, journal entry time decreases by an average of 35%. Chefs stop jotting down invoices on scraps of paper and transferring them at the end of a shift—the entry appears in the log as soon as goods are received."}
+  ]
+}

@@ -3,6 +3,7 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 import { keyboardSheetMaxHeight, scrollDeltaToReveal, useKeyboardInset, useVisibleViewportHeight } from "@/lib/use-keyboard-inset";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import {
   AlertTriangle,
@@ -145,14 +146,17 @@ export function ConfirmDialog({
   title,
   description,
   bullets,
-  confirmLabel = "Подтвердить",
-  cancelLabel = "Отмена",
+  confirmLabel,
+  cancelLabel,
   variant = "default",
   typeToConfirm,
   icon: IconOverride,
   children,
   confirmDisabled = false,
 }: ConfirmDialogProps) {
+  const t = useTranslations("journalControls.confirm");
+  const resolvedConfirmLabel = confirmLabel ?? t("confirm");
+  const resolvedCancelLabel = cancelLabel ?? t("cancel");
   const [submitting, setSubmitting] = useState(false);
   const [phrase, setPhrase] = useState("");
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -281,7 +285,7 @@ export function ConfirmDialog({
       {/* Backdrop */}
       <button
         type="button"
-        aria-label="Закрыть"
+        aria-label={t("close")}
         onClick={() => !submitting && onClose()}
         className="absolute inset-0 bg-[#0b1024]/40 backdrop-blur-sm transition-opacity"
       />
@@ -328,7 +332,7 @@ export function ConfirmDialog({
             <button
               type="button"
               onClick={() => !submitting && onClose()}
-              aria-label="Закрыть"
+              aria-label={t("close")}
               className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#9b9fb3] hover:bg-white/60 hover:text-[#0b1024]"
             >
               <X className="size-4" />
@@ -376,10 +380,10 @@ export function ConfirmDialog({
         {typeToConfirm ? (
           <div className="px-6 pb-1 pt-4">
             <label className="block text-[12px] font-medium text-[#3c4053]">
-              Чтобы продолжить, введите{" "}
-              <span className="rounded-md bg-[#fff4f2] px-1.5 py-0.5 font-mono text-[12px] font-semibold text-[#a13a32]">
-                {typeToConfirm}
-              </span>
+              {t.rich("typeInstruction", {
+                phrase: typeToConfirm,
+                required: chunks => <span className="rounded-md bg-[#fff4f2] px-1.5 py-0.5 font-mono text-[12px] font-semibold text-[#a13a32]">{chunks}</span>,
+              })}
             </label>
             <input
               type="text"
@@ -396,7 +400,7 @@ export function ConfirmDialog({
             />
             {phrase.length > 0 && !phraseOk ? (
               <div className="mt-1 text-[11px] text-[#a13a32]">
-                Не совпало — введите точно так, как написано выше.
+                {t("mismatch")}
               </div>
             ) : null}
           </div>
@@ -412,7 +416,7 @@ export function ConfirmDialog({
             disabled={submitting}
             className="inline-flex h-11 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/40 hover:bg-[#fafbff] disabled:opacity-60"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             type="button"
@@ -421,7 +425,7 @@ export function ConfirmDialog({
             className={`inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${styles.confirmBg} ${styles.confirmHover} ${styles.confirmRing}`}
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </div>

@@ -1,0 +1,17 @@
+{
+  "common": {
+    "delete": "O‘chirish",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "close": "Yopish"
+  },
+  "journalControls": {
+    "confirm": {
+      "confirm": "Tasdiqlash",
+      "cancel": "Bekor qilish",
+      "close": "Yopish",
+      "typeInstruction": "Davom etish uchun <required>{phrase}</required> deb kiriting",
+      "mismatch": "Matn mos kelmadi — yuqorida ko‘rsatilganidek kiriting."
+    }
+  }
+}

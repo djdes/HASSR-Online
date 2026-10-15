@@ -1,3 +1,5 @@
+import { getJournalControls } from "@/lib/journal-controls.server";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -45,7 +47,6 @@ import { isEmailVerified } from "@/lib/email-verification";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
-import { getRouteTitle } from "@/lib/route-titles";
 import { LinkPendingOverlay } from "@/components/ui/link-pending";
 // ThemeSwitcher убран отсюда — занимал много места. Переключатель темы
 // живёт в меню профиля (иконка справа вверху) → подменю «Тема».
@@ -59,6 +60,7 @@ const settingsCards = [
   {
     description: "За 3 шага: объект, команда, журналы",
     href: "/settings/onboarding",
+    messageId: "settings_onboarding",
     icon: Sparkles,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -66,6 +68,7 @@ const settingsCards = [
   {
     description: "Название, ИНН, адрес, бренд, часовой пояс — для договоров и printable PDF",
     href: "/settings/organization",
+    messageId: "settings_organization",
     icon: Building2,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -73,6 +76,7 @@ const settingsCards = [
   {
     description: "Производственные зоны и помещения",
     href: "/settings/areas",
+    messageId: "settings_areas",
     icon: Building2,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -81,6 +85,7 @@ const settingsCards = [
     description:
       "Точки с адресами и помещения внутри — журналы уборки и климата, отдельные журналы по точкам",
     href: "/settings/buildings",
+    messageId: "settings_buildings",
     icon: Building2,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -88,6 +93,7 @@ const settingsCards = [
   {
     description: "Холодильники, печи, датчики",
     href: "/settings/equipment",
+    messageId: "settings_equipment",
     icon: Wrench,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f0edff]",
@@ -95,6 +101,7 @@ const settingsCards = [
   {
     description: "Роли, доступы, приглашения",
     href: "/settings/users",
+    messageId: "settings_users",
     icon: Users,
     iconClass: "text-[#0ea5e9]",
     bgClass: "bg-[#e8f7ff]",
@@ -102,6 +109,7 @@ const settingsCards = [
   {
     description: "Кто каких сотрудников видит и кому назначает",
     href: "/settings/staff-hierarchy",
+    messageId: "settings_staff_hierarchy",
     icon: Network,
     iconClass: "text-[#f59e0b]",
     bgClass: "bg-[#fff8eb]",
@@ -109,6 +117,7 @@ const settingsCards = [
   {
     description: "Видимость сотрудников по должностям — драйвит TasksFlow и бот",
     href: "/settings/position-staff-visibility",
+    messageId: "settings_position_staff_visibility",
     icon: Users,
     iconClass: "text-[#0ea5e9]",
     bgClass: "bg-[#e8f7ff]",
@@ -116,6 +125,7 @@ const settingsCards = [
   {
     description: "Какие журналы ваша компания ведёт",
     href: "/settings/journals",
+    messageId: "settings_journals",
     icon: ClipboardList,
     iconClass: "text-[#d946ef]",
     bgClass: "bg-[#fdf4ff]",
@@ -124,6 +134,7 @@ const settingsCards = [
     description:
       "Свои названия журналов и разделов меню — для вашей команды. В печати и у проверяющего остаются официальные",
     href: "/settings/names",
+    messageId: "settings_names",
     icon: PenLine,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -132,6 +143,7 @@ const settingsCards = [
     description:
       "Pipeline-инструкции для каждого журнала — что взять, куда идти, что делать",
     href: "/settings/journal-pipelines",
+    messageId: "settings_journal_pipelines",
     icon: ListChecks,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -140,6 +152,7 @@ const settingsCards = [
     description:
       "Гонка / свободно / только админ — стиль работы команды над одной задачей",
     href: "/settings/journal-flow",
+    messageId: "settings_journal_flow",
     icon: Shuffle,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f0edff]",
@@ -148,6 +161,7 @@ const settingsCards = [
     description:
       "Какие возможности у каждого preset'а (admin / head_chef / cook / …)",
     href: "/settings/role-presets",
+    messageId: "settings_role_presets",
     icon: ShieldCheck,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -156,6 +170,7 @@ const settingsCards = [
     description:
       "На какой срок создаётся каждый журнал — месяц, N дней, год…",
     href: "/settings/journal-periods",
+    messageId: "settings_journal_periods",
     icon: CalendarRange,
     iconClass: "text-[#10b981]",
     bgClass: "bg-[#ecfdf5]",
@@ -163,6 +178,7 @@ const settingsCards = [
   {
     description: "Импорт из Excel, iiko, 1С",
     href: "/settings/products",
+    messageId: "settings_products",
     icon: Package,
     iconClass: "text-[#f59e0b]",
     bgClass: "bg-[#fff8eb]",
@@ -170,6 +186,7 @@ const settingsCards = [
   {
     description: "Связать аккаунт с TasksFlow по номеру",
     href: "/settings/phone",
+    messageId: "settings_phone",
     icon: Phone,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -177,6 +194,7 @@ const settingsCards = [
   {
     description: "Один планшет на смену: сотрудник подписывает записи своим ПИН",
     href: "/settings/kiosk",
+    messageId: "settings_kiosk",
     icon: TabletSmartphone,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -184,6 +202,7 @@ const settingsCards = [
   {
     description: "Чтобы каждый месяц не заводить вручную",
     href: "/settings/auto-journals",
+    messageId: "settings_auto_journals",
     icon: Sparkles,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -191,6 +210,7 @@ const settingsCards = [
   {
     description: "Группы, должности, индивидуальные права",
     href: "/settings/permissions",
+    messageId: "settings_permissions",
     icon: ShieldCheck,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -198,6 +218,7 @@ const settingsCards = [
   {
     description: "Кто сегодня на смене — для авто-назначений",
     href: "/settings/schedule",
+    messageId: "settings_schedule",
     icon: CalendarRange,
     iconClass: "text-[#10b981]",
     bgClass: "bg-[#ecfdf5]",
@@ -205,6 +226,7 @@ const settingsCards = [
   {
     description: "Кто какие журналы видит и заполняет",
     href: "/settings/journal-access",
+    messageId: "settings_journal_access",
     icon: KeyRound,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -213,6 +235,7 @@ const settingsCards = [
     description:
       "Кто заполняет каждый журнал. Один клик — умные пресеты (уборка → уборщикам)",
     href: "/settings/journal-responsibles",
+    messageId: "settings_journal_responsibles",
     icon: Network,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f0edff]",
@@ -221,6 +244,7 @@ const settingsCards = [
     description:
       "Per-журнал: как создаются TasksFlow-задачи (по помещениям/сотрудникам/смене) и нужна ли двойная проверка завед. Здесь — «Без проверки» для журналов где сотрудник заполнил → готово",
     href: "/settings/journal-task-mode",
+    messageId: "settings_journal_task_mode",
     icon: Settings2,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -229,6 +253,7 @@ const settingsCards = [
     description:
       "Один клик — и настроены должности, помещения, оборудование, обязательные журналы под тип бизнеса (прилавок/кафе/ресторан/школа/производство)",
     href: "/settings/onboarding-template",
+    messageId: "settings_onboarding_template",
     icon: Wand2,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f0edff]",
@@ -237,6 +262,7 @@ const settingsCards = [
     description:
       "Список действий для каждого журнала (например «разобрать → промыть → продезинфицировать»). Сотрудник видит чек-лист в форме и отмечает галочки. Обязательные пункты блокируют отправку. Все отметки в audit-log",
     href: "/settings/journal-checklists",
+    messageId: "settings_journal_checklists",
     icon: ListChecks,
     iconClass: "text-emerald-700",
     bgClass: "bg-emerald-100",
@@ -245,6 +271,7 @@ const settingsCards = [
     description:
       "Если в команде нет шеф-повара — поставьте сложность 1-5 и распределите задачи между поварами равномерно",
     href: "/settings/journal-difficulty",
+    messageId: "settings_journal_difficulty",
     icon: Gauge,
     iconClass: "text-[#a16d32]",
     bgClass: "bg-[#fff8eb]",
@@ -253,6 +280,7 @@ const settingsCards = [
     description:
       "Кто сколько журналов ведёт в месяц — таблица с подсветкой перекоса между поварами на одинаковой зарплате",
     href: "/settings/workload-balance",
+    messageId: "settings_workload_balance",
     icon: Scale,
     iconClass: "text-[#10b981]",
     bgClass: "bg-[#ecfdf5]",
@@ -261,6 +289,7 @@ const settingsCards = [
     description:
       "Кто из руководства видит ВСЕ задачи в TasksFlow (admin-режим). По умолчанию — никто; включай только для одной должности (обычно «Админ»)",
     href: "/settings/task-visibility",
+    messageId: "settings_task_visibility",
     icon: Eye,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -268,6 +297,7 @@ const settingsCards = [
   {
     description: "Тот же выбор, но в виде матрицы должность × журнал — для power-юзеров",
     href: "/settings/journals-by-position",
+    messageId: "settings_journals_by_position",
     icon: Network,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f0edff]",
@@ -275,6 +305,7 @@ const settingsCards = [
   {
     description: "Сколько ₽ за «единичные» журналы — мотивация в TasksFlow",
     href: "/settings/journal-bonuses",
+    messageId: "settings_journal_bonuses",
     icon: Coins,
     iconClass: "text-[#b45309]",
     bgClass: "bg-[#fef3c7]",
@@ -282,6 +313,7 @@ const settingsCards = [
   {
     description: "Telegram-бот, типы оповещений",
     href: "/settings/notifications",
+    messageId: "settings_notifications",
     icon: Bell,
     iconClass: "text-[#10b981]",
     bgClass: "bg-[#ecfdf5]",
@@ -289,6 +321,7 @@ const settingsCards = [
   {
     description: "События WeSetup на ваш сервер: записи, отклонения, CAPA, оплаты",
     href: "/settings/webhooks",
+    messageId: "settings_webhooks",
     icon: Webhook,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -296,6 +329,7 @@ const settingsCards = [
   {
     description: "Сроки медкнижек, поверок и подписки — в вашем календаре",
     href: "/settings/calendar",
+    messageId: "settings_calendar",
     icon: CalendarDays,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -303,6 +337,7 @@ const settingsCards = [
   {
     description: "История входов, выход со всех устройств",
     href: "/settings/security",
+    messageId: "settings_security",
     icon: ShieldCheck,
     iconClass: "text-[#a13a32]",
     bgClass: "bg-[#fff4f2]",
@@ -310,6 +345,7 @@ const settingsCards = [
   {
     description: "Баллы за отзывы и рекомендации — скидка на подписку",
     href: "/settings/balance",
+    messageId: "settings_balance",
     icon: Coins,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -317,6 +353,7 @@ const settingsCards = [
   {
     description: "Тариф, история платежей, автопродление",
     href: "/settings/subscription",
+    messageId: "settings_subscription",
     icon: CreditCard,
     iconClass: "text-[#ec4899]",
     bgClass: "bg-[#fdf2f8]",
@@ -324,6 +361,7 @@ const settingsCards = [
   {
     description: "Настройка журналов, аудит, консультации и выезд специалиста",
     href: "/settings/services",
+    messageId: "settings_services",
     icon: Sparkles,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f5f0ff]",
@@ -331,6 +369,7 @@ const settingsCards = [
   {
     description: "Приказы по предприятию: заполнить реквизитами и распечатать",
     href: "/orders",
+    messageId: "orders",
     icon: ScrollText,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
@@ -338,6 +377,7 @@ const settingsCards = [
   {
     description: "Аудит всех событий",
     href: "/settings/audit",
+    messageId: "settings_audit",
     icon: ScrollText,
     iconClass: "text-[#6b7280]",
     bgClass: "bg-[#f3f4f6]",
@@ -345,6 +385,7 @@ const settingsCards = [
   {
     description: "Кто может править выполненные записи журналов",
     href: "/settings/compliance",
+    messageId: "settings_compliance",
     icon: ShieldCheck,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -352,6 +393,7 @@ const settingsCards = [
   {
     description: "Экспериментальные фичи: Design v2 и др.",
     href: "/settings/experimental",
+    messageId: "settings_experimental",
     icon: FlaskConical,
     iconClass: "text-[#7a5cff]",
     bgClass: "bg-[#f5f6ff]",
@@ -359,6 +401,7 @@ const settingsCards = [
   {
     description: "Read-only ссылка для СЭС / Роспотребнадзора с TTL",
     href: "/settings/inspector-portal",
+    messageId: "settings_inspector_portal",
     icon: ShieldCheck,
     iconClass: "text-[#10b981]",
     bgClass: "bg-[#ecfdf5]",
@@ -366,6 +409,7 @@ const settingsCards = [
   {
     description: "Нормативы и требования",
     href: "/sanpin",
+    messageId: "sanpin",
     icon: BookOpen,
     iconClass: "text-[#14b8a6]",
     bgClass: "bg-[#f0fdfa]",
@@ -373,6 +417,7 @@ const settingsCards = [
   {
     description: "Ключ для внешних систем и датчиков",
     href: "/settings/api",
+    messageId: "settings_api",
     icon: KeyRound,
     iconClass: "text-[#8b5cf6]",
     bgClass: "bg-[#f5f3ff]",
@@ -380,6 +425,7 @@ const settingsCards = [
   {
     description: "Автозадачи уборщикам через tasksflow.ru",
     href: "/settings/integrations/tasksflow",
+    messageId: "settings_integrations_tasksflow",
     icon: Plug,
     iconClass: "text-[#0ea5e9]",
     bgClass: "bg-[#e8f7ff]",
@@ -387,6 +433,7 @@ const settingsCards = [
   {
     description: "Еженедельный JSON-дамп журналов в облако",
     href: "/settings/backup",
+    messageId: "settings_backup",
     icon: CloudUpload,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -394,6 +441,7 @@ const settingsCards = [
   {
     description: "Еженедельная выгрузка списаний в 1С на email",
     href: "/settings/accounting",
+    messageId: "settings_accounting",
     icon: FileSpreadsheet,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -401,6 +449,7 @@ const settingsCards = [
   {
     description: "Кто сопровождает вас: доступ, контакты, отключение",
     href: "/settings/consultant",
+    messageId: "settings_consultant",
     icon: Handshake,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -408,6 +457,7 @@ const settingsCards = [
   {
     description: "Подключайте своих клиентов под своим брендом и получайте вознаграждение",
     href: "/settings/partner",
+    messageId: "settings_partner",
     icon: Award,
     iconClass: "text-[#9a4a06]",
     bgClass: "bg-[#fff7ed]",
@@ -416,6 +466,7 @@ const settingsCards = [
     description:
       "Бэк-офис один раз загружает меню и сырьё — все объекты с вашим кодом получают их в бракераж и скоропорт",
     href: "/settings/master-cabinet",
+    messageId: "settings_master_cabinet",
     icon: Library,
     iconClass: "text-[#3848c7]",
     bgClass: "bg-[#eef1ff]",
@@ -423,11 +474,12 @@ const settingsCards = [
   {
     description: "Светлая или тёмная тема кабинета",
     href: "/settings/appearance",
+    messageId: "settings_appearance",
     icon: Palette,
     iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
   },
-];
+] as const;
 
 export default async function SettingsPage() {
   const session = await requireAuth();
@@ -447,6 +499,8 @@ export default async function SettingsPage() {
     redirect("/journals");
   }
   const orgId = getActiveOrgId(session);
+  const specialMode = (await getJournalControls(orgId)).specialMode;
+  const t = await getTranslations("settingsManagement.home");
 
   const [areaCount, equipmentCount, userCount, productCount, me] =
     await Promise.all([
@@ -461,6 +515,12 @@ export default async function SettingsPage() {
         select: { email: true, emailVerifiedAt: true },
       }),
     ]);
+
+  const localizedCards = settingsCards.map((card) => ({
+    ...card,
+    title: t(`cards.${card.messageId}.title`),
+    localizedDescription: t(`cards.${card.messageId}.description`),
+  }));
 
   return (
     <div className="space-y-5">
@@ -492,9 +552,7 @@ export default async function SettingsPage() {
               <Settings2 className="size-6" />
             </div>
             <div>
-              <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] font-bold leading-tight tracking-[-0.02em]">
-                Настройки
-              </h1>
+              <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] font-bold leading-tight tracking-[-0.02em]">{t("title")}</h1>
               <p className="mt-1 text-[15px] text-white/70">
                 {session.user.organizationName}
               </p>
@@ -504,10 +562,10 @@ export default async function SettingsPage() {
           {/* Одна строка на любом экране: на телефоне это компактная
               полоса цифр, а не четыре крупные плитки в пол-экрана. */}
           <div className="no-mobile-shrink mt-6 grid grid-cols-4 gap-2 sm:mt-8 sm:gap-4">
-            <StatPill label="Цехов" value={areaCount} />
-            <StatPill label="Оборудования" value={equipmentCount} />
-            <StatPill label="Сотрудников" value={userCount} />
-            <StatPill label="Продуктов" value={productCount} />
+            <StatPill label={t("stats.areas")} value={areaCount} />
+            <StatPill label={t("stats.equipment")} value={equipmentCount} />
+            <StatPill label={t("stats.staff")} value={userCount} />
+            <StatPill label={t("stats.products")} value={productCount} />
           </div>
         </div>
       </section>
@@ -531,53 +589,29 @@ export default async function SettingsPage() {
             <Sparkles className="size-5 sm:size-7" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[18px] font-semibold tracking-[-0.02em] sm:text-[clamp(1.375rem,1.5vw+1rem,1.75rem)]">
-              Быстрый старт
-            </h2>
-            <p className="mt-0.5 text-[13px] leading-snug text-white/80 sm:mt-1.5 sm:max-w-[640px] sm:text-[15px] sm:leading-relaxed">
-              Настройка по шагам: компания, команда, журналы, интеграции.
-            </p>
+            <h2 className="text-[18px] font-semibold tracking-[-0.02em] sm:text-[clamp(1.375rem,1.5vw+1rem,1.75rem)]">{t("quickStart")}</h2>
+            <p className="mt-0.5 text-[13px] leading-snug text-white/80 sm:mt-1.5 sm:max-w-[640px] sm:text-[15px] sm:leading-relaxed">{t("quickStartDescription")}</p>
           </div>
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/30 sm:hidden">
             <ArrowRight className="size-4" />
           </span>
-          <span className="hidden shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[14px] font-semibold text-[#0b1024] shadow-[0_10px_30px_-12px_rgba(11,16,36,0.45)] sm:inline-flex">
-            Открыть
-            <ArrowRight className="size-4" />
+          <span className="hidden shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[14px] font-semibold text-[#0b1024] shadow-[0_10px_30px_-12px_rgba(11,16,36,0.45)] sm:inline-flex">{t("open")}<ArrowRight className="size-4" />
           </span>
         </div>
       </Link>
 
       <PageGuide
         storageKey="settings-hub"
-        title="С чего начать новой команде"
+        title={t("guide.title")}
         bullets={[
-          {
-            title: "Старт",
-            body: "Запишите ИНН/адрес, добавьте сотрудников, настройте журналы которые ведёте.",
-          },
-          {
-            title: "Команда и доступы",
-            body: "Должности, иерархия (кто кого видит), пресеты прав ролей.",
-          },
-          {
-            title: "Журналы",
-            body: "Кто заполняет каждый журнал (Ответственные), как раздавать задачи в TasksFlow (Режимы), и какие журналы вообще нужны вашей кухне.",
-          },
-          {
-            title: "Интеграции",
-            body: "TasksFlow для смартфон-задач, Telegram для уведомлений, инспектор-портал для проверок.",
-          },
+          { title: t("guide.startTitle"), body: t("guide.startBody") },
+          { title: t("guide.teamTitle"), body: t("guide.teamBody") },
+          { title: t("guide.journalsTitle"), body: t("guide.journalsBody") },
+          { title: t("guide.integrationsTitle"), body: t("guide.integrationsBody") },
         ]}
         qa={[
-          {
-            q: "Что если сделал что-то не так",
-            a: "Большинство настроек обратимы — открой ту же страницу и поменяй. Опасные действия (удалить документы, изменить во всех) всегда спрашивают подтверждение.",
-          },
-          {
-            q: "Сотрудник не видит задачи в TasksFlow",
-            a: "Скорее всего у него нет TasksFlow-привязки. Зайди в «Сотрудники» и убедись что у него есть телефон + он принят в TasksFlow.",
-          },
+          { q: t("guide.qaMistakeQuestion"), a: t("guide.qaMistakeAnswer") },
+          { q: t("guide.qaTasksQuestion"), a: t("guide.qaTasksAnswer") },
         ]}
       />
 
@@ -585,41 +619,41 @@ export default async function SettingsPage() {
           она уже большой кнопкой сверху, дублировать её карточкой
           значит показывать один и тот же адрес дважды. */}
       <SettingsGroup
-        title="Организация"
-        subtitle="Реквизиты, точки, помещения, оборудование, вид кабинета"
-        items={settingsCards.filter((c) => GROUP_ORG.has(c.href as string))}
+        title={t("groups.organization.title")}
+        subtitle={t("groups.organization.subtitle")}
+        items={localizedCards.filter((c) => GROUP_ORG.has(c.href as string))}
       />
       <SettingsGroup
-        title="Команда и доступы"
-        subtitle="Сотрудники, должности, права, графики"
-        items={settingsCards.filter((c) => GROUP_TEAM.has(c.href as string))}
+        title={t("groups.team.title")}
+        subtitle={t("groups.team.subtitle")}
+        items={localizedCards.filter((c) => GROUP_TEAM.has(c.href as string))}
       />
       <SettingsGroup
-        title="Журналы"
-        subtitle="Какие ведём, кто отвечает, как заполняются"
-        items={settingsCards.filter((c) => GROUP_JOURNALS.has(c.href as string))}
+        title={t("groups.journals.title")}
+        subtitle={t("groups.journals.subtitle")}
+        items={localizedCards.filter((c) => GROUP_JOURNALS.has(c.href as string) && (!specialMode || c.href !== "/settings/auto-journals"))}
       />
       <SettingsGroup
-        title="Задачи сотрудникам"
-        subtitle="Кто получает задачи, как проверяются, премии"
-        items={settingsCards.filter((c) => GROUP_TASKS.has(c.href as string))}
+        title={t("groups.tasks.title")}
+        subtitle={t("groups.tasks.subtitle")}
+        items={localizedCards.filter((c) => GROUP_TASKS.has(c.href as string))}
       />
       <SettingsGroup
-        title="Оплата"
-        subtitle="Баланс, тариф, услуги специалиста, партнёрская программа"
-        items={settingsCards.filter((c) => GROUP_MONEY.has(c.href as string))}
+        title={t("groups.payments.title")}
+        subtitle={t("groups.payments.subtitle")}
+        items={localizedCards.filter((c) => GROUP_MONEY.has(c.href as string))}
       />
       <SettingsGroup
-        title="Интеграции и уведомления"
-        subtitle="TasksFlow, Telegram, бухгалтерия, API, бэкапы"
-        items={settingsCards.filter((c) =>
+        title={t("groups.integrations.title")}
+        subtitle={t("groups.integrations.subtitle")}
+        items={localizedCards.filter((c) =>
           GROUP_INTEGRATIONS.has(c.href as string)
         )}
       />
       <SettingsGroup
-        title="Проверки и безопасность"
-        subtitle="Инспектор, соответствие, журнал действий"
-        items={settingsCards.filter((c) => GROUP_CHECKS.has(c.href as string))}
+        title={t("groups.checks.title")}
+        subtitle={t("groups.checks.subtitle")}
+        items={localizedCards.filter((c) => GROUP_CHECKS.has(c.href as string))}
       />
     </div>
   );
@@ -700,6 +734,11 @@ const GROUP_CHECKS = new Set([
   "/settings/experimental",
 ]);
 
+type LocalizedSettingsCard = (typeof settingsCards)[number] & {
+  title: string;
+  localizedDescription: string;
+};
+
 function SettingsGroup({
   title,
   subtitle,
@@ -707,7 +746,7 @@ function SettingsGroup({
 }: {
   title: string;
   subtitle: string;
-  items: typeof settingsCards;
+  items: LocalizedSettingsCard[];
 }) {
   if (items.length === 0) return null;
   return (
@@ -740,12 +779,12 @@ function SettingsGroup({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-[15px] font-semibold text-[#0b1024]">
-                      {getRouteTitle(card.href) ?? card.href}
+                      {card.title}
                     </div>
                     <ArrowRight className="size-4 text-[#c7ccea] transition-all group-hover:translate-x-0.5 group-hover:text-[#5566f6]" />
                   </div>
                   <div className="mt-1 text-[13px] text-[#6f7282]">
-                    {card.description}
+                    {card.localizedDescription}
                   </div>
                 </div>
               </div>

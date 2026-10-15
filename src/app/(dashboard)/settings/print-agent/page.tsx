@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { isAgentOnline } from "@/lib/print-agent-auth";
 import { PageHeader } from "@/components/ui/page-header";
 import { PrintAgentSettingsClient } from "./print-agent-settings-client";
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,7 @@ export const dynamic = "force-dynamic";
 export default async function PrintAgentSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  const t = await getTranslations("printAgent.settings.page");
 
   const agents = await db.printAgent.findMany({
     where: { organizationId: getActiveOrgId(session), revokedAt: null },
@@ -36,11 +39,12 @@ export default async function PrintAgentSettingsPage() {
   });
 
   return (
+    <DomainMessagesBoundary namespaces={["printAgent", "journalControls"]}>
     <div className="space-y-5">
       <PageHeader
-        eyebrow="Печать"
-        title="Онлайн принтер"
-        description="Программа на компьютере с принтером — чтобы отправлять журнал на печать с телефона."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
       />
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
@@ -50,33 +54,24 @@ export default async function PrintAgentSettingsPage() {
           </span>
           <div className="min-w-0">
             <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              Как это работает
+              {t("how")}
             </h2>
             <ol className="mt-3 space-y-2 text-[14px] leading-[1.55] text-[#3c4053]">
               <li>
-                <b>1.</b> Скачайте архив и распакуйте на тот компьютер, к
-                которому подключён принтер.
+                <b>1.</b> {t("downloadStep")}
               </li>
               <li>
-                <b>2.</b> Запустите <b>Установить.bat</b>. Программа спросит
-                вашу почту и пароль от Wesetup, предложит выбрать принтер и
-                пропишет себя в автозапуск. Больше ничего ставить не нужно.
+                <b>2.</b> {t.rich("installStep", { filename: "Установить.bat", file: chunks => <b>{chunks}</b> })}
               </li>
               <li>
-                <b>3.</b> Готово — любой журнал уходит на печать кнопкой «На
-                принтер заведения», с телефона и из любого раздела.
+                <b>3.</b> {t("printStep")}
               </li>
             </ol>
             <p className="mt-3 rounded-2xl bg-[#fff8eb] px-4 py-2.5 text-[13px] leading-snug text-[#7a4a00]">
-              Включите на том компьютере автовход в Windows:{" "}
-              <b>Win+R → netplwiz</b> → снять галочку «Требовать ввод имени и
-              пароля». Иначе после перезагрузки в систему никто не войдёт и
-              печатать будет некому.
+              {t.rich("windows", { shortcut: "Win+R → netplwiz", command: chunks => <b>{chunks}</b> })}
             </p>
             <p className="mt-2 text-[13px] leading-snug text-[#6f7282]">
-              Пароль на компьютере не сохраняется: программа получает ключ
-              доступа и дальше работает по нему. Ключ можно отозвать в любой
-              момент кнопкой «Отключить».
+              {t("credentials")}
             </p>
           </div>
         </div>
@@ -93,5 +88,6 @@ export default async function PrintAgentSettingsPage() {
         }))}
       />
     </div>
+    </DomainMessagesBoundary>
   );
 }

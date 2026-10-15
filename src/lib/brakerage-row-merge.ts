@@ -17,6 +17,13 @@
  * заменяют базу, но серверные поля всё равно берутся из базы.
  */
 
+import { aggregateBrakerageAssessment, brakerageCommentRequired } from "@/lib/brakerage-assessment";
+import { normalizeCommissionMembers, normalizeRowSignatures } from "@/lib/brakerage-commission";
+
+export class BrakerageInputError extends Error {
+  constructor(message: string, public status = 400) { super(message); }
+}
+
 export const BRAKERAGE_JOURNAL_CODES = new Set(["finished_product", "perishable_rejection"]);
 
 export function isBrakerageJournalCode(code: string | null | undefined): boolean {
@@ -95,6 +102,8 @@ export function mergeBrakerageConfig(params: {
   incoming: unknown;
   current: unknown;
   knownRowIds: ReadonlySet<string> | null;
+  finishedProductActorId?: string;
+  finishedProductCommissionMember?: boolean;
 }): Record<string, unknown> {
   const incoming =
     params.incoming && typeof params.incoming === "object" && !Array.isArray(params.incoming)
@@ -106,8 +115,24 @@ export function mergeBrakerageConfig(params: {
       : {};
   const guarded = withServerOwnedKeys(incoming, current);
   if (!Array.isArray(incoming.rows)) return guarded;
+  if (params.finishedProductActorId) {
+    const stored = new Map(asRows(current.rows).map(row => [row.id, row]));
+    const members = normalizeCommissionMembers(current.commissionMembers);
+    const isMember = params.finishedProductCommissionMember || members.some(member => member.employeeId === params.finishedProductActorId);
+    for (const row of asRows(incoming.rows)) {
+      if (isMember && !stored.has(row.id)) throw new BrakerageInputError("Члены комиссии оценивают блюда из списка. Добавление блюд доступно сотруднику, который ведёт журнал.", 403);
+      if (typeof row.organoleptic === "string" && row.organoleptic.trim() && row.organoleptic !== stored.get(row.id)?.organoleptic && brakerageCommentRequired(row.organoleptic) && !(typeof row.note === "string" && row.note.trim())) {
+        throw new BrakerageInputError("Добавьте комментарий к оценке блюда");
+      }
+    }
+  }
+  const rows = mergeBrakerageRows({ incoming: incoming.rows, current: current.rows, knownRowIds: params.knownRowIds });
   return {
     ...guarded,
-    rows: mergeBrakerageRows({ incoming: incoming.rows, current: current.rows, knownRowIds: params.knownRowIds }),
+    rows: params.finishedProductActorId ? rows.map(row => {
+      if (typeof row.organoleptic !== "string" || !row.organoleptic.trim()) return row;
+      const assessment = aggregateBrakerageAssessment(normalizeRowSignatures(row.signatures), row.organoleptic);
+      return { ...row, organoleptic: assessment.grade, releaseAllowed: assessment.releaseAllowed, ...(assessment.releaseAllowed === "no" ? { releasePermissionTime: "" } : {}) };
+    }) : rows,
   };
 }

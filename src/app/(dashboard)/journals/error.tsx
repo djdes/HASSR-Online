@@ -13,10 +13,8 @@ export default function JournalsError({
     <JournalRouteError
       error={error}
       reset={reset}
-      title="Не удалось загрузить список журналов"
-      description="Сервер не отдал перечень журналов. Данные организации в безопасности — попробуйте загрузить страницу ещё раз."
+      variant="journals"
       backHref="/dashboard"
-      backLabel="На главную"
     />
   );
 }

@@ -33,22 +33,29 @@ export type MiniNavIcon =
   | "UserRound"
   | "CalendarCheck";
 
+export type MiniNavLabelKey = "dashboard" | "journals" | "today" | "sections" | "profile";
+
 export type MiniNavItem = {
   href: string;
   label: string;
   icon: MiniNavIcon;
+  labelKey: MiniNavLabelKey;
+  /** True only when `label` is an organization-provided override. */
+  customLabel?: boolean;
 };
 
 const SECTIONS_ITEM: MiniNavItem = {
   href: "/mini/sections",
   label: "Разделы",
   icon: "LayoutGrid",
+  labelKey: "sections",
 };
 
 const PROFILE_ITEM: MiniNavItem = {
   href: "/mini/me",
   label: "Профиль",
   icon: "UserRound",
+  labelKey: "profile",
 };
 
 /** Видит ли человек список журналов как список журналов. */
@@ -69,13 +76,13 @@ function canOpenJournals(actor: MiniNavActor | null): boolean {
 export function miniHomeItem(actor: MiniNavActor | null): MiniNavItem {
   if (actor && canOpenJournals(actor)) {
     return hasFullWorkspaceAccess(actor)
-      ? { href: "/dashboard", label: "Главная", icon: "Home" }
-      : { href: "/journals", label: "Журналы", icon: "ClipboardList" };
+      ? { href: "/dashboard", label: "Главная", icon: "Home", labelKey: "dashboard" }
+      : { href: "/journals", label: "Журналы", icon: "ClipboardList", labelKey: "journals" };
   }
   if (actor && hasCapability(actor, "tasks.verify")) {
-    return { href: "/control-board", label: "Главная", icon: "Home" };
+    return { href: "/control-board", label: "Главная", icon: "Home", labelKey: "dashboard" };
   }
-  return { href: "/mini/today", label: "Сегодня", icon: "CalendarCheck" };
+  return { href: "/mini/today", label: "Сегодня", icon: "CalendarCheck", labelKey: "today" };
 }
 
 /** Домашний адрес приложения — он же «корень» для кнопки «назад». */
@@ -95,7 +102,7 @@ export function miniNavItems(actor: MiniNavActor | null): MiniNavItem[] {
   const items: MiniNavItem[] = [home];
 
   if (canOpenJournals(actor) && home.href !== "/journals") {
-    items.push({ href: "/journals", label: "Журналы", icon: "ClipboardList" });
+    items.push({ href: "/journals", label: "Журналы", icon: "ClipboardList", labelKey: "journals" });
   }
 
   items.push(SECTIONS_ITEM, PROFILE_ITEM);

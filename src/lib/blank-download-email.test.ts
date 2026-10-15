@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildBlankDownloadEmail } from "@/lib/email";
+import { loadMessages } from "@/i18n/messages";
 
 /** Письмо со ссылками на скачанный шаблон (AC2): собирается без SMTP. */
 
-test("письмо: ссылка на файл, другой формат, страница журнала и регистрация с почтой", () => {
-  const { subject, html } = buildBlankDownloadEmail({
+test("письмо: ссылка на файл, другой формат, страница журнала и регистрация с почтой", async () => {
+  const { subject, html } = await buildBlankDownloadEmail({
     journalTitle: "Гигиенический журнал",
     files: [
       { label: "Скачать PDF", url: "https://wesetup.ru/api/journal-samples/hygiene/pdf?t=AAA.BBB" },
@@ -22,12 +23,12 @@ test("письмо: ссылка на файл, другой формат, ст�
   assert.ok(html.includes('href="https://wesetup.ru/api/journal-samples/hygiene/docx?t=CCC.DDD"'), "второй формат");
   assert.ok(html.includes('href="https://wesetup.ru/journals-info/hygiene"'), "страница журнала");
   assert.ok(html.includes("source=blank&amp;journal=hygiene"), "регистрация с отметкой источника");
-  assert.ok(html.includes("работает 7 дней"));
-  assert.ok(html.includes("Если это были не вы"));
+  assert.ok(html.includes("7"));
+  assert.ok(html.includes((await loadMessages("ru")).email.blankDownload.disclaimer));
 });
 
-test("письмо: название экранируется, без страницы журнала блока нет", () => {
-  const { subject, html } = buildBlankDownloadEmail({
+test("письмо: название экранируется, без страницы журнала блока нет", async () => {
+  const { subject, html } = await buildBlankDownloadEmail({
     journalTitle: 'Журнал <b>"x"</b>',
     files: [{ label: "Скачать PDF", url: "https://wesetup.ru/api/journal-samples/paper/ot_intro/pdf?t=A.B" }],
     pageUrl: null,

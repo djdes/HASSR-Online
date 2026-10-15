@@ -41,7 +41,10 @@ function buildUvTaskForm(employeeName: string | null): TaskFormSchema {
       (employeeName ? `${employeeName}, ` : "") +
       "запишите время включения и выключения бактерицидной установки " +
       "за смену. Формат: 24-часовой, например 08:30.",
+    introPresentationKey: "dynamic.uvLampIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить смену",
+    submitPresentationKey: "dynamic.saveShift",
     fields: [
       {
         type: "time",

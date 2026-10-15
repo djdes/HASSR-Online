@@ -1,6 +1,7 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
+import { useId } from "react";
 
 import Link from "next/link";
 
@@ -24,7 +25,8 @@ export function LegalConsentCheckbox({
   /** Пытались отправить без галки — подсветить. */
   highlight?: boolean;
 }) {
-  const t = usePublicCopy();
+  const t = useTranslations("auth.legal");
+  const descriptionId = useId();
   const dark = tone === "dark";
   const link = cn(
     "underline underline-offset-2 transition-colors",
@@ -45,21 +47,15 @@ export function LegalConsentCheckbox({
         onChange={(event) => onChange(event.target.checked)}
         className="mt-0.5 size-[18px] shrink-0 accent-[#5566f6]"
         data-testid="legal-consent"
-        aria-describedby="legal-consent-text"
+        aria-describedby={descriptionId}
       />
-      <span id="legal-consent-text">
-        {t("Принимаю условия")}{" "}
-        <Link href="/oferta" target="_blank" className={link}>
-          {t("оферты")}</Link>{" "}
-        {t("и")}{" "}
-        <Link href="/terms" target="_blank" className={link}>
-          {t("пользовательского соглашения")}</Link>
-        {t(", ознакомлен с")}{" "}
-        <Link href="/privacy" target="_blank" className={link}>
-          {t("политикой конфиденциальности")}</Link>{" "}
-        {t("и даю")}{" "}
-        <Link href="/consent" target="_blank" className={link}>
-          {t("согласие на обработку персональных данных")}</Link>
+      <span id={descriptionId}>
+        {t.rich("consentSentence", {
+          offer: (chunks) => <Link href="/oferta" target="_blank" className={link}>{chunks}</Link>,
+          terms: (chunks) => <Link href="/terms" target="_blank" className={link}>{chunks}</Link>,
+          privacy: (chunks) => <Link href="/privacy" target="_blank" className={link}>{chunks}</Link>,
+          consent: (chunks) => <Link href="/consent" target="_blank" className={link}>{chunks}</Link>,
+        })}
       </span>
     </label>
   );

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { Archive, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -18,11 +19,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel, getUsersForRoleLabel, pickPrimaryManager } from "@/lib/user-roles";
+import { getUserRoleLabel, getUsersForRoleLabel } from "@/lib/user-roles";
 import {
-  GLASS_LIST_PAGE_TITLE,
   createGlassListRow,
-  formatGlassListDateLong,
   normalizeGlassListConfig,
   type GlassListConfig,
   type GlassListRow,
@@ -31,13 +30,12 @@ import { useDocumentCloseAction } from "@/components/journals/document-close-but
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
   RecordCardsView,
-  type RecordCardItem,
 } from "@/components/journals/record-cards-view";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { PositionNativeOptions } from "@/components/shared/position-select";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { isFetchNetworkError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -61,10 +59,23 @@ type RowDialogState = {
   row: GlassListRow;
 };
 
-const RESPONSIBLE_TITLES = USER_ROLE_LABEL_VALUES;
-
 function emptyRow(location: string) {
   return createGlassListRow({ location });
+}
+
+function dateForDisplay(value: string | Date): Date {
+  if (value instanceof Date) return value;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  return dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+    : new Date(value);
+}
+
+function formatDisplayDate(format: ReturnType<typeof useFormatter>, value: string | Date, style: "short" | "long"): string {
+  const date = dateForDisplay(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : format.dateTime(date, { dateStyle: style, timeZone: "UTC" });
 }
 
 export function GlassListDocumentClient({
@@ -76,6 +87,9 @@ export function GlassListDocumentClient({
   users,
   useV2 = false,
 }: Props) {
+  const t = useTranslations("glassInventory");
+  const journalNames = useTranslations("journals.names");
+  const format = useFormatter();
   const router = useRouter();
   const isClosed = status === "closed";
   const { mobileView, switchMobileView } = useMobileView("glass_items_list");
@@ -122,16 +136,14 @@ export function GlassListDocumentClient({
 
       const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(result?.error || "Не удалось сохранить документ");
+        throw new Error(result?.error || t("saveError"));
       }
 
       setConfig(nextConfig);
       router.refresh();
       return true;
     } catch (error) {
-      toast.error(
-        humanizeFetchError(error, "Не удалось сохранить документ")
-      );
+      toast.error(isFetchNetworkError(error) ? t("saveError") : error instanceof Error && error.message ? error.message : t("saveError"));
       return false;
     } finally {
       setSaving(false);
@@ -193,16 +205,15 @@ export function GlassListDocumentClient({
       0
     );
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные позиции?",
-      description:
-        "Позиции перечня изделий из стекла и хрупкого пластика будут удалены безвозвратно.",
+      title: t("deleteSelectedTitle"),
+      description: t("deleteSelectedDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("deleteAction"),
       bullets: [
-        { label: `Позиций будет удалено: ${doomed.length}`, tone: "warn" },
-        { label: `Заполненных значений потеряется: ${filledValues}`, tone: "warn" },
+        { label: t("deleteCount", { count: doomed.length }), tone: "warn" },
+        { label: t("lostValuesCount", { count: filledValues }), tone: "warn" },
         {
-          label: `Останется позиций: ${config.rows.length - doomed.length}`,
+          label: t("remainingCount", { count: config.rows.length - doomed.length }),
           tone: "default",
         },
       ],
@@ -215,21 +226,19 @@ export function GlassListDocumentClient({
     const ok = await persist(nextConfig);
     if (ok) {
       setSelectedRows([]);
-      toast.success(
-        `Удалено позиций: ${doomed.length}; значений: ${filledValues}`
-      );
+      toast.success(t("deleteResult", { count: doomed.length, values: filledValues }));
     }
   }
 
   return (
     <div className="space-y-6 text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("emptyTitle")} emptyBody={t("emptyDescription")} />
       {selectedRows.length > 0 && !isClosed && (
         <JournalSelectionBar
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
           onDelete={() => deleteSelectedRows().catch(() => undefined)}
-          hint="Позиции перечня будут удалены без возможности отмены"
+          hint={t("deleteHint")}
         >
           <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
         </JournalSelectionBar>
@@ -241,14 +250,14 @@ export function GlassListDocumentClient({
         backHref="/journals/glass_items_list"
         onSettings={isClosed ? undefined : () => setSettingsOpen(true)}
         closed={isClosed}
-        closedHint="Откройте журнал заново, чтобы добавлять и редактировать позиции."
+        closedHint={t("closedHint")}
         menuItems={
           isClosed
             ? []
             : [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("finishJournal"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => void closeDocument(),
                 },
@@ -276,37 +285,37 @@ export function GlassListDocumentClient({
                 />
               ) : null,
               fields: [
-                { label: "Участок", value: row.location, hideIfEmpty: true },
-                { label: "Кол-во", value: row.quantity, hideIfEmpty: true },
+                { label: t("locationShort"), value: row.location, hideIfEmpty: true },
+                { label: t("quantityShort"), value: row.quantity, hideIfEmpty: true },
               ],
               onClick: !isClosed
                 ? () => setRowDialog({ open: true, rowIndex: index, row })
                 : undefined,
             }))}
-            emptyLabel="Предметов из стекла ещё не внесено."
+            emptyLabel={t("emptyItems")}
           />
         }
         paperHeader={
           <>
             <JournalDocumentHeader
               orgName={organizationName}
-              title="ПЕРЕЧЕНЬ ИЗДЕЛИЙ ИЗ СТЕКЛА И ХРУПКОГО ПЛАСТИКА"
+              title={t("documentHeading")}
               startedAt={config.documentDate}
               finishedAt={null}
             />
             <div className="flex justify-end pt-4">
               <div className="min-w-[360px] space-y-2 text-right text-[18px]">
-                <div className="font-semibold uppercase">УТВЕРЖДАЮ</div>
-                <div>{config.responsibleTitle || "Управляющий"}</div>
+                <div className="font-semibold uppercase">{t("approvalHeading")}</div>
+                <div>{config.responsibleTitle === "Управляющий" || !config.responsibleTitle ? t("defaultResponsibleTitle") : config.responsibleTitle}</div>
                 <div>
                   ____________________ {responsibleUser?.name || "Иванов И.И."}
                 </div>
-                <div>« {formatGlassListDateLong(config.documentDate)} г.</div>
+                <div>« {formatDisplayDate(format, config.documentDate, "long")}</div>
               </div>
             </div>
           </>
         }
-        sheetTitle={GLASS_LIST_PAGE_TITLE}
+        sheetTitle={journalNames("glass_items_list")}
         sheetMinWidth={1100}
         toolbar={
           !isClosed ? (
@@ -322,7 +331,7 @@ export function GlassListDocumentClient({
               }
             >
               <Plus className="size-5" />
-              Добавить
+              {t("addAction")}
             </Button>
           ) : null
         }
@@ -331,9 +340,9 @@ export function GlassListDocumentClient({
           <thead>
             <tr>
               <th className={`w-[42px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`} />
-              <th className={`w-[260px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Место расположения (участок)</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Наименование объекта контроля (предмета)</th>
-              <th className={`w-[120px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Кол-во</th>
+              <th className={`w-[260px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("tableLocationHeader")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("tableItemHeader")}</th>
+              <th className={`w-[120px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("tableQuantityHeader")}</th>
             </tr>
           </thead>
           <tbody>
@@ -375,7 +384,7 @@ export function GlassListDocumentClient({
                 leading={1}
                 labelSpan={2}
                 trailing={1}
-                label="Добавить"
+                label={t("addAction")}
                 onClick={() =>
                   setRowDialog({
                     open: true,
@@ -403,8 +412,8 @@ export function GlassListDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название, место расположения, дата и ответственный сотрудник."
+          title={t("settingsTitle")}
+          description={t("settingsDescription")}
           size="md"
           isSaving={saving}
           onSave={async () => {
@@ -414,7 +423,7 @@ export function GlassListDocumentClient({
         >
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название документа
+              {t("documentNameLabel")}
             </Label>
             <Input
               value={config.documentName}
@@ -427,20 +436,20 @@ export function GlassListDocumentClient({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Место расположения
+                {t("locationLabel")}
               </Label>
               <Input
                 value={config.location}
                 onChange={(event) =>
                   setConfig((prev) => ({ ...prev, location: event.target.value }))
                 }
-                placeholder="Участок"
+                placeholder={t("locationPlaceholder")}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Дата документа
+                {t("documentDateLabel")}
               </Label>
               <Input
                 type="date"
@@ -454,7 +463,7 @@ export function GlassListDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Должность
+              {t("responsibleRoleLabel")}
             </Label>
             <select
               value={config.responsibleTitle}
@@ -477,7 +486,7 @@ export function GlassListDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Сотрудник
+              {t("responsibleEmployeeLabel")}
             </Label>
             <select
               value={config.responsibleUserId}
@@ -499,7 +508,7 @@ export function GlassListDocumentClient({
               }}
               className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]"
             >
-              <option value="">— Выберите —</option>
+              <option value="">{t("chooseAnyEmployee")}</option>
               {(config.responsibleTitle ? getUsersForRoleLabel(users, config.responsibleTitle) : users).map(
                 (user) => (
                   <option key={user.id} value={user.id}>
@@ -515,12 +524,12 @@ export function GlassListDocumentClient({
           <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
             <DialogHeader className="border-b px-14 py-10">
               <DialogTitle className="text-[22px] font-medium text-black">
-                Настройки документа
+                {t("settingsTitle")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-8 px-14 py-12">
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+                <Label className="text-[14px] text-[#73738a]">{t("documentNameLabel")}</Label>
                 <Input
                   value={config.documentName}
                   onChange={(event) =>
@@ -530,7 +539,7 @@ export function GlassListDocumentClient({
                 />
               </div>
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Место расположения (участок)</Label>
+                <Label className="text-[14px] text-[#73738a]">{t("rowLocationLabel")}</Label>
                 <Input
                   value={config.location}
                   onChange={(event) =>
@@ -540,7 +549,7 @@ export function GlassListDocumentClient({
                 />
               </div>
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
+                <Label className="text-[14px] text-[#73738a]">{t("documentDateLabel")}</Label>
                 <Input
                   type="date"
                   value={config.documentDate}
@@ -551,7 +560,7 @@ export function GlassListDocumentClient({
                 />
               </div>
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Должность</Label>
+                <Label className="text-[14px] text-[#73738a]">{t("responsibleRoleLabel")}</Label>
                 <select
                   value={config.responsibleTitle}
                   onChange={(event) => {
@@ -574,7 +583,7 @@ export function GlassListDocumentClient({
                 </select>
               </div>
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+                <Label className="text-[14px] text-[#73738a]">{t("responsibleEmployeeLabel")}</Label>
                 <select
                   value={config.responsibleUserId}
                   onChange={(event) => {
@@ -591,7 +600,7 @@ export function GlassListDocumentClient({
                   }}
                   className="h-18 w-full rounded-[22px] border border-[#dfe1ec] bg-[#f3f4fb] px-7 text-[15px]"
                 >
-                  <option value="">Выберите сотрудника</option>
+                  <option value="">{t("chooseEmployee")}</option>
                   {(config.responsibleTitle ? getUsersForRoleLabel(users, config.responsibleTitle) : users).map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name}
@@ -606,7 +615,7 @@ export function GlassListDocumentClient({
                   onClick={() => saveSettings().catch(() => undefined)}
                   className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
                 >
-                  {saving ? "Сохранение..." : "Сохранить"}
+                  {saving ? t("saving") : t("save")}
                 </Button>
               </div>
             </div>
@@ -624,12 +633,12 @@ export function GlassListDocumentClient({
         <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
           <DialogHeader className="border-b px-14 py-10">
             <DialogTitle className="text-[22px] font-medium text-black">
-              {rowDialog.rowIndex === null ? "Добавление новой строки" : `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`}
+              {rowDialog.rowIndex === null ? t("addRowTitle") : t("editRowTitle", { progress: seq.progress || "" })}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-8 px-14 py-12">
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Место расположения (участок)</Label>
+              <Label className="text-[14px] text-[#73738a]">{t("rowLocationLabel")}</Label>
               <Input
                 value={rowDialog.row.location}
                 onChange={(event) =>
@@ -642,7 +651,7 @@ export function GlassListDocumentClient({
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Наименование объекта контроля (предмета)</Label>
+              <Label className="text-[14px] text-[#73738a]">{t("rowItemLabel")}</Label>
               <Input
                 value={rowDialog.row.itemName}
                 onChange={(event) =>
@@ -655,7 +664,7 @@ export function GlassListDocumentClient({
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Кол-во</Label>
+              <Label className="text-[14px] text-[#73738a]">{t("rowQuantityLabel")}</Label>
               <Input
                 value={rowDialog.row.quantity}
                 onChange={(event) =>
@@ -674,7 +683,7 @@ export function GlassListDocumentClient({
                 onClick={() => saveRow().catch(() => undefined)}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
               >
-                {saving ? "Сохранение..." : rowDialog.rowIndex === null ? "Добавить" : "Сохранить"}
+                {saving ? t("saving") : rowDialog.rowIndex === null ? t("addAction") : t("save")}
               </Button>
             </div>
           </div>

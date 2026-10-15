@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,9 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FRYER_OIL_PAGE_TITLE } from "@/lib/fryer-oil-document";
-import { openDocumentPdf } from "@/lib/open-document-pdf";
-
 import { toast } from "sonner";
 import {
   DocumentActionsMenu,
@@ -44,8 +42,8 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { formatJournalDate } from "@/lib/journal-card-date";
+import { FRYER_OIL_PAGE_TITLE } from "@/lib/fryer-oil-document";
 type DocumentItem = {
   id: string;
   title: string;
@@ -85,6 +83,7 @@ function FryerOilSettingsDialog(props: {
   editing: EditingState | null;
   onSaved: () => void;
 }) {
+  const t = useTranslations("fryerOil");
   const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -116,7 +115,7 @@ function FryerOilSettingsDialog(props: {
       props.onOpenChange(false);
       props.onSaved();
     } catch {
-      toast.error("Не удалось сохранить настройки документа");
+      toast.error(t("saveSettingsError"));
     } finally {
       setSubmitting(false);
     }
@@ -136,18 +135,18 @@ function FryerOilSettingsDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("documentSettings")}
           </DialogTitle>
         </DialogHeader>
 
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <FloatingInputField
-            label="Название документа"
+            label={t("documentName")}
             value={title}
             onChange={setTitle}
           />
 
-          <DateField label="Дата начала" value={dateFrom} onChange={setDateFrom} />
+          <DateField label={t("startDate")} value={dateFrom} onChange={setDateFrom} />
         </div>
 
         <div className={JOURNAL_DIALOG_FOOTER_CLASS}>
@@ -158,7 +157,7 @@ function FryerOilSettingsDialog(props: {
               disabled={submitting}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -168,28 +167,29 @@ function FryerOilSettingsDialog(props: {
 }
 
 export function FryerOilDocumentsClient(props: Props) {
+  const t = useTranslations("fryerOil");
   const router = useRouter();
   const [editing, setEditing] = useState<EditingState | null>(null);
   const routeCode = props.routeCode || props.templateCode;
-  const pageTitle =
-    props.activeTab === "closed"
-      ? `${FRYER_OIL_PAGE_TITLE} (закрытые)`
-      : FRYER_OIL_PAGE_TITLE;
+  const pageTitle = props.activeTab === "closed"
+    ? `${t("pageTitle")} ${t("closedDocuments")}`
+    : t("pageTitle");
 
   // Единый источник delete / status / pdf для журнальных документов.
-  const { deleteDocument } = useJournalDocumentActions();
+  const { deleteDocument, openPdf } = useJournalDocumentActions();
 
   async function handleDelete(document: DocumentItem) {
+    const displayTitle = document.title === FRYER_OIL_PAGE_TITLE ? t("pageTitle") : document.title;
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: t("documentDeleteDescription", { title: displayTitle }),
       bullets: [
-        { label: "Удалятся все записи об использовании фритюрных жиров", tone: "warn" },
-        { label: `Журнал начат: ${formatDateDash(document.dateFrom)}`, tone: "info" },
-        { label: "Печатную форму документа восстановить будет нельзя", tone: "warn" },
+        { label: t("deleteAllRows"), tone: "warn" },
+        { label: t("documentStarted", { date: formatDateDash(document.dateFrom) }), tone: "info" },
+        { label: t("cannotRestorePrint"), tone: "warn" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: t("documentDeleted"),
+      errorMessage: t("unknownError"),
     });
   }
 
@@ -225,12 +225,12 @@ export function FryerOilDocumentsClient(props: Props) {
               className={JOURNAL_LIST_CARD_CLASS}
             >
               <Link href={href} className={JOURNAL_CARD_TITLE_CLASS}>
-                {document.title}
+                {document.title === FRYER_OIL_PAGE_TITLE ? t("pageTitle") : document.title}
               <SharedDocumentBadge shared={document.shared} />
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("startDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatDateDash(document.dateFrom)}
                 </div>
@@ -252,11 +252,7 @@ export function FryerOilDocumentsClient(props: Props) {
                       : undefined
                   }
                   onPrint={() => {
-                    void openDocumentPdf(document.id).catch((error) =>
-                      toast.error(
-                        humanizeFetchError(error, "Не удалось открыть PDF")
-                      )
-                    );
+                    openPdf({ documentId: document.id })
                   }}
                   onDelete={
                     document.status === "active"

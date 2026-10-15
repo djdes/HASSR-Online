@@ -1,0 +1,69 @@
+{
+  "locale": "en",
+  "sourceHash": "30ecbee26123ffac6fea41b0b4e2e0c7dee2c3c2d0774b65629a12c0f5c16fea",
+  "title": "HACCP in 30 minutes: implementing a system in a small café",
+  "excerpt": "The seven principles, typical critical control points in food service, and five journals that are enough for an initial audit. A short guide for a coffee shop or small café.",
+  "body": [
+    {
+      "type": "p",
+      "text": "The word ‘HACCP’ may sound intimidating, but the idea is simple: identify hazards in your operation, assess them, and keep them under control. For a 20-seat coffee shop, this can fit into one evening and one table."
+    },
+    {
+      "type": "h2",
+      "text": "The seven principles"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Hazard analysis: biological (Salmonella, E. coli), chemical (cleaning-agent residue), and physical (glass shards, metal).",
+        "Identify critical control points (CCPs)—where a hazard can be eliminated or controlled.",
+        "Set critical limits—for example, a hot dish must be at least 65 °C when served.",
+        "Monitor CCPs: how, by whom, and how often measurements are taken.",
+        "Define corrective actions: what to do if a limit is exceeded.",
+        "Verify regularly that the system is working.",
+        "Keep records: journals, protocols, and plans."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Typical CCPs in food service"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Receiving raw ingredients: chilled fish at no more than +2 °C; frozen fish at no more than −18 °C.",
+        "Storage: refrigerator at 0 to +4 °C; freezer at no more than −18 °C.",
+        "Heat treatment: the center of the product reaches at least 75 °C for no less than 5 minutes.",
+        "Cooling cooked food: from +65 °C to +10 °C within no more than 2 hours.",
+        "Serving: hot food at 65 °C or above; cold food at +14 °C or below."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Minimum set of journals",
+      "text": "Temperature, reject-product, incoming-inspection, cleaning, and pest-control journals. This is enough for an initial HACCP audit at a small venue."
+    },
+    {
+      "type": "h2",
+      "text": "Where to start"
+    },
+    {
+      "type": "p",
+      "text": "If you have never written a HACCP plan, start by mapping your processes. On one sheet of A4 paper, draw each stage: receiving → storage → preparation → serving → disposal. At every stage, ask, ‘What could go wrong?’ You will have the first draft of your hazard analysis."
+    },
+    {
+      "type": "h2",
+      "text": "How WeSetup helps"
+    },
+    {
+      "type": "p",
+      "text": "The expanded plan includes audit, CAPA, traceability, and metal-detection journals. The templates follow formats accepted by Rosselkhoznadzor and most chain buyers; you only need to enter values and signatures."
+    }
+  ],
+  "tags": [
+    "HACCP",
+    "Implementation",
+    "Small business"
+  ]
+}

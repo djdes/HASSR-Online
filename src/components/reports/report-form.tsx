@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useMessages, useTranslations } from "next-intl";
+import { journalTitle } from "@/i18n/journal-presentation";
+import { LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +48,7 @@ type ReportKind = "pdf" | "excel";
 
 function buildReportUrl(
   kind: ReportKind,
-  args: { templateCode: string; dateFrom: string; dateTo: string; areaId: string },
+  args: { templateCode: string; dateFrom: string; dateTo: string; areaId: string; locale: Locale },
   inline = false
 ): string {
   const params =
@@ -56,6 +59,7 @@ function buildReportUrl(
     params.set(kind === "pdf" ? "area" : "areaId", args.areaId);
   }
   if (inline) params.set("inline", "1");
+  params.set("locale", args.locale);
   return `/api/reports/${kind}?${params.toString()}`;
 }
 
@@ -65,6 +69,12 @@ export function ReportForm({
   defaultDateFrom = "",
   defaultDateTo = "",
 }: ReportFormProps) {
+  const locale = useLocale();
+  const language = useTranslations("language");
+  const t = useTranslations("reports");
+  const journalNames = useMessages().journals.names;
+  const [localeOverride, setLocaleOverride] = useState<Locale | null>(null);
+  const exportLocale = localeOverride ?? locale;
   const [templateCode, setTemplateCode] = useState("");
   const [dateFrom, setDateFrom] = useState(defaultDateFrom);
   const [dateTo, setDateTo] = useState(defaultDateTo);
@@ -74,14 +84,14 @@ export function ReportForm({
   const [error, setError] = useState("");
   // Прямая ссылка на последний файл — запасной вариант, если браузер
   // (или WebView Telegram) не сохранил скачанный файл.
-  const [fallbackLink, setFallbackLink] = useState<{ href: string; label: string } | null>(null);
+  const [fallbackLink, setFallbackLink] = useState<{ href: string; kind: ReportKind } | null>(null);
 
   const validateFields = () => {
-    if (!templateCode) { setError("Выберите журнал"); return false; }
-    if (!dateFrom) { setError("Укажите дату начала"); return false; }
-    if (!dateTo) { setError("Укажите дату окончания"); return false; }
+    if (!templateCode) { setError(t("errors.selectJournal")); return false; }
+    if (!dateFrom) { setError(t("errors.dateFromRequired")); return false; }
+    if (!dateTo) { setError(t("errors.dateToRequired")); return false; }
     if (new Date(dateFrom) > new Date(dateTo)) {
-      setError("Дата начала не может быть позже даты окончания");
+      setError(t("errors.dateOrderClient"));
       return false;
     }
     return true;
@@ -93,18 +103,18 @@ export function ReportForm({
     if (!validateFields()) return;
     const setBusy = kind === "pdf" ? setIsLoading : setIsLoadingExcel;
     setBusy(true);
-    const args = { templateCode, dateFrom, dateTo, areaId };
+    const args = { templateCode, dateFrom, dateTo, areaId, locale: exportLocale };
     const extension = kind === "pdf" ? "pdf" : "xlsx";
     try {
       const response = await fetch(buildReportUrl(kind, args));
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Ошибка при формировании отчёта");
+        throw new Error(data.error || t("errors.reportGeneration"));
       }
       const inlineUrl = buildReportUrl(kind, args, true);
       setFallbackLink({
         href: inlineUrl,
-        label: kind === "pdf" ? "Открыть PDF" : "Открыть файл Excel",
+        kind,
       });
       // В оболочке Telegram скачивание через a[download] + blob не
       // работает: WebView молча игнорирует такой клик. Открываем файл
@@ -118,7 +128,7 @@ export function ReportForm({
       // В браузере — скачивание, в приложении WeSetup — «Поделиться».
       await saveBlob(blob, `report_${templateCode}_${dateFrom}_${dateTo}.${extension}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка при формировании отчёта");
+      setError(err instanceof Error ? err.message : t("errors.reportGeneration"));
     } finally {
       setBusy(false);
     }
@@ -130,24 +140,34 @@ export function ReportForm({
   return (
     <Card className="max-w-lg">
       <CardHeader>
-        <CardTitle>Сформировать отчёт</CardTitle>
+        <CardTitle>{t("form.title")}</CardTitle>
         <CardDescription>
-          Выберите журнал и период — выгрузка в PDF или Excel
+          {t("form.description")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="report-locale">{language("exportLabel")}</Label>
+            <Select value={exportLocale} onValueChange={(value) => setLocaleOverride(value as Locale)}>
+              <SelectTrigger id="report-locale" className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LOCALES.map((value) => <SelectItem key={value} value={value}>{LOCALE_NAMES[value]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="text-[13px] text-muted-foreground">{language("exportHint")}</p>
+          </div>
           {/* Template selector */}
           <div className="space-y-2">
-            <Label>Журнал</Label>
+            <Label>{t("form.journal")}</Label>
             <Select value={templateCode} onValueChange={setTemplateCode}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Выберите журнал" />
+                <SelectValue placeholder={t("form.selectJournal")} />
               </SelectTrigger>
               <SelectContent>
                 {templates.map((t) => (
                   <SelectItem key={t.id} value={t.code}>
-                    {t.name}
+                    {journalTitle(locale, journalNames, t.code, t.name)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -156,7 +176,7 @@ export function ReportForm({
 
           {/* Date from */}
           <div className="space-y-2">
-            <Label>Дата начала</Label>
+            <Label>{t("form.dateFrom")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -166,7 +186,7 @@ export function ReportForm({
 
           {/* Date to */}
           <div className="space-y-2">
-            <Label>Дата окончания</Label>
+            <Label>{t("form.dateTo")}</Label>
             <Input
               type="date"
               value={dateTo}
@@ -177,17 +197,17 @@ export function ReportForm({
           {/* Area filter (optional) */}
           <div className="space-y-2">
             <Label>
-              Участок{" "}
+              {t("form.area")} {" "}
               <span className="text-muted-foreground font-normal">
-                (необязательно)
+                ({t("form.optional")})
               </span>
             </Label>
             <Select value={areaId} onValueChange={setAreaId}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Все участки" />
+                <SelectValue placeholder={t("form.allAreas")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">Все участки</SelectItem>
+                <SelectItem value="__all__">{t("form.allAreas")}</SelectItem>
                 {areas.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
                     {a.name}
@@ -204,15 +224,19 @@ export function ReportForm({
 
           {fallbackLink ? (
             <p className="text-[13px] text-[#6f7282]">
-              Файл не скачался?{" "}
-              <a
-                href={fallbackLink.href}
-                target="_blank"
-                rel="noopener"
-                className="font-medium text-[#3848c7] underline-offset-2 transition-colors hover:text-[#5566f6] hover:underline"
-              >
-                {fallbackLink.label}
-              </a>
+              {t.rich("form.fileNotDownloaded", {
+                label: fallbackLink.kind === "pdf" ? t("form.openPdf") : t("form.openExcel"),
+                link: (chunks) => (
+                  <a
+                    href={fallbackLink.href}
+                    target="_blank"
+                    rel="noopener"
+                    className="font-medium text-[#3848c7] underline-offset-2 transition-colors hover:text-[#5566f6] hover:underline"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           ) : null}
 
@@ -226,12 +250,12 @@ export function ReportForm({
               {isLoading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Формирование...
+                  {t("form.generating")}
                 </>
               ) : (
                 <>
                   <FileDown className="size-4" />
-                  Скачать PDF
+                  {t("form.downloadPdf")}
                 </>
               )}
             </Button>
@@ -244,12 +268,12 @@ export function ReportForm({
               {isLoadingExcel ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Формирование...
+                  {t("form.generating")}
                 </>
               ) : (
                 <>
                   <FileSpreadsheet className="size-4" />
-                  Скачать Excel
+                  {t("form.downloadExcel")}
                 </>
               )}
             </Button>

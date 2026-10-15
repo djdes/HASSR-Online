@@ -1,5 +1,18 @@
 import { TOUR, type TourAnchor } from "@/lib/tour-anchors";
 import { FILLING_GUIDES } from "@/lib/journal-filling-guides";
+import {
+  FILLING_GUIDE_WALKTHROUGH_COPY_KEYS,
+  GENERIC_WALKTHROUGH_COPY_KEYS,
+  MANUAL_WALKTHROUGH_COPY_KEYS,
+  type WalkthroughStepCopyKey,
+  type WalkthroughTranslator,
+} from "@/lib/journal-walkthrough-copy";
+
+// Only registered built-in objects have catalog copy. Custom entries and steps
+// supplied later retain their own text, even when they reuse a built-in code.
+const BUILT_IN_GUIDES = new Map(Object.entries(FILLING_GUIDES).map(([code, guide]) => [
+  code, { guide, steps: guide.steps.slice(0, 4) },
+]));
 
 /**
  * «Как заполнить?» — шаги по ИНТЕРФЕЙСУ журнала: куда нажать, что
@@ -275,49 +288,77 @@ const GENERIC_DOCUMENT_STEPS: WalkthroughStep[] = [
  * заполнять» приходит из журнала. Ручной разбор, если он есть, всегда
  * в приоритете.
  */
-function buildStepsFromFillingGuide(code: string): WalkthroughStep[] | null {
-  const guide = FILLING_GUIDES[code];
+function translateStep(
+  step: WalkthroughStep,
+  copyKey: WalkthroughStepCopyKey | undefined,
+  t?: WalkthroughTranslator,
+): WalkthroughStep {
+  if (!t || !copyKey) return step;
+  return { ...step, title: t(`${copyKey}.title`), body: t(`${copyKey}.body`) };
+}
+
+function translateSteps(
+  steps: WalkthroughStep[],
+  keys: Readonly<Record<string, WalkthroughStepCopyKey>>,
+  t?: WalkthroughTranslator,
+): WalkthroughStep[] {
+  if (!t) return steps;
+  return steps.map(step => translateStep(step, Object.hasOwn(keys, step.id) ? keys[step.id] : undefined, t));
+}
+
+function buildStepsFromFillingGuide(code: string, t?: WalkthroughTranslator): WalkthroughStep[] | null {
+  const guide = Object.hasOwn(FILLING_GUIDES, code) ? FILLING_GUIDES[code] : undefined;
   if (!guide || guide.steps.length === 0) return null;
+  const builtIn = BUILT_IN_GUIDES.get(code);
+  const copyKeys = Object.hasOwn(FILLING_GUIDE_WALKTHROUGH_COPY_KEYS, code)
+    ? FILLING_GUIDE_WALKTHROUGH_COPY_KEYS[code as keyof typeof FILLING_GUIDE_WALKTHROUGH_COPY_KEYS]
+    : undefined;
 
   const guideSteps: WalkthroughStep[] = guide.steps
     // Больше четырёх шагов подряд на телефоне никто не дочитывает;
     // полная инструкция открывается ссылкой из того же окна.
     .slice(0, 4)
-    .map((step, index) => ({
+    .map((step, index) => translateStep({
       id: `guide-${index + 1}`,
       page: "document" as const,
       title: step.title,
       body: step.detail,
-    }));
+    }, builtIn?.guide === guide && builtIn.steps[index] === step ? copyKeys?.[index] : undefined, t));
 
   // Интерфейсные шаги «как открыть и куда нажать» + содержательные из
   // инструкции + завершение периода.
-  const opening = GENERIC_DOCUMENT_STEPS.filter((step) =>
+  const genericSteps = translateSteps(GENERIC_DOCUMENT_STEPS, GENERIC_WALKTHROUGH_COPY_KEYS, t);
+  const opening = genericSteps.filter((step) =>
     ["create-document", "document-card", "view-toggle"].includes(step.id)
   );
-  const closing = GENERIC_DOCUMENT_STEPS.filter((step) =>
+  const closing = genericSteps.filter((step) =>
     ["autofill", "more-actions"].includes(step.id)
   );
 
   return [...opening, ...guideSteps, ...closing];
 }
 
-export function getJournalWalkthrough(code: string): WalkthroughStep[] | null {
-  return WALKTHROUGHS[code] ?? buildStepsFromFillingGuide(code) ?? null;
+/** Runtime callers supply request-local copy; omitted copy retains the legacy RU API. */
+export function getJournalWalkthrough(code: string, t?: WalkthroughTranslator): WalkthroughStep[] | null {
+  if (Object.hasOwn(WALKTHROUGHS, code)) {
+    const keys = MANUAL_WALKTHROUGH_COPY_KEYS[code as keyof typeof MANUAL_WALKTHROUGH_COPY_KEYS];
+    return translateSteps(WALKTHROUGHS[code], keys, t);
+  }
+  return buildStepsFromFillingGuide(code, t);
 }
 
 /**
  * Шаги для окна «Инструкция»: свои, если есть, иначе общие. Пустым не
  * бывает — окно с двумя вкладками открывается у любого журнала.
  */
-export function getJournalWalkthroughOrGeneric(code: string): WalkthroughStep[] {
-  return (
-    WALKTHROUGHS[code] ?? buildStepsFromFillingGuide(code) ?? GENERIC_DOCUMENT_STEPS
-  );
+export function getJournalWalkthroughOrGeneric(code: string, t?: WalkthroughTranslator): WalkthroughStep[] {
+  return getJournalWalkthrough(code, t)
+    ?? translateSteps(GENERIC_DOCUMENT_STEPS, GENERIC_WALKTHROUGH_COPY_KEYS, t);
 }
 
 export function hasJournalWalkthrough(code: string): boolean {
-  return code in WALKTHROUGHS || buildStepsFromFillingGuide(code) !== null;
+  return Object.hasOwn(WALKTHROUGHS, code)
+    || (Object.hasOwn(FILLING_GUIDES, code) && FILLING_GUIDES[code].steps.length > 0);
 }
 
 /** Шаги, которые имеет смысл показывать на этом устройстве. */

@@ -1,3 +1,5 @@
+
+import { useTranslations } from "next-intl";
 import { PageSkeleton } from "@/components/ui/skeleton";
 
 /**
@@ -6,5 +8,6 @@ import { PageSkeleton } from "@/components/ui/skeleton";
  * серверный скелет сменяется клиентским незаметно.
  */
 export default function VerificationsLoading() {
-  return <PageSkeleton label="Загружаем задачи на проверку…" body="list" actions={false} />;
+  const tLoading = useTranslations("loadingSurfaces");
+  return <PageSkeleton label={tLoading("verifications")} body="list" actions={false} />;
 }

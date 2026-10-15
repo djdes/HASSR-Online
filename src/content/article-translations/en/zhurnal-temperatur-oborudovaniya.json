@@ -1,0 +1,16 @@
+{
+  "locale": "en",
+  "sourceHash": "b8a1ece77f90c18f644cb0366f8a5c44bfc3ea6e584dd81d8689232b96f2ad3a",
+  "title": "Refrigerator temperature log: how to keep one and avoid fines",
+  "excerpt": "Record readings at least twice a day, set limits for each type of equipment, and act when readings fall outside the limits. Inspectors look at the response, not just the numbers.",
+  "tags": ["Temperature", "Journals"],
+  "body": [
+    {"type":"p","text":"The rule is simple: record refrigerated-equipment temperatures at least twice a day, usually in the morning and evening. In practice, that may not be enough: if a refrigerator breaks at lunchtime, the evening reading will only record products that have already spoiled. A good practice is therefore to take three readings and add an automatic sensor."},
+    {"type":"h2","text":"Permitted limits"},
+    {"type":"ul","items":["Refrigerator for finished products: 0…+4 °C.","Refrigerator for raw ingredients: 0…+6 °C (depending on the product).","Freezer: no higher than –18 °C.","Display case for cold dishes: no higher than +14 °C.","Heated display case: no lower than +65 °C."]},
+    {"type":"callout","tone":"tip","title":"If you use a sensor","text":"A wireless sensor that records data to the cloud takes a reading every 5–10 minutes. The journal is generated automatically, and deviations are not lost between shifts."},
+    {"type":"h2","text":"What to do when there is a deviation"},
+    {"type":"ol","items":["Record the event in the journal: time, reading, and who noticed it.","Check the products: if the temperature was above +5 °C for more than 2 hours, reassess their organoleptic properties and shelf life.","Complete a CAPA: record the cause (power outage, open door, or compressor failure), what was done, and who is responsible.","If a product is disposed of, record the write-off and identify the batch."]},
+    {"type":"p","text":"What matters to an inspector is not “perfect” temperatures, but evidence that deviations are addressed. A reading of +7 °C with a note saying “detected, product disposed of, compressor serviced” shows a working system. By contrast, +4 °C every day for a week without a single variation looks suspicious."}
+  ]
+}

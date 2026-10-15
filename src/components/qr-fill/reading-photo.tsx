@@ -1,13 +1,15 @@
 "use client";
 
+import { useQrFillCopy, useQrFeedback, qrResponseFeedback, type QrFeedback, type QrFillTranslator } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Camera, Loader2, Lock, RotateCcw, X } from "lucide-react";
 
 import { PhotoLightbox } from "@/components/shared/photo-lightbox";
 import { downscaleImageFile } from "@/lib/ai-vision/downscale";
-import { READING_PHOTO_FIXATION_TEXT, type ReadingPhotoPhase } from "@/lib/reading-photo-fixation";
-import { READING_PHOTO_TEXT, formatRecognizedReading, type ReadingMetric } from "@/lib/reading-photos";
+import { type ReadingPhotoPhase } from "@/lib/reading-photo-fixation";
+import { formatRecognizedReading, type ReadingMetric } from "@/lib/reading-photos";
 
 /**
  * «Фото» у поля показания в QR-форме холодильника и склада (2026-09-26).
@@ -43,8 +45,8 @@ type Status =
   | { kind: "kept"; value: string }
   | { kind: "unreadable" }
   | { kind: "paid-only"; tariffsHref: string | null }
-  | { kind: "recognize-error"; message: string }
-  | { kind: "upload-error"; message: string };
+  | { kind: "recognize-error"; message: QrFeedback }
+  | { kind: "upload-error"; message: QrFeedback };
 
 const OUTLINE_BUTTON =
   "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50";
@@ -61,15 +63,15 @@ function phaseOf(status: Status): ReadingPhotoPhase {
 }
 
 /** Подсказка под кнопкой, пока снимка нет. */
-function emptyHint(variant: "inline" | "primary", autofill: boolean, required: boolean): string {
+function emptyHint(variant: "inline" | "primary", autofill: boolean, required: boolean, t: QrFillTranslator): string {
   if (variant === "primary") {
     const base = autofill
-      ? "Снимите один термометр или дисплей крупно, чтобы было видно цифры шкалы, — показание впишем сами, останется проверить и сохранить."
-      : "Снимите один термометр или дисплей крупно — фото ляжет в журнал рядом со значением, цифры введёте сами.";
-    return required ? `Без фото замер не сохранить. ${base}` : base;
+      ? t("photo.primaryAutoHint")
+      : t("photo.primaryManualHint");
+    return required ? t("photo.requiredPrefix", { hint: base }) : base;
   }
-  if (required) return "Фото обязательно — без снимка замер не сохранить";
-  return autofill ? "Снимите термометр — показание заполним сами" : "Снимок ляжет в журнал рядом со значением";
+  if (required) return t("photo.requiredHint");
+  return autofill ? t("photo.inlineAutoHint") : t("photo.inlineManualHint");
 }
 
 /** Черновик «−» морозилки или пустое поле — это ещё не введённое число. */
@@ -123,6 +125,8 @@ export function ReadingPhoto({
   /** Этап снимка — форма показывает поле, когда распознавание закончилось. */
   onPhaseChange?: (phase: ReadingPhotoPhase) => void;
 }) {
+  const { t } = useQrFillCopy();
+  const feedback = useQrFeedback();
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [preview, setPreview] = useState<string | null>(null);
@@ -170,7 +174,7 @@ export function ReadingPhoto({
         return;
       }
       if (!response.ok) {
-        setStatus({ kind: "recognize-error", message: data?.error || "Не получилось распознать показание — введите значение вручную." });
+        setStatus({ kind: "recognize-error", message: qrResponseFeedback(data, "photo.recognizeError") });
         return;
       }
       if (typeof data?.value !== "number" || !Number.isFinite(data.value)) {
@@ -188,7 +192,7 @@ export function ReadingPhoto({
       setStatus({ kind: "filled", value: text });
     } catch {
       if (seq !== seqRef.current) return;
-      setStatus({ kind: "recognize-error", message: "Нет связи — показание не распознали. Введите значение вручную." });
+      setStatus({ kind: "recognize-error", message: { key: "photo.recognizeNetworkError" } });
     }
   }
 
@@ -217,13 +221,13 @@ export function ReadingPhoto({
       if (seq !== seqRef.current) return;
       if (!response.ok || typeof data?.url !== "string") {
         setPreview(null);
-        setStatus({ kind: "upload-error", message: data?.error || "Не удалось загрузить фото — попробуйте ещё раз." });
+        setStatus({ kind: "upload-error", message: qrResponseFeedback(data, "photo.uploadError") });
         return;
       }
     } catch {
       if (seq !== seqRef.current) return;
       setPreview(null);
-      setStatus({ kind: "upload-error", message: "Нет связи — фото не загрузилось. Попробуйте ещё раз." });
+      setStatus({ kind: "upload-error", message: { key: "photo.uploadNetworkError" } });
       return;
     }
     onPhotoChange(data.url);
@@ -269,14 +273,14 @@ export function ReadingPhoto({
         {fileInput}
         <button type="button" onClick={openCamera} disabled={disabled} className={PRIMARY_BUTTON} data-testid="reading-photo-button">
           <Camera className="size-6" />
-          {READING_PHOTO_FIXATION_TEXT.primaryButton}
+          {t("photo.capture")}
         </button>
         <p className="mt-2 text-center text-[14px] leading-snug text-[#6f7282]" data-testid="reading-photo-hint">
-          {disabledReason ?? emptyHint("primary", autofill, required)}
+          {disabledReason ?? emptyHint("primary", autofill, required, t)}
         </p>
         {status.kind === "upload-error" ? (
           <p className="mt-2 text-center text-[14px] leading-snug text-[#a13a32]" role="alert">
-            {status.message}
+            {feedback(status.message)}
           </p>
         ) : null}
       </div>
@@ -290,15 +294,15 @@ export function ReadingPhoto({
         <div className="flex items-center gap-3">
           <button type="button" onClick={openCamera} disabled={disabled} className={OUTLINE_BUTTON} data-testid="reading-photo-button">
             <Camera className="size-5" />
-            {READING_PHOTO_TEXT.button}
+            {t("photo.button")}
           </button>
           <p className={`min-w-0 text-[13px] leading-snug ${required && !disabledReason ? "font-medium text-[#7a4a00]" : "text-[#6f7282]"}`} data-testid="reading-photo-hint">
-            {disabledReason ?? emptyHint("inline", autofill, required)}
+            {disabledReason ?? emptyHint("inline", autofill, required, t)}
           </p>
         </div>
         {status.kind === "upload-error" ? (
           <p className="mt-2 text-[13px] leading-snug text-[#a13a32]" role="alert">
-            {status.message}
+            {feedback(status.message)}
           </p>
         ) : null}
       </div>
@@ -316,7 +320,7 @@ export function ReadingPhoto({
         <button
           type="button"
           onClick={() => setViewing(true)}
-          aria-label="Открыть фото замера"
+          aria-label={t("photo.open")}
           className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-[#ececf4] bg-[#fafbff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- снимок из загрузок или blob: превью, не статика */}
@@ -329,7 +333,7 @@ export function ReadingPhoto({
         </button>
         <div className="min-w-0 flex-1" aria-live="polite">
           <div className="text-[14px] font-medium leading-snug text-[#0b1024]">
-            {status.kind === "uploading" ? READING_PHOTO_TEXT.uploading : READING_PHOTO_TEXT.attached}
+            {status.kind === "uploading" ? t("photo.uploading") : t("photo.attached")}
           </div>
           <StatusLine status={status} unit={unit} value={value} onApply={(text) => {
             onRecognized(text);
@@ -340,15 +344,13 @@ export function ReadingPhoto({
       <div className="mt-2.5 flex flex-wrap gap-2">
         <button type="button" onClick={openCamera} disabled={disabled || busy} className={SMALL_BUTTON}>
           <RotateCcw className="size-4 text-[#5566f6]" />
-          Переснять
-        </button>
+          {t("photo.retake")}</button>
         <button type="button" onClick={remove} disabled={status.kind === "uploading"} className={SMALL_BUTTON}>
           <X className="size-4 text-[#6f7282]" />
-          Убрать фото
-        </button>
+          {t("photo.remove")}</button>
       </div>
       {viewing
-        ? createPortal(<PhotoLightbox url={shownUrl} filename="Фото замера" caption="Фото замера" onClose={() => setViewing(false)} />, document.body)
+        ? createPortal(<PhotoLightbox url={shownUrl} filename={t("photo.title")} caption={t("photo.title")} onClose={() => setViewing(false)} />, document.body)
         : null}
     </div>
   );
@@ -365,45 +367,47 @@ function StatusLine({
   value: string;
   onApply: (value: string) => void;
 }) {
+  const { t } = useQrFillCopy();
+  const feedback = useQrFeedback();
   switch (status.kind) {
     case "recognizing":
       return (
         <p className="mt-0.5 flex items-center gap-1.5 text-[13px] leading-snug text-[#3848c7]" data-testid="reading-photo-status">
           <Loader2 className="size-3.5 shrink-0 animate-spin" />
-          {READING_PHOTO_TEXT.recognizing}
+          {t("photo.recognizing")}
         </p>
       );
     case "filled":
       return (
         <p className="mt-0.5 text-[13px] leading-snug text-[#3848c7]" data-testid="reading-photo-status">
           {value.trim() === status.value
-            ? `Подставили ${status.value} ${unit} ${READING_PHOTO_TEXT.checkMark}`
-            : `С фото распознали ${status.value} ${unit}`}
+            ? `${t("photo.filled", { value: `${status.value} ${unit}` })} ${t("photo.checkMark")}`
+            : t("photo.recognized", { value: `${status.value} ${unit}` })}
         </p>
       );
     case "kept":
       return (
         <p className="mt-0.5 text-[13px] leading-snug text-[#3848c7]" data-testid="reading-photo-status">
-          С фото распознали {status.value} {unit} — оставили введённое вами.{" "}
+          {t("photo.kept", { value: `${status.value} ${unit}` })}{" "}
           <button type="button" onClick={() => onApply(status.value)} className="font-semibold underline underline-offset-2">
-            Подставить {status.value}
+            {t("photo.useRecognized")} {status.value}
           </button>
         </p>
       );
     case "unreadable":
       return (
         <p className="mt-0.5 text-[13px] font-medium leading-snug text-[#7a4a00]" data-testid="reading-photo-status">
-          {READING_PHOTO_TEXT.unreadable}
+          {t("photo.unreadable")}
         </p>
       );
     case "paid-only":
       return (
         <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] leading-snug text-[#6f7282]" data-testid="reading-photo-status">
           <Lock className="size-3.5 shrink-0" />
-          <span>{READING_PHOTO_TEXT.paidOnly}</span>
+          <span>{t("photo.paidOnly")}</span>
           {status.tariffsHref ? (
             <a href={status.tariffsHref} className="font-semibold text-[#3848c7] underline underline-offset-2" data-testid="reading-photo-tariffs">
-              {READING_PHOTO_TEXT.tariffsLink}
+              {t("photo.plans")}
             </a>
           ) : null}
         </p>
@@ -411,7 +415,7 @@ function StatusLine({
     case "recognize-error":
       return (
         <p className="mt-0.5 text-[13px] leading-snug text-[#7a4a00]" data-testid="reading-photo-status">
-          {status.message}
+          {feedback(status.message)}
         </p>
       );
     default:

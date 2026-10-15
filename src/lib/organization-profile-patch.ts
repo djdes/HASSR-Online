@@ -34,7 +34,7 @@ export const ORG_PROFILE_FIELDS = [
 
 export type OrgProfileField = (typeof ORG_PROFILE_FIELDS)[number];
 
-const VALID_LOCALES = new Set(["ru", "en"]);
+const VALID_LOCALES = new Set(["ru", "en", "uz"]);
 const TIMEZONE_PATTERN = /^[A-Za-z_]+\/[A-Za-z_/-]+$/;
 // Принимаем 3- (#abc), 6- (#aabbcc) и 8-знач (#aabbccff) hex — иначе
 // legacy-данные с alpha или коротким shorthand блокируют сохранение
@@ -102,7 +102,7 @@ export function parseOrganizationProfilePatch(
   }
   if (has("locale")) {
     const v = typeof body.locale === "string" ? body.locale : "";
-    if (!VALID_LOCALES.has(v)) errors.push("Язык должен быть ru или en");
+    if (!VALID_LOCALES.has(v)) errors.push("Язык должен быть ru, en или uz");
     else data.locale = v;
   }
   if (has("timezone")) {

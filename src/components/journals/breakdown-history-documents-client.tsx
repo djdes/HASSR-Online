@@ -1,5 +1,8 @@
 "use client";
 
+import { useBreakdownCopy } from "./use-breakdown-copy";
+import { breakdownDate, breakdownTitle } from "./breakdown-history-presentation";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -12,7 +15,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookOpenText,
   CalendarDays,
   Ellipsis,
   Pencil,
@@ -32,16 +34,15 @@ import {
 } from "@/components/ui/dialog";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
-  BREAKDOWN_HISTORY_HEADING,
   BREAKDOWN_HISTORY_DOCUMENT_TITLE,
 } from "@/lib/breakdown-history-document";
 
 import { toast } from "sonner";
+import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -86,12 +87,6 @@ function toIsoDate(value: string) {
   return date.toISOString().slice(0, 10);
 }
 
-function formatDateDMY(iso: string) {
-  const parts = iso.split("-");
-  if (parts.length !== 3) return iso;
-  return `${parts[2]}-${parts[1]}-${parts[0]}`;
-}
-
 /* ---------- Create / Settings Dialog ---------- */
 
 type DialogState = {
@@ -110,14 +105,15 @@ function SettingsDialog(props: {
   submitText: string;
   dialogTitle: string;
 }) {
+  const { t, locale } = useBreakdownCopy();
   const [state, setState] = useState<DialogState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({
     onOpenChange: props.onOpenChange,
     fallbackError:
       props.mode === "create"
-        ? "Не удалось создать документ"
-        : "Не удалось сохранить настройки",
+        ? t("errors.create")
+        : t("errors.settings"),
   });
   const submitting = submit.submitting;
 
@@ -138,6 +134,8 @@ function SettingsDialog(props: {
     resetAutoTitle();
     const seeded =
       initial && mode === "create" ? titleForPeriod({ dateFrom: initial.dateFrom }) : null;
+    // Reset only on opening or changing the selected document, never on locale change.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(initial ? { ...initial, title: seeded || initial.title } : null);
   }, [initial, mode, open, resetAutoTitle, titleForPeriod]);
 
@@ -159,6 +157,7 @@ function SettingsDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#0b1024]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -175,9 +174,9 @@ function SettingsDialog(props: {
               onForce={() => handleSubmit(true)}
             />
             <div className="space-y-2">
-              <Label className="text-[15px] text-[#7a7c8e]">Название документа</Label>
+              <Label className="text-[15px] text-[#7a7c8e]">{t("settings.name")}</Label>
               <Input
-                value={activeState.title}
+                value={breakdownTitle(activeState.title, activeState.dateFrom, locale, t)}
                 onChange={(e) => {
                   auto.markTouched();
                   setState({ ...activeState, title: e.target.value });
@@ -187,7 +186,7 @@ function SettingsDialog(props: {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[15px] text-[#7a7c8e]">Дата начала</Label>
+              <Label className="text-[15px] text-[#7a7c8e]">{t("settings.start")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -214,7 +213,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? t("actions.saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -232,6 +231,7 @@ function DeleteDialog(props: {
   title: string;
   onConfirm: () => Promise<void>;
 }) {
+  const { t, latest } = useBreakdownCopy();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleDelete() {
@@ -239,6 +239,8 @@ function DeleteDialog(props: {
     try {
       await props.onConfirm();
       props.onOpenChange(false);
+    } catch {
+      toast.error(latest.current.t("errors.delete"));
     } finally {
       setSubmitting(false);
     }
@@ -250,10 +252,11 @@ function DeleteDialog(props: {
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Удаление документа &laquo;{props.title}&raquo;
+              {t("delete.title", { title: props.title })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#0b1024]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -263,8 +266,7 @@ function DeleteDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
           <p className="text-[15px] text-[#7a7c8e]">
-            Вы уверены, что хотите удалить этот документ? Это действие нельзя отменить.
-          </p>
+            {t("delete.documentDescription")}</p>
           <div className="flex justify-end pt-3">
             <Button
               type="button"
@@ -272,7 +274,7 @@ function DeleteDialog(props: {
               disabled={submitting}
               className="h-9 rounded-xl bg-[#ff3b30] px-3.5 text-[13.5px] text-white hover:bg-[#e0342a]"
             >
-              {submitting ? "Удаление..." : "Удалить"}
+              {submitting ? t("actions.deleting") : t("actions.delete")}
             </Button>
           </div>
         </div>
@@ -290,11 +292,13 @@ export function BreakdownHistoryDocumentsClient({
   documents,
 }: Props) {
   const router = useRouter();
+  const { t, locale } = useBreakdownCopy();
+  const { openPdf } = useJournalDocumentActions();
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
 
@@ -349,8 +353,7 @@ export function BreakdownHistoryDocumentsClient({
     });
 
     if (!response.ok) {
-      const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+      throw new Error("BREAKDOWN_SETTINGS_FAILED");
     }
 
     router.refresh();
@@ -359,8 +362,7 @@ export function BreakdownHistoryDocumentsClient({
   async function handleDelete(documentId: string) {
     const response = await fetch(`/api/journal-documents/${documentId}`, { method: "DELETE" });
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
-      return;
+      throw new Error("BREAKDOWN_DELETE_FAILED");
     }
     router.refresh();
   }
@@ -373,11 +375,11 @@ export function BreakdownHistoryDocumentsClient({
           <JournalHeadingName
             fallback={
               <>
-                {BREAKDOWN_HISTORY_HEADING}
-                {activeTab === "closed" && " (Закрытые)"}
+                {t("title")}
+                {activeTab === "closed" && t("list.closedSuffix")}
               </>
             }
-            suffix={activeTab === "closed" ? " (Закрытые)" : null}
+            suffix={activeTab === "closed" ? t("list.closedSuffix") : null}
           />
         </h1>
         <JournalListActions
@@ -387,8 +389,7 @@ export function BreakdownHistoryDocumentsClient({
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
                 <Plus className="size-4" />
-                Создать документ
-              </Button>
+                {t("actions.createDocument")}</Button>
             ) : null
           }
         />
@@ -410,27 +411,27 @@ export function BreakdownHistoryDocumentsClient({
               className={JOURNAL_LIST_CARD_CLASS}
             >
               <Link href={href} className={JOURNAL_CARD_TITLE_CLASS}>
-                {document.title || BREAKDOWN_HISTORY_DOCUMENT_TITLE}
+                {breakdownTitle(document.title, document.dateFrom, locale, t)}
               <SharedDocumentBadge shared={document.shared} />
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("settings.start")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {formatDateDMY(document.dateFrom)}
+                  {breakdownDate(document.dateFrom, locale)}
                 </div>
               </Link>
 
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия с документом"
+                  title={t("actions.documentActions")}
                   contentClassName="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-5 shadow-xl sm:w-[320px]"
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: t("actions.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -438,19 +439,19 @@ export function BreakdownHistoryDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: t("actions.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
-                        window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
+                        openPdf({ documentId: document.id }),
                     },
                     // Закрытый документ раньше уходил навсегда: вернуть
                     // его в активные было нечем.
-                    ...restoreMenuItems({ document, siblings: documents, restore }),
+                    ...restoreMenu({ document, siblings: documents }),
                     ...(document.status === "active"
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: t("actions.delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             onSelect: () => setDeleteTarget(document),
                             tone: "danger" as const,
@@ -461,6 +462,7 @@ export function BreakdownHistoryDocumentsClient({
                   trigger={
                     <button
                       type="button"
+                      aria-label={t("actions.documentActions")}
                       className="flex size-10 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                     >
                       <Ellipsis className="size-8" />
@@ -482,8 +484,8 @@ export function BreakdownHistoryDocumentsClient({
         routeCode={routeCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
-        submitText="Создать"
-        dialogTitle="Создание документа"
+        submitText={t("actions.create")}
+        dialogTitle={t("settings.createTitle")}
       />
 
       {/* Settings Dialog */}
@@ -500,8 +502,8 @@ export function BreakdownHistoryDocumentsClient({
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, value);
         }}
-        submitText="Сохранить"
-        dialogTitle="Настройки документа"
+        submitText={t("actions.save")}
+        dialogTitle={t("settings.title")}
       />
 
       {/* Delete Dialog */}
@@ -510,7 +512,7 @@ export function BreakdownHistoryDocumentsClient({
         onOpenChange={(value) => {
           if (!value) setDeleteTarget(null);
         }}
-        title={deleteTarget?.title || BREAKDOWN_HISTORY_DOCUMENT_TITLE}
+        title={deleteTarget ? breakdownTitle(deleteTarget.title, deleteTarget.dateFrom, locale, t) : t("title")}
         onConfirm={async () => {
           if (!deleteTarget) return;
           await handleDelete(deleteTarget.id);

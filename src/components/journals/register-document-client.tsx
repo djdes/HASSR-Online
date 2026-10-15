@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useGenericRegisterCopy } from "./use-generic-register-copy";
+import { presentRegisterField, registerCell, registerDate, registerName, registerTitle } from "./generic-register-presentation";
+import { Archive, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -47,9 +50,7 @@ import {
   type RegisterJournalField,
 } from "@/lib/register-journals";
 import { useMobileView } from "@/lib/use-mobile-view";
-import { formatCardDateTime } from "@/lib/journal-card-date";
 import { localDayKey } from "@/lib/entry-defaults";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 
 /**
@@ -93,19 +94,6 @@ function toRegisterFields(fields: RegisterJournalField[]): RegisterField[] {
   }));
 }
 
-function formatDate(value: string) {
-  if (!value) return "";
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) return value;
-  return `${day}.${month}.${year}`;
-}
-
-function formatCell(field: RegisterJournalField, value: string) {
-  if (!value) return "";
-  if (field.type === "date") return formatDate(value);
-  return value;
-}
-
 function currentTimeKey() {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -116,6 +104,7 @@ function RowDialog({
   onOpenChange,
   row,
   fields,
+  templateCode,
   hint,
   titleSuffix,
   period,
@@ -126,12 +115,15 @@ function RowDialog({
   onOpenChange: (open: boolean) => void;
   row: RegisterDocumentRow | null;
   fields: RegisterJournalField[];
+  templateCode: string;
   hint: string;
   titleSuffix?: string;
   period: { dateFrom: string; dateTo: string };
   users: EmployeeItem[];
   onSave: (row: RegisterDocumentRow) => Promise<void>;
 }) {
+  const { t, locale, messages, latest } = useGenericRegisterCopy();
+  const periodT = useTranslations("journalControls.dateInPeriod");
   const registerFields = useMemo(() => toRegisterFields(fields), [fields]);
   const buildEmpty = useMemo(
     () => () => {
@@ -164,18 +156,18 @@ function RowDialog({
 
   async function handleSave() {
     if (missing.length > 0) {
-      toast.error(`Заполните: ${missing.map((field) => field.label).join(", ")}`);
+      toast.error(t("row.required", { fields: missing.map(field => presentRegisterField(templateCode, field, messages).displayLabel).join(", ") }));
       return;
     }
     const dateField = fields.find((field) => field.type === "date");
-    if (dateField && !(await confirmDateInPeriod(draft.values[dateField.key] || "", period))) {
+    if (dateField && !(await confirmDateInPeriod(draft.values[dateField.key] || "", period, { locale, t: periodT }))) {
       return;
     }
     setSubmitting(true);
     try {
       await onSave(draft);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить строку"));
+    } catch {
+      toast.error(latest.current.t("row.saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -185,10 +177,11 @@ function RowDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-[calc(100vw-1rem)] overflow-hidden rounded-3xl border-0 p-0 sm:max-w-[640px]">
+      <DialogContent showCloseButton={false} className="max-h-[90vh] max-w-[calc(100vw-1rem)] overflow-hidden rounded-3xl border-0 p-0 sm:max-w-[640px]">
+        <DialogClose className="absolute right-4 top-4 rounded-full p-2" aria-label={t("actions.close")}><X className="size-5" /></DialogClose>
         <DialogHeader className="shrink-0 border-b border-[#ececf4] px-6 py-5 sm:px-8">
           <DialogTitle className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            {row ? `Редактирование записи${titleSuffix ? ` ${titleSuffix}` : ""}` : "Новая запись"}
+            {row ? titleSuffix ? t("row.editProgressTitle", { progress: titleSuffix }) : t("row.editTitle") : t("row.newTitle")}
           </DialogTitle>
           <p className="text-[13px] leading-[1.5] text-[#6f7282]">{hint}</p>
         </DialogHeader>
@@ -196,19 +189,21 @@ function RowDialog({
           {fields.map((field) => {
             const id = `register-field-${field.key}`;
             const value = draft.values[field.key] || "";
+            const display = presentRegisterField(templateCode, field, messages);
             return (
               <div key={field.key} className="space-y-1.5">
                 <Label htmlFor={id} className={FIELD_LABEL_CLASS}>
-                  {field.label}
+                  {display.displayLabel}
                   {field.required ? <span className="text-[#a13a32]"> *</span> : null}
                 </Label>
                 {field.type === "select" ? (
                   <Select value={value} onValueChange={(next) => setValue(field.key, next)}>
                     <SelectTrigger id={id} className={`w-full ${FIELD_INPUT_CLASS}`}>
-                      <SelectValue placeholder="Выберите из списка" />
+                      <SelectValue placeholder={t("row.selectPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {(field.options ?? []).map((item) => (
+                      {value && !(field.options ?? []).some(option => option.value === value) ? <SelectItem value={value}>{value}</SelectItem> : null}
+                      {(display.displayOptions ?? []).map((item) => (
                         <SelectItem key={item.value} value={item.value}>
                           {item.label}
                         </SelectItem>
@@ -219,7 +214,7 @@ function RowDialog({
                   <Textarea
                     id={id}
                     value={value}
-                    placeholder={field.placeholder}
+                    placeholder={display.displayPlaceholder}
                     onChange={(event) => setValue(field.key, event.target.value)}
                     className="min-h-[96px] rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                   />
@@ -230,7 +225,7 @@ function RowDialog({
                     inputMode={field.type === "number" ? "decimal" : undefined}
                     step={field.type === "number" ? field.step ?? "any" : undefined}
                     value={value}
-                    placeholder={field.placeholder}
+                    placeholder={display.displayPlaceholder}
                     list={field.key === "responsible" ? responsibleListId : undefined}
                     onChange={(event) => setValue(field.key, event.target.value)}
                     className={FIELD_INPUT_CLASS}
@@ -252,7 +247,7 @@ function RowDialog({
             onClick={() => onOpenChange(false)}
             className="h-11 rounded-2xl border-[#dcdfed] px-5 text-[15px] text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            Отмена
+            {t("actions.cancel")}
           </Button>
           <Button
             type="button"
@@ -260,7 +255,7 @@ function RowDialog({
             disabled={submitting}
             className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
-            {submitting ? "Сохранение…" : row ? "Сохранить" : "Добавить запись"}
+            {submitting ? t("actions.saving") : row ? t("actions.save") : t("actions.addRow")}
           </Button>
         </div>
       </DialogContent>
@@ -280,6 +275,7 @@ export function RegisterDocumentClient({
   users,
   useV2 = false,
 }: Props) {
+  const { t, locale, messages, latest } = useGenericRegisterCopy();
   const journal = getRegisterJournal(templateCode);
   const fields = useMemo(() => journal?.fields ?? [], [journal]);
   const registerFields = useMemo(() => toRegisterFields(fields), [fields]);
@@ -288,6 +284,9 @@ export function RegisterDocumentClient({
     () => (dateTo ? { dateFrom, dateTo } : resolveJournalPeriodForDate(templateCode, dateFrom)),
     [dateFrom, dateTo, templateCode]
   );
+  const displayTitle = (value: string, from = dateFrom) => registerTitle(value, templateCode, from, documentPeriod.dateTo, locale, messages, t);
+  const displayDefaultTitle = registerName(templateCode, defaultTitle, messages);
+  const hint = messages.genericRegister.journals[templateCode]?.hint ?? journal?.hint ?? "";
   const router = useRouter();
   const [config, setConfig] = useState(() =>
     normalizeRegisterDocumentConfig(initialConfig, registerFields)
@@ -340,9 +339,9 @@ export function RegisterDocumentClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: nextTitle, config: nextConfig, ...patch }),
     });
-    const result = await response.json().catch(() => null);
+    await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
+      throw new Error("register_write_failed");
     }
     setDocumentTitle(nextTitle);
     setConfig(nextConfig);
@@ -372,7 +371,7 @@ export function RegisterDocumentClient({
       seq.saved();
       return;
     }
-    toast.success("Запись добавлена");
+    toast.success(latest.current.t("row.added"));
     setEditingRow(null);
     setRowDialogOpen(false);
   }
@@ -381,13 +380,14 @@ export function RegisterDocumentClient({
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные записи?",
-      description: "Записи исчезнут из журнала и из печатной формы безвозвратно.",
+      locale,
+      title: t("selection.deleteTitle"),
+      description: t("selection.deleteDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("actions.delete"),
       bullets: [
-        { label: `Записей будет удалено: ${count}`, tone: "warn" },
-        { label: `Останется записей: ${config.rows.length - count}`, tone: "default" },
+        { label: t("selection.deleteCount", { count }), tone: "warn" },
+        { label: t("selection.remainingCount", { count: config.rows.length - count }), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -396,7 +396,7 @@ export function RegisterDocumentClient({
       rows: config.rows.filter((row) => !selectedRowIds.includes(row.id)),
     });
     setSelectedRowIds([]);
-    toast.success(`Удалено записей: ${count}`);
+    toast.success(latest.current.t("selection.deleted", { count }));
   }
 
   async function handleSaveSettings() {
@@ -408,9 +408,9 @@ export function RegisterDocumentClient({
         resolveJournalPeriodForDate(templateCode, settingsDate || dateFrom)
       );
       setSettingsOpen(false);
-      toast.success("Настройки документа сохранены");
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"));
+      toast.success(latest.current.t("settings.saved"));
+    } catch {
+      toast.error(latest.current.t("settings.saveFailed"));
     } finally {
       setSavingSettings(false);
     }
@@ -418,30 +418,32 @@ export function RegisterDocumentClient({
 
   async function handleFinish() {
     const confirmed = await confirmAsync({
-      title: `Закончить журнал «${documentTitle}»?`,
-      description: "Журнал уйдёт во вкладку «Закрытые», в шапке журнала появится дата окончания.",
+      locale,
+      title: t("finish.title", { title: displayTitle(documentTitle) }),
+      description: t("finish.description"),
       variant: "warn",
-      confirmLabel: "Закончить",
+      confirmLabel: t("actions.finish"),
       bullets: [
-        { label: `Записей в журнале: ${config.rows.length}`, tone: "default" },
-        { label: "Добавлять записи будет нельзя, пока журнал не откроют заново", tone: "warn" },
+        { label: t("finish.count", { count: config.rows.length }), tone: "default" },
+        { label: t("finish.warning"), tone: "warn" },
       ],
     });
     if (!confirmed) return;
     try {
       await persist(documentTitle, { ...config, finishedAt: localDayKey() }, { status: "closed" });
       router.push(`/journals/${templateCode}?tab=closed`);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось закончить журнал"));
+    } catch {
+      toast.error(latest.current.t("finish.failed"));
     }
   }
 
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
-    title: `№${index + 1} · ${(titleField && row.values[titleField.key]) || "—"}`,
-    subtitle: dateField ? formatCardDateTime(row.values[dateField.key] || "") || undefined : undefined,
+    title: t("row.cardTitle", { number: index + 1, title: (titleField && row.values[titleField.key]) || "—" }),
+    subtitle: dateField ? registerDate(row.values[dateField.key] || "", locale) || undefined : undefined,
     leading: (
       <Checkbox
+        aria-label={t("row.selectOne", { number: index + 1 })}
         checked={selectedRowIds.includes(row.id)}
         onCheckedChange={(checked) => toggleRow(row.id, checked === true)}
         disabled={!active}
@@ -451,8 +453,8 @@ export function RegisterDocumentClient({
     fields: fields
       .filter((field) => field !== titleField && field !== dateField)
       .map((field) => ({
-        label: field.label,
-        value: formatCell(field, row.values[field.key] || ""),
+        label: presentRegisterField(templateCode, field, messages).displayLabel,
+        value: registerCell(templateCode, field, row.values[field.key] || "", locale, messages),
         hideIfEmpty: true,
       })),
     onClick: active ? () => openRow(row) : undefined,
@@ -462,7 +464,7 @@ export function RegisterDocumentClient({
         onClick={() => openRow(row)}
         className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
       >
-        Редактировать
+        {t("actions.edit")}
       </button>
     ) : null,
   }));
@@ -479,28 +481,28 @@ export function RegisterDocumentClient({
       <div className="space-y-6 text-black">
         <FocusTodayScroller
           selector="[data-focus-today]"
-          emptyTitle="Записей пока нет"
-          emptyBody="Нажмите «Добавить», чтобы внести первую запись."
+          emptyTitle={t("empty.title")}
+          emptyBody={t("empty.guidance")}
         />
         {selectedRowIds.length > 0 && active ? (
           <JournalSelectionBar
             count={selectedRowIds.length}
             onClear={() => setSelectedRowIds([])}
             onDelete={() =>
-              handleDeleteSelected().catch((error) =>
-                toast.error(humanizeFetchError(error, "Не удалось удалить записи"))
+              handleDeleteSelected().catch(() =>
+                toast.error(latest.current.t("selection.deleteFailed"))
               )
             }
             deleting={isPending}
-            hint="Выбранные записи будут удалены без возможности отмены"
+            hint={t("selection.hint")}
           >
             <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
         ) : null}
 
         <JournalDocumentShell
-          title={documentTitle}
-          subtitle={`Начат ${formatDate(dateFrom)}`}
+          title={displayTitle(documentTitle)}
+          subtitle={t("document.started", { date: registerDate(dateFrom, locale) })}
           documentId={documentId}
           backHref={`/journals/${templateCode}`}
           onSettings={() => {
@@ -509,13 +511,13 @@ export function RegisterDocumentClient({
             setSettingsOpen(true);
           }}
           closed={!active}
-          closedHint="Откройте журнал заново, чтобы добавлять и править записи."
+          closedHint={t("document.closedHint")}
           menuItems={
             active
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("actions.finishJournal"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => void handleFinish(),
                   },
@@ -524,32 +526,33 @@ export function RegisterDocumentClient({
           }
           mobileView={mobileView}
           onMobileView={switchMobileView}
-          cards={<RecordCardsView items={cardItems} emptyLabel="Записей пока нет." />}
+          cards={<RecordCardsView items={cardItems} emptyLabel={t("empty.cards")} />}
           paperHeader={
             <JournalDocumentHeader
               orgName={organizationName}
-              title={defaultTitle}
+              title={displayDefaultTitle}
               startedAt={dateFrom}
               finishedAt={active ? null : config.finishedAt ?? null}
             />
           }
-          sheetTitle={defaultTitle}
+          sheetTitle={displayDefaultTitle}
           sheetMinWidth={sheetMinWidth}
           toolbar={
             active ? (
               <Button type="button" onClick={() => openRow(null)} className={DOC_PRIMARY_BUTTON_CLASS}>
                 <Plus className="size-5" />
-                Добавить
+                {t("actions.add")}
               </Button>
             ) : undefined
           }
         >
-          <p className="mb-3 text-[13px] leading-[1.5] text-[#6f7282] print:hidden">{journal.hint}</p>
+          <p className="mb-3 text-[13px] leading-[1.5] text-[#6f7282] print:hidden">{hint}</p>
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr>
                 <th className={`w-[42px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight print:hidden`}>
                   <Checkbox
+                    aria-label={t("row.selectAll")}
                     checked={allSelected}
                     onCheckedChange={(checked) =>
                       setSelectedRowIds(checked === true ? config.rows.map((row) => row.id) : [])
@@ -557,13 +560,13 @@ export function RegisterDocumentClient({
                     disabled={!active || config.rows.length === 0}
                   />
                 </th>
-                <th className={`w-[56px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>№</th>
+                <th className={`w-[56px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("row.numberColumn")}</th>
                 {fields.map((field) => (
                   <th
                     key={field.key}
                     className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                   >
-                    {field.label}
+                    {presentRegisterField(templateCode, field, messages).displayLabel}
                   </th>
                 ))}
               </tr>
@@ -580,6 +583,7 @@ export function RegisterDocumentClient({
                     onClick={(event) => event.stopPropagation()}
                   >
                     <Checkbox
+                      aria-label={t("row.selectOne", { number: index + 1 })}
                       checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={(checked) => toggleRow(row.id, checked === true)}
                       disabled={!active}
@@ -593,7 +597,7 @@ export function RegisterDocumentClient({
                       key={field.key}
                       className={`${GRID_CELL_CLASS} whitespace-pre-wrap px-2 py-1 align-top leading-tight ${field.type === "number" ? "text-center tabular-nums" : ""}`}
                     >
-                      {formatCell(field, row.values[field.key] || "") || "—"}
+                      {registerCell(templateCode, field, row.values[field.key] || "", locale, messages) || "—"}
                     </td>
                   ))}
                 </tr>
@@ -604,7 +608,7 @@ export function RegisterDocumentClient({
                     colSpan={fields.length + 2}
                     className={`${GRID_CELL_CLASS} px-4 py-10 text-center text-[15px] text-[#6f7282]`}
                   >
-                    Записей пока нет
+                    {t("empty.title")}
                   </td>
                 </tr>
               ) : null}
@@ -613,7 +617,7 @@ export function RegisterDocumentClient({
                   leading={2}
                   labelSpan={labelSpan}
                   trailing={Math.max(0, fields.length - labelSpan)}
-                  label="Добавить"
+                  label={t("actions.add")}
                   onClick={() => openRow(null)}
                 />
               ) : null}
@@ -633,7 +637,8 @@ export function RegisterDocumentClient({
         }}
         row={editingRow}
         fields={fields}
-        hint={journal.hint}
+        templateCode={templateCode}
+        hint={hint}
         titleSuffix={seq.progress ?? undefined}
         period={documentPeriod}
         users={users}
@@ -644,15 +649,15 @@ export function RegisterDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название документа и дата начала."
+          title={t("settings.title")}
+          description={t("settings.description")}
           size="md"
           isSaving={savingSettings}
           onSave={handleSaveSettings}
           onCancel={() => setSettingsOpen(false)}
         >
           <SettingsFields
-            title={settingsTitle}
+            title={displayTitle(settingsTitle, settingsDate)}
             date={settingsDate}
             onTitle={setSettingsTitle}
             onDate={setSettingsDate}
@@ -660,15 +665,16 @@ export function RegisterDocumentClient({
         </JournalSettingsModal>
       ) : (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="max-w-[calc(100vw-1rem)] rounded-3xl border-0 p-0 sm:max-w-[560px]">
+          <DialogContent showCloseButton={false} className="max-w-[calc(100vw-1rem)] rounded-3xl border-0 p-0 sm:max-w-[560px]">
+            <DialogClose className="absolute right-4 top-4 rounded-full p-2" aria-label={t("actions.close")}><X className="size-5" /></DialogClose>
             <DialogHeader className="border-b border-[#ececf4] px-6 py-5 sm:px-8">
               <DialogTitle className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-                Настройки документа
+                {t("settings.title")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 px-6 py-5 sm:px-8">
               <SettingsFields
-                title={settingsTitle}
+                title={displayTitle(settingsTitle, settingsDate)}
                 date={settingsDate}
                 onTitle={setSettingsTitle}
                 onDate={setSettingsDate}
@@ -680,7 +686,7 @@ export function RegisterDocumentClient({
                   disabled={savingSettings}
                   className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
                 >
-                  {savingSettings ? "Сохранение…" : "Сохранить"}
+                  {savingSettings ? t("actions.saving") : t("actions.save")}
                 </Button>
               </div>
             </div>
@@ -702,11 +708,12 @@ function SettingsFields({
   onTitle: (value: string) => void;
   onDate: (value: string) => void;
 }) {
+  const { t } = useGenericRegisterCopy();
   return (
     <>
       <div className="space-y-1.5">
         <Label htmlFor="register-settings-title" className={FIELD_LABEL_CLASS}>
-          Название документа
+          {t("settings.documentTitle")}
         </Label>
         <Input
           id="register-settings-title"
@@ -717,7 +724,7 @@ function SettingsFields({
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="register-settings-date" className={FIELD_LABEL_CLASS}>
-          Дата начала
+          {t("settings.startDate")}
         </Label>
         <Input
           id="register-settings-date"

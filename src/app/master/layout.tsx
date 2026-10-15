@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { MasterShell } from "@/components/master/master-shell";
@@ -50,6 +51,7 @@ export default async function MasterLayout({ children }: { children: React.React
     .map((item) => ({ id: item.id, name: item.name }));
 
   return (
+    <DomainMessagesBoundary namespaces={["finishedProduct"]}>
     <AuthSessionProvider session={session}>
       <SiteThemeProvider initialTheme={initialTheme}>
         <div className="app-shell min-h-screen bg-[#f4f5fb]" data-app-theme={initialTheme} suppressHydrationWarning>
@@ -71,5 +73,6 @@ export default async function MasterLayout({ children }: { children: React.React
         <Toaster />
       </SiteThemeProvider>
     </AuthSessionProvider>
+    </DomainMessagesBoundary>
   );
 }

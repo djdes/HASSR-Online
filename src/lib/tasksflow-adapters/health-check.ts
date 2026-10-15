@@ -145,6 +145,8 @@ export const healthCheckAdapter: JournalAdapter = {
     return {
       ...HEALTH_TASK_FORM,
       intro: `${employee.name}, подтвердите что сегодня чувствуете себя хорошо.`,
+      introPresentationKey: "dynamic.healthCheckNamedIntro",
+      introPresentationValues: { employeeName: employee.name },
       fields,
     };
   },

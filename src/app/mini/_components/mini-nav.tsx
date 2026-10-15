@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   CalendarCheck,
   ClipboardList,
@@ -50,6 +51,9 @@ function isSignInPath(pathname: string): boolean {
 
 export function MiniNav({ items }: { items: MiniNavItem[] }) {
   const pathname = usePathname();
+  const tMini = useTranslations("navigation.mini");
+  const tRoutes = useTranslations("navigation.routes");
+  const tPresentation = useTranslations("miniHome.navigation");
   const activeHref = activeMiniNavHref(items, pathname);
   if (isSignInPath(pathname ?? "")) return null;
 
@@ -58,7 +62,7 @@ export function MiniNav({ items }: { items: MiniNavItem[] }) {
   // в mini-theme.css.
   return (
     <nav
-      aria-label="Разделы приложения"
+      aria-label={tPresentation("landmark")}
       className="mini-nav-rail fixed inset-x-3"
       style={{
         bottom: "var(--mini-safe-b)",
@@ -84,7 +88,13 @@ export function MiniNav({ items }: { items: MiniNavItem[] }) {
               className="mini-nav-tab mini-press"
             >
               <Icon className="size-[22px]" strokeWidth={isActive ? 2.2 : 1.9} />
-              <span className="max-w-full truncate">{item.label}</span>
+              <span className="max-w-full truncate">
+                {item.customLabel
+                  ? item.label
+                  : item.labelKey === "dashboard" || item.labelKey === "journals"
+                    ? tRoutes(item.labelKey)
+                    : tMini(item.labelKey)}
+              </span>
             </Link>
           );
         })}

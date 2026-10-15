@@ -1,0 +1,16 @@
+{
+  "locale":"en","sourceHash":"5e7fc782e1929826c36077c56aaad1abe1ec839700506a4c3ab234b0c07b509e",
+  "title":"Deep-frying oil records: when to change the oil and what to write down",
+  "excerpt":"The limit for polar compounds in food service is 24%: once it is reached, change the oil, no matter how it looks. Learn what to record in the replacement log and how to dispose of fryer oil.",
+  "tags":["Deep-frying","HACCP"],
+  "body":[
+    {"type":"p","text":"Frying fat is one of the kitchen’s most deceptive ingredients. It may still look usable, while chemically it has turned into a mixture of acrylamides and aldehydes. That is why the rule is to measure it rather than judge it by appearance: usually once per shift, and more often when frying is intensive."},
+    {"type":"h2","text":"Replacement threshold"},
+    {"type":"p","text":"The key indicator is the percentage of polar compounds. The limit in food service is 24%. Once it reaches that level, change the oil regardless of whether it “still fries well.” Measure it with a handheld analyzer or test strips."},
+    {"type":"h2","text":"What to record in the journal"},
+    {"type":"ul","items":["Date, shift, and person responsible.","Measurement result as a percentage of polar compounds.","Action: continue using the oil or replace it.","When replacing it, record the volume and disposal method (including the separate collection contract)."]},
+    {"type":"callout","tone":"warn","title":"Disposal is mandatory","text":"Pouring fryer oil into the sewer is a direct violation of sanitary rules and the agreement with the water utility. Used oil must be collected in a separate container and removed under a collection report."},
+    {"type":"h2","text":"How the service helps"},
+    {"type":"p","text":"The template fills in typical values, reminds you to measure at the start of a shift, and automatically marks a result in red if it exceeds 24%. The disposal report is attached to the replacement entry, so an inspector can immediately see the complete process."}
+  ]
+}

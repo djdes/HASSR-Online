@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
@@ -9,65 +9,31 @@ import {
   ScrollText,
 } from "lucide-react";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
-import {
-  JOURNAL_INFO,
-  JOURNAL_CATEGORY_LABEL,
-} from "@/content/journal-info";
-import { JOURNAL_SEO } from "@/content/journal-seo";
 import { JournalScreenshot } from "@/components/public/journal-screenshot";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
-import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
-import { buildJournalFaq, journalFaqJsonLd } from "@/lib/journal-faq";
-import { journalHeadline } from "@/lib/journal-headline";
+import { journalFaqJsonLd } from "@/lib/journal-faq";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import {
   DOCX_SAMPLE_CODES,
 } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
-import {
-  DEFAULT_TWITTER_CARD,
-  } from "@/lib/meta-defaults";
-import { FILLING_GUIDES } from "@/lib/journal-filling-guides";
-import { ogImageUrl, ogImages, twitterImages } from "@/lib/og-image";
+import { getFillingGuide } from "@/lib/journal-filling-guides";
+import { ogImageUrl } from "@/lib/og-image";
 import { BlankDownloadButton } from "@/components/public/blank-download";
+
+import { createTranslator } from "use-intl/core";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { localizedHref } from "@/i18n/site-locale";
+import { presentPublicJournalDetail } from "@/i18n/public-journal-detail-presentation";
+import { publicJournalDetailMetadata } from "@/i18n/public-journal-detail-metadata";
+import { publicJournalDetailFaq } from "@/i18n/public-journal-detail-faq";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ code: string }>;
-}) {
-  const { code } = await params;
-  const info = JOURNAL_INFO[code];
-  if (!info) return { title: { absolute: "Журнал не найден — WeSetup" } };
-  const seo = JOURNAL_SEO[code];
-  const canonical = `https://wesetup.ru/journals-info/${code}`;
-  return {
-    // Ключевик-первый title; бренд «— WeSetup» добавляет template в
-    // корневом layout. Fallback БЕЗ ручного суффикса — иначе на первом
-    // журнале без записи в JOURNAL_SEO получилось бы «…— WeSetup — WeSetup».
-    title: seo?.title ?? info.tagline,
-    description: seo?.description ?? info.why,
-    keywords: seo?.keywords,
-    alternates: { canonical },
-    openGraph: {
-      title: seo?.title ?? info.tagline,
-      description: seo?.description ?? info.why,
-      url: canonical,
-      type: "article",
-      locale: "ru_RU",
-      siteName: "WeSetup",
-      images: ogImages({ title: seo?.title ?? info.tagline, subtitle: seo?.description ?? info.why, kind: "journal" }),
-    },
-    twitter: {
-      card: DEFAULT_TWITTER_CARD,
-      title: seo?.title ?? info.tagline,
-      description: seo?.description ?? info.why,
-      images: twitterImages({ title: seo?.title ?? info.tagline, subtitle: seo?.description ?? info.why, kind: "journal" }),
-    },
-  };
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }) {
+  return publicJournalDetailMetadata(await getSiteLocale(), (await params).code);
 }
 
 /** Журналы с публичным образцом — страница серверная, импорт безопасен. */
@@ -82,31 +48,16 @@ export default async function JournalInfoDetailPage({
   searchParams: Promise<{ download?: string; expired?: string }>;
 }) {
   const { code } = await params;
-  const info = JOURNAL_INFO[code];
-  if (!info) notFound();
-  const seo = JOURNAL_SEO[code];
-  // `?download=pdf|docx` — пришли по ссылке на файл без токена (старая
-  // ссылка из блога или поиска, протухшее письмо): окно email открывается
-  // сразу у кнопки этого формата.
+  const locale = await getSiteLocale();
+  const messages = await loadMessages(locale);
+  const detail = presentPublicJournalDetail(messages, locale, code);
+  if (!detail) notFound();
+  const { info, seo, name: journalName, catalogName, related } = detail;
+  const t = createTranslator({ locale, messages, namespace: "publicJournalIndex.detailCommon" });
   const { download, expired } = await searchParams;
-
-  // Название из каталога («Гигиенический журнал», «Журнал уборки») — это
-  // и есть та фраза, по которой страницу ищут. Раньше оно использовалось
-  // только в хлебных крошках, а заголовок брал описательный tagline.
-  const journalName = journalHeadline(
-    seo?.title,
-    ACTIVE_JOURNAL_CATALOG.find((j) => j.code === code)?.name,
-    info.tagline
-  );
-  const faq = buildJournalFaq(info, journalName);
-  // Название шаблона в окне скачивания — то же, что уйдёт в письмо.
-  const catalogName = ACTIVE_JOURNAL_CATALOG.find((j) => j.code === code)?.name ?? journalName;
-
-  const related = Object.values(JOURNAL_INFO)
-    .filter((j) => j.category === info.category && j.code !== info.code)
-    .slice(0, 4);
-
-  const canonical = `https://wesetup.ru/journals-info/${code}`;
+  const faq = publicJournalDetailFaq(info, journalName, locale, messages);
+  const canonical = `https://wesetup.ru${localizedHref(`/journals-info/${code}`, locale)}`;
+  const language = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -116,9 +67,9 @@ export default async function JournalInfoDetailPage({
     // карточка не попадает в Article rich result. /og-default — 1200×630
     // landscape brand-hero, лучше для rich-snippet чем квадрат
     // icon-512.png. См. blog/[slug] для идентичного фикса.
-    image: [ogImageUrl({ title: seo?.title ?? info.tagline, subtitle: seo?.description ?? info.why, kind: "journal" })],
+    image: [ogImageUrl({ title: seo?.title ?? info.tagline, subtitle: seo?.description ?? info.why, kind: "journal", locale })],
     url: canonical,
-    inLanguage: "ru-RU",
+    inLanguage: language,
     keywords: seo?.keywords?.join(", "),
     mainEntityOfPage: canonical,
     publisher: {
@@ -136,14 +87,16 @@ export default async function JournalInfoDetailPage({
 
   // HowTo — расширенный сниппет «как заполнять»: шаги и материалы из гайда
   // для новых сотрудников, того же, что показывается внутри формы.
-  const guide = FILLING_GUIDES[code];
+  const guideCopy = createTranslator({ locale, messages, namespace: "journalFillingGuides" });
+  const walkthroughCopy = createTranslator({ locale, messages, namespace: "journalControls.walkthroughs" });
+  const guide = getFillingGuide(code, { guide: key => guideCopy(key), walkthrough: key => walkthroughCopy(key) });
   const howToLd = guide
     ? {
         "@context": "https://schema.org",
         "@type": "HowTo",
-        name: `Как заполнять: ${seo?.title ?? info.tagline}`,
+        name: t("howToTitle", { title: seo?.title ?? info.tagline }),
         description: guide.summary,
-        inLanguage: "ru-RU",
+        inLanguage: language,
         supply: guide.materials.map((name) => ({ "@type": "HowToSupply", name })),
         step: guide.steps.map((step, index) => ({
           "@type": "HowToStep",
@@ -180,14 +133,16 @@ export default async function JournalInfoDetailPage({
           </div>
           <div className="relative">
             <PublicBreadcrumbs
+              home={{ name: messages.publicFeatures.detail.home, href: localizedHref("/", locale) }}
+              ariaLabel={messages.publicFeatures.detail.breadcrumbAria}
               items={[
-                { name: "Журналы", href: "/journals-info" },
+                { name: t("breadcrumb"), href: localizedHref("/journals-info", locale) },
                 { name: journalName },
               ]}
             />
             <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.18em] text-white/80 backdrop-blur">
               <BookOpenCheck className="size-3.5" />
-              {JOURNAL_CATEGORY_LABEL[info.category]}
+              {messages.publicJournalIndex.categories[info.category]}
             </div>
             {/* h1 — название журнала, а не tagline. Раньше здесь стояло
                 описательное предложение с точкой («Акт списания
@@ -209,7 +164,7 @@ export default async function JournalInfoDetailPage({
         <section className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6 sm:pt-10">
           <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-5 sm:p-7 md:p-8">
             <h2 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Что это за журнал
+              {t("aboutHeading")}
             </h2>
             <p className="text-[16px] leading-[1.7] text-[#3c4053]">
               {seo.seoIntro}
@@ -223,9 +178,9 @@ export default async function JournalInfoDetailPage({
           skeleton when the file isn't on disk yet. */}
       <section className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6 sm:pt-10">
         <h2 className="mb-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Как это выглядит в системе
+          {t("screenHeading")}
         </h2>
-        <JournalScreenshot code={code} label={info.tagline} />
+        <JournalScreenshot code={code} label={info.tagline} pendingLabel={t("screenshotPending")} />
       </section>
 
       {/* ОБРАЗЕЦ — показываем сам PDF, а не картинку с него. Встроенный
@@ -242,11 +197,10 @@ export default async function JournalInfoDetailPage({
               </span>
               <div className="min-w-0 flex-1">
                 <h2 className="text-[15px] font-semibold text-[#0b1024]">
-                  Так выглядит заполненный журнал
+                  {t("sampleHeading")}
                 </h2>
                 <p className="mt-1 text-[13px] leading-[1.55] text-[#6f7282]">
-                  Тот же файл, который сервис выдаёт инспектору. Данные
-                  вымышленные — организация «Ромашка» и пять сотрудников.
+                  {t("sampleDescription")}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -285,16 +239,15 @@ export default async function JournalInfoDetailPage({
             <object
               data={`/api/journal-samples/${code}/pdf?inline=1#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
               type="application/pdf"
-              aria-label="Образец заполненного журнала"
+              aria-label={t("sampleAria")}
               className="mt-5 hidden aspect-[1.414/1] w-full rounded-2xl border border-[#dcdfed] bg-white sm:block"
             >
               <div className="flex h-full items-center justify-center p-6 text-center text-[13px] text-[#6f7282]">
-                Браузер не показывает PDF на странице — откройте файл
-                кнопкой выше.
+                {t("pdfFallback")}
               </div>
             </object>
             <p className="mt-2 hidden text-[12px] text-[#9b9fb3] sm:block">
-              Пролистайте прямо здесь или скачайте, чтобы распечатать.
+              {t("sampleHelp")}
             </p>
           </div>
         </section>
@@ -308,7 +261,7 @@ export default async function JournalInfoDetailPage({
             <div className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">
               <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#3848c7]">
                 <CheckCircle2 className="size-4" />
-                Что заполняется
+                {t("fieldsHeading")}
               </h2>
               <ul className="mt-4 space-y-2.5 text-[15px] leading-[1.6] text-[#3c4053]">
                 {info.whatToFill.map((item, i) => (
@@ -324,7 +277,7 @@ export default async function JournalInfoDetailPage({
             <div className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">
               <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#3848c7]">
                 <ScrollText className="size-4" />
-                На основании
+                {t("normativeHeading")}
               </h2>
               <ul className="mt-4 space-y-2 text-[15px] text-[#3c4053]">
                 {info.normative.map((n, i) => (
@@ -345,7 +298,7 @@ export default async function JournalInfoDetailPage({
               <div className="rounded-3xl border border-[#c8f0d5] bg-[#ecfdf5] p-5 sm:p-7">
                 <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#116b2a]">
                   <Lightbulb className="size-4" />
-                  Как помогает WeSetup
+                  {t("benefitsHeading")}
                 </div>
                 <ul className="mt-4 space-y-2.5 text-[15px] leading-[1.6] text-[#116b2a]">
                   {info.tips.map((t, i) => (
@@ -363,7 +316,7 @@ export default async function JournalInfoDetailPage({
           <aside className="space-y-5">
             <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-6">
               <div className="text-[13px] font-medium text-[#6f7282]">
-                Код журнала
+                {t("codeLabel")}
               </div>
               <div className="mt-1 break-all font-mono text-[15px] font-semibold text-[#0b1024]">
                 {info.code}
@@ -372,19 +325,18 @@ export default async function JournalInfoDetailPage({
                 href="/register"
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-3 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
               >
-                Попробовать бесплатно
+                {t("tryFree")}
                 <ArrowRight className="size-4" />
               </Link>
               <p className="mt-3 text-[12px] leading-[1.5] text-[#6f7282]">
-                Все журналы доступны на бесплатном тарифе — без
-                ограничений по времени и без карты.
+                {t("freeDescription")}
               </p>
             </div>
 
             {related.length > 0 && (
               <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
                 <div className="text-[13px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
-                  Похожие журналы
+                  {t("relatedHeading")}
                 </div>
                 <ul className="mt-3 space-y-2">
                   {related.map((r) => (
@@ -415,7 +367,7 @@ export default async function JournalInfoDetailPage({
           /blanki вместо профильных страниц. */}
       <section className="mx-auto max-w-[860px] px-4 pb-12 sm:px-6">
         <h2 className="text-[26px] font-semibold tracking-[-0.02em]">
-          Вопросы и ответы
+          {t("faqHeading")}
         </h2>
         <div className="mt-6 space-y-3">
           {faq.map((item) => (

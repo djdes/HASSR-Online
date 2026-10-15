@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   const parsed = postSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Некорректное сообщение" },
+      { error: parsed.error.issues[0]?.message ?? "Некорректное сообщение", code: "invalid_request" },
       { status: 400 }
     );
   }
@@ -104,13 +104,13 @@ export async function POST(request: Request) {
   const attachments = validateSignedAttachments(parsed.data.attachments, key);
   if (attachments === null) {
     return NextResponse.json(
-      { error: "Вложения не прошли проверку — прикрепите файлы заново" },
+      { error: "Вложения не прошли проверку — прикрепите файлы заново", code: "invalid_attachments" },
       { status: 400 }
     );
   }
   if (parsed.data.message.length < SUPPORT_CHAT_MIN_LENGTH && attachments.length === 0) {
     return NextResponse.json(
-      { error: "Сообщение слишком короткое" },
+      { error: "Сообщение слишком короткое", code: "message_too_short" },
       { status: 400 }
     );
   }
@@ -126,18 +126,18 @@ export async function POST(request: Request) {
   const phone = given.phone ?? existing?.phone ?? null;
   if (!email && !phone) {
     return NextResponse.json(
-      { error: "Оставьте телефон или почту — иначе некуда ответить" },
+      { error: "Оставьте телефон или почту — иначе некуда ответить", code: "missing_contact" },
       { status: 400 }
     );
   }
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return NextResponse.json({ error: "Проверьте адрес почты" }, { status: 400 });
+    return NextResponse.json({ error: "Проверьте адрес почты", code: "invalid_email" }, { status: 400 });
   }
 
   const ip = clientIp(request) ?? "unknown";
   if (!publicContactLimiter.consume(`chat:${ip}`)) {
     return NextResponse.json(
-      { error: "Слишком много сообщений подряд. Попробуйте через 10 минут" },
+      { error: "Слишком много сообщений подряд. Попробуйте через 10 минут", code: "rate_limited" },
       { status: 429 }
     );
   }

@@ -10,6 +10,7 @@ import {
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -184,6 +185,7 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
+  const t = useTranslations("cleaningGrid.cleaning");
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
   const submitting = submit.submitting;
@@ -209,7 +211,7 @@ function ConfirmDialog(props: {
             }}
             className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
           >
-            {submitting ? "Сохранение..." : props.submitLabel}
+            {submitting ? t("saving") : props.submitLabel}
           </Button>
           </div>
         </div>
@@ -226,6 +228,7 @@ function CreateDialog(props: {
   documents: DocumentItem[];
   onSubmit: (state: CreateState) => Promise<void>;
 }) {
+  const t = useTranslations("cleaningGrid.cleaning");
   const existingTitles = useMemo(
     () => props.documents.map((document) => document.title),
     [props.documents]
@@ -248,7 +251,7 @@ function CreateDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Создание документа
+              {t("createDocument")}
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -261,8 +264,8 @@ function CreateDialog(props: {
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <FloatingInputField
-            label="Название документа"
-            placeholder="Введите название документа"
+            label={t("documentTitle")}
+            placeholder={t("documentTitlePlaceholder")}
             value={state.title}
             onChange={(value) => {
               if (titleError) setTitleError("");
@@ -280,8 +283,8 @@ function CreateDialog(props: {
                 cleaningUserId: next.userId,
               }))
             }
-            positionLabel="Должность ответственного за уборку"
-            employeeLabel={CLEANING_ROW_LABELS.cleaning}
+            positionLabel={t("cleaningRolePosition")}
+            employeeLabel={t("cleaningRole")}
             variant="floating"
           />
           <PositionEmployeePicker
@@ -294,8 +297,8 @@ function CreateDialog(props: {
                 controlUserId: next.userId,
               }))
             }
-            positionLabel="Должность ответственного за контроль"
-            employeeLabel={CLEANING_ROW_LABELS.control}
+            positionLabel={t("controlRolePosition")}
+            employeeLabel={t("controlRole")}
             variant="floating"
           />
           <ControlPeriodicityField
@@ -312,7 +315,7 @@ function CreateDialog(props: {
               disabled={submitting}
               onClick={async () => {
                 if (!state.title.trim()) {
-                  setTitleError("Поле не заполнено");
+                  setTitleError(t("fieldRequired"));
                   return;
                 }
                 setTitleError("");
@@ -320,7 +323,7 @@ function CreateDialog(props: {
               }}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {submitting ? "Создание..." : "Создать"}
+              {submitting ? t("creating") : t("create")}
             </Button>
           </div>
         </div>
@@ -338,6 +341,7 @@ function SettingsDialog(props: {
   initialState: SettingsState | null;
   onSubmit: (state: SettingsState) => Promise<void>;
 }) {
+  const t = useTranslations("cleaningGrid.cleaning");
   const [state, setState] = useState<SettingsState | null>(props.initialState);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -356,14 +360,14 @@ function SettingsDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки документа
+              {t("documentSettings")}
             </DialogTitle>
           </div>
         </DialogHeader>
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <FloatingInputField
-            label="Название документа"
+            label={t("documentTitle")}
             value={state.title}
             onChange={(value) =>
               setState((current) => (current ? { ...current, title: value } : current))
@@ -383,8 +387,8 @@ function SettingsDialog(props: {
                   : current
               )
             }
-            positionLabel="Должность ответственного за уборку"
-            employeeLabel={CLEANING_ROW_LABELS.cleaning}
+            positionLabel={t("cleaningRolePosition")}
+            employeeLabel={t("cleaningRole")}
             variant="floating"
           />
           <PositionEmployeePicker
@@ -401,8 +405,8 @@ function SettingsDialog(props: {
                   : current
               )
             }
-            positionLabel="Должность ответственного за контроль"
-            employeeLabel={CLEANING_ROW_LABELS.control}
+            positionLabel={t("controlRolePosition")}
+            employeeLabel={t("controlRole")}
             variant="floating"
           />
           <ControlPeriodicityField
@@ -424,7 +428,7 @@ function SettingsDialog(props: {
               }}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -434,6 +438,7 @@ function SettingsDialog(props: {
 }
 
 export function CleaningDocumentsClient(props: Props) {
+  const t = useTranslations("cleaningGrid.cleaning");
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -499,7 +504,7 @@ export function CleaningDocumentsClient(props: Props) {
 
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || "Не удалось создать документ");
+    throw new Error(result?.error || t("saveError"));
     }
 
     router.push(`/journals/${props.routeCode}/documents/${result.document.id}`);
@@ -557,7 +562,7 @@ export function CleaningDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      throw new Error("Не удалось сохранить документ");
+    throw new Error(t("saveError"));
     }
 
     setSettingsDocument(null);
@@ -570,7 +575,7 @@ export function CleaningDocumentsClient(props: Props) {
       method: "DELETE",
     });
     if (!response.ok) {
-      throw new Error("Не удалось удалить документ");
+    throw new Error(t("documentDeleteError"));
     }
     setDeleteDocument(null);
     router.refresh();
@@ -585,7 +590,7 @@ export function CleaningDocumentsClient(props: Props) {
       body: JSON.stringify({ status: nextStatus }),
     });
     if (!response.ok) {
-      throw new Error("Не удалось изменить статус документа");
+    throw new Error(t("documentSaveError"));
     }
     setArchiveDocument(null);
     router.refresh();
@@ -607,7 +612,7 @@ export function CleaningDocumentsClient(props: Props) {
               canManageDocuments && props.activeTab === "active" && props.documents.length > 0 ? (
                 <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
                   <Plus className="size-4" />
-                  Создать документ
+              {t("createDocumentButton")}
                 </Button>
               ) : null
             }
@@ -619,6 +624,8 @@ export function CleaningDocumentsClient(props: Props) {
         <div className={JOURNAL_LIST_CARDS_CLASS}>
           {props.documents.length === 0 ? (
             <EmptyDocumentsState
+              label={t("emptyListTitle")}
+              description={t("emptyListDescription")}
               action={
                 <Button
                   type="button"
@@ -626,7 +633,7 @@ export function CleaningDocumentsClient(props: Props) {
                   onClick={() => setCreateOpen(true)}
                 >
                   <Plus className="size-5" strokeWidth={2.5} />
-                  Создать документ
+              {t("createDocumentButton")}
                 </Button>
               }
             />
@@ -670,18 +677,18 @@ export function CleaningDocumentsClient(props: Props) {
                   </div>
                 </Link>
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Период</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("periodLabel")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {getCleaningPeriodLabel(document.dateFrom, document.dateTo)}
                   </div>
                 </Link>
                 <div className="flex justify-start sm:justify-end">
                   <ResponsiveMenu
-                    title="Действия с документом"
+                    title={t("documentActions")}
                     items={filterManageMenuItems([
                       {
                         key: "archive",
-                        label: document.status === "active" ? "Закрыть" : "Восстановить",
+                        label: document.status === "active" ? t("closeDocument") : t("restoreDocument"),
                         icon:
                           document.status === "active" ? (
                             <Archive className="size-4 text-[#6f7282]" />
@@ -694,7 +701,7 @@ export function CleaningDocumentsClient(props: Props) {
                         ? [
                             {
                               key: "settings",
-                              label: "Настройки",
+          label: t("settings"),
                               icon: <Pencil className="size-4 text-[#6f7282]" />,
                               onSelect: () => setSettingsDocument(document),
                             },
@@ -702,7 +709,7 @@ export function CleaningDocumentsClient(props: Props) {
                         : []),
                       {
                         key: "print",
-                        label: "Печать",
+          label: t("print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
                           window.open(
@@ -715,7 +722,7 @@ export function CleaningDocumentsClient(props: Props) {
                         ? [
                             {
                               key: "delete",
-                              label: "Удалить",
+                              label: t("deleteDocument"),
                               icon: <Trash2 className="size-4 text-[#6f7282]" />,
                               onSelect: () => setDeleteDocument(document),
                               tone: "danger" as const,
@@ -764,10 +771,10 @@ export function CleaningDocumentsClient(props: Props) {
         }}
         title={
           archiveDocument?.status === "active"
-            ? `Закрыть документ "${archiveDocument?.title || CLEANING_DOCUMENT_TITLE}"`
-            : `Восстановить документ "${archiveDocument?.title || CLEANING_DOCUMENT_TITLE}"`
+            ? t("closeDocumentTitle", { title: archiveDocument?.title || t("pdfCleaningTitle") })
+            : t("restoreDocumentTitle", { title: archiveDocument?.title || t("pdfCleaningTitle") })
         }
-        submitLabel={archiveDocument?.status === "active" ? "Закрыть" : "Восстановить"}
+        submitLabel={archiveDocument?.status === "active" ? t("closeDocument") : t("restoreDocument")}
         onSubmit={toggleDocumentStatus}
       />
 
@@ -776,8 +783,8 @@ export function CleaningDocumentsClient(props: Props) {
         onOpenChange={(open) => {
           if (!open) setDeleteDocument(null);
         }}
-        title={`Удаление документа "${deleteDocument?.title || CLEANING_DOCUMENT_TITLE}"`}
-        submitLabel="Удалить"
+        title={t("deleteDocumentTitle", { title: deleteDocument?.title || t("pdfCleaningTitle") })}
+        submitLabel={t("deleteDocument")}
         onSubmit={deleteCurrentDocument}
       />
     </>

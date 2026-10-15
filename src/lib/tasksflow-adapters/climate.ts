@@ -22,6 +22,7 @@
 import { db } from "@/lib/db";
 import {
   CLIMATE_DOCUMENT_TEMPLATE_CODE,
+  DEFAULT_CLIMATE_ROOM_NAME,
   DEFAULT_CLIMATE_CONTROL_TIMES,
   applyRoomDirectoryToClimateConfig,
   normalizeClimateDocumentConfig,
@@ -68,6 +69,13 @@ function humidityKey(roomId: string) {
   return `h_${roomId}`;
 }
 
+export function setClimatePrefilledNotice(form: TaskFormSchema, slot: string, filled: number): void {
+  if (filled <= 0) return;
+  form.notice = `Сегодня в ${slot} уже записано. Значения подставлены — проверьте и измените, что нужно.`;
+  form.noticePresentationKey = "dynamic.climatePrefilledNotice";
+  form.noticePresentationValues = { slot };
+}
+
 function buildForm(
   config: ClimateDocumentConfig,
   employeeName: string | null,
@@ -85,6 +93,7 @@ function buildForm(
   fields.push({
     type: "select",
     key: "controlTime",
+    presentationKey: "fields.climate_control.controlTime.label",
     label: "Время замера",
     required: true,
     options: [{ value: time, label: time }],
@@ -102,6 +111,18 @@ function buildForm(
         type: "number",
         key: tempKey(room.id),
         label: `${room.name} — t°${rangeSuffix}`,
+        presentationKey: room.id === "room-0" && room.name === DEFAULT_CLIMATE_ROOM_NAME
+          ? typeof min === "number" && typeof max === "number" ? "dynamic.climateTemperatureDefaultWithRange" : "dynamic.climateTemperatureDefault"
+          : typeof min === "number" && typeof max === "number" ? "dynamic.climateTemperatureWithRange" : "dynamic.climateTemperature",
+        presentationValues: {
+          room: room.name,
+          ...(typeof min === "number" ? { min } : {}),
+          ...(typeof max === "number" ? { max } : {}),
+        },
+        normalRange: {
+          ...(typeof min === "number" ? { min } : {}),
+          ...(typeof max === "number" ? { max } : {}),
+        },
         unit: "°C",
         min: -40,
         max: 60,
@@ -119,6 +140,18 @@ function buildForm(
         type: "number",
         key: humidityKey(room.id),
         label: `${room.name} — влажность${rangeSuffix}`,
+        presentationKey: room.id === "room-0" && room.name === DEFAULT_CLIMATE_ROOM_NAME
+          ? typeof min === "number" && typeof max === "number" ? "dynamic.climateHumidityDefaultWithRange" : "dynamic.climateHumidityDefault"
+          : typeof min === "number" && typeof max === "number" ? "dynamic.climateHumidityWithRange" : "dynamic.climateHumidity",
+        presentationValues: {
+          room: room.name,
+          ...(typeof min === "number" ? { min } : {}),
+          ...(typeof max === "number" ? { max } : {}),
+        },
+        normalRange: {
+          ...(typeof min === "number" ? { min } : {}),
+          ...(typeof max === "number" ? { max } : {}),
+        },
         unit: "%",
         min: 0,
         max: 100,
@@ -132,7 +165,10 @@ function buildForm(
       (employeeName ? `${employeeName}, ` : "") +
       "снимите показания температуры (и влажности — где включено) по " +
       "каждому помещению и выберите время замера.",
+    introPresentationKey: "dynamic.climateIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить замер",
+    submitPresentationKey: "dynamic.saveClimateReading",
     fields,
   };
 }
@@ -187,9 +223,7 @@ async function prefillFromToday(
     }
   }
   if (prefilledOff.length > 0) form.prefilledOff = prefilledOff;
-  if (filled > 0) {
-    form.notice = `Сегодня в ${slot} уже записано. Значения подставлены — проверьте и измените, что нужно.`;
-  }
+  setClimatePrefilledNotice(form, slot, filled);
 }
 
 export const climateAdapter: JournalAdapter = {

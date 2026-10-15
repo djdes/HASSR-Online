@@ -35,8 +35,7 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -251,7 +250,7 @@ export function PestControlDocumentsClient(props: Props) {
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
   const [deleting, setDeleting] = useState<DocumentItem | null>(null);
@@ -401,7 +400,7 @@ export function PestControlDocumentsClient(props: Props) {
                     },
                     // Закрытый документ раньше уходил навсегда: вернуть
                     // его в активные было нечем.
-                    ...restoreMenuItems({ document, siblings: props.documents, restore }),
+                    ...restoreMenu({ document, siblings: props.documents }),
                     ...(document.status === "active"
                       ? [
                           {

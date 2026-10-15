@@ -42,8 +42,7 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -256,7 +255,7 @@ export function IntensiveCoolingDocumentsClient({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
@@ -394,7 +393,7 @@ export function IntensiveCoolingDocumentsClient({
                     },
                     // Закрытый документ раньше уходил навсегда: вернуть
                     // его в активные было нечем.
-                    ...restoreMenuItems({ document, siblings: documents, restore }),
+                    ...restoreMenu({ document, siblings: documents }),
                     ...(document.status === "active"
                       ? [
                           {

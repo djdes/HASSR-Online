@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Copy, KeyRound, RefreshCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -12,6 +13,7 @@ function mask(token: string): string {
 }
 
 export function ApiTokenManager({ initialToken }: { initialToken: string | null }) {
+  const t = useTranslations("settingsManagement.apiToken");
   const [token, setToken] = useState<string | null>(initialToken);
   const [justGenerated, setJustGenerated] = useState<string | null>(null);
   const [confirmRevokeOpen, setConfirmRevokeOpen] = useState(false);
@@ -22,12 +24,12 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
       try {
         const res = await fetch("/api/settings/external-token", { method: "POST" });
         const body = (await res.json()) as { token: string };
-        if (!res.ok) throw new Error("Не удалось создать ключ");
+        if (!res.ok) throw new Error(t("createFailed"));
         setToken(body.token);
         setJustGenerated(body.token);
-        toast.success("Новый ключ сгенерирован. Сохраните его — полную версию мы покажем только один раз.");
+        toast.success(t("created"));
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Ошибка");
+        toast.error(error instanceof Error ? error.message : t("failed"));
       }
     });
 
@@ -35,12 +37,12 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
     startTransition(async () => {
       try {
         const res = await fetch("/api/settings/external-token", { method: "DELETE" });
-        if (!res.ok) throw new Error("Не удалось удалить ключ");
+        if (!res.ok) throw new Error(t("revokeFailed"));
         setToken(null);
         setJustGenerated(null);
-        toast.success("Ключ отозван.");
+        toast.success(t("revoked"));
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Ошибка");
+        toast.error(error instanceof Error ? error.message : t("failed"));
       }
     });
 
@@ -49,9 +51,9 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Скопировано в буфер обмена.");
+      toast.success(t("copied"));
     } catch {
-      toast.error("Не удалось скопировать — выделите и скопируйте вручную.");
+      toast.error(t("copyFailed"));
     }
   };
 
@@ -71,26 +73,26 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
               disabled={!justGenerated && !token}
             >
               <Copy className="size-4" />
-              Копировать
+              {t("copy")}
             </Button>
           </div>
           {justGenerated ? (
             <p className="text-xs text-amber-700">
-              Это последний раз, когда вы видите ключ целиком. Закройте страницу — останется только последние 4 символа.
+              {t("fullKeyWarning")}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Показаны только первые и последние символы. Чтобы получить новый — сгенерируйте заново.
+              {t("maskedKeyHint")}
             </p>
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">Ключ не создан.</p>
+        <p className="text-sm text-muted-foreground">{t("notCreated")}</p>
       )}
       <div className="flex flex-wrap gap-2">
         <Button type="button" onClick={rotate} disabled={pending}>
           <RefreshCcw className="size-4" />
-          {token ? "Сгенерировать новый" : "Создать ключ"}
+          {token ? t("createNew") : t("create")}
         </Button>
         {token ? (
           <Button
@@ -100,7 +102,7 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
             disabled={pending}
           >
             <Trash2 className="size-4" />
-            Отозвать
+            {t("revoke")}
           </Button>
         ) : null}
       </div>
@@ -114,19 +116,19 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
           setConfirmRevokeOpen(false);
           revoke();
         }}
-        title="Отозвать ключ доступа?"
-        description="Ключ перестанет работать сразу же."
+        title={t("confirmTitle")}
+        description={t("confirmDescription")}
         bullets={[
           {
-            label: "Все интеграции, где прописан этот ключ, перестанут работать",
+            label: t("confirmBulletIntegrations"),
             tone: "warn",
           },
-          { label: "Вернуть отозванный ключ нельзя — только создать новый", tone: "warn" },
+          { label: t("confirmBulletIrreversible"), tone: "warn" },
         ]}
-        confirmLabel="Отозвать ключ"
-        cancelLabel="Отмена"
+        confirmLabel={t("revokeKey")}
+        cancelLabel={t("cancel")}
         variant="danger"
-        typeToConfirm="ОТОЗВАТЬ"
+        typeToConfirm={t("typeToConfirm")}
       />
     </div>
   );

@@ -8,6 +8,8 @@ import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalsByPositionMatrix } from "@/components/settings/journals-by-position-matrix";
 import { OnboardingApplyButton } from "@/components/settings/onboarding-apply-button";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ export const dynamic = "force-dynamic";
  * сервере при PUT.
  */
 export default async function JournalsByPositionPage() {
+  const t = await getTranslations("settingsManagement.accessMatrices");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -68,6 +71,7 @@ export default async function JournalsByPositionPage() {
   }
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsManagement", "journals", "staffManagement"]}>
     <div className="space-y-5">
       <div>
 
@@ -77,23 +81,9 @@ export default async function JournalsByPositionPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Иерархия журналов по должностям
+              {t("pages.positionsTitle")}
             </h1>
-            <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Какие журналы получают сотрудники каждой должности при
-              рассылке «отправить всем». Если у должности нет ни одной
-              отметки — пока ничего не выбрано, сотрудники этой должности
-              могут вести все журналы. Чтобы запретить
-              что-то конкретное конкретному человеку — используйте
-              {" "}
-              <Link
-                href="/settings/journal-access"
-                className="text-[#3848c7] underline-offset-2 hover:underline"
-              >
-                Журналы для сотрудников
-              </Link>
-              .
-            </p>
+            <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">{t.rich("pages.positionsDescription", { access: (chunks) => <Link href="/settings/journal-access" className="text-[#3848c7] underline-offset-2 hover:underline">{chunks}</Link> })}</p>
           </div>
         </div>
       </div>
@@ -117,5 +107,6 @@ export default async function JournalsByPositionPage() {
         }))}
       />
     </div>
+    </DomainMessagesBoundary>
   );
 }

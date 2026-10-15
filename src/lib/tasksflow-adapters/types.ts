@@ -1,3 +1,5 @@
+import type { FillingGuideTranslators } from "@/lib/journal-filling-guide-copy";
+
 /**
  * Adapter contract for plugging a WeSetup journal into the TasksFlow
  * integration. One adapter = one journal type. Add a new adapter →
@@ -152,6 +154,8 @@ export type JournalAdapter = {
   getTaskForm?(input: {
     documentId: string;
     rowKey: string;
+    /** Explicit presentation context; omitted by legacy/background consumers. */
+    guideTranslators?: FillingGuideTranslators;
     /** День (YYYY-MM-DD по часовому поясу организации): адаптер может
      *  подставить уже записанные сегодня значения как `defaultValue`. */
     todayKey?: string;

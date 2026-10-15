@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -36,6 +37,10 @@ export async function POST(
 
   const { id } = await params;
   const body = (await request.json()) as { action?: UvRuntimeAction };
+  if (body.action === "apply_auto_fill") {
+    const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+    if (blocked) return blocked;
+  }
   if (body.action !== "apply_auto_fill") {
     return NextResponse.json({ error: "Не указано действие" }, { status: 400 });
   }

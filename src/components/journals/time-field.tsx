@@ -2,6 +2,7 @@
 
 import { Clock } from "lucide-react";
 import { useId } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Одно поле времени вместо пары «часы» + «минуты».
@@ -87,6 +88,7 @@ export function TimeField({
   hint,
   className = "",
 }: TimeFieldProps) {
+  const t = useTranslations("journalControls.timeField");
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
@@ -114,6 +116,7 @@ export function TimeField({
           <input
             id={inputId}
             type="time"
+            aria-label={label || t("time")}
             value={normalizeTimeValue(value)}
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
@@ -129,7 +132,7 @@ export function TimeField({
             disabled={disabled}
             className="h-12 shrink-0 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-40"
           >
-            Сейчас
+            {t("now")}
           </button>
         ) : null}
       </div>

@@ -1,0 +1,70 @@
+{
+  "locale": "uz",
+  "sourceHash": "53224ae06eaa9581dd3ee93c1f46e444ea1ba5539db29ee7044b39ca8bdb20da",
+  "title": "Elektron yoki qog‘oz jurnal: inspektor qaysi birini qabul qiladi?",
+  "excerpt": "Elektron jurnalni chop etish, imzolash va talab etilgan muddat davomida saqlash mumkin bo‘lsa, inspektor uni qabul qilishi mumkin. Qoidalar ma’lumotlar tarkibini belgilaydi, qog‘oz formatini emas.",
+  "body": [
+    {
+      "type": "p",
+      "text": "Taqdimotlarda eng ko‘p eshitadigan afsonamiz: “Inspektor elektron jurnalni qabul qilmaydi”. Amalda, jurnalni chop etish, mas’ul shaxs imzolashi va me’yor talab qilgan muddat saqlash mumkin bo‘lsa, u qabul qilinadi. SanPiN 2.3/2.4.4282-26 ning hech bir bandi elektron hisob yuritishni taqiqlamaydi."
+    },
+    {
+      "type": "h2",
+      "text": "Me’yorlarda nima deyilgan"
+    },
+    {
+      "type": "p",
+      "text": "SanPiN 2.3/2.4.4282-26 qayd etilishi kerak bo‘lgan ma’lumotlarni — harorat, sog‘liq holati va xomashyo qabulini — sanab o‘tadi, ammo qayd etish usulini belgilamaydi. TR CU 021/2011 va Rospotrebnadzor tavsiyalarida ham yondashuv shunday: ma’lumotlar tarkibi va imzo muhim, qog‘oz formati emas."
+    },
+    {
+      "type": "h2",
+      "text": "Inspektor odatda nimalarni tekshiradi"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "To‘liqlik: barcha sanalar qamrab olinganmi, smenalar bo‘yicha bo‘sh joy yo‘qmi?",
+        "Imzolar: qarorni kim qabul qildi, kim ishdan chetlatildi, kim ishlashga ruxsat oldi?",
+        "Reaksiya tezligi: harorat me’yordan og‘ishi qanchalik tez bartaraf etildi?",
+        "Saqlash: yozuvlar tarixini necha yil orqaga qarab topish mumkin?"
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Maslahat",
+      "text": "PDF faylni chop etib, “Mas’ul shaxs” ustuniga ko‘k ruchkada imzo qo‘ying — shu yetarli. Elektron imzo majburiy emas, ammo ma’qullanadi."
+    },
+    {
+      "type": "h2",
+      "text": "Korxona uchun foydasi"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Hech narsa yo‘qolmaydi: jurnal yirtilmaydi, sho‘rvaga belanmaydi va ko‘chishda yo‘qolib qolmaydi.",
+        "Kim kechikgani ko‘rinadi: yozuv vaqt tamg‘asi bilan saqlanadi, orqaga sana qo‘yish yoki ma’lumotni soxtalashtirish mumkin emas.",
+        "Inspektor uchun PDF bir daqiqada tayyorlanadi. Qog‘oz nusxa ombordagi qutidan emas, printerdan olinadi.",
+        "Har bir smena 20–30 daqiqa tejaydi: sarlavha va takroriy maydonlarni qo‘lda to‘ldirish shart emas."
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "Qog‘oz bilan ikki marta muammoga duch keldik: bir safar sho‘rva brak jurnali ustiga to‘kildi, yana bir safar ta’mirlash vaqtida papka yo‘qoldi. Elektron tizimda bunday holat yuz bermaydi.",
+      "author": "Шеф-повар сети пекарен, Казань"
+    },
+    {
+      "type": "h2",
+      "text": "Qog‘oz qachon baribir kerak bo‘ladi"
+    },
+    {
+      "type": "p",
+      "text": "Kamdan-kam hollarda inspektor aynan qog‘oz asl nusxani so‘rashi mumkin — masalan, printerni ulash imkoni bo‘lmagan joydagi tekshiruvda. Bunday vaziyat uchun WeSetup’da ommaviy eksport rejimi bor: bir marta bosib, davr uchun barcha jurnallarni imzolari qo‘shilgan PDF ko‘rinishida chiqarish mumkin."
+    }
+  ],
+  "tags": [
+    "SanPiN",
+    "Elektron jurnallar",
+    "Tekshiruvlar"
+  ]
+}

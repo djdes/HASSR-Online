@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useMemo, type ReactNode } from "react";
 import { Camera } from "lucide-react";
 import { QuickValues } from "@/components/qr-fill/quick-values";
@@ -42,9 +44,10 @@ export function ReadingField({
   /** Под полем, после быстрого ввода: кнопка «Фото» и прикреплённый снимок. */
   footer?: ReactNode;
 }) {
+  const { t } = useQrFillCopy();
   const lo = typeof min === "number" && typeof max === "number" ? Math.min(min, max) : min ?? null;
   const hi = typeof min === "number" && typeof max === "number" ? Math.max(min, max) : max ?? null;
-  const normText = lo !== null && hi !== null ? `${lo}…${hi} ${unit}` : lo !== null ? `не ниже ${lo} ${unit}` : hi !== null ? `не выше ${hi} ${unit}` : "";
+  const normText = lo !== null && hi !== null ? t("field.range", { min: lo, max: hi, unit }) : lo !== null ? t("field.minimum", { value: lo, unit }) : hi !== null ? t("field.maximum", { value: hi, unit }) : "";
   const parsed = useMemo(() => {
     const text = value.replace(",", ".").trim();
     if (text === "" || text === "-") return null;
@@ -57,10 +60,10 @@ export function ReadingField({
   const status = invalidText
     ? invalidText
     : parsed === null
-      ? normText ? `Норма ${normText}` : ""
+      ? normText ? t("field.normalRange", { range: normText }) : ""
       : low || high
-        ? `${low ? "Ниже" : "Выше"} нормы ${normText}`
-        : normText ? "В норме" : "";
+        ? t(low ? "field.belowRange" : "field.aboveRange", { range: normText })
+        : normText ? t("field.inRange") : "";
   const box =
     tone === "bad"
       ? "border-[#e9b949] bg-[#fffaeb]"
@@ -71,7 +74,7 @@ export function ReadingField({
   return (
     <div>
       <div className={`relative rounded-[14px] border transition-colors duration-150 ${box}`}>
-        <button type="button" className={`${stepButton} left-2`} aria-label={`Минус: ${label.toLowerCase()} на шаг ниже`} onClick={() => onChange(stepNumber(value, -1, lo, hi))}>
+        <button type="button" className={`${stepButton} left-2`} aria-label={t("field.decrease", { label })} onClick={() => onChange(stepNumber(value, -1, lo, hi))}>
           −
         </button>
         <input
@@ -99,7 +102,7 @@ export function ReadingField({
             {tone === "good" ? "✓" : "!"}
           </span>
         ) : null}
-        <button type="button" className={`${stepButton} right-2`} aria-label={`Плюс: ${label.toLowerCase()} на шаг выше`} onClick={() => onChange(stepNumber(value, 1, lo, hi))}>
+        <button type="button" className={`${stepButton} right-2`} aria-label={t("field.increase", { label })} onClick={() => onChange(stepNumber(value, 1, lo, hi))}>
           +
         </button>
       </div>
@@ -118,7 +121,7 @@ export function ReadingField({
       ) : status ? (
         <p className={`ml-[3px] mt-1 text-[14.5px] leading-[1.3] ${tone === "bad" ? "font-medium text-[#7a4a00]" : tone === "good" ? "text-[#116b2a]" : "text-[#9b9fb3]"}`}>{status}</p>
       ) : null}
-      <QuickValues min={lo} max={hi} value={value} onPick={onChange} label={`Быстрый ввод: ${label.toLowerCase()}`} />
+      <QuickValues min={lo} max={hi} value={value} onPick={onChange} label={t("field.quickEntryLabel", { label })} />
       {footer}
     </div>
   );

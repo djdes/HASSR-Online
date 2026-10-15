@@ -7,18 +7,21 @@
  * и как `loading.tsx`, то есть в момент серверной навигации, когда
  * человек до этого видел белый экран.
  */
+import { useTranslations } from "next-intl";
+
 export function MiniListSkeleton({
   rows = 3,
-  label = "Загружаем",
+  label,
 }: {
   rows?: number;
   label?: string;
 }) {
+  const t = useTranslations("errorSurface");
   return (
     <div
       className="flex flex-1 flex-col gap-4 pb-28"
       role="status"
-      aria-label={label}
+      aria-label={label ?? t("loading")}
       data-testid="mini-list-skeleton"
     >
       <div

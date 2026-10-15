@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy, useQrFeedback, qrResponseFeedback, type QrFeedback } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
@@ -10,10 +12,9 @@ import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
 import { ReadingPhoto } from "@/components/qr-fill/reading-photo";
-import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
+import { isReadingPhotoUrl } from "@/lib/reading-photos";
 import {
   DEFAULT_READING_PHOTO_SETTINGS,
-  READING_PHOTO_FIXATION_TEXT,
   initialReadingEntry,
   isBlankReading,
   isReadingPhotoMissing,
@@ -27,7 +28,7 @@ import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forget
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import { EquipmentStatusChoice } from "@/components/qr-fill/equipment-status-choice";
 import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
-import { COLD_EQUIPMENT_STATUS_SHORT, COLD_EQUIPMENT_STATUS_TITLE, parseColdEquipmentStatus, type ColdEquipmentStatus } from "@/lib/cold-equipment-document";
+import { parseColdEquipmentStatus, type ColdEquipmentStatus } from "@/lib/cold-equipment-document";
 
 type Employee = { id: string; name: string; positionTitle: string | null; hasPin?: boolean };
 
@@ -95,6 +96,8 @@ export function EquipmentFillClient({
   photoAutofill = false,
   photoFixation = DEFAULT_READING_PHOTO_SETTINGS,
 }: Props) {
+  const { t } = useQrFillCopy();
+  const feedback = useQrFeedback();
   const [employeeId, setEmployeeId] = useState<string>("");
   // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
   // и только пока выбор не меняли руками.
@@ -177,12 +180,14 @@ export function EquipmentFillClient({
     },
     Boolean(done)
   );
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<QrFeedback | null>(null);
 
   // Hydrate the remembered employee pick on mount.
   useEffect(() => {
+    if (hydratedRef.current) return;
     if (mode === "auth" && sessionEmployee) {
       setEmployeeId(sessionEmployee.id);
+      hydratedRef.current = true;
       return;
     }
     const remembered = passEmployeeId ?? rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
@@ -281,19 +286,19 @@ export function EquipmentFillClient({
     if (submitting) return;
     setError(null);
     if (!employeeId) {
-      setError("Выберите имя");
+      setError({ key: "reading.selectName" });
       return;
     }
     if (!status && parsedTemp === null) {
-      setError("Введите температуру");
+      setError({ key: "reading.enterTemperature" });
       return;
     }
     if (photoMissing) {
-      setError(READING_PHOTO_FIXATION_TEXT.requiredError);
+      setError({ key: "photo.requiredError" });
       return;
     }
     if (correctionMissing) {
-      setError("Замер вне нормы — напишите, что вы сделали");
+      setError({ key: "reading.correctionRequired" });
       return;
     }
     setSubmitting(true);
@@ -320,14 +325,15 @@ export function EquipmentFillClient({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка сохранения");
+        setError(qrResponseFeedback(data, "reading.saveError"));
+        return;
       }
       localStorage.setItem(LS_EMPLOYEE_KEY, employeeId);
       localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, employeeId);
       setPhotoAttached(data?.photoAttached === true);
       setDone(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка сохранения");
+    } catch {
+      setError({ key: "reading.saveError" });
     } finally {
       setSubmitting(false);
     }
@@ -340,17 +346,17 @@ export function EquipmentFillClient({
   const pinStepNeeded = Boolean(employeeId) && pinRequired && !hasPass;
   // Почему «Сохранить» неактивна — пишем под кнопкой, а не оставляем серой загадкой.
   const blockedReason = !hasActiveDocument
-    ? "Нет журнала на сегодня — запись некуда сохранить"
+    ? t("reading.noDocumentBlocked")
     : !employeeId
-      ? "Не выбран сотрудник"
+      ? t("reading.noEmployee")
       : pinRequired && !hasPass
-        ? "Не введён PIN"
+        ? t("reading.noPin")
         : !status && parsedTemp === null
-          ? "Не указана температура"
+          ? t("reading.noTemperature")
           : photoMissing
-            ? READING_PHOTO_FIXATION_TEXT.needPhoto
+            ? t("photo.requiredBlocked")
             : correctionMissing
-              ? "Опишите, что сделали"
+              ? t("reading.describeAction")
               : null;
 
   return (
@@ -358,16 +364,14 @@ export function EquipmentFillClient({
         <QrPinUiStyles />
         {/* Смены оборудования на наклейке нет (владелец, 2026-09-22): каждый
             холодильник — своей наклейкой, чтобы замер делали у него. */}
-        <WhoRow label="Оборудование" value={equipment.name} />
+        <WhoRow label={t("common.equipment")} value={equipment.name} />
         {/* Раньше об отсутствии журнала сообщал только 409 после
             «Сохранить» — человек вводил замер впустую. */}
         {!hasActiveDocument ? (
           <div className="mb-5 flex gap-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[14px] leading-relaxed text-[#7a4a00]">
             <AlertTriangle className="mt-0.5 size-5 shrink-0" />
             <span>
-              Сегодня это оборудование не входит ни в один активный журнал
-              температуры. Попросите управляющего создать документ или добавить
-              в него оборудование — после этого замер можно будет сохранить.
+              {t("reading.noDocument")}
             </span>
           </div>
         ) : null}
@@ -376,21 +380,18 @@ export function EquipmentFillClient({
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <SuccessCheck />
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Записано
-            </h2>
+              {t("common.recorded")}</h2>
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
               {status
-                ? `${COLD_EQUIPMENT_STATUS_TITLE[status]}: в журнале «${COLD_EQUIPMENT_STATUS_SHORT[status]}»`
-                : `Температура ${parsedTemp}°C сохранена в журнал`}{" "}
-              {rememberedName ? `на имя ${rememberedName}` : ""}.
-              {photoAttached ? " Фото показания — в журнале рядом со значением." : ""}
+                ? t("reading.savedStatus", { status: t(`status.${status}`), short: t(status === "service" ? "status.serviceShort" : "status.repairShort"), hasName: rememberedName ? "yes" : "no", name: rememberedName ?? "" })
+                : t("reading.savedTemperature", { temperature: parsedTemp ?? 0, hasName: rememberedName ? "yes" : "no", name: rememberedName ?? "" })}
+              {photoAttached ? t("reading.photoAttached") : ""}
             </p>
             {/* Раньше предупреждение о выходе за норму исчезало вместе с
                 формой, и человек уходил, не зная, что делать дальше. */}
             {outOfRange ? (
               <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
-                Показание вне нормы — руководителю отправлено уведомление.
-                Проверьте оборудование и сообщите начальнику.
+                {t("reading.deviationSaved")}
               </p>
             ) : null}
             {/* «Следующий QR» — главное действие: обход холодильников подряд
@@ -415,8 +416,7 @@ export function EquipmentFillClient({
               }}
               className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Записать ещё замер
-            </button>
+              {t("reading.another")}</button>
           </div>
         ) : (
           <div>
@@ -426,7 +426,7 @@ export function EquipmentFillClient({
                 value={employeeId}
                 onChange={rememberEmployee}
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
-                hint={restoredId !== null && restoredId === employeeId ? (!pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null) : null}
+                hint={restoredId !== null && restoredId === employeeId ? (!pinStepNeeded ? t("reading.rememberedReady") : selectedEmployee?.hasPin ? t("reading.rememberedPin") : null) : null}
               />
               {pinRequired && hasPass && !fixedEmployee ? (
                 <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} />
@@ -455,15 +455,13 @@ export function EquipmentFillClient({
 
               {hasToday ? (
                 <p className="rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
-                  Сегодня уже записано — значение подставлено, проверьте и измените, что нужно.
-                </p>
+                  {t("reading.prefilled")}</p>
               ) : null}
               {draft.restored ? (
                 <p className="flex items-center justify-between gap-3 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
-                  <span>Восстановили введённое после обновления страницы.</span>
+                  <span>{t("reading.draftRestored")}</span>
                   <button type="button" className="shrink-0 font-semibold underline" onClick={() => { draft.reset(); window.location.reload(); }}>
-                    Начать заново
-                  </button>
+                    {t("reading.startAgain")}</button>
                 </p>
               ) : null}
               {status ? null : (
@@ -471,7 +469,7 @@ export function EquipmentFillClient({
                   {view.showField ? (
                     <ReadingField
                       id="equipment-fill-temperature"
-                      label="Температура"
+                      label={t("reading.temperature")}
                       unit="°C"
                       stamp={stampLabel}
                       value={temperature}
@@ -480,7 +478,7 @@ export function EquipmentFillClient({
                       max={equipment.tempMax}
                       required
                       // Число подставлено со снимка и не правилось — пусть человек сверит.
-                      mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
+                      mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? t("photo.checkMark") : null}
                     />
                   ) : null}
                   {/* Снимок — всегда на этом месте дерева: смена «главная кнопка → карточка
@@ -503,7 +501,7 @@ export function EquipmentFillClient({
                         setTemperature(text);
                         setRecognizedTemperature(text);
                       }}
-                      disabledReason={employeeId ? null : "Сначала выберите своё имя"}
+                      disabledReason={employeeId ? null : t("reading.selectNameFirst")}
                       variant={view.photoFirst ? "primary" : "inline"}
                       required={photoFixation.required}
                       onPhaseChange={setPhotoPhase}
@@ -516,7 +514,7 @@ export function EquipmentFillClient({
                       className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                       data-testid="reading-manual-button"
                     >
-                      {READING_PHOTO_FIXATION_TEXT.manualButton}
+                      {t("photo.manual")}
                     </button>
                   ) : null}
                 </div>
@@ -526,7 +524,7 @@ export function EquipmentFillClient({
               {/* Дополнительное поле для оборудования с climate-mapping
                   на humidity (например, кондиционер в кондитерской цехе). */}
               {equipment.hasHumidityField && !status && view.showField ? (
-                <ReadingField id="equipment-fill-humidity" label="Влажность" unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={humidityNorm?.min} max={humidityNorm?.max} invalidText={humidity.trim() && parsedHumidity === null ? "Влажность — число от 0 до 100, можно оставить пустым." : null} />
+                <ReadingField id="equipment-fill-humidity" label={t("reading.humidity")} unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={humidityNorm?.min} max={humidityNorm?.max} invalidText={humidity.trim() && parsedHumidity === null ? t("reading.humidityInvalid") : null} />
               ) : null}
 
               {/* Вне нормы — «Что сделали» обязательно: комментарий ложится
@@ -535,12 +533,12 @@ export function EquipmentFillClient({
                 <DeviationCorrection
                   title={
                     outOfRange && humidityOutOfRange
-                      ? "Температура и влажность вне нормы"
+                      ? t("reading.bothOutside")
                       : outOfRange
-                        ? "Температура вне нормы"
-                        : "Влажность вне нормы"
+                        ? t("reading.temperatureOutside")
+                        : t("reading.humidityOutside")
                   }
-                  hint="Руководитель получит уведомление."
+                  hint={t("reading.managerNotified")}
                   value={correction}
                   onChange={setCorrection}
                 />
@@ -548,7 +546,7 @@ export function EquipmentFillClient({
 
               {error ? (
                 <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">
-                  {error}
+                  {feedback(error)}
                 </div>
               ) : null}
 
@@ -562,7 +560,7 @@ export function EquipmentFillClient({
                     className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
                     data-testid="equipment-fill-save"
                   >
-                    {submitting ? "Сохраняем…" : confirmRecognized ? READING_PHOTO_FIXATION_TEXT.confirmSave : "Сохранить замер"}
+                    {submitting ? t("common.saving") : confirmRecognized ? t("photo.confirmSave") : t("reading.save")}
                   </Button>
                   <SaveBlockedReason reason={submitting ? null : blockedReason} />
                 </div>

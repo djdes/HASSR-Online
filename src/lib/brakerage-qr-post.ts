@@ -1,6 +1,7 @@
 import type { BrakerageRowEdit } from "@/lib/brakerage-qr";
 import type { BrakerageQrRole } from "@/lib/brakerage-qr-role";
 import type { BrakerageSignEntry } from "@/lib/brakerage-signatures";
+import { brakerageCommentRequired, parseBrakerageTimeDigits } from "@/lib/brakerage-assessment";
 
 /**
  * Разбор формы QR-списка бракеража с правами по ролям (решение владельца):
@@ -18,13 +19,11 @@ type Row = {
   grade: string;
   portionWeight: string;
   rejectionTime: string;
+  note?: string;
 };
 
-const TIME_RE = /^([01]?\d|2[0-3]):([0-5]\d)$/;
-
 function cleanTime(value: string | undefined): string | null {
-  const match = TIME_RE.exec((value ?? "").trim());
-  return match ? `${match[1].padStart(2, "0")}:${match[2]}` : null;
+  return parseBrakerageTimeDigits(value ?? "");
 }
 
 function push<T>(map: Map<string, T[]>, key: string, item: T) {
@@ -38,19 +37,28 @@ export function parseBrakerageListPost(
   rows: readonly Row[],
   role: BrakerageQrRole,
   options: { isFinished: boolean; gradeValues: readonly string[] }
-): { editsByDoc: Map<string, BrakerageRowEdit[]>; signsByDoc: Map<string, BrakerageSignEntry[]> } {
+): { editsByDoc: Map<string, BrakerageRowEdit[]>; signsByDoc: Map<string, BrakerageSignEntry[]>; error?: string } {
   const editsByDoc = new Map<string, BrakerageRowEdit[]>();
   const signsByDoc = new Map<string, BrakerageSignEntry[]>();
   const validGrade = (value: string | undefined) => (value && options.gradeValues.includes(value) ? value : null);
 
   for (const row of rows) {
     const id = row.rowId;
-    const admission = get(`adm:${id}`);
-    const signs = role.evaluator && (admission === "yes" || admission === "no");
     const grade = validGrade(get(`grade:${id}`));
+    const signs = role.evaluator && Boolean(grade);
+    if (role.evaluator && get(`grade:${id}`) && !grade) return { editsByDoc: new Map(), signsByDoc: new Map(), error: "Выберите оценку из списка" };
+    for (const key of role.editor ? [`time:${id}`, ...(signs ? [`rej:${id}`] : [])] : signs ? [`rej:${id}`] : []) {
+      const raw = get(key);
+      if (raw && !cleanTime(raw)) return { editsByDoc: new Map(), signsByDoc: new Map(), error: "Введите время четырьмя цифрами: например, 1430" };
+    }
 
     if (role.editor) {
       const edit: BrakerageRowEdit = { rowId: id };
+      const note = get(`note:${id}`);
+      if (note !== undefined && note.trim().slice(0, 500) !== (row.note ?? "")) {
+        edit.note = note.trim().slice(0, 500);
+        if (brakerageCommentRequired(grade || row.grade) && !edit.note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: `Добавьте комментарий к оценке блюда «${row.name}»` };
+      }
       const name = (get(`name:${id}`) ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
       if (name && name !== row.name) edit.name = name;
       const time = cleanTime(get(`time:${id}`));
@@ -60,16 +68,23 @@ export function parseBrakerageListPost(
         if (weight !== undefined && weight.trim().slice(0, 20) !== row.portionWeight) edit.portionWeight = weight.trim().slice(0, 20);
       }
       // Оценка редактора — правкой; если он же подписывает — оценка уйдёт с подписью.
-      if (grade && grade !== row.grade && !signs) edit.grade = grade;
+      if (grade && grade !== row.grade && !signs) {
+        const note = (get(`note:${id}`) ?? "").trim().slice(0, 500);
+        if (brakerageCommentRequired(grade) && !note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: `Добавьте комментарий к оценке блюда «${row.name}»` };
+        edit.grade = grade;
+        edit.note = note;
+      }
       if (Object.keys(edit).length > 1) push(editsByDoc, row.documentId, edit);
     }
 
     if (signs) {
       const entry: BrakerageSignEntry = { rowId: id };
       if (grade) entry.grade = grade;
-      entry.releaseAllowed = admission as "yes" | "no";
+      const note = (get(`note:${id}`) ?? "").trim().slice(0, 500);
+      if (grade && brakerageCommentRequired(grade) && !note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: `Добавьте комментарий к оценке блюда «${row.name}»` };
+      entry.note = note;
       const rejection = cleanTime(get(`rej:${id}`));
-      if (rejection && rejection !== row.rejectionTime) entry.rejectionTime = rejection;
+      if (rejection && rejection !== row.rejectionTime) entry.rejectionTime = get(`rej:${id}`);
       push(signsByDoc, row.documentId, entry);
     }
   }

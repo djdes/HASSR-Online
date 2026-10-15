@@ -37,14 +37,13 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ApiError, toastCaughtError } from "@/lib/billing-limit-toast";
+import { ApiError, useBillingError } from "@/lib/billing-limit-toast";
 import { cn } from "@/lib/utils";
 import {
   clampOffset,
-  formatDayLong,
   monthDates,
-  monthLabel,
   monthOf,
   shiftMonth,
 } from "@/lib/staff-schedule-month";
@@ -73,7 +72,6 @@ import {
   dayOffOverrideKey,
   isStaffDayOff,
   weekdayIndex,
-  weeklyDaysOffLabel,
   type StaffDayOffKind,
   type WorkOffBulkItem,
 } from "@/lib/staff-days-off";
@@ -86,55 +84,25 @@ import type {
 } from "@/components/staff/staff-types";
 import { StaffAccessDialog } from "@/components/staff/staff-access-dialog";
 import { printPage } from "@/lib/native-bridge";
+import { staffApiErrorKey } from "@/components/staff/staff-api-error";
 
 type TabKey = "work-off" | "vacations" | "sick-leaves" | "dismissals";
-
-const TAB_TITLES: Record<TabKey, string> = {
-  "work-off": "График выходных дней",
-  vacations: "График отпусков",
-  "sick-leaves": "График больничных",
-  dismissals: "График увольнений",
-};
 
 /** Ключ sessionStorage для «какая должность раскрыта в рубрике». */
 const OPEN_POSITIONS_STORAGE_KEY = "staff.openPositions";
 
-function pluralDays(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return "день";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "дня";
-  return "дней";
-}
-
-function formatDayCell(iso: string) {
+function formatDayCell(iso: string, locale: string) {
   const d = new Date(iso + "T00:00:00Z");
-  const dayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
   const dd = String(d.getUTCDate()).padStart(2, "0");
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dayNum = d.getUTCDay();
   return {
     top: `${dd}.${mm}`,
-    bottom: dayNames[dayNum] + ".",
+    bottom: `${new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(d)}.`,
     isWeekend: dayNum === 0 || dayNum === 6,
   };
 }
 
-/** «5 сотрудников» / «1 сотрудника» — для заголовков подтверждений. */
-function pluralEmployees(count: number) {
-  const tail = count % 100;
-  if (tail >= 11 && tail <= 14) return "сотрудников";
-  switch (count % 10) {
-    case 1:
-      return "сотрудника";
-    case 2:
-    case 3:
-    case 4:
-      return "сотрудников";
-    default:
-      return "сотрудников";
-  }
-}
 
 /** Сколько записей журналов ссылается на сотрудника (ответ 409 API). */
 async function readBlockedReferences(res: Response) {
@@ -146,13 +114,20 @@ async function readBlockedReferences(res: Response) {
   }
 }
 
-function formatRange(fromIso: string, toIso: string) {
-  return `${formatDate(fromIso)} — ${formatDate(toIso)}`;
+function formatRange(fromIso: string, toIso: string, locale: string) {
+  return `${formatDate(fromIso, locale)} — ${formatDate(toIso, locale)}`;
 }
 
-function formatDate(iso: string) {
-  const [y, m, d] = iso.split("-");
-  return `${d}.${m}.${y}`;
+function formatDate(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, { dateStyle: "short", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+function formatLongDate(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+function formatMonth(month: { year: number; month: number }, locale: string) {
+  return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(month.year, month.month, 1)));
 }
 
 type SortField = "name" | "position" | "date";
@@ -168,9 +143,19 @@ type StaffSortField = "name" | "position";
 type StaffSort = { field: StaffSortField; order: SortOrder } | null;
 
 export function StaffPageClient(props: StaffPageProps) {
+  const { toastCaughtError } = useBillingError();
+  const t = useTranslations("staffManagement.page");
+  const tApi = useTranslations("staffManagement.dialogs.api");
+  const locale = useLocale();
   const router = useRouter();
+  const tabTitles: Record<TabKey, string> = {
+    "work-off": t("tabWorkOff"),
+    vacations: t("tabVacations"),
+    "sick-leaves": t("tabSickLeaves"),
+    dismissals: t("tabDismissals"),
+  };
   // Своё название раздела «Сотрудники» у организации, если его задали.
-  const staffTitle = customSectionName(useCustomNames(), "staff") ?? "Сотрудники";
+  const staffTitle = customSectionName(useCustomNames(), "staff") ?? t("title");
   const [isPending, startTransition] = useTransition();
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
 
@@ -407,6 +392,22 @@ export function StaffPageClient(props: StaffPageProps) {
   }
 
   // Action handlers.
+  function localizeStaffApiError(message: string | undefined, status: number) {
+    const key = staffApiErrorKey(message);
+    switch (key) {
+      case "managerOnly": return tApi("managerOnly");
+      case "employeeNotFound": return tApi("employeeNotFound");
+      case "positionNotFound": return tApi("positionNotFound");
+      case "recordNotFound": return tApi("recordNotFound");
+      case "endBeforeStart": return tApi("endBeforeStart");
+      case "invalidDate": return tApi("invalidDate");
+      case "rootCannotArchive": return tApi("rootCannotArchive");
+      case "cannotArchiveSelf": return tApi("cannotArchiveSelf");
+      case null: break;
+    }
+    return tApi("requestFailed", { status });
+  }
+
   async function callJson(url: string, init?: RequestInit) {
     const res = await fetch(url, {
       ...init,
@@ -415,7 +416,7 @@ export function StaffPageClient(props: StaffPageProps) {
     if (!res.ok) {
       const data = await res.json().catch(() => null);
       // С телом ответа: лимит тарифа (402) показываем с кнопкой «Оплатить».
-      throw new ApiError(data?.error || `Ошибка ${res.status}`, data);
+      throw new ApiError(localizeStaffApiError(data?.error, res.status), data);
     }
     return res.json().catch(() => ({}));
   }
@@ -427,7 +428,7 @@ export function StaffPageClient(props: StaffPageProps) {
         method: "POST",
         body: JSON.stringify({ items }),
       });
-      toast.success(`Отмечено: ${items.length} ${pluralDays(items.length)}`);
+      toast.success(t("daysMarked", { count: items.length }));
       startTransition(() => router.refresh());
     } catch (error) {
       toast.error((error as Error).message);
@@ -454,7 +455,7 @@ export function StaffPageClient(props: StaffPageProps) {
   async function handleArchive(id: string) {
     try {
       await callJson(`/api/staff/${id}/archive`, { method: "POST" });
-      toast.success("Сотрудник в архиве");
+      toast.success(t("archivedOne"));
       setDlg(null);
       clearSelection();
       startTransition(() => router.refresh());
@@ -469,15 +470,15 @@ export function StaffPageClient(props: StaffPageProps) {
     // Массовое действие без подтверждения: одиночный архив диалог
     // показывал, а «в архив» по галочкам срабатывал сразу.
     const confirmed = await confirmAsync({
-      title: `В архив: ${ids.length} ${pluralEmployees(ids.length)}?`,
+      title: t("archiveCount", { count: ids.length }),
       description:
-        "Архивные сотрудники исчезают из списков выбора и не получают задачи.",
+        t("archiveDescription"),
       bullets: [
-        { label: "Записи в журналах сохраняются", tone: "info" },
-        { label: "Сотрудника можно вернуть из архива", tone: "info" },
+        { label: t("archiveRecordsPreserved"), tone: "info" },
+        { label: t("archiveCanRestore"), tone: "info" },
       ],
       variant: "danger",
-      confirmLabel: "В архив",
+      confirmLabel: t("archiveAction"),
     });
     if (!confirmed) return;
     let ok = 0;
@@ -489,7 +490,7 @@ export function StaffPageClient(props: StaffPageProps) {
         /* ignore single failures, continue */
       }
     }
-    toast.success(`В архив: ${ok}/${ids.length}`);
+    toast.success(t("archivedSummary", { archived: ok, total: ids.length }));
     clearSelection();
     startTransition(() => router.refresh());
   }
@@ -499,18 +500,18 @@ export function StaffPageClient(props: StaffPageProps) {
     const ids = Array.from(selected);
     // Удаление необратимо, а подтверждения у массового действия не было.
     const confirmed = await confirmAsync({
-      title: `Удалить ${ids.length} ${pluralEmployees(ids.length)}?`,
-      description: "Восстановить удалённых сотрудников нельзя.",
+      title: t("deleteCount", { count: ids.length }),
+      description: t("deleteDescription"),
       bullets: [
-        { label: "Учётные записи и доступы удаляются навсегда", tone: "warn" },
+        { label: t("deleteAccountWarning"), tone: "warn" },
         {
-          label: "Сотрудники, участвующие в журналах, удалены не будут",
+          label: t("deleteJournalWarning"),
           tone: "info",
         },
       ],
       variant: "danger",
-      confirmLabel: "Удалить",
-      typeToConfirm: "УДАЛИТЬ",
+      confirmLabel: t("deleteAction"),
+      typeToConfirm: t("deleteTypeToConfirm"),
     });
     if (!confirmed) return;
     let deleted = 0;
@@ -537,7 +538,7 @@ export function StaffPageClient(props: StaffPageProps) {
         /* swallow, continue */
       }
     }
-    if (deleted > 0) toast.success(`Удалено: ${deleted}`);
+    if (deleted > 0) toast.success(t("deletedSummary", { count: deleted }));
     if (blockedEmployee) {
       setDlg({
         kind: "delete-blocked",
@@ -572,7 +573,7 @@ export function StaffPageClient(props: StaffPageProps) {
           }),
         });
       }
-      toast.success("Запись добавлена");
+      toast.success(t("recordAdded"));
       setDlg(null);
       startTransition(() => router.refresh());
     } catch (error) {
@@ -589,7 +590,7 @@ export function StaffPageClient(props: StaffPageProps) {
       await callJson(url, { method: "DELETE" });
       startTransition(() => router.refresh());
     } catch (error) {
-      toastCaughtError(error, "Не удалось удалить запись");
+      toastCaughtError(error, t("recordDeleteFailed"));
     }
   }
 
@@ -617,11 +618,8 @@ export function StaffPageClient(props: StaffPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(
-          (data as { error?: string })?.error || "Не удалось сохранить"
-        );
+        toast.error(t("saveFailed"));
         setDlg((current) =>
           current?.kind === "edit-employee" && current.employee.id === id
             ? { ...current, pending: false }
@@ -629,12 +627,12 @@ export function StaffPageClient(props: StaffPageProps) {
         );
         return;
       }
-      toast.success("Сохранено");
+      toast.success(t("saved"));
       setDlg(null);
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Сохранение не удалось"
+        error instanceof Error ? error.message : t("saveFailed")
       );
       setDlg((current) =>
         current?.kind === "edit-employee" && current.employee.id === id
@@ -692,7 +690,7 @@ export function StaffPageClient(props: StaffPageProps) {
     setDlg({ kind: "tg-unlink", employee, pending: true });
     try {
       await callJson(`/api/staff/${employee.id}/unlink-tg`, { method: "POST" });
-      toast.success("Telegram отвязан");
+      toast.success(t("telegramUnlinked"));
       setDlg(null);
       startTransition(() => router.refresh());
     } catch (error) {
@@ -722,31 +720,24 @@ export function StaffPageClient(props: StaffPageProps) {
         (e) => e.isActive && !e.isRoot && (e.buildingIds ?? []).length === 0
       ).length
     : 0;
-  const staffWord = (n: number) => {
-    const m10 = n % 10;
-    const m100 = n % 100;
-    if (m10 === 1 && m100 !== 11) return "сотрудник";
-    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return "сотрудника";
-    return "сотрудников";
-  };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={staffTitle}
-        description="Должности и графики: по ним раздаются задачи и заполняется Гигиенический журнал."
+        description={t("description")}
         actions={
           <>
-            <PageHeaderStat>Всего: {totalEmployees}</PageHeaderStat>
-            <PageHeaderStat>Должностей: {totalPositions}</PageHeaderStat>
+            <PageHeaderStat>{t("employeesStat", { count: totalEmployees })}</PageHeaderStat>
+            <PageHeaderStat>{t("positionsStat", { count: totalPositions })}</PageHeaderStat>
             {activeVacations > 0 ? (
               <PageHeaderStat tone="warn">
-                В отпуске: {activeVacations}
+                {t("vacationsStat", { count: activeVacations })}
               </PageHeaderStat>
             ) : null}
             {activeSickLeaves > 0 ? (
               <PageHeaderStat tone="warn">
-                На больничном: {activeSickLeaves}
+                {t("sickLeaveStat", { count: activeSickLeaves })}
               </PageHeaderStat>
             ) : null}
             <StaffImportExport />
@@ -756,7 +747,7 @@ export function StaffPageClient(props: StaffPageProps) {
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Users className="size-4 text-[#5566f6]" />
-              Несколько сразу
+              {t("bulkAdd")}
             </button>
             <button
               type="button"
@@ -764,7 +755,7 @@ export function StaffPageClient(props: StaffPageProps) {
               className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_12px_36px_-16px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
             >
               <QrCode className="size-4" />
-              Пригласить по QR
+              {t("inviteQr")}
             </button>
             <button
               type="button"
@@ -772,7 +763,7 @@ export function StaffPageClient(props: StaffPageProps) {
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <BookOpen className="size-4" />
-              Инструкция
+              {t("instruction")}
             </button>
           </>
         }
@@ -782,9 +773,7 @@ export function StaffPageClient(props: StaffPageProps) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-[#ffe1b5] bg-[#fff8ec] px-4 py-2.5 text-[13px] leading-snug text-[#8a5a12]">
           <MapPin className="size-4 shrink-0" />
           <span>
-            <b className="font-semibold">{staffWithoutBuilding}</b> {staffWord(staffWithoutBuilding)} без
-            точки — задачи по журналам приходят им со всех точек. Точки ставятся
-            чипами в карточке сотрудника.
+            {t("staffWithoutBuilding", { count: staffWithoutBuilding })}
           </span>
         </div>
       ) : null}
@@ -799,7 +788,7 @@ export function StaffPageClient(props: StaffPageProps) {
             className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
           >
             <X className="size-4" />
-            Выбрано: {selected.size}
+            {t("selectedCount", { count: selected.size })}
           </button>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             {selected.size === 1 && firstSelected ? (
@@ -815,12 +804,12 @@ export function StaffPageClient(props: StaffPageProps) {
                             (p) => p.id === firstSelected.jobPositionId
                           )!,
                       })
-                    : toast.error("У сотрудника не выбрана должность")
+                    : toast.error(t("positionMissing"))
                 }
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <Pencil className="size-4" />
-                Редактировать
+                {t("edit")}
               </button>
               {firstSelected.telegramLinked && props.telegramBotUrl ? (
                 <Link
@@ -830,7 +819,7 @@ export function StaffPageClient(props: StaffPageProps) {
                   className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 >
                   <ExternalLink className="size-4" />
-                  Открыть TG
+                  {t("openTelegram")}
                 </Link>
               ) : (
                 <button
@@ -839,7 +828,7 @@ export function StaffPageClient(props: StaffPageProps) {
                   className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#dbe1ff] bg-[#eef1ff] px-3 text-[13px] font-medium text-[#4054d8] hover:bg-[#e5e9ff]"
                 >
                   <Send className="size-4" />
-                  Пригласить в TG
+                  {t("inviteTelegram")}
                 </button>
               )}
               {/* Вход по телефону — для тех, у кого Telegram нет или кто
@@ -850,7 +839,7 @@ export function StaffPageClient(props: StaffPageProps) {
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <KeyRound className="size-4 text-[#5566f6]" />
-                Вход без Telegram
+                {t("pairSignIn")}
               </button>
               {firstSelected.telegramLinked ? (
                 <>
@@ -859,7 +848,7 @@ export function StaffPageClient(props: StaffPageProps) {
                     onClick={() => void openTelegramInvite(firstSelected, "rebind")}
                     className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                   >
-                  Перепривязать
+                  {t("rebindTelegram")}
                   </button>
                   <button
                     type="button"
@@ -873,7 +862,7 @@ export function StaffPageClient(props: StaffPageProps) {
                     className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#ffd2cd] bg-[#fff4f2] px-3 text-[13px] font-medium text-[#d2453d] hover:bg-[#ffecea]"
                   >
                     <Unlink className="size-4" />
-                    Отвязать TG
+                    {t("unlinkTelegram")}
                   </button>
                 </>
               ) : null}
@@ -886,7 +875,7 @@ export function StaffPageClient(props: StaffPageProps) {
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
             >
               <Archive className="size-4" />
-              Отправить в архив
+              {t("archive")}
             </button>
             <button
               type="button"
@@ -895,7 +884,7 @@ export function StaffPageClient(props: StaffPageProps) {
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#ffd2cd] bg-[#fff4f2] px-3 text-[13px] font-medium text-[#d2453d] hover:bg-[#ffecea] disabled:opacity-60"
             >
               <Trash2 className="size-4" />
-              Удалить
+              {t("delete")}
             </button>
           </div>
         </div>
@@ -909,15 +898,15 @@ export function StaffPageClient(props: StaffPageProps) {
             type="search"
             value={staffQuery}
             onChange={(event) => setStaffQuery(event.target.value)}
-            placeholder="Найти сотрудника по ФИО или должности"
-            aria-label="Поиск сотрудника"
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchLabel")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         {staffQuery.trim() ? (
           <div className="mt-3" data-testid="staff-search-results">
             {staffMatches.length === 0 ? (
-              <p className="px-1 py-2 text-[13px] text-[#9b9fb3]">Никого не нашли по «{staffQuery.trim()}».</p>
+              <p className="px-1 py-2 text-[13px] text-[#9b9fb3]">{t("searchNoResults", { query: staffQuery.trim() })}</p>
             ) : (
               <ul className="divide-y divide-[#ececf4] rounded-2xl border border-[#ececf4]">
                 {staffMatches.map(({ employee, position }) => (
@@ -932,7 +921,7 @@ export function StaffPageClient(props: StaffPageProps) {
                       className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                     >
                       <Pencil className="size-3.5" />
-                      Изменить
+                      {t("change")}
                     </button>
                   </li>
                 ))}
@@ -964,7 +953,7 @@ export function StaffPageClient(props: StaffPageProps) {
             : ["management", "staff"]) as PositionCategory[]).map((cat) => (
             <CategoryColumn
                 key={cat}
-                title={cat === "management" ? "Руководство" : cat === "commission" ? "Комиссия" : "Сотрудники"}
+                title={t(`category.${cat}`)}
                 categoryKey={cat}
                 open={categoryOpen[cat]}
                 onToggle={() => toggleCategory(cat)}
@@ -1012,10 +1001,10 @@ export function StaffPageClient(props: StaffPageProps) {
       >
       <div className="flex min-w-max items-center gap-6 border-b border-[#ececf4]">
         {[
-          { key: "work-off" as TabKey, label: "График выходных дней" },
-          { key: "vacations" as TabKey, label: "График отпусков" },
-          { key: "sick-leaves" as TabKey, label: "График больничных" },
-          { key: "dismissals" as TabKey, label: "График увольнений" },
+          { key: "work-off" as TabKey, label: tabTitles["work-off"] },
+          { key: "vacations" as TabKey, label: tabTitles.vacations },
+          { key: "sick-leaves" as TabKey, label: tabTitles["sick-leaves"] },
+          { key: "dismissals" as TabKey, label: tabTitles.dismissals },
         ].map((t) => {
           const active = tab === t.key;
           return (
@@ -1050,19 +1039,18 @@ export function StaffPageClient(props: StaffPageProps) {
             {props.organization.name}
           </div>
           <div className="mt-1 text-[16px] font-semibold text-black">
-            {TAB_TITLES[tab]}
-            {tab === "work-off" ? ` — ${monthLabel(scheduleMonth)}` : null}
+            {tabTitles[tab]}
+            {tab === "work-off" ? ` — ${formatMonth(scheduleMonth, locale)}` : null}
           </div>
           {tab === "work-off" && workOffDates.length > 0 ? (
             <div className="mt-0.5 text-[10px] text-black">
-              Период: {formatDayLong(workOffDates[0])} —{" "}
-              {formatDayLong(workOffDates[workOffDates.length - 1])}
+              {t("period", { from: formatLongDate(workOffDates[0], locale), to: formatLongDate(workOffDates[workOffDates.length - 1], locale) })}
             </div>
           ) : null}
         </div>
 
         <h2 className="text-center text-[18px] font-semibold text-[#0b1024] print:hidden">
-          {TAB_TITLES[tab]}
+          {tabTitles[tab]}
         </h2>
 
         <div
@@ -1073,18 +1061,18 @@ export function StaffPageClient(props: StaffPageProps) {
             <div className="flex items-center gap-1 rounded-2xl border border-[#dcdfed] bg-white p-1">
               <button
                 type="button"
-                aria-label="Предыдущий месяц"
+                aria-label={t("previousMonth")}
                 onClick={() => setMonthOffset((o) => clampOffset(o - 1))}
                 className="rounded-xl px-2.5 py-1.5 text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
               >
                 <ChevronDown className="size-4 rotate-90" />
               </button>
               <span className="min-w-[132px] text-center text-[13.5px] font-medium tabular-nums text-[#0b1024]">
-                {monthLabel(scheduleMonth)}
+                {formatMonth(scheduleMonth, locale)}
               </span>
               <button
                 type="button"
-                aria-label="Следующий месяц"
+                aria-label={t("nextMonth")}
                 onClick={() => setMonthOffset((o) => clampOffset(o + 1))}
                 className="rounded-xl px-2.5 py-1.5 text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
               >
@@ -1096,7 +1084,7 @@ export function StaffPageClient(props: StaffPageProps) {
                   onClick={() => setMonthOffset(0)}
                   className="ml-1 rounded-xl px-2.5 py-1.5 text-[13px] text-[#3848c7] transition-colors hover:bg-[#f5f6ff]"
                 >
-                  Текущий
+                  {t("currentMonth")}
                 </button>
               ) : null}
             </div>
@@ -1108,10 +1096,10 @@ export function StaffPageClient(props: StaffPageProps) {
             type="button"
             onClick={() => void printPage()}
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-            title="Лист A4, альбомная ориентация"
+            title={t("printTitle")}
           >
             <Printer className="size-4 text-[#5566f6]" />
-            Распечатать
+            {t("print")}
           </button>
         </div>
 
@@ -1121,49 +1109,23 @@ export function StaffPageClient(props: StaffPageProps) {
         >
           {tab === "work-off" ? (
             <p className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 text-[#3c4053]">
-              <b>Новый месяц не нужно заводить.</b> График на любой месяц
-              строится сам из недельных выходных каждого сотрудника — тех, что
-              отмечены чипами «Пн-Вс» в его строке. Переключите месяц стрелками,
-              и он уже заполнен. Отличия от расписания — подмены, отгулы,
-              дополнительные смены — проставляются вручную кликом по клетке:
-              такая отметка перебивает недельное правило только на этот день.
+              {t.rich("guideNewMonth", { strong: (chunks) => <b>{chunks}</b> })}
             </p>
           ) : null}
           {/* Один общий абзац про выходные висел на всех четырёх вкладках
               и обещал разное. Теперь на каждой вкладке честно написано,
               что именно происходит. */}
           {tab === "work-off" && (
-            <p>
-              В свой выходной сотрудник не получает ежедневные обязательства
-              и напоминания, а в Гигиеническом журнале день закрывается
-              отметкой <b>«В»</b>. Задачи в приложении при этом остаются
-              доступны — человек может выйти на подмену, и мы ему не мешаем.
-            </p>
+            <p>{t.rich("guideWorkOff", { strong: (chunks) => <b>{chunks}</b> })}</p>
           )}
           {tab === "vacations" && (
-            <p>
-              В дни отпуска в Гигиеническом журнале день закрывается отметкой{" "}
-              <b>«Отп»</b>, напоминания в Telegram не приходят, и на панели
-              контроля сотрудник не считается «не взявшим задачи». Задачи в
-              приложении остаются доступны — вдруг вышел на подмену.
-            </p>
+            <p>{t.rich("guideVacation", { strong: (chunks) => <b>{chunks}</b> })}</p>
           )}
           {tab === "sick-leaves" && (
-            <p>
-              В дни больничного в Гигиеническом журнале день закрывается
-              отметкой <b>«Б/л»</b>, напоминания в Telegram не приходят, и на
-              панели контроля сотрудник не считается «не взявшим задачи».
-              Задачи в приложении остаются доступны — на случай, если человек
-              вышел раньше.
-            </p>
+            <p>{t.rich("guideSickLeave", { strong: (chunks) => <b>{chunks}</b> })}</p>
           )}
           {tab === "dismissals" && (
-            <p>
-              В указанную дату сотрудник переедет в <b>«Архив»</b>: пропадёт
-              из списков исполнителей и из новых строк журналов, перестанет
-              получать задачи и напоминания. Уже заполненные записи остаются
-              на месте — их предъявляют инспектору.
-            </p>
+            <p>{t.rich("guideDismissal", { strong: (chunks) => <b>{chunks}</b> })}</p>
           )}
         </div>
 
@@ -1383,6 +1345,7 @@ function CategoryColumn(props: {
   onAddEmployee: (position: StaffPosition) => void;
   onEditPosition: (position: StaffPosition) => void;
 }) {
+  const t = useTranslations("staffManagement.page");
   const headerAccentClass =
     props.categoryKey === "management"
       ? "bg-[#fff8eb] text-[#b25f00]"
@@ -1431,15 +1394,14 @@ function CategoryColumn(props: {
           className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-2xl bg-[#eef1ff] px-3 text-[13px] font-semibold text-[#3848c7] transition-colors hover:bg-[#5566f6] hover:text-white"
         >
           <Plus className="size-4" />
-          Должность
+          {t("position")}
         </button>
       </div>
       {props.open ? (
         <div className="space-y-2">
           {props.positions.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 py-8 text-center text-[13px] text-[#9b9fb3]">
-              Пока нет должностей. Нажмите <b>«Должность»</b>, чтобы добавить
-              первую.
+              {t("noPositions")}
             </p>
           ) : (
             props.positions.map((p) => {
@@ -1472,8 +1434,8 @@ function CategoryColumn(props: {
                     <button
                       type="button"
                       onClick={() => props.onAddEmployee(p)}
-                      title={`Добавить в «${p.name}»`}
-                      aria-label={`Добавить в «${p.name}»`}
+                      title={t("addToPosition", { position: p.name })}
+                      aria-label={t("addToPosition", { position: p.name })}
                       // На hover/фокусе — быстрый «+» прямо в шапке
                       // должности: не надо раскрывать аккордеон, чтобы
                       // добавить человека. На тач-устройствах hover нет,
@@ -1485,7 +1447,7 @@ function CategoryColumn(props: {
                     <button
                       type="button"
                       onClick={() => props.onEditPosition(p)}
-                      aria-label="Редактировать должность"
+                      aria-label={t("editPosition")}
                       className="inline-flex size-7 items-center justify-center rounded-lg text-transparent transition-colors group-hover/pos:text-[#9b9fb3] hover:bg-[#f5f6ff] hover:!text-[#5566f6]"
                     >
                       <Pencil className="size-3.5" />
@@ -1493,7 +1455,7 @@ function CategoryColumn(props: {
                     <button
                       type="button"
                       onClick={() => props.togglePosition(p.id)}
-                      aria-label="Раскрыть"
+                      aria-label={t("expandPosition")}
                       className="inline-flex size-7 items-center justify-center rounded-lg text-[#9b9fb3] hover:bg-[#f5f6ff]"
                     >
                       <ChevronDown
@@ -1508,7 +1470,7 @@ function CategoryColumn(props: {
                     <div className="border-t border-[#ececf4] bg-[#fafbff]">
                       {employees.length === 0 ? (
                         <p className="px-4 py-3 text-center text-[12px] text-[#9b9fb3]">
-                          Нет сотрудников
+                          {t("noEmployees")}
                         </p>
                       ) : (
                         employees.map((e) => (
@@ -1531,7 +1493,7 @@ function CategoryColumn(props: {
                               {e.name}
                               {e.isSelf ? (
                                 <span className="ml-1.5 text-[11px] text-[#9b9fb3]">
-                                  (вы)
+                                  {t("self")}
                                 </span>
                               ) : null}
                             </span>
@@ -1543,12 +1505,12 @@ function CategoryColumn(props: {
                                   event.stopPropagation();
                                   props.onEditEmployee(e);
                                 }}
-                                title="Редактировать"
-                                aria-label="Редактировать сотрудника"
+                                title={t("edit")}
+                                aria-label={t("editEmployee")}
                                 className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2 text-[11px] font-medium text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                               >
                                 <Pencil className="size-3.5" />
-                                <span className="hidden sm:inline">Изменить</span>
+                                <span className="hidden sm:inline">{t("change")}</span>
                               </button>
                               {e.telegramLinked && props.telegramBotUrl ? (
                                 <Link
@@ -1556,12 +1518,12 @@ function CategoryColumn(props: {
                                   target="_blank"
                                   rel="noreferrer"
                                   onClick={(event) => event.stopPropagation()}
-                                  title="Открыть TG"
-                                  aria-label="Открыть TG"
+                                  title={t("openTelegram")}
+                                  aria-label={t("openTelegram")}
                                   className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2 text-[11px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                                 >
                                   <ExternalLink className="size-3.5" />
-                                  <span className="hidden sm:inline">Открыть TG</span>
+                                  <span className="hidden sm:inline">{t("openTelegram")}</span>
                                 </Link>
                               ) : (
                                 <button
@@ -1571,12 +1533,12 @@ function CategoryColumn(props: {
                                     event.stopPropagation();
                                     props.onInviteTelegram(e);
                                   }}
-                                  title="Пригласить в TG"
-                                  aria-label="Пригласить в TG"
+                                  title={t("inviteTelegram")}
+                                  aria-label={t("inviteTelegram")}
                                   className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#dbe1ff] bg-[#eef1ff] px-2 text-[11px] font-medium text-[#4054d8] hover:bg-[#e5e9ff]"
                                 >
                                   <Send className="size-3.5" />
-                                  <span className="hidden sm:inline">Пригласить в TG</span>
+                                  <span className="hidden sm:inline">{t("inviteTelegram")}</span>
                                 </button>
                               )}
                               {e.telegramLinked ? (
@@ -1588,12 +1550,12 @@ function CategoryColumn(props: {
                                     event.stopPropagation();
                                     props.onRebindTelegram(e);
                                   }}
-                                  title="Перепривязать"
-                                  aria-label="Перепривязать"
+                                  title={t("rebindTelegram")}
+                                  aria-label={t("rebindTelegram")}
                                   className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2 text-[11px] font-medium text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                                 >
                                   <RefreshCcw className="size-3.5" />
-                                  <span className="hidden sm:inline">Перепривязать</span>
+                                  <span className="hidden sm:inline">{t("rebindTelegram")}</span>
                                   </button>
                                   <button
                                     type="button"
@@ -1602,12 +1564,12 @@ function CategoryColumn(props: {
                                       event.stopPropagation();
                                       props.onUnlinkTelegram(e);
                                     }}
-                                    title="Отвязать"
-                                    aria-label="Отвязать"
+                                    title={t("unlinkTelegram")}
+                                    aria-label={t("unlinkTelegram")}
                                     className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#ffd2cd] bg-[#fff4f2] px-2 text-[11px] font-medium text-[#d2453d] hover:bg-[#ffecea]"
                                   >
                                     <Unlink className="size-3.5" />
-                                    <span className="hidden sm:inline">Отвязать</span>
+                                    <span className="hidden sm:inline">{t("unlinkTelegram")}</span>
                                   </button>
                                 </>
                               ) : null}
@@ -1621,7 +1583,7 @@ function CategoryColumn(props: {
                         className="flex w-full items-center justify-center gap-1.5 border-t border-[#ececf4] bg-white px-4 py-2.5 text-[13px] font-medium text-[#5566f6] transition-colors hover:bg-[#eef1ff]"
                       >
                         <Plus className="size-3.5" />
-                        Добавить
+                        {t("addEmployee")}
                       </button>
                     </div>
                   ) : null}
@@ -1666,6 +1628,7 @@ function StaffSortHead(props: {
   sort: StaffSort;
   onClick: (field: StaffSortField) => void;
 }) {
+  const t = useTranslations("staffManagement.page");
   const active = props.sort?.field === props.field;
   const ascending = active && props.sort?.order === "asc";
   const Arrow = ascending ? ChevronUp : ChevronDown;
@@ -1675,8 +1638,8 @@ function StaffSortHead(props: {
       onClick={() => props.onClick(props.field)}
       title={
         active && !ascending
-          ? "Сбросить сортировку"
-          : `Сортировать по «${props.label}»`
+          ? t("sortReset")
+          : t("sortBy", { label: props.label })
       }
       className={cn(
         "-mx-1 inline-flex items-center gap-1 rounded-lg px-1 py-0.5 text-left font-medium transition-colors",
@@ -1734,6 +1697,12 @@ function WorkOffGrid(props: {
   onPaint: (items: WorkOffBulkItem[]) => Promise<void>;
   onChangeWeekly: (userId: string, weeklyDaysOff: number[]) => Promise<void>;
 }) {
+  const t = useTranslations("staffManagement.page");
+  const locale = useLocale();
+  const weekdayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+  const weeklyDaysOffText = (days: number[]) => days.length > 0
+    ? days.map((day) => t(`weekday.${weekdayKeys[day]}`)).join(", ")
+    : t("notSet");
   const posNameById = new Map<string, string>(
     props.positions.map((p) => [p.id, p.name])
   );
@@ -1853,7 +1822,7 @@ function WorkOffGrid(props: {
         className="h-10 gap-2 rounded-xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_8px_20px_-12px_rgba(85,102,246,0.6)] hover:bg-[#4a5bf0]"
       >
         <UserPlus className="size-4" />
-        Заполнить выходные дни из Айко
+        {t("iikoFill")}
       </Button>
 
       <div
@@ -1875,7 +1844,7 @@ function WorkOffGrid(props: {
       >
         {props.employees.length === 0 ? (
           <p className="px-6 py-10 text-center text-[13px] text-[#9b9fb3]">
-            Нет сотрудников. Добавьте хотя бы одного, чтобы управлять графиком.
+            {t("noEmployeesForSchedule")}
           </p>
         ) : (
           <table
@@ -1889,7 +1858,7 @@ function WorkOffGrid(props: {
                   aria-sort={ariaSortOf(props.sort, "name")}
                 >
                   <StaffSortHead
-                    label="Ф.И.О. работника"
+                    label={t("employeeName")}
                     field="name"
                     sort={props.sort}
                     onClick={props.onSort}
@@ -1900,15 +1869,15 @@ function WorkOffGrid(props: {
                   aria-sort={ariaSortOf(props.sort, "position")}
                 >
                   <StaffSortHead
-                    label="Должность"
+                    label={t("positionLabel")}
                     field="position"
                     sort={props.sort}
                     onClick={props.onSort}
                   />
                 </th>
-                <th className="px-3 py-2 text-left font-medium">Выходные</th>
+                <th className="px-3 py-2 text-left font-medium">{t("daysOff")}</th>
                 {props.dates.map((iso) => {
-                  const { top, bottom, isWeekend } = formatDayCell(iso);
+                  const { top, bottom, isWeekend } = formatDayCell(iso, locale);
                   return (
                     <th
                       key={iso}
@@ -1946,7 +1915,7 @@ function WorkOffGrid(props: {
                       <WeekdayChips
                         size="sm"
                         value={weeklyOf(e)}
-                        ariaLabel={`Выходные дни: ${e.name}`}
+                        ariaLabel={t("employeeDaysOff", { name: e.name })}
                         onChange={(next) => {
                           updateDraft((base) => ({
                             ...base,
@@ -1959,7 +1928,7 @@ function WorkOffGrid(props: {
                     {props.dates.map((iso) => {
                       const checked = isChecked(e, iso);
                       const byRule = isByRule(e, iso);
-                      const { isWeekend } = formatDayCell(iso);
+                      const { isWeekend } = formatDayCell(iso, locale);
                       return (
                         <td
                           key={iso}
@@ -1977,10 +1946,10 @@ function WorkOffGrid(props: {
                             aria-label={`${e.name}, ${iso}`}
                             title={
                               byRule
-                                ? `Выходной по правилу: ${weeklyDaysOffLabel(weeklyOf(e))}`
+                                ? t("ruleDayOff", { days: weeklyDaysOffText(weeklyOf(e)) })
                                 : checked
-                                  ? "Выходной"
-                                  : "Рабочий день"
+                                  ? t("dayOff")
+                                  : t("workingDay")
                             }
                             onPointerDown={(event) => {
                               // preventDefault, иначе браузер начнёт
@@ -2032,7 +2001,7 @@ function WorkOffGrid(props: {
                                 при печати гасит, и синий квадрат с белой
                                 галочкой вышел бы пустой клеткой. */}
                             <span aria-hidden className="hidden print:inline">
-                              {checked ? "В" : ""}
+                              {checked ? t("checkedDay") : ""}
                             </span>
                           </button>
                         </td>
@@ -2049,20 +2018,16 @@ function WorkOffGrid(props: {
       <div data-print-hide className="space-y-1 text-[12px] text-[#9b9fb3]">
         <div className="flex items-center gap-2">
           <span className="inline-block size-3 rounded-sm bg-[#fff5d9]/80 ring-1 ring-[#ffe2a0]" />
-          Выходные — суббота и воскресенье подсвечены светло-жёлтым
+          {t("weekendLegend")}
         </div>
         <div>
           {coarsePointer ? (
             <>
-              Нажимайте на клетки, чтобы отметить выходные. Полупрозрачная
-              галочка — выходной по недельному правилу; нажатие на неё делает
-              исключение на этот день.
+              {t("tapInstructions")}
             </>
           ) : (
             <>
-              Зажмите и проведите курсором, чтобы отметить сразу несколько дней.
-              Shift + клик — прямоугольник. Полупрозрачная галочка — выходной по
-              недельному правилу; клик по ней делает исключение на этот день.
+              {t("mouseInstructions")}
             </>
           )}
         </div>
@@ -2110,6 +2075,7 @@ function PeriodsTable(props: {
     userId: string;
     userName: string;
     positionLabel: string;
+    positionRoleCode?: string | null;
     dateFrom?: string;
     dateTo?: string;
     date?: string;
@@ -2121,12 +2087,23 @@ function PeriodsTable(props: {
   sortField: SortField;
   sortOrder: SortOrder;
 }) {
+  const t = useTranslations("staffManagement.page");
+  const tRole = useTranslations("staffManagement.roleLabels");
+  const positionLabelForDisplay = (label: string, roleCode?: string | null) => {
+    if (!roleCode) return label;
+    const role = roleCode;
+    const knownRoles = ["manager", "head_chef", "cook", "waiter", "owner", "technologist", "operator"] as const;
+    return knownRoles.includes(role as (typeof knownRoles)[number])
+      ? tRole(role as (typeof knownRoles)[number])
+      : t("positionLabel");
+  };
+  const locale = useLocale();
   const dateLabel =
-    props.kind === "vacation"
-      ? "Даты отпуска"
+  props.kind === "vacation"
+      ? t("vacationDates")
       : props.kind === "sick_leave"
-        ? "Даты больничного"
-        : "Дата увольнения";
+        ? t("sickLeaveDates")
+        : t("dismissalDate");
   return (
     <div className="space-y-4">
       <Button
@@ -2135,7 +2112,7 @@ function PeriodsTable(props: {
         className="h-10 gap-2 rounded-xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_8px_20px_-12px_rgba(85,102,246,0.6)] hover:bg-[#4a5bf0]"
       >
         <Plus className="size-4" />
-        Добавить
+        {t("add")}
       </Button>
 
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
@@ -2145,11 +2122,11 @@ function PeriodsTable(props: {
             <tr className="bg-[#f5f6ff]">
               <th className="w-[44px] px-3 py-2" />
               <th className="w-[60px] px-3 py-2 text-left text-[12px] font-medium uppercase tracking-wider text-[#9b9fb3]">
-                № п/п
+                {t("rowNumber")}
               </th>
               <th className="px-3 py-2 text-left">
                 <SortHead
-                  label="Ф.И.О. работника"
+                  label={t("employeeName")}
                   active={props.sortField === "name"}
                   order={props.sortOrder}
                   onClick={() => props.onSort("name")}
@@ -2157,7 +2134,7 @@ function PeriodsTable(props: {
               </th>
               <th className="px-3 py-2 text-left">
                 <SortHead
-                  label="Должность"
+                  label={t("positionLabel")}
                   active={props.sortField === "position"}
                   order={props.sortOrder}
                   onClick={() => props.onSort("position")}
@@ -2181,7 +2158,7 @@ function PeriodsTable(props: {
                   colSpan={6}
                   className="px-6 py-10 text-center text-[13px] text-[#9b9fb3]"
                 >
-                  Записей пока нет.
+                  {t("noRecords")}
                 </td>
               </tr>
             ) : (
@@ -2190,17 +2167,17 @@ function PeriodsTable(props: {
                   <td className="px-3 py-2" />
                   <td className="px-3 py-2 text-[#6f7282]">{idx + 1}</td>
                   <td className="px-3 py-2 text-[#0b1024]">{r.userName}</td>
-                  <td className="px-3 py-2 text-[#6f7282]">{r.positionLabel}</td>
+                  <td className="px-3 py-2 text-[#6f7282]">{positionLabelForDisplay(r.positionLabel, r.positionRoleCode)}</td>
                   <td className="px-3 py-2 text-[#0b1024]">
                     {props.kind === "dismissal"
-                      ? formatDate(r.date!)
-                      : formatRange(r.dateFrom!, r.dateTo!)}
+                      ? formatDate(r.date!, locale)
+                      : formatRange(r.dateFrom!, r.dateTo!, locale)}
                   </td>
                   <td className="px-3 py-2 text-right">
                     <button
                       type="button"
                       onClick={() => props.onDelete(r.id, props.kind)}
-                      aria-label="Удалить"
+                      aria-label={t("deleteRecord")}
                       className="inline-flex size-8 items-center justify-center rounded-lg text-[#c7ccea] hover:bg-[#fff4f2] hover:text-[#d2453d]"
                     >
                       <Trash2 className="size-4" />

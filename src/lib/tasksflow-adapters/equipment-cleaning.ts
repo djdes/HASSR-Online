@@ -75,7 +75,10 @@ function buildForm(
     intro:
       (employeeName ? `${employeeName}, ` : "") +
       "запишите факт мойки и дезинфекции оборудования после её завершения.",
+    introPresentationKey: "dynamic.equipmentCleaningIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить мойку",
+    submitPresentationKey: "dynamic.saveEquipmentCleaning",
     fields: [
       {
         type: "text",

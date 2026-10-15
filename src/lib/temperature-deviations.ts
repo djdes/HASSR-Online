@@ -9,6 +9,7 @@ import {
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { MANAGEMENT_ROLES, getDbRoleValuesWithLegacy } from "@/lib/user-roles";
+import { resolveLocale } from "@/i18n/locales";
 
 /**
  * Отклонение температуры: сначала ответственному, потом руководству.
@@ -599,8 +600,9 @@ function defaultDeps(): Deps {
           role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
           isActive: true,
         },
-        select: { email: true },
+        select: { email: true, locale: true },
       });
+      const organization = await db.organization.findUnique({ where: { id: input.organizationId }, select: { locale: true } });
       for (const user of users) {
         await sendTemperatureAlertEmail({
           to: user.email,
@@ -611,6 +613,7 @@ function defaultDeps(): Deps {
           areaName: input.areaName ?? undefined,
           filledBy: input.source,
           organizationId: input.organizationId,
+          locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: organization?.locale }),
         });
       }
     },

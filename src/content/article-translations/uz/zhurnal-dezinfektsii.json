@@ -1,0 +1,52 @@
+{
+  "locale": "uz",
+  "sourceHash": "16204e1f2b6d993b681bdafb87213fcbdfd30534fb018e2981d86b21d5dfd2df",
+  "title": "Dezinfeksiya jurnali: nimalarni yozish va dalolatnomalarni qanday saqlash kerak",
+  "excerpt": "Vosita, konsentratsiya, ta’sir vaqti, ishlov berilgan joy va imzo — jurnalga kiritiladigan ma’lumotlar. Dezinseksiya pudratchisi hisobotlarini buxgalteriya hujjatlari va xatlar orasida yo‘qotmay saqlash usuli.",
+  "body": [
+    {
+      "type": "p",
+      "text": "Dezinfeksiya jurnali shunchaki ‘pol yuvildi’ degan qayd emas. Unda aynan qaysi vosita, qanday konsentratsiyada, qancha vaqt va qayerda qo‘llangani yoziladi. Inspektor jurnal orqali muassasa mikroblarga qarshi choralarni bajarayotganini va amaldagi sarf pudratchi hujjatiga mosligini baholaydi."
+    },
+    {
+      "type": "h2",
+      "text": "Nimalar qayd etiladi"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Ishlov berilgan sana va vaqt.",
+        "Obyekt: zal, sex, inventar, sovutkich yoki texnika.",
+        "Vosita: savdo nomi, faol modda va konsentratsiya.",
+        "Qo‘llash usuli va ta’sir qilish vaqti.",
+        "Mas’ul xodim va uning imzosi."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Dezinseksiya pudratchisining dalolatnomalari"
+    },
+    {
+      "type": "p",
+      "text": "Bu tashqi tashkilot tomonidan dezinseksiya va dezinfeksiya bo‘yicha beriladigan alohida hujjat. Uni jurnalga ko‘chirib yozmang — ilova qiling. Dalolatnomalar ko‘pincha buxgalterda qolib ketgani, shartnomalar papkasiga qo‘shilgani yoki umumiy pochta qutisida ko‘milgani sabab yo‘qoladi. Elektron jurnalda hujjat tegishli qaydga biriktiriladi va undan ajralib qolmaydi."
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Kutish muddatiga e’tibor bering",
+      "text": "Ko‘p vositalar qo‘llangandan keyin ishlab chiqarishni 2–4 soat davomida qayta boshlamaslik kerak. Bu talabni buzish ishni to‘xtatish uchun bevosita asos bo‘lishi mumkin."
+    },
+    {
+      "type": "h2",
+      "text": "Qanday osonlashtirish mumkin"
+    },
+    {
+      "type": "p",
+      "text": "Ayrim qaydlarni avtomatlashtirish mumkin: ish yuzalariga har kuni reja asosida ishlov berish uchun standart shablon yetarli, uni faqat imzolash kerak. Rejadan tashqari ishlar va pudratchi dalolatnomalarini alohida tur sifatida yuriting — shunda inspektor kundalik va vaziyatga qarab bajariladigan ishlar farqini ko‘radi."
+    }
+  ],
+  "tags": [
+    "Dezinfeksiya",
+    "Jurnallar"
+  ]
+}

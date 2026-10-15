@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { toastApiError } from "@/lib/billing-limit-toast";
+import { useBillingError } from "@/lib/billing-limit-toast";
 import { toastPlanUpgraded } from "@/lib/plan-upgraded-toast";
 import { Button } from "@/components/ui/button";
 
@@ -37,6 +37,7 @@ type ColumnRole = "fullName" | "position" | "phone" | null;
  * точно «Шеф-повар», достаточно «шеф повар».
  */
 export function BulkStaffImport() {
+  const { toastApiError } = useBillingError();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);

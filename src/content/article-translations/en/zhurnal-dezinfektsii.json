@@ -1,0 +1,52 @@
+{
+  "locale": "en",
+  "sourceHash": "16204e1f2b6d993b681bdafb87213fcbdfd30534fb018e2981d86b21d5dfd2df",
+  "title": "Disinfection journal: what to record and how to keep service reports",
+  "excerpt": "The product, concentration, contact time, area treated, and signature: what belongs in the journal. How to store pest-control contractor reports without losing them among accounting files and email.",
+  "body": [
+    {
+      "type": "p",
+      "text": "A disinfection journal is not just a record that ‘the floor was washed.’ It tracks which product was used, at what concentration, for how long, and where. Inspectors use it to assess whether the facility controls microbes and whether actual use matches the contractor’s report."
+    },
+    {
+      "type": "h2",
+      "text": "What to record"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Date and time of treatment.",
+        "Area or item: room, workshop, equipment, refrigerator, or vehicle.",
+        "Product: trade name, active ingredient, and concentration.",
+        "Application method and contact time.",
+        "The responsible person and their signature."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Pest-control contractor reports"
+    },
+    {
+      "type": "p",
+      "text": "This is a separate document from an external provider covering pest control and disinfection. Do not copy it into the journal; attach it instead. Reports often go missing because they are left with accounting, filed with contracts, or buried in a shared inbox. In an electronic journal, the report is attached directly to the record and stays with it."
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Watch the re-entry interval",
+      "text": "After using many products, production must not resume for 2–4 hours. Violating this requirement can be direct grounds for suspending operations."
+    },
+    {
+      "type": "h2",
+      "text": "A simpler approach"
+    },
+    {
+      "type": "p",
+      "text": "Some entries can be automated: scheduled daily treatment of work surfaces can use a standard template that only needs a signature. Unscheduled work and contractor reports should be a separate category, so an inspector can see that routine and responsive treatment are distinguished."
+    }
+  ],
+  "tags": [
+    "Disinfection",
+    "Journals"
+  ]
+}

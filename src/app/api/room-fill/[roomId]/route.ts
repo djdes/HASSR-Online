@@ -87,7 +87,7 @@ export async function POST(
   const roomId = decodeRouteParam((await params).roomId);
 
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "room", roomId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
 
   let body: z.infer<typeof bodySchema>;
@@ -96,7 +96,8 @@ export async function POST(
   } catch (error) {
     const message =
       error instanceof z.ZodError ? error.issues[0]?.message ?? "Некорректные данные" : "Некорректные данные";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const missingMetrics = error instanceof z.ZodError && error.issues[0]?.code === "custom" && error.issues[0]?.path.length === 0;
+    return NextResponse.json({ error: message, errorCode: missingMetrics ? "roomFill.errors.enterTemperatureOrHumidity" : "equipmentFill.errors.invalidData" }, { status: 400 });
   }
 
   const verify = verifyQrFillTokenFor(body.token, "room", roomId);
@@ -104,6 +105,7 @@ export async function POST(
     return NextResponse.json(
       {
         error: "QR-код недействителен для этого помещения.",
+        errorCode: "roomFill.errors.invalidCode",
         code: verify.reason,
       },
       { status: 401 }
@@ -127,7 +129,7 @@ export async function POST(
     },
   });
   if (!room) {
-    return NextResponse.json({ error: "Помещение не найдено" }, { status: 404 });
+    return NextResponse.json({ error: "Помещение не найдено", errorCode: "roomFill.errors.roomNotFound" }, { status: 404 });
   }
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
@@ -141,7 +143,7 @@ export async function POST(
     cookiePass: await readObjectPassCookie(organizationId),
   });
   if (!actor.ok) {
-    return NextResponse.json({ error: actor.error }, { status: actor.status });
+    return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, ...(actor.errorParams ? { errorParams: actor.errorParams } : {}) }, { status: actor.status });
   }
 
   const employee = await db.user.findFirst({
@@ -150,17 +152,17 @@ export async function POST(
   });
   // «Кто заполняет»: закреплённое помещение — только своим (и руководству).
   if (employee && !canFillObject(room.fillerUserIds, employee)) {
-    return NextResponse.json({ error: OBJECT_FILLER_DENIED }, { status: 403 });
+    return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });
   }
   if (!employee) {
-    return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
+    return NextResponse.json({ error: "Сотрудник не найден", errorCode: "equipmentFill.errors.employeeNotFound" }, { status: 404 });
   }
 
   // «Фотофиксация показаний» организации (2026-09-27): выключена — присланное
   // фото не прикладываем; «Фото обязательно» — температура без снимка не
   // принимается (одна влажность — без фото). Фото — к температуре и только
   // наша ссылка на снимок, который есть в каталоге.
-  const photoSettings = await getReadingPhotoSettings(organizationId);
+  const photoSettings = await getReadingPhotoSettings(organizationId, "climate_control");
   const photoDecision = resolveReadingPhotoForSave({
     settings: photoSettings,
     hasReading: typeof body.temperature === "number",
@@ -168,7 +170,7 @@ export async function POST(
   });
   if (!photoDecision.ok) {
     console.info(`[reading-photo] save refused: photo required room=${room.id} org=${organizationId} user=${employee.id}`);
-    return NextResponse.json({ code: photoDecision.code, error: photoDecision.error }, { status: photoDecision.status });
+    return NextResponse.json({ code: photoDecision.code, error: photoDecision.error, errorCode: "equipmentFill.photo.requiredError" }, { status: photoDecision.status });
   }
   if (photoDecision.ignored) {
     console.info(`[reading-photo] photo ignored: fixation off room=${room.id} org=${organizationId} user=${employee.id}`);
@@ -180,6 +182,7 @@ export async function POST(
         error: photoSettings.required
           ? "Фото не найдено — снимите ещё раз"
           : "Фото не найдено — снимите ещё раз или сохраните замер без фото",
+        errorCode: photoSettings.required ? "equipmentFill.errors.photoNotFound" : "equipmentFill.errors.photoNotFoundOptional",
       },
       { status: 400 }
     );
@@ -219,6 +222,7 @@ export async function POST(
     return NextResponse.json(
       {
         code: "no-active-document",
+        errorCode: rollover.reason === "period-closed" ? "roomFill.errors.periodClosed" : rollover.reason === "org-paused" ? "roomFill.errors.orgPaused" : "roomFill.errors.noDocument",
         error:
           rollover.reason === "period-closed" || rollover.reason === "org-paused"
             ? qrRolloverMessage(rollover.reason)
@@ -255,6 +259,7 @@ export async function POST(
     return NextResponse.json(
       {
         code: "correction-required",
+        errorCode: "equipmentFill.errors.correctionRequired",
         error:
           "Замер вне нормы. Напишите, что вы сделали — без этого запись в журнал не принимается.",
       },

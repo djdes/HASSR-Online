@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import { quickValues } from "@/lib/quick-values";
 
 /** Кнопки быстрого ввода под полем с нормой: нижняя, середина, верхняя. */
@@ -8,7 +10,7 @@ export function QuickValues({
   max,
   value,
   onPick,
-  label = "Быстрый ввод",
+  label,
 }: {
   min: number | null | undefined;
   max: number | null | undefined;
@@ -16,11 +18,12 @@ export function QuickValues({
   onPick: (value: string) => void;
   label?: string;
 }) {
+  const { t } = useQrFillCopy();
   const values = quickValues(min, max);
   if (values.length === 0) return null;
   const current = value.trim().replace(",", ".");
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label={label}>
+    <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label={label ?? t("field.quickEntry")}>
       {values.map((item) => (
         <button
           key={item}

@@ -1,3 +1,4 @@
+import { getJournalControls } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -197,7 +198,7 @@ export async function POST(
   });
 
   let filled = { created: 0, updated: 0 };
-  if (document.autoFill) {
+  if (document.autoFill && !(await getJournalControls(document.organizationId)).specialMode) {
     const currentEntries = await db.journalDocumentEntry.findMany({
       where: { documentId, employeeId: { in: targetUserIds } },
       select: { id: true, employeeId: true, date: true, data: true },

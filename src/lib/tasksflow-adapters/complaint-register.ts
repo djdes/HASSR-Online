@@ -31,7 +31,7 @@ const TEMPLATE_CODE = COMPLAINT_REGISTER_TEMPLATE_CODE;
 function buildForm(): TaskFormSchema {
   const fields: TaskFormField[] = [
     { type: "text", key: "applicantName", label: "ФИО заявителя", required: true, maxLength: 200, placeholder: "Иванов И.И." },
-    { type: "select", key: "complaintReceiptForm", label: "Форма получения жалобы", required: true, options: COMPLAINT_RECEIPT_OPTIONS.map((o) => ({ value: o.value, label: o.label })) },
+    { type: "select", key: "complaintReceiptForm", label: "Форма получения жалобы", required: true, options: COMPLAINT_RECEIPT_OPTIONS.map((o, index) => ({ value: o.value, label: o.label, presentationKey: `options.complaintReceipt.${index}` })) },
     { type: "text", key: "applicantDetails", label: "Контактные данные заявителя", required: false, maxLength: 300, placeholder: "Телефон / email / адрес" },
     { type: "text", key: "complaintContent", label: "Содержание жалобы", required: true, multiline: true, maxLength: 500, placeholder: "Опишите суть жалобы" },
     { type: "text", key: "decisionSummary", label: "Решение по жалобе", required: false, multiline: true, maxLength: 400, placeholder: "Какие меры приняты" },

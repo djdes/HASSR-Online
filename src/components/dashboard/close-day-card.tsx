@@ -1,5 +1,6 @@
 "use client";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -31,6 +32,7 @@ import {
  * секция — одна строка. Гасить клик больше не нужно — `<summary>` рядом нет.
  */
 export function CloseDayCard() {
+  const { controls } = useJournalControls();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [submitting, setSubmitting] = useState(false);
@@ -65,6 +67,8 @@ export function CloseDayCard() {
   }
 
   const busy = submitting || pending;
+
+  if (controls.specialMode) return <Link href="/settings/qr-posters" className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]"><QrCode className="size-4" />QR-коды</Link>;
 
   return (
     <div

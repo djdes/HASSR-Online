@@ -123,9 +123,11 @@ async function notifyPinRequest(params: {
         // Одно уведомление «Запросы PIN» на организацию, по пункту на запрос.
         dedupeKey: `qr-pin-requests:${params.organizationId}`,
         title: "Запросы PIN от сотрудников",
+        messageKey: "pinRequests",
         linkHref: PIN_REQUESTS_HREF,
         linkLabel: "Рассмотреть",
-        items: [{ id: params.requestId, label, hint: "с QR-страницы", href: PIN_REQUESTS_HREF }],
+        linkLabelKey: "reviewPinRequests",
+        items: [{ id: params.requestId, label, labelKey: "pinRequestItem", labelParams: { name: params.employeeName, kind: params.kind }, hint: "с QR-страницы", hintKey: "fromQrPage", href: PIN_REQUESTS_HREF }],
       });
       await notifyEmployee(
         userId,

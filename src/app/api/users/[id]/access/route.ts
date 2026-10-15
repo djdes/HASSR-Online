@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { invalidateJournalAcl } from "@/lib/journal-acl";
 import { isManagementRole } from "@/lib/user-roles";
-import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { JOURNAL_ACCESS_CATALOG } from "@/lib/journal-access-catalog";
 import { escapeTelegramHtml, notifyEmployee } from "@/lib/telegram";
 import { orgLoginPrefix } from "@/lib/login-prefix";
 
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 type RouteParams = { params: Promise<{ id: string }> };
 
 const VALID_CODES = new Set<string>(
-  ACTIVE_JOURNAL_CATALOG.map((item) => item.code)
+  JOURNAL_ACCESS_CATALOG.map((item) => item.code)
 );
 
 /**
@@ -83,7 +83,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       : []
   );
 
-  const catalog = ACTIVE_JOURNAL_CATALOG.filter(
+  const catalog = JOURNAL_ACCESS_CATALOG.filter(
     (item) => !disabled.has(item.code)
   );
 
@@ -221,7 +221,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       | null) ?? {};
     if (target && prefs.assignments !== false) {
       const codeToName = new Map<string, string>(
-        ACTIVE_JOURNAL_CATALOG.map((item) => [item.code, item.name])
+        JOURNAL_ACCESS_CATALOG.map((item) => [item.code, item.name])
       );
       const names = newlyGranted
         .map((row) => codeToName.get(row.templateCode) ?? row.templateCode)

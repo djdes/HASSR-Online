@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, Library, Loader2 } from "lucide-react";
-import { pluralRu } from "@/lib/plural-ru";
+import { BILLING_LIMIT_CODE } from "@/lib/billing-period";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,9 @@ import {
 } from "@/components/ui/card";
 
 type Status = "valid" | "expired" | "used" | "not_found";
+type InviteError =
+  | { key: "password.tooShort" | "password.mismatch" | "password.invalidInvite" | "password.failure" | "password.genericError" }
+  | { key: "password.seatLimit"; activeUsers: number; limit: number };
 
 type Props = {
   status: Status;
@@ -32,25 +36,24 @@ type Props = {
 };
 
 export function InviteAcceptClient({ status, token, user }: Props) {
+  const t = useTranslations("authInvite");
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<InviteError | null>(null);
   const [loading, setLoading] = useState(false);
 
   if (status !== "valid" || !user) {
-    const title =
-      status === "expired"
-        ? "Приглашение устарело"
-        : status === "used"
-          ? "Приглашение уже использовано"
-          : "Приглашение не найдено";
-    const message =
-      status === "expired"
-        ? "Срок действия этой ссылки истёк. Попросите администратора организации прислать новое приглашение."
-        : status === "used"
-          ? "Эта ссылка уже была использована для установки пароля. Войдите обычным способом."
-          : "Ссылка некорректна или была отозвана.";
+    const title = status === "expired"
+      ? t("invalid.expiredTitle")
+      : status === "used"
+        ? t("invalid.usedTitle")
+        : t("invalid.missingTitle");
+    const message = status === "expired"
+      ? t("invalid.expiredMessage")
+      : status === "used"
+        ? t("invalid.usedMessage")
+        : t("invalid.missingMessage");
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="items-start gap-2">
@@ -60,28 +63,27 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         </CardHeader>
         <CardFooter>
           <Button asChild className="w-full">
-            <Link href="/login">Вернуться ко входу</Link>
+            <Link href="/login">{t("invalid.backToLogin")}</Link>
           </Button>
         </CardFooter>
       </Card>
     );
   }
 
-  // Мастер-кабинет: прежний аккаунт «только в кабинете» или сотрудник
-  // организации, приглашённый в кабинет (после входа — сразу туда).
-  const masterCabinet = user.masterCabinet ?? null;
-  const isDirectory = user.organization.kind === "directory" || masterCabinet !== null;
-  const poolObjects = masterCabinet ? masterCabinet.poolObjects : user.organization.poolObjects;
+  const inviteUser = user;
+  const masterCabinet = inviteUser.masterCabinet ?? null;
+  const isDirectory = inviteUser.organization.kind === "directory" || masterCabinet !== null;
+  const poolObjects = masterCabinet ? masterCabinet.poolObjects : inviteUser.organization.poolObjects;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (password.length < 6) {
-      setError("Пароль должен быть не короче 6 символов");
+      setError({ key: "password.tooShort" });
       return;
     }
     if (password !== confirm) {
-      setError("Пароли не совпадают");
+      setError({ key: "password.mismatch" });
       return;
     }
     setLoading(true);
@@ -93,22 +95,30 @@ export function InviteAcceptClient({ status, token, user }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "Не удалось установить пароль");
+        if (body?.code === "invalid_invite") {
+          setError({ key: "password.invalidInvite" });
+        } else if (body?.code === "invalid_password") {
+          setError({ key: "password.tooShort" });
+        } else if (body?.code === BILLING_LIMIT_CODE) {
+          setError({ key: "password.seatLimit",
+            activeUsers: Number.isFinite(body.activeUsers) ? body.activeUsers : 0,
+            limit: Number.isFinite(body.limit) ? body.limit : 0,
+          });
+        } else {
+          setError({ key: "password.failure" });
+        }
+        return;
       }
-      // The regular password login issues the session cookie (the same
-      // single name next-auth uses, see lib/auth-cookies.ts) and clears any
-      // other session left in this browser.
+      // The regular password login issues the session cookie and clears any other session left in this browser.
       const login = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, password }),
+        body: JSON.stringify({ email: inviteUser.email, password }),
       });
       if (!login.ok) {
         router.push("/login?invite=accepted");
       } else {
-        // Сотрудник бэк-офиса — сразу в мастер-кабинет, без крюка через /dashboard.
         if (masterCabinet) {
-          // Сотрудник организации: переключить сессию на кабинет и открыть его.
           await fetch("/api/me/active-organization", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -120,8 +130,8 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         router.push(isDirectory ? "/master" : "/dashboard");
         router.refresh();
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      setError({ key: "password.genericError" });
     } finally {
       setLoading(false);
     }
@@ -130,39 +140,46 @@ export function InviteAcceptClient({ status, token, user }: Props) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Добро пожаловать, {user.name}!</CardTitle>
+        <CardTitle>{t.rich("welcomeTitle", { name: user.name, strong: (chunks) => <strong>{chunks}</strong> })}</CardTitle>
         <CardDescription>
-          Вас пригласили в <strong>{user.organization.name}</strong>.
-          Установите пароль, чтобы войти.
+          {t.rich("invitedToOrganization", {
+            organization: user.organization.name,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </CardDescription>
         {isDirectory && (
           <div className="mt-3 flex gap-3 rounded-2xl bg-[#eef1ff] p-4 text-sm leading-relaxed text-[#3c4053]">
             <Library className="mt-0.5 size-5 shrink-0 text-[#5566f6]" />
             <div>
               <p className="font-medium text-[#0b1024]">
-                Мастер-кабинет справочников{masterCabinet ? ` «${masterCabinet.name}»` : ""}
+                {masterCabinet
+                  ? t("directory.headingWithCabinet", { cabinet: masterCabinet.name })
+                  : t("directory.heading")}
               </p>
               <p className="mt-1">
-                Вы загружаете меню и сырьё — из Excel, CSV или списком.
-                {poolObjects > 0
-                  ? ` ${poolObjects} ${pluralRu(poolObjects, "пищеблок получит", "пищеблока получат", "пищеблоков получат")} их сразу в журналы бракеража готовой продукции и скоропортящейся продукции.`
-                  : " Пищеблоки, подключённые по коду справочника, получат их сразу в журналы бракеража."}
+                {t("directory.uploadDescription")} {poolObjects > 0
+                  ? t("directory.poolAccess", { count: poolObjects })
+                  : t("directory.poolAccessWithoutCount")}
               </p>
-              <p className="mt-1 text-[#6f7282]">Журналы и сотрудники пищеблоков в кабинете не показываются — только эти два списка.</p>
+              <p className="mt-1 text-[#6f7282]">{t("directory.hiddenDataNote")}</p>
             </div>
           </div>
         )}
         <p className="mt-3 text-sm text-[#6f7282]">
-          Логин для входа: <span className="font-medium text-[#0b1024]">{user.email}</span>
+          {t("loginEmail")} <span className="font-medium text-[#0b1024]">{user.email}</span>
         </p>
       </CardHeader>
       <form onSubmit={submit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
+            <div role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+              {error.key === "password.seatLimit"
+                ? t(error.key, { activeUsers: error.activeUsers, limit: error.limit })
+                : t(error.key)}
+            </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="password">Пароль</Label>
+            <Label htmlFor="password">{t("password.setLabel")}</Label>
             <Input
               id="password"
               type="password"
@@ -174,7 +191,7 @@ export function InviteAcceptClient({ status, token, user }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm">Подтвердите пароль</Label>
+            <Label htmlFor="confirm">{t("password.confirmLabel")}</Label>
             <Input
               id="confirm"
               type="password"
@@ -187,7 +204,7 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         <CardFooter>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="size-4 animate-spin" />}
-            Установить пароль и войти
+            {loading ? t("submitLoading") : t("password.submit")}
           </Button>
         </CardFooter>
       </form>

@@ -134,6 +134,7 @@ import {
 import { findOrgUser } from "@/lib/journal-roster-db";
 import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
 import { orgTodayKey } from "@/lib/timezone";
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 
 /**
  * Журналы, где утверждающий шапки («УТВЕРЖДАЮ») — отдельный слот
@@ -222,6 +223,10 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
+  if (body.autoFill === true || body.config?.autoFill?.enabled === true) {
+    const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+    if (blocked) return blocked;
+  }
   const { templateCode, title, dateFrom, dateTo, responsibleUserId, responsibleTitle, config } = body;
   // `force: true` присылает клиент после того, как человек в диалоге
   // подтвердил, что второй документ на тот же период нужен осознанно.

@@ -1,5 +1,7 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import type { ReactNode } from "react";
 
 /**
@@ -22,6 +24,7 @@ export function WhoRow({
   onAction?: () => void;
   children?: ReactNode;
 }) {
+  const { t } = useQrFillCopy();
   const empty = !value;
   return (
     <div className="mb-2.5">
@@ -36,12 +39,12 @@ export function WhoRow({
         <span className="flex min-w-0 flex-1 flex-col gap-px">
           <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#9b9fb3]">{label}</span>
           <span className={`line-clamp-2 text-[21px] font-semibold leading-[1.3] [word-break:break-word] ${empty ? "text-[#3848c7]" : "text-[#0b1024]"}`}>
-            {value ?? placeholder ?? "Выбрать"}
+            {value ?? placeholder ?? t("common.select")}
           </span>
         </span>
         {onAction ? (
           // Крупная и по центру карточки по вертикали: в неё попадают пальцем на ходу.
-          <span className="inline-flex h-11 shrink-0 items-center self-center rounded-full bg-[#eef1ff] px-4 text-[16px] font-semibold text-[#3848c7]">{empty ? "Выбрать" : action ?? "Сменить"}</span>
+          <span className="inline-flex h-11 shrink-0 items-center self-center rounded-full bg-[#eef1ff] px-4 text-[16px] font-semibold text-[#3848c7]">{empty ? t("common.select") : action ?? t("common.change")}</span>
         ) : null}
       </button>
       {children}

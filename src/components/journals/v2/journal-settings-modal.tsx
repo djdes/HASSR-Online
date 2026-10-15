@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import {
@@ -47,8 +49,8 @@ export function JournalSettingsModal({
   children,
   onSave,
   onCancel,
-  saveLabel = "Сохранить",
-  cancelLabel = "Отмена",
+  saveLabel,
+  cancelLabel,
   isSaving = false,
   saveDisabled = false,
   /** Если задан — рендерим как destructive button слева от save. */
@@ -70,6 +72,7 @@ export function JournalSettingsModal({
   destructiveAction?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
 }) {
+  const t = useTranslations("journalControls.settingsModal");
   const sizeClass = {
     sm: "sm:max-w-[420px]",
     md: "sm:max-w-[560px]",
@@ -104,7 +107,7 @@ export function JournalSettingsModal({
               type="button"
               onClick={() => onOpenChange(false)}
               className="rounded-xl p-2 text-[#9b9fb3] transition-colors hover:bg-[#fafbff] hover:text-[#0b1024]"
-              aria-label="Закрыть"
+              aria-label={t("close")}
             >
               <X className="size-5" />
             </button>
@@ -124,7 +127,7 @@ export function JournalSettingsModal({
                   onClick={onCancel}
                   className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px] text-[#0b1024] shadow-none hover:bg-[#fafbff]"
                 >
-                  {cancelLabel}
+                  {cancelLabel ?? t("cancel")}
                 </Button>
               ) : null}
               {onSave ? (
@@ -134,7 +137,7 @@ export function JournalSettingsModal({
                   disabled={isSaving || saveDisabled}
                   className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_28px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
                 >
-                  {isSaving ? "Сохранение…" : saveLabel}
+                  {isSaving ? t("saving") : saveLabel ?? t("save")}
                 </Button>
               ) : null}
             </div>

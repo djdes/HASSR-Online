@@ -16,6 +16,7 @@ import {
   OWNER_POSITION_CATEGORY,
 } from "@/lib/sphere-positions";
 import { completeProfileSchema } from "@/lib/validators";
+import { resolveLocale } from "@/i18n/locales";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -190,6 +191,7 @@ export async function POST(request: Request) {
       to: email,
       password: data.newPassword,
       organizationId,
+      locale: resolveLocale({ authenticated: true, userLocale: session.user.locale, organizationLocale: session.user.organizationLocale }),
     }).catch((err) => console.error("sendPasswordChangedEmail failed", err));
   }
 

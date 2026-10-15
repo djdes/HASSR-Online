@@ -10,6 +10,11 @@ const orgMembers = [
 ];
 const base = { config, orgMembers, role: "cook", canEditBrakerageDishes: false, commissionPosition: false };
 
+test("commission membership takes precedence over management/editor rights in QR", () => {
+  const role = brakerageQrRole({ ...base, employeeId: "u-commission", role: "owner", canEditBrakerageDishes: true });
+  assert.deepEqual(role, { evaluator: true, editor: false, viewer: false });
+});
+
 test("член в копии документа — оценщик, список за сегодня", () => {
   const commission = brakerageQrRole({ ...base, employeeId: "u-commission" });
   assert.deepEqual(commission, { evaluator: true, editor: false, viewer: false });

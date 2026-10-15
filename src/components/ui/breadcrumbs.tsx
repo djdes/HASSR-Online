@@ -13,6 +13,7 @@ import {
   type RefObject,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, ChevronRight, EyeOff, Loader2, Search, X } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
 import {
-  DOCUMENT_STATUS_LEGEND,
+  documentStatusLegend,
   filterCrumbMenu,
   legendEntriesFor,
   matchingHidden,
@@ -166,11 +167,6 @@ const SUBPANEL_CLASS = cn(
   "max-h-80 overflow-y-auto",
 );
 
-/** Точки документов в подменю журнала — для текста диктору. */
-const DOCUMENT_STATUS_TEXT: ReadonlyMap<CrumbStatus, string> = new Map(
-  DOCUMENT_STATUS_LEGEND.map((entry) => [entry.status, entry.label] as const),
-);
-
 /**
  * Раскрытие по наведению с задержкой на закрытие: между сегментом и
  * панелью есть зазор, и без задержки список схлопывался ровно тогда,
@@ -211,7 +207,7 @@ function useCrumbMenuSearch(crumb: Crumb, menu: CrumbMenuItem[]) {
   const results = useMemo(() => filterCrumbMenu(menu, query), [menu, query]);
   const hidden = crumb.menuHiddenMatches;
   const hiddenMatches = useMemo(
-    () => (hidden ? matchingHidden(hidden.labels, query) : []),
+    () => (hidden ? matchingHidden(hidden.labels, query, hidden.entries) : []),
     [hidden, query],
   );
   const legendSource = crumb.menuLegend;
@@ -267,6 +263,7 @@ export function Breadcrumbs({
   items: Crumb[];
   className?: string;
 }) {
+  const t = useTranslations("journalControls.guidePage");
   const visible = items.filter((item) => item.label.trim().length > 0);
   if (visible.length === 0) return null;
 
@@ -278,7 +275,7 @@ export function Breadcrumbs({
           visible[0],
           {
             label: "…",
-            menuTitle: "Пропущенные разделы",
+            menuTitle: t("collapsedSections"),
             menu: collapsed.map((crumb) => ({
               label: crumb.label,
               href: crumb.href ?? "#",
@@ -292,7 +289,7 @@ export function Breadcrumbs({
 
   return (
     <nav
-      aria-label="Хлебные крошки"
+      aria-label={t("breadcrumbs")}
       className={cn(
         "flex min-w-0 flex-nowrap items-center gap-0.5 text-[13px] print:hidden",
         className,
@@ -300,7 +297,7 @@ export function Breadcrumbs({
     >
       {shown.map((item, index) => (
         <span
-          key={`${item.label}-${index}`}
+          key={`${item.href ?? "crumb"}-${index}`}
           className={cn(
             "flex min-w-0 items-center gap-0.5",
             // Телефон, путь из 3+ звеньев: название организации — самое
@@ -521,7 +518,7 @@ function CrumbSheetMenu({ crumb, menu, isLast, navigate, children }: CrumbMenuVa
           <div id={listId}>
             {search.results.map((item) => (
               <button
-                key={item.href + item.label}
+                key={item.href}
                 type="button"
                 onClick={() => pick(item.href)}
                 aria-current={item.current ? "page" : undefined}
@@ -710,7 +707,7 @@ function CrumbDropdownMenu({ crumb, menu, isLast, navigate, children }: CrumbMen
           {search.results.map((item) =>
             item.submenuJournalCode ? (
               <JournalRowWithDocuments
-                key={item.href + item.label}
+                key={item.href}
                 item={item}
                 journalCode={item.submenuJournalCode}
                 onNavigate={() => hover.setOpen(false)}
@@ -720,7 +717,7 @@ function CrumbDropdownMenu({ crumb, menu, isLast, navigate, children }: CrumbMen
               />
             ) : (
               <DropdownMenuItem
-                key={item.href + item.label}
+                key={item.href}
                 onSelect={() => pick(item.href)}
                 onPointerMove={holdFocus}
                 onPointerLeave={holdFocus}
@@ -799,6 +796,7 @@ function CrumbSearchInput({
   /** Фокус при появлении — только при мыши (см. `useFinePointer`). */
   autoFocus: boolean;
 }) {
+  const t = useTranslations("navigation.breadcrumbs");
   // Фокус ставим раньше, чем меню/лист фокусирует само себя: их
   // FocusScope видит, что фокус уже внутри, и не перебивает его.
   useEffect(() => {
@@ -847,7 +845,7 @@ function CrumbSearchInput({
       {value ? (
         <button
           type="button"
-          aria-label="Очистить поиск"
+          aria-label={t("clearSearch")}
           onClick={() => {
             onChange("");
             inputRef.current?.focus();
@@ -875,16 +873,17 @@ function SearchOutcome({
   renderAction: (link: { label: string; href: string }) => ReactNode;
 }) {
   const hidden = crumb.menuHiddenMatches;
+  const t = useTranslations("navigation.breadcrumbs");
   const empty = search.filtering && search.results.length === 0;
   return (
     <>
       {empty ? (
         <div className="px-3 py-5 text-center">
           <div className="break-words text-[13.5px] font-medium text-[#0b1024]">
-            Ничего не нашлось по «{search.query.trim()}»
+            {t("noResults", { query: search.query.trim() })}
           </div>
           <div className="mt-1 text-[12.5px] text-[#6f7282]">
-            Попробуйте часть слова или другое название
+            {t("searchHint")}
           </div>
         </div>
       ) : null}
@@ -897,7 +896,7 @@ function SearchOutcome({
       ) : null}
       {crumb.menuSearch ? (
         <div aria-live="polite" className="sr-only">
-          {search.filtering ? `Найдено: ${search.results.length}` : ""}
+          {search.filtering ? t("resultCount", { count: search.results.length }) : ""}
         </div>
       ) : null}
     </>
@@ -914,6 +913,7 @@ function HiddenMatchesHint({
   matches: string[];
   action: ReactNode;
 }) {
+  const t = useTranslations("navigation.breadcrumbs");
   return (
     <div className="mx-1 my-1.5 flex gap-2.5 rounded-xl border border-[#ececf4] bg-[#fafbff] px-3 py-2.5 text-[12.5px] leading-snug text-[#6f7282]">
       <EyeOff aria-hidden className="mt-px size-4 shrink-0 text-[#9b9fb3]" />
@@ -922,7 +922,7 @@ function HiddenMatchesHint({
           <span className="font-medium text-[#3c4053]">
             {matches.length === 1 ? hidden.title[0] : hidden.title[1]}:
           </span>{" "}
-          {quotedList(matches)}
+          {quotedList(matches, 3, (items, count) => t("listMore", { items, count }))}
         </p>
         {action ?? (hidden.note ? <p>{hidden.note}</p> : null)}
       </div>
@@ -992,22 +992,32 @@ function JournalRowWithDocuments({
   /** Пока в поиске есть текст — наведение не уводит фокус из поля. */
   holdFocus?: (event: ReactPointerEvent) => void;
 }) {
-  const [documents, setDocuments] = useState<CrumbMenuItem[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const locale = useLocale();
+  const t = useTranslations("navigation.breadcrumbs");
+  const documentStatusText = new Map(documentStatusLegend(t).map(entry => [entry.status, entry.label] as const));
+  const [documentsByLocale, setDocumentsByLocale] = useState<Record<string, CrumbMenuItem[]>>({});
+  const loadingLocales = useRef(new Set<string>());
+  const documents = documentsByLocale[locale] ?? null;
+  const requested = useRef(false);
   // Тип указателя запоминаем на pointerdown: у синтезированного click
   // pointerType в части браузеров пустой, и отличить тап от мыши внутри
   // самого click надёжно нельзя.
   const pointerType = useRef<string>("mouse");
 
   const load = useCallback(() => {
-    if (documents !== null || loading) return;
-    setLoading(true);
-    fetch(`/api/journals/${journalCode}/documents-menu`)
+    requested.current = true;
+    if (documents !== null || loadingLocales.current.has(locale)) return;
+    loadingLocales.current.add(locale);
+    fetch(`/api/journals/${journalCode}/documents-menu?locale=${encodeURIComponent(locale)}`)
       .then((res) => (res.ok ? res.json() : { items: [] }))
-      .then((data) => setDocuments((data?.items as CrumbMenuItem[]) ?? []))
-      .catch(() => setDocuments([]))
-      .finally(() => setLoading(false));
-  }, [documents, journalCode, loading]);
+      .then((data) => setDocumentsByLocale(previous => ({ ...previous, [locale]: (data?.items as CrumbMenuItem[]) ?? [] })))
+      .catch(() => setDocumentsByLocale(previous => ({ ...previous, [locale]: [] })))
+      .finally(() => loadingLocales.current.delete(locale));
+  }, [documents, journalCode, locale]);
+
+  useEffect(() => {
+    if (requested.current) load();
+  }, [load]);
 
   return (
     <DropdownMenuSub>
@@ -1042,15 +1052,15 @@ function JournalRowWithDocuments({
           списка (у него overflow-y-auto под длинный набор журналов). */}
       <DropdownMenuPortal>
         <DropdownMenuSubContent alignOffset={-4} className={SUBPANEL_CLASS}>
-          <div className={PANEL_LABEL_CLASS}>Документы журнала</div>
-          {loading || documents === null ? (
+          <div className={PANEL_LABEL_CLASS}>{t("documents")}</div>
+          {documents === null ? (
             <div className="flex items-center gap-2 px-2 py-2 text-[12px] text-[#9b9fb3]">
               <Loader2 className="size-3.5 animate-spin" />
-              Загружаем
+              {t("loading")}
             </div>
           ) : documents.length === 0 ? (
             <div className="px-2 py-2 text-[12px] text-[#9b9fb3]">
-              Документов пока нет
+              {t("emptyDocuments")}
             </div>
           ) : (
             documents.map((doc) => (
@@ -1062,7 +1072,7 @@ function JournalRowWithDocuments({
                 }}
                 className={cn(ITEM_CLASS, "min-w-0")}
               >
-                <MenuRow item={doc} statusText={DOCUMENT_STATUS_TEXT} />
+                <MenuRow item={doc} statusText={documentStatusText} />
               </DropdownMenuItem>
             ))
           )}

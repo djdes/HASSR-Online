@@ -92,10 +92,14 @@ export async function loadMiniShellData(session: Session | null) {
   return {
     authed: Boolean(session?.user),
     homeHref: miniHomeHref(actor),
-    navItems: miniNavItems(actor).map((item) => ({
-      ...item,
-      label: customSectionNameByHref(customNames, item.href) ?? item.label,
-    })),
+    navItems: miniNavItems(actor).map((item) => {
+      const customLabel = customSectionNameByHref(customNames, item.href);
+      return {
+        ...item,
+        label: customLabel ?? item.label,
+        customLabel: customLabel !== null,
+      };
+    }),
     initialTheme: (profileTheme ?? "dark") as "light" | "dark",
     profileTheme,
     announcement,

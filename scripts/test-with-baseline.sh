@@ -14,8 +14,16 @@ BASELINE="tests/.legacy-failures.txt"
 # Запускаем tests, ловим все строки `not ok` (TAP)
 # TEST_SHARD=i/N — только i-я часть файлов: CI делит тесты на параллельные
 # job'ы. Флаг стоит ДО шаблона файлов: после него node молча гоняет всё.
+if [ -n "${TEST_CONCURRENCY:-}" ] && ! [[ "$TEST_CONCURRENCY" =~ ^[1-9][0-9]?$ ]]; then
+  echo "TEST_CONCURRENCY must be an integer from 1 to 99"
+  exit 1
+fi
 if [ -n "${TEST_SHARD:-}" ]; then
-  OUTPUT=$(node --import tsx --test --test-reporter=tap --test-shard="$TEST_SHARD" "src/**/*.test.ts" 2>&1 || true)
+  concurrency_args=()
+  if [ -n "${TEST_CONCURRENCY:-}" ]; then concurrency_args+=(--test-concurrency="$TEST_CONCURRENCY"); fi
+  OUTPUT=$(node --import tsx --test --test-reporter=tap "${concurrency_args[@]}" --test-shard="$TEST_SHARD" "src/**/*.test.ts" 2>&1 || true)
+elif [ -n "${TEST_CONCURRENCY:-}" ]; then
+  OUTPUT=$(node --import tsx --test --test-reporter=tap --test-concurrency="$TEST_CONCURRENCY" "src/**/*.test.ts" 2>&1 || true)
 else
   OUTPUT=$(npm run test:ci 2>&1 || true)
 fi

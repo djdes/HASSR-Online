@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { JOURNAL_RATING_MAX_DEFAULT, type JournalCustomColumn } from "@/lib/journal-columns";
 
 /**
@@ -32,6 +34,7 @@ export function JournalCustomCell({
   employees?: string[];
   className?: string;
 }) {
+  const t = useTranslations("journalControls");
   const empty = value.trim() === "";
   const warn = Boolean(mustFill) && empty && !disabled;
   const base = `h-8 w-full border-0 bg-transparent px-1.5 text-[12.5px] text-[#0b1024] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/20 ${
@@ -58,7 +61,7 @@ export function JournalCustomCell({
                 : "text-[#9b9fb3] hover:bg-[#f5f6ff]"
             }`}
           >
-            {option}
+            {t(option === "Да" ? "customCell.yes" : "customCell.no")}
           </button>
         ))}
       </div>
@@ -83,7 +86,7 @@ export function JournalCustomCell({
                 ? "bg-[#5566f6] font-semibold text-white"
                 : "text-[#9b9fb3] hover:bg-[#f5f6ff]"
             }`}
-            aria-label={`Оценка ${score} из ${max}`}
+            aria-label={t("customCell.rating", { value: Number(score), max })}
           >
             {score}
           </button>
@@ -104,7 +107,7 @@ export function JournalCustomCell({
           disabled={disabled}
           list={listId}
           className={base}
-          placeholder={options.length > 0 ? "Выберите или впишите" : ""}
+          placeholder={options.length > 0 ? t("customCell.choose") : ""}
         />
         <datalist id={listId}>
           {options.map((option) => (

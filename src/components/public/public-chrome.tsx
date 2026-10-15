@@ -1,14 +1,13 @@
 import Link from "@/components/i18n/localized-link";
 import { getSiteLocale } from "@/i18n/site-locale-server";
-import { publicCopyFor } from "@/i18n/public-copy";
-import type { SiteLocale } from "@/i18n/site-locale";
+import { getTranslations } from "next-intl/server";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { PublicSupportWidget } from "@/components/public/public-support-widget";
 import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
 import { BrandLogo } from "@/components/brand/logo";
 import { NICHES } from "@/content/niches";
 import { SEO_LANDINGS } from "@/content/seo-landings";
-import { FEATURES_INFO, FEATURES_ORDER } from "@/content/features";
+import { FEATURES_ORDER } from "@/content/features";
 import { ArrowRight, LogIn } from "lucide-react";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -35,7 +34,7 @@ export async function PublicHeader({
   activeSection?: "blog" | "journals-info" | "home";
 }) {
   const locale = await getSiteLocale();
-  const t = publicCopyFor(locale);
+  const t = await getTranslations({ locale, namespace: "publicChrome" });
   const session = await getServerSession(authOptions).catch(() => null);
   // В приложении WeSetup нет оплаты и ссылок к ней (правила магазинов) —
   // «Тарифы» не показываем.
@@ -66,22 +65,23 @@ export async function PublicHeader({
       <PublicThemeBootstrap />
       <PublicThemeScope />
       <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2.5 sm:px-6 sm:py-5">
-        <Link href="/" className="text-[#0b1024]" aria-label={t("WeSetup — на главную")}>
+        <Link href="/" className="text-[#0b1024]" aria-label={t("homeAria")}>
           <BrandLogo height={30} className="sm:[--logo-h:26px]" title="" />
         </Link>
         <div className="flex items-center gap-3 sm:gap-5">
           <LanguageSwitch />
-          {link("journals-info", t("Журналы"), "/journals-info")}
-          {link("blog", t("Блог"), "/blog")}
+          {link("journals-info", t("journals"), "/journals-info")}
+          {link("blog", t("blog"), "/blog")}
           {session ? (
             <PublicHeaderAuthed
-              locale={locale}
-              userName={session.user.name ?? t("Пользователь")}
+              userName={session.user.name ?? t("userFallback")}
               role={session.user.role ?? ""}
               isRoot={session.user.isRoot === true}
+              dashboardLabel={t("dashboard")}
+              profileLabel={t("profile")}
             />
           ) : (
-            <PublicHeaderAnon showPricing={!inApp} locale={locale} />
+            <PublicHeaderAnon showPricing={!inApp} pricingLabel={t("pricing")} loginLabel={t("login")} />
           )}
         </div>
       </nav>
@@ -89,8 +89,7 @@ export async function PublicHeader({
   );
 }
 
-function PublicHeaderAnon({ showPricing, locale }: { showPricing: boolean; locale: SiteLocale }) {
-  const t = publicCopyFor(locale);
+function PublicHeaderAnon({ showPricing, pricingLabel, loginLabel }: { showPricing: boolean; pricingLabel: string; loginLabel: string }) {
   return (
     <>
       {showPricing ? (
@@ -98,30 +97,31 @@ function PublicHeaderAnon({ showPricing, locale }: { showPricing: boolean; local
           href="/pricing"
           className="text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
         >
-          {t("Тарифы")}</Link>
+          {pricingLabel}</Link>
       ) : null}
       <Link
         href="/login"
         className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:px-4"
       >
-        {t("Войти")}<LogIn className="size-4 text-[#5566f6]" />
+        {loginLabel}<LogIn className="size-4 text-[#5566f6]" />
       </Link>
     </>
   );
 }
 
 function PublicHeaderAuthed({
-  locale,
   userName,
   role,
   isRoot,
+  dashboardLabel,
+  profileLabel,
 }: {
-  locale: SiteLocale;
   userName: string;
   role: string;
   isRoot: boolean;
+  dashboardLabel: string;
+  profileLabel: string;
 }) {
-  const t = publicCopyFor(locale);
   const homeHref = getWebHomeHref({ role, isRoot });
   const initials = getInitials(userName);
   return (
@@ -130,12 +130,12 @@ function PublicHeaderAuthed({
         href={homeHref}
         className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-3.5 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:px-4 sm:text-[14px]"
       >
-        {t("Открыть кабинет")}<ArrowRight className="size-4" />
+        {dashboardLabel}<ArrowRight className="size-4" />
       </Link>
       <Link
         href={homeHref}
         title={userName}
-        aria-label={`${t("Профиль")} · ${userName}`}
+        aria-label={`${profileLabel} · ${userName}`}
         className="hidden size-10 items-center justify-center rounded-full border border-[#dcdfed] bg-[#f5f6ff] text-[12px] font-semibold text-[#3848c7] transition-colors hover:border-[#5566f6]/50 hover:bg-[#eef1ff] sm:inline-flex"
       >
         {initials}
@@ -156,7 +156,12 @@ function getInitials(name: string): string {
 
 export async function PublicFooter() {
   const locale = await getSiteLocale();
-  const t = publicCopyFor(locale);
+  const t = await getTranslations({ locale, namespace: "publicChrome" });
+  const navT = await getTranslations({ locale, namespace: "publicNavigation" });
+  const navigationLabel = (group: "niches" | "journals" | "features", id: string) => {
+    const key = `${group}.${id}` as Exclude<Parameters<typeof navT>[0], "allLogsLink">;
+    return navT(key);
+  };
   // В приложении WeSetup: без «Тарифов» (оплаты в приложении нет) и без
   // анонса «Приложение скоро» — человек уже в нём.
   const inApp = await isMobileAppRequest();
@@ -172,16 +177,16 @@ export async function PublicFooter() {
             <BrandLogo height={26} />
           </div>
           <p className="mt-3 max-w-[440px] text-[13px] text-[#9b9fb3]">
-            {t("Сервис электронных журналов СанПиН и ХАССП для общепита и пищевых производств. © 2026 WeSetup.")}</p>
+            {t("footerDescription")}</p>
         </div>
 
         <div className="min-w-[220px] text-[12px] leading-[1.6] text-[#6f7282]">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-            {t("Реквизиты")}</div>
-          <div className="font-medium text-[#0b1024]">{t("ООО «БФС»")}</div>
-          <div>{t("ИНН 5018215599 · КПП 501801001")}</div>
-          <div>{t("ОГРН 1235000105306")}</div>
-          <div>{t("141065, Московская область, г. Королёв, ул. Ленина, д. 10/6")}</div>
+            {t("details")}</div>
+          <div className="font-medium text-[#0b1024]">ООО «БФС»</div>
+          <div>{t("companyTaxIds", { inn: "5018215599", kpp: "501801001" })}</div>
+          <div>{t("companyRegistrationId", { ogrn: "1235000105306" })}</div>
+          <div>141065, Московская область, г. Королёв, ул. Ленина, д. 10/6</div>
           <div className="mt-2">
             <a
               href="tel:+79996341612"
@@ -203,51 +208,51 @@ export async function PublicFooter() {
               href="/oferta"
               className="inline-flex min-h-[32px] items-center transition-colors hover:text-[#0b1024]"
             >
-              {t("Договор-оферта")}</Link>
+              {t("contractOffer")}</Link>
             <Link
               href="/privacy"
               className="inline-flex min-h-[32px] items-center transition-colors hover:text-[#0b1024]"
             >
-              {t("Политика конфиденциальности")}</Link>
+              {t("privacyPolicy")}</Link>
             {/* Робокасса требует, чтобы все четыре документа были
                 доступны с сайта, а не только со страницы оплаты. */}
             <Link
               href="/terms"
               className="inline-flex min-h-[32px] items-center transition-colors hover:text-[#0b1024]"
             >
-              {t("Пользовательское соглашение")}</Link>
+              {t("userAgreement")}</Link>
             <Link
               href="/consent"
               className="inline-flex min-h-[32px] items-center transition-colors hover:text-[#0b1024]"
             >
-              {t("Согласие на обработку персональных данных")}</Link>
+              {t("personalDataConsent")}</Link>
           </div>
 
-          {inApp ? null : <AppStoresTeaser locale={locale} />}
+          {inApp ? null : <AppStoresTeaser />}
         </div>
 
         <div className="flex flex-col flex-wrap text-[13px] text-[#6f7282] md:items-end">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3] md:text-right">
-            {t("Разделы")}</div>
-          <Link href="/blog" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Блог")}</Link>
-          <Link href="/glossary" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Глоссарий")}</Link>
-          <Link href="/compare" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Сравнения")}</Link>
-          <Link href="/calc/journals" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Какие журналы нужны")}</Link>
-          <Link href="/calc/fines" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Калькулятор штрафов")}</Link>
-          <Link href="/whats-new" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Что нового")}</Link>
-          <Link href="/developers" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Разработчикам")}</Link>
-          <Link href="/journals-info" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Журналы")}</Link>
-          <Link href="/blanki" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Бланки")}</Link>
-          <Link href="/prikazy" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Приказы")}</Link>
-          <Link href="/uslugi" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Услуги")}</Link>
+            {t("sections")}</div>
+          <Link href="/blog" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("blog")}</Link>
+          <Link href="/glossary" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("glossary")}</Link>
+          <Link href="/compare" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("comparisons")}</Link>
+          <Link href="/calc/journals" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("journalCalculator")}</Link>
+          <Link href="/calc/fines" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("fineCalculator")}</Link>
+          <Link href="/whats-new" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("whatsNew")}</Link>
+          <Link href="/developers" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("developers")}</Link>
+          <Link href="/journals-info" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("journals")}</Link>
+          <Link href="/blanki" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("forms")}</Link>
+          <Link href="/prikazy" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("orders")}</Link>
+          <Link href="/uslugi" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("services")}</Link>
           {inApp ? null : (
-            <Link href="/pricing" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Тарифы")}</Link>
+            <Link href="/pricing" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("pricing")}</Link>
           )}
-          <Link href="/login" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Войти")}</Link>
-          <Link href="/register" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Регистрация")}</Link>
-          <Link href="/partners" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Партнёрам")}</Link>
-          <Link href="/oferta" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Оферта")}</Link>
-          <Link href="/privacy" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("Конфиденциальность")}</Link>
+          <Link href="/login" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("login")}</Link>
+          <Link href="/register" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("register")}</Link>
+          <Link href="/partners" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("partners")}</Link>
+          <Link href="/oferta" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("offer")}</Link>
+          <Link href="/privacy" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("privacy")}</Link>
           <a
             href="https://t.me/wesetupbot"
             target="_blank"
@@ -267,24 +272,24 @@ export async function PublicFooter() {
       <div className="border-t border-[#ececf4]">
         <div className="mx-auto max-w-[1200px] space-y-4 px-4 py-7 sm:px-6">
           <FooterLinkRow
-            title={t("По типу заведения")}
-            links={Object.values(NICHES).map((n) => ({
+            title={t("nicheLinks")}
+            links={Object.entries(NICHES).map(([id, n]) => ({
               href: `/${n.slug}`,
-              label: t(n.navLabel),
+              label: navigationLabel("niches", id),
             }))}
           />
           <FooterLinkRow
-            title={t("Частые журналы")}
-            links={Object.values(SEO_LANDINGS).map((s) => ({
+            title={t("popularJournals")}
+            links={Object.entries(SEO_LANDINGS).map(([id, s]) => ({
               href: `/${s.slug}`,
-              label: t(s.navLabel),
+              label: navigationLabel("journals", id),
             }))}
           />
           <FooterLinkRow
-            title={t("Возможности")}
+            title={t("features")}
             links={FEATURES_ORDER.map((slug) => ({
               href: `/features/${slug}`,
-              label: t(FEATURES_INFO[slug].title),
+              label: navigationLabel("features", slug),
             }))}
           />
         </div>

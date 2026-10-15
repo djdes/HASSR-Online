@@ -1,4 +1,6 @@
 import { computeDiscountRub, type PromoRule } from "./rules";
+import { pricingTranslator } from "@/i18n/pricing-messages";
+import type { Locale } from "@/i18n/locales";
 
 /**
  * Акции на подписку — чистые правила, без `db`: модуль импортируют и
@@ -179,20 +181,7 @@ export function computeCheckoutAmounts(input: {
 /* ------------------------------------------------------------------ время */
 
 const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
-const MONTHS_GENITIVE = [
-  "января",
-  "февраля",
-  "марта",
-  "апреля",
-  "мая",
-  "июня",
-  "июля",
-  "августа",
-  "сентября",
-  "октября",
-  "ноября",
-  "декабря",
-];
+
 const NBSP = "\u00a0";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -241,37 +230,46 @@ export function formatMskDateTime(date: Date): string {
  * читается как «весь день». Год не пишем: акции короткие, а текущий год
  * на сервере и в браузере мог бы разойтись на границе суток.
  */
-export function promotionEndLabel(endsAt: Date | string, locale: "ru" | "en" = "ru"): string {
+export function promotionEndLabel(endsAt: Date | string, locale: Locale = "ru"): string {
   const end = typeof endsAt === "string" ? new Date(endsAt) : endsAt;
   const p = mskParts(end);
-  const label = (day: number, month: number) => locale === "en"
-    ? `until ${day}${NBSP}${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month]}`
-    : `до ${day}${NBSP}${MONTHS_GENITIVE[month]}`;
+  const t = pricingTranslator(locale);
+  const label = (day: number, month: number) => t("promotion.endDate", {
+    day,
+    month: t("promotion.month", { month: String(month) }),
+  });
   if (p.hours === 0 && p.minutes === 0) {
     const last = mskParts(new Date(end.getTime() - 60_000));
     return label(last.day, last.month);
   }
-  const day = label(p.day, p.month);
-  if (p.hours === 23 && p.minutes === 59) return day;
-  return `${day}, ${pad(p.hours)}:${pad(p.minutes)}`;
+  const date = label(p.day, p.month);
+  if (p.hours === 23 && p.minutes === 59) return date;
+  return t("promotion.endDateTimeLabel", {
+    day: p.day,
+    month: t("promotion.month", { month: String(p.month) }),
+    time: `${pad(p.hours)}:${pad(p.minutes)}`,
+  });
 }
-
-/** Текст плашки: «−20 % до 10 октября». */
-export function promotionBadgeLabel(promotion: Pick<AppliedPromotion, "percent" | "endsAt">, locale: "ru" | "en" = "ru"): string {
-  return `−${promotion.percent}${NBSP}% ${promotionEndLabel(promotion.endsAt, locale)}`;
+export function promotionBadgeLabel(promotion: Pick<AppliedPromotion, "percent" | "endsAt">, locale: Locale = "ru"): string {
+  return pricingTranslator(locale)("promotion.badge", {
+    percent: promotion.percent,
+    end: promotionEndLabel(promotion.endsAt, locale),
+  });
 }
 
 /**
  * Точный конец для подсказки, в тон плашке: конец в полночь — «до
  * 10.10.2026, 23:59» (последний день целиком), иначе — ровно время конца.
  */
-export function promotionEndHint(promotion: Pick<AppliedPromotion, "endsAt">, locale: "ru" | "en" = "ru"): string {
+export function promotionEndHint(promotion: Pick<AppliedPromotion, "endsAt">, locale: Locale = "ru"): string {
   const end = new Date(promotion.endsAt);
   const p = mskParts(end);
   const shown = p.hours === 0 && p.minutes === 0 ? new Date(end.getTime() - 60_000) : end;
-  return locale === "en"
-    ? `Promotion ends on ${formatMskDateTime(shown)} Moscow time`
-    : `Акция действует до ${formatMskDateTime(shown)} по Москве`;
+  const formatted = formatMskDateTime(shown);
+  const [date, time] = formatted.split(", ");
+  return pricingTranslator(locale)("promotion.endHint", {
+    dateTime: pricingTranslator(locale)("promotion.endDateTime", { date, time }),
+  });
 }
 
 /**

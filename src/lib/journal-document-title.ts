@@ -12,6 +12,7 @@
  * можно было звать прямо в обработчиках диалога и покрыть юнит-тестом.
  */
 import { resolveJournalPeriodKind } from "@/lib/journal-period";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 /** Месяцы в родительном падеже: «1 сентября 2026». */
 const MONTHS_GENITIVE = [
@@ -95,7 +96,8 @@ function compare(a: ParsedDate, b: ParsedDate): number {
  */
 export function formatJournalPeriodLabel(
   dateFrom: string | null | undefined,
-  dateTo?: string | null
+  dateTo?: string | null,
+  locale: Locale = "ru",
 ): string {
   const from = parseIsoDate(dateFrom);
   if (!from) return "";
@@ -103,6 +105,18 @@ export function formatJournalPeriodLabel(
   // тогда период — это один день начала.
   const parsedTo = parseIsoDate(dateTo);
   const to = parsedTo && compare(parsedTo, from) >= 0 ? parsedTo : from;
+
+  if (locale !== "ru") {
+    const asDate = (value: ParsedDate) => new Date(Date.UTC(value.year, value.month - 1, value.day, 12));
+    const start = asDate(from), end = asDate(to);
+    const year = from.year === to.year && from.month === 1 && from.day === 1 && to.month === 12 && to.day === 31;
+    const month = from.year === to.year && from.month === to.month && from.day === 1 && to.day === daysInMonth(to.year, to.month);
+    const format = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+      year: "numeric", ...(year ? {} : { month: "long" as const }),
+      ...(year || month ? {} : { day: "numeric" as const }), timeZone: "UTC",
+    });
+    return year || month || compare(from, to) === 0 ? format.format(start) : format.formatRange(start, end);
+  }
 
   const dayFrom = `${from.day} ${MONTHS_GENITIVE[from.month - 1]}`;
   const dayTo = `${to.day} ${MONTHS_GENITIVE[to.month - 1]}`;

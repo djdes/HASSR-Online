@@ -2,6 +2,7 @@
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   BookOpen,
@@ -41,7 +42,12 @@ export function TaskFillHelperModal({
   journalCode,
   journalLabel,
 }: Props) {
-  const guide = getFillingGuide(journalCode);
+  const t = useTranslations("journalControls.taskHelper");
+  const tChrome = useTranslations("journalControls.guide");
+  const tSections = useTranslations("journalControls.guideSections");
+  const tGuide = useTranslations("journalFillingGuides");
+  const tWalkthrough = useTranslations("journalControls.walkthroughs");
+  const guide = getFillingGuide(journalCode, { guide: tGuide, walkthrough: tWalkthrough });
 
   // ESC закрывает модалку.
   useEffect(() => {
@@ -72,7 +78,7 @@ export function TaskFillHelperModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={tChrome("close")}
             className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25"
           >
             <X className="size-5" />
@@ -84,10 +90,10 @@ export function TaskFillHelperModal({
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-                Гайд
+                {tChrome("guide")}
               </div>
               <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em] sm:text-[24px]">
-                Как заполнять
+                {tChrome("how")}
               </h2>
               <p className="mt-1 text-[13px] text-white/85 sm:text-[14px]">
                 {journalLabel}
@@ -117,7 +123,7 @@ export function TaskFillHelperModal({
                 <section>
                   <SectionHeader
                     icon={Hammer}
-                    title="Что взять"
+                    title={tSections("materials")}
                     tone="amber"
                   />
                   <ul className="mt-3 space-y-2">
@@ -141,7 +147,7 @@ export function TaskFillHelperModal({
                 <section>
                   <SectionHeader
                     icon={ScrollText}
-                    title="Шаги"
+                    title={tSections("orderedSteps")}
                     tone="indigo"
                   />
                   <ol className="mt-3 space-y-3">
@@ -174,7 +180,7 @@ export function TaskFillHelperModal({
                 <section>
                   <SectionHeader
                     icon={CheckCircle2}
-                    title="Готово, когда"
+                    title={tSections("completion")}
                     tone="emerald"
                   />
                   <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-[13.5px] leading-relaxed text-emerald-900 sm:text-[14px]">
@@ -188,7 +194,7 @@ export function TaskFillHelperModal({
                 <section>
                   <SectionHeader
                     icon={AlertTriangle}
-                    title="Частые ошибки"
+                    title={tSections("mistakes")}
                     tone="rose"
                   />
                   <ul className="mt-3 space-y-2">
@@ -213,7 +219,7 @@ export function TaskFillHelperModal({
                   <div className="flex items-start gap-2">
                     <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
                     <span>
-                      <strong className="text-[#3c4053]">Источник:</strong>{" "}
+                      <strong className="text-[#3c4053]">{t("source")}</strong>{" "}
                       {guide.regulationRef}
                     </span>
                   </div>
@@ -227,11 +233,10 @@ export function TaskFillHelperModal({
                   <BookOpen className="size-6" />
                 </div>
                 <h3 className="mt-3 text-[16px] font-semibold text-[#0b1024]">
-                  Подробного гайда пока нет
+                  {t("missingTitle")}
                 </h3>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-[#6f7282]">
-                  Заполни поля по описанию выше. Если что-то непонятно —
-                  спроси заведующего производством или открой полную страницу гайда.
+                  {t("missingBody")}
                 </p>
                 <a
                   href={`/journals/${journalCode}/guide`}
@@ -239,7 +244,7 @@ export function TaskFillHelperModal({
                   rel="noopener noreferrer"
                   className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
                 >
-                  Открыть полную инструкцию
+                  {tChrome("full")}
                 </a>
               </div>
             </div>
@@ -253,7 +258,7 @@ export function TaskFillHelperModal({
             onClick={onClose}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#3d4efc] to-[#7a5cff] text-[15px] font-medium text-white shadow-[0_12px_30px_-12px_rgba(85,102,246,0.65)] transition-opacity hover:opacity-95"
           >
-            Понятно — заполняю
+            {t("start")}
           </button>
         </div>
       </div>

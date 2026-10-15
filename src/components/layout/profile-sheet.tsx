@@ -1,4 +1,6 @@
 "use client";
+import { PersonalLanguageSelect } from "@/components/i18n/personal-language-select";
+import { useTranslations } from "next-intl";
 
 import Link from "next/link";
 import {
@@ -87,6 +89,7 @@ export function ProfileSheet({
   isRoot: boolean;
   onLogout: () => void;
 }) {
+  const t = useTranslations("navigation");
   const inApp = useInsideMobileApp();
   const openMaster = useOpenMasterCabinet();
   return (
@@ -105,7 +108,7 @@ export function ProfileSheet({
           className={`${SHEET_ROW_CLASS} text-[#a13a32] hover:bg-[#fff4f2] active:bg-[#ffe9e5]`}
         >
           <LogOut className="size-5 shrink-0" />
-          Выйти
+          {t("header.logout")}
         </button>
       }
     >
@@ -122,7 +125,7 @@ export function ProfileSheet({
           onOpenCreate={onOpenCreate}
           showSettings={fullAccess}
           onNavigate={onClose}
-          label="Организации этого кабинета"
+          label={t("profile.organizationSwitcher")}
         />
       </div>
 
@@ -131,11 +134,11 @@ export function ProfileSheet({
           под ними всегда «Создать мастер-кабинет». */}
       {partnerCabinet || masterCabinets.length > 0 || canCreateOrganization ? (
         <>
-          <div className={SHEET_GROUP_LABEL_CLASS}>Другие кабинеты</div>
+          <div className={SHEET_GROUP_LABEL_CLASS}>{t("profile.otherCabinets")}</div>
           {partnerCabinet ? (
             <Link href="/partner" onClick={onClose} className={SHEET_ROW_CLASS}>
               <Handshake className="size-5 shrink-0 text-[#5566f6]" />
-              <span className="min-w-0 flex-1 truncate">Партнёрский кабинет</span>
+              <span className="min-w-0 flex-1 truncate">{t("header.partnerCabinet")}</span>
               <span className="max-w-[110px] shrink-0 truncate text-[12px] text-[#6f7282]">
                 {partnerCabinet.brandName}
               </span>
@@ -167,16 +170,16 @@ export function ProfileSheet({
               data-testid="profile-create-master-cabinet"
             >
               <Plus className="size-5 shrink-0" />
-              <span className="min-w-0 flex-1">Создать мастер-кабинет</span>
+              <span className="min-w-0 flex-1">{t("profile.createMasterCabinet")}</span>
             </button>
           ) : null}
         </>
       ) : null}
 
-      <div className={SHEET_GROUP_LABEL_CLASS}>Аккаунт</div>
+      <div className={SHEET_GROUP_LABEL_CLASS}>{t("profile.accountGroup")}</div>
       <Link href="/settings/balance" onClick={onClose} className={SHEET_ROW_CLASS}>
         <Coins className="size-5 shrink-0 text-[#5566f6]" />
-        <span className="min-w-0 flex-1">Баланс и бонусы</span>
+        <span className="min-w-0 flex-1">{t("profile.balanceBonuses")}</span>
         {balanceRub !== null ? (
           <span className="shrink-0 text-[13px] tabular-nums text-[#3848c7]">
             {balanceRub.toLocaleString("ru-RU")} ₽
@@ -190,28 +193,29 @@ export function ProfileSheet({
       {canManagePlan && inApp ? (
         <Link href="/settings/subscription" onClick={onClose} className={SHEET_ROW_CLASS}>
           <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
-          <span className="min-w-0 flex-1">Тариф</span>
+          <span className="min-w-0 flex-1">{t("profile.plan")}</span>
         </Link>
       ) : null}
 
       {fullAccess ? (
         <Link href="/settings" onClick={onClose} className={SHEET_ROW_CLASS}>
           <Settings className="size-5 shrink-0 text-[#6f7282]" />
-          <span className="min-w-0 flex-1">Настройки</span>
+          <span className="min-w-0 flex-1">{t("header.settings")}</span>
         </Link>
       ) : null}
 
       {isRoot ? (
         <Link href="/root" onClick={onClose} className={SHEET_ROW_CLASS}>
           <ShieldCheck className="size-5 shrink-0 text-[#5566f6]" />
-          <span className="min-w-0 flex-1">Панель платформы</span>
+          <span className="min-w-0 flex-1">{t("header.platformPanel")}</span>
         </Link>
       ) : null}
 
       {/* Тема — всем: это личная настройка, а не настройка организации.
           Лист при выборе не закрывается — видно, как перекрасился экран. */}
-      <div className={SHEET_GROUP_LABEL_CLASS}>Тема</div>
+      <div className={SHEET_GROUP_LABEL_CLASS}>{t("profile.theme")}</div>
       <ThemeTiles className="px-2 pb-1 pt-1" />
+      <div className="px-2 py-2"><PersonalLanguageSelect /></div>
       {canEditBranding ? (
         <Link
           href={BRANDING_SETTINGS_HREF}
@@ -220,7 +224,7 @@ export function ProfileSheet({
           className="mx-1 mt-1 inline-flex items-center gap-1.5 rounded-xl px-2 py-2 text-[13px] font-medium text-[var(--app-indigo-deep)] transition-colors hover:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           <Palette className="size-4 shrink-0" aria-hidden />
-          Логотип и цвета
+          {t("profile.branding")}
         </Link>
       ) : null}
     </BottomSheet>

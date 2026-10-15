@@ -30,6 +30,8 @@ type Exception = {
   reason: string;
   /** Разрешённые тексты целиком (пробелы схлопнуты). Без списка — весь файл. */
   only?: readonly string[];
+  /** Catalog exceptions apply only to these semantic keys, never the whole catalog. */
+  messageKeys?: readonly string[];
 };
 
 /** Ключ — файл или папка (со слешем на конце: всё внутри неё). */
@@ -38,21 +40,10 @@ const EXCEPTIONS: Readonly<Record<string, Exception>> = {
     reason:
       "Раздел «Бланки» — пустые формы для скачивания, так их ищут в Яндексе. Решение за владельцем.",
   },
-  "src/app/journals-info/page.tsx": {
-    reason: "Кнопка-ссылка на раздел «Бланки».",
-    only: ["Скачать пустые бланки"],
-  },
-  "src/app/page.tsx": {
-    reason: "Ссылка с главной на раздел «Бланки».",
-    only: ["Бланки журналов: PDF и Word"],
-  },
-  "src/components/public/public-chrome.tsx": {
-    reason: "Пункт меню сайта — ссылка на раздел «Бланки».",
-    only: ["Бланки"],
-  },
-  "src/i18n/public-en.ts": {
-    reason: "Ключи перевода двух уже разрешённых ссылок на раздел пустых форм; английские значения не вводят термин в журналы.",
-    only: ["Бланки", "Бланки журналов: PDF и Word"],
+  "src/i18n/messages/ru.json": {
+    reason: "Ранее разрешённые ссылки с главной, из меню и каталога журналов на пустые формы теперь хранятся по стабильным ключам перевода.",
+    only: ["Бланки", "Бланки журналов: PDF и Word", "Скачать пустые бланки"],
+    messageKeys: ["publicChrome.forms", "landing.logTemplates", "publicJournalIndex.hero.downloadBlanks"],
   },
   "src/app/prikazy/page.tsx": {
     reason:
@@ -98,11 +89,24 @@ const NEVER_EXCEPTED = [
   "src/lib/paper-journal-pdf.ts",
 ];
 
-type Text = { line: number; text: string };
+type Text = { line: number; text: string; messageKey?: string };
 type Hit = Text & { file: string };
 
 /** Тексты, которые могут дойти до человека: литералы, шаблоны, JSX. */
 function visibleTexts(fileName: string, source: string): Text[] {
+  if (fileName.endsWith(".json")) {
+    const texts: Text[] = [];
+    function visit(value: unknown, prefix = "") {
+      if (typeof value === "string") {
+        const offset = source.indexOf(JSON.stringify(value));
+        texts.push({ text: value.replace(/\s+/g, " ").trim(), messageKey: prefix, line: source.slice(0, Math.max(offset, 0)).split("\n").length });
+      } else if (value && typeof value === "object") {
+        for (const [key, child] of Object.entries(value)) visit(child, prefix ? `${prefix}.${key}` : key);
+      }
+    }
+    visit(JSON.parse(source));
+    return texts;
+  }
   const kind = /\.[jt]sx$/.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, kind);
   const texts: Text[] = [];
@@ -132,7 +136,7 @@ function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const entry of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
     const relative = `${dir}/${entry.name}`;
     if (entry.isDirectory()) sourceFiles(relative, out);
-    else if (SOURCE_FILE.test(entry.name) && !TEST_FILE.test(entry.name)) out.push(relative);
+    else if ((SOURCE_FILE.test(entry.name) && !TEST_FILE.test(entry.name) && !entry.name.endsWith(".d.ts")) || (dir === "src/i18n/messages" && entry.name.endsWith(".json"))) out.push(relative);
   }
   return out;
 }
@@ -156,11 +160,23 @@ function covers(key: string, file: string): boolean {
 function isAllowed(hit: Hit): boolean {
   return Object.entries(EXCEPTIONS).some(
     ([key, exception]) =>
-      covers(key, hit.file) && (!exception.only || exception.only.includes(hit.text)),
+      covers(key, hit.file) && (!exception.only || exception.only.includes(hit.text)) &&
+      (!exception.messageKeys || exception.messageKeys.includes(hit.messageKey ?? "")),
   );
 }
 
 const hits = collectHits();
+
+test("catalog terminology exceptions cannot hide the same word in journal messages", () => {
+  const [allowed] = visibleTexts("ru.json", '{"publicChrome":{"forms":"Бланки"}}');
+  assert.ok(isAllowed({ ...allowed, file: "src/i18n/messages/ru.json" }));
+  const [forbidden] = visibleTexts("ru.json", '{"journalFields":{"title":"Бланки"}}');
+  assert.ok(!isAllowed({ ...forbidden, file: "src/i18n/messages/ru.json" }));
+  const [indexLink] = visibleTexts("ru.json", '{"publicJournalIndex":{"hero":{"downloadBlanks":"Скачать пустые бланки"}}}');
+  assert.ok(isAllowed({ ...indexLink, file: "src/i18n/messages/ru.json" }));
+  const [journalLabel] = visibleTexts("ru.json", '{"journalFields":{"title":"Скачать пустые бланки"}}');
+  assert.ok(!isAllowed({ ...journalLabel, file: "src/i18n/messages/ru.json" }));
+});
 
 test("в текстах для человека нет слова «бланк» — кроме исключений", (t) => {
   const offenders = hits.filter((hit) => !isAllowed(hit));

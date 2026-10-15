@@ -1,0 +1,19 @@
+{
+  "locale": "uz",
+  "sourceHash": "cd44c646f205a6e2de3b017b1020d463796890fead3ab22cb06924f04bccc201",
+  "title": "iiko va 1C bilan sinxronlash: nimalar avtomatik to‘ldiriladi",
+  "excerpt": "Yetkazib beruvchilar, nomenklatura, yuk xatlari va hisobdan chiqarishlar avtomatik keladi; o‘lchovlar va imzolar esa xodim tomonidan kiritiladi. Smenani avtomatik yopishni yoqmasdan ma’lumot almashinuvini sozlash.",
+  "tags": ["Integratsiyalar", "iiko", "1C"],
+  "body": [
+    {"type":"p","text":"Jurnallardagi xatolarning asosiy manbalaridan biri — ma’lumotni qo‘lda kiritish. Oshpaz yuk xatini ko‘chiradi, raqamda adashadi va inspektor tayyor mahsulot bahosi bilan ombor hisobi orasidagi tafovutni topadi. iiko va 1C bilan integratsiya bu xavfni deyarli to‘liq bartaraf etadi."},
+    {"type":"h2","text":"Nimalar sinxronlanadi"},
+    {"type":"ul","items":["Yetkazib beruvchilar ma’lumotnomasi — ularni qayta kiritish shart emas.","O‘lchov birliklari va guruhlari bilan xomashyo nomenklaturasi.","Tovar qabul qilishlar — har bir yuk xati bir tugma bilan kirish nazoratida paydo bo‘ladi.","Hisobdan chiqarishlar — mahsulotni rad etish va utilizatsiyaga chiqarish 1C’da avtomatik buxgalteriya yozuvini yaratadi."]},
+    {"type":"h2","text":"Nimalar xodim tomonidan bajariladi"},
+    {"type":"p","text":"Haqiqiy o‘lchovlar: qabul paytidagi harorat, organoleptik baho va mas’ul xodimning imzosi. Bular ataylab avtomatik to‘ldirilmaydi — jurnalning mazmuni shundaki, ma’lumotni tirik inson o‘lchab qayd etadi."},
+    {"type":"callout","tone":"warn","title":"Avtomatik yopishda ehtiyot bo‘ling","text":"Jamoa barqaror ishlamasa, jurnallarni avtomatik yopishni yoqmang. Ochiq qolgan smena eslatma bo‘lib turgani, nol qiymatlar bilan yopilishidan yaxshiroq."},
+    {"type":"h2","text":"Sozlash"},
+    {"type":"ol","items":["WeSetup’da Sozlamalar → Integratsiyalar bo‘limini ochib, iiko yoki 1C’ni tanlang.","Tashqi tizim kabinetidan API-kalitni nusxalang.","Dastlabki sinxronlash davrini belgilang — odatda 30 kun.","Nomenklatura mosligini tekshiring: xomashyo — kirish nazoratiga, tayyor mahsulot — tayyor mahsulot jurnaliga."]},
+    {"type":"h2","text":"Bu qanday foyda beradi"},
+    {"type":"p","text":"Integratsiyani ulagan mijozlarimizdagi o‘lchovlarga ko‘ra, jurnallarni to‘ldirish vaqti o‘rtacha 35 foizga qisqaradi. Oshpazlar yuk xatlarini qog‘oz parchalariga yozib, smena oxirida ko‘chirishni bas qiladi — yozuv tovar qabul qilingach darhol jurnalda paydo bo‘ladi."}
+  ]
+}

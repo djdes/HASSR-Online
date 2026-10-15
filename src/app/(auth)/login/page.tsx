@@ -1,6 +1,7 @@
 import LoginClient from "./login-client";
 import { getSiteLocale } from "@/i18n/site-locale-server";
-import { siteLanguageAlternates } from "@/i18n/site-locale";
+import { siteLanguageAlternates, localizedHref } from "@/i18n/site-locale";
+import { translatorFor } from "@/i18n/translator";
 import { MiniShellReset } from "@/components/layout/mini-shell-reset";
 import {
   DEFAULT_OG_IMAGES,
@@ -36,13 +37,14 @@ const russianMetadata = {
 
 export async function generateMetadata() {
   const locale = await getSiteLocale();
-  const title = locale === "en" ? "Sign in" : TITLE;
-  const description = locale === "en" ? "Sign in to WeSetup. Digital SanPiN and HACCP logs for food service and production." : DESC;
-  const url = locale === "en" ? "https://wesetup.ru/en/login" : URL;
+  const t = await translatorFor(locale);
+  const title = t("auth.metadata.loginTitle");
+  const description = t("auth.metadata.loginDescription");
+  const url = `https://wesetup.ru${localizedHref("/login", locale)}`;
   return {
     ...russianMetadata, title, description,
     alternates: { canonical: url, languages: siteLanguageAlternates("/login") },
-    openGraph: { ...russianMetadata.openGraph, title, description, url, locale: locale === "en" ? "en_US" : "ru_RU", images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
+    openGraph: { ...russianMetadata.openGraph, title, description, url, locale: { ru: "ru_RU", en: "en_US", uz: "uz_UZ" }[locale], images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
     twitter: { ...russianMetadata.twitter, title, description, images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_TWITTER_IMAGES },
   };
 }

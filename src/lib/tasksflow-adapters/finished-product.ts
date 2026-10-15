@@ -20,6 +20,8 @@ import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
+  FINISHED_PRODUCT_ORGANOLEPTIC_DISH,
+  FINISHED_PRODUCT_ORGANOLEPTIC_SEMI,
   createFinishedProductRow,
   getFinishedProductOrganolepticOptions,
   type FinishedProductDocumentConfig,
@@ -55,9 +57,11 @@ function buildForm(
         config.fieldNameMode === "semi"
           ? "Наименование полуфабриката"
           : "Наименование блюда",
+      presentationKey: config.fieldNameMode === "semi" ? "dynamic.finishedProductSemiName" : "dynamic.finishedProductDishName",
       required: true,
       maxLength: 200,
       placeholder: "Например: куриный суп",
+      placeholderPresentationKey: "dynamic.finishedProductNamePlaceholder",
     },
     {
       type: "time",
@@ -69,13 +73,24 @@ function buildForm(
   ];
   // Оценка: варианты документа (у полуфабрикатов свои).
   const organolepticOptions = getFinishedProductOrganolepticOptions(config);
+  const standardOptions = config.fieldNameMode === "semi"
+    ? FINISHED_PRODUCT_ORGANOLEPTIC_SEMI
+    : FINISHED_PRODUCT_ORGANOLEPTIC_DISH;
+  const isStandardOptions = organolepticOptions.length === standardOptions.length
+    && organolepticOptions.every((option, index) => option === standardOptions[index]);
   if (organolepticOptions.length > 0) {
     fields.push({
       type: "select",
       key: "organoleptic",
       label: "Органолептическая оценка",
       required: true,
-      options: organolepticOptions.map((value) => ({ value, label: value })),
+      options: organolepticOptions.map((value, index) => ({
+        value,
+        label: value,
+        ...(isStandardOptions
+          ? { presentationKey: `options.finishedProduct.organoleptic.${config.fieldNameMode}.${index}` }
+          : {}),
+      })),
       defaultValue: organolepticOptions[0],
     });
   } else {
@@ -147,7 +162,10 @@ function buildForm(
     intro:
       (employeeName ? `${employeeName}, ` : "") +
       "запишите бракераж блюда — органолептическую оценку и решение.",
+    introPresentationKey: "dynamic.finishedProductIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить бракераж",
+    submitPresentationKey: "dynamic.saveFinishedProductReview",
     fields,
   };
 }

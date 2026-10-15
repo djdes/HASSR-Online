@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { Phone } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -12,6 +14,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function PhoneBindingPage() {
   const session = await requireAuth();
+  const t = await getTranslations("phoneBinding");
   const organizationId = getActiveOrgId(session);
 
   const [user, integration] = await Promise.all([
@@ -55,18 +58,16 @@ export default async function PhoneBindingPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Привязка телефона
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[640px] text-[14px] leading-relaxed text-[#6f7282]">
-              Номер связывает ваш аккаунт с TasksFlow — оттуда уходят
-              задачи сотрудникам. Укажите один раз, дальше он
-              автоматически подтянется к интеграции по совпадению
-              номера.
+              {t("intro")}
             </p>
           </div>
         </div>
       </div>
 
+      <DomainMessagesBoundary namespaces={["phoneBinding"]}>
       <PhoneBindingClient
         initialPhone={user?.phone ?? null}
         initialDisplay={user?.phone ? formatPhone(user.phone) : ""}
@@ -76,6 +77,7 @@ export default async function PhoneBindingPage() {
         userName={user?.name ?? ""}
         telegramLinked={Boolean(user?.telegramChatId)}
       />
+      </DomainMessagesBoundary>
     </div>
   );
 }

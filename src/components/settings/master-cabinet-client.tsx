@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   Building2,
   Check,
-  ChevronDown,
   Copy,
   Library,
-  Link2,
   Loader2,
   Mail,
   PenLine,
@@ -89,15 +87,6 @@ export function MasterCabinetClient({
   const master = status.master;
   const objectsCount = status.poolOrganizations.length;
   const formValid = name.trim().length >= 2 && EMAIL_RE.test(email.trim());
-
-  const reload = useCallback(async () => {
-    try {
-      const response = await fetch("/api/settings/master-cabinet", { cache: "no-store" });
-      if (response.ok) setStatus((await response.json()) as MasterCabinetStatus);
-    } catch {
-      // Страница остаётся с прежними данными — не критично.
-    }
-  }, []);
 
   async function invite(person: { name: string; email: string }): Promise<boolean> {
     setError(null);
@@ -262,7 +251,7 @@ export function MasterCabinetClient({
           },
           {
             title: "3. Объекты получают списки",
-            body: "Все объекты с вашим кодом справочника сразу видят меню в бракераже готовой продукции, а сырьё, поставщиков и изготовителей — в скоропорте.",
+            body: "Справочник блюд сохраняется отдельно. Для выгрузки в бракеражные журналы выберите дату в мастер-кабинете. Сырьё, поставщики и изготовители обновляются в скоропорте при сохранении.",
           },
         ]}
         qa={[
@@ -272,7 +261,7 @@ export function MasterCabinetClient({
           },
           {
             q: "Как подключить ещё один объект?",
-            a: "В его настройках БЖГП → «Общий справочник блюд» введите код справочника. Меню и сырьё придут сразу после подключения.",
+            a: "Скопируйте «Код журнала объекта» в настройках БЖГП пищеблока. В мастер-кабинете откройте «Подключённые объекты», введите этот код и подтвердите подключение.",
           },
           {
             q: "Сотрудник бэк-офиса увидит журналы и людей?",
@@ -331,23 +320,12 @@ export function MasterCabinetClient({
               </ul>
             ) : (
               <p className="mt-2 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-                Пока только «{organizationName}». Другие объекты подключаются этим кодом.
+                Пока только «{organizationName}». Другие объекты подключаются в мастер-кабинете по их собственным кодам.
               </p>
             )}
           </div>
 
-          <details className="group mt-5 rounded-2xl border border-[#ececf4] bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-2xl px-4 py-3 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff] [&::-webkit-details-marker]:hidden">
-              <span className="inline-flex items-center gap-2">
-                <Link2 className="size-4 text-[#5566f6]" />
-                Подключиться к коду другой организации
-              </span>
-              <ChevronDown className="size-4 text-[#9b9fb3] transition-transform duration-200 group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-[#ececf4] px-4 py-4">
-              <DishPoolSection hideTitle onChange={() => void reload()} />
-            </div>
-          </details>
+          <div className="mt-5"><DishPoolSection hideTitle /></div>
         </section>
 
         {/* Мастер-кабинет */}

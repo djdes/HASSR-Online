@@ -1,5 +1,12 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { finishedDate, finishedTitle } from "./finished-product-presentation";
+import { formatJournalPeriodLabel } from "@/lib/journal-document-title";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -64,17 +71,6 @@ type Props = {
   documents: JournalListDocument[];
 };
 
-/**
- * «YYYY-MM-DD» → «ДД-ММ-ГГГГ». На эталоне дата в карточке списка бракеража
- * пишется через дефисы («01-04-2026»), а не точками.
- */
-function formatDashedDate(isoDate: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
-  if (!match) return "";
-  const [, year, month, day] = match;
-  return `${day}-${month}-${year}`;
-}
-
 function endOfMonth(dateValue: string) {
   const [year, month] = dateValue.split("-").map(Number);
   if (!year || !month) return dateValue;
@@ -88,7 +84,10 @@ export function FinishedProductDocumentsClient({
   users,
   documents,
 }: Props) {
+  const t = useTranslations("finishedProduct");
   const router = useRouter();
+  const locale = useLocale() as Locale;
+  const documentTitle = (document: JournalListDocument) => finishedTitle(document.title, document.dateFrom, document.dateTo, locale, t);
   const [editingDocument, setEditingDocument] = useState<JournalListDocument | null>(null);
   const [title, setTitle] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -124,14 +123,14 @@ export function FinishedProductDocumentsClient({
     const cfg = normalizeFinishedProductDocumentConfig(document.config);
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: t("list.deleteDescription", { title: documentTitle(document) }),
       bullets: [
-        { label: `Записей бракеража: ${cfg.rows.length}`, tone: "warn" },
-        { label: `Изделий в справочнике документа: ${cfg.itemsCatalog.length}`, tone: "info" },
-        { label: `Период документа: ${document.periodLabel}`, tone: "info" },
+        { label: t("list.records", { count: cfg.rows.length }), tone: "warn" },
+        { label: t("list.products", { count: cfg.itemsCatalog.length }), tone: "info" },
+        { label: t("list.period", { period: formatJournalPeriodLabel(document.dateFrom, document.dateTo, locale) }), tone: "info" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: t("list.deleted", { title: documentTitle(document) }),
+      errorMessage: t("errors.delete"),
     });
   }
 
@@ -160,11 +159,11 @@ export function FinishedProductDocumentsClient({
           }),
         }),
       });
-      if (!response.ok) throw new Error();
+      if (!response.ok) throw new Error(await readLocalizedApiError(response, locale, t("errors.settings")));
       setEditingDocument(null);
       router.refresh();
-    } catch {
-      toast.error("Не удалось сохранить настройки");
+    } catch (error) {
+      toast.error(humanizeFetchError(error, t("errors.settings"), t("errors.network")));
     } finally {
       setIsSaving(false);
     }
@@ -175,8 +174,8 @@ export function FinishedProductDocumentsClient({
       <JournalTopBar
         heading={
           activeTab === "closed"
-            ? "Журнал бракеража готовой пищевой продукции (закрытые)"
-            : "Журнал бракеража готовой пищевой продукции"
+            ? t("closedTitle")
+            : t("title")
         }
         activeTab={activeTab}
         templateCode={templateCode}
@@ -205,7 +204,7 @@ export function FinishedProductDocumentsClient({
             >
               <Link href={`/journals/${templateCode}/documents/${document.id}`} className="min-w-0">
                 <div className={`${JOURNAL_CARD_TITLE_CLASS} truncate`}>
-                  {document.title}
+                  {documentTitle(document)}
               <SharedDocumentBadge shared={document.shared} />
                 </div>
               </Link>
@@ -214,7 +213,7 @@ export function FinishedProductDocumentsClient({
                   href={`/journals/${templateCode}/documents/${document.id}`}
                   className={JOURNAL_CARD_SECTION_CLASS}
                 >
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("people.responsibleLabel")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>{responsible}</div>
                 </Link>
               ) : null}
@@ -222,9 +221,9 @@ export function FinishedProductDocumentsClient({
                 href={`/journals/${templateCode}/documents/${document.id}`}
                 className={JOURNAL_CARD_SECTION_CLASS}
               >
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("fields.dateFrom")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {formatDashedDate(document.dateFrom) || document.startedAtLabel}
+                  {finishedDate(document.dateFrom, locale) || document.startedAtLabel}
                 </div>
               </Link>
               <DocumentActionsMenu
@@ -246,17 +245,16 @@ export function FinishedProductDocumentsClient({
         <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки документа
-            </DialogTitle>
+              {t("settings.title")}</DialogTitle>
           </DialogHeader>
           <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
             <FloatingInputField
-              label="Название документа"
+              label={t("settings.documentTitle")}
               value={title}
               onChange={setTitle}
             />
-            <DateField label="Дата начала" value={dateFrom} onChange={setDateFrom} />
-            <FloatingLabelField label="Колонка наименования">
+            <DateField label={t("fields.dateFrom")} value={dateFrom} onChange={setDateFrom} />
+            <FloatingLabelField label={t("settings.nameColumn")}>
               <div className="flex flex-col gap-2 pt-1 text-[14px] text-[#0b1024]">
                 <label className="flex items-center gap-2.5">
                   <input
@@ -265,8 +263,7 @@ export function FinishedProductDocumentsClient({
                     onChange={() => setFieldNameMode("dish")}
                     className="size-4 accent-[#5566f6]"
                   />
-                  Наименование блюд (изделий)
-                </label>
+                  {t("settings.dishName")}</label>
                 <label className="flex items-center gap-2.5">
                   <input
                     type="radio"
@@ -274,33 +271,28 @@ export function FinishedProductDocumentsClient({
                     onChange={() => setFieldNameMode("semi")}
                     className="size-4 accent-[#5566f6]"
                   />
-                  Наименование полуфабриката
-                </label>
+                  {t("settings.semiName")}</label>
               </div>
             </FloatingLabelField>
             <div className="space-y-2 rounded-xl border p-3">
-              <Label>Добавить поля</Label>
+              <Label>{t("settings.addFields")}</Label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox checked={showProductTemp} onCheckedChange={(v) => setShowProductTemp(v === true)} />
-                T°C внутри продукта
-              </label>
+                {t("fields.temperature")}</label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={showCorrectiveAction}
                   onCheckedChange={(v) => setShowCorrectiveAction(v === true)}
                 />
-                Корректирующие действия
-              </label>
+                {t("fields.corrective")}</label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox checked={showOxygenLevel} onCheckedChange={(v) => setShowOxygenLevel(v === true)} />
-                Остаточный уровень кислорода, % об.
-              </label>
+                {t("fields.oxygen")}</label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox checked={showCourierTime} onCheckedChange={(v) => setShowCourierTime(v === true)} />
-                Время передачи блюд курьеру
-              </label>
+                {t("fields.courierFull")}</label>
             </div>
-            <FloatingLabelField label="Кто подписывает">
+            <FloatingLabelField label={t("settings.whoSigns")}>
               <div className="flex flex-col gap-2 pt-1 text-[14px] text-[#0b1024]">
                 <label className="flex items-center gap-2.5">
                   <input
@@ -309,8 +301,7 @@ export function FinishedProductDocumentsClient({
                     onChange={() => setInspectorMode("inspector_name")}
                     className="size-4 accent-[#5566f6]"
                   />
-                  ФИО лица, проводившего бракераж
-                </label>
+                  {t("people.inspectorFull")}</label>
                 <label className="flex items-center gap-2.5">
                   <input
                     type="radio"
@@ -318,15 +309,14 @@ export function FinishedProductDocumentsClient({
                     onChange={() => setInspectorMode("commission_signatures")}
                     className="size-4 accent-[#5566f6]"
                   />
-                  Подписи членов бракеражной комиссии
-                </label>
+                  {t("commission.fullSignatures")}</label>
               </div>
             </FloatingLabelField>
             <FloatingInputField
-              label="Примечание"
+              label={t("fields.note")}
               value={footerNote}
               onChange={setFooterNote}
-              placeholder="Печатается под таблицей"
+              placeholder={t("settings.footerHint")}
             />
           </div>
           <div className={JOURNAL_DIALOG_FOOTER_CLASS}>
@@ -336,7 +326,7 @@ export function FinishedProductDocumentsClient({
                 disabled={isSaving}
                 className={JOURNAL_DIALOG_SUBMIT_CLASS}
               >
-                {isSaving ? "Сохранение..." : "Сохранить"}
+                {isSaving ? t("actions.saving") : t("actions.save")}
               </Button>
             </div>
           </div>

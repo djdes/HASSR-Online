@@ -16,6 +16,7 @@ import { db } from "@/lib/db";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import {
   CLEANING_DOCUMENT_TEMPLATE_CODE,
+  defaultCleaningRoomPresentationKey,
   type CleaningDocumentConfig,
   effectiveStepRequirePhoto,
   listCleaningRoomCompletions,
@@ -508,14 +509,21 @@ async function buildRoomCleaningFormFromDb(args: {
   dateKey: string;
 }): Promise<{
   intro?: string;
+  introPresentationKey?: string;
+  introPresentationValues?: Record<string, string | number>;
   fields: TaskFormField[];
   pipeline: Array<{
     id: string;
     title: string;
+    titlePresentationKey?: string;
+    titlePresentationValues?: Record<string, string | number>;
     detail: string;
+    detailPresentationKey?: string;
+    detailPresentationValues?: Record<string, string | number>;
     photoMode?: "required" | "optional";
   }>;
   submitLabel?: string;
+  submitPresentationKey?: string;
 } | null> {
   // Source 1: Room (DB) — основной.
   const dbRoom = await db.room.findFirst({
@@ -595,6 +603,8 @@ async function buildRoomCleaningFormFromDb(args: {
   ]
     .filter(Boolean)
     .join("\n");
+  const introPresentationKey = "dynamic.cleaning.roomIntro";
+  const introPresentationValues = { type: args.cleanType, room: roomName, roomKind: "custom", hasDetergent: detergent ? "yes" : "no", detergent };
 
   const requirePhoto = dbRoom?.requirePhoto === true;
 
@@ -608,21 +618,30 @@ async function buildRoomCleaningFormFromDb(args: {
       type: "boolean",
       key: "confirmed",
       label: cleanLabel,
+      presentationKey: "dynamic.cleaning.kindLabel",
+      presentationValues: { type: args.cleanType },
     };
     return {
       intro,
+      introPresentationKey,
+      introPresentationValues,
       fields: [confirmField],
       pipeline: [
         {
           id: "confirm",
           title: cleanLabel,
+          titlePresentationKey: "dynamic.cleaning.kindLabel",
+          titlePresentationValues: { type: args.cleanType },
           detail: detergent
             ? `Сделай ${cleanLabel.toLowerCase()} в помещении «${roomName}» с использованием «${detergent}». Подтверди по факту.`
             : `Сделай ${cleanLabel.toLowerCase()} в помещении «${roomName}». Подтверди по факту.`,
           ...(requirePhoto ? { photoMode: "required" as const } : {}),
+          detailPresentationKey: "dynamic.cleaning.taskDetail",
+          detailPresentationValues: { type: args.cleanType, room: roomName, roomKind: "custom", hasDetergent: detergent ? "yes" : "no", detergent },
         },
       ],
       submitLabel: "Готово",
+      submitPresentationKey: "dynamic.cleaning.done",
     };
   }
 
@@ -632,12 +651,16 @@ async function buildRoomCleaningFormFromDb(args: {
       type: "boolean" as const,
       key: `step_${idx}`,
       label: `${idx + 1}. ${step.label}`,
+      presentationKey: "dynamic.cleaning.scopeCheckbox",
+      presentationValues: { step: idx + 1, label: step.label },
       ...(stepRequiresPhoto ? { requirePhoto: true } : {}),
     };
   });
 
   return {
     intro,
+    introPresentationKey,
+    introPresentationValues,
     fields: stepFields,
     pipeline: scopeSteps.map((step, idx) => {
       const stepRequiresPhoto = effectiveStepRequirePhoto(step, requirePhoto);
@@ -645,10 +668,13 @@ async function buildRoomCleaningFormFromDb(args: {
         id: `step-${idx + 1}`,
         title: step.label,
         detail: `Шаг ${idx + 1} из ${scopeSteps.length}. После выполнения нажми «Сделал».`,
+        detailPresentationKey: "dynamic.cleaning.scopeStepDetail",
+        detailPresentationValues: { step: idx + 1, total: scopeSteps.length },
         ...(stepRequiresPhoto ? { photoMode: "required" as const } : {}),
       };
     }),
     submitLabel: "Готово",
+      submitPresentationKey: "dynamic.cleaning.done",
   };
 }
 
@@ -657,32 +683,45 @@ function buildPairsCleaningForm(args: {
   todayKey: string;
 }): {
   intro?: string;
+  introPresentationKey?: string;
+  introPresentationValues?: Record<string, string | number>;
   fields: TaskFormField[];
   pipeline: Array<{
     id: string;
     title: string;
+    titlePresentationKey?: string;
+    titlePresentationValues?: Record<string, string | number>;
     detail: string;
+    detailPresentationKey?: string;
+    detailPresentationValues?: Record<string, string | number>;
   }>;
   submitLabel?: string;
+  submitPresentationKey?: string;
 } | null {
   const rooms = args.config.rooms ?? [];
   if (rooms.length === 0) {
     return {
+      introPresentationKey: "dynamic.cleaning.pairsIntro",
       intro: "Уборка по плану журнала. Подтверди по факту.",
       fields: [
         {
           type: "boolean",
           key: "confirmed",
+          presentationKey: "dynamic.cleaning.completedLabel",
           label: "Уборка выполнена",
         },
       ],
       pipeline: [
         {
           id: "confirm",
+          titlePresentationKey: "dynamic.cleaning.kindLabel",
+          titlePresentationValues: { type: "current" },
           title: "Уборка",
+          detailPresentationKey: "dynamic.cleaning.pairsTaskDetail",
           detail: "Сделай уборку согласно журналу.",
         },
       ],
+    submitPresentationKey: "dynamic.cleaning.done",
       submitLabel: "Готово",
     };
   }
@@ -696,21 +735,29 @@ function buildPairsCleaningForm(args: {
 
   if (todayRooms.length === 0) {
     return {
+      introPresentationKey: "dynamic.cleaning.noScheduledIntro",
       intro:
         "Сегодня по плану нет помещений для обязательной уборки. Если нужна — пройди по списку и подтверди.",
       fields: rooms.slice(0, 6).map((room, idx) => ({
         type: "boolean" as const,
         key: `room_${idx}_${room.id}`,
+        presentationKey: "dynamic.cleaning.roomLabel",
+        presentationValues: { room: room.name, roomKind: defaultCleaningRoomPresentationKey(room) ?? "custom", hasDetergent: room.detergent ? "yes" : "no", detergent: room.detergent ?? "" },
         label: `Уборка · ${room.name}${room.detergent ? ` (средство: ${room.detergent})` : ""}`,
       })),
       pipeline: rooms.slice(0, 6).map((room, idx) => ({
         id: `room-${idx + 1}`,
+        titlePresentationKey: "dynamic.cleaning.roomLabel",
+        titlePresentationValues: { room: room.name, roomKind: defaultCleaningRoomPresentationKey(room) ?? "custom", hasDetergent: room.detergent ? "yes" : "no", detergent: room.detergent ?? "" },
         title: `Уборка · ${room.name}`,
+        detailPresentationKey: "dynamic.cleaning.roomDetail",
+        detailPresentationValues: { hasDetergent: room.detergent ? "yes" : "no", detergent: room.detergent ?? "" },
         detail: room.detergent
           ? `Средство: ${room.detergent}.`
           : "Уборка по плану.",
       })),
       submitLabel: "Готово",
+      submitPresentationKey: "dynamic.cleaning.done",
     };
   }
 
@@ -720,7 +767,11 @@ function buildPairsCleaningForm(args: {
     const kind = cell === "G" ? "Генеральная" : "Текущая";
     return {
       id: `room-${idx + 1}-${room.id}`,
+      titlePresentationKey: "dynamic.cleaning.kindRoomLabel",
+      titlePresentationValues: { type: cell === "G" ? "general" : "current", room: room.name, roomKind: defaultCleaningRoomPresentationKey(room) ?? "custom" },
       title: `${kind} · ${room.name}`,
+      detailPresentationKey: "dynamic.cleaning.plannedRoomDetail",
+      detailPresentationValues: { type: cell === "G" ? "general" : "current", hasDetergent: room.detergent ? "yes" : "no", detergent: room.detergent ?? "" },
       detail: room.detergent
         ? `Средство: ${room.detergent}. Сделай ${
             cell === "G" ? "генеральную" : "текущую"
@@ -737,15 +788,20 @@ function buildPairsCleaningForm(args: {
     return {
       type: "boolean",
       key: `room_${idx}_${room.id}`,
+      presentationKey: "dynamic.cleaning.kindRoomLabel",
+      presentationValues: { type: cell === "G" ? "general" : "current", room: room.name, roomKind: defaultCleaningRoomPresentationKey(room) ?? "custom" },
       label: `${kind} · ${room.name}${room.detergent ? ` (средство: ${room.detergent})` : ""}`,
     };
   });
 
   return {
+    introPresentationKey: "dynamic.cleaning.todayCount",
+    introPresentationValues: { count: pipeline.length },
     intro: `Сегодня по плану уборка в ${pipeline.length} помещ.`,
     fields: stepFields,
     pipeline,
     submitLabel: "Готово",
+    submitPresentationKey: "dynamic.cleaning.done",
   };
 }
 

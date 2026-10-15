@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 
 import { usePathname } from "next/navigation";
 
@@ -15,8 +17,9 @@ import { isSectionRoot } from "@/components/ui/skeleton-routes";
  * с тёмным баннером, которого на ней нет, — экран «прыгал».
  */
 export default function SettingsLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   if (!isSectionRoot(usePathname(), "/settings")) {
-    return <PageSkeleton label="Загружаем настройки…" body="panel" />;
+    return <PageSkeleton label={tLoading("settings")} body="panel" />;
   }
   return <SettingsHubSkeleton />;
 }
@@ -28,9 +31,10 @@ export default function SettingsLoading() {
  * группы карточек разделов.
  */
 function SettingsHubSkeleton() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем настройки…</span>
+      <span className="sr-only">{tLoading("settings")}</span>
 
       {/* Hero */}
       <section className="rounded-3xl border border-[#ececf4] bg-[#0b1024] p-5 sm:p-8 md:p-10">

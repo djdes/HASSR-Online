@@ -1,6 +1,6 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { ChevronDown, Wrench } from "lucide-react";
@@ -34,7 +34,7 @@ export function EquipmentPricing({
   /** Самый дешёвый комплект — показываем как «от N ₽». */
   hardwareFromRub: number;
 }) {
-  const t = usePublicCopy();
+  const t = useTranslations("landingComponents.equipment");
   const [open, setOpen] = useState(false);
 
   return (
@@ -48,14 +48,14 @@ export function EquipmentPricing({
               <Wrench className="size-5" />
             </span>
             <div className="text-[20px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              {t("+ Оборудование")}</div>
+              {t("title")}</div>
           </div>
 
           <div className="mt-6 flex items-baseline gap-2">
             <span className="text-[34px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {t("от ")}{hardwareFromRub.toLocaleString("ru-RU")} ₽
+              {t("bundlePrice", { price: hardwareFromRub })}
             </span>
-            <span className="text-[16px] text-[#9b9fb3] sm:text-[13px]">{t("разово")}</span>
+            <span className="text-[16px] text-[#9b9fb3] sm:text-[13px]">{t("oneTime")}</span>
           </div>
 
           {/* На телефоне текст 16 px и кнопка 48 px — как у карточек рядом
@@ -63,15 +63,15 @@ export function EquipmentPricing({
           <ul className="mt-6 space-y-2.5 pb-8 text-[16px] text-[#3c4053] sm:text-[14px]">
             <li className="flex items-start gap-2">
               <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#5566f6] sm:mt-[7px]" />
-              <span>{t("Датчики в холодильники — температура пишется сама")}</span>
+              <span>{t("sensorBenefit")}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#5566f6] sm:mt-[7px]" />
-              <span>{t("Планшет на кухне и NFC-брелоки для смены")}</span>
+              <span>{t("tabletBenefit")}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#5566f6] sm:mt-[7px]" />
-              <span>{t("Выезд, монтаж и обучение смены")}</span>
+              <span>{t("setupBenefit")}</span>
             </li>
           </ul>
 
@@ -85,7 +85,7 @@ export function EquipmentPricing({
             aria-controls="equipment-calculator"
             className="mt-auto inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-11 sm:text-[15px]"
           >
-            {open ? t("Свернуть подбор") : t("Подобрать оборудование")}
+            {open ? t("collapse") : t("choose")}
             <ChevronDown
               className={`size-4 text-[#5566f6] transition-transform duration-200 ${
                 open ? "rotate-180" : ""
@@ -102,9 +102,9 @@ export function EquipmentPricing({
         >
           <div className="mb-5 max-w-[560px]">
             <div className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              {t("Подбор оборудования")}</div>
+              {t("calculatorTitle")}</div>
             <p className="mt-1.5 text-[14px] leading-[1.55] text-[#6f7282]">
-              {t("Выберите, что нужно — цена пересчитается. Уже есть планшет или датчики: снимите галочку, и останется только подписка.")}</p>
+              {t("calculatorDescription")}</p>
           </div>
           <PricingCalculator
             subscriptionMonthly={subscriptionMonthly}

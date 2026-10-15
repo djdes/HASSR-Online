@@ -1,9 +1,9 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
-import { publicError } from "@/i18n/public-copy";
+import { useAuthError } from "@/components/i18n/use-auth-error";
 
 import { Suspense, useEffect, useState } from "react";
 import { parseMobileAppUserAgent } from "@/lib/mobile-app";
@@ -12,10 +12,11 @@ import Link from "@/components/i18n/localized-link";
 import { BrandLogo } from "@/components/brand/logo";
 import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { looksLikePhoneInput, phoneQueryValue } from "@/lib/login-identifier";
-import { JOURNALS_TOTAL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 function LoginForm() {
-  const t = usePublicCopy();
+  const t = useTranslations("auth");
+  const authError = useAuthError();
   const locale = useSiteLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,7 +72,7 @@ function LoginForm() {
         body: JSON.stringify({}),
       });
       const optJson = (await opt.json()) as { challengeId: string; options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; error?: string };
-      if (!opt.ok) throw new Error(optJson.error ?? t("Не удалось начать вход"));
+      if (!opt.ok) throw new Error(optJson.error ?? t("login.passkey.startFailed"));
       const response = await startAuthentication({ optionsJSON: optJson.options });
       const ver = await fetch("/api/webauthn/authenticate/verify", {
         method: "POST",
@@ -79,11 +80,11 @@ function LoginForm() {
         body: JSON.stringify({ challengeId: optJson.challengeId, response }),
       });
       const verJson = (await ver.json()) as { error?: string };
-      if (!ver.ok) throw new Error(verJson.error ?? t("Подпись не подтверждена"));
+      if (!ver.ok) throw new Error(verJson.error ?? t("login.passkey.verificationFailed"));
       window.location.href = "/dashboard";
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      setError(/NotAllowed|cancel|abort/i.test(msg) ? t("Вход по Face ID отменён") : publicError(locale, msg, "Не удалось войти по Face ID"));
+      setError(/NotAllowed|cancel|abort/i.test(msg) ? t("login.passkey.cancelled") : authError(msg, t("errors.passkeySignIn")));
     } finally {
       setPasskeyBusy(false);
     }
@@ -92,7 +93,7 @@ function LoginForm() {
   async function requestMagicLink() {
     const email = formData.email.trim();
     if (!email) {
-      setError(t("Введите почту — на неё придёт ссылка для входа"));
+      setError(t("login.magicLink.emailRequired"));
       return;
     }
     setMagicState("sending");
@@ -105,13 +106,13 @@ function LoginForm() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(publicError(locale, data?.error, "Не удалось отправить письмо"));
+        setError(authError(data?.error, t("errors.emailSend")));
         setMagicState("idle");
         return;
       }
       setMagicState("sent");
     } catch {
-      setError(t("Ошибка соединения с сервером"));
+      setError(t("login.errors.connection"));
       setMagicState("idle");
     }
   }
@@ -126,7 +127,7 @@ function LoginForm() {
   async function requestReset() {
     const email = formData.email.trim().toLowerCase();
     if (!email.includes("@")) {
-      setError(t("Введите email — на него придёт ссылка для смены пароля"));
+      setError(t("login.passwordReset.emailRequired"));
       return;
     }
     setForgotState("sending");
@@ -139,7 +140,7 @@ function LoginForm() {
       setForgotState("sent");
     } catch {
       setForgotState("idle");
-      setError(t("Не удалось отправить письмо. Попробуйте ещё раз"));
+      setError(t("login.email.sendFailed"));
     }
   }
 
@@ -169,7 +170,7 @@ function LoginForm() {
         const data = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
-        setError(publicError(locale, data?.error, "Неверный email или пароль"));
+        setError(authError(data?.error, t("errors.invalidCredentials")));
         return;
       }
       const data = (await res.json().catch(() => null)) as {
@@ -181,14 +182,14 @@ function LoginForm() {
         setCode("");
         return;
       }
-      if (locale === "en") {
+      if (locale !== "ru") {
         window.location.assign(nextPath);
         return;
       }
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError(t("Ошибка соединения с сервером"));
+      setError(t("login.errors.connection"));
     } finally {
       setLoading(false);
     }
@@ -207,17 +208,17 @@ function LoginForm() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(publicError(locale, data?.error, "Неверный код"));
+        setError(authError(data?.error, t("errors.invalidCode")));
         return;
       }
-      if (locale === "en") {
+      if (locale !== "ru") {
         window.location.assign(nextPath);
         return;
       }
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError(t("Ошибка соединения с сервером"));
+      setError(t("login.errors.connection"));
     } finally {
       setLoading(false);
     }
@@ -248,7 +249,7 @@ function LoginForm() {
         <div className="relative z-10 flex flex-col">
           {/* Тот же знак, что в шапке лендинга и в футере — один бренд
               на всех публичных экранах. */}
-          <Link href="/" className="text-white" aria-label={t("WeSetup — на главную")}>
+          <Link href="/" className="text-white" aria-label={t("login.brand.homeLabel")}>
             <BrandLogo height={26} title="" />
           </Link>
         </div>
@@ -256,18 +257,18 @@ function LoginForm() {
         <div className="relative z-10 mt-auto max-w-[520px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] uppercase tracking-[0.18em] text-white/70 backdrop-blur">
             <span className="size-1.5 rounded-full bg-[#7cf5c0]" />
-            {locale === "en" ? `${JOURNALS_TOTAL} logs` : JOURNALS_TOTAL_LABEL} {t(" СанПиН / ХАССП")}</div>
+            {t("login.marketing.journalCount", { count: JOURNALS_TOTAL })}</div>
           <h1 className="text-[46px] font-semibold leading-[1.05] tracking-[-0.03em]">
-            {t("Электронные журналы пищевого производства")}</h1>
+            {t("login.marketing.heading")}</h1>
           <p className="mt-5 max-w-[440px] text-[16px] leading-[1.6] text-white/70">
-            {t("Контроль температур, санитарии и прослеживаемости сырья — в одном месте. Telegram-уведомления, импорт iiko, печать в формате Роспотребнадзора.")}</p>
+            {t("login.marketing.description")}</p>
 
           <ul className="mt-8 grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] text-white/80">
             {[
-              t("Базовый + Расширенный тарифы"),
-              t("Доступ по ролям и журналам"),
-              t("Уведомления в Telegram"),
-              t("Автозаполнение с датчиков"),
+              t("login.marketing.plans"),
+              t("login.marketing.accessControl"),
+              t("login.marketing.telegramAlerts"),
+              t("login.marketing.sensorEntries"),
             ].map((item) => (
               <li key={item} className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-[#7cf5c0]" />
@@ -283,7 +284,7 @@ function LoginForm() {
               href="/register"
               className="underline-offset-4 hover:text-white hover:underline"
             >
-              {t("Зарегистрировать компанию")}</Link>
+              {t("login.actions.registerCompany")}</Link>
           </div>
         </div>
       </aside>
@@ -304,24 +305,24 @@ function LoginForm() {
         <div className="relative w-full max-w-[420px]">
           {/* Mobile brand header */}
           <div className="mb-8 lg:hidden">
-            <Link href="/" className="text-[#0b1024]" aria-label={t("WeSetup — на главную")}>
+            <Link href="/" className="text-[#0b1024]" aria-label={t("login.brand.homeLabel")}>
               <BrandLogo height={24} title="" />
             </Link>
           </div>
 
           <h2 className="text-[clamp(1.5rem,2vw+1rem,2rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-            {t("Вход в личный кабинет")}</h2>
+            {t("login.heading")}</h2>
           <p className="mt-2 text-[14px] text-[#6f7282]">
             {challengeId
-              ? t("Второй шаг: код из Telegram.")
-              : t("Введите email и пароль, выданные вашей компанией.")}
+              ? t("login.codeStep.description")
+              : t("login.form.description")}
           </p>
 
           {alreadyExists && (
             <div className="mt-6 flex items-start gap-2 rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] px-4 py-3 text-[13px] text-[#3c4053]">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
               <span>
-                {t("Аккаунт с этой почтой уже есть — введите пароль. Не помните его? Нажмите «Забыли пароль?» ниже.")}</span>
+                {t("login.notices.accountExists")}</span>
             </div>
           )}
 
@@ -332,7 +333,7 @@ function LoginForm() {
               data-testid="login-account-deleted"
             >
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
-              <span>{t("Аккаунт удалён.")}</span>
+              <span>{t("login.notices.accountDeleted")}</span>
             </div>
           )}
 
@@ -341,8 +342,8 @@ function LoginForm() {
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
               <span>
                 {registered
-                  ? t("Регистрация завершена. Войдите в систему.")
-                  : t("Приглашение принято. Войдите под своим паролем.")}
+                  ? t("login.notices.registrationComplete")
+                  : t("login.notices.invitationAccepted")}
               </span>
             </div>
           )}
@@ -359,7 +360,7 @@ function LoginForm() {
           {challengeId ? (
             <form onSubmit={handleCode} className="mt-8 space-y-5">
               <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[13.5px] leading-relaxed text-[#3c4053]">
-                {t("Пароль верный. Мы отправили код в ваш Telegram — введите его, код действует 5 минут.")}</div>
+                {t("login.codeStep.sentNotice")}</div>
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -367,7 +368,7 @@ function LoginForm() {
                 autoComplete="one-time-code"
                 autoFocus
                 placeholder="000000"
-                aria-label={t("Код из Telegram")}
+                aria-label={t("login.codeStep.label")}
                 className="h-14 w-full rounded-2xl border border-[#dcdfed] bg-white text-center font-mono text-[24px] tracking-[0.4em] text-[#0b1024] placeholder:text-[#c9ccdb] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
               <button
@@ -375,7 +376,7 @@ function LoginForm() {
                 disabled={loading || code.length !== 6}
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
               >
-                {loading ? t("Проверяем…") : t("Подтвердить")}
+                {loading ? t("login.codeStep.verifying") : t("login.codeStep.confirm")}
               </button>
               <button
                 type="button"
@@ -385,7 +386,7 @@ function LoginForm() {
                 }}
                 className="w-full text-center text-[13px] text-[#6f7282] underline underline-offset-2"
               >
-                {t("Назад — отправить код ещё раз")}</button>
+                {t("login.codeStep.resend")}</button>
             </form>
           ) : null}
           <form onSubmit={handleSubmit} className="mt-8 space-y-5" hidden={Boolean(challengeId)}>
@@ -406,21 +407,21 @@ function LoginForm() {
 
             {phoneTyped ? (
               <p className="rounded-2xl border border-[#ffe9b0] bg-[#fffaf0] px-4 py-3 text-[13px] leading-[1.55] text-[#8a5a00]">
-                {t("Похоже, вы ввели номер телефона. На этой странице вход по почте. Сотрудникам —")}{" "}
+                {t("login.phoneNotice.prefix")}{" "}
                 <Link
                   href={`/mini/login?phone=${encodeURIComponent(
                     phoneQueryValue(formData.email)
                   )}`}
                   className="font-medium text-[#3848c7] underline underline-offset-2"
                 >
-                  {t("Вход по номеру телефона")}</Link>
+                  {t("login.phoneNotice.link")}</Link>
                 .
               </p>
             ) : null}
 
             <Field
               id="password"
-              label={t("Пароль")}
+              label={t("login.password.label")}
               type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={(v) => setFormData((p) => ({ ...p, password: v }))}
@@ -433,7 +434,7 @@ function LoginForm() {
                   onClick={() => setShowPassword((v) => !v)}
                   className="rounded-lg p-1 text-[#8a8ea4] transition-colors hover:text-[#5566f6] focus:outline-none focus-visible:text-[#5566f6]"
                   aria-label={
-                    showPassword ? t("Скрыть пароль") : t("Показать пароль")
+                    showPassword ? t("login.password.hide") : t("login.password.show")
                   }
                   tabIndex={-1}
                 >
@@ -452,7 +453,7 @@ function LoginForm() {
               className="group relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-all hover:bg-[#4a5bf0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-70"
             >
               <span className="relative z-10">
-                {loading ? t("Вход...") : t("Войти")}
+                {loading ? t("login.actions.signingIn") : t("login.actions.signIn")}
               </span>
               {!loading && (
                 <ArrowRight className="relative z-10 size-4 transition-transform group-hover:translate-x-0.5" />
@@ -467,12 +468,12 @@ function LoginForm() {
           {magicReason ? (
             <p className="mt-4 rounded-2xl border border-[#ffe9b0] bg-[#fffaf0] px-4 py-3 text-[13px] text-[#8a5a00]" role="status">
               {magicReason === "expired"
-                ? t("Ссылка из письма устарела — запросите новую.")
+                ? t("login.magicLink.expired")
                 : magicReason === "used"
-                  ? t("Эта ссылка уже использована — запросите новую.")
+                  ? t("login.magicLink.used")
                   : magicReason === "two-factor"
-                    ? t("У вас включён код в Telegram: войдите по паролю, ссылка из письма его не заменяет.")
-                    : t("Ссылка не подошла — запросите новую.")}
+                    ? t("login.magicLink.twoFactorHint")
+                    : t("login.magicLink.invalid")}
             </p>
           ) : null}
           {androidApp ? null : (
@@ -483,13 +484,13 @@ function LoginForm() {
               data-testid="passkey-login-button"
               className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
             >
-              {passkeyBusy ? t("Подтверждаем…") : t("Войти по Face ID / отпечатку")}
+              {passkeyBusy ? t("login.passkey.verifying") : t("login.passkey.signIn")}
             </button>
           )}
 
           {magicState === "sent" ? (
             <p className="mt-4 rounded-2xl border border-[#c8f0d5] bg-[#effaf1] px-4 py-3 text-[13px] text-[#136b2a]" data-testid="magic-sent">
-              {t("Если аккаунт с такой почтой есть, ссылка для входа уже отправлена. Она действует 15 минут.")}</p>
+              {t("login.magicLink.sentNotice")}</p>
           ) : (
             <button
               type="button"
@@ -498,12 +499,12 @@ function LoginForm() {
               data-testid="magic-link-button"
               className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
             >
-              {magicState === "sending" ? t("Отправляем письмо…") : t("Войти по ссылке из письма")}
+              {magicState === "sending" ? t("login.email.sending") : t("login.magicLink.action")}
             </button>
           )}
           {forgotState === "sent" ? (
             <p className="mt-4 rounded-2xl border border-[#c8f0d5] bg-[#effaf1] px-4 py-3 text-[13px] text-[#136b2a]">
-              {t("Если аккаунт с такой почтой существует, письмо со ссылкой для смены пароля уже отправлено. Проверьте входящие и папку «Спам».")}</p>
+              {t("login.passwordReset.sentNotice")}</p>
           ) : (
             <button
               type="button"
@@ -512,15 +513,15 @@ function LoginForm() {
               className="mt-4 w-full text-center text-[13px] text-[#6f7282] underline-offset-4 transition-colors hover:text-[#3848c7] hover:underline disabled:opacity-60"
             >
               {forgotState === "sending"
-                ? t("Отправляем письмо…")
-                : t("Забыли пароль?")}
+                ? t("login.email.sending")
+                : t("login.passwordReset.action")}
             </button>
           )}
 
           <div className="mt-8 flex items-center gap-3">
             <div className="h-px flex-1 bg-[#ececf4]" />
             <span className="text-[12px] uppercase tracking-[0.2em] text-[#9b9fb3]">
-              {t("или")}</span>
+              {t("login.actions.or")}</span>
             <div className="h-px flex-1 bg-[#ececf4]" />
           </div>
 
@@ -528,11 +529,11 @@ function LoginForm() {
             href="/register"
             className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            {t("Зарегистрировать компанию")}<ArrowRight className="size-4 text-[#5566f6]" />
+            {t("login.actions.registerCompany")}<ArrowRight className="size-4 text-[#5566f6]" />
           </Link>
 
           <p className="mt-8 text-center text-[12px] text-[#9b9fb3]">
-            {t("Забыли пароль? Попросите администратора вашей организации выслать приглашение повторно.")}</p>
+            {t("login.passwordReset.adminHint")}</p>
         </div>
       </main>
     </div>

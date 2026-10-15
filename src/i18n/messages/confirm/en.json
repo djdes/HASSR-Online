@@ -1,0 +1,17 @@
+{
+  "common": {
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "journalControls": {
+    "confirm": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "close": "Close",
+      "typeInstruction": "To continue, enter <required>{phrase}</required>",
+      "mismatch": "The text does not match — enter it exactly as shown above."
+    }
+  }
+}

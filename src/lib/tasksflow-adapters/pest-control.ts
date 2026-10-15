@@ -37,7 +37,10 @@ function buildPestForm(employeeName: string | null): TaskFormSchema {
       (employeeName ? `${employeeName}, ` : "") +
       "запишите проведённое мероприятие по дезинфекции / дезинсекции / " +
       "дератизации. Все поля кроме примечания — обязательные.",
+    introPresentationKey: "dynamic.pestControlIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Записать обработку",
+    submitPresentationKey: "dynamic.recordTreatment",
     fields: [
       {
         type: "select",

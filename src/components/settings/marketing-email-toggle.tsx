@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Megaphone } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,6 +20,9 @@ type State = {
  * `variant="mini"` — в профиле мини-приложения (свои цвета темы).
  */
 export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | "mini" }) {
+  const t = useTranslations("notificationSettings.marketing");
+  const feedback = useRef(t);
+  useEffect(() => { feedback.current = t; }, [t]);
   const [state, setState] = useState<State | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -46,10 +50,10 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
       });
       if (!res.ok) throw new Error();
       setState((await res.json()) as State);
-      toast.success(next ? "Новости и предложения включены" : "Новости и предложения выключены");
+      toast.success(feedback.current(next ? "enabled" : "disabled"));
     } catch {
       setState(prev);
-      toast.error("Не удалось сохранить");
+      toast.error(feedback.current("saveError"));
     } finally {
       setBusy(false);
     }
@@ -58,16 +62,15 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
   // Ручную блокировку снимает только поддержка; «не принимает почту» касается
   // одного письма — колокольчик, push и Telegram переключатель по-прежнему включает.
   const disabled = !state || busy || state.blockedReason === "manual";
-  const always = "Коды входа, счета и уведомления о журналах приходят всегда.";
   const hint = !state
-    ? "Загружаем…"
+    ? t("loading")
     : state.blockedReason === "manual"
-      ? `Реклама для ${state.email} отключена вручную — ни письмом, ни в колокольчик, push или Telegram. Напишите в поддержку, чтобы вернуть.`
+      ? t("manual", { email: state.email ?? "" })
       : state.blockedReason === "bounced"
-        ? `Новости и акции WeSetup — в колокольчике, push и Telegram. Письма на ${state.email} не доходили — адрес в стоп-листе; напишите в поддержку, если он снова работает. ${always}`
+        ? t("bounced", { email: state.email ?? "" })
         : !state.email
-          ? `Новости и акции WeSetup — в колокольчике, push и Telegram. ${always}`
-          : `Новости и акции WeSetup — письмом на ${state.email}, в колокольчике, push и Telegram. Выключите — не придут ни в один из них. ${always}`;
+          ? t("noEmail")
+          : t("normal", { email: state.email });
 
   const checked = Boolean(state?.subscribed);
   const switchEl = (
@@ -75,7 +78,7 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label="Новости и предложения"
+      aria-label={t("title")}
       disabled={disabled}
       onClick={() => void toggle(!checked)}
       data-testid="marketing-toggle"
@@ -97,7 +100,7 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-[17px] font-semibold" style={{ color: "var(--mini-text)" }}>
-              Новости и предложения
+              {t("title")}
             </h2>
             <p className="mt-1 text-[14px] leading-[1.5]" style={{ color: "var(--mini-text-muted)" }}>
               {hint}
@@ -120,7 +123,7 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
             <Megaphone className="size-4" />
           </div>
           <div>
-            <div className="text-[15px] font-medium text-[#0b1024]">Новости и предложения</div>
+            <div className="text-[15px] font-medium text-[#0b1024]">{t("title")}</div>
             <div className="mt-1 text-[13px] text-[#6f7282]">{hint}</div>
           </div>
         </div>

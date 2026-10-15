@@ -41,11 +41,11 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Некорректные данные" },
+        { error: error.issues[0]?.message ?? "Некорректные данные", errorCode: "ORG_BALANCE_INVALID" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ error: "Не удалось прочитать запрос" }, { status: 400 });
+    return NextResponse.json({ error: "Не удалось прочитать запрос", errorCode: "ORG_BALANCE_READ_FAILED" }, { status: 400 });
   }
 
   const organization = await db.organization.findUnique({
@@ -53,7 +53,7 @@ export async function POST(
     select: { id: true, name: true, balanceRub: true },
   });
   if (!organization) {
-    return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
+    return NextResponse.json({ error: "Организация не найдена", errorCode: "ORG_NOT_FOUND" }, { status: 404 });
   }
 
   try {
@@ -69,6 +69,8 @@ export async function POST(
       return NextResponse.json(
         {
           error: `На балансе только ${formatPoints(organization.balanceRub)} — списать больше нельзя`,
+          errorCode: "ORG_BALANCE_INSUFFICIENT",
+          errorParams: { amount: organization.balanceRub },
         },
         { status: 409 },
       );

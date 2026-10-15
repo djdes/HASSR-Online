@@ -1,0 +1,16 @@
+{
+  "locale":"uz","sourceHash":"5e7fc782e1929826c36077c56aaad1abe1ec839700506a4c3ab234b0c07b509e",
+  "title":"Qovurish yog‘i hisobi: yog‘ni qachon almashtirish va nimalarni yozish kerak",
+  "excerpt":"Umumiy ovqatlanishda qutbli birikmalar chegarasi — 24%: shu qiymatga yetgach, yog‘ ko‘rinishidan qat’i nazar almashtiriladi. Almashtirish jurnaliga nimalar yozilishi va friturni qanday topshirish haqida.",
+  "tags":["Qovurish","HACCP"],
+  "body":[
+    {"type":"p","text":"Friturni qovurish yog‘i oshxonadagi eng aldamchi mahsulotlardan biridir. Tashqi ko‘rinishidan hali yaroqlidek tuyulishi mumkin, ammo kimyoviy jihatdan u akrilamidlar va aldegidlar aralashmasiga aylangan bo‘ladi. Shu sababli uni ko‘z bilan chamalash emas, o‘lchash kerak: odatda har smenada bir marta, qovurish jadalligi yuqori bo‘lsa, undan ham tez-tez."},
+    {"type":"h2","text":"Almashtirish mezoni"},
+    {"type":"p","text":"Asosiy ko‘rsatkich — qutbli birikmalarning foizi. Umumiy ovqatlanishda chegara 24%. Shu qiymatga yetgach, yog‘ “hali yaxshi qovuryapti” degan fikrdan qat’i nazar almashtiriladi. O‘lchov qo‘l analizatori yoki test-tasmalar bilan bajariladi."},
+    {"type":"h2","text":"Jurnalga nimalar yoziladi"},
+    {"type":"ul","items":["Sana, smena va mas’ul xodim.","Qutbli birikmalar foizida o‘lchov natijasi.","Chora: foydalanishni davom ettirish yoki yog‘ni almashtirish.","Almashtirilganda — hajmi va utilizatsiya usuli (olib ketish uchun alohida shartnoma)."]},
+    {"type":"callout","tone":"warn","title":"Utilizatsiya qilish majburiy","text":"Friturni kanalizatsiyaga quyish sanitariya me’yorlari va suv ta’minoti tashkiloti bilan tuzilgan shartnomani bevosita buzish hisoblanadi. Ishlatilgan yog‘ alohida idishga yig‘ilib, topshirish dalolatnomasi asosida olib ketiladi."},
+    {"type":"h2","text":"Xizmat qanday yordam beradi"},
+    {"type":"p","text":"Shablon odatiy qiymatlarni kiritadi, smena boshida o‘lchashni eslatadi va ko‘rsatkich 24% dan oshsa, avtomatik ravishda qizil belgi qo‘yadi. Utilizatsiya dalolatnomasi almashtirish yozuviga biriktiriladi — tekshiruvda jarayonning to‘liq qayd etilgani darhol ko‘rinadi."}
+  ]
+}

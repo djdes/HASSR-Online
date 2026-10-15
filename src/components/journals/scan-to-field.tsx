@@ -6,6 +6,7 @@ import { ScanLine } from "lucide-react";
 import { QrCameraSheet } from "@/app/mini/_components/qr-camera-sheet";
 import { haptic } from "@/app/mini/_components/use-haptic";
 import { useIsNarrowViewport } from "@/lib/use-narrow-viewport";
+import { useTranslations } from "next-intl";
 
 /**
  * Кнопка «сканировать» рядом с полем формы.
@@ -23,11 +24,12 @@ import { useIsNarrowViewport } from "@/lib/use-narrow-viewport";
  */
 export function ScanToField({
   onScanned,
-  label = "Сканировать",
+  label,
 }: {
   onScanned: (text: string) => void;
   label?: string;
 }) {
+  const t = useTranslations("journalForm");
   const narrow = useIsNarrowViewport();
   const [open, setOpen] = useState(false);
 
@@ -44,7 +46,7 @@ export function ScanToField({
         className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
       >
         <ScanLine className="size-4 text-[#5566f6]" />
-        {label}
+        {label ?? t("scan.button")}
       </button>
 
       <QrCameraSheet

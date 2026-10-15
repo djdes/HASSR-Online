@@ -6,12 +6,12 @@ import {
   getDocumentCrumbMenu,
   getJournalCrumbMenu,
 } from "@/lib/journal-crumb-menu";
-import { DOCUMENT_STATUS_LEGEND } from "@/lib/crumb-menu";
+import { documentStatusLegend } from "@/lib/crumb-menu";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
 import { orgTodayKey } from "@/lib/timezone";
 import { TodayKeyProvider } from "@/lib/today-key-context";
 import { CurrentJournalProvider } from "@/components/shared/custom-names-provider";
-
-const ORG_NAME_FALLBACK = "Организация";
 
 /**
  * Оболочка страницы документа.
@@ -47,6 +47,9 @@ export default async function JournalDocumentLayout({
   const { code, docId } = await params;
   const session = await requireAuth();
   const activeOrgId = getActiveOrgId(session);
+  const locale = await getSiteLocale();
+  const tCrumbs = await getTranslations({ locale, namespace: "navigation.breadcrumbs" });
+  const tGuidePage = await getTranslations({ locale, namespace: "journalControls.guidePage" });
 
   const [document, organization] = await Promise.all([
     db.journalDocument.findUnique({
@@ -72,8 +75,8 @@ export default async function JournalDocumentLayout({
   // и в соседний документ этого же журнала.
   const [journalMenu, documentMenu] = showCrumbs
     ? await Promise.all([
-        getJournalCrumbMenu(session, code),
-        getDocumentCrumbMenu(activeOrgId, code, docId, await getActiveBuildingId(session)),
+        getJournalCrumbMenu(session, code, locale),
+        getDocumentCrumbMenu(activeOrgId, code, docId, await getActiveBuildingId(session), locale),
       ])
     : [undefined, undefined];
 
@@ -95,7 +98,7 @@ export default async function JournalDocumentLayout({
 
       {showCrumbs ? (
         <JournalPageCrumbs
-          organizationName={organization?.name || ORG_NAME_FALLBACK}
+          organizationName={organization?.name || tGuidePage("organizationFallback")}
           journalName={document?.template.name ?? ""}
           journalCode={code}
           journalMenu={journalMenu}
@@ -103,9 +106,9 @@ export default async function JournalDocumentLayout({
             {
               label: document?.title ?? "",
               menu: documentMenu,
-              menuTitle: "Документы журнала",
+              menuTitle: tCrumbs("documents"),
               // Точки документов — «открыт / закрыт», не журнальные.
-              menuLegend: DOCUMENT_STATUS_LEGEND,
+              menuLegend: documentStatusLegend(tCrumbs),
             },
           ]}
         />

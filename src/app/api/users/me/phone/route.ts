@@ -29,7 +29,7 @@ const bodySchema = z.object({
 export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    return NextResponse.json({ error: "Не авторизован", errorCode: "PHONE_UNAUTHORIZED" }, { status: 401 });
   }
 
   let parsed: z.infer<typeof bodySchema>;
@@ -38,11 +38,11 @@ export async function PUT(request: Request) {
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Некорректный запрос" },
+        { error: err.issues[0]?.message ?? "Некорректный запрос", errorCode: "PHONE_INVALID_REQUEST" },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
+    return NextResponse.json({ error: "Некорректный запрос", errorCode: "PHONE_INVALID_REQUEST" }, { status: 400 });
   }
 
   const normalized = normalizePhone(parsed.phone);
@@ -50,6 +50,7 @@ export async function PUT(request: Request) {
     return NextResponse.json(
       {
         error: "Неверный формат. Пример: +7 985 123-45-67",
+        errorCode: "PHONE_INVALID_FORMAT",
       },
       { status: 400 }
     );
@@ -71,6 +72,8 @@ export async function PUT(request: Request) {
     return NextResponse.json(
       {
         error: `Этот номер уже привязан к сотруднику: ${dup.name}. У каждого должен быть свой уникальный.`,
+        errorCode: "PHONE_DUPLICATE",
+        errorParams: { name: dup.name },
       },
       { status: 409 }
     );
@@ -97,7 +100,7 @@ export async function PUT(request: Request) {
 export async function DELETE() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    return NextResponse.json({ error: "Не авторизован", errorCode: "PHONE_UNAUTHORIZED" }, { status: 401 });
   }
   await db.user.update({
     where: { id: session.user.id },

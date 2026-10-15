@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { sensorCameraEnabled, type SensorJournalCode } from "@/lib/journal-controls";
+import { getJournalControls } from "@/lib/journal-controls.server";
 import {
   applyReadingPhotoPatch,
   isDefaultReadingPhotoSettings,
@@ -17,12 +19,15 @@ import {
  * данные одной организации другой не видны.
  */
 
-export async function getReadingPhotoSettings(organizationId: string): Promise<ReadingPhotoSettings> {
+export async function getReadingPhotoSettings(organizationId: string, journalCode?: SensorJournalCode): Promise<ReadingPhotoSettings> {
   const row = await db.platformSetting.findUnique({
     where: { key: readingPhotoSettingKey(organizationId) },
     select: { value: true },
   });
-  return parseReadingPhotoSettings(row?.value ?? null);
+  const settings = parseReadingPhotoSettings(row?.value ?? null);
+  if (!journalCode) return settings;
+  const enabled = sensorCameraEnabled(await getJournalControls(organizationId), journalCode);
+  return { enabled, required: enabled && settings.required };
 }
 
 /** Применить изменение руководителя; вернули умолчания — строку удаляем. */

@@ -1,6 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +12,6 @@ import {
   type CleaningStatus,
   type SanitationRoomRow,
 } from "@/lib/sanitation-day-document";
-import { MONTH_NAMES_RU, formatDayMonth, formatDayMonthWeekday } from "@/lib/wheel-date";
 
 /**
  * Цвета дат уборок — одни и те же в ячейке таблицы, в редакторе месяца
@@ -22,13 +22,6 @@ export const GC_CHIP_TONE: Record<CleaningStatus, string> = {
   overdue: "bg-[#fff4f2] text-[#a13a32]",
   today: "bg-[#f5f6ff] text-[#3848c7] ring-1 ring-[#5566f6]",
   planned: "bg-[#f5f6ff] text-[#3848c7]",
-};
-
-export const GC_STATUS_LABEL: Record<CleaningStatus, string> = {
-  done: "выполнена",
-  overdue: "просрочена",
-  today: "сегодня по плану",
-  planned: "запланирована",
 };
 
 const CHIP_CLASS =
@@ -64,6 +57,12 @@ export function GeneralCleaningMonthCell({
   readOnly: boolean;
   onOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("cleaningGrid.cleaning");
+  const displayDate = (value: string, withWeekday = false) => new Intl.DateTimeFormat(
+    locale === "uz" ? "uz-Latn-UZ" : locale,
+    { day: "numeric", month: "long", ...(withWeekday ? { weekday: "short" as const } : {}), timeZone: "UTC" },
+  ).format(new Date(`${value.slice(0, 10)}T12:00:00Z`));
   const key = sanitationMonthKey(monthIndex);
   const note = row.legacyNotes?.[key]?.[kind];
   const chips: Chip[] =
@@ -75,8 +74,8 @@ export function GeneralCleaningMonthCell({
             key: cleaning.id,
             label: date.slice(8, 10),
             tone: GC_CHIP_TONE[status],
-            title: `${formatDayMonthWeekday(date)} — ${GC_STATUS_LABEL[status]}${
-              cleaning.done ? ` ${formatDayMonth(cleaning.done)}` : ""
+            title: `${displayDate(date, true)} — ${t(({ done: "cleaningStatusDone", overdue: "cleaningStatusOverdue", today: "cleaningStatusToday", planned: "cleaningStatusPlanned" } as const)[status])}${
+              cleaning.done ? ` ${displayDate(cleaning.done)}` : ""
             }`,
           };
         })
@@ -86,14 +85,19 @@ export function GeneralCleaningMonthCell({
           tone: GC_CHIP_TONE.done,
           dashed: !cleaning.planned,
           title: cleaning.planned
-            ? `${formatDayMonthWeekday(cleaning.done as string)} — уборка по плану ${formatDayMonth(cleaning.planned)}`
-            : `${formatDayMonthWeekday(cleaning.done as string)} — внеплановая уборка`,
+            ? `${displayDate(cleaning.done as string, true)} — ${t("cleaningStatusPlanned")} ${displayDate(cleaning.planned)}`
+            : `${displayDate(cleaning.done as string, true)} — ${t("unscheduledCleaning")}`,
         }));
 
   const summary = chips.map((chip) => chip.label).join(", ");
-  const ariaLabel = `${MONTH_NAMES_RU[monthIndex]}, ${row.roomName || "помещение"}: ${
-    kind === "plan" ? "план" : "выполнено"
-  } — ${summary || "пусто"}${note ? `, заметка «${note}»` : ""}. Открыть редактор месяца`;
+  const monthName = new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : locale, { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, monthIndex, 1)));
+  const ariaLabel = t("monthCellAria", {
+    month: monthName,
+    room: row.roomName || t("room"),
+    kind: kind === "plan" ? t("plan") : t("fact"),
+    summary: summary || t("noMonthMarks"),
+    note: note ? `, ${t("monthNote", { note })}` : "",
+  });
 
   const content = (
     <>

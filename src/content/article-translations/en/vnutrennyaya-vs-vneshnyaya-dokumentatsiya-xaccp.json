@@ -1,0 +1,58 @@
+{
+  "locale": "en",
+  "sourceHash": "270d20ec758c969e9501e0c40a42ce20514d044d7b21d9b11e7a093cb56ceb2f",
+  "title": "HACCP: internal and external documentation—what is the difference?",
+  "excerpt": "Which documents the team creates itself, and which it keeps in their original form from suppliers and government agencies? Confusing the two is a common source of audit problems.",
+  "body": [
+    {
+      "type": "p",
+      "text": "Every HACCP plan has two layers of documents. The first contains records created by the operation itself: policies, procedures, journals, and audit reports. The second contains documents received from outside: supplier certificates, safety data sheets for cleaning products, and laboratory reports. Keep them separate: each has its own retention period and role during an inspection."
+    },
+    {
+      "type": "h2",
+      "text": "Internal documentation"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Food-safety policy: a one-page document signed by the manager.",
+        "HACCP plan: process diagrams, hazard analysis, CCPs, and their limits.",
+        "Kitchen work instructions: handwashing, board labeling, and processing temperatures.",
+        "Journals: hygiene, temperature, cleaning, reject products, and training.",
+        "Internal audit reports and CAPA records."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "External documentation"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Declarations and certificates for raw ingredients and packaging.",
+        "Safety data sheets for detergents and disinfectants.",
+        "Contractor reports for pest control and service reports for refrigeration equipment.",
+        "Laboratory test reports for water and surface swabs.",
+        "Contracts with suppliers and carriers."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "A common mistake",
+      "text": "A supplier certificate is filed in the incoming-inspection journal. This makes the records hard to review: an inspector should not have to browse your entries to find a third party’s document."
+    },
+    {
+      "type": "h2",
+      "text": "How to store them"
+    },
+    {
+      "type": "p",
+      "text": "Keep internal documents in a system that shows the edit history and signatures. Store external documents separately, searchable by supplier and the document’s expiry date. WeSetup separates these workflows: external documents have their own tab and access-control tree."
+    }
+  ],
+  "tags": [
+    "HACCP",
+    "Document management"
+  ]
+}

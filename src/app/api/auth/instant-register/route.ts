@@ -24,6 +24,7 @@ import {
 } from "@/lib/partners/referral";
 import { REFERRAL_COOKIE, readCookie } from "@/lib/balance/constants";
 import { attachReferral, resolveReferrerByCode } from "@/lib/balance/referral";
+import { resolveRequestLocale } from "@/i18n/site-locale";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,28 +94,28 @@ export async function POST(request: Request) {
   // выжигал квоту живому пользователю с того же IP (общий офисный NAT).
   if (!email || email.length > 200 || !EMAIL_RE.test(email)) {
     return NextResponse.json(
-      { error: "Укажите корректный адрес электронной почты" },
+      { error: "Укажите корректный адрес электронной почты", code: "invalid_email" },
       { status: 400 },
     );
   }
 
   if (!consentGiven) {
     return NextResponse.json(
-      { error: "Отметьте согласие с офертой, соглашением и обработкой персональных данных" },
+      { error: "Отметьте согласие с офертой, соглашением и обработкой персональных данных", code: "consent_required" },
       { status: 400 },
     );
   }
 
   if (!registrationCodeRateLimiter.consume(`instant:${ip}`)) {
     return NextResponse.json(
-      { error: "Слишком часто. Попробуйте через несколько минут" },
+      { error: "Слишком часто. Попробуйте через несколько минут", code: "rate_limited" },
       { status: 429 },
     );
   }
 
   const challenge = await verifyRegistrationChallenge(body);
   if (!challenge.ok) {
-    return NextResponse.json({ error: challenge.error }, { status: challenge.status });
+    return NextResponse.json({ error: challenge.error, code: challenge.status === 403 ? "challenge_rejected" : "challenge_unavailable" }, { status: challenge.status });
   }
 
   // Домен обязан принимать почту. Проверка в поле ввода — для удобства,
@@ -125,6 +126,7 @@ export async function POST(request: Request) {
       {
         error:
           "Такого почтового домена не существует — проверьте адрес. Письмо с паролем на него не дойдёт",
+        code: "email_domain_unavailable",
       },
       { status: 400 },
     );
@@ -175,6 +177,7 @@ export async function POST(request: Request) {
           passwordHash,
           role: "manager",
           organizationId: organization.id,
+          locale: resolveRequestLocale(request),
           journalAccessMigrated: true,
           // Регистрация с лендинга сразу же и логинит человека, поэтому
           // адрес пишем в оба поля: первый вход — он же и есть.
@@ -219,7 +222,7 @@ export async function POST(request: Request) {
     }
     console.error("instant-register failed", error);
     return NextResponse.json(
-      { error: "Не получилось создать аккаунт. Попробуйте ещё раз" },
+      { error: "Не получилось создать аккаунт. Попробуйте ещё раз", code: "registration_failed" },
       { status: 500 },
     );
   }
@@ -252,6 +255,7 @@ export async function POST(request: Request) {
     to: email,
     password,
     organizationId: created.organization.id,
+    locale: resolveRequestLocale(request),
   }).catch((err) =>
     console.error("sendAccountPasswordEmail failed", err),
   );

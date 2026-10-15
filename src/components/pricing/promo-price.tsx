@@ -13,6 +13,8 @@ import {
 } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
 import type { SiteLocale } from "@/i18n/site-locale";
+import { FORMAT_LOCALES } from "@/i18n/locales";
+import { pricingTranslator } from "@/i18n/pricing-messages";
 
 /**
  * Цена подписки с акцией — один компонент на все витрины: лендинг,
@@ -58,7 +60,7 @@ const OLD_SIZE: Record<Size, string> = {
 };
 
 export function formatPriceRub(value: number, locale: SiteLocale = "ru"): string {
-  return `${new Intl.NumberFormat(locale === "en" ? "en-GB" : "ru-RU").format(value)} ₽`;
+  return `${new Intl.NumberFormat(FORMAT_LOCALES[locale]).format(value)} ₽`;
 }
 
 export function PromoBadge({
@@ -149,6 +151,7 @@ export function PromoPrice({
   showBadge?: boolean;
   className?: string;
 }) {
+  const t = pricingTranslator(locale);
   const promotion = price.promotion && price.priceRub < price.baseRub ? price.promotion : null;
   const personalRub = personal ? discountForPrice(personal, price.priceRub) : 0;
   const personalActive = personal && personalRub > 0 ? personal : null;
@@ -169,14 +172,14 @@ export function PromoPrice({
 
   const oldPrice = (
     <s data-promo-old className={cn("tabular-nums decoration-[1.5px]", OLD_SIZE[size], oldTone)}>
-      <span className="sr-only">{locale === "en" ? "Regular price: " : promotion ? "Без акции: " : "Без скидки: "}</span>
+      <span className="sr-only">{promotion ? t("price.regularBeforePromotion") : t("price.regularBeforeDiscount")}</span>
       {formatPriceRub(price.baseRub, locale)}
     </s>
   );
   const newPrice = (
     <span className="whitespace-nowrap">
       <span data-promo-new className={cn("tabular-nums", NEW_SIZE[size], newTone)}>
-        <span className="sr-only">{locale === "en" ? "Discounted price: " : personalActive ? "Со скидкой: " : "По акции: "}</span>
+        <span className="sr-only">{t("price.discountedPrice")}</span>
         {formatPriceRub(finalRub, locale)}
       </span>
       {suffix}

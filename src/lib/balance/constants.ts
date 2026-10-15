@@ -146,7 +146,11 @@ export function anonymousRewardRub(baseRub: number): number {
 
 export type TopupAmountCheck =
   | { ok: true; amountRub: number }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      code: "required" | "numeric" | "wholeRubles" | "minimum" | "maximum";
+      error: string;
+    };
 
 /**
  * Сумма пополнения: целые рубли от TOPUP_MIN_RUB до TOPUP_MAX_RUB.
@@ -160,23 +164,23 @@ export function parseTopupAmount(value: unknown): TopupAmountCheck {
     amount = value;
   } else if (typeof value === "string") {
     const compact = value.replace(/[\s  ]/g, "").replace(",", ".").replace(/₽$/, "");
-    if (!compact) return { ok: false, error: "Укажите сумму пополнения" };
+    if (!compact) return { ok: false, code: "required", error: "Укажите сумму пополнения" };
     if (!/^-?\d+(\.\d+)?$/.test(compact)) {
-      return { ok: false, error: "Сумма — числом, в рублях" };
+      return { ok: false, code: "numeric", error: "Сумма — числом, в рублях" };
     }
     amount = Number(compact);
   } else {
-    return { ok: false, error: "Укажите сумму пополнения" };
+    return { ok: false, code: "required", error: "Укажите сумму пополнения" };
   }
-  if (!Number.isFinite(amount)) return { ok: false, error: "Сумма — числом, в рублях" };
+  if (!Number.isFinite(amount)) return { ok: false, code: "numeric", error: "Сумма — числом, в рублях" };
   if (!Number.isInteger(amount)) {
-    return { ok: false, error: "Сумма — целыми рублями, без копеек" };
+    return { ok: false, code: "wholeRubles", error: "Сумма — целыми рублями, без копеек" };
   }
   if (amount < TOPUP_MIN_RUB) {
-    return { ok: false, error: `Минимальная сумма — ${formatPoints(TOPUP_MIN_RUB)}` };
+    return { ok: false, code: "minimum", error: `Минимальная сумма — ${formatPoints(TOPUP_MIN_RUB)}` };
   }
   if (amount > TOPUP_MAX_RUB) {
-    return { ok: false, error: `Максимальная сумма — ${formatPoints(TOPUP_MAX_RUB)}` };
+    return { ok: false, code: "maximum", error: `Максимальная сумма — ${formatPoints(TOPUP_MAX_RUB)}` };
   }
   return { ok: true, amountRub: amount };
 }

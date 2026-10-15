@@ -4,6 +4,8 @@ import { normalizeRowSignatures, type BrakerageRowSignature } from "@/lib/braker
 import { correctedBrakerageTimes, deriveBrakerageTimes, rowRejectionDateTime } from "@/lib/brakerage-times";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
+import { aggregateBrakerageAssessment, allCommissionMembersAssessed, brakerageCommentRequired } from "@/lib/brakerage-assessment";
+import { readOrgCommission } from "@/lib/brakerage-commission-org";
 import {
   FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
   createFinishedProductRow,
@@ -46,6 +48,7 @@ export type BrakerageQrRow = {
   portionWeight: string;
   note: string;
   signatures: BrakerageRowSignature[];
+  fullyAssessed?: boolean;
 };
 
 export type BrakerageQrList = {
@@ -93,16 +96,19 @@ export async function listBrakerageDayRows(params: {
   const docs = found.filter((doc) => doc.id === params.primaryDocumentId || doc.dateTo < today);
   const primary = docs.find((doc) => doc.id === params.primaryDocumentId) ?? docs[0];
   const rows: BrakerageQrRow[] = [];
+  const orgMembers = params.code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE ? await readOrgCommission(params.organizationId, params.code) : [];
   const pick = (dayKey: string, signatures: BrakerageRowSignature[]) =>
     dayKey === params.todayKey || (dayKey === params.yesterdayKey && signatures.length === 0);
 
   for (const doc of docs) {
     if (params.code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE) {
       const config = normalizeFinishedProductDocumentConfig(doc.config);
+      const members = [...new Map([...orgMembers, ...config.commissionMembers].map(member => [member.employeeId || member.id, member])).values()];
       for (const row of config.rows) {
         const dayKey = row.productionDateTime.slice(0, 10);
         const signatures = normalizeRowSignatures(row.signatures);
-        if (!row.productName.trim() || !pick(dayKey, signatures)) continue;
+        const fullyAssessed = allCommissionMembersAssessed({ ...row, signatures }, members);
+        if (!row.productName.trim() || !(dayKey === params.todayKey || (dayKey === params.yesterdayKey && !fullyAssessed))) continue;
         const rejection = deriveBrakerageTimes({
           productionDateTime: row.productionDateTime,
           rejectionTime: row.rejectionTime,
@@ -122,6 +128,7 @@ export async function listBrakerageDayRows(params: {
           portionWeight: row.portionWeight ?? "",
           note: row.note ?? "",
           signatures,
+          fullyAssessed,
         });
       }
     } else {
@@ -180,6 +187,7 @@ export type BrakerageRowEdit = {
   grade?: string;
   /** «Результат взвешивания» (выход), только готовая продукция. */
   portionWeight?: string;
+  note?: string;
 };
 
 /**
@@ -206,6 +214,10 @@ export async function editBrakerageRows(params: {
 
     if (doc.templateCode === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE) {
       const config = normalizeFinishedProductDocumentConfig(doc.config);
+      for (const row of config.rows) {
+        const edit = byId.get(row.id);
+        if (edit?.grade && brakerageCommentRequired(edit.grade) && !edit.note?.trim()) return { result: { ok: false as const, error: "Добавьте комментарий к оценке блюда" } };
+      }
       const rows = [];
       for (const row of config.rows) {
         if (toDelete.has(row.id)) {
@@ -219,12 +231,13 @@ export async function editBrakerageRows(params: {
         const nextDateTime = time ? `${row.productionDateTime.slice(0, 10)} ${time}`.trim() : row.productionDateTime;
         const nextGrade = edit?.grade ?? row.organoleptic;
         const nextWeight = edit?.portionWeight ?? row.portionWeight;
+        const nextNote = edit?.note ?? row.note;
         if (
           edit &&
           (nextName !== row.productName ||
             nextDateTime !== row.productionDateTime ||
             nextGrade !== row.organoleptic ||
-            nextWeight !== row.portionWeight)
+            nextWeight !== row.portionWeight || nextNote !== row.note)
         ) {
           // Изготовление поправили у неподписанной строки — бракераж и
           // разрешение сдвигаются цепочкой; у подписанной остаются как были.
@@ -234,8 +247,9 @@ export async function editBrakerageRows(params: {
             signed: normalizeRowSignatures(row.signatures).length > 0,
             offsets: config.timeDefaults,
           });
+          const assessment = aggregateBrakerageAssessment(normalizeRowSignatures(row.signatures), nextGrade);
           rows.push(
-            createFinishedProductRow({ ...row, ...times, productName: nextName, productionDateTime: nextDateTime, organoleptic: nextGrade, portionWeight: nextWeight })
+            createFinishedProductRow({ ...row, ...times, productName: nextName, productionDateTime: nextDateTime, organoleptic: assessment.grade, releaseAllowed: assessment.releaseAllowed, ...(assessment.releaseAllowed === "no" ? { releasePermissionTime: "" } : {}), portionWeight: nextWeight, note: edit.note ?? row.note })
           );
           changed += 1;
         } else rows.push(row);

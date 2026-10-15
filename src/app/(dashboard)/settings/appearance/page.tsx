@@ -7,6 +7,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ThemeModeControls } from "@/components/theme/theme-quick-switch";
 import { WhatsNewToggle } from "@/components/dashboard/whats-new-toggle";
 import { db } from "@/lib/db";
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ export const dynamic = "force-dynamic";
  * компьютере.
  */
 export default async function AppearanceSettingsPage() {
+  const t = await getTranslations("settingsManagement.appearance");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/journals");
 
@@ -31,10 +34,11 @@ export default async function AppearanceSettingsPage() {
     .catch(() => null);
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsManagement"]}>
     <div className="space-y-5">
       <PageHeader
-        title="Внешний вид"
-        description="Тема кабинета: светлая, тёмная или как в системе."
+        title={t("title")}
+        description={t("description")}
       />
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6">
@@ -43,9 +47,9 @@ export default async function AppearanceSettingsPage() {
             <Palette className="size-5" />
           </span>
           <div>
-            <div className="text-[15px] font-semibold text-[#0b1024]">Тема</div>
+            <div className="text-[15px] font-semibold text-[#0b1024]">{t("theme")}</div>
             <div className="text-[13px] text-[#6f7282]">
-              Выбор запоминается в вашем аккаунте.
+              {t("savedToAccount")}
             </div>
           </div>
         </div>
@@ -56,15 +60,16 @@ export default async function AppearanceSettingsPage() {
       <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6">
         <div className="mb-4">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            Сообщения об обновлениях
+            {t("whatsNewTitle")}
           </div>
           <div className="mt-0.5 text-[13px] text-[#6f7282]">
-            Настройка запоминается в вашем аккаунте.
+            {t("savedToAccount")}
           </div>
         </div>
 
         <WhatsNewToggle initial={me?.showWhatsNew ?? true} />
       </section>
     </div>
+    </DomainMessagesBoundary>
   );
 }

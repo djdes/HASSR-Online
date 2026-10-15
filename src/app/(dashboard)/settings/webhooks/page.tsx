@@ -5,6 +5,8 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 import { WebhooksClient } from "./webhooks-client";
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +14,14 @@ export const dynamic = "force-dynamic";
 export default async function WebhooksSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  const t = await getTranslations("webhooksSettings");
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Вебхуки"
-        description="WeSetup сам присылает события на ваш сервер: записи в журналах, отклонения температуры, задачи CAPA, оплаты, статусы идей. Каждый вызов подписан вашим секретом, неудачные доставки повторяются."
+        title={t("title")}
+        description={t("description")}
       />
-      <WebhooksClient />
+      <DomainMessagesBoundary namespaces={["webhooksSettings"]}><WebhooksClient /></DomainMessagesBoundary>
     </div>
   );
 }

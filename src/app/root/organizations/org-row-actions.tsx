@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { RootMetricsCopy } from "../metrics-presentation";
 import { Loader2, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { OrgDeleteButton } from "@/app/root/organizations/org-delete-button";
@@ -17,13 +18,18 @@ export function OrgRowActions({
   organizationName,
   usersCount,
   documentsCount,
+  copy,
 }: {
   organizationId: string;
   organizationName: string;
   /** Показываем в подтверждении, если вызывающий знает цифры. */
   usersCount?: number;
   documentsCount?: number;
+  /** Only callers with the ROOT metrics message boundary opt in. */
+  copy?: RootMetricsCopy;
 }) {
+  const currentCopy = useRef(copy);
+  currentCopy.current = copy;
   const [busy, setBusy] = useState<"enter" | null>(null);
 
   async function enter() {
@@ -41,7 +47,7 @@ export function OrgRowActions({
       // Hard reload: серверные компоненты должны перечитать свежий cookie.
       window.location.href = "/dashboard";
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(currentCopy.current ? currentCopy.current("actions.enterFailed") : error instanceof Error ? error.message : "Ошибка");
       setBusy(null);
     }
   }
@@ -60,7 +66,7 @@ export function OrgRowActions({
           ) : (
             <UserCog className="size-3.5 text-[#5566f6]" />
           )}
-          Войти
+          {copy ? copy("actions.enter") : "Войти"}
         </button>
         <OrgDeleteButton
           organizationId={organizationId}
@@ -68,6 +74,7 @@ export function OrgRowActions({
           usersCount={usersCount}
           documentsCount={documentsCount}
           disabled={busy !== null}
+          copy={copy}
         />
       </div>
 

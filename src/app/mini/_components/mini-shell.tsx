@@ -4,12 +4,14 @@ import Link from "next/link";
 import { PartnerHint } from "@/components/partner/partner-hint";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
-import { getDynamicRouteTitle, getRouteTitle } from "@/lib/route-titles";
+import { getDynamicRouteTitle, getRouteTitle, type RouteTitleTranslator } from "@/lib/route-titles";
+import type { MessageContract } from "@/i18n/message-contract";
 import { customSectionTitleForPath } from "@/lib/custom-names";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import {
@@ -28,13 +30,14 @@ import { MINI_HERO_COLOR, miniBackgroundColor, useMiniTheme } from "./mini-theme
 // Собственных экранов у приложения осталось немного: остальные адреса
 // `/mini/*` только перекидывают на страницы кабинета, и их подписи
 // берутся из хлебных крошек сайта (`titleForSitePath`).
-const SECTION_TITLES: Array<[string, string]> = [
-  ["/mini/me", "Профиль"],
-  ["/mini/bonus", "Премия"],
-  ["/mini/today", "Сегодня"],
-  ["/mini/outbox", "Не отправлено"],
-  ["/mini/claim", "Задача"],
-  ["/mini/sections", "Все разделы"],
+type MiniTitleTranslator = (key: keyof MessageContract["navigation"]["mini"]) => string;
+const SECTION_TITLES: Array<[string, string, Parameters<MiniTitleTranslator>[0]]> = [
+  ["/mini/me", "Профиль", "profile"],
+  ["/mini/bonus", "Премия", "bonus"],
+  ["/mini/today", "Сегодня", "today"],
+  ["/mini/outbox", "Не отправлено", "outbox"],
+  ["/mini/claim", "Задача", "task"],
+  ["/mini/sections", "Все разделы", "sections"],
 ];
 
 /**
@@ -68,24 +71,24 @@ export function isMiniRootPath(pathname: string): boolean {
  * Динамических сегментов там нет, поэтому для `/journals/xxx/documents/1`
  * поднимаемся по пути вверх до ближайшего известного раздела.
  */
-export function titleForSitePath(pathname: string): string {
-  const dynamicTitle = getDynamicRouteTitle(pathname);
+export function titleForSitePath(pathname: string, tRoutes?: RouteTitleTranslator, tMini?: MiniTitleTranslator): string {
+  const dynamicTitle = getDynamicRouteTitle(pathname, tRoutes);
   if (dynamicTitle) return dynamicTitle;
   let path = pathname.replace(/\/+$/, "") || "/";
   while (path.length > 1) {
-    const title = getRouteTitle(path);
+    const title = getRouteTitle(path, tRoutes);
     if (title) return title;
     path = path.slice(0, path.lastIndexOf("/")) || "/";
   }
-  return "Кабинет";
+  return tMini ? tMini("workspace") : "Кабинет";
 }
 
-export function titleForPath(pathname: string): string {
-  if (pathname === "/mini") return "Вход";
-  if (pathname === "/mini/login") return "Вход";
-  if (pathname.startsWith("/mini/o/")) return "Задача";
-  if (!isMiniPath(pathname)) return titleForSitePath(pathname);
-  return SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "WeSetup";
+export function titleForPath(pathname: string, tRoutes?: RouteTitleTranslator, tMini?: MiniTitleTranslator): string {
+  if (pathname === "/mini" || pathname === "/mini/login") return tMini ? tMini("login") : "Вход";
+  if (pathname.startsWith("/mini/o/")) return tMini ? tMini("task") : "Задача";
+  if (!isMiniPath(pathname)) return titleForSitePath(pathname, tRoutes, tMini);
+  const section = SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix));
+  return section ? (tMini ? tMini(section[2]) : section[1]) : "WeSetup";
 }
 
 /** Приложение установлено на домашний экран (без адресной строки). */
@@ -284,8 +287,11 @@ export function MiniTopBar({
   showNotifications?: boolean;
 }) {
   const pathname = usePathname();
+  const tRoutes = useTranslations("navigation.routes");
+  const tMini = useTranslations("navigation.mini");
+  const tCommon = useTranslations("common");
   // Своё название раздела организации (провайдер — в оболочке кабинета).
-  const title = customSectionTitleForPath(useCustomNames(), pathname) ?? titleForPath(pathname);
+  const title = customSectionTitleForPath(useCustomNames(), pathname) ?? titleForPath(pathname, tRoutes, tMini);
   const router = useRouter();
   const showBack = useNeedsOwnBackButton(pathname);
   // Кнопки «отменить / повторить» открытого журнала — тот же слот, что
@@ -312,7 +318,7 @@ export function MiniTopBar({
               if (window.history.length > 1) router.back();
               else router.push(homeHref);
             }}
-            aria-label="Назад"
+            aria-label={tCommon("back")}
             className="mini-topbar-btn mini-press -ml-1"
           >
             <ArrowLeft />
@@ -321,7 +327,7 @@ export function MiniTopBar({
         <Link
           href={homeHref}
           className="mini-topbar-home flex min-h-12 min-w-0 flex-1 items-center gap-2.5 pr-1"
-          aria-label="На главный экран"
+          aria-label={tMini("home")}
         >
           {/* Плитку прячем, когда в шапке кнопки отмены правок: на 360 px
               иначе от названия экрана оставалось «Жу…». */}

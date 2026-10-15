@@ -1,0 +1,15 @@
+{
+  "locale":"uz","sourceHash":"e5b8d2d7529eff388d00593da655e2816e0f364ab0f932d60cda66219af7510f",
+  "title":"HACCP ichki auditi: foydali hisobotni qanday tuzish kerak",
+  "excerpt":"Hisobot tuzilishi, baholar o‘rniga dalillarga asoslangan nomuvofiqliklar hamda muddati va mas’uli ko‘rsatilgan CAPA. Har qanday tarmoqning xarid bo‘limi qabul qiladigan amaliy audit hujjati.",
+  "tags":["Audit","HACCP"],
+  "body":[
+    {"type":"p","text":"Ichki audit HACCP tizimining muntazam qismidir. Uni o‘z jamoangiz o‘z rejangiz asosida o‘tkazadi. Maqsad — muammolarni inspektordan oldin aniqlash. Audit yakunidagi hisobot shunchaki belgi qo‘yish uchun emas, boshqaruv vositasidir."},
+    {"type":"h2","text":"Hisobot tuzilishi"},
+    {"type":"ol","items":["Sana va auditorlar tarkibi (kamida bitta auditor tekshirilayotgan hududdan mustaqil bo‘lishi kerak).","Qamrov: nimalar tekshirilgani (hudud, jarayon yoki smena).","Har bir band bo‘yicha chek-list va natija.","Nomuvofiqliklar: darajasi (kritik, jiddiy yoki kuzatuv), tavsifi va dalillari.","CAPA: choralar, mas’ul va muddat.","Imzolar: auditor va tekshirilgan hudud rahbari."]},
+    {"type":"h2","text":"Nomuvofiqliklarni qanday ifodalash kerak"},
+    {"type":"p","text":"Bahoni emas, faktni yozing. “Iflos edi” deb yozish o‘rniga: “Yuvish joyidagi rakovina ustidagi tokchada mahsulot qoldiqlari aniqlandi; 10.03 dan 12.03 gacha bu hudud tozalangani haqida qaydlar yo‘q.”"},
+    {"type":"callout","tone":"info","title":"CAPA — tizimning asosi","text":"Tuzatish chorasi va muddatisiz nomuvofiqlik “tarix uchun” yozuvga aylanadi. CAPA’ni hisobot tuzilayotgan paytda darhol oching va aniq bir xodimga biriktiring."},
+    {"type":"p","text":"WeSetup’da audit alohida hujjat sifatida ochiladi: natijalar, nomuvofiqliklar va CAPA bir joyda saqlanadi. Bir oy o‘tgach, barcha bandlar yopilganini tekshirish oson va jarayonda nomuvofiqlik “yo‘qolib” qolmaydi."}
+  ]
+}

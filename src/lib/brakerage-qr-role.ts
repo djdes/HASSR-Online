@@ -36,7 +36,7 @@ export function brakerageQrRole(params: {
   const evaluator =
     isCommissionMember(params.config, params.employeeId) ||
     isCommissionMember({ commissionMembers: params.orgMembers ?? [] }, params.employeeId);
-  const editor = params.canEditBrakerageDishes || isManagementRole(params.role ?? "");
+  const editor = !evaluator && (params.canEditBrakerageDishes || isManagementRole(params.role ?? ""));
   return { evaluator, editor, viewer: !evaluator && !editor && params.commissionPosition === true };
 }
 

@@ -54,7 +54,7 @@ describe("скелетон по адресу: подстраница не гру
     // Хаб настроек сохранил свой скелет с тёмным баннером, подстраницы — нет.
     const settings = read(`${APP}/settings/loading.tsx`);
     assert.match(settings, /bg-\[#0b1024\]/);
-    assert.match(settings, /<PageSkeleton label="Загружаем настройки…" body="panel" \/>/);
+    assert.match(settings, /<PageSkeleton label=\{tLoading\("settings"\)\} body="panel" \/>/);
   });
 });
 

@@ -22,6 +22,8 @@ import { parseColdEquipmentStatus, type ColdEquipmentStatus } from "@/lib/cold-e
 export type TaskFormOption = {
   value: string;
   label: string;
+  /** Stable presentation key for built-in labels; value remains unchanged. */
+  presentationKey?: string;
   /**
    * Short code used on printed journals (e.g. "Зд." for «Здоров»).
    * Non-displayed in the form; kept so the response can be rendered in
@@ -36,8 +38,13 @@ export type TaskFormField =
       type: "text";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
+      autofill?: "employeeName";
+      presentationKey?: string;
       required?: boolean;
       placeholder?: string;
+      placeholderPresentationKey?: string;
       multiline?: boolean;
       maxLength?: number;
       /** Pre-fill значение при открытии (для редактирования уже сохранённой
@@ -48,6 +55,12 @@ export type TaskFormField =
       type: "number";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
+      /** Operational target range, distinct from input-validation bounds. */
+      normalRange?: { min?: number; max?: number };
+      presentationKey?: string;
+      presentationValues?: Record<string, string | number>;
       required?: boolean;
       /** Подсказка в пустом поле («18–25», «кг»). */
       placeholder?: string;
@@ -62,6 +75,10 @@ export type TaskFormField =
       type: "boolean";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
+      presentationKey?: string;
+      presentationValues?: Record<string, string | number>;
       /** Default checked state when the form first renders. */
       defaultValue?: boolean;
       /**
@@ -77,6 +94,9 @@ export type TaskFormField =
       type: "select";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
+      presentationKey?: string;
       required?: boolean;
       options: TaskFormOption[];
       /** Default selected value. */
@@ -86,6 +106,9 @@ export type TaskFormField =
       type: "date";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
+      presentationKey?: string;
       required?: boolean;
       defaultValue?: string;
     }
@@ -100,6 +123,8 @@ export type TaskFormField =
       type: "time";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
       required?: boolean;
       placeholder?: string;
       defaultValue?: string;
@@ -114,6 +139,8 @@ export type TaskFormField =
       type: "photo";
       key: string;
       label: string;
+      sourceLabel?: string;
+      presentationSource?: "adapter" | "template";
       required?: boolean;
       defaultValue?: string;
     }
@@ -122,6 +149,7 @@ export type TaskFormField =
       type: "signature";
       key: string;
       label: string;
+      sourceLabel?: string;
       required?: boolean;
       defaultValue?: string;
     };
@@ -143,6 +171,14 @@ export type PipelineStep = {
   id: string;
   /** Заголовок шага (что делать). Краткий, glanceable. */
   title: string;
+  /** Original source title retained for audit and compatibility. */
+  sourceTitle?: string;
+  /** Stable product-owned presentation key; never inferred from title text. */
+  titlePresentationKey?: string;
+  titlePresentationValues?: Record<string, string | number>;
+  detailPresentationKey?: string;
+  detailPresentationValues?: Record<string, string | number | Date>;
+  hintPresentationKey?: string;
   /** Подробное объяснение «как сделать», с конкретикой. */
   detail: string;
   /** Опциональное поле для ввода данных в этом шаге. */
@@ -243,9 +279,13 @@ export type TaskFormSchema = {
   /** Rendered above the form — free-text task description from admin
    *  is concatenated on top of this. Optional. */
   intro?: string;
+  introPresentationKey?: string;
+  introPresentationValues?: Record<string, string | number | Date>;
   /** Короткая плашка над полями («Сегодня уже записано — проверьте»).
    *  Только подсказка интерфейсу; клиенты, которым она не нужна, игнорируют. */
   notice?: string;
+  noticePresentationKey?: string;
+  noticePresentationValues?: Record<string, string | number | Date>;
   /** Поля, у которых сегодня уже стоит пометка «Выключено / Нет показания» — форма показывает их отмеченными. */
   prefilledOff?: string[];
   /**
@@ -276,6 +316,7 @@ export type TaskFormSchema = {
    * shape; throws on invalid.
    */
   submitLabel?: string;
+  submitPresentationKey?: string;
 };
 
 export type TaskFormValues = Record<string, string | number | boolean | null>;

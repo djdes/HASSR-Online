@@ -48,12 +48,12 @@ export async function GET(
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
   if (!Number.isFinite(taskId) || !token) {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    return NextResponse.json({ errorCode: "invalidBody", error: "Bad request" }, { status: 400 });
   }
 
   const link = await resolveTaskFillLink(taskId, token);
   if (!link) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
   const organizationId = link.integration.organizationId;
 
@@ -220,17 +220,17 @@ export async function POST(
   const { taskId: taskIdRaw } = await params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId)) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
   const body = await request.json().catch(() => null);
   const parsed = ToggleBody.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Bad body" }, { status: 400 });
+    return NextResponse.json({ errorCode: "invalidBody", error: "Bad body" }, { status: 400 });
   }
 
   const link = await resolveTaskFillLink(taskId, parsed.data.token);
   if (!link) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
   const organizationId = link.integration.organizationId;
 
@@ -243,7 +243,7 @@ export async function POST(
     },
   });
   if (!item) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "itemNotFound", error: "Item not found" }, { status: 404 });
   }
 
   const employeeId = extractEmployeeId(link.rowKey);

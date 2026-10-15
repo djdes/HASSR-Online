@@ -4,6 +4,7 @@ import { Lock } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
@@ -32,7 +33,7 @@ import { humanizeFetchError } from "@/lib/humanize-fetch-error";
  */
 export function JournalClosedBanner({
   /** Чем именно нельзя управлять — уточнение во второй строке. */
-  hint = "Откройте журнал заново, чтобы редактировать отметки и записи.",
+  hint,
   className = "",
   documentId,
 }: {
@@ -41,6 +42,9 @@ export function JournalClosedBanner({
   /** Без id кнопка «Открыть заново» не рисуется — нечего открывать. */
   documentId?: string;
 } = {}) {
+  const t = useTranslations("journalWidgets.closed");
+  const locale = useLocale();
+  const errors = useTranslations("journalControls.closeDocument");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   // Открыть журнал заново может только тот, кто управляет документами —
@@ -50,14 +54,15 @@ export function JournalClosedBanner({
   async function reopen() {
     if (!documentId || busy) return;
     const confirmed = await confirmAsync({
-      title: "Открыть журнал заново?",
-      description: "Документ снова станет активным.",
+      locale,
+      title: t("reopenTitle"),
+      description: t("reopenDescription"),
       bullets: [
-        { label: "Его можно будет дозаполнить и исправить", tone: "info" },
-        { label: "Он вернётся на вкладку «Активные»", tone: "default" },
+        { label: t("reopenCanEdit"), tone: "info" },
+        { label: t("reopenMovesToActive"), tone: "default" },
       ],
       variant: "info",
-      confirmLabel: "Открыть заново",
+      confirmLabel: t("reopenConfirm"),
     });
     if (!confirmed) return;
 
@@ -72,12 +77,12 @@ export function JournalClosedBanner({
         const failure = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(failure?.error || "Не удалось открыть журнал заново");
+        throw new Error(failure?.error || t("reopenFailed"));
       }
-      toast.success("Журнал снова активен");
+      toast.success(t("reopenSuccess"));
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось открыть журнал заново"));
+      toast.error(humanizeFetchError(error, t("reopenFailed"), errors("networkError")));
     } finally {
       setBusy(false);
     }
@@ -94,9 +99,9 @@ export function JournalClosedBanner({
       </span>
       <div className="min-w-0 text-[13px] leading-[1.55] text-[#7a4a00]">
         <div className="text-[14px] font-semibold text-[#5c3800]">
-          Журнал закрыт — только просмотр
+          {t("closedReadOnly")}
         </div>
-        {hint}
+        {hint ?? t("defaultHint")}
         {showButton ? (
           <div className="mt-2.5">
             <button
@@ -105,7 +110,7 @@ export function JournalClosedBanner({
               onClick={() => void reopen()}
               className="inline-flex h-9 items-center rounded-xl bg-[#5566f6] px-3.5 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-50"
             >
-              {busy ? "Открываем…" : "Открыть заново"}
+              {busy ? t("reopening") : t("reopenConfirm")}
             </button>
           </div>
         ) : null}

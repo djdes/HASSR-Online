@@ -1,5 +1,10 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { calibrationDate, calibrationPositionLabel, calibrationDocumentTitle, calibrationErrorKey, checkCalibrationResponse } from "./equipment-calibration-presentation";
+import { EquipmentCalibrationPositionItems } from "./equipment-calibration-position-items";
+
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, ListPlus, Plus, X } from "lucide-react";
@@ -8,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel } from "@/lib/user-roles";
+import { getUserRoleLabel, getUserPositionLabel } from "@/lib/user-roles";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +32,6 @@ import {
   type CalibrationRow,
   createCalibrationRow,
   normalizeEquipmentCalibrationConfig,
-  formatCalibrationDate,
-  formatCalibrationDateLong,
   calculateNextCalibrationDate,
   isCalibrationOverdue,
 } from "@/lib/equipment-calibration-document";
@@ -38,7 +41,7 @@ import {
   type EquipmentDirectoryOption,
 } from "@/lib/equipment-directory-link";
 import { EquipmentDirectoryField } from "@/components/journals/equipment-directory-field";
-import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
+import { getUserDisplayName } from "@/lib/user-display-name";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
@@ -57,12 +60,9 @@ import {
 
 import { toast } from "sonner";
 import {
-  PositionSelectItems,
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { localDayKey } from "@/lib/entry-defaults";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { resolveApprover } from "@/lib/approver-display";
 
 type Props = {
@@ -79,7 +79,7 @@ type Props = {
   useV2?: boolean;
 };
 
-const POSITION_OPTIONS = USER_ROLE_LABEL_VALUES;
+
 
 export function EquipmentCalibrationDocumentClient({
   documentId,
@@ -93,6 +93,11 @@ export function EquipmentCalibrationDocumentClient({
   useV2 = false,
 }: Props) {
   const router = useRouter();
+  const locale = useLocale() as Locale;
+  const t = useTranslations("equipmentCalibration");
+  const roles = { manager: t("roles.manager"), head_chef: t("roles.head_chef"), cook: t("roles.cook"), waiter: t("roles.waiter") };
+  const positionLabel = (value: string) => calibrationPositionLabel(value, users, roles);
+  const documentTitle = (value: string, year: number) => calibrationDocumentTitle(value, year, locale, t("pageTitle"), (name, period) => t("generatedTitle", { name, period }));
   const [, startTransition] = useTransition();
   const [isSaving, setIsSaving] = useState(false);
   const [config, setConfig] = useState(() =>
@@ -157,9 +162,9 @@ export function EquipmentCalibrationDocumentClient({
   const [editNote, setEditNote] = useState("");
 
   const isClosed = status === "closed";
-  const organizationLabel = organizationName || ORG_NAME_FALLBACK;
+  const organizationLabel = organizationName || t("organizationFallback");
   const { mobileView, switchMobileView } = useMobileView("equipment_calibration");
-  const { closeDocument, isClosing } = useDocumentCloseAction({ documentId, title });
+  const { closeDocument, isClosing } = useDocumentCloseAction({ documentId, title: documentTitle(title, config.year) });
 
   /** Имя строки: у связанных — из справочника, у остальных — сохранённое. */
   const rowName = (row: CalibrationRow) =>
@@ -198,23 +203,23 @@ export function EquipmentCalibrationDocumentClient({
         [row.equipmentNumber, row.location].filter(Boolean).join(" · ") || undefined,
       badge: overdue ? (
         <span className="rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-semibold text-[#ff3b30]">
-          Просрочено
-        </span>
+          {t("overdue")}</span>
       ) : undefined,
       leading: !isClosed ? (
         <Checkbox
+          aria-label={t("selectRow", { number: index + 1 })}
           checked={selectedRows.includes(row.id)}
           onCheckedChange={(checked) => toggleRow(row.id, checked === true)}
           className="size-5"
         />
       ) : null,
       fields: [
-        { label: "Назначение", value: row.purpose, hideIfEmpty: true },
-        { label: "Диапазон измерений", value: row.measurementRange, hideIfEmpty: true },
-        { label: "Межповерочный интервал", value: `${row.calibrationInterval} мес.` },
-        { label: "Последняя поверка", value: formatCalibrationDate(row.lastCalibrationDate) },
-        { label: "Очередная поверка", value: formatCalibrationDate(nextDate) },
-        { label: "Примечание", value: row.note, hideIfEmpty: true },
+        { label: t("purpose"), value: row.purpose, hideIfEmpty: true },
+        { label: t("range"), value: row.measurementRange, hideIfEmpty: true },
+        { label: t("interval"), value: t("months", { count: row.calibrationInterval }) },
+        { label: t("lastVerification"), value: calibrationDate(row.lastCalibrationDate, locale) },
+        { label: t("nextVerification"), value: calibrationDate(nextDate, locale) },
+        { label: t("note"), value: row.note, hideIfEmpty: true },
       ],
       onClick: !isClosed ? () => openEditRow(row.id) : undefined,
       actions: !isClosed ? (
@@ -223,8 +228,7 @@ export function EquipmentCalibrationDocumentClient({
           onClick={() => openEditRow(row.id)}
           className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5563ff] px-4 text-[14px] font-medium text-white hover:bg-[#4452ee]"
         >
-          Редактировать
-        </button>
+          {t("edit")}</button>
       ) : null,
     };
   });
@@ -255,16 +259,15 @@ export function EquipmentCalibrationDocumentClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config: next }),
       });
-      const result = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(result?.error || "Не удалось сохранить журнал");
-      }
+      await checkCalibrationResponse(response, "saveJournal");
       startTransition(() => router.refresh());
+      return true;
     } catch (error) {
       applyConfig(previous);
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить журнал")
+        t(`errors.${calibrationErrorKey(error, "saveJournal")}`)
       );
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -294,7 +297,7 @@ export function EquipmentCalibrationDocumentClient({
    * Дописывает строки для СИ из справочника, которых в графике ещё нет.
    * Даты поверки пустые — их проставляет человек.
    */
-  function addMissingFromDirectory() {
+  async function addMissingFromDirectory() {
     if (missingEquipment.length === 0) return;
     const added = missingEquipment.map((item) =>
       createCalibrationRow({
@@ -302,11 +305,11 @@ export function EquipmentCalibrationDocumentClient({
         equipmentName: item.name,
       })
     );
-    void mutateConfig((current) => ({
+    const saved = await mutateConfig((current) => ({
       ...current,
       rows: [...current.rows, ...added],
     }));
-    toast.success(`Добавлено строк из справочника: ${added.length}`);
+    if (saved) toast.success(t("added", { count: added.length }));
   }
 
   function resetDraft() {
@@ -433,17 +436,14 @@ export function EquipmentCalibrationDocumentClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config: nextConfig, title: settingsTitle }),
       });
-      const result = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(result?.error || "Не удалось сохранить настройки");
-      }
+      await checkCalibrationResponse(response, "saveSettings");
       setSettingsOpen(false);
       startTransition(() => router.refresh());
     } catch (error) {
       // Откат: иначе на экране остаются настройки, которых нет в базе.
       applyConfig(previous);
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки")
+        t(`errors.${calibrationErrorKey(error, "saveSettings")}`)
       );
     } finally {
       setIsSaving(false);
@@ -454,7 +454,7 @@ export function EquipmentCalibrationDocumentClient({
 
   return (
     <div className="space-y-6 text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("emptyTitle")} emptyBody={t("emptyBody")} />
 
       {/* Selection bar */}
       {selectedRows.length > 0 && !isClosed && (
@@ -462,19 +462,19 @@ export function EquipmentCalibrationDocumentClient({
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
           onDelete={removeSelectedRows}
-          hint="Строки графика поверки будут удалены без возможности отмены"
+          hint={t("deleteRowsHint")}
         >
           <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
         </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
-        title={title}
+        title={documentTitle(title, config.year)}
         documentId={documentId}
         backHref="/journals/equipment_calibration"
         onSettings={openSettings}
         closed={isClosed}
-        closedHint="Откройте журнал заново, чтобы добавлять и править средства измерений."
+        closedHint={t("closedHint")}
         /* «Закончить журнал» был в ППР и поломках, а в поверке отсутствовал —
            закрыть график поверки было нечем. */
         menuItems={
@@ -482,7 +482,7 @@ export function EquipmentCalibrationDocumentClient({
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("finish"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => void closeDocument(),
                   disabled: isClosing,
@@ -493,13 +493,13 @@ export function EquipmentCalibrationDocumentClient({
         mobileView={mobileView}
         onMobileView={switchMobileView}
         cards={
-          <RecordCardsView items={cardItems} emptyLabel="Средств измерений пока не внесено." />
+          <RecordCardsView items={cardItems} emptyLabel={t("emptyInstruments")} />
         }
         paperHeader={
           <>
             <JournalDocumentHeader
               orgName={organizationLabel}
-              title="ГРАФИК ПОВЕРКИ СРЕДСТВ ИЗМЕРЕНИЙ"
+              title={t("pageTitle").toUpperCase()}
               startedAt={dateFrom}
               finishedAt={isClosed ? config.documentDate : null}
             />
@@ -507,20 +507,20 @@ export function EquipmentCalibrationDocumentClient({
             {/* УТВЕРЖДАЮ block */}
             <div className="mt-4 flex justify-end">
               <div className="w-[400px] text-right text-sm leading-relaxed">
-                <div className="font-semibold uppercase">УТВЕРЖДАЮ</div>
-                <div>{approver.title}</div>
+                <div className="font-semibold uppercase">{t("approve")}</div>
+                <div>{positionLabel(approver.title)}</div>
                 <div className="mt-1 flex items-center justify-end gap-2">
                   <span className="inline-block w-[180px] border-b border-black" />
                   <span>{approver.name}</span>
                 </div>
                 <div className="mt-1">
-                  {config.documentDate ? formatCalibrationDateLong(config.documentDate) : ""}
+                  {config.documentDate ? calibrationDate(config.documentDate, locale, true) : ""}
                 </div>
               </div>
             </div>
           </>
         }
-        sheetTitle={`График поверки средств измерений на ${config.year} г.`}
+        sheetTitle={t("yearTitle", { year: String(config.year) })}
         sheetMinWidth={1100}
         toolbar={
           !isClosed ? (
@@ -534,8 +534,7 @@ export function EquipmentCalibrationDocumentClient({
                 }}
               >
                 <Plus className="size-4" />
-                Добавить
-              </Button>
+                {t("add")}</Button>
 
               {/* Добавленное в /settings/equipment раньше не попадало в
                   уже созданный график поверки вообще. */}
@@ -545,10 +544,10 @@ export function EquipmentCalibrationDocumentClient({
                   variant="outline"
                   className="border-[#dcdfed]"
                   onClick={addMissingFromDirectory}
-                  title="Оборудование из справочника, которого нет в графике"
+                  title={t("directoryHint")}
                 >
                   <ListPlus className="size-4" />
-                  Добавить из справочника ({missingEquipment.length})
+                  {t("addDirectory", { count: missingEquipment.length })}
                 </Button>
               ) : null}
             </>
@@ -560,34 +559,25 @@ export function EquipmentCalibrationDocumentClient({
             <tr>
               <th className={`w-10 ${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2} />
               <th className={`w-12 ${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2}>
-                № п/п
-              </th>
+                {t("number")}</th>
               <th className={`w-[280px] ${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2}>
-                Идентификаторы СИ (наименование, тип, заводское обозначение, номер, место расположения)
-              </th>
+                {t("identifiers")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`} colSpan={2}>
-                Метрологические характеристики
-              </th>
+                {t("characteristics")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2}>
-                Межповерочный интервал
-              </th>
+                {t("interval")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2}>
-                Дата последней поверки
-              </th>
+                {t("lastDate")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2}>
-                Сроки проведения очередной поверки
-              </th>
+                {t("nextDate")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`} rowSpan={2}>
-                Примечание
-              </th>
+                {t("note")}</th>
             </tr>
             <tr>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`}>
-                Назначение (измеряемые параметры)
-              </th>
+                {t("purposeFull")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} p-1`}>
-                Предел (диапазон) измерений
-              </th>
+                {t("rangeFull")}</th>
             </tr>
           </thead>
           <tbody>
@@ -610,7 +600,8 @@ export function EquipmentCalibrationDocumentClient({
                   >
                     {!isClosed && (
                       <Checkbox
-                        checked={selectedRows.includes(row.id)}
+                        aria-label={t("selectRow", { number: index + 1 })}
+          checked={selectedRows.includes(row.id)}
                         onCheckedChange={(checked) =>
                           toggleRow(row.id, checked === true)
                         }
@@ -634,15 +625,15 @@ export function EquipmentCalibrationDocumentClient({
                     {row.measurementRange}
                   </td>
                   <td className={`${GRID_CELL_CLASS} p-1 text-center leading-tight`}>
-                    {row.calibrationInterval} мес.
+                    {t("months", { count: row.calibrationInterval })}
                   </td>
                   <td className={`${GRID_CELL_CLASS} p-1 text-center leading-tight`}>
-                    {formatCalibrationDate(row.lastCalibrationDate)}
+                    {calibrationDate(row.lastCalibrationDate, locale)}
                   </td>
                   <td
                     className={`${GRID_CELL_CLASS} p-1 text-center leading-tight ${overdue ? "font-semibold text-[#ff3b30]" : ""}`}
                   >
-                    {formatCalibrationDate(nextDate)}
+                    {calibrationDate(nextDate, locale)}
                   </td>
                   <td className={`${GRID_CELL_CLASS} p-1 text-center leading-tight`}>
                     {row.note}
@@ -657,8 +648,7 @@ export function EquipmentCalibrationDocumentClient({
                   colSpan={9}
                   className={`${GRID_CELL_CLASS} p-4 text-center text-gray-400`}
                 >
-                  Нет записей. Нажмите &laquo;Добавить&raquo; чтобы добавить СИ.
-                </td>
+                  {t("emptyTable")}</td>
               </tr>
             )}
 
@@ -675,7 +665,7 @@ export function EquipmentCalibrationDocumentClient({
                 leading={2}
                 labelSpan={1}
                 trailing={6}
-                label="Добавить СИ"
+                label={t("addInstrument")}
                 onClick={() => {
                   resetDraft();
                   setAddModalOpen(true);
@@ -689,7 +679,7 @@ export function EquipmentCalibrationDocumentClient({
                 эта строка остаётся только «полом» бланка при печати. */}
             <tr className="hidden print:table-row">
               <td className={`${GRID_CELL_CLASS} p-1 text-center`}>
-                <Checkbox disabled />
+                <Checkbox disabled aria-hidden="true" />
               </td>
               <td
                 colSpan={8}
@@ -705,10 +695,10 @@ export function EquipmentCalibrationDocumentClient({
         <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
             <DialogTitle className="text-[24px] font-semibold text-black">
-              Добавление новой строки
-            </DialogTitle>
+              {t("addRow")}</DialogTitle>
             <button
               type="button"
+              aria-label={t("close")}
               className="rounded-md p-1 text-black/80 hover:bg-black/5"
               onClick={() => setAddModalOpen(false)}
             >
@@ -717,7 +707,7 @@ export function EquipmentCalibrationDocumentClient({
           </DialogHeader>
           <div className="space-y-4 px-7 py-6">
             <EquipmentDirectoryField
-              label="Наименование, тип, заводское обозначение СИ"
+              label={t("instrumentName")}
               value={draftName}
               sourceEquipmentId={draftSourceEquipmentId}
               directory={equipmentDirectory}
@@ -728,48 +718,48 @@ export function EquipmentCalibrationDocumentClient({
               }}
             />
             <Input
-              value={draftNumber}
+              aria-label={t("instrumentNumber")} value={draftNumber}
               onChange={(e) => setDraftNumber(e.target.value)}
-              placeholder="Введите номер СИ"
+              placeholder={t("numberPlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
             />
             <Input
-              value={draftLocation}
+              aria-label={t("location")} value={draftLocation}
               onChange={(e) => setDraftLocation(e.target.value)}
-              placeholder="Введите место расположения СИ"
+              placeholder={t("locationPlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
             />
             <Input
-              value={draftPurpose}
+              aria-label={t("purposeFull")} value={draftPurpose}
               onChange={(e) => setDraftPurpose(e.target.value)}
-              placeholder="Введите назначение (измеряемые параметры)"
+              placeholder={t("purposePlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
             />
             <Input
-              value={draftRange}
+              aria-label={t("rangeFull")} value={draftRange}
               onChange={(e) => setDraftRange(e.target.value)}
-              placeholder="Введите предел (диапазон) измерений"
+              placeholder={t("rangePlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
             />
             <Input
-              value={draftInterval}
+              aria-label={t("intervalMonths")} value={draftInterval}
               onChange={(e) => setDraftInterval(e.target.value)}
-              placeholder="Введите межповерочный интервал, месяцев"
+              placeholder={t("intervalPlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
             />
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Дата последней поверки</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("lastDate")}</Label>
               <Input
                 type="date"
-                value={draftLastDate}
+                aria-label={t("lastDate")} value={draftLastDate}
                 onChange={(e) => setDraftLastDate(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <Textarea
-              value={draftNote}
+              aria-label={t("note")} value={draftNote}
               onChange={(e) => setDraftNote(e.target.value)}
-              placeholder="Примечание"
+              placeholder={t("note")}
               rows={3}
               className="rounded-2xl border-[#dfe1ec] px-5 py-4 text-[16px]"
             />
@@ -779,8 +769,7 @@ export function EquipmentCalibrationDocumentClient({
                 disabled={!draftName.trim()}
                 className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
               >
-                Добавить
-              </Button>
+                {t("add")}</Button>
             </div>
           </div>
         </DialogContent>
@@ -791,10 +780,11 @@ export function EquipmentCalibrationDocumentClient({
         <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
             <DialogTitle className="text-[24px] font-semibold text-black">
-              Редактирование строки{seq.progress ? ` ${seq.progress}` : ""}
+              {t("editRow", { progress: seq.progress ? ` ${seq.progress}` : "" })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("close")}
               className="rounded-md p-1 text-black/80 hover:bg-black/5"
               onClick={closeEditModal}
             >
@@ -803,7 +793,7 @@ export function EquipmentCalibrationDocumentClient({
           </DialogHeader>
           <div className="space-y-4 px-7 py-6">
             <EquipmentDirectoryField
-              label="Наименование, тип, заводское обозначение СИ"
+              label={t("instrumentName")}
               value={editName}
               sourceEquipmentId={editSourceEquipmentId}
               directory={equipmentDirectory}
@@ -814,58 +804,58 @@ export function EquipmentCalibrationDocumentClient({
               }}
             />
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Номер СИ</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("instrumentNumber")}</Label>
               <Input
-                value={editNumber}
+                aria-label={t("instrumentNumber")} value={editNumber}
                 onChange={(e) => setEditNumber(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Место расположения СИ</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("location")}</Label>
               <Input
-                value={editLocation}
+                aria-label={t("location")} value={editLocation}
                 onChange={(e) => setEditLocation(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Назначение (измеряемые параметры)</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("purposeFull")}</Label>
               <Input
-                value={editPurpose}
+                aria-label={t("purposeFull")} value={editPurpose}
                 onChange={(e) => setEditPurpose(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Предел (диапазон) измерений</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("rangeFull")}</Label>
               <Input
-                value={editRange}
+                aria-label={t("rangeFull")} value={editRange}
                 onChange={(e) => setEditRange(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Межповерочный интервал, месяцев</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("intervalMonths")}</Label>
               <Input
-                value={editInterval}
+                aria-label={t("intervalMonths")} value={editInterval}
                 onChange={(e) => setEditInterval(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Дата последней поверки</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("lastDate")}</Label>
               <Input
                 type="date"
-                value={editLastDate}
+                aria-label={t("lastDate")} value={editLastDate}
                 onChange={(e) => setEditLastDate(e.target.value)}
                 className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Примечание</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("note")}</Label>
               <Textarea
-                value={editNote}
+                aria-label={t("note")} value={editNote}
                 onChange={(e) => setEditNote(e.target.value)}
                 rows={3}
                 className="rounded-2xl border-[#dfe1ec] px-5 py-4 text-[16px]"
@@ -876,8 +866,7 @@ export function EquipmentCalibrationDocumentClient({
                 onClick={saveEditRow}
                 className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
               >
-                Сохранить
-              </Button>
+                {t("save")}</Button>
             </div>
           </div>
         </DialogContent>
@@ -888,8 +877,8 @@ export function EquipmentCalibrationDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название документа, дата, год и должность утверждающего."
+          title={t("settingsTitle")}
+          description={t("settingsDescription")}
           size="md"
           isSaving={isSaving}
           onSave={handleSaveSettings}
@@ -897,10 +886,9 @@ export function EquipmentCalibrationDocumentClient({
         >
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название документа
-            </Label>
+              {t("documentTitle")}</Label>
             <Input
-              value={settingsTitle}
+              aria-label={t("documentTitle")} value={settingsTitle}
               onChange={(e) => setSettingsTitle(e.target.value)}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
@@ -908,19 +896,17 @@ export function EquipmentCalibrationDocumentClient({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Дата документа
-              </Label>
+                {t("documentDate")}</Label>
               <Input
                 type="date"
-                value={settingsDate}
+                aria-label={t("documentDate")} value={settingsDate}
                 onChange={(e) => setSettingsDate(e.target.value)}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Год
-              </Label>
+                {t("year")}</Label>
               <Select
                 value={String(settingsYear)}
                 onValueChange={(val) => setSettingsYear(Number(val))}
@@ -938,24 +924,22 @@ export function EquipmentCalibrationDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Должность «Утверждаю»
-            </Label>
+              {t("approvalRole")}</Label>
             <Select
               value={settingsApproveRole}
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={t("choose")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={users} />
+                <EquipmentCalibrationPositionItems users={users} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Сотрудник
-            </Label>
+              {t("employee")}</Label>
             <Select
               value={settingsApproveEmployeeId}
               onValueChange={(value) => {
@@ -968,11 +952,11 @@ export function EquipmentCalibrationDocumentClient({
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={t("choose")} />
               </SelectTrigger>
               <SelectContent>
                 {(settingsApproveRole ? approveCascade.candidates : users).map((u) => (
-                  <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>
+                  <SelectItem key={u.id} value={u.id}>{`${positionLabel(getUserPositionLabel(u))} - ${getUserDisplayName(u, t("noName"))}`}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -983,10 +967,10 @@ export function EquipmentCalibrationDocumentClient({
           <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
             <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
               <DialogTitle className="text-[24px] font-semibold text-black">
-                Настройки документа
-              </DialogTitle>
+                {t("settingsTitle")}</DialogTitle>
               <button
                 type="button"
+                aria-label={t("close")}
                 className="rounded-md p-1 text-black/80 hover:bg-black/5"
                 onClick={() => setSettingsOpen(false)}
               >
@@ -995,24 +979,24 @@ export function EquipmentCalibrationDocumentClient({
             </DialogHeader>
             <div className="space-y-4 px-7 py-6">
               <div className="space-y-1">
-                <Label className="text-[14px] text-[#6f7282]">Название документа</Label>
+                <Label className="text-[14px] text-[#6f7282]">{t("documentTitle")}</Label>
                 <Input
-                  value={settingsTitle}
+                  aria-label={t("documentTitle")} value={settingsTitle}
                   onChange={(e) => setSettingsTitle(e.target.value)}
                   className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-[14px] text-[#6f7282]">Дата документа</Label>
+                <Label className="text-[14px] text-[#6f7282]">{t("documentDate")}</Label>
                 <Input
                   type="date"
-                  value={settingsDate}
+                  aria-label={t("documentDate")} value={settingsDate}
                   onChange={(e) => setSettingsDate(e.target.value)}
                   className="h-9 rounded-xl border-[#dfe1ec] px-5 text-[16px]"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-[14px] text-[#6f7282]">Год</Label>
+                <Label className="text-[14px] text-[#6f7282]">{t("year")}</Label>
                 <Select
                   value={String(settingsYear)}
                   onValueChange={(val) => setSettingsYear(Number(val))}
@@ -1028,21 +1012,21 @@ export function EquipmentCalibrationDocumentClient({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-[14px] text-[#6f7282]">Должность &quot;Утверждаю&quot;</Label>
+                <Label className="text-[14px] text-[#6f7282]">{t("approvalRole")}</Label>
                 <Select
                   value={settingsApproveRole}
                   onValueChange={approveCascade.handlePositionChange}
                 >
                   <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                    <SelectValue placeholder="Выберите должность" />
+                    <SelectValue placeholder={t("choosePosition")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <PositionSelectItems users={users} />
+                    <EquipmentCalibrationPositionItems users={users} />
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-[14px] text-[#6f7282]">Сотрудник</Label>
+                <Label className="text-[14px] text-[#6f7282]">{t("employee")}</Label>
                 <Select
                   value={settingsApproveEmployeeId}
                   onValueChange={(value) => {
@@ -1055,11 +1039,11 @@ export function EquipmentCalibrationDocumentClient({
                   onOpenChange={approveCascade.setEmployeeOpen}
                 >
                   <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                    <SelectValue placeholder="Выберите сотрудника" />
+                    <SelectValue placeholder={t("chooseEmployee")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(settingsApproveRole ? approveCascade.candidates : users).map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>
+                      <SelectItem key={u.id} value={u.id}>{`${positionLabel(getUserPositionLabel(u))} - ${getUserDisplayName(u, t("noName"))}`}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1070,7 +1054,7 @@ export function EquipmentCalibrationDocumentClient({
                   disabled={isSaving}
                   className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
                 >
-                  {isSaving ? "Сохранение..." : "Сохранить"}
+                  {isSaving ? t("saving") : t("save")}
                 </Button>
               </div>
             </div>

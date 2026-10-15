@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { CalendarRange, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +47,10 @@ import {
   type GeneralCleaningOp,
 } from "@/lib/general-cleaning-ops";
 import { nextOpenCleaning } from "@/lib/tasksflow-adapters/sanitation-day-tasks";
+import {
+  sanitationMonthShortLabel,
+  sanitationRoleDisplayTitle,
+} from "@/lib/sanitation-day-presentation";
 import {
   RoomEditorDialog,
   type RoomEditorInitial,
@@ -112,7 +117,7 @@ import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { resolveApprover, resolveResponsible } from "@/lib/approver-display";
 import { useLiveRefetch } from "@/lib/use-live-refetch";
 import { useTodayKey } from "@/lib/use-today-key";
-import { MONTH_NAMES_RU, formatDayMonth, formatDayMonthWeekday } from "@/lib/wheel-date";
+import { formatDayMonthWeekday } from "@/lib/wheel-date";
 
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
@@ -182,22 +187,18 @@ function toIsoDate(value: string) {
   return date.toISOString().slice(0, 10);
 }
 
-function toViewDateLabel(dateKey: string) {
-  const [year, month, day] = dateKey.split("-");
-  if (!year || !month || !day) return dateKey;
-  // `toLocaleDateString({ month: "long" })` без дня даёт именительный
-  // падеж («январь»), а бланк требует родительный («января»). Просим
-  // локаль отформатировать дату целиком с днём — тогда падеж верный —
-  // и забираем из результата только название месяца.
-  const monthName = new Date(`${year}-${month}-${day}T00:00:00`)
-    .toLocaleDateString("ru-RU", { day: "numeric", month: "long" })
-    .replace(/^\d+\s+/, "");
-  return `« ${day} » ${monthName} ${year} г.`;
+function toViewDateLabel(dateKey: string, locale: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return dateKey;
+  return new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : locale, {
+    day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
+  }).format(new Date(`${dateKey}T12:00:00Z`));
 }
 
-function datesPreview(dates: string[]): string {
-  const shown = dates.slice(0, 5).map(formatDayMonth).join(", ");
-  return dates.length > 5 ? `${shown} и ещё ${dates.length - 5}` : shown;
+function datesPreview(dates: string[], locale: string, moreLabel: (count: number) => string): string {
+  const shown = dates.slice(0, 5).map((value) => new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : locale, {
+    day: "numeric", month: "short", timeZone: "UTC",
+  }).format(new Date(`${value.slice(0, 10)}T12:00:00Z`))).join(", ");
+  return dates.length > 5 ? `${shown} ${moreLabel(dates.length - 5)}` : shown;
 }
 
 function RoomDialog(props: {
@@ -210,6 +211,7 @@ function RoomDialog(props: {
   linkOptions?: Array<{ id: string; name: string }>;
   onSubmit: (value: RoomDialogState, linkRoomId?: string | null) => Promise<void>;
 }) {
+  const t = useTranslations("cleaningGrid.cleaning");
   const [state, setState] = useState<RoomDialogState>(props.initial);
   const [linkRoomId, setLinkRoomId] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -246,7 +248,7 @@ function RoomDialog(props: {
         <div className="space-y-4 px-6 py-5">
           <div className="space-y-2">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Название помещения
+              {t("roomNameLabel")}
             </Label>
             <Input
               value={state.name}
@@ -256,7 +258,7 @@ function RoomDialog(props: {
                   name: event.target.value,
                 }))
               }
-              placeholder="Введите название помещения"
+            placeholder={t("room")}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
             />
           </div>
@@ -264,14 +266,14 @@ function RoomDialog(props: {
           {props.initial.id && (props.linkOptions?.length ?? 0) > 0 ? (
             <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                Связать с помещением из справочника
+                {t("linkRoomFromDirectory")}
               </Label>
               <select
                 value={linkRoomId}
                 onChange={(event) => setLinkRoomId(event.target.value)}
                 className="h-10 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               >
-                <option value="">— не связывать —</option>
+                <option value="">{t("doNotLinkRoom")}</option>
                 {props.linkOptions?.map((room) => (
                   <option key={room.id} value={room.id}>
                     {room.name}
@@ -279,7 +281,7 @@ function RoomDialog(props: {
                 ))}
               </select>
               <p className="text-[11.5px] leading-[1.5] text-[#6f7282]">
-                После связи название, ответственные и график генуборки берутся из карточки помещения («Настройки → Помещения»); даты плана сохраняются.
+                {t("linkRoomHelp")}
               </p>
             </div>
           ) : null}
@@ -290,7 +292,7 @@ function RoomDialog(props: {
               disabled={submitting}
               onClick={async () => {
                 if (!state.name.trim()) {
-                  toast.error("Введите название помещения");
+        toast.error(t("room"));
                   return;
                 }
                 setSubmitting(true);
@@ -304,7 +306,7 @@ function RoomDialog(props: {
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Сохранение..." : props.submitText}
+            {submitting ? t("saving") : props.submitText}
             </Button>
           </div>
         </div>
@@ -321,6 +323,7 @@ function DocumentSettingsDialog(props: {
   onSubmit: (value: SettingsState) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("cleaningGrid.cleaning");
   const [state, setState] = useState<SettingsState>(props.initial);
   const [submitting, setSubmitting] = useState(false);
   // Тот же ресинк, что и в RoomDialog: окно открывается снаружи.
@@ -390,7 +393,7 @@ function DocumentSettingsDialog(props: {
   const documentDateField = (
     <DateField
       picker="wheel"
-      label="Дата документа"
+      label={t("documentDate")}
       value={state.documentDate}
       onChange={(value) =>
         setState((current) => ({
@@ -409,8 +412,8 @@ function DocumentSettingsDialog(props: {
           if (value) setState(props.initial);
           props.onOpenChange(value);
         }}
-        title="Настройки документа"
-        description="Название документа, дата, год и две роли: утверждающий и ответственный."
+        title={t("settingsTitle")}
+        description={t("settingsDescriptionDetailed")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -418,14 +421,14 @@ function DocumentSettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {t("documentTitleLabel")}
           </Label>
           <Input
             value={state.title}
             onChange={(event) =>
               setState((current) => ({ ...current, title: event.target.value }))
             }
-            placeholder="Название документа"
+            placeholder={t("documentTitlePlaceholder")}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
@@ -433,7 +436,7 @@ function DocumentSettingsDialog(props: {
           {documentDateField}
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Год
+              {t("yearLabel")}
             </Label>
             <Select
               value={state.year}
@@ -459,21 +462,19 @@ function DocumentSettingsDialog(props: {
         </div>
         {state.year !== props.initial.year ? (
           <p className="rounded-2xl bg-[#fff8eb] px-3.5 py-2.5 text-[12.5px] leading-[1.5] text-[#8a5a14]">
-            Даты плана и отметки перенесутся на {state.year} год — те же числа и месяцы. Перед
-            сохранением мы спросим ещё раз.
+            {t("yearChangeWarning", { year: state.year })}
           </p>
         ) : null}
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            {/* G6: у эталона кавычки прямые, не «ёлочки». */}
-            Должность &quot;Утверждаю&quot;
+            {t("approvePositionLabel")}
           </Label>
           <Select
             value={state.approveRole}
             onValueChange={approveCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={t("selectValue")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={props.users} />
@@ -482,7 +483,7 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник (утверждает)
+            {t("selectEmployeeLabel")}
           </Label>
           <Select
             value={state.approveEmployeeId || "__empty__"}
@@ -491,10 +492,10 @@ function DocumentSettingsDialog(props: {
             onOpenChange={approveCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={t("selectValue")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">— не выбран —</SelectItem>
+              <SelectItem value="__empty__">{t("notSelectedValue")}</SelectItem>
               {approveCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -505,14 +506,14 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного
+            {t("responsiblePosition")}
           </Label>
           <Select
             value={state.responsibleRole}
             onValueChange={responsibleCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={t("selectValue")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={props.users} />
@@ -521,7 +522,7 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник (ответственный)
+            {t("responsibleEmployeeLabel")}
           </Label>
           <Select
             value={state.responsibleEmployeeId || "__empty__"}
@@ -530,10 +531,10 @@ function DocumentSettingsDialog(props: {
             onOpenChange={responsibleCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={t("selectValue")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">— не выбран —</SelectItem>
+              <SelectItem value="__empty__">{t("notSelectedValue")}</SelectItem>
               {responsibleCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -558,7 +559,7 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки документа
+              {t("settingsTitle")}
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -569,7 +570,7 @@ function DocumentSettingsDialog(props: {
             onChange={(event) =>
               setState((current) => ({ ...current, title: event.target.value }))
             }
-            placeholder="Название документа"
+            placeholder={t("documentTitlePlaceholder")}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
           />
 
@@ -601,7 +602,7 @@ function DocumentSettingsDialog(props: {
             onValueChange={approveCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-              <SelectValue placeholder='Должность "Утверждаю"' />
+            <SelectValue placeholder={t("approvePositionLabel")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={props.users} />
@@ -615,10 +616,10 @@ function DocumentSettingsDialog(props: {
             onOpenChange={approveCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Сотрудник" />
+            <SelectValue placeholder={t("employee")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+              <SelectItem value="__empty__">{t("chooseEmployeeValue")}</SelectItem>
               {approveCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -632,7 +633,7 @@ function DocumentSettingsDialog(props: {
             onValueChange={responsibleCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Должность ответственного" />
+            <SelectValue placeholder={t("responsiblePosition")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={props.users} />
@@ -646,10 +647,10 @@ function DocumentSettingsDialog(props: {
             onOpenChange={responsibleCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Сотрудник" />
+            <SelectValue placeholder={t("employee")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+              <SelectItem value="__empty__">{t("chooseEmployeeValue")}</SelectItem>
               {responsibleCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -673,7 +674,7 @@ function DocumentSettingsDialog(props: {
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+          {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -694,6 +695,13 @@ export function SanitationDayDocumentClient({
   useV2 = false,
   tasksflowEnabled = false,
 }: Props) {
+  const locale = useLocale();
+  const t = useTranslations("cleaningGrid.cleaning");
+  const translateSummary = (
+    key: "plannedCleaningSummary" | "noPlannedCleaningSummary" | "completedCleaningSummary",
+    values?: { count: number },
+  ) => key === "noPlannedCleaningSummary" ? t(key) : t(key, values ?? { count: 0 });
+  const monthName = (monthIndex: number, year: number) => new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : locale, { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, monthIndex, 1)));
   const router = useRouter();
   const pathname = usePathname();
   const todayKey = useTodayKey();
@@ -822,7 +830,7 @@ export function SanitationDayDocumentClient({
         const body = await response.json().catch(() => null);
         toast.error(
           (body && typeof body.error === "string" && body.error) ||
-            "Не удалось сохранить документ",
+        t("saveError"),
         );
         return;
       }
@@ -852,7 +860,7 @@ export function SanitationDayDocumentClient({
         if (!response.ok) {
           toast.error(
             (body && typeof body.error === "string" && body.error) ||
-              "Не удалось сохранить график",
+        t("saveScheduleError"),
           );
           return false;
         }
@@ -862,7 +870,7 @@ export function SanitationDayDocumentClient({
         router.refresh();
         return true;
       } catch (error) {
-        toast.error(humanizeFetchError(error, "Не удалось сохранить график"));
+    toast.error(humanizeFetchError(error, t("saveScheduleError"), t("networkError")));
         return false;
       }
     });
@@ -930,7 +938,7 @@ export function SanitationDayDocumentClient({
   async function addRoomFromDirectory(room: DirectoryRoom) {
     const current = configRef.current;
     if (current.rows.some((r) => r.roomId === room.id)) {
-      toast.error("Это помещение уже есть в графике");
+    toast.error(t("roomExists"));
       return;
     }
     const nextRow = createEmptySanitationRow(
@@ -984,10 +992,11 @@ export function SanitationDayDocumentClient({
   async function deleteSelectedRows() {
     const count = selectedRowIds.length;
     const confirmed = await confirmAsync({
-      title: count > 1 ? `Удалить ${count} строк?` : "Удалить строку?",
-      description: "Строки помещений, их план и отметки о выполнении будут удалены безвозвратно.",
+      locale,
+      title: t("deleteRowsTitle", { count }),
+      description: t("deleteRowsDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("deleteDocument"),
     });
     if (!confirmed) return;
 
@@ -1009,11 +1018,11 @@ export function SanitationDayDocumentClient({
     if (!row) return;
     const schedule = roomGeneralSchedule(snapshot);
     if (!schedule) {
-      toast.info(`У «${row.roomName}» больше нет графика генуборки — даты в плане остались как были`);
+      toast.info(t("roomScheduleGone", { room: row.roomName }));
       return;
     }
     if (inSequence) {
-      toast.info("График помещения изменился — обновите даты кнопкой «Заполнить план по графику»");
+    toast.info(t("planChanged"));
       return;
     }
     const op: GeneralCleaningOp = {
@@ -1037,19 +1046,20 @@ export function SanitationDayDocumentClient({
     }
     if (!change) return;
     const ok = await confirmAsync({
-      title: `Обновить план «${row.roomName}» по новому графику?`,
-      description: `Новый график: ${describeGeneralSchedule(schedule)}.`,
+      locale,
+      title: t("refreshRoomPlanTitle", { room: row.roomName }),
+      description: t("newSchedule", { schedule: describeGeneralSchedule(schedule) }),
       bullets: [
         ...(change.added.length > 0
-          ? [{ label: `Добавятся: ${datesPreview(change.added)}`, tone: "info" as const }]
+          ? [{ label: t("willBeAdded", { dates: datesPreview(change.added, locale, (count) => t("andMoreDates", { count })) }), tone: "info" as const }]
           : []),
         ...(change.removed.length > 0
-          ? [{ label: `Уйдут из плана: ${datesPreview(change.removed)}`, tone: "warn" as const }]
+          ? [{ label: t("willLeavePlan", { dates: datesPreview(change.removed, locale, (count) => t("andMoreDates", { count })) }), tone: "warn" as const }]
           : []),
-        { label: "Прошедшие даты и отметки о выполнении не изменятся", tone: "default" as const },
+      { label: t("pastDatesUnchanged"), tone: "default" as const },
       ],
-      confirmLabel: "Обновить план",
-      cancelLabel: "Оставить как есть",
+      confirmLabel: t("updatePlanConfirm"),
+      cancelLabel: t("keepAsIs"),
     });
     if (ok) await postOp(op);
   }
@@ -1072,18 +1082,19 @@ export function SanitationDayDocumentClient({
         { planned: 0, done: 0 },
       );
       const ok = await confirmAsync({
-        title: `Перенести график на ${nextYear} год?`,
-        description: "Все даты останутся теми же числами и месяцами, но в новом году.",
+      locale,
+        title: t("shiftScheduleTitle", { year: String(nextYear) }),
+        description: t("shiftScheduleDescription"),
         bullets: [
-          { label: `Дат в плане: ${counts.planned}`, tone: "info" },
-          { label: `Отметок о выполнении: ${counts.done} — тоже переедут`, tone: counts.done > 0 ? "warn" : "info" },
-          { label: "Для графика на следующий год удобнее «Сделать копию» в списке документов", tone: "default" },
+          { label: t("plannedDaysCount", { count: counts.planned }), tone: "info" },
+          { label: t("completedMarksCount", { count: counts.done }), tone: counts.done > 0 ? "warn" : "info" },
+          { label: t("copyForNextYear"), tone: "default" },
         ],
-        confirmLabel: `Перенести на ${nextYear}`,
+        confirmLabel: t("shiftToYear", { year: String(nextYear) }),
         variant: "warn",
       });
       if (!ok) {
-        toast.info("Год не изменён — настройки не сохранены");
+    toast.info(t("yearUnchanged"));
         return;
       }
       if (!(await postOp({ type: "shiftYear", year: nextYear }))) return;
@@ -1109,7 +1120,7 @@ export function SanitationDayDocumentClient({
 
   return (
     <div className="space-y-5">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+        <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("noRecords")} emptyBody={t("noRecordsHint")} />
       <DocumentActionsBar
         className={DOC_TITLE_ROW_NO_STRIP_CLASS}
         backHref={journalHref}
@@ -1119,7 +1130,7 @@ export function SanitationDayDocumentClient({
       />
 
       {readOnly ? (
-        <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать план и факт уборок." documentId={documentId} />
+        <JournalClosedBanner hint={t("reopenHint")} documentId={documentId} />
       ) : null}
 
       {/* R1: бумажное полотно — во всю ширину контентной колонки. */}
@@ -1144,7 +1155,7 @@ export function SanitationDayDocumentClient({
           <tbody>
             <JournalPaperHeaderRows
               orgName={organizationName}
-              title="ГРАФИК И УЧЕТ ГЕНЕРАЛЬНЫХ УБОРОК"
+              title={t("generalHeading")}
               startedAt={normalized.documentDate}
               finishedAt={readOnly ? normalized.documentDate : null}
               controlPeriodicity={controlPeriodicity}
@@ -1157,8 +1168,8 @@ export function SanitationDayDocumentClient({
 
         <div className={`${DOC_PAPER_HEADER_CLASS} flex justify-end`}>
           <div className="w-full max-w-[320px] pr-2 text-right text-[13px] leading-snug">
-            <div className="font-semibold">УТВЕРЖДАЮ</div>
-            <div>{approver.title}</div>
+            <div className="font-semibold">{t("approvalHeading")}</div>
+            <div>{sanitationRoleDisplayTitle(approver.title, t("defaultManagerRole"))}</div>
             {/* G2: линия подписи и ФИО стоят В ОДНУ строку
                 («_________ Борисов Борис Борисович»), как на эталоне
                 (general_cleaning-2-doc.png). Раньше подчёркнутым был сам
@@ -1168,13 +1179,13 @@ export function SanitationDayDocumentClient({
               <span>{approver.name}</span>
             </div>
             <div className="pt-1">
-              {toViewDateLabel(normalized.documentDate)}
+              {toViewDateLabel(normalized.documentDate, locale)}
             </div>
           </div>
         </div>
 
         <h2 className={`${DOC_CAPS_TITLE_CLASS} text-center text-[15px] font-bold`}>
-          График и учет генеральных уборок на предприятии в {normalized.year} г.
+          {t("yearHeading", { year: String(normalized.year) })}
         </h2>
 
         {!readOnly ? (
@@ -1188,18 +1199,18 @@ export function SanitationDayDocumentClient({
               className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]"
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Добавить помещение
+              {t("addRoom")}
             </Button>
 
             {normalized.rows.length > 0 ? (
               <button
                 type="button"
                 onClick={() => setFillOpen(true)}
-                title="Проставить даты плана по дням генеральной уборки из карточек помещений"
+                title={t("fillPlanTitle")}
                 className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:hidden"
               >
                 <CalendarRange className="size-4 text-[#5566f6]" />
-                Заполнить план по графику помещений
+                {t("fillPlanTitle")}
               </button>
             ) : null}
           </div>
@@ -1209,10 +1220,10 @@ export function SanitationDayDocumentClient({
             onClear={() => setSelectedRowIds([])}
             onDelete={() => {
               deleteSelectedRows().catch((error) =>
-                toast.error(humanizeFetchError(error, "Не удалось удалить строки"))
+                toast.error(humanizeFetchError(error, t("documentDeleteError"), t("networkError")))
               );
             }}
-            hint="Помещения будут удалены вместе с планом генеральных уборок"
+            hint={t("deletedRowsWarning")}
           >
             <SelectionEditButton count={selectedRowIds.length} disabled={readOnly} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
@@ -1231,9 +1242,9 @@ export function SanitationDayDocumentClient({
                   summary.planned + summary.unplanned === 0
                     ? ""
                     : [
-                        `${summary.planned} в плане`,
-                        `выполнено ${summary.done}`,
-                        ...(summary.overdue > 0 ? [`просрочено ${summary.overdue}`] : []),
+                        t("plannedSummary", { count: summary.planned }),
+                        t("completedSummary", { count: summary.done }),
+                        ...(summary.overdue > 0 ? [t("overdueCount", { count: summary.overdue })] : []),
                       ].join(" · ");
                 const openYear = readOnly ? undefined : () => setYearSheetRowId(row.id);
                 return {
@@ -1255,25 +1266,25 @@ export function SanitationDayDocumentClient({
                     />
                   ) : null,
                   fields: [
-                    { label: "Уборки", value: planText || "дат пока нет", header: true },
+                    { label: t("cleaningsLabel"), value: planText || t("noDates"), header: true },
                     {
-                      label: "Ближайшая",
+                      label: t("nearestDate"),
                       value: next?.planned ? formatDayMonthWeekday(next.planned) : "",
                       header: true,
                     },
-                    { label: "Убирает", value: roomPeople(row).cleaners.join(", "), hideIfEmpty: true },
-                    { label: "Проверяет", value: roomPeople(row).verifiers.join(", "), hideIfEmpty: true },
+                    { label: t("cleanerLabel"), value: roomPeople(row).cleaners.join(", "), hideIfEmpty: true },
+                    { label: t("inspectorLabel"), value: roomPeople(row).verifiers.join(", "), hideIfEmpty: true },
                     {
-                      label: "План и факт на год",
+                      label: t("annualPlanFact"),
                       value: planText,
                       hideIfEmpty: false,
                       onClick: openYear,
-                      hint: readOnly ? undefined : "нажмите, чтобы открыть месяцы",
+                      hint: readOnly ? undefined : t("openMonthEditor"),
                     },
                   ],
                 };
               })}
-              emptyLabel="Помещений пока не внесено."
+      emptyLabel={t("noRecords")}
             />
           ) : null}
 
@@ -1302,25 +1313,25 @@ export function SanitationDayDocumentClient({
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[240px] px-3 py-1.5 leading-tight`}
                 >
-                  Помещение
+                  {t("roomColumn")}
                 </th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[90px] px-2 py-1.5 leading-tight`}
                 >
-                  Вид
+                  {t("typeColumn")}
                 </th>
                 <th colSpan={12} className={`${GRID_HEAD_CELL_CLASS} px-3 py-1.5 leading-tight`}>
-                  График
+                  {t("scheduleColumn")}
                 </th>
               </tr>
               <tr>
-                {SANITATION_MONTHS.map((month) => (
+                {SANITATION_MONTHS.map((month, monthIndex) => (
                   <th
                     key={month.key}
                     className={`${GRID_HEAD_CELL_CLASS} w-[60px] px-1 py-1.5 leading-tight`}
                   >
-                    {month.short}
+                    {sanitationMonthShortLabel(monthIndex, locale)}
                   </th>
                 ))}
               </tr>
@@ -1360,17 +1371,17 @@ export function SanitationDayDocumentClient({
                       {/* Кто убирает / проверяет — из карточки помещения. */}
                       {roomPeople(row).cleaners.length > 0 ? (
                         <div className="text-[11px] font-normal text-[#3848c7] print:hidden">
-                          Убирает: {roomPeople(row).cleaners.join(", ")}
+                          {t("cleanerLabel")}: {roomPeople(row).cleaners.join(", ")}
                         </div>
                       ) : null}
                       {roomPeople(row).verifiers.length > 0 ? (
                         <div className="text-[11px] font-normal text-[#3848c7] print:hidden">
-                          Проверяет: {roomPeople(row).verifiers.join(", ")}
+                          {t("inspectorLabel")}: {roomPeople(row).verifiers.join(", ")}
                         </div>
                       ) : null}
                       {rowSchedule(row) ? (
                         <div className="text-[11px] font-normal text-[#6f7282] print:hidden">
-                          График: {describeGeneralSchedule(rowSchedule(row) as RoomGeneralSchedule)}
+                          {t("scheduleColumn")}: {describeGeneralSchedule(rowSchedule(row) as RoomGeneralSchedule)}
                         </div>
                       ) : null}
                       {!readOnly && !row.roomId && suggestDirectoryRoomForSanitationRow(row, directoryRooms) ? (
@@ -1381,15 +1392,15 @@ export function SanitationDayDocumentClient({
                             const match = suggestDirectoryRoomForSanitationRow(row, directoryRooms);
                             if (match) void linkRow(row.id, match);
                           }}
-                          title="В справочнике есть помещение с таким же названием — связать, чтобы название, ответственные и график брались из карточки помещения"
+                          title={t("linkMatchingRoom")}
                           className="mt-0.5 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#eef1ff] print:hidden"
                         >
-                          Связать
+                          {t("linkMatchingRoomAction")}
                         </button>
                       ) : null}
                     </td>
                     <td className={`${GRID_CELL_CLASS} px-3 py-1 text-center leading-tight`}>
-                      План
+                      {t("planColumn")}
                     </td>
                     {SANITATION_MONTHS.map((month, monthIndex) => (
                       <td
@@ -1410,7 +1421,7 @@ export function SanitationDayDocumentClient({
                   </tr>
                   <tr>
                     <td className={`${GRID_CELL_CLASS} px-3 py-1 text-center leading-tight`}>
-                      Факт
+                      {t("factColumn")}
                     </td>
                     {SANITATION_MONTHS.map((month, monthIndex) => (
                       <td
@@ -1439,7 +1450,7 @@ export function SanitationDayDocumentClient({
                   leading={1}
                   labelSpan={1}
                   trailing={1 + SANITATION_MONTHS.length}
-                  label="Добавить помещение"
+                  label={t("addRoom")}
                   onClick={() => setPickerOpen(true)}
                 />
               ) : null}
@@ -1464,9 +1475,9 @@ export function SanitationDayDocumentClient({
                   className={`${GRID_CELL_CLASS} px-3 py-2 text-center align-middle leading-tight`}
                 >
                   <span className={GRID_SERVICE_LABEL_CLASS}>
-                    Ответственный:{" "}
+              {t("responsibleCaption")}{" "}
                     {getSanitationApproveLabel(
-                      responsible.title,
+                      sanitationRoleDisplayTitle(responsible.title, t("defaultManagerRole")),
                       responsible.name,
                       ", ",
                     )}
@@ -1498,8 +1509,8 @@ export function SanitationDayDocumentClient({
             if (!open) setEditor(null);
           }}
           anchorRef={anchorRef}
-          title={`${MONTH_NAMES_RU[editor.monthIndex]} ${normalized.year} · ${editorRow.roomName || "Помещение"}`}
-          subtitle={describeMonthLoad(editorRow, normalized.year, editor.monthIndex, todayKey).text}
+          title={`${monthName(editor.monthIndex, normalized.year)} ${normalized.year} · ${editorRow.roomName || t("room")}`}
+          subtitle={describeMonthLoad(editorRow, normalized.year, editor.monthIndex, todayKey, translateSummary).text}
         >
           <GeneralCleaningMonthPanel
             key={`${editorRow.id}-${editor.monthIndex}`}
@@ -1552,10 +1563,10 @@ export function SanitationDayDocumentClient({
         initial={roomDialogState}
         title={
           roomDialogState.id
-            ? `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`
-            : "Добавление новой строки"
+                ? `${t("editRowTitle")}${seq.progress ? ` ${seq.progress}` : ""}`
+                : t("addRowTitle")
         }
-        submitText={roomDialogState.id ? "Сохранить" : "Создать"}
+                submitText={roomDialogState.id ? t("save") : t("create")}
         linkOptions={listSanitationRoomsNotInDocument(normalized, directoryRooms)}
         onSubmit={async (value, linkRoomId) => {
           await saveRoomDialog(value, linkRoomId);
@@ -1571,7 +1582,7 @@ export function SanitationDayDocumentClient({
         onOpenChange={setPickerOpen}
         buildings={buildings}
         excludeRoomIds={normalized.rows.map((r) => r.roomId).filter((id): id is string => Boolean(id))}
-        hint="Помещения общие для всех журналов. Состав генеральной уборки, дни по графику, уборщики и проверяющие — в карточке помещения."
+          hint={t("linkRoomHelp")}
         onPick={addRoomFromDirectory}
         onCreated={async (room) => {
           await addRoomFromDirectory(room);

@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 
 import { usePathname } from "next/navigation";
 
@@ -27,9 +29,10 @@ export default function JournalsLoading() {
  * заголовок + подсказка, строка поиска/фильтров, сетка карточек.
  */
 function JournalsCatalogSkeleton() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем журналы…</span>
+      <span className="sr-only">{tLoading("journals")}</span>
 
       <div className="space-y-3">
         <Skeleton className="h-9 w-[280px] rounded-2xl" />

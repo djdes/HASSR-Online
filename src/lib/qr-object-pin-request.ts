@@ -22,7 +22,17 @@ export type QrObjectPinRequestInput = QrObjectPinTarget & {
 };
 
 /** Строка статуса запроса на экране «Запросить доступ». */
-export type PinRequestStatusLine = { text: string; tone: "wait" | "bad" };
+export type PinRequestStatusLine = { text: string; tone: "wait" | "bad"; messageCode?: string; messageParams?: Record<string, string> };
+
+/** Add presentation descriptors without changing legacy status text or decision notes. */
+export function qrPinRequestScreenWithMessages(latest: Parameters<typeof qrPinRequestScreen>[0]) {
+  const screen = qrPinRequestScreen(latest);
+  const messageCode = latest?.status === "pending" ? "equipmentFill.pin.pending"
+    : latest?.status === "rejected" ? "equipmentFill.pin.rejected"
+      : latest?.status === "approved" ? latest.kind === "change" ? "equipmentFill.pin.changeApproved" : "equipmentFill.pin.approved" : undefined;
+  const messageParams = latest?.status === "rejected" ? { hasNote: latest.decisionNote ? "yes" : "no", note: latest.decisionNote ?? "" } : undefined;
+  return { ...screen, status: screen.status ? { ...screen.status, messageCode, messageParams } : null, ...(screen.approvedNote ? { approvedMessageCode: messageCode } : {}) };
+}
 
 /** Сколько после одобрения держать зелёное «Руководитель одобрил…» над шагом PIN (как у журналов). */
 export const PIN_APPROVED_NOTE_MS = 3 * 24 * 3600 * 1000;

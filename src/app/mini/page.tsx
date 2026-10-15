@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Loader2, ShieldAlert } from "lucide-react";
 
 import { adoptCookieSession } from "./_lib/cookie-session";
@@ -12,10 +13,7 @@ import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
 import { NPS_PREVIEW_PARAM, isNpsPreviewRequested, withNpsPreview } from "@/lib/nps";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getTelegramWebApp } from "./_components/telegram-web-app";
-import {
-  telegramSignInProblemFromMessage,
-  type TelegramSignInProblem,
-} from "@/lib/telegram-auth-messages";
+import { miniEntryErrorPresentation, type MiniEntryErrorKey } from "@/lib/mini-entry-error-presentation";
 
 /**
  * Вход в мини-приложение — и больше ничего.
@@ -36,16 +34,26 @@ type LocalState =
   | { kind: "init" }
   | {
       kind: "error";
-      message: string;
+      errorKey: MiniEntryErrorKey;
       /** Отказ Telegram: повтор не поможет, нужно переоткрыть из бота. */
-      problem?: TelegramSignInProblem | null;
+      problem?: "expired" | "not-confirmed" | null;
     };
 
 export default function MiniEntryPage() {
+  const t = useTranslations("miniHome.entry");
+  const errorTextByKey = {
+    timeout: t("error.timeout"),
+    sessionUnavailable: t("error.sessionUnavailable"),
+    expired: t("error.expired"),
+    notConfirmed: t("error.notConfirmed"),
+    notConfigured: t("error.notConfigured"),
+    generic: t("error.generic"),
+  };
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [localState, setLocalState] = useState<LocalState>({ kind: "init" });
+  const [authAttempt, setAuthAttempt] = useState(0);
   const signInStarted = useRef(false);
   const redirectStarted = useRef(false);
   const statusRef = useRef(status);
@@ -131,21 +139,22 @@ export default function MiniEntryPage() {
       if ("timeout" in result && result.timeout) {
         setLocalState({
           kind: "error",
-          message: "Telegram отвечает медленно. Проверьте подключение.",
+          errorKey: "timeout",
         });
         return;
       }
       const r = "r" in result ? result.r : null;
       if (!r || r.error) {
-        const message = r?.error || "Сессия Telegram не получена";
+        const message = r?.error ?? null;
+        const error = miniEntryErrorPresentation(message);
         setLocalState({
           kind: "error",
-          message,
-          problem: telegramSignInProblemFromMessage(message),
+          errorKey: error.key,
+          problem: error.problem,
         });
       }
     })();
-  }, [router, status]);
+  }, [authAttempt, router, status]);
 
   // Вошли — уводим. Дальше человек работает на страницах сайта внутри
   // оболочки приложения, и возвращаться на этот экран ему незачем,
@@ -178,13 +187,13 @@ export default function MiniEntryPage() {
             <ShieldAlert className="size-7" />
           </span>
           <h1 className="mini-h1 mt-4" style={{ fontSize: 22 }}>
-            Не получилось войти
+            {t("error.heading")}
           </h1>
           <p
             className="mt-2 text-[16px] leading-relaxed"
             style={{ color: "var(--mini-danger)" }}
           >
-            {localState.message}
+            {errorTextByKey[localState.errorKey]}
           </p>
           {/* Когда Telegram отказал в подписи (устарела или не сошлась),
               повтор не поможет никогда: те же данные отправятся снова.
@@ -202,7 +211,7 @@ export default function MiniEntryPage() {
               }}
               className="mini-btn-primary mini-press mt-5 w-full"
             >
-              Закрыть приложение
+              {t("action.closeApp")}
             </button>
           ) : (
             /* Повтор: `signInStarted` уже true, и без сброса флага новый
@@ -212,10 +221,11 @@ export default function MiniEntryPage() {
               onClick={() => {
                 signInStarted.current = false;
                 setLocalState({ kind: "init" });
+                setAuthAttempt((attempt) => attempt + 1);
               }}
               className="mini-btn-primary mini-press mt-5 w-full"
             >
-              Попробовать ещё раз
+              {t("action.retry")}
             </button>
           )}
           {/* Второй выход из этого экрана. «Аккаунт не связан с
@@ -224,7 +234,7 @@ export default function MiniEntryPage() {
               работают независимо от привязки. */}
           <div className="mt-2">
             <Link href="/mini/login" className="mini-btn-secondary mini-press w-full">
-              Войти по телефону
+              {t("action.phoneLogin")}
             </Link>
           </div>
         </section>
@@ -239,10 +249,10 @@ export default function MiniEntryPage() {
         style={{ color: "var(--mini-accent)" }}
       />
       <div className="text-[18px] font-semibold" style={{ color: "var(--mini-text)" }}>
-        Открываем кабинет…
+        {t("loading.heading")}
       </div>
       <p className="text-[16px]" style={{ color: "var(--mini-text-muted)" }}>
-        Проверяем вход — это займёт пару секунд.
+        {t("loading.description")}
       </p>
     </div>
   );

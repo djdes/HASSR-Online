@@ -30,8 +30,7 @@ import {
   JournalTabs,
   JournalTopBar,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
 import { resolveJournalPeriodForDate } from "@/lib/journal-period";
@@ -350,7 +349,7 @@ export function IncomingControlDocumentsClient({
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   // Единый источник delete / pdf для журнальных документов.
@@ -575,7 +574,7 @@ export function IncomingControlDocumentsClient({
                       },
                       // Закрытый документ раньше уходил навсегда: вернуть
                       // его в активные было нечем.
-                      ...restoreMenuItems({ document, siblings: documents, restore }),
+                      ...restoreMenu({ document, siblings: documents }),
                       ...(document.status === "active"
                         ? [
                             {

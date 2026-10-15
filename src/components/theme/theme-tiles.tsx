@@ -2,6 +2,7 @@
 
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
@@ -158,6 +159,7 @@ export function ThemeTileGroup({
   /** Дополнительные классы кнопки-карточки (в мини-приложении — отклик нажатия). */
   tileClassName?: string;
 }) {
+  const t = useTranslations("common.theme");
   const buttons = useRef<Partial<Record<ThemeMode, HTMLButtonElement | null>>>({});
   // В группу переключателей Tab заходит один раз — на выбранную карточку.
   const tabStop = value ?? THEME_TILES[0].mode;
@@ -174,7 +176,7 @@ export function ThemeTileGroup({
     <div className={className} data-testid="theme-tiles">
       <div
         role="radiogroup"
-        aria-label="Тема"
+        aria-label={t("theme")}
         className={cn(
           "grid grid-cols-3",
           size === "compact" ? "gap-2" : "gap-2.5",
@@ -224,7 +226,7 @@ export function ThemeTileGroup({
                 onClick={note.onRestore}
                 className={RESTORE_CLASS}
               >
-                Включить снова
+                {t("restoreAuto")}
               </button>
             }
           />
@@ -241,6 +243,7 @@ export function ThemeTileGroup({
  * видит, как перекрасился кабинет, и может сразу выбрать другую.
  */
 export function ThemeTilesMenu({ className }: { className?: string }) {
+  const t = useTranslations("common.theme");
   const { selected, autoBySchedule, autoTurnedOff, choose, restoreAuto } =
     useThemeTileChoice(useSiteTheme());
 
@@ -262,14 +265,14 @@ export function ThemeTilesMenu({ className }: { className?: string }) {
         onValueChange={(value) => {
           if (isThemeMode(value)) choose(value);
         }}
-        aria-label="Тема"
+        aria-label={t("theme")}
         className="grid grid-cols-3 gap-1"
       >
         {THEME_TILES.map((tile) => (
           <DropdownMenuPrimitive.RadioItem
             key={tile.mode}
             value={tile.mode}
-            textValue={tile.label}
+            textValue={t(`mode.${tile.mode}`)}
             data-theme-tile={tile.mode}
             data-testid={`theme-tile-${tile.mode}`}
             onSelect={(event) => event.preventDefault()}
@@ -296,7 +299,7 @@ export function ThemeTilesMenu({ className }: { className?: string }) {
                 "cursor-pointer rounded-md px-1 outline-none data-[highlighted]:bg-[var(--app-tint-indigo)]"
               )}
             >
-              Включить снова
+              {t("restoreAuto")}
             </DropdownMenuPrimitive.Item>
           }
         />
@@ -319,6 +322,7 @@ function AutoScheduleNote({
   restore: ReactNode;
   size?: ThemeTileSize;
 }) {
+  const t = useTranslations("common.theme");
   if (!autoBySchedule && !autoTurnedOff) return null;
   return (
     <div
@@ -332,12 +336,11 @@ function AutoScheduleNote({
       <Clock className="mt-px size-3.5 shrink-0 text-[var(--app-indigo-deep)]" aria-hidden />
       {autoBySchedule ? (
         <span>
-          Сейчас тема меняется по времени суток. Выберите вариант — смена по
-          времени выключится.
+          {t("autoScheduleActive")}
         </span>
       ) : (
         <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span>Смена по времени суток выключена.</span>
+          <span>{t("autoScheduleDisabled")}</span>
           {restore}
         </span>
       )}
@@ -366,6 +369,7 @@ function ThemeTileFace({
   checked: boolean;
   size: ThemeTileSize;
 }) {
+  const t = useTranslations("common.theme");
   return (
     <>
       <span
@@ -389,7 +393,7 @@ function ThemeTileFace({
             : "font-medium text-[var(--app-text-secondary)]"
         )}
       >
-        {tile.label}
+        {t(`mode.${tile.mode}`)}
       </span>
     </>
   );

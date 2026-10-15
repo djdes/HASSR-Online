@@ -1,28 +1,19 @@
 import Link from "next/link";
-import { formatMeasureUnit } from "@/lib/measure-units";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { FORMAT_LOCALES, formatNumber } from "@/i18n/locales";
+import { BATCH_FILTERS, batchUnitCode, isBatchStatus, type BatchStatus } from "@/components/batches/batch-presentation";
 import { AlertTriangle, Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 
-const STATUS_INFO: Record<string, { label: string; className: string }> = {
-  received: { label: "Принята", className: "bg-[#eef1ff] text-[#3848c7]" },
-  in_production: { label: "В производстве", className: "bg-[#f5f6ff] text-[#5566f6]" },
-  finished: { label: "Готова", className: "bg-[#ecfdf5] text-[#116b2a]" },
-  shipped: { label: "Отгружена", className: "bg-[#fafbff] text-[#6f7282]" },
-  expired: { label: "Просрочена", className: "bg-[#fff4f2] text-[#a13a32]" },
-  written_off: { label: "Списана", className: "bg-[#fff4f2] text-[#a13a32]" },
-};
-
-const FILTER_LABELS: Record<string, string> = {
-  all: "Все",
-  received: "Принято",
-  in_production: "В работе",
-  finished: "Готово",
-  shipped: "Отгружено",
-  expired: "Просрочено",
-  // Статус «Списана» показывался в таблице, но отфильтровать по нему
-  // было нечем — кнопки в списке фильтров не было.
-  written_off: "Списано",
+const STATUS_CLASSES: Record<BatchStatus, string> = {
+  received: "bg-[#eef1ff] text-[#3848c7]",
+  in_production: "bg-[#f5f6ff] text-[#5566f6]",
+  finished: "bg-[#ecfdf5] text-[#116b2a]",
+  shipped: "bg-[#fafbff] text-[#6f7282]",
+  expired: "bg-[#fff4f2] text-[#a13a32]",
+  written_off: "bg-[#fff4f2] text-[#a13a32]",
 };
 
 function daysUntilExpiry(date: Date | null, now: Date): number | null {
@@ -37,6 +28,14 @@ export default async function BatchesPage({
 }) {
   const filters = await searchParams;
   const session = await requireAuth();
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "productionBatches" });
+  // Retain the server timezone previously used by toLocaleDateString.
+  const dateFormat = new Intl.DateTimeFormat(FORMAT_LOCALES[locale]);
+  const displayUnit = (value: string) => {
+    const code = batchUnitCode(value);
+    return code ? t(`units.${code}`) : value.trim();
+  };
   const now = new Date();
   // Граница «просрочено» — начало сегодняшнего дня: партия со сроком
   // «сегодня» ещё годна, в таблице она подписана «сегодня», а не
@@ -112,10 +111,10 @@ export default async function BatchesPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-            Партии
+            {t("title")}
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">
-            Партионный учёт и прослеживаемость
+            {t("description")}
           </p>
         </div>
         <Link
@@ -123,24 +122,24 @@ export default async function BatchesPage({
           className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:w-auto sm:justify-start sm:self-start"
         >
           <Plus className="size-4" />
-          Новая партия
+          {t("newBatch")}
         </Link>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <StatCard label="На складе" value={receivedCount} />
-        <StatCard label="В производстве" value={inProductionCount} />
+        <StatCard label={t("stats.inStock")} value={formatNumber(locale, receivedCount)} />
+        <StatCard label={t("stats.inProduction")} value={formatNumber(locale, inProductionCount)} />
         <StatCard
-          label="Истекает ≤3 дня"
-          value={expiringCount}
+          label={t("stats.expiring")}
+          value={formatNumber(locale, expiringCount)}
           tone={expiringCount > 0 ? "warn" : "default"}
         />
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
-        {Object.entries(FILTER_LABELS).map(([key, label]) => {
+        {BATCH_FILTERS.map((key) => {
           const isActive = activeFilter === key;
           return (
             <Link
@@ -152,7 +151,7 @@ export default async function BatchesPage({
                   : "inline-flex h-9 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               }
             >
-              {label}
+              {t(`filters.${key}`)}
             </Link>
           );
         })}
@@ -164,13 +163,13 @@ export default async function BatchesPage({
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
-                <th className="px-5 py-3 font-medium">Код</th>
-                <th className="px-5 py-3 font-medium">Продукт</th>
-                <th className="px-5 py-3 font-medium">Поставщик</th>
-                <th className="px-5 py-3 font-medium">Кол-во</th>
-                <th className="px-5 py-3 font-medium">Срок годности</th>
-                <th className="px-5 py-3 font-medium">Статус</th>
-                <th className="px-5 py-3 font-medium">Откуда</th>
+                <th className="px-5 py-3 font-medium">{t("code")}</th>
+                <th className="px-5 py-3 font-medium">{t("product")}</th>
+                <th className="px-5 py-3 font-medium">{t("supplier")}</th>
+                <th className="px-5 py-3 font-medium">{t("quantityShort")}</th>
+                <th className="px-5 py-3 font-medium">{t("expiryDate")}</th>
+                <th className="px-5 py-3 font-medium">{t("status")}</th>
+                <th className="px-5 py-3 font-medium">{t("source")}</th>
               </tr>
             </thead>
             <tbody>
@@ -178,10 +177,10 @@ export default async function BatchesPage({
                 const days = daysUntilExpiry(batch.expiryDate, now);
                 const isExpiring = days !== null && days <= 3 && days >= 0;
                 const isExpired = days !== null && days < 0;
-                const status = STATUS_INFO[batch.status] ?? {
-                  label: batch.status,
-                  className: "bg-[#f5f6ff] text-[#6f7282]",
-                };
+                const status = isBatchStatus(batch.status) ? {
+                  label: t(`statuses.${batch.status}`),
+                  className: STATUS_CLASSES[batch.status],
+                } : { label: batch.status, className: "bg-[#f5f6ff] text-[#6f7282]" };
                 const source = batch.sourceEntryId
                   ? sourceById.get(batch.sourceEntryId)
                   : undefined;
@@ -211,7 +210,7 @@ export default async function BatchesPage({
                       {batch.supplier || "—"}
                     </td>
                     <td className="px-5 py-3 tabular-nums text-[#0b1024]">
-                      {batch.quantity} {formatMeasureUnit(batch.unit)}
+                      {formatNumber(locale, batch.quantity, { maximumFractionDigits: 20 })} {displayUnit(batch.unit)}
                     </td>
                     <td className="px-5 py-3">
                       {batch.expiryDate ? (
@@ -228,16 +227,16 @@ export default async function BatchesPage({
                                 : "text-[#0b1024]"
                             }
                           >
-                            {batch.expiryDate.toLocaleDateString("ru-RU")}
+                            {dateFormat.format(batch.expiryDate)}
                           </span>
                           {days !== null && (
                             <span className="text-[11px] text-[#9b9fb3]">
                               (
                               {days > 0
-                                ? `${days} дн`
+                                ? t("daysLeft", { days })
                                 : days === 0
-                                ? "сегодня"
-                                : "просрочена"}
+                                ? t("today")
+                                : t("expired")}
                               )
                             </span>
                           )}
@@ -261,11 +260,10 @@ export default async function BatchesPage({
                           href={`/journals/${source.template.code}/documents/${source.id}`}
                           className="text-[#3848c7] hover:underline"
                         >
-                          из приёмки от{" "}
-                          {source.dateFrom.toLocaleDateString("ru-RU")}
+                          {t("fromReceipt", { date: dateFormat.format(source.dateFrom) })}
                         </Link>
                       ) : (
-                        <span className="text-[#9b9fb3]">вручную</span>
+                        <span className="text-[#9b9fb3]">{t("manual")}</span>
                       )}
                     </td>
                   </tr>
@@ -277,7 +275,7 @@ export default async function BatchesPage({
                     colSpan={7}
                     className="px-5 py-10 text-center text-[14px] text-[#9b9fb3]"
                   >
-                    Партий пока нет
+                    {t("empty")}
                   </td>
                 </tr>
               )}
@@ -295,7 +293,7 @@ function StatCard({
   tone = "default",
 }: {
   label: string;
-  value: number;
+  value: string;
   tone?: "default" | "warn";
 }) {
   return (

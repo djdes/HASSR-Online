@@ -45,10 +45,10 @@ export async function POST(request: Request) {
   try {
     body = bodySchema.parse(await request.json());
   } catch {
-    return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+    return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
   }
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), body.kind, body.objectId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
 
   const auth = await authorizeQrReadingPhoto({
@@ -60,29 +60,29 @@ export async function POST(request: Request) {
     pass: body.pass ?? null,
   });
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ error: auth.error, errorCode: auth.errorCode, errorParams: auth.errorParams }, { status: auth.status });
   }
   const { actor } = auth;
   if (!actor.photo.enabled) {
     return NextResponse.json(
-      { error: READING_PHOTO_FIXATION_TEXT.disabledError, code: READING_PHOTO_DISABLED_CODE },
+      { error: READING_PHOTO_FIXATION_TEXT.disabledError, errorCode: "equipmentFill.photo.disabled", code: READING_PHOTO_DISABLED_CODE },
       { status: 403 }
     );
   }
   if (!actor.autofill) {
     console.info(`[reading-photo] qr recognize refused: free plan org=${actor.organizationId} user=${actor.employee.id}`);
     return NextResponse.json(
-      { error: READING_PHOTO_TEXT.paidOnly, code: READING_PAID_ONLY_CODE, tariffsHref: actor.tariffsHref },
+      { error: READING_PHOTO_TEXT.paidOnly, errorCode: "equipmentFill.photo.paidOnly", code: READING_PAID_ONLY_CODE, tariffsHref: actor.tariffsHref },
       { status: 402 }
     );
   }
 
   if (!isReadingPhotoUrl(body.url)) {
-    return NextResponse.json({ error: "Фото не найдено — снимите ещё раз" }, { status: 400 });
+    return NextResponse.json({ error: "Фото не найдено — снимите ещё раз", errorCode: "equipmentFill.errors.photoNotFound" }, { status: 400 });
   }
   const bytes = await readReadingPhoto(body.url);
   if (!bytes) {
-    return NextResponse.json({ error: "Фото не найдено — снимите ещё раз" }, { status: 404 });
+    return NextResponse.json({ error: "Фото не найдено — снимите ещё раз", errorCode: "equipmentFill.errors.photoNotFound" }, { status: 404 });
   }
 
   const outcome = await recognizeReading({
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     metric: body.metric,
   });
   if (!outcome.ok) {
-    return NextResponse.json({ error: outcome.error }, { status: outcome.status });
+    return NextResponse.json({ error: outcome.error, errorCode: "equipmentFill.photo.recognizeError" }, { status: outcome.status });
   }
   console.info(
     `[reading-photo] qr recognize kind=${body.kind} object=${body.objectId} metric=${body.metric} device=${outcome.result.device ?? "-"} value=${outcome.result.value ?? "null"} confidence=${outcome.result.confidence} org=${actor.organizationId}`

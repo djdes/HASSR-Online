@@ -1,0 +1,16 @@
+{
+  "locale": "uz",
+  "sourceHash": "b8a1ece77f90c18f644cb0366f8a5c44bfc3ea6e584dd81d8689232b96f2ad3a",
+  "title": "Sovutkichlar harorati jurnali: jarimasiz yuritish yo‘li",
+  "excerpt": "Ko‘rsatkichlarni kuniga kamida ikki marta qayd eting, har bir uskuna turi uchun chegaralarni belgilang va og‘ish bo‘lsa chora ko‘ring. Inspektor faqat raqamlarga emas, ko‘rilgan choraga ham qaraydi.",
+  "tags": ["Harorat", "Jurnallar"],
+  "body": [
+    {"type":"p","text":"Qoida oddiy: sovutish uskunalari haroratini kuniga kamida ikki marta — odatda ertalab va kechqurun — qayd eting. Amalda buning o‘zi yetarli bo‘lmasligi mumkin: sovutkich tush payti buzilsa, kechki o‘lchov allaqachon aynigan mahsulotlarni qayd etadi. Shu sababli yaxshi amaliyot — kuniga uch marta o‘lchash va avtomatik datchikdan foydalanish."},
+    {"type":"h2","text":"Ruxsat etilgan chegaralar"},
+    {"type":"ul","items":["Tayyor mahsulotlar uchun sovutkich: 0…+4 °C.","Xomashyo uchun sovutkich: 0…+6 °C (mahsulot turiga bog‘liq).","Muzlatkich kamerasi: –18 °C dan yuqori emas.","Sovuq taomlar vitrinasida: +14 °C dan yuqori emas.","Issiq vitrinada: +65 °C dan past emas."]},
+    {"type":"callout","tone":"tip","title":"Datchikdan foydalanilsa","text":"Ma’lumotlarni bulutga yozib boradigan simsiz datchik har 5–10 daqiqada haroratni o‘lchaydi. Jurnal avtomatik tuziladi, og‘ishlar esa smenalar orasida yo‘qolib qolmaydi."},
+    {"type":"h2","text":"Og‘ish yuz berganda nima qilish kerak"},
+    {"type":"ol","items":["Jurnalga holatni yozing: vaqt, ko‘rsatkich va uni kim aniqlagani.","Mahsulotlarni tekshiring: harorat +5 °C dan yuqori bo‘lgan vaqt 2 soatdan oshsa, mahsulotning organoleptik xususiyatlari va yaroqlilik muddatini qayta baholang.","CAPA yozuvini to‘ldiring: sababni (elektr uzilishi, ochiq eshik yoki kompressor nosozligi), ko‘rilgan chorani va mas’ul xodimni qayd eting.","Mahsulot utilizatsiya qilinsa, hisobdan chiqarishni va partiyani ko‘rsating."]},
+    {"type":"p","text":"Inspektor ko‘rmoqchi bo‘lgan narsa “mukammal” haroratlar emas, balki og‘ishlarga munosabat bildirilganidir. +7 °C ko‘rsatkichi yonida “aniqlandi, mahsulot utilizatsiya qilindi, kompressorga xizmat ko‘rsatildi” degan qayd tizim ishlayotganini ko‘rsatadi. Aksincha, bir hafta davomida hech qanday o‘zgarishsiz +4 °C qayd etilishi shubha uyg‘otadi."}
+  ]
+}

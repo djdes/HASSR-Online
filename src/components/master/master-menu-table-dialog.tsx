@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ListChecks, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -53,7 +53,7 @@ function badTime(value: string): boolean {
  * «Вставить списком» для меню мастер-кабинета — таблица «Наименование |
  * Выход | Время», как «Добавить списком» в БЖГП: вставка столбцов из Excel
  * прямо в ячейку, строки добавляются и удаляются. Открывается с текущим
- * списком: удалили строку — позиция уберётся из меню.
+ * списком: удалили строку — позиция уберётся из справочника.
  */
 export function MasterMenuTableDialog({
   open,
@@ -72,13 +72,6 @@ export function MasterMenuTableDialog({
   const [submitting, setSubmitting] = useState(false);
   /** «Время для всех строк» — одно время каждой строке. */
   const [allTime, setAllTime] = useState("");
-
-  // Каждое открытие — заново с текущим списком мастера.
-  useEffect(() => {
-    if (!open) return;
-    setRows(rowsFromItems(items));
-    setShown(RENDER_CHUNK);
-  }, [open, items]);
 
   const toSave = useMemo(() => menuRowsToSave(rows), [rows]);
   const withYield = toSave.filter((row) => row.yield !== "").length;
@@ -145,17 +138,17 @@ export function MasterMenuTableDialog({
     <Dialog open={open} onOpenChange={(next) => (next ? null : onClose())}>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS} data-testid="master-menu-table-dialog">
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Меню списком</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Справочник блюд</DialogTitle>
           <DialogDescription className="sr-only">
-            Таблица меню: наименование, выход и время изготовления. Можно вставить столбцы из Excel.
+            Справочник блюд: наименование, выход и время изготовления. Можно вставить столбцы из Excel.
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-w-0 space-y-3 px-4 py-4 sm:px-6 sm:py-5">
           <p className="text-[13px] leading-[1.55] text-[#3c4053]">
             Встаньте в ячейку и нажмите Ctrl+V — из Excel можно вставить сразу три столбца: наименование, выход и
-            время (или только наименования). Меню на бумаге — «С фото» внизу. В таблице уже текущее меню: удалите
-            строку — блюдо уберётся из меню.
+            время (или только наименования). Меню на бумаге — «С фото» внизу. В таблице уже текущий справочник: удалите
+            строку — блюдо уберётся из справочника.
           </p>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 sm:flex-row sm:items-center">
@@ -303,13 +296,13 @@ export function MasterMenuTableDialog({
               <RecognizeFromPhoto
                 kind="menu"
                 onItems={addFromPhoto}
-                resultLabel="В меню добавлено"
+                resultLabel="Добавлено в справочник"
                 className="flex-1 sm:flex-none"
                 testId="menu-photo"
               />
             </div>
             <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] text-[#3848c7]" data-testid="master-menu-table-count">
-              В меню: <span className="font-semibold tabular-nums">{toSave.length}</span>
+              В справочнике: <span className="font-semibold tabular-nums">{toSave.length}</span>
               {toSave.length > 0 ? (
                 <span className="text-[#6f7282]">
                   {" "}

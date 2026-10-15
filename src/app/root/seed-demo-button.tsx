@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +14,9 @@ import { Button } from "@/components/ui/button";
  * пустого дашборда trial-org'и.
  */
 export function SeedDemoButton() {
+  const t = useTranslations("rootMetrics");
+  const copy = useRef(t);
+  copy.current = t;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -26,15 +30,20 @@ export function SeedDemoButton() {
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось создать демо");
+        toast.error(copy.current("seed.failed"));
+        return;
+      }
+      if (typeof data?.name !== "string" || ![data.positionsCreated, data.staffCreated, data.entriesCreated, data.durationMs].every(value => typeof value === "number" && Number.isFinite(value))) {
+        toast.error(copy.current("seed.failed"));
+        return;
       }
       toast.success(
-        `Демо «${data.name}» создан. Должностей: ${data.positionsCreated}, сотрудников: ${data.staffCreated}, записей: ${data.entriesCreated} (${Math.round(data.durationMs / 1000)}s)`,
+        copy.current("seed.success", { name: data.name, positions: data.positionsCreated, staff: data.staffCreated, entries: data.entriesCreated, seconds: Math.round(data.durationMs / 1000) }),
         { duration: 8000 }
       );
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(copy.current("seed.failed"));
     } finally {
       setBusy(false);
     }
@@ -52,7 +61,7 @@ export function SeedDemoButton() {
       ) : (
         <Sparkles className="mr-2 size-4" />
       )}
-      Создать демо-ресторан
+      {t("seed.create")}
     </Button>
   );
 }

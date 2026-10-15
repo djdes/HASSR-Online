@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Copy, Loader2, QrCode } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +41,8 @@ export function StaffPairDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useTranslations("staffManagement.pair");
+  const locale = useLocale();
   const [payload, setPayload] = useState<PairPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -62,12 +65,12 @@ export function StaffPairDialog({
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
         if (!res.ok) {
-          setError(data.error || "Не удалось создать ссылку");
+          setError(t("createFailed"));
           return;
         }
         setPayload(data as PairPayload);
       } catch {
-        if (!cancelled) setError("Нет связи с сервером");
+        if (!cancelled) setError(t("networkError"));
       } finally {
         if (!cancelled) setPending(false);
       }
@@ -76,19 +79,17 @@ export function StaffPairDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, employeeId]);
+  }, [open, employeeId, t]);
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-[460px] overflow-y-auto rounded-[24px]">
         <DialogHeader>
-          <DialogTitle>Вход без Telegram</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
 
         <p className="text-[13px] leading-[1.6] text-[#6f7282]">
-          Покажите этот код сотруднику — {employeeName ?? "он"} отсканирует его
-          камерой телефона, придумает пароль и сразу войдёт. Дальше вход по
-          номеру телефона и паролю, Telegram не нужен.
+          {t("description", { name: employeeName ?? t("employee") })}
         </p>
 
         {pending ? (
@@ -105,7 +106,7 @@ export function StaffPairDialog({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={payload.qrPngDataUrl}
-                alt="QR-код для входа"
+                alt={t("qrAlt")}
                 width={280}
                 height={brandQrHeightFor(280)}
                 className="h-auto rounded-2xl border border-[#ececf4] bg-white p-2"
@@ -113,12 +114,11 @@ export function StaffPairDialog({
             </div>
 
             <div className="rounded-2xl bg-[#fafbff] px-4 py-3 text-[13px] leading-[1.6] text-[#3c4053]">
-              Логином будет номер{" "}
-              <span className="font-medium text-[#0b1024]">
-                {payload.phone ?? "—"}
-              </span>
-              . Ссылка одноразовая и действует до{" "}
-              {new Date(payload.expiresAt).toLocaleString("ru-RU")}.
+              {t.rich("linkInfo", {
+                phone: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+                phoneNumber: payload.phone ?? "—",
+                expiration: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(payload.expiresAt)),
+              })}
             </div>
 
             <button
@@ -126,19 +126,18 @@ export function StaffPairDialog({
               onClick={() => {
                 void navigator.clipboard
                   .writeText(payload.pairUrl)
-                  .then(() => toast.success("Ссылка скопирована"))
-                  .catch(() => toast.error("Не удалось скопировать"));
+                  .then(() => toast.success(t("copied")))
+                  .catch(() => toast.error(t("copyFailed")));
               }}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Copy className="size-4 text-[#5566f6]" />
-              Скопировать ссылку
+              {t("copyLink")}
             </button>
 
             <p className="flex items-start gap-2 text-[12px] leading-[1.5] text-[#9b9fb3]">
               <QrCode className="mt-0.5 size-4 shrink-0" />
-              Новый код гасит предыдущий: если сотрудник потеряет ссылку,
-              просто откройте это окно ещё раз.
+              {t("reissueHelp")}
             </p>
           </div>
         ) : null}

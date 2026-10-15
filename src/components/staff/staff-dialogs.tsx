@@ -3,9 +3,11 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import type { MessageContract } from "@/i18n/message-contract";
 import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { toast } from "sonner";
-import { toastApiError } from "@/lib/billing-limit-toast";
+import { isBillingLimitError, useBillingError } from "@/lib/billing-limit-toast";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import { formatDaysRu } from "@/lib/format-days";
 import { ChevronLeft, Copy, ExternalLink, KeyRound } from "lucide-react";
@@ -126,16 +128,6 @@ function floatingLabel({
   );
 }
 
-// Галки прав сотрудника — одни и те же в окнах добавления и редактирования.
-const KEEPS_CORE_JOURNALS_LABEL = "Ответственный за ведение основных журналов";
-const KEEPS_CORE_JOURNALS_HINT =
-  "По QR гигиенического журнала видит вкладку «Допуск сотрудников»: кто отметился сегодня, и ставит «Допущен» или «Отстранён». " +
-  "В конце дня получает список тех, кто не отметился, и сразу — если кого-то не допустили.";
-const MANAGE_SETTINGS_LABEL = "Разрешение менять настройки";
-const MANAGE_SETTINGS_HINT =
-  "Открывает кабинет как у руководителя: все настройки, журналы, сотрудники, QR-плакаты, " +
-  "оборудование. Удобно для заведующего производством.";
-
 function FlagCheckbox(props: {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -164,6 +156,7 @@ export function StaffEditPositionDialog(props: {
   position: StaffPosition;
   onUpdated: () => void;
 } & Close) {
+  const t = useTranslations("staffManagement.dialogs");
   const [name, setName] = useState(props.position.name);
   const [categoryKey, setCategoryKey] = useState<PositionCategory>(
     props.position.categoryKey
@@ -173,7 +166,7 @@ export function StaffEditPositionDialog(props: {
 
   async function submit() {
     if (name.trim().length < 2) {
-      toast.error("Введите название");
+      toast.error(t("positionNameRequired"));
       return;
     }
     setPending(true);
@@ -184,11 +177,10 @@ export function StaffEditPositionDialog(props: {
         body: JSON.stringify({ name: name.trim(), categoryKey }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        toast.error(data?.error ?? "Не удалось сохранить");
+        toast.error(t("saveFailed"));
         return;
       }
-      toast.success("Должность обновлена");
+      toast.success(t("positionUpdated"));
       props.onUpdated();
     } finally {
       setPending(false);
@@ -202,11 +194,10 @@ export function StaffEditPositionDialog(props: {
         method: "DELETE",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        toast.error(data?.error ?? "Не удалось удалить");
+        toast.error(t("deleteFailed"));
         return;
       }
-      toast.success("Должность удалена");
+      toast.success(t("positionDeleted"));
       props.onUpdated();
     } finally {
       setPending(false);
@@ -217,11 +208,11 @@ export function StaffEditPositionDialog(props: {
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
         {shell(
-          "Редактирование должности",
+          t("editPositionTitle"),
           <div className="space-y-4">
             {floatingLabel({
               id: "edit-parent",
-              label: "Родительская рубрика",
+              label: t("parentCategory"),
               children: (
                 <select
                   id="edit-parent"
@@ -229,14 +220,14 @@ export function StaffEditPositionDialog(props: {
                   onChange={(e) => setCategoryKey(e.target.value as PositionCategory)}
                   className="h-12 w-full rounded-xl border border-[#dcdfed] bg-[#f5f6ff] px-4 pt-6 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                 >
-                  <option value="management">Руководство</option>
-                  <option value="staff">Сотрудники</option>
+                  <option value="management">{t("management")}</option>
+                  <option value="staff">{t("employees")}</option>
                 </select>
               ),
             })}
             {floatingLabel({
               id: "edit-pos-name",
-              label: "Должность",
+              label: t("position"),
               children: (
                 <Input
                   id="edit-pos-name"
@@ -254,9 +245,9 @@ export function StaffEditPositionDialog(props: {
               disabled={pending}
               className="text-[13px] font-medium text-[#d2453d] hover:underline disabled:opacity-50"
             >
-              Удалить должность
+              {t("deletePosition")}
             </button>
-            {primaryBtn("Сохранить", submit, pending)}
+            {primaryBtn(t("save"), submit, pending)}
           </div>
         )}
       </DialogContent>
@@ -270,17 +261,17 @@ export function StaffEditPositionDialog(props: {
           setConfirmDeleteOpen(false);
           await deletePos();
         }}
-        title={`Удалить должность «${props.position.name}»?`}
-        description="Должность исчезнет из справочника и из выпадающих списков при добавлении сотрудников."
+        title={t("deletePositionTitle", { position: props.position.name })}
+        description={t("deletePositionDescription")}
         bullets={[
           {
-            label: "Удалить получится, только если на должности никого нет",
+            label: t("deletePositionOnlyEmpty"),
             tone: "warn",
           },
-          { label: "Вернуть удалённую должность нельзя", tone: "warn" },
+          { label: t("deletePositionIrreversible"), tone: "warn" },
         ]}
-        confirmLabel="Удалить"
-        cancelLabel="Отмена"
+        confirmLabel={t("delete")}
+        cancelLabel={t("cancel")}
         variant="danger"
       />
     </Dialog>
@@ -316,7 +307,7 @@ export function StaffAddFlowDialog(props: {
   positions: StaffPosition[];
   initialPositionId?: string | null;
   /** Типовые названия должностей для сферы организации (шаг 1). */
-  positionSuggestions?: string[];
+  positionSuggestions?: Array<{ id: string; name: string }>;
   /** Интеграция TasksFlow уже подключена — промо не показываем. */
   hasTasksflowIntegration?: boolean;
   /** Точки организации и включён ли режим точек — чипы «Точки». */
@@ -332,6 +323,10 @@ export function StaffAddFlowDialog(props: {
    */
   onCreated: (result?: { positionId: string }) => void;
 } & Close) {
+  const { toastApiError } = useBillingError();
+  const t = useTranslations("staffManagement.dialogs");
+  const tPositionSuggestion = useTranslations("staffManagement.positionSuggestions");
+  type PositionSuggestionKey = keyof MessageContract["staffManagement"]["positionSuggestions"];
   const [step, setStep] = useState<1 | 2>(props.initialStep);
 
   // Шаг 1.
@@ -382,7 +377,7 @@ export function StaffAddFlowDialog(props: {
   const positionHints = useMemo(
     () =>
       (props.positionSuggestions ?? []).filter(
-        (name) => !createdNames.has(name.trim().toLowerCase())
+        ({ name }) => !createdNames.has(name.trim().toLowerCase())
       ),
     [props.positionSuggestions, createdNames]
   );
@@ -394,7 +389,7 @@ export function StaffAddFlowDialog(props: {
   async function submitPosition() {
     const name = posName.trim();
     if (name.length < 2) {
-      toast.error("Введите название");
+      toast.error(t("addFlow.positionNameRequired"));
       return;
     }
 
@@ -410,7 +405,7 @@ export function StaffAddFlowDialog(props: {
     if (existing) {
       setPositionId(existing.id);
       setPosName("");
-      toast.success(`Должность «${existing.name}» уже есть — добавляем сотрудника`);
+      toast.success(t("addFlow.positionAlreadyExists", { name: existing.name }));
       setStep(2);
       return;
     }
@@ -429,10 +424,14 @@ export function StaffAddFlowDialog(props: {
         | { position?: StaffPosition; error?: string }
         | null;
       if (!res.ok || !data?.position) {
-        toast.error(data?.error ?? "Не удалось создать");
+        toast.error(
+          data?.error === "Такая должность уже существует" || data?.error === "Должность с таким названием уже существует"
+            ? t("addFlow.positionAlreadyExists", { name })
+            : t("addFlow.positionCreateFailed")
+        );
         return;
       }
-      toast.success("Должность создана");
+      toast.success(t("addFlow.positionCreated"));
       setCreatedPositions((prev) => [...prev, data.position as StaffPosition]);
       setPositionId(data.position.id);
       setPosName("");
@@ -445,12 +444,12 @@ export function StaffAddFlowDialog(props: {
 
   async function submitEmployee() {
     if (!positionId) {
-      toast.error("Сначала создайте должность");
+      toast.error(t("addFlow.createPositionFirst"));
       setStep(1);
       return;
     }
     if (fullName.trim().length < 2) {
-      toast.error("Введите ФИО");
+      toast.error(t("addFlow.nameRequired"));
       return;
     }
     if (!acquire()) return;
@@ -474,10 +473,11 @@ export function StaffAddFlowDialog(props: {
         | null;
       if (!res.ok || !data?.user) {
         // Лимит бесплатного тарифа — с кнопкой «Оплатить».
-        toastApiError(data, "Не удалось создать");
+        if (isBillingLimitError(data)) toastApiError(data, t("addFlow.employeeCreateFailed"));
+        else toast.error(t("addFlow.employeeCreateFailed"));
         return;
       }
-      toast.success("Сотрудник добавлен");
+      toast.success(t("addFlow.employeeAdded"));
       // Список обновляем сразу, но диалог держим открытым: менеджер
       // может тут же выдать доступ или приглашение в Telegram.
       props.onCreated({ positionId });
@@ -497,15 +497,13 @@ export function StaffAddFlowDialog(props: {
       <Dialog open={props.open} onOpenChange={(v) => !v && closeAll()}>
         <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
           {shell(
-            "Сотрудник добавлен",
+            t("addFlow.employeeAdded"),
             <div className="space-y-3 text-[14px] leading-5 text-[#0b1024]">
               <p>
-                <b>{created.userName}</b> добавлен в штат.
+                {t.rich("addFlow.addedToStaff", { name: created.userName, b: (chunks) => <b>{chunks}</b> })}
               </p>
               <p className="text-[#6f7282]">
-                Логин с паролем, вход через Telegram и доступ к журналам
-                выдаются в карточке сотрудника — кнопка «Добавить доступ» в
-                окне редактирования.
+                {t("addFlow.accessInstructions")}
               </p>
             </div>,
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -516,7 +514,7 @@ export function StaffAddFlowDialog(props: {
                 disabled={pending}
                 className="h-11 rounded-xl"
               >
-                Готово
+                {t("addFlow.done")}
               </Button>
             </div>
           )}
@@ -533,23 +531,17 @@ export function StaffAddFlowDialog(props: {
             // Название группы в заголовке: без него было непонятно,
             // куда именно ляжет новая должность — в «Руководство»
             // или в «Сотрудники».
-            `Добавление должности · ${
-              props.categoryKey === "management"
-                ? "Руководство"
-                : props.categoryKey === "commission"
-                  ? "Комиссия"
-                  : "Сотрудники"
-            }`,
+            t("addFlow.addPositionTitle", { category: t(`category.${props.categoryKey}`) }),
             <div className="space-y-3">
               {floatingLabel({
                 id: "pos-name",
-                label: "Должность",
+                label: t("position"),
                 children: (
                   <Input
                     id="pos-name"
                     value={posName}
                     onChange={(e) => setPosName(e.target.value)}
-                    placeholder="Например, «Повар холодного цеха»"
+                    placeholder={t("addFlow.positionPlaceholder")}
                     className="h-12 rounded-xl border-[#dcdfed] bg-[#f5f6ff] pl-4 pr-4 pt-6 text-[14px] text-[#0b1024] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                   />
                 ),
@@ -557,7 +549,7 @@ export function StaffAddFlowDialog(props: {
               {positionHints.length > 0 ? (
                 <div className="space-y-1.5">
                   <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-                    Частые должности
+                    {t("addFlow.commonPositions")}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {(showAllHints
@@ -565,18 +557,18 @@ export function StaffAddFlowDialog(props: {
                       : positionHints.slice(0, POSITION_HINTS_VISIBLE)
                     ).map((hint) => (
                       <button
-                        key={hint}
+                        key={hint.id}
                         type="button"
                         // Подставляем название в поле — его можно
                         // поправить перед сохранением.
-                        onClick={() => setPosName(hint)}
+                        onClick={() => setPosName(hint.name)}
                         className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
-                          posName.trim() === hint
+                          posName.trim() === hint.name
                             ? "bg-[#5566f6] text-white"
                             : "bg-[#f5f6ff] text-[#3848c7] hover:bg-[#eef1ff]"
                         }`}
                       >
-                        {hint}
+                        {tPositionSuggestion(hint.id as PositionSuggestionKey)}
                       </button>
                     ))}
                     {!showAllHints &&
@@ -586,7 +578,7 @@ export function StaffAddFlowDialog(props: {
                         onClick={() => setShowAllHints(true)}
                         className="rounded-full px-3 py-1 text-[12px] text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                       >
-                        ещё {positionHints.length - POSITION_HINTS_VISIBLE}
+                        {t("addFlow.moreSuggestions", { count: positionHints.length - POSITION_HINTS_VISIBLE })}
                       </button>
                     ) : null}
                   </div>
@@ -598,12 +590,12 @@ export function StaffAddFlowDialog(props: {
                   onClick={() => setStep(2)}
                   className="text-[13px] font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
                 >
-                  У меня уже есть должность → пропустить
+                  {t("addFlow.skipPosition")}
                 </button>
               ) : null}
             </div>,
-            primaryBtn("Добавить", submitPosition, posPending),
-            { eyebrow: "Шаг 1 из 2" }
+            primaryBtn(t("addFlow.add"), submitPosition, posPending),
+            { eyebrow: t("addFlow.step", { current: 1 }) }
           )}
         </DialogContent>
       </Dialog>
@@ -614,11 +606,11 @@ export function StaffAddFlowDialog(props: {
     <Dialog open={props.open} onOpenChange={(v) => !v && closeAll()}>
       <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
         {shell(
-          "Добавление сотрудника",
+          t("addFlow.addEmployeeTitle"),
           <div className="space-y-4">
             {floatingLabel({
               id: "add-emp-pos",
-              label: "Должность",
+              label: t("position"),
               children: (
                 <select
                   id="add-emp-pos"
@@ -637,15 +629,15 @@ export function StaffAddFlowDialog(props: {
                   {positions.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.categoryKey === "management"
-                        ? "Руководство · "
+                        ? `${t("category.management")} · `
                         : p.categoryKey === "commission"
-                          ? "Комиссия · "
-                          : "Сотрудники · "}
+                          ? `${t("category.commission")} · `
+                          : `${t("category.staff")} · `}
                       {p.name}
                     </option>
                   ))}
                   <option value={NEW_POSITION_OPTION}>
-                    + Новая должность…
+                    {t("addFlow.newPositionOption")}
                   </option>
                 </select>
               ),
@@ -657,13 +649,13 @@ export function StaffAddFlowDialog(props: {
               <Input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Введите ФИО сотрудника"
+                placeholder={t("addFlow.namePlaceholder")}
                 className="h-12 rounded-xl border-[#dcdfed] bg-white text-[14px] text-[#0b1024] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               />
               <Input
                 type="tel"
                 {...phoneInputProps(phone, setPhone)}
-                placeholder="Телефон · необязательно"
+                placeholder={t("addFlow.phonePlaceholder")}
                 autoComplete="tel"
                 className="h-12 rounded-xl border-[#dcdfed] bg-white text-[14px] text-[#0b1024] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               />
@@ -674,16 +666,15 @@ export function StaffAddFlowDialog(props: {
             />
             <div className="space-y-1.5">
               <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-                Выходные
+                {t("addFlow.daysOff")}
               </div>
               <WeekdayChips
                 value={weeklyDaysOff}
                 onChange={setWeeklyDaysOff}
-                ariaLabel="Выходные дни нового сотрудника"
+                ariaLabel={t("addFlow.daysOffAria")}
               />
               <p className="text-[11px] leading-snug text-[#6f7282]">
-                Нужно для журналов и задач: в выходные ставится «В», задачи
-                не приходят. День правится в графике.
+                {t("addFlow.daysOffHint")}
               </p>
             </div>
             {props.perLocationJournals ? (
@@ -691,27 +682,27 @@ export function StaffAddFlowDialog(props: {
                 buildings={props.buildings ?? []}
                 value={buildingIds}
                 onChange={setBuildingIds}
-                ariaLabel="Точки нового сотрудника"
+                ariaLabel={t("addFlow.buildingsAria")}
               />
             ) : null}
             <FlagCheckbox
               checked={keepsCore}
               onChange={setKeepsCore}
-              label={KEEPS_CORE_JOURNALS_LABEL}
-              hint={KEEPS_CORE_JOURNALS_HINT}
+              label={t("addFlow.keepsCoreLabel")}
+              hint={t("addFlow.keepsCoreHint")}
               testId="staff-add-keeps-core-journals"
             />
             <FlagCheckbox
               checked={manageSettings}
               onChange={setManageSettings}
-              label={MANAGE_SETTINGS_LABEL}
-              hint={`${MANAGE_SETTINGS_HINT} Войти можно по личному QR и своему PIN — их выдают в карточке сотрудника после добавления.`}
+              label={t("addFlow.manageSettingsLabel")}
+              hint={t("addFlow.manageSettingsHint")}
               testId="staff-add-can-manage-settings"
             />
           </div>,
-          primaryBtn("Добавить", () => void submitEmployee(), pending),
+          primaryBtn(t("addFlow.add"), () => void submitEmployee(), pending),
           {
-            eyebrow: "Шаг 2 из 2",
+            eyebrow: t("addFlow.step", { current: 2 }),
             leading: (
               <button
                 type="button"
@@ -719,7 +710,7 @@ export function StaffAddFlowDialog(props: {
                 className="-ml-1 inline-flex w-fit items-center gap-1 rounded-lg px-1 py-0.5 text-[13px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
               >
                 <ChevronLeft className="size-4" />
-                Назад
+                {t("back")}
               </button>
             ),
           }
@@ -753,6 +744,7 @@ export function StaffEditEmployeeDialog(props: {
   /** Открыть окно выдачи доступа вместо этого диалога. */
   onOpenAccess?: () => void;
 } & Close) {
+  const t = useTranslations("staffManagement.dialogs");
   const { employee, open, onClose, pending, onSave, onOpenAccess } = props;
   const [name, setName] = useState(employee.name);
   const [phone, setPhone] = useState(employee.phone ?? "");
@@ -793,7 +785,7 @@ export function StaffEditEmployeeDialog(props: {
   function submit() {
     const trimmedName = name.trim();
     if (trimmedName.length < 2) {
-      toast.error("Введите ФИО (минимум 2 символа)");
+      toast.error(t("editEmployee.nameRequired"));
       return;
     }
     const patch: {
@@ -835,40 +827,37 @@ export function StaffEditEmployeeDialog(props: {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
         {shell(
-          `Редактировать: ${employee.name}`,
+          t("editEmployee.title", { name: employee.name }),
           <div className="space-y-4">
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ФИО"
+              placeholder={t("editEmployee.namePlaceholder")}
               className="h-12 rounded-xl border-[#dcdfed] bg-white text-[14px] text-[#0b1024] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             />
             <div>
               <Input
                 type="tel"
                 {...phoneInputProps(phone, setPhone)}
-                placeholder={`Телефон · ${RU_PHONE_PLACEHOLDER}`}
+                placeholder={t("editEmployee.phonePlaceholder", { format: RU_PHONE_PLACEHOLDER })}
                 autoComplete="tel"
                 className="h-12 rounded-xl border-[#dcdfed] bg-white text-[14px] text-[#0b1024] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               />
               <p className="mt-1 text-[11px] leading-snug text-[#6f7282]">
-                Меняется номер — запустится автосвязка с TasksFlow по
-                совпадению телефона. Чтобы очистить телефон, оставьте
-                поле пустым.
+                {t("editEmployee.phoneHint")}
               </p>
             </div>
             <div className="space-y-1.5">
               <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-                Выходные
+                {t("addFlow.daysOff")}
               </div>
               <WeekdayChips
                 value={weeklyDaysOff}
                 onChange={setWeeklyDaysOff}
-                ariaLabel={`Выходные дни: ${employee.name}`}
+                ariaLabel={t("editEmployee.daysOffAria", { name: employee.name })}
               />
               <p className="text-[11px] leading-snug text-[#6f7282]">
-                Правило на каждую неделю. Отдельный день можно переопределить
-                в графике выходных.
+                {t("editEmployee.daysOffHint")}
               </p>
             </div>
             {props.perLocationJournals ? (
@@ -876,7 +865,7 @@ export function StaffEditEmployeeDialog(props: {
                 buildings={props.buildings ?? []}
                 value={buildingIds}
                 onChange={setBuildingIds}
-                ariaLabel={`Точки: ${employee.name}`}
+                ariaLabel={t("editEmployee.buildingsAria", { name: employee.name })}
               />
             ) : null}
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
@@ -888,26 +877,25 @@ export function StaffEditEmployeeDialog(props: {
               />
               <span>
                 <span className="block text-[14px] font-medium text-[#0b1024]">
-                  Уполномочен редактировать в бракеражных журналах список блюд
+                  {t("editEmployee.dishesLabel")}
                 </span>
                 <span className="block text-[12px] leading-snug text-[#6f7282]">
-                  По QR журнала видит все блюда за сегодня и может исправить наименование и время. Обычно —
-                  заведующий производством.
+                  {t("editEmployee.dishesHint")}
                 </span>
               </span>
             </label>
             <FlagCheckbox
               checked={keepsCore}
               onChange={setKeepsCore}
-              label={KEEPS_CORE_JOURNALS_LABEL}
-              hint={KEEPS_CORE_JOURNALS_HINT}
+              label={t("addFlow.keepsCoreLabel")}
+              hint={t("addFlow.keepsCoreHint")}
               testId="staff-keeps-core-journals"
             />
             <FlagCheckbox
               checked={manageSettings}
               onChange={setManageSettings}
-              label={MANAGE_SETTINGS_LABEL}
-              hint={`${MANAGE_SETTINGS_HINT} Войти можно по личному QR и своему PIN. После изменения галки сотрудник входит заново.`}
+              label={t("addFlow.manageSettingsLabel")}
+              hint={t("editEmployee.manageSettingsHint")}
               testId="staff-can-manage-settings"
             />
             {/* PIN для быстрой QR-авторизации — отдельный PATCH, вне общего «Сохранить». */}
@@ -921,8 +909,7 @@ export function StaffEditEmployeeDialog(props: {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ qrPin: pin }),
                 });
-                const data = await response.json().catch(() => null);
-                if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить PIN");
+                if (!response.ok) throw new Error(t("editEmployee.pinSaveFailed"));
               }}
             />
             <PersonalQrCard employeeId={employee.id} employeeName={employee.name} />
@@ -937,7 +924,7 @@ export function StaffEditEmployeeDialog(props: {
                 className="w-full border-[#dcdfed] text-[#3848c7] hover:bg-[#f5f6ff] sm:mr-auto sm:w-auto"
               >
                 <KeyRound className="size-4" />
-                Добавить доступ
+                {t("editEmployee.addAccess")}
               </Button>
             ) : null}
             <Button
@@ -946,9 +933,9 @@ export function StaffEditEmployeeDialog(props: {
               onClick={onClose}
               disabled={pending}
             >
-              Отмена
+              {t("cancel")}
             </Button>
-            {primaryBtn("Сохранить", submit, pending)}
+            {primaryBtn(t("save"), submit, pending)}
           </>
         )}
       </DialogContent>
@@ -964,6 +951,7 @@ export function StaffTelegramInviteDialog(props: {
   error: string | null;
   invite: TgInvitePayload | null;
 } & Close) {
+  const t = useTranslations("staffManagement.dialogs.telegramInvite");
   const { employee, mode, botUrl, onClose, open, pending, error, invite } = props;
   const [copied, setCopied] = useState(false);
   const setPending = (_value: boolean) => {};
@@ -988,7 +976,7 @@ export function StaffTelegramInviteDialog(props: {
           | (TgInvitePayload & { error?: string })
           | null;
         if (!res.ok || !data?.inviteUrl) {
-          throw new Error(data?.error || "Не удалось создать приглашение");
+          throw new Error(t("createFailed"));
         }
         if (cancelled) return;
         setInvite({
@@ -997,10 +985,10 @@ export function StaffTelegramInviteDialog(props: {
           expiresAt: data.expiresAt,
         });
         onIssued();
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : "Не удалось создать приглашение"
+            t("createFailed")
           );
         }
       } finally {
@@ -1017,7 +1005,7 @@ export function StaffTelegramInviteDialog(props: {
     return () => {
       cancelled = true;
     };
-  }, [employee.id, mode, onIssued, open]);
+  }, [employee.id, mode, onIssued, open, t]);
 
   async function copyInviteUrl(url: string) {
     try {
@@ -1025,14 +1013,14 @@ export function StaffTelegramInviteDialog(props: {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Не удалось скопировать ссылку");
+      toast.error(t("copyFailed"));
     }
   }
 
   const title =
     mode === "rebind"
-      ? `Перепривязать TG для ${employee.name}`
-      : `Пригласить в TG: ${employee.name}`;
+      ? t("rebindTitle", { name: employee.name })
+      : t("inviteTitle", { name: employee.name });
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -1041,7 +1029,7 @@ export function StaffTelegramInviteDialog(props: {
           title,
           pending ? (
             <div className="py-8 text-center text-[14px] text-[#6f7282]">
-              Готовим ссылку Telegram…
+              {t("loading")}
             </div>
           ) : error ? (
             <div className="space-y-4">
@@ -1050,7 +1038,7 @@ export function StaffTelegramInviteDialog(props: {
               </div>
               <div className="flex justify-end">
                 <Button type="button" onClick={onClose} className="h-11 rounded-xl">
-                  Закрыть
+                  {t("close")}
                 </Button>
               </div>
             </div>
@@ -1058,14 +1046,14 @@ export function StaffTelegramInviteDialog(props: {
             <div className="space-y-4">
               <div className="rounded-lg border border-[#eef0fb] bg-[#f8f9ff] p-3 text-[13px] leading-5 text-[#5464ff]">
                 {mode === "rebind"
-                  ? "Ссылка обновлена. Сотрудник увидит ее в уведомлениях сайта, а если Telegram уже был привязан — еще и в сообщении Telegram."
-                  : "Ссылка готова. Сотрудник увидит ее в уведомлениях сайта, а вы можете сразу передать ее вручную или показать QR."}
+                  ? t("rebindReady")
+                  : t("inviteReady")}
               </div>
               <div className="flex justify-center">
                 <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5">
                   <Image
                     src={invite.qrPngDataUrl}
-                    alt="QR-код приглашения в Telegram"
+                    alt={t("qrAlt")}
                     width={220}
                     height={brandQrHeightFor(220)}
                     className="h-auto"
@@ -1086,7 +1074,7 @@ export function StaffTelegramInviteDialog(props: {
                   className="h-11 rounded-xl px-3"
                 >
                   <Copy className="size-4" />
-                  {copied ? "Скопировано" : "Копировать"}
+                  {copied ? t("copied") : t("copy")}
                 </Button>
               </div>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -1096,7 +1084,7 @@ export function StaffTelegramInviteDialog(props: {
                   onClick={onClose}
                   className="h-11 rounded-xl"
                 >
-                  Готово
+                  {t("done")}
                 </Button>
                 <Button
                   type="button"
@@ -1105,14 +1093,14 @@ export function StaffTelegramInviteDialog(props: {
                 >
                   <a href={invite.inviteUrl} target="_blank" rel="noreferrer">
                     <ExternalLink className="mr-1.5 size-4" />
-                    Открыть Telegram
+                    {t("openTelegram")}
                   </a>
                 </Button>
                 {employee.telegramLinked && botUrl ? (
                   <Button type="button" variant="outline" asChild className="h-11 rounded-xl">
                     <a href={botUrl} target="_blank" rel="noreferrer">
                       <ExternalLink className="mr-1.5 size-4" />
-                      Открыть чат бота
+                      {t("openBotChat")}
                     </a>
                   </Button>
                 ) : null}
@@ -1129,16 +1117,16 @@ export function StaffArchiveDialog(props: {
   employee: StaffEmployee;
   onConfirm: () => void;
 } & Close) {
+  const t = useTranslations("staffManagement.dialogs.archive");
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
         {shell(
-          `Архивирование сотрудника "${props.employee.name}"`,
+          t("title", { name: props.employee.name }),
           <p className="text-[13px] text-[#6f7282]">
-            Сотрудник исчезнет из активных списков и графиков, но останется
-            привязан к прежним записям в журналах.
+            {t("description")}
           </p>,
-          primaryBtn("В архив", props.onConfirm)
+          primaryBtn(t("confirm"), props.onConfirm)
         )}
       </DialogContent>
     </Dialog>
@@ -1146,42 +1134,27 @@ export function StaffArchiveDialog(props: {
 }
 
 /** «1 запись / 2 записи / 5 записей» журналов. */
-function pluralJournalRecords(count: number) {
-  const tail = count % 100;
-  if (tail >= 11 && tail <= 14) return "записей";
-  switch (count % 10) {
-    case 1:
-      return "запись";
-    case 2:
-    case 3:
-    case 4:
-      return "записи";
-    default:
-      return "записей";
-  }
-}
-
 export function StaffDeleteBlockedDialog(props: {
   employee: StaffEmployee;
   /// Сколько записей журналов ссылается на сотрудника — API отдаёт это
   /// число в ответе 409, а диалог раньше его не показывал.
   references?: number;
 } & Close) {
+  const t = useTranslations("staffManagement.dialogs.deleteBlocked");
   const references = props.references ?? 0;
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]">
         {shell(
-          `Удаление сотрудника "${props.employee.name}"`,
+          t("title", { name: props.employee.name }),
           <div className="space-y-2 text-[13px] text-[#6f7282]">
-            <p>Данный сотрудник участвует в журналах. Удаление не возможно.</p>
+            <p>{t("cannotDelete")}</p>
             {references > 0 ? (
               <p className="font-medium text-[#3c4053]">
-                На сотрудника ссылаются {references}{" "}
-                {pluralJournalRecords(references)} журналов.
+                {t("references", { count: references })}
               </p>
             ) : null}
-            <p>Если сотрудник уволился, то перенесите его в архив.</p>
+            <p>{t("archiveAdvice")}</p>
           </div>
         )}
       </DialogContent>
@@ -1190,13 +1163,14 @@ export function StaffDeleteBlockedDialog(props: {
 }
 
 export function StaffIikoDialog(props: Close) {
+  const t = useTranslations("staffManagement.dialogs.iiko");
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
         {shell(
-          "Заполнение выходных дней из iiko",
+          t("title"),
           <p className="text-[13px] text-[#6f7282]">
-            Для настройки синхронизации с iiko обратитесь к разработчикам сервиса WeSetup.
+            {t("description")}
           </p>
         )}
       </DialogContent>
@@ -1205,26 +1179,21 @@ export function StaffIikoDialog(props: Close) {
 }
 
 export function StaffInstructionDialog(props: Close) {
+  const t = useTranslations("staffManagement.dialogs.instruction");
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[560px]">
         {shell(
-          "Инструкция по странице «Сотрудники»",
+          t("title"),
           <div className="space-y-3 text-[13px] leading-[1.55] text-[#3c4053]">
             <p>
-              На этой странице вы можете управлять штатом организации: добавлять
-              должности, сотрудников, а также вести графики выходных дней,
-              отпусков, больничных и увольнений.
+              {t("intro")}
             </p>
             <p>
-              Все заполненные графики используются <b>только для автозаполнения
-              Гигиенического журнала</b> — в соответствующие ячейки журнала
-              будут подставляться значения «В», «Отп» или «Б/л».
+              {t.rich("schedule", { b: (chunks) => <b>{chunks}</b> })}
             </p>
             <p>
-              Если сотрудник участвует в уже существующих записях журналов, его
-              нельзя удалить — но можно перевести в <b>Архив</b>: запись в
-              прежних журналах сохранится, а в активных списках его не будет.
+              {t.rich("archive", { b: (chunks) => <b>{chunks}</b> })}
             </p>
           </div>
         )}
@@ -1244,6 +1213,7 @@ export function StaffAddPeriodDialog(props: {
     dateTo?: string;
   }) => void;
 } & Close) {
+  const t = useTranslations("staffManagement.dialogs.addPeriod");
   const [positionId, setPositionId] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const [dateFrom, setDateFrom] = useState<string>(
@@ -1265,20 +1235,20 @@ export function StaffAddPeriodDialog(props: {
 
   async function submit() {
     if (!userId) {
-      toast.error("Выберите сотрудника");
+      toast.error(t("employeeRequired"));
       return;
     }
     if (!dateFrom) {
-      toast.error("Укажите дату");
+      toast.error(t("dateRequired"));
       return;
     }
     if (props.kind !== "dismissal") {
       if (!dateTo) {
-        toast.error("Укажите дату окончания");
+        toast.error(t("endDateRequired"));
         return;
       }
       if (dateTo < dateFrom) {
-        toast.error("Дата ПО не может быть раньше С");
+        toast.error(t("dateRangeInvalid"));
         return;
       }
     }
@@ -1299,20 +1269,20 @@ export function StaffAddPeriodDialog(props: {
   // безлико «Добавление новой строки».
   const title =
     props.kind === "dismissal"
-      ? "Добавление увольнения"
+      ? t("dismissalTitle")
       : props.kind === "vacation"
-        ? "Добавление отпуска"
-        : "Добавление больничного";
+        ? t("vacationTitle")
+        : t("sickLeaveTitle");
   const fromLabel =
     props.kind === "vacation"
-      ? "Дата отпуска С"
+      ? t("vacationFrom")
       : props.kind === "sick_leave"
-        ? "Дата больничного С"
-        : "Дата увольнения С";
+        ? t("sickLeaveFrom")
+        : t("dismissalFrom");
   const toLabel =
     props.kind === "vacation"
-      ? "Дата отпуска ПО"
-      : "Дата больничного ПО";
+      ? t("vacationTo")
+      : t("sickLeaveTo");
 
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
@@ -1322,7 +1292,7 @@ export function StaffAddPeriodDialog(props: {
           <div className="space-y-4">
             {floatingLabel({
               id: "period-pos",
-              label: "Должность",
+              label: t("position"),
               children: (
                 <select
                   id="period-pos"
@@ -1333,7 +1303,7 @@ export function StaffAddPeriodDialog(props: {
                   }}
                   className="h-12 w-full rounded-xl border border-[#dcdfed] bg-[#f5f6ff] px-4 pt-6 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                 >
-                  <option value="">- Выберите значение -</option>
+                  <option value="">{t("selectValue")}</option>
                   {props.positions.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
@@ -1345,7 +1315,7 @@ export function StaffAddPeriodDialog(props: {
             {positionId ? (
               floatingLabel({
                 id: "period-user",
-                label: "Сотрудник",
+                label: t("employee"),
                 children: (
                   <select
                     id="period-user"
@@ -1353,7 +1323,7 @@ export function StaffAddPeriodDialog(props: {
                     onChange={(e) => setUserId(e.target.value)}
                     className="h-12 w-full rounded-xl border border-[#dcdfed] bg-white px-4 pt-6 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                   >
-                    <option value="">- Выберите значение -</option>
+                    <option value="">{t("selectValue")}</option>
                     {employeesForPosition.map((e) => (
                       <option key={e.id} value={e.id}>
                         {e.name}
@@ -1407,8 +1377,8 @@ export function StaffAddPeriodDialog(props: {
               </>
             ) : null}
           </div>,
-          primaryBtn("Добавить", submit, pending),
-          { description: "Выберите сотрудника и даты" }
+          primaryBtn(t("add"), submit, pending),
+          { description: t("description") }
         )}
       </DialogContent>
     </Dialog>

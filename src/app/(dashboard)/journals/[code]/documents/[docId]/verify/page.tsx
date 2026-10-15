@@ -9,7 +9,9 @@ import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { getCrumbOrganizationName } from "@/lib/crumb-organization";
 import { getDocumentCrumbMenu } from "@/lib/journal-crumb-menu";
-import { DOCUMENT_STATUS_LEGEND } from "@/lib/crumb-menu";
+import { documentStatusLegend } from "@/lib/crumb-menu";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
 import { getActiveBuildingId } from "@/lib/active-building";
 
 export const runtime = "nodejs";
@@ -32,6 +34,9 @@ export default async function VerifyDocumentPage({
   const { code, docId } = await params;
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
+  const locale = await getSiteLocale();
+  const tCrumbs = await getTranslations({ locale, namespace: "navigation.breadcrumbs" });
+  const tHeader = await getTranslations({ locale, namespace: "navigation.header" });
 
   const doc = await db.journalDocument.findFirst({
     where: { id: docId, organizationId: orgId },
@@ -87,8 +92,8 @@ export default async function VerifyDocumentPage({
 
   const [crumbOrganizationName, journalMenu, documentMenu] = await Promise.all([
     getCrumbOrganizationName(orgId),
-    getJournalCrumbMenu(session, code),
-    getDocumentCrumbMenu(orgId, code, docId, await getActiveBuildingId(session)),
+    getJournalCrumbMenu(session, code, locale),
+    getDocumentCrumbMenu(orgId, code, docId, await getActiveBuildingId(session), locale),
   ]);
 
   return (
@@ -105,10 +110,10 @@ export default async function VerifyDocumentPage({
             label: doc.title,
             href: `/journals/${code}/documents/${docId}`,
             menu: documentMenu,
-            menuTitle: "Документы журнала",
-            menuLegend: DOCUMENT_STATUS_LEGEND,
+            menuTitle: tCrumbs("documents"),
+            menuLegend: documentStatusLegend(tCrumbs),
           },
-          { label: "Проверка" },
+          { label: tHeader("taskVerificationShort") },
         ]}
       />
 

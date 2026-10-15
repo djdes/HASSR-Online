@@ -1,6 +1,6 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
@@ -20,7 +20,7 @@ import { ymGoal } from "@/lib/signup-source";
  * его (см. globals.css).
  */
 export function NavStartButton() {
-  const t = usePublicCopy();
+  const t = useTranslations("landingComponents.navStart");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -67,8 +67,8 @@ export function NavStartButton() {
       onClick={handleClick}
       className="hidden h-12 items-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-4 text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] md:inline-flex sm:h-10 sm:text-[14px]"
     >
-      <span className="sm:hidden">{t("Начать")}</span>
-      <span className="hidden sm:inline">{t("Начать бесплатно")}</span>
+      <span className="sm:hidden">{t("start")}</span>
+      <span className="hidden sm:inline">{t("startFree")}</span>
       <ArrowRight className="size-4" />
     </button>
   );

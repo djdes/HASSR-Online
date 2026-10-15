@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import {
   AlertTriangle,
@@ -22,6 +23,7 @@ import type { JournalDocGuide } from "@/lib/journal-doc-guides";
  * «Правила» окна «Как заполнить?». Вёрстка не менялась.
  */
 export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
+  const t = useTranslations("journalControls.guideSections");
   return (
     <div className="space-y-5">
       {/* Intro */}
@@ -31,12 +33,12 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <MetaCard
           icon={<Users className="size-4" />}
-          label="Кто заполняет"
+          label={t("who")}
           value={guide.whoFills}
         />
         <MetaCard
           icon={<Clock className="size-4" />}
-          label="Когда"
+          label={t("when")}
           value={guide.whenToFill}
         />
       </div>
@@ -44,7 +46,7 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
       {/* Prepare */}
       {guide.prepare && guide.prepare.length > 0 ? (
         <Section
-          title="Что подготовить"
+          title={t("prepare")}
           icon={<Package className="size-4" />}
           tone="info"
         >
@@ -64,7 +66,7 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
 
       {/* Steps */}
       <Section
-        title="Пошаговая инструкция"
+        title={t("steps")}
         icon={<ListChecks className="size-4" />}
         tone="primary"
       >
@@ -101,7 +103,7 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
       {/* Examples */}
       {guide.examples && guide.examples.length > 0 ? (
         <Section
-          title="Примеры заполнения"
+          title={t("examples")}
           icon={<Sparkles className="size-4" />}
           tone="success"
         >
@@ -126,7 +128,7 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
       {/* Common mistakes */}
       {guide.mistakes && guide.mistakes.length > 0 ? (
         <Section
-          title="Типичные ошибки"
+          title={t("mistakes")}
           icon={<XCircle className="size-4" />}
           tone="warn"
         >
@@ -147,7 +149,7 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
       {/* Red flags */}
       {guide.redFlags && guide.redFlags.length > 0 ? (
         <Section
-          title="Что делать если что-то не так"
+          title={t("redFlags")}
           icon={<AlertTriangle className="size-4" />}
           tone="warn"
         >
@@ -180,7 +182,7 @@ export function JournalDocGuideBody({ guide }: { guide: JournalDocGuide }) {
         <div className="flex items-start gap-2 rounded-xl border border-[#ececf4] bg-[#fafbff] px-3 py-2.5">
           <ExternalLink className="mt-0.5 size-3.5 shrink-0 text-[#6f7282]" />
           <div className="text-[12px] leading-[1.55] text-[#6f7282]">
-            <span className="font-semibold text-[#3c4053]">Норматив:</span>{" "}
+            <span className="font-semibold text-[#3c4053]">{t("regulationLabel")}</span>{" "}
             {guide.legalRef}
           </div>
         </div>

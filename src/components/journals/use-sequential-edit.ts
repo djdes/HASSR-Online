@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import {
   openNextEditable,
   sequentialEditProgress,
-  sequentialEditSummary,
   type SequentialEditState,
 } from "@/components/journals/sequential-edit";
 
@@ -27,6 +27,9 @@ import {
  * обработчики журнала не ветвятся.
  */
 export function useSequentialEdit(handlers: { open: (id: string) => boolean; close: () => void }) {
+  const t = useTranslations("journalControls.selection");
+  const currentTranslation = useRef(t);
+  useEffect(() => { currentTranslation.current = t; }, [t]);
   // Обработчики журнала пересоздаются каждый рендер (замыкают config) —
   // держим их в ref, чтобы очередь всегда звала актуальные.
   const handlersRef = useRef(handlers);
@@ -46,7 +49,7 @@ export function useSequentialEdit(handlers: { open: (id: string) => boolean; clo
       const current = stateRef.current;
       setState(null);
       handlersRef.current.close();
-      if (current && current.ids.length > 1) toast.success(sequentialEditSummary(done, current.ids.length));
+      if (current && current.ids.length > 1) toast.success(currentTranslation.current("summary", { done, total: current.ids.length }));
     },
     [setState]
   );
@@ -56,12 +59,12 @@ export function useSequentialEdit(handlers: { open: (id: string) => boolean; clo
       const list = Array.from(new Set(ids));
       const index = openNextEditable(list, 0, handlersRef.current.open);
       if (index === -1) {
-        toast.error("Выбранные строки не найдены");
+        toast.error(t("notFound"));
         return;
       }
       setState({ ids: list, index, done: 0 });
     },
-    [setState]
+    [setState, t]
   );
 
   const saved = useCallback(() => {
@@ -88,14 +91,16 @@ export function useSequentialEdit(handlers: { open: (id: string) => boolean; clo
     finish(current.done);
   }, [finish]);
 
+  const progress = sequentialEditProgress(state);
+  const progressLabel = progress ? t("progress", progress) : null;
   return useMemo(
     () => ({
       active: state !== null,
-      progress: sequentialEditProgress(state),
+      progress: progressLabel,
       start,
       saved,
       cancelled,
     }),
-    [state, start, saved, cancelled]
+    [state, progressLabel, start, saved, cancelled]
   );
 }

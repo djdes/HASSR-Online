@@ -1,0 +1,16 @@
+{
+  "locale": "en",
+  "sourceHash": "8335a90074686988ae280c836b9f579492625f4c1dd7921479ce7605cefeb48b",
+  "title": "Required food-service logs: the minimum set",
+  "excerpt": "The SanPiN baseline covers health, temperatures, finished-product checks, receiving, cleaning, and disinfectants. HACCP adds more when you work with chains or serve children's food.",
+  "tags": ["Journals", "SanPiN"],
+  "body": [
+    {"type":"p","text":"When you open a café or other establishment from scratch, a reasonable question comes up: which logs are required, and which are merely recommended? The answer depends on the product range, but the basic set is the same for everyone."},
+    {"type":"h2","text":"Basic minimum (SanPiN)"},
+    {"type":"ul","items":["Employee health / hygiene log.","Refrigeration equipment temperature log.","Finished-product quality assessment log.","Raw-material receiving and incoming inspection log.","Cleaning and disinfection log.","Disinfectant use log.","UV lamp operating log (if lamps are used)."]},
+    {"type":"h2","text":"Extended set (HACCP)"},
+    {"type":"ul","items":["Internal audit log.","Staff training log.","Scale and thermometer verification log.","Traceability and traceability-test log.","Claims and complaints log.","Metal contamination control log (for production facilities).","Personal protective equipment issue log."]},
+    {"type":"callout","tone":"tip","title":"When you need the extended set","text":"It is useful when working with chain-store buyers, children's food, hospital deliveries, or online marketplaces. It also saves time during contractor audits as your business grows."},
+    {"type":"p","text":"At WeSetup, the basic set is included in the plan for one location, while the extended set is included in plans for chains and production facilities. Changing plans does not require you to create the logs again."}
+  ]
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { MapPin } from "lucide-react";
 import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export function BuildingChips(props: {
   ariaLabel?: string;
 }) {
   const { buildings, value, onChange, disabled } = props;
+  const t = useTranslations("staffManagement.buildings");
   const [expanded, setExpanded] = useState(false);
   if (buildings.length < 2) return null;
   const all = value.length === 0;
@@ -48,26 +50,26 @@ export function BuildingChips(props: {
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-          Точки
+          {t("heading")}
         </div>
         <span className="text-[11px] leading-snug text-[#6f7282]">
-          Пусто — задачи со всех точек
+          {t("allTasksHint")}
         </span>
       </div>
       <div
         role="group"
-        aria-label={props.ariaLabel ?? "Точки сотрудника"}
+        aria-label={props.ariaLabel ?? t("employeeLabel")}
         className="flex flex-wrap gap-1"
       >
         <button
           type="button"
           disabled={disabled}
           aria-pressed={all}
-          title="Работает на всех точках"
+          title={t("allTitle")}
           onClick={() => onChange([])}
           className={chipClass(all)}
         >
-          Все точки
+          {t("all")}
         </button>
         {visible.map((building) => {
           const active = value.includes(building.id);
@@ -99,7 +101,7 @@ export function BuildingChips(props: {
             onClick={() => setExpanded((prev) => !prev)}
             className="inline-flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
           >
-            {expanded ? "Свернуть" : `Ещё ${hidden}`}
+            {expanded ? t("collapse") : t("more", { count: hidden })}
           </button>
         ) : null}
       </div>

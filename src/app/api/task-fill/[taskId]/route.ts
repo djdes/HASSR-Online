@@ -46,7 +46,7 @@ export async function POST(
   const { taskId: taskIdRaw } = await ctx.params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId) || taskId <= 0) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
 
   let parsed: z.infer<typeof bodySchema>;
@@ -55,11 +55,11 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Invalid body" },
+        { errorCode: "invalidBody", error: err.issues[0]?.message ?? "Invalid body" },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return NextResponse.json({ errorCode: "invalidBody", error: "Invalid body" }, { status: 400 });
   }
 
   // Resolve the link via HMAC signature — see the matching comment in
@@ -70,7 +70,7 @@ export async function POST(
     include: { integration: true },
   });
   if (candidates.length === 0) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "taskNotFound", error: "Task not found" }, { status: 404 });
   }
   let link: (typeof candidates)[number] | null = null;
   let lastReason = "bad-signature";
@@ -89,7 +89,7 @@ export async function POST(
   }
   if (!link) {
     return NextResponse.json(
-      { error: `Invalid token (${lastReason})` },
+      { errorCode: "invalidToken", error: `Invalid token (${lastReason})` },
       { status: 401 }
     );
   }
@@ -97,7 +97,7 @@ export async function POST(
   const adapter = getAdapter(link.journalCode);
   if (!adapter) {
     return NextResponse.json(
-      { error: `Журнал «${link.journalCode}» не поддерживается` },
+      { errorCode: "unsupportedJournal", error: `Журнал «${link.journalCode}» не поддерживается` },
       { status: 400 }
     );
   }
@@ -138,7 +138,7 @@ export async function POST(
       if (!isManagementRole(actorRole)) {
         return NextResponse.json(
           {
-            error:
+            errorCode: "adminEditOnly", error:
               "Только администраторы могут изменять выполненные записи. Попросите руководителя поправить данные.",
           },
           { status: 403 }
@@ -184,7 +184,7 @@ export async function POST(
           });
           return NextResponse.json(
             {
-              error: `Ошибка валидации поля «${fieldLabel}»: ${
+              errorCode: "fieldInvalid", errorParams: { field: fieldKey ?? "" }, error: `Ошибка валидации поля «${fieldLabel}»: ${
                 issue?.message ?? "неизвестно"
               }`,
             },

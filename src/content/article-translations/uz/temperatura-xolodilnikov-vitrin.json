@@ -1,0 +1,15 @@
+{
+  "locale": "uz",
+  "sourceHash": "cd3387821c671b4f4f4351466823011c2d68b5e846a3d5b5c232b0d07025fbec",
+  "title": "Sovutkich va vitrinalar harorati: me’yorlar va nazorat",
+  "excerpt": "Tayyor mahsulotlar uchun 0…+4 °C, muzlatilgan mahsulotlar uchun –18 °C dan yuqori emas, sovuq vitrina uchun esa +14 °C. Me’yoriy chegaralar va tajribali oshpazlar ikki o‘lchov oralig‘idagi nosozlikni qanday aniqlashi.",
+  "tags": ["Harorat", "Amaliyot"],
+  "body": [
+    {"type":"p","text":"“Sovutkich haroratni ushlab turibdi” deyish aniq emas. U faqat o‘lchov olingan paytda haroratni ushlab turadi. Ikki o‘lchov oralig‘ida ko‘p narsa yuz berishi mumkin: eshik ochiq qoladi, bug‘latgich tiqilib qoladi yoki tunda elektr uziladi. Shuning uchun to‘g‘ri nazorat — kuniga ikki marta o‘lchashning o‘zi emas, balki nosozlikni yuz berishi bilan aniqlaydigan tizimdir."},
+    {"type":"h2","text":"Me’yoriy chegaralar"},
+    {"type":"ul","items":["Tayyor salatlar, kremli mahsulotlar va issiqlik bilan ishlov berilgan go‘sht: 0…+4 °C.","Xom go‘sht va baliq: –2…+2 °C.","Sut mahsulotlari: 0…+6 °C.","Muzlatilgan mahsulotlar: –18 °C dan yuqori emas.","Sovuq vitrinalar: +14 °C dan yuqori emas; ma’quli ≤ +8 °C.","Issiq vitrinalar: +65 °C dan past emas."]},
+    {"type":"h2","text":"Tajribali bosh oshpaz nima qiladi"},
+    {"type":"ol","items":["Har bir muhim sovutish kamerasiga mustaqil simsiz datchik o‘rnatadi.","Chegaradan chetga chiqish 30 daqiqa yoki undan ko‘p davom etsa, push-xabarnoma yuborilishini sozlaydi.","Oyda bir marta datchik va jurnal ma’lumotlarini solishtirib, smenalar qulay raqamlarni kiritmayotganini tekshiradi.","Uskuna pasportini yuritadi: bug‘latgich qachon tozalangani va uskuna qachon xizmatdan o‘tgani qayd etiladi."]},
+    {"type":"callout","tone":"info","title":"Nega +14 °C yetarli emas","text":"Me’yorda “+14 °C dan yuqori emas” deyiladi, ammo tayyor salat xavfsizligi bundan pastroq, taxminan +8 °C da boshlanadi. +14 °C da ishlayotgan vitrina xavf chegarasida turadi; har qanday xato mahsulotni me’yor buzilishiga olib kelishi mumkin."}
+  ]
+}

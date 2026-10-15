@@ -430,9 +430,12 @@ export const sanitationDayAdapter: JournalAdapter = {
     const gc = parseGcRowKey(rowKey);
     const rowId = gc?.rowId ?? rowKey;
     const row = config.rows.find((r) => r.id === rowId);
-    const roomName = row?.roomName ?? "помещение";
+    const configuredRoomName = row?.roomName;
+    const hasConfiguredRoomName = typeof configuredRoomName === "string" && configuredRoomName.trim().length > 0;
+    const roomName = hasConfiguredRoomName && typeof configuredRoomName === "string" ? configuredRoomName : "помещение";
     const room = row?.roomId ? directoryRooms.find((r) => r.id === row.roomId) : undefined;
     const dateSuffix = gc ? ` · ${formatDayMonthWeekday(gc.dateKey)}` : "";
+    const taskDate = gc ? new Date(`${gc.dateKey}T12:00:00.000Z`) : undefined;
 
     // Шаги — из карточки помещения (состав генеральной уборки), если он
     // задан; иначе стандартный список.
@@ -440,16 +443,21 @@ export const sanitationDayAdapter: JournalAdapter = {
     if (room && roomSteps.length > 0) {
       return {
         intro: `Генеральная уборка · ${roomName}${dateSuffix}\nСостав из карточки помещения. Выполняйте шаги по порядку.`,
+        introPresentationKey: "dynamic.sanitationDay.roomIntro",
+        introPresentationValues: { room: roomName, ...(taskDate ? { hasDate: "yes", date: taskDate } : { hasDate: "no" }) },
         fields: [],
         pipeline: roomSteps.map((step, idx) => ({
           id: `step-${idx + 1}`,
           title: step.label,
           detail: `Шаг ${idx + 1} из ${roomSteps.length}.`,
+          detailPresentationKey: "dynamic.sanitationDay.stepCount",
+          detailPresentationValues: { step: idx + 1, total: roomSteps.length },
           photoMode: effectiveStepRequirePhoto(step, room.requirePhoto)
             ? ("required" as const)
             : ("optional" as const),
         })),
         submitLabel: "Завершить генеральную уборку",
+        submitPresentationKey: "dynamic.sanitationDay.submit",
       };
     }
 
@@ -464,16 +472,24 @@ export const sanitationDayAdapter: JournalAdapter = {
       "Финальная проверка и подпись",
     ];
 
+    const standardStepKeys = ["floor", "walls", "ceiling", "equipment", "ventilation", "furniture", "traps", "finalCheck"];
+
     return {
       intro: `Генеральная уборка · ${roomName}${dateSuffix}\nПолная глубокая уборка с дезинфекцией. Каждый шаг — фотофиксация результата.`,
+        introPresentationKey: hasConfiguredRoomName ? "dynamic.sanitationDay.deepIntro" : "dynamic.sanitationDay.deepIntroFallback",
+        introPresentationValues: { room: roomName, ...(taskDate ? { hasDate: "yes", date: taskDate } : { hasDate: "no" }) },
       fields: [],
       pipeline: steps.map((title, idx) => ({
         id: `step-${idx + 1}`,
         title,
+        titlePresentationKey: `dynamic.sanitationDay.${standardStepKeys[idx]}`,
         detail: `Шаг ${idx + 1} из ${steps.length}. После выполнения — фото и «Сделал».`,
+          detailPresentationKey: "dynamic.sanitationDay.deepStepDetail",
+          detailPresentationValues: { step: idx + 1, total: steps.length },
         photoMode: "required" as const,
       })),
       submitLabel: "Завершить генеральную уборку",
+        submitPresentationKey: "dynamic.sanitationDay.submit",
     };
   },
 };

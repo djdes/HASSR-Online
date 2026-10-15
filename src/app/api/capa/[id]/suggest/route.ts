@@ -3,6 +3,10 @@ import { db } from "@/lib/db";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { resolveExportLocale } from "@/i18n/export-locale";
+import { resolveRequestLocale } from "@/i18n/site-locale";
+import { capaSuggestionLanguageInstruction } from "@/components/capa/capa-presentation";
+import { capaSuggestionErrorResponse } from "@/components/capa/capa-suggestion-copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +54,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireApiAuth();
-  if (!auth.ok) return auth.response;
+  if (!auth.ok) return capaSuggestionErrorResponse("UNAUTHORIZED", resolveRequestLocale(request));
+
+  const defaultLocale = resolveExportLocale(null, auth.session.user)!;
+  const { searchParams } = new URL(request.url);
+  const locale = resolveExportLocale(searchParams.get("locale"), auth.session.user);
+  if (!locale) return capaSuggestionErrorResponse("INVALID_LOCALE", defaultLocale);
 
   // Раньше: только requireApiAuth — любой authenticated юзер мог
   // дёргать AI-suggest и сжигать месячный AI-квоту org-и. Cleaner
@@ -58,27 +67,21 @@ export async function POST(
   // CAPA workflow — management-only по дизайну (см. /api/capa
   // POST/GET); согласовываем suggest с ним.
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return capaSuggestionErrorResponse("FORBIDDEN", locale);
   }
 
   const { id } = await params;
   const orgId = getActiveOrgId(auth.session);
 
-  const { searchParams } = new URL(request.url);
   const step = searchParams.get("step") ?? "corrective";
-  const stepInstruction = STEP_PROMPTS[step];
+  const stepInstruction = Object.hasOwn(STEP_PROMPTS, step) ? STEP_PROMPTS[step] : undefined;
   if (!stepInstruction) {
-    return NextResponse.json(
-      {
-        error: `step должен быть одним из: ${Object.keys(STEP_PROMPTS).join(", ")}`,
-      },
-      { status: 400 }
-    );
+    return capaSuggestionErrorResponse("INVALID_STEP", locale);
   }
 
   const ticket = await db.capaTicket.findUnique({ where: { id } });
   if (!ticket || ticket.organizationId !== orgId) {
-    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    return capaSuggestionErrorResponse("NOT_FOUND", locale);
   }
 
   const org = await db.organization.findUnique({
@@ -110,15 +113,12 @@ ${stepInstruction}`;
   // AI-запрос уходит в очередь диспетчера ProjectsFlow — сайт к LLM не
   // ходит (см. src/lib/ai-assistant/pf-client.ts).
   const result = await enqueueAndWait(
-    ["type: wesetup_capa_suggest", "---", SYSTEM_PROMPT, "---", userPrompt].join(
+    ["type: wesetup_capa_suggest", `locale: ${locale}`, "---", SYSTEM_PROMPT, capaSuggestionLanguageInstruction(locale), "---", userPrompt].join(
       "\n"
     )
   );
   if (!result.ok) {
-    return NextResponse.json(
-      { error: result.error },
-      { status: result.code === "not_configured" ? 503 : 502 }
-    );
+    return capaSuggestionErrorResponse(result.code === "not_configured" ? "SUGGEST_UNAVAILABLE" : "SUGGEST_FAILED", locale);
   }
 
   const raw = result.text.trim();
@@ -132,24 +132,19 @@ ${stepInstruction}`;
       .trim();
     parsedReply = JSON.parse(cleaned);
   } catch {
-    return NextResponse.json(
-      { error: "AI вернул некорректный JSON", raw: raw.slice(0, 500) },
-      { status: 502 }
-    );
+    return capaSuggestionErrorResponse("SUGGEST_INVALID", locale, { raw: raw.slice(0, 500) });
   }
 
   if (
     !Array.isArray(parsedReply.suggestions) ||
     parsedReply.suggestions.length === 0
   ) {
-    return NextResponse.json(
-      { error: "AI не вернул suggestions" },
-      { status: 502 }
-    );
+    return capaSuggestionErrorResponse("SUGGEST_INVALID", locale);
   }
 
   return NextResponse.json({
     suggestions: parsedReply.suggestions.slice(0, 3),
     step,
-  });
+    locale,
+  }, { headers: { "Cache-Control": "private, no-store", "Content-Language": locale } });
 }

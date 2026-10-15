@@ -1,0 +1,15 @@
+{
+  "locale":"en","sourceHash":"e5b8d2d7529eff388d00593da655e2816e0f364ab0f932d60cda66219af7510f",
+  "title":"Internal HACCP audit: how to write a useful report",
+  "excerpt":"Report structure, evidence-based nonconformities instead of opinions, and CAPA with a deadline and owner. A practical audit document accepted by any chain’s procurement team.",
+  "tags":["Audit","HACCP"],
+  "body":[
+    {"type":"p","text":"An internal audit is a regular part of a HACCP system. Your own team conducts it according to your own plan. The goal is to find problems before an inspector does. The resulting report is not a box to tick; it is a management tool."},
+    {"type":"h2","text":"Report structure"},
+    {"type":"ol","items":["Date and audit team (at least one auditor must be independent of the area being inspected).","Scope: what was checked (area, process, or shift).","Checklist and result for each item.","Nonconformities: level (critical, major, or observation), description, and evidence.","CAPA: actions, owner, and deadline.","Signatures: auditor and manager of the inspected area."]},
+    {"type":"h2","text":"How to describe nonconformities"},
+    {"type":"p","text":"State facts, not opinions. Instead of “it was dirty,” write: “Product residue was found on the shelf above the sink in the wash area; there are no cleaning records for this area from 10.03 to 12.03.”"},
+    {"type":"callout","tone":"info","title":"CAPA is the heart of the system","text":"Without a corrective action and a deadline, a nonconformity becomes a note “for the record.” Create CAPA as soon as the report is written and assign it to a specific person."},
+    {"type":"p","text":"In WeSetup, an audit opens as a separate document: results, nonconformities, and CAPA stay together. A month later, it is easy to check whether every item is closed, and a nonconformity cannot be “lost” along the way."}
+  ]
+}

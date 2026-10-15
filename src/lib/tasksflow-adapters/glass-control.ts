@@ -47,9 +47,12 @@ function buildGlassControlForm(
     {
       id: "field-damagesDetected",
       title: "Есть повреждения?",
+      titlePresentationKey: "dynamic.glassDamageTitle",
       detail:
         "По описи (опись стеклянных и хрупких изделий) обойди все объекты: посуда, мерные ёмкости, лампочки, банки. Ищешь сколы, трещины, мутнения. Любое подозрение — отметь «Да».",
+      detailPresentationKey: "dynamic.glassDamageDetail",
       hint: "ХАССП ССР1 — физические опасности. СанПиН 2.3/2.4.4282-26",
+      hintPresentationKey: "dynamic.glassDamageRegulationHint",
       field: {
         type: "select",
         key: "damagesDetected",
@@ -66,8 +69,10 @@ function buildGlassControlForm(
     {
       id: "field-itemName",
       title: "Какое изделие проверял (или какое повреждено)",
+      titlePresentationKey: "dynamic.glassItemNameTitle",
       detail:
         "Если повреждений нет — напиши «Все изделия» или название проверяемого предмета. Если есть — конкретное название (стеклянная банка №3, лампочка над плитой, графин).",
+      detailPresentationKey: "dynamic.glassItemNameDetail",
       field: {
         type: "text",
         key: "itemName",
@@ -81,8 +86,10 @@ function buildGlassControlForm(
     {
       id: "field-quantity",
       title: "Количество проверенных / повреждённых",
+      titlePresentationKey: "dynamic.glassQuantityTitle",
       detail:
         "Численное значение. «Все 24 банки», «5 ламп», «1 трещина». Если повреждений нет — общее число проверенных изделий.",
+      detailPresentationKey: "dynamic.glassQuantityDetail",
       field: {
         type: "text",
         key: "quantity",
@@ -96,9 +103,12 @@ function buildGlassControlForm(
     {
       id: "field-damageInfo",
       title: "Что сделал с повреждённым (или общая запись)",
+      titlePresentationKey: "dynamic.glassDamageInfoTitle",
       detail:
         "Если есть повреждение — где скол / что заменили / списали. Если нет — «Целостность не нарушена» или похожая запись подтверждения.",
+      detailPresentationKey: "dynamic.glassDamageInfoDetail",
       hint: "Любая повреждённая посуда → списание (journal_writeoff) и запись здесь.",
+      hintPresentationKey: "dynamic.glassWriteoffHint",
       field: {
         type: "text",
         key: "damageInfo",
@@ -117,7 +127,10 @@ function buildGlassControlForm(
     intro:
       (employeeName ? `${employeeName}. ` : "") +
       "Контроль изделий из стекла перед сменой. По описи проверь посуду / лампы / ёмкости. Любые повреждения — фиксируй.",
+    introPresentationKey: "dynamic.glassControlIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Готово — записать в журнал",
+    submitPresentationKey: "dynamic.genericSubmit",
     pipeline: steps,
     fields: [
       {

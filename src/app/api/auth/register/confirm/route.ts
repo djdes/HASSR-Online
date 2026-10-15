@@ -6,6 +6,7 @@ import {
   compareVerificationCode,
 } from "@/lib/registration";
 import { sendWelcomeEmail } from "@/lib/email";
+import { resolveRequestLocale } from "@/i18n/site-locale";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
 import { normalizePhone } from "@/lib/phone";
@@ -182,6 +183,7 @@ export async function POST(request: Request) {
         passwordHash,
         role: "manager",
         organizationId: organization.id,
+        locale: resolveRequestLocale(request),
         // jobPositionId — null на старте. positionTitle тоже пустой,
         // пусть менеджер впишет что ему удобно.
         journalAccessMigrated: true,
@@ -219,6 +221,7 @@ export async function POST(request: Request) {
     name: result.user.name,
     organizationName: result.organization.name,
     organizationId: result.organization.id,
+    locale: resolveRequestLocale(request),
   }).catch((err) => console.error("sendWelcomeEmail failed", err));
 
   // Регистрации через /register раньше не уведомляли никого: новые

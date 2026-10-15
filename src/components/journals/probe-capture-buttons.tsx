@@ -4,6 +4,8 @@ import { Bluetooth, Camera, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { sensorCameraEnabled } from "@/lib/journal-controls";
 
 import {
   isBluetoothProbeSupported,
@@ -137,6 +139,7 @@ export function DisplayOcrButton({
   /** Какое число нужно с дисплея: у термогигрометра их два. */
   metric?: ReadingMetric;
 }) {
+  const { controls } = useJournalControls();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -174,8 +177,9 @@ export function DisplayOcrButton({
       const form = new FormData();
       form.append("photo", compressed ?? file);
       form.append("metric", metric);
+      form.append("journalCode", "cold_equipment_control");
 
-      const response = await fetch("/api/ocr/reading", {
+      const response = await fetch("/api/ocr/reading?code=cold_equipment_control", {
         method: "POST",
         body: form,
       });
@@ -214,6 +218,8 @@ export function DisplayOcrButton({
   }
 
   const paidOnly = status !== null && !status.autofill;
+
+  if (!sensorCameraEnabled(controls, "cold_equipment_control")) return null;
 
   return (
     <>

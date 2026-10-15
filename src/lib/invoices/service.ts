@@ -7,6 +7,7 @@ import { buildBuyerSnapshot, buildSellerSnapshot } from "@/lib/closing-documents
 import { readLegalImage, readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { db } from "@/lib/db";
 import { sendInvoiceEmail } from "@/lib/email";
+import { resolveLocale } from "@/i18n/locales";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
@@ -191,6 +192,9 @@ export async function deliverInvoice(orderId: number, organizationName: string):
   if (!rendered) return;
   const { order, pdf } = rendered;
   const topup = isTopupOrder(order);
+  const recipient = await db.user.findFirst({ where: { email: order.email, organizationId: order.organizationId! }, select: { locale: true } });
+  const organization = await db.organization.findUnique({ where: { id: order.organizationId! }, select: { locale: true } });
+  const locale = resolveLocale({ authenticated: Boolean(recipient), userLocale: recipient?.locale, organizationLocale: organization?.locale });
   await sendInvoiceEmail({
     to: order.email,
     number: String(order.id),
@@ -199,6 +203,7 @@ export async function deliverInvoice(orderId: number, organizationName: string):
     organizationId: order.organizationId,
     pdf,
     purpose: topup ? "topup" : "subscription",
+    locale,
   }).catch((error) => console.error("[invoices] email failed", error));
   await notifyPlatformAdmin(
     [

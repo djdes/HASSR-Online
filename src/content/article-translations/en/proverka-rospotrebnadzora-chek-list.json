@@ -1,0 +1,66 @@
+{
+  "locale": "en",
+  "sourceHash": "f9100b75f31e3a16dc038493f7d6fb63207df8e7ed1f1b89409b20b4597fba64",
+  "title": "Rospotrebnadzor inspection: a checklist for the day before the visit",
+  "excerpt": "Employee medical records, the production-control program, pest-control contracts, waste-removal documents, and journals for the past 12 months. What to prepare in one day—and what not to do before an inspection.",
+  "body": [
+    {
+      "type": "p",
+      "text": "A planned inspection is scheduled 20 working days in advance; an unscheduled one may sometimes come with just a day’s notice. If the inspector arrives tomorrow, here is what to prepare."
+    },
+    {
+      "type": "h2",
+      "text": "Documents to have ready"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Medical records for every employee on shift: valid and showing fluorography results.",
+        "The current production-control program, approved by the manager.",
+        "The pest-control and disinfection contract, plus the latest service reports.",
+        "The contract for food-waste removal and used cooking-oil disposal.",
+        "The HACCP plan, if your facility uses one."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Journals for the past 12 months"
+    },
+    {
+      "type": "p",
+      "text": "This is what the inspector will focus on. Gather the hygiene, reject-product, temperature, incoming-raw-material, cleaning, and disinfectant journals as PDFs in one folder. In WeSetup, this takes one click: ‘Export for period.’"
+    },
+    {
+      "type": "callout",
+      "tone": "info",
+      "title": "Check the signatures",
+      "text": "If the head chef was on leave, the deputy should have signed on their behalf. A blank field marked with a dash may lead to a formal notice."
+    },
+    {
+      "type": "h2",
+      "text": "On-site inspection"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Check that cutting boards and knives are labeled, with a separate color for each product group.",
+        "Check expiry dates in the refrigerator: anything without a label or with a smeared date must be discarded.",
+        "The refrigerator temperatures must match the journal for the latest shift.",
+        "Check work surfaces: make sure no cleaning residue remains and handles are not greasy."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "What not to do"
+    },
+    {
+      "type": "p",
+      "text": "Do not fill in journals retroactively. Inspectors can spot this from handwriting, ink patterns, and the sequence of dates. It is better to show a missed entry and explain why than to be caught falsifying records—which carries a greater penalty."
+    }
+  ],
+  "tags": [
+    "Inspections",
+    "Rospotrebnadzor",
+    "Checklist"
+  ]
+}

@@ -1,4 +1,5 @@
 "use client";
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 
 import { TOUR } from "@/lib/tour-anchors";
 
@@ -12,6 +13,9 @@ import {
   Sticker,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { useExportLanguageChoice } from "./export-language-choice";
 import { printPage, printPdf } from "@/lib/native-bridge";
 import { QrCode } from "lucide-react";
 import { isJournalObjectQrCode, journalQrHref } from "@/lib/journal-qr-target";
@@ -106,19 +110,28 @@ export function DocumentActionsBar({
   showPrint = true,
   heading,
   onSettings,
-  settingsLabel = "Настройки документа",
+  settingsLabel,
   menuItems = [],
   undo,
   className,
   children,
 }: Props) {
+  const t = useTranslations("journalControls.actions");
+  const locale = useLocale();
+  const chooseExportLanguage = useExportLanguageChoice();
+  const pdfUrl = (language: Locale) => `/api/journal-documents/${encodeURIComponent(documentId ?? "")}/pdf?locale=${language}`;
+  const openPdf = (language: Locale) => void printPdf(pdfUrl(language), {
+    fallback: () => { window.open(pdfUrl(language), "_blank", "noopener,noreferrer"); },
+  });
+  const resolvedSettingsLabel = settingsLabel ?? t("settings");
   // Рядовому сотруднику управление документом не показываем: сервер на
   // такой PATCH отвечает 403, и человек видел только тост «Недостаточно
   // прав». Печать остаётся — она никому не запрещена. QR-плакаты и
   // наклейки собирает только руководитель (их API и страница — для него).
   const canManage = useCanManageJournalDocument();
   const router = useRouter();
-  const items = (canManage ? menuItems : []).filter(Boolean);
+  const { controls } = useJournalControls();
+  const items = (canManage ? menuItems : []).filter((item) => Boolean(item) && (!controls.specialMode || item.key !== "copy-yesterday"));
   const hasPrint = Boolean(showPrint && documentId);
   // Код журнала — из `backHref` (`/journals/<code>`): его передают все
   // клиенты, и отдельный проп не нужен. Есть код и документ — есть QR.
@@ -139,31 +152,31 @@ export function DocumentActionsBar({
    * Обычная «Печать» открывает PDF в браузере, а это ставит задание в
    * очередь, и бланк выезжает на кассе без похода к компьютеру.
    */
-  async function sendToAgent(id: string) {
-    const toastId = toast.loading("Отправляю на принтер…");
+  async function sendToAgent(id: string, language: Locale) {
+    const toastId = toast.loading(t("sendPrinter"));
     try {
       const res = await fetch("/api/print/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: id }),
+        body: JSON.stringify({ documentId: id, locale: language }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось отправить", { id: toastId });
+        toast.error(t("sendFailed"), { id: toastId });
         return;
       }
       // Про офлайн говорим сразу: иначе человек стоит у принтера и не
       // понимает, чего ждёт.
       if (data?.agentOnline) {
-        toast.success(`Отправлено на «${data.agentName}»`, { id: toastId });
+        toast.success(t("sentToPrinter", { agentName: data.agentName }), { id: toastId });
       } else {
         toast.warning(
-          "Принтер сейчас не на связи — распечатается, как только программа поднимется",
+          t("printerOffline"),
           { id: toastId },
         );
       }
     } catch {
-      toast.error("Не удалось отправить", { id: toastId });
+      toast.error(t("sendFailed"), { id: toastId });
     }
   }
   const hasMenu = hasPrint || hasQr || items.length > 0;
@@ -203,11 +216,16 @@ export function DocumentActionsBar({
               обработчик клика не срабатывал (тёмная тема на телефоне). */}
           {hasPrint ? (
             <a
-              href={`/api/journal-documents/${documentId}/pdf`}
+              href={pdfUrl(locale)}
+              onClick={event => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                chooseExportLanguage(openPdf, t("print"));
+              }}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Распечатать"
-              title="Распечатать (PDF)"
+              aria-label={t("print")}
+              title={t("printPdf")}
               data-testid="print-pdf-link"
               className="relative z-[1] flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
@@ -217,8 +235,8 @@ export function DocumentActionsBar({
             <button
               type="button"
               onClick={() => void printPage()}
-              aria-label="Распечатать"
-              title="Распечатать"
+              aria-label={t("print")}
+              title={t("print")}
               className="relative z-[1] flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
               <Printer className="size-4" />
@@ -233,37 +251,29 @@ export function DocumentActionsBar({
               className={ACTION_BUTTON_CLASS}
             >
               <Settings2 className="size-4" />
-              {settingsLabel}
+              {resolvedSettingsLabel}
             </Button>
           ) : null}
           {hasMenu ? (
             // На телефоне это лист снизу, на компьютере — выпадающий
             // список. Пункты одни и те же (см. `responsive-menu.tsx`).
             <ResponsiveMenu
-              title="Действия с журналом"
+              title={t("menuAria")}
               items={[
                 ...(hasPrint
                   ? [
                       {
                         key: "print-pdf",
-                        label: "Печать",
+                        label: t("print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         // В приложении — системное окно печати, иначе новая вкладка.
-                        onSelect: () =>
-                          void printPdf(`/api/journal-documents/${documentId}/pdf`, {
-                            fallback: () =>
-                              window.open(
-                                `/api/journal-documents/${documentId}/pdf`,
-                                "_blank",
-                                "noopener,noreferrer"
-                              ),
-                          }),
+                        onSelect: () => chooseExportLanguage(openPdf, t("print")),
                       },
                       {
                         key: "print-agent",
-                        label: "На принтер заведения",
+                        label: t("printAtVenue"),
                         icon: <PrinterCheck className="size-4 text-[#5566f6]" />,
-                        onSelect: () => void sendToAgent(documentId as string),
+                        onSelect: () => chooseExportLanguage(language => { void sendToAgent(documentId as string, language); }, t("printAtVenue")),
                       },
                     ]
                   : []),
@@ -271,9 +281,9 @@ export function DocumentActionsBar({
                   ? [
                       {
                         key: "qr-stickers",
-                        label: "QR-наклейки объектов",
+                        label: t("objectStickers"),
                         icon: <Sticker className="size-4 text-[#5566f6]" />,
-                        title: "Наклейки с QR-кодом на каждый объект этого документа: сотрудник сканирует объект и вносит показание",
+                        title: t("objectStickersHint"),
                         onSelect: () => router.push(journalQrHref(journalCode as string, { documentId })),
                       },
                     ]
@@ -281,9 +291,9 @@ export function DocumentActionsBar({
                     ? [
                         {
                           key: "qr-fill",
-                          label: "QR: заполнить с телефона",
+                          label: t("qrFill"),
                           icon: <QrCode className="size-4 text-[#5566f6]" />,
-                          title: "Плакат с QR-кодом: сотрудник сканирует и вносит запись в этот документ без входа",
+                          title: t("qrFillHint"),
                           onSelect: () => setQrOpen(true),
                         },
                       ]
@@ -301,8 +311,8 @@ export function DocumentActionsBar({
               trigger={
                 <button
                   type="button"
-                  aria-label="Ещё действия"
-                  title="Ещё действия"
+                  aria-label={t("moreActions")}
+                  title={t("moreActions")}
                   data-tour={TOUR.moreActions}
                   className="flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors hover:bg-[#5566f6]/[0.09]"
                 >
@@ -318,29 +328,26 @@ export function DocumentActionsBar({
         <Dialog open={qrOpen} onOpenChange={setQrOpen}>
           <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-              <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>QR: заполнить с телефона</DialogTitle>
+              <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("qrFill")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3 px-6 py-5">
               <p className="text-[13px] leading-[1.55] text-[#3c4053]">
-                Основной QR журнала работает всегда — его и вешайте в цехе. QR
-                этого документа ведёт только в него и перестаёт работать после
-                последнего дня документа. Кто может записывать — «Настройки →
-                Строгость журналов».
+                {t("qrExplanation")}
               </p>
               <QrFillPreview
                 kind="journal"
                 id={journalCode as string}
-                heading="Основной QR журнала — работает всегда"
+                heading={t("mainQr")}
                 accent
                 allHref={journalQrHref(journalCode as string, { documentId })}
-                emptyHint="QR появится после сохранения документа."
+                emptyHint={t("qrAfterSave")}
               />
               <QrFillPreview
                 kind="journal"
                 id={`${journalCode}:${documentId}`}
-                heading="QR этого документа"
+                heading={t("documentQr")}
                 allHref={journalQrHref(journalCode as string, { documentId })}
-                emptyHint="QR появится после сохранения документа."
+                emptyHint={t("qrAfterSave")}
               />
             </div>
           </DialogContent>

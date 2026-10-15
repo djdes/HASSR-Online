@@ -9,6 +9,7 @@ import {
 import { sendVerificationEmail } from "@/lib/email";
 import { isEmailVerified } from "@/lib/email-verification";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
+import { resolveLocale } from "@/i18n/locales";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export async function POST() {
     update: { codeHash, expiresAt, attempts: 0 },
   });
 
-  await sendVerificationEmail(email, code).catch((err) =>
+  await sendVerificationEmail(email, code, resolveLocale({ authenticated: true, userLocale: session.user.locale, organizationLocale: session.user.organizationLocale })).catch((err) =>
     console.error("profile/complete send-code failed", err),
   );
 

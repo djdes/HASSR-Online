@@ -29,7 +29,7 @@ function buildForm(): TaskFormSchema {
     { type: "text", key: "nonConformity", label: "Выявленное несоответствие", required: true, multiline: true, maxLength: 500, placeholder: "Описание несоответствия" },
     { type: "text", key: "correctionActions", label: "Немедленные корректирующие действия", required: false, multiline: true, maxLength: 500 },
     { type: "text", key: "correctiveActions", label: "Корректирующие действия", required: false, multiline: true, maxLength: 500 },
-    { type: "text", key: "responsibleName", label: "Ответственный (ФИО)", required: false, maxLength: 200 },
+    { type: "text", key: "responsibleName", label: "Ответственный (ФИО)", autofill: "employeeName", required: false, maxLength: 200 },
     { type: "text", key: "responsiblePosition", label: "Должность ответственного", required: false, maxLength: 200 },
     { type: "date", key: "dueDatePlan", label: "Срок выполнения (план)", required: false },
   ];

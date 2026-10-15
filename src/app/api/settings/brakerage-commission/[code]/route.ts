@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
-import { isCommissionJournalCode } from "@/lib/brakerage-commission";
+import { commissionRoleKind, isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { readOrgCommission, saveOrgCommission } from "@/lib/brakerage-commission-org";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
@@ -85,6 +85,7 @@ export async function PUT(request: Request, ctx: Ctx) {
     .map((item) => ({
       employeeId: typeof item.employeeId === "string" ? item.employeeId : "",
       role: typeof item.role === "string" ? item.role.slice(0, 80) : undefined,
+      roleKind: commissionRoleKind(item.roleKind),
     }))
     .filter((item) => item.employeeId);
   const result = await saveOrgCommission(auth.organizationId, auth.code, input);

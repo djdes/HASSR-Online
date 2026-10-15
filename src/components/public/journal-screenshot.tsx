@@ -15,16 +15,18 @@ import { useState } from "react";
 export function JournalScreenshot({
   code,
   label,
+  pendingLabel = "Скриншот будет готов после ближайшего автоматического обхода",
 }: {
   code: string;
   label: string;
+  pendingLabel?: string;
 }) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
     return (
       <div className="flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] text-center text-[12px] text-[#9b9fb3]">
-        Скриншот будет готов после ближайшего автоматического обхода
+        {pendingLabel}
       </div>
     );
   }

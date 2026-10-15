@@ -38,6 +38,7 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
 
 /** Что открыто сессии мастер-кабинета. */
 const DIRECTORY_ALLOWED_PREFIXES = [
+  "/api/profile/locale",
   "/master",
   "/api/master",
   "/api/auth",

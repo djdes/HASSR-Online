@@ -6,6 +6,7 @@ import { loadBillingView } from "@/lib/billing-view.server";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
 import { MiniMeClient } from "./me-client";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function MiniMePage() {
   const billingStaffNotice = billing?.staffNotice === true;
 
   return (
+    <DomainMessagesBoundary namespaces={["notificationSettings"]}>
     <MiniMeClient
       billingAnnouncement={billingAnnouncement}
       billingStaffNotice={billingStaffNotice}
@@ -63,5 +65,6 @@ export default async function MiniMePage() {
       phone={profile?.phone ?? null}
       telegramLinked={Boolean(profile?.telegramChatId)}
     />
+    </DomainMessagesBoundary>
   );
 }

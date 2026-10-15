@@ -1,3 +1,5 @@
+
+import { useTranslations } from "next-intl";
 import { Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
 
 /**
@@ -6,9 +8,10 @@ import { Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
  * статуса).
  */
 export default function TeamLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем команду…</span>
+      <span className="sr-only">{tLoading("team")}</span>
 
       <SkeletonPageHeader />
 

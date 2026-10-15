@@ -23,8 +23,22 @@ export function isImageAttachment(meta: {
   return meta.mimeType.startsWith("image/");
 }
 
-export function formatBytes(size: number, locale: "ru" | "en" = "ru"): string {
-  if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} ${locale === "en" ? "MB" : "МБ"}`;
-  if (size >= 1024) return `${Math.round(size / 1024)} ${locale === "en" ? "KB" : "КБ"}`;
-  return `${size} ${locale === "en" ? "B" : "Б"}`;
+export function formatBytes(size: number, locale: "ru" | "en" | "uz" = "ru"): string {
+  const intlLocale = locale === "uz" ? "uz-Latn" : locale;
+  const format = (
+    value: number,
+    unit: "byte" | "kilobyte" | "megabyte",
+    fractionDigits: number,
+  ) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: "unit",
+      unit,
+      unitDisplay: "short",
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(value);
+
+  if (size >= 1024 * 1024) return format(size / (1024 * 1024), "megabyte", 1);
+  if (size >= 1024) return format(Math.round(size / 1024), "kilobyte", 0);
+  return format(size, "byte", 0);
 }

@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "YANDEX_BACKUP_FORBIDDEN" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
 
@@ -30,7 +30,7 @@ export async function POST() {
   });
   if (!org?.yandexDiskToken) {
     return NextResponse.json(
-      { error: "Я.Диск не подключён" },
+      { error: "Я.Диск не подключён", errorCode: "YANDEX_BACKUP_NOT_CONNECTED" },
       { status: 400 }
     );
   }
@@ -81,6 +81,6 @@ export async function POST() {
         : err instanceof Error
           ? err.message
           : "Неизвестная ошибка";
-    return NextResponse.json({ error: reason }, { status: 500 });
+    return NextResponse.json({ error: reason, errorCode: "YANDEX_BACKUP_UPLOAD_FAILED" }, { status: 500 });
   }
 }

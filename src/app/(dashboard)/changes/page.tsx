@@ -1,27 +1,33 @@
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { FORMAT_LOCALES } from "@/i18n/locales";
 import Link from "next/link";
 import { GitBranch, Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 
-const STATUS_INFO: Record<string, { label: string; className: string }> = {
-  requested: { label: "Заявка", className: "bg-[#eef1ff] text-[#3848c7]" },
-  risk_review: { label: "Оценка рисков", className: "bg-[#fff8eb] text-[#b25f00]" },
-  testing: { label: "Тестирование", className: "bg-[#f5f0ff] text-[#5d3ab3]" },
-  approved: { label: "Одобрено", className: "bg-[#ecfdf5] text-[#116b2a]" },
-  rejected: { label: "Отклонено", className: "bg-[#fff4f2] text-[#a13a32]" },
-  implemented: { label: "Внедрено", className: "bg-[#ecfdf5] text-[#116b2a]" },
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  recipe: "Рецептура",
-  process: "Процесс",
-  packaging: "Упаковка",
-  supplier: "Поставщик",
-  equipment: "Оборудование",
-};
-
 export default async function ChangesPage() {
   const session = await requireAuth();
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "changeManagement" });
+  const dateFormat = new Intl.DateTimeFormat(FORMAT_LOCALES[locale]);
+  const STATUS_INFO: Record<string, { label: string; className: string }> = {
+    requested: { label: t("statuses.requested"), className: "bg-[#eef1ff] text-[#3848c7]" },
+    risk_review: { label: t("statuses.risk_review"), className: "bg-[#fff8eb] text-[#b25f00]" },
+    testing: { label: t("statuses.testing"), className: "bg-[#f5f0ff] text-[#5d3ab3]" },
+    approved: { label: t("statuses.approved"), className: "bg-[#ecfdf5] text-[#116b2a]" },
+    rejected: { label: t("statuses.rejected"), className: "bg-[#fff4f2] text-[#a13a32]" },
+    implemented: { label: t("statuses.implemented"), className: "bg-[#ecfdf5] text-[#116b2a]" },
+  };
+
+  const TYPE_LABELS: Record<string, string> = {
+    other: t("types.other"),
+    recipe: t("types.recipe"),
+    process: t("types.process"),
+    packaging: t("types.packaging"),
+    supplier: t("types.supplier"),
+    equipment: t("types.equipment"),
+  };
 
   const changes = await db.changeRequest.findMany({
     where: { organizationId: getActiveOrgId(session) },
@@ -36,10 +42,10 @@ export default async function ChangesPage() {
           {/* Надзаголовок убран: он слово в слово повторял H1. */}
           <h1 className="flex items-center gap-2 text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
             <GitBranch className="size-6 shrink-0 text-[#5566f6]" />
-            Управление изменениями
+            {t("title")}
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">
-            Рецептуры, процессы, упаковка, поставщики и оборудование
+            {t("description")}
           </p>
         </div>
         <Link
@@ -47,7 +53,7 @@ export default async function ChangesPage() {
           className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:w-auto sm:justify-start sm:self-start"
         >
           <Plus className="size-4" />
-          Новое изменение
+          {t("newTitle")}
         </Link>
       </div>
 
@@ -56,16 +62,16 @@ export default async function ChangesPage() {
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
-                <th className="px-5 py-3 font-medium">Версия</th>
-                <th className="px-5 py-3 font-medium">Название</th>
-                <th className="px-5 py-3 font-medium">Тип</th>
-                <th className="px-5 py-3 font-medium">Статус</th>
-                <th className="px-5 py-3 font-medium">Дата</th>
+                <th className="px-5 py-3 font-medium">{t("version")}</th>
+                <th className="px-5 py-3 font-medium">{t("name")}</th>
+                <th className="px-5 py-3 font-medium">{t("type")}</th>
+                <th className="px-5 py-3 font-medium">{t("status")}</th>
+                <th className="px-5 py-3 font-medium">{t("date")}</th>
               </tr>
             </thead>
             <tbody>
               {changes.map((c: (typeof changes)[number]) => {
-                const sInfo = STATUS_INFO[c.status] ?? {
+                const sInfo = Object.hasOwn(STATUS_INFO, c.status) ? STATUS_INFO[c.status] : {
                   label: c.status,
                   className: "bg-[#f5f6ff] text-[#6f7282]",
                 };
@@ -82,7 +88,7 @@ export default async function ChangesPage() {
                     </td>
                     <td className="px-5 py-3">
                       <span className="inline-flex items-center rounded-full border border-[#ececf4] bg-white px-2.5 py-0.5 text-[12px] text-[#3c4053]">
-                        {TYPE_LABELS[c.changeType] || c.changeType}
+                        {Object.hasOwn(TYPE_LABELS, c.changeType) ? TYPE_LABELS[c.changeType] : c.changeType}
                       </span>
                     </td>
                     <td className="px-5 py-3">
@@ -93,7 +99,7 @@ export default async function ChangesPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3 text-[13px] text-[#6f7282]">
-                      {c.createdAt.toLocaleDateString("ru-RU")}
+                      {dateFormat.format(c.createdAt)}
                     </td>
                   </tr>
                 );
@@ -104,7 +110,7 @@ export default async function ChangesPage() {
                     colSpan={5}
                     className="px-5 py-10 text-center text-[14px] text-[#9b9fb3]"
                   >
-                    Изменений пока нет
+                    {t("empty")}
                   </td>
                 </tr>
               )}

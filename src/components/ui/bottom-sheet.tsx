@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { Drawer } from "vaul";
 
@@ -44,6 +45,7 @@ export function BottomSheet({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const t = useTranslations("common");
   return (
     <Drawer.Root
       open={open}
@@ -77,7 +79,7 @@ export function BottomSheet({
                 ) : null}
               </div>
               <Drawer.Close
-                aria-label="Закрыть"
+                aria-label={t("close")}
                 className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#6f7282] transition-colors hover:bg-[#eef1ff] hover:text-[#0b1024]"
               >
                 <X className="size-4" />

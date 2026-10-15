@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,7 +54,7 @@ export function FinishedProductBulkTable({
   showYield,
   showTime = false,
   fillYields,
-  timePlaceholder = "Время",
+  timePlaceholder,
 }: {
   rows: BulkDishRow[];
   onRowsChange: (next: BulkDishRow[] | ((prev: BulkDishRow[]) => BulkDishRow[])) => void;
@@ -65,6 +67,7 @@ export function FinishedProductBulkTable({
   fillYields?: (rows: BulkDishRow[]) => BulkDishRow[];
   timePlaceholder?: string;
 }) {
+  const t = useTranslations("finishedProduct");
   const fill = (next: BulkDishRow[]) => (fillYields ? fillYields(next) : next);
   const addCount = rows.filter((row) => row.name.trim() !== "").length;
 
@@ -107,7 +110,7 @@ export function FinishedProductBulkTable({
       const parsed = parseMenuPaste(text, maxRows);
       const columns = parsed.columns.filter((column) => column !== "yield" || showYield);
       if (parsed.rows.length === 0 || columns.length === 0) {
-        if (parsed.columns.includes("yield")) toast.info("В журнале колонка выхода скрыта — вставьте наименования");
+        if (parsed.columns.includes("yield")) toast.info(t("bulk.yieldHidden"));
         return;
       }
       const count = Math.min(parsed.rows.length, maxRows - index);
@@ -118,13 +121,13 @@ export function FinishedProductBulkTable({
           )
         )
       );
-      toast.success(`Вставлено строк: ${count}`);
+      toast.success(t("bulk.pasted", { count }));
       return;
     }
     const parsed = parseDishYieldPaste(text);
     if (parsed.rows.length === 0) return;
     if (parsed.kind === "yields" && !showYield) {
-      toast.info("В этом журнале колонка выхода скрыта — вставьте наименования");
+      toast.info(t("bulk.yieldHidden"));
       return;
     }
     const count = Math.min(parsed.rows.length, maxRows - index);
@@ -140,16 +143,16 @@ export function FinishedProductBulkTable({
           }))
       )
     );
-    toast.success(`Вставлено строк: ${count}`);
+    toast.success(t("bulk.pasted", { count }));
   }
 
   return (
     <div className="space-y-3" data-testid="bulk-dish-table">
       <div className="hidden items-center gap-2 px-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] sm:flex">
         <span className="w-6 shrink-0 text-center">№</span>
-        <span className="min-w-0 flex-1">Наименование</span>
-        {showYield ? <span className={cn("shrink-0", showTime ? "w-[120px]" : "w-[140px]")}>{showTime ? "Выход" : "Выход, г"}</span> : null}
-        {showTime ? <span className="w-[176px] shrink-0">Время</span> : null}
+        <span className="min-w-0 flex-1">{t("bulk.name")}</span>
+        {showYield ? <span className={cn("shrink-0", showTime ? "w-[120px]" : "w-[140px]")}>{showTime ? t("bulk.yield") : t("bulk.yieldGrams")}</span> : null}
+        {showTime ? <span className="w-[176px] shrink-0">{t("bulk.time")}</span> : null}
         <span className="w-9 shrink-0" aria-hidden />
       </div>
       <ol className={cn("space-y-2", showTime ? "max-h-[min(46vh,480px)] overflow-y-auto overscroll-contain pr-0.5" : "")}>
@@ -176,8 +179,8 @@ export function FinishedProductBulkTable({
                     )}
                     value={row.name}
                     maxLength={200}
-                    placeholder={index === 0 ? "Например: Борщ" : "Наименование"}
-                    aria-label={`Наименование, строка ${n}`}
+                    placeholder={index === 0 ? t("bulk.nameExample") : t("bulk.name")}
+                    aria-label={t("bulk.nameAria", { number: n })}
                     onChange={(e) => update(index, { name: e.target.value })}
                     onPaste={(e) => paste(e, index)}
                     data-testid={`bulk-name-${index}`}
@@ -189,13 +192,13 @@ export function FinishedProductBulkTable({
                         showTime ? "sm:w-[120px] sm:shrink-0" : "sm:w-[140px] sm:shrink-0",
                         row.yieldAuto ? "border-[#c8cdf7] bg-[#f5f6ff]" : "border-[#dcdfed] bg-white"
                       )}
-                      title={row.yieldAuto ? "Выход из меню — исправьте, если иначе" : undefined}
+                      title={row.yieldAuto ? t("bulk.yieldHint") : undefined}
                       data-yield-auto={row.yieldAuto ? "1" : undefined}
                       value={row.yield}
                       maxLength={20}
                       inputMode="decimal"
-                      placeholder={index === 0 ? "250 или 200/10" : "Выход, г"}
-                      aria-label={`Выход, строка ${n}`}
+                      placeholder={index === 0 ? t("bulk.yieldExample") : t("bulk.yieldGrams")}
+                      aria-label={t("bulk.yieldAria", { number: n })}
                       onChange={(e) => update(index, { yield: e.target.value })}
                       onPaste={(e) => paste(e, index)}
                       data-testid={`bulk-yield-${index}`}
@@ -208,8 +211,8 @@ export function FinishedProductBulkTable({
                       onChange={(time) => update(index, { time })}
                       onFillBelow={() => onRowsChange((prev) => fillTimeBelow(prev, index))}
                       fillBelowDisabled={index >= rows.length - 1}
-                      ariaLabel={`Время изготовления, строка ${n}`}
-                      placeholder={timePlaceholder}
+                      ariaLabel={t("bulk.timeAria", { number: n })}
+                      placeholder={timePlaceholder ?? t("bulk.time")}
                       testId={`bulk-time-${index}`}
                       onPaste={(e) => paste(e, index)}
                     />
@@ -217,8 +220,8 @@ export function FinishedProductBulkTable({
                 </div>
                 <button
                   type="button"
-                  aria-label={`Удалить строку ${n}`}
-                  title="Удалить строку"
+                  aria-label={t("bulk.deleteRow", { number: n })}
+                  title={t("bulk.deleteRowTitle")}
                   onClick={() => remove(index)}
                   className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-[#9b9fb3] transition-colors duration-150 hover:bg-[#fff4f2] hover:text-[#a13a32] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
@@ -226,7 +229,7 @@ export function FinishedProductBulkTable({
                 </button>
               </div>
               {orphan ? (
-                <p className="mt-1.5 pl-8 text-[12px] leading-snug text-[#a13a32]">нет наименования — строка не добавится</p>
+                <p className="mt-1.5 pl-8 text-[12px] leading-snug text-[#a13a32]">{t("bulk.noName")}</p>
               ) : null}
             </li>
           );
@@ -241,30 +244,29 @@ export function FinishedProductBulkTable({
             className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-xl sm:text-[14px]"
           >
             <Plus className="size-4" />
-            Ещё строка
-          </button>
+            {t("bulk.moreRow")}</button>
           <RecognizeFromPhoto
             kind="menu"
             fields={["name", ...(showYield ? (["yield"] as const) : []), ...(showTime ? (["time"] as const) : [])]}
             onItems={addFromPhoto}
-            resultLabel="В таблицу добавлено"
+            resultLabel={t("bulk.photoResult")}
             className="flex-1 sm:flex-none"
             testId="bulk-photo"
           />
         </div>
         <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] text-[#3848c7]" data-testid="bulk-dish-count">
-          Будет добавлено: <span className="font-semibold tabular-nums">{addCount}</span>
+          {t("bulk.count", { count: addCount })}
         </span>
       </div>
       <p className="text-[12px] leading-[1.45] text-[#6f7282]">
-        Меню на бумаге или на доске — нажмите «С фото»: строки заполнятся сами.{" "}
+        {t("bulk.photoHint")}{" "}
         {showTime
           ? showYield
-            ? "Можно вставить из Excel сразу три столбца — наименование, выход и время: встаньте в первую ячейку и нажмите Ctrl+V. Время можно набирать без двоеточия: 0830 → 08:30."
-            : "Можно вставить из Excel наименования и время: встаньте в первую ячейку и нажмите Ctrl+V. Время можно набирать без двоеточия: 0830 → 08:30."
+            ? t("bulk.pasteAll")
+            : t("bulk.pasteNameTime")
           : showYield
-            ? "Можно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V."
-            : "Можно вставить из Excel или из списка столбец наименований: встаньте в первую ячейку и нажмите Ctrl+V."}
+            ? t("bulk.pasteNameYield")
+            : t("bulk.pasteNames")}
       </p>
     </div>
   );
@@ -274,12 +276,12 @@ export function FinishedProductBulkTable({
 export function FinishedProductBulkDialog({
   open,
   onOpenChange,
-  title = "Добавить изделия списком",
+  title,
   description,
   top,
   table,
   commonFields,
-  submitLabel = "Добавить",
+  submitLabel,
   submitDisabled,
   submitting = false,
   onSubmit,
@@ -299,22 +301,21 @@ export function FinishedProductBulkDialog({
   onSubmit: () => void;
   testId?: string;
 }) {
+  const t = useTranslations("finishedProduct");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS} data-testid={testId}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{title}</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{title ?? t("bulk.title")}</DialogTitle>
           <DialogDescription className="sr-only">
-            Таблица изделий: наименование и выход, общие поля — для всех строк.
-          </DialogDescription>
+            {t("bulk.description")}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[calc(92vh-160px)] min-w-0 space-y-5 overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-6">
           {description ? <div className="text-[13px] leading-[1.55] text-[#3c4053]">{description}</div> : null}
           {top}
           {table}
           <div className="border-t border-[#ececf4] pt-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Общие для всех изделий
-          </div>
+            {t("bulk.common")}</div>
           {commonFields}
         </div>
         <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
@@ -324,8 +325,7 @@ export function FinishedProductBulkDialog({
             className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none transition-colors hover:bg-[#fafbff] sm:w-auto"
             onClick={() => onOpenChange(false)}
           >
-            Отмена
-          </Button>
+            {t("actions.cancel")}</Button>
           <Button
             type="button"
             className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] sm:w-auto"
@@ -334,7 +334,7 @@ export function FinishedProductBulkDialog({
             data-testid={testId ? `${testId}-submit` : undefined}
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-            {submitLabel}
+            {submitLabel ?? t("actions.add")}
           </Button>
         </div>
       </DialogContent>

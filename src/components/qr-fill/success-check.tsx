@@ -1,3 +1,6 @@
+"use client";
+
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
 import { QR_CHECK_CSS, QR_CHECK_SVG } from "@/lib/qr-pin-ui";
 
 /**
@@ -8,7 +11,8 @@ import { QR_CHECK_CSS, QR_CHECK_SVG } from "@/lib/qr-pin-ui";
  * (React 19 дедуплицирует `<style href precedence>`), в `globals.css` не
  * зависит. При `prefers-reduced-motion` — сразу готовая.
  */
-export function SuccessCheck({ label = "Сохранено", size = 112 }: { label?: string; size?: number }) {
+export function SuccessCheck({ label, size = 112 }: { label?: string; size?: number }) {
+  const { t } = useQrFillCopy();
   return (
     <div className="mx-auto mb-5 flex justify-center p-3">
       <style href="wesetup-qr-check" precedence="default">
@@ -16,7 +20,7 @@ export function SuccessCheck({ label = "Сохранено", size = 112 }: { lab
       </style>
       <div
         role="status"
-        aria-label={label}
+        aria-label={label ?? t("common.saved")}
         className="qc"
         style={{ ["--qc" as string]: `${size}px` }}
         dangerouslySetInnerHTML={{ __html: QR_CHECK_SVG }}

@@ -1,4 +1,5 @@
 import { QUEUED_PHOTO_PREFIX } from "@/app/mini/_lib/queued-photo-mark";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 /**
  * Черновик формы журнала — чистые правила. Черновик живёт в localStorage
@@ -93,15 +94,49 @@ export function parseDraft(raw: string | null | undefined, now: Date): FormDraft
   return hasMeaningfulValues(draft) ? draft : null;
 }
 
-/** «сегодня в 12:03», «вчера в 18:40», «08.09 в 09:15». */
-export function describeDraftTime(savedAt: string, now: Date, timeZone?: string): string {
+export type DraftTimeDescription =
+  | { key: "recently" }
+  | { key: "todayAt"; time: string }
+  | { key: "yesterdayAt"; time: string }
+  | { key: "dateAt"; date: string; time: string };
+
+/** Returns a translation key and locale-formatted values for a saved draft timestamp. */
+export function getDraftTimeDescription(
+  savedAt: string,
+  now: Date,
+  timeZone?: string,
+  locale: Locale = "ru",
+): DraftTimeDescription {
   const at = new Date(savedAt);
-  if (Number.isNaN(at.getTime())) return "недавно";
-  const dayOf = (d: Date) => d.toLocaleDateString("ru-RU", { timeZone });
-  const time = at.toLocaleTimeString("ru-RU", { timeZone, hour: "2-digit", minute: "2-digit" });
-  if (dayOf(at) === dayOf(now)) return `сегодня в ${time}`;
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  if (dayOf(at) === dayOf(yesterday)) return `вчера в ${time}`;
-  const day = at.toLocaleDateString("ru-RU", { timeZone, day: "2-digit", month: "2-digit" });
-  return `${day} в ${time}`;
+  if (Number.isNaN(at.getTime())) return { key: "recently" };
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  const localDay = (value: Date) => {
+    const parts = Object.fromEntries(formatter.formatToParts(value).map((part) => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  };
+  const time = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+    timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).format(at);
+  const today = localDay(now);
+  const savedDay = localDay(at);
+  if (savedDay === today) return { key: "todayAt", time };
+  const [year, month, day] = today.split("-").map(Number);
+  const yesterdayDate = new Date(Date.UTC(year, month - 1, day - 1));
+  const yesterday = `${yesterdayDate.getUTCFullYear()}-${String(yesterdayDate.getUTCMonth() + 1).padStart(2, "0")}-${String(yesterdayDate.getUTCDate()).padStart(2, "0")}`;
+  if (savedDay === yesterday) return { key: "yesterdayAt", time };
+  const date = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+    timeZone, day: "2-digit", month: "2-digit",
+  }).format(at);
+  return { key: "dateAt", date, time };
+}
+
+/** Legacy Russian API retained for non-localized callers. */
+export function describeDraftTime(savedAt: string, now: Date, timeZone?: string): string {
+  const description = getDraftTimeDescription(savedAt, now, timeZone, "ru");
+  if (description.key === "recently") return "недавно";
+  if (description.key === "todayAt") return `сегодня в ${description.time}`;
+  if (description.key === "yesterdayAt") return `вчера в ${description.time}`;
+  return `${description.date} в ${description.time}`;
 }

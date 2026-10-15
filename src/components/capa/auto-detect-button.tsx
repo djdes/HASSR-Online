@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { capaErrorKey } from "./capa-presentation";
 import { useRouter } from "next/navigation";
 import { Loader2, Radar } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +20,7 @@ type Summary = {
  * fridge temp limits or after importing a batch of readings.
  */
 export function CapaAutoDetectButton() {
+  const t = useTranslations("capaManagement");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -30,33 +33,31 @@ export function CapaAutoDetectButton() {
       });
       const data = (await response.json().catch(() => null)) as
         | Summary
-        | { error: string }
+        | { error: string; code?: string }
         | null;
       if (!response.ok) {
         toast.error(
-          (data && "error" in data && data.error) || "Не удалось запустить"
+          t(`errors.${capaErrorKey(data && "error" in data ? data.error : undefined, response.status, data && "code" in data ? data.code : undefined, "detectFailed")}`)
         );
         return;
       }
       const summary = data as Summary;
       if (summary.candidates === 0) {
-        toast.success("Отклонений 3 дня подряд не найдено.");
+        toast.success(t("detect.none"));
       } else if (summary.created === 0) {
         toast.info(
-          `Найдено кандидатов: ${summary.candidates}, но по всем уже есть открытые нарушения.`
+          t("detect.existing", { candidates: summary.candidates })
         );
       } else {
         toast.success(
-          `Создано нарушений: ${summary.created}${
-            summary.skippedExisting
-              ? ` · пропущено уже открытых: ${summary.skippedExisting}`
-              : ""
-          }`
+          summary.skippedExisting
+            ? t("detect.createdWithSkipped", { created: summary.created, skipped: summary.skippedExisting })
+            : t("detect.created", { created: summary.created })
         );
       }
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+    } catch {
+      toast.error(t("errors.detectFailed"));
     } finally {
       setBusy(false);
     }
@@ -67,7 +68,7 @@ export function CapaAutoDetectButton() {
       type="button"
       onClick={run}
       disabled={busy}
-      title="Найти оборудование с температурой вне нормы три дня подряд и открыть нарушение."
+      title={t("detect.tooltip")}
       className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] transition-colors hover:bg-[#5566f6]/[0.09] disabled:opacity-60"
     >
       {busy ? (
@@ -75,7 +76,7 @@ export function CapaAutoDetectButton() {
       ) : (
         <Radar className="size-4" />
       )}
-      Проверить отклонения
+      {t("detect.button")}
     </button>
   );
 }

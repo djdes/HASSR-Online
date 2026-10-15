@@ -3,11 +3,12 @@ import { phoneInputProps } from "@/lib/phone-input";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { toastApiError } from "@/lib/billing-limit-toast";
+import { useBillingError } from "@/lib/billing-limit-toast";
 import { cn } from "@/lib/utils";
-import { WEEKDAY_LABELS, DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
+import { DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
 import { parseStaffRows } from "@/lib/staff-bulk-parse";
 
 /**
@@ -60,6 +61,9 @@ export function StaffBulkAddDialog({
   onClose: () => void;
   onDone: (createdCount: number) => void;
 }) {
+  const { toastApiError } = useBillingError();
+  const t = useTranslations("staffManagement.bulkAdd");
+  const weekdays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
   const [rows, setRows] = useState<Row[]>(() => [
     emptyRow(),
     emptyRow(),
@@ -113,7 +117,7 @@ export function StaffBulkAddDialog({
 
     const parsed = parseStaffRows(text);
     if (parsed.rows.length === 0) {
-      toast.error("Не нашёл ни одной строки. Нужны ФИО и должность.");
+      toast.error(t("pasteNoRows"));
       return;
     }
 
@@ -131,7 +135,7 @@ export function StaffBulkAddDialog({
         telegramInvite: row.telegramInvite,
         error: position
           ? undefined
-          : `Должность «${row.positionName}» не найдена — выберите из списка`,
+          : t("unknownPosition", { position: row.positionName }),
       };
     });
 
@@ -139,11 +143,7 @@ export function StaffBulkAddDialog({
     // руками, а потом довставить остальных из таблицы.
     setRows((current) => [...current.filter((row) => row.fullName.trim()), ...next]);
     const unknown = next.filter((row) => row.error).length;
-    toast.success(
-      unknown > 0
-        ? `Вставлено ${next.length}, из них ${unknown} без должности`
-        : `Вставлено строк: ${next.length}`
-    );
+    toast.success(t("pasteSummary", { count: next.length, unknown }));
   }
 
   async function submit() {
@@ -171,17 +171,17 @@ export function StaffBulkAddDialog({
                 ...row,
                 error:
                   row.fullName.trim().length < 2
-                    ? "Укажите ФИО"
-                    : "Выберите должность",
+                    ? t("nameRequired")
+                    : t("positionRequired"),
               }
             : row
         )
       );
-      toast.error("Проверьте подсвеченные строки");
+      toast.error(t("checkHighlighted"));
       return;
     }
     if (payload.length === 0) {
-      toast.error("Заполните хотя бы одну строку");
+      toast.error(t("fillAtLeastOne"));
       return;
     }
 
@@ -193,7 +193,7 @@ export function StaffBulkAddDialog({
         body: JSON.stringify({ rows: payload.map((item) => item.data) }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось добавить");
+      if (!response.ok) throw new Error(t("addFailed"));
 
       const serverErrors: Array<{ line: number; message: string }> =
         data?.errors ?? [];
@@ -208,32 +208,26 @@ export function StaffBulkAddDialog({
           if (!failedIndexes.has(index)) return;
           failedRows.push({
             ...item.row,
-            error:
-              serverErrors.find((error) => error.line - 1 === index)?.message ??
-              "Не удалось добавить",
+            error: t("rowFailed"),
           });
         });
         setRows(failedRows.length > 0 ? failedRows : [emptyRow()]);
         toast.error(
-          `Добавлено ${data?.created ?? 0}, не прошло ${serverErrors.length}`
+          t("partialSummary", { created: data?.created ?? 0, failed: serverErrors.length })
         );
         // Часть строк упёрлась в лимит бесплатного тарифа — отдельно, с
         // кнопкой «Оплатить».
-        if (data?.billingLimit) toastApiError(data.billingLimit, "Лимит тарифа");
+        if (data?.billingLimit) toastApiError(data.billingLimit, t("billingLimit"));
         onDone(data?.created ?? 0);
         return;
       }
 
       const skipped = data?.skipped ?? 0;
-      toast.success(
-        skipped > 0
-          ? `Добавлено ${data?.created ?? 0}, пропущено как уже заведённых ${skipped}`
-          : `Добавлено сотрудников: ${data?.created ?? 0}`
-      );
+      toast.success(t("successSummary", { created: data?.created ?? 0, skipped }));
       onDone(data?.created ?? 0);
       onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("genericError"));
     } finally {
       setBusy(false);
     }
@@ -249,19 +243,17 @@ export function StaffBulkAddDialog({
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#eef0f6] px-6 py-5">
           <div>
             <h2 className="text-[18px] font-semibold text-[#0b1024]">
-              Добавить несколько сотрудников
+              {t("title")}
             </h2>
             <p className="mt-1 max-w-[720px] text-[13px] leading-[1.55] text-[#6f7282]">
-              Заполните строки или вставьте их из Excel — скопируйте столбцы
-              «ФИО», «Должность», «Телефон» и нажмите Ctrl+V прямо здесь.
-              Доступ к журналам сотрудник получит от своей должности.
+              {t("description")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
-            aria-label="Закрыть"
+            aria-label={t("close")}
           >
             <X className="size-5" />
           </button>
@@ -275,10 +267,10 @@ export function StaffBulkAddDialog({
           <table className="w-full border-separate border-spacing-y-1.5">
             <thead>
               <tr className="text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                <th className="w-[26%] pb-1">ФИО</th>
-                <th className="w-[20%] pb-1">Должность</th>
-                <th className="w-[18%] pb-1">Телефон</th>
-                <th className="w-[24%] pb-1">Выходные</th>
+                <th className="w-[26%] pb-1">{t("nameColumn")}</th>
+                <th className="w-[20%] pb-1">{t("positionColumn")}</th>
+                <th className="w-[18%] pb-1">{t("phoneColumn")}</th>
+                <th className="w-[24%] pb-1">{t("daysOffColumn")}</th>
                 <th className="w-[8%] pb-1 text-center">Telegram</th>
                 <th className="w-[4%] pb-1" />
               </tr>
@@ -292,7 +284,7 @@ export function StaffBulkAddDialog({
                       onChange={(event) =>
                         patch(row.id, { fullName: event.target.value })
                       }
-                      placeholder="Иванова Мария Петровна"
+                      placeholder={t("namePlaceholder")}
                       className={cn(
                         field,
                         row.error && "border-[#d2453d] ring-4 ring-[#d2453d]/10"
@@ -317,7 +309,7 @@ export function StaffBulkAddDialog({
                       }
                       className={cn(field, "cursor-pointer")}
                     >
-                      <option value="">Выберите…</option>
+                      <option value="">{t("choosePosition")}</option>
                       {positions.map((position) => (
                         <option key={position.id} value={position.id}>
                           {position.name}
@@ -328,13 +320,14 @@ export function StaffBulkAddDialog({
                   <td className="pr-2">
                     <input
                       {...phoneInputProps(row.phone, (value) => patch(row.id, { phone: value }))}
-                      placeholder="можно не указывать"
+                      placeholder={t("phoneOptional")}
                       className={field}
                     />
                   </td>
                   <td className="pr-2">
                     <div className="flex flex-wrap gap-1">
-                      {WEEKDAY_LABELS.map((label, day) => {
+                      {weekdays.map((weekday, day) => {
+                        const label = t(`weekday.${weekday}`);
                         const active = row.weeklyDaysOff.includes(day);
                         return (
                           <button
@@ -362,7 +355,7 @@ export function StaffBulkAddDialog({
                         patch(row.id, { telegramInvite: event.target.checked })
                       }
                       className="mt-2.5 size-4 accent-[#5566f6]"
-                      aria-label="Пригласить в Telegram"
+                      aria-label={t("inviteTelegram")}
                     />
                   </td>
                   <td>
@@ -376,7 +369,7 @@ export function StaffBulkAddDialog({
                         )
                       }
                       className="mt-1.5 rounded-lg p-2 text-[#9b9fb3] transition-colors hover:bg-[#fff4f2] hover:text-[#a13a32]"
-                      aria-label="Убрать строку"
+                      aria-label={t("removeRow")}
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -392,13 +385,13 @@ export function StaffBulkAddDialog({
             className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <Plus className="size-4" />
-            Ещё строка
+            {t("addRow")}
           </button>
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#eef0f6] px-6 py-4">
           <div className="text-[13px] text-[#6f7282]">
-            Заполнено строк: <span className="tabular-nums">{filled.length}</span>
+            {t("filledRows", { count: filled.length })}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -406,7 +399,7 @@ export function StaffBulkAddDialog({
               onClick={onClose}
               className="inline-flex h-11 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff]"
             >
-              Отмена
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -415,7 +408,7 @@ export function StaffBulkAddDialog({
               className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              Добавить {filled.length > 0 ? filled.length : ""}
+              {t("addCount", { count: filled.length })}
             </button>
           </div>
         </div>

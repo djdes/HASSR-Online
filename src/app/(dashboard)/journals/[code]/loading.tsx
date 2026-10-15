@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 
 import { usePathname } from "next/navigation";
 
@@ -20,9 +22,10 @@ import JournalDocumentLoading from "./documents/[docId]/loading";
  * списка документов и потом «перепрыгивали» в свою раскладку.
  */
 export default function JournalCodeLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   const kind = journalsSkeletonFor(usePathname());
   if (kind === "document") return <JournalDocumentLoading />;
-  if (kind === "page") return <PageSkeleton label="Загружаем журнал…" body="panel" />;
+  if (kind === "page") return <PageSkeleton label={tLoading("journal")} body="panel" />;
   return <JournalListSkeleton />;
 }
 
@@ -42,9 +45,10 @@ export default function JournalCodeLoading() {
  * страница после загрузки не прыгает.
  */
 function JournalListSkeleton() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className={JOURNAL_LIST_STACK_CLASS} aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем документы журнала…</span>
+      <span className="sr-only">{tLoading("documents")}</span>
 
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-5 sm:items-center">
         <Skeleton className="h-9 w-[320px] max-w-full rounded-2xl" />

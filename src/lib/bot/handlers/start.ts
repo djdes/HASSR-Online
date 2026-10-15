@@ -1,4 +1,5 @@
 import type { Composer, Context } from "grammy";
+import { createTranslator } from "use-intl/core";
 import {
   hashBotInviteToken,
   stripBotInvitePrefix,
@@ -7,6 +8,9 @@ import { loadTelegramStartHome } from "@/lib/bot/start-home";
 import {
   buildTelegramLinkedStartReply,
   buildTelegramUnlinkedStartReply,
+  setLocalizedTelegramChatCommands,
+  telegramStartError,
+  type TelegramStaticStartErrorKey,
   type TelegramLinkedStartState,
 } from "@/lib/bot/start-response";
 import { db } from "@/lib/db";
@@ -14,6 +18,45 @@ import { telegramConsultantFooter } from "@/lib/partners/branding";
 import { parseLinkToken } from "@/lib/telegram";
 import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { buildTelegramWebAppKeyboard } from "@/lib/telegram-web-app";
+import { resolveLocale, type Locale } from "@/i18n/locales";
+import { loadMessages, type Messages } from "@/i18n/messages";
+import { BILLING_LIMIT_CODE } from "@/lib/billing-period";
+
+async function localeForUserId(userId: string): Promise<Locale> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { locale: true, organization: { select: { locale: true } } },
+  });
+  return resolveLocale({
+    authenticated: true,
+    userLocale: user?.locale,
+    organizationLocale: user?.organization.locale,
+  });
+}
+
+async function localeForChat(chatId: string): Promise<Locale> {
+  const user = await db.user.findFirst({
+    where: { telegramChatId: chatId, isActive: true, archivedAt: null },
+    select: { locale: true, organization: { select: { locale: true } } },
+  });
+  return resolveLocale({
+    authenticated: Boolean(user),
+    userLocale: user?.locale,
+    organizationLocale: user?.organization.locale,
+  });
+}
+
+async function replyStartError(ctx: Context, key: TelegramStaticStartErrorKey, locale: Locale = "ru"): Promise<void> {
+  const messages = await loadMessages(locale);
+  await ctx.reply(telegramStartError(key, locale, messages));
+}
+
+async function setChatCommands(ctx: Context, chatId: string, messages: Messages): Promise<void> {
+  // Keep the /start reply available even if Telegram rejects a scoped menu update.
+  await setLocalizedTelegramChatCommands(ctx.api, chatId, messages, (error) => {
+    console.warn("[bot:start] Failed to localize chat command menu:", error);
+  });
+}
 
 function getMiniAppBaseUrl(): string | null {
   return getMiniAppBaseUrlFromEnv();
@@ -23,9 +66,12 @@ async function replyWithLinkedStart(
   ctx: Context,
   state: TelegramLinkedStartState,
   buttonUrl: string | null,
-  consultantFooter = ""
+  consultantFooter = "",
+  locale: Locale = "ru",
+  messages?: Messages
 ): Promise<void> {
-  const reply = buildTelegramLinkedStartReply(state, buttonUrl, consultantFooter);
+  const activeMessages = messages ?? await loadMessages(locale);
+  const reply = buildTelegramLinkedStartReply(state, buttonUrl, consultantFooter, locale, activeMessages);
   await ctx.reply(reply.text, {
     parse_mode: "HTML",
     link_preview_options: { is_disabled: true },
@@ -49,8 +95,12 @@ async function replyWithLoadedStartHome(
     miniAppBaseUrl: getMiniAppBaseUrl(),
   });
 
+  const locale = home.kind === "unlinked" ? "ru" : home.actor.locale;
+  const messages = await loadMessages(locale);
+  await setChatCommands(ctx, fromId, messages);
+
   if (home.kind === "unlinked") {
-    await ctx.reply(buildTelegramUnlinkedStartReply().text, {
+    await ctx.reply(buildTelegramUnlinkedStartReply(locale, messages).text, {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
     });
@@ -80,7 +130,9 @@ async function replyWithLoadedStartHome(
         employeesWithPending: home.summary.employeesWithPending,
       },
       home.buttonUrl,
-      consultantFooter
+      consultantFooter,
+      locale,
+      messages
     );
     return;
   }
@@ -95,7 +147,9 @@ async function replyWithLoadedStartHome(
         kind: "readonly",
       },
       home.buttonUrl,
-      consultantFooter
+      consultantFooter,
+      locale,
+      messages
     );
     return;
   }
@@ -110,7 +164,9 @@ async function replyWithLoadedStartHome(
       nextActionLabel: home.nextAction?.label ?? null,
     },
     home.buttonUrl,
-    consultantFooter
+    consultantFooter,
+    locale,
+    messages
   );
 }
 
@@ -146,9 +202,7 @@ async function handleSelfLinkToken(
     select: { id: true, name: true },
   });
   if (!user) {
-    await ctx.reply(
-      "Аккаунт не найден. Сгенерируйте новую ссылку в «Настройки → Уведомления»."
-    );
+    await replyStartError(ctx, "accountNotFound", await localeForChat(chatId));
     return true;
   }
 
@@ -159,9 +213,7 @@ async function handleSelfLinkToken(
     select: { id: true },
   });
   if (collision) {
-    await ctx.reply(
-      "Этот Telegram уже привязан к другому сотруднику. Отвяжите его командой /stop в том аккаунте или используйте другой Telegram."
-    );
+    await replyStartError(ctx, "alreadyLinkedSelf", await localeForUserId(collision.id));
     return true;
   }
 
@@ -180,7 +232,7 @@ export function registerStartHandler(composer: Composer<Context>): void {
     if (!payload) {
       const fromId = ctx.from?.id;
       if (!fromId) {
-        await ctx.reply("Не удалось определить ваш Telegram-аккаунт.");
+        await replyStartError(ctx, "cannotIdentify");
         return;
       }
 
@@ -190,7 +242,7 @@ export function registerStartHandler(composer: Composer<Context>): void {
 
     const fromId = ctx.from?.id;
     if (!fromId) {
-      await ctx.reply("Не удалось определить ваш Telegram-аккаунт.");
+      await replyStartError(ctx, "cannotIdentify");
       return;
     }
 
@@ -204,9 +256,7 @@ export function registerStartHandler(composer: Composer<Context>): void {
       const handled = await handleSelfLinkToken(ctx, payload, String(fromId));
       if (handled) return;
 
-      await ctx.reply(
-        "Ссылка не распознана. Откройте «Настройки → Уведомления» в кабинете и нажмите «Привязать Telegram», либо попросите руководителя прислать приглашение."
-      );
+      await replyStartError(ctx, "unrecognizedLink", await localeForChat(String(fromId)));
       return;
     }
 
@@ -218,17 +268,16 @@ export function registerStartHandler(composer: Composer<Context>): void {
     });
 
     if (!token) {
-      await ctx.reply(
-        "Приглашение не найдено или уже использовано. Попросите новую ссылку."
-      );
+      await replyStartError(ctx, "inviteNotFound", await localeForChat(String(fromId)));
       return;
     }
+    const inviteeLocale = await localeForUserId(token.userId);
     if (token.consumedAt) {
-      await ctx.reply("Это приглашение уже использовано.");
+      await replyStartError(ctx, "inviteUsed", inviteeLocale);
       return;
     }
     if (token.expiresAt.getTime() < Date.now()) {
-      await ctx.reply("Срок действия приглашения истек. Попросите новую ссылку.");
+      await replyStartError(ctx, "inviteExpired", inviteeLocale);
       return;
     }
 
@@ -246,9 +295,7 @@ export function registerStartHandler(composer: Composer<Context>): void {
       select: { id: true },
     });
     if (collision) {
-      await ctx.reply(
-        "Этот Telegram уже привязан к другому сотруднику. Используйте другой аккаунт."
-      );
+      await replyStartError(ctx, "alreadyLinkedInvite", await localeForUserId(collision.id));
       return;
     }
 
@@ -260,7 +307,13 @@ export function registerStartHandler(composer: Composer<Context>): void {
       audience: "invitee",
     });
     if (!seats.ok) {
-      await ctx.reply(seats.error);
+      if (seats.code === BILLING_LIMIT_CODE) {
+        const messages = await loadMessages(inviteeLocale);
+        const t = createTranslator({ locale: inviteeLocale, messages, namespace: "telegram.bot.errors" });
+        await ctx.reply(t("inviteSeatLimit", { limit: seats.limit }));
+      } else {
+        await ctx.reply(seats.error);
+      }
       return;
     }
 

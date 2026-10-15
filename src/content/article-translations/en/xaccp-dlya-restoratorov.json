@@ -1,0 +1,21 @@
+{
+  "locale": "en",
+  "sourceHash": "a1725b614ef0d60c1d533a4e399b3e87a1423373774d06ece1ae9179e302ac47",
+  "title": "HACCP for restaurateurs: three pages that protect your business",
+  "excerpt": "Process maps, hazards, CCPs, and critical limits: put together a working HACCP plan in a week. A day-by-day route instead of a folder kept “just in case.”",
+  "tags": ["HACCP", "Restaurants"],
+  "body": [
+    {"type":"p","text":"In many restaurant chains, the HACCP plan sits in an accounting office in a folder marked “just in case.” In a good restaurant, it is a working document that people actually use to track hazards. You can put one together in a week if you keep it practical."},
+    {"type":"h2","text":"Days 1–2. Process map"},
+    {"type":"p","text":"Draw every stage on one sheet: receiving → storage → preparation → heat treatment → serving → cleaning. Do not worry about using pencil and drawing by hand; you can prepare a clean copy later."},
+    {"type":"h2","text":"Day 3. Hazards"},
+    {"type":"p","text":"At each stage, note what could go wrong. Biological (salmonella on chicken), chemical (detergent residue after washing), and physical (a glass fragment in a dessert). Assess the likelihood and severity—subjectively, but honestly."},
+    {"type":"h2","text":"Day 4. CCPs and limits"},
+    {"type":"ol","items":["Choose 3–6 points where a hazard can be eliminated or controlled.","Set a limit: “chicken core ≥ 75 °C for 5 minutes.”","Decide who will measure it and how.","Define what to do if the limit is exceeded."]},
+    {"type":"h2","text":"Day 5. Monitoring and logs"},
+    {"type":"p","text":"Link every CCP to a specific log: temperatures go in the temperature log, finished-product checks in their log, and cleaning in the cleaning log. Do not create separate “HACCP logs”—they will drift out of sync."},
+    {"type":"h2","text":"Days 6–7. Trial run and sign-off"},
+    {"type":"p","text":"Show the plan to the shift team, ask them to use it for one or two days, collect feedback, make revisions, and get the manager's signature. That is it: the basic HACCP plan is ready."},
+    {"type":"callout","tone":"tip","title":"Review it after a month","text":"A HACCP plan is not set in stone. After 30 days, the team may sit down and rewrite half the items—that is normal and how the plan becomes useful in practice."}
+  ]
+}

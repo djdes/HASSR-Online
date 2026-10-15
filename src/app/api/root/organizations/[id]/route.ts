@@ -45,7 +45,7 @@ export async function PATCH(
     },
   });
   if (!org) {
-    return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
+    return NextResponse.json({ error: "Организация не найдена", errorCode: "ORG_NOT_FOUND" }, { status: 404 });
   }
 
   const body = (await request.json().catch(() => null)) as {
@@ -63,7 +63,7 @@ export async function PATCH(
   if (typeof body?.name === "string") {
     const name = body.name.trim();
     if (name.length < 2) {
-      return NextResponse.json({ error: "Слишком короткое название" }, { status: 400 });
+      return NextResponse.json({ error: "Слишком короткое название", errorCode: "ORG_NAME_SHORT" }, { status: 400 });
     }
     data.name = name;
   }
@@ -75,7 +75,7 @@ export async function PATCH(
     // `trial` намеренно отсутствует: это legacy-значение бесплатного
     // тарифа, читается как `free`, но новым его не назначаем.
     if (!["free", "paid", "paused", "cancelled"].includes(plan)) {
-      return NextResponse.json({ error: "Неизвестный тариф" }, { status: 400 });
+      return NextResponse.json({ error: "Неизвестный тариф", errorCode: "ORG_PLAN_UNKNOWN" }, { status: 400 });
     }
     data.subscriptionPlan = plan;
   }
@@ -86,7 +86,7 @@ export async function PATCH(
     } else if (typeof body.subscriptionEnd === "string") {
       const parsed = new Date(body.subscriptionEnd);
       if (Number.isNaN(parsed.getTime())) {
-        return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
+        return NextResponse.json({ error: "Некорректная дата", errorCode: "ORG_DATE_INVALID" }, { status: 400 });
       }
       data.subscriptionEnd = parsed;
     }
@@ -143,7 +143,7 @@ export async function DELETE(
   const platformOrgId = (process.env.PLATFORM_ORG_ID ?? "").trim();
   if (platformOrgId && id === platformOrgId) {
     return NextResponse.json(
-      { error: "Нельзя удалить platform-organization" },
+      { error: "Нельзя удалить platform-organization", errorCode: "ORG_PLATFORM_PROTECTED" },
       { status: 400 }
     );
   }
@@ -153,7 +153,7 @@ export async function DELETE(
     select: { id: true, name: true, type: true },
   });
   if (!org) {
-    return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
+    return NextResponse.json({ error: "Организация не найдена", errorCode: "ORG_NOT_FOUND" }, { status: 404 });
   }
 
   // Best-effort cleanup TasksFlow-задач до DELETE org. Cascade prisma

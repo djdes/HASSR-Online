@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,14 +16,14 @@ type Props = {
   label?: string;
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  restaurant: "Ресторан / кафе",
-  meat: "Мясная продукция",
-  dairy: "Молочная продукция",
-  bakery: "Хлебобулочные изделия",
-  confectionery: "Кондитерские изделия",
-  other: "Другое",
-};
+const TYPE_CODES = ["restaurant", "meat", "dairy", "bakery", "confectionery", "other"] as const;
+type TypeCode = typeof TYPE_CODES[number];
+function isTypeCode(value: unknown): value is TypeCode {
+  return typeof value === "string" && (TYPE_CODES as readonly string[]).includes(value);
+}
+function isCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
 
 /**
  * Применяет онбординг-пресет: создаёт канонические должности + связи
@@ -31,11 +32,15 @@ const TYPE_LABELS: Record<string, string> = {
  */
 export function OnboardingApplyButton({ orgType, showSeedStaff = false, label }: Props) {
   const router = useRouter();
+  const t = useTranslations("settingsManagement.onboardingApply");
+  const currentTranslations = useRef(t);
+  useEffect(() => { currentTranslations.current = t; }, [t]);
+  const typeId = useId();
   const [busy, setBusy] = useState(false);
   const [seed, setSeed] = useState(showSeedStaff);
   const [pickedType, setPickedType] = useState<string>(orgType ?? "other");
 
-  const typeLabel = TYPE_LABELS[pickedType] ?? "Другое";
+  const typeLabel = t(`types.${isTypeCode(pickedType) ? pickedType : "other"}`);
   const typeChanged = pickedType !== (orgType ?? "other");
 
   async function apply() {
@@ -55,20 +60,29 @@ export function OnboardingApplyButton({ orgType, showSeedStaff = false, label }:
           applyAutoJournals: true,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось применить");
-      const orgUpd = data.orgUpdated as
-        | { disabledJournalCodes?: string[]; autoJournalCodes?: string[] }
-        | undefined;
-      const disabledN = orgUpd?.disabledJournalCodes?.length ?? 0;
-      const autoN = orgUpd?.autoJournalCodes?.length ?? 0;
-      toast.success(
-        `Применён шаблон «${data.presetLabel}». Должностей: ${data.positionsCreated}, доступов: ${data.journalAccessRowsCreated}, скрыто журналов: ${disabledN}, автосоздание: ${autoN}` +
-          (seed ? `, демо-сотрудников: ${data.staffCreated}` : "")
-      );
+      if (!res.ok) {
+        toast.error(currentTranslations.current(res.status === 403 ? "errors.forbidden" : res.status === 400 ? "errors.invalid" : res.status === 404 ? "errors.notFound" : "errors.failed"));
+        return;
+      }
+      const data: unknown = await res.json();
+      if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid onboarding response");
+      const result = data as Record<string, unknown>;
+      if (!isCount(result.positionsCreated) || !isCount(result.journalAccessRowsCreated) || (seed && !isCount(result.staffCreated))) throw new Error("Invalid onboarding counts");
+      const orgUpd = result.orgUpdated && typeof result.orgUpdated === "object" ? result.orgUpdated as Record<string, unknown> : undefined;
+      const autoCodes = orgUpd?.autoJournalCodes;
+      if (autoCodes !== undefined && (!Array.isArray(autoCodes) || !autoCodes.every(code => typeof code === "string"))) throw new Error("Invalid automatic journal codes");
+      const presetType = isTypeCode(result.type) ? result.type : isTypeCode(pickedType) ? pickedType : "other";
+      const feedbackT = currentTranslations.current;
+      const values = {
+        preset: feedbackT(`types.${presetType}`),
+        positions: result.positionsCreated,
+        access: result.journalAccessRowsCreated,
+        automatic: Array.isArray(autoCodes) ? autoCodes.length : 0,
+      };
+      toast.success(seed ? feedbackT("successWithStaff", { ...values, staff: result.staffCreated as number }) : feedbackT("success", values));
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(currentTranslations.current(err instanceof TypeError ? "errors.network" : "errors.failed"));
     } finally {
       setBusy(false);
     }
@@ -82,32 +96,31 @@ export function OnboardingApplyButton({ orgType, showSeedStaff = false, label }:
         </span>
         <div>
           <div className="text-[14px] font-semibold text-[#0b1024]">
-            {label ?? `Применить шаблон «${typeLabel}»`}
+            {label ?? t("heading", { preset: typeLabel })}
           </div>
           <div className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
-            Создаст должности, привяжет журналы, отключит нерелевантные
-            и включит автосоздание документов на каждый месяц.
-            Идемпотентно — повторное нажатие безопасно.
+            {t("description")}
           </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-2">
-            <label className="text-[12px] font-medium text-[#3a3f55]">
-              Тип компании:
+            <label htmlFor={typeId} className="text-[12px] font-medium text-[#3a3f55]">
+              {t("companyType")}
             </label>
             <select
+              id={typeId}
               value={pickedType}
               onChange={(e) => setPickedType(e.target.value)}
               className="h-8 rounded-lg border border-[#dcdfed] bg-white px-2 text-[12px] text-[#0b1024]"
               disabled={busy}
             >
-              {Object.entries(TYPE_LABELS).map(([k, v]) => (
+              {TYPE_CODES.map((k) => (
                 <option key={k} value={k}>
-                  {v}
+                  {t(`types.${k}`)}
                 </option>
               ))}
             </select>
             {typeChanged ? (
               <span className="rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11px] text-[#7a4a00]">
-                будет переписан
+                {t("typeChanged")}
               </span>
             ) : null}
           </div>
@@ -119,7 +132,7 @@ export function OnboardingApplyButton({ orgType, showSeedStaff = false, label }:
                 checked={seed}
                 onChange={(e) => setSeed(e.target.checked)}
               />
-              Заодно заселить демо-сотрудников (для проверки)
+              {t("seedStaff")}
             </label>
           ) : null}
         </div>
@@ -135,7 +148,7 @@ export function OnboardingApplyButton({ orgType, showSeedStaff = false, label }:
         ) : (
           <Sparkles className="mr-2 size-4" />
         )}
-        Применить шаблон
+        {busy ? t("applying") : t("apply")}
       </Button>
     </div>
   );

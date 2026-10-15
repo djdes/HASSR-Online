@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { organizationError } from "./organization-presentation";
 import { UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,9 @@ type Props = { organizationId: string; organizationName: string };
  * рендерится в контексте выбранной организации.
  */
 export function ImpersonateButton({ organizationId, organizationName }: Props) {
+  const t = useTranslations("rootOrganizationManagement");
+  const currentCopy = useRef(t);
+  useLayoutEffect(() => { currentCopy.current = t; }, [t]);
   const [busy, setBusy] = useState(false);
 
   async function start() {
@@ -28,16 +33,16 @@ export function ImpersonateButton({ organizationId, organizationName }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "Не удалось начать impersonation");
+        toast.error(organizationError(body, currentCopy.current, "impersonate.failed"));
+        setBusy(false);
+        return;
       }
-      toast.success(`Вы просматриваете: ${organizationName}`);
+      toast.success(currentCopy.current("impersonate.success", { name: organizationName }));
       // Hard reload гарантирует что server-side getServerSession()
       // перечитает свежий cookie на /dashboard.
       window.location.href = "/dashboard";
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Не удалось войти в организацию"
-      );
+    } catch {
+      toast.error(currentCopy.current("impersonate.failed"));
       setBusy(false);
     }
   }
@@ -50,7 +55,7 @@ export function ImpersonateButton({ organizationId, organizationName }: Props) {
       className="h-11 rounded-2xl bg-[#5566f6] px-4 text-[15px] text-white hover:bg-[#4959eb]"
     >
       <UserCog className="size-5" />
-      Войти как {organizationName}
+      {t("impersonate.enter", { name: organizationName })}
     </Button>
   );
 }

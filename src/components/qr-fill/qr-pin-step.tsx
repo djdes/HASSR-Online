@@ -1,10 +1,12 @@
 "use client";
 
+import { useQrFillCopy, useQrFeedback, qrResponseFeedback, type QrFeedback } from "@/components/qr-fill/qr-fill-presentation";
+
 import { useState } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 import { QrPinNoAccess, QrPinRequestForm, QrPinRequestSent, useQrPinRequestInfo } from "@/components/qr-fill/qr-pin-request";
-import { QR_PIN_OK_HTML, QR_PIN_UI_CSS, QR_REMEMBER_LABEL } from "@/lib/qr-pin-ui";
+import { qrCheckHtml, QR_PIN_UI_CSS } from "@/lib/qr-pin-ui";
 
 /**
  * Наклейки объектов по единым правилам QR (2026-09-22): PIN — отдельным
@@ -17,14 +19,16 @@ export function QrPinUiStyles() {
 }
 
 export function QrPinOk() {
-  return <div dangerouslySetInnerHTML={{ __html: QR_PIN_OK_HTML }} />;
+  const { t } = useQrFillCopy();
+  return <div className="qp-ok" role="status" aria-label={t("pin.valid")} dangerouslySetInnerHTML={{ __html: qrCheckHtml({ size: 120 }) }} />;
 }
 
 export function QrRememberToggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+  const { t } = useQrFillCopy();
   return (
     <label className="qp-remember qp-remember-mid">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} data-testid="qr-remember" />
-      <span>{QR_REMEMBER_LABEL}</span>
+      <span>{t("pin.remember")}</span>
     </label>
   );
 }
@@ -55,11 +59,12 @@ export async function forgetQrPass(params: { kind: "equipment" | "room"; objectI
  * как выйти, если телефон общий.
  */
 export function QrPassNote({ remembered, onLogout }: { remembered: boolean; onLogout: () => void }) {
+  const { t } = useQrFillCopy();
   return (
     <div className="-mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-2xl border border-[#bbf0d0] bg-[#ecfdf5] px-4 py-2.5 text-[15px] leading-snug text-[#116b2a]" data-testid="qr-pass-note">
       <span className="flex items-center gap-2">
         <ShieldCheck className="size-5 shrink-0" />
-        {remembered ? "PIN подтверждён — 30 минут без повторного ввода" : "PIN подтверждён"}
+        {remembered ? t("pin.confirmedVisit") : t("pin.confirmed")}
       </span>
       <button
         type="button"
@@ -67,8 +72,7 @@ export function QrPassNote({ remembered, onLogout }: { remembered: boolean; onLo
         data-testid="qr-pass-logout"
         className="shrink-0 rounded-lg font-semibold text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
       >
-        Не вы? Сменить
-      </button>
+        {t("pin.switchPerson")}</button>
     </div>
   );
 }
@@ -96,12 +100,14 @@ export function QrPinStep(props: QrPinStepProps) {
 }
 
 function QrPinStepFor(props: QrPinStepProps) {
+  const { t, scoped } = useQrFillCopy();
+  const feedback = useQrFeedback();
   const target = { kind: props.kind, objectId: props.objectId, token: props.token, employeeId: props.employeeId };
   const [info, setInfo] = useQrPinRequestInfo(target);
   const [view, setView] = useState<"pin" | "change" | "change-sent">("pin");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<QrFeedback | null>(null);
   // PIN мог появиться, пока страница открыта: руководитель одобрил запрос.
   const hasPin = props.hasPin !== false || info.hasPin === true;
 
@@ -117,10 +123,10 @@ function QrPinStepFor(props: QrPinStepProps) {
         body: JSON.stringify({ kind: props.kind, objectId: props.objectId, token: props.token, employeeId: props.employeeId, pin, remember: props.remember }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok || typeof data?.pass !== "string") throw new Error(data?.error ?? "Не удалось проверить PIN");
+      if (!res.ok || typeof data?.pass !== "string") { setError(qrResponseFeedback(data, "pin.checkError")); setPin(""); return; }
       props.onPass(data.pass);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось проверить PIN");
+    } catch {
+      setError({ key: "pin.checkError" });
       setPin("");
     } finally {
       setBusy(false);
@@ -139,11 +145,11 @@ function QrPinStepFor(props: QrPinStepProps) {
     <form onSubmit={submit} className="qp-card" data-testid="qr-pin-step">
       {info.approvedNote ? (
         <div className="qp-ok-note" role="status">
-          {info.approvedNote}
+          {info.approvedMessageCode ? feedback(qrResponseFeedback({ errorCode: info.approvedMessageCode }, "pin.approved")) : scoped ? t("pin.approved") : info.approvedNote}
         </div>
       ) : null}
       <div className="qp-head flex-wrap">
-        <span className="qp-k">Ваш PIN</span>
+        <span className="qp-k">{t("pin.yourPin")}</span>
         <span className="ml-auto flex flex-wrap items-baseline justify-end gap-x-4 gap-y-1">
           <button
             type="button"
@@ -154,16 +160,15 @@ function QrPinStepFor(props: QrPinStepProps) {
               setView("change");
             }}
           >
-            Запросить смену PIN
-          </button>
+            {t("pin.requestChange")}</button>
           {props.onChangeEmployee ? (
             <button type="button" className="qp-link" onClick={props.onChangeEmployee}>
-              Не {props.employeeName.split(" ")[0]}?
+              {t("pin.notPerson", { name: props.employeeName.split(" ")[0] })}
             </button>
           ) : null}
         </span>
       </div>
-      {error ? <div className="qp-err">{error}</div> : null}
+      {error ? <div className="qp-err">{feedback(error)}</div> : null}
       <input
         className="qp-pin"
         type="password"
@@ -177,15 +182,14 @@ function QrPinStepFor(props: QrPinStepProps) {
         placeholder="••••"
         aria-label="PIN"
       />
-      <p className="qp-hint">PIN для подтверждения личности</p>
+      <p className="qp-hint">{t("pin.identityHint")}</p>
       <button
         type="submit"
         disabled={busy || pin.length < 4}
         className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[19px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
       >
         {busy ? <Loader2 className="size-5 animate-spin" /> : null}
-        Войти
-      </button>
+        {t("pin.signIn")}</button>
     </form>
   );
 }

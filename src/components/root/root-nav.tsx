@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/messages";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -63,8 +65,8 @@ import { cn } from "@/lib/utils";
  * мыши и «открыть в новой вкладке». Меню на `router.push` этого лишает.
  */
 
-type NavLink = { href: string; label: string; icon: LucideIcon; exact?: boolean };
-type NavGroup = { key: string; label: string; icon: LucideIcon; items: NavLink[] };
+type NavLink = { href: string; label: keyof Messages["rootNavigation"]; icon: LucideIcon; exact?: boolean };
+type NavGroup = { key: string; label: keyof Messages["rootNavigation"]; icon: LucideIcon; items: NavLink[] };
 type NavEntry = NavLink | NavGroup;
 
 function isGroup(entry: NavEntry): entry is NavGroup {
@@ -72,56 +74,56 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 }
 
 const NAV: NavEntry[] = [
-  { href: "/root", label: "Организации", icon: LayoutDashboard, exact: true },
+  { href: "/root", label: "organizations", icon: LayoutDashboard, exact: true },
   {
     key: "money",
-    label: "Деньги и продажи",
+    label: "money",
     icon: Wallet,
     items: [
-      { href: "/root/tariffs", label: "Тарифы", icon: Wallet },
-      { href: "/root/promotions", label: "Акции", icon: BadgePercent },
-      { href: "/root/promo-codes", label: "Промокоды", icon: Ticket },
-      { href: "/root/proposals", label: "Коммерческие предложения", icon: FileText },
-      { href: "/root/mailing", label: "Рассылка", icon: Mail },
-      { href: "/root/services", label: "Услуги", icon: Sparkles },
-      { href: "/root/service-requests", label: "Заявки на услуги", icon: ClipboardList },
-      { href: "/root/blank-downloads", label: "Скачивания шаблонов", icon: FileDown },
-      { href: "/root/partners", label: "Партнёры", icon: Handshake },
-      { href: "/root/requisites", label: "Реквизиты", icon: Stamp },
+      { href: "/root/tariffs", label: "tariffs", icon: Wallet },
+      { href: "/root/promotions", label: "promotions", icon: BadgePercent },
+      { href: "/root/promo-codes", label: "promoCodes", icon: Ticket },
+      { href: "/root/proposals", label: "proposals", icon: FileText },
+      { href: "/root/mailing", label: "mailing", icon: Mail },
+      { href: "/root/services", label: "services", icon: Sparkles },
+      { href: "/root/service-requests", label: "serviceRequests", icon: ClipboardList },
+      { href: "/root/blank-downloads", label: "blankDownloads", icon: FileDown },
+      { href: "/root/partners", label: "partners", icon: Handshake },
+      { href: "/root/requisites", label: "requisites", icon: Stamp },
     ],
   },
   {
     key: "voice",
-    label: "Обратная связь",
+    label: "voice",
     icon: MessageSquareText,
     items: [
-      { href: "/root/feedback", label: "Обращения", icon: MessageSquareText },
-      { href: "/root/reviews", label: "Отзывы", icon: Star },
-      { href: "/root/ideas", label: "Идеи", icon: Lightbulb },
-      { href: "/root/nps", label: "NPS", icon: Smile },
-      { href: "/root/assistant", label: "Ассистент", icon: Bot },
+      { href: "/root/feedback", label: "feedback", icon: MessageSquareText },
+      { href: "/root/reviews", label: "reviews", icon: Star },
+      { href: "/root/ideas", label: "ideas", icon: Lightbulb },
+      { href: "/root/nps", label: "nps", icon: Smile },
+      { href: "/root/assistant", label: "assistant", icon: Bot },
     ],
   },
   {
     key: "site",
-    label: "Сайт",
+    label: "site",
     icon: NotebookText,
     items: [
-      { href: "/root/blog", label: "Блог", icon: NotebookText },
-      { href: "/root/seo", label: "SEO", icon: SearchCheck },
+      { href: "/root/blog", label: "blog", icon: NotebookText },
+      { href: "/root/seo", label: "seo", icon: SearchCheck },
     ],
   },
   {
     key: "platform",
-    label: "Платформа",
+    label: "platform",
     icon: Activity,
     items: [
-      { href: "/root/status", label: "Статус", icon: Activity },
-      { href: "/root/health", label: "Здоровье", icon: HeartPulse },
-      { href: "/root/telegram-logs", label: "Telegram логи", icon: ScrollText },
-      { href: "/root/audit", label: "Аудит", icon: FileClock },
-      { href: "/root/audit-impersonations", label: "Входы под клиента", icon: UserCog },
-      { href: "/root/timings", label: "Тайминги", icon: Timer },
+      { href: "/root/status", label: "status", icon: Activity },
+      { href: "/root/health", label: "health", icon: HeartPulse },
+      { href: "/root/telegram-logs", label: "telegramLogs", icon: ScrollText },
+      { href: "/root/audit", label: "audit", icon: FileClock },
+      { href: "/root/audit-impersonations", label: "impersonation", icon: UserCog },
+      { href: "/root/timings", label: "timings", icon: Timer },
     ],
   },
 ];
@@ -139,6 +141,7 @@ const TRIGGER_CLASS =
 const TRIGGER_ACTIVE_CLASS = "bg-white/10 font-medium text-white";
 
 export function RootNav() {
+  const t = useTranslations("rootNavigation");
   const pathname = usePathname();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -158,7 +161,7 @@ export function RootNav() {
     <>
       {/* Компьютер: ряд из шести элементов. */}
       <nav
-        aria-label="Разделы платформы"
+        aria-label={t("navigationLabel")}
         className="hidden flex-wrap items-center gap-1 md:flex"
       >
         {NAV.map((entry) => {
@@ -172,7 +175,7 @@ export function RootNav() {
                 className={cn(TRIGGER_CLASS, active && TRIGGER_ACTIVE_CLASS)}
               >
                 <entry.icon className="size-4 shrink-0" />
-                {entry.label}
+                {t(entry.label)}
               </Link>
             );
           }
@@ -196,7 +199,7 @@ export function RootNav() {
                 )}
               >
                 <entry.icon className="size-4 shrink-0" />
-                {entry.label}
+                {t(entry.label)}
                 <ChevronDown
                   aria-hidden
                   className={cn(
@@ -230,7 +233,7 @@ export function RootNav() {
                       className={cn(MENU_ITEM_CLASS, active && MENU_ITEM_ACTIVE_CLASS)}
                     >
                       <item.icon className="size-4 shrink-0" />
-                      {item.label}
+                      {t(item.label)}
                     </Link>
                   );
                 })}
@@ -247,12 +250,12 @@ export function RootNav() {
         className={cn(TRIGGER_CLASS, "md:hidden")}
       >
         <Menu className="size-4 shrink-0" />
-        Разделы
+        {t("sections")}
       </button>
 
-      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Разделы платформы">
+      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={t("navigationLabel")}>
         <nav
-          aria-label="Разделы платформы"
+          aria-label={t("navigationLabel")}
           onClick={(event) => {
             if ((event.target as HTMLElement).closest("a")) setSheetOpen(false);
           }}
@@ -269,13 +272,13 @@ export function RootNav() {
                   className={cn(SHEET_ROW_CLASS, active && "bg-[#eef1ff] font-medium text-[#3848c7]")}
                 >
                   <entry.icon className="size-5 shrink-0 text-[#5566f6]" />
-                  {entry.label}
+                  {t(entry.label)}
                 </Link>
               );
             }
             return (
               <div key={entry.key}>
-                <div className={SHEET_GROUP_LABEL_CLASS}>{entry.label}</div>
+                <div className={SHEET_GROUP_LABEL_CLASS}>{t(entry.label)}</div>
                 {entry.items.map((item) => {
                   const active = isLinkActive(pathname, item);
                   return (
@@ -289,7 +292,7 @@ export function RootNav() {
                       )}
                     >
                       <item.icon className="size-5 shrink-0 text-[#5566f6]" />
-                      {item.label}
+                      {t(item.label)}
                     </Link>
                   );
                 })}

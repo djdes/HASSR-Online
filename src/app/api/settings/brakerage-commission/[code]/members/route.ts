@@ -22,6 +22,7 @@ const Schema = z.object({
   pin: z.string().trim().optional(),
   // Роль в комиссии; нет — «Член комиссии».
   role: z.string().trim().max(80).optional(),
+  roleKind: z.enum(["chair", "member"]).optional(),
 });
 
 /**
@@ -68,7 +69,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
   const pinError = await setEmployeeQrPin(created.user.id, pin);
   const commission = await addOrgCommissionMember(organizationId, code, {
     employeeId: created.user.id,
-    role: parsed.data.role || "Член комиссии",
+    role: parsed.data.role,
+    roleKind: parsed.data.roleKind,
   });
   await recordAuditLog({
     request,

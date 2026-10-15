@@ -29,18 +29,8 @@ export function openNextEditable(ids: readonly string[], from: number, open: (id
   return -1;
 }
 
-/** Подпись кнопки в полосе выделения. */
-export function selectionEditLabel(count: number): string {
-  return count > 1 ? `Изменить по очереди · ${count}` : "Изменить";
-}
-
-/** «(2 из 5)» для заголовка окна; null — когда правится одна строка. */
-export function sequentialEditProgress(state: SequentialEditState | null): string | null {
+/** Progress data for localized display; no label participates in queue behavior. */
+export function sequentialEditProgress(state: SequentialEditState | null): { current: number; total: number } | null {
   if (!state || state.ids.length <= 1) return null;
-  return `(${state.done + 1} из ${state.ids.length})`;
-}
-
-/** Итог по завершении или отмене очереди из нескольких строк. */
-export function sequentialEditSummary(done: number, total: number): string {
-  return `Изменено ${done} из ${total}`;
+  return { current: state.done + 1, total: state.ids.length };
 }

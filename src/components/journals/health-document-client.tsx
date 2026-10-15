@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { getJournalDocumentPeriodLabel } from "@/lib/journal-document-helpers";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -69,9 +71,6 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import { promptAsync } from "@/components/ui/prompt-async";
 import { PAST_DAY_LOCKED_MESSAGE } from "@/lib/closed-day";
 import {
-  FOREIGN_ROW_MESSAGE,
-  FUTURE_DAY_LOCKED_MESSAGE,
-  NOT_TODAY_MESSAGE,
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
@@ -222,6 +221,7 @@ function getHealthMeasures(
 }
 
 export function HealthDocumentClient(props: Props) {
+  const scopeT = useTranslations("journalWidgets.headerEdit");
   const router = useRouter();
   const {
     documentId,
@@ -372,13 +372,13 @@ export function HealthDocumentClient(props: Props) {
 
   /** Причина, по которой ячейка закрыта, или null. */
   function cellLockReason(employeeId: string, dateKey: string): string | null {
-    if (todayKey !== "" && dateKey > todayKey) return FUTURE_DAY_LOCKED_MESSAGE;
+    if (todayKey !== "" && dateKey > todayKey) return scopeT("futureDay");
     if (pastDaysLocked && todayKey !== "" && dateKey < todayKey) {
       return PAST_DAY_LOCKED_MESSAGE;
     }
     if (viewerHasFullAccess || !viewer) return null;
-    if (employeeId !== viewer.id) return FOREIGN_ROW_MESSAGE;
-    if (todayKey !== "" && dateKey !== todayKey) return NOT_TODAY_MESSAGE;
+    if (employeeId !== viewer.id) return scopeT("foreignRow");
+    if (todayKey !== "" && dateKey !== todayKey) return scopeT("notToday");
     return null;
   }
 

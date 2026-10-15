@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   BookOpenText,
   Copy,
@@ -52,7 +53,7 @@ import {
   EmptyDocumentsState,
   JournalTabs,
   JournalTopBar,
-  deletedRecordsBullet,
+  useDeletedRecordsBullet,
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
@@ -87,6 +88,7 @@ import { localDayKey } from "@/lib/entry-defaults";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { resolveApprover, resolveResponsible } from "@/lib/approver-display";
+import { sanitationRoleDisplayTitle } from "@/lib/sanitation-day-presentation";
 import {
   DocumentDialogFeedback,
   readCreatedDocument,
@@ -171,6 +173,7 @@ function SettingsDialog(props: {
   /** В документе уже есть даты уборок — при смене года предупредить о переносе. */
   hasDates?: boolean;
 }) {
+  const t = useTranslations("cleaningGrid.cleaning");
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -226,7 +229,7 @@ function SettingsDialog(props: {
           <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
             <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <FloatingInputField
-              label="Название документа"
+        label={t("documentTitle")}
               value={activeState.title}
               onChange={(value) => {
                 auto.markTouched();
@@ -236,7 +239,7 @@ function SettingsDialog(props: {
 
             <DateField
               picker="wheel"
-              label="Дата документа"
+        label={t("documentDate")}
               value={activeState.documentDate}
               onChange={(value) => {
                 const documentDate = toIsoDate(value);
@@ -252,7 +255,7 @@ function SettingsDialog(props: {
               }}
             />
 
-            <FloatingLabelField label="Год">
+        <FloatingLabelField label={t("year")}>
               <Select
                 value={activeState.year}
                 onValueChange={(value) => {
@@ -288,8 +291,7 @@ function SettingsDialog(props: {
             props.initial &&
             activeState.year !== props.initial.year ? (
               <p className="rounded-2xl bg-[#fff8eb] px-3.5 py-2.5 text-[12.5px] leading-[1.5] text-[#8a5a14]">
-                Даты плана и отметки о выполнении перенесутся на {activeState.year} год — те же
-                числа и месяцы. Для графика на следующий год удобнее «Сделать копию».
+              {t("yearCarryover", { year: activeState.year })}
               </p>
             ) : null}
 
@@ -308,8 +310,8 @@ function SettingsDialog(props: {
                     props.users.find((item) => item.id === next.userId)?.name || "",
                 })
               }
-              positionLabel={'Должность «Утверждаю»'}
-              employeeLabel={'Утверждающий'}
+              positionLabel={t("approverPositionShort")}
+              employeeLabel={t("approvedBy")}
               variant="floating"
             />
 
@@ -328,8 +330,8 @@ function SettingsDialog(props: {
                     props.users.find((item) => item.id === next.userId)?.name || "",
                 })
               }
-              positionLabel="Должность ответственного"
-              employeeLabel="Ответственный"
+        positionLabel={t("responsiblePosition")}
+        employeeLabel={t("employee")}
               variant="floating"
             />
 
@@ -349,7 +351,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className={JOURNAL_DIALOG_SUBMIT_CLASS}
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? t("saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -367,9 +369,12 @@ export function SanitationDayDocumentsClient({
   users,
   documents,
 }: Props) {
+  const locale = useLocale();
+  const t = useTranslations("cleaningGrid.cleaning");
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
+  const deletedRecords = useDeletedRecordsBullet();
   const [settingsTarget, setSettingsTarget] =
     useState<SanitationDocumentItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -447,7 +452,7 @@ export function SanitationDayDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+    throw new Error(failure?.error || t("documentSaveError"));
     }
 
     router.refresh();
@@ -457,15 +462,15 @@ export function SanitationDayDocumentsClient({
     const cfg = normalizeSanitationDayConfig(document.config);
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title || SANITATION_DAY_DOCUMENT_TITLE}» будет удалён безвозвратно.`,
+      description: t("documentWillBeDeleted", { title: document.title || t("generalScheduleHeading") }),
       bullets: [
-        { label: `Дата документа: ${getSanitationDocumentDateLabel(cfg.documentDate)}`, tone: "info" },
+        { label: t("documentDatePrefix", { date: new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${cfg.documentDate}T12:00:00Z`)) }), tone: "info" },
         // Сколько записей пропадёт — раньше окно про объём потери молчало.
-        ...(deletedRecordsBullet(document.config) ? [deletedRecordsBullet(document.config)!] : []),
-        { label: "Удалятся все строки и отметки санитарного дня", tone: "warn" },
+        ...(deletedRecords(document.config) ? [deletedRecords(document.config)!] : []),
+        { label: t("deletedRowsWarning"), tone: "warn" },
       ],
-      successMessage: `Документ «${document.title || SANITATION_DAY_DOCUMENT_TITLE}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: t("documentDeletedSuccess", { title: document.title || t("generalScheduleHeading") }),
+      errorMessage: t("documentDeleteError"),
     });
   }
 
@@ -501,7 +506,7 @@ export function SanitationDayDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось сделать копию");
+      toast.error(failure?.error || t("copyError"));
       return;
     }
 
@@ -532,7 +537,7 @@ export function SanitationDayDocumentsClient({
     <div className={JOURNAL_LIST_STACK_CLASS}>
       <JournalTopBar
         routeCode={routeCode}
-        heading={`${SANITATION_DAY_HEADING}${activeTab === "closed" ? " (закрытые)" : ""}`}
+        heading={`${t("generalScheduleHeading")}${activeTab === "closed" ? ` (${t("closedSuffix")})` : ""}`}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={SANITATION_DAY_HEADING}
@@ -544,7 +549,7 @@ export function SanitationDayDocumentsClient({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" />
-            Создать документ
+            {t("createDocumentButton")}
           </Button>
         }
       />
@@ -560,7 +565,7 @@ export function SanitationDayDocumentsClient({
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Создать документ
+              {t("createDocumentButton")}
             </Button>}
           />
         ) : null}
@@ -589,7 +594,7 @@ export function SanitationDayDocumentsClient({
                 href={href}
                 className={JOURNAL_CARD_SECTION_CLASS}
               >
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Год</div>
+          <div className={JOURNAL_CARD_LABEL_CLASS}>{t("year")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getSanitationYearLabel(cfg.year)}
                 </div>
@@ -600,10 +605,13 @@ export function SanitationDayDocumentsClient({
                 className={JOURNAL_CARD_SECTION_CLASS}
               >
                 <div className={JOURNAL_CARD_LABEL_CLASS}>
-                  Должность &quot;Утверждаю&quot;
+                  {t("approverPositionShort")}
                 </div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {getSanitationApproveLabel(approver.title, approver.name)}
+                  {getSanitationApproveLabel(
+                    sanitationRoleDisplayTitle(approver.title, t("defaultManagerRole")),
+                    approver.name,
+                  )}
                 </div>
               </Link>
 
@@ -611,9 +619,12 @@ export function SanitationDayDocumentsClient({
                 href={href}
                 className={JOURNAL_CARD_SECTION_CLASS}
               >
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+          <div className={JOURNAL_CARD_LABEL_CLASS}>{t("responsiblePosition")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {getSanitationApproveLabel(responsible.title, responsible.name)}
+                  {getSanitationApproveLabel(
+                    sanitationRoleDisplayTitle(responsible.title, t("defaultManagerRole")),
+                    responsible.name,
+                  )}
                 </div>
               </Link>
 
@@ -621,7 +632,7 @@ export function SanitationDayDocumentsClient({
                 href={href}
                 className={JOURNAL_CARD_SECTION_CLASS}
               >
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+          <div className={JOURNAL_CARD_LABEL_CLASS}>{t("documentDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getSanitationDocumentDateLabel(cfg.documentDate)}
                 </div>
@@ -629,19 +640,19 @@ export function SanitationDayDocumentsClient({
 
               <div className="flex items-center justify-start text-[#5566f6] sm:justify-center">
                 <ResponsiveMenu
-                  title="Действия с документом"
+        title={t("documentActions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+          label: t("settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
                           {
                             key: "clone",
-                            label: "Сделать копию",
+          label: t("makeCopy"),
                             icon: <Copy className="size-4 text-[#6f7282]" />,
                             onSelect: () => cloneDocument(document.id),
                           },
@@ -649,7 +660,7 @@ export function SanitationDayDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+          label: t("print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () => openPdf({ documentId: document.id }),
                     },
@@ -657,7 +668,7 @@ export function SanitationDayDocumentsClient({
                       ? [
                           {
                             key: "activate",
-                            label: "Отправить в активные",
+          label: t("moveActive"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => setStatus("active", { documentId: document.id }),
                           },
@@ -665,13 +676,13 @@ export function SanitationDayDocumentsClient({
                       : [
                           {
                             key: "archive",
-                            label: "Отправить в закрытые",
+          label: t("moveClosed"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => setStatus("closed", { documentId: document.id }),
                           },
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: t("deleteDocument"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             onSelect: () => handleDelete(document),
                             tone: "danger" as const,
@@ -700,8 +711,8 @@ export function SanitationDayDocumentsClient({
         users={users}
         initial={defaultCreateState}
         onSubmit={createDocument}
-        submitText="Создать"
-        title="Создание документа"
+        submitText={t("create")}
+        title={t("createDocument")}
         showEmptyState
       />
 
@@ -724,8 +735,8 @@ export function SanitationDayDocumentsClient({
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, value);
         }}
-        submitText="Сохранить"
-        title="Настройки документа"
+        submitText={t("save")}
+        title={t("documentSettings")}
       />
     </div>
   );

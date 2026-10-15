@@ -1,11 +1,11 @@
 "use client";
 
+import { useQrFillCopy } from "@/components/qr-fill/qr-fill-presentation";
+
 import { Hammer, Wrench } from "lucide-react";
 
 import {
   COLD_EQUIPMENT_STATUSES,
-  COLD_EQUIPMENT_STATUS_SHORT,
-  COLD_EQUIPMENT_STATUS_TITLE,
   type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
 
@@ -23,10 +23,11 @@ export function EquipmentStatusChoice({
   value: ColdEquipmentStatus | null;
   onChange: (next: ColdEquipmentStatus | null) => void;
 }) {
+  const { t } = useQrFillCopy();
   return (
     <div>
-      <div className="mb-1.5 ml-[3px] text-[13px] text-[#6f7282]">Или вместо температуры:</div>
-      <div className="grid grid-cols-2 gap-2" role="group" aria-label="Вместо температуры">
+      <div className="mb-1.5 ml-[3px] text-[13px] text-[#6f7282]">{t("status.alternative")}</div>
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label={t("status.group")}>
         {COLD_EQUIPMENT_STATUSES.map((status) => {
           const active = value === status;
           const Icon = ICONS[status];
@@ -44,14 +45,14 @@ export function EquipmentStatusChoice({
               }`}
             >
               <Icon className="size-5" />
-              {COLD_EQUIPMENT_STATUS_TITLE[status]}
+              {t(`status.${status}`)}
             </button>
           );
         })}
       </div>
       {value ? (
         <p className="mt-2 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[14px] leading-snug text-[#3848c7]" data-testid="equipment-status-note">
-          В журнал вместо температуры запишем «{COLD_EQUIPMENT_STATUS_SHORT[value]}». Норма не проверяется.
+          {t("status.explanation", { status: t(value === "service" ? "status.serviceShort" : "status.repairShort") })}
         </p>
       ) : null}
     </div>

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronDown, Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
-import { isBillingLimitError, toastApiError } from "@/lib/billing-limit-toast";
-import { employeesLabel } from "@/lib/plan-catalog";
+import { isBillingLimitError, useBillingError } from "@/lib/billing-limit-toast";
 import { cn } from "@/lib/utils";
 
 /**
@@ -37,6 +37,9 @@ export function ArchivedStaffSection({
   /** Ссылка на оплату рядом с подсказкой; null — не звать (приложение). */
   payHref: string | null;
 }) {
+  const { toastApiError } = useBillingError();
+  const t = useTranslations("staffManagement.archive");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -51,20 +54,20 @@ export function ArchivedStaffSection({
         const res = await fetch(`/api/staff/${id}/archive`, { method: "DELETE" });
         const data = await res.json().catch(() => null);
         if (!res.ok) {
-          toastApiError(data, "Не удалось вернуть сотрудника");
+          toastApiError(data, t("restoreFailed"));
           // Упёрлись в лимит — дальше по списку то же самое.
           if (isBillingLimitError(data)) break;
           continue;
         }
         restored += 1;
       } catch {
-        toast.error("Сеть недоступна");
+        toast.error(t("networkUnavailable"));
         break;
       }
     }
     setBusyId(null);
     if (restored > 0) {
-      toast.success(restored === 1 ? "Сотрудник возвращён из архива" : `Вернули из архива: ${employeesLabel(restored)}`);
+      toast.success(restored === 1 ? t("restoredOne") : t("restoredMany", { count: restored }));
       router.refresh();
     }
   }
@@ -85,10 +88,10 @@ export function ArchivedStaffSection({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[16px] font-semibold text-[#0b1024]">
-            Архив · {employeesLabel(employees.length)}
+            {t("title", { count: employees.length })}
           </span>
           <span className="block text-[13px] text-[#6f7282]">
-            Не входят в тариф и не могут входить в кабинет. Записи в журналах сохранены.
+            {t("description")}
           </span>
         </span>
         <ChevronDown
@@ -102,7 +105,7 @@ export function ArchivedStaffSection({
               {seatsNote}{" "}
               {payHref ? (
                 <Link href={payHref} className="font-medium text-[#3848c7] underline underline-offset-2">
-                  Оплатить подписку
+                  {t("paySubscription")}
                 </Link>
               ) : null}
             </p>
@@ -113,7 +116,7 @@ export function ArchivedStaffSection({
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14.5px] font-medium text-[#0b1024]">{e.name}</div>
                   <div className="truncate text-[12.5px] text-[#6f7282]">
-                    {[e.position, `в архиве с ${new Date(e.archivedAt).toLocaleDateString("ru-RU")}`]
+                    {[e.position, t("archivedSince", { date: new Date(e.archivedAt).toLocaleDateString(locale) })]
                       .filter(Boolean)
                       .join(" · ")}
                   </div>
@@ -130,7 +133,7 @@ export function ArchivedStaffSection({
                   ) : (
                     <RotateCcw className="size-4 text-[#5566f6]" />
                   )}
-                  Вернуть
+                  {t("restore")}
                 </button>
               </li>
             ))}
@@ -143,7 +146,7 @@ export function ArchivedStaffSection({
               className="mt-3 inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
             >
               <RotateCcw className="size-4 text-[#5566f6]" />
-              Вернуть всех
+              {t("restoreAll")}
             </button>
           ) : null}
         </div>

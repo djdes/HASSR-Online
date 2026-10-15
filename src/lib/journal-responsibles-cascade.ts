@@ -1,5 +1,6 @@
 import { withNewHygieneFormVersion } from "@/lib/hygiene-v2";
 import { db } from "@/lib/db";
+import { allowsImplicitJournalResponsible } from "@/lib/journal-controls";
 import { parseOrgColumnDefaults, withOrgColumnDefault } from "@/lib/journal-columns";
 import { withOrgCommission } from "@/lib/brakerage-commission-org";
 import { withMasterSharedLists } from "@/lib/master-directory-push";
@@ -211,7 +212,7 @@ export async function cascadeResponsibleToActiveDocuments(input: {
     Object.values(slotUsers).filter((v): v is string => Boolean(v))
   );
 
-  const cascadeRoster = schema.slots.some((slot) => !slotUsers[slot.id])
+  const cascadeRoster = allowsImplicitJournalResponsible(journalCode) && schema.slots.some((slot) => !slotUsers[slot.id])
     ? await loadSlotRoster(organizationId, positionIds)
     : [];
   for (const slot of schema.slots) {
@@ -512,7 +513,7 @@ export async function prefillResponsiblesForNewDocument(input: {
   const usedIds = new Set<string>(
     Object.values(slots).filter((v): v is string => Boolean(v))
   );
-  const prefillRoster = schema.slots.some((slot) => !slots[slot.id])
+  const prefillRoster = allowsImplicitJournalResponsible(journalCode) && schema.slots.some((slot) => !slots[slot.id])
     ? await loadSlotRoster(organizationId, [])
     : [];
   for (const slot of schema.slots) {

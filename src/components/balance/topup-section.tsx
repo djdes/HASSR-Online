@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, CreditCard, FileText, Loader2, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,6 +53,8 @@ export function TopupSection({
   /** Оплата подтверждена — перечитать баланс и историю. */
   onPaid: () => void | Promise<void>;
 }) {
+  const t = useTranslations("settingsManagement.balanceTopup");
+  const locale = useLocale();
   const router = useRouter();
   const [input, setInput] = useState<string>(String(TOPUP_PRESETS_RUB[0]));
   const [touched, setTouched] = useState(false);
@@ -64,7 +67,17 @@ export function TopupSection({
 
   const check = useMemo(() => parseTopupAmount(input), [input]);
   const amountRub = check.ok ? check.amountRub : null;
-  const hint = check.ok ? null : touched ? check.error : null;
+  const hint = !touched || check.ok
+    ? null
+    : check.code === "minimum"
+      ? t("validation.minimum", { amount: TOPUP_MIN_RUB })
+      : check.code === "maximum"
+        ? t("validation.maximum", { amount: TOPUP_MAX_RUB })
+        : check.code === "wholeRubles"
+          ? t("validation.wholeRubles")
+          : check.code === "numeric"
+            ? t("validation.numeric")
+            : t("validation.required");
 
   // Пока человек платит в iFrame, следим за заказом: возврат на SuccessURL
   // происходит внутри рамки, и без опроса блок так и остался бы формой.
@@ -91,7 +104,7 @@ export function TopupSection({
           if (data.status !== "pending") {
             if (!stopped) {
               setWatch(null);
-              setError("Оплата не прошла — заказ закрыт. Попробуйте ещё раз");
+              setError(t("paymentClosed"));
             }
             return;
           }
@@ -108,7 +121,7 @@ export function TopupSection({
       stopped = true;
       if (timer) clearTimeout(timer);
     };
-  }, [watch, onPaid]);
+  }, [watch, onPaid, t]);
 
   async function create(method: "card" | "invoice") {
     setTouched(true);
@@ -131,15 +144,15 @@ export function TopupSection({
         created?: boolean;
       };
       if (!res.ok) {
-        setError(data.error ?? "Не удалось оформить пополнение");
+        setError(t("createFailed"));
         setInvoiceOpen(false);
         return;
       }
       if (method === "invoice") {
         toast.success(
           data.created === false
-            ? `Счёт № ${data.orderId} уже выставлен — скачиваем его ещё раз`
-            : `Счёт № ${data.orderId} выставлен — PDF скачивается, копия ушла на почту`,
+            ? t("invoicePdfNotice")
+            : t("invoiceCreditNotice"),
         );
         if (data.pdfUrl) window.open(data.pdfUrl, "_blank", "noopener");
         setInvoiceOpen(false);
@@ -147,7 +160,7 @@ export function TopupSection({
         return;
       }
       if (!data.params || !data.invId) {
-        setError("Не удалось открыть оплату. Попробуйте ещё раз");
+        setError(t("openFailed"));
         return;
       }
       if (scriptReady && window.Robokassa) {
@@ -157,7 +170,7 @@ export function TopupSection({
       }
       if (data.paymentUrl) window.location.href = data.paymentUrl;
     } catch {
-      setError("Сеть недоступна. Попробуйте ещё раз");
+      setError(t("networkError"));
     } finally {
       setBusy(null);
     }
@@ -170,8 +183,8 @@ export function TopupSection({
     <Section
       mini={mini}
       icon={<Wallet className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
-      title="Пополнить баланс"
-      subtitle="Деньги зачисляются на баланс организации баллами, 1 ₽ = 1 балл, — как только оплата подтверждена. Баллами оплачивается подписка."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <div data-testid="topup-section">
         {paid ? (
@@ -186,7 +199,7 @@ export function TopupSection({
           >
             <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
             <span>
-              Оплата получена — баланс пополнен на <strong>{formatPoints(paid.amountRub)}</strong> (заказ №{paid.invId}).
+              {t("paymentReceived", { amount: paid.amountRub, invoiceId: String(paid.invId) })}
             </span>
           </div>
         ) : null}
@@ -195,9 +208,9 @@ export function TopupSection({
           className={mini ? "text-[12px] font-medium" : "text-[12px] font-medium uppercase tracking-[0.14em] text-[#6f7282]"}
           style={muted}
         >
-          Сумма
+          {t("amountLabel")}
         </div>
-        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Быстрый выбор суммы">
+        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={t("quickAmountLabel")}>
           {TOPUP_PRESETS_RUB.map((preset) => {
             const active = amountRub === preset;
             return (
@@ -232,7 +245,7 @@ export function TopupSection({
           className={mini ? "mt-4 block text-[13px] font-medium" : "mt-4 block text-[13px] font-medium text-[#0b1024]"}
           style={mini ? { color: "var(--mini-text)" } : undefined}
         >
-          Или своя сумма, ₽
+          {t("customAmountLabel")}
         </label>
         <input
           id="topup-amount"
@@ -255,7 +268,7 @@ export function TopupSection({
           className={hint ? "mt-1.5 text-[12.5px] text-[#a13a32]" : mini ? "mt-1.5 text-[12.5px]" : "mt-1.5 text-[12.5px] text-[#9b9fb3]"}
           style={hint ? undefined : mini ? { color: "var(--mini-text-faint)" } : undefined}
         >
-          {hint ?? `От ${formatPoints(TOPUP_MIN_RUB)} до ${formatPoints(TOPUP_MAX_RUB)}, целыми рублями.`}
+          {hint ?? t("amountRange", { min: TOPUP_MIN_RUB, max: TOPUP_MAX_RUB })}
         </p>
 
         <div
@@ -267,7 +280,7 @@ export function TopupSection({
           style={mini ? { background: "var(--mini-surface-2)" } : undefined}
         >
           <span className={mini ? "text-[13px]" : "text-[13.5px] text-[#3c4053]"} style={muted}>
-            К оплате
+            {t("totalDue")}
           </span>
           <span
             data-testid="topup-total"
@@ -277,7 +290,7 @@ export function TopupSection({
             {amountRub ? formatPoints(amountRub) : "—"}
           </span>
           <span className="w-full text-[12.5px] text-[#116b2a]">
-            {amountRub ? `На баланс поступит ${formatPoints(amountRub)} баллами` : " "}
+            {amountRub ? t("creditedAmount", { amount: amountRub }) : " "}
           </span>
         </div>
 
@@ -298,7 +311,7 @@ export function TopupSection({
               style={mini ? miniPrimary : undefined}
             >
               {busy === "card" ? <Loader2 className="size-4 animate-spin" /> : <CreditCard className="size-4" />}
-              Оплатить картой
+              {t("payByCard")}
             </button>
           ) : null}
           {config.invoiceReady && !pending ? (
@@ -314,7 +327,7 @@ export function TopupSection({
               style={mini ? miniSecondary : undefined}
             >
               {busy === "invoice" ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
-              Выставить счёт
+              {t("issueInvoice")}
             </button>
           ) : null}
         </div>
@@ -322,7 +335,7 @@ export function TopupSection({
         {watch ? (
           <p className="mt-3 flex items-center gap-2 text-[13px] text-[#6f7282]" style={muted}>
             <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
-            Ждём подтверждение оплаты — баланс обновится сам.
+            {t("waitingPayment")}
           </p>
         ) : null}
 
@@ -335,22 +348,21 @@ export function TopupSection({
             }
             style={mini ? { background: "var(--mini-surface-2)", color: "var(--mini-text-muted)" } : undefined}
           >
-            У вас включено автопродление: оно списывает деньги с карты по цене тарифа, баллы при
-            автосписании не тратятся. Потратить баллы можно при оплате подписки вручную.
+            {t("recurringActive")}
           </p>
         ) : null}
 
         {!config.cardReady ? (
           <p className="mt-3 text-[13px] text-[#6f7282]" style={muted}>
-            Оплата картой пока не настроена{config.invoiceReady ? " — пополните по счёту" : ""}.
+            {t("cardUnavailable", { invoiceHint: config.invoiceReady ? t("invoiceHint") : "" })}
           </p>
         ) : null}
 
         {config.invoiceReady && !pending && !config.organizationInn ? (
           <p className="mt-3 text-[13px] text-[#b25f00]">
-            Для счёта нужен ИНН организации —{" "}
+            {t("innRequired")} {" "}
             <Link href="/settings/organization" className="underline underline-offset-2">
-              укажите его в настройках
+              {t("setInn")}
             </Link>
             .
           </p>
@@ -366,9 +378,11 @@ export function TopupSection({
             }
             style={mini ? { background: "var(--mini-surface-2)", color: "var(--mini-text)" } : undefined}
           >
-            Счёт № {pending.id} на {formatPoints(pending.amountRub)} выставлен
-            {pending.dueAt ? ` и действителен до ${new Date(pending.dueAt).toLocaleDateString("ru-RU")}` : ""}.
-            Как только деньги поступят, баланс пополнится автоматически.
+            {t("invoicePending", {
+              invoiceId: String(pending.id),
+              amount: pending.amountRub,
+              dueDatePart: pending.dueAt ? t("dueDatePart", { date: new Date(pending.dueAt).toLocaleDateString(locale) }) : "",
+            })}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <a
                 href={`/api/payments/invoice/${pending.id}/pdf`}
@@ -376,10 +390,10 @@ export function TopupSection({
                 style={mini ? miniSecondary : undefined}
               >
                 <FileText className="size-4" />
-                Скачать счёт (PDF)
+                {t("downloadInvoice")}
               </a>
               <span className="inline-flex h-10 items-center rounded-2xl bg-[#fff8eb] px-3 text-[13px] font-medium text-[#b25f00]">
-                Ждём оплату
+                {t("waitingInvoicePayment")}
               </span>
             </div>
           </div>
@@ -391,10 +405,9 @@ export function TopupSection({
         >
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
           <span>
-            Промокоды и акции к пополнению не применяются. Оплата картой проходит на стороне
-            «Робокассы», данные карты нам не передаются. Оплачивая, вы принимаете условия{" "}
+            {t("paymentDisclosure")} {" "}
             <Link href="/oferta" className="text-[#3848c7]">
-              договора-оферты
+              {t("offer")}
             </Link>
             .
           </span>
@@ -406,16 +419,17 @@ export function TopupSection({
         onClose={() => setInvoiceOpen(false)}
         onConfirm={() => create("invoice")}
         variant="info"
-        title={`Выставить счёт на ${amountRub ? formatPoints(amountRub) : "—"}?`}
-        description={`Плательщик — ${config.organizationName}${
-          config.organizationInn ? `, ИНН ${config.organizationInn}` : ""
-        }. Счёт действителен 7 дней.`}
+        title={t("invoiceConfirmTitle", { amount: String(amountRub ?? "—") })}
+        description={t("invoiceConfirmDescription", {
+          organizationName: config.organizationName,
+          innPart: config.organizationInn ? t("invoiceInnPart", { inn: config.organizationInn }) : "",
+        })}
         bullets={[
-          { label: "PDF скачается сразу и уйдёт на вашу почту" },
-          { label: "Баланс пополнится, когда деньги поступят на счёт WeSetup", tone: "info" },
-          { label: "Промокоды и акции к пополнению не применяются" },
+          { label: t("invoicePdfNotice") },
+          { label: t("invoiceCreditNotice"), tone: "info" },
+          { label: t("noPromoNotice") },
         ]}
-        confirmLabel={busy === "invoice" ? "Выставляем…" : "Выставить счёт"}
+        confirmLabel={busy === "invoice" ? t("issuingInvoice") : t("issueInvoice")}
         confirmDisabled={busy !== null}
       />
     </Section>

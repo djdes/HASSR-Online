@@ -26,16 +26,48 @@ import { stampFor } from "@/lib/quick-values";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { RoomFillClient } from "./room-fill-client";
+import { composeRoomQrMessages } from "./room-fill-presentation";
 import { decodeRouteParam } from "@/lib/route-param";
+import { cache, type ReactNode } from "react";
+import { getServerSession } from "@/lib/server-session";
+import { authOptions } from "@/lib/auth";
+import { resolveLocale } from "@/i18n/locales";
+import { SITE_LOCALE_COOKIE } from "@/i18n/site-locale";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages, pickMessages } from "@/i18n/messages";
+import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
+import { QrFillPresentationProvider } from "@/components/qr-fill/qr-fill-presentation";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { customJournalName } from "@/lib/custom-names";
+import { normalizeUserRole } from "@/lib/user-roles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Ссылка с подписанным токеном плаката — не индексировать.
-export const metadata = {
-  title: "Замер температуры и влажности",
-  robots: { index: false, follow: false },
-};
+async function selectedLocale(organizationLocale: string | null) {
+  const [session, jar] = await Promise.all([getServerSession(authOptions), cookies()]);
+  return { authenticated: Boolean(session), locale: resolveLocale({ authenticated: Boolean(session), userLocale: session?.user.locale, cookieLocale: jar.get(SITE_LOCALE_COOKIE)?.value, organizationLocale }) };
+}
+
+const findRoom = cache(async (roomId: string) => db.room.findUnique({
+  where: { id: roomId },
+  select: {
+    id: true, name: true, climateNorms: true, buildingId: true, fillerUserIds: true,
+    building: { select: { name: true, organizationId: true, organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true } } } },
+  },
+}));
+
+type PageProps = { params: Promise<{ roomId: string }>; searchParams: Promise<{ token?: string }> };
+
+export async function generateMetadata({ params, searchParams }: PageProps) {
+  const roomId = decodeRouteParam((await params).roomId);
+  const { token } = await searchParams;
+  const room = token && verifyQrFillTokenFor(token, "room", roomId).ok ? await findRoom(roomId) : null;
+  const locale = room ? (await selectedLocale(room.building.organization.locale)).locale : await getSiteLocale();
+  const messages = await loadMessages(locale);
+  return { title: messages.roomFill.page.metadataTitle, robots: { index: false, follow: false } };
+}
 
 /**
  * Публичная страница QR-плаката склада. Входа нет: доступ даёт токен из
@@ -55,6 +87,7 @@ export default async function RoomFillPage({
 
   const verify = verifyQrFillTokenFor(token, "room", roomId);
   if (!verify.ok) {
+    const messages = await loadMessages(await getSiteLocale());
     console.warn(`[qr-fill] poster rejected kind=room reason=${verify.reason}`);
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#fafbff] px-4 py-10">
@@ -63,37 +96,30 @@ export default async function RoomFillPage({
             !
           </div>
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Ссылка недействительна
+            {messages.equipmentFill.page.invalidTitle}
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-            Плакат повреждён или не подходит к этому помещению.
+            {messages.roomFill.page.invalidDescription}
           </p>
         </div>
       </main>
     );
   }
 
-  const room = await db.room.findUnique({
-    where: { id: roomId },
-    select: {
-      id: true,
-      name: true,
-      climateNorms: true,
-      buildingId: true,
-      fillerUserIds: true,
-      building: {
-        select: {
-          name: true,
-          organizationId: true,
-          organization: { select: { name: true, timezone: true, qrFillMode: true } },
-        },
-      },
-    },
-  });
+  const room = await findRoom(roomId);
   if (!room) notFound();
 
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
+  const [{ locale, authenticated }, customNames] = await Promise.all([selectedLocale(room.building.organization.locale), getOrgCustomNames(organizationId)]);
+  const messages = await loadMessages(locale);
+  const roomCopy = composeRoomQrMessages(messages);
+  const wrap = (children: ReactNode) => <SiteLocaleProvider locale={locale} messages={pickMessages(messages, ["roomFill", "equipmentFill", "language"])} timeZone={timezone}><QrFillPresentationProvider locale={locale} messages={roomCopy} authenticated={authenticated}>{children}</QrFillPresentationProvider></SiteLocaleProvider>;
+  const position = (person: Parameters<typeof getUserDisplayTitle>[0]) => {
+    if (person?.jobPosition?.name?.trim() || person?.positionTitle?.trim()) return getUserDisplayTitle(person);
+    const role = normalizeUserRole(person?.role);
+    return Object.hasOwn(messages.staffManagement.roleLabels, role) ? messages.staffManagement.roleLabels[role as keyof typeof messages.staffManagement.roleLabels] : getUserDisplayTitle(person);
+  };
   // Режим QR-форм организации: в «auth» без сессии — на вход и обратно.
   const qrMode = normalizeQrFillMode(room.building.organization.qrFillMode);
   let sessionEmployee: { id: string; name: string; positionTitle: string | null; canPickOthers: boolean } | null = null;
@@ -138,7 +164,7 @@ export default async function RoomFillPage({
     // «Фото» у температуры — всем; автоввод показания со снимка — на платном тарифе.
     hasPaidPlan(organizationId),
     // «Фотофиксация показаний»: «Сфотографируйте показание» первым действием / выключена / фото обязательно.
-    getReadingPhotoSettings(organizationId),
+    getReadingPhotoSettings(organizationId, "climate_control"),
   ]);
 
   const document =
@@ -164,10 +190,10 @@ export default async function RoomFillPage({
     timezone,
   });
 
-  return (
+  return wrap(
     <RoomFillClient
       token={token}
-      journalTitle="Температура и влажность помещений"
+      journalTitle={customJournalName(customNames, CLIMATE_DOCUMENT_TEMPLATE_CODE) ?? messages.roomFill.page.journalTitle}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone, now)}
       room={{
@@ -191,7 +217,7 @@ export default async function RoomFillPage({
       ).map((employee) => ({
         id: employee.id,
         name: employee.name,
-        position: getUserDisplayTitle(employee),
+        position: position(employee),
         hasPin: Boolean(employee.qrPinHash),
       }))}
     />

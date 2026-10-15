@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, RotateCcw, TriangleAlert } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedHref } from "@/i18n/site-locale";
 
 const DEPLOYMENT_DESYNC_PATTERNS = [
   "ChunkLoadError",
@@ -35,6 +37,8 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("errorSurface");
   const shouldReload = isDeploymentDesyncError(error);
   const buildId = process.env.NEXT_PUBLIC_BUILD_ID || "dev";
   const errorId = error.digest || error.message.slice(0, 120);
@@ -77,11 +81,10 @@ export default function AppError({
             <RotateCcw className="size-7 animate-spin" />
           </div>
           <h1 className="mt-6 text-[clamp(1.5rem,4vw+1rem,2.25rem)] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Обновляем приложение
+            {t("updating")}
           </h1>
           <p className="mt-3 text-[14px] leading-relaxed text-[#6f7282]">
-            После деплоя браузер мог держать старый кусок интерфейса. Сейчас
-            загрузим свежую версию автоматически.
+            {t("updatingDescription")}
           </p>
         </div>
       </div>
@@ -95,24 +98,23 @@ export default function AppError({
           <TriangleAlert className="size-7" />
         </div>
         <h1 className="mt-6 text-[clamp(1.5rem,4vw+1rem,2.25rem)] font-semibold tracking-[-0.02em] text-[#0b1024]">
-          Что-то пошло не так
+          {t("errorTitle")}
         </h1>
         <p className="mt-3 text-[14px] leading-relaxed text-[#6f7282]">
-          Мы уже знаем о проблеме. Попробуйте повторить действие или
-          вернитесь на главную — обычно помогает.
+          {t("errorDescription")}
         </p>
         {error.digest ? (
           <p className="mt-2 font-mono text-[11px] text-[#9b9fb3]">
-            Код: {error.digest}
+            {t("code", { code: error.digest })}
           </p>
         ) : null}
         <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Link
-            href="/"
+            href={localizedHref("/", locale)}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <ArrowLeft className="size-4" />
-            На главную
+            {t("home")}
           </Link>
           <button
             type="button"
@@ -120,7 +122,7 @@ export default function AppError({
             className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
             <RotateCcw className="size-4" />
-            Повторить
+            {t("retry")}
           </button>
         </div>
       </div>

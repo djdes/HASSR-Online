@@ -1,6 +1,13 @@
 import { db } from "@/lib/db";
 import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
 import { hashInviteToken } from "@/lib/invite-tokens";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-session";
+import { cookies } from "next/headers";
+import { resolveLocale } from "@/i18n/locales";
+import { SITE_LOCALE_COOKIE } from "@/i18n/site-locale";
+import { loadMessages, pickMessages } from "@/i18n/messages";
+import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
 import { InviteAcceptClient } from "./invite-accept-client";
 
 export const dynamic = "force-dynamic";
@@ -23,12 +30,18 @@ type PageProps = { params: Promise<{ token: string }> };
 export default async function InviteAcceptPage({ params }: PageProps) {
   const { token } = await params;
   const raw = (token || "").trim();
+  const [session, cookieStore] = await Promise.all([
+    getServerSession(authOptions),
+    cookies(),
+  ]);
 
   let status: "valid" | "expired" | "used" | "not_found" = "not_found";
   let invite: { userId: string; expiresAt: Date } | null = null;
   let user: {
     name: string;
     email: string;
+    locale: string | null;
+    organizationLocale: string;
     organization: { name: string; kind: string; poolObjects: number };
     /** Сотрудник организации, приглашённый в мастер-кабинет: после входа — сразу в кабинет. */
     masterCabinet: { id: string; name: string; poolObjects: number } | null;
@@ -44,7 +57,8 @@ export default async function InviteAcceptPage({ params }: PageProps) {
             name: true,
             email: true,
             lastActiveOrganizationId: true,
-            organization: { select: { id: true, name: true, kind: true } },
+            locale: true,
+            organization: { select: { id: true, name: true, kind: true, locale: true } },
             organizationMemberships: {
               where: { organization: { kind: "directory" } },
               select: { organization: { select: { id: true, name: true } } },
@@ -82,20 +96,32 @@ export default async function InviteAcceptPage({ params }: PageProps) {
       user = {
         name: row.user.name,
         email: row.user.email,
+        locale: row.user.locale,
+        organizationLocale: org.locale,
         organization: { name: org.name, kind: org.kind, poolObjects },
         masterCabinet,
       };
     }
   }
 
+  const locale = resolveLocale({
+    authenticated: Boolean(session),
+    userLocale: session?.user.locale,
+    cookieLocale: cookieStore.get(SITE_LOCALE_COOKIE)?.value,
+    organizationLocale: session?.user.organizationLocale ?? user?.organizationLocale,
+  });
+  const messages = pickMessages(await loadMessages(locale), ["authInvite", "auth", "common", "language"]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f4f5fb] px-4">
-      <InviteAcceptClient
-        status={status}
-        token={raw}
-        invite={invite}
-        user={user}
-      />
-    </div>
+    <SiteLocaleProvider locale={locale} messages={messages}>
+      <div lang={locale} className="flex min-h-screen items-center justify-center bg-[#f4f5fb] px-4">
+        <InviteAcceptClient
+          status={status}
+          token={raw}
+          invite={invite}
+          user={user}
+        />
+      </div>
+    </SiteLocaleProvider>
   );
 }

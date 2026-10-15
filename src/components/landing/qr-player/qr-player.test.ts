@@ -6,6 +6,7 @@ import test from "node:test";
 import { DEFAULT_PIPELINE_FIELDS } from "@/lib/journal-default-pipelines";
 import { HEALTH_CONFIRMATIONS, healthDecision } from "@/lib/health-qr";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import messages from "@/i18n/messages/ru.json";
 
 import { formatClock, interpolate } from "./clock";
 import {
@@ -96,7 +97,33 @@ test("короткая подпись главы: есть, одна строк�
 });
 
 test("тексты экранов взяты из настоящих QR-форм", () => {
+  const localized: Partial<Record<keyof typeof UI, string>> = {
+    equipment: messages.equipmentFill.common.equipment,
+    equipmentWho: messages.equipmentFill.employee.label,
+    saveReading: messages.equipmentFill.reading.save,
+    written: messages.equipmentFill.common.recorded,
+    tempOut: messages.equipmentFill.reading.temperatureOutside,
+    managerWillKnow: messages.equipmentFill.reading.managerNotified,
+    uvWho: messages.equipmentFill.uv.operator,
+    uvOn: messages.equipmentFill.uv.switchOn,
+    uvOff: messages.equipmentFill.uv.switchOff,
+    uvOnDone: messages.equipmentFill.uv.onTitle,
+    uvOffDone: messages.equipmentFill.uv.offTitle,
+  };
+  const excerpts: Partial<Record<keyof typeof UI, string>> = {
+    readingOutDone: messages.equipmentFill.reading.deviationSaved,
+    uvRemaining: messages.equipmentFill.uv.remaining,
+  };
   for (const [key, text] of Object.entries(UI)) {
+    const caption = key as keyof typeof UI;
+    if (localized[caption] !== undefined) {
+      assert.equal(localized[caption], text, key);
+      continue;
+    }
+    if (excerpts[caption] !== undefined) {
+      assert.ok(excerpts[caption]!.startsWith(text), key);
+      continue;
+    }
     const file = UI_SOURCES[key as keyof typeof UI];
     assert.ok(read(file).includes(text), `«${text}» нет в ${file}`);
   }
@@ -104,7 +131,35 @@ test("тексты экранов взяты из настоящих QR-форм
 
 test("подписи граф бланков — как в генераторе PDF", () => {
   const pdf = read("src/lib/document-pdf.ts");
-  for (const label of Object.values(PDF)) assert.ok(pdf.includes(label), `«${label}» нет в document-pdf.ts`);
+  const localized = {
+    stamp: messages.journalPdf.system,
+    coldName: messages.coldEquipment.print.equipmentName,
+    coldTemp: messages.coldEquipment.print.temperature,
+    coldResponsible: messages.coldEquipment.print.responsible,
+    uvDate: messages.uvLampRuntime.date,
+    uvOn: messages.uvLampRuntime.timeOnShort,
+    uvOff: messages.uvLampRuntime.timeOffShort,
+    uvTotal: messages.uvLampRuntime.totalDuration,
+    uvWho: messages.uvLampRuntime.responsibleFullName,
+    fryerStart: messages.fryerOil.pdfDateStartTime,
+    fryerFat: messages.fryerOil.pdfFat,
+    fryerQualityStart: messages.fryerOil.pdfQualityStart,
+    fryerEquipment: messages.fryerOil.pdfEquipment,
+    fryerProduct: messages.fryerOil.pdfProduct,
+    fryerEnd: messages.fryerOil.pdfEndTime,
+    fryerQualityEnd: messages.fryerOil.pdfQualityEnd,
+    fryerLeftover: messages.fryerOil.pdfRemainingOil,
+    fryerCarry: messages.fryerOil.pdfCarryover,
+    fryerDisposed: messages.fryerOil.pdfDisposed,
+    fryerController: messages.fryerOil.pdfController,
+  };
+  for (const [key, label] of Object.entries(PDF)) {
+    if (key in localized) {
+      assert.equal(localized[key as keyof typeof localized], label, key);
+    } else {
+      assert.ok(pdf.includes(label), `«${label}» нет в document-pdf.ts`);
+    }
+  }
 });
 
 test("поля фритюра — из колонок пайплайна fryer_oil", () => {
@@ -139,7 +194,15 @@ test("напоминания 12:00 / 17:00 / 21:00 — ступени крона
 test("пресеты «Что сделали» — из формы отклонения", () => {
   const source = read("src/lib/qr-correction-presets.ts");
   const scene = read("src/components/landing/qr-player/scene.tsx");
-  for (const chip of ["Вызвал мастера", "Переложил продукты"]) {
-    assert.ok(source.includes(chip) && scene.includes(chip), chip);
+  const russian = JSON.parse(read("src/i18n/messages/ru.json"));
+  const english = JSON.parse(read("src/i18n/messages/en.json"));
+  const uzbek = JSON.parse(read("src/i18n/messages/uz.json"));
+  for (const [id, preset] of [["masterCalled", "Вызвал мастера"], ["productsMoved", "Переложил продукты"]]) {
+    assert.ok(source.includes(preset), `preset data: ${preset}`);
+    assert.ok(scene.includes(`id: "${id}"`) && scene.includes(`ui.${id}`), `scene behavior and translation key: ${id}`);
+    for (const catalog of [russian, english, uzbek]) {
+      assert.equal(typeof catalog.qrScene.ui[id], "string", `translated label: ${id}`);
+      assert.ok(catalog.qrScene.ui[id].length > 0, `non-empty translated label: ${id}`);
+    }
   }
 });

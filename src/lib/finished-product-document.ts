@@ -6,6 +6,7 @@ import {
 } from "@/lib/journal-columns";
 import { BRAKERAGE_TIME_OFFSETS_DEFAULT } from "@/lib/brakerage-times";
 import { modernizeGradeWording } from "@/lib/brakerage-grade-wording";
+import { formatBrakerageDateTime } from "@/lib/brakerage-assessment";
 import {
   formatRowSignatures,
   normalizeCommissionMembers as normalizeBrakerageCommission,
@@ -466,13 +467,13 @@ export function finishedProductReleaseText(row: Pick<FinishedProductDocumentRow,
 export function finishedProductCellText(
   row: FinishedProductDocumentRow,
   key: string,
-  options: { timeZone?: string } = {}
+  options: { timeZone?: string; fallbackSignatureName?: string } = {}
 ): string {
   switch (key) {
     case "production":
-      return row.productionDateTime;
+      return formatBrakerageDateTime(row.productionDateTime);
     case "rejection":
-      return row.rejectionTime;
+      return timeOf(row.rejectionTime);
     case "name":
       return row.productName;
     case "organoleptic":
@@ -481,7 +482,7 @@ export function finishedProductCellText(
       return finishedProductReleaseText(row);
     case "signatures": {
       const signatures = normalizeRowSignatures(row.signatures);
-      return signatures.length > 0 ? formatRowSignatures(signatures, options.timeZone, row) : "";
+      return signatures.length > 0 ? formatRowSignatures(signatures, options.timeZone, row) : row.productName.trim() ? options.fallbackSignatureName ?? "" : "";
     }
     case "portion":
       return row.portionWeight;
@@ -496,7 +497,7 @@ export function finishedProductCellText(
     case "release_allowed":
       return row.releaseAllowed === "no" ? "Нет" : "Да";
     case "courier":
-      return row.courierTransferTime;
+      return formatBrakerageDateTime(row.courierTransferTime);
     case "responsible":
       return row.responsiblePerson;
     case "inspector":

@@ -1,6 +1,7 @@
+"use client";
+
 import { Smartphone } from "lucide-react";
-import type { SiteLocale } from "@/i18n/site-locale";
-import { publicCopyFor } from "@/i18n/public-copy";
+import { useTranslations } from "next-intl";
 
 /**
  * Заглушка мобильного приложения.
@@ -11,24 +12,21 @@ import { publicCopyFor } from "@/i18n/public-copy";
  * местах легко забыть, а разъехавшиеся даты выглядят хуже, чем их
  * отсутствие.
  */
-export const MOBILE_APP_LAUNCH_DATE = "1 октября";
-
 const STORES = ["App Store", "Google Play"] as const;
 
 export function AppStoresTeaser({
   tone = "footer",
-  locale = "ru",
 }: {
-  locale?: SiteLocale;
   /// "footer" — компактно в подвале, "card" — в настройках уведомлений.
   tone?: "footer" | "card";
 }) {
+  const t = useTranslations("publicUi.appStores");
   const card = tone === "card";
 
   return (
     <div className={card ? "" : "mt-5"}>
       <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-        {locale === "en" ? "Mobile app" : "Приложение"}
+        {t("title")}
       </div>
       <p
         className={
@@ -36,7 +34,7 @@ export function AppStoresTeaser({
           (card ? "max-w-[520px]" : "max-w-[280px]")
         }
       >
-        {locale === "en" ? <>Employees will be able to keep logs and receive notifications on their phones. Launch: {publicCopyFor(locale)(MOBILE_APP_LAUNCH_DATE)}.</> : <>Сотрудники будут вести журналы и получать уведомления прямо на телефон. Запуск — {MOBILE_APP_LAUNCH_DATE}.</>}
+        {t("description", { launchDate: t("launchDate") })}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {STORES.map((store) => (
@@ -47,7 +45,7 @@ export function AppStoresTeaser({
             <Smartphone className="size-3.5" />
             {store}
             <span className="rounded-full bg-[#f5f6ff] px-1.5 py-0.5 text-[10.5px] text-[#3848c7]">
-              {locale === "en" ? "coming soon" : "скоро"}
+              {t("comingSoon")}
             </span>
           </span>
         ))}

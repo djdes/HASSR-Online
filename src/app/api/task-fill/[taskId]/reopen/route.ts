@@ -32,7 +32,7 @@ export async function POST(
   const { taskId: taskIdRaw } = await ctx.params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId) || taskId <= 0) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
 
   let parsed;
@@ -41,11 +41,11 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Invalid body" },
+        { errorCode: "invalidBody", error: err.issues[0]?.message ?? "Invalid body" },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return NextResponse.json({ errorCode: "invalidBody", error: "Invalid body" }, { status: 400 });
   }
 
   const candidates = await db.tasksFlowTaskLink.findMany({
@@ -53,7 +53,7 @@ export async function POST(
     include: { integration: true },
   });
   if (candidates.length === 0) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "taskNotFound", error: "Task not found" }, { status: 404 });
   }
   let link: (typeof candidates)[number] | null = null;
   for (const c of candidates) {
@@ -64,7 +64,7 @@ export async function POST(
     }
   }
   if (!link) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
 
   const template = await db.journalTemplate.findFirst({
@@ -72,13 +72,13 @@ export async function POST(
     select: { id: true },
   });
   if (!template) {
-    return NextResponse.json({ error: "Template not found" }, { status: 400 });
+    return NextResponse.json({ errorCode: "templateNotFound", error: "Template not found" }, { status: 400 });
   }
 
   const actorId = extractEmployeeId(link.rowKey);
   if (!actorId) {
     return NextResponse.json(
-      { error: "Не удалось определить сотрудника" },
+      { errorCode: "employeeUnknown", error: "Не удалось определить сотрудника" },
       { status: 400 }
     );
   }
@@ -93,7 +93,7 @@ export async function POST(
 
   if (!result.ok) {
     return NextResponse.json(
-      { error: "Журнал не был закрыт за сегодня" },
+      { errorCode: "notClosed", error: "Журнал не был закрыт за сегодня" },
       { status: 404 }
     );
   }

@@ -1,0 +1,17 @@
+{
+  "locale":"uz","sourceHash":"62945a032b9b58c6f006d90ba760820d0afa3ce161beb040f0e1bec517a8a898",
+  "title":"Joriy va umumiy tozalash: jurnalga nimalarni yozish kerak",
+  "excerpt":"Kundalik, joriy va umumiy tozalash — jadvali hamda ishlari ro‘yxati alohida bo‘lgan uch xil jarayon. Inspektor ularni farqlashi uchun har bir qaydga nimalar yozish kerakligini bilib oling.",
+  "tags":["Tozalash","Jurnallar"],
+  "body":[
+    {"type":"p","text":"“Tozalab qo‘ydik, bo‘ldi” degan yondashuv ishlamaydi. Sanitariya me’yorlarida har biri o‘z jadvali va ishlari ro‘yxatiga ega uch xil jarayon bor. Jurnallarda ularni ko‘pincha aralashtirib yuborishadi, natijada qaydning mazmuni yo‘qoladi."},
+    {"type":"h2","text":"Kundalik tozalash (smena davomida)"},
+    {"type":"p","text":"Ish yuzalarini artish, chiqindini olib chiqish, salfetkalarni almashtirish va anjomlarni sanitariya ishlovidan o‘tkazish. Mas’ul — oshpaz yoki ofitsiant; jurnalga ish bajarilgani belgilanadi."},
+    {"type":"h2","text":"Joriy tozalash (smena oxirida)"},
+    {"type":"p","text":"Pol, qo‘l yetadigan balandlikkacha devorlar, uskunalar, rakovinalar va yuvish vannalarini tozalash. Yuvish va dezinfeksiya vositalari qo‘llanadi. Vaqt, vosita, konsentratsiya va imzo qayd etiladi."},
+    {"type":"h2","text":"Umumiy tozalash (oyda bir marta yoki jadval bo‘yicha)"},
+    {"type":"p","text":"To‘liq sanitariya ishlovi: devorlarni shiftgacha, sovutkichlarning ichki yuzalarini, tortish shkaflarini, shiftlarni va shamollatish panjaralarini tozalash. Rejani rahbar tasdiqlaydi. Bajarilgan ishlar hududlar bo‘yicha dalolatnomada qayd etiladi."},
+    {"type":"callout","tone":"info","title":"Jadval qoidasi","text":"Umumiy tozalash — “qo‘l bo‘shaganda” qilinadigan ish emas, balki aniq sanasi ko‘rsatilgan jadval bandi. Jadvalning yo‘qligi alohida kamchilik hisoblanadi."},
+    {"type":"p","text":"Elektron jurnalda tozalashning uch turi alohida shablonlarda yuritiladi: kundalik tozalash bir marta bosib belgilanadi, joriy tozalash chek-list bo‘yicha bajariladi, umumiy tozalash esa hududlar va imzolar ko‘rsatilgan hujjatni ochadi."}
+  ]
+}

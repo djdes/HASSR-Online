@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { CAPA_TEMPLATES, CAPA_CATEGORIES, CAPA_PRIORITIES, capaErrorKey, readCapaFormData } from "./capa-presentation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,104 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSubmitLock } from "@/lib/use-submit-lock";
-
-/**
- * Pre-set CAPA scenarios — частые случаи, чтобы менеджер не писал
- * с нуля. После выбора подставляются title/description/priority/
- * category/slaHours, можно редактировать.
- */
-type CapaTemplate = {
-  id: string;
-  label: string;
-  title: string;
-  description: string;
-  priority: string;
-  category: string;
-  slaHours: string;
-};
-
-const CAPA_TEMPLATES: CapaTemplate[] = [
-  {
-    id: "temp_high",
-    label: "Превышение t° холодильника > 6 ч",
-    title: "Превышение t° холодильника",
-    description:
-      "Холодильник [номер] показывал температуру выше нормы (+2..+6°C) более 6 часов подряд.\n\nДата: [дата]\nВремя: [время начала] — [время фиксации]\nЗафиксировано: [°C]\nДопуск: +2..+6°C",
-    priority: "high",
-    category: "temperature",
-    slaHours: "24",
-  },
-  {
-    id: "rejected_supply",
-    label: "Бракованная партия от поставщика",
-    title: "Бракованная партия — [продукт]",
-    description:
-      "Входной контроль выявил несоответствие принимаемой партии:\n\nПродукт: [название]\nПоставщик: [имя]\nПричина брака: [упаковка / срок / органолептика / маркировка]\nКол-во: [кг]\nДействия: партия возвращена / уничтожена / на складе под изоляцией",
-    priority: "high",
-    category: "quality",
-    slaHours: "24",
-  },
-  {
-    id: "hygiene_violation",
-    label: "Нарушение гигиены сотрудником",
-    title: "Нарушение санитарных правил — [имя]",
-    description:
-      "Сотрудник [имя] не допущен к работе из-за:\n\n— симптомов ОРВИ / ЖКТ\n— ран на руках\n— просроченной медкнижки\n— несоблюдения формы\n\nПринятые меры: [отстранение / медосмотр / замена]",
-    priority: "high",
-    category: "hygiene",
-    slaHours: "24",
-  },
-  {
-    id: "ccp_breach",
-    label: "Выход за пределы ККТ",
-    title: "ККТ за пределами критических лимитов",
-    description:
-      "Критическая контрольная точка [название] вышла за пределы:\n\nФакт: [значение]\nДопуск: [диапазон]\nПродукция за этот период: [партии]\nДействия: продукция изолирована / отбракована / переработана",
-    priority: "critical",
-    category: "process",
-    slaHours: "2",
-  },
-  {
-    id: "equipment_failure",
-    label: "Поломка оборудования",
-    title: "Поломка [оборудование]",
-    description:
-      "Оборудование [название] вышло из строя:\n\nДата: [дата]\nХарактер поломки: [описание]\nПричина: [предполагаемая]\nПринятые меры: ремонт / замена / временный обход\nИсполнитель: [подрядчик]",
-    priority: "medium",
-    category: "equipment",
-    slaHours: "48",
-  },
-  {
-    id: "pest_sighting",
-    label: "Обнаружены вредители",
-    title: "Обнаружены [тип] вредителей",
-    description:
-      "На территории кухни / склада обнаружены признаки наличия:\n\nГде: [помещение]\nЧто: [грызуны / насекомые / следы]\nДата: [дата]\nДействия: вызвана дез-станция [имя], проведена обработка, повторный осмотр через 7 дней",
-    priority: "high",
-    category: "process",
-    slaHours: "24",
-  },
-  {
-    id: "glass_breakage",
-    label: "Разбитие стекла / хрупкого пластика",
-    title: "Разбитие [предмет] на производстве",
-    description:
-      "На производстве разбито:\n\nЧто: [предмет]\nГде: [зона]\nДата/время: [дата]\nДействия: зона изолирована, продукция в радиусе 3 м проверена и [списана / допущена]; осколки собраны и утилизированы.",
-    priority: "high",
-    category: "quality",
-    slaHours: "24",
-  },
-  {
-    id: "training_overdue",
-    label: "Просрочка обучения сотрудников",
-    title: "Просрочено обучение по СанПиН",
-    description:
-      "Сотрудники с просроченным обучением:\n\n[ФИО, должность, дата истечения]\n\nЗапланировано обучение: [дата].\nДо обучения отстранены от работы с продуктом.",
-    priority: "medium",
-    category: "hygiene",
-    slaHours: "48",
-  },
-];
 
 /**
  * Срок устранения, который подразумевает сам приоритет — ровно те
@@ -134,13 +38,14 @@ interface Props {
 }
 
 export function CapaForm({ users }: Props) {
+  const t = useTranslations("capaManagement");
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
   // Двойной тап по «Создать нарушение» заводил две карточки: `useState`
   // применяется к следующему рендеру, и оба клика успевали отправить POST.
   const { busy: isSubmitting, acquire, release } = useSubmitLock();
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ReturnType<typeof capaErrorKey> | null>(null);
   const [priority, setPriority] = useState(DEFAULT_PRIORITY);
   const [category, setCategory] = useState("other");
   // Срок по умолчанию — из приоритета по умолчанию, одним словарём.
@@ -155,8 +60,8 @@ export function CapaForm({ users }: Props) {
     setTemplateId(id);
     const tpl = CAPA_TEMPLATES.find((t) => t.id === id);
     if (!tpl) return;
-    if (titleRef.current) titleRef.current.value = tpl.title;
-    if (descRef.current) descRef.current.value = tpl.description;
+    if (titleRef.current) titleRef.current.value = t(`templates.${tpl.id}.title`);
+    if (descRef.current) descRef.current.value = t(`templates.${tpl.id}.description`);
     setPriority(tpl.priority);
     setCategory(tpl.category);
     setSlaHours(tpl.slaHours);
@@ -173,7 +78,7 @@ export function CapaForm({ users }: Props) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!acquire()) return;
-    setError("");
+    setError(null);
 
     const form = new FormData(e.currentTarget);
 
@@ -181,24 +86,17 @@ export function CapaForm({ users }: Props) {
       const res = await fetch("/api/capa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.get("title"),
-          description: form.get("description") || null,
-          priority,
-          category,
-          slaHours: Number(slaHours),
-          assignedToId: assignedToId || null,
-          dueDate: form.get("dueDate") || null,
-        }),
+        body: JSON.stringify(readCapaFormData(form, { priority, category, slaHours, assignedToId })),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Ошибка");
+        const data = await res.json().catch(() => null);
+        setError(capaErrorKey(data?.error, res.status, data?.code));
+        return;
       }
       const ticket = await res.json();
       router.push(`/capa/${ticket.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      setError("saveFailed");
     } finally {
       release();
     }
@@ -206,75 +104,65 @@ export function CapaForm({ users }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{t(`errors.${error}`)}</p>}
 
       <div className="space-y-2">
-        <Label>Шаблон (опционально)</Label>
+        <Label htmlFor="capa-template">{t("form.template")}</Label>
         <Select value={templateId} onValueChange={applyTemplate}>
-          <SelectTrigger>
-            <SelectValue placeholder="Выберите типовой сценарий..." />
+          <SelectTrigger id="capa-template">
+            <SelectValue placeholder={t("form.templatePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            {CAPA_TEMPLATES.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.label}
+            {CAPA_TEMPLATES.map((template) => (
+              <SelectItem key={template.id} value={template.id}>
+                {t(`templates.${template.id}.label`)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-[12px] text-[#6f7282]">
-          После выбора шаблона поля ниже заполнятся — отредактируйте под
-          конкретный инцидент.
+          {t("form.templateHint")}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="title">Название проблемы *</Label>
+        <Label htmlFor="title">{t("form.title")}</Label>
         <Input
           id="title"
           name="title"
           required
           ref={titleRef}
-          placeholder="Кратко опишите отклонение"
+          placeholder={t("form.titlePlaceholder")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Описание</Label>
+        <Label htmlFor="description">{t("fields.description")}</Label>
         <Textarea
           id="description"
           name="description"
           ref={descRef}
           rows={6}
-          placeholder="Подробное описание: что произошло, где, когда"
+          placeholder={t("form.descriptionPlaceholder")}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="space-y-2">
-          <Label>Приоритет</Label>
+          <Label htmlFor="capa-priority">{t("form.priority")}</Label>
           <Select value={priority} onValueChange={handlePriorityChange}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="capa-priority"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="critical">Критический (2ч)</SelectItem>
-              <SelectItem value="high">Высокий (24ч)</SelectItem>
-              <SelectItem value="medium">Средний (48ч)</SelectItem>
-              <SelectItem value="low">Низкий (72ч)</SelectItem>
+              {CAPA_PRIORITIES.map(value => <SelectItem key={value} value={value}>{t(`prioritySla.${value}`, { hours: Number(PRIORITY_SLA_HOURS[value]) })}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Категория</Label>
+          <Label htmlFor="capa-category">{t("form.category")}</Label>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="capa-category"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="temperature">Температура</SelectItem>
-              <SelectItem value="hygiene">Гигиена</SelectItem>
-              <SelectItem value="packaging">Упаковка</SelectItem>
-              <SelectItem value="quality">Качество</SelectItem>
-              <SelectItem value="process">Процесс</SelectItem>
-              <SelectItem value="equipment">Оборудование</SelectItem>
-              <SelectItem value="other">Другое</SelectItem>
+              {CAPA_CATEGORIES.map(value => <SelectItem key={value} value={value}>{t(`categories.${value}`)}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -282,7 +170,7 @@ export function CapaForm({ users }: Props) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="space-y-2">
-          <Label>Срок устранения, часов</Label>
+          <Label htmlFor="capa-sla">{t("form.deadline")}</Label>
           <Select
             value={slaHours}
             onValueChange={(next) => {
@@ -290,19 +178,16 @@ export function CapaForm({ users }: Props) {
               setSlaHours(next);
             }}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="capa-sla"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="2">2 часа</SelectItem>
-              <SelectItem value="24">24 часа</SelectItem>
-              <SelectItem value="48">48 часов</SelectItem>
-              <SelectItem value="72">72 часа</SelectItem>
+              {[2, 24, 48, 72].map(hours => <SelectItem key={hours} value={String(hours)}>{t("hours", { hours })}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Ответственный</Label>
+          <Label htmlFor="capa-assignee">{t("form.assignee")}</Label>
           <Select value={assignedToId} onValueChange={setAssignedToId}>
-            <SelectTrigger><SelectValue placeholder="Выберите..." /></SelectTrigger>
+            <SelectTrigger id="capa-assignee"><SelectValue placeholder={t("form.select")} /></SelectTrigger>
             <SelectContent>
               {users.map((u) => (
                 <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
@@ -314,10 +199,10 @@ export function CapaForm({ users }: Props) {
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Создание..." : "Создать нарушение"}
+          {isSubmitting ? t("form.creating") : t("form.create")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/capa")}>
-          Отмена
+          {t("form.cancel")}
         </Button>
       </div>
     </form>

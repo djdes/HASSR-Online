@@ -32,10 +32,10 @@ const TEMPLATE_CODE = STAFF_TRAINING_TEMPLATE_CODE;
 
 function buildForm(): TaskFormSchema {
   const fields: TaskFormField[] = [
-    { type: "select", key: "topic", label: "Тема инструктажа", required: true, options: TRAINING_TOPICS.map((t) => ({ value: t.value, label: t.label })) },
+    { type: "select", key: "topic", label: "Тема инструктажа", required: true, options: TRAINING_TOPICS.map((t) => ({ value: t.value, label: t.label, presentationKey: `options.staffTraining.topics.${t.value}` })) },
     { type: "select", key: "trainingType", label: "Вид инструктажа", required: true, options: TRAINING_TYPES.map((t) => ({ value: t.value, label: t.label })), defaultValue: "primary" },
     { type: "text", key: "instructorName", label: "Кто провёл инструктаж", required: true, maxLength: 200, placeholder: "ФИО инструктора" },
-    { type: "select", key: "attestationResult", label: "Результат аттестации", required: false, options: [{ value: "", label: "—" }, ...ATTESTATION_RESULTS.map((r) => ({ value: r.value, label: r.label }))], defaultValue: "" },
+    { type: "select", key: "attestationResult", label: "Результат аттестации", required: false, options: [{ value: "", label: "—", presentationKey: "options.staffTraining.attestation.empty" }, ...ATTESTATION_RESULTS.map((r) => ({ value: r.value, label: r.label, presentationKey: `options.staffTraining.attestation.${r.value}` }))], defaultValue: "" },
     { type: "text", key: "unscheduledReason", label: "Причина внепланового инструктажа", required: false, maxLength: 300, placeholder: "Заполняется только для внепланового" },
   ];
   return {

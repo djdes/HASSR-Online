@@ -20,14 +20,14 @@ export async function POST(request: Request, { params }: RouteParams) {
   const { token } = await params;
   const raw = (token || "").trim();
   if (!raw) {
-    return NextResponse.json({ error: "Ссылка некорректна" }, { status: 400 });
+    return NextResponse.json({ error: "Ссылка некорректна", code: "invalid_invite" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
   const password = typeof body?.password === "string" ? body.password : "";
   if (password.length < 6) {
     return NextResponse.json(
-      { error: "Пароль должен быть не короче 6 символов" },
+      { error: "Пароль должен быть не короче 6 символов", code: "invalid_password" },
       { status: 400 }
     );
   }
@@ -40,7 +40,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   if (!invite || invite.usedAt || invite.expiresAt.getTime() < Date.now()) {
     return NextResponse.json(
-      { error: "Ссылка недействительна" },
+      { error: "Ссылка недействительна", code: "invalid_invite" },
       { status: 400 }
     );
   }

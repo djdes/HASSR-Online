@@ -3,7 +3,13 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { getAllOrgMetrics } from "@/lib/org-metrics";
 import { MetricsTable } from "./metrics-table";
 import { SeedDemoButton } from "./seed-demo-button";
-import { EXTRA_USER_PRICE_RUB, FREE_SEATS_LABEL, SUBSCRIPTION_SEATS_LABEL } from "@/lib/plan-catalog";
+import { EXTRA_USER_PRICE_RUB, SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
+import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { formatNumber } from "@/i18n/locales";
+import { loadMessages } from "@/i18n/messages";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +17,7 @@ const PLATFORM_ORG_ID = process.env.PLATFORM_ORG_ID || "platform";
 
 export default async function RootMetricsPage() {
   await requireRoot();
+  const [t, locale, sourceMessages] = await Promise.all([getTranslations("rootMetrics"), getSiteLocale(), loadMessages("ru")]);
 
   // Один момент времени на весь рендер: и окна 7/14/30 дней в метриках,
   // и относительные подписи «N дн назад» в таблице считаются от него.
@@ -34,6 +41,7 @@ export default async function RootMetricsPage() {
   const totalBalance = sorted.reduce((s, m) => s + m.balanceRub, 0);
 
   return (
+    <DomainMessagesBoundary namespaces={["rootMetrics", "settingsManagement", "journals"]}>
     <div className="space-y-6">
       <div>
         <div className="flex items-start gap-4">
@@ -43,23 +51,12 @@ export default async function RootMetricsPage() {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-[clamp(1.625rem,1.5vw+1.2rem,2rem)] font-semibold tracking-[-0.02em] text-[#0b1024]">
-                Метрики платформы
+                {t("page.title")}
               </h1>
               <SeedDemoButton />
             </div>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Активность, retention и выручка по всем организациям.
-              Расчётный MRR — `quoteSubscription(activeUsers)` по единой
-              модели: {FREE_SEATS_LABEL} — 0 ₽, {SUBSCRIPTION_SEATS_LABEL} — одна
-              подписка, дальше +{EXTRA_USER_PRICE_RUB} ₽ за каждого; реальный — 0 для trial-org. Trend — % изменения 7-дневной
-              активности vs предыдущая неделя. Email — адрес того, кто
-              зарегистрировал организацию. Заголовки колонок кликабельны,
-              поиск ищет по части адреса или названия. Клик по числу
-              записей раскрывает панель: какие журналы организация
-              реально ведёт и кто их заполняет. IP пишется при
-              входе с 26.08.2026; более ранние адреса подтянуты из
-              журнала действий, поэтому у тех, кто с тех пор не заходил
-              и ничего не администрировал, колонка пустая.
+              {t("page.summary")} {t("page.pricing", { freeSeats: FREE_MAX_USERS, subscriptionSeats: SUBSCRIPTION_MAX_USERS, extraSeatPrice: EXTRA_USER_PRICE_RUB })} {t("page.tableHelp")} {t("page.ipHistory", { since: "26.08.2026" })}
             </p>
           </div>
         </div>
@@ -67,29 +64,30 @@ export default async function RootMetricsPage() {
 
       {/* Aggregate stats */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <StatCard label="Организаций" value={sorted.length} />
+        <StatCard label={t("stats.organizations")} value={formatNumber(locale, sorted.length)} />
         <StatCard
-          label="Активных за 7 дней"
-          value={activeOrgs}
-          hint={`из ${sorted.length}`}
+          label={t("stats.active7d")}
+          value={formatNumber(locale, activeOrgs)}
+          hint={t("stats.ofTotal", { count: sorted.length })}
         />
-        <StatCard label="Сотрудников всего" value={totalActiveUsers} />
-        <StatCard label="Записей за 7 дней" value={totalEntries7d} />
+        <StatCard label={t("stats.employees")} value={formatNumber(locale, totalActiveUsers)} />
+        <StatCard label={t("stats.entries7d")} value={formatNumber(locale, totalEntries7d)} />
         <StatCard
-          label="Баллов на балансах"
-          value={`${totalBalance.toLocaleString("ru-RU")} ₽`}
-          hint="обязательства платформы"
+          label={t("stats.balance")}
+          value={t("format.rubles", { amount: totalBalance })}
+          hint={t("stats.liabilities")}
         />
         <StatCard
-          label="MRR"
-          value={`${totalActualMrr.toLocaleString("ru-RU")} ₽`}
-          hint={`потенциал: ${totalPotentialMrr.toLocaleString("ru-RU")} ₽`}
+          label={t("stats.mrr")}
+          value={t("format.rubles", { amount: totalActualMrr })}
+          hint={t("stats.potential", { amount: totalPotentialMrr })}
           accent
         />
       </div>
 
-      <MetricsTable rows={sorted} now={refDate.getTime()} />
+      <MetricsTable rows={sorted} now={refDate.getTime()} sourceJournalNames={sourceMessages.journals.names} />
     </div>
+    </DomainMessagesBoundary>
   );
 }
 

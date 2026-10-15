@@ -1,5 +1,8 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { journalApiErrors } from "@/lib/journal-api-errors";
 import { NextResponse } from "next/server";
-import { isBrakerageJournalCode, mergeBrakerageConfig, parseKnownRowIds } from "@/lib/brakerage-row-merge";
+import { BrakerageInputError, isBrakerageJournalCode, mergeBrakerageConfig, parseKnownRowIds } from "@/lib/brakerage-row-merge";
+import { readOrgCommission } from "@/lib/brakerage-commission-org";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { isCommissionJournalCode, unsignedRows } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
@@ -24,6 +27,7 @@ import {
 } from "@/lib/sanitation-day-document";
 import {
   CLEANING_DOCUMENT_TEMPLATE_CODE,
+  CleaningConfigError,
   validateCleaningDocumentConfig,
   type CleaningDocumentConfig,
 } from "@/lib/cleaning-document";
@@ -51,7 +55,6 @@ import { canWriteJournal, hasJournalAccess } from "@/lib/journal-acl";
 import {
   ORG_ROSTER_WHERE,
   ORG_SIGNER_WHERE,
-  RESPONSIBLE_NOT_IN_ORG_ERROR,
   resolveResponsibleChoice,
 } from "@/lib/journal-roster";
 import { findOrgUser } from "@/lib/journal-roster-db";
@@ -88,12 +91,13 @@ function isValidDate(value: Date) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  const errors = await journalApiErrors(request, session?.user);
+  if (!session) return errors.response("UNAUTHORIZED");
 
   const doc = await db.journalDocument.findUnique({
     where: { id },
@@ -106,7 +110,7 @@ export async function GET(
   });
 
   if (!doc || doc.organizationId !== getActiveOrgId(session)) {
-    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    return errors.response("DOCUMENT_NOT_FOUND");
   }
 
   // ACL: документы могут содержать PII (med_books — мед-книжки,
@@ -118,7 +122,7 @@ export async function GET(
     isRoot: session.user.isRoot === true,
   };
   if (doc.template?.code && !(await hasJournalAccess(aclActor, doc.template.code))) {
-    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    return errors.response("DOCUMENT_NOT_FOUND");
   }
 
   // Load org employees for the grid rows
@@ -140,17 +144,22 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  const errors = await journalApiErrors(request, session?.user);
+  if (!session) return errors.response("UNAUTHORIZED");
 
   const doc = await db.journalDocument.findUnique({ where: { id } });
   if (!doc || doc.organizationId !== getActiveOrgId(session)) {
-    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    return errors.response("DOCUMENT_NOT_FOUND");
   }
 
   // Оборванный или пустой запрос — это ошибка клиента, а не 500 сервера.
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "Пустой запрос" }, { status: 400 });
+    return errors.response("EMPTY_REQUEST");
+  }
+  if (body.autoFill === true && doc.autoFill !== true) {
+    const blocked = await rejectJournalAutomation(doc.organizationId);
+    if (blocked) return blocked;
   }
   const data: Record<string, unknown> = {};
   const needsTemplateLookup =
@@ -194,7 +203,7 @@ export async function PATCH(
         template!.code
       ));
     if (!canEditConfig) {
-      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+      return errors.response("MANAGEMENT_REQUIRED");
     }
   }
   // Ростер документа — живые сотрудники этой организации без ROOT: только
@@ -239,7 +248,7 @@ export async function PATCH(
       orgUserIds: new Set(allUsers.map((user) => user.id)),
     });
     if ("error" in choice) {
-      return NextResponse.json(RESPONSIBLE_NOT_IN_ORG_ERROR, { status: 400 });
+      return errors.response("responsible-not-in-org");
     }
   }
 
@@ -258,28 +267,22 @@ export async function PATCH(
       "dateTo",
     ].some((key) => body[key] !== undefined)
   ) {
-    return NextResponse.json(
-      { error: "Закрытый документ нельзя редактировать до перевода в активные" },
-      { status: 400 }
-    );
+    return errors.response("DOCUMENT_CLOSED");
   }
 
   if (body.status !== undefined && !["active", "closed"].includes(body.status)) {
-    return NextResponse.json({ error: "Некорректный статус документа" }, { status: 400 });
+    return errors.response("INVALID_DOCUMENT_STATUS");
   }
 
   let nextDateFrom = body.dateFrom !== undefined ? new Date(body.dateFrom) : new Date(doc.dateFrom);
   let nextDateTo = body.dateTo !== undefined ? new Date(body.dateTo) : new Date(doc.dateTo);
 
   if (!isValidDate(nextDateFrom) || !isValidDate(nextDateTo)) {
-    return NextResponse.json({ error: "Некорректный период документа" }, { status: 400 });
+    return errors.response("INVALID_DOCUMENT_PERIOD");
   }
 
   if (nextDateFrom > nextDateTo) {
-    return NextResponse.json(
-      { error: "Дата начала не может быть позже даты окончания" },
-      { status: 400 }
-    );
+    return errors.response("REVERSED_DOCUMENT_PERIOD");
   }
 
   // Защита от случайного сжатия документа.
@@ -395,13 +398,7 @@ export async function PATCH(
             applyRoomResponsiblesToConfig(rawCleaningConfig, roomsForValidation),
           );
         } catch (err) {
-          return NextResponse.json(
-            {
-              error:
-                err instanceof Error ? err.message : "Невалидная конфигурация",
-            },
-            { status: 400 },
-          );
+          return errors.response(err instanceof CleaningConfigError ? err.code : "INVALID_DOCUMENT_CONFIG");
         }
       }
       data.config = normalizedDocumentState.config;
@@ -459,14 +456,7 @@ export async function PATCH(
       }
     );
     if (pending.length > 0) {
-      return NextResponse.json(
-        {
-          error: `Нельзя закончить журнал: ${pending.length} ${pending.length === 1 ? "строка ждёт" : "строк ждут"} подписи комиссии`,
-          code: "unsigned-rows",
-          unsigned: pending.slice(0, 20).map((row) => String(row.productName || row.productionDateTime || "без названия")),
-        },
-        { status: 409 }
-      );
+      return errors.unsignedRows(pending);
     }
   }
   if (body.status !== undefined) data.status = body.status;
@@ -570,13 +560,18 @@ export async function PATCH(
   // Бракеражи: строки, добавленные по QR и подписанные комиссией, пока
   // страница была открыта, не затираются — слияние под блокировкой
   // документа (см. brakerage-row-merge.ts).
-  const updated =
+  let updated;
+  const orgCommissionMember = template?.code === "finished_product" && (await readOrgCommission(doc.organizationId, template.code)).some(member => member.employeeId === session.user.id);
+  try {
+  updated =
     isBrakerageJournalCode(template?.code) && data.config !== undefined
       ? await withDocumentConfigLock(id, async (locked) => ({
           config: mergeBrakerageConfig({
             incoming: data.config,
             current: locked.config,
             knownRowIds: parseKnownRowIds((body as { knownRowIds?: unknown }).knownRowIds),
+            finishedProductActorId: template?.code === "finished_product" ? session.user.id : undefined,
+            finishedProductCommissionMember: orgCommissionMember,
           }) as Prisma.InputJsonValue,
           data: { ...data, config: undefined },
           result: true,
@@ -594,6 +589,10 @@ export async function PATCH(
           result: true,
         })).then(() => db.journalDocument.findUniqueOrThrow({ where: { id } }))
       : await db.journalDocument.update({ where: { id }, data });
+  } catch (error) {
+    if (error instanceof BrakerageInputError) return NextResponse.json({ error: error.message }, { status: error.status });
+    throw error;
+  }
 
   // Fire-and-forget TasksFlow sync for journals whose adapter is
   // registered (see src/lib/tasksflow-adapters/index.ts). Sync runs
@@ -647,20 +646,21 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  const errors = await journalApiErrors(request, session?.user);
+  if (!session) return errors.response("UNAUTHORIZED");
 
   if (!isManagementRole(session.user.role)) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return errors.response("MANAGEMENT_REQUIRED");
   }
 
   const doc = await db.journalDocument.findUnique({ where: { id } });
   if (!doc || doc.organizationId !== getActiveOrgId(session)) {
-    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    return errors.response("DOCUMENT_NOT_FOUND");
   }
 
   // Задачи TasksFlow этого документа: локальные ссылки удаляем сами, а

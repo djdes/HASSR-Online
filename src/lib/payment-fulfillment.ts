@@ -12,6 +12,7 @@ import {
   prepareClosingDocumentEmail,
 } from "@/lib/closing-documents/service";
 import { sendPaymentReceiptEmail } from "@/lib/email";
+import { resolveLocale } from "@/i18n/locales";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { describeHardwareConfig } from "@/lib/hardware-pricing";
 import { formatRub } from "@/lib/tariffs";
@@ -331,6 +332,9 @@ export async function notifyAboutPayment(args: {
     emitWebhook(result.organizationId, "payment.paid", { orderId: order.id, amountRub: amount, description: order.description, subscriptionEnd: result.subscriptionEnd ? new Date(result.subscriptionEnd).toISOString() : null });
   }
 
+  const recipient = result.organizationId ? await db.user.findFirst({ where: { email: order.email, organizationId: result.organizationId }, select: { locale: true } }) : null;
+  const organizationLocale = result.organizationId ? await db.organization.findUnique({ where: { id: result.organizationId }, select: { locale: true } }) : null;
+  const locale = resolveLocale({ authenticated: Boolean(recipient), userLocale: recipient?.locale, organizationLocale: organizationLocale?.locale });
   const sent = await sendPaymentReceiptEmail({
     to: order.email,
     amountRub: amount,
@@ -341,6 +345,7 @@ export async function notifyAboutPayment(args: {
     organizationId: result.organizationId,
     pointsSpent,
     closingDocument,
+    locale,
   }).catch((err) => {
     console.error("sendPaymentReceiptEmail failed", err);
     return false;

@@ -1,5 +1,8 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, Check, Info, Lock, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
@@ -13,7 +16,6 @@ import {
   JOURNAL_COLUMN_LABEL_MAX,
   JOURNAL_CUSTOM_COLUMNS_MAX,
   JOURNAL_FIELD_TYPES,
-  JOURNAL_FIELD_TYPE_LABEL,
   JOURNAL_RATING_MAX_DEFAULT,
   JOURNAL_RATING_MAX_MAX,
   JOURNAL_RATING_MAX_MIN,
@@ -64,6 +66,7 @@ export function renameColumn(columns: JournalColumnsConfig, key: string, label: 
 
 function ColumnRow({
   column,
+  display = column,
   onToggle,
   onRename,
   onMustFill,
@@ -74,6 +77,7 @@ function ColumnRow({
   disabled,
 }: {
   column: ResolvedJournalColumn;
+  display?: ResolvedJournalColumn;
   /** Сдвиг в порядке показа; `null` у крайней колонки. */
   onMove?: { up: (() => void) | null; down: (() => void) | null };
   /** Это последняя видимая колонка — скрыть нельзя, таблица не может быть пустой. */
@@ -87,13 +91,12 @@ function ColumnRow({
   onRemove?: () => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations("journalControls");
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(column.label);
+  const originalDraft = column.label === column.defaultLabel && !column.custom ? "" : column.label;
+  const [draft, setDraft] = useState(originalDraft);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!editing) setDraft(column.label);
-  }, [column.label, editing]);
   useEffect(() => {
     if (editing) inputRef.current?.select();
   }, [editing]);
@@ -115,13 +118,14 @@ function ColumnRow({
         checked={!column.hidden}
         disabled={disabled || Boolean(column.unavailable) || (lastVisible === true && !column.hidden)}
         onCheckedChange={(value) => onToggle(value !== true)}
-        aria-label={column.hidden ? `Показать колонку «${column.label}»` : `Скрыть колонку «${column.label}»`}
+        aria-label={column.hidden ? t("columnSettings.show", { label: display.label }) : t("columnSettings.hide", { label: display.label })}
       />
       <div className="min-w-0 flex-1">
         {editing ? (
           <input
             ref={inputRef}
             value={draft}
+            placeholder={display.defaultLabel}
             maxLength={JOURNAL_COLUMN_LABEL_MAX}
             onChange={(event) => setDraft(event.target.value)}
             onBlur={commit}
@@ -131,16 +135,16 @@ function ColumnRow({
                 commit();
               } else if (event.key === "Escape") {
                 event.preventDefault();
-                setDraft(column.label);
+                setDraft(originalDraft);
                 setEditing(false);
               }
             }}
             className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-            aria-label="Название колонки"
+            aria-label={t("columnSettings.name")}
           />
         ) : (
           <div className={cn("text-[14px] leading-snug", column.hidden ? "text-[#9b9fb3]" : "text-[#0b1024]")}>
-            {column.label}
+            {display.label}
           </div>
         )}
         {column.unavailable ? (
@@ -149,23 +153,22 @@ function ColumnRow({
             {column.unavailable}
           </div>
         ) : lastVisible && !column.hidden ? (
-          <div className="mt-0.5 text-[12px] text-[#9b9fb3]">Последняя видимая колонка — скрыть нельзя</div>
+          <div className="mt-0.5 text-[12px] text-[#9b9fb3]">{t("columnSettings.lastVisible")}</div>
         ) : column.custom ? (
           <div className="mt-0.5 text-[12px] text-[#9b9fb3]">
-            Своя колонка · {JOURNAL_FIELD_TYPE_LABEL[column.custom.type]}
+            {t("columnSettings.customType", { type: t(`columnSettings.types.${column.custom.type}`) })}
           </div>
         ) : column.label !== column.defaultLabel && !editing ? (
-          <div className="mt-0.5 text-[12px] text-[#9b9fb3]">Стандартное: {column.defaultLabel}</div>
+          <div className="mt-0.5 text-[12px] text-[#9b9fb3]">{t("columnSettings.default", { label: display.defaultLabel })}</div>
         ) : null}
         {!disabled && onMustFill && !column.hidden ? (
           <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-[12.5px] text-[#6f7282]">
             <Checkbox
               checked={column.mustFill}
               onCheckedChange={(value) => onMustFill(value === true)}
-              aria-label={`Обязательно заполнять колонку «${column.label}»`}
+              aria-label={t("columnSettings.requiredAria", { label: display.label })}
             />
-            Обязательно заполнять
-          </label>
+            {t("columnSettings.required")}</label>
         ) : null}
         {!disabled && column.custom && onTypeChange && !column.hidden ? (
           <CustomColumnEditor column={column} onChange={onTypeChange} />
@@ -180,8 +183,8 @@ function ColumnRow({
                 onClick={onMove.up ?? undefined}
                 disabled={!onMove.up}
                 className="rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#3848c7] disabled:opacity-30 disabled:hover:bg-transparent"
-                title="Выше — левее в таблице"
-                aria-label={`Сдвинуть колонку «${column.label}» левее`}
+                title={t("columnSettings.upHint")}
+                aria-label={t("columnSettings.left", { label: display.label })}
               >
                 <ArrowUp className="size-3.5" />
               </button>
@@ -190,8 +193,8 @@ function ColumnRow({
                 onClick={onMove.down ?? undefined}
                 disabled={!onMove.down}
                 className="rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#3848c7] disabled:opacity-30 disabled:hover:bg-transparent"
-                title="Ниже — правее в таблице"
-                aria-label={`Сдвинуть колонку «${column.label}» правее`}
+                title={t("columnSettings.downHint")}
+                aria-label={t("columnSettings.right", { label: display.label })}
               >
                 <ArrowDown className="size-3.5" />
               </button>
@@ -202,18 +205,21 @@ function ColumnRow({
               type="button"
               onClick={() => onRename("")}
               className="rounded-xl p-2 text-[#9b9fb3] transition-colors duration-150 hover:bg-white hover:text-[#3848c7]"
-              title="Вернуть стандартное название"
-              aria-label="Вернуть стандартное название"
+              title={t("columnSettings.resetName")}
+              aria-label={t("columnSettings.resetName")}
             >
               <RotateCcw className="size-4" />
             </button>
           ) : null}
           <button
             type="button"
-            onClick={() => (editing ? commit() : setEditing(true))}
+            onClick={() => {
+              if (editing) commit();
+              else { setDraft(originalDraft); setEditing(true); }
+            }}
             className="rounded-xl p-2 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#3848c7]"
-            title={editing ? "Готово" : "Переименовать колонку"}
-            aria-label={editing ? "Готово" : "Переименовать колонку"}
+            title={editing ? t("columnSettings.done") : t("columnSettings.renameColumn")}
+            aria-label={editing ? t("columnSettings.done") : t("columnSettings.renameColumn")}
           >
             {editing ? <Check className="size-4" /> : <Pencil className="size-4" />}
           </button>
@@ -222,8 +228,8 @@ function ColumnRow({
               type="button"
               onClick={onRemove}
               className="rounded-xl p-2 text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2]"
-              title="Удалить свою колонку"
-              aria-label="Удалить свою колонку"
+              title={t("columnSettings.deleteColumn")}
+              aria-label={t("columnSettings.deleteColumn")}
             >
               <Trash2 className="size-4" />
             </button>
@@ -246,6 +252,7 @@ function CustomColumnEditor({
   column: ResolvedJournalColumn;
   onChange: (patch: { type?: JournalFieldType; options?: string[]; ratingMax?: number; unit?: string }) => void;
 }) {
+  const t = useTranslations("journalControls");
   const custom = column.custom;
   const [optionDraft, setOptionDraft] = useState("");
   if (!custom) return null;
@@ -254,15 +261,14 @@ function CustomColumnEditor({
   return (
     <div className="mt-2 space-y-2 rounded-xl bg-white p-2.5">
       <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
-        Тип поля
-        <select
+        {t("columnSettings.fieldType")}<select
           value={custom.type}
           onChange={(event) => onChange({ type: event.target.value as JournalFieldType })}
           className="h-8 flex-1 rounded-lg border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
         >
           {JOURNAL_FIELD_TYPES.map((type) => (
             <option key={type} value={type}>
-              {JOURNAL_FIELD_TYPE_LABEL[type]}
+              {t(`columnSettings.types.${type}`)}
             </option>
           ))}
         </select>
@@ -270,11 +276,10 @@ function CustomColumnEditor({
 
       {custom.type === "number" ? (
         <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
-          Единица
-          <input
+          {t("columnSettings.unit")}<input
             value={custom.unit ?? ""}
             onChange={(event) => onChange({ unit: event.target.value })}
-            placeholder="°C, кг, шт"
+            placeholder={t("columnSettings.unitExample")}
             maxLength={12}
             className="h-8 w-28 rounded-lg border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
           />
@@ -283,8 +288,7 @@ function CustomColumnEditor({
 
       {custom.type === "rating" ? (
         <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
-          Максимальный балл
-          <input
+          {t("columnSettings.maximum")}<input
             type="number"
             min={JOURNAL_RATING_MAX_MIN}
             max={JOURNAL_RATING_MAX_MAX}
@@ -297,7 +301,7 @@ function CustomColumnEditor({
 
       {custom.type === "select" ? (
         <div className="space-y-1.5">
-          <div className="text-[12.5px] text-[#6f7282]">Значения списка</div>
+          <div className="text-[12.5px] text-[#6f7282]">{t("columnSettings.options")}</div>
           {options.map((option, index) => (
             <div key={`${option}-${index}`} className="flex items-center gap-1.5">
               <input
@@ -314,7 +318,7 @@ function CustomColumnEditor({
                 type="button"
                 onClick={() => onChange({ options: options.filter((_, i) => i !== index) })}
                 className="rounded-lg p-1.5 text-[#a13a32] hover:bg-[#fff4f2]"
-                aria-label={`Удалить значение «${option}»`}
+                aria-label={t("columnSettings.deleteOption", { value: option })}
               >
                 <Trash2 className="size-3.5" />
               </button>
@@ -333,7 +337,7 @@ function CustomColumnEditor({
                   onChange({ options: [...options, value] });
                   setOptionDraft("");
                 }}
-                placeholder="Добавить значение и нажать Enter"
+                placeholder={t("columnSettings.optionPlaceholder")}
                 maxLength={JOURNAL_COLUMN_LABEL_MAX}
                 className="h-8 flex-1 rounded-lg border border-dashed border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
               />
@@ -346,7 +350,7 @@ function CustomColumnEditor({
                   setOptionDraft("");
                 }}
                 className="rounded-lg p-1.5 text-[#3848c7] hover:bg-[#f5f6ff]"
-                aria-label="Добавить значение"
+                aria-label={t("columnSettings.addOption")}
               >
                 <Plus className="size-3.5" />
               </button>
@@ -369,6 +373,7 @@ export function JournalColumnsSettings({
   onChange,
   canApplyToAll,
   onApplyToAll,
+  presentColumn,
 }: {
   code: string;
   config: Record<string, unknown>;
@@ -381,7 +386,10 @@ export function JournalColumnsSettings({
    * (`useColumnHeaderMenu().openApplyToAll`) с черновиком набора.
    */
   onApplyToAll?: (columns: JournalColumnsConfig) => void;
+  /** Display metadata must never replace the canonical columns used by mutations. */
+  presentColumn?: (column: ResolvedJournalColumn) => ResolvedJournalColumn;
 }) {
+  const t = useTranslations("journalControls");
   const [applyOpen, setApplyOpen] = useState(false);
   const columns = useMemo(() => resolveColumns(code, config), [code, config]);
   const current = useMemo(() => columnsConfigFromResolved(columns), [columns]);
@@ -390,15 +398,14 @@ export function JournalColumnsSettings({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Колонки таблицы</div>
+        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("columnSettings.title")}</div>
         {canApplyToAll ? (
           <button
             type="button"
             onClick={() => (onApplyToAll ? onApplyToAll(current) : setApplyOpen(true))}
             className="text-[13px] font-medium text-[#3848c7] underline-offset-2 transition-colors duration-150 hover:text-[#5566f6] hover:underline"
           >
-            Применить ко всем документам…
-          </button>
+            {t("columnSettings.applyAll")}</button>
         ) : null}
       </div>
       <JournalColumnTemplatesBar
@@ -407,17 +414,17 @@ export function JournalColumnsSettings({
         current={current}
         onApply={onChange}
         canManage={canApplyToAll === true}
+        presentColumn={presentColumn}
       />
       <p className="flex gap-1.5 text-[12.5px] leading-[1.45] text-[#6f7282]">
         <Info className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
-        Любую колонку можно скрыть — она не печатается и не видна в таблице, но записанные в ней данные сохраняются:
-        включите её снова, и они вернутся. Карандаш меняет название, стрелки — порядок колонок в таблице и в печати.
-      </p>
+        {t("columnSettings.description")}</p>
       <div className="space-y-2">
         {columns.map((column, index) => (
           <ColumnRow
             key={column.key}
             column={column}
+            display={presentColumn?.(column)}
             lastVisible={visibleCount <= 1}
             onMove={{
               up: index > 0 ? () => onChange(moveColumn(current, columns, column.key, -1)) : null,
@@ -446,15 +453,14 @@ export function JournalColumnsSettings({
             onChange(
               addCustomColumn(current, {
                 key: newCustomColumnKey(),
-                label: `Своя колонка ${(current.custom ?? []).length + 1}`,
+                label: t("columnSettings.newColumnName", { number: (current.custom ?? []).length + 1 }),
                 type: "text",
               })
             )
           }
           className="mt-1 inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          <Plus className="size-4" /> Добавить свою колонку
-        </button>
+          <Plus className="size-4" /> {t("columnSettings.addCustom")}</button>
       ) : null}
       <ApplyColumnsToAllDialog code={code} columns={current} open={applyOpen} onClose={() => setApplyOpen(false)} />
     </div>
@@ -473,12 +479,14 @@ export function ApplyColumnsToAllDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useTranslations("journalControls");
   const router = useRouter();
+  const locale = useLocale();
   const [scope, setScope] = useState<ColumnsApplyScope>("active-any");
   const options: Array<{ value: ColumnsApplyScope; label: string; hint: string }> = [
-    { value: "active-any", label: "Новые и активные документы", hint: "Закрытые документы остаются как были." },
-    { value: "all", label: "Все документы журнала", hint: "Включая закрытые — перепечатка покажет новый набор." },
-    { value: "new-only", label: "Только новые документы", hint: "Уже созданные документы не меняются." },
+    { value: "active-any", label: t("columnSettings.scopeActive"), hint: t("columnSettings.scopeActiveHint") },
+    { value: "all", label: t("columnSettings.scopeAll"), hint: t("columnSettings.scopeAllHint") },
+    { value: "new-only", label: t("columnSettings.scopeNew"), hint: t("columnSettings.scopeNewHint") },
   ];
 
   return (
@@ -486,30 +494,31 @@ export function ApplyColumnsToAllDialog({
       open={open}
       onClose={onClose}
       variant="info"
-      title="Сделать набор колонок общим для журнала?"
-      description="Этот набор колонок и их названия получат документы журнала в выбранном объёме и все документы, созданные после этого."
+      title={t("columnSettings.confirmTitle")}
+      description={t("columnSettings.confirmDescription")}
       bullets={[
-        { label: "Настройка станет общей для журнала", tone: "info" },
-        { label: "Личные настройки документов в выбранном объёме сбросятся", tone: "warn" },
-        { label: "Данные скрытых колонок не удаляются" },
+        { label: t("columnSettings.confirmShared"), tone: "info" },
+        { label: t("columnSettings.confirmReset"), tone: "warn" },
+        { label: t("columnSettings.confirmData") },
       ]}
-      confirmLabel="Применить"
+      confirmLabel={t("columnSettings.apply")}
       onConfirm={async () => {
         const response = await fetch(`/api/settings/journal-columns/${code}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ columns, applyTo: scope }),
         });
+        const errorResponse = response.clone();
         const data = await response.json().catch(() => null);
         if (!response.ok) {
-          toast.error(data?.error ?? "Не удалось применить набор колонок");
+          toast.error(await readLocalizedApiError(errorResponse, locale, t("columnSettings.failed")));
           return;
         }
         const updated = typeof data?.documentsUpdated === "number" ? data.documentsUpdated : 0;
         toast.success(
           scope === "new-only"
-            ? "Набор колонок сохранён для новых документов"
-            : `Обновлено: ${updated} ${updated % 10 === 1 && updated % 100 !== 11 ? "документ" : updated % 10 >= 2 && updated % 10 <= 4 && (updated % 100 < 10 || updated % 100 >= 20) ? "документа" : "документов"}`
+            ? t("columnSettings.savedNew")
+            : t("columnSettings.updated", { count: updated })
         );
         onClose();
         router.refresh();
@@ -554,7 +563,9 @@ export function useColumnHeaderMenu({
   enabled,
   canApplyToAll,
   onChange,
+  presentColumn,
 }: {
+  presentColumn?: (column: ResolvedJournalColumn) => ResolvedJournalColumn;
   code: string;
   config: Record<string, unknown>;
   enabled: boolean;
@@ -562,6 +573,7 @@ export function useColumnHeaderMenu({
   /** Сохранить новый набор колонок документа (сразу, без модалки). */
   onChange: (columns: JournalColumnsConfig) => void | Promise<void>;
 }) {
+  const t = useTranslations("journalControls");
   const [menu, setMenu] = useState<HeaderMenuState>(null);
   const [renaming, setRenaming] = useState<ResolvedJournalColumn | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
@@ -608,33 +620,33 @@ export function useColumnHeaderMenu({
         },
         onTouchEnd: cancelPress,
         onTouchCancel: cancelPress,
-        title: "Правый клик или долгое нажатие — меню колонки",
+        title: t("columnSettings.menuHint"),
       };
     },
-    [cancelPress, columns, enabled]
+    [cancelPress, columns, enabled, t]
   );
 
   const items: TableContextMenuItem[] = menu
     ? [
         {
           key: "rename",
-          label: "Переименовать",
+          label: t("columnSettings.rename"),
           onSelect: () => {
             setRenaming(menu.column);
-            setRenameDraft(menu.column.label);
+            setRenameDraft(menu.column.label === menu.column.defaultLabel && !menu.column.custom ? "" : menu.column.label);
           },
         },
         ...(columns.filter((column) => !column.hidden).length <= 1
-          ? [{ key: "last", label: "Последняя видимая колонка — скрыть нельзя", onSelect: () => undefined }]
+          ? [{ key: "last", label: t("columnSettings.lastVisible"), onSelect: () => undefined }]
           : [
               {
                 key: "hide",
-                label: "Скрыть колонку",
+                label: t("columnSettings.hideColumn"),
                 onSelect: () => void onChange(toggleColumnHidden(current, menu.column.key, true)),
               },
             ]),
         ...(canApplyToAll
-          ? [{ key: "apply", label: "Применить ко всем документам…", separatorBefore: true, onSelect: () => setApplyOpen(true) }]
+          ? [{ key: "apply", label: t("columnSettings.applyAll"), separatorBefore: true, onSelect: () => setApplyOpen(true) }]
           : []),
       ]
     : [];
@@ -647,7 +659,7 @@ export function useColumnHeaderMenu({
           y={menu.y}
           items={items}
           onClose={() => setMenu(null)}
-          ariaLabel={`Колонка «${menu.column.label}»`}
+          ariaLabel={t("columnSettings.columnTitle", { label: presentColumn?.(menu.column).label ?? menu.column.label })}
         />
       ) : null}
       <ConfirmDialog
@@ -655,9 +667,9 @@ export function useColumnHeaderMenu({
         onClose={() => setRenaming(null)}
         variant="info"
         icon={Pencil}
-        title="Название колонки"
-        description="Меняется в таблице, карточках и печати этого документа. Пустое поле — стандартное название."
-        confirmLabel="Сохранить"
+        title={t("columnSettings.name")}
+        description={t("columnSettings.renameHint")}
+        confirmLabel={t("columnSettings.save")}
         onConfirm={async () => {
           if (!renaming) return;
           const value = renameDraft.trim();
@@ -669,9 +681,9 @@ export function useColumnHeaderMenu({
           value={renameDraft}
           maxLength={JOURNAL_COLUMN_LABEL_MAX}
           onChange={(event) => setRenameDraft(event.target.value)}
-          placeholder={renaming?.defaultLabel}
+          placeholder={renaming ? presentColumn?.(renaming).defaultLabel ?? renaming.defaultLabel : undefined}
           className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          aria-label="Название колонки"
+          aria-label={t("columnSettings.name")}
           autoFocus
         />
       </ConfirmDialog>

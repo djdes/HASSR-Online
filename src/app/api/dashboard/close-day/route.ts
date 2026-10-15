@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -114,6 +115,8 @@ export async function POST(request: Request) {
     : null;
 
   const organizationId = getActiveOrgId(session);
+  const blocked = await rejectJournalAutomation(organizationId);
+  if (blocked) return blocked;
   // Точки: закрываем день и создаём документ для активной точки.
   const activeBuildingId = await getActiveBuildingId(session);
   const org = await db.organization.findUnique({

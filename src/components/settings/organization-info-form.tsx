@@ -6,6 +6,7 @@ import {
 } from "@/lib/phone-input";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   AtSign,
@@ -33,13 +34,13 @@ import {
   normalizeOwnership,
   normalizeSphere,
 } from "@/lib/org-profile";
-import { planLabel } from "@/lib/plan-limits";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import {
   ORG_JOURNAL_NAME_MAX,
   resolveOrgJournalName,
   suggestOrgJournalName,
 } from "@/lib/org-journal-name";
+import { mapOrganizationProfileApiError } from "@/lib/organization-profile-error-adapter";
 
 type Form = {
   name: string;
@@ -103,6 +104,22 @@ export function OrganizationInfoForm({
   meta: Meta;
   legal?: Legal;
 }) {
+  const t = useTranslations("settingsManagement.organizationProfile");
+  const locale = useLocale();
+  function localizedPlanLabel(plan: string): string {
+    switch (plan.trim()) {
+      case "trial":
+      case "free": return t("form.planLabels.free");
+      case "paid": return t("form.planLabels.paid");
+      case "paused": return t("form.planLabels.paused");
+      case "cancelled": return t("form.planLabels.cancelled");
+      default: return plan;
+    }
+  }
+  function apiError(error: unknown, fallback: string): string {
+    const keys = mapOrganizationProfileApiError(error);
+    return keys ? keys.map((key) => t(`form.apiErrors.${key}`)).join("; ") : fallback;
+  }
   const router = useRouter();
   // Телефон в базе хранится как «+79991234567». В поле он и показывался
   // сплошной строкой цифр — приводим к читаемому «+7 999 123-45-67».
@@ -136,13 +153,13 @@ export function OrganizationInfoForm({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        if (!quiet) toast.error(data?.error ?? "Не удалось получить данные из ЕГРЮЛ");
+        if (!quiet) toast.error(apiError(data?.error, t("form.lookupFailed")));
         return;
       }
       setLegal({ profile: data.profile as LegalProfile, updatedAt: new Date().toISOString() });
-      if (!quiet) toast.success("Данные из ЕГРЮЛ обновлены");
-    } catch (err) {
-      if (!quiet) toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      if (!quiet) toast.success(t("form.legalUpdated"));
+    } catch {
+      if (!quiet) toast.error(t("form.networkError"));
     } finally {
       setLegalLoading(false);
     }
@@ -215,13 +232,13 @@ export function OrganizationInfoForm({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Ошибка сохранения");
+        toast.error(apiError(data?.error, t("form.saveError")));
         return;
       }
-      toast.success("Сохранено");
+      toast.success(t("form.saved"));
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+    } catch {
+      toast.error(t("form.networkError"));
     } finally {
       setSaving(false);
     }
@@ -234,7 +251,7 @@ export function OrganizationInfoForm({
   async function lookupByInn() {
     const inn = (form.inn ?? "").replace(/\D/g, "");
     if (inn.length !== 10 && inn.length !== 12) {
-      toast.error("Введите ИНН (10 или 12 цифр)");
+      toast.error(t("form.innRequired"));
       return;
     }
     setInnLookup(true);
@@ -242,7 +259,7 @@ export function OrganizationInfoForm({
       const res = await fetch(`/api/public/inn-lookup?inn=${inn}`);
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? "Не нашли организацию");
+        toast.error(apiError(data?.error, t("form.organizationNotFound")));
         return;
       }
       // Защита: если человек уже ввёл своё название и оно отличается от
@@ -263,10 +280,10 @@ export function OrganizationInfoForm({
       if (needsNameConfirm) {
         setNameReplace({ current: form.name, suggested: data.name as string });
       }
-      toast.success(`Найдено: ${data.name}`);
+      toast.success(t("form.organizationFound", { name: String(data.name) }));
       void refreshLegal(inn, true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+    } catch {
+      toast.error(t("form.networkError"));
     } finally {
       setInnLookup(false);
     }
@@ -278,7 +295,7 @@ export function OrganizationInfoForm({
       {dirty ? (
         <div className="sticky top-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] px-4 py-3 shadow-[0_10px_24px_-12px_rgba(161,58,50,0.18)]">
           <span className="text-[13px] text-[#7a4a00]">
-            Есть несохранённые изменения
+            {t("form.unsaved")}
           </span>
           <div className="flex gap-2">
             <button
@@ -287,7 +304,7 @@ export function OrganizationInfoForm({
               disabled={saving}
               className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#3c4053] hover:bg-[#fafbff] disabled:opacity-60"
             >
-              Сбросить
+              {t("form.discard")}
             </button>
             <button
               type="button"
@@ -300,7 +317,7 @@ export function OrganizationInfoForm({
               ) : (
                 <Save className="size-3.5" />
               )}
-              Сохранить
+              {t("form.save")}
             </button>
           </div>
         </div>
@@ -308,23 +325,23 @@ export function OrganizationInfoForm({
 
       {/* === ОСНОВНОЕ === */}
       <FormSection
-        title="Основные реквизиты"
-        subtitle="Идут в шапку каждого печатного журнала и в договоры с поставщиками"
+        title={t("form.basicTitle")}
+        subtitle={t("form.basicSubtitle")}
         icon={<Building2 className="size-4" />}
       >
-        <FormRow label="Название организации" hint="Юридическое или коммерческое">
+        <FormRow label={t("form.organizationName")} hint={t("form.organizationNameHint")}>
           <input
             type="text"
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
             className="form-input"
-            placeholder='ООО "Пекарня"'
+            placeholder={t("form.organizationNamePlaceholder")}
             maxLength={200}
           />
         </FormRow>
         <FormRow
-          label="Сокращённое название для журналов"
-          hint="Печатается в шапке каждого журнала и в PDF; в меню и списках остаётся «Название организации». Пусто — краткое название из ЕГРЮЛ или полное"
+          label={t("form.journalShortName")}
+          hint={t("form.journalShortNameHint")}
           icon={<FileText className="size-4" />}
         >
           <div className="space-y-2">
@@ -333,13 +350,12 @@ export function OrganizationInfoForm({
               value={form.journalShortName ?? ""}
               onChange={(e) => set("journalShortName", e.target.value || null)}
               className="form-input"
-              placeholder={legalShortName ?? (form.name || "Кафе «Ромашка»")}
+              placeholder={legalShortName ?? (form.name || t("form.journalShortNameExample"))}
               maxLength={ORG_JOURNAL_NAME_MAX}
             />
             <div className="flex flex-wrap items-center gap-2 text-[12px] leading-snug text-[#6f7282]">
               <span>
-                В шапке журналов:{" "}
-                <b className="font-semibold text-[#0b1024]">«{journalNamePreview}»</b>
+                {t("form.journalHeaderPreview", { name: journalNamePreview })}
               </span>
               {legalShortName && legalShortName !== (form.journalShortName ?? "").trim() ? (
                 <button
@@ -348,13 +364,13 @@ export function OrganizationInfoForm({
                   className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 >
                   <ShieldCheck className="size-3.5 text-[#5566f6]" />
-                  Взять из ЕГРЮЛ: {legalShortName}
+                  {t("form.useFromRegistry", { name: legalShortName })}
                 </button>
               ) : null}
             </div>
           </div>
         </FormRow>
-        <FormRow label="Сфера" hint="Влияет на наборы журналов и пошаговые инструкции">
+        <FormRow label={t("form.sphere")} hint={t("form.sphereHint")}>
           <select
             value={normalizeSphere(form.type)}
             onChange={(e) => set("type", e.target.value)}
@@ -362,12 +378,12 @@ export function OrganizationInfoForm({
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(`form.spheres.${opt.value}`)}
               </option>
             ))}
           </select>
         </FormRow>
-        <FormRow label="Тип" hint="Частное, сетевое или государственное заведение">
+        <FormRow label={t("form.ownership")} hint={t("form.ownershipHint")}>
           <select
             value={normalizeOwnership(form.ownershipKind)}
             onChange={(e) => set("ownershipKind", e.target.value)}
@@ -375,7 +391,7 @@ export function OrganizationInfoForm({
           >
             {ORG_OWNERSHIP.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(`form.ownershipKinds.${opt.value}`)}
               </option>
             ))}
           </select>
@@ -383,14 +399,14 @@ export function OrganizationInfoForm({
         {/* Точек — только чтение: значение приходит из анкеты
             регистрации. Менять его здесь нечему: отдельных организаций
             под точки пока не создаётся. */}
-        <FormRow label="Точек" hint="Указано при регистрации">
+        <FormRow label={t("form.locations")} hint={t("form.locationsHint")}>
           <span className="inline-flex h-11 items-center rounded-2xl bg-[#f5f6ff] px-4 text-[15px] font-medium tabular-nums text-[#3848c7]">
             {meta.locationsCount ?? 1}
           </span>
         </FormRow>
         <FormRow
-          label="ИНН"
-          hint="10 цифр для юр.лица или 12 для ИП. По нему авто-заполняется название и адрес из ЕГРЮЛ"
+          label={t("form.inn")}
+          hint={t("form.innHint")}
           icon={<Hash className="size-4" />}
         >
           <div className="flex gap-2">
@@ -408,33 +424,33 @@ export function OrganizationInfoForm({
               onClick={lookupByInn}
               disabled={innLookup || !form.inn}
               className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#5566f6] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
-              title="Найти название и адрес по ИНН (DaData / ЕГРЮЛ)"
+              title={t("form.findByInn")}
             >
               {innLookup ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
                 <Search className="size-3.5" />
               )}
-              Найти
+              {t("form.find")}
             </button>
           </div>
         </FormRow>
         <FormRow
-          label="Адрес"
-          hint="Полный фактический адрес производства"
+          label={t("form.address")}
+          hint={t("form.addressHint")}
           icon={<MapPin className="size-4" />}
         >
           <textarea
             value={form.address ?? ""}
             onChange={(e) => set("address", e.target.value || null)}
             className="form-input min-h-[68px]"
-            placeholder="г. Москва, ул. Пятницкая, д. 12, стр. 1"
+            placeholder={t("form.addressPlaceholder")}
             maxLength={500}
           />
         </FormRow>
         <FormRow
-          label="Телефон"
-          hint="Контактный для инспекторов и поставщиков"
+          label={t("form.phone")}
+          hint={t("form.phoneHint")}
           icon={<Phone className="size-4" />}
         >
           <input
@@ -447,8 +463,8 @@ export function OrganizationInfoForm({
       </FormSection>
 
       <FormSection
-        title="Данные из ЕГРЮЛ"
-        subtitle="Реквизиты, руководитель, ОКВЭД и статистика по ИНН. Только для справки — в журналы идут поля выше."
+        title={t("form.registryTitle")}
+        subtitle={t("form.registrySubtitle")}
         icon={<FileText className="size-4" />}
       >
         <LegalProfileView
@@ -461,13 +477,13 @@ export function OrganizationInfoForm({
 
       {/* === КОНТАКТЫ === */}
       <FormSection
-        title="Контакты"
-        subtitle="Email бухгалтерии для еженедельных отчётов"
+        title={t("form.contactsTitle")}
+        subtitle={t("form.contactsSubtitle")}
         icon={<AtSign className="size-4" />}
       >
         <FormRow
-          label="Email бухгалтера"
-          hint="Куда уходит еженедельная выгрузка списаний для 1С"
+          label={t("form.accountantEmail")}
+          hint={t("form.accountantEmailHint")}
         >
           <input
             type="email"
@@ -481,11 +497,11 @@ export function OrganizationInfoForm({
 
       {/* === РЕГИОН === */}
       <FormSection
-        title="Регион и язык"
-        subtitle="Часовой пояс используется для расчёта смен и crontab задач"
+        title={t("form.regionTitle")}
+        subtitle={t("form.regionSubtitle")}
         icon={<Globe className="size-4" />}
       >
-        <FormRow label="Часовой пояс">
+        <FormRow label={t("form.timezone")}>
           <select
             value={form.timezone}
             onChange={(e) => set("timezone", e.target.value)}
@@ -498,7 +514,7 @@ export function OrganizationInfoForm({
                 перезаписал данные. */}
             {!TIMEZONE_OPTIONS.includes(form.timezone) && form.timezone ? (
               <option value={form.timezone}>
-                {form.timezone.replace("_", " ")} (текущий)
+                {t("form.currentTimezone", { timezone: form.timezone.replace("_", " ") })}
               </option>
             ) : null}
             {TIMEZONE_OPTIONS.map((tz) => (
@@ -508,14 +524,15 @@ export function OrganizationInfoForm({
             ))}
           </select>
         </FormRow>
-        <FormRow label="Язык интерфейса" hint="Влияет на дашборд + Mini App + email">
+        <FormRow label={t("form.interfaceLanguage")} hint={t("form.interfaceLanguageHint")}>
           <select
             value={form.locale}
             onChange={(e) => set("locale", e.target.value)}
             className="form-input"
           >
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
+            <option value="ru">{t("form.languageRu")}</option>
+            <option value="en">{t("form.languageEn")}</option>
+            <option value="uz">{t("form.languageUz")}</option>
           </select>
         </FormRow>
       </FormSection>
@@ -524,13 +541,13 @@ export function OrganizationInfoForm({
       {/* id — сюда ведёт «Логотип и цвета» из меню профиля. */}
       <FormSection
         id="branding"
-        title="Брендинг"
-        subtitle="White-label: ваш цвет и логотип на дашборде, печатных журналах, портале инспектора"
+        title={t("form.brandingTitle")}
+        subtitle={t("form.brandingSubtitle")}
         icon={<Palette className="size-4" />}
       >
         <FormRow
-          label="Брендовый цвет"
-          hint="HEX вида #5566f6 — заменяет основной indigo во всём интерфейсе"
+          label={t("form.brandColor")}
+          hint={t("form.brandColorHint")}
         >
           <div className="flex items-center gap-2">
             <input
@@ -553,14 +570,14 @@ export function OrganizationInfoForm({
                 onClick={() => set("brandColor", null)}
                 className="text-[12px] text-[#6f7282] hover:text-[#5566f6]"
               >
-                Сбросить
+                {t("form.discard")}
               </button>
             ) : null}
           </div>
         </FormRow>
         <FormRow
-          label="URL логотипа"
-          hint="Публичный https-URL изображения. Показывается в шапке"
+          label={t("form.logoUrl")}
+          hint={t("form.logoUrlHint")}
           icon={<ImageIcon className="size-4" />}
         >
           <input
@@ -575,14 +592,14 @@ export function OrganizationInfoForm({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={form.logoUrl}
-                alt="Превью"
+                alt={t("form.preview")}
                 className="size-12 rounded-lg object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
               <span className="text-[12px] text-[#6f7282]">
-                Превью текущего логотипа
+                {t("form.currentLogoPreview")}
               </span>
             </div>
           ) : null}
@@ -591,13 +608,13 @@ export function OrganizationInfoForm({
 
       {/* === СМЕНЫ И КОМПЛАЕНС === */}
       <FormSection
-        title="Смены и строгость журналов"
-        subtitle="Когда журнал «закрывается» и кто может править прошлые записи"
+        title={t("form.shiftsTitle")}
+        subtitle={t("form.shiftsSubtitle")}
         icon={<ShieldCheck className="size-4" />}
       >
         <FormRow
-          label="Час окончания смены"
-          hint="После этого часа день считается «прошлым» — для блокировок за незаполненные журналы. 0–23"
+          label={t("form.shiftEndHour")}
+          hint={t("form.shiftEndHourHint")}
         >
           <input
             type="number"
@@ -611,14 +628,14 @@ export function OrganizationInfoForm({
           />
         </FormRow>
         <ToggleRow
-          label="Запретить править записи прошлых дней"
-          hint="Когда включено — править вчерашние записи может только admin. По СанПиН рекомендуется."
+          label={t("form.lockPastDays")}
+          hint={t("form.lockPastDaysHint")}
           checked={form.lockPastDayEdits}
           onChange={(v) => set("lockPastDayEdits", v)}
         />
         <ToggleRow
-          label="Только admin может править завершённые задачи"
-          hint="Сотрудник заполнил, но потом нашёл ошибку — нужно одобрение admin'а"
+          label={t("form.adminJournalEdit")}
+          hint={t("form.adminJournalEditHint")}
           checked={form.requireAdminForJournalEdit}
           onChange={(v) => set("requireAdminForJournalEdit", v)}
         />
@@ -626,26 +643,26 @@ export function OrganizationInfoForm({
 
       {/* === Подписка (read-only) === */}
       <FormSection
-        title="Подписка"
-        subtitle="Только просмотр. Управление — на странице «Подписка»"
+        title={t("form.subscriptionTitle")}
+        subtitle={t("form.subscriptionSubtitle")}
         icon={<CreditCard className="size-4" />}
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <ReadOnlyCard
-            label="Тариф"
-            value={planLabel(meta.subscriptionPlan)}
+            label={t("form.plan")}
+            value={localizedPlanLabel(meta.subscriptionPlan)}
           />
           <ReadOnlyCard
-            label="Действует до"
+            label={t("form.activeUntil")}
             value={
               meta.subscriptionEnd
-                ? new Date(meta.subscriptionEnd).toLocaleDateString("ru-RU")
+                ? new Date(meta.subscriptionEnd).toLocaleDateString(locale)
                 : "—"
             }
           />
           <ReadOnlyCard
-            label="Создана"
-            value={new Date(meta.createdAt).toLocaleDateString("ru-RU")}
+            label={t("form.createdAt")}
+            value={new Date(meta.createdAt).toLocaleDateString(locale)}
           />
         </div>
         <div className="mt-3">
@@ -653,7 +670,7 @@ export function OrganizationInfoForm({
             href="/settings/subscription"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
           >
-            Управление подпиской →
+            {t("form.manageSubscription")}
           </a>
         </div>
       </FormSection>
@@ -667,7 +684,7 @@ export function OrganizationInfoForm({
             disabled={saving}
             className="inline-flex h-10 items-center rounded-xl border border-[#dcdfed] bg-white px-4 text-[13px] text-[#3c4053] hover:bg-[#fafbff] disabled:opacity-60"
           >
-            Сбросить
+            {t("form.discard")}
           </button>
         ) : null}
         <button
@@ -681,7 +698,7 @@ export function OrganizationInfoForm({
           ) : (
             <Save className="size-4" />
           )}
-          {saving ? "Сохраняем…" : "Сохранить изменения"}
+          {saving ? t("form.saving") : t("form.saveChanges")}
         </button>
       </div>
 
@@ -722,41 +739,27 @@ export function OrganizationInfoForm({
           setNameReplace(null);
           if (suggested) setForm((prev) => ({ ...prev, name: suggested }));
         }}
-        title="Заменить название на данные из ЕГРЮЛ?"
+        title={t("form.legalNameTitle")}
         description={
           nameReplace
-            ? `Сейчас введено «${nameReplace.current}». В ЕГРЮЛ по этому ИНН записано «${nameReplace.suggested}».`
+            ? t("form.legalNameDescription", { current: nameReplace.current, suggested: nameReplace.suggested })
             : undefined
         }
         bullets={[
           {
             label:
-              "Официальное название попадёт в договоры и печатные формы журналов",
+              t("form.legalNameBulletOfficial"),
             tone: "info",
           },
-          { label: "Если откажетесь — останется то, что вы ввели", tone: "default" },
+          { label: t("form.legalNameBulletKeep"), tone: "default" },
         ]}
-        confirmLabel="Заменить"
-        cancelLabel="Оставить своё"
+        confirmLabel={t("form.replace")}
+        cancelLabel={t("form.keepMine")}
         variant="info"
       />
     </div>
   );
 }
-
-const LEGAL_STATUS: Record<string, string> = {
-  ACTIVE: "Действует",
-  LIQUIDATING: "Ликвидируется",
-  LIQUIDATED: "Ликвидирована",
-  BANKRUPT: "Банкротство",
-  REORGANIZING: "Реорганизация",
-};
-
-const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
-const formatRub = (value: number | null | undefined) =>
-  typeof value === "number" ? `${rub.format(value)} \u20bd` : null;
-const formatDate = (iso: string | null | undefined) =>
-  iso ? new Date(iso).toLocaleDateString("ru-RU") : null;
 
 /**
  * Снимок ЕГРЮЛ читаемыми строками. Пустые поля не показываем: у ИП нет
@@ -773,54 +776,71 @@ function LegalProfileView({
   canRefresh: boolean;
   onRefresh: () => void;
 }) {
+  const t = useTranslations("settingsManagement.organizationProfile");
+  const locale = useLocale();
+  const numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+  const formatRub = (value: number | null | undefined) =>
+    typeof value === "number" ? `${numberFormat.format(value)} ₽` : null;
+  const formatDate = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleDateString(locale) : null;
+  const legalStatusTranslation = (status: string) => {
+    switch (status) {
+      case "ACTIVE": return t("form.legalStatus.ACTIVE");
+      case "LIQUIDATING": return t("form.legalStatus.LIQUIDATING");
+      case "LIQUIDATED": return t("form.legalStatus.LIQUIDATED");
+      case "BANKRUPT": return t("form.legalStatus.BANKRUPT");
+      case "REORGANIZING": return t("form.legalStatus.REORGANIZING");
+      default: return t("form.legalRows.status");
+    }
+  };
   const p = legal.profile;
   const rows: Array<[string, string | null]> = p
     ? [
-        ["Полное название", p.nameFull],
-        ["Форма", p.opfFull ?? p.opfShort],
-        ["ОГРН", p.ogrn ? `${p.ogrn}${p.ogrnDate ? ` от ${formatDate(p.ogrnDate)}` : ""}` : null],
-        ["КПП", p.kpp],
-        ["Юридический адрес", p.address],
+        [t("form.legalRows.fullName"), p.nameFull],
+        [t("form.legalRows.legalForm"), p.opfFull ?? p.opfShort],
+        [t("form.legalRows.ogrn"), p.ogrn ? `${p.ogrn}${p.ogrnDate ? ` ${t("form.legalRows.ogrnRegisteredAt", { date: formatDate(p.ogrnDate) ?? "" })}` : ""}` : null],
+        [t("form.legalRows.kpp"), p.kpp],
+        [t("form.legalRows.legalAddress"), p.address],
         [
-          p.type === "INDIVIDUAL" ? "Предприниматель" : "Руководитель",
+          p.type === "INDIVIDUAL" ? t("form.legalRows.entrepreneur") : t("form.legalRows.director"),
           p.management
             ? `${p.management.name}${p.management.post ? `, ${p.management.post.toLowerCase()}` : ""}`
             : null,
         ],
         [
-          "Основной ОКВЭД",
+          t("form.legalRows.mainOkved"),
           p.okvedMain ? `${p.okvedMain.code}${p.okvedMain.name ? ` — ${p.okvedMain.name}` : ""}` : null,
         ],
         [
-          "Дополнительные ОКВЭД",
+          t("form.legalRows.extraOkved"),
           p.okvedsExtra.length
             ? `${p.okvedsExtra.length}: ${p.okvedsExtra.slice(0, 4).map((o) => o.code).join(", ")}${p.okvedsExtra.length > 4 ? "…" : ""}`
             : null,
         ],
         [
-          "Статус",
+          t("form.legalRows.status"),
           p.status
-            ? `${LEGAL_STATUS[p.status] ?? p.status}${p.registrationDate ? `, зарегистрирована ${formatDate(p.registrationDate)}` : ""}`
+            ? `${legalStatusTranslation(p.status)}${p.registrationDate ? `, ${t("form.legalRows.registrationDate", { date: formatDate(p.registrationDate) ?? "" })}` : ""}`
             : null,
         ],
-        ["Сотрудников (по данным ФНС)", typeof p.employeeCount === "number" ? rub.format(p.employeeCount) : null],
-        ["Уставный капитал", p.capital ? formatRub(p.capital.value) : null],
-        ["Филиалов", typeof p.branchCount === "number" && p.branchCount > 0 ? String(p.branchCount) : null],
-        ["Налоговый режим", p.finance?.taxSystem ?? null],
+        [t("form.legalRows.employees"), typeof p.employeeCount === "number" ? numberFormat.format(p.employeeCount) : null],
+        [t("form.legalRows.capital"), p.capital ? formatRub(p.capital.value) : null],
+        [t("form.legalRows.branches"), typeof p.branchCount === "number" && p.branchCount > 0 ? numberFormat.format(p.branchCount) : null],
+        [t("form.legalRows.taxSystem"), p.finance?.taxSystem ?? null],
         [
-          p.finance?.year ? `Финансы за ${p.finance.year}` : "Финансы",
+          p.finance?.year ? t("form.legalRows.financeYear", { year: String(p.finance.year) }) : t("form.legalRows.finance"),
           p.finance && (p.finance.revenue ?? p.finance.income ?? p.finance.expense) !== null
             ? [
-                p.finance.revenue !== null ? `выручка ${formatRub(p.finance.revenue)}` : null,
-                p.finance.income !== null ? `доход ${formatRub(p.finance.income)}` : null,
-                p.finance.expense !== null ? `расход ${formatRub(p.finance.expense)}` : null,
+                p.finance.revenue !== null ? t("form.legalRows.revenue", { amount: formatRub(p.finance.revenue) ?? "" }) : null,
+                p.finance.income !== null ? t("form.legalRows.income", { amount: formatRub(p.finance.income) ?? "" }) : null,
+                p.finance.expense !== null ? t("form.legalRows.expense", { amount: formatRub(p.finance.expense) ?? "" }) : null,
               ]
                 .filter(Boolean)
                 .join(", ")
             : null,
         ],
         [
-          "Учредители",
+          t("form.legalRows.founders"),
           p.founders.length
             ? p.founders
                 .slice(0, 5)
@@ -828,8 +848,8 @@ function LegalProfileView({
                 .join("; ")
             : null,
         ],
-        ["Телефон из реестра", p.phones[0] ?? null],
-        ["Почта из реестра", p.emails[0] ?? null],
+        [t("form.legalRows.registryPhone"), p.phones[0] ?? null],
+        [t("form.legalRows.registryEmail"), p.emails[0] ?? null],
       ]
     : [];
   const visible = rows.filter(([, value]) => value);
@@ -847,7 +867,7 @@ function LegalProfileView({
         </dl>
       ) : (
         <p className="text-[13px] leading-snug text-[#6f7282]">
-          Введите ИНН и нажмите «Найти» — подтянем реквизиты, руководителя, ОКВЭД и статистику из ЕГРЮЛ.
+          {t("form.registryEmpty")}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-3">
@@ -858,11 +878,11 @@ function LegalProfileView({
           className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:text-[#9b9fb3]"
         >
           {loading ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
-          Обновить из ЕГРЮЛ
+          {t("form.refreshRegistry")}
         </button>
         {legal.updatedAt ? (
           <span className="text-[12px] text-[#9b9fb3]">
-            Обновлено {new Date(legal.updatedAt).toLocaleDateString("ru-RU")}
+            {t("form.registryUpdatedAt", { date: new Date(legal.updatedAt).toLocaleDateString(locale) })}
           </span>
         ) : null}
       </div>

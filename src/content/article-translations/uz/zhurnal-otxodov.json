@@ -1,0 +1,15 @@
+{
+  "locale":"uz","sourceHash":"dde9b2c96f9446a71cbe311f05e6828cdb42d551e2fac03b072770512e499971",
+  "title":"Oziq-ovqat chiqindilari hisobi: harakat, utilizatsiya va topshirish dalolatnomalari",
+  "excerpt":"Oziq-ovqat, yog‘li, qadoqlash va xavfli chiqindilar: jurnalga nimalarni kiritish, hisobdan chiqarishni brakera j bilan qanday bog‘lash va litsenziyaga ega pudratchi nega kerak.",
+  "tags":["Chiqindilar","Hujjatlar"],
+  "body":[
+    {"type":"p","text":"Oziq-ovqat chiqindilari tekshiruvda ko‘tarilmaguncha arzimasdek tuyuladi. To‘g‘ri hisob yuritish rasmiyatchilik emas: u sifatsiz mahsulotlarni ruxsatsiz sotish ayblovlaridan himoya qiladi va hisobdan chiqarish tizimi ishlayotganini ko‘rsatadi."},
+    {"type":"h2","text":"Chiqindi oqimlari"},
+    {"type":"ul","items":["Oziq-ovqat chiqindilari — po‘stloqlar, qoldiqlar va brak qilingan tayyor mahsulotlar.","Yog‘li chiqindilar — ishlatilgan friturni yog‘i va yog‘ tutgichlar.","Qadoqlash chiqindilari — PET, karton va shisha (alohida yig‘iladi).","Xavfli chiqindilar — lampalar, batareyalar va ayrim dezinfeksiya vositalari."]},
+    {"type":"h2","text":"Jurnalda nimalar bo‘lishi kerak"},
+    {"type":"ul","items":["Sana, chiqindi turi va hajmi yoki og‘irligi.","Asos: brakeraj tekshiruvi, yaroqlilik muddati bo‘yicha hisobdan chiqarish yoki rejali tozalash.","Qayerga yuborilgani: konteyner, pudratchi yoki ichki qayta ishlash.","Olib ketish dalolatnomasi yoki pudratchi taloni yozuvga biriktiriladi."]},
+    {"type":"callout","tone":"warn","title":"Muhim jihat","text":"Oziq-ovqat chiqindilarini olib ketish shartnomasi litsenziyaga ega tashkilot bilan tuzilishi kerak. “Yaqin atrofdagi fermer bilan kelishib oldik” degan holat jarimaga olib kelishi mumkin."},
+    {"type":"p","text":"Xizmat brakeraj jurnalidagi hisobdan chiqarishni chiqindilar jurnalidagi yozuv bilan avtomatik bog‘laydi. Shu tariqa yaroqlilik muddati bo‘yicha 3 kg hisobdan chiqarilib, chiqindiga esa 1 kg yozib qo‘yilishining oldi olinadi. Tafovut rahbarga ko‘rsatiladi."}
+  ]
+}

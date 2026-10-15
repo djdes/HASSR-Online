@@ -5,6 +5,8 @@ import { ArrowLeft, Compass } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { hasMiniShellCookie } from "@/lib/mini-shell-cookie";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedHref } from "@/i18n/site-locale";
 
 /**
  * Карточка «страница не найдена».
@@ -20,6 +22,8 @@ import { hasMiniShellCookie } from "@/lib/mini-shell-cookie";
  * оставалась ярко-белой.
  */
 export function NotFoundCard() {
+  const locale = useLocale();
+  const t = useTranslations("errorSurface");
   // Куку читает только браузер, и делает это после гидрации: на сервере
   // 404 может отрисоваться заранее, без запроса.
   const [inShell, setInShell] = useState(false);
@@ -61,19 +65,18 @@ export function NotFoundCard() {
           className="mt-6 text-[clamp(1.5rem,4vw+1rem,2.25rem)] font-semibold tracking-[-0.02em]"
           style={{ color: "var(--app-text)" }}
         >
-          Страница не найдена
+          {t("notFoundTitle")}
         </h1>
         <p
           className="mt-3 text-[14px] leading-relaxed"
           style={{ color: "var(--app-text-muted)" }}
         >
-          Ссылка устарела или раздел перенесён. Вернитесь на главную, чтобы
-          продолжить работу.
+          {t("notFoundDescription")}
         </p>
         <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:justify-center">
           {inShell ? null : (
             <Link
-              href="/"
+              href={localizedHref("/", locale)}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-[14px] font-medium transition-colors"
               style={{
                 background: "var(--app-surface)",
@@ -82,7 +85,7 @@ export function NotFoundCard() {
               }}
             >
               <ArrowLeft className="size-4" />
-              О сервисе
+              {t("about")}
             </Link>
           )}
           <Link
@@ -90,7 +93,7 @@ export function NotFoundCard() {
             className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors"
             style={{ background: "var(--app-indigo)" }}
           >
-            Вернуться на главную
+            {t("returnHome")}
           </Link>
         </div>
       </div>

@@ -556,7 +556,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     // Должность комиссии вне состава видит список только для чтения.
     listCapable = role.evaluator || role.editor || role.viewer;
     const viewParam = q.get("view");
-    view = commissionOnly ? "list" : viewParam === "add" || viewParam === "list" ? viewParam : brakerageQrDefaultView(role);
+    view = commissionOnly || role.evaluator || role.viewer ? "list" : viewParam === "add" || viewParam === "list" ? viewParam : brakerageQrDefaultView(role);
   }
 
   // ---- гигиена и здоровье: один QR на оба журнала (health-qr-flow.ts)
@@ -726,7 +726,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     const listHref = link({ ...keep, view: "list" });
     const addHref = link({ ...keep, view: "add" });
     const yesterdayKey = previousDayKey(todayKey);
-    if (listCapable && !commissionOnly) {
+    if (listCapable && !commissionOnly && !role.evaluator && !role.viewer) {
       const waitingCount =
         view === "add"
           ? (await listBrakerageDayRows({ organizationId: orgId, code, todayKey, yesterdayKey, primaryDocumentId: document.id })).rows.filter(
@@ -736,6 +736,9 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       brakerageTabs = renderBrakerageTabs({ active: view, listHref, addHref, waiting: waitingCount, addLabel: isFinished ? "Добавить блюдо" : "Добавить позицию" });
     }
     if (listCapable && view === "list") {
+      if (posted && q.get("view") === "add" && (role.evaluator || role.viewer)) {
+        return page(title, renderMessage("muted", "Члены комиссии оценивают блюда из списка. Добавление блюд доступно сотруднику, который ведёт журнал."), null, null, 403, setCookies);
+      }
       return handleBrakerageList({
         request,
         posted,

@@ -10,6 +10,7 @@ import {
 import { getUserPermissions } from "@/lib/permissions-server";
 import { isManagerLikePermissions } from "@/lib/permissions";
 import { getManagerScope, canAssignJournal, type ManagerScope } from "@/lib/manager-scope";
+import { resolveLocale, type Locale } from "@/i18n/locales";
 
 type LinkedTelegramUser = {
   id: string;
@@ -17,6 +18,8 @@ type LinkedTelegramUser = {
   role: string;
   isRoot: boolean;
   organizationId: string;
+  locale?: string | null;
+  organization?: { locale?: string | null } | null;
   permissionsJson: unknown;
   jobPosition: {
     categoryKey: string | null;
@@ -44,6 +47,7 @@ type StartHomeActor = {
   name: string;
   role: string;
   isRoot: boolean;
+  locale: Locale;
 };
 
 type StartHomeStaffAction = Pick<OpenJournalObligation, "journalCode"> & {
@@ -85,6 +89,8 @@ function createDefaultDeps(): StartHomeDeps {
           role: true,
           isRoot: true,
           organizationId: true,
+          locale: true,
+          organization: { select: { locale: true } },
           permissionsJson: true,
           jobPosition: {
             select: {
@@ -116,6 +122,11 @@ function toActor(user: LinkedTelegramUser): StartHomeActor {
     name: user.name,
     role: user.role,
     isRoot: user.isRoot === true,
+    locale: resolveLocale({
+      authenticated: true,
+      userLocale: user.locale,
+      organizationLocale: user.organization?.locale,
+    }),
   };
 }
 

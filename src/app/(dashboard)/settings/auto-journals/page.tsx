@@ -1,3 +1,4 @@
+import { getJournalControls } from "@/lib/journal-controls.server";
 import { redirect } from "next/navigation";
 import { MapPin, Sparkles } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -21,6 +22,7 @@ export default async function AutoJournalsPage() {
     redirect("/settings");
   }
   const organizationId = getActiveOrgId(session);
+  if ((await getJournalControls(organizationId)).specialMode) redirect("/settings/organization");
 
   const [templates, org, activeDocs] = await Promise.all([
     db.journalTemplate.findMany({

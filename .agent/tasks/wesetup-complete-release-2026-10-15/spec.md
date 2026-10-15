@@ -1,0 +1,34 @@
+# Complete the WeSetup request and verify the production release
+
+Frozen 2026-10-15 before implementation. Owner: root; no delegated agents. This continues the three prior task specs and incorporates the user's explicit authorization to deploy and verify production. Preserve unrelated working-tree work and all customer records.
+
+## Acceptance criteria
+
+- AC1: Maintain a requirement-to-proof matrix for all nine original requests and the partner's master/commission refinements. Previously implemented behavior must remain intact; resolve actual gaps rather than treating the former first-version label as completion.
+- AC2: Complete the checklist builder's documented core: eleven question types; sections/categories; add, reorder, move and duplicate structural nodes with repaired internal references; active/required flags; meaningful answer weights and exclusions; configurable Yes/No/N/A labels, scale step and numeric units; safe description links and reference attachments; collapse/numbering, responsive interactive preview and conflict-safe saving/autosaving. Preserve existing definitions and immutable inspection snapshots.
+- AC3: Implement checklist conditions beyond equality: equality/inequality, numeric/date comparisons, inclusive/exclusive ranges, any answered value and checkbox state, with appropriate multiselect handling. Support conditional follow-up chains to three levels, validate references/order/type compatibility, and hide/prune inactive answers consistently in UI, validation, scores and reports.
+- AC4: Support conditionally required comments, photos with a minimum count, video/audio, barcode text and explicit geolocation capture. Files and actual drawn signatures must work on mobile. Enforce bounded sizes, genuine formats, inspection/template ownership, tenant isolation and private downloads. No paid model or real customer notification is needed for verification.
+- AC5: Support violation rules and critical-stop logic with optional zero result. The server derives the result, retains the real assessor, enforces finalize permission, explains forced completion and does not demand unrelated unanswered questions after a critical stop. Required evidence for the triggering answer cannot be bypassed. Completed inspections remain immutable.
+- AC6: Support repeatable categories during an inspection, with bounded independent instances, internal condition remapping and separate answers/evidence. Validate instance ownership/limits server-side and retain them in the final report/snapshot.
+- AC7: Provide an XLSX import sample, validation/preview before committing the imported structure, portable JSON export/import, template print/PDF and inspection reports containing visible answers, evidence, signatures, violations and weighted totals. Imports must not execute formulas or silently discard invalid rows.
+- AC8: Verify the documented constructor capabilities against official CheckOffice builder/logic documentation; inspect the registration flow and record the actual access outcome. Do not invent successful registration, access or exact private-screen parity. The deliverable is the requested constructor and its logic, not CheckOffice's unrelated chat/task/calendar service. Use original design-system components, keyboard/mobile interaction and actionable errors.
+- AC9: Reverify the original non-constructor features and all partner refinements: dated master directory distribution/correction/connection flow; signed/verified/closed protections; commission addition restrictions, own grade/comment, automatic release, four-digit editable time, display dates, decline fallback and complete-commission queue; blank attribution and explicit defaults; private document library; camera opt-in; organization special mode hiding and refusing automation.
+- AC10: Record current focused tests, API/browser/PDF evidence, typecheck, generated-message consistency, scoped source lint, schema validation, complete baseline-aware test gate and production build. Run a fresh current-state verification; retain failures, minimally fix them and reverify. Every criterion must PASS before a completion claim.
+- AC11: Prepare a coherent, reviewable release from tested runtime sources and required dependencies without discarding the current dirty tree or publishing private/local/mobile artifacts. Record the exact release manifest/revision. Before remote schema changes inspect the actual production schema diff and take a recoverable backup; apply only additive/non-lossy changes. Preserve uploaded customer files and retain a rollback route. Deployment and necessary production schema updates are now explicitly authorized.
+- AC12: Let the production deployment finish and verify the actual running revision/build marker, PM2, HTTPS and local health. Exercise the original request and the complete constructor in the deployed app using isolated, clearly identified QA tenants and real employee/manager roles. Test private file/PDF delivery, foreign-tenant refusal and protected-record conflicts. Do not change customer journals, invoke global write crons, contact real users or run paid AI. Record current raw production results; clean up only positively identified QA data if needed.
+
+## Boundaries and implementation decisions
+
+- Knowledge-library OCR/full-text search remain deferred by the original request. File-card previews for legacy DOC/archives are valid; supported images/PDF/office formats retain readable previews.
+- Use the existing JSON definition/snapshot storage and access model; extend it compatibly rather than replacing journal identity/permissions. New attachment storage is private and tenant scoped.
+- Condition/violation/media rules belong to the checklist constructor. They do not create a second TasksFlow task engine.
+- CheckOffice references: https://help.checkoffice.ru/article/21715 and the official constructor article linked from it; registration https://reg.checkoffice.ru/. Do not contact a real invented phone number to obtain access.
+- The existing working tree includes extensive localization changes required by several edited runtime modules. Resolve and record the dependency closure in the release snapshot; never blindly stage or upload the entire workspace.
+- Keep all new task artifacts here. Earlier evidence remains historical and useful, but production completion requires current production results for the released revision.
+
+## Sequence
+
+1. Complete the documented capability matrix, constructor implementation and focused tests.
+2. Exercise current local API/mobile/browser flows in the isolated test database and audit all original requirements.
+3. Freeze the release source snapshot, run fresh gates/build and inspect the production baseline/schema.
+4. Deploy the exact tested revision, wait for completion, run isolated production scenarios and package evidence/verdict.

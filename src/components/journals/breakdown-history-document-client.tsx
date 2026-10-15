@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useBreakdownCopy } from "./use-breakdown-copy";
+import { breakdownDate, breakdownTitle, breakdownTime, breakdownEnd } from "./breakdown-history-presentation";
+
+import { useMemo, useState, useTransition } from "react";
 import { Archive, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -25,11 +28,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   createBreakdownRow,
-  formatBreakdownEnd,
   getBreakdownRowDateError,
   normalizeBreakdownHistoryDocumentConfig,
-  BREAKDOWN_HISTORY_HEADING,
-  BREAKDOWN_HISTORY_DOCUMENT_TITLE,
   type BreakdownHistoryDocumentConfig,
   type BreakdownRow,
 } from "@/lib/breakdown-history-document";
@@ -50,8 +50,6 @@ import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/jou
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -65,25 +63,6 @@ type Props = {
   /** Design v2 toggle. */
   useV2?: boolean;
 };
-
-function formatDateLabel(date: string) {
-  if (!date) return "";
-  const [year, month, day] = date.split("-");
-  if (!year || !month || !day) return date;
-  return `${day}-${month}-${year}`;
-}
-
-function formatTime(hour: string, minute: string) {
-  return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
-}
-
-function hourOptions() {
-  return Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-}
-
-function minuteOptions() {
-  return Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
-}
 
 /* ------------------------------------------------------------------ */
 /*  Row Dialog                                                        */
@@ -99,6 +78,7 @@ function RowDialog(props: {
   documentId: string;
   directory: readonly EquipmentDirectoryOption[];
 }) {
+  const { t, latest } = useBreakdownCopy();
   const [row, setRow] = useState<BreakdownRow>(() => props.initialRow || createBreakdownRow());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -106,7 +86,7 @@ function RowDialog(props: {
     setRow((current) => ({ ...current, [key]: value }));
   }
 
-  const dateError = getBreakdownRowDateError(row);
+  const dateError = getBreakdownRowDateError(row) ? t("row.dateError") : null;
 
   async function handleSave() {
     if (dateError) {
@@ -117,11 +97,11 @@ function RowDialog(props: {
     try {
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row);
-    } catch (error) {
+    } catch {
       // ПОЧЕМУ: окно закрывалось в finally — сотрудник видел «сохранено»,
       // хотя сервер отказал, и запись о поломке терялась.
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить строку")
+        latest.current.t("errors.row")
       );
     } finally {
       setIsSubmitting(false);
@@ -133,7 +113,7 @@ function RowDialog(props: {
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
         <DialogHeader className="border-b px-6 py-5">
           <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+            {props.initialRow ? (props.titleSuffix ? t("row.editProgress", { progress: props.titleSuffix }) : t("row.edit")) : t("row.add")}
           </DialogTitle>
         </DialogHeader>
 
@@ -141,13 +121,13 @@ function RowDialog(props: {
           {/* Start date + time */}
           <div className="space-y-2">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Дата и время начала работ
-            </Label>
+              {t("columns.startTime")}</Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.4fr_1.6fr]">
               <Input
                 type="date"
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-                value={row.startDate}
+                aria-label={t("columns.startTime")}
+              value={row.startDate}
                 onChange={(e) => setValue("startDate", e.target.value)}
               />
               {/* Одно поле времени вместо пары селектов «часы» и «минуты»:
@@ -165,7 +145,7 @@ function RowDialog(props: {
           </div>
 
           <EquipmentDirectoryField
-            label="Наименование оборудования"
+            label={t("columns.equipment")}
             value={row.equipmentName}
             sourceEquipmentId={row.sourceEquipmentId}
             directory={props.directory}
@@ -180,30 +160,33 @@ function RowDialog(props: {
           />
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Описание поломки</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("columns.description")}</Label>
             <textarea
               className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-3 text-[15px] text-[#0b1024] focus:outline-none"
               rows={3}
+              aria-label={t("columns.description")}
               value={row.breakdownDescription}
               onChange={(e) => setValue("breakdownDescription", e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Выполненный ремонт</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("columns.repair")}</Label>
             <textarea
               className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-3 text-[15px] text-[#0b1024] focus:outline-none"
               rows={3}
+              aria-label={t("columns.repair")}
               value={row.repairPerformed}
               onChange={(e) => setValue("repairPerformed", e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Замена частей (если произведена)</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("columns.parts")}</Label>
             <textarea
               className="w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-3 text-[15px] text-[#0b1024] focus:outline-none"
               rows={2}
+              aria-label={t("columns.parts")}
               value={row.partsReplaced}
               onChange={(e) => setValue("partsReplaced", e.target.value)}
             />
@@ -212,16 +195,16 @@ function RowDialog(props: {
           {/* End date + time */}
           <div className="space-y-2">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Дата и время окончания работ
-              <span className="ml-1 font-normal text-[#6f7282]">
-                — оставьте пустым, пока ремонт идёт
+              {t("columns.endTime")}<span className="ml-1 font-normal text-[#6f7282]">
+                {t("row.endHint")}
               </span>
             </Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.4fr_1.6fr]">
               <Input
                 type="date"
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-                value={row.endDate}
+                aria-label={t("columns.endTime")}
+              value={row.endDate}
                 onChange={(e) => setValue("endDate", e.target.value)}
               />
               {/* Одно поле времени вместо пары селектов «часы» и «минуты»:
@@ -239,18 +222,20 @@ function RowDialog(props: {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Часы простоя</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("columns.downtime")}</Label>
             <Input
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+              aria-label={t("columns.downtime")}
               value={row.downtimeHours}
               onChange={(e) => setValue("downtimeHours", e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">ФИО лица, ответственного за ремонт</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("columns.responsible")}</Label>
             <Input
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+              aria-label={t("columns.responsible")}
               value={row.responsiblePerson}
               onChange={(e) => setValue("responsiblePerson", e.target.value)}
             />
@@ -270,15 +255,14 @@ function RowDialog(props: {
             className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
             onClick={() => props.onOpenChange(false)}
           >
-            Отмена
-          </Button>
+            {t("actions.cancel")}</Button>
           <Button
             type="button"
             className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
             onClick={handleSave}
             disabled={isSubmitting || dateError !== null}
           >
-            {isSubmitting ? "Сохранение..." : props.initialRow ? "Сохранить" : "Добавить"}
+            {isSubmitting ? t("actions.saving") : props.initialRow ? t("actions.save") : t("actions.add")}
           </Button>
         </div>
       </DialogContent>
@@ -298,6 +282,7 @@ function SettingsDialog(props: {
   onSave: (params: { title: string; dateFrom: string }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const { t, locale, latest } = useBreakdownCopy();
   const [title, setTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -307,10 +292,10 @@ function SettingsDialog(props: {
     try {
       await props.onSave({ title: title.trim(), dateFrom });
       props.onOpenChange(false);
-    } catch (error) {
+    } catch {
       // Не закрываем окно при отказе сервера — иначе правка теряется молча.
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки")
+        latest.current.t("errors.settings")
       );
     } finally {
       setIsSubmitting(false);
@@ -322,8 +307,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа и дата начала."
+        title={t("settings.title")}
+        description={t("settings.description")}
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -331,18 +316,16 @@ function SettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
-          </Label>
+            {t("settings.name")}</Label>
           <Input
-            value={title}
+            value={breakdownTitle(title, dateFrom, locale, t)}
             onChange={(e) => setTitle(e.target.value)}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
-          </Label>
+            {t("settings.start")}</Label>
           <Input
             type="date"
             value={dateFrom}
@@ -359,16 +342,15 @@ function SettingsDialog(props: {
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="border-b px-8 py-6">
           <DialogTitle className="text-[30px] font-medium text-black">
-            Настройки документа
-          </DialogTitle>
+            {t("settings.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
-            <Label>Название документа</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Label>{t("settings.name")}</Label>
+            <Input value={breakdownTitle(title, dateFrom, locale, t)} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Дата начала</Label>
+            <Label>{t("settings.start")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -382,7 +364,7 @@ function SettingsDialog(props: {
               onClick={handleSave}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? t("actions.saving") : t("actions.save")}
             </Button>
           </div>
         </div>
@@ -402,6 +384,7 @@ function FinishDialog(props: {
   documentId: string;
   onFinished: () => void;
 }) {
+  const { t, latest } = useBreakdownCopy();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleFinish() {
@@ -413,13 +396,12 @@ function FinishDialog(props: {
         body: JSON.stringify({ status: "closed" }),
       });
       if (!response.ok) {
-        const result = await response.json().catch(() => null);
-        throw new Error(result?.error || "Не удалось закончить журнал");
+        throw new Error("BREAKDOWN_CLOSE_FAILED");
       }
       props.onFinished();
       props.onOpenChange(false);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка"));
+    } catch {
+      toast.error(latest.current.t("errors.generic"));
     } finally {
       setIsSubmitting(false);
     }
@@ -430,12 +412,12 @@ function FinishDialog(props: {
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[480px]">
         <DialogHeader className="border-b px-8 py-6">
           <DialogTitle className="text-[24px] font-medium text-black">
-            Закончить журнал &laquo;{props.title}&raquo;
+            {t("finish.title", { title: props.title })}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <p className="text-sm text-[#80849a]">
-            После завершения журнал станет доступен только для чтения. Это действие нельзя отменить.
+            {t("finish.description")}
           </p>
           <div className="flex flex-wrap justify-end gap-3 pt-2">
             <Button
@@ -443,15 +425,14 @@ function FinishDialog(props: {
               variant="outline"
               onClick={() => props.onOpenChange(false)}
             >
-              Отмена
-            </Button>
+              {t("actions.cancel")}</Button>
             <Button
               type="button"
               className="bg-[#5563ff] hover:bg-[#4452ee]"
               onClick={handleFinish}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Завершение..." : "Закончить"}
+              {isSubmitting ? t("actions.finishing") : t("actions.finishShort")}
             </Button>
           </div>
         </div>
@@ -470,6 +451,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
   const [config, setConfig] = useState(() =>
     normalizeBreakdownHistoryDocumentConfig(props.config)
   );
+  const { t, locale, latest } = useBreakdownCopy();
   const [title, setTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
@@ -491,13 +473,11 @@ export function BreakdownHistoryDocumentClient(props: Props) {
 
   const cardItems: RecordCardItem[] = rows.map((row, index) => ({
     id: row.id,
-    title: `№${index + 1} · ${formatDateLabel(row.startDate)} ${formatTime(
-      row.startHour,
-      row.startMinute
-    )}`,
+    title: t("cards.title", { number: index + 1, date: breakdownDate(row.startDate, locale), time: breakdownTime(row.startHour, row.startMinute) }),
     subtitle: rowName(row) || "—",
     leading: (
       <Checkbox
+        aria-label={t("actions.selectRow", { number: index + 1 })}
         checked={selectedRowIds.includes(row.id)}
         onCheckedChange={(checked) =>
           setSelectedRowIds((current) =>
@@ -511,13 +491,13 @@ export function BreakdownHistoryDocumentClient(props: Props) {
       />
     ),
     fields: [
-      { label: "Описание поломки", value: row.breakdownDescription, hideIfEmpty: true },
-      { label: "Выполненный ремонт", value: row.repairPerformed, hideIfEmpty: true },
-      { label: "Замена частей", value: row.partsReplaced, hideIfEmpty: true },
+      { label: t("columns.description"), value: row.breakdownDescription, hideIfEmpty: true },
+      { label: t("columns.repair"), value: row.repairPerformed, hideIfEmpty: true },
+      { label: t("cards.parts"), value: row.partsReplaced, hideIfEmpty: true },
       // Пустое окончание — «ремонт идёт», а не «закончен 00:00».
-      { label: "Окончание работ", value: formatBreakdownEnd(row), hideIfEmpty: true },
-      { label: "Часы простоя", value: row.downtimeHours, hideIfEmpty: true },
-      { label: "Ответственный", value: row.responsiblePerson, hideIfEmpty: true },
+      { label: t("cards.end"), value: breakdownEnd(row, locale), hideIfEmpty: true },
+      { label: t("columns.downtime"), value: row.downtimeHours, hideIfEmpty: true },
+      { label: t("cards.responsible"), value: row.responsiblePerson, hideIfEmpty: true },
     ],
     onClick: isActive
       ? () => {
@@ -534,8 +514,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
         }}
         className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5563ff] px-4 text-[14px] font-medium text-white hover:bg-[#4452ee]"
       >
-        Редактировать
-      </button>
+        {t("actions.edit")}</button>
     ) : null,
   }));
 
@@ -554,9 +533,9 @@ export function BreakdownHistoryDocumentClient(props: Props) {
         config: nextConfig,
       }),
     });
-    const result = await response.json().catch(() => null);
+    await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить документ");
+      throw new Error("BREAKDOWN_SAVE_FAILED");
     }
     setTitle(nextTitle);
     setDateFrom(nextDateFrom);
@@ -574,9 +553,9 @@ export function BreakdownHistoryDocumentClient(props: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ config: nextConfig }),
     });
-    const result = await response.json().catch(() => null);
+    await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить документ");
+      throw new Error("BREAKDOWN_SAVE_FAILED");
     }
     setConfig(nextConfig);
     startTransition(() => router.refresh());
@@ -617,16 +596,16 @@ export function BreakdownHistoryDocumentClient(props: Props) {
   async function handleDeleteSelected() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ locale, title: t("delete.rowsTitle"), description: t("delete.description", { count }), variant: "danger", confirmLabel: t("actions.delete") }))) return;
     try {
       await persistConfig({
         ...config,
         rows: config.rows.filter((row) => !selectedRowIds.includes(row.id)),
       });
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
-    } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.success(latest.current.t("delete.success", { count }));
+    } catch {
+      toast.error(latest.current.t("errors.deleteRows"));
     }
   }
 
@@ -641,13 +620,13 @@ export function BreakdownHistoryDocumentClient(props: Props) {
           count={selectedRowIds.length}
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
-            handleDeleteSelected().catch((error) =>
+            handleDeleteSelected().catch(() =>
               toast.error(
-                humanizeFetchError(error, "Ошибка удаления")
+                latest.current.t("errors.deleteRows")
               )
             );
           }}
-          hint="Карточки поломок будут удалены без возможности отмены"
+          hint={t("delete.hint")}
         >
           <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
@@ -660,24 +639,24 @@ export function BreakdownHistoryDocumentClient(props: Props) {
            dialog с подсказкой добавить новую. */}
         <FocusTodayScroller
           selector="[data-focus-today]"
-          createLabel="Добавить запись о поломке"
-          emptyTitle="Поломок ещё нет"
-          emptyBody="Если случилась поломка — добавьте новую запись через кнопку «Добавить» в таблице ниже."
+          createLabel={t("empty.add")}
+          emptyTitle={t("empty.title")}
+          emptyBody={t("empty.body")}
         />
         <JournalDocumentShell
-          title={title || BREAKDOWN_HISTORY_HEADING}
-          subtitle={`Начат ${formatDateLabel(dateFrom)}`}
+          title={breakdownTitle(title, dateFrom, locale, t)}
+          subtitle={t("started", { date: breakdownDate(dateFrom, locale) })}
           documentId={props.documentId}
           backHref="/journals/breakdown_history"
           onSettings={() => setSettingsOpen(true)}
           closed={!isActive}
-          closedHint="Откройте журнал заново, чтобы добавлять и править записи о поломках."
+          closedHint={t("finish.closedHint")}
           menuItems={
             isActive
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("actions.finish"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => setFinishOpen(true),
                   },
@@ -687,17 +666,17 @@ export function BreakdownHistoryDocumentClient(props: Props) {
           mobileView={mobileView}
           onMobileView={switchMobileView}
           cards={
-            <RecordCardsView items={cardItems} emptyLabel="Карточки поломок пока не добавлены." />
+            <RecordCardsView items={cardItems} emptyLabel={t("empty.cards")} />
           }
           paperHeader={
             <JournalDocumentHeader
-              orgName={props.organizationName || ORG_NAME_FALLBACK}
-              title={BREAKDOWN_HISTORY_DOCUMENT_TITLE}
+              orgName={props.organizationName || t("organization")}
+              title={t("title")}
               startedAt={dateFrom}
               finishedAt={isActive ? null : new Date()}
             />
           }
-          sheetTitle="Карточка истории поломок"
+          sheetTitle={t("title")}
           sheetMinWidth={1600}
           toolbar={
             isActive ? (
@@ -710,8 +689,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                 }}
               >
                 <Plus className="size-5" />
-                Добавить
-              </Button>
+                {t("actions.add")}</Button>
             ) : undefined
           }
         >
@@ -720,6 +698,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
               <tr>
                 <th className={`w-[44px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
                   <Checkbox
+                    aria-label={t("actions.selectAll")}
                     checked={allSelected}
                     onCheckedChange={(checked) =>
                       setSelectedRowIds(
@@ -729,17 +708,16 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                     disabled={rows.length === 0 || !isActive}
                   />
                 </th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Дата и время начала работ</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Наименование оборудования</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Описание поломки</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Выполненный ремонт</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("columns.startTime")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("columns.equipment")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("columns.description")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("columns.repair")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                  Замена частей (если произведена)
-                </th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Дата и время окончания работ</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Часы простоя</th>
+                  {t("columns.parts")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("columns.endTime")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("columns.downtime")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                  ФИО лица ответственного за ремонт
+                  {t("columns.responsible")}
                 </th>
               </tr>
             </thead>
@@ -763,6 +741,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Checkbox
+                      aria-label={t("actions.selectRow", { number: idx + 1 })}
                       checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={(checked) =>
                         setSelectedRowIds((current) =>
@@ -785,8 +764,8 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                         setRowDialogOpen(true);
                       }}
                     >
-                      {formatDateLabel(row.startDate)}{" "}
-                      {formatTime(row.startHour, row.startMinute)}
+                      {breakdownDate(row.startDate, locale)}{" "}
+                      {breakdownTime(row.startHour, row.startMinute)}
                     </button>
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
@@ -802,7 +781,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                     {row.partsReplaced || "—"}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
-                    {formatBreakdownEnd(row) || "—"}
+                    {breakdownEnd(row, locale) || "—"}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
                     {row.downtimeHours || "—"}
@@ -818,8 +797,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                     colSpan={9}
                     className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#80849a]`}
                   >
-                    Строк пока нет
-                  </td>
+                    {t("empty.rows")}</td>
                 </tr>
               )}
 
@@ -837,7 +815,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                   leading={1}
                   labelSpan={2}
                   trailing={6}
-                  label="Добавить запись о поломке"
+                  label={t("empty.add")}
                   onClick={() => {
                     setEditingRow(null);
                     setRowDialogOpen(true);
@@ -885,7 +863,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
       <FinishDialog
         open={finishOpen}
         onOpenChange={setFinishOpen}
-        title={title}
+        title={breakdownTitle(title, dateFrom, locale, t)}
         documentId={props.documentId}
         onFinished={() => startTransition(() => router.refresh())}
       />

@@ -99,12 +99,12 @@ test("колонки пищеблока: T° и примечание — тол�
       commissionMembers: [{ id: "m1", employeeName: "Сидорова", role: "Председатель" }],
     },
     rows: [{ name: "Котлета", yield: "100", time: "11:00" }],
-    common: { ...common, productTemp: "85", note: "контроль", releaseAllowed: "no" },
+    common: { ...common, organoleptic: "Недоброкачественно", productTemp: "85", note: "контроль", releaseAllowed: "yes" },
     people,
   });
   const [row] = plan.rows;
   assert.equal(row.productTemp, "85");
-  assert.equal(row.organoleptic, "Соответствует");
+  assert.equal(row.organoleptic, "Недоброкачественно");
   assert.equal(row.inspectorName, "");
   assert.equal(row.releaseAllowed, "no");
   assert.equal(row.releasePermissionTime, "");

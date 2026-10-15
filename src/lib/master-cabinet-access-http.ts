@@ -14,6 +14,9 @@ import { MasterCabinetError } from "@/lib/master-cabinet-error";
 import { connectedSeatOrganization, masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { notifyEmployee } from "@/lib/telegram";
+import { db } from "@/lib/db";
+import { resolveLocale } from "@/i18n/locales";
+import { translatorFor } from "@/i18n/translator";
 
 /**
  * Обработчики доступа к мастер-кабинетам — общие для «Права доступа →
@@ -121,14 +124,21 @@ export async function handleAccessPost(
     // Письмо — best-effort: ссылка приглашения есть и в ответе.
     let emailSent = true;
     try {
+      const [recipient, targetOrganization] = await Promise.all([
+        db.user.findUnique({ where: { id: result.user.id }, select: { locale: true } }),
+        db.organization.findUnique({ where: { id: result.cabinet.id }, select: { locale: true } }),
+      ]);
+      const locale = resolveLocale({ authenticated: true, userLocale: recipient?.locale, organizationLocale: targetOrganization?.locale });
+      const t = await translatorFor(locale);
       await sendInviteTokenEmail({
         to: result.user.email,
         name: result.user.name,
         organizationName: result.cabinet.name,
         inviteUrl: result.inviteUrl,
         organizationId: result.cabinet.id,
-        subject: `Мастер-кабинет «${result.cabinet.name}» в WeSetup: установите пароль`,
-        intro: `Вам открыт мастер-кабинет справочников «${result.cabinet.name}»: в нём ведут меню и сырьё, а подключённые пищеблоки получают их в журналы бракеража готовой продукции и скоропортящейся продукции. Журналы и сотрудники пищеблоков в кабинете не показываются. После входа вы сразу окажетесь в кабинете.`,
+        locale,
+        subject: t("email.masterCabinet.subject", { organization: result.cabinet.name }),
+        intro: t("email.masterCabinet.intro", { organization: result.cabinet.name }),
       });
     } catch (err) {
       emailSent = false;

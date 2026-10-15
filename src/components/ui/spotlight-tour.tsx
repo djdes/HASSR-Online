@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import {
   useCallback,
@@ -109,6 +110,7 @@ export function SpotlightTour({
   startStepId?: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("journalControls.guide");
   // Шаги, у которых на странице есть цель, — считаем один раз при открытии,
   // чтобы счётчик «Шаг N из M» не прыгал.
   const [available] = useState(() =>
@@ -245,7 +247,7 @@ export function SpotlightTour({
       style={{ fontFamily: PORTAL_FONT_FAMILY }}
       role="dialog"
       aria-modal="true"
-      aria-label="Подсказка по интерфейсу"
+      aria-label={t("tour")}
     >
       <style>{`@keyframes wesetup-spotlight-pulse{0%,100%{box-shadow:0 0 0 2px rgba(85,102,246,.95),0 0 0 6px rgba(85,102,246,.25)}50%{box-shadow:0 0 0 2px rgba(85,102,246,.95),0 0 0 14px rgba(85,102,246,0)}}`}</style>
       {/* Click-catcher: evenodd-дырка в SVG пропускает клики на страницу,
@@ -292,12 +294,12 @@ export function SpotlightTour({
             className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]"
             aria-live="polite"
           >
-            Шаг {index + 1} из {available.length}
+            {t("progress", { current: String(index + 1), total: String(available.length) })}
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть подсказку"
+            aria-label={t("closeHint")}
             className="-m-2 rounded-full p-2 text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
           >
             <X className="size-4" />
@@ -309,7 +311,7 @@ export function SpotlightTour({
         <p className="mt-1.5 text-[13px] leading-[1.55] text-[#3c4053]">{step.body}</p>
         {!targetRect ? (
           <p className="mt-2 text-[12px] text-[#a13a32]">
-            Элемент сейчас не виден на экране.
+            {t("invisible")}
           </p>
         ) : null}
 
@@ -336,7 +338,7 @@ export function SpotlightTour({
                 className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <ArrowLeft className="size-3.5" />
-                Назад
+                {t("back")}
               </button>
             ) : null}
             <button
@@ -344,7 +346,7 @@ export function SpotlightTour({
               onClick={goNext}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3.5 text-[13px] font-semibold text-white shadow-[0_10px_26px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
             >
-              {isLast ? "Готово" : "Далее"}
+              {isLast ? t("done") : t("next")}
               {isLast ? null : <ArrowRight className="size-3.5" />}
             </button>
           </div>

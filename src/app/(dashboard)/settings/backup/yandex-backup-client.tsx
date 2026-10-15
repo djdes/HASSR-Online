@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { FORMAT_LOCALES, isLocale } from "@/i18n/locales";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -31,6 +33,11 @@ type Props = {
 };
 
 export function YandexBackupClient({ initialState, recentLogs }: Props) {
+  const t = useTranslations("yandexBackup");
+  const selectedLocale = useLocale();
+  const locale = isLocale(selectedLocale) ? selectedLocale : "ru";
+  const feedback = useRef(t);
+  useEffect(() => { feedback.current = t; }, [t]);
   const router = useRouter();
   const [state, setState] = useState(initialState);
   const [token, setToken] = useState("");
@@ -38,9 +45,25 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
   const [busy, setBusy] = useState(false);
   const [confirmDisconnectOpen, setConfirmDisconnectOpen] = useState(false);
 
+  function errorMessage(code: unknown, fallback: "connectError" | "disconnectError" | "backupError") {
+    const copy = feedback.current;
+    switch (code) {
+      case "YANDEX_BACKUP_FORBIDDEN": return copy("forbidden");
+      case "YANDEX_BACKUP_INVALID_INPUT": return copy("invalidInput");
+      case "YANDEX_BACKUP_NOT_CONNECTED": return copy("notConnected");
+      default: return copy(fallback);
+    }
+  }
+
+  function historyError(value: string) {
+    if (value === "Yandex.Disk не вернул upload URL") return t("missingUploadUrl");
+    if (value === "Неизвестная ошибка") return t("unknownError");
+    return value;
+  }
+
   async function connect() {
     if (token.trim().length < 10) {
-      toast.error("Введите OAuth-токен Яндекса");
+      toast.error(t("tokenRequired"));
       return;
     }
     setBusy(true);
@@ -50,20 +73,21 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: token.trim(), folder: folder.trim() }),
       });
-      const data = (await res.json()) as { error?: string; userLogin?: string };
+      const data = (await res.json()) as { errorCode?: string; userLogin?: string };
       if (!res.ok) {
-        throw new Error(data.error ?? "Ошибка");
+        toast.error(errorMessage(data.errorCode, "connectError"));
+        return;
       }
       toast.success(
         data.userLogin
-          ? `Подключено: ${data.userLogin}`
-          : "Я.Диск подключён"
+          ? feedback.current("connectedUser", { login: data.userLogin })
+          : feedback.current("connected")
       );
       setState({ ...state, connected: true, folder: folder.trim() });
       setToken("");
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(feedback.current("connectError"));
     } finally {
       setBusy(false);
     }
@@ -76,13 +100,15 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
         method: "DELETE",
       });
       if (!res.ok) {
-        throw new Error("Ошибка");
+        const data = await res.json().catch(() => null) as { errorCode?: string } | null;
+        toast.error(errorMessage(data?.errorCode, "disconnectError"));
+        return;
       }
-      toast.success("Я.Диск отключён");
+      toast.success(feedback.current("disconnected"));
       setState({ ...state, connected: false });
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(feedback.current("disconnectError"));
     } finally {
       setBusy(false);
     }
@@ -95,22 +121,21 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
         method: "POST",
       });
       const data = (await res.json()) as {
-        error?: string;
+        errorCode?: string;
         path?: string;
         sizeBytes?: number;
       };
       if (!res.ok) {
-        throw new Error(data.error ?? "Ошибка");
+        toast.error(errorMessage(data.errorCode, "backupError"));
+        return;
       }
       toast.success(
-        `Бэкап загружен: ${data.path} (${Math.round(
-          (data.sizeBytes ?? 0) / 1024
-        )} КБ)`
+        feedback.current("uploadedFile", { path: data.path ?? "", size: Math.round((data.sizeBytes ?? 0) / 1024) })
       );
       setState({ ...state, lastBackupAt: new Date().toISOString() });
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(feedback.current("backupError"));
     } finally {
       setBusy(false);
     }
@@ -126,19 +151,15 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
             </span>
             <div className="flex-1 min-w-0">
               <div className="text-[15px] font-semibold text-[#0b1024]">
-                Я.Диск подключён
+                {t("connected")}
               </div>
               <p className="mt-1 text-[13px] text-[#6f7282]">
-                Папка:{" "}
-                <span className="font-mono text-[#3848c7]">
-                  {state.folder}
-                </span>
+                {t.rich("folderValue", { folder: state.folder, path: chunks => <span className="font-mono text-[#3848c7]">{chunks}</span> })}
               </p>
               <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Последний бэкап:{" "}
-                {state.lastBackupAt
-                  ? new Date(state.lastBackupAt).toLocaleString("ru-RU")
-                  : "ещё не создавался"}
+                {t("lastBackup", { date: state.lastBackupAt
+                  ? new Date(state.lastBackupAt).toLocaleString(FORMAT_LOCALES[locale])
+                  : t("never") })}
               </p>
             </div>
           </div>
@@ -155,7 +176,7 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
               ) : (
                 <CloudUpload className="size-4" />
               )}
-              Сделать бэкап сейчас
+              {t("run")}
             </button>
             <button
               type="button"
@@ -164,48 +185,42 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
               className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#a13a32] hover:bg-[#fff4f2] disabled:opacity-50"
             >
               <Trash2 className="size-4" />
-              Отключить
+              {t("disconnect")}
             </button>
           </div>
         </section>
       ) : (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            Подключить Yandex.Disk
+            {t("connectTitle")}
           </div>
           <ol className="mt-3 space-y-2 text-[13px] leading-relaxed text-[#3c4053]">
             <li>
-              <span className="font-medium">1.</span> Зайдите в{" "}
-              <a
+              <span className="font-medium">1.</span>{" "}{t.rich("stepApp", { link: chunks => <a
                 href="https://oauth.yandex.ru/authorize?response_type=token&client_id=YOUR_APP_ID&scope=cloud_api%3Adisk.read%20cloud_api%3Adisk.write"
                 target="_blank"
                 rel="noreferrer"
                 className="text-[#3848c7] underline"
               >
-                Яндекс.OAuth
-              </a>{" "}
-              и создайте приложение с правами «Доступ к папке приложения
-              на Диске» + «Запись на Диск».
+                {chunks}
+              </a> })}
             </li>
             <li>
-              <span className="font-medium">2.</span> Скопируйте полученный
-              OAuth-токен (длинная строка, начинается с букв и цифр).
+              <span className="font-medium">2.</span>{" "}{t("stepToken")}
             </li>
             <li>
-              <span className="font-medium">3.</span> Вставьте токен ниже —
-              мы проверим его и сохраним. Сами файлы пишутся в папку{" "}
-              <span className="font-mono text-[#3848c7]">/WeSetup</span> на
-              вашем Диске (можно изменить).
+              <span className="font-medium">3.</span>{" "}{t.rich("stepPaste", { path: chunks => <span className="font-mono text-[#3848c7]">{chunks}</span> })}
             </li>
           </ol>
 
           <div className="mt-5 space-y-3">
             <div>
               <label className="block text-[12px] font-medium text-[#6f7282]">
-                OAuth-токен
+                {t("token")}
               </label>
               <input
                 type="password"
+                aria-label={t("token")}
                 autoComplete="off"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
@@ -215,10 +230,11 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
             </div>
             <div>
               <label className="block text-[12px] font-medium text-[#6f7282]">
-                Папка на Диске
+                {t("folder")}
               </label>
               <input
                 type="text"
+                aria-label={t("folder")}
                 value={folder}
                 onChange={(e) => setFolder(e.target.value)}
                 placeholder="/WeSetup"
@@ -234,7 +250,7 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
               {busy ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              Подключить
+              {t("connect")}
             </button>
           </div>
         </section>
@@ -243,7 +259,7 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
       {recentLogs.length > 0 ? (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            История последних бэкапов
+            {t("history")}
           </div>
           <ul className="mt-3 divide-y divide-[#ececf4]">
             {recentLogs.map((log) => {
@@ -266,28 +282,28 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-medium text-[#0b1024]">
-                        {ok ? "Загружено" : "Ошибка"}
+                        {ok ? t("uploaded") : t("error")}
                         {log.action === "yandex_backup.manual" ? (
                           <span className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] text-[#3848c7]">
-                            вручную
+                            {t("manual")}
                           </span>
                         ) : null}
                       </div>
                       <div className="text-[12px] text-[#9b9fb3]">
-                        {new Date(log.createdAt).toLocaleString("ru-RU")}
+                        {new Date(log.createdAt).toLocaleString(FORMAT_LOCALES[locale])}
                       </div>
                     </div>
                     {path ? (
                       <div className="mt-0.5 font-mono text-[12px] text-[#6f7282]">
                         {path}
                         {size
-                          ? ` · ${Math.round(size / 1024)} КБ`
+                          ? ` · ${t("size", { size: Math.round(size / 1024) })}`
                           : ""}
                       </div>
                     ) : null}
                     {error ? (
                       <div className="mt-0.5 text-[12px] text-[#a13a32]">
-                        {error}
+                        {historyError(error)}
                       </div>
                     ) : null}
                   </div>
@@ -307,18 +323,18 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
           setConfirmDisconnectOpen(false);
           await disconnect();
         }}
-        title="Отключить Яндекс.Диск?"
-        description="Связь с диском разорвётся, и новые копии базы перестанут создаваться."
+        title={t("confirmTitle")}
+        description={t("confirmDescription")}
         bullets={[
-          { label: "Автоматические копии больше не создаются", tone: "warn" },
+          { label: t("confirmStop"), tone: "warn" },
           {
-            label: "Уже загруженные копии на диске останутся — их не удаляем",
+            label: t("confirmKeep"),
             tone: "default",
           },
-          { label: "Подключить обратно можно в любой момент", tone: "info" },
+          { label: t("confirmReconnect"), tone: "info" },
         ]}
-        confirmLabel="Отключить"
-        cancelLabel="Отмена"
+        confirmLabel={t("disconnect")}
+        cancelLabel={t("cancel")}
         variant="danger"
       />
     </div>

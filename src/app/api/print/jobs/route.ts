@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
 import { AGENT_ONLINE_WINDOW_MS } from "@/lib/print-agent-auth";
+import { resolveExportLocale } from "@/i18n/export-locale";
+import { translatorFor } from "@/i18n/translator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,17 +22,24 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
+  const personalLocale = resolveExportLocale(null, session.user)!;
+  const t = await translatorFor(personalLocale);
 
-  let body: { documentId?: unknown };
+  let body: { documentId?: unknown; locale?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
+    return NextResponse.json({ code: "EMPTY_REQUEST", error: t("journalApi.emptyRequest") }, { status: 400 });
   }
 
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ code: "EMPTY_REQUEST", error: t("journalApi.emptyRequest") }, { status: 400 });
+  }
+  const locale = resolveExportLocale(body.locale, session.user);
+  if (!locale) return NextResponse.json({ code: "INVALID_LOCALE", error: t("journalPdf.errors.invalidLocale") }, { status: 400 });
   const documentId = String(body.documentId ?? "").trim();
   if (!documentId) {
-    return NextResponse.json({ error: "Не указан документ" }, { status: 400 });
+    return NextResponse.json({ code: "DOCUMENT_REQUIRED", error: t("journalApi.documentRequired") }, { status: 400 });
   }
 
   const doc = await db.journalDocument.findUnique({
@@ -43,7 +52,7 @@ export async function POST(request: Request) {
     },
   });
   if (!doc || doc.organizationId !== organizationId) {
-    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+    return NextResponse.json({ code: "DOCUMENT_NOT_FOUND", error: t("journalPdf.errors.notFound") }, { status: 404 });
   }
 
   // Та же проверка, что у скачивания PDF: если человеку нельзя скачать
@@ -60,7 +69,7 @@ export async function POST(request: Request) {
   );
   if (!access) {
     return NextResponse.json(
-      { error: "Нет доступа к этому журналу" },
+      { code: "JOURNAL_FORBIDDEN", error: t("journalPdf.errors.forbidden") },
       { status: 403 },
     );
   }
@@ -81,6 +90,7 @@ export async function POST(request: Request) {
     data: {
       organizationId,
       documentId: doc.id,
+      locale,
       docTitle: `${doc.template.name} — ${doc.title}`,
       createdById: session.user.id,
       createdByName: session.user.name ?? null,

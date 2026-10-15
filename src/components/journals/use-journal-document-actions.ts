@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
+import { useExportLanguageChoice } from "./export-language-choice";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
 
 /**
  * Общие действия над `JournalDocument`, которые до этого копипастились
@@ -72,17 +76,16 @@ export type SetStatusOptions = {
 
 export type OpenPdfOptions = {
   documentId?: string;
+  locale?: Locale;
 };
-
-async function readApiError(response: Response, fallback: string) {
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: string }
-    | null;
-  return payload?.error || fallback;
-}
 
 export function useJournalDocumentActions(documentId?: string | null) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("journalControls.documentActions");
+  const currentPresentation = useRef({ t, locale });
+  useEffect(() => { currentPresentation.current = { t, locale }; }, [t, locale]);
+  const chooseExportLanguage = useExportLanguageChoice();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
 
@@ -98,13 +101,14 @@ export function useJournalDocumentActions(documentId?: string | null) {
 
       if (!opts.skipConfirm) {
         const confirmed = await confirmAsync({
-          title: opts.title ?? "Удалить документ?",
+          locale,
+          title: opts.title ?? t("deleteTitle"),
           description:
             opts.description ??
-            "Документ и все его записи будут удалены безвозвратно.",
+            t("deleteDescription"),
           bullets: opts.bullets,
           variant: "danger",
-          confirmLabel: opts.confirmLabel ?? "Удалить",
+          confirmLabel: opts.confirmLabel ?? t("delete"),
           typeToConfirm: opts.typeToConfirm,
         });
         if (!confirmed) return false;
@@ -117,27 +121,28 @@ export function useJournalDocumentActions(documentId?: string | null) {
         });
         if (!response.ok) {
           toast.error(
-            await readApiError(
+            await readLocalizedApiError(
               response,
-              opts.errorMessage ?? "Не удалось удалить документ",
+              () => currentPresentation.current.locale,
+              () => opts.errorMessage ?? currentPresentation.current.t("deleteError"),
             ),
           );
           return false;
         }
         if (opts.successMessage !== null) {
-          toast.success(opts.successMessage ?? "Документ удалён");
+          toast.success(opts.successMessage ?? currentPresentation.current.t("deleted"));
         }
         opts.onSuccess?.();
         if (opts.refresh !== false) router.refresh();
         return true;
       } catch {
-        toast.error("Сетевая ошибка — документ не удалён");
+        toast.error(currentPresentation.current.t("deleteNetworkError"));
         return false;
       } finally {
         setIsDeleting(false);
       }
     },
-    [resolveId, router],
+    [resolveId, router, t, locale],
   );
 
   const setStatus = useCallback(
@@ -154,12 +159,13 @@ export function useJournalDocumentActions(documentId?: string | null) {
         });
         if (!response.ok) {
           toast.error(
-            await readApiError(
+            await readLocalizedApiError(
               response,
-              opts.errorMessage ??
+              () => currentPresentation.current.locale,
+              () => opts.errorMessage ??
                 (status === "closed"
-                  ? "Не удалось закрыть документ"
-                  : "Не удалось вернуть документ в активные"),
+                  ? currentPresentation.current.t("closeError")
+                  : currentPresentation.current.t("reopenError")),
             ),
           );
           return false;
@@ -168,15 +174,15 @@ export function useJournalDocumentActions(documentId?: string | null) {
           toast.success(
             opts.successMessage ??
               (status === "closed"
-                ? "Документ перенесён в закрытые"
-                : "Документ снова активен"),
+                ? currentPresentation.current.t("closed")
+                : currentPresentation.current.t("reopened")),
           );
         }
         opts.onSuccess?.();
         if (opts.refresh !== false) router.refresh();
         return true;
       } catch {
-        toast.error("Сетевая ошибка — статус не изменён");
+        toast.error(currentPresentation.current.t("statusNetworkError"));
         return false;
       } finally {
         setIsChangingStatus(false);
@@ -189,18 +195,22 @@ export function useJournalDocumentActions(documentId?: string | null) {
     (opts: OpenPdfOptions = {}) => {
       const id = resolveId(opts.documentId);
       if (!id) return;
-      const opened = window.open(
-        `/api/journal-documents/${id}/pdf`,
-        "_blank",
-        "noopener,noreferrer",
-      );
-      if (!opened) {
-        toast.error(
-          "Браузер заблокировал новое окно — разрешите всплывающие окна для печати",
-        );
+      const download = (selectedLocale: Locale) => {
+        // Native navigation keeps activation and does not mistake the null
+        // return value of window.open(noopener) for a blocked popup.
+        const link = document.createElement("a");
+        link.href = `/api/journal-documents/${encodeURIComponent(id)}/pdf?locale=${selectedLocale}`;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.click();
+      };
+      if (opts.locale) {
+        download(opts.locale);
+        return;
       }
+      chooseExportLanguage(download);
     },
-    [resolveId],
+    [resolveId, chooseExportLanguage],
   );
 
   return {

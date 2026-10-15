@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 
 import { usePathname } from "next/navigation";
 
@@ -10,8 +12,9 @@ import { journalsSkeletonFor } from "@/components/ui/skeleton-routes";
  * (`…/documents/<id>/verify`) — ей общий скелет страницы, а не сетка.
  */
 export default function JournalDocumentLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   if (journalsSkeletonFor(usePathname()) === "page") {
-    return <PageSkeleton label="Загружаем проверку документа…" body="list" />;
+    return <PageSkeleton label={tLoading("documentReview")} body="list" />;
   }
   return <JournalDocumentGridSkeleton />;
 }
@@ -22,9 +25,10 @@ export default function JournalDocumentLoading() {
  * (три колонки), заголовок журнала и сетка «строки × дни».
  */
 function JournalDocumentGridSkeleton() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем документ…</span>
+      <span className="sr-only">{tLoading("document")}</span>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Skeleton className="h-5 w-[180px] rounded-lg" />

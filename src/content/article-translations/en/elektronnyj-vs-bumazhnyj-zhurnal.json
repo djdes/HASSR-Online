@@ -1,0 +1,70 @@
+{
+  "locale": "en",
+  "sourceHash": "53224ae06eaa9581dd3ee93c1f46e444ea1ba5539db29ee7044b39ca8bdb20da",
+  "title": "Digital or paper log: what will an inspector accept?",
+  "excerpt": "An inspector can accept a digital log if it can be printed, signed, and retained for the required period. The rules specify what information must be recorded, not whether it is on paper.",
+  "body": [
+    {
+      "type": "p",
+      "text": "The most common myth we hear during demos is: “An inspector will not accept a digital log.” In practice, they will accept one if it can be printed, signed by the responsible person, and kept for as long as the rules require. No clause in SanPiN 2.3/2.4.4282-26 prohibits electronic record-keeping."
+    },
+    {
+      "type": "h2",
+      "text": "What the rules say"
+    },
+    {
+      "type": "p",
+      "text": "SanPiN 2.3/2.4.4282-26 lists the information that must be recorded—temperature, health status, and receipt of raw materials—but does not prescribe the recording medium. The same approach appears in TR CU 021/2011 and Rospotrebnadzor recommendations: the information and signature matter, not the paper format."
+    },
+    {
+      "type": "h2",
+      "text": "What inspectors usually check"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Completeness: are all dates covered, with no missing shifts?",
+        "Signatures: who made the decision, who was suspended, and who was cleared to work?",
+        "Response time: how quickly was a temperature deviation corrected?",
+        "Retention: how many years back can the records be retrieved?"
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Tip",
+      "text": "Print the PDF and sign it in blue ink in the “Responsible person” field; that is enough. An electronic signature is not mandatory, but is welcome."
+    },
+    {
+      "type": "h2",
+      "text": "Benefits for the business"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Nothing gets lost: a log cannot be torn, soaked with soup, or misplaced during a move.",
+        "It is clear who was late: entries receive a timestamp, with no backdating or falsification.",
+        "A PDF for the inspector takes a minute to prepare. The paper copy comes from a printer, not a box in the storeroom.",
+        "Each shift saves 20–30 minutes: there is no need to handwrite headings and repeated fields."
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "With paper, we had two incidents: once soup soaked the rejection log, and once a folder went missing during repairs. With a digital system, that cannot happen in the same way.",
+      "author": "Шеф-повар сети пекарен, Казань"
+    },
+    {
+      "type": "h2",
+      "text": "When paper is still needed"
+    },
+    {
+      "type": "p",
+      "text": "In rare cases an inspector may specifically ask for a paper original—for example, during an on-site inspection where a printer cannot be connected. WeSetup has a batch export mode for this case: one click exports all logs for a period to PDF with signatures already embedded."
+    }
+  ],
+  "tags": [
+    "SanPiN",
+    "Digital logs",
+    "Inspections"
+  ]
+}

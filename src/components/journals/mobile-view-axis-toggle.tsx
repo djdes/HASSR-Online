@@ -1,6 +1,7 @@
 "use client";
 
 import { Rows3, Table2, CalendarDays } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { MobileAxis, MobileView } from "@/lib/use-mobile-view";
 
@@ -30,7 +31,7 @@ export function MobileViewAxisToggle({
   view,
   axis,
   onChange,
-  entityLabel = "По периоду",
+  entityLabel,
   axisAvailable = true,
   dataTour,
 }: {
@@ -43,6 +44,8 @@ export function MobileViewAxisToggle({
   axisAvailable?: boolean;
   dataTour?: string;
 }) {
+  const t = useTranslations("journalWidgets.mobileView");
+  const periodLabel = entityLabel ?? t("period");
   const options: Array<{
     key: string;
     label: string;
@@ -53,21 +56,21 @@ export function MobileViewAxisToggle({
     ? [
         {
           key: "today",
-          label: "Сегодня",
+          label: t("today"),
           icon: CalendarDays,
           active: view === "cards" && axis === "today",
           choice: { view: "cards", axis: "today" },
         },
         {
           key: "entity",
-          label: entityLabel,
+          label: periodLabel,
           icon: Rows3,
           active: view === "cards" && axis === "entity",
           choice: { view: "cards", axis: "entity" },
         },
         {
           key: "table",
-          label: "Таблица",
+          label: t("table"),
           icon: Table2,
           active: view === "table",
           choice: { view: "table" },
@@ -76,14 +79,14 @@ export function MobileViewAxisToggle({
     : [
         {
           key: "cards",
-          label: "Карточки",
+          label: t("cards"),
           icon: Rows3,
           active: view === "cards",
           choice: { view: "cards", axis },
         },
         {
           key: "table",
-          label: "Таблица",
+          label: t("table"),
           icon: Table2,
           active: view === "table",
           choice: { view: "table" },
@@ -93,7 +96,7 @@ export function MobileViewAxisToggle({
   return (
     <div
       role="tablist"
-      aria-label="Что показывать"
+      aria-label={t("ariaLabel")}
       data-tour={dataTour}
       className="inline-flex w-full rounded-2xl border border-[#ececf4] bg-[#fafbff] p-1 print:hidden"
     >

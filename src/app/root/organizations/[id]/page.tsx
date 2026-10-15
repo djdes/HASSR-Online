@@ -5,13 +5,16 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { isRequisitesComplete } from "@/lib/closing-documents/types";
-import { getUserRoleLabel } from "@/lib/user-roles";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { formatNumber } from "@/i18n/locales";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { organizationDate, organizationSphere, organizationRole, organizationPlan, organizationOrderStatus } from "./organization-presentation";
 import { ImpersonateButton } from "./impersonate-button";
 import { DeleteOrgButton } from "./delete-org-button";
 import { OrgSettingsForm } from "./org-settings-form";
 import { BalanceCard } from "./balance-card";
 import { InvoiceActions } from "./invoice-actions";
-import { orderStatusLabel } from "@/lib/order-status";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +23,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function OrganizationDetailPage({ params }: PageProps) {
   await requireRoot();
+  const [t, locale, profile, roleCopy, legacyPlans] = await Promise.all([getTranslations("rootOrganizationManagement"), getSiteLocale(), getTranslations("settingsManagement.organizationProfile.form"), getTranslations("staffManagement.roleLabels"), getTranslations("rootMetrics.plans")]);
   const { id } = await params;
 
   const org = await db.organization.findUnique({
@@ -116,6 +120,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   ]);
 
   return (
+    <DomainMessagesBoundary namespaces={["rootOrganizationManagement"]}>
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-6">
         <div>
@@ -124,14 +129,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
             className="inline-flex items-center gap-2 text-[14px] text-[#6f7282] hover:text-black"
           >
             <ArrowLeft className="size-4" />
-            Все организации
-          </Link>
+            {t("page.back")}</Link>
           <h1 className="mt-3 text-[32px] font-semibold tracking-[-0.03em] text-black">
             {org.name}
           </h1>
           <p className="mt-1 text-[15px] text-[#6f7282]">
-            {org.type} · создана {new Date(org.createdAt).toLocaleDateString("ru-RU")}
-            {org.inn ? ` · ИНН ${org.inn}` : ""}
+            {t("page.created", { type: organizationSphere(org.type, profile), date: organizationDate(org.createdAt, locale, true) })}
+            {org.inn ? t("page.inn", { inn: org.inn }) : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -141,37 +145,37 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard icon={<Users className="size-5" />} label="Сотрудники" value={org._count.users} />
-        <StatCard icon={<BookText className="size-5" />} label="Документов" value={org._count.journalDocuments} />
-        <StatCard icon={<BadgeCheck className="size-5" />} label="Активных" value={activeDocs} />
-        <StatCard icon={<BookText className="size-5" />} label="Записей" value={org._count.journalEntries} />
+        <StatCard icon={<Users className="size-5" />} label={t("stats.users")} value={formatNumber(locale, org._count.users)} />
+        <StatCard icon={<BookText className="size-5" />} label={t("stats.documents")} value={formatNumber(locale, org._count.journalDocuments)} />
+        <StatCard icon={<BadgeCheck className="size-5" />} label={t("stats.active")} value={formatNumber(locale, activeDocs)} />
+        <StatCard icon={<BookText className="size-5" />} label={t("stats.entries")} value={formatNumber(locale, org._count.journalEntries)} />
       </div>
 
       <div className="rounded-2xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-        <div className="mb-4 text-[18px] font-semibold">Подписка</div>
+        <div className="mb-4 text-[18px] font-semibold">{t("subscription.title")}</div>
         <dl className="grid grid-cols-1 gap-4 text-[14px] sm:grid-cols-3 sm:gap-6">
           <div>
-            <dt className="text-[#8a8ea4]">Тариф</dt>
-            <dd className="mt-1 font-semibold text-black">{org.subscriptionPlan}</dd>
+            <dt className="text-[#8a8ea4]">{t("subscription.plan")}</dt>
+            <dd className="mt-1 font-semibold text-black">{organizationPlan(org.subscriptionPlan, t, legacyPlans)}</dd>
           </div>
           <div>
-            <dt className="text-[#8a8ea4]">Действует до</dt>
+            <dt className="text-[#8a8ea4]">{t("subscription.until")}</dt>
             <dd className="mt-1 font-semibold text-black">
               {org.subscriptionEnd
-                ? new Date(org.subscriptionEnd).toLocaleDateString("ru-RU")
+                ? organizationDate(org.subscriptionEnd, locale, true)
                 : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-[#8a8ea4]">Внешний API-токен</dt>
+            <dt className="text-[#8a8ea4]">{t("subscription.token")}</dt>
             <dd className="mt-1 font-semibold text-black">
-              {org.externalApiToken ? "выдан" : "не выдан"}
+              {org.externalApiToken ? t("subscription.tokenIssued") : t("subscription.tokenMissing")}
             </dd>
           </div>
           <div>
-            <dt className="text-[#8a8ea4]">Оплачено за всё время</dt>
+            <dt className="text-[#8a8ea4]">{t("subscription.paidTotal")}</dt>
             <dd className="mt-1 font-semibold text-black tabular-nums">
-              {paidTotalRub.toLocaleString("ru-RU")} ₽
+              {t("format.rubles", { amount: paidTotalRub })}
             </dd>
           </div>
         </dl>
@@ -203,37 +207,36 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
       <div className="rounded-2xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="mb-4 flex items-baseline gap-3">
-          <span className="text-[18px] font-semibold">История оплат</span>
+          <span className="text-[18px] font-semibold">{t("payments.title")}</span>
           <span className="text-[14px] text-[#8a8ea4]">
             {payments.length === 0
-              ? "платежей нет"
-              : `платежей: ${payments.length}`}
+              ? t("payments.none")
+              : t("payments.count", { count: payments.length })}
           </span>
         </div>
 
         {payments.length === 0 ? (
           <p className="text-[14px] text-[#9b9fb3]">
-            Организация ещё ничего не оплачивала.
-          </p>
+            {t("payments.empty")}</p>
         ) : (
           <table className="w-full text-[14px]">
             <thead>
               <tr className="text-left text-[12px] uppercase tracking-[0.14em] text-[#8a8ea4]">
-                <th className="pb-2 font-medium">Дата и время</th>
-                <th className="pb-2 font-medium">Тариф</th>
-                <th className="pb-2 font-medium">Статус</th>
-                <th className="pb-2 text-right font-medium">Сумма</th>
-                <th className="pb-2 pl-4 font-medium">Документы</th>
+                <th className="pb-2 font-medium">{t("payments.date")}</th>
+                <th className="pb-2 font-medium">{t("subscription.plan")}</th>
+                <th className="pb-2 font-medium">{t("payments.status")}</th>
+                <th className="pb-2 text-right font-medium">{t("payments.amount")}</th>
+                <th className="pb-2 pl-4 font-medium">{t("payments.documents")}</th>
               </tr>
             </thead>
             <tbody>
               {payments.map((payment) => (
                 <tr key={payment.id} className="border-t border-[#f2f3f8]">
                   <td className="py-2.5 text-[#0b1024]">
-                    {(payment.paidAt ?? payment.createdAt).toLocaleString("ru-RU")}
+                    {organizationDate(payment.paidAt ?? payment.createdAt, locale)}
                   </td>
                   <td className="py-2.5 text-[#6f7282]">
-                    {isTopupOrder(payment) ? "пополнение баланса" : payment.tariffKey}
+                    {isTopupOrder(payment) ? t("payments.topup") : payment.tariffKey}
                   </td>
                   <td className="py-2.5">
                     <span
@@ -243,25 +246,25 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                           : "rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#6f7282]"
                       }
                     >
-                      {orderStatusLabel(payment)}
+                      {organizationOrderStatus(payment, t)}
                     </span>
                   </td>
                   <td className="py-2.5 text-right tabular-nums text-[#0b1024]">
-                    {Number(payment.amountRub).toLocaleString("ru-RU")} ₽
+                    {t("format.rubles", { amount: Number(payment.amountRub) })}
                     {payment.pointsSpent > 0 ? (
                       <span className="ml-1 text-[12px] text-[#3848c7]">
-                        баллами −{payment.pointsSpent.toLocaleString("ru-RU")}
+                        {t("payments.pointsSpent", { amount: payment.pointsSpent })}
                       </span>
                     ) : null}
                     {/* Отчёт по скидкам: акция и промокод — снимком из заказа. */}
                     {payment.promotionPercent && payment.promotionDiscountRub > 0 ? (
                       <div className="text-[12px] text-[#116b2a]">
-                        акция −{payment.promotionPercent} % (−{payment.promotionDiscountRub.toLocaleString("ru-RU")} ₽)
+                        {t("payments.promotion", { percent: payment.promotionPercent, amount: payment.promotionDiscountRub })}
                       </div>
                     ) : null}
                     {payment.promoCode && payment.discountRub > 0 ? (
                       <div className="text-[12px] text-[#3848c7]">
-                        {payment.promoCode} −{payment.discountRub.toLocaleString("ru-RU")} ₽
+                        {t("payments.promo", { code: payment.promoCode, amount: payment.discountRub })}
                       </div>
                     ) : null}
                   </td>
@@ -279,8 +282,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                         href={`/api/closing-documents/${payment.id}/pdf`}
                         className="inline-flex h-8 items-center rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                       >
-                        УПД (PDF)
-                      </a>
+                        {t("payments.closingPdf")}</a>
                     ) : (
                       <span className="text-[#c9ccdb]">—</span>
                     )}
@@ -294,19 +296,19 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
       <div className="rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="flex items-center justify-between border-b border-[#eef0f6] px-6 py-4">
-          <div className="text-[18px] font-semibold">Сотрудники</div>
-          <div className="text-[14px] text-[#8a8ea4]">{org.users.length}</div>
+          <div className="text-[18px] font-semibold">{t("stats.users")}</div>
+          <div className="text-[14px] text-[#8a8ea4]">{formatNumber(locale, org.users.length)}</div>
         </div>
         <div className="overflow-x-auto">
         <table className="w-full min-w-[840px] text-[14px]">
           <thead className="bg-[#f8f9fc] text-[13px] text-[#6f7282]">
             <tr>
-              <th className="px-6 py-3 text-left font-medium">Имя</th>
-              <th className="px-6 py-3 text-left font-medium">Email</th>
-              <th className="px-6 py-3 text-left font-medium">Роль</th>
-              <th className="px-6 py-3 text-center font-medium">Telegram</th>
-              <th className="px-6 py-3 text-center font-medium">ACL</th>
-              <th className="px-6 py-3 text-center font-medium">Статус</th>
+              <th className="px-6 py-3 text-left font-medium">{t("users.name")}</th>
+              <th className="px-6 py-3 text-left font-medium">{t("users.email")}</th>
+              <th className="px-6 py-3 text-left font-medium">{t("users.role")}</th>
+              <th className="px-6 py-3 text-center font-medium">{t("users.telegram")}</th>
+              <th className="px-6 py-3 text-center font-medium">{t("users.acl")}</th>
+              <th className="px-6 py-3 text-center font-medium">{t("payments.status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -315,16 +317,16 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                 <td className="px-6 py-3 text-black">{user.name}</td>
                 <td className="px-6 py-3 text-[#6f7282]">{user.email}</td>
                 <td className="px-6 py-3 text-[#6f7282]">
-                  {getUserRoleLabel(user.role)}
+                  {organizationRole(user.role, roleCopy)}
                 </td>
                 <td className="px-6 py-3 text-center">
                   {user.telegramChatId ? "✓" : "—"}
                 </td>
                 <td className="px-6 py-3 text-center">
-                  {user.journalAccessMigrated ? "✓" : "все"}
+                  {user.journalAccessMigrated ? "✓" : t("users.all")}
                 </td>
                 <td className="px-6 py-3 text-center">
-                  {user.isActive ? "активен" : "неактивен"}
+                  {user.isActive ? t("users.active") : t("users.inactive")}
                 </td>
               </tr>
             ))}
@@ -333,6 +335,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         </div>
       </div>
     </div>
+    </DomainMessagesBoundary>
   );
 }
 
@@ -343,7 +346,7 @@ function StatCard({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: number;
+  value: string;
 }) {
   return (
     <div className="rounded-2xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">

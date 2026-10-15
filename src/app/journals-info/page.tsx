@@ -1,65 +1,28 @@
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { ArrowRight, BookOpenCheck, Building2, FileDown, Layers, Search } from "lucide-react";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
-import {
-  JOURNAL_INFO,
-  JOURNAL_CATEGORY_LABEL,
-  type JournalInfo,
-} from "@/content/journal-info";
-import { NICHES } from "@/components/landing/niche-landing";
-import { SEO_LANDINGS } from "@/components/landing/seo-journal-landing";
-import {
-  DEFAULT_OG_IMAGES,
-  DEFAULT_TWITTER_CARD,
-  DEFAULT_TWITTER_IMAGES,
-} from "@/lib/meta-defaults";
-import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
+import { createTranslator } from "use-intl/core";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { publicJournalIndexMetadata } from "@/i18n/public-journal-index-metadata";
+import { presentPublicJournalIndex } from "@/i18n/public-journal-index-presentation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const HUB_TITLE = `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП — каталог`;
-const HUB_DESC =
-  `Полный каталог WeSetup: ${JOURNALS_TOTAL_ELECTRONIC_LABEL} ХАССП и СанПиН — гигиена, температуры, бракераж, уборка, ДДД и многое другое.`;
-
-export const metadata = {
-  title: HUB_TITLE,
-  description: HUB_DESC,
-  alternates: { canonical: "https://wesetup.ru/journals-info" },
-  openGraph: {
-    type: "website",
-    locale: "ru_RU",
-    siteName: "WeSetup",
-    url: "https://wesetup.ru/journals-info",
-    title: HUB_TITLE,
-    description: HUB_DESC,
-    images: DEFAULT_OG_IMAGES,
-  },
-  twitter: {
-    card: DEFAULT_TWITTER_CARD,
-    title: HUB_TITLE,
-    description: HUB_DESC,
-    images: DEFAULT_TWITTER_IMAGES,
-  },
-};
-
-const CATEGORY_ORDER: Array<JournalInfo["category"]> = [
-  "sanpin_daily",
-  "sanpin_periodic",
-  "haccp",
-];
+export async function generateMetadata() {
+  return publicJournalIndexMetadata(await getSiteLocale());
+}
 
 /** Журналы, у которых есть готовое превью образца. */
 const SAMPLE_CODES = new Set<string>(SAMPLE_JOURNAL_CODES);
 
-export default function JournalsInfoListPage() {
-  const all = Object.values(JOURNAL_INFO);
-  const grouped = CATEGORY_ORDER.map((category) => ({
-    category,
-    label: JOURNAL_CATEGORY_LABEL[category],
-    items: all.filter((j) => j.category === category),
-  }));
+export default async function JournalsInfoListPage() {
+  const locale = await getSiteLocale();
+  const messages = await loadMessages(locale);
+  const t = createTranslator({ locale, messages, namespace: "publicJournalIndex" });
+  const { grouped, count, niches, seo } = presentPublicJournalIndex(messages);
 
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
@@ -74,16 +37,13 @@ export default function JournalsInfoListPage() {
           </div>
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-              <BookOpenCheck className="size-3.5" /> Каталог журналов
+              <BookOpenCheck className="size-3.5" /> {t("hero.badge")}
             </div>
             <h1 className="mt-4 max-w-[780px] text-[40px] font-semibold leading-[1.08] tracking-[-0.02em] md:text-[56px]">
-              {all.length} журналов СанПиН и ХАССП в одном сервисе
+              {t("hero.title", { count })}
             </h1>
             <p className="mt-5 max-w-[720px] text-[16px] leading-[1.6] text-white/80 md:text-[18px]">
-              Всё, что требует СанПиН 2.3/2.4.4282-26 и план ХАССП: от
-              ежедневного журнала здоровья до журналов аудита и
-              прослеживаемости. Кликните по любому, чтобы посмотреть, что
-              заполняется и какая норма требует.
+              {t("hero.description")}
             </p>
             {/* Отдельный вход для тех, кому нужен файл, а не описание
                 сервиса: этот каталог отвечает на «какие журналы нужны»,
@@ -93,7 +53,7 @@ export default function JournalsInfoListPage() {
               className="mt-6 inline-flex h-11 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 text-[15px] font-medium text-white backdrop-blur transition-colors duration-150 hover:bg-white/20"
             >
               <FileDown className="size-4" />
-              Скачать пустые бланки
+              {t("hero.downloadBlanks")}
             </Link>
           </div>
         </div>
@@ -103,13 +63,13 @@ export default function JournalsInfoListPage() {
       <section className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-16">
         {grouped.map((group) => (
           <div key={group.category} className="mb-14">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Layers className="size-5 text-[#3848c7]" />
               <h2 className="text-[24px] font-semibold tracking-tight">
                 {group.label}
               </h2>
               <span className="text-[14px] text-[#6f7282]">
-                {group.items.length}
+                {t("cards.groupCount", { count: group.items.length })}
               </span>
             </div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -117,6 +77,7 @@ export default function JournalsInfoListPage() {
                 <Link
                   key={j.code}
                   href={`/journals-info/${j.code}`}
+                  title={j.name}
                   className="group flex min-w-0 flex-col rounded-2xl border border-[#ececf4] bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/40 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)]"
                 >
                   {/* Превью первой страницы образца. Одним взглядом
@@ -143,7 +104,7 @@ export default function JournalsInfoListPage() {
                     {j.why}
                   </p>
                   <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7]">
-                    Подробнее
+                    {t("cards.more")}
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </Link>
@@ -161,17 +122,16 @@ export default function JournalsInfoListPage() {
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6 sm:p-8">
             <div className="mb-2 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
               <Building2 className="size-3.5" />
-              По типу бизнеса
+              {t("niches.badge")}
             </div>
             <h2 className="text-[20px] font-semibold tracking-[-0.01em]">
-              Журналы для вашей ниши
+              {t("niches.title")}
             </h2>
             <p className="mt-2 text-[13px] text-[#6f7282]">
-              Конкретный список журналов, который требует именно ваш тип
-              заведения.
+              {t("niches.description")}
             </p>
             <div className="mt-4 grid gap-2">
-              {Object.values(NICHES).map((n) => (
+              {niches.map((n) => (
                 <Link
                   key={n.slug}
                   href={`/${n.slug}`}
@@ -189,17 +149,16 @@ export default function JournalsInfoListPage() {
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6 sm:p-8">
             <div className="mb-2 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
               <Search className="size-3.5" />
-              Частые запросы
+              {t("seo.badge")}
             </div>
             <h2 className="text-[20px] font-semibold tracking-[-0.01em]">
-              Ищете конкретный журнал?
+              {t("seo.title")}
             </h2>
             <p className="mt-2 text-[13px] text-[#6f7282]">
-              Отдельные страницы под популярные поисковые запросы — с
-              описанием полей и СанПиН-обоснованием.
+              {t("seo.description")}
             </p>
             <div className="mt-4 grid gap-2">
-              {Object.values(SEO_LANDINGS).slice(0, 7).map((s) => (
+              {seo.map((s) => (
                 <Link
                   key={s.slug}
                   href={`/${s.slug}`}
@@ -220,18 +179,16 @@ export default function JournalsInfoListPage() {
       <section className="mx-auto max-w-[1200px] px-4 pb-12 sm:px-6 sm:pb-16">
         <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] px-5 py-8 text-center sm:px-8 sm:py-12">
           <div className="text-[22px] font-semibold tracking-tight sm:text-[26px]">
-            Попробуйте все журналы бесплатно
+            {t("cta.title")}
           </div>
           <p className="mx-auto mt-2 max-w-[520px] text-[14px] text-[#6f7282]">
-            Все журналы — на бесплатном тарифе навсегда, без привязки
-            карты. Если нужно больше сотрудников или автоматизация, подписка
-            подключается за минуту.
+            {t("cta.description")}
           </p>
           <Link
             href="/register"
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-[#5566f6] px-5 py-3 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
-            Попробовать
+            {t("cta.try")}
             <ArrowRight className="size-4" />
           </Link>
         </div>

@@ -83,7 +83,10 @@ function buildForm(
       (employeeName ? `${employeeName}, ` : "") +
       "отметьте выполненные процедуры чек-листа. Часы возьмутся из " +
       "графика журнала автоматически.",
+    introPresentationKey: "dynamic.cleaningChecklistIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить чек-лист",
+    submitPresentationKey: "dynamic.saveChecklist",
     fields,
   };
 }

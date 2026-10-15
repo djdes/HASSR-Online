@@ -4,6 +4,8 @@ import { appSectionLabel, visibleAppSectionGroups } from "@/lib/app-sections";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { customSectionNameByHref } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { getTranslations } from "next-intl/server";
+import { navigationSectionHintKey } from "@/i18n/navigation-presentation";
 
 import { MiniSectionsClient, type MiniSectionGroupView } from "./sections-client";
 
@@ -23,6 +25,9 @@ export const dynamic = "force-dynamic";
  * RSC не сериализуются (см. правило про `WhatsNewModal` в CLAUDE.md).
  */
 export default async function MiniSectionsPage() {
+  const [tRoutes, tNavigation] = await Promise.all([
+    getTranslations("navigation.routes"), getTranslations("navigation"),
+  ]);
   const session = await getServerSession(authOptions).catch(() => null);
   const user = session?.user ?? null;
   // Свои названия разделов организации — те же, что в меню сайта.
@@ -31,12 +36,12 @@ export default async function MiniSectionsPage() {
   const groups: MiniSectionGroupView[] = user
     ? visibleAppSectionGroups(user).map((group) => ({
         id: group.id,
-        title: group.title,
-        subtitle: group.subtitle,
+        title: tNavigation(`groups.${group.id}.title`),
+        subtitle: tNavigation(`groups.${group.id}.subtitle`),
         items: group.sections.map((section) => ({
           href: section.href,
-          label: customSectionNameByHref(customNames, section.href) ?? appSectionLabel(section),
-          hint: section.hint,
+          label: customSectionNameByHref(customNames, section.href) ?? appSectionLabel(section, tRoutes, tNavigation),
+          hint: navigationSectionHintKey(section.href) ? tNavigation(navigationSectionHintKey(section.href)!) : section.hint,
           icon: section.icon,
         })),
       }))

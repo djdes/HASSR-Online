@@ -1,13 +1,14 @@
 "use client";
 
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
+import { useTranslations } from "next-intl";
 import { PageBackLink } from "@/components/layout/page-nav";
-import { useCustomNames } from "@/components/shared/custom-names-provider";
+import { useCustomNames, useJournalDisplayName } from "@/components/shared/custom-names-provider";
 import {
   journalSwitcherOptions,
   type JournalSwitcherMenu,
 } from "@/lib/crumb-menu";
-import { customJournalName, customSectionName } from "@/lib/custom-names";
+import { customSectionName } from "@/lib/custom-names";
 
 /**
  * Хлебные крошки раздела журналов:
@@ -71,25 +72,26 @@ export function JournalPageCrumbs({
   /** Куда вернуться при прямом заходе: истории в новой вкладке нет. */
   backHref?: string;
 }) {
+  const t = useTranslations("journalControls.guidePage");
+  const tCrumbs = useTranslations("navigation.breadcrumbs");
   // Поиск «Найти журнал», легенда точек и «Показать все» — одинаковые у
   // обоих звеньев: в Mini App на телефоне видно только одно из них
   // (второе прячет mini-theme.css), и переключатель должен быть в любом.
-  const switcher = journalMenu ? journalSwitcherOptions(journalMenu) : {};
+  const switcher = journalMenu ? journalSwitcherOptions(journalMenu, tCrumbs) : {};
   const customNames = useCustomNames();
-  const journalLabel = journalName
-    ? customJournalName(customNames, journalCode) ?? journalName
-    : journalName;
+  const displayedName = useJournalDisplayName(journalCode ?? "", journalName ?? "");
+  const journalLabel = journalName ? displayedName : journalName;
 
   const items: JournalCrumb[] = [
     { label: organizationName, href: "/dashboard" },
     {
-      label: customSectionName(customNames, "journals") ?? "Журналы",
+      label: customSectionName(customNames, "journals") ?? t("journals"),
       href: "/journals",
       // Двухуровневое, как «Проекты» в ProjectsFlow: журнал → его
       // документы. Отсюда можно попасть сразу в нужный бланк, не
       // открывая сперва журнал.
       menu: journalMenu?.items,
-      menuTitle: journalMenu ? "Перейти к журналу" : undefined,
+      menuTitle: journalMenu ? t("goToJournal") : undefined,
       ...switcher,
     },
   ];
@@ -106,7 +108,7 @@ export function JournalPageCrumbs({
       label: journalLabel,
       href: tail.length > 0 && journalCode ? `/journals/${journalCode}` : undefined,
       menu: journalMenu?.items.map(({ submenuJournalCode: _drop, ...rest }) => rest),
-      menuTitle: journalMenu ? "Журналы набора" : undefined,
+      menuTitle: journalMenu ? t("journalSet") : undefined,
       ...switcher,
     });
   }

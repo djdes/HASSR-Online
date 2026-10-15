@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { LOGIN_METHOD_LABEL, describeUserAgent, deviceKey, maskIp, type LoginMethod } from "@/lib/login-device";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 /**
  * Отметка о входе: IP и время последнего логина на пользователе плюс
@@ -67,11 +68,16 @@ async function notifyNewDevice(
 ): Promise<void> {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { email: true, name: true, telegramChatId: true, organizationId: true },
+    select: { email: true, name: true, telegramChatId: true, organizationId: true, locale: true },
   });
   if (!user) return;
   const device = describeUserAgent(login.userAgent);
-  const when = login.at.toLocaleString("ru-RU", { timeZone: "Europe/Moscow", dateStyle: "medium", timeStyle: "short" });
+  const locale: Locale = user.locale === "en" || user.locale === "uz" ? user.locale : "ru";
+  const when = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+    timeZone: "Europe/Moscow",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(login.at);
   const [{ sendNewDeviceLoginEmail }, { notifyEmployee }] = await Promise.all([
     import("@/lib/email"),
     import("@/lib/telegram"),
@@ -83,8 +89,9 @@ async function notifyNewDevice(
       when,
       device,
       ip: maskIp(login.ip),
-      method: LOGIN_METHOD_LABEL[login.method],
+      method: login.method,
       organizationId: user.organizationId,
+      locale,
     }).catch((error) => console.error("[login-trace] email failed", error));
   }
   if (user.telegramChatId) {

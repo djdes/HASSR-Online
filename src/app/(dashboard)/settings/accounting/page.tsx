@@ -4,10 +4,13 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { AccountingClient } from "./accounting-client";
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccountingSettingsPage() {
+  const t = await getTranslations("settingsManagement.accounting");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/settings");
@@ -20,6 +23,7 @@ export default async function AccountingSettingsPage() {
   });
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsManagement"]}>
     <div className="space-y-5">
       <div>
 
@@ -29,14 +33,10 @@ export default async function AccountingSettingsPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Бухгалтерия
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Раз в неделю отправляем бухгалтеру CSV со списаниями
-              (журнал «Потери и брак») за прошедшие 7 дней. Файл в
-              UTF-8 BOM с разделителем «;» — открывается в Excel и
-              импортируется в 1С через «Загрузка данных из табличного
-              документа».
+              {t("description")}
             </p>
           </div>
         </div>
@@ -44,5 +44,6 @@ export default async function AccountingSettingsPage() {
 
       <AccountingClient initialEmail={org?.accountantEmail ?? null} />
     </div>
+    </DomainMessagesBoundary>
   );
 }

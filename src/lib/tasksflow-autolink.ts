@@ -21,9 +21,9 @@ type Args = {
   name?: string | null;
 };
 
-type Result =
+type Result = { reasonCode?: string; reasonParams?: { status: number } } & (
   | { ok: true; linked: boolean; reason?: string }
-  | { ok: false; reason: string };
+  | { ok: false; reason: string });
 
 export async function tryAutolinkTasksflowByPhone(args: Args): Promise<Result> {
   const normalized = normalizePhone(args.phone);
@@ -61,6 +61,7 @@ export async function tryAutolinkTasksflowByPhone(args: Args): Promise<Result> {
     return {
       ok: false,
       reason: getIntegrationCryptoErrorMessage(err),
+      reasonCode: "crypto-error",
     };
   }
   let tfUsers;
@@ -71,11 +72,14 @@ export async function tryAutolinkTasksflowByPhone(args: Args): Promise<Result> {
       return {
         ok: false,
         reason: `tasksflow-${err.status}`,
+        reasonCode: "tasksflow-status",
+        reasonParams: { status: err.status },
       };
     }
     return {
       ok: false,
       reason: err instanceof Error ? err.message : "tasksflow-unreachable",
+      reasonCode: "unavailable",
     };
   }
 
@@ -99,11 +103,14 @@ export async function tryAutolinkTasksflowByPhone(args: Args): Promise<Result> {
           return {
             ok: false,
             reason: `tasksflow-create-${err.status}`,
+            reasonCode: "tasksflow-create-status",
+            reasonParams: { status: err.status },
           };
         }
         return {
           ok: false,
           reason: err instanceof Error ? err.message : "tasksflow-create-failed",
+          reasonCode: "unavailable",
         };
       }
     }

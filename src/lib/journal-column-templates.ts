@@ -15,6 +15,7 @@ import {
   sanitizeColumnsConfig,
   type JournalColumnsConfig,
   type JournalCustomColumn,
+  type ResolvedJournalColumn,
 } from "@/lib/journal-columns";
 
 export const JOURNAL_TEMPLATE_NAME_MAX = 120;
@@ -88,7 +89,8 @@ export function sanitizeTemplateName(value: unknown): string {
 export function describeTemplateChange(
   code: string,
   config: Record<string, unknown>,
-  next: JournalColumnsConfig
+  next: JournalColumnsConfig,
+  presentColumn?: (column: ResolvedJournalColumn) => ResolvedJournalColumn,
 ): { hide: string[]; show: string[]; renamed: number; customRemoved: string[] } {
   const before = resolveColumns(code, config);
   const after = resolveColumns(code, { ...config, columns: next });
@@ -100,15 +102,17 @@ export function describeTemplateChange(
   for (const column of before) {
     const other = afterByKey.get(column.key);
     if (!other) {
-      if (column.custom) customRemoved.push(column.label);
+      if (column.custom) customRemoved.push(presentColumn?.(column).label ?? column.label);
       continue;
     }
-    if (!column.hidden && other.hidden) hide.push(column.label);
-    if (column.hidden && !other.hidden) show.push(other.label);
+    if (!column.hidden && other.hidden) hide.push(presentColumn?.(column).label ?? column.label);
+    if (column.hidden && !other.hidden) show.push(presentColumn?.(other).label ?? other.label);
     if (column.label !== other.label) renamed += 1;
   }
   for (const column of after) {
-    if (!before.some((item) => item.key === column.key) && !column.hidden) show.push(column.label);
+    if (!before.some((item) => item.key === column.key) && !column.hidden) {
+      show.push(presentColumn?.(column).label ?? column.label);
+    }
   }
   return { hide, show, renamed, customRemoved };
 }
@@ -170,9 +174,14 @@ const SYNONYMS: Record<string, Array<{ key: string; any: string[][] }>> = {
 };
 
 /** Колонка реестра по подписи шапки или null. `taken` — уже занятые ключи. */
-export function matchColumnLabel(code: string, label: string, taken: ReadonlySet<string> = new Set()): string | null {
+export type ColumnLabelAliases = Readonly<Record<string, readonly string[]>>;
+
+export function matchColumnLabel(code: string, label: string, taken: ReadonlySet<string> = new Set(), aliases: ColumnLabelAliases = {}): string | null {
   const text = norm(label);
   if (!text) return null;
+  for (const column of getColumnRegistry(code)) {
+    if (!taken.has(column.key) && aliases[column.key]?.some(alias => norm(alias) === text)) return column.key;
+  }
   for (const entry of SYNONYMS[code] ?? []) {
     if (taken.has(entry.key)) continue;
     if (entry.any.some((fragments) => fragments.every((fragment) => text.includes(fragment)))) return entry.key;
@@ -227,7 +236,7 @@ export type ImportedColumnsPreview = {
  * подписью из файла и в его порядке, остальные колонки журнала скрываются,
  * неузнанные подписи становятся своими текстовыми колонками.
  */
-export function columnsFromHeaderLabels(code: string, labels: readonly string[]): ImportedColumnsPreview {
+export function columnsFromHeaderLabels(code: string, labels: readonly string[], aliases: ColumnLabelAliases = {}): ImportedColumnsPreview {
   const registry = getColumnRegistry(code);
   const byKey = new Map(registry.map((column) => [column.key, column]));
   const taken = new Set<string>();
@@ -241,7 +250,7 @@ export function columnsFromHeaderLabels(code: string, labels: readonly string[])
   for (const raw of labels) {
     const label = raw.replace(/\s+/g, " ").trim().slice(0, 60);
     if (!label || /^№?\s*п\s*\/?\s*п$|^№$/i.test(label)) continue;
-    const key = matchColumnLabel(code, label, taken);
+    const key = matchColumnLabel(code, raw, taken, aliases);
     if (key) {
       taken.add(key);
       const column = byKey.get(key);
@@ -251,7 +260,7 @@ export function columnsFromHeaderLabels(code: string, labels: readonly string[])
       // Сверяем ПОЛНУЮ подпись из файла (не обрезанную до 60 символов) без
       // учёта регистра и знаков: шапка по форме СанПиН длиннее 60 символов,
       // и обрезок иначе сохранился бы «своей» подписью вместо стандартной.
-      if (norm(raw) !== norm(standardLabel)) labelsOut[key] = label;
+      if (norm(raw) !== norm(standardLabel) && !aliases[key]?.some(alias => norm(alias) === norm(raw))) labelsOut[key] = label;
       continue;
     }
     if (custom.length >= JOURNAL_CUSTOM_COLUMNS_MAX) {

@@ -1,9 +1,13 @@
 "use client";
+
+import { useLocale, useTranslations } from "next-intl";
+import { taskFillErrorMessage, TaskFillRequestError, type TaskFillTranslator } from "@/lib/task-fill-messages";
+import { FORMAT_LOCALES } from "@/i18n/locales";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Calendar,
   Camera,
@@ -55,6 +59,7 @@ type Props = {
   taskScope: "personal" | "shared";
   allowNoEvents: boolean;
   noEventsReasons: string[];
+  noEventsReasonLabels?: Record<string, string>;
   allowFreeTextReason: boolean;
   /** Кол-во записей в этот журнал за сегодня (бейдж для shared). */
   todaysEntryCount: number;
@@ -88,10 +93,14 @@ export function TaskFillClient({
   taskScope,
   allowNoEvents,
   noEventsReasons,
+  noEventsReasonLabels,
   allowFreeTextReason,
   todaysEntryCount,
   closeEvent,
 }: Props) {
+  const t = useTranslations("taskFill");
+  const currentTranslations = useRef(t);
+  useEffect(() => { currentTranslations.current = t; }, [t]);
   const [helperOpen, setHelperOpen] = useState(false);
   // Чек-лист: ready=true когда все required-пункты отмечены. Если
   // в данной орге чеклиста для этого журнала нет, компонент молчаливо
@@ -129,14 +138,7 @@ export function TaskFillClient({
           //   1. defaultValue из адаптера — приоритет (для редактирования).
           //   2. ФИО / подпись / исполнитель → employeeName из props.
           //   3. иначе — пусто.
-          const key = (field.key ?? "").toLowerCase();
-          const lbl = (field.label ?? "").toLowerCase();
-          const looksLikeName =
-            /(^|[^а-я])(фио|подпис|исполнител|ответствен|повар|работник|имя\b)/i.test(
-              `${key} ${lbl}`,
-            );
-          let autofill = "";
-          if (looksLikeName && employeeName) autofill = employeeName;
+          const autofill = "autofill" in field && field.autofill === "employeeName" ? employeeName ?? "" : "";
           init[field.key] =
             typeof dv === "string" || typeof dv === "number"
               ? String(dv)
@@ -160,7 +162,7 @@ export function TaskFillClient({
     (saved) => setValues((current) => ({ ...current, ...saved })),
     done
   );
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ response: unknown; fallback: "actions.saveError" | "actions.error" } | null>(null);
   // Из «Выполненных» задача сама не возвращается. Кружок выполненной
   // → confirm «Точно изменить данные?» → editIntent=true → форма с
   // prefilled значениями, юзер правит и подтверждает (новый submit
@@ -228,7 +230,7 @@ export function TaskFillClient({
     });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.url) {
-      throw new Error(data?.error ?? "Не удалось загрузить фото");
+      throw new TaskFillRequestError(data);
     }
     setStepPhotos((prev) => ({ ...prev, [stepIndex]: data.url as string }));
   }
@@ -252,7 +254,7 @@ export function TaskFillClient({
     const entry: PipelineConfirm = {
       stepId: step.id,
       stepIndex,
-      stepTitle: step.title,
+      stepTitle: step.sourceTitle ?? step.title,
       confirmedAt: new Date().toISOString(),
       msSinceFormOpen,
       ...(photoUrl ? { photoUrl } : {}),
@@ -271,7 +273,7 @@ export function TaskFillClient({
           token,
           stepId: step.id,
           stepIndex,
-          stepTitle: step.title,
+          stepTitle: step.sourceTitle ?? step.title,
           totalSteps: pipelineSteps.length,
           msSinceFormOpen,
           ...(photoUrl ? { photoUrl } : {}),
@@ -384,7 +386,7 @@ export function TaskFillClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка сохранения");
+        throw new TaskFillRequestError(data);
       }
       setConfirmOpen(false);
       if (isShared) {
@@ -394,7 +396,7 @@ export function TaskFillClient({
         setAddAnotherMode(true);
         // Сбрасываем форму для следующей записи (preserve какие-нибудь
         // sticky поля? пока полный reset — у каждого события свои данные).
-        setValues((prev) => {
+        setValues(() => {
           const next: Record<string, unknown> = {};
           if (form) {
             for (const f of form.fields) {
@@ -408,7 +410,7 @@ export function TaskFillClient({
         setDone(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка сохранения");
+      setError({ response: err instanceof TaskFillRequestError ? err.response : null, fallback: "actions.saveError" });
     } finally {
       setSubmitting(false);
     }
@@ -442,7 +444,7 @@ export function TaskFillClient({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка");
+        throw new TaskFillRequestError(data);
       }
       setClosure({
         kind: "no-events",
@@ -452,7 +454,7 @@ export function TaskFillClient({
       setNoEventsOpen(false);
       setAddAnotherMode(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError({ response: err instanceof TaskFillRequestError ? err.response : null, fallback: "actions.error" });
     } finally {
       setSubmitting(false);
     }
@@ -472,7 +474,7 @@ export function TaskFillClient({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка");
+        throw new TaskFillRequestError(data);
       }
       setClosure({
         kind: "closed-with-events",
@@ -482,7 +484,7 @@ export function TaskFillClient({
       setAddAnotherMode(false);
       setDone(true); // обычная success-карточка с auto-redirect
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError({ response: err instanceof TaskFillRequestError ? err.response : null, fallback: "actions.error" });
     } finally {
       setSubmitting(false);
     }
@@ -531,7 +533,7 @@ export function TaskFillClient({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.values) {
-        toast.error("Вчерашних данных не нашлось");
+        toast.error(currentTranslations.current("actions.yesterdayMissing"));
         return;
       }
       const yd = data.values as Record<string, unknown>;
@@ -564,12 +566,12 @@ export function TaskFillClient({
         return next;
       });
       if (copied > 0) {
-        toast.success(`Скопировано ${copied} полей со вчера`);
+        toast.success(currentTranslations.current("actions.yesterdayCopied", { count: copied }));
       } else {
-        toast.message("Вчерашняя структура отличается — заполните вручную");
+        toast.message(currentTranslations.current("actions.yesterdayDifferent"));
       }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(currentTranslations.current("actions.error"));
     } finally {
       setYesterdayBusy(false);
     }
@@ -586,12 +588,12 @@ export function TaskFillClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка");
+        throw new TaskFillRequestError(data);
       }
       setClosure(null);
       setAddAnotherMode(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError({ response: err instanceof TaskFillRequestError ? err.response : null, fallback: "actions.error" });
     } finally {
       setSubmitting(false);
     }
@@ -625,8 +627,7 @@ export function TaskFillClient({
               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/15 px-3 text-[12.5px] font-medium text-white ring-1 ring-white/25 backdrop-blur-sm transition-colors hover:bg-white/25"
             >
               <HelpCircle className="size-3.5" />
-              Как заполнять
-            </button>
+              {t("form.guide")}</button>
           </div>
 
           {/* Title — единый блок без иконки внутри. Если documentTitle
@@ -679,6 +680,7 @@ export function TaskFillClient({
           />
         ) : isShared && closure ? (
           <SharedClosedCard
+            reasonLabels={noEventsReasonLabels}
             closure={closure}
             onReopen={reopenJournal}
             submitting={submitting}
@@ -720,15 +722,12 @@ export function TaskFillClient({
                   </span>
                   <div>
                     <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                      Общая задача смены
-                    </div>
+                      {t("form.sharedTask")}</div>
                     <div className="mt-1 text-[14.5px] font-semibold text-[#0b1024]">
-                      Записей сегодня: <span className="text-[#5566f6]">{entryCount}</span>
+                      {t("form.entriesToday", { count: entryCount })}
                     </div>
                     <p className="mt-0.5 text-[12.5px] text-[#6f7282]">
-                      Можно добавлять записи несколько раз — задача
-                      остаётся открытой до конца смены.
-                    </p>
+                      {t("form.sharedHint")}</p>
                   </div>
                 </div>
                 {allowNoEvents ? (
@@ -737,8 +736,7 @@ export function TaskFillClient({
                     onClick={() => setNoEventsOpen(true)}
                     className="shrink-0 rounded-xl border border-[#dcdfed] bg-white px-3 py-2 text-[12px] font-medium text-[#3a3f55] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                   >
-                    Не требуется сегодня
-                  </button>
+                    {t("form.noEvents")}</button>
                 ) : null}
               </div>
             ) : null}
@@ -748,9 +746,7 @@ export function TaskFillClient({
                   <RotateCcw className="size-4" />
                 </span>
                 <span>
-                  Вы редактируете уже сохранённую запись журнала. После
-                  подтверждения старые значения будут перезаписаны.
-                </span>
+                  {t("form.editingHint")}</span>
               </div>
             ) : null}
             {form?.intro ? (
@@ -778,8 +774,7 @@ export function TaskFillClient({
                     ) : (
                       <Copy className="size-4" />
                     )}
-                    Заполнить как вчера
-                  </button>
+                    {t("form.copyYesterday")}</button>
                 ) : null}
 
                 {allOkApplicable ? (
@@ -788,11 +783,10 @@ export function TaskFillClient({
                     onClick={fillAllOk}
                     disabled={submitting}
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white px-4 text-[13.5px] font-semibold text-emerald-800 shadow-[0_8px_20px_-12px_rgba(34,197,94,0.4)] transition-all hover:border-emerald-300 hover:from-emerald-100 disabled:opacity-60"
-                    title="Подставит средние значения нормы для всех замеров и true для галочек"
+                    title={t("form.normalHint")}
                   >
                     <Trophy className="size-4 text-emerald-600" />
-                    Всё в норме
-                  </button>
+                    {t("form.allNormal")}</button>
                 ) : null}
               </div>
             ) : null}
@@ -837,13 +831,12 @@ export function TaskFillClient({
               </div>
             ) : pipelineComplete && (!form || form.fields.length === 0) ? (
               <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-4 text-[14px] text-[#6f7282]">
-                Форма не требует заполнения — просто подтвердите выполнение.
-              </p>
+                {t("form.noFields")}</p>
             ) : null}
 
             {error ? (
               <div className="mt-4 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-4 text-[13px] text-[#a13a32]">
-                {error}
+                <span role="alert">{taskFillErrorMessage(error.response, t, t(error.fallback), form?.fields)}</span>
               </div>
             ) : null}
 
@@ -859,9 +852,9 @@ export function TaskFillClient({
               className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#3d4efc] to-[#7a5cff] px-5 text-[15.5px] font-semibold text-white shadow-[0_14px_36px_-12px_rgba(85,102,246,0.65)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:from-[#dcdfed] disabled:to-[#dcdfed] disabled:text-[#9b9fb3] disabled:shadow-none"
               title={
                 !pipelineComplete
-                  ? `Пройдите все шаги (${pipelineConfirms.length}/${pipelineSteps?.length ?? 0})`
+                  ? t("form.completeSteps", { completed: pipelineConfirms.length, total: pipelineSteps?.length ?? 0 })
                   : !checklistReady
-                    ? "Сначала отметь все обязательные пункты чек-листа"
+                    ? t("form.completeChecklist")
                     : undefined
               }
             >
@@ -870,15 +863,14 @@ export function TaskFillClient({
               ) : (
                 <Send className="size-5" />
               )}
-              {form?.submitLabel ?? "Выполнено"}
+              {form?.submitLabel ?? t("form.completed")}
             </Button>
             {returnUrl ? (
               <a
                 href={returnUrl}
                 className="mt-3 block text-center text-[13px] text-[#6f7282] hover:text-[#0b1024]"
               >
-                Отмена — вернуться
-              </a>
+                {t("form.cancelReturn")}</a>
             ) : null}
           </div>
           </div>
@@ -899,6 +891,7 @@ export function TaskFillClient({
         {noEventsOpen ? (
           <NoEventsSheet
             reasons={noEventsReasons}
+            reasonLabels={noEventsReasonLabels}
             allowFreeText={allowFreeTextReason}
             submitting={submitting}
             onCancel={() => setNoEventsOpen(false)}
@@ -927,15 +920,14 @@ function SharedAddAnotherCard({
   submitting: boolean;
   returnUrl: string | null;
 }) {
+  const t = useTranslations("taskFill");
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <SuccessCheck />
+      <SuccessCheck label={t("success.saved")} />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-        Запись сохранена
-      </h2>
+        {t("success.saved")}</h2>
       <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-        Сегодня записей: <strong>{entryCount}</strong>. Можно добавить
-        ещё или закрыть смену по этому журналу.
+        {t("success.sharedHint", { count: entryCount })}
       </p>
       <div className="mt-6 flex flex-col gap-2.5">
         <Button
@@ -945,8 +937,7 @@ function SharedAddAnotherCard({
           className="h-12 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white hover:bg-[#4a5bf0]"
         >
           <Plus className="mr-2 size-4" />
-          Добавить ещё запись
-        </Button>
+          {t("success.addAnother")}</Button>
         <Button
           type="button"
           variant="outline"
@@ -957,16 +948,14 @@ function SharedAddAnotherCard({
           {submitting ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : null}
-          Завершить смену по этому журналу
-        </Button>
+          {t("success.closeShift")}</Button>
       </div>
       {returnUrl ? (
         <a
           href={returnUrl}
           className="mt-4 inline-block text-[13px] text-[#6f7282] hover:text-[#0b1024]"
         >
-          Вернуться в TasksFlow
-        </a>
+          {t("actions.return")}</a>
       ) : null}
     </div>
   );
@@ -978,40 +967,41 @@ function SharedAddAnotherCard({
  * случилось после закрытия.
  */
 function SharedClosedCard({
+  reasonLabels,
   closure,
   onReopen,
   submitting,
   returnUrl,
   entryCount,
 }: {
+  reasonLabels?: Record<string, string>;
   closure: { kind: string; reason: string | null; closedAt: string };
   onReopen: () => void;
   submitting: boolean;
   returnUrl: string | null;
   entryCount: number;
 }) {
+  const t = useTranslations("taskFill");
+  const locale = useLocale();
   const labelByKind: Record<string, string> = {
-    "no-events": "Закрыто как «без событий»",
-    "closed-with-events": "Смена завершена",
-    "auto-closed-empty": "Закрыто автоматически",
+    "no-events": t("closed.noEvents"),
+    "closed-with-events": t("closed.shiftEnded"),
+    "auto-closed-empty": t("closed.automatic"),
   };
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <SuccessCheck />
+      <SuccessCheck label={t("success.saved")} />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-        {labelByKind[closure.kind] ?? "Журнал закрыт"}
+        {labelByKind[closure.kind] ?? t("closed.title")}
       </h2>
       {closure.reason ? (
         <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-          Причина: <strong>{closure.reason}</strong>
+          {t("closed.reason", { reason: reasonLabels?.[closure.reason] ?? closure.reason })}
         </p>
       ) : null}
       <p className="mt-1 text-[13px] text-[#9b9fb3]">
-        {entryCount > 0 ? `Записей за смену: ${entryCount} · ` : ""}
-        Закрыто {new Date(closure.closedAt).toLocaleString("ru-RU", {
-          dateStyle: "short",
-          timeStyle: "short",
-        })}
+        {entryCount > 0 ? t("closed.entries", { count: entryCount }) : ""}
+        {t("closed.at", { time: new Date(closure.closedAt).toLocaleString(FORMAT_LOCALES[locale], { dateStyle: "short", timeStyle: "short" }) })}
       </p>
       <Button
         type="button"
@@ -1024,15 +1014,13 @@ function SharedClosedCard({
         ) : (
           <RotateCcw className="mr-2 size-4" />
         )}
-        Открыть заново (случилось событие)
-      </Button>
+        {t("closed.reopen")}</Button>
       {returnUrl ? (
         <a
           href={returnUrl}
           className="mt-3 inline-block text-[13px] text-[#6f7282] hover:text-[#0b1024]"
         >
-          Вернуться в TasksFlow
-        </a>
+          {t("actions.return")}</a>
       ) : null}
     </div>
   );
@@ -1043,18 +1031,21 @@ function SharedClosedCard({
  * доступен только если allowFreeText=true.
  */
 function NoEventsSheet({
+  reasonLabels,
   reasons,
   allowFreeText,
   submitting,
   onCancel,
   onConfirm,
 }: {
+  reasonLabels?: Record<string, string>;
   reasons: string[];
   allowFreeText: boolean;
   submitting: boolean;
   onCancel: () => void;
   onConfirm: (reason: string) => void;
 }) {
+  const t = useTranslations("taskFill");
   const [picked, setPicked] = useState<string | "__free__" | null>(
     reasons[0] ?? (allowFreeText ? "__free__" : null)
   );
@@ -1068,22 +1059,19 @@ function NoEventsSheet({
       <div className="w-full max-w-md rounded-t-3xl border-x border-t border-[#ececf4] bg-white p-6 shadow-[0_-20px_60px_-20px_rgba(11,16,36,0.3)] animate-in slide-in-from-bottom-8 fade-in-0 duration-300 sm:rounded-3xl sm:border sm:zoom-in-95">
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-[18px] font-semibold text-[#0b1024]">
-            Не требуется сегодня
-          </h3>
+            {t("form.noEvents")}</h3>
           <button
             type="button"
             onClick={onCancel}
             className="rounded-lg p-1.5 text-[#6f7282] hover:bg-[#fafbff]"
             disabled={submitting}
-            aria-label="Закрыть"
+            aria-label={t("actions.close")}
           >
             <X className="size-4" />
           </button>
         </div>
         <p className="mt-1 text-[13px] text-[#6f7282]">
-          Укажите причину. Журнал будет закрыт за сегодня — менеджер
-          увидит «без событий».
-        </p>
+          {t("noEvents.description")}</p>
         <div className="mt-4 space-y-2">
           {reasons.map((r) => (
             <label
@@ -1100,7 +1088,7 @@ function NoEventsSheet({
                 onChange={() => setPicked(r)}
                 className="size-4"
               />
-              <span className="text-[#0b1024]">{r}</span>
+              <span className="text-[#0b1024]">{reasonLabels?.[r] ?? r}</span>
             </label>
           ))}
           {allowFreeText ? (
@@ -1118,13 +1106,13 @@ function NoEventsSheet({
                   onChange={() => setPicked("__free__")}
                   className="size-4"
                 />
-                <span className="text-[#0b1024]">Своя причина</span>
+                <span className="text-[#0b1024]">{t("noEvents.customReason")}</span>
               </div>
               {picked === "__free__" ? (
                 <Input
                   value={free}
                   onChange={(e) => setFree(e.target.value)}
-                  placeholder="Например: проверка СЭС"
+                  placeholder={t("noEvents.reasonExample")}
                   maxLength={120}
                   className="h-10 rounded-xl"
                   autoFocus
@@ -1141,8 +1129,7 @@ function NoEventsSheet({
             disabled={submitting}
             className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px]"
           >
-            Отмена
-          </Button>
+            {t("actions.cancel")}</Button>
           <Button
             type="button"
             onClick={() =>
@@ -1154,7 +1141,7 @@ function NoEventsSheet({
             {submitting ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              "Подтвердить"
+              t("actions.confirm")
             )}
           </Button>
         </div>
@@ -1180,33 +1167,27 @@ function AlreadyDoneCard({
   returnUrl: string | null;
   locked: boolean;
 }) {
+  const t = useTranslations("taskFill");
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <SuccessCheck />
+      <SuccessCheck label={t("success.saved")} />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-        Задача выполнена
-      </h2>
+        {t("alreadyDone.title")}</h2>
       {locked ? (
         <>
           <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-            Запись уже сохранена в журнале. По правилам компании изменять
-            выполненные записи могут только администраторы — попросите
-            руководителя поправить данные за вас.
-          </p>
+            {t("alreadyDone.locked")}</p>
         </>
       ) : (
         <>
           <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-            Запись уже сохранена в журнале. Можно открыть её и изменить
-            данные — старые значения будут перезаписаны.
-          </p>
+            {t("alreadyDone.editable")}</p>
           <Button
             type="button"
             onClick={onEdit ?? undefined}
             className="mt-6 h-12 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]"
           >
-            Изменить данные
-          </Button>
+            {t("alreadyDone.edit")}</Button>
         </>
       )}
       {returnUrl ? (
@@ -1214,8 +1195,7 @@ function AlreadyDoneCard({
           href={returnUrl}
           className={`${locked ? "mt-6" : "mt-3"} inline-block text-[13px] text-[#6f7282] hover:text-[#0b1024]`}
         >
-          Вернуться в TasksFlow
-        </a>
+          {t("actions.return")}</a>
       ) : null}
     </div>
   );
@@ -1228,27 +1208,24 @@ function SuccessCard({
   returnUrl: string | null;
   autoRedirecting: boolean;
 }) {
+  const t = useTranslations("taskFill");
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <SuccessCheck />
+      <SuccessCheck label={t("success.saved")} />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-        Журнал заполнен
-      </h2>
+        {t("success.title")}</h2>
       <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-        Запись сохранена в WeSetup. Задача в TasksFlow отмечена выполненной.
-      </p>
+        {t("success.personalHint")}</p>
       {returnUrl ? (
         <>
           <a
             href={returnUrl}
             className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white hover:bg-[#4a5bf0]"
           >
-            Вернуться в TasksFlow
-          </a>
+            {t("actions.return")}</a>
           {autoRedirecting ? (
             <p className="mt-3 text-[12px] text-[#9b9fb3]">
-              Переадресация через пару секунд…
-            </p>
+              {t("success.redirecting")}</p>
           ) : null}
         </>
       ) : null}
@@ -1269,27 +1246,27 @@ function ConfirmSheet({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useTranslations("taskFill");
   const summary = useMemo(() => {
     if (!form) return null;
     return form.fields.map((field) => ({
       label: field.label,
-      value: formatValue(field, values[field.key]),
+      key: field.key,
+      value: formatValue(field, values[field.key], t),
     }));
-  }, [form, values]);
+  }, [form, values, t]);
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 backdrop-blur-[2px] animate-in fade-in-0 duration-200 sm:items-center">
       <BodyScrollLock />
       <div className="w-full max-w-md rounded-t-3xl border-x border-t border-[#ececf4] bg-white p-6 shadow-[0_-20px_60px_-20px_rgba(11,16,36,0.3)] animate-in slide-in-from-bottom-8 fade-in-0 duration-300 sm:rounded-3xl sm:border sm:zoom-in-95">
         <h3 className="text-[18px] font-semibold text-[#0b1024]">
-          Проверьте данные
-        </h3>
+          {t("confirm.title")}</h3>
         <p className="mt-1 text-[13px] text-[#6f7282]">
-          После подтверждения запись попадёт в журнал WeSetup.
-        </p>
+          {t("confirm.description")}</p>
         {summary ? (
           <div className="mt-4 space-y-1 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13px]">
             {summary.map((item) => (
-              <div key={item.label} className="flex items-start justify-between gap-3">
+              <div key={item.key} className="flex items-start justify-between gap-3">
                 <span className="text-[#6f7282]">{item.label}:</span>
                 <span className="text-right font-medium text-[#0b1024]">
                   {item.value}
@@ -1306,15 +1283,14 @@ function ConfirmSheet({
             disabled={submitting}
             className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px]"
           >
-            Назад
-          </Button>
+            {t("actions.back")}</Button>
           <Button
             type="button"
             onClick={onConfirm}
             disabled={submitting}
             className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
           >
-            {submitting ? "Сохраняю…" : "Подтвердить"}
+            {submitting ? t("actions.saving") : t("actions.confirm")}
           </Button>
         </div>
       </div>
@@ -1326,9 +1302,9 @@ function ConfirmSheet({
  * Краткое представление значения поля для done-шага pipeline'а.
  * Отличается от formatValue ниже только для boolean: «Да/Нет» → ✓/✗.
  */
-function formatPipelineValue(field: TaskFormField, value: unknown): string {
+function formatPipelineValue(field: TaskFormField, value: unknown, t: TaskFillTranslator): string {
   if (value === null || value === undefined || value === "") return "—";
-  if (field.type === "boolean") return value ? "✓ Да" : "✗ Нет";
+  if (field.type === "boolean") return value ? t("values.checkedYes") : t("values.checkedNo");
   if (field.type === "select") {
     const opt = field.options.find((o) => o.value === value);
     return opt ? opt.label : String(value);
@@ -1338,11 +1314,11 @@ function formatPipelineValue(field: TaskFormField, value: unknown): string {
   return String(value).length > 60 ? String(value).slice(0, 60) + "…" : String(value);
 }
 
-function formatValue(field: TaskFormField, value: unknown): string {
+function formatValue(field: TaskFormField, value: unknown, t: TaskFillTranslator): string {
   if (value === null || value === undefined || value === "") return "—";
   switch (field.type) {
     case "boolean":
-      return value ? "Да" : "Нет";
+      return value ? t("values.yes") : t("values.no");
     case "select": {
       const opt = field.options.find((o) => o.value === value);
       return opt ? `${opt.code ? opt.code + " — " : ""}${opt.label}` : String(value);
@@ -1397,10 +1373,11 @@ function PipelineWizard({
   onFieldChange: (key: string, value: unknown) => void;
   disabled: boolean;
 }) {
+  const t = useTranslations("taskFill");
   const total = steps.length;
   const allDone = confirmedCount >= total;
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<{ response: unknown } | null>(null);
 
   async function handleFile(index: number, file: File | null) {
     if (!file) return;
@@ -1409,7 +1386,7 @@ function PipelineWizard({
     try {
       await onUploadPhoto(index, file);
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Не удалось загрузить");
+      setUploadError({ response: err instanceof TaskFillRequestError ? err.response : null });
     } finally {
       setUploadingIdx(null);
     }
@@ -1431,8 +1408,7 @@ function PipelineWizard({
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#dcdfed] bg-white px-4 py-3">
         <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
           <ClipboardCheck className="size-4 text-[#5566f6]" />
-          Пошаговое выполнение
-        </div>
+          {t("pipeline.title")}</div>
         <div className="flex items-center gap-2">
           <div className="text-[13px] font-semibold tabular-nums text-[#0b1024]">
             {confirmedCount}/{total}
@@ -1520,7 +1496,7 @@ function PipelineWizard({
                   {isDone && step.field ? (
                     <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white/70 px-2 py-1 text-[11px] text-emerald-700">
                       <Check className="size-3" />
-                      {step.field.label}: {formatPipelineValue(step.field, values[step.field.key])}
+                      {step.field.label}: {formatPipelineValue(step.field, values[step.field.key], t)}
                     </div>
                   ) : null}
                   {isCurrent && (() => {
@@ -1539,18 +1515,18 @@ function PipelineWizard({
                       <div className="mt-3 space-y-2">
                         {stepPhotos[index] ? (
                           <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
+                            {/* Evidence uploads are served directly, without image optimization. */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={stepPhotos[index]}
-                              alt="Фото шага"
+                              alt={t("pipeline.photoAlt")}
                               className="size-16 rounded-xl object-cover"
                             />
                             <div className="flex-1 text-[13px] text-emerald-800">
                               <div className="font-semibold">
-                                Фото загружено
-                              </div>
+                                {t("pipeline.photoUploaded")}</div>
                               <label className="mt-1 inline-flex cursor-pointer items-center gap-1 text-[12px] text-emerald-700 underline">
-                                Заменить
-                                <input
+                                {t("pipeline.replacePhoto")}<input
                                   type="file"
                                   accept="image/*"
                                   capture="environment"
@@ -1583,10 +1559,10 @@ function PipelineWizard({
                             )}
                             <span className="flex-1">
                               {uploadingIdx === index
-                                ? "Загружаем фото…"
+                                ? t("pipeline.uploadingPhoto")
                                 : isRequired
-                                  ? "Сфотографировать (обязательно)"
-                                  : "Сфотографировать (по желанию)"}
+                                  ? t("pipeline.requiredPhoto")
+                                  : t("pipeline.optionalPhoto")}
                             </span>
                             <ImageIcon className="size-4 opacity-50" />
                             <input
@@ -1606,7 +1582,7 @@ function PipelineWizard({
                         )}
                         {uploadError ? (
                           <div className="rounded-xl bg-[#fff4f2] px-3 py-2 text-[12px] text-[#a13a32]">
-                            {uploadError}
+                            {taskFillErrorMessage(uploadError.response, t, t("pipeline.uploadError"))}
                           </div>
                         ) : null}
                       </div>
@@ -1615,12 +1591,11 @@ function PipelineWizard({
                   {isCurrent && step.requireComment ? (
                     <div className="mt-3 space-y-1.5">
                       <label className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-                        Комментарий (обязательно)
-                      </label>
+                        {t("pipeline.comment")}</label>
                       <textarea
                         value={stepComments[index] ?? ""}
                         onChange={(e) => onCommentChange(index, e.target.value)}
-                        placeholder="Что заметили на этом шаге, что важно записать"
+                        placeholder={t("pipeline.commentPlaceholder")}
                         disabled={disabled}
                         className="min-h-[80px] w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-3 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                       />
@@ -1629,15 +1604,14 @@ function PipelineWizard({
                   {isCurrent && step.requireSignature ? (
                     <div className="mt-3 space-y-1.5">
                       <label className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-                        Подпись — ваше ФИО (обязательно)
-                      </label>
+                        {t("pipeline.signature")}</label>
                       <input
                         type="text"
                         value={stepSignatures[index] ?? ""}
                         onChange={(e) =>
                           onSignatureChange(index, e.target.value)
                         }
-                        placeholder="Например: Иванов И.И."
+                        placeholder={t("pipeline.signaturePlaceholder")}
                         disabled={disabled}
                         className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                       />
@@ -1673,33 +1647,31 @@ function PipelineWizard({
                               "required" &&
                             !stepPhotos[index]
                           )
-                            return "Сначала загрузите фото";
+                            return t("pipeline.needPhoto");
                           if (!fieldSatisfied(step))
-                            return `Заполните поле «${step.field?.label ?? ""}»`;
+                            return t("pipeline.needField", { field: step.field?.label ?? "" });
                           if (
                             step.requireComment &&
                             !(stepComments[index] ?? "").trim()
                           )
-                            return "Сначала напишите комментарий";
+                            return t("pipeline.needComment");
                           if (
                             step.requireSignature &&
                             !(stepSignatures[index] ?? "").trim()
                           )
-                            return "Сначала введите ФИО (подпись)";
+                            return t("pipeline.needSignature");
                           return undefined;
                         })()}
                         className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
                       >
                         <Check className="size-4" />
-                        Сделал
-                      </Button>
+                        {t("pipeline.done")}</Button>
                     </div>
                   ) : null}
                   {isDone && stepPhotos[index] ? (
                     <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white/70 px-2 py-1 text-[11px] text-emerald-700">
                       <ImageIcon className="size-3" />
-                      Фото прикреплено
-                    </div>
+                      {t("pipeline.photoAttached")}</div>
                   ) : null}
                 </div>
               </div>
@@ -1711,8 +1683,7 @@ function PipelineWizard({
       {allDone ? (
         <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-[13.5px] text-emerald-800">
           <CheckCircle2 className="size-5 shrink-0" />
-          Все шаги пройдены — заполните комментарий и нажмите «Готово».
-        </div>
+          {t("pipeline.allDone")}</div>
       ) : null}
     </div>
   );

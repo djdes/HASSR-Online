@@ -57,6 +57,7 @@ export type StaffPeriodRow = {
   userName: string;
   jobPositionId: string | null;
   positionLabel: string;
+  positionRoleCode?: string | null;
   /// ISO YYYY-MM-DD
   dateFrom: string;
   /// ISO YYYY-MM-DD
@@ -69,6 +70,7 @@ export type StaffDismissalRow = {
   userName: string;
   jobPositionId: string | null;
   positionLabel: string;
+  positionRoleCode?: string | null;
   /// ISO YYYY-MM-DD
   date: string;
 };
@@ -88,7 +90,7 @@ export type StaffPageProps = {
   employees: StaffEmployee[];
   /// Подсказки названий должностей для сферы организации, уже без
   /// тех, что заведены. Считаются на сервере из onboarding-пресета.
-  positionSuggestions: Record<PositionCategory, string[]>;
+  positionSuggestions: Record<PositionCategory, Array<{ id: string; name: string }>>;
   workOffDays: StaffWorkOff[];
   vacations: StaffPeriodRow[];
   sickLeaves: StaffPeriodRow[];

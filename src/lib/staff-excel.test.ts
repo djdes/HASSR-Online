@@ -59,6 +59,8 @@ test("пустые строки в конце файла не считаются
 test("строка без должности объясняет, о ком речь", () => {
   const { rows, errors } = parseStaffSheet(sheet(["Иванова Мария", ""]));
   assert.equal(rows.length, 0);
+  assert.equal(errors[0].code, "missingPosition");
+  assert.deepEqual(errors[0].params, { name: "Иванова Мария" });
   assert.match(errors[0].message, /Иванова Мария/);
 });
 

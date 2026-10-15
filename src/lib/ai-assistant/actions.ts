@@ -1,4 +1,10 @@
 import crypto from "node:crypto";
+import { translatorFor } from "@/i18n/translator";
+import type { Locale } from "@/i18n/locales";
+import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { journalTitle } from "@/i18n/journal-presentation";
+import { loadMessages } from "@/i18n/messages";
+import { presentDocumentTitle } from "@/i18n/journal-document-presentation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { canWriteJournal } from "@/lib/journal-acl";
@@ -104,10 +110,13 @@ export type PrepareResult =
   | { ok: true; preview: PendingActionPreview }
   | { ok: false; error: string };
 
-function statusLabel(status: string): string {
-  return (
-    HYGIENE_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status
-  );
+function statusLabel(status: string, t: Awaited<ReturnType<typeof translatorFor>>): string {
+  if (status === "healthy") return t("hygiene.statuses.healthy");
+  if (status === "day_off") return t("hygiene.statuses.dayOff");
+  if (status === "sick_leave") return t("hygiene.statuses.sickLeave");
+  if (status === "suspended") return t("hygiene.statuses.suspended");
+  if (status === "vacation") return t("hygiene.statuses.vacation");
+  return status;
 }
 
 /**
@@ -116,22 +125,23 @@ function statusLabel(status: string): string {
  */
 export async function prepareAction(
   raw: { kind: string; input: unknown },
-  ctx: { orgId: string; actor: ActionActor }
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale }
 ): Promise<PrepareResult> {
+  const t = await translatorFor(ctx.locale ?? "ru");
   if (raw.kind === "add_staff") {
     const parsed = addStaffSchema.safeParse(raw.input);
     if (!parsed.success) {
-      return { ok: false, error: "Некорректные данные сотрудника" };
+      return { ok: false, error: t("assistantActions.invalidStaff") };
     }
     if (!isManagementRole(ctx.actor.role) && !ctx.actor.isRoot) {
-      return { ok: false, error: "Добавлять сотрудников может только менеджер" };
+      return { ok: false, error: t("assistantActions.managerOnly") };
     }
     const position = await db.jobPosition.findFirst({
       where: { id: parsed.data.jobPositionId, organizationId: ctx.orgId },
       select: { name: true },
     });
     if (!position) {
-      return { ok: false, error: "Должность не найдена" };
+      return { ok: false, error: t("assistantActions.positionMissing") };
     }
     const action: ProposedAction = { kind: "add_staff", input: parsed.data };
     return {
@@ -139,11 +149,11 @@ export async function prepareAction(
       preview: {
         token: signAction(action, ctx.orgId, ctx.actor.id),
         kind: "add_staff",
-        title: "Добавить сотрудника",
+        title: t("assistantActions.addStaff"),
         details: [
-          `${parsed.data.fullName} — ${position.name}`,
-          ...(parsed.data.phone ? [`Телефон: ${parsed.data.phone}`] : []),
-          "Доступ к журналам — по правилам должности",
+          t("assistantActions.staffIdentity", { name: parsed.data.fullName, position: position.name }),
+          ...(parsed.data.phone ? [t("assistantActions.phone", { phone: parsed.data.phone })] : []),
+          t("assistantActions.accessRules"),
         ],
         expiresAt: Date.now() + ACTION_TTL_MS,
       },
@@ -153,11 +163,11 @@ export async function prepareAction(
   if (raw.kind === "fill_journal_cells") {
     const parsed = fillCellsSchema.safeParse(raw.input);
     if (!parsed.success) {
-      return { ok: false, error: "Некорректные данные заполнения" };
+      return { ok: false, error: t("assistantActions.invalidFill") };
     }
     const input = parsed.data;
     if (input.employeeIds.length * input.dates.length > MAX_CELLS) {
-      return { ok: false, error: "Слишком много ячеек за один раз" };
+      return { ok: false, error: t("assistantActions.tooManyCells") };
     }
 
     const doc = await db.journalDocument.findFirst({
@@ -171,8 +181,8 @@ export async function prepareAction(
         template: { select: { code: true, name: true } },
       },
     });
-    if (!doc) return { ok: false, error: "Документ не найден" };
-    if (doc.status === "closed") return { ok: false, error: "Документ закрыт" };
+    if (!doc) return { ok: false, error: t("assistantActions.documentMissing") };
+    if (doc.status === "closed") return { ok: false, error: t("assistantActions.documentClosed") };
 
     const templateCode = doc.template?.code ?? "";
     const isStaffJournal = (
@@ -181,14 +191,14 @@ export async function prepareAction(
     if (input.values.kind === "status" && templateCode !== "hygiene") {
       return {
         ok: false,
-        error: "Статусы «Здоров/Выходной…» есть только в гигиеническом журнале",
+        error: t("assistantActions.hygieneStatusOnly"),
       };
     }
     if (input.values.kind === "auto" && !isStaffJournal) {
       return {
         ok: false,
         error:
-          "Автозаполнение доступно только для гигиенического журнала и журнала здоровья. Значения других журналов вносятся явно",
+          t("assistantActions.autoStaffOnly"),
       };
     }
 
@@ -199,7 +209,7 @@ export async function prepareAction(
         templateCode
       ))
     ) {
-      return { ok: false, error: "Нет доступа к этому журналу" };
+      return { ok: false, error: t("assistantActions.noAccess") };
     }
 
     const fromKey = toDateKey(doc.dateFrom);
@@ -208,7 +218,7 @@ export async function prepareAction(
     if (badDate) {
       return {
         ok: false,
-        error: `Дата ${badDate} вне периода документа (${fromKey} — ${toKey})`,
+        error: t("assistantActions.periodError", { date: badDate, from: fromKey, to: toKey }),
       };
     }
 
@@ -217,14 +227,14 @@ export async function prepareAction(
       select: { id: true, name: true },
     });
     if (employees.length !== new Set(input.employeeIds).size) {
-      return { ok: false, error: "Сотрудник не найден" };
+      return { ok: false, error: t("assistantActions.employeeMissing") };
     }
 
     const valueLabel =
       input.values.kind === "status"
-        ? `«${statusLabel(input.values.status)}»`
+        ? statusLabel(input.values.status, t)
         : input.values.kind === "auto"
-          ? "типовое заполнение по правилам журнала"
+          ? t("assistantActions.autoValues")
           : Object.entries(input.values.data)
               .map(([k, v]) => `${k}: ${String(v)}`)
               .join(", ");
@@ -235,24 +245,29 @@ export async function prepareAction(
     };
     const cellCount = input.employeeIds.length * input.dates.length;
     const sortedDates = [...input.dates].sort();
+    const locale = ctx.locale ?? "ru";
+    const messages = await loadMessages(locale);
+    const localizedName = journalTitle(locale, messages.journals.names, templateCode, doc.template?.name ?? t("assistantActions.journal"));
+    const displayTitle = presentDocumentTitle({ title: doc.title, templateCode, sourceNames: doc.template ? [doc.template.name] : [], localizedName,
+      dateFrom: fromKey, dateTo: toKey, locale, formatTitle: (name, period) => t("journalWidgets.headerEdit.generatedTitle", { name, period }) });
     return {
       ok: true,
       preview: {
         token: signAction(action, ctx.orgId, ctx.actor.id),
         kind: "fill_journal_cells",
-        title: "Заполнить журнал",
+        title: t("assistantActions.fillJournal"),
         details: [
-          `${doc.template?.name ?? "Журнал"} — «${doc.title}»`,
-          `Сотрудники: ${employees.map((e) => e.name).join(", ")}`,
-          `Дни: ${sortedDates[0]}${sortedDates.length > 1 ? ` — ${sortedDates[sortedDates.length - 1]}` : ""} (ячеек: ${cellCount})`,
-          `Значение: ${valueLabel}`,
+          t("assistantActions.documentDetail", { journal: localizedName, title: displayTitle }),
+          t("assistantActions.employees", { names: employees.map(e => e.name).join(", ") }),
+          sortedDates.length > 1 ? t("assistantActions.dateRange", { from: sortedDates[0], to: sortedDates[sortedDates.length - 1], count: cellCount }) : t("assistantActions.singleDate", { date: sortedDates[0], count: cellCount }),
+          t("assistantActions.value", { value: valueLabel }),
         ],
         expiresAt: Date.now() + ACTION_TTL_MS,
       },
     };
   }
 
-  return { ok: false, error: "Неизвестное действие" };
+  return { ok: false, error: t("assistantActions.unknownAction") };
 }
 
 // ---------------------------------------------------------------------------
@@ -292,29 +307,29 @@ type TokenPayload = {
 export function verifyActionToken(
   token: string,
   ctx: { orgId: string; userId: string }
-): { ok: true; action: ProposedAction } | { ok: false; error: string } {
+): { ok: true; action: ProposedAction } | { ok: false; error: string; code: "invalidToken" | "expiredToken" | "foreignToken" } {
   const dot = token.lastIndexOf(".");
-  if (dot <= 0) return { ok: false, error: "Некорректный токен действия" };
+  if (dot <= 0) return { ok: false, code: "invalidToken", error: "Некорректный токен действия" };
   const payload = token.slice(0, dot);
   const signature = token.slice(dot + 1);
   const expected = hmac(payload);
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-    return { ok: false, error: "Некорректный токен действия" };
+    return { ok: false, code: "invalidToken", error: "Некорректный токен действия" };
   }
   let parsed: TokenPayload;
   try {
     parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
   } catch {
-    return { ok: false, error: "Некорректный токен действия" };
+    return { ok: false, code: "invalidToken", error: "Некорректный токен действия" };
   }
   if (parsed.exp < Date.now()) {
-    return { ok: false, error: "Действие устарело — попросите помощника ещё раз" };
+    return { ok: false, code: "expiredToken", error: "Действие устарело — попросите помощника ещё раз" };
   }
   // Подтверждает тот же человек и та же организация, что получили превью.
   if (parsed.orgId !== ctx.orgId || parsed.userId !== ctx.userId) {
-    return { ok: false, error: "Токен действия не подходит этой сессии" };
+    return { ok: false, code: "foreignToken", error: "Токен действия не подходит этой сессии" };
   }
   return { ok: true, action: parsed.action };
 }
@@ -328,13 +343,14 @@ export type ExecuteResult =
 
 export async function verifyAndExecuteAction(
   token: string,
-  ctx: { orgId: string; actor: ActionActor }
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale }
 ): Promise<ExecuteResult> {
+  const t = await translatorFor(ctx.locale ?? "ru");
   const verified = verifyActionToken(token, {
     orgId: ctx.orgId,
     userId: ctx.actor.id,
   });
-  if (!verified.ok) return { ok: false, error: verified.error };
+  if (!verified.ok) return { ok: false, error: t(`assistantActions.${verified.code}`) };
 
   const result =
     verified.action.kind === "add_staff"
@@ -368,23 +384,29 @@ export async function verifyAndExecuteAction(
 
 async function executeAddStaff(
   input: z.infer<typeof addStaffSchema>,
-  ctx: { orgId: string; actor: ActionActor }
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale }
 ): Promise<ExecuteResult> {
+  const t = await translatorFor(ctx.locale ?? "ru");
   if (!isManagementRole(ctx.actor.role) && !ctx.actor.isRoot) {
-    return { ok: false, error: "Добавлять сотрудников может только менеджер" };
+    return { ok: false, error: t("assistantActions.managerOnly") };
   }
   const result = await createStaffMember(ctx.orgId, input);
-  if (!result.ok) return { ok: false, error: result.error };
+  if (!result.ok) return { ok: false, error: result.code === "billing_free_limit"
+    ? t("common.billing.limit", { count: FREE_MAX_USERS })
+    : result.status === 404 ? t("assistantActions.positionMissing")
+    : result.status === 400 ? t("assistantActions.invalidPhone")
+    : t("common.assistant.actionFailed") };
   return {
     ok: true,
-    summary: `Добавлен сотрудник: ${result.user.name} — ${result.positionName}`,
+    summary: t("assistantActions.staffAdded", { name: result.user.name, position: result.positionName }),
   };
 }
 
 async function executeFillCells(
   input: z.infer<typeof fillCellsSchema>,
-  ctx: { orgId: string; actor: ActionActor }
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale }
 ): Promise<ExecuteResult> {
+  const t = await translatorFor(ctx.locale ?? "ru");
   // Полный боевой набор guard'ов — тот же, что у bulk-маршрута покраски.
   // Между превью и подтверждением могло измениться что угодно (документ
   // закрыли, день заперся) — проверяем всё заново.
@@ -393,10 +415,10 @@ async function executeFillCells(
     include: { template: { select: { code: true } } },
   });
   if (!doc || doc.organizationId !== ctx.orgId) {
-    return { ok: false, error: "Документ не найден" };
+    return { ok: false, error: t("assistantActions.documentMissing") };
   }
   if (doc.status === "closed") {
-    return { ok: false, error: "Документ закрыт" };
+    return { ok: false, error: t("assistantActions.documentClosed") };
   }
 
   const templateCode = doc.template?.code ?? "";
@@ -407,7 +429,7 @@ async function executeFillCells(
       templateCode
     ))
   ) {
-    return { ok: false, error: "Нет доступа к этому журналу" };
+    return { ok: false, error: t("assistantActions.noAccess") };
   }
 
   // Гигиена по новой форме (Приложение №1): три графы подписывает сам
@@ -421,7 +443,7 @@ async function executeFillCells(
   ) {
     return {
       ok: false,
-      error: "В новой форме подписи ставит сам сотрудник по QR — «Здоров» и «Отстранён» за него не ставятся.",
+      error: t("assistantActions.selfSignature"),
     };
   }
 
@@ -441,7 +463,7 @@ async function executeFillCells(
         entryDayKey: dateKey,
         todayKey,
       });
-      if (!scope.allowed) return { ok: false, error: scope.error };
+      if (!scope.allowed) return { ok: false, error: t(scope.code === "foreign_row" ? "journalWidgets.headerEdit.foreignRow" : "journalWidgets.headerEdit.notToday") };
     }
   }
 
@@ -450,7 +472,7 @@ async function executeFillCells(
     include: { jobPosition: { select: { name: true } } },
   });
   if (employees.length !== new Set(input.employeeIds).size) {
-    return { ok: false, error: "Сотрудник не найден" };
+    return { ok: false, error: t("assistantActions.employeeMissing") };
   }
   const employeeById = new Map(employees.map((e) => [e.id, e]));
 
@@ -458,7 +480,7 @@ async function executeFillCells(
   const docTo = toDateKey(doc.dateTo);
   const badDate = input.dates.find((d) => d < docFrom || d > docTo);
   if (badDate) {
-    return { ok: false, error: `Дата ${badDate} вне периода документа` };
+    return { ok: false, error: t("assistantActions.dateOutside", { date: badDate }) };
   }
 
   // Значения ячеек. Для kind:"auto" гигиенического журнала статус берётся
@@ -500,7 +522,7 @@ async function executeFillCells(
 
   for (const dateKey of input.dates) {
     const dateObj = toEntryDayUtc(dateKey);
-    if (!dateObj) return { ok: false, error: "Некорректная дата" };
+    if (!dateObj) return { ok: false, error: t("assistantActions.invalidDate") };
 
     const decision = checkEntryWrite(writeCtx, ctx.actor, dateObj);
     if (!decision.allowed) {
@@ -542,8 +564,8 @@ async function executeFillCells(
       ok: false,
       error:
         leftForQr > 0
-          ? "Нечего заполнять: в новой форме «Здоров» отмечает сам сотрудник по QR, а выходных, отпусков и больничных на эти дни в графике нет."
-          : "Все выбранные дни закрыты для редактирования",
+          ? t("assistantActions.nothingToFill")
+          : t("assistantActions.allDaysClosed"),
     };
   }
 
@@ -573,8 +595,6 @@ async function executeFillCells(
   return {
     ok: true,
     summary:
-      `Заполнено ячеек: ${accepted.length}` +
-      (skipped > 0 ? `, пропущено (день закрыт): ${skipped}` : "") +
-      (leftForQr > 0 ? `, оставлено для отметки по QR: ${leftForQr}` : ""),
+      t("assistantActions.cellsFilled", { count: accepted.length, skipped, qr: leftForQr }),
   };
 }

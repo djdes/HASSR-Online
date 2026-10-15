@@ -1,4 +1,5 @@
 "use client";
+import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { cloneElement, createContext, isValidElement, useCallback, useContext, type ReactElement } from "react";
@@ -117,17 +118,27 @@ export function countConfigRecords(config: unknown): number | null {
 
 /** «Записей будет удалено: 12» — или `null`, если считать нечего. */
 export function deletedRecordsBullet(
-  config: unknown
+  config: unknown,
+  copy: { empty: string; count: (count: number) => string },
 ): { label: string; tone: "warn" } | null {
   const count = countConfigRecords(config);
   if (count === null) return null;
   return {
-    label:
-      count === 0
-        ? "Записей в документе нет"
-        : `Записей будет удалено: ${count}`,
+    label: count === 0 ? copy.empty : copy.count(count),
     tone: "warn",
   };
+}
+
+export function useDeletedRecordsBullet() {
+  const t = useTranslations("journalControls.list");
+  return useCallback(
+    (config: unknown) =>
+      deletedRecordsBullet(config, {
+        empty: t("deletedRecordsEmpty"),
+        count: (count) => t("deletedRecordsCount", { count }),
+      }),
+    [t],
+  );
 }
 
 /**
@@ -164,6 +175,8 @@ function toPeriod(doc: RestorableDocument): { dateFrom: Date; dateTo: Date } | n
  * по двум документам, и на проверке ни один не выглядит заполненным.
  */
 export function useRestoreDocument() {
+  const t = useTranslations("journalControls.list");
+  const locale = useLocale();
   const router = useRouter();
   return useCallback(
     async (document: RestorableDocument, siblings: RestorableDocument[] = []) => {
@@ -190,22 +203,21 @@ export function useRestoreDocument() {
         : null;
       if (clash) {
         toast.error(
-          `Вернуть нельзя: на этот период уже есть активный документ «${
-            clash.title || "без названия"
-          }». Закройте или удалите его, иначе записи за одни и те же дни разойдутся по двум документам.`
+          t("restoreConflict", { title: clash.title || t("untitled") })
         );
         return false;
       }
 
       const confirmed = await confirmAsync({
-        title: "Вернуть документ в активные?",
-        description: `Документ «${document.title || "без названия"}» снова станет активным.`,
+        locale,
+        title: t("restoreTitle"),
+        description: t("restoreDescription", { title: document.title || t("untitled") }),
         bullets: [
-          { label: "Его можно будет дозаполнить и исправить", tone: "info" },
-          { label: "Он вернётся на вкладку «Активные»", tone: "default" },
+          { label: t("restoreEditable"), tone: "info" },
+          { label: t("restoreTab"), tone: "default" },
         ],
         variant: "info",
-        confirmLabel: "Вернуть",
+        confirmLabel: t("restore"),
       });
       if (!confirmed) return false;
 
@@ -215,17 +227,14 @@ export function useRestoreDocument() {
         body: JSON.stringify({ status: "active" }),
       });
       if (!response.ok) {
-        const failure = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        toast.error(failure?.error || "Не удалось вернуть документ в активные");
+        toast.error(t("restoreFailed"));
         return false;
       }
-      toast.success("Документ снова активен");
+      toast.success(t("restored"));
       router.refresh();
       return true;
     },
-    [router]
+    [locale, router, t]
   );
 }
 
@@ -241,18 +250,29 @@ export function restoreMenuItems(args: {
   document: RestorableDocument;
   siblings?: RestorableDocument[];
   restore: ReturnType<typeof useRestoreDocument>;
+  label: string;
 }) {
   if ((args.document.status ?? "active") !== "closed") return [];
   return [
     {
       key: "activate",
-      label: "Вернуть в активные",
+      label: args.label,
       icon: <ArchiveRestore className="size-4 text-[#6f7282]" />,
       onSelect: () => {
         void args.restore(args.document, args.siblings ?? []);
       },
     },
   ];
+}
+
+export function useRestoreMenuItems() {
+  const restore = useRestoreDocument();
+  const t = useTranslations("journalControls.list");
+  return useCallback(
+    (args: { document: RestorableDocument; siblings?: RestorableDocument[] }) =>
+      restoreMenuItems({ ...args, restore, label: t("restoreMenu") }),
+    [restore, t],
+  );
 }
 
 export function JournalTopBar(props: {
@@ -299,6 +319,7 @@ export function JournalTopBar(props: {
    */
   canManage?: boolean;
 }) {
+  const t = useTranslations("journalControls.list");
   const canManageFromContext = useCanManageDocuments();
   const canManage = props.canManage !== false && canManageFromContext;
   // Пока документов ноль, «Создать документ» — только в карточке пустого
@@ -322,7 +343,7 @@ export function JournalTopBar(props: {
               (`JournalTitleControls`, их кладёт страница раздела). */}
           <JournalHeadingName
             fallback={props.heading}
-            suffix={props.activeTab === "closed" ? " (закрытые)" : null}
+            suffix={props.activeTab === "closed" ? ` (${t("closedSuffix")})` : null}
           />
         </h1>
       </div>
@@ -344,7 +365,7 @@ export function JournalTopBar(props: {
                 templateName={props.templateName}
                 users={props.users}
                 triggerClassName={JOURNAL_ACTION_CREATE_CLASS}
-                triggerLabel="Создать документ"
+                triggerLabel={t("create")}
                 triggerIcon={<Plus className="size-4" strokeWidth={2.5} />}
                 nextLampNumber={props.nextLampNumber}
                 triggerDataTour={TOUR.createDocument}
@@ -374,8 +395,8 @@ function restyleCreateSlot(slot: React.ReactNode): React.ReactNode {
 }
 
 const JOURNAL_TABS = [
-  { key: "active", label: "Активные", query: "" },
-  { key: "closed", label: "Закрытые", query: "?tab=closed" },
+  { key: "active", query: "" },
+  { key: "closed", query: "?tab=closed" },
 ] as const;
 
 /**
@@ -391,8 +412,9 @@ export function JournalTabs(props: {
   activeTab: "active" | "closed";
   templateCode: string;
 }) {
+  const t = useTranslations("journalControls.list");
   return (
-    <nav aria-label="Документы журнала" className={JOURNAL_TAB_VIEWPORT_CLASS}>
+    <nav aria-label={t("documents")} className={JOURNAL_TAB_VIEWPORT_CLASS}>
       <div className={JOURNAL_TAB_RAIL_CLASS}>
         {JOURNAL_TABS.map((tab) => {
           const active = props.activeTab === tab.key;
@@ -407,7 +429,7 @@ export function JournalTabs(props: {
               )}
             >
               <span className={cn(JOURNAL_TAB_LABEL_CLASS, active && JOURNAL_TAB_UNDERLINE_CLASS)}>
-                {tab.label}
+                {t(tab.key)}
               </span>
               <LinkPendingSpinner />
             </Link>
@@ -459,6 +481,7 @@ export function EmptyDocumentsState({
   /** Нет прав на создание — карточка остаётся, кнопка исчезает. */
   canManage?: boolean;
 } = {}) {
+  const t = useTranslations("journalControls.list");
   const canManageFromContext = useCanManageDocuments();
   const button =
     canManage === false || !canManageFromContext
@@ -470,7 +493,7 @@ export function EmptyDocumentsState({
         templateName={templateName}
         users={users}
         triggerClassName={EMPTY_STATE_CREATE_BUTTON_CLASS}
-        triggerLabel="Создать документ"
+        triggerLabel={t("create")}
         triggerIcon={<Plus className="size-5" strokeWidth={2.5} />}
         nextLampNumber={nextLampNumber}
         triggerDataTour={TOUR.createDocument}
@@ -480,11 +503,11 @@ export function EmptyDocumentsState({
   return (
     <div className="rounded-2xl bg-[#f6f7fa] px-6 py-12 text-center sm:px-10 sm:py-14">
       <div className="text-[22px] font-bold tracking-[-0.02em] text-[#0b1024] sm:text-[26px]">
-        {label ?? "Документ ещё не создан"}
+        {label ?? t("emptyTitle")}
       </div>
       <p className="mx-auto mt-3 max-w-[560px] text-[14px] leading-[1.5] text-[#6f7282]">
         {description ??
-          "Нажмите на кнопку ниже, чтобы создать документ и начать фиксировать записи журнала — они понадобятся при проверке Роспотребнадзора."}
+          t("emptyDescription")}
       </p>
       {button ? <div className="mt-7 flex justify-center">{button}</div> : null}
     </div>
@@ -520,28 +543,28 @@ export function DocumentActionsMenu(props: {
   document?: RestorableDocument;
   siblings?: RestorableDocument[];
 }) {
+  const t = useTranslations("journalControls.list");
   // На телефоне это лист снизу, на компьютере — выпадающий список:
   // общий `ResponsiveMenu`. Меню карточки документа одно на полтора
   // десятка журналов, поэтому правка здесь меняет их все разом.
   // «Настройки» и «Удалить» API отдаёт только руководителю — у остальных
   // в меню остаётся одна «Печать».
   const canManage = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreItemsForDocument = useRestoreMenuItems();
   const onEdit = canManage ? props.onEdit : undefined;
   const onDelete = canManage ? props.onDelete : undefined;
   const restoreItems = props.document
     ? filterManageMenuItems(
-        restoreMenuItems({
+        restoreItemsForDocument({
           document: props.document,
           siblings: props.siblings,
-          restore,
         }),
         canManage
       )
     : [];
   return (
     <ResponsiveMenu
-      title="Действия с документом"
+      title={t("actionsTitle")}
       contentClassName={
         (props.size ?? "md") === "md"
           ? "w-[300px] rounded-[22px] border-0 p-3 shadow-xl"
@@ -552,7 +575,7 @@ export function DocumentActionsMenu(props: {
           ? [
               {
                 key: "settings",
-                label: "Настройки",
+                label: t("settings"),
                 icon: <Pencil className="size-4 text-[#6f7282]" />,
                 onSelect: onEdit,
               },
@@ -560,7 +583,7 @@ export function DocumentActionsMenu(props: {
           : []),
         {
           key: "print",
-          label: "Печать",
+          label: t("print"),
           icon: <Printer className="size-4 text-[#6f7282]" />,
           onSelect: props.onPrint,
         },
@@ -569,7 +592,7 @@ export function DocumentActionsMenu(props: {
           ? [
               {
                 key: "delete",
-                label: "Удалить",
+                label: t("delete"),
                 icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                 onSelect: onDelete,
                 tone: "danger" as const,
@@ -580,7 +603,7 @@ export function DocumentActionsMenu(props: {
       trigger={
         <button
           type="button"
-          aria-label="Действия с документом"
+          aria-label={t("actionsTitle")}
           className={
             // На телефоне — 44 px и подпись: наведения мыши там нет, и
             // догадаться, что значок кликабельный, неоткуда. На
@@ -592,7 +615,7 @@ export function DocumentActionsMenu(props: {
           }
         >
           <Ellipsis className="size-4 text-[#5566f6]" />
-          <span className="sm:hidden">Действия</span>
+          <span className="sm:hidden">{t("actions")}</span>
         </button>
       }
     />

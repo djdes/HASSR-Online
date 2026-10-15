@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { notificationPresenter } from "@/i18n/notification-messages";
+import { resolveLocale } from "@/i18n/locales";
 import {
   asDismissedItemIds,
   asNotificationItems,
@@ -61,6 +63,8 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const session = await requireAuth();
+  const locale = resolveLocale({ authenticated: true, userLocale: session.user.locale, organizationLocale: session.user.organizationLocale });
+  const presenter = await notificationPresenter(locale);
   const rows = await db.notification.findMany({
     where: { userId: session.user.id, dismissedAt: null },
     orderBy: { createdAt: "desc" },
@@ -71,7 +75,7 @@ export async function GET() {
     const items = asNotificationItems(n.items)
       .filter((it) => !dismissed.has(it.id))
       .map((it) => migrateLegacyNotificationItem(n.kind, it));
-    return { ...n, items };
+    return presenter.row({ ...n, items });
   });
   // Если у нотификации не осталось «живых» подзадач — она автоматически
   // считается прочитанной (юзер вычистил все). Отделяем по readAt и по
@@ -89,10 +93,11 @@ export async function GET() {
     return original.length > 0 && n.items.length === 0;
   });
   return NextResponse.json({
+    locale,
     unread,
     read,
     unreadCount: unread.length,
-  });
+  }, { headers: { "Cache-Control": "private, no-store", "Content-Language": locale } });
 }
 
 /**

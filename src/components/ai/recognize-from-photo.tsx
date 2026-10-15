@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, Camera, Check, ImagePlus, Images, Loader2, RotateCcw, ScanText, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ import {
 import { downscaleImageFile } from "@/lib/ai-vision/downscale";
 import {
   VISION_FIELDS,
-  VISION_FIELD_LABELS,
+  VISION_MAX_ITEMS,
   VISION_MAX_PHOTOS,
   type VisionExtractError,
   type VisionExtractSuccess,
@@ -22,8 +23,8 @@ import {
   type VisionKind,
 } from "@/lib/ai-vision/shared";
 import { normalizeTypedTime } from "@/lib/finished-product-bulk";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
-import { pluralRu } from "@/lib/plural-ru";
+import { isFetchNetworkError } from "@/lib/humanize-fetch-error";
+import { visionErrorMessageKey } from "@/lib/ai-vision/presentation";
 import { cn } from "@/lib/utils";
 
 /**
@@ -46,24 +47,6 @@ export type RecognizeResult = { added: number; skipped?: number; overflow?: numb
 type Photo = { id: string; blob: Blob; url: string };
 type Phase = "photos" | "recognizing" | "review" | "empty" | "error";
 type ReviewRow = { key: string; checked: boolean; values: Partial<Record<VisionFieldKey, string>> };
-
-const COPY: Record<VisionKind, { title: string; hint: string; noun: [string, string, string] }> = {
-  menu: {
-    title: "Меню с фото",
-    hint: "Сфотографируйте меню или план-меню целиком — ровно, при хорошем свете, без бликов. Если меню на нескольких страницах — до 3 фото.",
-    noun: ["блюдо", "блюда", "блюд"],
-  },
-  raw: {
-    title: "Сырьё с фото",
-    hint: "Сфотографируйте накладную, этикетку или список сырья — ровно, при хорошем свете. Если документ на нескольких страницах — до 3 фото.",
-    noun: ["позиция", "позиции", "позиций"],
-  },
-  generic: {
-    title: "Список с фото",
-    hint: "Сфотографируйте список — ровно, при хорошем свете. Если он на нескольких страницах — до 3 фото.",
-    noun: ["позиция", "позиции", "позиций"],
-  },
-};
 
 const PRIMARY =
   "inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:text-[14px]";
@@ -125,10 +108,10 @@ export function RecognizeFromPhoto<K extends VisionKind>({
   kind,
   onItems,
   fields,
-  label = "С фото",
+  label,
   title,
   hint,
-  resultLabel = "Добавлено строк",
+  resultLabel,
   disabled = false,
   className,
   testId = "photo-recognize",
@@ -151,7 +134,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
   className?: string;
   testId?: string;
 }) {
-  const copy = COPY[kind];
+  const t = useTranslations("journalControls.photoRecognition");
   const shownFields = useMemo<VisionFieldKey[]>(
     () => (fields && fields.length > 0 ? VISION_FIELDS[kind].filter((field) => (fields as string[]).includes(field)) : VISION_FIELDS[kind]),
     [fields, kind]
@@ -234,10 +217,10 @@ export function RecognizeFromPhoto<K extends VisionKind>({
     if (files.length === 0) return;
     const room = VISION_MAX_PHOTOS - photosRef.current.length;
     if (room <= 0) {
-      toast.info(`Не больше ${VISION_MAX_PHOTOS} фото за раз`);
+      toast.info(t("maxPhotos", { max: VISION_MAX_PHOTOS }));
       return;
     }
-    if (files.length > room) toast.info(`Взяли первые ${room} — не больше ${VISION_MAX_PHOTOS} фото за раз`);
+    if (files.length > room) toast.info(t("photosLimited", { room, max: VISION_MAX_PHOTOS }));
     setOpen(true);
     setPhase("photos");
     setError(null);
@@ -250,7 +233,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
           photoSeq += 1;
           added.push({ id: `p${photoSeq}`, blob, url: URL.createObjectURL(blob) });
         } catch {
-          toast.error("Не удалось открыть фото — сфотографируйте ещё раз или выберите снимок JPG / PNG");
+          toast.error(t("openFailed"));
         }
       }
       if (added.length > 0) setPhotos((prev) => [...prev, ...added].slice(0, VISION_MAX_PHOTOS));
@@ -281,7 +264,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
       const json = (await response.json().catch(() => null)) as (VisionExtractSuccess<K> & Partial<VisionExtractError>) | null;
       if (controller.signal.aborted) return;
       if (!response.ok || !json || !Array.isArray(json.items)) {
-        setError(json?.error ?? "Не получилось распознать фото — попробуйте ещё раз или введите строки вручную.");
+        setError(t(visionErrorMessageKey(json?.code, response.status)));
         setPhase("error");
         return;
       }
@@ -294,7 +277,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
       setPhase("review");
     } catch (err) {
       if (controller.signal.aborted) return;
-      setError(humanizeFetchError(err, "Не получилось распознать фото — попробуйте ещё раз или введите строки вручную."));
+      setError(isFetchNetworkError(err) ? t("networkError") : t("recognitionFailed"));
       setPhase("error");
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
@@ -327,22 +310,24 @@ export function RecognizeFromPhoto<K extends VisionKind>({
     try {
       result = await onItems(items);
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Не удалось добавить строки — попробуйте ещё раз"));
+      // Callers include legacy server messages without a language contract.
+      // Keep the review/draft intact and present a localized retry message.
+      toast.error(isFetchNetworkError(err) ? t("networkError") : t("addFailed"));
       return;
     } finally {
       setAdding(false);
     }
     const added = result ? result.added : items.length;
-    const parts = [`${resultLabel}: ${added}`];
-    if (result?.skipped) parts.push(`уже были: ${result.skipped}`);
-    if (result?.overflow) parts.push(`не влезло: ${result.overflow}`);
-    if (added > 0) toast.success(parts.join(" · "));
-    else toast.info(parts.slice(1).join(" · ") || "Новых строк нет");
+    const summary = t("result", {
+      label: resultLabel ?? t("resultLabel"),
+      added,
+      skipped: result?.skipped ?? 0,
+      overflow: result?.overflow ?? 0,
+    });
+    if (added > 0) toast.success(summary);
+    else toast.info(summary);
     close();
   }
-
-  const nounCount = (count: number) => `${count} ${pluralRu(count, copy.noun[0], copy.noun[1], copy.noun[2])}`;
-  const rowsWord = (count: number) => pluralRu(count, "строку", "строки", "строк");
 
   return (
     <>
@@ -350,7 +335,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
         type="button"
         onClick={pickCamera}
         disabled={disabled}
-        title="Сфотографировать или выбрать фото — строки заполнятся сами"
+        title={t("triggerHint")}
         className={cn(
           "inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:rounded-xl sm:text-[14px]",
           className
@@ -358,7 +343,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
         data-testid={testId}
       >
         <Camera className="size-4 text-[#5566f6]" />
-        {label}
+        {label ?? t("label")}
       </button>
       <input
         ref={cameraInput}
@@ -390,10 +375,10 @@ export function RecognizeFromPhoto<K extends VisionKind>({
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={cn(JOURNAL_DIALOG_TITLE_CLASS, "flex items-center gap-2")}>
               <ScanText className="size-5 text-[#5566f6]" />
-              {title ?? copy.title}
+              {title ?? t(`kinds.${kind as VisionKind}.title`)}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Фото уходит на распознавание, строки можно проверить и поправить перед добавлением.
+              {t("description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -401,7 +386,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
             {phase === "photos" || phase === "recognizing" ? (
               <>
                 {phase === "photos" ? (
-                  <p className="text-[14px] leading-[1.55] text-[#3c4053]">{hint ?? copy.hint}</p>
+                  <p className="text-[14px] leading-[1.55] text-[#3c4053]">{hint ?? t(`kinds.${kind as VisionKind}.hint`, { max: VISION_MAX_PHOTOS })}</p>
                 ) : null}
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {photos.map((photo, index) => (
@@ -413,12 +398,12 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                       )}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element -- локальное превью blob: */}
-                      <img src={photo.url} alt={`Фото ${index + 1}`} className="size-full object-contain" />
+                      <img src={photo.url} alt={t("photoAlt", { index: index + 1 })} className="size-full object-contain" />
                       {phase === "photos" ? (
                         <button
                           type="button"
                           onClick={() => removePhoto(photo.id)}
-                          aria-label={`Убрать фото ${index + 1}`}
+                          aria-label={t("removePhoto", { index: index + 1 })}
                           className="absolute right-1.5 top-1.5 flex size-10 items-center justify-center rounded-full bg-white/90 text-[#3c4053] shadow-[0_4px_12px_-4px_rgba(11,16,36,0.35)] transition-colors hover:bg-white hover:text-[#a13a32]"
                         >
                           <X className="size-4" />
@@ -435,15 +420,14 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                       data-testid="photo-recognize-more"
                     >
                       {preparing ? <Loader2 className="size-5 animate-spin" /> : <ImagePlus className="size-5" />}
-                      {photos.length === 0 ? "Сфотографировать" : "Ещё фото"}
+                      {photos.length === 0 ? t("takePhoto") : t("morePhotos")}
                     </button>
                   ) : null}
                 </div>
                 {phase === "photos" ? (
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] leading-snug text-[#6f7282]">
                     <span>
-                      Фото {photos.length} из {VISION_MAX_PHOTOS}. Хранится на сервере несколько минут — только для
-                      распознавания.
+                      {t("retention", { count: photos.length, max: VISION_MAX_PHOTOS })}
                     </span>
                     {coarse ? (
                       <button
@@ -452,7 +436,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                         className="inline-flex h-10 items-center gap-1.5 rounded-xl px-2 text-[13px] font-medium text-[#3848c7] hover:bg-[#f5f6ff]"
                       >
                         <Images className="size-4" />
-                        Выбрать из галереи
+                        {t("gallery")}
                       </button>
                     ) : null}
                   </div>
@@ -464,9 +448,9 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                   >
                     <Loader2 className="size-5 shrink-0 animate-spin text-[#5566f6]" />
                     <div className="min-w-0">
-                      <div className="text-[15px] font-medium text-[#0b1024]">Распознаём… обычно 10–40 секунд</div>
+                      <div className="text-[15px] font-medium text-[#0b1024]">{t("recognizing")}</div>
                       <div className="mt-0.5 text-[13px] tabular-nums text-[#6f7282]">
-                        {elapsed >= 50 ? `Дольше обычного — ещё немного (${elapsed} с)` : `Прошло ${elapsed} с`}
+                        {t(elapsed >= 50 ? "longer" : "elapsed", { seconds: elapsed })}
                       </div>
                     </div>
                   </div>
@@ -477,17 +461,19 @@ export function RecognizeFromPhoto<K extends VisionKind>({
             {phase === "review" ? (
               <>
                 <p className="text-[14px] leading-[1.55] text-[#3c4053]" data-testid="photo-recognize-summary">
-                  Распознано: <b className="font-semibold tabular-nums">{nounCount(rows.length)}</b>. Снимите галки с лишнего и
-                  поправьте, если модель ошиблась.
-                  {truncated ? " Показаны первые 200 строк." : ""}
+                  {t.rich(`kinds.${kind as VisionKind}.summary`, {
+                    count: rows.length,
+                    strong: (chunks) => <b className="font-semibold tabular-nums">{chunks}</b>,
+                  })}
+                  {truncated ? <> {t("truncated", { max: VISION_MAX_ITEMS })}</> : null}
                 </p>
                 <label className="flex h-11 cursor-pointer items-center gap-3 rounded-xl px-1 text-[14px] font-medium text-[#3c4053]">
                   <CheckBox
                     checked={allChecked}
                     onChange={() => setRows((prev) => prev.map((row) => ({ ...row, checked: !allChecked })))}
-                    label="Выбрать все"
+                    label={t("selectAll")}
                   />
-                  Выбрать все
+                  {t("selectAll")}
                 </label>
                 <ol className="max-h-[min(52vh,520px)] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
                   {rows.map((row, index) => (
@@ -505,7 +491,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                           onChange={() =>
                             setRows((prev) => prev.map((item, i) => (i === index ? { ...item, checked: !item.checked } : item)))
                           }
-                          label={`Добавить строку ${index + 1}`}
+                          label={t("selectRow", { index: index + 1 })}
                           testId={`photo-recognize-check-${index}`}
                         />
                       </span>
@@ -513,13 +499,13 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                         {shownFields.map((field) => (
                           <label key={field} className={cn("min-w-0 space-y-0.5", spans[field] ?? "")}>
                             <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9b9fb3]">
-                              {VISION_FIELD_LABELS[field]}
+                              {t(`fields.${field}`)}
                             </span>
                             <input
                               className={INPUT}
                               type={field === "productionDate" || field === "expiryDate" ? "date" : "text"}
                               inputMode={field === "time" ? "numeric" : undefined}
-                              placeholder={field === "time" ? "ЧЧ:ММ" : field === "name" ? "Наименование" : "—"}
+                              placeholder={field === "time" ? t("timePlaceholder") : field === "name" ? t("fields.name") : "—"}
                               value={row.values[field] ?? ""}
                               maxLength={field === "name" ? 200 : 60}
                               onChange={(event) => {
@@ -544,10 +530,9 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                 className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-10 text-center"
                 data-testid="photo-recognize-empty"
               >
-                <div className="text-[16px] font-medium text-[#0b1024]">Ничего не распознали</div>
+                <div className="text-[16px] font-medium text-[#0b1024]">{t("emptyTitle")}</div>
                 <p className="mx-auto mt-1.5 max-w-[420px] text-[14px] leading-[1.55] text-[#6f7282]">
-                  На фото не нашлось строк, которые читаются однозначно. Сфотографируйте ближе, ровно и без бликов — или
-                  введите строки вручную.
+                  {t("emptyBody")}
                 </p>
               </div>
             ) : null}
@@ -568,7 +553,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
             {phase === "photos" ? (
               <>
                 <button type="button" onClick={close} className={OUTLINE}>
-                  Отмена
+                  {t("cancel")}
                 </button>
                 <button
                   type="button"
@@ -578,20 +563,20 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                   data-testid="photo-recognize-submit"
                 >
                   <ScanText className="size-4" />
-                  Распознать{photos.length > 1 ? ` ${photos.length} фото` : ""}
+                  {t("recognize", { count: photos.length })}
                 </button>
               </>
             ) : null}
             {phase === "recognizing" ? (
               <button type="button" onClick={cancelRecognition} className={OUTLINE} data-testid="photo-recognize-cancel">
-                Отменить
+                {t("cancelRecognition")}
               </button>
             ) : null}
             {phase === "review" ? (
               <>
                 <button type="button" onClick={retake} className={OUTLINE}>
                   <RotateCcw className="size-4 text-[#5566f6]" />
-                  Другое фото
+                  {t("retake")}
                 </button>
                 <button
                   type="button"
@@ -601,25 +586,25 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                   data-testid="photo-recognize-add"
                 >
                   {adding ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                  Добавить {selected.length} {rowsWord(selected.length)}
+                  {t("addRows", { count: selected.length })}
                 </button>
               </>
             ) : null}
             {phase === "empty" ? (
               <>
                 <button type="button" onClick={close} className={OUTLINE}>
-                  Ввести вручную
+                  {t("manual")}
                 </button>
                 <button type="button" onClick={retake} className={PRIMARY}>
                   <Camera className="size-4" />
-                  Сфотографировать ещё раз
+                  {t("takeAgain")}
                 </button>
               </>
             ) : null}
             {phase === "error" ? (
               <>
                 <button type="button" onClick={close} className={OUTLINE}>
-                  Ввести вручную
+                  {t("manual")}
                 </button>
                 <button
                   type="button"
@@ -629,7 +614,7 @@ export function RecognizeFromPhoto<K extends VisionKind>({
                   data-testid="photo-recognize-retry"
                 >
                   <RotateCcw className="size-4" />
-                  Попробовать ещё раз
+                  {t("retry")}
                 </button>
               </>
             ) : null}

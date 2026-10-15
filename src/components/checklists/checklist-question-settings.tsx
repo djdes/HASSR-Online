@@ -1,0 +1,54 @@
+"use client";
+
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CHECKLIST_OPERATOR_LABELS as CONDITION_LABELS, type ChecklistCondition, type ChecklistRule } from "@/lib/custom-checklist-rules";
+import { type ChecklistQuestion } from "@/lib/custom-checklists";
+
+const selectClass = "h-10 max-w-full rounded-xl border bg-white px-2 text-sm";
+export function ChecklistConditionEditor({ value, type, onChange, options = [] }: { value: ChecklistCondition; type: string; onChange: (value: ChecklistCondition) => void; options?: {value:string;label:string}[] }) {
+  const numeric = ["number", "scale", "multi"].includes(type);
+  const operand = (raw: string) => type === "checkbox" ? raw === "true" : numeric ? Number(raw) : raw;
+  const choices = type === "yes_no" ? [{value:"yes",label:"Да"},{value:"no",label:"Нет"},{value:"na",label:"Не применимо"}] : type === "checkbox" ? [{value:"true",label:"Да"},{value:"false",label:"Нет"}] : type === "choice" ? options : [];
+  return <div className="flex flex-wrap gap-2"><select aria-label="Оператор условия" className={selectClass} value={value.operator} onChange={e => onChange({ ...value, operator: e.target.value as ChecklistCondition["operator"], value: value.value ?? (type === "checkbox" ? true : numeric ? 0 : type === "yes_no" ? "no" : ""), upper: value.upper ?? (numeric ? 10 : "") })}>{Object.entries(CONDITION_LABELS).filter(([key]) => (["any","eq","neq"].includes(key)) || (["checked", "unchecked"].includes(key) ? type === "checkbox" : ["number","scale","datetime","multi"].includes(type))).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
+    {!["any", "checked", "unchecked"].includes(value.operator) ? choices.length ? <select aria-label="Значение условия" className={selectClass} value={String(value.value ?? "")} onChange={e => onChange({...value,value:operand(e.target.value)})}><option value="">Выберите ответ</option>{choices.map(choice=><option key={choice.value} value={choice.value}>{choice.label}</option>)}</select> : <Input aria-label="Значение условия" className="w-44" type={type === "datetime" ? "datetime-local" : numeric ? "number" : "text"} value={String(value.value ?? "")} onChange={e => onChange({ ...value, value: operand(e.target.value) })} /> : null}
+    {["between", "not_between"].includes(value.operator) ? <Input aria-label="Верхняя граница условия" className="w-44" type={type === "datetime" ? "datetime-local" : "number"} value={String(value.upper ?? "")} onChange={e => onChange({ ...value, upper: operand(e.target.value) })} /> : null}
+  </div>;
+}
+
+export function ChecklistQuestionSettings({ question: q, onChange, templateId }: { question: ChecklistQuestion; onChange: (patch: Partial<ChecklistQuestion>) => void; templateId?: string }) {
+  const [uploading, setUploading] = useState(false);
+  function ruleChange(index: number, patch: Partial<ChecklistRule>) { onChange({ logic: q.logic?.map((rule, i) => i === index ? { ...rule, ...patch } : rule) }); }
+  return <details className="rounded-xl border bg-white p-3"><summary className="cursor-pointer text-sm font-medium">Баллы, условия и подтверждения</summary><div className="mt-3 space-y-4">
+    {q.type === "yes_no" ? <div className="space-y-2">{(["yes", "no", "na"] as const).map(key => <div className="flex flex-wrap items-center gap-2" key={key}><span className="w-16 text-sm">{key === "yes" ? "Да" : key === "no" ? "Нет" : "Н/П"}</span><Input aria-label={`Подпись ${key}`} className="w-40" placeholder={key === "na" ? "Пусто — скрыть" : "Название ответа"} value={q.labels?.[key] ?? (key === "yes" ? "Да" : key === "no" ? "Нет" : "Не применимо")} onChange={e => onChange({ labels: { yes: "Да", no: "Нет", na: "Не применимо", ...q.labels, [key]: e.target.value } })} /><Input aria-label={`Баллы ${key}`} className="w-24" type="number" min={0} max={1000} value={q.answerPoints?.[key] ?? (key === "yes" ? q.weight : 0)} onChange={e => onChange({ answerPoints: { yes: q.weight, no: 0, na: 0, ...q.answerPoints, [key]: Number(e.target.value) } })} /><label className="flex gap-2 text-sm"><Checkbox checked={(q.excludedAnswers ?? ["na"]).includes(key)} onCheckedChange={checked => onChange({ excludedAnswers: checked ? [...new Set([...(q.excludedAnswers ?? ["na"]), key])] : (q.excludedAnswers ?? ["na"]).filter(item => item !== key) })} />Исключить из итога</label></div>)}</div> : null}
+    {["number", "scale"].includes(q.type) ? <div className="flex flex-wrap gap-3"><label className="text-sm">Единица<Input value={q.unit ?? ""} maxLength={40} onChange={e => onChange({ unit: e.target.value })} /></label><label className="text-sm">Шаг<Input aria-label="Шаг шкалы" type="number" min={0.001} step="any" value={q.step ?? ""} onChange={e => onChange({ step: e.target.value ? Number(e.target.value) : undefined })} /></label>{q.type === "scale" ? <select aria-label="Подсчёт шкалы" className={selectClass} value={q.scaleScoring ?? "range"} onChange={e => onChange({ scaleScoring: e.target.value as "range" | "value" })}><option value="range">Доля диапазона</option><option value="value">Значение / максимум</option></select> : null}</div> : null}
+    {q.type === "photo" ? <label className="block text-sm">Минимум фотографий<Input aria-label="Минимум фотографий" className="w-24" type="number" min={1} max={10} value={q.minPhotos ?? 1} onChange={e => onChange({ minPhotos: Number(e.target.value) })} /></label> : null}
+    {["choice", "multi"].includes(q.type) ? <div className="space-y-2">{q.type === "multi" ? <select aria-label="Подсчёт мультивыбора" className={selectClass} value={q.multiScoring ?? "average"} onChange={e => onChange({ multiScoring: e.target.value as "average" | "sum" })}><option value="average">Средняя оценка</option><option value="sum">Сумма баллов</option></select> : null}{q.options.map((option, index) => <div className="flex flex-wrap items-center gap-3 text-sm" key={option.value}><span>{option.label}</span><Input aria-label={`Баллы: ${option.label}`} className="w-24" type="number" min={0} max={1000} placeholder="Баллы" value={option.points ?? ""} onChange={e => onChange({ options: q.options.map((o, i) => i === index ? { ...o, points: e.target.value ? Number(e.target.value) : undefined } : o) })} />{(["excluded", "violation"] as const).map(key => <label key={key} className="flex items-center gap-2"><Checkbox checked={option[key] === true} onCheckedChange={checked => onChange({ options: q.options.map((o, i) => i === index ? { ...o, [key]: checked === true } : o) })} />{key === "excluded" ? "Исключить" : "Нарушение"}</label>)}</div>)}</div> : null}
+    {!["photo", "signature", "info", "text"].includes(q.type) ? <>
+      <label className="flex items-center gap-2 text-sm"><Checkbox checked={!!q.violation} onCheckedChange={checked => onChange({ violation: checked ? { operator: "eq", value: q.type === "yes_no" ? "no" : q.type === "checkbox" ? false : 0 } : undefined })} />Своё условие нарушения</label>
+      {q.violation ? <ChecklistConditionEditor value={q.violation} type={q.type} options={q.options} onChange={violation => onChange({ violation })} /> : null}
+      {(q.logic ?? []).map((rule, index) => <div key={rule.id} className="space-y-2 rounded-xl border p-3"><p className="text-sm font-medium">Если ответ</p><ChecklistConditionEditor value={rule.condition} type={q.type} options={q.options} onChange={condition => ruleChange(index, { condition })} />
+        <div className="flex flex-wrap gap-3">{(["comment", "barcode", "location", "violation", "critical", "stop", "zeroScore"] as const).map(key => <label key={key} className="flex items-center gap-2 text-sm"><Checkbox checked={rule.actions[key] === true} onCheckedChange={checked => {
+          const actions = { ...rule.actions, [key]: checked === true };
+          if (checked && key === "zeroScore") { actions.stop = true; actions.critical = true; }
+          if (checked && key === "stop") actions.critical = true;
+          if (!checked && key === "critical") { actions.stop = false; actions.zeroScore = false; }
+          if (!checked && key === "stop") actions.zeroScore = false;
+          ruleChange(index, { actions });
+        }} />{{comment:"Комментарий",barcode:"Штрихкод",location:"Геопозиция",violation:"Нарушение",critical:"Критическое",stop:"Завершить проверку",zeroScore:"Обнулить итог"}[key]}</label>)}</div>
+        <div className="flex flex-wrap gap-3">{(["photos", "videos", "audios"] as const).map(key => <label key={key} className="text-sm">{{photos:"Фото, минимум",videos:"Видео, минимум",audios:"Аудио, минимум"}[key]}<Input className="w-24" type="number" min={0} max={key === "photos" ? 10 : 3} value={rule.actions[key] ?? 0} onChange={e => ruleChange(index, { actions: { ...rule.actions, [key]: Number(e.target.value) } })} /></label>)}</div>
+        <Button variant="outline" onClick={() => onChange({ logic: q.logic?.filter((_, i) => i !== index) })}>Удалить условие</Button></div>)}
+      <Button variant="outline" disabled={(q.logic?.length ?? 0) >= 10} onClick={() => onChange({ logic: [...(q.logic ?? []), { id: crypto.randomUUID(), condition: { operator: "eq", value: q.type === "yes_no" ? "no" : q.type === "checkbox" ? false : 0 }, actions: { comment: true } }] })}>Добавить условие и действия</Button>
+    </> : null}
+    <div className="space-y-2"><p className="text-sm font-medium">Файлы-инструкции</p>{q.references?.map(ref => <div key={ref} className="flex gap-2"><a className="text-sm text-indigo-600 underline" href={`/api/checklists/attachments/${ref.slice(5)}`} target="_blank" rel="noopener noreferrer">Открыть файл</a><Button variant="ghost" size="sm" onClick={() => onChange({ references: q.references?.filter(item => item !== ref) })}>Убрать</Button></div>)}
+      <Input aria-label="Загрузить инструкцию" type="file" disabled={uploading || (q.references?.length ?? 0) >= 10} onChange={async event => {
+        const file = event.target.files?.[0]; event.target.value = ""; if (!file) return;
+        setUploading(true);
+        try { const form = new FormData(); form.set("file", file); form.set("purpose", "reference"); form.set("questionId", q.id); if (templateId) form.set("templateId", templateId); const response = await fetch("/api/checklists/attachments", { method: "POST", body: form }); const body = await response.json(); if (!response.ok) throw new Error(body.error); onChange({ references: [...(q.references ?? []), body.attachment.ref] }); }
+        catch (error) { toast.error(error instanceof Error ? error.message : "Не удалось загрузить файл"); } finally { setUploading(false); }
+      }} /><p className="text-xs text-muted-foreground">До 10 МБ на файл. Изображения, PDF, документы и архивы.</p></div>
+  </div></details>;
+}

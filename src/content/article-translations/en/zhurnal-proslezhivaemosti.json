@@ -1,0 +1,16 @@
+{
+  "locale":"en","sourceHash":"ecb9506033484852c8b734c254292d86c4746f90e62bd5c77bf7ae08c89e2f9f",
+  "title":"Traceability: how to find a batch’s journey in 20 minutes",
+  "excerpt":"A complete answer to “Where did this batch come from?” should take 2–4 hours. See which journals connect the chain and how to run a quarterly traceability test.",
+  "tags":["Traceability","HACCP"],
+  "body":[
+    {"type":"p","text":"Traceability is the ability to quickly reconstruct a product’s journey: from its supplier and invoice number to the specific dish served to a guest. An inspector is working against a timer: good practice is to provide a complete answer within 2–4 hours."},
+    {"type":"h2","text":"Traceability test"},
+    {"type":"p","text":"Once a quarter, a manager or technologist runs an exercise: they choose a random batch, and the team must assemble the chain backward (supplier → transport → receipt → storage → processing → serving) and forward (where the product went and which dishes were prepared) within the allotted time."},
+    {"type":"h2","text":"What you need to have"},
+    {"type":"ul","items":["Goods-receipt journal with the invoice number.","Incoming-inspection journal linked to the batch.","Kitchen labeling (when the package was opened and when the product was processed).","Product-inspection journal for the prepared dish.","Receipts or cash-register sales data for the period."]},
+    {"type":"callout","tone":"tip","title":"What electronic records provide","text":"The batch number from an invoice is automatically added to all related journals. Searching by batch takes seconds instead of flipping through a paper folder."},
+    {"type":"h2","text":"Why this matters to a business"},
+    {"type":"p","text":"Beyond inspections, traceability protects your reputation. If your dish is blamed for a food-poisoning incident, good traceability can either clear your kitchen of suspicion or give you grounds to make a claim against the supplier."}
+  ]
+}

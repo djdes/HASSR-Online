@@ -6,6 +6,7 @@ import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import { MiniSessionProvider } from "./_components/mini-session-provider";
 import { MiniAppShell } from "./_components/mini-app-shell";
 import { loadMiniShellData } from "./_components/mini-shell-data";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import "./mini-theme.css";
 // app-theme.css scopes site dashboard styles to `.app-shell` — needed
 // here because the Mini App embeds site components (e.g. document
@@ -70,8 +71,10 @@ export default async function MiniLayout({
   const shell = await loadMiniShellData(session);
 
   return (
-    <MiniSessionProvider initialSession={session}>
-      <MiniAppShell {...shell}>{children}</MiniAppShell>
-    </MiniSessionProvider>
+    <DomainMessagesBoundary namespaces={["miniHome"]}>
+      <MiniSessionProvider initialSession={session}>
+        <MiniAppShell {...shell}>{children}</MiniAppShell>
+      </MiniSessionProvider>
+    </DomainMessagesBoundary>
   );
 }

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { MENU_ITEM_MUTED_CLASS } from "@/components/ui/menu-styles";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import { FloatingLabelField } from "@/components/journals/journal-dialog-field";
 import {
   JOURNAL_DIALOG_FIELD_TRIGGER_CLASS,
@@ -57,14 +58,15 @@ export function PositionSelect({
   users,
   value,
   onValueChange,
-  placeholder = "- Выберите значение -",
+  placeholder,
   disabled,
   triggerClassName,
 }: PositionSelectProps) {
+  const t = useTranslations("journalControls.positionSelect");
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className={triggerClassName}>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder ?? t("chooseValue")} />
       </SelectTrigger>
       <SelectContent>
         <PositionSelectItems users={users} />
@@ -94,6 +96,7 @@ export function PositionSelectItems({
   groups?: PositionGroups;
   labelClassName?: string;
 }) {
+  const t = useTranslations("journalControls.positionSelect");
   const computed = useMemo(() => getPositionLabelsGrouped(users), [users]);
   const resolved = groups ?? computed;
   return (
@@ -102,7 +105,7 @@ export function PositionSelectItems({
         <SelectGroup>
           <SelectLabel className={labelClassName}>
             <Crown className="text-[#5566f6]" />
-            Руководство
+            {t("management")}
             <GroupCount count={resolved.management.length} />
           </SelectLabel>
           {resolved.management.map((label) => (
@@ -116,7 +119,7 @@ export function PositionSelectItems({
         <SelectGroup>
           <SelectLabel className={labelClassName}>
             <Users className="text-[#5566f6]" />
-            Сотрудники
+            {t("staff")}
             <GroupCount count={resolved.staff.length} />
           </SelectLabel>
           {resolved.staff.map((label) => (
@@ -305,19 +308,6 @@ export function usePositionEmployeeCascade<T extends UserLike & { id: string }>(
  * тупик «выберите сотрудника, а их нет» без выхода — самая частая
  * жалоба новых менеджеров.
  */
-const DEFAULT_EMPTY_EMPLOYEE_HINT = (
-  <>
-    В этой должности пока никого —{" "}
-    <Link
-      href="/settings/users"
-      className="font-medium text-[#5566f6] underline underline-offset-2 transition-colors duration-150 hover:text-[#4a5bf0]"
-    >
-      добавить
-    </Link>
-    .
-  </>
-);
-
 /**
  * Каскад Должность → Сотрудник.
  *
@@ -335,11 +325,11 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
   value,
   onChange,
   disabled,
-  positionLabel = "Должность",
-  employeeLabel = "Сотрудник",
-  emptyPositionPlaceholder = POSITION_PLACEHOLDER,
-  emptyEmployeePlaceholder = EMPLOYEE_PLACEHOLDER,
-  emptyEmployeeHint = DEFAULT_EMPTY_EMPLOYEE_HINT,
+  positionLabel,
+  employeeLabel,
+  emptyPositionPlaceholder,
+  emptyEmployeePlaceholder,
+  emptyEmployeeHint,
   triggerClassName,
   labelClassName,
   variant = "stacked",
@@ -377,6 +367,14 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
   variant?: "stacked" | "floating";
   autoPick?: CascadeAutoPick;
 }) {
+  const t = useTranslations("journalControls.positionSelect");
+  const resolvedPositionLabel = positionLabel ?? t("positionLabel");
+  const resolvedEmployeeLabel = employeeLabel ?? t("employeeLabel");
+  const resolvedPositionPlaceholder = emptyPositionPlaceholder ?? t("choosePosition");
+  const resolvedEmployeePlaceholder = emptyEmployeePlaceholder ?? t("chooseEmployee");
+  const resolvedEmployeeHint = emptyEmployeeHint ?? t.rich("emptyEmployeeHint", {
+    add: (chunks) => <Link href="/settings/users" className="font-medium text-[#5566f6] underline underline-offset-2 transition-colors duration-150 hover:text-[#4a5bf0]">{chunks}</Link>,
+  });
   const cascade = usePositionEmployeeCascade({
     users,
     positionTitle: value.positionTitle,
@@ -401,11 +399,11 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
       disabled={disabled}
     >
       <SelectTrigger className={resolvedTriggerClassName}>
-        <SelectValue placeholder={emptyPositionPlaceholder} />
+        <SelectValue placeholder={resolvedPositionPlaceholder} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>
-          {emptyPositionPlaceholder}
+          {resolvedPositionPlaceholder}
         </SelectItem>
         <SelectSeparator />
         <PositionSelectItems
@@ -425,11 +423,11 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
       disabled={disabled || availableEmployees.length === 0}
     >
       <SelectTrigger className={resolvedTriggerClassName}>
-        <SelectValue placeholder={emptyEmployeePlaceholder} />
+        <SelectValue placeholder={resolvedEmployeePlaceholder} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>
-          {emptyEmployeePlaceholder}
+          {resolvedEmployeePlaceholder}
         </SelectItem>
         {availableEmployees.map((u) => (
           <SelectItem key={u.id} value={u.id}>
@@ -443,13 +441,13 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
   if (floating) {
     return (
       <>
-        <FloatingLabelField label={positionLabel}>{positionSelect}</FloatingLabelField>
+        <FloatingLabelField label={resolvedPositionLabel}>{positionSelect}</FloatingLabelField>
 
         {value.positionTitle ? (
           <FloatingLabelField
-            label={employeeLabel}
+            label={resolvedEmployeeLabel}
             className={CASCADE_REVEAL_CLASS}
-            hint={availableEmployees.length === 0 ? emptyEmployeeHint : undefined}
+            hint={availableEmployees.length === 0 ? resolvedEmployeeHint : undefined}
           >
             {employeeSelect}
           </FloatingLabelField>
@@ -462,7 +460,7 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
     <div className="space-y-4">
       <div className="space-y-2">
         <div className={cn("text-[13px] font-medium text-[#6f7282]", labelClassName)}>
-          {positionLabel}
+          {resolvedPositionLabel}
         </div>
         {positionSelect}
       </div>
@@ -470,7 +468,7 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
       {value.positionTitle ? (
         <div className={cn("space-y-2", CASCADE_REVEAL_CLASS)}>
           <div className={cn("text-[13px] font-medium text-[#6f7282]", labelClassName)}>
-            {employeeLabel}
+            {resolvedEmployeeLabel}
           </div>
           {employeeSelect}
           {availableEmployees.length === 0 ? (

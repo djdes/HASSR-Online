@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +43,7 @@ import {
 import { PositionEmployeePicker } from "@/components/shared/position-select";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { formatDate as formatLocalizedDate, type Locale } from "@/i18n/locales";
 type UserItem = {
   id: string;
   name: string;
@@ -61,6 +63,15 @@ type JournalListDocument = {
   dateFrom: string;
   dateTo: string;
 };
+
+function periodLabel(dateFrom: string, dateTo: string, locale: Locale) {
+  const format = (dateKey: string) => {
+    const [year, month, day] = dateKey.slice(0, 10).split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, 12));
+    return formatLocalizedDate(locale, date, "UTC", { day: "numeric", month: "short", year: "numeric" });
+  };
+  return dateFrom === dateTo ? format(dateFrom) : `${format(dateFrom)} — ${format(dateTo)}`;
+}
 
 type Props = {
   activeTab: "active" | "closed";
@@ -84,6 +95,8 @@ function EditDocumentDialog({
   users: UserItem[];
   onSaved: () => void;
 }) {
+  const t = useTranslations("coldEquipment");
+  const common = useTranslations("common");
   const [title, setTitle] = useState("");
   const [responsibleTitle, setResponsibleTitle] = useState("");
   const [responsibleUserId, setResponsibleUserId] = useState("");
@@ -118,14 +131,14 @@ function EditDocumentDialog({
 
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) {
-        throw new Error(payload?.error || "Не удалось сохранить настройки документа");
+        throw new Error(payload?.error || t("errors.saveSettings"));
       }
 
       onOpenChange(false);
       onSaved();
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки документа")
+        humanizeFetchError(error, t("errors.saveSettings"))
       );
     } finally {
       setIsSubmitting(false);
@@ -137,14 +150,14 @@ function EditDocumentDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("ui.docTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <FloatingInputField
             id="cold-document-title"
-            label="Название документа"
+            label={t("ui.documentName")}
             value={title}
             onChange={setTitle}
           />
@@ -156,8 +169,8 @@ function EditDocumentDialog({
               setResponsibleTitle(n.positionTitle);
               setResponsibleUserId(n.userId);
             }}
-            positionLabel="Должность ответственного"
-            employeeLabel="Ответственный"
+            positionLabel={t("ui.responsiblePosition")}
+            employeeLabel={t("ui.employee")}
             variant="floating"
             autoPick="first"
           />
@@ -172,7 +185,7 @@ function EditDocumentDialog({
               disabled={isSubmitting || title.trim() === ""}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -189,6 +202,8 @@ export function ColdEquipmentDocumentsClient({
   users,
   documents,
 }: Props) {
+  const t = useTranslations("coldEquipment");
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const [editingDocument, setEditingDocument] = useState<JournalListDocument | null>(null);
   const { deleteDocument, openPdf } = useJournalDocumentActions();
@@ -196,13 +211,13 @@ export function ColdEquipmentDocumentsClient({
   async function handleDelete(document: JournalListDocument) {
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: t("dialogs.deleteDocumentDescription", { title: document.title }),
       bullets: [
-        { label: `Период документа: ${document.periodLabel}`, tone: "info" },
-        { label: "Удалятся все показания холодильного оборудования за этот период", tone: "warn" },
+        { label: t("dialogs.documentPeriod", { period: periodLabel(document.dateFrom, document.dateTo, locale) }), tone: "info" },
+        { label: t("dialogs.deleteAllMeasurements"), tone: "warn" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: t("toasts.documentDeleted", { title: document.title }),
+      errorMessage: t("errors.deleteDocument"),
     });
   }
 
@@ -241,18 +256,18 @@ export function ColdEquipmentDocumentsClient({
                 </Link>
 
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("ui.employee")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {document.responsibleTitle && document.responsibleUserName
                       ? `${document.responsibleTitle}: ${document.responsibleUserName}`
-                      : document.responsibleTitle || document.responsibleUserName || "Не назначен"}
+                      : document.responsibleTitle || document.responsibleUserName || t("ui.unassigned")}
                   </div>
                 </Link>
 
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Период</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("ui.periodLabel")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
-                    {document.periodLabel}
+                    {periodLabel(document.dateFrom, document.dateTo, locale)}
                   </div>
                 </Link>
 

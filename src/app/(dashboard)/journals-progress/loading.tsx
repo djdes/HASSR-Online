@@ -1,3 +1,5 @@
+
+import { useTranslations } from "next-intl";
 import { Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
 
 /**
@@ -6,9 +8,10 @@ import { Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
  * «Готовы») со списком строк-журналов.
  */
 export default function JournalsProgressLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем прогресс журналов…</span>
+      <span className="sr-only">{tLoading("journalProgress")}</span>
 
       <SkeletonPageHeader />
 

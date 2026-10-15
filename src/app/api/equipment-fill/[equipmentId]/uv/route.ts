@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request, { params }: { params: Promise<{ equipmentId: string }> }) {
   const equipmentId = decodeRouteParam((await params).equipmentId);
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "equipment", equipmentId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
   const body = (await request.json().catch(() => null)) as
     | { token?: unknown; employeeId?: unknown; pin?: unknown; pass?: unknown; action?: unknown }
@@ -33,11 +33,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
   const token = typeof body?.token === "string" ? body.token : "";
   const employeeId = typeof body?.employeeId === "string" ? body.employeeId : "";
   const action = body?.action === "on" || body?.action === "off" ? body.action : null;
-  if (!token || !employeeId || !action) return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+  if (!token || !employeeId || !action) return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
 
   const verify = verifyEquipmentQrToken(token);
   if (!verify.ok || verify.equipmentId !== equipmentId) {
-    return NextResponse.json({ error: "Неверная QR-наклейка" }, { status: 401 });
+    return NextResponse.json({ error: "Неверная QR-наклейка", errorCode: "equipmentFill.errors.invalidSticker" }, { status: 401 });
   }
   const lamp = await db.equipment.findUnique({
     where: { id: equipmentId },
@@ -50,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
       area: { select: { name: true, organizationId: true, organization: { select: { timezone: true, qrFillMode: true } } } },
     },
   });
-  if (!lamp || !isUvLampType(lamp.type)) return NextResponse.json({ error: "Это не УФ-лампа" }, { status: 404 });
+  if (!lamp || !isUvLampType(lamp.type)) return NextResponse.json({ error: "Это не УФ-лампа", errorCode: "equipmentFill.errors.notUvLamp" }, { status: 404 });
   const organizationId = lamp.area.organizationId;
   const timeZone = lamp.area.organization.timezone || "Europe/Moscow";
   const mode = normalizeQrFillMode(lamp.area.organization.qrFillMode);
@@ -63,7 +63,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     pass: typeof body?.pass === "string" ? body.pass : null,
     cookiePass: await readObjectPassCookie(organizationId),
   });
-  if (!actor.ok) return NextResponse.json({ error: actor.error }, { status: actor.status });
+  if (!actor.ok) return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
 
   // Только люди из списка журнала (закреплённые за лампой / ответственные журнала).
   const doc = await ensureUvDocumentForLamp({
@@ -75,7 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
   const person = await db.user.findUnique({ where: { id: actor.employee.id }, select: { role: true, canManageSettings: true } });
   const allowed =
     operators.some((operator) => operator.id === actor.employee.id) || isManagementRole(person?.role ?? "") || person?.canManageSettings === true;
-  if (!allowed) return NextResponse.json({ error: OBJECT_FILLER_DENIED }, { status: 403 });
+  if (!allowed) return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });
 
   const result = await toggleLamp({
     organizationId,
@@ -84,7 +84,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     employee: { id: actor.employee.id, name: actor.employee.name },
     action,
   });
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  if (!result.ok) return NextResponse.json({ error: result.error, errorCode: result.errorCode, errorParams: result.errorParams }, { status: result.status });
 
   await recordQrFillAudit({
     request,

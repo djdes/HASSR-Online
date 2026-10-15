@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, RefreshCw, TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Общая карточка ошибки для `error.tsx` журнальных маршрутов.
@@ -15,10 +16,11 @@ import { ArrowLeft, RefreshCw, TriangleAlert } from "lucide-react";
 export function JournalRouteError({
   error,
   reset,
-  title = "Не удалось загрузить журнал",
-  description = "Данные не пришли с сервера. Обычно помогает повторная попытка — записи при этом не теряются.",
+  title,
+  description,
   backHref,
-  backLabel = "К списку журналов",
+  backLabel,
+  variant = "journal",
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -26,7 +28,9 @@ export function JournalRouteError({
   description?: string;
   backHref?: string;
   backLabel?: string;
+  variant?: "journal" | "journals" | "documents" | "document";
 }) {
+  const t = useTranslations("errorSurface");
   useEffect(() => {
     console.error("[journals] route error", error);
   }, [error]);
@@ -40,14 +44,14 @@ export function JournalRouteError({
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="text-[18px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]">
-              {title}
+              {title ?? t(`${variant}Title`)}
             </h1>
             <p className="mt-2 text-[13px] leading-[1.55] text-[#3c4053]">
-              {description}
+              {description ?? t(`${variant}Description`)}
             </p>
             {error.digest ? (
               <p className="mt-2 text-[12px] text-[#9b9fb3]">
-                Код ошибки: <span className="font-mono">{error.digest}</span>
+                {t("code", { code: error.digest })}
               </p>
             ) : null}
           </div>
@@ -60,7 +64,7 @@ export function JournalRouteError({
             className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
             <RefreshCw className="size-4" />
-            Попробовать снова
+            {t("retry")}
           </button>
           {backHref ? (
             <Link
@@ -68,7 +72,7 @@ export function JournalRouteError({
               className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
             >
               <ArrowLeft className="size-4 text-[#5566f6]" />
-              {backLabel}
+              {backLabel ?? t(backHref === "/dashboard" ? "home" : "backToJournals")}
             </Link>
           ) : null}
         </div>

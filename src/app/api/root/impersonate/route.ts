@@ -40,7 +40,7 @@ async function rewriteSessionToken(
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isRoot) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Not found", errorCode: "ROOT_NOT_FOUND" }, { status: 404 });
   }
 
   const body = await request.json().catch(() => null);
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     typeof body?.organizationId === "string" ? body.organizationId : null;
   if (!organizationId) {
     return NextResponse.json(
-      { error: "organizationId обязателен" },
+      { error: "organizationId обязателен", errorCode: "ORG_ID_REQUIRED" },
       { status: 400 }
     );
   }
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     select: { id: true, name: true },
   });
   if (!org) {
-    return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
+    return NextResponse.json({ error: "Организация не найдена", errorCode: "ORG_NOT_FOUND" }, { status: 404 });
   }
 
   await db.auditLog.create({
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
   const rewrite = await rewriteSessionToken(org.id);
   if (!rewrite.ok) {
     return NextResponse.json(
-      { error: `Не удалось обновить сессию: ${rewrite.reason}` },
+      { error: `Не удалось обновить сессию: ${rewrite.reason}`, errorCode: "ROOT_IMPERSONATE_FAILED" },
       { status: 500 }
     );
   }
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isRoot) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Not found", errorCode: "ROOT_NOT_FOUND" }, { status: 404 });
   }
   const target = session.user.actingAsOrganizationId;
   if (target) {

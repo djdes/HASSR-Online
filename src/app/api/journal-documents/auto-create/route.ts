@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -35,6 +36,8 @@ export async function POST() {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
+  const blocked = await rejectJournalAutomation(organizationId);
+  if (blocked) return blocked;
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { autoJournalCodes: true },

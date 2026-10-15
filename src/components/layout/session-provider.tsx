@@ -2,6 +2,8 @@
 
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
+import { JournalControlsProvider } from "@/components/journals/journal-controls-provider";
+import { BrakerageSetupPrompt } from "@/components/journals/brakerage-setup-prompt";
 
 export function AuthSessionProvider({
   children,
@@ -17,7 +19,7 @@ export function AuthSessionProvider({
       refetchWhenOffline={false}
       refetchInterval={0}
     >
-      {children}
+      <JournalControlsProvider><BrakerageSetupPrompt />{children}</JournalControlsProvider>
     </SessionProvider>
   );
 }

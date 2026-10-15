@@ -1,3 +1,4 @@
+import { getJournalControls } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildingTargets } from "@/lib/active-building";
@@ -63,6 +64,7 @@ async function handle(request: Request) {
   const restoredCodes = new Set<string>();
 
   for (const org of orgs) {
+    if ((await getJournalControls(org.id)).specialMode) continue;
     // Точки: документы создаются на каждую точку организации (или один
     // общий, если точки не включены).
     const targets = await buildingTargets(org.id);

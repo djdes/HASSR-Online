@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Ellipsis, Pencil, Printer, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,6 @@ import {
 } from "@/components/ui/select";
 import {
   buildUvRuntimeDocumentTitle,
-  formatRuDateDash,
   getUvResponsibleTitleOptions,
   normalizeUvRuntimeDocumentConfig,
   type UvRuntimeDocumentConfig,
@@ -105,6 +105,7 @@ function UvRuntimeSettingsDialog(props: {
   editing: EditingState | null;
   onSaved: () => void;
 }) {
+  const t = useTranslations("uvLampRuntime");
   const [submitting, setSubmitting] = useState(false);
   const [lampNumber, setLampNumber] = useState("1");
   const [areaName, setAreaName] = useState("");
@@ -163,7 +164,7 @@ function UvRuntimeSettingsDialog(props: {
       props.onOpenChange(false);
       props.onSaved();
     } catch {
-      toast.error("Не удалось сохранить настройки документа");
+      toast.error(t("saveSettingsError"));
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +187,7 @@ function UvRuntimeSettingsDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("settingsTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -196,27 +197,24 @@ function UvRuntimeSettingsDialog(props: {
               установка №<имя>». Теперь поле подписано как номер, а итоговое
               название показано ниже — его собирает система. */}
           <FloatingInputField
-            label="Номер установки"
-            placeholder="Например: 1"
+            label={t("deviceNumber")}
+            placeholder={t("deviceNumberPlaceholder")}
             value={lampNumber}
             onChange={setLampNumber}
           />
           <p className="-mt-1 text-[12.5px] leading-[1.45] text-[#6f7282]">
-            Название документа соберётся само:{" "}
-            <span className="font-medium text-[#3c4053]">
-              «Бактерицидная установка №{lampNumber.trim() || "1"}»
-            </span>
+            {t("documentTitlePreview")} {t("titlePreview", { number: lampNumber.trim() || "1" })}
           </p>
 
           <FloatingInputField
-            label="Наименование цеха/участка применения"
+            label={t("areaName")}
             value={areaName}
             onChange={setAreaName}
           />
 
-          <DateField label="Дата начала" value={dateFrom} onChange={setDateFrom} />
+          <DateField label={t("documentDate")} value={dateFrom} onChange={setDateFrom} />
 
-          <FloatingLabelField label="Должность ответственного">
+          <FloatingLabelField label={t("responsiblePosition")}>
             <Select
               value={
                 responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -226,18 +224,18 @@ function UvRuntimeSettingsDialog(props: {
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>
-                  Выберите должность
+                  {t("choosePosition")}
                 </SelectItem>
                 <PositionSelectItems users={props.users} groups={options} />
               </SelectContent>
             </Select>
           </FloatingLabelField>
 
-          <FloatingLabelField label="Ответственный">
+          <FloatingLabelField label={t("employee")}>
             <Select
               value={responsibleUserId}
               onValueChange={cascade.handleEmployeeChange}
@@ -245,7 +243,7 @@ function UvRuntimeSettingsDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -269,7 +267,7 @@ function UvRuntimeSettingsDialog(props: {
               disabled={submitting}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -280,14 +278,14 @@ function UvRuntimeSettingsDialog(props: {
 
 export function UvLampRuntimeDocumentsClient(props: Props) {
   const router = useRouter();
+  const t = useTranslations("uvLampRuntime");
+  const journalNames = useTranslations("journals.names");
+  const format = useFormatter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
   const [editing, setEditing] = useState<EditingState | null>(null);
   const routeCode = props.routeCode || props.templateCode;
-  const heading =
-    props.activeTab === "closed"
-      ? "Журнал учета работы УФ бактерицидной установки (закрытые)"
-      : "Журнал учета работы УФ бактерицидной установки";
+  const heading = props.activeTab === "closed" ? t("headingClosed") : t("headingActive");
   const { deleteDocument, setStatus, openPdf } = useJournalDocumentActions();
 
   /**
@@ -310,26 +308,26 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
   async function handleDelete(document: DocumentItem, resolvedTitle: string) {
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${resolvedTitle}» будет удалён безвозвратно.`,
+      description: t("deleteDocumentDescription", { title: resolvedTitle }),
       bullets: [
-        { label: `Дата начала: ${formatRuDateDash(document.dateFrom)}`, tone: "info" },
-        { label: "Удалятся все отметки времени работы установки", tone: "warn" },
+        { label: t("dateStartPrefix", { date: format.dateTime(new Date(`${document.dateFrom}T00:00:00Z`), { dateStyle: "short", timeZone: "UTC" }) }), tone: "info" },
+        { label: t("deleteTimeMarks"), tone: "warn" },
       ],
-      successMessage: `Документ «${resolvedTitle}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: t("deleteDocumentSuccess", { title: resolvedTitle }),
+      errorMessage: t("deleteDocumentError"),
     });
   }
 
   async function handleReactivate(documentId: string, title: string) {
     const confirmed = await confirmAsync({
-      title: "Вернуть документ в активные?",
-      description: `Документ «${title}» снова станет доступен для редактирования.`,
+      title: t("restoreQuestion"),
+      description: t("restoreDescription", { title }),
       variant: "warn",
-      confirmLabel: "Вернуть",
+      confirmLabel: t("restoreAction"),
     });
     if (!confirmed) return;
 
-    await setStatus("active", { documentId, successMessage: "Документ снова активен" });
+    await setStatus("active", { documentId, successMessage: t("restoredSuccess") });
   }
 
   return (
@@ -362,12 +360,19 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
           const config = normalizeUvRuntimeDocumentConfig(document.config);
           // U1: имя документа всегда собираем из конфига — сохранённые
           // в БД обрезки («… | Журнал учета работы») больше не показываем.
-          const resolvedTitle = buildUvRuntimeDocumentTitle(config);
+          const resolvedTitle = `${t("deviceHeading", { number: config.lampNumber })} | ${journalNames("uv_lamp_runtime")}`;
           const responsibleName = document.responsibleUserId
             ? props.users.find((user) => user.id === document.responsibleUserId)?.name || ""
             : "";
-          const responsibleLabel = document.responsibleTitle
-            ? `${document.responsibleTitle}${responsibleName ? `: ${responsibleName}` : ""}`
+          const titleKey = document.responsibleTitle === "Руководитель" ? "roleOwner"
+            : document.responsibleTitle === "Управляющий" ? "roleManager"
+            : document.responsibleTitle === "Шеф-повар" ? "roleChef"
+            : document.responsibleTitle === "Повар" ? "roleCook"
+            : document.responsibleTitle === "Официант" ? "roleWaiter"
+            : null;
+          const displayResponsibleTitle = titleKey ? t(titleKey) : document.responsibleTitle;
+          const responsibleLabel = displayResponsibleTitle
+            ? `${displayResponsibleTitle}${responsibleName ? `: ${responsibleName}` : ""}`
             : ":";
 
           return (
@@ -377,28 +382,28 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("employeeResponsible")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {responsibleLabel}
                 </div>
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("documentDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {formatRuDateDash(document.dateFrom)}
+                  {format.dateTime(new Date(`${document.dateFrom}T00:00:00Z`), { dateStyle: "short", timeZone: "UTC" })}
                 </div>
               </Link>
 
               <div className="flex items-center justify-center text-[#5566f6]">
                 <ResponsiveMenu
-                  title="Действия"
+                  title={t("actions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: t("settingsTitle"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () =>
                               setEditing({
@@ -414,7 +419,7 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: t("print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () => openPdf({ documentId: document.id }),
                     },
@@ -422,7 +427,7 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
                       ? [
                           {
                             key: "restore",
-                            label: "Отправить в активные",
+                            label: t("restoreToActive"),
                             icon: <RotateCcw className="size-4 text-[#6f7282]" />,
                             onSelect: () => handleReactivate(document.id, resolvedTitle),
                           },
@@ -432,7 +437,7 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: t("delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             tone: "danger" as const,
                             onSelect: () => handleDelete(document, resolvedTitle),

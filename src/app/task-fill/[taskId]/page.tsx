@@ -1,11 +1,22 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
+import { getServerSession } from "@/lib/server-session";
+import { authOptions } from "@/lib/auth";
+import { FORMAT_LOCALES, resolveLocale } from "@/i18n/locales";
+import { SITE_LOCALE_COOKIE } from "@/i18n/site-locale";
+import { loadMessages, pickMessages } from "@/i18n/messages";
+import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
 import { db } from "@/lib/db";
 import { prettifyKey, SYSTEM_FIELD_LABELS } from "@/lib/field-labels";
 import { verifyTaskFillToken } from "@/lib/task-fill-token";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { extractEmployeeId } from "@/lib/tasksflow-adapters/row-key";
 import { isManagementRole } from "@/lib/user-roles";
-import { resolveJournalDisplayName } from "@/lib/org-custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { customJournalName } from "@/lib/custom-names";
+import { journalTitle } from "@/i18n/journal-presentation";
+import { presentTaskFillSchema, presentTaskFillField, presentNoEventsReason } from "@/lib/task-fill-schema-presentation";
 import {
   getActiveCloseEvent,
   utcDayStart, documentBuildingId } from "@/lib/journal-close-events";
@@ -71,20 +82,39 @@ export default async function TaskFillPage({
     }
   }
   if (!link) {
+    const [session, jar] = await Promise.all([getServerSession(authOptions), cookies()]);
+    const locale = resolveLocale({ authenticated: Boolean(session), userLocale: session?.user.locale, cookieLocale: jar.get(SITE_LOCALE_COOKIE)?.value });
+    const t = await getTranslations({ locale, namespace: "taskFill" });
     const reason =
       firstVerify && !firstVerify.ok ? firstVerify.reason : "bad-signature";
     return (
       <TaskFillErrorShell
-        title="Ссылка недействительна"
+        title={t("page.invalidLink")}
         message={
           reason === "expired"
-            ? "Срок жизни ссылки истёк — попросите администратора выслать задачу заново."
-            : "Токен повреждён или не подходит к этой задаче."
+            ? t("page.expiredLink")
+            : t("page.damagedLink")
         }
         returnUrl={returnUrl}
+        returnLabel={t("actions.return")}
       />
     );
   }
+
+  // Locale is resolved only after HMAC verification identifies the organization.
+  const [org, localeSession, localeCookies, customNames] = await Promise.all([
+    db.organization.findUnique({ where: { id: link.integration.organizationId }, select: { requireAdminForJournalEdit: true, locale: true } }),
+    getServerSession(authOptions), cookies(), getOrgCustomNames(link.integration.organizationId),
+  ]);
+  const guideLocale = resolveLocale({ authenticated: Boolean(localeSession), userLocale: localeSession?.user.locale, cookieLocale: localeCookies.get(SITE_LOCALE_COOKIE)?.value, organizationLocale: org?.locale });
+  const [t, tGuide, tWalkthrough, allMessages] = await Promise.all([
+    getTranslations({ locale: guideLocale, namespace: "taskFill" }),
+    getTranslations({ locale: guideLocale, namespace: "journalFillingGuides" }),
+    getTranslations({ locale: guideLocale, namespace: "journalControls.walkthroughs" }),
+    loadMessages(guideLocale),
+  ]);
+  const guideMessages = pickMessages(allMessages, ["common", "taskFill", "journalControls", "journalFillingGuides"]);
+  const displayJournalName = (code: string, name: string) => journalTitle(guideLocale, allMessages.journals.names, code, name, customJournalName(customNames, code));
 
   // Если это verifier-task (kind === "verifier") — рендерим
   // отдельный verify-flow вместо обычной формы заполнения. Verifier
@@ -159,13 +189,21 @@ export default async function TaskFillPage({
         key?: unknown;
         label?: unknown;
         options?: unknown;
-      }>
+      }>,
+      presentationSource: "adapter" | "template" = "template",
     ) {
       for (const f of fields) {
         if (typeof f?.key !== "string") continue;
         const key = f.key;
+        const options = Array.isArray(f.options) ? f.options.filter((option): option is { value: string; label: string } => Boolean(option && typeof option === "object" && typeof option.value === "string" && typeof option.label === "string")) : [];
+        const presented = presentTaskFillField(
+          options.length > 0
+            ? { type: "select", key, label: typeof f.label === "string" ? f.label : prettifyKey(key), options, presentationSource }
+            : { type: "text", key, label: typeof f.label === "string" ? f.label : prettifyKey(key), presentationSource },
+          doc!.template.code, guideLocale, allMessages,
+        );
         if (typeof f?.label === "string" && f.label && !labelByKey.has(key)) {
-          labelByKey.set(key, f.label);
+          labelByKey.set(key, presented.label);
         }
         if (Array.isArray(f.options)) {
           const optMap = optionsByKey.get(key) ?? new Map<string, string>();
@@ -177,7 +215,7 @@ export default async function TaskFillPage({
               typeof (opt as { label?: unknown }).label === "string"
             ) {
               const v = (opt as { value: string }).value;
-              const l = (opt as { label: string }).label;
+              const l = presented.type === "select" ? presented.options.find(item => item.value === v)?.label ?? (opt as { label: string }).label : (opt as { label: string }).label;
               if (!optMap.has(v)) optMap.set(v, l);
             }
           }
@@ -195,17 +233,21 @@ export default async function TaskFillPage({
     // 2) Fallback из реестра дефолтов
     const defaults = DEFAULT_PIPELINE_FIELDS[doc.template.code];
     if (Array.isArray(defaults)) {
-      ingestFields(defaults);
+      ingestFields(defaults, "adapter");
     }
     // 3) Системные поля (присутствуют почти везде)
     for (const [k, v] of Object.entries(SYSTEM_FIELD_LABELS)) {
-      if (!labelByKey.has(k)) labelByKey.set(k, v);
+      if (!labelByKey.has(k)) labelByKey.set(k, presentTaskFillField({ type: "text", key: k, label: v, presentationSource: "adapter" }, doc.template.code, guideLocale, allMessages).label);
+    }
+    function defaultOptions(key: string, entries: [string, string][]): Map<string, string> {
+      const field = presentTaskFillField({ type: "select", key, label: key, presentationSource: "adapter", options: entries.map(([value, label]) => ({ value, label })) }, doc!.template.code, guideLocale, allMessages);
+      return new Map(field.type === "select" ? field.options.map(option => [option.value, option.label]) : entries);
     }
     // Common select-options:
     if (!optionsByKey.has("organolepticResult")) {
       optionsByKey.set(
         "organolepticResult",
-        new Map([
+        defaultOptions("organolepticResult", [
           ["compliant", "Соответствует"],
           ["non_compliant", "Не соответствует"],
           ["good_quality", "Доброкачественно"],
@@ -216,7 +258,7 @@ export default async function TaskFillPage({
     if (!optionsByKey.has("storageCondition")) {
       optionsByKey.set(
         "storageCondition",
-        new Map([
+        defaultOptions("storageCondition", [
           ["2_6", "+2…+6°C"],
           ["minus2_2", "-2…+2°C"],
           ["minus18", "-18°C и ниже"],
@@ -226,24 +268,15 @@ export default async function TaskFillPage({
     if (!optionsByKey.has("damagesDetected")) {
       optionsByKey.set(
         "damagesDetected",
-        new Map([
+        defaultOptions("damagesDetected", [
           ["yes", "Да"],
           ["no", "Нет"],
         ])
       );
     }
 
-    // Форматирование даты в русский формат «5 мая 2026 г.»
-    const RUS_MONTHS = [
-      "января", "февраля", "марта", "апреля", "мая", "июня",
-      "июля", "августа", "сентября", "октября", "ноября", "декабря",
-    ];
-    function formatRu(d: Date): string {
-      const day = d.getUTCDate();
-      const month = RUS_MONTHS[d.getUTCMonth()];
-      const year = d.getUTCFullYear();
-      return `${day} ${month} ${year} г.`;
-    }
+    // The previous formatter used UTC date parts. Retain UTC calendar boundaries.
+    const entryDate = new Intl.DateTimeFormat(FORMAT_LOCALES[guideLocale], { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" });
 
     const entryViews = entries.map((e) => {
       const data = (e.data ?? {}) as Record<string, unknown>;
@@ -264,7 +297,7 @@ export default async function TaskFillPage({
         // Translate select-values to labels
         let valStr: string;
         if (typeof val === "boolean") {
-          valStr = val ? "Да" : "Нет";
+          valStr = val ? t("values.yes") : t("values.no");
         } else if (typeof val === "object") {
           valStr = JSON.stringify(val);
         } else {
@@ -279,7 +312,7 @@ export default async function TaskFillPage({
       }
       return {
         id: e.id,
-        date: formatRu(e.date),
+        date: entryDate.format(e.date),
         employeeName: e.employee?.name ?? "—",
         employeePosition: e.employee?.positionTitle ?? null,
         verificationStatus: e.verificationStatus,
@@ -294,32 +327,30 @@ export default async function TaskFillPage({
     ).length;
 
     return (
+      <SiteLocaleProvider locale={guideLocale} messages={guideMessages}>
       <TaskVerifyClient
         taskId={taskId}
         token={token}
         // Своё название журнала организации (официальное — в печати).
-        journalLabel={await resolveJournalDisplayName(
-          link.integration.organizationId,
-          doc.template.code,
-          doc.template.name
-        )}
+        journalLabel={displayJournalName(doc.template.code, doc.template.name)}
         documentTitle={doc.title}
         documentClosed={false}
         documentVerificationStatus={doc.verificationStatus}
         previousRejectReason={doc.verificationRejectReason}
         entries={entryViews}
-        verifierName={verifierEmployee?.name ?? "Проверяющий"}
+        verifierName={verifierEmployee?.name ?? t("page.verifier")}
         returnUrl={returnUrl ?? null}
         totalFillers={totalFillers}
         completedFillers={completedFillers}
       />
+      </SiteLocaleProvider>
     );
   }
 
   const adapter = getAdapter(link.journalCode);
   if (!adapter) notFound();
 
-  const [doc, employee, template, org] = await Promise.all([
+  const [doc, employee, template] = await Promise.all([
     db.journalDocument.findUnique({
       where: { id: link.journalDocumentId },
       select: { id: true, title: true, dateFrom: true, dateTo: true },
@@ -345,19 +376,17 @@ export default async function TaskFillPage({
         allowFreeTextReason: true,
       },
     }),
-    db.organization.findUnique({
-      where: { id: link.integration.organizationId },
-      select: { requireAdminForJournalEdit: true },
-    }),
   ]);
   if (!doc) notFound();
 
-  const form = adapter.getTaskForm
+  const sourceForm = adapter.getTaskForm
     ? await adapter.getTaskForm({
         documentId: link.journalDocumentId,
         rowKey: link.rowKey,
+        guideTranslators: { guide: tGuide, walkthrough: tWalkthrough },
       })
     : null;
+  const form = sourceForm ? presentTaskFillSchema(sourceForm, link.journalCode, guideLocale, allMessages) : null;
 
   // Shared-task: загружаем close-event и счётчик записей за сегодня.
   const todayStart = utcDayStart(new Date());
@@ -407,6 +436,7 @@ export default async function TaskFillPage({
     : [];
 
   return (
+    <SiteLocaleProvider locale={guideLocale} messages={guideMessages}>
     <TaskFillClient
       taskId={taskId}
       token={token}
@@ -414,11 +444,7 @@ export default async function TaskFillPage({
       returnUrl={returnUrl ?? null}
       journalLabel={
         template
-          ? await resolveJournalDisplayName(
-              link.integration.organizationId,
-              link.journalCode,
-              template.name
-            )
+          ? displayJournalName(link.journalCode, template.name)
           : link.journalCode
       }
       documentTitle={doc.title}
@@ -430,6 +456,10 @@ export default async function TaskFillPage({
       taskScope={(template?.taskScope as "personal" | "shared") ?? "personal"}
       allowNoEvents={template?.allowNoEvents ?? true}
       noEventsReasons={noEventsReasons}
+      noEventsReasonLabels={Object.fromEntries([...noEventsReasons, ...(closeEvent?.reason ? [closeEvent.reason] : [])].map(reason => {
+        const presented = presentNoEventsReason(reason, link.journalCode, guideLocale, allMessages);
+        return [presented.value, presented.label];
+      }))}
       allowFreeTextReason={template?.allowFreeTextReason ?? false}
       todaysEntryCount={todaysEntryCount}
       closeEvent={
@@ -442,6 +472,7 @@ export default async function TaskFillPage({
           : null
       }
     />
+    </SiteLocaleProvider>
   );
 }
 
@@ -449,10 +480,12 @@ function TaskFillErrorShell({
   title,
   message,
   returnUrl,
+  returnLabel,
 }: {
   title: string;
   message: string;
   returnUrl: string | undefined;
+  returnLabel: string;
 }) {
   return (
     <main className="min-h-screen bg-[#fafbff] flex items-center justify-center px-4 py-10">
@@ -471,7 +504,7 @@ function TaskFillErrorShell({
             href={returnUrl}
             className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
           >
-            Вернуться в TasksFlow
+            {returnLabel}
           </a>
         ) : null}
       </div>

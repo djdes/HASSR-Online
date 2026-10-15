@@ -2,6 +2,7 @@
 
 import { useSiteTheme, type ThemeMode } from "./site-theme";
 import { ThemeTiles } from "./theme-tiles";
+import { useTranslations } from "next-intl";
 
 /**
  * Тема на странице «Настройки → Внешний вид»: те же три карточки, что в
@@ -13,6 +14,7 @@ import { ThemeTiles } from "./theme-tiles";
  * нажатие на карточку снимает её у человека на глазах.
  */
 export function ThemeModeControls({ className }: { className?: string }) {
+  const t = useTranslations("common.theme");
   const { autoBySchedule, setAutoBySchedule } = useSiteTheme();
 
   return (
@@ -28,11 +30,10 @@ export function ThemeModeControls({ className }: { className?: string }) {
         />
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium text-[#0b1024]">
-            Менять по времени суток
+            {t("autoScheduleLabel")}
           </div>
           <div className="mt-0.5 text-[12px] leading-[1.4] text-[#6f7282]">
-            7:00–19:00 — светлая, остальное — тёмная. Выбор карточки
-            выключает эту настройку.
+            {t("autoScheduleHint")}
           </div>
         </div>
       </label>

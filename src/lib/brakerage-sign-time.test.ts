@@ -55,7 +55,7 @@ test("+1 минута к времени бракеража: 12:30 → 12:31", ()
 test("экран-карточка и печать: ячейка подписи — время бракеража + 1 минута", () => {
   const journalRow = createFinishedProductRow({ ...row, productName: "Суп куриный", signatures: [signedNow] });
   assert.equal(finishedProductCellText(journalRow, "signatures"), "Иванова А. А. · 12:31");
-  assert.equal(finishedProductCellText(journalRow, "rejection"), "2026-09-30 12:30");
+  assert.equal(finishedProductCellText(journalRow, "rejection"), "12:30");
 });
 
 test("переход через полночь", () => {

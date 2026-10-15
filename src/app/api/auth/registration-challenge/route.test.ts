@@ -5,6 +5,7 @@ import { POST as instant } from "@/app/api/auth/instant-register/route";
 import { POST as requestCode } from "@/app/api/auth/register/request/route";
 import { POST as confirm } from "@/app/api/auth/register/confirm/route";
 import { GET } from "./route";
+import { resolveRequestLocale, SITE_LOCALE_COOKIE } from "@/i18n/site-locale";
 
 const names = ["RECAPTCHA_SITE_KEY", "RECAPTCHA_SECRET_KEY", "RECAPTCHA_HOSTNAMES"] as const;
 const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
@@ -70,6 +71,14 @@ function request(body: unknown, ip = `192.0.2.${++address}`) {
   });
 }
 
+test("guest registration locale is resolved from the public language cookie", () => {
+  const registrationRequest = new Request("https://wesetup.ru/api/auth/instant-register", {
+    method: "POST",
+    headers: { cookie: `${SITE_LOCALE_COOKIE}=uz` },
+  });
+  assert.equal(resolveRequestLocale(registrationRequest), "uz");
+});
+
 for (const [name, handler] of Object.entries(endpoints)) {
   for (const [caseName, extra] of Object.entries({
     missing: { captchaToken: undefined }, honeypot: { website: "spam" },
@@ -77,6 +86,7 @@ for (const [name, handler] of Object.entries(endpoints)) {
     test(`${name}: ${caseName} rejected before DNS/DB/provider/notifications`, async () => {
       const response = await handler(request({ ...payload, ...extra }));
       assert.equal(response.status, 403);
+      if (name === "instant") assert.equal((await response.json()).code, "challenge_rejected");
       assert.deepEqual(calls, []);
     });
   }
@@ -89,7 +99,9 @@ for (const [name, handler] of Object.entries(endpoints)) {
   });
   test(`${name}: missing secret fails closed`, async () => {
     delete process.env.RECAPTCHA_SECRET_KEY;
-    assert.equal((await handler(request(payload))).status, 503);
+    const response = await handler(request(payload));
+    assert.equal(response.status, 503);
+    if (name === "instant") assert.equal((await response.json()).code, "challenge_unavailable");
     assert.deepEqual(calls, []);
   });
   test(`${name}: valid token reaches the existing business logic`, async () => {

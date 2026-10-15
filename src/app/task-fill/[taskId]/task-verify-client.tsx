@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { taskFillErrorMessage } from "@/lib/task-fill-messages";
+
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, ClipboardCheck, MessageSquareWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -54,6 +57,9 @@ export type TaskVerifyClientProps = {
 };
 
 export function TaskVerifyClient(props: TaskVerifyClientProps) {
+  const t = useTranslations("taskFill");
+  const currentTranslations = useRef(t);
+  useEffect(() => { currentTranslations.current = t; }, [t]);
   const [submitting, setSubmitting] = useState(false);
   const [decided, setDecided] = useState<null | "approved" | "rejected">(null);
   const [confirmApprove, setConfirmApprove] = useState(false);
@@ -85,15 +91,15 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
       const data = await response.json().catch(() => null);
       if (!response.ok) {
         toast.error(
-          data?.error || "Не удалось отправить решение. Попробуйте ещё раз."
+          taskFillErrorMessage(data, currentTranslations.current, currentTranslations.current("verify.error"))
         );
         return;
       }
       setDecided(decision);
       toast.success(
         decision === "approved"
-          ? "Журнал принят целиком ✓"
-          : "Возвращено на доработку — сотрудник получит уведомление"
+          ? currentTranslations.current("verify.approvedToast")
+          : currentTranslations.current("verify.rejectedToast")
       );
       setConfirmApprove(false);
       setConfirmReject(false);
@@ -103,6 +109,8 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
           window.location.href = props.returnUrl!;
         }, 1500);
       }
+    } catch {
+      toast.error(currentTranslations.current("verify.error"));
     } finally {
       setSubmitting(false);
     }
@@ -120,13 +128,12 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
           </div>
           <div className="min-w-0">
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/60">
-              Проверка журнала
-            </div>
+              {t("verify.title")}</div>
             <h1 className="mt-1 text-[clamp(1.25rem,2vw+0.75rem,1.75rem)] font-semibold leading-tight tracking-[-0.02em]">
               {props.documentTitle}
             </h1>
             <p className="mt-1 text-[14px] text-white/70">
-              {props.journalLabel} · проверяет: {props.verifierName}
+              {t("verify.reviewer", { journal: props.journalLabel, name: props.verifierName })}
             </p>
           </div>
         </div>
@@ -142,8 +149,8 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
         >
           <div className="text-[15px] font-semibold">
             {decided === "approved"
-              ? "Журнал принят. Возвращаемся в TasksFlow…"
-              : "Возвращено на доработку. Сотрудник увидит причину."}
+              ? t("verify.approvedResult")
+              : t("verify.rejectedResult")}
           </div>
         </div>
       ) : null}
@@ -174,8 +181,8 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
                 }`}
               >
                 {allFillersDone
-                  ? "Все сотрудники заполнили — можно проверять"
-                  : `Ждём пока сотрудники закончат заполнение`}
+                  ? t("verify.ready")
+                  : t("verify.waiting")}
               </div>
               <p
                 className={`mt-0.5 text-[13px] ${
@@ -183,8 +190,8 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
                 }`}
               >
                 {allFillersDone
-                  ? `Готово к решению: принять журнал целиком или вернуть конкретному сотруднику с причиной.`
-                  : `Задач выполнено: ${props.completedFillers} из ${props.totalFillers}. Ниже — то, что уже заполнили. Можно дождаться остальных или проверить сейчас.`}
+                  ? t("verify.readyHint")
+                  : t("verify.progressHint", { completed: props.completedFillers, total: props.totalFillers })}
               </p>
             </div>
           </div>
@@ -194,18 +201,15 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
       {empty ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[#6f7282]">
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Журнал ещё не заполнен
-          </div>
+            {t("verify.emptyTitle")}</div>
           <p className="mt-1 text-[13px]">
-            Сотрудник пока не внёс ни одной записи. Зайдите позже —
-            ссылка в TasksFlow будет работать всю смену.
-          </p>
+            {t("verify.emptyHint")}</p>
         </div>
       ) : (
         <>
           <div className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <div className="border-b border-[#ececf4] px-5 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-              Записи · {props.entries.length}
+              {t("verify.entries", { count: props.entries.length })}
             </div>
             <ul className="divide-y divide-[#ececf4]">
               {props.entries.map((entry, idx) => (
@@ -239,8 +243,7 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
                     </dl>
                   ) : (
                     <p className="mt-1.5 text-[12px] italic text-[#9b9fb3]">
-                      Нет данных в записи
-                    </p>
+                      {t("verify.noEntryData")}</p>
                   )}
                 </li>
               ))}
@@ -250,8 +253,8 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
           <div className="sticky bottom-2 z-10 flex flex-col gap-2 rounded-3xl border border-[#ececf4] bg-white/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] leading-snug text-[#6f7282]">
               {someFillersPending
-                ? "Сотрудники ещё дозаполняют. Можно подождать или посмотреть что уже есть и решить."
-                : "Прими целиком если всё в порядке. Если нашли ошибку — верни сотруднику с причиной, он исправит."}
+                ? t("verify.waitingDecisionHint")
+                : t("verify.decisionHint")}
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
@@ -262,8 +265,7 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
                 className="h-11 rounded-2xl border-[#fed4ce] bg-[#fff4f2] px-4 text-[14px] font-medium text-[#a13a32] hover:border-[#a13a32]/30 hover:bg-[#ffe5e1]"
               >
                 <MessageSquareWarning className="size-4" />
-                Вернуть на доработку
-              </Button>
+                {t("verify.reject")}</Button>
               <Button
                 type="button"
                 disabled={submitting || isReadOnly}
@@ -271,8 +273,7 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
                 className="h-11 rounded-2xl bg-emerald-600 px-5 text-[14px] font-medium text-white hover:bg-emerald-700"
               >
                 <CheckCircle2 className="size-4" />
-                Принять журнал
-              </Button>
+                {t("verify.approveJournal")}</Button>
             </div>
           </div>
         </>
@@ -282,8 +283,7 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
       props.previousRejectReason ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
           <div className="font-semibold">
-            Предыдущее возврат на доработку
-          </div>
+            {t("verify.previousRejection")}</div>
           <div className="mt-0.5">{props.previousRejectReason}</div>
         </div>
       ) : null}
@@ -292,15 +292,13 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
         open={confirmApprove}
         onClose={() => setConfirmApprove(false)}
         variant="info"
-        title="Принять журнал?"
+        title={t("verify.approveTitle")}
         description={
           <span>
-            Все <strong>{props.entries.length}</strong> записей будут
-            помечены как одобренные. Сотрудник увидит «Записи приняты»
-            в своей TasksFlow-задаче.
+            {t("verify.approveHint", { count: props.entries.length })}
           </span>
         }
-        confirmLabel={submitting ? "Сохраняем…" : "Принять"}
+        confirmLabel={submitting ? t("actions.saving") : t("verify.approve")}
         onConfirm={() => submitDecision("approved", "")}
       />
 
@@ -308,22 +306,23 @@ export function TaskVerifyClient(props: TaskVerifyClientProps) {
         open={confirmReject}
         onClose={() => setConfirmReject(false)}
         variant="warn"
-        title="Вернуть на доработку?"
+        title={t("verify.rejectTitle")}
         description={
           <div className="space-y-2">
-            <p>Опишите что не так — сотрудник увидит причину и исправит.</p>
+            <p>{t("verify.rejectHint")}</p>
             <textarea
+              aria-label={t("verify.rejectHint")}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Например: t° холодильника №2 указана неверно — проверь термометр"
+              placeholder={t("verify.rejectPlaceholder")}
               className="min-h-[80px] w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-2 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </div>
         }
-        confirmLabel={submitting ? "Отправляем…" : "Вернуть на доработку"}
+        confirmLabel={submitting ? t("verify.sending") : t("verify.reject")}
         onConfirm={() => {
           if (!rejectReason.trim()) {
-            toast.error("Опишите причину — без неё сотрудник не поймёт что исправить");
+            toast.error(t("verify.reasonRequired"));
             return;
           }
           return submitDecision("rejected", rejectReason.trim());

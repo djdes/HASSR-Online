@@ -288,10 +288,11 @@ export const equipmentMaintenanceAdapter: JournalAdapter = {
       doc.config,
     ) as EquipmentMaintenanceConfig;
     const row = config.rows.find((r) => r.id === rowKey);
-    const equipmentName =
+    const configuredEquipmentName =
       (row as { title?: string; equipmentName?: string } | undefined)?.title ??
-      (row as { title?: string; equipmentName?: string } | undefined)?.equipmentName ??
-      "оборудование";
+      (row as { title?: string; equipmentName?: string } | undefined)?.equipmentName;
+    const hasEquipmentName = typeof configuredEquipmentName === "string" && configuredEquipmentName.trim().length > 0;
+    const equipmentName = hasEquipmentName ? configuredEquipmentName : "оборудование";
     const isComplex =
       (row as { maintenanceType?: string; type?: string } | undefined)
         ?.maintenanceType === "B" ||
@@ -313,13 +314,26 @@ export const equipmentMaintenanceAdapter: JournalAdapter = {
       "Сделай фото после обслуживания",
     ];
     const steps = isComplex ? stepsB : stepsA;
+    const stepKeys = isComplex
+      ? ["equipmentMaintenance.disassemble", "equipmentMaintenance.cleanInternal", "equipmentMaintenance.seals", "equipmentMaintenance.lubricate", "equipmentMaintenance.reassemble"]
+      : ["equipmentMaintenance.cleanExternal", "equipmentMaintenance.checkConnections"];
+
 
     return {
       intro: `Профилактическое обслуживание · ${equipmentName}\nТип ${isComplex ? "B (сложное)" : "A (простое)"}. После каждого шага — «Сделал».`,
+      introPresentationKey: hasEquipmentName ? "dynamic.equipmentMaintenance.intro" : "dynamic.equipmentMaintenance.introFallback",
+      introPresentationValues: { equipment: equipmentName, type: isComplex ? "B" : "A" },
       fields: [],
       pipeline: steps.map((title, idx) => ({
         id: `step-${idx + 1}`,
         title,
+        titlePresentationKey: idx === 0
+          ? "dynamic.equipmentMaintenance.disconnect"
+          : idx === steps.length - 1
+            ? "dynamic.equipmentMaintenance.photo"
+            : `dynamic.${stepKeys[idx - 1]}`,
+        detailPresentationKey: "dynamic.equipmentMaintenance.stepCount",
+        detailPresentationValues: { step: idx + 1, total: steps.length },
         detail: `Шаг ${idx + 1} из ${steps.length}.`,
         photoMode:
           idx === steps.length - 1
@@ -327,6 +341,7 @@ export const equipmentMaintenanceAdapter: JournalAdapter = {
             : ("optional" as const),
       })),
       submitLabel: "ППР завершён",
+      submitPresentationKey: "dynamic.equipmentMaintenance.submit",
     };
   },
 };

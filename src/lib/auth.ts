@@ -378,12 +378,13 @@ export const authOptions: NextAuthOptions = {
           if (activeOrgId) {
             const fresh = await db.organization.findUnique({
               where: { id: activeOrgId },
-              select: { name: true, presetCapabilitiesJson: true, kind: true },
+              select: { name: true, presetCapabilitiesJson: true, kind: true, locale: true },
             });
             if (fresh?.name) {
               session.user.organizationName = fresh.name;
             }
             if (fresh) {
+              session.user.organizationLocale = fresh.locale;
               session.user.orgKind = fresh.kind === "directory" ? "directory" : "regular";
             }
             session.user.orgPresetOverrides =
@@ -398,9 +399,10 @@ export const authOptions: NextAuthOptions = {
           if (session.user.id) {
             const freshUser = await db.user.findUnique({
               where: { id: session.user.id },
-              select: { permissionPreset: true },
+              select: { permissionPreset: true, locale: true },
             });
             if (freshUser) {
+              session.user.locale = freshUser.locale;
               session.user.permissionPreset = freshUser.permissionPreset ?? null;
             }
           }

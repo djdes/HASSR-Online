@@ -1,4 +1,5 @@
 import type { FillingGuide } from "@/lib/journal-specs";
+import { FILLING_GUIDE_COPY_KEYS, translateFillingGuideTree, type FillingGuideTranslators } from "./journal-filling-guide-copy";
 
 /**
  * Подробные гайды «как заполнять журнал» для новых сотрудников.
@@ -1899,6 +1900,16 @@ export const FILLING_GUIDES: Record<string, FillingGuide> = {
   },
 };
 
-export function getFillingGuide(code: string): FillingGuide | null {
-  return FILLING_GUIDES[code] ?? null;
+const BUILT_IN_FILLING_GUIDES = new Map(Object.entries(FILLING_GUIDES));
+
+/** Localize registered built-ins only; caller-authored guide objects stay exact. */
+export function presentFillingGuide<T extends FillingGuide>(code: string, guide: T, t?: FillingGuideTranslators): T {
+  if (!t || BUILT_IN_FILLING_GUIDES.get(code) !== guide || !Object.hasOwn(FILLING_GUIDE_COPY_KEYS, code)) return guide;
+  return translateFillingGuideTree(guide, code as keyof typeof FILLING_GUIDE_COPY_KEYS, t);
+}
+
+/** Omit translators only for explicit Russian compatibility consumers. */
+export function getFillingGuide(code: string, t?: FillingGuideTranslators): FillingGuide | null {
+  if (!Object.hasOwn(FILLING_GUIDES, code)) return null;
+  return presentFillingGuide(code, FILLING_GUIDES[code], t);
 }

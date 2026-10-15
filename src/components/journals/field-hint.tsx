@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { getFieldHint } from "@/lib/sanpin-norms";
+import { useTranslations } from "next-intl";
 
 interface FieldHintProps {
   templateCode: string;
@@ -14,6 +15,7 @@ interface FieldHintProps {
 }
 
 export function FieldHint({ templateCode, fieldKey }: FieldHintProps) {
+  const t = useTranslations("journalForm");
   const hint = getFieldHint(templateCode, fieldKey);
   if (!hint) return null;
 
@@ -23,7 +25,7 @@ export function FieldHint({ templateCode, fieldKey }: FieldHintProps) {
         <button
           type="button"
           className="inline-flex items-center justify-center rounded-full p-0.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-          aria-label="Подсказка СанПиН"
+          aria-label={t("fieldHint.sanpinLabel")}
         >
           <Info className="size-3.5" />
         </button>
@@ -50,15 +52,16 @@ interface FieldWarningProps {
 }
 
 export function FieldWarning({ templateCode, fieldKey, value }: FieldWarningProps) {
+  const t = useTranslations("journalForm");
   const hint = getFieldHint(templateCode, fieldKey);
   if (!hint || value === undefined || value === null) return null;
 
   let warning = "";
   if (hint.warnBelow !== undefined && value < hint.warnBelow) {
-    warning = `Значение ${value} ниже нормы (мин. ${hint.warnBelow})`;
+    warning = t("fieldWarning.below", { value, minimum: hint.warnBelow });
   }
   if (hint.warnAbove !== undefined && value > hint.warnAbove) {
-    warning = `Значение ${value} выше нормы (макс. ${hint.warnAbove})`;
+    warning = t("fieldWarning.above", { value, maximum: hint.warnAbove });
   }
 
   if (!warning) return null;

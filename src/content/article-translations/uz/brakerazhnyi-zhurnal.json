@@ -1,0 +1,17 @@
+{
+  "locale": "uz",
+  "sourceHash": "74d15d6998aff4de219deee3f7e51fcedc64184adbb471637f68791bf3e48121",
+  "title": "Tayyor mahsulot sifatini baholash jurnali: yuritish va partiyalarni adashtirmaslik",
+  "excerpt": "Komissiya nimalarni baholaydi, kim imzo qo‘yadi va nega har bir partiya uchun alohida yozuv kerak. Tayyor mahsulotni baholash hamda tekshiruvdan o‘tmagan taom bilan nima qilish haqida.",
+  "tags": ["Mahsulotni baholash", "Jurnallar"],
+  "body": [
+    {"type":"p","text":"Tayyor mahsulotni baholash — taom dasturxonga tortilishidan oldin uning ko‘rinishi, ta’mi, harorati va texnologik xaritaga muvofiqligini tekshirishdir. Inspektor shu jurnal orqali o‘sha kuni aynan nima tayyorlangani va zalga nima chiqarilganini aniqlaydi."},
+    {"type":"h2","text":"Kim o‘tkazadi"},
+    {"type":"p","text":"Ikki-uch kishidan iborat komissiya: bosh oshpaz, texnolog va ba’zan navbatchi menejer. Kichik muassasalarda bosh oshpaz va administrator bo‘lishi mumkin. Komissiyaning barcha a’zolari imzo qo‘yadi."},
+    {"type":"h2","text":"Nimalar qayd etiladi"},
+    {"type":"ul","items":["Taom nomi va texnologik xarita.","Partiya — pishirish yoki non yopish siklining raqami.","Organoleptik baho: tashqi ko‘rinishi, hidi, ta’mi va konsistensiyasi.","Tortish paytidagi harorati.","Natija: ruxsat berildi / ruxsat berilmadi / qayta ishlash kerak.","Komissiya a’zolarining imzolari."]},
+    {"type":"callout","tone":"warn","title":"Ruxsat berilmagani uni indamay tashlashga sabab emas","text":"Taom baholashdan o‘tmasa, sababini ko‘rsatib, hisobdan chiqarish jurnaliga alohida yozuv kiriting. Uni shunchaki chiqindiga tashlash izni yo‘qotadi va inspektorda savollar qoldiradi."},
+    {"type":"h2","text":"Partiyalarni adashtirmaslik"},
+    {"type":"p","text":"Bitta partiya — bitta yozuv. Kun davomida kruassan uch marta pishirilgan bo‘lsa, jurnalda uchta yozuv va uchta imzo to‘plami bo‘lishi kerak. Ularni bitta “ertalabki pishiriq” deb birlashtirmang: ovqatdan zaharlanish tekshirilganda aynan qaysi partiya dasturxonga tortilganini bilish zarur."}
+  ]
+}

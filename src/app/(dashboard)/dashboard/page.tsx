@@ -1,3 +1,4 @@
+import { WorkspaceResourceCards } from "@/components/dashboard/workspace-resource-cards";
 import Link from "next/link";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { redirect } from "next/navigation";
@@ -47,6 +48,7 @@ import { isSuperUser } from "@/lib/super-user";
 import { OrgHealthWidget } from "@/components/dashboard/org-health-widget";
 import { QuickStartCard } from "@/components/dashboard/quick-start-card";
 import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { runOrgHealthCheck } from "@/lib/org-health-check";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
@@ -299,6 +301,7 @@ export default async function DashboardPage() {
       {/* Сотрудник отметился с телефона — «сегодня осталось» и карточки
           журналов обновляются сами, без F5 (событие `journal`). */}
       <LiveRefresh />
+      <WorkspaceResourceCards />
       {/* Persist для DashboardSection (collapsible-блоки): inline-script
           читает localStorage и настраивает initial open state. */}
       <DashboardSectionPersistScript />
@@ -399,7 +402,9 @@ export default async function DashboardPage() {
             icon={Printer}
             defaultOpen={false}
           >
-            <PrintAgentCard />
+            <DomainMessagesBoundary namespaces={["printAgent"]}>
+              <PrintAgentCard />
+            </DomainMessagesBoundary>
           </DashboardSection>
 
           {/* Compliance audit shortcut */}

@@ -65,7 +65,8 @@ async function checkHealth(reply: "success" | "failure" | "timeout", useProxy = 
   try {
     const { stdout } = await run(process.execPath, ["--import", "tsx", "--input-type=module", "-e", code], {
       cwd: process.cwd(),
-      timeout: 15000,
+      // The cold tsx/Next import graph needs its own budget; transport still has a 3s deadline.
+      timeout: 60000,
       env: {
         ...process.env,
         TELEGRAM_BOT_TOKEN: token,

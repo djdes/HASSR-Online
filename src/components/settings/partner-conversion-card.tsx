@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Handshake } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ const PRIMARY =
   "inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60";
 
 export function PartnerConversionCard({ view }: { view: PartnerConversionView }) {
+  const t = useTranslations("settingsManagement.organizationProfile");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [ack, setAck] = useState(false);
@@ -49,17 +51,17 @@ export function PartnerConversionCard({ view }: { view: PartnerConversionView })
         | { ok?: boolean; error?: string; redirect?: string; blockers?: Blocker[] }
         | null;
       if (!response.ok || !data?.ok) {
-        toast.error(data?.error ?? "Не удалось перевести организацию");
+        toast.error(response.status === 409 ? t("partnerConversion.blocked") : t("partnerConversion.conversionFailed"));
         setOpen(false);
         // Причины отказа могли появиться только что (оплата, счёт) — покажем их.
         router.refresh();
         return;
       }
-      toast.success(`«${view.organizationName}» — теперь клиент вашего партнёрского кабинета`);
+      toast.success(t("partnerConversion.converted", { organizationName: view.organizationName }));
       // Полная загрузка: сессия переписана, организация ушла из списка.
       window.location.assign(data.redirect ?? "/partner");
     } catch {
-      toast.error("Нет связи с сервером");
+      toast.error(t("partnerConversion.connectionError"));
     } finally {
       setBusy(false);
     }
@@ -69,11 +71,10 @@ export function PartnerConversionCard({ view }: { view: PartnerConversionView })
     <section id="partner-conversion" className={CARD} data-testid="partner-conversion-card">
       <div className="flex items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
         <Handshake className="size-4 text-[#5566f6]" aria-hidden />
-        Перевести в партнёрский кабинет
+        {t("partnerConversion.title")}
       </div>
       <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-        Если эту организацию вы ведёте для клиента, переведите её в свой партнёрский кабинет «{view.partnerBrandName}»:
-        подписку будет оплачивать сама организация, а вам — начисляться вознаграждение с её оплат.
+        {t("partnerConversion.description", { partnerName: view.partnerBrandName })}
       </p>
 
       {canConvert ? (
@@ -88,12 +89,12 @@ export function PartnerConversionCard({ view }: { view: PartnerConversionView })
             data-testid="partner-conversion-open"
           >
             <Handshake className="size-4" aria-hidden />
-            Перевести в партнёрский кабинет
+            {t("partnerConversion.open")}
           </button>
         </div>
       ) : (
         <div className="mt-4">
-          <ConversionBlockers blockers={view.blockers} title="Сейчас перевести нельзя" />
+          <ConversionBlockers blockers={view.blockers} title={t("partnerConversion.blocked")} />
         </div>
       )}
 
@@ -104,9 +105,9 @@ export function PartnerConversionCard({ view }: { view: PartnerConversionView })
           onConfirm={convert}
           variant="warn"
           icon={Handshake}
-          title={`Перевести «${view.organizationName}» в партнёрский кабинет?`}
-          description="Проверьте, что изменится. Вернуть организацию в свой аккаунт можно будет в партнёрском кабинете."
-          confirmLabel="Перевести"
+          title={t("partnerConversion.confirmTitle", { organizationName: view.organizationName })}
+          description={t("partnerConversion.confirmDescription")}
+          confirmLabel={t("partnerConversion.confirm")}
           confirmDisabled={!ack || busy}
         >
           <ConversionConsequences consequences={view.consequences} />
@@ -118,7 +119,7 @@ export function PartnerConversionCard({ view }: { view: PartnerConversionView })
               className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
               data-testid="partner-conversion-ack"
             />
-            <span>Понимаю: организация уйдёт из моего аккаунта, я буду работать с ней через партнёрский кабинет.</span>
+            <span>{t("partnerConversion.acknowledgement")}</span>
           </label>
         </ConfirmDialog>
       ) : null}

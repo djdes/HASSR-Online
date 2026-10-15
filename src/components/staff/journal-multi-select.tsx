@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Check, Search, X } from "lucide-react";
 import {
-  CATEGORY_LABELS,
   STAFF_ACCESS_PRESETS,
   getJournalResponsibilityMeta,
   presetJournalCodes,
@@ -11,6 +11,14 @@ import {
 } from "@/lib/journal-responsible-presets";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { cn } from "@/lib/utils";
+
+const PRESET_LABEL_KEYS = {
+  manager: "preset.manager",
+  cook: "preset.cook",
+  cleaner: "preset.cleaner",
+  intake: "preset.intake",
+  tech: "preset.tech",
+} as const;
 
 /**
  * Выбор журналов, к которым сотруднику открывают доступ.
@@ -40,6 +48,13 @@ export function JournalMultiSelect({
   positionTitle,
   disabled = false,
 }: Props) {
+  const t = useTranslations("staffManagement.journalAccess");
+  const tJournal = useTranslations("journals.names");
+  const journalName = useCallback(
+    (item: JournalOption) =>
+      tJournal.has(item.code as never) ? tJournal(item.code as never) : item.name,
+    [tJournal]
+  );
   const [query, setQuery] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
@@ -49,8 +64,8 @@ export function JournalMultiSelect({
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
-    return options.filter((item) => item.name.toLowerCase().includes(q));
-  }, [options, query]);
+    return options.filter((item) => journalName(item).toLowerCase().includes(q));
+  }, [options, query, journalName]);
 
   /**
    * Группировка по категориям: тридцать журналов сплошным списком человек
@@ -66,9 +81,9 @@ export function JournalMultiSelect({
       else map.set(category, [item]);
     }
     return [...map.entries()].map(
-      ([category, items]) => [category, sortJournalsByName(items, (item) => item.name)] as const
+      ([category, items]) => [category, sortJournalsByName(items, journalName)] as const
     );
-  }, [visible]);
+  }, [visible, journalName]);
 
   /** Плоский порядок строк — по нему считается диапазон при протягивании. */
   const flatCodes = useMemo(
@@ -157,15 +172,15 @@ export function JournalMultiSelect({
           {
             id: "position",
             label: positionTitle
-              ? `Как для «${positionTitle}»`
-              : "Как для должности",
+              ? t("positionPreset", { position: positionTitle })
+              : t("positionPresetGeneric"),
             codes: positionPresetCodes,
           },
         ]
       : []),
     ...STAFF_ACCESS_PRESETS.map((preset) => ({
       id: preset.id,
-      label: preset.label,
+      label: t(PRESET_LABEL_KEYS[preset.id as keyof typeof PRESET_LABEL_KEYS]),
       codes: presetJournalCodes(preset, allCodes),
     })).filter((preset) => preset.codes.length > 0),
   ];
@@ -197,7 +212,7 @@ export function JournalMultiSelect({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Поиск журнала"
+            placeholder={t("searchPlaceholder")}
             disabled={disabled}
             className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white pl-9 pr-8 text-[13.5px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 disabled:opacity-50"
           />
@@ -205,7 +220,7 @@ export function JournalMultiSelect({
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="Очистить поиск"
+              aria-label={t("clearSearch")}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-[#9b9fb3] hover:text-[#0b1024]"
             >
               <X className="size-3.5" />
@@ -218,7 +233,7 @@ export function JournalMultiSelect({
           onClick={() => apply(new Set(allCodes))}
           className="h-10 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff] disabled:opacity-50"
         >
-          Выбрать все
+          {t("selectAll")}
         </button>
         <button
           type="button"
@@ -226,20 +241,20 @@ export function JournalMultiSelect({
           onClick={() => apply(new Set())}
           className="h-10 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#6f7282] transition-colors hover:bg-[#f5f6ff] disabled:opacity-50"
         >
-          Снять все
+          {t("clearAll")}
         </button>
       </div>
 
       <div className="max-h-[40vh] select-none overflow-y-auto rounded-2xl border border-[#ececf4] bg-[#fafbff] p-2 [touch-action:pan-y]">
         {visible.length === 0 ? (
           <p className="px-2 py-6 text-center text-[13px] text-[#9b9fb3]">
-            Ничего не нашлось
+            {t("noResults")}
           </p>
         ) : (
           groups.map(([category, items]) => (
             <div key={category} className="mb-2 last:mb-0">
               <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                {CATEGORY_LABELS[category]}
+                {t(`category.${category}`)}
               </div>
               {items.map((item) => {
                 const index = flatCodes.indexOf(item.code);
@@ -288,7 +303,7 @@ export function JournalMultiSelect({
                     >
                       {checked ? <Check className="size-3" strokeWidth={3} /> : null}
                     </span>
-                    <span className="min-w-0 flex-1 leading-snug">{item.name}</span>
+                    <span className="min-w-0 flex-1 leading-snug">{journalName(item)}</span>
                   </div>
                 );
               })}
@@ -298,8 +313,7 @@ export function JournalMultiSelect({
       </div>
 
       <p className="text-[12px] text-[#6f7282]">
-        Выбрано: {selected.size} из {options.length}. Мышью можно вести по
-        списку, отмечая подряд.
+        {t("selectionHelp", { selected: selected.size, total: options.length })}
       </p>
     </div>
   );

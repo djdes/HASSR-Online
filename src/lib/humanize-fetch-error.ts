@@ -49,9 +49,10 @@ export function isFetchNetworkError(error: unknown): boolean {
  */
 export function humanizeFetchError(
   error: unknown,
-  fallback = NO_CONNECTION_MESSAGE
+  fallback = NO_CONNECTION_MESSAGE,
+  networkMessage = NO_CONNECTION_MESSAGE,
 ): string {
-  if (isFetchNetworkError(error)) return NO_CONNECTION_MESSAGE;
+  if (isFetchNetworkError(error)) return networkMessage;
   if (error instanceof Error && error.message.trim()) return error.message;
   if (typeof error === "string" && error.trim()) return error;
   return fallback;

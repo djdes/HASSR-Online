@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useQrFillCopy, useQrFeedback, qrResponseFeedback, type QrFeedback } from "@/components/qr-fill/qr-fill-presentation";
 import { AlertTriangle } from "lucide-react";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 
@@ -11,10 +13,9 @@ import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
 import { ReadingPhoto } from "@/components/qr-fill/reading-photo";
-import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
+import { isReadingPhotoUrl } from "@/lib/reading-photos";
 import {
   DEFAULT_READING_PHOTO_SETTINGS,
-  READING_PHOTO_FIXATION_TEXT,
   initialReadingEntry,
   isBlankReading,
   isReadingPhotoMissing,
@@ -62,6 +63,22 @@ type Props = {
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
 const LS_SHARED_EMPLOYEE_KEY = "wesetup.qr-fill.employeeId";
 
+const ROOM_ERROR_KEYS = {
+  "roomFill.errors.invalidCode": "errors.invalidCode",
+  "roomFill.errors.roomNotFound": "errors.roomNotFound",
+  "roomFill.errors.enterTemperatureOrHumidity": "errors.enterTemperatureOrHumidity",
+  "roomFill.errors.noDocument": "errors.noDocument",
+  "roomFill.errors.periodClosed": "errors.periodClosed",
+  "roomFill.errors.orgPaused": "errors.orgPaused",
+} as const;
+type RoomFeedback = QrFeedback | { roomKey: typeof ROOM_ERROR_KEYS[keyof typeof ROOM_ERROR_KEYS] | "reading.enterReadings" };
+
+export function roomResponseFeedback(data: unknown): RoomFeedback {
+  const code = data && typeof data === "object" && "errorCode" in data ? data.errorCode : null;
+  if (typeof code === "string" && Object.hasOwn(ROOM_ERROR_KEYS, code)) return { roomKey: ROOM_ERROR_KEYS[code as keyof typeof ROOM_ERROR_KEYS] };
+  return qrResponseFeedback(data, "reading.saveError");
+}
+
 
 function parseNumber(value: string): number | null {
   if (!value.trim()) return null;
@@ -79,6 +96,9 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
 export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null, photoAutofill = false, photoFixation = DEFAULT_READING_PHOTO_SETTINGS }: Props) {
+  const t = useTranslations("roomFill");
+  const { t: q } = useQrFillCopy();
+  const feedback = useQrFeedback();
   const [employeeId, setEmployeeId] = useState("");
   // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
   // и только пока выбор не меняли руками.
@@ -142,7 +162,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   }, [stamp]);
   const stampLabel = stamp ? `${stamp.date} ${stampTime}` : "";
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<RoomFeedback | null>(null);
   const [saved, setSaved] = useState<{ slot: string; outOfRange: boolean; photoAttached: boolean } | null>(null);
   // Черновик: обновил страницу или пропал интернет — введённое на месте; после записи стирается.
   const draft = useFormDraft(
@@ -164,9 +184,11 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   );
 
   useEffect(() => {
+    if (hydratedRef.current) return;
     try {
       if (mode === "auth" && sessionEmployee) {
         setEmployeeId(sessionEmployee.id);
+        hydratedRef.current = true;
         return;
       }
       const remembered = passEmployeeId ?? rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
@@ -248,19 +270,19 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     if (submitting) return;
     setError(null);
     if (!employeeId) {
-      setError("Выберите своё имя");
+      setError({ key: "reading.selectName" });
       return;
     }
     if (!hasValue) {
-      setError("Введите показания");
+      setError({ roomKey: "reading.enterReadings" });
       return;
     }
     if (photoMissing) {
-      setError(READING_PHOTO_FIXATION_TEXT.requiredError);
+      setError({ key: "photo.requiredError" });
       return;
     }
     if (correctionMissing) {
-      setError("Замер вне нормы — напишите, что вы сделали");
+      setError({ key: "reading.correctionRequired" });
       return;
     }
     setSubmitting(true);
@@ -281,7 +303,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
         }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok) {
+        setError(roomResponseFeedback(data));
+        return;
+      }
       try {
         localStorage.setItem(LS_EMPLOYEE_KEY, employeeId);
         localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, employeeId);
@@ -293,8 +318,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
         outOfRange: Boolean(data?.temperatureOutOfRange || data?.humidityOutOfRange),
         photoAttached: data?.photoAttached === true,
       });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось сохранить");
+    } catch {
+      setError({ key: "reading.saveError" });
     } finally {
       setSubmitting(false);
     }
@@ -307,21 +332,21 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const pinStepNeeded = Boolean(employeeId) && pinRequired && !hasPass;
   // Почему «Сохранить» неактивна — пишем под кнопкой, а не оставляем серой загадкой.
   const blockedReason = !hasActiveDocument
-    ? "Нет журнала на сегодня — запись некуда сохранить"
+    ? q("reading.noDocumentBlocked")
     : !employeeId
-      ? "Не выбран сотрудник"
+      ? q("reading.noEmployee")
       : pinRequired && !hasPass
-        ? "Не введён PIN"
+        ? q("reading.noPin")
         : !hasValue
           ? norms.temperature.enabled && norms.humidity.enabled
-            ? "Не указаны показания"
+            ? t("reading.missingReadings")
             : norms.humidity.enabled
-              ? "Не указана влажность"
-              : "Не указана температура"
+              ? t("reading.missingHumidity")
+              : q("reading.noTemperature")
           : photoMissing
-            ? READING_PHOTO_FIXATION_TEXT.needPhoto
+            ? q("photo.requiredBlocked")
             : correctionMissing
-              ? "Опишите, что сделали"
+              ? q("reading.describeAction")
               : null;
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
 
@@ -330,30 +355,26 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
         <QrPinUiStyles />
         {/* Смены помещения на плакате нет (владелец, 2026-09-22): каждое
             помещение — своим QR, чтобы замер делали на месте. */}
-        <WhoRow label="Помещение" value={room.name} />
+        <WhoRow label={t("reading.room")} value={room.name} />
         {!hasActiveDocument ? (
           <div className="mb-5 flex gap-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[14px] leading-relaxed text-[#7a4a00]">
             <AlertTriangle className="mt-0.5 size-5 shrink-0" />
             <span>
-              На сегодня нет активного журнала температуры. Попросите управляющего создать документ — после этого
-              замер можно будет сохранить.
-            </span>
+              {t("reading.noDocument")}</span>
           </div>
         ) : null}
 
         {saved ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center">
             <SuccessCheck />
-            <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">Записано</h2>
+            <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">{q("common.recorded")}</h2>
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-              Записано в журнал за сегодня{saved.slot ? `, ${saved.slot}` : ""}
-              {rememberedName ? ` — на имя ${rememberedName}` : ""}.
-              {saved.photoAttached ? " Фото показания — в журнале рядом со значением." : ""}
+              {t("reading.savedSummary", { hasSlot: saved.slot ? "yes" : "no", slot: saved.slot, hasName: rememberedName ? "yes" : "no", name: rememberedName ?? "" })}
+              {saved.photoAttached ? ` ${q("reading.photoAttached")}` : ""}
             </p>
             {saved.outOfRange ? (
               <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
-                Показание вне нормы — руководителю уже отправлено уведомление. Проветрите или сообщите о поломке.
-              </p>
+                {t("reading.deviationSaved")}</p>
             ) : null}
             {/* «Следующий QR» — главное действие: обход складов подряд без
                 повторного PIN. Ссылок на другие объекты нет — только камера. */}
@@ -375,8 +396,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
               }}
               className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Записать ещё замер
-            </button>
+              {q("reading.another")}</button>
           </div>
         ) : (
           <div>
@@ -386,7 +406,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 value={employeeId}
                 onChange={rememberEmployee}
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
-                hint={restoredId !== null && restoredId === employeeId ? (!pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null) : null}
+                hint={restoredId !== null && restoredId === employeeId ? (!pinStepNeeded ? q("reading.rememberedReady") : selectedEmployee?.hasPin ? q("reading.rememberedPin") : null) : null}
               />
               {pinRequired && hasPass && !fixedEmployee ? (
                 <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} />
@@ -414,26 +434,24 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
               <div className={pinOk ? "qp-rise space-y-5" : "space-y-5"}>
 
               <div className="space-y-4">
-                <div className="text-[16px] font-semibold text-[#0b1024]">Показания</div>
+                <div className="text-[16px] font-semibold text-[#0b1024]">{t("reading.heading")}</div>
                 {draft.restored ? (
                   <p className="-mt-2 flex items-center justify-between gap-3 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
-                    <span>Восстановили введённое после обновления страницы.</span>
+                    <span>{q("reading.draftRestored")}</span>
                     <button type="button" className="shrink-0 font-semibold underline" onClick={() => { draft.reset(); window.location.reload(); }}>
-                      Начать заново
-                    </button>
+                      {q("reading.startAgain")}</button>
                   </p>
                 ) : null}
                 {hasToday ? (
                   <p className="-mt-2 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
-                    Сегодня уже записано — значения подставлены, проверьте и измените, что нужно.
-                  </p>
+                    {t("reading.prefilled")}</p>
                 ) : null}
                 {norms.temperature.enabled ? (
                   <div>
                     {view.showField ? (
                       <ReadingField
                         id="room-fill-temperature"
-                        label="Температура"
+                        label={q("reading.temperature")}
                         unit="°C"
                         stamp={stampLabel}
                         value={temperature}
@@ -442,7 +460,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         max={norms.temperature.max}
                         required
                         // Число подставлено со снимка и не правилось — пусть человек сверит.
-                        mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
+                        mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? q("photo.checkMark") : null}
                       />
                     ) : null}
                     {/* Снимок — всегда на этом месте дерева: смена «главная кнопка → карточка
@@ -465,7 +483,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                           setTemperature(text);
                           setRecognizedTemperature(text);
                         }}
-                        disabledReason={employeeId ? null : "Сначала выберите своё имя"}
+                        disabledReason={employeeId ? null : q("reading.selectNameFirst")}
                         variant={view.photoFirst ? "primary" : "inline"}
                         required={photoSettings.required}
                         onPhaseChange={setPhotoPhase}
@@ -478,14 +496,14 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                         data-testid="reading-manual-button"
                       >
-                        {READING_PHOTO_FIXATION_TEXT.manualButton}
+                        {q("photo.manual")}
                       </button>
                     ) : null}
                   </div>
                 ) : null}
 
                 {norms.humidity.enabled && view.showField ? (
-                  <ReadingField id="room-fill-humidity" label="Влажность" unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={norms.humidity.min} max={norms.humidity.max} invalidText={humidityInvalid ? "Влажность — число от 0 до 100." : null} />
+                  <ReadingField id="room-fill-humidity" label={q("reading.humidity")} unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={norms.humidity.min} max={norms.humidity.max} invalidText={humidityInvalid ? t("reading.humidityInvalid") : null} />
                 ) : null}
 
                 {/* Вне нормы — «Что сделали» обязательно: комментарий ложится
@@ -494,12 +512,12 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   <DeviationCorrection
                     title={
                       temperatureOutside && humidityOutside
-                        ? "Температура и влажность вне нормы"
+                        ? q("reading.bothOutside")
                         : temperatureOutside
-                          ? "Температура вне нормы"
-                          : "Влажность вне нормы"
+                          ? q("reading.temperatureOutside")
+                          : q("reading.humidityOutside")
                     }
-                    hint="Руководитель получит уведомление."
+                    hint={q("reading.managerNotified")}
                     value={correction}
                     onChange={setCorrection}
                   />
@@ -507,7 +525,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
               </div>
 
               {error ? (
-                <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{error}</div>
+              <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{"roomKey" in error ? t(error.roomKey) : feedback(error)}</div>
               ) : null}
 
               {/* Пока ждём снимок — «Сохранить» нет: главное действие одно. */}
@@ -520,12 +538,12 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                     className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                     data-testid="room-fill-save"
                   >
-                    {submitting ? "Сохраняем…" : confirmRecognized ? READING_PHOTO_FIXATION_TEXT.confirmSave : "Сохранить"}
+                    {submitting ? q("common.saving") : confirmRecognized ? q("photo.confirmSave") : t("reading.save")}
                   </Button>
                   <SaveBlockedReason reason={submitting ? null : blockedReason} />
                   {hasActiveDocument && nextSlot ? (
                     <p className="mt-2 text-center text-[14px] text-[#9b9fb3]">
-                      Запись попадёт в журнал за сегодня, срок контроля {nextSlot}.
+                      {t("reading.slotHint", { slot: nextSlot })}
                     </p>
                   ) : null}
                 </div>

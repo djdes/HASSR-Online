@@ -31,7 +31,7 @@ const TEMPLATE_CODE = DISINFECTANT_TEMPLATE_CODE;
 
 function buildForm(): TaskFormSchema {
   const unitOptions = (Object.entries(MEASURE_UNIT_LABELS) as [MeasureUnit, string][]).map(
-    ([value, label]) => ({ value, label })
+    ([value, label]) => ({ value, label, presentationKey: `options.disinfectantUnits.${value}` })
   );
   const fields: TaskFormField[] = [
     { type: "text", key: "disinfectantName", label: "Наименование дезсредства", required: true, maxLength: 200, placeholder: "Например: Ph средство дезинфицирующее" },

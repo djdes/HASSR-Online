@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -46,6 +48,7 @@ export function ApplyToSelectedDialog({
   fields: readonly ApplyToSelectedField[];
   onApply: (patch: Record<string, string>) => Promise<void> | void;
 }) {
+  const t = useTranslations("journalControls");
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [values, setValues] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -70,7 +73,7 @@ export function ApplyToSelectedDialog({
       await onApply(patch);
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось применить изменения"));
+      toast.error(humanizeFetchError(error, t("applySelected.failed"), t("commissionDialog.network")));
     } finally {
       setBusy(false);
     }
@@ -80,12 +83,11 @@ export function ApplyToSelectedDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS} data-testid="apply-to-selected">
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Применить ко всем выделенным · {count}</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("applySelected.title", { count })}</DialogTitle>
         </DialogHeader>
         <div className={`${JOURNAL_DIALOG_BODY_CLASS} space-y-3`}>
           <p className="text-[13px] leading-snug text-[#6f7282]">
-            Отметьте поля, которые нужно заменить у всех выделенных строк. Остальные поля останутся как были.
-          </p>
+            {t("applySelected.description")}</p>
           {fields.map((field) => {
             const on = enabled[field.key] === true;
             const value = values[field.key] ?? "";
@@ -104,7 +106,7 @@ export function ApplyToSelectedDialog({
                 <Checkbox
                   checked={on}
                   onCheckedChange={(next) => setEnabled((prev) => ({ ...prev, [field.key]: next === true }))}
-                  aria-label={`Менять: ${field.label}`}
+                  aria-label={t("applySelected.change", { label: field.label })}
                   className="mt-2.5"
                 />
                 <div className="min-w-0 flex-1 space-y-1.5">
@@ -112,7 +114,7 @@ export function ApplyToSelectedDialog({
                   {field.type === "select" ? (
                     <Select value={value} onValueChange={setValue}>
                       <SelectTrigger className={inputClass} aria-label={field.label}>
-                        <SelectValue placeholder={field.placeholder ?? "Выберите"} />
+                        <SelectValue placeholder={field.placeholder ?? t("applySelected.choose")} />
                       </SelectTrigger>
                       <SelectContent>
                         {(field.options ?? []).map((option) => (
@@ -141,16 +143,15 @@ export function ApplyToSelectedDialog({
         </div>
         <div className={JOURNAL_DIALOG_FOOTER_CLASS}>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy} className="h-9 rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff]">
-            Отмена
-          </Button>
+            {t("commissionDialog.cancel")}</Button>
           <Button
             type="button"
             onClick={() => void apply()}
             disabled={busy || activeKeys.length === 0}
-            title={activeKeys.length === 0 ? "Отметьте хотя бы одно поле" : undefined}
+            title={activeKeys.length === 0 ? t("applySelected.chooseField") : undefined}
             className="h-9 rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
           >
-            {busy ? "Применяем…" : `Применить к ${count}`}
+            {busy ? t("applySelected.applying") : t("applySelected.apply", { count })}
           </Button>
         </div>
       </DialogContent>

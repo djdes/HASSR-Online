@@ -36,19 +36,35 @@ export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 export const PHOTO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const PHOTO_RULES_HINT = "JPG, PNG или WebP, не больше 5 МБ";
 
+export type PhotoFieldCopy = {
+  rules: string; invalidType: string; tooLarge: string; uploadError: string;
+  networkError: string; required: string; present: string; queued: string;
+  remove: string; uploading: string; more: string; take: string;
+  alt: (index: number) => string;
+};
+
+const DEFAULT_PHOTO_COPY: PhotoFieldCopy = {
+  rules: PHOTO_RULES_HINT, invalidType: "Подойдут JPG, PNG или WebP",
+  tooLarge: "Фото больше 5 МБ — сожмите или снимите заново",
+  uploadError: "Не удалось загрузить фото", networkError: "Нет связи — попробуйте ещё раз",
+  required: "обязательно", present: "есть", queued: "уйдёт со связью",
+  remove: "Удалить фото", uploading: "Загружаем…", more: "Ещё фото", take: "Снять фото",
+  alt: index => `Фото ${index}`,
+};
+
 /**
  * Проверка снимка ДО отправки. Раньше её не было вовсе: человек ждал
  * загрузку восьмимегабайтного кадра по сотовой связи, чтобы в конце
  * получить отказ. Тексты — те же, что отдаёт сервер, чтобы правило
  * звучало одинаково, откуда бы ни пришло.
  */
-export function checkPhotoBeforeUpload(file: File): string | null {
+export function checkPhotoBeforeUpload(file: File, copy: PhotoFieldCopy = DEFAULT_PHOTO_COPY): string | null {
   // Снимок с камеры иногда приходит без mime-типа — не придираемся.
   if (file.type && !PHOTO_ALLOWED_TYPES.includes(file.type)) {
-    return "Подойдут JPG, PNG или WebP";
+    return copy.invalidType;
   }
   if (file.size > PHOTO_MAX_BYTES) {
-    return "Фото больше 5 МБ — сожмите или снимите заново";
+    return copy.tooLarge;
   }
   return null;
 }
@@ -66,6 +82,7 @@ export function PhotoField({
   disabled = false,
   hint,
   offlineFallback = false,
+  copy: suppliedCopy,
 }: {
   label: string;
   value: string;
@@ -80,17 +97,20 @@ export function PhotoField({
    * уехала бы в журнал как строка «queued-photo:…».
    */
   offlineFallback?: boolean;
+  /** Explicit presentation context; omitted callers retain Russian compatibility. */
+  copy?: PhotoFieldCopy;
 }) {
+  const copy = suppliedCopy ?? DEFAULT_PHOTO_COPY;
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ key: "invalidType" | "tooLarge" | "uploadError" | "networkError" } | { text: string } | null>(null);
   const urls = parsePhotoValue(value);
 
   async function upload(file: File) {
     // Сначала — правила, потом сеть. Ждать загрузку ради отказа незачем.
-    const problem = checkPhotoBeforeUpload(file);
+    const problem = checkPhotoBeforeUpload(file, copy);
     if (problem) {
-      setError(problem);
+      setError({ key: file.type && !PHOTO_ALLOWED_TYPES.includes(file.type) ? "invalidType" : "tooLarge" });
       return;
     }
     setUploading(true);
@@ -110,7 +130,7 @@ export function PhotoField({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.url) {
-        setError(data?.error || "Не удалось загрузить фото");
+        setError(!suppliedCopy && data?.error ? { text: data.error } : { key: "uploadError" });
         return;
       }
       onChange([...urls, String(data.url)].join(PHOTO_VALUE_SEPARATOR));
@@ -126,7 +146,7 @@ export function PhotoField({
         setError(null);
         return;
       }
-      setError("Нет связи — попробуйте ещё раз");
+      setError({ key: "networkError" });
     } finally {
       setUploading(false);
     }
@@ -156,7 +176,7 @@ export function PhotoField({
                 : "bg-[#ecfdf5] text-[#116b2a]"
             }`}
           >
-            {missing ? "обязательно" : "есть"}
+            {missing ? copy.required : copy.present}
           </span>
         ) : null}
       </div>
@@ -180,19 +200,19 @@ export function PhotoField({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={src}
-                  alt={`Фото ${index + 1}`}
+                  alt={copy.alt(index + 1)}
                   className="size-full object-cover"
                 />
               ) : null}
               {pending ? (
                 <span className="absolute inset-x-0 bottom-0 bg-[#0b1024]/70 px-1 py-0.5 text-center text-[9px] font-medium text-white">
-                  уйдёт со связью
+                  {copy.queued}
                 </span>
               ) : null}
               {!disabled ? (
                 <button
                   type="button"
-                  aria-label="Удалить фото"
+                  aria-label={copy.remove}
                   onClick={() => removeAt(index)}
                   className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-[#0b1024]/60 text-white transition-colors hover:bg-[#0b1024]/80"
                 >
@@ -233,15 +253,15 @@ export function PhotoField({
         ) : (
           <Camera className="size-4" />
         )}
-        {uploading ? "Загружаем…" : urls.length > 0 ? "Ещё фото" : "Снять фото"}
+        {uploading ? copy.uploading : urls.length > 0 ? copy.more : copy.take}
       </button>
 
       {error ? (
-        <div className="mt-1 text-[12px] font-medium text-[#a13a32]">{error}</div>
+        <div className="mt-1 text-[12px] font-medium text-[#a13a32]">{"key" in error ? copy[error.key] : error.text}</div>
       ) : (
         // Правило показываем ЗАРАНЕЕ, а не после неудачной отправки.
         <div className="mt-1 text-[12px] text-[#9b9fb3]">
-          {hint ? `${hint} · ${PHOTO_RULES_HINT}` : PHOTO_RULES_HINT}
+          {hint ? `${hint} · ${copy.rules}` : copy.rules}
         </div>
       )}
     </div>

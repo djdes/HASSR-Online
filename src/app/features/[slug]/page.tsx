@@ -1,4 +1,10 @@
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { isFeatureSlug, presentFeature } from "@/i18n/feature-presentation";
+import { featureMetadata } from "@/i18n/feature-metadata";
+import { localizedHref } from "@/i18n/site-locale";
+import { createTranslator } from "use-intl/core";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
@@ -17,11 +23,7 @@ import {
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { ArticleRenderer } from "@/components/public/article-renderer";
-import { FEATURES_INFO, FEATURES_ORDER } from "@/content/features";
-import {
-  DEFAULT_TWITTER_CARD,
-  } from "@/lib/meta-defaults";
-import { ogImages, twitterImages } from "@/lib/og-image";
+import { FEATURES_ORDER } from "@/content/features";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -38,36 +40,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Timer,
 };
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const info = FEATURES_INFO[slug];
-  if (!info) return { title: { absolute: "Возможность не найдена — WeSetup" } };
-  const url = `https://wesetup.ru/features/${slug}`;
-  return {
-    // info.title уже самостоятельный, layout.template добавит «— WeSetup».
-    title: info.title,
-    description: info.tagline,
-    alternates: { canonical: url },
-    openGraph: {
-      type: "website",
-      locale: "ru_RU",
-      siteName: "WeSetup",
-      url,
-      title: info.title,
-      description: info.tagline,
-      images: ogImages({ title: info.title, subtitle: info.tagline, kind: "feature" }),
-    },
-    twitter: {
-      card: DEFAULT_TWITTER_CARD,
-      title: info.title,
-      description: info.tagline,
-      images: twitterImages({ title: info.title, subtitle: info.tagline, kind: "feature" }),
-    },
-  };
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  return featureMetadata(await getSiteLocale(), (await params).slug);
 }
 
 export default async function FeatureDetailPage({
@@ -76,14 +50,18 @@ export default async function FeatureDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const info = FEATURES_INFO[slug];
-  if (!info) notFound();
+  if (!isFeatureSlug(slug)) notFound();
+  const locale = await getSiteLocale();
+  const messages = await loadMessages(locale);
+  const t = createTranslator({ locale, messages, namespace: "publicFeatures.detail" });
+  const info = presentFeature(slug, messages);
 
   const Icon = ICON_MAP[info.iconName] ?? Sparkles;
 
   const others = FEATURES_ORDER.filter((s) => s !== slug)
     .slice(0, 4)
-    .map((s) => FEATURES_INFO[s]);
+    .filter(isFeatureSlug)
+    .map((s) => presentFeature(s, messages));
 
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
@@ -93,7 +71,9 @@ export default async function FeatureDetailPage({
       <PublicBreadcrumbs
         tone="light"
         className="mx-auto max-w-[1200px] px-4 pb-2 sm:px-6"
-        items={[{ name: "Возможности", href: "/features" }, { name: info.title }]}
+        home={{ name: t("home"), href: localizedHref("/", locale) }}
+        ariaLabel={t("breadcrumbAria")}
+        items={[{ name: t("breadcrumb"), href: localizedHref("/features", locale) }, { name: info.title }]}
       />
 
       {/* HERO */}
@@ -126,24 +106,23 @@ export default async function FeatureDetailPage({
           <aside className="space-y-5">
             <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-6">
               <div className="text-[13px] font-medium text-[#6f7282]">
-                Попробовать возможность
+                {t("trialHeading")}
               </div>
               <p className="mt-2 text-[13px] leading-[1.5] text-[#6f7282]">
-                Бесплатный тариф — навсегда, со всеми функциями и
-                интеграциями. Без привязки карты.
+                {t("trialDescription")}
               </p>
               <Link
                 href="/register"
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-3 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
               >
-                Попробовать
+                {t("trialButton")}
                 <ArrowRight className="size-4" />
               </Link>
             </div>
             {others.length > 0 && (
               <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
                 <div className="text-[13px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
-                  Ещё возможности
+                  {t("moreFeatures")}
                 </div>
                 <ul className="mt-3 space-y-1">
                   {others.map((o) => {

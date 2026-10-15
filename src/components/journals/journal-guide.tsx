@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   BookOpenText,
@@ -43,7 +44,10 @@ export function JournalGuide({
   expanded = false,
   customNodes,
 }: Props) {
-  const guide = getFillingGuide(journalCode);
+  const t = useTranslations("journalControls.guideSections");
+  const tGuide = useTranslations("journalFillingGuides");
+  const tWalkthrough = useTranslations("journalControls.walkthroughs");
+  const guide = getFillingGuide(journalCode, { guide: tGuide, walkthrough: tWalkthrough });
   const spec = getJournalSpec(journalCode);
   const hasCustomNodes = (customNodes?.length ?? 0) > 0;
   if (!guide && !hasCustomNodes) {
@@ -68,7 +72,7 @@ export function JournalGuide({
         </div>
         {hasCustomNodes ? (
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#f5f0ff] px-2.5 py-0.5 text-[11px] font-medium text-[#7a5cff]">
-            ⚙ Кастомный гайд организации
+            {t("custom")}
           </div>
         ) : null}
       </div>
@@ -77,7 +81,7 @@ export function JournalGuide({
         <div>
           <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3848c7]">
             <Package className="size-3.5" />
-            Что взять
+            {t("materials")}
           </div>
           <ul className="space-y-1 text-[12.5px] text-[#3c4053]">
             {guide.materials.map((m, i) => (
@@ -93,7 +97,7 @@ export function JournalGuide({
       <div>
         <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3848c7]">
           <ListChecks className="size-3.5" />
-          Шаги — по порядку
+          {t("orderedSteps")}
         </div>
         <ol className="space-y-2.5">
           {hasCustomNodes
@@ -118,7 +122,7 @@ export function JournalGuide({
                         rel="noopener noreferrer"
                         className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#f5f6ff] px-2.5 py-1 text-[11px] text-[#3848c7] hover:bg-[#eef1ff]"
                       >
-                        📷 Открыть фото
+                        {t("photo")}
                       </a>
                     ) : null}
                   </div>
@@ -148,7 +152,7 @@ export function JournalGuide({
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
             <div>
               <div className="font-semibold text-emerald-800">
-                Когда задача считается выполненной
+                {t("completion")}
               </div>
               <div className="mt-0.5 text-emerald-900/80">
                 {guide.completionCriteria}
@@ -164,7 +168,7 @@ export function JournalGuide({
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-700" />
             <div className="min-w-0">
               <div className="font-semibold text-amber-800">
-                Типичные ошибки новичков — НЕ делай так
+                {t("beginnerMistakes")}
               </div>
               <ul className="mt-1 space-y-1 text-amber-900/80">
                 {guide.commonMistakes.map((m, i) => (
@@ -184,7 +188,7 @@ export function JournalGuide({
           <div className="flex items-start gap-1.5">
             <ScrollText className="mt-0.5 size-3.5 shrink-0" />
             <div>
-              <div className="font-semibold text-[#3c4053]">Норматив</div>
+              <div className="font-semibold text-[#3c4053]">{t("regulation")}</div>
               <div className="mt-0.5">{guide.regulationRef}</div>
             </div>
           </div>
@@ -200,7 +204,7 @@ export function JournalGuide({
           <div className="flex items-center gap-2">
             <BookOpenText className="size-5 text-[#5566f6]" />
             <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              Как правильно заполнить
+              {t("title")}
             </h2>
           </div>
         </div>
@@ -215,14 +219,14 @@ export function JournalGuide({
         <div className="flex items-center gap-2">
           <BookOpenText className="size-4 text-[#5566f6]" />
           <span className="text-[13px] font-semibold text-[#3848c7]">
-            📖 Как правильно заполнить — открой если первый раз
+            {t("firstTime")}
           </span>
         </div>
         <span className="text-[11px] text-[#9b9fb3] group-open:hidden">
-          раскрыть ↓
+          {t("expand")}
         </span>
         <span className="hidden text-[11px] text-[#9b9fb3] group-open:inline">
-          свернуть ↑
+          {t("collapse")}
         </span>
       </summary>
       <div className="border-t border-[#ececf4]">{body}</div>

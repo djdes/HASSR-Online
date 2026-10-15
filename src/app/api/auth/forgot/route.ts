@@ -7,6 +7,7 @@ import {
 } from "@/lib/invite-tokens";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
+import { resolveLocale } from "@/i18n/locales";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   if (email && email.length <= 200) {
     const user = await db.user.findUnique({
       where: { email },
-      select: { id: true, isActive: true },
+      select: { id: true, isActive: true, locale: true },
     });
 
     if (user && user.isActive) {
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
       await sendPasswordResetEmail({
         to: email,
         resetUrl: `${base}/invite/${raw}?reset=1`,
+        locale: resolveLocale({ authenticated: true, userLocale: user.locale }),
       }).catch((err) => console.error("sendPasswordResetEmail failed", err));
     }
   }

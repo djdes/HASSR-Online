@@ -1,0 +1,15 @@
+{
+  "locale":"en","sourceHash":"dde9b2c96f9446a71cbe311f05e6828cdb42d551e2fac03b072770512e499971",
+  "title":"Food waste accounting: movement, disposal, and collection reports",
+  "excerpt":"Food, grease-containing, packaging, and hazardous waste: what to record in the journal, how to link write-offs to product checks, and why a licensed contractor is needed.",
+  "tags":["Waste","Documents"],
+  "body":[
+    {"type":"p","text":"Food waste seems minor until it comes up during an inspection. Proper accounting is not a formality: it protects against accusations of unauthorized sale of “substandard” products and shows that the write-off system works."},
+    {"type":"h2","text":"Waste streams"},
+    {"type":"ul","items":["Food waste — peelings, leftovers, and rejected finished products.","Grease-containing waste — used fryer oil and grease traps.","Packaging waste — PET, cardboard, and glass (kept separately).","Hazardous waste — lamps, batteries, and some disinfectants."]},
+    {"type":"h2","text":"What the journal should contain"},
+    {"type":"ul","items":["Date, waste type, and volume or weight.","Reason: product check, expiry-date write-off, or scheduled clearance.","Destination: container, contractor, or internal recycling.","The collection report or contractor’s receipt must be attached to the entry."]},
+    {"type":"callout","tone":"warn","title":"Important detail","text":"The contract for food-waste collection must be with a licensed organization. “We made a deal with the farmer next door” carries a risk of a fine."},
+    {"type":"p","text":"The service automatically links a write-off in the product-inspection journal to an entry in the waste journal. This prevents a record from writing off 3 kg as expired while listing only 1 kg as waste. The discrepancy is flagged for the manager."}
+  ]
+}

@@ -18,6 +18,7 @@
 import { db } from "@/lib/db";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
+  defaultColdEquipmentPresentationKey,
   expandColdEquipmentReadingSlots,
   normalizeColdEquipmentDocumentConfig,
   normalizeColdEquipmentEntryData,
@@ -69,6 +70,20 @@ export function buildFormFromConfig(
       type: "number",
       key: fieldKeyForEquipment(slot.slotKey),
       label: `${slot.name} — ${slot.slotLabel || "t°"}${range}`,
+      presentationKey: typeof norm.min === "number" && typeof norm.max === "number"
+        ? "dynamic.coldEquipmentReadingWithRange"
+        : "dynamic.coldEquipmentReading",
+      presentationValues: {
+        equipment: slot.name,
+        equipmentKind: defaultColdEquipmentPresentationKey(slot) ?? "custom",
+        slot: slot.slotLabel || "t°",
+        ...(typeof norm.min === "number" ? { min: norm.min } : {}),
+        ...(typeof norm.max === "number" ? { max: norm.max } : {}),
+      },
+      normalRange: {
+        ...(typeof norm.min === "number" ? { min: norm.min } : {}),
+        ...(typeof norm.max === "number" ? { max: norm.max } : {}),
+      },
       unit: "°C",
       required: true,
       min: -40,
@@ -81,7 +96,10 @@ export function buildFormFromConfig(
       (employeeName ? `${employeeName}, ` : "") +
       "снимите показания каждого холодильника и введите температуру в °C. " +
       "Если оборудование выключено — отметьте «Выключено» в его карточке: в журнал попадёт пометка, руководитель получит уведомление.",
+    introPresentationKey: "dynamic.coldEquipmentIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить замеры",
+    submitPresentationKey: "dynamic.saveColdReadings",
     fields,
     // У каждого холодильника рядом с «Выключено» — «Обслуживание» и «Ремонт» (как на наклейке).
     statusFields: fields.map((field) => field.key),
@@ -131,6 +149,8 @@ export function prefillColdEquipmentForm(
   if (Object.keys(prefilledStatuses).length > 0) form.prefilledStatuses = prefilledStatuses;
   if (filled > 0) {
     form.notice = `Сегодня уже записано: ${filled} из ${slots.length}. Значения подставлены — проверьте и измените, что нужно.`;
+    form.noticePresentationKey = "dynamic.coldEquipmentPrefilledNotice";
+    form.noticePresentationValues = { count: filled, total: slots.length };
   }
 }
 

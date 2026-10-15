@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getActiveBuildingId, listOrganizationBuildings } from "@/lib/active-building";
-import { positionSuggestionsFor } from "@/lib/sphere-positions";
+import { positionSuggestionOptionsFor } from "@/lib/sphere-positions";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
@@ -9,12 +9,12 @@ import { PinRequestsPanel } from "@/components/staff/pin-requests-panel";
 import { listPendingQrPinRequests } from "@/lib/qr-pin-requests";
 import { AddOrganizationButton } from "@/components/settings/add-organization-button";
 import { normalizeSphere } from "@/lib/org-profile";
-import type { PositionCategory } from "@/components/staff/staff-types";
 import { ArchivedStaffSection } from "@/components/staff/archived-staff-section";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { BILLING_PAY_HREF } from "@/lib/billing-period";
 import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -116,16 +116,18 @@ export default async function StaffPage() {
   const staffBuildings = await listOrganizationBuildings(orgId);
   const activeBuildingId = await getActiveBuildingId(session);
 
-  const positionSuggestions: Record<PositionCategory, string[]> = {
-    management: positionSuggestionsFor(
+  const positionSuggestions = {
+    management: positionSuggestionOptionsFor(
       sphere,
       "management",
       existingPositionNames
     ),
-    staff: positionSuggestionsFor(sphere, "staff", existingPositionNames),
-    commission: ["Член бракеражной комиссии", "Председатель бракеражной комиссии", "Медицинский работник"].filter(
-      (name) => !existingPositionNames.includes(name)
-    ),
+    staff: positionSuggestionOptionsFor(sphere, "staff", existingPositionNames),
+    commission: [
+      { id: "commission_member", name: "Член бракеражной комиссии" },
+      { id: "commission_chair", name: "Председатель бракеражной комиссии" },
+      { id: "commission_medical", name: "Медицинский работник" },
+    ].filter(({ name }) => !existingPositionNames.includes(name)),
   };
 
   // Заводить новые точки может только владелец аккаунта: организации
@@ -161,6 +163,7 @@ export default async function StaffPage() {
     billing?.state.seatLimit != null && billing.state.activeUsers >= billing.state.seatLimit;
 
   return (
+    <DomainMessagesBoundary namespaces={["staffManagement", "journals"]}>
     <>
     <PinRequestsPanel initial={pinRequests} />
     <StaffPageClient
@@ -212,7 +215,8 @@ export default async function StaffPage() {
         userId: v.userId,
         userName: v.user.name,
         jobPositionId: v.user.jobPositionId,
-        positionLabel: v.user.positionTitle || v.user.role || "—",
+        positionLabel: v.user.positionTitle || "—",
+        positionRoleCode: v.user.positionTitle ? null : v.user.role,
         dateFrom: v.dateFrom.toISOString().slice(0, 10),
         dateTo: v.dateTo.toISOString().slice(0, 10),
       }))}
@@ -221,7 +225,8 @@ export default async function StaffPage() {
         userId: s.userId,
         userName: s.user.name,
         jobPositionId: s.user.jobPositionId,
-        positionLabel: s.user.positionTitle || s.user.role || "—",
+        positionLabel: s.user.positionTitle || "—",
+        positionRoleCode: s.user.positionTitle ? null : s.user.role,
         dateFrom: s.dateFrom.toISOString().slice(0, 10),
         dateTo: s.dateTo.toISOString().slice(0, 10),
       }))}
@@ -230,7 +235,8 @@ export default async function StaffPage() {
         userId: d.userId,
         userName: d.user.name,
         jobPositionId: d.user.jobPositionId,
-        positionLabel: d.user.positionTitle || d.user.role || "—",
+        positionLabel: d.user.positionTitle || "—",
+        positionRoleCode: d.user.positionTitle ? null : d.user.role,
         date: d.date.toISOString().slice(0, 10),
       }))}
     />
@@ -258,5 +264,6 @@ export default async function StaffPage() {
       </div>
     ) : null}
     </>
+    </DomainMessagesBoundary>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Download, Loader2, Unplug } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 /**
  * Список подключённых машин и кнопка скачивания программы.
@@ -26,6 +28,10 @@ type Agent = {
 
 export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
   const router = useRouter();
+  const t = useTranslations("printAgent.settings");
+  const locale = useLocale() as Locale;
+  const currentTranslations = useRef(t);
+  useEffect(() => { currentTranslations.current = t; }, [t]);
   const [revoking, setRevoking] = useState<Agent | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -36,14 +42,13 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
         method: "POST",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        toast.error(data?.error ?? "Не удалось отключить");
+        toast.error(currentTranslations.current(res.status === 403 ? "errors.forbidden" : res.status === 404 ? "errors.notFound" : "errors.failed"));
         return;
       }
-      toast.success(`«${agent.name}» отключена от печати`);
+      toast.success(currentTranslations.current("devices.disconnected", { name: agent.name }));
       router.refresh();
     } catch {
-      toast.error("Не удалось отключить");
+      toast.error(currentTranslations.current("errors.failed"));
     } finally {
       setBusy(false);
       setRevoking(null);
@@ -56,10 +61,10 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef0f6] px-6 py-4">
           <div>
             <div className="text-[16px] font-semibold text-[#0b1024]">
-              Подключённые машины
+              {t("devices.heading")}
             </div>
             <p className="mt-0.5 text-[13px] text-[#6f7282]">
-              По одной на каждый принтер.
+              {t("devices.description")}
             </p>
           </div>
           <a
@@ -67,14 +72,13 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
             className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
             <Download className="size-4" />
-            Скачать программу
+            {t("devices.download")}
           </a>
         </div>
 
         {agents.length === 0 ? (
           <div className="px-6 py-12 text-center text-[14px] text-[#6f7282]">
-            Пока ни одной. Поставьте программу на компьютер с принтером — она
-            появится здесь сама после входа.
+            {t("devices.empty")}
           </div>
         ) : (
           <ul className="divide-y divide-[#eef0f6]">
@@ -89,24 +93,25 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
                     agent.online ? "bg-[#116b2a]" : "bg-[#c6c9d8]"
                   }`}
                 />
+                <span className="sr-only">{t(agent.online ? "devices.online" : "devices.offline")}</span>
                 <div className="min-w-0 flex-1">
                   <div className="text-[14px] font-medium text-[#0b1024]">
                     {agent.name}
                   </div>
                   <div className="mt-0.5 text-[12px] text-[#6f7282]">
-                    {agent.printerName ?? "Принтер не выбран"}
                     {agent.lastSeenAt
-                      ? ` · на связи ${new Date(agent.lastSeenAt).toLocaleString("ru-RU")}`
-                      : " · ни разу не выходила на связь"}
+                      ? t("devices.lastSeen", { printer: agent.printerName ?? t("devices.noPrinter"), when: new Date(agent.lastSeenAt).toLocaleString(FORMAT_LOCALES[locale]) })
+                      : t("devices.neverSeen", { printer: agent.printerName ?? t("devices.noPrinter") })}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setRevoking(agent)}
+                  aria-label={t("devices.disconnectAria", { name: agent.name })}
                   className="inline-flex h-9 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#6f7282] transition-colors hover:border-[#ff8d7d] hover:bg-[#fff4f2] hover:text-[#a13a32]"
                 >
                   <Unplug className="size-4" />
-                  Отключить
+                  {t("devices.disconnect")}
                 </button>
               </li>
             ))}
@@ -121,19 +126,19 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
           if (revoking) await revoke(revoking);
         }}
         variant="warn"
-        title={`Отключить «${revoking?.name ?? ""}»?`}
-        description="Машина перестанет печатать сразу. Чтобы вернуть её, войдите в программе заново."
+        title={t("confirm.title", { name: revoking?.name ?? "" })}
+        description={t("confirm.description")}
         bullets={[
-          { label: "Задания в очереди останутся и уйдут на другой принтер" },
-          { label: "История печати с этой машины сохранится" },
+          { label: t("confirm.queue") },
+          { label: t("confirm.history") },
         ]}
-        confirmLabel="Отключить"
+        confirmLabel={t("devices.disconnect")}
       />
 
       {busy ? (
         <div className="flex items-center gap-2 text-[13px] text-[#6f7282]">
           <Loader2 className="size-4 animate-spin" />
-          Отключаю…
+          {t("devices.disconnecting")}
         </div>
       ) : null}
     </>

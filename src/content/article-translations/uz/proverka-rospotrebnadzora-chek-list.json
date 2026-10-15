@@ -1,0 +1,66 @@
+{
+  "locale": "uz",
+  "sourceHash": "f9100b75f31e3a16dc038493f7d6fb63207df8e7ed1f1b89409b20b4597fba64",
+  "title": "Rospotrebnadzor tekshiruvi: tashrifdan bir kun oldingi tekshiruv ro‘yxati",
+  "excerpt": "Xodimlarning tibbiy daftarchalari, ishlab chiqarish nazorati dasturi, zararkunandalarga qarshi ishlov shartnomalari, chiqindilarni olib chiqish hujjatlari va oxirgi 12 oylik jurnallar. Bir kunda nimalarni tayyorlash va tekshiruv oldidan nimalarni qilmaslik kerak.",
+  "body": [
+    {
+      "type": "p",
+      "text": "Rejali tekshiruv 20 ish kuni oldin belgilanadi; rejadan tashqari tekshiruv ba’zan bir kun oldin xabar qilinishi mumkin. Inspektor ertaga kelsa, mana bularni tayyorlang."
+    },
+    {
+      "type": "h2",
+      "text": "Qo‘l ostida bo‘lishi kerak bo‘lgan hujjatlar"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Smenadagi barcha xodimlarning tibbiy daftarchalari: muddati o‘tmagan va fluorografiya qaydi mavjud bo‘lishi kerak.",
+        "Rahbar tasdiqlagan, amaldagi ishlab chiqarish nazorati dasturi.",
+        "Dezinseksiya va dezinfeksiya shartnomasi hamda so‘nggi bajarilgan ishlar dalolatnomalari.",
+        "Oziq-ovqat chiqindilarini olib chiqish va ishlatilgan fritür yog‘ini utilizatsiya qilish shartnomasi.",
+        "Muassasada foydalanilsa, HACCP rejasi."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Oxirgi 12 oylik jurnallar"
+    },
+    {
+      "type": "p",
+      "text": "Inspektor asosan shu hujjatlarni ko‘rib chiqadi. Gigiyena, brak, harorat, xomashyo qabul qilish, tozalash va dezinfeksiya vositalari jurnallarini PDF qilib, bitta papkaga joylang. WeSetup’da bu bir tugma bilan bajariladi: ‘Davr bo‘yicha eksport’."
+    },
+    {
+      "type": "callout",
+      "tone": "info",
+      "title": "Imzolarni tekshiring",
+      "text": "Bosh oshpaz ta’tilda bo‘lgan bo‘lsa, uning o‘rniga o‘rinbosari imzo qo‘yishi kerak. Chiziqcha qo‘yilgan bo‘sh katak e’tirozga sabab bo‘lishi mumkin."
+    },
+    {
+      "type": "h2",
+      "text": "Joyida ko‘zdan kechirish"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Taxtakach va pichoqlardagi belgilashni tekshiring: har bir mahsulot guruhi uchun alohida rang bo‘lishi kerak.",
+        "Muzlatkichdagi yaroqlilik muddatlarini tekshiring: yorlig‘i yo‘q yoki sanasi o‘chib ketgan mahsulotlar tashlanishi kerak.",
+        "Muzlatkich harorati oxirgi smena jurnalidagi ko‘rsatkichlarga mos bo‘lishi kerak.",
+        "Ish yuzalarini tekshiring: tozalash vositasi qoldiqlari va yog‘li tutqichlar qolmagan bo‘lsin."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Nimalarni qilmaslik kerak"
+    },
+    {
+      "type": "p",
+      "text": "Jurnallarni keyinroq, o‘tgan sana bilan to‘ldirmang. Inspektor buni yozuv, siyoh izlari va sanalar ketma-ketligidan payqashi mumkin. Soxtalashtirish ustida ushlangandan ko‘ra, o‘tkazib yuborilgan yozuvni ko‘rsatib, sababini tushuntirgan ma’qul: soxtalashtirish uchun jazo og‘irroq."
+    }
+  ],
+  "tags": [
+    "Tekshiruvlar",
+    "Rospotrebnadzor",
+    "Tekshiruv ro‘yxati"
+  ]
+}

@@ -55,8 +55,35 @@ function escapeTelegramText(value: string | null | undefined): string {
   return escapeHtml(value ?? "");
 }
 
-function formatObligationList(openObligations: OpenJournalObligation[]): string[] {
+export type StaffObligationDigestPresentation = {
+  openCount: (count: number) => string;
+  nextAction: (title: string) => string;
+  noNextAction: string;
+  todayHeading: string;
+  obligationLine: (values: { title: string; location: string; description: string }) => string;
+  locationSuffix: (building: string) => string;
+  descriptionSuffix: (description: string) => string;
+  moreCount: (count: number) => string;
+  openTask: string;
+  openJournals: string;
+};
+
+function formatObligationList(
+  openObligations: OpenJournalObligation[],
+  presentation?: StaffObligationDigestPresentation
+): string[] {
   const preview = openObligations.slice(0, 5).map((obligation) => {
+    if (presentation) {
+      return presentation.obligationLine({
+        title: escapeTelegramText(obligation.template.name),
+        location: obligation.buildingName
+          ? presentation.locationSuffix(escapeTelegramText(obligation.buildingName))
+          : "",
+        description: obligation.template.description
+          ? presentation.descriptionSuffix(escapeTelegramText(obligation.template.description))
+          : "",
+      });
+    }
     const suffix = obligation.template.description
       ? ` (${escapeTelegramText(obligation.template.description)})`
       : "";
@@ -67,7 +94,8 @@ function formatObligationList(openObligations: OpenJournalObligation[]): string[
   });
 
   if (openObligations.length > preview.length) {
-    preview.push(`…и ещё ${openObligations.length - preview.length}`);
+    const remaining = openObligations.length - preview.length;
+    preview.push(presentation ? presentation.moreCount(remaining) : `…и ещё ${remaining}`);
   }
 
   return preview;
@@ -86,6 +114,7 @@ export function buildStaffObligationDigest(args: {
   openObligations: OpenJournalObligation[];
   miniAppBaseUrl: string | null;
   now?: Date;
+  presentation?: StaffObligationDigestPresentation;
 }): StaffObligationDigest | null {
   if (args.openObligations.length === 0) {
     return null;
@@ -98,13 +127,13 @@ export function buildStaffObligationDigest(args: {
     miniAppBaseUrl && nextObligation
       ? {
           kind: "obligation" as const,
-          label: "Открыть задачу",
+          label: args.presentation?.openTask ?? "Открыть задачу",
           url: buildMiniObligationEntryUrl(miniAppBaseUrl, nextObligation.id),
         }
       : miniAppBaseUrl
         ? {
             kind: "mini-app" as const,
-            label: "Открыть журналы",
+            label: args.presentation?.openJournals ?? "Открыть журналы",
             url: miniAppBaseUrl,
           }
         : null;
@@ -117,13 +146,13 @@ export function buildStaffObligationDigest(args: {
   const body = [
     `{greeting}, {name}!`,
     "",
-    `Открыто задач: ${args.openObligations.length}`,
+    args.presentation?.openCount(args.openObligations.length) ?? `Открыто задач: ${args.openObligations.length}`,
     nextObligation
-      ? `Следующее действие: ${escapeTelegramText(nextObligation.template.name)}`
-      : "Следующее действие пока не найдено.",
+      ? args.presentation?.nextAction(escapeTelegramText(nextObligation.template.name)) ?? `Следующее действие: ${escapeTelegramText(nextObligation.template.name)}`
+      : args.presentation?.noNextAction ?? "Следующее действие пока не найдено.",
     "",
-    "На сегодня:",
-    ...formatObligationList(args.openObligations),
+    args.presentation?.todayHeading ?? "На сегодня:",
+    ...formatObligationList(args.openObligations, args.presentation),
   ].join("\n");
 
   return {

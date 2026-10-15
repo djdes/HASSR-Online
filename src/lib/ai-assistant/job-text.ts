@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { toDateKey } from "@/lib/hygiene-document";
+import { parseSiteLocale, type SiteLocale } from "@/i18n/site-locale";
 
 /**
  * Сборка самодостаточного текста AI-задания для диспетчера ProjectsFlow.
@@ -62,7 +63,7 @@ const INSTRUCTION = `Ты — ИИ-помощник в системе WeSetup (�
 2. Знаешь пункт норматива — ссылайся («согласно п. 4.5 СанПиН 2.3/2.4.4282-26…»).
 3. Юридически тонкие вопросы помечай («это решение должен принимать ваш технолог / юрист»). Никаких юридических заключений, никаких «это законно/незаконно».
 4. Не уверен — так и скажи, предложи проверить в Роспотребнадзоре.
-5. Русский язык, дружелюбно-профессионально, на «вы».
+5. Пиши на языке, заданном в response_language, дружелюбно и профессионально. Язык не меняет применимые нормативы РФ; имена, данные и идентификаторы сохраняй в оригинале.
 
 ДЕЙСТВИЯ. Ты можешь ПРЕДЛОЖИТЬ одно действие в организации пользователя. Действие НИКОГДА не выполняется сразу: сайт покажет пользователю карточку с деталями и кнопкой «Выполнить», исполнит его сервер только после подтверждения. Доступные действия:
 
@@ -233,6 +234,7 @@ export async function buildChatJobText(args: {
   pathname?: string;
   history: ChatHistoryItem[];
   question: string;
+  locale?: SiteLocale;
 }): Promise<string> {
   const [pageContext, orgData] = await Promise.all([
     describePage(args.pathname, args.orgId),
@@ -248,6 +250,7 @@ export async function buildChatJobText(args: {
     `type: ${CHAT_JOB_TYPE}`,
     "---",
     INSTRUCTION,
+    `response_language: ${assistantResponseLanguage(args.locale)}`,
     "---",
     `<page_context>\n${esc(pageContext)}\n</page_context>`,
     "",
@@ -257,6 +260,11 @@ export async function buildChatJobText(args: {
     "",
     `Вопрос пользователя: ${esc(args.question)}`,
   ].join("\n");
+}
+
+/** A fixed allowlist prevents request data from becoming prompt instructions. */
+export function assistantResponseLanguage(locale?: SiteLocale): string {
+  return { ru: "Russian", en: "English", uz: "Uzbek (Latin script)" }[parseSiteLocale(locale)];
 }
 
 /**

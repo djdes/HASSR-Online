@@ -6,14 +6,21 @@ import { db } from "@/lib/db";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { generateJournalPDF } from "@/lib/pdf";
 import { isManagementRole } from "@/lib/user-roles";
+import { resolveExportLocale } from "@/i18n/export-locale";
+import { translatorFor } from "@/i18n/translator";
+import { parseReportDate } from "@/lib/report-export";
 
 export async function GET(request: Request) {
+  let t = await translatorFor("ru");
   try {
     const session = await getServerSession(authOptions);
+    const { searchParams } = new URL(request.url);
+    const locale = resolveExportLocale(searchParams.get("locale"), session?.user ?? {});
+    t = await translatorFor(locale ?? resolveExportLocale(null, session?.user ?? {})!);
 
     if (!session) {
       return NextResponse.json(
-        { error: "Не авторизован" },
+        { code: "REPORT_UNAUTHORIZED", error: t("reports.errors.unauthorized") },
         { status: 401 }
       );
     }
@@ -22,12 +29,14 @@ export async function GET(request: Request) {
     // — ROOT не мог скачать отчёт за импесонируемого клиента.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
       return NextResponse.json(
-        { error: "Это действие доступно руководителю" },
+        { code: "REPORT_MANAGEMENT_ONLY", error: t("reports.errors.managementOnly") },
         { status: 403 }
       );
     }
 
-    const { searchParams } = new URL(request.url);
+    if (!locale) {
+      return NextResponse.json({ code: "INVALID_LOCALE", error: t("language.invalid") }, { status: 400 });
+    }
     const templateCode = searchParams.get("template");
     const dateFrom = searchParams.get("from");
     const dateTo = searchParams.get("to");
@@ -35,17 +44,17 @@ export async function GET(request: Request) {
 
     if (!templateCode || !dateFrom || !dateTo) {
       return NextResponse.json(
-        { error: "Укажите шаблон журнала, дату начала и дату окончания" },
+        { code: "REPORT_REQUIRED_PARAMETERS_PDF", error: t("reports.errors.requiredParametersPdf") },
         { status: 400 }
       );
     }
 
     // Validate date format
-    const parsedFrom = Date.parse(dateFrom);
-    const parsedTo = Date.parse(dateTo);
-    if (Number.isNaN(parsedFrom) || Number.isNaN(parsedTo)) {
+    const parsedFrom = parseReportDate(dateFrom);
+    const parsedTo = parseReportDate(dateTo);
+    if (parsedFrom === null || parsedTo === null) {
       return NextResponse.json(
-        { error: "Некорректный формат даты" },
+        { code: "REPORT_INVALID_DATE", error: t("reports.errors.invalidDate") },
         { status: 400 }
       );
     }
@@ -53,14 +62,14 @@ export async function GET(request: Request) {
     // генерил гигантский PDF и блокировал workers. Теперь sanity-bounds.
     if (parsedFrom > parsedTo) {
       return NextResponse.json(
-        { error: "Дата начала позже даты окончания" },
+        { code: "REPORT_DATE_ORDER", error: t("reports.errors.dateOrder") },
         { status: 400 }
       );
     }
     const MAX_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
     if (parsedTo - parsedFrom > MAX_RANGE_MS) {
       return NextResponse.json(
-        { error: "Период отчёта не должен превышать 366 дней" },
+        { code: "REPORT_PERIOD_TOO_LONG", error: t("reports.errors.periodTooLong") },
         { status: 400 }
       );
     }
@@ -78,6 +87,7 @@ export async function GET(request: Request) {
       dateFrom,
       dateTo,
       areaId,
+      locale,
     });
 
     const fileName = `report_${templateCode}_${dateFrom}_${dateTo}.pdf`;
@@ -91,12 +101,12 @@ export async function GET(request: Request) {
         // inline=1 — запасной путь для оболочки Telegram (см. report-form.tsx).
         "Content-Disposition": `${searchParams.get("inline") === "1" ? "inline" : "attachment"}; filename="${fileName}"`,
         "Content-Length": String(uint8.length),
+        "Content-Language": locale,
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (error) {
     console.error("PDF generation error:", error);
-    const message =
-      error instanceof Error ? error.message : "Внутренняя ошибка сервера";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ code: "REPORT_INTERNAL", error: t("reports.errors.internalServer") }, { status: 500 });
   }
 }

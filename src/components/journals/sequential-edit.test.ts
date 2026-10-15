@@ -3,9 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   openNextEditable,
-  selectionEditLabel,
   sequentialEditProgress,
-  sequentialEditSummary,
 } from "./sequential-edit";
 
 describe("sequential-edit", () => {
@@ -27,12 +25,9 @@ describe("sequential-edit", () => {
     assert.equal(openNextEditable([], 0, () => true), -1);
   });
 
-  it("labels the button and the dialog title", () => {
-    assert.equal(selectionEditLabel(1), "Изменить");
-    assert.equal(selectionEditLabel(3), "Изменить по очереди · 3");
+  it("returns numeric progress independent of display language", () => {
     assert.equal(sequentialEditProgress(null), null);
     assert.equal(sequentialEditProgress({ ids: ["a"], index: 0, done: 0 }), null);
-    assert.equal(sequentialEditProgress({ ids: ["a", "b", "c"], index: 2, done: 1 }), "(2 из 3)");
-    assert.equal(sequentialEditSummary(2, 3), "Изменено 2 из 3");
+    assert.deepEqual(sequentialEditProgress({ ids: ["a", "b", "c"], index: 2, done: 1 }), { current: 2, total: 3 });
   });
 });

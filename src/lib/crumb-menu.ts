@@ -1,5 +1,9 @@
 import { journalMatchesQuery } from "@/lib/journal-search";
 import { sortJournalsByName } from "@/lib/journal-sort";
+import type { MessageContract } from "@/i18n/message-contract";
+
+export type BreadcrumbStaticKey = Exclude<keyof MessageContract["navigation"]["breadcrumbs"], "noResults" | "resultCount" | "listMore" | "sharedPeriod">;
+export type BreadcrumbTranslator = (key: BreadcrumbStaticKey) => string;
 
 /**
  * Меню хлебных крошек без разметки: поиск по списку, легенда точек,
@@ -51,6 +55,8 @@ export type CrumbLink = {
  */
 export type CrumbHiddenMatches = {
   labels: string[];
+  /** Original names and stable codes remain searchable after localization. */
+  entries?: ReadonlyArray<{ label: string; keywords?: string[] }>;
   /** Подпись перед названиями: [для одного, для нескольких]. */
   title: [string, string];
   /** Как вернуть пункт в список: ссылка — тому, кто это может. */
@@ -87,6 +93,18 @@ export const DOCUMENT_STATUS_LEGEND: readonly CrumbLegendEntry[] = [
   { status: "muted", label: "закрыт" },
 ];
 
+export function journalStatusLegend(t?: BreadcrumbTranslator): readonly CrumbLegendEntry[] {
+  return t ? [
+    { status: "ok", label: t("filled") },
+    { status: "danger", label: t("pending") },
+    { status: "muted", label: t("disabled") },
+  ] : JOURNAL_STATUS_LEGEND;
+}
+
+export function documentStatusLegend(t?: BreadcrumbTranslator): readonly CrumbLegendEntry[] {
+  return t ? [{ status: "ok", label: t("open") }, { status: "muted", label: t("closed") }] : DOCUMENT_STATUS_LEGEND;
+}
+
 /** Пункты, подходящие под запрос, в исходном порядке. */
 export function filterCrumbMenu<T extends CrumbMenuItem>(
   items: readonly T[],
@@ -107,16 +125,17 @@ export function legendEntriesFor(
 }
 
 /** Скрытые пункты, подходящие под запрос. Пустой запрос — ни одного. */
-export function matchingHidden(labels: readonly string[], query: string): string[] {
+export function matchingHidden(labels: readonly string[], query: string, entries?: CrumbHiddenMatches["entries"]): string[] {
   if (!query.trim()) return [];
+  if (entries) return entries.filter(entry => journalMatchesQuery([entry.label, ...(entry.keywords ?? [])], query)).map(entry => entry.label);
   return labels.filter((label) => journalMatchesQuery([label], query));
 }
 
 /** «А», «Б», «В» и ещё 2. */
-export function quotedList(labels: readonly string[], max = 3): string {
+export function quotedList(labels: readonly string[], max = 3, more?: (items: string, count: number) => string): string {
   const shown = labels.slice(0, max).map((label) => `«${label}»`).join(", ");
   const rest = labels.length - max;
-  return rest > 0 ? `${shown} и ещё ${rest}` : shown;
+  return rest > 0 ? (more ? more(shown, rest) : `${shown} и ещё ${rest}`) : shown;
 }
 
 /**
@@ -130,6 +149,7 @@ export type JournalSwitcherMenu = {
   showAllHref: string | null;
   /** Выключенные журналы (кроме текущего — он и так в списке). */
   disabledLabels: string[];
+  disabledItems?: Array<{ label: string; keywords?: string[] }>;
 };
 
 /** Страница «Набор журналов» — там включают выключенные. */
@@ -145,19 +165,24 @@ export function buildJournalSwitcherMenu(input: {
   filledTemplateIds: ReadonlySet<string>;
   currentCode?: string;
   showAllHref: string | null;
+  t?: BreadcrumbTranslator;
 }): JournalSwitcherMenu {
   const { templates, disabledCodes, filledTemplateIds, currentCode } = input;
   const items: CrumbMenuItem[] = [];
   const disabledLabels: string[] = [];
+  const disabledItems: NonNullable<JournalSwitcherMenu["disabledItems"]> = [];
 
   // По алфавиту — по названию, которое видит организация.
   for (const template of sortJournalsByName(templates, (t) => t.name)) {
+    const keywords = template.officialName && template.officialName !== template.name
+      ? [template.code, template.officialName] : [template.code];
     const disabled = disabledCodes.has(template.code);
     const current = template.code === currentCode;
     // Выключенный журнал в рабочий список не попадает — кроме текущего:
     // иначе из списка пропало бы «где я сейчас».
     if (disabled && !current) {
       disabledLabels.push(template.name);
+      disabledItems.push({ label: template.name, keywords });
       continue;
     }
     items.push({
@@ -166,38 +191,36 @@ export function buildJournalSwitcherMenu(input: {
       // Выключенный — серый, а не красный: его не «просрочили», его
       // просто не ведут, и красным он звал бы заполнять то, чего нет.
       status: disabled ? "muted" : filledTemplateIds.has(template.id) ? "ok" : "danger",
-      hint: disabled ? "выключен" : undefined,
+      hint: disabled ? (input.t ? input.t("disabled") : "выключен") : undefined,
       current,
       // Наведение на строку раскрывает документы этого журнала —
       // второй уровень подгружается лениво, по одному запросу.
       submenuJournalCode: template.code,
-      keywords:
-        template.officialName && template.officialName !== template.name
-          ? [template.code, template.officialName]
-          : [template.code],
+      keywords,
     });
   }
 
-  return { items, showAllHref: input.showAllHref, disabledLabels };
+  return { items, showAllHref: input.showAllHref, disabledLabels, disabledItems };
 }
 
 /** Поиск, легенда и «Показать все» для обеих журнальных крошек. */
-export function journalSwitcherOptions(menu: JournalSwitcherMenu): CrumbMenuOptions {
+export function journalSwitcherOptions(menu: JournalSwitcherMenu, t?: BreadcrumbTranslator): CrumbMenuOptions {
   const showAll = menu.showAllHref;
   return {
-    menuSearch: "Найти журнал",
+    menuSearch: t ? t("searchJournals") : "Найти журнал",
     menuFooterLink: showAll
-      ? { label: "Показать все", href: showAll, hint: "включая выключенные" }
+      ? { label: t ? t("showAll") : "Показать все", href: showAll, hint: t ? t("includingDisabled") : "включая выключенные" }
       : undefined,
-    menuLegend: JOURNAL_STATUS_LEGEND,
+    menuLegend: journalStatusLegend(t),
     menuHiddenMatches:
       menu.disabledLabels.length > 0
         ? {
             labels: menu.disabledLabels,
-            title: ["Выключен в наборе", "Выключены в наборе"],
+            entries: menu.disabledItems,
+            title: [t ? t("disabledOne") : "Выключен в наборе", t ? t("disabledMany") : "Выключены в наборе"],
             ...(showAll
-              ? { link: { label: "Открыть набор журналов", href: showAll } }
-              : { note: "Включить может руководитель" }),
+              ? { link: { label: t ? t("openSet") : "Открыть набор журналов", href: showAll } }
+              : { note: t ? t("managerCanEnable") : "Включить может руководитель" }),
           }
         : undefined,
   };

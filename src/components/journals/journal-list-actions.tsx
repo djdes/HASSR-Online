@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
@@ -84,16 +85,17 @@ export function JournalQrPointButton({
   documentId?: string | null;
   className?: string;
 }) {
+  const t = useTranslations("journalControls.list");
   return (
     <Link
       href={journalQrHref(templateCode, { documentId })}
-      aria-label="QR-точка контроля — плакат и наклейки для записи в журнал с телефона"
-      title="Плакат или наклейки с QR-кодом: сотрудник сканирует и вносит запись с телефона, без входа в кабинет"
+      aria-label={t("qrAria")}
+      title={t("qrHint")}
       data-testid="journal-qr-point"
       className={cn(JOURNAL_QR_POINT_CLASS, className)}
     >
       <QrCode className="size-[18px]" strokeWidth={2.25} aria-hidden />
-      <span>QR-точка контроля</span>
+      <span>{t("qr")}</span>
       <LinkPendingSpinner />
     </Link>
   );

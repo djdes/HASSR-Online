@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { JOURNAL_DIALOG_ERROR_CLASS } from "@/components/journals/journal-responsive";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useTranslations } from "next-intl";
 
 /**
  * Одно поведение на все окна создания и настроек документа.
@@ -43,7 +43,7 @@ export class DuplicatePeriodError extends Error {
 /**
  * Разбор ответа `POST /api/journal-documents` в одном месте.
  * Возвращает id созданного документа, либо бросает
- * `DuplicatePeriodError` / обычную ошибку с текстом сервера.
+ * `DuplicatePeriodError` / обычную ошибку с безопасным текстом по умолчанию.
  */
 export async function readCreatedDocument(
   response: Response,
@@ -59,11 +59,9 @@ export async function readCreatedDocument(
         title: String(existing.title || ""),
       });
     }
-    throw new Error(
-      (result as { error?: unknown } | null)?.error
-        ? String((result as { error?: unknown }).error)
-        : fallbackError
-    );
+    // Unknown API prose is not a trusted localized message. The dialog renders
+    // its current-language fallback; duplicate document metadata stays original.
+    throw new Error(fallbackError);
   }
   const id = (result as { document?: { id?: unknown } } | null)?.document?.id;
   if (!id) throw new Error(fallbackError);
@@ -73,7 +71,7 @@ export async function readCreatedDocument(
 export type DocumentDialogSubmit = {
   /** Идёт запрос — кнопку блокируем и подписываем «Создание…». */
   submitting: boolean;
-  /** Текст ошибки сервера. Пусто — ошибки нет. */
+  /** Текст ошибки на текущем языке. Пусто — ошибки нет. */
   error: string;
   /** Документ на этот период уже есть — показываем развилку. */
   duplicate: ExistingDocumentRef | null;
@@ -92,20 +90,24 @@ export function useDocumentDialogSubmit(params: {
   fallbackError?: string;
 }): DocumentDialogSubmit {
   const { onOpenChange } = params;
-  const fallbackError = params.fallbackError ?? "Не удалось создать документ";
+  const t = useTranslations("journalControls.documentDialog");
+  const fallbackError = params.fallbackError === "Не удалось сохранить настройки"
+    ? t("settingsError")
+    : !params.fallbackError || params.fallbackError === "Не удалось создать документ"
+      ? t("createError") : params.fallbackError;
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [failed, setFailed] = useState(false);
   const [duplicate, setDuplicate] = useState<ExistingDocumentRef | null>(null);
 
   const reset = useCallback(() => {
-    setError("");
+    setFailed(false);
     setDuplicate(null);
   }, []);
 
   const run = useCallback(
     async (action: (force: boolean) => Promise<void>, force = false) => {
       setSubmitting(true);
-      setError("");
+      setFailed(false);
       setDuplicate(null);
       try {
         await action(force);
@@ -115,15 +117,15 @@ export function useDocumentDialogSubmit(params: {
           setDuplicate(err.existing);
           return;
         }
-        setError(humanizeFetchError(err, fallbackError));
+        setFailed(true);
       } finally {
         setSubmitting(false);
       }
     },
-    [fallbackError, onOpenChange]
+    [onOpenChange]
   );
 
-  return { submitting, error, duplicate, reset, run };
+  return { submitting, error: failed ? fallbackError : "", duplicate, reset, run };
 }
 
 /**
@@ -139,6 +141,7 @@ export function DocumentDialogFeedback(props: {
   onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const t = useTranslations("journalControls.documentDialog");
   const { state, routeCode, onForce, onOpenChange } = props;
 
   // Развилку рисуем, только если есть хотя бы один выход. Иначе —
@@ -148,12 +151,10 @@ export function DocumentDialogFeedback(props: {
     return (
       <div className="rounded-2xl border border-[#ffd8a8] bg-[#fff8ed] p-4">
         <div className="text-[14px] font-medium text-[#0b1024]">
-          За этот период уже есть документ
+          {t("duplicateTitle")}
         </div>
         <div className="mt-1 text-[13px] leading-[1.45] text-[#6f7282]">
-          {state.duplicate.title ? `«${state.duplicate.title}». ` : ""}
-          Записи за одни и те же дни попадут в разные документы, и ни один не
-          будет выглядеть заполненным.
+          {state.duplicate.title ? t("namedDuplicateDescription", { title: state.duplicate.title }) : t("duplicateDescription")}
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {routeCode ? (
@@ -167,7 +168,7 @@ export function DocumentDialogFeedback(props: {
                 );
               }}
             >
-              Открыть существующий
+              {t("openExisting")}
             </Button>
           ) : null}
           {onForce ? (
@@ -178,7 +179,7 @@ export function DocumentDialogFeedback(props: {
               className="h-10 rounded-xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               onClick={onForce}
             >
-              Всё равно создать
+              {t("forceCreate")}
             </Button>
           ) : null}
         </div>
@@ -187,9 +188,7 @@ export function DocumentDialogFeedback(props: {
   }
 
   const message = state.duplicate
-    ? `За этот период уже есть документ${
-        state.duplicate.title ? ` «${state.duplicate.title}»` : ""
-      }. Откройте его или выберите другой период.`
+    ? (state.duplicate.title ? t("namedDuplicateFallback", { title: state.duplicate.title }) : t("duplicateFallback"))
     : state.error;
   if (!message) return null;
   return (

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import { LayoutGrid, Rows3 } from "lucide-react";
 import type { MobileView } from "@/lib/use-mobile-view";
@@ -13,8 +14,8 @@ import type { TourAnchor } from "@/lib/tour-anchors";
 export function MobileViewToggle({
   mobileView,
   onChange,
-  cardsLabel = "Карточки",
-  tableLabel = "Таблица",
+  cardsLabel,
+  tableLabel,
   dataTour,
 }: {
   mobileView: MobileView;
@@ -24,10 +25,11 @@ export function MobileViewToggle({
   /** Анкор спотлайт-тура «Как заполнить?» (шаг «Переключитесь на Таблица»). */
   dataTour?: TourAnchor;
 }) {
+  const t = useTranslations("journalControls.list");
   return (
     <div
       role="tablist"
-      aria-label="Режим отображения"
+      aria-label={t("viewMode")}
       data-tour={dataTour}
       className="flex w-full rounded-2xl border border-[#ececf4] bg-white p-1 text-[13px] font-medium sm:hidden print:hidden"
     >
@@ -43,7 +45,7 @@ export function MobileViewToggle({
         }`}
       >
         <LayoutGrid className="size-4" />
-        {cardsLabel}
+        {cardsLabel ?? t("cards")}
       </button>
       <button
         type="button"
@@ -57,7 +59,7 @@ export function MobileViewToggle({
         }`}
       >
         <Rows3 className="size-4" />
-        {tableLabel}
+        {tableLabel ?? t("table")}
       </button>
     </div>
   );

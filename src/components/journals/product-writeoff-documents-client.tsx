@@ -36,8 +36,7 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   type RestorableDocument,
   useCanManageDocuments,
   JournalTabs,
@@ -78,7 +77,7 @@ function ProductWriteoffActionsMenu(props: {
 }) {
   // Настройки / архив / удаление API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   return (
     <ResponsiveMenu
       title="Действия"
@@ -97,11 +96,7 @@ function ProductWriteoffActionsMenu(props: {
         },
         // Закрытый документ раньше уходил навсегда: вернуть его в
         // активные было нечем.
-        ...restoreMenuItems({
-          document: props.document,
-          siblings: props.siblings,
-          restore,
-        }),
+        ...restoreMenu({ document: props.document, siblings: props.siblings }),
         ...(props.isActive
           ? [
               {

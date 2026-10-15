@@ -1,6 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/i18n/locales";
+import type { Messages } from "@/i18n/messages";
+import { formatMetricsRelative, metricsDate, metricsPlanLabel, type JournalSourceNames } from "./metrics-presentation";
 import Link from "next/link";
 import {
   ArrowDown,
@@ -12,7 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import type { OrgMetrics } from "@/lib/org-metrics";
-import { ownershipLabel, sphereLabel } from "@/lib/org-profile";
+import { normalizeOwnership, normalizeSphere, ownershipLabel, sphereLabel } from "@/lib/org-profile";
 import { ActivityDrawer } from "./activity-drawer";
 import { OrgRowActions } from "@/app/root/organizations/org-row-actions";
 
@@ -45,24 +49,24 @@ type SortDir = "asc" | "desc";
 
 const COLUMNS: {
   key: SortKey;
-  label: string;
+  label: keyof Messages["rootMetrics"]["columns"];
   align: "left" | "center" | "right";
 }[] = [
-  { key: "organizationName", label: "Организация", align: "left" },
-  { key: "ownerEmail", label: "Email владельца", align: "left" },
-  { key: "ownerRegistrationIp", label: "IP", align: "left" },
-  { key: "sphere", label: "Сфера", align: "left" },
-  { key: "inn", label: "ИНН", align: "left" },
-  { key: "locationsCount", label: "Точек", align: "right" },
-  { key: "createdAt", label: "Регистрация", align: "right" },
-  { key: "subscriptionPlan", label: "Тариф", align: "center" },
-  { key: "activeUsers", label: "Сотрудники", align: "right" },
-  { key: "documentsCount", label: "Документы", align: "right" },
-  { key: "entries7d", label: "Записи 7д", align: "right" },
-  { key: "weeklyTrendPct", label: "Trend", align: "right" },
-  { key: "lastEntryAt", label: "Last activity", align: "right" },
-  { key: "actualMrrRub", label: "MRR ₽", align: "right" },
-  { key: "balanceRub", label: "Баланс ₽", align: "right" },
+  { key: "organizationName", label: "organization", align: "left" },
+  { key: "ownerEmail", label: "ownerEmail", align: "left" },
+  { key: "ownerRegistrationIp", label: "ip", align: "left" },
+  { key: "sphere", label: "sphere", align: "left" },
+  { key: "inn", label: "inn", align: "left" },
+  { key: "locationsCount", label: "locations", align: "right" },
+  { key: "createdAt", label: "registration", align: "right" },
+  { key: "subscriptionPlan", label: "plan", align: "center" },
+  { key: "activeUsers", label: "employees", align: "right" },
+  { key: "documentsCount", label: "documents", align: "right" },
+  { key: "entries7d", label: "entries7d", align: "right" },
+  { key: "weeklyTrendPct", label: "trend", align: "right" },
+  { key: "lastEntryAt", label: "lastActivity", align: "right" },
+  { key: "actualMrrRub", label: "mrr", align: "right" },
+  { key: "balanceRub", label: "balance", align: "right" },
 ];
 
 /** «ООО · Кафе» — форма собственности и сфера одной строкой. */
@@ -103,13 +107,18 @@ function sortValue(m: OrgMetrics, key: SortKey): string | number | null {
 export function MetricsTable({
   rows,
   now,
+  sourceJournalNames,
 }: {
   rows: OrgMetrics[];
   /// Момент отрисовки приходит с сервера: Date.now() прямо в рендере —
   /// нечистая функция, она разъезжается между SSR и гидратацией и ломает
   /// правило react-hooks/purity.
   now: number;
+  sourceJournalNames: JournalSourceNames;
 }) {
+  const t = useTranslations("rootMetrics");
+  const profile = useTranslations("settingsManagement.organizationProfile.form");
+  const locale = useLocale();
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("actualMrrRub");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -133,6 +142,7 @@ export function MetricsTable({
             // по ним человек будет.
             (m.inn ?? "").includes(q) ||
             sphereText(m).toLowerCase().includes(q) ||
+            [m.ownershipKind ? profile(`ownershipKinds.${normalizeOwnership(m.ownershipKind)}`) : "", profile(`spheres.${normalizeSphere(m.type)}`)].join(" · ").toLowerCase().includes(q) ||
             m.subscriptionPlan.toLowerCase().includes(q),
         )
       : rows;
@@ -151,7 +161,7 @@ export function MetricsTable({
           : String(va).localeCompare(String(vb), "ru");
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [rows, query, sortKey, sortDir]);
+  }, [rows, query, sortKey, sortDir, profile]);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -176,14 +186,15 @@ export function MetricsTable({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск по названию, почте, IP, ИНН, сфере, тарифу"
+            aria-label={t("table.searchLabel")}
+            placeholder={t("table.searchPlaceholder")}
             className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white pl-10 pr-4 text-[14px] text-[#0b1024] outline-none transition-colors placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </label>
         <div className="text-[13px] tabular-nums text-[#6f7282]">
           {query
-            ? `Найдено ${visible.length} из ${rows.length}`
-            : `Всего ${rows.length}`}
+            ? t("table.found", { count: visible.length, total: rows.length })
+            : t("table.total", { count: rows.length })}
         </div>
       </div>
 
@@ -219,19 +230,19 @@ export function MetricsTable({
                     <button
                       type="button"
                       onClick={() => toggleSort(c.key)}
-                      title="Сортировать"
+                      title={t("table.sort")}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 uppercase tracking-wider transition-colors hover:text-[#3848c7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 ${
                         active ? "text-[#3848c7]" : ""
                       } ${c.align === "right" ? "flex-row-reverse" : ""}`}
                     >
                       <Icon className={active ? "size-3.5" : "size-3.5 opacity-40"} />
-                      {c.label}
+                      {t(`columns.${c.label}`)}
                     </button>
                   </th>
                 );
               })}
               <th className="px-5 py-3 text-right font-medium">
-                <span className="sr-only">Действия</span>
+                <span className="sr-only">{t("table.actions")}</span>
               </th>
             </tr>
           </thead>
@@ -243,15 +254,15 @@ export function MetricsTable({
                   className="px-5 py-12 text-center text-[#6f7282]"
                 >
                   {rows.length === 0
-                    ? "Пока нет организаций."
-                    : "Ничего не нашлось. Попробуйте другую часть адреса."}
+                    ? t("table.noOrganizations")
+                    : t("table.noResults")}
                 </td>
               </tr>
             ) : null}
             {visible.map((m) => {
               const lastActivity = m.lastEntryAt
-                ? formatRelative(new Date(m.lastEntryAt), now)
-                : "никогда";
+                ? formatMetricsRelative(new Date(m.lastEntryAt), now, t)
+                : t("table.never");
               const isStale =
                 !m.lastEntryAt ||
                 now - new Date(m.lastEntryAt).getTime() >
@@ -273,18 +284,14 @@ export function MetricsTable({
                           // не входит, удалится сама — чтобы ROOT не принял
                           // её за живого клиента.
                           <span className="inline-flex items-center rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[12px] font-medium text-[#3848c7]">
-                            Демо
-                            {m.demoExpiresAt
-                              ? ` · до ${new Date(m.demoExpiresAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}`
-                              : ""}
+                            {m.demoExpiresAt ? t("table.demoUntil", { date: metricsDate(m.demoExpiresAt, locale, { day: "numeric", month: "short" }, true) }) : t("table.demo")}
                           </span>
                         ) : null}
                         {m.isDirectory ? (
                           // Служебный кабинет бэк-офиса пула служебного кода:
                           // только меню и сырьё, журналов и оплаты нет.
                           <span className="inline-flex items-center rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] font-medium text-[#3848c7]">
-                            Мастер-кабинет
-                          </span>
+                            {t("table.directory")}</span>
                         ) : null}
                       </div>
                     </Link>
@@ -299,8 +306,7 @@ export function MetricsTable({
                       </a>
                     ) : (
                       <span className="text-[13px] text-[#9b9fb3]">
-                        нет пользователей
-                      </span>
+                        {t("table.noUsers")}</span>
                     )}
                   </td>
                   <td className="px-5 py-3">
@@ -311,7 +317,7 @@ export function MetricsTable({
                     />
                   </td>
                   <td className="px-5 py-3 text-[13px] text-[#3c4053]">
-                    {sphereText(m) || "—"}
+                    {[m.ownershipKind ? profile(`ownershipKinds.${normalizeOwnership(m.ownershipKind)}`) : null, profile(`spheres.${normalizeSphere(m.type)}`)].filter(Boolean).join(" · ") || "—"}
                   </td>
                   <td className="px-5 py-3 text-[13px] tabular-nums text-[#3c4053]">
                     {m.inn || "—"}
@@ -322,25 +328,25 @@ export function MetricsTable({
                       // заводит точки и включает раздельные журналы.
                       // Подсвечиваем, чтобы такие организации были на виду.
                       <span className="inline-flex items-center rounded-full bg-[#fff3ed] px-2.5 py-0.5 text-[13px] font-medium text-[#b45309]">
-                        {m.locationsCount}
+                        {formatNumber(locale, m.locationsCount)}
                       </span>
                     ) : (
                       <span className="text-[#6f7282]">
-                        {m.locationsCount || 1}
+                        {formatNumber(locale, m.locationsCount || 1)}
                       </span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-right text-[13px] tabular-nums text-[#3c4053]">
-                    {new Date(m.createdAt).toLocaleDateString("ru-RU")}
+                    {metricsDate(m.createdAt, locale, undefined, true)}
                   </td>
                   <td className="px-5 py-3 text-center">
                     <PlanPill plan={m.subscriptionPlan} />
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums">
-                    {m.activeUsers}
+                    {formatNumber(locale, m.activeUsers)}
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums text-[#3c4053]">
-                    {m.documentsCount}
+                    {formatNumber(locale, m.documentsCount)}
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums">
                     {/* Цифра отвечает «сколько», но не «что»: одна и та же
@@ -355,12 +361,12 @@ export function MetricsTable({
                           name: m.organizationName,
                         })
                       }
-                      title="Посмотреть, что заполняют"
+                      title={t("table.viewActivity")}
                       className="inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 tabular-nums transition-colors hover:bg-[#eef1ff] hover:text-[#3848c7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40"
                     >
-                      {m.entries7d}
+                      {formatNumber(locale, m.entries7d)}
                       <span className="text-[12px] text-[#9b9fb3]">
-                        / {m.entries30d} за 30
+                        {t("table.entries30d", { count: m.entries30d })}
                       </span>
                       <Eye className="size-3.5 opacity-0 transition-opacity group-hover/row:opacity-60" />
                     </button>
@@ -378,12 +384,12 @@ export function MetricsTable({
                   <td className="px-5 py-3 text-right tabular-nums">
                     {m.actualMrrRub > 0 ? (
                       <span className="font-semibold text-[#0b1024]">
-                        {m.actualMrrRub.toLocaleString("ru-RU")}
+                        {formatNumber(locale, m.actualMrrRub)}
                       </span>
                     ) : (
                       <span className="text-[#9b9fb3]">
                         {m.potentialMrrRub > 0
-                          ? `(${m.potentialMrrRub.toLocaleString("ru-RU")})`
+                          ? `(${formatNumber(locale, m.potentialMrrRub)})`
                           : "—"}
                       </span>
                     )}
@@ -393,7 +399,7 @@ export function MetricsTable({
                   <td className="px-5 py-3 text-right tabular-nums">
                     {m.balanceRub > 0 ? (
                       <span className="font-medium text-[#3848c7]">
-                        {m.balanceRub.toLocaleString("ru-RU")}
+                        {formatNumber(locale, m.balanceRub)}
                       </span>
                     ) : (
                       <span className="text-[#9b9fb3]">—</span>
@@ -407,6 +413,7 @@ export function MetricsTable({
                       organizationId={m.organizationId}
                       organizationName={m.organizationName}
                       usersCount={m.activeUsers}
+                      copy={t}
                     />
                   </td>
                 </tr>
@@ -421,6 +428,7 @@ export function MetricsTable({
           organizationId={openOrg.id}
           organizationName={openOrg.name}
           onClose={() => setOpenOrg(null)}
+          sourceJournalNames={sourceJournalNames}
         />
       ) : null}
     </section>
@@ -428,6 +436,7 @@ export function MetricsTable({
 }
 
 function PlanPill({ plan }: { plan: string }) {
+  const t = useTranslations("rootMetrics");
   const styles: Record<string, { bg: string; fg: string }> = {
     trial: { bg: "#fff8eb", fg: "#7a4a00" },
     paid: { bg: "#ecfdf5", fg: "#116b2a" },
@@ -439,12 +448,13 @@ function PlanPill({ plan }: { plan: string }) {
       className="inline-flex rounded-full px-2.5 py-0.5 text-[12px] font-medium"
       style={{ backgroundColor: s.bg, color: s.fg }}
     >
-      {plan}
+      {metricsPlanLabel(plan, t)}
     </span>
   );
 }
 
 function TrendBadge({ value }: { value: number | null }) {
+  const locale = useLocale();
   if (value === null) {
     return <span className="text-[12px] text-[#9b9fb3]">—</span>;
   }
@@ -457,20 +467,9 @@ function TrendBadge({ value }: { value: number | null }) {
     >
       <Icon className="size-3.5" />
       {value > 0 ? "+" : ""}
-      {value}%
+      {formatNumber(locale, value)}%
     </span>
   );
-}
-
-function formatRelative(date: Date, now: number): string {
-  const diff = now - date.getTime();
-  const hours = Math.floor(diff / (60 * 60 * 1000));
-  if (hours < 1) return "только что";
-  if (hours < 24) return `${hours} ч назад`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} дн назад`;
-  const months = Math.floor(days / 30);
-  return `${months} мес назад`;
 }
 
 /**
@@ -501,6 +500,8 @@ function OwnerIpCell({
   lastLoginIp: string | null;
   lastLoginAt: string | null;
 }) {
+  const t = useTranslations("rootMetrics");
+  const locale = useLocale();
   if (!registrationIp && !lastLoginIp) {
     // Не молчим прочерком: у ROOT'а возникает законный вопрос «почему
     // пусто». Адрес пишется только при входе, а колонки появились
@@ -511,26 +512,22 @@ function OwnerIpCell({
       <span
         className="cursor-help text-[13px] text-[#9b9fb3] underline decoration-dotted underline-offset-4"
         title={
-          "Адрес не записан. IP сохраняется при входе, а запись включена " +
-          "26.08.2026 — этот человек с тех пор не заходил. Более ранние " +
-          "адреса подтянуты из журнала действий, но там есть только те, " +
-          "кто делал административные операции."
+          t("ip.missingHint", { since: "26.08.2026" })
         }
       >
-        нет входов
-      </span>
+        {t("ip.noLogins")}</span>
     );
   }
 
   const loginTitle = lastLoginAt
-    ? `Последний вход: ${new Date(lastLoginAt).toLocaleString("ru-RU")}`
-    : "Последний вход: не зафиксирован";
+    ? t("ip.lastLogin", { date: metricsDate(lastLoginAt, locale) })
+    : t("ip.noLastLogin");
 
   if (registrationIp && registrationIp === lastLoginIp) {
     return (
       <div className="text-[13px] leading-snug">
         <IpLink ip={registrationIp} title={loginTitle} />
-        <div className="text-[11px] text-[#9b9fb3]">регистрация и вход</div>
+        <div className="text-[11px] text-[#9b9fb3]">{t("ip.registrationAndLogin")}</div>
       </div>
     );
   }
@@ -539,14 +536,14 @@ function OwnerIpCell({
     <div className="space-y-0.5 text-[13px] leading-snug">
       {registrationIp ? (
         <div>
-          <IpLink ip={registrationIp} title="IP при регистрации" />
-          <span className="ml-1.5 text-[11px] text-[#9b9fb3]">рег.</span>
+          <IpLink ip={registrationIp} title={t("ip.registrationHint")} />
+          <span className="ml-1.5 text-[11px] text-[#9b9fb3]">{t("ip.registrationShort")}</span>
         </div>
       ) : null}
       {lastLoginIp ? (
         <div>
           <IpLink ip={lastLoginIp} title={loginTitle} />
-          <span className="ml-1.5 text-[11px] text-[#9b9fb3]">вход</span>
+          <span className="ml-1.5 text-[11px] text-[#9b9fb3]">{t("ip.login")}</span>
         </div>
       ) : null}
     </div>

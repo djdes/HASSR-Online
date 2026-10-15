@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "@/lib/server-session";
@@ -65,6 +66,8 @@ export async function POST(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
+  const blocked = await rejectJournalAutomation(organizationId);
+  if (blocked) return blocked;
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: {

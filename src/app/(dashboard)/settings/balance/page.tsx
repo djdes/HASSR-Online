@@ -6,6 +6,8 @@ import { loadTopupBlockConfig } from "@/lib/balance/topup";
 import { BalanceClient } from "@/components/balance/balance-client";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,7 @@ export const dynamic = "force-dynamic";
  * в режиме «войти как» (чужие деньги) и не в приложении WeSetup.
  */
 export default async function BalanceSettingsPage() {
+  const t = await getTranslations("settingsManagement.balance");
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
   const overview = await loadBalanceOverview(organizationId, session.user);
@@ -40,6 +43,7 @@ export default async function BalanceSettingsPage() {
     : null;
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsManagement"]}>
     <div className="space-y-5">
       <div className="flex items-start gap-4">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]">
@@ -47,17 +51,18 @@ export default async function BalanceSettingsPage() {
         </span>
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Баланс и бонусы
+            {t("title")}
           </h1>
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
             {inApp
-              ? "Бонусные баллы вашей организации и история начислений."
-              : "Баллами оплачивается подписка: 1 балл = 1 ₽. Их можно заработать — рекомендацией коллегам и отзывом о сервисе — или пополнить баланс деньгами. Тратятся автоматически при оплате."}
+              ? t("inAppDescription")
+              : t("description")}
           </p>
         </div>
       </div>
 
       <BalanceClient initial={overview} variant="site" inApp={inApp} topup={topup} />
     </div>
+    </DomainMessagesBoundary>
   );
 }

@@ -2,6 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Generic «Карточки» mode for list-style journals (one record per row,
@@ -51,13 +52,14 @@ export type RecordCardItem = {
 
 export function RecordCardsView({
   items,
-  emptyLabel = "Нет записей.",
+  emptyLabel,
   defaultExpandFirst = false,
 }: {
   items: RecordCardItem[];
   emptyLabel?: string;
   defaultExpandFirst?: boolean;
 }) {
+  const t = useTranslations("journalControls.recordCards");
   const [expanded, setExpanded] = useState<string | null>(
     defaultExpandFirst && items[0] ? items[0].id : null
   );
@@ -65,7 +67,7 @@ export function RecordCardsView({
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-        {emptyLabel}
+        {emptyLabel ?? t("empty")}
       </div>
     );
   }
@@ -148,7 +150,7 @@ export function RecordCardsView({
                   onClick={item.onClick}
                   className="shrink-0 rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[12px] font-semibold text-[#5566f6] transition-colors duration-150 hover:bg-[#eef1ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
-                  изменить
+                  {t("edit")}
                 </button>
               ) : null}
             </div>
@@ -175,7 +177,7 @@ export function RecordCardsView({
                         {f.label}
                         {tappable ? (
                           <span className="ml-1 text-[10px] font-medium normal-case tracking-normal text-[#5566f6]">
-                            · изменить
+                            · {t("edit")}
                           </span>
                         ) : null}
                       </span>

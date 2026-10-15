@@ -1,5 +1,8 @@
 "use client";
 
+import { useAccidentCopy } from "./use-accident-copy";
+import { accidentDate, accidentTitle } from "./accident-presentation";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -12,7 +15,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookOpenText,
   CalendarDays,
   Ellipsis,
   Pencil,
@@ -32,7 +34,6 @@ import {
 } from "@/components/ui/dialog";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
-  ACCIDENT_DOCUMENT_HEADING,
   ACCIDENT_DOCUMENT_TITLE,
 } from "@/lib/accident-document";
 
@@ -40,8 +41,7 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -55,7 +55,7 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
-import { formatJournalDate } from "@/lib/journal-card-date";
+import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import {
   DocumentDialogFeedback,
   readCreatedDocument,
@@ -84,13 +84,6 @@ type DialogState = {
   dateFrom: string;
 };
 
-function formatDateDMY(value: string) {
-  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
-  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
-  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
-  return formatJournalDate(value) || value;
-}
-
 function SettingsDialog(props: {
   open: boolean;
   onOpenChange: (value: boolean) => void;
@@ -102,14 +95,15 @@ function SettingsDialog(props: {
   submitText: string;
   dialogTitle: string;
 }) {
+  const { t, locale } = useAccidentCopy();
   const [state, setState] = useState<DialogState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({
     onOpenChange: props.onOpenChange,
     fallbackError:
       props.mode === "create"
-        ? "Не удалось создать документ"
-        : "Не удалось сохранить настройки",
+        ? t("errors.create")
+        : t("errors.settings"),
   });
   const submitting = submit.submitting;
 
@@ -130,6 +124,8 @@ function SettingsDialog(props: {
     resetAutoTitle();
     const seeded =
       initial && mode === "create" ? titleForPeriod({ dateFrom: initial.dateFrom }) : null;
+    // A newly opened document dialog receives an external draft; locale is not a reset dependency.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(initial ? { ...initial, title: seeded || initial.title } : null);
   }, [initial, mode, open, resetAutoTitle, titleForPeriod]);
 
@@ -151,6 +147,7 @@ function SettingsDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -167,9 +164,9 @@ function SettingsDialog(props: {
               onForce={() => handleSubmit(true)}
             />
             <div className="space-y-2">
-              <Label className="text-base text-[#6e7387]">Название документа</Label>
+              <Label className="text-base text-[#6e7387]">{t("settings.name")}</Label>
               <Input
-                value={activeState.title}
+                value={accidentTitle(activeState.title, activeState.dateFrom, locale, t)}
                 onChange={(event) => {
                   auto.markTouched();
                   setState({ ...activeState, title: event.target.value });
@@ -178,7 +175,7 @@ function SettingsDialog(props: {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-base text-[#6e7387]">Дата начала</Label>
+              <Label className="text-base text-[#6e7387]">{t("settings.start")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -204,7 +201,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-10 text-[13.5px] text-white hover:bg-[#4452ee]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? t("actions.saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -220,6 +217,7 @@ function DeleteDialog(props: {
   title: string;
   onConfirm: () => Promise<void>;
 }) {
+  const { t, latest } = useAccidentCopy();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleDelete() {
@@ -227,6 +225,8 @@ function DeleteDialog(props: {
     try {
       await props.onConfirm();
       props.onOpenChange(false);
+    } catch {
+      toast.error(latest.current.t("errors.delete"));
     } finally {
       setSubmitting(false);
     }
@@ -238,10 +238,11 @@ function DeleteDialog(props: {
         <DialogHeader className="border-b px-8 py-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <DialogTitle className="text-[22px] font-medium text-black">
-              Удаление документа &quot;{props.title}&quot;
+              {t("delete.title", { title: props.title })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("actions.close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -256,7 +257,7 @@ function DeleteDialog(props: {
             disabled={submitting}
             className="h-9 rounded-xl bg-[#5563ff] px-10 text-[13.5px] text-white hover:bg-[#4452ee]"
           >
-            {submitting ? "Удаление..." : "Удалить"}
+            {submitting ? t("actions.deleting") : t("actions.delete")}
           </Button>
         </div>
       </DialogContent>
@@ -271,10 +272,12 @@ export function AccidentDocumentsClient({
   documents,
 }: Props) {
   const router = useRouter();
+  const { t, locale } = useAccidentCopy();
+  const { openPdf } = useJournalDocumentActions();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
@@ -331,8 +334,7 @@ export function AccidentDocumentsClient({
     });
 
     if (!response.ok) {
-      const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+      throw new Error("ACCIDENT_SETTINGS_FAILED");
     }
 
     router.refresh();
@@ -344,8 +346,7 @@ export function AccidentDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
-      return;
+      throw new Error("ACCIDENT_DELETE_FAILED");
     }
 
     router.refresh();
@@ -355,7 +356,7 @@ export function AccidentDocumentsClient({
     <div className="space-y-5">
       <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
         <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-          <JournalHeadingName fallback={ACCIDENT_DOCUMENT_HEADING} />
+          <JournalHeadingName fallback={t("title")} />
         </h1>
         <JournalListActions
           templateCode={templateCode}
@@ -364,8 +365,7 @@ export function AccidentDocumentsClient({
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
                 <Plus className="size-4" />
-                Создать документ
-              </Button>
+                {t("actions.createDocument")}</Button>
             ) : null
           }
         />
@@ -386,25 +386,25 @@ export function AccidentDocumentsClient({
               className={JOURNAL_LIST_CARD_CLASS}
             >
               <Link href={href} className={JOURNAL_CARD_TITLE_CLASS}>
-                {document.title || ACCIDENT_DOCUMENT_TITLE}
+                {accidentTitle(document.title, document.dateFrom, locale, t)}
               <SharedDocumentBadge shared={document.shared} />
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("settings.start")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {formatDateDMY(document.dateFrom)}
+                  {accidentDate(document.dateFrom, locale)}
                 </div>
               </Link>
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия с документом"
+                  title={t("actions.documentActions")}
                   contentClassName="w-[320px] rounded-[28px] border-0 p-5 shadow-xl"
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: t("actions.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -412,19 +412,19 @@ export function AccidentDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: t("actions.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
-                        window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
+                        openPdf({ documentId: document.id }),
                     },
                     // Закрытый документ раньше уходил навсегда: вернуть
                     // его в активные было нечем.
-                    ...restoreMenuItems({ document, siblings: documents, restore }),
+                    ...restoreMenu({ document, siblings: documents }),
                     ...(document.status === "active"
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: t("actions.delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             onSelect: () => setDeleteTarget(document),
                             tone: "danger" as const,
@@ -435,6 +435,7 @@ export function AccidentDocumentsClient({
                   trigger={
                     <button
                       type="button"
+                      aria-label={t("actions.documentActions")}
                       className="flex size-10 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                     >
                       <Ellipsis className="size-8" />
@@ -455,8 +456,8 @@ export function AccidentDocumentsClient({
         routeCode={routeCode}
         initial={createInitialState}
         onSubmit={createDocument}
-        submitText="Создать"
-        dialogTitle="Создание документа"
+        submitText={t("actions.create")}
+        dialogTitle={t("settings.createTitle")}
       />
 
       <SettingsDialog
@@ -472,8 +473,8 @@ export function AccidentDocumentsClient({
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, payload);
         }}
-        submitText="Сохранить"
-        dialogTitle="Настройки документа"
+        submitText={t("actions.save")}
+        dialogTitle={t("settings.title")}
       />
 
       <DeleteDialog
@@ -481,7 +482,7 @@ export function AccidentDocumentsClient({
         onOpenChange={(value) => {
           if (!value) setDeleteTarget(null);
         }}
-        title={deleteTarget?.title || ACCIDENT_DOCUMENT_TITLE}
+        title={deleteTarget ? accidentTitle(deleteTarget.title, deleteTarget.dateFrom, locale, t) : t("title")}
         onConfirm={async () => {
           if (!deleteTarget) return;
           await deleteDocument(deleteTarget.id);

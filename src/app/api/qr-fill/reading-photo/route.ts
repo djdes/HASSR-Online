@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Не удалось прочитать фото — попробуйте ещё раз" }, { status: 400 });
+    return NextResponse.json({ error: "Не удалось прочитать фото — попробуйте ещё раз", errorCode: "equipmentFill.errors.photoRead" }, { status: 400 });
   }
   const kindRaw = text(form, "kind", 20);
   const kind: QrObjectKind | null = kindRaw === "equipment" || kindRaw === "room" ? kindRaw : null;
@@ -47,13 +47,13 @@ export async function POST(request: Request) {
   const employeeId = text(form, "employeeId", 100);
   const photo = form.get("photo");
   if (!kind || !objectId || !token || !employeeId) {
-    return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+    return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
   }
   if (!photo || typeof photo !== "object") {
-    return NextResponse.json({ error: "Фото не загружено" }, { status: 400 });
+    return NextResponse.json({ error: "Фото не загружено", errorCode: "equipmentFill.errors.photoMissing" }, { status: 400 });
   }
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), kind, objectId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
 
   const auth = await authorizeQrReadingPhoto({
@@ -65,25 +65,25 @@ export async function POST(request: Request) {
     pass: text(form, "pass", 300) || null,
   });
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ error: auth.error, errorCode: auth.errorCode, errorParams: auth.errorParams }, { status: auth.status });
   }
   const { actor } = auth;
   if (!actor.photo.enabled) {
     console.info(`[reading-photo] upload refused: fixation off org=${actor.organizationId} user=${actor.employee.id}`);
     return NextResponse.json(
-      { error: READING_PHOTO_FIXATION_TEXT.disabledError, code: READING_PHOTO_DISABLED_CODE },
+      { error: READING_PHOTO_FIXATION_TEXT.disabledError, errorCode: "equipmentFill.photo.disabled", code: READING_PHOTO_DISABLED_CODE },
       { status: 403 }
     );
   }
 
   const file = photo as File;
   if (file.size > READING_PHOTO_MAX_BYTES) {
-    return NextResponse.json({ error: "Фото больше 6 МБ — снимите ещё раз" }, { status: 413 });
+    return NextResponse.json({ error: "Фото больше 6 МБ — снимите ещё раз", errorCode: "equipmentFill.errors.photoTooLarge" }, { status: 413 });
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!readingPhotoRateLimiter.consume(actor.employee.id)) {
     return NextResponse.json(
-      { error: "Слишком много фото за сутки — введите показание без фото или попробуйте завтра." },
+      { error: "Слишком много фото за сутки — введите показание без фото или попробуйте завтра.", errorCode: "equipmentFill.errors.photoDailyLimit" },
       { status: 429 }
     );
   }
@@ -93,11 +93,11 @@ export async function POST(request: Request) {
   } catch (error) {
     readingPhotoRateLimiter.refund(actor.employee.id);
     console.error("[reading-photo] save failed:", error);
-    return NextResponse.json({ error: "Не удалось сохранить фото — попробуйте ещё раз" }, { status: 500 });
+    return NextResponse.json({ error: "Не удалось сохранить фото — попробуйте ещё раз", errorCode: "equipmentFill.errors.photoSave" }, { status: 500 });
   }
   if (!saved) {
     readingPhotoRateLimiter.refund(actor.employee.id);
-    return NextResponse.json({ error: "Нужен снимок JPG, PNG или WEBP" }, { status: 415 });
+    return NextResponse.json({ error: "Нужен снимок JPG, PNG или WEBP", errorCode: "equipmentFill.errors.photoFormat" }, { status: 415 });
   }
 
   console.info(

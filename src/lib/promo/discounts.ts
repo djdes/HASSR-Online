@@ -1,4 +1,6 @@
-import { computeDiscountRub, describeDiscount } from "./rules";
+import { computeDiscountRub } from "./rules";
+import { pricingTranslator } from "@/i18n/pricing-messages";
+import type { Locale } from "@/i18n/locales";
 
 /**
  * Персональные скидки на подписку — чистые правила без `db`: их
@@ -42,11 +44,12 @@ export type AppliedDiscount = {
   lifetimeDiscountId: string | null;
 };
 
-const NBSP = " ";
-
 /** «−10 %» / «−500 ₽» с неразрывным пробелом — для плашек. */
-function amountLabel(d: { kind: DiscountKind; value: number }): string {
-  return describeDiscount(d).replace(" ", NBSP);
+function amountLabel(d: { kind: DiscountKind; value: number }, locale: Locale): string {
+  const t = pricingTranslator(locale);
+  return d.kind === "percent"
+    ? t("discount.percent", { value: d.value })
+    : t("discount.fixed", { value: d.value });
 }
 
 /**
@@ -55,14 +58,12 @@ function amountLabel(d: { kind: DiscountKind; value: number }): string {
  */
 export function discountLabel(
   d: Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime">,
-  locale: "ru" | "en" = "ru",
+  locale: Locale = "ru",
 ): string {
-  if (locale === "en") {
-    if (d.source === "lifetime") return `Your lifetime discount ${amountLabel(d)}`;
-    return `Promo code ${d.code}: ${amountLabel(d)}${d.lifetime ? " for life" : ""}`;
-  }
-  if (d.source === "lifetime") return `Ваша скидка ${amountLabel(d)} навсегда`;
-  return `Промокод ${d.code}: ${amountLabel(d)}${d.lifetime ? " навсегда" : ""}`;
+  const t = pricingTranslator(locale);
+  const amount = amountLabel(d, locale);
+  if (d.source === "lifetime") return t("discount.lifetime", { amount });
+  return t("discount.promoCode", { code: d.code, amount, lifetime: d.lifetime ? "yes" : "no" });
 }
 
 /** Скидка в рублях от другой цены (доплата за сотрудников, цена без акции). */
@@ -111,7 +112,7 @@ export function appliedDiscountNotice(input: {
 }): string | null {
   const { applied, lifetime, typedCode } = input;
   if (!applied) return null;
-  const lifetimeText = lifetime ? amountLabel(lifetime) : "";
+  const lifetimeText = lifetime ? amountLabel(lifetime, "ru") : "";
   if (applied.source === "lifetime") {
     if (!typedCode) return null;
     if (lifetime && typedCode === lifetime.code) {

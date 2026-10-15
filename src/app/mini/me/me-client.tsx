@@ -1,4 +1,5 @@
 "use client";
+import { PersonalLanguageSelect } from "@/components/i18n/personal-language-select";
 
 import Link from "next/link";
 import { MiniOrgSwitcher } from "@/app/mini/_components/mini-org-switcher";
@@ -335,6 +336,7 @@ export function MiniMeClient({
 
       {/* «Новости и предложения» — как в настройках уведомлений на сайте (П-3). */}
       <MarketingEmailToggle variant="mini" />
+      <section className="mini-card p-4"><PersonalLanguageSelect /></section>
 
       {/* Тема — те же три карточки, что в меню профиля на сайте
           («Светлая / Тёмная / Как на устройстве», как блок Appearance в

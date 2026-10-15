@@ -16,6 +16,8 @@
  * Аналог haccp-online.ru, но в нашей design-system.
  */
 
+"use client";
+
 import {
   GRID_CELL_CLASS,
   GRID_HEAD_CELL_CLASS,
@@ -26,6 +28,7 @@ import {
   HeaderTitle,
 } from "@/components/journals/journal-header-edit";
 import { JOURNAL_TABLE_SCROLL_CLASS } from "@/components/journals/journal-responsive";
+import { useLocale, useTranslations } from "next-intl";
 
 type Props = {
   /** Название организации (ООО «Кухня» / ИП Иванов и т.п.). */
@@ -68,14 +71,22 @@ type Props = {
 export const PAPER_HEADER_DATE_BLANK = "__________";
 
 export function formatPaperHeaderDate(
-  d: Date | string | null | undefined
+  d: Date | string | null | undefined,
+  locale = "ru"
 ): string {
   if (!d) return PAPER_HEADER_DATE_BLANK;
-  const dt = typeof d === "string" ? new Date(d) : d;
+  const dateOnly = typeof d === "string" ? /^(\d{4})-(\d{2})-(\d{2})/.exec(d) : null;
+  const dt = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+    : typeof d === "string" ? new Date(d) : d;
   if (Number.isNaN(dt.getTime())) return PAPER_HEADER_DATE_BLANK;
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  return `${dd}-${mm}-${dt.getFullYear()}`;
+  const year = dateOnly ? dt.getUTCFullYear() : dt.getFullYear();
+  const month = dateOnly ? dt.getUTCMonth() : dt.getMonth();
+  const day = dateOnly ? dt.getUTCDate() : dt.getDate();
+  if (locale === "ru") return `${String(day).padStart(2, "0")}-${String(month + 1).padStart(2, "0")}-${year}`;
+  return new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : "en-GB", {
+    day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month, day)));
 }
 
 /**
@@ -100,7 +111,7 @@ export function formatPaperHeaderDate(
 export function JournalPaperHeaderRows({
   orgName,
   title,
-  pageInfo = "СТР. 1 ИЗ 1",
+  pageInfo,
   startedAt,
   finishedAt,
   controlPeriodicity,
@@ -118,6 +129,8 @@ export function JournalPaperHeaderRows({
   /** Ширина правой колонки. */
   sideCellClass?: string;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("journalWidgets.documentHeader");
   return (
     <>
       <tr>
@@ -131,7 +144,7 @@ export function JournalPaperHeaderRows({
         <td
           className={`${GRID_CELL_CLASS} px-3 py-2 text-center text-[13px] uppercase leading-tight`}
         >
-          СИСТЕМА ХАССП
+          {t("haccpSystem")}
         </td>
         <td
           className={`${sideCellClass} ${GRID_CELL_CLASS} px-3 py-2 text-[13px] leading-tight`}
@@ -140,12 +153,12 @@ export function JournalPaperHeaderRows({
               а не выталкивает шапку за правый край (там «Начат…/Окончен…»
               обрезались и не читались). */}
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <span className="font-semibold">Начат</span>
-            <span className="tabular-nums">{formatPaperHeaderDate(startedAt)}</span>
+            <span className="font-semibold">{t("started")}</span>
+            <span className="tabular-nums">{formatPaperHeaderDate(startedAt, locale)}</span>
           </div>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
-            <span>Окончен</span>
-            <span className="tabular-nums">{formatPaperHeaderDate(finishedAt)}</span>
+            <span>{t("finished")}</span>
+            <span className="tabular-nums">{formatPaperHeaderDate(finishedAt, locale)}</span>
           </div>
         </td>
       </tr>
@@ -183,8 +196,8 @@ export function JournalPaperHeaderRows({
         <td
           className={`${GRID_CELL_CLASS} px-3 py-2 text-center text-[13px] uppercase leading-tight [word-spacing:0.18em] sm:whitespace-nowrap`}
         >
-          <span className="print:hidden">{pageInfo}</span>
-          <span className="hidden print:inline">СТР. ___ ИЗ ___</span>
+          <span className="print:hidden">{pageInfo ?? t("pageInfo")}</span>
+          <span className="hidden print:inline">{t("paperPageInfo")}</span>
         </td>
       </tr>
       <JournalPeriodicityHeaderRow
@@ -205,7 +218,7 @@ export function JournalPaperHeaderRows({
 export function JournalDocumentHeader({
   orgName,
   title,
-  pageInfo = "СТР. 1 ИЗ 1",
+  pageInfo,
   startedAt,
   finishedAt,
   dateMode,
@@ -258,13 +271,14 @@ export function JournalPeriodicityHeaderRow({
   /** Сколько колонок занимает ячейка со значением (обычно «средняя + правая»). */
   valueColSpan?: number;
 }) {
+  const t = useTranslations("journalWidgets.documentHeader");
   const value = (text ?? "").trim();
   if (!value) return null;
 
   return (
     <tr>
       <td className={`px-3 py-2 text-center text-[12.5px] font-semibold ${labelClass}`}>
-        Периодичность контроля
+        {t("periodicity")}
       </td>
       <td
         colSpan={valueColSpan}
@@ -302,7 +316,7 @@ export function JournalDocumentTitle({
  * видит легенду что значит «Зд», «В», «Б/л», «T», «Г», «C1» и т.д.
  */
 export function JournalLegendBlock({
-  title = "Условные обозначения",
+  title,
   items,
   className = "",
   variant = "card",
@@ -327,13 +341,15 @@ export function JournalLegendBlock({
    */
   variant?: "card" | "plain";
 }) {
+  const t = useTranslations("journalWidgets.documentHeader");
+  const legendTitle = title ?? t("legendTitle");
   if (variant === "plain") {
     return (
       <div
         className={`w-full break-inside-avoid text-[12.5px] italic leading-[1.4] text-[#0b1024] sm:text-[13px] ${className}`}
       >
         <div className="mb-1 font-semibold underline underline-offset-2">
-          {title}:
+          {legendTitle}:
         </div>
         {items.map((item, idx) => (
           <div key={idx}>
@@ -365,7 +381,7 @@ export function JournalLegendBlock({
       className={`mx-auto w-full max-w-[820px] break-inside-avoid rounded-2xl border border-[#ececf4] bg-white p-4 text-[12.5px] leading-relaxed text-[#3c4053] sm:p-5 sm:text-[13px] print:rounded-none print:border-black ${className}`}
     >
       <div className="mb-2 italic underline underline-offset-2 text-[12px] font-semibold sm:text-[12.5px]">
-        {title}:
+        {legendTitle}:
       </div>
       <ul className="space-y-1">
         {items.map((item, idx) => (

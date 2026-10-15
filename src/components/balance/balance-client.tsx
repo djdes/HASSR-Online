@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -80,6 +81,7 @@ export function BalanceClient({
    */
   topup?: TopupBlockConfig | null;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
   const [data, setData] = useState(initial);
   const mini = variant === "mini";
 
@@ -103,11 +105,11 @@ export function BalanceClient({
       const comment =
         typeof event.data?.comment === "string" ? event.data.comment : "";
       if (amount > 0) {
-        toast.success(`Начислено ${formatPoints(amount)}`, {
+        toast.success(t("events.credited", { amount }), {
           description: comment || undefined,
         });
       } else if (amount < 0) {
-        toast.message(`Списано ${formatPoints(Math.abs(amount))}`, {
+        toast.message(t("events.debited", { amount: Math.abs(amount) }), {
           description: comment || undefined,
         });
       }
@@ -142,41 +144,41 @@ export function BalanceClient({
       {!mini && !inApp ? (
         <PageGuide
           storageKey="settings-balance"
-          title="Как работают баллы"
+          title={t("guide.title")}
           bullets={[
             {
-              title: "Один балл — один рубль",
-              body: "Баллы лежат на балансе организации и списываются при оплате подписки. Оборудование за баллы не продаём.",
+              title: t("guide.onePointTitle"),
+              body: t("guide.onePointBody"),
             },
             {
-              title: "Приглашайте коллег",
-              body: `Друг оформит подписку — вам придёт ${REFERRAL_REWARD_PERCENT} % её стоимости баллами. Один бонус на одно приглашённое заведение.`,
+              title: t("guide.inviteTitle"),
+              body: t("guide.inviteBody", { percent: REFERRAL_REWARD_PERCENT }),
             },
             {
-              title: "Оставьте отзыв",
-              body: "Текст — 300 ₽, с фото — 750 ₽, с видео — 1990 ₽. Анонимно, без имени и заведения, — на 20 % меньше. Начислим после проверки модератором.",
+              title: t("guide.reviewTitle"),
+              body: t("guide.reviewBody"),
             },
             {
-              title: "Пополните деньгами",
-              body: `Картой или по счёту для юрлиц, от ${formatPoints(TOPUP_MIN_RUB)} до ${formatPoints(TOPUP_MAX_RUB)}. Деньги зачисляются баллами 1:1 сразу после оплаты. Промокоды и акции к пополнению не применяются.`,
+              title: t("guide.topupTitle"),
+              body: t("guide.topupBody", { min: TOPUP_MIN_RUB, max: TOPUP_MAX_RUB }),
             },
           ]}
           qa={[
             {
-              q: "Баллы сгорают?",
-              a: "Нет. Лежат на балансе, пока не потратите на подписку.",
+              q: t("guide.faqBurnQuestion"),
+              a: t("guide.faqBurnAnswer"),
             },
             {
-              q: "Можно вывести деньгами?",
-              a: "Нет, вывод баллов не предусмотрен: ими оплачивается подписка. Если пополнили баланс по ошибке — напишите на support@wesetup.ru.",
+              q: t("guide.faqWithdrawQuestion"),
+              a: t("guide.faqWithdrawAnswer"),
             },
             {
-              q: "Можно оплатить баллами оборудование?",
-              a: "Нет. В заказе «подписка + оборудование» баллами закроется только подписка, железо оплачивается деньгами.",
+              q: t("guide.faqEquipmentQuestion"),
+              a: t("guide.faqEquipmentAnswer"),
             },
             {
-              q: "Почему тумблер баллов недоступен при автопродлении?",
-              a: "Касса запоминает карту по сумме первого платежа. Со скидкой она запомнила бы уменьшенную сумму, и следующие списания пошли бы не по цене тарифа.",
+              q: t("guide.faqAutopayQuestion"),
+              a: t("guide.faqAutopayAnswer"),
             },
           ]}
         />
@@ -196,6 +198,7 @@ function HeroCard({
   mini: boolean;
   inApp: boolean;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
   if (!data.canSeeBalance) {
     return (
       <section
@@ -226,7 +229,7 @@ function HeroCard({
               }
               style={mini ? { color: "var(--mini-text)" } : undefined}
             >
-              Ваши бонусы идут на баланс организации
+              {t("balance.myBonusesTitle")}
             </h2>
             <p
               className={
@@ -235,10 +238,8 @@ function HeroCard({
               style={mini ? { color: "var(--mini-text-muted)" } : undefined}
             >
               {inApp
-                ? "Бонусы начисляются на баланс организации. Вы принесли "
-                : "Баллы тратит руководитель — при оплате подписки. Вы принесли "}
-              <strong>{formatPoints(data.myEarnedRub)}</strong>: за отзыв и за
-              коллег, которые пришли по вашей рекомендации.
+                ? t("balance.myBonusesInApp", { amount: data.myEarnedRub })
+                : t("balance.myBonusesAdmin", { amount: data.myEarnedRub })}
             </p>
           </div>
         </div>
@@ -265,7 +266,7 @@ function HeroCard({
             }
             style={mini ? { color: "var(--mini-text-muted)" } : undefined}
           >
-            Баланс организации
+            {t("balance.organization")}
           </div>
           <div
             className={
@@ -281,9 +282,7 @@ function HeroCard({
             className={mini ? "mt-2 text-[13px]" : "mt-2 text-[14px] text-[#6f7282]"}
             style={mini ? { color: "var(--mini-text-muted)" } : undefined}
           >
-            {inApp
-              ? "1 балл = 1 ₽."
-              : "1 балл = 1 ₽. Списываются при оплате подписки — оборудование за баллы не продаём."}
+            {inApp ? t("balance.inAppDescription") : t("balance.siteDescription")}
           </p>
         </div>
 
@@ -305,7 +304,7 @@ function HeroCard({
             }
           >
             <Coins className="size-4" />
-            Оплатить с баллами
+            {t("balance.payWithPoints")}
           </Link>
         ) : null}
       </div>
@@ -317,11 +316,11 @@ function HeroCard({
 
 const INVITE_STATUS: Record<
   string,
-  { label: string; tone: "muted" | "info" | "ok" }
+  { label: "referral.statusSent" | "referral.statusRegistered" | "referral.statusPaid"; tone: "muted" | "info" | "ok" }
 > = {
-  sent: { label: "приглашение отправлено", tone: "muted" },
-  registered: { label: "зарегистрировался", tone: "info" },
-  paid: { label: "оплатил", tone: "ok" },
+  sent: { label: "referral.statusSent", tone: "muted" },
+  registered: { label: "referral.statusRegistered", tone: "info" },
+  paid: { label: "referral.statusPaid", tone: "ok" },
 };
 
 function ReferralSection({
@@ -335,6 +334,7 @@ function ReferralSection({
   referralLink: string;
   onSent: () => void | Promise<void>;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -354,19 +354,16 @@ function ReferralSection({
           message: message.trim() || undefined,
         }),
       });
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
       if (!response.ok) {
-        toast.error(body.error ?? "Не удалось отправить приглашение");
+        toast.error(t("referral.sendFailed"));
         return;
       }
-      toast.success("Приглашение отправлено");
+      toast.success(t("referral.sendSuccess"));
       setEmail("");
       setMessage("");
       await onSent();
     } catch {
-      toast.error("Сеть недоступна. Попробуйте ещё раз");
+      toast.error(t("referral.networkError"));
     } finally {
       setSending(false);
       setConfirmOpen(false);
@@ -377,32 +374,32 @@ function ReferralSection({
     try {
       await navigator.clipboard.writeText(referralLink);
       setCopied(true);
-      toast.success("Ссылка скопирована");
+      toast.success(t("referral.copied"));
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Браузер не дал скопировать — выделите ссылку вручную");
+      toast.error(t("referral.copyFailed"));
     }
   }
 
   const telegramShare = `https://t.me/share/url?url=${encodeURIComponent(
     referralLink,
   )}&text=${encodeURIComponent(
-    "Ведём журналы СанПиН и ХАССП в WeSetup — попробуй, это заметно быстрее бумаги",
+    t("referral.shareText"),
   )}`;
 
   return (
     <Section
       mini={mini}
       icon={<Gift className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
-      title={`Пригласите друга — ${REFERRAL_REWARD_PERCENT} % на баланс`}
-      subtitle={`Коллега оформит подписку — начислим ${REFERRAL_REWARD_PERCENT} % её стоимости баллами. Бонус один на каждое приглашённое заведение.`}
+      title={t("referral.title", { percent: REFERRAL_REWARD_PERCENT })}
+      subtitle={t("referral.subtitle", { percent: REFERRAL_REWARD_PERCENT })}
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <input
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="почта коллеги"
+          placeholder={t("referral.emailPlaceholder")}
           className={inputClass(mini)}
           style={mini ? miniInput : undefined}
         />
@@ -418,14 +415,14 @@ function ReferralSection({
           ) : (
             <Send className="size-4" />
           )}
-          Отправить
+          {t("referral.send")}
         </button>
       </div>
       <textarea
         value={message}
         onChange={(event) => setMessage(event.target.value.slice(0, 500))}
         rows={2}
-        placeholder="Пара слов от себя — необязательно"
+        placeholder={t("referral.messagePlaceholder")}
         className={`${inputClass(mini)} mt-3 h-auto py-3`}
         style={mini ? miniInput : undefined}
       />
@@ -446,7 +443,7 @@ function ReferralSection({
           }
           style={mini ? { color: "var(--mini-text-muted)" } : undefined}
         >
-          Ваша ссылка
+          {t("referral.linkLabel")}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <code
@@ -470,7 +467,7 @@ function ReferralSection({
             style={mini ? miniSecondary : undefined}
           >
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            Копировать
+            {t("referral.copy")}
           </button>
           <a
             href={telegramShare}
@@ -479,7 +476,7 @@ function ReferralSection({
             className={secondaryButtonClass(mini)}
             style={mini ? miniSecondary : undefined}
           >
-            <Send className="size-4" />В Telegram
+            <Send className="size-4" />{t("referral.telegram")}
           </a>
         </div>
       </div>
@@ -511,7 +508,7 @@ function ReferralSection({
                     </span>
                   ) : null}
                   <StatusPill tone={status.tone} mini={mini}>
-                    {status.label}
+                    {t(status.label)}
                   </StatusPill>
                 </span>
               </li>
@@ -524,16 +521,16 @@ function ReferralSection({
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={send}
-        title="Отправить приглашение?"
-        description={`Письмо уйдёт на ${email.trim().toLowerCase()} от имени WeSetup с вашей рекомендацией.`}
+        title={t("referral.confirmTitle")}
+        description={t("referral.confirmDescription", { email: email.trim().toLowerCase() })}
         bullets={[
-          { label: "Адрес увидит только сервис — рассылок не будет" },
+          { label: t("referral.privacyNotice") },
           {
-            label: `Когда коллега оплатит подписку, вам начислят ${REFERRAL_REWARD_PERCENT} % баллами`,
+            label: t("referral.rewardNotice", { percent: REFERRAL_REWARD_PERCENT }),
             tone: "info",
           },
         ]}
-        confirmLabel="Отправить"
+        confirmLabel={t("referral.send")}
         variant="info"
       />
     </Section>
@@ -542,10 +539,10 @@ function ReferralSection({
 
 /* -------------------------------------------------------------- отзыв */
 
-const REVIEW_TILES: Array<{ kind: ReviewKind; title: string; hint: string }> = [
-  { kind: "text", title: "Текст", hint: "пара абзацев о работе с журналами" },
-  { kind: "photo", title: "С фото", hint: "снимок кухни, планшета или журнала" },
-  { kind: "video", title: "С видео", hint: "30–60 секунд от первого лица" },
+const REVIEW_TILES: Array<{ kind: ReviewKind; titleKey: "review.textKind" | "review.photoKind" | "review.videoKind"; hintKey: "review.textHint" | "review.photoHint" | "review.videoHint" }> = [
+  { kind: "text", titleKey: "review.textKind", hintKey: "review.textHint" },
+  { kind: "photo", titleKey: "review.photoKind", hintKey: "review.photoHint" },
+  { kind: "video", titleKey: "review.videoKind", hintKey: "review.videoHint" },
 ];
 
 /**
@@ -564,6 +561,7 @@ function RewardAmount({
   className: string;
   testId?: string;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
   const full = reviewRewardFor(kind);
   if (!anonymous) {
     return (
@@ -575,11 +573,11 @@ function RewardAmount({
   return (
     <span className="inline-flex flex-wrap items-baseline gap-x-1.5" data-testid={testId}>
       <s className="text-[0.82em] font-medium text-[#9b9fb3]" data-testid={testId ? `${testId}-old` : undefined}>
-        <span className="sr-only">было </span>
+        <span className="sr-only">{t("review.oldAmount")} </span>
         {formatPoints(full)}
       </s>
       <span className={className}>
-        <span className="sr-only">анонимно </span>
+        <span className="sr-only">{t("review.anonymousAmount")} </span>
         {formatPoints(reviewRewardFor(kind, true))}
       </span>
     </span>
@@ -595,6 +593,7 @@ function ReviewSection({
   mini: boolean;
   onSent: () => void | Promise<void>;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
   const review = data.myReview;
   const [showForm, setShowForm] = useState(false);
   // Анонимность живёт здесь, а не в форме: от неё зависят и плитки видов
@@ -606,11 +605,11 @@ function ReviewSection({
       <Section
         mini={mini}
         icon={<Star className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
-        title="Ваш отзыв"
+        title={t("review.yourReview")}
         subtitle={
           review.status === "pending"
-            ? "На проверке — обычно отвечаем в течение рабочего дня."
-            : `Опубликован. Начислено ${formatPoints(review.rewardRub)} на баланс организации.`
+            ? t("review.pendingStatus")
+            : t("review.publishedStatus", { amount: review.rewardRub })
         }
       >
         <blockquote
@@ -631,7 +630,7 @@ function ReviewSection({
             style={mini ? { color: "var(--mini-text-muted)" } : undefined}
           >
             {review.anonymous
-              ? "— анонимно, без имени и заведения"
+              ? t("review.anonymousBadge")
               : `— ${review.authorName}, ${review.place}`}
           </footer>
         </blockquote>
@@ -643,8 +642,8 @@ function ReviewSection({
     <Section
       mini={mini}
       icon={<Star className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
-      title="Оставьте отзыв — до 1990 ₽"
-      subtitle="Расскажите, как ведёте журналы. Мы опубликуем отзыв на сайте, а баллы начислим на баланс организации после проверки."
+      title={t("review.formTitle")}
+      subtitle={t("review.formSubtitle")}
     >
       {review?.status === "rejected" ? (
         <div
@@ -659,8 +658,7 @@ function ReviewSection({
               : undefined
           }
         >
-          Прошлый отзыв не опубликован: {review.rejectReason ?? "причина не указана"}.
-          Исправьте и отправьте заново.
+          {t("review.previousRejected", { reason: review.rejectReason ?? t("review.reasonUnavailable") })}
         </div>
       ) : null}
 
@@ -684,7 +682,7 @@ function ReviewSection({
               }
               style={mini ? { color: "var(--mini-text)" } : undefined}
             >
-              {tile.title}
+              {t(tile.titleKey)}
             </div>
             <div className="mt-1">
               <RewardAmount
@@ -697,7 +695,7 @@ function ReviewSection({
               className={mini ? "mt-1 text-[12px]" : "mt-1 text-[12px] text-[#6f7282]"}
               style={mini ? { color: "var(--mini-text-muted)" } : undefined}
             >
-              {tile.hint}
+              {t(tile.hintKey)}
             </div>
           </div>
         ))}
@@ -730,6 +728,7 @@ function ReviewForm({
   onAnonymousChange: (next: boolean) => void;
   onSent: () => void | Promise<void>;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
   const [text, setText] = useState("");
   // Предзаполнение — с сервера и без дублей: если организация названа так
   // же, как человек, заведение не подставляется (reviewPrefill).
@@ -778,17 +777,16 @@ function ReviewForm({
           attachments: ready ? [ready] : [],
         }),
       });
-      const body = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
-        toast.error(body.error ?? "Не удалось отправить отзыв");
+        toast.error(t("review.submitFailed"));
         return;
       }
-      toast.success("Отзыв отправлен на проверку");
+      toast.success(t("review.submitSuccess"));
       setText("");
       uploads.clear();
       await onSent();
     } catch {
-      toast.error("Сеть недоступна. Попробуйте ещё раз");
+      toast.error(t("referral.networkError"));
     } finally {
       setSending(false);
       setConfirmOpen(false);
@@ -802,7 +800,7 @@ function ReviewForm({
           <button
             key={value}
             type="button"
-            aria-label={`Оценка ${value}`}
+            aria-label={t("review.ratingLabel", { rating: value })}
             onClick={() => setRating(value)}
             className="transition-transform duration-150 hover:scale-110"
           >
@@ -825,8 +823,8 @@ function ReviewForm({
           setText(event.target.value.slice(0, REVIEW_TEXT_MAX_LENGTH))
         }
         rows={5}
-        aria-label="Текст отзыва"
-        placeholder="Что изменилось после перехода на электронные журналы? Что понравилось, что было сложно?"
+        aria-label={t("review.textLabel")}
+        placeholder={t("review.textPlaceholder")}
         className={`${inputClass(mini)} h-auto py-3`}
         style={mini ? miniInput : undefined}
       />
@@ -834,7 +832,7 @@ function ReviewForm({
         className={mini ? "text-[12px]" : "text-[12px] text-[#9b9fb3]"}
         style={mini ? { color: "var(--mini-text-faint)" } : undefined}
       >
-        {text.trim().length} / {REVIEW_TEXT_MAX_LENGTH} символов
+        {t("review.characterCount", { count: text.trim().length, limit: REVIEW_TEXT_MAX_LENGTH })}
       </div>
 
       <label className="flex cursor-pointer items-start gap-2.5">
@@ -849,12 +847,12 @@ function ReviewForm({
           className={mini ? "text-[13px]" : "text-[13.5px] leading-[1.5] text-[#0b1024]"}
           style={mini ? { color: "var(--mini-text)" } : undefined}
         >
-          Оставить отзыв анонимно (без имени и заведения)
+          {t("review.anonymousCheckbox")}
           <span
             className={mini ? "mt-0.5 block text-[12px]" : "mt-0.5 block text-[12px] text-[#6f7282]"}
             style={mini ? { color: "var(--mini-text-muted)" } : undefined}
           >
-            На сайте отзыв будет подписан «Анонимный отзыв», начисление — на 20 % меньше.
+            {t("review.anonymousNote")}
           </span>
         </span>
       </label>
@@ -863,26 +861,26 @@ function ReviewForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="review-author" className={labelClass} style={labelStyle}>
-              Как вас подписать
+              {t("review.authorLabel")}
             </label>
             <input
               id="review-author"
               value={authorName}
               onChange={(event) => setAuthorName(event.target.value)}
-              placeholder="Например, Анна Петрова"
+              placeholder={t("review.authorPlaceholder")}
               className={inputClass(mini)}
               style={mini ? miniInput : undefined}
             />
           </div>
           <div>
             <label htmlFor="review-place" className={labelClass} style={labelStyle}>
-              Заведение и город
+              {t("review.placeLabel")}
             </label>
             <input
               id="review-place"
               value={place}
               onChange={(event) => setPlace(event.target.value)}
-              placeholder="Например, кафе «Ромашка», Казань"
+              placeholder={t("review.placePlaceholder")}
               className={inputClass(mini)}
               style={mini ? miniInput : undefined}
             />
@@ -910,7 +908,7 @@ function ReviewForm({
           style={mini ? miniSecondary : undefined}
         >
           <Paperclip className="size-4" />
-          Фото или видео
+          {t("review.attachmentLabel")}
         </button>
         {attachment ? (
           <span
@@ -929,7 +927,7 @@ function ReviewForm({
             <span className="max-w-[180px] truncate">{attachment.filename}</span>
             <button
               type="button"
-              aria-label="Убрать вложение"
+              aria-label={t("review.removeAttachment")}
               onClick={() => uploads.remove(attachment.key)}
               className="opacity-70 transition-opacity hover:opacity-100"
             >
@@ -952,9 +950,7 @@ function ReviewForm({
           className={mini ? "text-[13px]" : "text-[13px] leading-[1.5] text-[#3c4053]"}
           style={mini ? { color: "var(--mini-text-muted)" } : undefined}
         >
-          {anonymous
-            ? "Согласен на публикацию текста отзыва без имени и заведения"
-            : "Согласен на публикацию отзыва, имени и заведения на сайте wesetup.ru и в соцсетях."}
+          {anonymous ? t("review.anonymousConsent") : t("review.publicConsent")}
         </span>
       </label>
 
@@ -972,14 +968,14 @@ function ReviewForm({
         >
           {/* Пробелы между словами даёт gap флекса — литеральные пробелы
               удвоили бы отступ. */}
-          <span>Будет начислено</span>
+          <span>{t("review.rewardWillBe")}</span>
           <RewardAmount
             kind={kind}
             anonymous={anonymous}
             className="font-semibold text-[#116b2a]"
             testId="review-reward"
           />
-          <span>после проверки</span>
+          <span>{t("review.afterReview")}</span>
         </span>
         <button
           type="button"
@@ -993,7 +989,7 @@ function ReviewForm({
           ) : (
             <Send className="size-4" />
           )}
-          Отправить отзыв
+          {t("review.submit")}
         </button>
       </div>
 
@@ -1001,23 +997,23 @@ function ReviewForm({
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={send}
-        title="Отправить отзыв на проверку?"
-        description="Модератор прочитает отзыв и решит, публиковать ли его. Обычно это занимает один рабочий день."
+        title={t("review.confirmTitle")}
+        description={t("review.confirmDescription")}
         bullets={[
           {
             label: anonymous
-              ? `К начислению ${formatPoints(reward)} на баланс организации — анонимный отзыв на 20 % меньше`
-              : `К начислению ${formatPoints(reward)} на баланс организации`,
+              ? t("review.rewardAnonymous", { amount: reward })
+              : t("review.rewardPublic", { amount: reward }),
             tone: "info",
           },
           {
             label: anonymous
-              ? "Отзыв появится на сайте без имени и заведения"
-              : "Отзыв появится на сайте с вашим именем и заведением",
+              ? t("review.publishAnonymous")
+              : t("review.publishPublic"),
           },
-          { label: "Пока отзыв на проверке, отправить второй нельзя" },
+          { label: t("review.secondReviewBlocked") },
         ]}
-        confirmLabel="Отправить"
+        confirmLabel={t("review.submit")}
         variant="info"
       />
     </div>
@@ -1035,16 +1031,18 @@ function HistorySection({
   mini: boolean;
   inApp: boolean;
 }) {
+  const t = useTranslations("settingsManagement.balanceClient");
+  const locale = useLocale();
   if (data.transactions.length === 0) {
     return (
       <Section
         mini={mini}
         icon={<Coins className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
-        title="История начислений"
+        title={t("history.title")}
         subtitle={
           inApp
-            ? "Пока пусто."
-            : "Пока пусто. Пригласите коллегу, оставьте отзыв или пополните баланс — первые баллы появятся здесь."
+            ? t("history.empty")
+            : t("history.emptyWithNextSteps")
         }
       >
         {null}
@@ -1069,8 +1067,8 @@ function HistorySection({
     <Section
       mini={mini}
       icon={<Coins className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
-      title="История начислений"
-      subtitle="Каждое движение баллов — с датой, причиной и остатком после операции."
+      title={t("history.title")}
+      subtitle={t("history.subtitle")}
     >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[420px] text-[13.5px]">
@@ -1083,10 +1081,10 @@ function HistorySection({
               }
               style={mini ? { color: "var(--mini-text-faint)" } : undefined}
             >
-              <th className="pb-2 font-medium">Дата</th>
-              <th className="pb-2 font-medium">Операция</th>
-              <th className="pb-2 text-right font-medium">Сумма</th>
-              <th className="pb-2 text-right font-medium">Итог</th>
+              <th className="pb-2 font-medium">{t("history.date")}</th>
+              <th className="pb-2 font-medium">{t("history.operation")}</th>
+              <th className="pb-2 text-right font-medium">{t("history.amount")}</th>
+              <th className="pb-2 text-right font-medium">{t("history.total")}</th>
             </tr>
           </thead>
           <tbody>
@@ -1102,7 +1100,7 @@ function HistorySection({
                   className="py-2.5 whitespace-nowrap"
                   style={mini ? { color: "var(--mini-text-muted)" } : undefined}
                 >
-                  {new Date(transaction.createdAt).toLocaleDateString("ru-RU")}
+                  {new Date(transaction.createdAt).toLocaleDateString(locale)}
                 </td>
                 <td
                   className="py-2.5"

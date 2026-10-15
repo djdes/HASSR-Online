@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { organizationError } from "./organization-presentation";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -22,6 +24,9 @@ export function InvoiceActions({
   purpose?: "subscription" | "topup";
 }) {
   const topup = purpose === "topup";
+  const t = useTranslations("rootOrganizationManagement");
+  const currentCopy = useRef(t);
+  currentCopy.current = t;
   const router = useRouter();
   const [confirm, setConfirm] = useState<"paid" | "cancel" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -31,18 +36,21 @@ export function InvoiceActions({
     try {
       const response = await fetch(`/api/root/orders/${orderId}/${kind === "paid" ? "mark-paid" : "cancel"}`, { method: "POST" });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось");
+      if (!response.ok) {
+        toast.error(organizationError(data, currentCopy.current, "invoice.failed"));
+        return;
+      }
       toast.success(
         kind === "paid"
           ? topup
-            ? `Счёт № ${orderId} оплачен — баланс пополнен, письмо ушло`
-            : `Счёт № ${orderId} оплачен — подписка продлена, письмо ушло`
-          : `Счёт № ${orderId} отменён`,
+            ? currentCopy.current("invoice.paidTopup", { orderId: String(orderId) })
+            : currentCopy.current("invoice.paidSubscription", { orderId: String(orderId) })
+          : currentCopy.current("invoice.cancelled", { orderId: String(orderId) }),
       );
       setConfirm(null);
       router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+    } catch {
+      toast.error(currentCopy.current("invoice.failed"));
     } finally {
       setBusy(false);
     }
@@ -54,16 +62,13 @@ export function InvoiceActions({
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
       <a href={`/api/payments/invoice/${orderId}/pdf`} className={small}>
-        Счёт (PDF)
-      </a>
+        {t("invoice.pdf")}</a>
       {pending ? (
         <>
           <button type="button" onClick={() => setConfirm("paid")} disabled={busy} className={`${small} border-[#5566f6]/40 text-[#3848c7]`}>
-            Оплата поступила
-          </button>
+            {t("invoice.received")}</button>
           <button type="button" onClick={() => setConfirm("cancel")} disabled={busy} className={`${small} text-[#a13a32]`}>
-            Отменить
-          </button>
+            {t("invoice.cancel")}</button>
         </>
       ) : null}
       <ConfirmDialog
@@ -71,22 +76,23 @@ export function InvoiceActions({
         onClose={() => setConfirm(null)}
         onConfirm={() => run("paid")}
         variant="info"
-        title={`Деньги по счёту № ${orderId} пришли?`}
-        description={`${organizationName}, ${amountRub.toLocaleString("ru-RU")} ₽. Сверьте с выпиской: отменить подтверждение нельзя.`}
+        title={t("invoice.paidTitle", { orderId: String(orderId) })}
+        description={t("invoice.paidDescription", { name: organizationName, amount: amountRub })}
         bullets={
           topup
             ? [
-                { label: `Баланс организации пополнится на ${amountRub.toLocaleString("ru-RU")} ₽ (1 ₽ = 1 балл)` },
-                { label: "Клиенту уйдёт письмо «Баланс пополнен», руководству — уведомление" },
-                { label: "Комиссия партнёру — как после кассы; УПД на пополнение не выпускается" },
+                { label: t("invoice.topupAmount", { amount: amountRub }) },
+                { label: t("invoice.topupEmail") },
+                { label: t("invoice.topupPartner") },
               ]
             : [
-                { label: "Подписка организации продлится" },
-                { label: "Клиенту уйдёт письмо «Оплата получена» с УПД" },
-                { label: "Партнёрские и реферальные начисления — как после кассы" },
+                { label: t("invoice.subscriptionExtension") },
+                { label: t("invoice.subscriptionEmail") },
+                { label: t("invoice.subscriptionRewards") },
               ]
         }
-        confirmLabel="Да, оплата поступила"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("invoice.confirmPaid")}
         confirmDisabled={busy}
       />
       <ConfirmDialog
@@ -94,9 +100,10 @@ export function InvoiceActions({
         onClose={() => setConfirm(null)}
         onConfirm={() => run("cancel")}
         variant="warn"
-        title={`Отменить счёт № ${orderId}?`}
-        description="Счёт перестанет скачиваться, клиент сможет выставить новый."
-        confirmLabel="Отменить счёт"
+        title={t("invoice.cancelTitle", { orderId: String(orderId) })}
+        description={t("invoice.cancelDescription")}
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("invoice.confirmCancel")}
         confirmDisabled={busy}
       />
     </span>

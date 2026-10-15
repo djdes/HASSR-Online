@@ -1,6 +1,6 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import type { SiteLocale } from "@/i18n/site-locale";
 
@@ -58,7 +58,7 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
   onRetry: () => void;
   tone: "light" | "dark";
 }) {
-  const t = usePublicCopy();
+  const t = useTranslations("auth.challenge");
   const locale = useSiteLocale();
   const container = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -133,12 +133,12 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
       <div ref={container} />
       {loading && (
         <p role="status" className={"text-[13px] " + (tone === "dark" ? "text-white/70" : "text-[#6f7282]")}>
-          {t("Загружаем проверку…")}</p>
+          {t("loading")}</p>
       )}
       {error && (
         <div role="alert" className={"text-[13px] " + (tone === "dark" ? "text-[#ffb4ab]" : "text-[#a13a32]")}>
-          {t("Не удалось пройти проверку. Попробуйте ещё раз.")}<button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">
-            {t("Повторить проверку")}</button>
+          {t("failed")}<button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">
+            {t("retry")}</button>
         </div>
       )}
     </div>
@@ -147,7 +147,7 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
 
 /** Independent tokens per form; any completed submission retires its token. */
 export function useRegistrationChallenge(tone: "light" | "dark" = "light") {
-  const t = usePublicCopy();
+  const t = useTranslations("auth.challenge");
   const [token, setToken] = useState("");
   const [website, setWebsite] = useState("");
   const [revision, setRevision] = useState(0);
@@ -163,7 +163,7 @@ export function useRegistrationChallenge(tone: "light" | "dark" = "light") {
     element: (
       <>
         <div aria-hidden="true" className="hidden">
-          <label htmlFor={id}>{t("Ваш сайт")}</label>
+          <label htmlFor={id}>{t("websiteLabel")}</label>
           <input id={id} name="website" type="text" autoComplete="off" tabIndex={-1}
             value={website} onChange={(event) => setWebsite(event.target.value)} />
         </div>

@@ -29,7 +29,7 @@ export async function POST(
   const { taskId: taskIdRaw } = await ctx.params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId) || taskId <= 0) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
@@ -38,18 +38,18 @@ export async function POST(
   const reason = (body as { reason?: unknown } | null)?.reason;
 
   if (typeof token !== "string" || !token) {
-    return NextResponse.json({ error: "Missing token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "missingToken", error: "Missing token" }, { status: 401 });
   }
   if (decision !== "approved" && decision !== "rejected") {
     return NextResponse.json(
-      { error: "decision must be 'approved' or 'rejected'" },
+      { errorCode: "invalidDecision", error: "decision must be 'approved' or 'rejected'" },
       { status: 400 }
     );
   }
   if (decision === "rejected") {
     if (typeof reason !== "string" || reason.trim().length < 3) {
       return NextResponse.json(
-        { error: "reason обязателен для rejected (минимум 3 символа)" },
+        { errorCode: "rejectionReason", error: "reason обязателен для rejected (минимум 3 символа)" },
         { status: 400 }
       );
     }
@@ -61,7 +61,7 @@ export async function POST(
     include: { integration: true },
   });
   if (candidates.length === 0) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "taskNotFound", error: "Task not found" }, { status: 404 });
   }
   let link: (typeof candidates)[number] | null = null;
   for (const candidate of candidates) {
@@ -73,13 +73,13 @@ export async function POST(
   }
   if (!link) {
     return NextResponse.json(
-      { error: "Bad signature or expired token" },
+      { errorCode: "invalidToken", error: "Bad signature or expired token" },
       { status: 401 }
     );
   }
   if (link.kind !== "verifier") {
     return NextResponse.json(
-      { error: "Эта задача не для проверки" },
+      { errorCode: "notVerifierTask", error: "Эта задача не для проверки" },
       { status: 400 }
     );
   }

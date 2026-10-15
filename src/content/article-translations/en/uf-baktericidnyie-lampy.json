@@ -1,0 +1,15 @@
+{
+  "locale": "en",
+  "sourceHash": "56591e0ad9577e8f02334815462919f167f73c951f97340d0f89b7fe56e11086",
+  "title": "UV lamps: how to track operating time and stay within service life",
+  "excerpt": "A lamp lasts 8,000–9,000 hours: it still shines, but no longer disinfects. What to record, how to calculate operating time, and why it must never be switched on when people are present.",
+  "tags": ["UV lamps", "Safety"],
+  "body": [
+    {"type":"p","text":"A UV germicidal lamp is an inexpensive, effective way to reduce airborne microbes in a production area and on surfaces. But a lamp does not last forever: each model has a service life, usually 8,000–9,000 hours. After that, it may still shine while its germicidal effectiveness is gone."},
+    {"type":"h2","text":"What to record"},
+    {"type":"ul","items":["Switch-on and switch-off times.","Cumulative operating hours.","Lamp replacement, including its part number and date.","The responsible person's signature."]},
+    {"type":"callout","tone":"warn","title":"Safety","text":"An exposed germicidal lamp may operate only when no one is in the room. Switching it on between shifts while people are present can injure eyes and skin. Install a timer relay with a door interlock."},
+    {"type":"h2","text":"A simpler approach"},
+    {"type":"p","text":"In an electronic log, the lamp has a counter: switching it on starts the timer, and switching it off stops it. As the lamp approaches the end of its service life, a replacement task is created automatically. No more guessing that the lamp is probably still good."}
+  ]
+}

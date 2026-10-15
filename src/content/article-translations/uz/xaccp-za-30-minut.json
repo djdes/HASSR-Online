@@ -1,0 +1,69 @@
+{
+  "locale": "uz",
+  "sourceHash": "30ecbee26123ffac6fea41b0b4e2e0c7dee2c3c2d0774b65629a12c0f5c16fea",
+  "title": "30 daqiqada HACCP: kichik kafeda tizimni joriy etish",
+  "excerpt": "Yetti tamoyil, umumiy ovqatlanishdagi odatiy muhim nazorat nuqtalari va dastlabki audit uchun yetarli bo‘lgan beshta jurnal. Qahvaxona yoki kichik kafe uchun qisqa qo‘llanma.",
+  "body": [
+    {
+      "type": "p",
+      "text": "‘HACCP’ so‘zi murakkab tuyulishi mumkin, ammo mazmuni sodda: ishlab chiqarishingizdagi xavflarni topish, baholash va nazorat ostida saqlash. 20 o‘rinli qahvaxona uchun buni bir oqshom va bitta jadval bilan boshlash mumkin."
+    },
+    {
+      "type": "h2",
+      "text": "Yetti tamoyil"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Xavflarni tahlil qilish: biologik (Salmonella, ichak tayoqchasi), kimyoviy (yuvish vositasi qoldiqlari) va fizik (shisha siniqlari, metall).",
+        "Muhim nazorat nuqtalarini (CCP) aniqlash — xavfni bartaraf etish yoki nazorat qilish mumkin bo‘lgan bosqichlar.",
+        "Muhim chegaralarni belgilash — masalan, tortilayotgan issiq taom harorati kamida 65 °C bo‘lishi kerak.",
+        "CCP monitoringi: o‘lchovni qanday, kim va qanchalik tez-tez bajaradi.",
+        "Tuzatuvchi harakatlarni belgilash: chegara oshib ketganda nima qilish kerak.",
+        "Tizim ishlayotganini muntazam tekshirish.",
+        "Hujjatlarni yuritish: jurnallar, bayonnomalar va rejalar."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Umumiy ovqatlanishdagi odatiy CCP nuqtalari"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Xomashyoni qabul qilish: sovutilgan baliq harorati +2 °C dan yuqori emas, muzlatilgan baliqniki −18 °C dan yuqori emas.",
+        "Saqlash: muzlatkich 0 dan +4 °C gacha, muzlatgich −18 °C dan yuqori emas.",
+        "Issiqlik bilan ishlov berish: mahsulot markazida kamida 5 daqiqa davomida harorat 75 °C yoki undan yuqori bo‘lishi kerak.",
+        "Tayyor mahsulotni sovitish: +65 °C dan +10 °C gacha 2 soatdan oshmagan muddatda.",
+        "Tortish: issiq taom kamida 65 °C, sovuq taom ko‘pi bilan +14 °C."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Jurnallarning minimal to‘plami",
+      "text": "Harorat, brak, kiruvchi nazorat, tozalash va dezinseksiya jurnallari. Kichik muassasadagi dastlabki HACCP auditi uchun shu to‘plam yetarli."
+    },
+    {
+      "type": "h2",
+      "text": "Nimadan boshlash kerak"
+    },
+    {
+      "type": "p",
+      "text": "HACCP rejasini hech yozmagan bo‘lsangiz, jarayonlar xaritasidan boshlang. A4 varag‘iga bosqichlarni chizing: qabul qilish → saqlash → ishlov berish → tortish → hisobdan chiqarish. Har bir bosqichda ‘Nima noto‘g‘ri ketishi mumkin?’ deb so‘rang. Shu orqali xavflar tahlilining ilk loyihasi tayyor bo‘ladi."
+    },
+    {
+      "type": "h2",
+      "text": "WeSetup qanday yordam beradi"
+    },
+    {
+      "type": "p",
+      "text": "Kengaytirilgan tarifda audit, CAPA, kuzatuvchanlik va metall aralashmalarini nazorat qilish jurnallari bor. Shablonlar Rosselxoznadzor va yirik tarmoqlardagi ko‘pchilik xaridorlar qabul qiladigan shaklda tuzilgan; faqat qiymatlar va imzolarni kiritish qoladi."
+    }
+  ],
+  "tags": [
+    "HACCP",
+    "Joriy etish",
+    "Kichik biznes"
+  ]
+}

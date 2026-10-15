@@ -5,6 +5,8 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { YandexBackupClient } from "./yandex-backup-client";
 import { ExportJournalsCard } from "@/components/settings/export-journals-card";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export default async function BackupSettingsPage() {
     redirect("/settings");
   }
   const orgId = getActiveOrgId(session);
+  const t = await getTranslations("yandexBackup");
 
   const org = await db.organization.findUnique({
     where: { id: orgId },
@@ -49,21 +52,21 @@ export default async function BackupSettingsPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Авто-бэкап на Я.Диск
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Раз в неделю мы выгружаем JSON-дамп ваших журналов
-              (записи, документы, CAPA, потери) в вашу папку на
-              Yandex.Disk. Если WeSetup исчезнет — у вас остаётся
-              читаемый файл со всеми данными.
+              {t("description")}
             </p>
           </div>
         </div>
       </div>
 
-      <ExportJournalsCard />
+      <DomainMessagesBoundary namespaces={["archiveExport"]}>
+        <ExportJournalsCard />
+      </DomainMessagesBoundary>
 
 
+      <DomainMessagesBoundary namespaces={["yandexBackup"]}>
       <YandexBackupClient
         initialState={{
           connected: Boolean(org?.yandexDiskToken),
@@ -79,6 +82,7 @@ export default async function BackupSettingsPage() {
           createdAt: l.createdAt.toISOString(),
         }))}
       />
+      </DomainMessagesBoundary>
     </div>
   );
 }

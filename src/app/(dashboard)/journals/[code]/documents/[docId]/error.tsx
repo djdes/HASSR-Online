@@ -13,8 +13,7 @@ export default function JournalDocumentError({
     <JournalRouteError
       error={error}
       reset={reset}
-      title="Не удалось открыть документ"
-      description="Документ не загрузился. Все ранее сохранённые отметки остались в базе — нажмите «Попробовать снова»."
+      variant="document"
       backHref="/journals"
     />
   );

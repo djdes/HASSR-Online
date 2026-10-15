@@ -25,7 +25,7 @@ const TEMPLATE_CODE = EQUIPMENT_CALIBRATION_TEMPLATE_CODE;
 
 function buildForm(): TaskFormSchema {
   const fields: TaskFormField[] = [
-    { type: "date", key: "lastCalibrationDate", label: "Дата поверки", required: true },
+    { type: "date", key: "lastCalibrationDate", label: "Дата поверки", presentationKey: "fields.equipment_calibration.lastCalibrationDate.label", required: true },
     { type: "text", key: "note", label: "Примечание", required: false, multiline: true, maxLength: 300 },
   ];
   return {

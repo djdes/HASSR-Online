@@ -107,7 +107,7 @@ export async function POST(
   const equipmentId = decodeRouteParam((await params).equipmentId);
 
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "equipment", equipmentId))) {
-    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
+    return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
   }
 
   let parsed: z.infer<typeof bodySchema>;
@@ -116,23 +116,23 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Некорректные данные" },
+        { error: err.issues[0]?.message ?? "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+    return NextResponse.json({ error: "Некорректные данные", errorCode: "equipmentFill.errors.invalidData" }, { status: 400 });
   }
 
   const status: ColdEquipmentStatus | null = parsed.status ?? null;
   const temperature = status ? null : parsed.temperature ?? null;
   if (!status && temperature === null) {
-    return NextResponse.json({ error: "Введите температуру" }, { status: 400 });
+    return NextResponse.json({ error: "Введите температуру", errorCode: "equipmentFill.reading.enterTemperature" }, { status: 400 });
   }
 
   const verify = verifyEquipmentQrToken(parsed.token);
   if (!verify.ok || verify.equipmentId !== equipmentId) {
     return NextResponse.json(
-      { error: "Неверная QR-наклейка" },
+      { error: "Неверная QR-наклейка", errorCode: "equipmentFill.errors.invalidSticker" },
       { status: 401 }
     );
   }
@@ -151,7 +151,7 @@ export async function POST(
     },
   });
   if (!equipment) {
-    return NextResponse.json({ error: "Оборудование не найдено" }, { status: 404 });
+    return NextResponse.json({ error: "Оборудование не найдено", errorCode: "equipmentFill.errors.equipmentNotFound" }, { status: 404 });
   }
   const organizationId = equipment.area.organizationId;
 
@@ -165,7 +165,7 @@ export async function POST(
     cookiePass: await readObjectPassCookie(organizationId),
   });
   if (!actor.ok) {
-    return NextResponse.json({ error: actor.error }, { status: actor.status });
+    return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
   }
 
   // Employee must belong to the same organization — protects against a
@@ -180,11 +180,11 @@ export async function POST(
   });
   // «Кто заполняет»: закреплённое оборудование — только своим (и руководству).
   if (employee && !canFillObject(equipment.fillerUserIds, employee)) {
-    return NextResponse.json({ error: OBJECT_FILLER_DENIED }, { status: 403 });
+    return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });
   }
   if (!employee) {
     return NextResponse.json(
-      { error: "Сотрудник не найден" },
+      { error: "Сотрудник не найден", errorCode: "equipmentFill.errors.employeeNotFound" },
       { status: 404 }
     );
   }
@@ -193,7 +193,7 @@ export async function POST(
   // фото не прикладываем; «Фото обязательно» — температура без снимка не
   // принимается («обсл»/«рем» — без фото). Фото — только к числу и только
   // наша ссылка на снимок, который действительно лежит в каталоге.
-  const photoSettings = await getReadingPhotoSettings(organizationId);
+  const photoSettings = await getReadingPhotoSettings(organizationId, "cold_equipment_control");
   const photoDecision = resolveReadingPhotoForSave({
     settings: photoSettings,
     hasReading: temperature !== null,
@@ -201,7 +201,7 @@ export async function POST(
   });
   if (!photoDecision.ok) {
     console.info(`[reading-photo] save refused: photo required equipment=${equipment.id} org=${organizationId} user=${employee.id}`);
-    return NextResponse.json({ code: photoDecision.code, error: photoDecision.error }, { status: photoDecision.status });
+    return NextResponse.json({ code: photoDecision.code, error: photoDecision.error, errorCode: "equipmentFill.photo.requiredError" }, { status: photoDecision.status });
   }
   if (photoDecision.ignored) {
     console.info(`[reading-photo] photo ignored: fixation off equipment=${equipment.id} org=${organizationId} user=${employee.id}`);
@@ -212,7 +212,7 @@ export async function POST(
       {
         error: photoSettings.required
           ? "Фото не найдено — снимите ещё раз"
-          : "Фото не найдено — снимите ещё раз или сохраните замер без фото",
+          : "Фото не найдено — снимите ещё раз или сохраните замер без фото", errorCode: photoSettings.required ? "equipmentFill.errors.photoNotFound" : "equipmentFill.errors.photoNotFoundOptional",
       },
       { status: 400 }
     );
@@ -238,7 +238,7 @@ export async function POST(
   });
   if (!targets.hasActiveDocument) {
     return NextResponse.json(
-      { code: "no-active-document", error: EQUIPMENT_FILL_NO_DOCUMENT_ERROR },
+      { code: "no-active-document", error: EQUIPMENT_FILL_NO_DOCUMENT_ERROR, errorCode: "equipmentFill.reading.noDocument" },
       { status: 409 }
     );
   }
@@ -261,7 +261,7 @@ export async function POST(
       {
         code: "correction-required",
         error:
-          "Замер вне нормы. Напишите, что вы сделали — без этого запись в журнал не принимается.",
+          "Замер вне нормы. Напишите, что вы сделали — без этого запись в журнал не принимается.", errorCode: "equipmentFill.errors.correctionRequired",
       },
       { status: 400 }
     );
@@ -405,7 +405,7 @@ export async function POST(
   // заставляло сотрудника думать, что замер записан.
   if (touched === 0 && humidityTouched === 0) {
     return NextResponse.json(
-      { code: "no-active-document", error: EQUIPMENT_FILL_NO_DOCUMENT_ERROR },
+      { code: "no-active-document", error: EQUIPMENT_FILL_NO_DOCUMENT_ERROR, errorCode: "equipmentFill.reading.noDocument" },
       { status: 409 }
     );
   }

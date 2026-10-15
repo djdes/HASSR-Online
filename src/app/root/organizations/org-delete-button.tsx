@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { RootMetricsCopy } from "../metrics-presentation";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ export function OrgDeleteButton({
   usersCount,
   documentsCount,
   disabled = false,
+  copy,
 }: {
   organizationId: string;
   organizationName: string;
@@ -26,7 +28,11 @@ export function OrgDeleteButton({
   usersCount?: number;
   documentsCount?: number;
   disabled?: boolean;
+  /** Preserve the legacy presentation unless the metrics caller opts in. */
+  copy?: RootMetricsCopy;
 }) {
+  const currentCopy = useRef(copy);
+  currentCopy.current = copy;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -42,11 +48,11 @@ export function OrgDeleteButton({
         const data = await response.json().catch(() => null);
         throw new Error(data?.error || "Не удалось удалить организацию");
       }
-      toast.success(`Организация «${organizationName}» удалена`);
+      toast.success(currentCopy.current ? currentCopy.current("actions.deleted", { name: organizationName }) : `Организация «${organizationName}» удалена`);
       setConfirmOpen(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(currentCopy.current ? currentCopy.current("actions.deleteFailed") : error instanceof Error ? error.message : "Ошибка");
     } finally {
       setBusy(false);
     }
@@ -54,13 +60,13 @@ export function OrgDeleteButton({
 
   const bullets = [
     typeof usersCount === "number"
-      ? { label: `Сотрудников: ${usersCount}`, tone: "warn" as const }
+      ? { label: copy ? copy("actions.usersCount", { count: usersCount }) : `Сотрудников: ${usersCount}`, tone: "warn" as const }
       : null,
     typeof documentsCount === "number"
-      ? { label: `Документов журналов: ${documentsCount}`, tone: "warn" as const }
+      ? { label: copy ? copy("actions.documentsCount", { count: documentsCount }) : `Документов журналов: ${documentsCount}`, tone: "warn" as const }
       : null,
     {
-      label: "Записи, логи и настройки удалятся вместе с организацией",
+      label: copy ? copy("actions.deleteConsequences") : "Записи, логи и настройки удалятся вместе с организацией",
       tone: "default" as const,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
@@ -71,8 +77,8 @@ export function OrgDeleteButton({
         type="button"
         onClick={() => setConfirmOpen(true)}
         disabled={disabled || busy}
-        aria-label={`Удалить ${organizationName}`}
-        title="Удалить организацию"
+        aria-label={copy ? copy("actions.deleteLabel", { name: organizationName }) : `Удалить ${organizationName}`}
+        title={copy ? copy("actions.deleteHint") : "Удалить организацию"}
         className="inline-flex size-9 items-center justify-center rounded-xl text-[#9b9fb3] transition-colors hover:bg-[#fff4f2] hover:text-[#a13a32] disabled:opacity-50"
       >
         {busy ? (
@@ -87,10 +93,11 @@ export function OrgDeleteButton({
         onClose={() => setConfirmOpen(false)}
         onConfirm={remove}
         variant="danger"
-        title={`Удалить «${organizationName}»?`}
-        description="Организация и все её данные будут удалены безвозвратно."
+        title={copy ? copy("actions.deleteTitle", { name: organizationName }) : `Удалить «${organizationName}»?`}
+        description={copy ? copy("actions.deleteDescription") : "Организация и все её данные будут удалены безвозвратно."}
         bullets={bullets}
-        confirmLabel="Удалить"
+        confirmLabel={copy ? copy("actions.deleteConfirm") : "Удалить"}
+        cancelLabel={copy ? copy("actions.cancel") : undefined}
       />
     </>
   );

@@ -1,10 +1,16 @@
 import type { Composer, Context } from "grammy";
+import type { ReactNode } from "react";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getManagerObligationSummary } from "@/lib/journal-obligations";
-import { escapeTelegramHtml as esc, personalizeMessage } from "@/lib/telegram";
-import { journalDisplayName } from "@/lib/custom-names";
+import { escapeTelegramHtml as esc } from "@/lib/telegram";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { createTranslator } from "use-intl/core";
+import { resolveLocale, FORMAT_LOCALES, type Locale } from "@/i18n/locales";
+import { loadMessages } from "@/i18n/messages";
+import { journalTitle } from "@/i18n/journal-presentation";
+import { customJournalName } from "@/lib/custom-names";
+import ruMessages from "@/i18n/messages/ru.json";
 
 /**
  * Команды бота для руководителя (manager / head_chef / owner / technologist /
@@ -29,10 +35,12 @@ type ManagementUser = {
   isRoot: boolean;
 };
 
-async function resolveManagementUser(
+type ManagerCommandContext = { user: ManagementUser | null; locale: Locale };
+
+async function resolveManagerCommandContext(
   chatId: number | string | undefined
-): Promise<ManagementUser | null> {
-  if (chatId === undefined || chatId === null) return null;
+): Promise<ManagerCommandContext> {
+  if (chatId === undefined || chatId === null) return { user: null, locale: "ru" };
   const candidate = await db.user.findFirst({
     where: {
       telegramChatId: String(chatId),
@@ -45,16 +53,62 @@ async function resolveManagementUser(
       organizationId: true,
       role: true,
       isRoot: true,
+      locale: true,
+      organization: { select: { locale: true } },
     },
   });
-  if (!candidate) return null;
-  if (!hasFullWorkspaceAccess(candidate)) return null;
-  return candidate;
+  const locale = resolveLocale({
+    authenticated: Boolean(candidate),
+    userLocale: candidate?.locale,
+    organizationLocale: candidate?.organization.locale,
+  });
+  if (!candidate || !hasFullWorkspaceAccess(candidate)) return { user: null, locale };
+  return {
+    user: {
+      id: candidate.id,
+      name: candidate.name,
+      organizationId: candidate.organizationId,
+      role: candidate.role,
+      isRoot: candidate.isRoot,
+    },
+    locale,
+  };
 }
 
-async function replyNotAuthorized(ctx: Context): Promise<void> {
+async function managerTranslator(locale: Locale) {
+  const messages = await loadMessages(locale);
+  return createTranslator({
+    locale,
+    messages,
+    namespace: "telegramManagerSummary",
+    onError: (error) => { throw error; },
+  });
+}
+
+async function managerOperationsTranslator(locale: Locale) {
+  const messages = await loadMessages(locale);
+  return createTranslator({
+    locale,
+    messages,
+    namespace: "telegramManagerOperations",
+    onError: (error) => { throw error; },
+  });
+}
+
+function richTelegramText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && value.every((part) => typeof part === "string" || typeof part === "number")) {
+    return value.join("");
+  }
+  throw new Error("Telegram rich message did not resolve to plain HTML text");
+}
+
+async function replyNotAuthorized(ctx: Context, locale?: Locale): Promise<void> {
+  const text = locale
+    ? (await managerTranslator(locale))("common.notAuthorized")
+    : "🔒 Эта команда — для руководителей. Если вы менеджер/owner и видите это сообщение, значит ваш Telegram-чат пока не привязан к рабочему аккаунту. Откройте /settings/notifications в кабинете и привяжите его.";
   await ctx.reply(
-    "🔒 Эта команда — для руководителей. Если вы менеджер/owner и видите это сообщение, значит ваш Telegram-чат пока не привязан к рабочему аккаунту. Откройте /settings/notifications в кабинете и привяжите его.",
+    text,
     { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
   );
 }
@@ -63,18 +117,27 @@ function utcDayStart(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-function formatDateRu(date: Date): string {
-  return date.toLocaleDateString("ru-RU", {
+function formatManagerDate(date: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
     day: "2-digit",
     month: "long",
-  });
+  }).format(date);
+}
+
+function greetingKey(now: Date): "greetingNight" | "greetingMorning" | "greetingDay" | "greetingEvening" {
+  const hour = now.getHours();
+  if (hour < 6) return "greetingNight";
+  if (hour < 12) return "greetingMorning";
+  if (hour < 18) return "greetingDay";
+  return "greetingEvening";
 }
 
 export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
   // /today — общий процент выполнения сегодня.
   composer.command("today", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const now = new Date();
     const summary = await getManagerObligationSummary(user.organizationId, now);
@@ -82,13 +145,32 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
       ? 0
       : Math.round((summary.done / summary.total) * 100);
 
+    const firstName = user.name?.trim().split(/\s+/)[0] || t("common.fallbackName");
+    const greeting = {
+      greetingNight: t("common.greetingNight"),
+      greetingMorning: t("common.greetingMorning"),
+      greetingDay: t("common.greetingDay"),
+      greetingEvening: t("common.greetingEvening"),
+    }[greetingKey(now)];
     const lines = [
-      personalizeMessage("📋 <b>{greeting}, {name}!</b>", { name: user.name }),
+      richTelegramText(t.rich("today.greeting", {
+        greeting,
+        name: esc(firstName),
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
       "",
-      `Сегодня (${formatDateRu(now)}):`,
-      `• Заполнено: <b>${summary.done}</b> / ${summary.total} (${pct}%)`,
-      `• Осталось: <b>${summary.pending}</b>`,
-      `• Сотрудников с открытыми задачами: ${summary.employeesWithPending}`,
+      t("today.dateHeading", { date: formatManagerDate(now, locale) }),
+      richTelegramText(t.rich("today.completed", {
+        done: summary.done,
+        total: summary.total,
+        percentage: pct,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
+      richTelegramText(t.rich("today.pending", {
+        count: summary.pending,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
+      t("today.employeesWithPending", { count: summary.employeesWithPending }),
     ];
     await ctx.reply(lines.join("\n"), {
       parse_mode: "HTML",
@@ -98,8 +180,9 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
   // /missing — что не заполнено.
   composer.command("missing", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const now = new Date();
     const dateKey = utcDayStart(now);
@@ -120,7 +203,7 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
     if (pending.length === 0) {
       await ctx.reply(
-        "✅ <b>Все журналы заполнены</b>\nНа сегодня нет открытых задач — отличная работа смене.",
+        richTelegramText(t.rich("missing.allComplete", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
@@ -128,20 +211,29 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
     // Своё название журнала организации — как на сайте.
     const customNames = await getOrgCustomNames(user.organizationId);
+    const journalNames = (await loadMessages(locale)).journals.names;
     const grouped = new Map<string, string[]>();
     for (const row of pending) {
-      const key = journalDisplayName(customNames, row.template.code, row.template.name);
+      const customName = customJournalName(customNames, row.template.code);
+      const canonicalName = ruMessages.journals.names[row.template.code as keyof typeof ruMessages.journals.names];
+      const key = customName ?? (locale !== "ru" && canonicalName === row.template.name
+        ? journalTitle(locale, journalNames, row.template.code, row.template.name)
+        : row.template.name);
       const arr = grouped.get(key) ?? [];
       arr.push(row.user.name?.trim() || "—");
       grouped.set(key, arr);
     }
     const lines = [
-      `📋 <b>Не заполнено сегодня · ${pending.length}</b>`,
+      richTelegramText(t.rich("missing.heading", {
+        count: pending.length,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
       "",
-      ...Array.from(grouped.entries()).map(
-        ([name, users]) =>
-          `• <b>${esc(name)}</b> — ${users.map(esc).join(", ")}`
-      ),
+      ...Array.from(grouped.entries()).map(([name, users]) => richTelegramText(t.rich("missing.groupLine", {
+        journal: esc(name),
+        names: new Intl.ListFormat(FORMAT_LOCALES[locale], { style: "long", type: "conjunction" }).format(users.map(esc)),
+        b: (children) => `<b>${String(children)}</b>`,
+      }))),
     ];
     await ctx.reply(lines.join("\n"), {
       parse_mode: "HTML",
@@ -151,8 +243,9 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
   // /capa — открытые тикеты.
   composer.command("capa", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerOperationsTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const tickets = await db.capaTicket.findMany({
       where: {
@@ -182,21 +275,29 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
     if (tickets.length === 0) {
       await ctx.reply(
-        "✅ <b>Открытых CAPA нет</b>\nВсе предписания закрыты — можно выдохнуть.",
+        richTelegramText(t.rich("capa.empty", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
     }
 
     const lines = [
-      `🛠 <b>Открытые CAPA · ${tickets.length}</b>`,
+      richTelegramText(t.rich("capa.heading", { count: tickets.length, b: (children) => `<b>${String(children)}</b>` })),
       "",
-      ...tickets.map((t) => {
-        const due = t.dueDate ? formatDateRu(t.dueDate) : "без срока";
+      ...tickets.map((ticket) => {
+        const due = ticket.dueDate
+          ? formatManagerDate(ticket.dueDate, locale)
+          : t("capa.noDeadline");
         const assignee =
-          (t.assignedToId && assigneeNameById.get(t.assignedToId)?.trim()) ||
-          "не назначено";
-        return `• [${esc(t.priority)}] <b>${esc(t.title)}</b>\n   ${esc(assignee)} · до ${esc(due)}`;
+          (ticket.assignedToId && assigneeNameById.get(ticket.assignedToId)?.trim()) ||
+          t("capa.unassigned");
+        return richTelegramText(t.rich("capa.row", {
+          priority: esc(ticket.priority),
+          title: esc(ticket.title),
+          assignee: esc(assignee),
+          due: esc(due),
+          b: (children) => `<b>${String(children)}</b>`,
+        }));
       }),
     ];
     await ctx.reply(lines.join("\n"), {
@@ -207,8 +308,9 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
   // /stats — 7-дневный график.
   composer.command("stats", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerOperationsTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const now = new Date();
     // ОДИН groupBy на всё окно 7 дней вместо 7 sequential round-trip'ов.
@@ -247,20 +349,36 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
       });
     }
 
-    const dayLabels = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+    const dayLabels = {
+      0: t("stats.weekdays.sun"),
+      1: t("stats.weekdays.mon"),
+      2: t("stats.weekdays.tue"),
+      3: t("stats.weekdays.wed"),
+      4: t("stats.weekdays.thu"),
+      5: t("stats.weekdays.fri"),
+      6: t("stats.weekdays.sat"),
+    } as const;
     const totalDone = days.reduce((sum, d) => sum + d.done, 0);
     const totalAll = days.reduce((sum, d) => sum + d.total, 0);
     const weekPct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
 
     const lines = [
-      "📊 <b>7 дней · сводка</b>",
+      richTelegramText(t.rich("stats.heading", { b: (children) => `<b>${String(children)}</b>` })),
       "",
-      `Заполнено: <b>${totalDone}</b> / ${totalAll} (${weekPct}%)`,
+      richTelegramText(t.rich("stats.total", {
+        done: totalDone, total: totalAll, percentage: weekPct,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
       "",
       ...days.map((d) => {
         const pct = d.total === 0 ? 0 : Math.round((d.done / d.total) * 100);
         const bar = bar10(pct);
-        return `${dayLabels[d.date.getUTCDay()]} ${formatDateRu(d.date).padEnd(10)} ${bar} ${pct}%`;
+        return t("stats.dayLine", {
+          weekday: dayLabels[d.date.getUTCDay() as keyof typeof dayLabels],
+          date: formatManagerDate(d.date, locale).padEnd(10),
+          bar,
+          percentage: pct,
+        });
       }),
     ];
     await ctx.reply(`<pre>${lines.join("\n")}</pre>`, {
@@ -282,8 +400,9 @@ function bar10(pct: number): string {
 export function registerOwnerExtendedHandlers(composer: Composer<Context>): void {
   // /losses — последние списания.
   composer.command("losses", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerOperationsTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - 7);
@@ -304,7 +423,7 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
     if (losses.length === 0) {
       await ctx.reply(
-        "📦 <b>Списаний за 7 дней нет</b>\nЕсли есть — отметьте через кабинет, чтобы они попали в отчёт инспектору.",
+        richTelegramText(t.rich("losses.empty", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
@@ -312,12 +431,24 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
     const totalCost = losses.reduce((s, l) => s + (l.costRub ?? 0), 0);
     const lines = [
-      `📦 <b>Последние списания · ${losses.length}</b>`,
-      totalCost > 0 ? `Сумма за неделю: <b>${totalCost.toFixed(0)} ₽</b>` : "",
+      richTelegramText(t.rich("losses.heading", { count: losses.length, b: (children) => `<b>${String(children)}</b>` })),
+      totalCost > 0 ? richTelegramText(t.rich("losses.weeklyTotal", {
+        amount: Number(totalCost.toFixed(0)), b: (children) => `<b>${String(children)}</b>`,
+      })) : "",
       "",
       ...losses.map((l) => {
-        const cost = l.costRub ? ` · ${l.costRub.toFixed(0)} ₽` : "";
-        return `• ${formatDateRu(l.date)} <b>${esc(l.productName)}</b>\n   ${l.quantity} ${esc(l.unit)} · ${esc(l.category)}${cost}`;
+        const params = {
+          date: formatManagerDate(l.date, locale),
+          product: esc(l.productName),
+          quantity: String(l.quantity),
+          unit: esc(l.unit),
+          category: esc(l.category),
+          amount: Number((l.costRub ?? 0).toFixed(0)),
+          b: (children: ReactNode) => `<b>${String(children)}</b>`,
+        };
+        return l.costRub
+          ? richTelegramText(t.rich("losses.rowWithCost", params))
+          : richTelegramText(t.rich("losses.row", params));
       }),
     ].filter(Boolean);
     await ctx.reply(lines.join("\n"), {
@@ -328,8 +459,9 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
   // /batches — активные партии.
   composer.command("batches", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerOperationsTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const batches = await db.batch.findMany({
       where: {
@@ -352,7 +484,7 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
     if (batches.length === 0) {
       await ctx.reply(
-        "📦 <b>Активных партий нет</b>\nДобавьте через журнал «Приёмка сырья» — карточки партий создаются автоматически.",
+        richTelegramText(t.rich("batches.empty", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
@@ -360,15 +492,22 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
     const now = new Date();
     const lines = [
-      `📦 <b>Активные партии · ${batches.length}</b>`,
+      richTelegramText(t.rich("batches.heading", { count: batches.length, b: (children) => `<b>${String(children)}</b>` })),
       "",
       ...batches.map((b) => {
+        const date = b.expiryDate ? formatManagerDate(b.expiryDate, locale) : "";
         const expiry = b.expiryDate
-          ? formatDateRu(b.expiryDate) +
-            (b.expiryDate < now ? " ⚠️ просрочено" : "")
-          : "без срока";
-        const supplier = b.supplier?.trim() ? ` · ${esc(b.supplier)}` : "";
-        return `• <code>${esc(b.code)}</code> <b>${esc(b.productName)}</b>${supplier}\n   ${b.quantity} ${esc(b.unit)} · до ${esc(expiry)}`;
+          ? (b.expiryDate < now ? t("batches.overdue", { date }) : date)
+          : t("batches.noExpiry");
+        const params = {
+          batchCode: esc(b.code), product: esc(b.productName),
+          quantity: String(b.quantity), unit: esc(b.unit), expiry: esc(expiry),
+          b: (children: ReactNode) => `<b>${String(children)}</b>`,
+          code: (children: ReactNode) => `<code>${String(children)}</code>`,
+        };
+        return b.supplier?.trim()
+          ? richTelegramText(t.rich("batches.rowWithSupplier", { ...params, supplier: esc(b.supplier) }))
+          : richTelegramText(t.rich("batches.row", params));
       }),
     ];
     await ctx.reply(lines.join("\n"), {
@@ -379,8 +518,9 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
   // /staff — кто сегодня на смене.
   composer.command("staff", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const today = utcDayStart(new Date());
     const shifts = await db.workShift.findMany({
@@ -395,7 +535,7 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
     if (shifts.length === 0) {
       await ctx.reply(
-        "👥 <b>На сегодня смены не назначены</b>\nРаспишите график в кабинете → «График смен» → выберите дату.",
+        richTelegramText(t.rich("staff.noShifts", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
@@ -411,20 +551,23 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
       grouped[status].push(line);
     }
     const STATUS_LABELS: Record<string, string> = {
-      working: "🟢 На смене",
-      scheduled: "🟡 По плану (ещё не вышли)",
-      ended: "🔵 Закончили",
-      absent: "🔴 Не вышли",
-      off: "⚪ Выходной",
-      vacation: "⚪ Отпуск",
-      sick: "⚪ Больничный",
+      working: t("staff.status.working"),
+      scheduled: t("staff.status.scheduled"),
+      ended: t("staff.status.ended"),
+      absent: t("staff.status.absent"),
+      off: t("staff.status.off"),
+      vacation: t("staff.status.vacation"),
+      sick: t("staff.status.sick"),
     };
     const order = ["working", "scheduled", "ended", "absent", "off", "vacation", "sick"];
-    const lines = [`👥 <b>Сегодня · ${shifts.length} смен</b>`, ""];
+    const lines = [richTelegramText(t.rich("staff.heading", {
+      count: shifts.length,
+      b: (children) => `<b>${String(children)}</b>`,
+    })), ""];
     for (const status of order) {
       const arr = grouped[status];
       if (!arr || arr.length === 0) continue;
-      lines.push(`<b>${STATUS_LABELS[status] ?? status}</b>`);
+      lines.push(`<b>${STATUS_LABELS[status] ?? esc(status)}</b>`);
       lines.push(...arr.map((l) => `• ${l}`));
       lines.push("");
     }
@@ -447,8 +590,9 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
   // Перекликается с shift-watcher cron'ом, но on-demand: менеджер хочет
   // сразу узнать состояние, не ждать следующего cron-tick'а.
   composer.command("who_late", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const now = new Date();
     const today = utcDayStart(now);
@@ -468,7 +612,7 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
     });
     if (shifts.length === 0) {
       await ctx.reply(
-        "🕓 <b>Сегодня нет активных смен</b>\nПроверьте график: возможно вы забыли проставить смены в кабинете.",
+        richTelegramText(t.rich("whoLate.noActiveShifts", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
@@ -495,19 +639,22 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
     const late = shifts.filter((s) => !activeUserIds.has(s.userId));
     if (late.length === 0) {
       await ctx.reply(
-        "✅ <b>Все на месте</b>\nКаждый сотрудник со сменой сегодня заполнял что-то в журналах за последние 2 часа.",
+        richTelegramText(t.rich("whoLate.allPresent", { b: (children) => `<b>${String(children)}</b>` })),
         { parse_mode: "HTML", link_preview_options: { is_disabled: true } }
       );
       return;
     }
 
     const STATUS_LABEL: Record<string, string> = {
-      scheduled: "по графику (не вышел?)",
-      working: "на смене > 2ч без записей",
+      scheduled: t("whoLate.status.scheduled"),
+      working: t("whoLate.status.working"),
     };
     const lines = [
-      `⚠️ <b>Подозрительные смены · ${late.length}</b>`,
-      `Сотрудники без активности в журналах за 2 часа:`,
+      richTelegramText(t.rich("whoLate.heading", {
+        count: late.length,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
+      t("whoLate.description"),
       "",
       ...late.map((s) => {
         const name = s.user.name?.trim() || "—";
@@ -515,7 +662,7 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
         return `• <b>${esc(name)}</b> — ${esc(label)}`;
       }),
       "",
-      "Может стоит позвонить или зайти проверить.",
+      t("whoLate.closing"),
     ];
     await ctx.reply(lines.join("\n"), {
       parse_mode: "HTML",
@@ -528,8 +675,9 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
   // когда пользователи жалуются «бот не отвечает», admin спрашивает
   // /health в DM и видит все signals в одном сообщении.
   composer.command("health", async (ctx) => {
-    const user = await resolveManagementUser(ctx.from?.id);
-    if (!user) return replyNotAuthorized(ctx);
+    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const t = await managerOperationsTranslator(locale);
+    if (!user) return replyNotAuthorized(ctx, locale);
 
     const startMe = Date.now();
     let getMeStatus = "ok";
@@ -562,15 +710,28 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
     }
 
     const lines = [
-      "🩺 <b>Health check</b>",
+      richTelegramText(t.rich("health.heading", { b: (children) => `<b>${String(children)}</b>` })),
       "",
-      `<b>Build</b>: <code>${esc(buildId)}</code>`,
-      `<b>Built at</b>: ${esc(buildTime)}`,
+      richTelegramText(t.rich("health.build", {
+        buildId: esc(buildId), b: (children) => `<b>${String(children)}</b>`,
+        code: (children) => `<code>${String(children)}</code>`,
+      })),
+      richTelegramText(t.rich("health.builtAt", {
+        buildTime: esc(buildTime), b: (children) => `<b>${String(children)}</b>`,
+      })),
       "",
-      `<b>Bot API</b>: ${getMeStatus === "ok" ? "✅" : "❌"} ${esc(getMeStatus)} (${getMeLatencyMs}ms)`,
-      `<b>Bot username</b>: @${esc(botUsername)}`,
+      richTelegramText(t.rich("health.botApi", {
+        icon: getMeStatus === "ok" ? "✅" : "❌", status: esc(getMeStatus), latency: getMeLatencyMs,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
+      richTelegramText(t.rich("health.botUsername", {
+        username: esc(botUsername), b: (children) => `<b>${String(children)}</b>`,
+      })),
       "",
-      `<b>DB ping</b>: ${dbStatus === "ok" ? "✅" : "❌"} ${esc(dbStatus)} (${dbLatencyMs}ms)`,
+      richTelegramText(t.rich("health.database", {
+        icon: dbStatus === "ok" ? "✅" : "❌", status: esc(dbStatus), latency: dbLatencyMs,
+        b: (children) => `<b>${String(children)}</b>`,
+      })),
     ];
     await ctx.reply(lines.join("\n"), {
       parse_mode: "HTML",

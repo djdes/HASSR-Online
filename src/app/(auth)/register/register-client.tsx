@@ -1,10 +1,10 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { localizedHref } from "@/i18n/site-locale";
-import { publicError } from "@/i18n/public-copy";
+import { useAuthError } from "@/components/i18n/use-auth-error";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -63,7 +63,10 @@ function RegisterScreen({
   /** Сфера из ссылки с промокодом: подставлена, человек может сменить. */
   linkSphere: OrgSphere | null;
 }) {
-  const t = usePublicCopy();
+  const t = useTranslations("auth");
+  const authError = useAuthError();
+  const auth = useTranslations("auth");
+  const journalNames = useTranslations("journals.names");
   const locale = useSiteLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -114,7 +117,7 @@ function RegisterScreen({
     if (loading || !field.valid || !challenge.token) return;
     if (!consent) {
       setConsentMissing(true);
-      setError(t("Отметьте согласие с документами — без него аккаунт не создаётся"));
+      setError(t("register.consent.required"));
       return;
     }
     const value = field.value.trim().toLowerCase();
@@ -143,7 +146,7 @@ function RegisterScreen({
       if (res.ok && data.created) {
         ymGoal("instant_register_done", GOAL_PARAMS);
         ymGoal("signup_created", GOAL_PARAMS);
-        if (locale === "en") {
+        if (locale !== "ru") {
           window.location.assign(nextPath ?? "/dashboard?welcome=1");
           return;
         }
@@ -159,10 +162,10 @@ function RegisterScreen({
         return;
       }
       ymGoal("signup_error", { ...GOAL_PARAMS, code: String(res.status) });
-      setError(publicError(locale, data.error, "Не получилось — попробуйте ещё раз"));
+      setError(authError(data.error, t("register.errors.submit")));
     } catch {
       ymGoal("signup_error", { ...GOAL_PARAMS, code: "network" });
-      setError(t("Сеть недоступна. Попробуйте ещё раз"));
+      setError(t("register.errors.network"));
     } finally {
       challenge.reset();
       setLoading(false);
@@ -192,7 +195,7 @@ function RegisterScreen({
         <div className="relative z-10">
           {/* Тот же знак, что в шапке лендинга и в футере — один бренд
               на всех публичных экранах. */}
-          <Link href="/" className="text-white" aria-label={t("WeSetup — на главную")}>
+          <Link href="/" className="text-white" aria-label={t("register.brand.homeLabel")}>
             <BrandLogo height={26} title="" />
           </Link>
         </div>
@@ -200,24 +203,24 @@ function RegisterScreen({
         <div className="relative z-10 mt-auto max-w-[520px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] uppercase tracking-[0.18em] text-white/70 backdrop-blur">
             <Sparkles className="size-3.5 text-[#7cf5c0]" />
-            {t("Бесплатно навсегда · без карты")}</div>
+            {t("register.marketing.foreverFree")}</div>
           <h1 className="text-[46px] font-semibold leading-[1.05] tracking-[-0.03em]">
-            {t("Аккаунт создаётся сразу")}</h1>
+            {t("register.marketing.instantAccount")}</h1>
           <p className="mt-5 max-w-[440px] text-[16px] leading-[1.6] text-white/70">
-            {t("Введите почту — и вы уже в кабинете. Пароль придёт письмом, данные организации заполните позже, когда будет удобно.")}</p>
+            {t("register.marketing.intro")}</p>
 
           <div className="mt-10 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
             <div className="text-[12px] uppercase tracking-[0.2em] text-white/60">
-              {t("Что внутри — бесплатно")}</div>
+              {t("register.marketing.whatsIncluded")}</div>
             <ul className="grid grid-cols-1 gap-2 text-[14px] text-white/80">
               {ACTIVE_JOURNAL_CATALOG.slice(0, 6).map((j) => (
                 <li key={j.code} className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#7cf5c0]" />
-                  <span className="truncate">{t(j.name)}</span>
+                  <span className="truncate">{journalNames(j.code)}</span>
                 </li>
               ))}
               <li className="pl-6 text-[13px] text-white/50">
-                {t("…и ещё ")}{ACTIVE_JOURNAL_CATALOG.length - 6} {t(" журналов СанПиН и ХАССП")}</li>
+                {auth("register.templates.logCount", { count: ACTIVE_JOURNAL_CATALOG.length - 6 })}</li>
             </ul>
           </div>
 
@@ -228,7 +231,7 @@ function RegisterScreen({
               href="/login"
               className="underline-offset-4 hover:text-white hover:underline"
             >
-              {t("Уже есть аккаунт — войти")}</Link>
+              {t("register.actions.loginExisting")}</Link>
           </div>
         </div>
       </aside>
@@ -246,7 +249,7 @@ function RegisterScreen({
 
         <div className="relative w-full max-w-[420px]">
           <div className="mb-8 lg:hidden">
-            <Link href="/" className="text-[#0b1024]" aria-label={t("WeSetup — на главную")}>
+            <Link href="/" className="text-[#0b1024]" aria-label={t("register.brand.homeLabel")}>
               <BrandLogo height={24} title="" />
             </Link>
           </div>
@@ -257,7 +260,7 @@ function RegisterScreen({
           {searchParams.get("ref") === "1" ? (
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dcdfed] bg-[#f5f6ff] px-3 py-1.5 text-[12.5px] font-medium text-[#3848c7]">
               <Gift className="size-3.5" />
-              {t("Вас пригласили: 14 дней теста для вас, бонус — другу")}</div>
+              {t("register.referral.invitation")}</div>
           ) : null}
           {promo ? (
             <div
@@ -266,7 +269,7 @@ function RegisterScreen({
             >
               <Ticket className="mt-0.5 size-4 shrink-0" />
               <span>
-                {promo.label}{t(". Создайте аккаунт — код подставится на оплате сам.")}</span>
+                {auth("register.templates.promoDescription", { label: promo.label })}</span>
             </div>
           ) : null}
           {blankJournalName ? (
@@ -275,20 +278,20 @@ function RegisterScreen({
               className="mb-4 inline-flex items-center gap-2 rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] px-3 py-1.5 text-[12.5px] font-medium leading-[1.4] text-[#3848c7]"
             >
               <CheckCircle2 className="size-3.5 shrink-0" />
-              «{t(blankJournalName)}{t("» откроется сразу после регистрации")}</div>
+              {auth("register.templates.blankJournalReady", { journal: blankJournal ? journalNames(blankJournal.code) : blankJournalName })}</div>
           ) : null}
 
           <h2 className="text-[clamp(1.5rem,2vw+1rem,2rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-            {t("Начать бесплатно")}</h2>
+            {t("register.heading.startFree")}</h2>
           <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
-            {t("Достаточно почты. Пароль отправим письмом, войдёте сразу — заполнять анкету сейчас не нужно.")}</p>
+            {t("register.form.intro")}</p>
 
           <form onSubmit={submit} className="mt-8">
             <label
               htmlFor="register-email"
               className="mb-1.5 block text-[13px] font-medium text-[#0b1024]"
             >
-              {t("Электронная почта")}</label>
+              {t("register.fields.email")}</label>
             <input
               id="register-email"
               type="email"
@@ -318,7 +321,7 @@ function RegisterScreen({
                   htmlFor="register-sphere"
                   className="mb-1.5 mt-4 block text-[13px] font-medium text-[#0b1024]"
                 >
-                  {t("Сфера")}</label>
+                  {t("register.fields.sector")}</label>
                 <select
                   id="register-sphere"
                   data-testid="register-sphere"
@@ -328,12 +331,12 @@ function RegisterScreen({
                 >
                   {ORG_SPHERES.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {t(option.label)}
+                      {auth(`sectors.${option.value}`)}
                     </option>
                   ))}
                 </select>
                 <p className="mt-1.5 text-[12px] text-[#6f7282]">
-                  {t("По сфере включим нужные журналы — поменять можно и потом.")}</p>
+                  {t("register.sector.journalsHint")}</p>
               </>
             ) : null}
 
@@ -366,22 +369,22 @@ function RegisterScreen({
               {loading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  {t("Создаём аккаунт…")}</>
+                  {t("register.actions.creating")}</>
               ) : (
                 <>
-                  {t("Создать аккаунт")}<ArrowRight className="size-4" />
+                  {t("register.actions.create")}<ArrowRight className="size-4" />
                 </>
               )}
             </button>
           </form>
 
           <p className="mt-6 text-center text-[13px] text-[#6f7282]">
-            {t("Уже есть аккаунт?")}{" "}
+            {t("register.actions.alreadyHaveAccount")}{" "}
             <Link
               href="/login"
               className="font-medium text-[#3848c7] underline-offset-4 hover:underline"
             >
-              {t("Войти")}</Link>
+              {t("register.actions.signIn")}</Link>
           </p>
 
 

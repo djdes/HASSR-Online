@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import { createPortal } from "react-dom";
 import { BookOpen } from "lucide-react";
@@ -35,6 +36,7 @@ export function JournalGuideFab({
   ariaLabel?: string;
   bottomOffset?: number;
 }) {
+  const t = useTranslations("journalControls.guide");
   // В кабинете кнопка живёт в общем доке (`FabDockProvider`): на телефоне
   // три плавающие кнопки закрывали правый край таблицы. В Mini App дока
   // нет — там компонент по-прежнему рисует свою кнопку сам.
@@ -44,7 +46,7 @@ export function JournalGuideFab({
       id: "journal-guide",
       order: 30,
       label,
-      hint: "Как заполнять этот журнал",
+      hint: t("hint"),
       icon: BookOpen,
       onSelect: onClick,
     },

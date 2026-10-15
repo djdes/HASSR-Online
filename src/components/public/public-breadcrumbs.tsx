@@ -61,12 +61,16 @@ export function PublicBreadcrumbs({
   items,
   tone = "dark",
   className,
+  home = HOME,
+  ariaLabel = "Хлебные крошки",
 }: {
   items: PublicCrumb[];
   tone?: "dark" | "light";
   className?: string;
+  home?: PublicCrumb;
+  ariaLabel?: string;
 }) {
-  const trail = [HOME, ...items];
+  const trail = [home, ...items];
   if (trail.length < 2) return null;
 
   // Цвета — токены дизайн-системы: text-muted #6f7282, indigo #5566f6,
@@ -89,7 +93,7 @@ export function PublicBreadcrumbs({
         }}
       />
       <nav
-        aria-label="Хлебные крошки"
+        aria-label={ariaLabel}
         className={cn("text-[13px] font-medium print:hidden", className)}
       >
         <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1">

@@ -1,10 +1,15 @@
 "use client";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { hasRecordedMeasurements } from "@/lib/journal-measurement-attribution";
+import { SensorCameraSetting } from "@/components/journals/sensor-camera-setting";
 import { TOUR } from "@/lib/tour-anchors";
 
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
 import { Archive, Pencil, Plus, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,9 +32,6 @@ import { Switch } from "@/components/ui/switch";
 import {
   createClimateRoomConfig,
   createEmptyClimateEntryData,
-  getClimateDateLabel,
-  getClimatePeriodicityText,
-  CLIMATE_DOCUMENT_TEMPLATE_CODE,
   CLIMATE_DOCUMENT_TITLE,
   climateCorrectionKey,
   collectClimateDeviations,
@@ -59,8 +61,6 @@ import { RoomDirectoryPickerDialog } from "@/components/cleaning/room-directory-
 import { TimeField } from "@/components/journals/time-field";
 import { parseNumeric } from "@/components/journals/number-field";
 import {
-  FOREIGN_ROW_MESSAGE,
-  NOT_TODAY_MESSAGE,
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
 import { directoryRoomToEditorInitial } from "@/components/cleaning/room-editor-initial";
@@ -88,7 +88,7 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { TodayProgressStrip } from "@/components/journals/today-progress-strip";
-import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
+import { useCanManageJournalDocument, useDocumentDisplayTitle } from "@/components/journals/journal-header-edit";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
 import { useMobileView } from "@/lib/use-mobile-view";
@@ -194,11 +194,9 @@ type Props = {
   useV2?: boolean;
 };
 
-function formatRange(min: number | null, max: number | null, unit: string) {
-  if (min == null && max == null) return "Не задано";
-  if (min != null && max != null) return `от ${min}${unit} до ${max}${unit}`;
-  if (min != null) return `от ${min}${unit}`;
-  return `до ${max}${unit}`;
+function dateOnlyUtc(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 12));
 }
 
 function getRoomMetricColumnCount(room: ClimateRoomConfig) {
@@ -245,6 +243,7 @@ function ControlTimeDialog({
   index: number | null;
   onSave: (nextTimes: string[]) => Promise<void>;
 }) {
+  const t = useTranslations("climate.ui");
   const [value, setValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -256,12 +255,12 @@ function ControlTimeDialog({
   async function handleSave() {
     if (index === null) return;
     if (!value) {
-      toast.error("Укажите время в формате ЧЧ:ММ.");
+      toast.error(t("invalidTime"));
       return;
     }
     const nextTimes = times.map((time, position) => (position === index ? value : time));
     if (new Set(nextTimes).size !== nextTimes.length) {
-      toast.error("Времена контроля не должны совпадать.");
+      toast.error(t("duplicateTimes"));
       return;
     }
     setIsSubmitting(true);
@@ -269,7 +268,7 @@ function ControlTimeDialog({
       await onSave(nextTimes);
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось изменить время контроля"));
+      toast.error(humanizeFetchError(error, t("saveControlTimeError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -280,20 +279,18 @@ function ControlTimeDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Время контроля {index !== null && times.length > 1 ? index + 1 : ""}
+            {index !== null && times.length > 1 ? t("controlTimeTitle", { index: index + 1 }) : t("controlTimeTitleSingle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-6 py-5">
           <TimeField
-            label="Когда снимаются показания"
+            label={t("readingTimeLabel")}
             value={value}
             onChange={setValue}
             showNow={false}
           />
           <p className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 text-[12.5px] leading-[1.5] text-[#6f7282]">
-            Время меняется для всего документа: заголовок колонки во всех
-            днях. Уже внесённые замеры и комментарии переедут под новое время,
-            ничего не потеряется.
+            {t("controlTimeHelp")}
           </p>
           <div className="flex justify-end">
             <Button
@@ -302,7 +299,7 @@ function ControlTimeDialog({
               disabled={isSubmitting || !value}
               className="h-10 rounded-xl bg-[#5566f6] px-5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -330,6 +327,7 @@ function RoomDialog({
   /** `false` — удаление отменено в подтверждении, окно оставляем открытым. */
   onDelete: (roomId: string) => Promise<boolean | void>;
 }) {
+  const t = useTranslations("climate.ui");
   const [name, setName] = useState("");
   const [linkRoomId, setLinkRoomId] = useState("");
   const [temperatureEnabled, setTemperatureEnabled] = useState(true);
@@ -360,7 +358,7 @@ function RoomDialog({
 
   async function handleSave() {
     if (!temperatureEnabled && !humidityEnabled) {
-      toast.error("Нужно оставить включённой хотя бы одну норму для помещения.");
+      toast.error(t("keepOneNorm"));
       return;
     }
 
@@ -384,7 +382,7 @@ function RoomDialog({
       await onSave(room, linkRoomId || null);
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения помещения"));
+      toast.error(humanizeFetchError(error, t("saveRoomError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -398,7 +396,7 @@ function RoomDialog({
       if (removed === false) return;
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка удаления помещения"));
+      toast.error(humanizeFetchError(error, t("deleteRoomError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -409,20 +407,20 @@ function RoomDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            {initialRoom ? "Редактирование помещения" : "Добавление нового помещения"}
+            {initialRoom ? t("editRoom") : t("addRoom")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="room-name" className="sr-only">
-              Название помещения
+              {t("roomName")}
             </Label>
             <Input
               id="room-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Введите название помещения"
+              placeholder={t("roomNamePlaceholder")}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
             />
           </div>
@@ -430,14 +428,14 @@ function RoomDialog({
           {initialRoom && !initialRoom.roomId && (linkOptions?.length ?? 0) > 0 ? (
             <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                Связать с помещением из справочника
+                {t("linkDirectoryRoom")}
               </Label>
               <select
                 value={linkRoomId}
                 onChange={(event) => setLinkRoomId(event.target.value)}
                 className="h-10 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               >
-                <option value="">— не связывать —</option>
+                <option value="">{t("noDirectoryLink")}</option>
                 {linkOptions?.map((room) => (
                   <option key={room.id} value={room.id}>
                     {room.name}
@@ -445,13 +443,13 @@ function RoomDialog({
                 ))}
               </select>
               <p className="text-[11.5px] leading-[1.5] text-[#6f7282]">
-                После связи имя и нормы берутся из карточки помещения («Настройки → Помещения»), замеры сохраняются.
+                {t("directoryLinkHelp")}
               </p>
             </div>
           ) : null}
 
           <div className="space-y-5">
-            <div className="text-[16px] font-medium text-black">Нормы условий</div>
+            <div className="text-[16px] font-medium text-black">{t("norms")}</div>
 
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -460,7 +458,7 @@ function RoomDialog({
                   onCheckedChange={setTemperatureEnabled}
                   className="data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d6d9ee]"
                 />
-                <div className="text-[15px] text-black">Температура (T)</div>
+                <div className="text-[15px] text-black">{t("temperature")} (T)</div>
                 <Input
                   type="number"
                   inputMode="decimal"
@@ -487,7 +485,7 @@ function RoomDialog({
                   onCheckedChange={setHumidityEnabled}
                   className="data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d6d9ee]"
                 />
-                <div className="text-[15px] text-black">Влажность воздуха (ВВ)</div>
+                <div className="text-[15px] text-black">{t("humidity")} ({t("humidityShort")})</div>
                 <Input
                   type="number"
                   inputMode="decimal"
@@ -521,7 +519,7 @@ function RoomDialog({
                   disabled={isSubmitting}
                   className="h-9 rounded-xl border-[#ffd7d3] px-3.5 text-[13.5px] text-[#ff3b30] hover:bg-[#fff3f2]"
                 >
-                  Удалить помещение
+                  {t("deleteRoom")}
                 </Button>
                 </>
               )}
@@ -532,7 +530,7 @@ function RoomDialog({
               disabled={isSubmitting || name.trim() === ""}
               className="h-10 rounded-xl bg-[#5566f6] px-5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Сохранение..." : initialRoom ? "Сохранить" : "Добавить"}
+              {isSubmitting ? t("saving") : initialRoom ? t("save") : t("add")}
             </Button>
           </div>
         </div>
@@ -562,6 +560,7 @@ function ResponsibleDialog({
     responsibleTitle: string | null;
   }) => Promise<void>;
 }) {
+  const t = useTranslations("climate.ui");
   const [responsibleTitle, setResponsibleTitle] = useState("");
   const [employeeId, setEmployeeId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -611,7 +610,7 @@ function ResponsibleDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить ответственного"));
+      toast.error(humanizeFetchError(error, t("saveResponsibleError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -622,19 +621,19 @@ function ResponsibleDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Редактирование ответственного лица
+            {t("editResponsible")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-7 px-6 py-5">
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("responsiblePosition")}</Label>
             <Select
               value={responsibleTitle}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={employees} />
@@ -643,7 +642,7 @@ function ResponsibleDialog({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("employee")}</Label>
             <Select
               value={employeeId}
               onValueChange={cascade.handleEmployeeChange}
@@ -651,7 +650,7 @@ function ResponsibleDialog({
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle ? cascade.candidates : employees).map((employee) => (
@@ -670,7 +669,7 @@ function ResponsibleDialog({
               disabled={isSubmitting || !employeeId}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
@@ -698,6 +697,7 @@ function AddRowDialog({
     responsibleTitle: string | null;
   }) => Promise<void>;
 }) {
+  const t = useTranslations("climate.ui");
   const [date, setDate] = useState("");
   const [responsibleTitle, setResponsibleTitle] = useState("");
   const [employeeId, setEmployeeId] = useState("");
@@ -748,7 +748,7 @@ function AddRowDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка создания строки"));
+      toast.error(humanizeFetchError(error, t("createRowError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -759,14 +759,14 @@ function AddRowDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Добавление новой строки
+            {t("addRow")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-7 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="row-date" className="text-[13px] font-medium text-[#3c4053]">
-              Дата
+              {t("date")}
             </Label>
             <Input
               id="row-date"
@@ -778,13 +778,13 @@ function AddRowDialog({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("responsiblePosition")}</Label>
             <Select
               value={responsibleTitle}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={employees} />
@@ -793,7 +793,7 @@ function AddRowDialog({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("employee")}</Label>
             <Select
               value={employeeId}
               onValueChange={cascade.handleEmployeeChange}
@@ -801,7 +801,7 @@ function AddRowDialog({
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle ? cascade.candidates : employees).map((employee) => (
@@ -820,7 +820,7 @@ function AddRowDialog({
               disabled={isSubmitting || !date || !employeeId}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Создание..." : "Создать"}
+              {isSubmitting ? t("creating") : t("create")}
             </Button>
           </div>
         </div>
@@ -858,6 +858,7 @@ function JournalSettingsDialog({
   }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("climate.ui");
   const [name, setName] = useState(title);
   const [position, setPosition] = useState(responsibleTitle || "");
   const [userId, setUserId] = useState(responsibleUserId || "");
@@ -896,16 +897,15 @@ function JournalSettingsDialog({
   async function handleRemoveSecondTime() {
     const lostValues = countValuesAtTime(timeTwo);
     const confirmed = await confirmAsync({
-      title: `Убрать время контроля ${timeTwo}?`,
-      description:
-        "Из документа исчезнет столбец замеров на это время за весь период. Изменение применится после сохранения настроек.",
+      title: t("removeTimeTitle", { time: timeTwo }),
+      description: t("removeTimeDescription"),
       variant: "danger",
-      confirmLabel: "Убрать время",
+      confirmLabel: t("removeTime"),
       bullets: [
         lostValues > 0
-          ? { label: `Будет удалено значений: ${lostValues}`, tone: "warn" as const }
-          : { label: "Замеров на это время ещё нет", tone: "info" as const },
-        { label: `Останется время контроля: ${timeOne || "—"}`, tone: "default" as const },
+          ? { label: t("willDeleteValues", { count: lostValues }), tone: "warn" as const }
+          : { label: t("noMeasurementsAtTime"), tone: "info" as const },
+        { label: t("remainingControlTime", { time: timeOne || "—" }), tone: "default" as const },
       ],
     });
     if (!confirmed) return;
@@ -914,7 +914,7 @@ function JournalSettingsDialog({
 
   async function handleSave() {
     if (!timeOne && !timeTwo) {
-      toast.error("Нужно указать хотя бы одно время контроля.");
+      toast.error(t("needControlTime"));
       return;
     }
 
@@ -934,7 +934,7 @@ function JournalSettingsDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения настроек"));
+      toast.error(humanizeFetchError(error, t("saveSettingsError")));
     } finally {
       setIsSubmitting(false);
     }
@@ -945,8 +945,8 @@ function JournalSettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки документа"
-        description="Название документа, ответственный сотрудник по умолчанию и расписание контроля."
+        title={t("documentSettings")}
+        description={t("settingsDescription")}
         size="lg"
         isSaving={isSubmitting}
         saveDisabled={name.trim() === ""}
@@ -958,7 +958,7 @@ function JournalSettingsDialog({
             htmlFor="climate-title-v2"
             className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
           >
-            Название документа
+            {t("documentName")}
           </Label>
           <Input
             id="climate-title-v2"
@@ -970,14 +970,14 @@ function JournalSettingsDialog({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Должность ответственного
+              {t("responsiblePosition")}
             </Label>
             <Select
               value={position}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={t("choose")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={employees} />
@@ -986,7 +986,7 @@ function JournalSettingsDialog({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Сотрудник по умолчанию
+              {t("defaultEmployee")}
             </Label>
             <Select
               value={userId}
@@ -995,7 +995,7 @@ function JournalSettingsDialog({
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={t("choose")} />
               </SelectTrigger>
               <SelectContent>
                 {(position ? cascade.candidates : employees).map(
@@ -1015,7 +1015,7 @@ function JournalSettingsDialog({
               htmlFor="climate-time-one-v2"
               className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
             >
-              Время контроля 1
+              {t("controlTimeNumber", { index: 1 })}
             </Label>
             <Input
               id="climate-time-one-v2"
@@ -1030,7 +1030,7 @@ function JournalSettingsDialog({
               htmlFor="climate-time-two-v2"
               className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
             >
-              Время контроля 2
+              {t("controlTimeNumber", { index: 2 })}
             </Label>
             {timeTwo ? (
               <div className="flex items-center gap-2">
@@ -1046,7 +1046,7 @@ function JournalSettingsDialog({
                   onClick={handleRemoveSecondTime}
                   className="h-9 shrink-0 rounded-xl border border-[#ffd7d3] px-3 text-[13px] font-medium text-[#ff3b30] transition-colors hover:bg-[#fff3f2]"
                 >
-                  Убрать
+                  {t("remove")}
                 </button>
               </div>
             ) : (
@@ -1055,7 +1055,7 @@ function JournalSettingsDialog({
                 onClick={() => setTimeTwo("17:00")}
                 className="flex h-9 w-full items-center justify-center rounded-xl border border-dashed border-[#dcdfed] px-3.5 text-[13.5px] font-medium text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
               >
-                Добавить второе время
+                {t("addSecondTime")}
               </button>
             )}
           </div>
@@ -1066,8 +1066,9 @@ function JournalSettingsDialog({
             checked={skipWeekends}
             onCheckedChange={(checked) => setSkipWeekends(checked === true)}
           />
-          <span className="text-[14px] text-[#0b1024]">Не заполнять в выходные дни</span>
+          <span className="text-[14px] text-[#0b1024]">{t("skipWeekends")}</span>
         </label>
+        <SensorCameraSetting code="climate_control" />
       </JournalSettingsModal>
     );
   }
@@ -1077,14 +1078,14 @@ function JournalSettingsDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("documentSettings")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-8 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="journal-title" className="sr-only">
-              Название документа
+              {t("documentName")}
             </Label>
             <Input
               id="journal-title"
@@ -1096,13 +1097,13 @@ function JournalSettingsDialog({
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("responsiblePosition")}</Label>
               <Select
                 value={position}
                 onValueChange={cascade.handlePositionChange}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={t("choosePosition")} />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={employees} />
@@ -1111,7 +1112,7 @@ function JournalSettingsDialog({
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник по умолчанию</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("defaultEmployee")}</Label>
               <Select
                 value={userId}
                 onValueChange={cascade.handleEmployeeChange}
@@ -1119,7 +1120,7 @@ function JournalSettingsDialog({
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={t("chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {(position ? cascade.candidates : employees).map((employee) => (
@@ -1135,7 +1136,7 @@ function JournalSettingsDialog({
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
               <Label htmlFor="time-one" className="text-[13px] font-medium text-[#3c4053]">
-                Время контроля 1
+                {t("controlTimeNumber", { index: 1 })}
               </Label>
               <Input
                 id="time-one"
@@ -1147,7 +1148,7 @@ function JournalSettingsDialog({
             </div>
             <div className="space-y-3">
               <Label htmlFor="time-two" className="text-[13px] font-medium text-[#3c4053]">
-                Время контроля 2
+                {t("controlTimeNumber", { index: 2 })}
               </Label>
               {timeTwo ? (
                 <div className="flex items-center gap-2">
@@ -1163,7 +1164,7 @@ function JournalSettingsDialog({
                     onClick={handleRemoveSecondTime}
                     className="h-9 shrink-0 rounded-xl border border-[#ffd7d3] px-3 text-[13px] font-medium text-[#ff3b30] transition-colors hover:bg-[#fff3f2]"
                   >
-                    Убрать
+                    {t("remove")}
                   </button>
                 </div>
               ) : (
@@ -1172,7 +1173,7 @@ function JournalSettingsDialog({
                   onClick={() => setTimeTwo("17:00")}
                   className="flex h-9 w-full items-center justify-center rounded-xl border border-dashed border-[#dcdfed] px-3.5 text-[13.5px] font-medium text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
                 >
-                  Добавить второе время
+                  {t("addSecondTime")}
                 </button>
               )}
             </div>
@@ -1186,7 +1187,7 @@ function JournalSettingsDialog({
               className="size-6"
             />
             <Label htmlFor="skip-weekends" className="text-[15px] text-black">
-              Не заполнять в выходные дни
+              {t("skipWeekends")}
             </Label>
           </div>
 
@@ -1197,10 +1198,11 @@ function JournalSettingsDialog({
               disabled={isSubmitting || name.trim() === ""}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? t("saving") : t("save")}
             </Button>
           </div>
         </div>
+        <SensorCameraSetting code="climate_control" />
       </DialogContent>
     </Dialog>
   );
@@ -1225,6 +1227,29 @@ export function ClimateDocumentClient({
   viewer,
   useV2 = false,
 }: Props) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("climate.ui");
+  const tJournal = useTranslations("journals.names");
+  const formatClimateDate = (dateKey: string) =>
+    formatDate(locale, dateOnlyUtc(dateKey), "UTC", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  const formatClimateRange = (minimum: number | null, maximum: number | null, unit: string) => {
+    if (minimum == null && maximum == null) return t("rangeUnset");
+    if (minimum != null && maximum != null) return t("rangeBoth", { minimum, maximum, unit });
+    if (minimum != null) return t("rangeMinimum", { minimum, unit });
+    return t("rangeMaximum", { maximum: maximum ?? 0, unit });
+  };
+  const formatClimateFrequency = () => {
+    const times = config.controlTimes.filter(Boolean);
+    if (times.length === 0) return t("frequencyUnconfigured");
+    if (times.length === 1) return t("frequencyOne", { time: times[0] });
+    return t("frequencyMultiple", { count: times.length, times: times.join(" · ") });
+  };
+  const { controls: journalControls } = useJournalControls();
+  const scopeT = useTranslations("journalWidgets.headerEdit");
   const router = useRouter();
   // «Сегодня» — после mount (useTodayKey): new Date() в рендере
   // расходился между сервером (UTC) и браузером и врал подсветкой.
@@ -1249,8 +1274,8 @@ export function ClimateDocumentClient({
   /** Причина, по которой строка закрыта для зрителя, или null. */
   function rowLockReason(row: { employeeId: string; date: string }): string | null {
     if (viewerHasFullAccess || !viewer) return null;
-    if (row.employeeId !== viewer.id) return FOREIGN_ROW_MESSAGE;
-    if (todayKey !== "" && row.date !== todayKey) return NOT_TODAY_MESSAGE;
+    if (row.employeeId !== viewer.id) return scopeT("foreignRow");
+    if (todayKey !== "" && row.date !== todayKey) return scopeT("notToday");
     return null;
   }
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -1267,6 +1292,9 @@ export function ClimateDocumentClient({
   // если её нет в документе — первой строки. Тур берёт первый видимый.
   const tourRowId = rows.find((row) => row.date === todayKey)?.id ?? rows[0]?.id;
   const [documentTitle, setDocumentTitle] = useState(title);
+  const displayedDocumentTitle = useDocumentDisplayTitle(documentTitle === CLIMATE_DOCUMENT_TITLE && locale !== "ru"
+    ? tJournal("climate_control")
+    : documentTitle);
   const [defaultResponsibleTitle, setDefaultResponsibleTitle] = useState(
     responsibleTitle
   );
@@ -1317,7 +1345,7 @@ export function ClimateDocumentClient({
         current.map((item) => (item.id === rowId ? previousRow : item)),
       );
       toast.error(
-        humanizeFetchError(error, "Ошибка сохранения"),
+        humanizeFetchError(error, t("saveError")),
       );
     }
   }
@@ -1350,7 +1378,7 @@ export function ClimateDocumentClient({
     title: documentTitle,
     confirmDescription:
       missingDaysBeforeClose > 0
-        ? `Не заполнено дней: ${missingDaysBeforeClose}. После закрытия дописать их будет нельзя.`
+        ? t("missingDaysBeforeClose", { count: missingDaysBeforeClose })
         : undefined,
   });
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
@@ -1413,7 +1441,7 @@ export function ClimateDocumentClient({
             const url = row.data.readingPhotos?.[climateCorrectionKey(room.id, time, "temperature")];
             if (!url) return [];
             const value = row.data.measurements[room.id]?.[time]?.temperature;
-            const caption = [room.name, `${getClimateDateLabel(row.date)} ${time}`, typeof value === "number" ? `${value} °C` : null]
+            const caption = [room.name, `${formatClimateDate(row.date)} ${time}`, typeof value === "number" ? `${formatNumber(locale, value, { maximumFractionDigits: 2 })} °C` : null]
               .filter(Boolean)
               .join(" · ");
             return [{ url, caption }];
@@ -1423,7 +1451,7 @@ export function ClimateDocumentClient({
     if (photos.length === 0) return [];
     return [
       {
-        label: "Фото замеров",
+        label: t("measurementPhotos"),
         value: (
           <div className="flex flex-wrap gap-2">
             {photos.map((photo) => (
@@ -1504,7 +1532,7 @@ export function ClimateDocumentClient({
 
     if (!response.ok) {
       const result = await response.json().catch(() => null);
-      throw new Error(result?.error || "Не удалось обновить документ");
+      throw new Error(result?.error || t("updateDocumentError"));
     }
   }
 
@@ -1517,7 +1545,7 @@ export function ClimateDocumentClient({
 
     if (!response.ok) {
       const result = await response.json().catch(() => null);
-      throw new Error(result?.error || "Не удалось синхронизировать строки");
+      throw new Error(result?.error || t("syncRowsError"));
     }
 
     setConfig(nextConfig);
@@ -1542,7 +1570,7 @@ export function ClimateDocumentClient({
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.config) {
-      throw new Error(result?.error || "Не удалось изменить время контроля");
+      throw new Error(result?.error || t("changeControlTimeError"));
     }
     const nextConfig = normalizeClimateDocumentConfig(result.config);
     const mapping: Record<string, string> = {};
@@ -1608,7 +1636,7 @@ export function ClimateDocumentClient({
           });
           if (!res.ok) {
             const body = await res.json().catch(() => null);
-            throw new Error(body?.error || "Не удалось сохранить нормы в карточку помещения");
+          throw new Error(body?.error || t("saveNormsError"));
           }
         }
       }
@@ -1644,7 +1672,7 @@ export function ClimateDocumentClient({
   async function addRoomFromDirectory(room: DirectoryRoom) {
     const row = climateRoomFromDirectory(room);
     if (config.rooms.some((r) => r.id === row.id || r.roomId === room.id)) {
-      toast.error("Это помещение уже есть в документе");
+      toast.error(t("roomAlreadyInDocument"));
       return;
     }
     setEditingRoom(null);
@@ -1657,17 +1685,17 @@ export function ClimateDocumentClient({
     // раньше это происходило молча, без подтверждения.
     const lostValues = countClimateRoomValues(rows, roomId);
     const confirmed = await confirmAsync({
-      title: `Удалить помещение «${room?.name || "без названия"}»?`,
+      title: t("deleteRoomTitle", { name: room?.name || t("unnamedRoom") }),
       description:
-        "Помещение исчезнет из документа вместе со всеми замерами за весь период.",
+        t("deleteRoomDescription"),
       variant: "danger",
-      confirmLabel: "Удалить помещение",
+      confirmLabel: t("deleteRoom"),
       bullets: [
         lostValues > 0
-          ? { label: `Будет удалено замеров: ${lostValues}`, tone: "warn" as const }
-          : { label: "Замеров по этому помещению ещё нет", tone: "info" as const },
+          ? { label: t("deleteMeasurements", { count: lostValues }), tone: "warn" as const }
+          : { label: t("noRoomMeasurements"), tone: "info" as const },
         {
-          label: `Останется помещений: ${config.rooms.length - 1}`,
+          label: t("remainingRooms", { count: config.rooms.length - 1 }),
           tone: "default" as const,
         },
       ],
@@ -1683,8 +1711,8 @@ export function ClimateDocumentClient({
     await syncEntriesWithConfig(nextConfig);
     toast.success(
       lostValues > 0
-        ? `Помещение удалено. Удалено замеров: ${lostValues}`
-        : "Помещение удалено"
+        ? t("roomDeletedWithMeasurements", { count: lostValues })
+        : t("roomDeleted")
     );
     return true;
   }
@@ -1695,7 +1723,7 @@ export function ClimateDocumentClient({
     responsibleTitle: string | null;
   }) {
     if (!isDateWithinDocumentPeriod(params.date, dateFrom, dateTo)) {
-      toast.error("Дата строки должна попадать в период документа.");
+      toast.error(t("rowOutsidePeriod"));
       return;
     }
 
@@ -1703,7 +1731,7 @@ export function ClimateDocumentClient({
       (row) => row.employeeId === params.employeeId && row.date === params.date
     );
     if (duplicate) {
-      toast.error("Для выбранной даты и сотрудника строка уже существует.");
+      toast.error(t("duplicateRow"));
       return;
     }
 
@@ -1720,7 +1748,7 @@ export function ClimateDocumentClient({
 
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.entry) {
-      throw new Error(result?.error || "Не удалось создать строку");
+      throw new Error(result?.error || t("createRowFailed"));
     }
 
     setRows((currentRows) =>
@@ -1751,7 +1779,7 @@ export function ClimateDocumentClient({
         item.date === row.date
     );
     if (duplicate) {
-      throw new Error("Для выбранной даты и сотрудника строка уже существует.");
+      throw new Error(t("duplicateRow"));
     }
 
     const nextRow: RowItem = {
@@ -1812,20 +1840,20 @@ export function ClimateDocumentClient({
         date: nextRow.date,
         data: nextRow.data,
       },
-      label: `Замеры климата · ${getClimateDateLabel(nextRow.date)}`,
+      label: t("measurements") + ` · ${formatClimateDate(nextRow.date)}`,
       group: "climate_control",
     });
 
     if (submit.status === "queued") {
       // Строка уже обновлена в состоянии вызывающим кодом — просто
       // сообщаем, что отправка отложена.
-      toast.info("Нет связи — замер сохранится, когда она появится");
+      toast.info(t("offlineSave"));
       return;
     }
 
     const result = await submit.response.json().catch(() => null);
     if (!submit.response.ok || !result?.entry) {
-      throw new Error(result?.error || "Не удалось сохранить строку");
+      throw new Error(result?.error || t("saveRowFailed"));
     }
 
     setRows((currentRows) =>
@@ -1886,7 +1914,7 @@ export function ClimateDocumentClient({
       setRows((currentRows) =>
         currentRows.map((item) => (item.id === rowId ? previousRow : item))
       );
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(humanizeFetchError(error, t("saveError")));
     }
   }
 
@@ -1906,7 +1934,7 @@ export function ClimateDocumentClient({
         fields.push({
           type: "number",
           key: `${time}::temperature`,
-          label: many ? `Температура, ${time}` : "Температура",
+          label: many ? t("temperatureAt", { time }) : t("temperature"),
           unit: "°C",
           step: 0.1,
           min: -40,
@@ -1918,7 +1946,7 @@ export function ClimateDocumentClient({
         fields.push({
           type: "number",
           key: `${time}::humidity`,
-          label: many ? `Влажность, ${time}` : "Влажность",
+          label: many ? t("humidityAt", { time }) : t("humidity"),
           unit: "%",
           step: 1,
           min: 0,
@@ -1987,7 +2015,7 @@ export function ClimateDocumentClient({
       setRows((currentRows) =>
         currentRows.map((item) => (item.id === rowId ? previousRow : item))
       );
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(humanizeFetchError(error, t("saveError")));
     }
   }
 
@@ -2033,7 +2061,7 @@ export function ClimateDocumentClient({
   async function handleDeleteSelected() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    const confirmed = await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" });
+    const confirmed = await confirmAsync({ title: t("deleteSelectedTitle"), description: t("deleteSelectedDescription", { count }), variant: "danger", confirmLabel: t("delete") });
     if (!confirmed) return;
 
     try {
@@ -2045,16 +2073,16 @@ export function ClimateDocumentClient({
 
       const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(result?.error || "Не удалось удалить строки");
+        throw new Error(result?.error || t("deleteRowsFailed"));
       }
 
       setRows((currentRows) =>
         currentRows.filter((row) => !selectedRowIds.includes(row.id))
       );
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(t("deletedRows", { count }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(humanizeFetchError(error, t("deleteRowsFailed")));
     }
   }
 
@@ -2074,7 +2102,7 @@ export function ClimateDocumentClient({
 
         if (!response.ok) {
           const result = await response.json().catch(() => null);
-          throw new Error(result?.error || "Не удалось применить автозаполнение");
+          throw new Error(result?.error || t("applyAutofillFailed"));
         }
       }
 
@@ -2082,7 +2110,7 @@ export function ClimateDocumentClient({
     } catch (error) {
       setCheckedAutoFill(!value);
       toast.error(
-        humanizeFetchError(error, "Ошибка обновления автозаполнения")
+        humanizeFetchError(error, t("refreshAutofillFailed"))
       );
     } finally {
       setIsSwitching(false);
@@ -2104,12 +2132,12 @@ export function ClimateDocumentClient({
         onClick={() => {
           setPickerOpen(true);
         }}
-        title="Добавить помещение с нормами температуры и влажности"
+        title={t("addRoomNormsTitle")}
           data-tour={TOUR.addRoom}
         className={GRID_ADD_CELL_SOLID_CLASS}
       >
         <Plus className="size-4" strokeWidth={2.5} />
-        Добавить помещение
+        {t("addRoom")}
       </button>
     ) : (
       /*
@@ -2137,17 +2165,17 @@ export function ClimateDocumentClient({
             <td
               className={`${GRID_CELL_CLASS} w-[220px] px-4 py-1 text-[12px] font-semibold uppercase tracking-[0.04em] text-[#6f7282] leading-tight print:text-black`}
             >
-              Помещение
+              {t("roomName")}
             </td>
             <td
               className={`${GRID_CELL_CLASS} w-1/2 px-4 py-1 text-center text-[12px] font-semibold uppercase tracking-[0.04em] text-[#6f7282] leading-tight print:text-black`}
             >
-              Температура °C
+              {t("temperature")} °C
             </td>
             <td
               className={`${GRID_CELL_CLASS} w-1/2 px-4 py-1 text-center text-[12px] font-semibold uppercase tracking-[0.04em] text-[#6f7282] leading-tight print:text-black`}
             >
-              Влажность, %
+              {t("humidity")}, %
             </td>
           </tr>
           {visibleRooms.map((room) => (
@@ -2180,7 +2208,7 @@ export function ClimateDocumentClient({
                     <button
                       type="button"
                       onClick={() => openRoomEditor(room)}
-                      title="Открыть карточку помещения: нормы и QR-код для заполнения с телефона"
+                      title={t("openRoomCardTitle")}
                       className="font-medium lowercase transition-colors duration-150 hover:text-[#3848c7] print:whitespace-nowrap print:text-inherit"
                     >
                       {room.name}
@@ -2196,8 +2224,8 @@ export function ClimateDocumentClient({
                       onClick={() => openRoomEditor(room)}
                       title={
                         room.roomId
-                          ? "Карточка помещения — нормы, уборка, ответственные"
-                          : "Изменить нормы помещения"
+                          ? t("roomCardTooltip")
+                          : t("editRoomNorms")
                       }
                       className="text-[#5566f6] transition-colors duration-150 hover:text-[#4a5bf0] print:hidden"
                     >
@@ -2211,26 +2239,26 @@ export function ClimateDocumentClient({
                         const match = suggestDirectoryRoomForClimateRow(room, directoryRooms);
                         if (match) {
                           handleSaveRoom(room, match.id).catch((error) =>
-                            toast.error(humanizeFetchError(error, "Не удалось связать помещение")),
+                            toast.error(humanizeFetchError(error, t("linkRoomFailed"))),
                           );
                         }
                       }}
-                      title="В справочнике есть помещение с таким же названием — связать, чтобы нормы и имя брались из карточки помещения"
+                      title={t("directoryDuplicateTooltip")}
                       className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#eef1ff] print:hidden"
                     >
-                      Связать
+                      {t("link")}
                     </button>
                   ) : null}
                 </div>
               </td>
               <td className={`${GRID_CELL_CLASS} w-1/2 px-4 py-2 text-center leading-tight`}>
                 {room.temperature.enabled
-                  ? formatRange(room.temperature.min, room.temperature.max, "°C")
+                  ? formatClimateRange(room.temperature.min, room.temperature.max, "°C")
                   : "—"}
               </td>
               <td className={`${GRID_CELL_CLASS} w-1/2 px-4 py-2 text-center leading-tight`}>
                 {room.humidity.enabled
-                  ? formatRange(room.humidity.min, room.humidity.max, "%")
+                  ? formatClimateRange(room.humidity.min, room.humidity.max, "%")
                   : "—"}
               </td>
             </tr>
@@ -2243,12 +2271,12 @@ export function ClimateDocumentClient({
                   onClick={() => {
                     setPickerOpen(true);
                   }}
-                  title="Добавить помещение с нормами температуры и влажности"
+                  title={t("addRoomNormsTitle")}
           data-tour={TOUR.addRoom}
                   className={GRID_ADD_CELL_SOLID_CLASS}
                 >
                   <Plus className="size-4" strokeWidth={2.5} />
-                  Добавить помещение
+                  {t("addRoom")}
                 </button>
               </td>
             </tr>
@@ -2270,7 +2298,7 @@ export function ClimateDocumentClient({
         <DocumentActionsBar
           backHref="/journals/climate_control"
           documentId={documentId}
-          heading={<h1 className={DOC_HEADING_CLASS}>{documentTitle}</h1>}
+          heading={<h1 className={DOC_HEADING_CLASS}>{displayedDocumentTitle}</h1>}
           onSettings={status === "active" ? () => setSettingsOpen(true) : undefined}
           undo={{
             canUndo: undoStack.canUndo,
@@ -2286,14 +2314,14 @@ export function ClimateDocumentClient({
                     // Лист A4 с QR на каждое помещение этого бланка: сотрудник
                     // сканирует и вносит температуру и влажность без входа.
                     key: "qr-posters",
-                    label: "QR-плакаты",
+                    label: t("qrPosters"),
                     icon: <QrCode className="size-4" />,
-                    title: "Распечатать A4-плакаты с QR-кодом для помещений этого журнала",
+                    title: t("printQrPosters"),
                     onSelect: () => router.push(`/settings/qr-posters?kind=rooms&doc=${documentId}`),
                   },
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("finishJournal"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => void closeAction.closeDocument(),
                     disabled: closeAction.isClosing,
@@ -2304,7 +2332,7 @@ export function ClimateDocumentClient({
         />
         {status !== "active" ? (
           <div className="mb-8">
-            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать строки." documentId={documentId} />
+            <JournalClosedBanner hint={t("closedHint")} documentId={documentId} />
           </div>
         ) : null}
 
@@ -2314,7 +2342,7 @@ export function ClimateDocumentClient({
             «Не заполнять в выходные дни» — в «Настройки журнала» (C3). */}
         {/* Q3: единый токен-лента вместо локального r24 + py-5. */}
         {/* Настройка документа — право руководителя (сервер отвечал 403). */}
-        {canManageDocument ? (
+        {canManageDocument && !journalControls.specialMode ? (
         <div className={DOC_AUTOFILL_STRIP_CLASS} data-tour={TOUR.autofill}>
           <Switch
             checked={checkedAutoFill}
@@ -2323,7 +2351,7 @@ export function ClimateDocumentClient({
             className="data-[state=unchecked]:bg-[#d6d9ee]"
           />
           <span className={`min-w-0 ${DOC_AUTOFILL_LABEL_CLASS}`}>
-            Автоматически заполнять журнал
+            {t("autofill")}
           </span>
         </div>
         ) : null}
@@ -2335,7 +2363,7 @@ export function ClimateDocumentClient({
           <TodayProgressStrip
             filled={todayProgress.filled}
             total={todayProgress.total}
-            label="помещений"
+            label={t("rooms")}
             onJumpToToday={scrollToTodayColumn}
           />
         </div>
@@ -2374,7 +2402,7 @@ export function ClimateDocumentClient({
             <tbody>
               <JournalPaperHeaderRows
                 orgName={organizationName}
-                title={CLIMATE_DOCUMENT_TITLE.toUpperCase()}
+                title={displayedDocumentTitle.toUpperCase()}
                 startedAt={dateFrom}
                 finishedAt={status === "closed" ? dateTo : null}
                 controlPeriodicity={controlPeriodicity}
@@ -2389,7 +2417,7 @@ export function ClimateDocumentClient({
                 <td
                   className={`${GRID_HEAD_CELL_CLASS} w-[20%] px-3 py-2 text-center text-[13px] font-semibold leading-tight`}
                 >
-                  Нормы условий
+                  {t("norms")}
                 </td>
                 {/* R5-5: БЕЗ `GRID_CELL_CLASS` — рамку этой ячейки рисует
                     вложенная таблица норм (см. `climateNormsBody`).
@@ -2405,18 +2433,18 @@ export function ClimateDocumentClient({
                 <td
                   className={`${GRID_HEAD_CELL_CLASS} px-3 py-2 text-left text-[13px] font-semibold leading-tight`}
                 >
-                  Частота контроля
+                  {t("controlFrequency")}
                 </td>
                 {config.controlTimes.length === 0 && status === "active" ? (
                   <td colSpan={2} className={`${GRID_CELL_CLASS} p-0 leading-tight`}>
                     <button
                       type="button"
                       onClick={() => setSettingsOpen(true)}
-                      title="Задать время замеров — сколько раз в смену снимаются показатели"
+                      title={t("setControlTimeTitle")}
                       className={GRID_ADD_CELL_SOLID_CLASS}
                     >
                       <Plus className="size-4" strokeWidth={2.5} />
-                      Добавить частоту контроля
+                      {t("addControlFrequency")}
                     </button>
                   </td>
                 ) : (
@@ -2424,7 +2452,7 @@ export function ClimateDocumentClient({
                     colSpan={2}
                     className={`${GRID_CELL_CLASS} px-3 py-2 text-center text-[13px] leading-tight`}
                   >
-                    {getClimatePeriodicityText(config)}
+                    {formatClimateFrequency()}
                   </td>
                 )}
               </tr>
@@ -2438,7 +2466,7 @@ export function ClimateDocumentClient({
         </div>
 
         <JournalDocumentTitle className={DOC_CAPS_TITLE_CLASS}>
-          {CLIMATE_DOCUMENT_TITLE}
+          {displayedDocumentTitle}
         </JournalDocumentTitle>
 
         {/* Область применения и периодичность — прямо в журнале, а не в
@@ -2465,11 +2493,10 @@ export function ClimateDocumentClient({
         {deviations.length > 0 ? (
           <section className="mt-6">
             <JournalDocumentTitle className={DOC_CAPS_TITLE_CLASS}>
-              Корректирующие действия
+              {t("correctiveActions")}
             </JournalDocumentTitle>
             <p className="mt-1 text-center text-[12px] leading-snug text-[#a13a32] print:text-[10px]">
-              Показатель вышел за норму — опишите, что сделали. Пустая графа
-              при проверке читается как «нарушение заметили и проигнорировали».
+              {t("correctiveActionsHelp")}
             </p>
             {/* Таблица ездит вбок внутри своей рамки (общий класс). */}
             <div className={`mt-3 ${JOURNAL_TABLE_SCROLL_CLASS}`}>
@@ -2477,19 +2504,19 @@ export function ClimateDocumentClient({
                 <thead>
                   <tr>
                     <th className={`${GRID_CELL_CLASS} w-[110px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                      Дата
+                      {t("date")}
                     </th>
                     <th className={`${GRID_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                      Время
+                      {t("time")}
                     </th>
                     <th className={`${GRID_CELL_CLASS} w-[160px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                      Точка контроля
+                      {t("controlPoint")}
                     </th>
                     <th className={`${GRID_CELL_CLASS} w-[190px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                      Зафиксированный параметр
+                      {t("recordedValue")}
                     </th>
                     <th className={`${GRID_CELL_CLASS} px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                      Комментарий / действие
+                      {t("commentAction")}
                     </th>
                   </tr>
                 </thead>
@@ -2497,23 +2524,23 @@ export function ClimateDocumentClient({
                   {deviations.map((d) => (
                     <tr key={d.key} className="bg-[#fff4f2]">
                       <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center tabular-nums`}>
-                        {getClimateDateLabel(d.date)}
+                        {formatClimateDate(d.date)}
                       </td>
                       <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center tabular-nums`}>
                         {d.time}
                       </td>
                       <td className={`${GRID_CELL_CLASS} px-2 py-1`}>{d.roomName}</td>
                       <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center font-medium text-[#d2453d]`}>
-                        {d.metric === "temperature" ? "T" : "ВВ"}, {d.value}
+                        {d.metric === "temperature" ? t("metricTemperatureShort") : t("metricHumidityShort")}, {formatNumber(locale, d.value, { maximumFractionDigits: 2 })}
                         {d.metric === "temperature" ? " °C" : " %"}
                         <span className="ml-1 text-[11px] font-normal text-[#a13a32]">
-                          (норма {d.min ?? "—"}–{d.max ?? "—"})
+                          ({t("norm", { minimum: d.min ?? 0, maximum: d.max ?? 0 })})
                         </span>
                       </td>
                       <td className={`${GRID_CELL_CLASS} p-0`}>
                         <JournalCellInput
                           defaultValue={d.comment}
-                          placeholder="Что сделали: проветрили, вызвали мастера…"
+                          placeholder={t("correctiveActionPlaceholder")}
                           disabled={status !== "active"}
                           onBlur={(event) =>
                             void saveCorrection(
@@ -2540,7 +2567,7 @@ export function ClimateDocumentClient({
             count={selectedRowIds.length}
             onClear={() => setSelectedRowIds([])}
             onDelete={handleDeleteSelected}
-            hint="Строки замеров будут удалены без возможности отмены"
+            hint={t("deleteRowsHint")}
           />
         ) : null}
 
@@ -2548,13 +2575,13 @@ export function ClimateDocumentClient({
         {mobileView === "cards" && status === "active" ? (
           // На телефоне шапки таблицы нет — время контроля правится отсюда.
           <div className="mb-3 flex flex-wrap items-center gap-2 text-[13px] text-[#6f7282]">
-            <span>Время контроля:</span>
+            <span>{t("controlFrequency")}:</span>
             {config.controlTimes.map((time, timeIndex) => (
               <button
                 key={`chip:${time}`}
                 type="button"
                 onClick={() => setEditingTimeIndex(timeIndex)}
-                title="Изменить время контроля — для всего документа, замеры сохранятся"
+                title={t("controlTimeHelp")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#dcdfed] bg-white px-3 text-[13px] font-medium tabular-nums text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 {time}
@@ -2567,12 +2594,12 @@ export function ClimateDocumentClient({
         {mobileView === "cards" ? (
           <RecordCardsView
             items={rows.map((row, index) => {
-              const employee = employeeMap[row.employeeId];
+              const employee = hasRecordedMeasurements(row.data) ? employeeMap[row.employeeId] : undefined;
               const lockReason = rowLockReason(row);
               const canEditRow = status === "active" && lockReason === null;
               return {
                 id: row.id,
-                title: `№${index + 1} · ${getClimateDateLabel(row.date)}`,
+                title: `№${formatNumber(locale, index + 1)} · ${formatClimateDate(row.date)}`,
                 subtitle: employee?.name || undefined,
                 // В таблице кнопка смены ответственного была, в карточках —
                 // нет, и на телефоне строку было не переподписать.
@@ -2586,7 +2613,7 @@ export function ClimateDocumentClient({
                     className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff]"
                   >
                     <Pencil className="size-4 text-[#9b9fb3]" />
-                    Сменить ответственного
+                    {t("changeResponsible")}
                   </button>
                 ) : lockReason ? (
                   <span className="text-[13px] text-[#9b9fb3]">{lockReason}</span>
@@ -2614,7 +2641,7 @@ export function ClimateDocumentClient({
                         parts.push(`T ${m.temperature}°`);
                       }
                       if (room.humidity.enabled && m.humidity != null) {
-                        parts.push(`ВВ ${m.humidity}%`);
+                        parts.push(`${t("metricHumidityShort")} ${formatNumber(locale, m.humidity, { maximumFractionDigits: 2 })}%`);
                       }
                       return parts.length > 0 ? `${time}: ${parts.join(" / ")}` : null;
                     })
@@ -2632,13 +2659,13 @@ export function ClimateDocumentClient({
                     hint: !canEditRow
                       ? lockReason ?? undefined
                       : lines.length === 0
-                        ? "нажмите, чтобы внести замеры"
+                        ? t("tapToMeasure")
                         : undefined,
                   };
                 }), ...climatePhotoFields(row)],
               };
             })}
-            emptyLabel="Записей по микроклимату нет."
+            emptyLabel={t("emptyClimate")}
           />
         ) : null}
 
@@ -2658,13 +2685,13 @@ export function ClimateDocumentClient({
                   />
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[140px] px-2 py-1.5 text-center font-semibold leading-tight`} rowSpan={4}>
-                  Дата
+                  {t("date")}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`} colSpan={totalMeasurementColumns}>
-                  Точки контроля
+                  {t("controlPoints")}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[260px] px-2 py-1.5 text-center font-semibold leading-tight`} rowSpan={4}>
-                  Фамилия ответственного лица
+                  {t("responsibleSurname")}
                 </th>
               </tr>
               <tr>
@@ -2678,7 +2705,7 @@ export function ClimateDocumentClient({
                       <button
                         type="button"
                         onClick={() => openRoomEditor(room)}
-                        title="Открыть карточку помещения: нормы и QR-код для заполнения с телефона"
+                        title={t("openRoomCardTitle")}
                         className="inline-flex items-center gap-1 font-semibold transition-colors duration-150 hover:text-[#3848c7] print:text-inherit"
                       >
                         {room.name}
@@ -2704,7 +2731,7 @@ export function ClimateDocumentClient({
                         <button
                           type="button"
                           onClick={() => setEditingTimeIndex(timeIndex)}
-                          title="Изменить время контроля — для всего документа, замеры сохранятся"
+                          title={t("controlTimeHelp")}
                           className="inline-flex items-center gap-1 font-semibold tabular-nums transition-colors duration-150 hover:text-[#3848c7] print:text-inherit"
                         >
                           {time}
@@ -2733,7 +2760,7 @@ export function ClimateDocumentClient({
                         key={`${room.id}:${time}:humidity`}
                         className={`${GRID_HEAD_CELL_CLASS} w-[110px] px-2 py-1.5 text-center font-semibold leading-tight`}
                       >
-                        ВВ, %
+                        {t("humidityPercent")}
                       </th>
                     ) : null,
                   ])
@@ -2742,7 +2769,7 @@ export function ClimateDocumentClient({
             </thead>
             <tbody>
               {rows.map((row) => {
-                const employee = employeeMap[row.employeeId];
+                const employee = hasRecordedMeasurements(row.data) ? employeeMap[row.employeeId] : undefined;
                 const isToday = row.date === todayKey;
                 // Недоступная строка гасится здесь же — иначе сотрудник
                 // правил ячейку и получал отказ уже на сохранении.
@@ -2768,10 +2795,10 @@ export function ClimateDocumentClient({
                       />
                     </td>
                     <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
-                      {getClimateDateLabel(row.date)}
+                      {formatClimateDate(row.date)}
                       {isToday ? (
                         <span className="mt-0.5 block text-[11px] font-semibold text-[#3848c7] print:hidden">
-                          сегодня
+                          {t("today")}
                         </span>
                       ) : null}
                     </td>
@@ -2792,7 +2819,7 @@ export function ClimateDocumentClient({
                                 url={photoUrl}
                                 caption={[
                                   room.name,
-                                  `${getClimateDateLabel(row.date)} ${time}`,
+                                  `${formatClimateDate(row.date)} ${time}`,
                                   typeof temperatureValue === "number" ? `${temperatureValue} °C` : null,
                                 ]
                                   .filter(Boolean)
@@ -2903,7 +2930,7 @@ export function ClimateDocumentClient({
                         <div className="text-[13px] text-[#6f7282]">
                           {/* Должность этого сотрудника, не документа:
                               строку мог заполнить не ответственный. */}
-                          {getRowEmployeeTitle(employee, row.data.responsibleTitle)}
+                          {hasRecordedMeasurements(row.data) ? getRowEmployeeTitle(employee, row.data.responsibleTitle) : ""}
                         </div>
                       </button>
                     </td>
@@ -2917,7 +2944,7 @@ export function ClimateDocumentClient({
                     colSpan={3 + totalMeasurementColumns}
                     className={`${GRID_CELL_CLASS} px-4 py-10 text-center text-[13px] text-[#6f7282] leading-tight`}
                   >
-                    Пока нет строк. Добавь первую запись вручную или включи автозаполнение.
+                    {t("emptyRows")}
                   </td>
                 </tr>
               )}
@@ -2937,7 +2964,7 @@ export function ClimateDocumentClient({
                   leading={1}
                   labelSpan={1}
                   trailing={totalMeasurementColumns + 1}
-                  label="Добавить строку"
+                  label={t("addRowButton")}
                   onClick={() => setRowDialogOpen(true)}
                 />
               ) : null}
@@ -2990,7 +3017,7 @@ export function ClimateDocumentClient({
         onOpenChange={setPickerOpen}
         buildings={buildings}
         excludeRoomIds={config.rooms.map((r) => r.roomId).filter((id): id is string => Boolean(id))}
-        hint="Помещения общие для всех журналов. Нормы температуры и влажности задаются в карточке помещения."
+        hint={t("roomDirectoryHint")}
         onPick={addRoomFromDirectory}
         onCreated={async (room) => {
           await addRoomFromDirectory(room);
@@ -3024,7 +3051,7 @@ export function ClimateDocumentClient({
             try {
               await handleSaveRoom(next);
             } catch (error) {
-              toast.error(humanizeFetchError(error, "Не удалось обновить строку"));
+              toast.error(humanizeFetchError(error, t("updateRowFailed")));
             }
           }
           router.refresh();
@@ -3058,11 +3085,11 @@ export function ClimateDocumentClient({
         open={editingCell !== null}
         title={
           config.rooms.find((room) => room.id === editingCell?.roomId)?.name ??
-          "Замеры"
+          t("measurements")
         }
         subtitle={
           editingCell
-            ? getClimateDateLabel(
+            ? formatClimateDate(
                 rows.find((row) => row.id === editingCell.rowId)?.date ?? ""
               )
             : undefined

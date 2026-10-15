@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   Archive,
   Copy,
@@ -26,12 +27,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel, getUsersForRoleLabel, pickPrimaryManager } from "@/lib/user-roles";
+import { getUsersForRoleLabel, pickPrimaryManager } from "@/lib/user-roles";
 import {
   GLASS_LIST_DOCUMENT_TITLE,
   GLASS_LIST_PAGE_TITLE,
   GLASS_LIST_TEMPLATE_CODE,
-  formatGlassListDate,
   getDefaultGlassListConfig,
   normalizeGlassListConfig,
   toIsoDate,
@@ -42,8 +42,7 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -60,9 +59,9 @@ import { PositionNativeOptions } from "@/components/shared/position-select";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { localDayKey } from "@/lib/entry-defaults";
+import { isFetchNetworkError } from "@/lib/humanize-fetch-error";
 import {
   DocumentDialogFeedback,
-  readCreatedDocument,
   useDocumentDialogSubmit,
 } from "@/components/journals/use-document-dialog-submit";
 type UserItem = {
@@ -98,8 +97,6 @@ type Props = {
   documents: DocumentItem[];
 };
 
-const RESPONSIBLE_TITLES = USER_ROLE_LABEL_VALUES;
-
 function getDefaultFormState(users: UserItem[]): FormState {
   const defaultConfig = getDefaultGlassListConfig();
   const responsibleUser =
@@ -114,6 +111,21 @@ function getDefaultFormState(users: UserItem[]): FormState {
   };
 }
 
+function dateForDisplay(value: string | Date): Date {
+  if (value instanceof Date) return value;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  return dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+    : new Date(value);
+}
+
+function formatDisplayDate(format: ReturnType<typeof useFormatter>, value: string | Date): string {
+  const date = dateForDisplay(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : format.dateTime(date, { dateStyle: "short", timeZone: "UTC" });
+}
+
 function GlassListFormDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -124,9 +136,13 @@ function GlassListFormDialog(props: {
   initialState: FormState;
   onSubmit: (state: FormState) => Promise<void>;
 }) {
+  const t = useTranslations("glassInventory");
   const [state, setState] = useState<FormState>(props.initialState);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
-  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submit = useDocumentDialogSubmit({
+    onOpenChange: props.onOpenChange,
+    fallbackError: props.mode === "create" ? t("createError") : t("saveError"),
+  });
   const submitting = submit.submitting;
 
   const auto = useAutoDocumentTitle({
@@ -164,30 +180,30 @@ function GlassListFormDialog(props: {
         <div className="space-y-8 px-14 py-12">
           <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("documentNameLabel")}</Label>
             <Input
               value={state.documentName}
               onChange={(event) => {
                 auto.markTouched();
                 setState((prev) => ({ ...prev, documentName: event.target.value }));
               }}
-              placeholder="Введите название документа"
+              placeholder={t("documentNamePlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Место расположения (участок)</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("rowLocationLabel")}</Label>
             <Input
               value={state.location}
               onChange={(event) =>
                 setState((prev) => ({ ...prev, location: event.target.value }))
               }
-              placeholder="Введите место расположения (участок)"
+              placeholder={t("locationInputPlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("documentDateLabel")}</Label>
             <Input
               type="date"
               value={state.documentDate}
@@ -204,7 +220,7 @@ function GlassListFormDialog(props: {
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("responsibleRoleLabel")}</Label>
             <select
               value={state.responsibleTitle}
               onChange={(event) =>
@@ -216,12 +232,12 @@ function GlassListFormDialog(props: {
               }
               className="h-9 w-full rounded-xl border border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]"
             >
-              <option value="">Выберите должность</option>
+              <option value="">{t("chooseRole")}</option>
               <PositionNativeOptions users={props.users} />
             </select>
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("responsibleEmployeeLabel")}</Label>
             <select
               value={state.responsibleUserId}
               onChange={(event) =>
@@ -229,7 +245,7 @@ function GlassListFormDialog(props: {
               }
               className="h-9 w-full rounded-xl border border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]"
             >
-              <option value="">Выберите сотрудника</option>
+              <option value="">{t("chooseEmployee")}</option>
               {(state.responsibleTitle
                 ? getUsersForRoleLabel(props.users, state.responsibleTitle, { keepUserId: state.responsibleUserId })
                 : props.users
@@ -245,11 +261,20 @@ function GlassListFormDialog(props: {
               type="button"
               disabled={submitting}
               onClick={async () => {
-                await submit.run(() => props.onSubmit(state));
+                await submit.run(async () => {
+                  try {
+                    await props.onSubmit(state);
+                  } catch (error) {
+                    if (isFetchNetworkError(error)) {
+                      throw new Error(props.mode === "create" ? t("createError") : t("saveError"));
+                    }
+                    throw error;
+                  }
+                });
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : props.submitLabel}
+              {submitting ? t("saving") : props.submitLabel}
             </Button>
           </div>
         </div>
@@ -265,8 +290,9 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
+  const t = useTranslations("glassInventory");
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
-  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange, fallbackError: t("saveError") });
   const submitting = submit.submitting;
 
   return (
@@ -289,11 +315,18 @@ function ConfirmDialog(props: {
             type="button"
             disabled={submitting}
             onClick={async () => {
-              await submit.run(() => props.onSubmit());
+              await submit.run(async () => {
+                try {
+                  await props.onSubmit();
+                } catch (error) {
+                  if (isFetchNetworkError(error)) throw new Error(t("saveError"));
+                  throw error;
+                }
+              });
             }}
             className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
           >
-            {submitting ? "Сохранение..." : props.submitLabel}
+            {submitting ? t("saving") : props.submitLabel}
           </Button>
         </div>
       </DialogContent>
@@ -302,13 +335,15 @@ function ConfirmDialog(props: {
 }
 
 export function GlassListDocumentsClient(props: Props) {
+  const t = useTranslations("glassInventory");
+  const format = useFormatter();
   const router = useRouter();
   const routeCode = props.routeCode || props.templateCode;
   const defaultFormState = useMemo(() => getDefaultFormState(props.users), [props.users]);
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   const [archiveDocument, setArchiveDocument] = useState<DocumentItem | null>(null);
@@ -359,7 +394,7 @@ export function GlassListDocumentsClient(props: Props) {
 
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || "Не удалось создать документ");
+      throw new Error(result?.error || t("createError"));
     }
 
     router.refresh();
@@ -392,7 +427,7 @@ export function GlassListDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      throw new Error("Не удалось сохранить документ");
+      throw new Error(t("saveError"));
     }
 
     setSettingsDocument(null);
@@ -413,25 +448,31 @@ export function GlassListDocumentsClient(props: Props) {
       existingTitles: props.documents.map((item) => item.title),
     });
     const config = copy.config as { responsibleTitle?: string; responsibleUserId?: string };
-    const response = await fetch("/api/journal-documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        templateCode: GLASS_LIST_TEMPLATE_CODE,
-        title: copy.title,
-        dateFrom: copy.dateFrom,
-        dateTo: copy.dateTo,
-        responsibleTitle:
-          config.responsibleTitle || document.responsibleTitle || "Управляющий",
-        responsibleUserId:
-          config.responsibleUserId || document.responsibleUserId || null,
-        config: copy.config,
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/journal-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateCode: GLASS_LIST_TEMPLATE_CODE,
+          title: copy.title,
+          dateFrom: copy.dateFrom,
+          dateTo: copy.dateTo,
+          responsibleTitle:
+            config.responsibleTitle || document.responsibleTitle || "Управляющий",
+          responsibleUserId:
+            config.responsibleUserId || document.responsibleUserId || null,
+          config: copy.config,
+        }),
+      });
+    } catch (error) {
+      toast.error(isFetchNetworkError(error) ? t("copyError") : error instanceof Error && error.message ? error.message : t("copyError"));
+      return;
+    }
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось сделать копию документа");
+      toast.error(failure?.error || t("copyError"));
       return;
     }
 
@@ -447,7 +488,7 @@ export function GlassListDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      throw new Error("Не удалось перенести документ в архив");
+      throw new Error(t("archiveError"));
     }
 
     setArchiveDocument(null);
@@ -461,7 +502,7 @@ export function GlassListDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      throw new Error("Не удалось удалить документ");
+      throw new Error(t("deleteError"));
     }
 
     setDeleteDocument(null);
@@ -482,7 +523,7 @@ export function GlassListDocumentsClient(props: Props) {
               canManageDocuments && props.activeTab === "active" ? (
                 <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
                   <Plus className="size-4" />
-                  Создать документ
+                  {t("createDocumentAction")}
                 </Button>
               ) : null
             }
@@ -512,56 +553,56 @@ export function GlassListDocumentsClient(props: Props) {
                   {config.documentName || document.title || props.templateName}
                 </Link>
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Место расположения</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("locationLabel")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {config.location || "—"}
                   </div>
                 </Link>
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Должность</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("responsibleRoleLabel")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {responsibleUser
-                      ? `${responsibleTitle}: ${responsibleUser.name}`
-                      : responsibleTitle}
+                      ? `${responsibleTitle === "Управляющий" ? t("defaultResponsibleTitle") : responsibleTitle}: ${responsibleUser.name}`
+                      : responsibleTitle === "Управляющий" ? t("defaultResponsibleTitle") : responsibleTitle}
                   </div>
                 </Link>
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("documentDateLabel")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
-                    {formatGlassListDate(config.documentDate || document.dateFrom)}
+                    {formatDisplayDate(format, config.documentDate || document.dateFrom)}
                   </div>
                 </Link>
                 <div className="flex justify-end">
                   <ResponsiveMenu
-                    title="Действия"
+                    title={t("actionsMenu")}
                     items={filterManageMenuItems([
                       {
                         key: "settings",
-                        label: "Настройки",
+                        label: t("menuSettings"),
                         icon: <Pencil className="size-4 text-[#6f7282]" />,
                         onSelect: () => setSettingsDocument(document),
                       },
                       {
                         key: "copy",
-                        label: "Сделать копию",
+                        label: t("menuCopy"),
                         icon: <Copy className="size-4 text-[#6f7282]" />,
                         onSelect: () => copyDocument(document),
                       },
                       {
                         key: "print",
-                        label: "Печать",
+                        label: t("menuPrint"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
                           window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
                       },
                       // Закрытый документ раньше уходил навсегда: вернуть
                       // его в активные было нечем.
-                      ...restoreMenuItems({ document, siblings: props.documents, restore }),
+                      ...restoreMenu({ document, siblings: props.documents }),
                       ...(document.status === "active"
                         ? [
                             {
                               key: "archive",
-                              label: "Отправить в закрытые",
+                              label: t("menuArchive"),
                               icon: <Archive className="size-4 text-[#6f7282]" />,
                               onSelect: () => setArchiveDocument(document),
                             },
@@ -569,7 +610,7 @@ export function GlassListDocumentsClient(props: Props) {
                         : []),
                       {
                         key: "delete",
-                        label: "Удалить",
+                        label: t("deleteAction"),
                         icon: <Trash2 className="size-4 text-[#6f7282]" />,
                         tone: "danger" as const,
                         onSelect: () => setDeleteDocument(document),
@@ -595,8 +636,8 @@ export function GlassListDocumentsClient(props: Props) {
         open={createOpen}
         onOpenChange={setCreateOpen}
         mode="create"
-        dialogTitle="Создание документа"
-        submitLabel="Создать"
+        dialogTitle={t("createDialogTitle")}
+        submitLabel={t("create")}
         users={props.users}
         initialState={defaultFormState}
         onSubmit={createDocument}
@@ -606,8 +647,8 @@ export function GlassListDocumentsClient(props: Props) {
         open={!!settingsDocument}
         onOpenChange={(open) => !open && setSettingsDocument(null)}
         mode="edit"
-        dialogTitle="Настройки документа"
-        submitLabel="Сохранить"
+        dialogTitle={t("settingsTitle")}
+        submitLabel={t("save")}
         users={props.users}
         initialState={settingsFormState}
         onSubmit={saveSettings}
@@ -616,16 +657,16 @@ export function GlassListDocumentsClient(props: Props) {
       <ConfirmDialog
         open={!!archiveDocument}
         onOpenChange={(open) => !open && setArchiveDocument(null)}
-        title={`Перенести в архив документ "${archiveDocument?.title || GLASS_LIST_DOCUMENT_TITLE}"`}
-        submitLabel="В архив"
+        title={t("archiveTitle", { documentTitle: archiveDocument?.title || GLASS_LIST_DOCUMENT_TITLE })}
+        submitLabel={t("archiveSubmit")}
         onSubmit={archiveCurrentDocument}
       />
 
       <ConfirmDialog
         open={!!deleteDocument}
         onOpenChange={(open) => !open && setDeleteDocument(null)}
-        title={`Удаление документа "${deleteDocument?.title || GLASS_LIST_DOCUMENT_TITLE}"`}
-        submitLabel="Удалить"
+        title={t("deleteTitle", { documentTitle: deleteDocument?.title || GLASS_LIST_DOCUMENT_TITLE })}
+        submitLabel={t("deleteAction")}
         onSubmit={deleteCurrentDocument}
       />
     </>

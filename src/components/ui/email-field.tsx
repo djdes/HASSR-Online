@@ -1,10 +1,22 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
-import { useSiteLocale } from "@/components/i18n/site-locale-provider";
-
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { checkEmail, replaceDomain, type EmailCheck } from "@/lib/email-validation";
+import { checkEmail, replaceDomain, type EmailCheck, type EmailValidationIssueCode } from "@/lib/email-validation";
+
+const EMAIL_ERROR_MESSAGE_KEYS = {
+  required: "errors.required",
+  tooLong: "errors.tooLong",
+  whitespace: "errors.whitespace",
+  missingAt: "errors.missingAt",
+  multipleAt: "errors.multipleAt",
+  missingLocalPart: "errors.missingLocalPart",
+  missingDomain: "errors.missingDomain",
+  missingDomainDot: "errors.missingDomainDot",
+  malformedDomain: "errors.malformedDomain",
+  invalidDomainCharacters: "errors.invalidDomainCharacters",
+  invalidTld: "errors.invalidTld",
+} as const satisfies Record<EmailValidationIssueCode, string>;
 
 /**
  * Поле почты, которое не даёт отправить заведомо мёртвый адрес.
@@ -112,8 +124,7 @@ export function EmailHint({
   onApply: (suggestion: string) => void;
   tone?: "light" | "dark";
 }) {
-  const t = usePublicCopy();
-  const locale = useSiteLocale();
+  const t = useTranslations("auth.emailField");
   const dark = tone === "dark";
   const errorColor = dark ? "text-[#ffb4ab]" : "text-[#a13a32]";
   const mutedColor = dark ? "text-white/60" : "text-[#6f7282]";
@@ -123,7 +134,9 @@ export function EmailHint({
   if (check.status === "typo") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + errorColor}>
-        {locale === "en" ? "Please check the email address" : check.message}.{" "}
+        {check.code === "knownTypo"
+          ? t("knownTypo", { domain: check.domain, suggestion: check.suggestion })
+          : t("suggestedTypo", { suggestion: check.suggestion })}{" "}
         <button
           type="button"
           onClick={() => onApply(check.suggestion)}
@@ -132,7 +145,7 @@ export function EmailHint({
             (dark ? "text-white" : "text-[#3848c7]")
           }
         >
-          {t("Исправить на ")}{check.suggestion}
+          {t("applySuggestion", { suggestion: check.suggestion })}
         </button>
       </p>
     );
@@ -141,7 +154,7 @@ export function EmailHint({
   if (check.status === "invalid") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + errorColor}>
-        {t(check.message)}
+        {t(EMAIL_ERROR_MESSAGE_KEYS[check.code])}
       </p>
     );
   }
@@ -149,14 +162,16 @@ export function EmailHint({
   if (check.status === "ok" && domainState === "missing") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + errorColor}>
-        {t("Такого домена не существует — проверьте адрес. Письмо с паролем на него не дойдёт.")}</p>
+        {t("domainMissing")}
+      </p>
     );
   }
 
   if (check.status === "ok" && domainState === "checking") {
     return (
       <p className={"mt-2.5 text-[13px] leading-[1.5] " + mutedColor}>
-        {t("Проверяем адрес…")}</p>
+        {t("domainChecking")}
+      </p>
     );
   }
 

@@ -2,6 +2,7 @@
 
 import { BadgeCheck, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -35,6 +36,7 @@ const SECONDARY =
  * обратно можно в любой момент.
  */
 export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeState; organizationName: string }) {
+  const t = useTranslations("settingsManagement.organizationProfile");
   const [state, setState] = useState<BadgeState>(initial);
   const [busy, setBusy] = useState(false);
   const [rotateOpen, setRotateOpen] = useState(false);
@@ -48,11 +50,11 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       const data = (await response.json().catch(() => null)) as (BadgeState & { error?: string }) | null;
-      if (!response.ok || !data) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok || !data) throw new Error();
       setState(data);
       return data;
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+    } catch {
+      toast.error(t("badge.saveFailed"));
       return null;
     } finally {
       setBusy(false);
@@ -63,9 +65,9 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${what} — скопировано`);
+      toast.success(t("badge.copySuccess", { what }));
     } catch {
-      toast.error("Не удалось скопировать — выделите текст вручную");
+      toast.error(t("badge.copyFailed"));
     }
   }
 
@@ -83,13 +85,13 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
     }
     const next = await call("PATCH", { enabled: true });
     if (!next) return;
-    toast.success(copied ? "Бейдж включён, код скопирован — вставьте его на сайт" : "Бейдж включён — скопируйте код ниже");
+    toast.success(copied ? t("badge.enabledCopied") : t("badge.enabledCopyBelow"));
   }
 
   async function toggle(enabled: boolean) {
     const next = await call("PATCH", { enabled });
     if (!next) return;
-    toast.success(enabled ? "Бейдж включён" : "Бейдж выключен: страница и картинка больше не открываются");
+    toast.success(enabled ? t("badge.turnedOn") : t("badge.turnedOff"));
   }
 
   return (
@@ -97,22 +99,21 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
           <BadgeCheck className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
-          Бейдж «Журналы ведутся в WeSetup»
+          {t("badge.title")}
         </div>
         <label className="flex min-h-10 cursor-pointer items-center gap-2.5 text-[13px] font-medium text-[#3c4053]">
-          <span data-testid="badge-switch-label">{state.enabled ? "Включён" : "Выключен"}</span>
+          <span data-testid="badge-switch-label">{state.enabled ? t("badge.enabled") : t("badge.disabled")}</span>
           <Switch
             checked={state.enabled}
             disabled={busy}
             onCheckedChange={(checked) => void toggle(checked)}
-            aria-label={state.enabled ? "Выключить бейдж" : "Включить бейдж"}
+            aria-label={state.enabled ? t("badge.disable") : t("badge.enable")}
             data-testid="badge-switch"
           />
         </label>
       </div>
       <p className="mt-1 max-w-[720px] text-[13px] leading-relaxed text-[#6f7282]" data-testid="badge-description">
-        Значок для сайта, меню или соцсетей заведения: гости видят, что журналы ХАССП ведутся в электронном виде и сколько
-        их заполнено за 30 дней. По нажатию открывается страница со статусом — без имён сотрудников и записей.
+        {t("badge.description")}
       </p>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -123,7 +124,7 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
               <span className="size-2 rounded-full bg-[#dcdfed]" />
               <span className="size-2 rounded-full bg-[#dcdfed]" />
               <span className="ml-2 min-w-0 truncate rounded-md bg-white px-2 py-0.5 text-[11px] text-[#9b9fb3]">
-                сайт вашего заведения
+                {t("badge.previewSite")}
               </span>
             </div>
             <div className="px-4 py-4">
@@ -134,12 +135,12 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-[#f0f1f7] pt-3">
                 <span className="text-[11px] text-[#9b9fb3]" aria-hidden>
-                  Меню · Контакты
+                  {t("badge.menuContacts")}
                 </span>
                 {/* eslint-disable-next-line @next/next/no-img-element -- та же SVG-картинка, что отдаёт /b/<код>/badge.svg */}
                 <img
                   src={state.previewSvgDataUrl}
-                  alt="Бейдж WeSetup: электронные журналы ХАССП"
+                  alt={t("badge.imageAlt")}
                   height={22}
                   className="ml-auto h-[22px] w-auto"
                   data-testid="badge-preview"
@@ -148,17 +149,17 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
             </div>
           </div>
           <figcaption className="mt-2 text-[12px] leading-relaxed text-[#9b9fb3]">
-            Так бейдж выглядит на сайте заведения
-            {state.percent !== null ? ` — сейчас ${state.percent}% журналов за 30 дней` : " — процент появится, когда журналы начнут заполняться"}.
+            {t("badge.previewCaption")}
+            {state.percent !== null ? t("badge.currentPercent", { percent: String(state.percent) }) : t("badge.percentPending")}.
           </figcaption>
         </figure>
 
         <div className="min-w-0 space-y-3">
           <div>
-            <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">Код для сайта</div>
+            <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">{t("badge.embedCode")}</div>
             <textarea
               readOnly
-              value={state.embedHtml ?? "Код появится после включения"}
+              value={state.embedHtml ?? t("badge.codePending")}
               rows={3}
               data-testid="badge-embed"
               onFocus={(event) => event.currentTarget.select()}
@@ -168,30 +169,30 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
             />
             {state.publicUrl ? (
               <div className="mt-1 break-all text-[12px] text-[#6f7282]" data-testid="badge-public-url">
-                Ссылка для соцсетей и карт: <span className="text-[#3848c7]">{state.publicUrl}</span>
+                {t("badge.socialLink", { url: state.publicUrl })}
               </div>
             ) : null}
           </div>
 
           {state.enabled ? (
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => void copy(state.embedHtml, "Код")} className={PRIMARY} data-testid="badge-copy-code">
+              <button type="button" onClick={() => void copy(state.embedHtml, t("badge.embedCode"))} className={PRIMARY} data-testid="badge-copy-code">
                 <Copy className="size-4" aria-hidden />
-                Скопировать код
+                {t("badge.copyCode")}
               </button>
-              <button type="button" onClick={() => void copy(state.publicUrl, "Ссылка")} className={SECONDARY}>
+              <button type="button" onClick={() => void copy(state.publicUrl, t("badge.copyLink"))} className={SECONDARY}>
                 <Copy className="size-4 text-[#5566f6]" aria-hidden />
-                Скопировать ссылку
+                {t("badge.copyLink")}
               </button>
               {state.publicUrl ? (
                 <a href={state.publicUrl} target="_blank" rel="noreferrer" className={SECONDARY} data-testid="badge-public-link">
                   <ExternalLink className="size-4 text-[#5566f6]" aria-hidden />
-                  Открыть страницу
+                  {t("badge.openPage")}
                 </a>
               ) : null}
               <button type="button" onClick={() => setRotateOpen(true)} disabled={busy} className={SECONDARY}>
                 <RefreshCw className="size-4 text-[#5566f6]" aria-hidden />
-                Перевыпустить
+                {t("badge.regenerate")}
               </button>
             </div>
           ) : (
@@ -204,11 +205,10 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
                 data-testid="badge-enable-copy"
               >
                 <BadgeCheck className="size-4" aria-hidden />
-                {busy ? "Включаем…" : "Включить и скопировать код"}
+                {busy ? t("badge.enabling") : t("badge.enableAndCopy")}
               </button>
               <p className="text-[12.5px] leading-relaxed text-[#9b9fb3]">
-                Пока бейдж выключен, ссылка и код не работают. Включение открывает страницу с названием организации и
-                процентом заполнения журналов, поэтому без вашего решения мы его не включаем.
+                {t("badge.disabledNotice")}
               </p>
             </div>
           )}
@@ -219,12 +219,12 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
         open={rotateOpen}
         onClose={() => setRotateOpen(false)}
         variant="warn"
-        title="Перевыпустить код бейджа?"
-        description="Старая ссылка и старый HTML-код перестанут работать — картинку на сайте нужно будет заменить."
-        bullets={[{ label: "Новый код появится сразу" }, { label: "Старые вставки покажут «нет данных»" }]}
-        confirmLabel="Перевыпустить"
+        title={t("badge.regenerateTitle")}
+        description={t("badge.regenerateDescription")}
+        bullets={[{ label: t("badge.regenerateNewCode") }, { label: t("badge.regenerateOldCode") }]}
+        confirmLabel={t("badge.regenerate")}
         onConfirm={async () => {
-          if (await call("POST")) toast.success("Код перевыпущен");
+          if (await call("POST")) toast.success(t("badge.regeneratedSuccess"));
           setRotateOpen(false);
         }}
         confirmDisabled={busy}

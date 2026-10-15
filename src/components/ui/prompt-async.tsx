@@ -4,6 +4,8 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 import { useEffect, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Loader2, PencilLine, X } from "lucide-react";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locales";
+import { loadConfirmMessages } from "@/i18n/confirm-messages";
 
 /**
  * Imperative prompt API — красивая замена `window.prompt`.
@@ -27,6 +29,7 @@ import { Loader2, PencilLine, X } from "lucide-react";
  */
 
 export type PromptAsyncOptions = {
+  locale?: Locale;
   title: string;
   /** Пояснение под заголовком — «зачем это». */
   description?: React.ReactNode;
@@ -46,6 +49,8 @@ export type PromptAsyncOptions = {
 
 let activeRoot: Root | null = null;
 let activeContainer: HTMLDivElement | null = null;
+let activeResolve: ((value: string | null) => void) | null = null;
+let requestId = 0;
 
 function cleanup() {
   if (activeRoot) {
@@ -65,9 +70,11 @@ function cleanup() {
 function PromptDialog({
   options,
   onResolve,
+  copy,
 }: {
   options: PromptAsyncOptions;
   onResolve: (value: string | null) => void;
+  copy: { save: string; cancel: string; close: string };
 }) {
   const [value, setValue] = useState(options.defaultValue ?? "");
   const [touched, setTouched] = useState(false);
@@ -111,7 +118,7 @@ function PromptDialog({
     >
       <button
         type="button"
-        aria-label="Закрыть"
+        aria-label={copy.close}
         onClick={() => onResolve(null)}
         className="absolute inset-0 bg-[#0b1024]/40 backdrop-blur-sm transition-opacity"
       />
@@ -139,7 +146,7 @@ function PromptDialog({
             <button
               type="button"
               onClick={() => onResolve(null)}
-              aria-label="Закрыть"
+              aria-label={copy.close}
               className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-white/60 hover:text-[#0b1024]"
             >
               <X className="size-4" />
@@ -185,7 +192,7 @@ function PromptDialog({
             disabled={submitting}
             className="inline-flex h-11 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/40 hover:bg-[#fafbff] disabled:opacity-60"
           >
-            {options.cancelLabel ?? "Отмена"}
+            {options.cancelLabel ?? copy.cancel}
           </button>
           <button
             type="button"
@@ -194,7 +201,7 @@ function PromptDialog({
             className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-            {options.confirmLabel ?? "Сохранить"}
+            {options.confirmLabel ?? copy.save}
           </button>
         </div>
       </div>
@@ -208,24 +215,38 @@ export function promptAsync(
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.resolve(null);
   }
+  const currentRequest = ++requestId;
   cleanup();
+  activeResolve?.(null);
+  activeResolve = null;
+  const rawLocale = options.locale ?? document.documentElement.lang;
+  const locale = isLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
 
   return new Promise<string | null>((resolve) => {
-    const container = document.createElement("div");
-    container.dataset.testid = "prompt-async-host";
-    document.body.appendChild(container);
-    activeContainer = container;
+    activeResolve = resolve;
+    void loadConfirmMessages(locale).then(messages => {
+      if (currentRequest !== requestId) return;
+      const container = document.createElement("div");
+      container.dataset.testid = "prompt-async-host";
+      document.body.appendChild(container);
+      activeContainer = container;
 
-    const root = createRoot(container);
-    activeRoot = root;
+      const root = createRoot(container);
+      activeRoot = root;
 
-    function finish(result: string | null) {
-      setTimeout(() => {
-        if (activeContainer === container) cleanup();
-        resolve(result);
-      }, 0);
-    }
+      function finish(result: string | null) {
+        setTimeout(() => {
+          if (activeContainer === container) cleanup();
+          if (currentRequest === requestId) activeResolve = null;
+          resolve(result);
+        }, 0);
+      }
 
-    root.render(<PromptDialog options={options} onResolve={finish} />);
+      root.render(<PromptDialog options={options} onResolve={finish} copy={messages.common} />);
+    }).catch(() => {
+      if (currentRequest !== requestId) return;
+      activeResolve = null;
+      resolve(null);
+    });
   });
 }

@@ -1,0 +1,21 @@
+{
+  "locale": "uz",
+  "sourceHash": "a1725b614ef0d60c1d533a4e399b3e87a1423373774d06ece1ae9179e302ac47",
+  "title": "Restoratorlar uchun HACCP: biznesni asraydigan uch sahifa",
+  "excerpt": "Jarayon xaritalari, xavflar, KKN va kritik chegaralar: amaliy HACCP rejasini bir haftada tuzish mumkin. “Kerak bo‘lib qolar” deb saqlanadigan papka o‘rniga kunma-kun ish rejasi.",
+  "tags": ["HACCP", "Restoranlar"],
+  "body": [
+    {"type":"p","text":"Ko‘plab restoran tarmoqlarida HACCP rejasi buxgalteriyada “kerak bo‘lib qolar” deb qo‘yilgan papkada yotadi. Yaxshi restoranda esa bu xavflarni amalda nazorat qilish uchun ishlatiladigan hujjat. Ishni murakkablashtirmasangiz, uni bir haftada tuzish mumkin."},
+    {"type":"h2","text":"1–2-kun. Jarayon xaritasi"},
+    {"type":"p","text":"Barcha bosqichlarni bir varaqda chizing: qabul qilish → saqlash → tayyorlash → issiqlik bilan ishlov berish → tortish → tozalash. Qalamda, qo‘lda chizishdan tortinmang — keyin toza nusxasini tayyorlaysiz."},
+    {"type":"h2","text":"3-kun. Xavflar"},
+    {"type":"p","text":"Har bir bosqichda nima noto‘g‘ri ketishi mumkinligini belgilang. Biologik (tovuqdagi salmonella), kimyoviy (yuvishdan keyin qolgan yuvish vositasi), fizik (desertdagi shisha siniqlari) xavflarni ko‘rsating. Ehtimollik va og‘irlikni subyektiv bo‘lsa ham, xolis baholang."},
+    {"type":"h2","text":"4-kun. KKN va chegaralar"},
+    {"type":"ol","items":["Xavfni bartaraf etish yoki nazoratda ushlab turish mumkin bo‘lgan 3–6 nuqtani tanlang.","Chegarani belgilang: “tovuqning markazida ≥ 75 °C harorat 5 daqiqa saqlansin”.","Kim va qanday o‘lchashini aniqlang.","Chegara oshib ketganda qanday chora ko‘rilishini belgilang."]},
+    {"type":"h2","text":"5-kun. Monitoring va jurnallar"},
+    {"type":"p","text":"Har bir KKNni aniq jurnalga bog‘lang: haroratlar harorat jurnaliga, tayyor mahsulot bahosi tegishli jurnalga, tozalash esa tozalash jurnaliga yoziladi. Alohida “HACCP jurnallari”ni yaratmang — ular o‘zaro mos kelmay qoladi."},
+    {"type":"h2","text":"6–7-kun. Sinov va tasdiqlash"},
+    {"type":"p","text":"Rejani smena jamoasiga ko‘rsating, undan bir-ikki kun foydalanishni so‘rang, fikrlarni yig‘ing, tuzatishlar kiriting va rahbarga imzolang. Tayyor: asosiy HACCP rejasi tuzildi."},
+    {"type":"callout","tone":"tip","title":"Bir oydan keyin qayta ko‘rib chiqing","text":"HACCP rejasi toshga o‘yilmagan. 30 kundan keyin jamoa yig‘ilib, bandlarning yarmini qayta yozishi mumkin — bu odatiy hol va rejaning amaliy bo‘lib borish jarayonidir."}
+  ]
+}

@@ -2,9 +2,10 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { toastApiError } from "@/lib/billing-limit-toast";
+import { useBillingError } from "@/lib/billing-limit-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 /**
@@ -19,6 +20,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
  * котором повторная загрузка того же файла ничего не портит.
  */
 export function StaffImportExport() {
+  const { toastApiError } = useBillingError();
+  const t = useTranslations("staffManagement.importExport");
+  const locale = useLocale();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,37 +41,51 @@ export function StaffImportExport() {
         body: form,
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось загрузить");
+      if (!response.ok) {
+        if (data?.errorCode === "missingColumns") throw new Error(t("errors.missingColumns"));
+        if (data?.errorCode === "emptyRows") throw new Error(t("errors.emptyRows"));
+        if (data?.errorCode === "tooManyRows") throw new Error(t("errors.tooManyRows", { maxRows: data.maxRows }));
+        throw new Error(t("uploadFailed"));
+      }
 
-      const parts = [
-        `Добавлено: ${data.created}`,
-        data.updated > 0 ? `обновлено: ${data.updated}` : null,
-        data.skipped > 0 ? `пропущено: ${data.skipped}` : null,
-      ].filter(Boolean);
-      toast.success(parts.join(" · "));
+      toast.success(t("importSummary", { created: data.created, updated: data.updated, skipped: data.skipped }));
 
-      const errors: Array<{ line: number; message: string }> = data.errors ?? [];
+      const errors: Array<{ line: number; message: string; code?: string; params?: Record<string, string> }> = data.errors ?? [];
+      const listFormat = new Intl.ListFormat(locale, { style: "long", type: "conjunction" });
+      const translateError = (item: (typeof errors)[number]) => {
+        const params = item.params ?? {};
+        switch (item.code) {
+          case "missingColumns": return t("errors.missingColumns");
+          case "missingName": return t("errors.missingName");
+          case "missingPosition": return t("errors.missingPosition", { name: params.name ?? "" });
+          case "positionNotFound": return t("errors.positionNotFound", { position: params.position ?? "" });
+          case "invalidPhone": return t("errors.invalidPhone", { name: params.name ?? "", phone: params.phone ?? "" });
+          case "unknownJournals": return t("errors.unknownJournals", { name: params.name ?? "", journals: listFormat.format((params.journals ?? "").split(", ").filter(Boolean)) });
+          case "seatLimit": return t("errors.seatLimit", { name: params.name ?? "" });
+          default: return t("errors.unknown");
+        }
+      };
       if (errors.length > 0) {
         // Ошибки показываем построчно и с номером строки файла: «не
         // загрузилось 3 строки» без указания каких — это задача найти
         // их самому, а файл может быть на сто человек.
         toast.error(
-          `Не прошло строк: ${errors.length}\n` +
+          `${t("rowErrors", { count: errors.length })}\n` +
             errors
               .slice(0, 5)
-              .map((item) => `Строка ${item.line}: ${item.message}`)
+              .map((item) => `${t("row", { line: item.line })}: ${translateError(item)}`)
               .join("\n") +
-            (errors.length > 5 ? `\n…и ещё ${errors.length - 5}` : ""),
+            (errors.length > 5 ? `\n${t("moreErrors", { count: errors.length - 5 })}` : ""),
           { duration: 12_000 }
         );
       }
       if (data.planUpgraded) {
-        toast.info("Сотрудников стало больше бесплатного лимита — тариф обновлён");
+        toast.info(t("planUpgraded"));
       }
-      if (data.billingLimit) toastApiError(data.billingLimit, "Лимит тарифа");
+      if (data.billingLimit) toastApiError(data.billingLimit, t("billingLimit"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("genericError"));
     } finally {
       setBusy(false);
       setPending(null);
@@ -86,12 +104,12 @@ export function StaffImportExport() {
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a href="/api/staff/export?template=1" className={buttonClass}>
         <FileSpreadsheet className="size-4 text-[#5566f6]" />
-        Шаблон
+        {t("template")}
       </a>
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a href="/api/staff/export" className={buttonClass}>
         <Download className="size-4 text-[#5566f6]" />
-        Выгрузить
+        {t("export")}
       </a>
       <button
         type="button"
@@ -104,7 +122,7 @@ export function StaffImportExport() {
         ) : (
           <Upload className="size-4 text-[#5566f6]" />
         )}
-        Загрузить
+        {t("upload")}
       </button>
 
       <input
@@ -128,29 +146,29 @@ export function StaffImportExport() {
           if (pending) void upload(pending);
         }}
         variant="info"
-        title="Загрузить сотрудников из файла?"
+        title={t("confirmTitle")}
         description={
           pending
-            ? `Файл «${pending.name}». Должности должны уже существовать в организации — новые из файла не создаются.`
+            ? t("confirmDescription", { fileName: pending.name })
             : ""
         }
         bullets={[
           {
             label:
               mode === "skip"
-                ? "Уже заведённые сотрудники будут пропущены"
-                : "У уже заведённых обновим телефон, почту, выходные и доступ",
+                ? t("skipEffect")
+                : t("updateEffect"),
             tone: "info" as const,
           },
-          { label: "Совпадение ищем по телефону, а без него — по ФИО и должности" },
+          { label: t("matchingRule") },
         ]}
-        confirmLabel="Загрузить"
+        confirmLabel={t("upload")}
       >
         <div className="space-y-2">
           {(
             [
-              ["skip", "Пропускать уже заведённых", "Безопасно: повторная загрузка ничего не изменит"],
-              ["update", "Обновлять уже заведённых", "Перезапишет телефон, почту, выходные и доступ к журналам"],
+              ["skip", t("skipMode"), t("skipHint")],
+              ["update", t("updateMode"), t("updateHint")],
             ] as const
           ).map(([value, label, hint]) => (
             <label

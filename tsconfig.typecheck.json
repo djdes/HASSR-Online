@@ -6,7 +6,7 @@
   // проверка тогда падает на мусоре, а не на реальных ошибках.
   "extends": "./tsconfig.json",
   "include": [
-    "next-env.d.ts",
+    "src/types/next-typecheck.d.ts",
     "middleware.ts",
     "proxy.ts",
     "next.config.ts",

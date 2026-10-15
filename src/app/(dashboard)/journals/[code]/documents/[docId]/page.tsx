@@ -24,6 +24,7 @@ import {
   normalizeCleaningEntryData,
 } from "@/lib/cleaning-document";
 import { FinishedProductDocumentClient } from "@/components/journals/finished-product-document-client";
+import { getJournalControls } from "@/lib/journal-controls.server";
 import {
   FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
   normalizeFinishedProductDocumentConfig,
@@ -271,7 +272,9 @@ async function JournalHeaderEditBoundary({
         organizationId: true,
         status: true,
         config: true,
-        template: { select: { code: true } },
+        dateFrom: true,
+        dateTo: true,
+        template: { select: { code: true, name: true } },
       },
     }),
     db.organization.findUnique({
@@ -289,6 +292,12 @@ async function JournalHeaderEditBoundary({
     <JournalHeaderEditProvider
       value={{
         documentId: document.id,
+        templateCode: document.template.code,
+        titlePresentation: {
+          sourceNames: [document.template.name],
+          dateFrom: document.dateFrom.toISOString().slice(0, 10),
+          dateTo: document.dateTo.toISOString().slice(0, 10),
+        },
         canEditDocument: canManageJournals && document.status !== "closed",
         canManageJournals,
         canEditOrganization: hasCapability(session.user, "admin.full"),
@@ -1451,6 +1460,7 @@ async function JournalDocumentBody({
     return (
       <>
         <FinishedProductDocumentClient
+          commissionDeclined={(await getJournalControls(getActiveOrgId(session))).brakerageSetup.finished_product === "declined"}
           documentId={document.id}
           currentUserId={session.user.id}
           controlPeriodicity={controlPeriodicity}

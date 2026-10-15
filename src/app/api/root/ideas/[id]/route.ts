@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { IDEA_ADMIN_NOTE_MAX, IDEA_STATUS_LABEL, describeIdeaStatusChange, isIdeaStatus } from "@/lib/ideas/rules";
 import { upsertNotification } from "@/lib/notifications";
 import { emitWebhook } from "@/lib/webhooks/dispatch";
+import { shortIdeaTitle } from "@/i18n/notification-messages";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,9 +49,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       kind: "idea.status",
       dedupeKey: `idea:${before.id}:${data.status}`,
       title: describeIdeaStatusChange(before.title, data.status),
+      messageKey: "ideaStatus",
+      messageParams: { title: shortIdeaTitle(before.title), status: data.status },
       linkHref: "/ideas",
       linkLabel: "Открыть идеи",
-      items: [{ id: before.id, label: before.title, hint: IDEA_STATUS_LABEL[data.status] }],
+      linkLabelKey: "openIdeas",
+      items: [{ id: before.id, label: before.title, hint: IDEA_STATUS_LABEL[data.status], hintKey: "ideaStatusLabel", hintParams: { status: data.status } }],
     }).catch((error) => console.error("[ideas] notify author failed", error));
   }
   await recordAuditLog({

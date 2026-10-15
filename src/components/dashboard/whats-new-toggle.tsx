@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Megaphone } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 /**
  * «Показывать окно "Что нового"».
@@ -14,6 +15,7 @@ import { toast } from "sonner";
  * его заново на телефоне и на втором компьютере.
  */
 export function WhatsNewToggle({ initial }: { initial: boolean }) {
+  const t = useTranslations("settingsManagement.appearance");
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
 
@@ -31,10 +33,10 @@ export function WhatsNewToggle({ initial }: { initial: boolean }) {
         body: JSON.stringify({ enabled: next }),
       });
       if (!res.ok) throw new Error();
-      toast.success(next ? "Окно будет показываться" : "Окно отключено");
+      toast.success(next ? t("whatsNewEnabled") : t("whatsNewDisabled"));
     } catch {
       setEnabled(!next);
-      toast.error("Не удалось сохранить");
+      toast.error(t("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -54,11 +56,10 @@ export function WhatsNewToggle({ initial }: { initial: boolean }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold text-[#0b1024]">
-          Окно «Что нового»
+          {t("whatsNewTitle")}
         </span>
         <span className="mt-0.5 block text-[13px] leading-[1.5] text-[#6f7282]">
-          Короткий список изменений при первом заходе после обновления
-          сервиса. Показывается один раз на версию.
+          {t("whatsNewHint")}
         </span>
       </span>
       <span

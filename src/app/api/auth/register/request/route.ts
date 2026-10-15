@@ -8,6 +8,7 @@ import {
 import { sendVerificationEmail } from "@/lib/email";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
+import { resolveRequestLocale } from "@/i18n/site-locale";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await sendVerificationEmail(email, code).catch((err) => {
+  await sendVerificationEmail(email, code, resolveRequestLocale(request)).catch((err) => {
     console.error("sendVerificationEmail failed", err);
   });
 

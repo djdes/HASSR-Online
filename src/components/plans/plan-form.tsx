@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { PLAN_SHIFTS, PLAN_PRIORITIES, planErrorKey, readPlanFormData, type PlanItem } from "./plan-presentation";
 import { useRouter } from "next/navigation";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import { Plus, Trash2 } from "lucide-react";
@@ -15,14 +17,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-type PlanItem = { sku: string; targetQuantity: number; priority: string };
 
 export function PlanForm() {
+  const t = useTranslations("productionPlans");
   const router = useRouter();
   // Двойной тап отправлял два POST подряд: setState применяется только
   // к следующему рендеру. Синхронный замок отсекает второй вход.
   const { busy: isSubmitting, acquire, release } = useSubmitLock();
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ReturnType<typeof planErrorKey> | null>(null);
   const [shift, setShift] = useState("morning");
   const [items, setItems] = useState<PlanItem[]>([{ sku: "", targetQuantity: 0, priority: "P2" }]);
 
@@ -43,27 +45,23 @@ export function PlanForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!acquire()) return;
-    setError("");
+    setError(null);
     const form = new FormData(e.currentTarget);
 
     try {
       const res = await fetch("/api/plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: form.get("date"),
-          shift,
-          items: items.filter((i) => i.sku),
-          notes: form.get("notes") || null,
-        }),
+        body: JSON.stringify(readPlanFormData(form, shift, items)),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Не удалось сохранить план. Попробуйте ещё раз.");
+        setError(planErrorKey(data?.error, res.status));
+        return;
       }
       router.push("/plans");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      setError("saveFailed");
     } finally {
       release();
     }
@@ -71,34 +69,33 @@ export function PlanForm() {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{t(`errors.${error}`)}</p>}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="space-y-2">
-          <Label htmlFor="date">Дата *</Label>
+          <Label htmlFor="date">{t("form.date")}</Label>
           <Input id="date" name="date" type="date" required defaultValue={localDayKey()} />
         </div>
         <div className="space-y-2">
-          <Label>Смена</Label>
+          <Label htmlFor="plan-shift">{t("form.shift")}</Label>
           <Select value={shift} onValueChange={setShift}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="plan-shift"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="morning">Утренняя</SelectItem>
-              <SelectItem value="evening">Вечерняя</SelectItem>
-              <SelectItem value="night">Ночная</SelectItem>
+              {PLAN_SHIFTS.map(value => <SelectItem key={value} value={value}>{t(`shiftOptions.${value}`)}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>Позиции плана</Label>
+        <Label>{t("form.items")}</Label>
         <div className="space-y-2">
           {items.map((item, i) => (
-            <div key={i} className="flex gap-2 items-end">
+            <div key={i} className="flex flex-wrap items-end gap-2">
               <div className="flex-1">
                 <Input
-                  placeholder="Продукт"
+                  placeholder={t("form.product")}
+                  aria-label={t("form.productLabel", { index: i + 1 })}
                   value={item.sku}
                   onChange={(e) => updateItem(i, "sku", e.target.value)}
                 />
@@ -106,7 +103,8 @@ export function PlanForm() {
               <div className="w-24">
                 <Input
                   type="number"
-                  placeholder="Кол-во"
+                  placeholder={t("form.quantity")}
+                  aria-label={t("form.quantityLabel", { index: i + 1 })}
                   value={item.targetQuantity || ""}
                   onChange={(e) => updateItem(i, "targetQuantity", Number(e.target.value))}
                 />
@@ -115,15 +113,13 @@ export function PlanForm() {
                   словами. Значения в базе прежние. */}
               <div className="w-[150px]">
                 <Select value={item.priority} onValueChange={(v) => updateItem(i, "priority", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label={t("form.priorityLabel", { index: i + 1 })}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="P1">Высокий приоритет</SelectItem>
-                    <SelectItem value="P2">Средний приоритет</SelectItem>
-                    <SelectItem value="P3">Низкий приоритет</SelectItem>
+                    {PLAN_PRIORITIES.map(value => <SelectItem key={value} value={value}>{t(`priorities.${value}`)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(i)} disabled={items.length === 1}>
+              <Button type="button" variant="ghost" size="icon" aria-label={t("form.removeItem", { index: i + 1 })} onClick={() => removeItem(i)} disabled={items.length === 1}>
                 <Trash2 className="size-4" />
               </Button>
             </div>
@@ -131,21 +127,21 @@ export function PlanForm() {
         </div>
         <Button type="button" variant="outline" size="sm" onClick={addItem}>
           <Plus className="size-4" />
-          Добавить позицию
+          {t("form.addItem")}
         </Button>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Примечания</Label>
+        <Label htmlFor="notes">{t("form.notes")}</Label>
         <Textarea id="notes" name="notes" />
       </div>
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Создание..." : "Создать план"}
+          {isSubmitting ? t("form.creating") : t("form.create")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/plans")}>
-          Отмена
+          {t("form.cancel")}
         </Button>
       </div>
     </form>

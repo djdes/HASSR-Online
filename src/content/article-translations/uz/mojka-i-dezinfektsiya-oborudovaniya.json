@@ -1,0 +1,15 @@
+{
+  "locale":"uz","sourceHash":"3ee78f120fd98d54f194bbab1fdf07f463356df8867630c17e9c02f9b647208d",
+  "title":"Uskunalarni yuvish va dezinfeksiya qilish: to‘g‘ri rasmiylashtirish",
+  "excerpt":"Kesgichlar, mikserlar va muz generatorlari o‘zaro ifloslanishning asosiy manbalaridan. Yuvish jarayonining olti bosqichi, jurnalga nimalar yozish va surtma namunalari nega kerakligi haqida.",
+  "tags":["Uskunalar","Dezinfeksiya"],
+  "body":[
+    {"type":"p","text":"Ishlab chiqarish uskunalari — kesgichlar, mikserlar, pechlar va muz generatorlari — o‘zaro ifloslanishning asosiy manbalaridan biridir. Shu sababli yuvish va dezinfeksiya “umumiy tozalash” bilan aralashtirilmaydi, alohida jurnalda yuritiladi."},
+    {"type":"h2","text":"Yuvish sikli"},
+    {"type":"ol","items":["Mexanik tozalash: mahsulot qoldiqlarini olib tashlash.","Yuvish vositasi yo‘riqnomasiga muvofiq yuvish (konsentratsiya va suv harorati).","Ichimlik suvi bilan chayish.","Yo‘riqnomaga muvofiq dezinfeksiya qilish (konsentratsiya va ta’sir vaqti).","Vosita yo‘riqnomasida talab qilinsa, qayta chayish.","Quritish va qayta ifloslanishdan himoyalash."]},
+    {"type":"h2","text":"Jurnalga nimalar yoziladi"},
+    {"type":"ul","items":["Uskuna: inventar raqami va hududi.","Sana, smena va mas’ul xodim.","Ishlatilgan vositalar va ularning konsentratsiyasi.","Dezinfeksiya vositasining ta’sir vaqti.","O‘tkazilgan bo‘lsa, surtma namunalari natijalari."]},
+    {"type":"callout","tone":"tip","title":"Surtma namunalari","text":"Mikrobiologik surtma namunalari yuvish haqiqatan samarali bo‘lganini isbotlashning eng yaxshi usulidir. Laboratoriya bayonnomalarini jurnalga biriktiring va 3 yil saqlang."},
+    {"type":"p","text":"Xizmat shabloni tanlangan vositani o‘zi kiritadi va ta’sir vaqtini eslatadi. Bu dezinfeksiya vositasini belgilangan 5 daqiqa o‘rniga 30 soniyadan keyin chayib yuborish kabi odatiy xatoning oldini oladi."}
+  ]
+}

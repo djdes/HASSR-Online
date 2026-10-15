@@ -68,3 +68,17 @@ test("предупреждение о замене колонок считает
   assert.ok(change.hide.includes("Ответственный исполнитель (ФИО, должность)"));
   assert.equal(change.show.length, 0);
 });
+
+test("localized template summaries use display labels without changing the stored column config", () => {
+  const template = builtInTemplates("finished_product")[0];
+  const original = structuredClone(template.columns);
+  const change = describeTemplateChange("finished_product", {}, template.columns, (column) => ({
+    ...column,
+    label: `display:${column.key}`,
+    defaultLabel: `display:${column.key}`,
+  }));
+
+  assert.ok(change.hide.length > 0);
+  assert.ok(change.hide.every((label) => label.startsWith("display:")));
+  assert.deepEqual(template.columns, original);
+});

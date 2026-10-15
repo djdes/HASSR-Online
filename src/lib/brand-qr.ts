@@ -43,7 +43,7 @@ export type BrandQrOptions = {
   /** Рамка и полоса «Отсканировать» снизу. По умолчанию — есть. */
   caption?: boolean;
   /** Locale of the built-in caption; QR payload and geometry stay unchanged. */
-  locale?: "ru" | "en";
+  locale?: "ru" | "en" | "uz";
 };
 
 export const BRAND_QR_CAPTION_TITLE = "Отсканировать";

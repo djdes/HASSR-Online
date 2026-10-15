@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -12,7 +13,6 @@ import {
 import { GC_CHIP_TONE } from "@/components/journals/general-cleaning/month-cell";
 import { cleaningStatus, monthCleanings } from "@/lib/sanitation-day-document";
 import { cn } from "@/lib/utils";
-import { MONTH_NAMES_RU } from "@/lib/wheel-date";
 
 type Props = Omit<GeneralCleaningPanelProps, "monthIndex" | "onBack"> & {
   open: boolean;
@@ -25,9 +25,16 @@ type Props = Omit<GeneralCleaningPanelProps, "monthIndex" | "onBack"> & {
  * листе (без листа поверх листа).
  */
 export function GeneralCleaningYearSheet({ open, onClose, ...panel }: Props) {
+  const locale = useLocale();
+  const t = useTranslations("cleaningGrid.cleaning");
   const [monthIndex, setMonthIndex] = useState<number | null>(null);
   const { row, year, todayKey } = panel;
+  const monthNames = Array.from({ length: 12 }, (_, index) => new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn-UZ" : locale, { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, index, 1))));
   const currentMonth = todayKey.startsWith(`${year}-`) ? Number(todayKey.slice(5, 7)) - 1 : -1;
+  const translateSummary = (
+    key: "plannedCleaningSummary" | "noPlannedCleaningSummary" | "completedCleaningSummary",
+    values?: { count: number },
+  ) => key === "noPlannedCleaningSummary" ? t(key) : t(key, values ?? { count: 0 });
 
   return (
     <BottomSheet
@@ -38,20 +45,20 @@ export function GeneralCleaningYearSheet({ open, onClose, ...panel }: Props) {
       }}
       title={
         monthIndex === null
-          ? row.roomName || "Помещение"
-          : `${MONTH_NAMES_RU[monthIndex]} ${year} · ${row.roomName || "Помещение"}`
+          ? row.roomName || t("room")
+          : `${monthNames[monthIndex]} ${year} · ${row.roomName || t("room")}`
       }
       subtitle={
         monthIndex === null
-          ? `График генеральных уборок на ${year} год`
-          : describeMonthLoad(row, year, monthIndex, todayKey).text
+          ? t("scheduleForYear", { year: String(year) })
+          : describeMonthLoad(row, year, monthIndex, todayKey, translateSummary).text
       }
     >
       <div className="px-1 pb-3 pt-1">
         {monthIndex === null ? (
           <ul className="space-y-1">
-            {MONTH_NAMES_RU.map((name, index) => {
-              const load = describeMonthLoad(row, year, index, todayKey);
+            {monthNames.map((name, index) => {
+              const load = describeMonthLoad(row, year, index, todayKey, translateSummary);
               const planned = monthCleanings(row, index, year).planned;
               return (
                 <li key={name}>
@@ -68,14 +75,14 @@ export function GeneralCleaningYearSheet({ open, onClose, ...panel }: Props) {
                         {name}
                         {index === currentMonth ? (
                           <span className="rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
-                            сейчас
+                            {t("currentMonth")}
                           </span>
                         ) : null}
                       </span>
                       <span className="block text-[12.5px] text-[#6f7282]">
                         {load.text}
                         {load.overdue > 0 ? (
-                          <span className="text-[#a13a32]"> · {load.overdue} просроч.</span>
+                          <span className="text-[#a13a32]"> · {load.overdue} {t("overdueShort")}</span>
                         ) : null}
                       </span>
                     </span>

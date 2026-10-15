@@ -4,6 +4,8 @@ import {
   COMMISSION_JOURNAL_CODES,
   isCommissionJournalCode,
   normalizeCommissionMembers,
+  normalizeCommissionRole,
+  type CommissionRoleKind,
   type BrakerageCommissionMember,
 } from "@/lib/brakerage-commission";
 import { db } from "@/lib/db";
@@ -41,7 +43,7 @@ export async function readOrgCommission(organizationId: string, code: string): P
 export async function saveOrgCommission(
   organizationId: string,
   code: string,
-  input: Array<{ employeeId: string; role?: string }>
+  input: Array<{ employeeId: string; role?: string; roleKind?: CommissionRoleKind }>
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
   if (!isCommissionJournalCode(code)) throw new Error("Журнал без комиссии");
   const ids = [...new Set(input.map((item) => item.employeeId).filter(Boolean))];
@@ -55,7 +57,7 @@ export async function saveOrgCommission(
       .filter((item) => byId.has(item.employeeId))
       .map((item, index) => ({
         id: `commission-${item.employeeId}`,
-        role: item.role || (index === 0 ? "Председатель" : "Член комиссии"),
+        ...normalizeCommissionRole(item.role, item.roleKind, index === 0 ? "chair" : "member"),
         employeeId: item.employeeId,
         employeeName: byId.get(item.employeeId)?.name ?? "",
       }))
@@ -133,15 +135,15 @@ export async function ensureCommissionPosition(organizationId: string): Promise<
 export async function addOrgCommissionMember(
   organizationId: string,
   code: string,
-  member: { employeeId: string; role?: string }
+  member: { employeeId: string; role?: string; roleKind?: CommissionRoleKind }
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
   const current = await readOrgCommission(organizationId, code);
   if (current.some((item) => item.employeeId === member.employeeId)) {
     return { members: current, updatedDocuments: 0 };
   }
   return saveOrgCommission(organizationId, code, [
-    ...current.map((item) => ({ employeeId: item.employeeId, role: item.role })),
-    { employeeId: member.employeeId, role: member.role || "Член комиссии" },
+    ...current.map((item) => ({ employeeId: item.employeeId, role: item.role, roleKind: item.roleKind })),
+    { employeeId: member.employeeId, ...normalizeCommissionRole(member.role, member.roleKind) },
   ]);
 }
 

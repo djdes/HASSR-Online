@@ -1,5 +1,13 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+import { emergencyLocale, emergencyTranslator } from "@/i18n/emergency-messages";
+import { localizedHref } from "@/i18n/site-locale";
+
+const subscribe = () => () => {};
+const serverLocale = () => "ru" as const;
+const browserLocale = () => emergencyLocale(window.location.pathname, document.cookie, document.documentElement.lang);
+
 /**
  * Глобальный error boundary, ловит ошибки которые произошли ВЫШЕ
  * RootLayout — например, в самом layout'е, в metadata, в next/font,
@@ -19,8 +27,11 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Server fallback is deterministic; browser preference applies after hydration.
+  const locale = useSyncExternalStore(subscribe, browserLocale, serverLocale);
+  const t = emergencyTranslator(locale);
   return (
-    <html lang="ru">
+    <html lang={locale}>
       <body
         style={{
           margin: 0,
@@ -71,7 +82,7 @@ export default function GlobalError({
               letterSpacing: "-0.02em",
             }}
           >
-            Сбой приложения
+            {t("globalTitle")}
           </h1>
           <p
             style={{
@@ -81,8 +92,7 @@ export default function GlobalError({
               color: "#6f7282",
             }}
           >
-            Что-то пошло не так на уровне layout'а. Перезагрузите страницу —
-            обычно помогает после свежего деплоя.
+            {t("globalDescription")}
           </p>
           {error.digest ? (
             <p
@@ -93,7 +103,7 @@ export default function GlobalError({
                 color: "#9b9fb3",
               }}
             >
-              Код: {error.digest}
+              {t("code", { code: error.digest })}
             </p>
           ) : null}
           <div
@@ -120,7 +130,7 @@ export default function GlobalError({
                 boxShadow: "0 10px 30px -12px rgba(85,102,246,0.55)",
               }}
             >
-              Повторить
+              {t("retry")}
             </button>
             {/* Намеренно <a>, не <Link>: global-error срабатывает когда
                 root layout упал, в этой ситуации клиентская гидратация
@@ -130,7 +140,7 @@ export default function GlobalError({
                 нужно явно отключить. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
-              href="/"
+              href={localizedHref("/", locale)}
               style={{
                 height: 44,
                 lineHeight: "44px",
@@ -144,7 +154,7 @@ export default function GlobalError({
                 display: "block",
               }}
             >
-              На главную
+              {t("home")}
             </a>
           </div>
         </div>

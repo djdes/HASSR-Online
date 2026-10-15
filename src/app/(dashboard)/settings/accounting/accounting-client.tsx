@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function AccountingClient({ initialEmail }: Props) {
+  const t = useTranslations("settingsManagement.accounting");
   const [email, setEmail] = useState(initialEmail ?? "");
   const [saved, setSaved] = useState(initialEmail);
   const [busy, setBusy] = useState(false);
@@ -18,7 +20,7 @@ export function AccountingClient({ initialEmail }: Props) {
   async function save() {
     const trimmed = email.trim();
     if (!trimmed) {
-      toast.error("Введите email");
+      toast.error(t("emailRequired"));
       return;
     }
     setBusy(true);
@@ -28,12 +30,11 @@ export function AccountingClient({ initialEmail }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: trimmed }),
       });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Ошибка");
-      toast.success(`Сохранено: ${trimmed}`);
+      if (!res.ok) throw new Error(t("saveFailed"));
+      toast.success(t("saved", { email: trimmed }));
       setSaved(trimmed);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(t("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -47,12 +48,12 @@ export function AccountingClient({ initialEmail }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: null }),
       });
-      if (!res.ok) throw new Error("Ошибка");
-      toast.success("Рассылка отключена");
+      if (!res.ok) throw new Error(t("disconnectFailed"));
+      toast.success(t("disconnected"));
       setSaved(null);
       setEmail("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      toast.error(t("disconnectFailed"));
     } finally {
       setBusy(false);
     }
@@ -66,18 +67,17 @@ export function AccountingClient({ initialEmail }: Props) {
         </span>
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            Email бухгалтера
+            {t("emailTitle")}
           </div>
           {saved ? (
             <p className="mt-1 text-[13px] text-[#6f7282]">
-              Подключено:{" "}
+              {t("connected")}:{" "}
               <span className="font-mono text-[#3848c7]">{saved}</span>{" "}
-              · ближайший отчёт — понедельник 09:00 МСК
+              · {t("reportSchedule")}
             </p>
           ) : (
             <p className="mt-1 text-[13px] text-[#6f7282]">
-              Введите адрес — на него начнут приходить еженедельные CSV
-              со списаниями.
+              {t("emailHint")}
             </p>
           )}
         </div>
@@ -98,7 +98,7 @@ export function AccountingClient({ initialEmail }: Props) {
           className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-50"
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-          {saved ? "Сохранить" : "Подключить"}
+          {saved ? t("save") : t("connect")}
         </button>
         {saved ? (
           <button
@@ -108,17 +108,14 @@ export function AccountingClient({ initialEmail }: Props) {
             className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#a13a32] hover:bg-[#fff4f2] disabled:opacity-50"
           >
             <Trash2 className="size-4" />
-            Отключить
+            {t("disconnect")}
           </button>
         ) : null}
       </div>
 
       <div className="mt-5 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[12px] leading-relaxed text-[#6f7282]">
-        <span className="font-medium text-[#0b1024]">Что в письме:</span>{" "}
-        вложение CSV с колонками Дата / Категория / Продукт / Кол-во /
-        Ед.изм / Сумма ₽ / Причина. Кодировка UTF-8 BOM, разделитель
-        «;», даты в формате ДД.ММ.ГГГГ. Если за неделю не было
-        списаний — письмо не отправляется.
+        <span className="font-medium text-[#0b1024]">{t("emailContentsTitle")}</span>{" "}
+        {t("emailContents")}
       </div>
 
       {/* Нативный confirm() в приложении Telegram может не показаться —
@@ -130,15 +127,15 @@ export function AccountingClient({ initialEmail }: Props) {
           setConfirmDisconnectOpen(false);
           await disconnect();
         }}
-        title="Отключить рассылку бухгалтеру?"
-        description={`Адрес ${saved ?? ""} перестанет получать еженедельный отчёт по списаниям.`}
+        title={t("confirmTitle")}
+        description={t("confirmDescription", { email: saved ?? "" })}
         bullets={[
-          { label: "Письма по понедельникам приходить перестанут", tone: "warn" },
-          { label: "Сами списания и журналы остаются на месте", tone: "default" },
-          { label: "Подключить обратно можно в любой момент", tone: "info" },
+          { label: t("confirmBulletSchedule"), tone: "warn" },
+          { label: t("confirmBulletData"), tone: "default" },
+          { label: t("confirmBulletReconnect"), tone: "info" },
         ]}
-        confirmLabel="Отключить"
-        cancelLabel="Отмена"
+        confirmLabel={t("disconnect")}
+        cancelLabel={t("cancel")}
         variant="warn"
       />
     </section>

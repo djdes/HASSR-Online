@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { ChevronDown, HelpCircle, X } from "lucide-react";
 
 /**
@@ -26,6 +27,7 @@ export type PageGuideProps = {
 };
 
 export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageGuideProps) {
+  const t = useTranslations("common.pageGuide");
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -56,7 +58,7 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
         className="inline-flex items-center gap-1 rounded-full border border-[#dcdfed] bg-white px-3 py-1 text-[12px] text-[#5566f6] hover:bg-[#f5f6ff]"
       >
         <HelpCircle className="size-3.5" />
-        Как это работает
+        {t("restore")}
       </button>
     );
   }
@@ -115,7 +117,7 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
           {qa.length > 0 ? (
             <div className="mt-2 space-y-1.5 border-t border-[#dcdfed] pt-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-                Частые вопросы
+                {t("faq")}
               </div>
               {qa.map((item, i) => (
                 <details key={i} className="text-[12px]">
@@ -136,7 +138,7 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
             className="inline-flex items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2.5 py-1 text-[11px] text-[#6f7282] hover:bg-[#fafbff]"
           >
             <X className="size-3" />
-            Понятно, скрыть
+            {t("dismiss")}
           </button>
         </div>
       ) : null}

@@ -2,8 +2,8 @@
 
 import { ArrowRight, MessageCircle, X } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import type { IncomingPopup } from "./use-incoming-messages";
 
 /**
@@ -25,7 +25,7 @@ export function IncomingMessagePopup({
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   className?: string;
 }) {
-  const locale = useSiteLocale();
+  const t = useTranslations("publicSupport");
   if (!popup) return null;
   return (
     <div
@@ -48,7 +48,7 @@ export function IncomingMessagePopup({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--app-indigo-deep,#3848c7)]">
-              {locale === "en" ? "New message" : "Новое сообщение"}
+              {t("widget.incomingNewMessage")}
             </span>
             <span className="mt-0.5 block truncate text-[14px] font-semibold text-[var(--app-text,#0b1024)]">
               {popup.title}
@@ -59,7 +59,7 @@ export function IncomingMessagePopup({
               </span>
             ) : null}
             <span className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#5566f6]">
-              {locale === "en" ? "Open chat" : "Открыть чат"}
+              {t("widget.incomingOpenChat")}
               <ArrowRight className="size-3.5" />
             </span>
           </span>
@@ -68,7 +68,7 @@ export function IncomingMessagePopup({
           type="button"
           onClick={onDismiss}
           className="absolute right-2.5 top-2.5 rounded-lg p-1 text-[var(--app-text-faint,#9b9fb3)] transition-colors hover:bg-[var(--app-tint-indigo,#f5f6ff)] hover:text-[var(--app-text,#0b1024)]"
-          aria-label={locale === "en" ? "Dismiss" : "Скрыть"}
+          aria-label={t("widget.incomingDismiss")}
         >
           <X className="size-4" />
         </button>

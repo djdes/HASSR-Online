@@ -62,7 +62,7 @@ test("buildTelegramLinkedStartReply returns completed-today copy for staff witho
     "https://wesetup.ru/mini"
   );
 
-  assert.match(reply.text, /обязательные журналы уже закрыты/);
+  assert.match(reply.text, /обязательные журналы на сегодня уже закрыты/i);
   assert.match(reply.buttonLabel ?? "", /Мои журналы/);
   assert.equal(reply.buttonUrl, "https://wesetup.ru/mini");
 });
@@ -80,8 +80,8 @@ test("buildTelegramLinkedStartReply includes a manager summary", () => {
     "https://wesetup.ru/mini"
   );
 
-  assert.match(reply.text, /Открыто задач: <b>4<\/b>/);
-  assert.match(reply.text, /сотрудников с задачами: <b>2<\/b>/);
+  assert.match(reply.text, /<b>4 задачи<\/b>/);
+  assert.match(reply.text, /<b>2 сотрудника с задачами<\/b>/);
   assert.match(reply.buttonLabel ?? "", /Открыть Кабинет/);
   assert.equal(reply.buttonUrl, "https://wesetup.ru/mini");
 });

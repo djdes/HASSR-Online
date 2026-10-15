@@ -1,5 +1,6 @@
 "use client";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Loader2 } from "lucide-react";
@@ -38,6 +39,7 @@ type Result = {
  * отрендерить ВНЕ DropdownMenuContent (иначе он размонтируется вместе с меню).
  */
 export function useCopyYesterdayAction(documentId: string) {
+  const { controls } = useJournalControls();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<number | null>(null);
@@ -132,11 +134,12 @@ export function useCopyYesterdayAction(documentId: string) {
     </>
   );
 
-  return { run, busy, dialog };
+  return { run, busy, dialog, hidden: controls.specialMode };
 }
 
 export function CopyYesterdayButton({ documentId }: { documentId: string }) {
-  const { run, busy, dialog } = useCopyYesterdayAction(documentId);
+  const { run, busy, dialog, hidden } = useCopyYesterdayAction(documentId);
+  if (hidden) return null;
   return (
     <>
       <Button

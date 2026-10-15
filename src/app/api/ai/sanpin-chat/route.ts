@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { resolveRequestLocale } from "@/i18n/site-locale";
+import { translatorFor } from "@/i18n/translator";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { aiChatRateLimiter } from "@/lib/rate-limit";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
@@ -53,6 +55,10 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
+  const locale = resolveRequestLocale(request, { authenticated: true, userLocale: auth.session.user.locale, organizationLocale: auth.session.user.organizationLocale });
+  const t = await translatorFor(locale);
+  const localizedHeaders = { "Cache-Control": "private, no-store", "Content-Language": locale };
+  const errorResponse = (code: string, error: string, status: number) => NextResponse.json({ code, error }, { status, headers: localizedHeaders });
 
   // Per-user rate limit: 10 запросов в минуту. Защищает от спама и
   // от расхода очереди диспетчера одним юзером. Месячная quota по org —
@@ -61,12 +67,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Слишком много запросов к AI. Подождите минуту и попробуйте снова.",
+          t("common.assistant.rateLimit"),
+        code: "AI_RATE_LIMIT",
         retryAfterMs: aiChatRateLimiter.remainingMs(
           `user:${auth.session.user.id}`
         ),
       },
-      { status: 429 }
+      { status: 429, headers: localizedHeaders }
     );
   }
 
@@ -76,10 +83,11 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Bad body" },
-        { status: 400 }
+        { code: "AI_INVALID_REQUEST", error: t("common.assistant.invalidRequest") },
+        { status: 400, headers: localizedHeaders }
       );
     }
+    if (err instanceof SyntaxError) return errorResponse("AI_INVALID_REQUEST", t("common.assistant.invalidRequest"), 400);
     throw err;
   }
 
@@ -96,8 +104,9 @@ export async function POST(request: Request) {
     const result = await verifyAndExecuteAction(parsed.confirmAction.token, {
       orgId,
       actor,
+      locale,
     });
-    return NextResponse.json({ actionResult: result });
+    return NextResponse.json({ actionResult: result }, { headers: localizedHeaders });
   }
 
   // --- Обычный ход чата. Месячной квоты нет: AI-помощник без лимитов
@@ -113,21 +122,16 @@ export async function POST(request: Request) {
       pathname: parsed.pathname,
       history,
       question: question.content,
+      locale,
     });
   } catch (err) {
     console.error("[sanpin-chat] job text build failed", err);
-    return NextResponse.json(
-      { error: "Ошибка AI. Подробности в логах сервера." },
-      { status: 502 }
-    );
+    return errorResponse("AI_CONTEXT_FAILED", t("common.assistant.unavailable"), 502);
   }
 
   const result = await enqueueAndWait(jobText);
   if (!result.ok) {
-    return NextResponse.json(
-      { error: result.error },
-      { status: result.code === "not_configured" ? 503 : 502 }
-    );
+    return errorResponse("AI_UNAVAILABLE", t("common.assistant.unavailable"), result.code === "not_configured" ? 503 : 502);
   }
 
   const { reply, action } = parseAssistantReply(result.text);
@@ -136,18 +140,18 @@ export async function POST(request: Request) {
   // превью-карточку. Невалидное действие не роняет ответ — просто нет
   // карточки, а причина дописывается к reply.
   let pendingAction = null;
-  let replyOut = reply || "(пустой ответ)";
+  let replyOut = reply || t("common.assistant.empty");
   if (action) {
-    const prepared = await prepareAction(action, { orgId, actor });
+    const prepared = await prepareAction(action, { orgId, actor, locale });
     if (prepared.ok) {
       pendingAction = prepared.preview;
     } else {
-      replyOut = `${replyOut}\n\nНе удалось подготовить действие: ${prepared.error}`;
+      replyOut = `${replyOut}\n\n${t("common.assistant.prepareFailed", { reason: prepared.error })}`;
     }
   }
 
   return NextResponse.json({
     reply: replyOut,
     pendingAction,
-  });
+  }, { headers: localizedHeaders });
 }

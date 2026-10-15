@@ -11,6 +11,9 @@ import {
 } from "@/lib/master-brakerage-plan";
 import { normalizeTypedTime } from "@/lib/finished-product-bulk";
 import { requireMasterDirectorySession } from "@/lib/master-directory-guard";
+import { db } from "@/lib/db";
+import { masterBrakerageHistoryInputSchema } from "@/lib/master-brakerage-history";
+import { brakerageCommentRequired } from "@/lib/brakerage-assessment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,6 +77,7 @@ export async function POST(request: Request) {
     );
   }
 
+  if (common.organoleptic.trim() && brakerageCommentRequired(common.organoleptic) && !common.note.trim()) return NextResponse.json({ error: "Добавьте комментарий к оценке блюда" }, { status: 400 });
   const result = await addMasterBrakerageToPool({ masterOrgId: auth.masterOrgId, rows, common, dryRun });
   console.info(dryRun ? "[master-brakerage] preview" : "[master-brakerage] added", {
     masterOrgId: auth.masterOrgId,
@@ -83,6 +87,12 @@ export async function POST(request: Request) {
   });
 
   if (!dryRun) {
+    await db.masterBrakerageBatch.create({ data: {
+      organizationId: auth.masterOrgId,
+      input: masterBrakerageHistoryInputSchema.parse({ ...parsed.data, rows }),
+      result: JSON.parse(JSON.stringify(result)),
+      createdByName: auth.session.user.name ?? "",
+    } });
     await recordAuditLog({
       request,
       session: auth.session,
@@ -119,5 +129,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, organizations: result.organizations.map(({ delivery: _delivery, ...organization }) => organization) });
 }

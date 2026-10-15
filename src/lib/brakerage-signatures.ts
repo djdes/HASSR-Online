@@ -9,6 +9,7 @@ import {
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   createFinishedProductRow,
+  getFinishedProductOrganolepticOptions,
   normalizeFinishedProductDocumentConfig,
   type FinishedProductDocumentRow,
 } from "@/lib/finished-product-document";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/perishable-rejection-document";
 import { orgTodayKey } from "@/lib/timezone";
 import { commissionSignDefaultTime, deriveBrakerageTimes, withLocalTime } from "@/lib/brakerage-times";
+import { aggregateBrakerageAssessment, brakerageCommentRequired, parseBrakerageTimeDigits } from "@/lib/brakerage-assessment";
 
 /**
  * Подпись членов бракеражной комиссии под строками (п. 2, 12 ТЗ).
@@ -109,6 +111,17 @@ export async function signBrakerageRows(params: {
       if (!isCommissionMember(config, params.signer.id) || !member) {
         return { result: { ok: false, error: "Подписывают только члены комиссии этого журнала", status: 403 } };
       }
+      // Validate the entire batch before creating any immutable events.
+      const gradeOptions = getFinishedProductOrganolepticOptions(config);
+      for (const entry of params.entries) {
+        const row = config.rows.find(item => item.id === entry.rowId);
+        if (!row) return { result: { ok: false, error: "Строка не найдена — обновите страницу", status: 404 } };
+        if (!row.productName.trim()) return { result: { ok: false, error: "Сначала сотрудник, ведущий журнал, должен внести название блюда", status: 400 } };
+        const grade = entry.grade?.trim() || row.organoleptic;
+        if (!gradeOptions.includes(grade)) return { result: { ok: false, error: "Выберите оценку из списка", status: 400 } };
+        if (brakerageCommentRequired(grade) && !entry.note?.trim()) return { result: { ok: false, error: `Добавьте комментарий к оценке блюда «${row.productName}»`, status: 400 } };
+        if (entry.rejectionTime !== undefined && !parseBrakerageTimeDigits(entry.rejectionTime)) return { result: { ok: false, error: "Введите время четырьмя цифрами: например, 1430", status: 400 } };
+      }
       let signed = 0;
       const rows: FinishedProductDocumentRow[] = [];
       const signedRows: BrakerageSignedRow[] = [];
@@ -118,11 +131,16 @@ export async function signBrakerageRows(params: {
           rows.push(row);
           continue;
         }
-        const releaseAllowed = entry.releaseAllowed ?? row.releaseAllowed;
+        const grade = entry.grade?.trim() || row.organoleptic;
+        const otherSignatures = normalizeRowSignatures(row.signatures).filter(item => item.userId !== params.signer.id && config.commissionMembers.some(member => member.employeeId === item.userId));
+        const assessment = aggregateBrakerageAssessment(otherSignatures, grade);
+        const assessmentNote = grade === assessment.grade ? entry.note?.trim() : otherSignatures.find(item => item.grade === assessment.grade)?.note?.trim();
+        const releaseAllowed = assessment.releaseAllowed;
         // Время бракеража: исправленное комиссией (ЧЧ:ММ на дату строки), иначе
         // записанное, иначе изготовление + смещение журнала (5 мин); разрешение —
         // бракераж + смещение. «Сейчас» — только если нет и времени изготовления.
-        const correctedRejection = entry.rejectionTime ? withLocalTime(row.productionDateTime || nowLocal, entry.rejectionTime) : null;
+        const correctedTime = entry.rejectionTime ? parseBrakerageTimeDigits(entry.rejectionTime) : null;
+        const correctedRejection = correctedTime ? withLocalTime(row.productionDateTime || nowLocal, correctedTime) : null;
         const times = deriveBrakerageTimes({
           productionDateTime: row.productionDateTime,
           rejectionTime: correctedRejection ?? row.rejectionTime,
@@ -132,10 +150,10 @@ export async function signBrakerageRows(params: {
         });
         const next = createFinishedProductRow({
           ...row,
-          ...(entry.grade ? { organoleptic: entry.grade } : {}),
+          organoleptic: assessment.grade,
           releaseAllowed,
           ...(entry.portionWeight !== undefined ? { portionWeight: entry.portionWeight } : {}),
-          ...(entry.note !== undefined ? { note: entry.note } : {}),
+          note: assessmentNote || row.note,
           rejectionTime: times.rejectionTime || nowLocal,
           releasePermissionTime: releaseAllowed === "yes" ? times.releasePermissionTime || nowLocal : "",
         });
@@ -149,8 +167,9 @@ export async function signBrakerageRows(params: {
           signedAt: now.toISOString(),
           ...(journalAt ? { journalAt } : {}),
           method: params.method,
-          ...(next.organoleptic ? { grade: next.organoleptic } : {}),
-          snapshot: signatureSnapshot(next as unknown as Record<string, unknown>),
+          grade,
+          note: entry.note?.trim() ?? "",
+          snapshot: { productName: next.productName, portionWeight: next.portionWeight },
         };
         rows.push({ ...next, signatures: withSignature(row.signatures, signature) });
         signedRows.push({ rowId: row.id, journalAt: journalAt || null });
@@ -168,6 +187,7 @@ export async function signBrakerageRows(params: {
               role: member.role,
               userName: params.signer.name,
               grade: signature.grade ?? null,
+              note: signature.note,
               snapshot: signature.snapshot,
               // Время в журнале; настоящий момент — createdAt события.
               journalAt: journalAt || null,

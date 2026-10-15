@@ -1,5 +1,10 @@
 ﻿"use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { calibrationDate, calibrationPositionLabel, calibrationDocumentTitle, calibrationErrorKey, checkCalibrationResponse } from "./equipment-calibration-presentation";
+import { EquipmentCalibrationPositionItems } from "./equipment-calibration-position-items";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,8 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel } from "@/lib/user-roles";
-import { openDocumentPdf } from "@/lib/open-document-pdf";
+import { getUserRoleLabel, getUserPositionLabel } from "@/lib/user-roles";
+import { useJournalDocumentActions } from "./use-journal-document-actions";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
   Select,
@@ -27,9 +32,8 @@ import {
 import { Ellipsis, Pencil, Copy, Printer, Archive, Trash2, ArchiveRestore, X } from "lucide-react";
 import {
   normalizeEquipmentCalibrationConfig,
-  formatCalibrationDate,
 } from "@/lib/equipment-calibration-document";
-import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
+import { getUserDisplayName } from "@/lib/user-display-name";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { localDayKey } from "@/lib/entry-defaults";
 
@@ -43,13 +47,12 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import {
-  PositionSelectItems,
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { resolveApprover } from "@/lib/approver-display";
 import { formatPositionWithName } from "@/lib/position-name-label";
-const POSITION_OPTIONS = USER_ROLE_LABEL_VALUES;
+
 
 type JournalListDocument = {
   id: string;
@@ -77,6 +80,12 @@ export function EquipmentCalibrationDocumentsClient({
   documents,
 }: Props) {
   const router = useRouter();
+  const { openPdf } = useJournalDocumentActions();
+  const locale = useLocale() as Locale;
+  const t = useTranslations("equipmentCalibration");
+  const roles = { manager: t("roles.manager"), head_chef: t("roles.head_chef"), cook: t("roles.cook"), waiter: t("roles.waiter") };
+  const positionLabel = (value: string) => calibrationPositionLabel(value, users, roles);
+  const documentTitle = (value: string, year: number) => calibrationDocumentTitle(value, year, locale, t("pageTitle"), (name, period) => t("generatedTitle", { name, period }));
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
   const [editingDoc, setEditingDoc] = useState<JournalListDocument | null>(null);
@@ -114,54 +123,60 @@ export function EquipmentCalibrationDocumentsClient({
   }, [editingDoc]);
 
   async function handleDelete(docId: string) {
-    const response = await fetch(`/api/journal-documents/${docId}`, { method: "DELETE" });
-    if (!response.ok) throw new Error("Не удалось удалить документ");
-    setDeleteDoc(null);
-    router.refresh();
+    try {
+      const response = await fetch(`/api/journal-documents/${docId}`, { method: "DELETE" });
+      await checkCalibrationResponse(response, "delete");
+      setDeleteDoc(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(t(`errors.${calibrationErrorKey(error, "delete")}`));
+    }
   }
 
   async function handleStatusChange(docId: string, newStatus: "active" | "closed") {
-    const response = await fetch(`/api/journal-documents/${docId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (!response.ok) throw new Error("Не удалось изменить статус документа");
-    setArchiveDoc(null);
-    router.refresh();
+    try {
+      const response = await fetch(`/api/journal-documents/${docId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      await checkCalibrationResponse(response, "status");
+      setArchiveDoc(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(t(`errors.${calibrationErrorKey(error, "status")}`));
+    }
   }
 
   async function handleCopy(doc: JournalListDocument) {
-    // Копия — перечень приборов на следующий год. Дата последней поверки
-    // в копию не переезжает (`buildDocumentCopy`): иначе новый бланк
-    // утверждал бы, что прибор уже поверен.
-    const copy = buildDocumentCopy({
-      templateCode,
-      journalName: templateName,
-      sourceConfig: normalizeEquipmentCalibrationConfig(doc.config),
-      sourcePeriod: { dateFrom: doc.dateFrom, dateTo: doc.dateFrom },
-      today: localDayKey(),
-      existingTitles: documents.map((item) => item.title),
-    });
-    const response = await fetch("/api/journal-documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      // Копия — перечень приборов на следующий год. Дата последней поверки
+      // в копию не переезжает (`buildDocumentCopy`): иначе новый бланк
+      // утверждал бы, что прибор уже поверен.
+      const copy = buildDocumentCopy({
         templateCode,
-        title: copy.title,
-        dateFrom: copy.dateFrom,
-        dateTo: copy.dateTo,
-        config: copy.config,
-      }),
-    });
-    if (!response.ok) {
-      // Ошибку показываем человеку: пункт меню промис не ловил, и копия
-      // молча не появлялась.
-      const data = await response.json().catch(() => null);
-      toast.error(data?.error || "Не удалось скопировать документ");
-      return;
+        journalName: templateName,
+        sourceConfig: normalizeEquipmentCalibrationConfig(doc.config),
+        sourcePeriod: { dateFrom: doc.dateFrom, dateTo: doc.dateFrom },
+        today: localDayKey(),
+        existingTitles: documents.map((item) => item.title),
+      });
+      const response = await fetch("/api/journal-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateCode,
+          title: copy.title,
+          dateFrom: copy.dateFrom,
+          dateTo: copy.dateTo,
+          config: copy.config,
+        }),
+      });
+      await checkCalibrationResponse(response, "copy");
+      router.refresh();
+    } catch (error) {
+      toast.error(t(`errors.${calibrationErrorKey(error, "copy")}`));
     }
-    router.refresh();
   }
 
   async function saveSettings() {
@@ -185,11 +200,11 @@ export function EquipmentCalibrationDocumentsClient({
           },
         }),
       });
-      if (!response.ok) throw new Error("Не удалось сохранить");
+      await checkCalibrationResponse(response, "save");
       setEditingDoc(null);
       router.refresh();
-    } catch {
-      toast.error("Не удалось сохранить");
+    } catch (error) {
+      toast.error(t(`errors.${calibrationErrorKey(error, "save")}`));
     } finally {
       setIsSaving(false);
     }
@@ -198,7 +213,7 @@ export function EquipmentCalibrationDocumentsClient({
   return (
     <div className="space-y-5">
       <JournalTopBar
-        heading="График поверки средств измерений"
+        heading={t("pageTitle")}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={templateName}
@@ -215,40 +230,40 @@ export function EquipmentCalibrationDocumentsClient({
               className={JOURNAL_LIST_CARD_CLASS}
             >
               <Link href={`/journals/${templateCode}/documents/${doc.id}`} className="min-w-0">
-                <div className={JOURNAL_CARD_TITLE_CLASS}>{doc.title}
+                <div className={JOURNAL_CARD_TITLE_CLASS}>{documentTitle(doc.title, cfg.year)}
               <SharedDocumentBadge shared={doc.shared} /></div>
               </Link>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Год</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("year")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>{cfg.year}</div>
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("approvalRole")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatPositionWithName(
-                    resolveApprover(cfg, users).title,
+                    positionLabel(resolveApprover(cfg, users).title),
                     resolveApprover(cfg, users).name
                   )}
                 </div>
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
-                <div className={JOURNAL_CARD_VALUE_CLASS}>{formatCalibrationDate(cfg.documentDate)}</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("documentDate")}</div>
+                <div className={JOURNAL_CARD_VALUE_CLASS}>{calibrationDate(cfg.documentDate, locale)}</div>
               </div>
               <ResponsiveMenu
-                title="Действия"
+                title={t("actions")}
                 items={filterManageMenuItems([
                   ...(doc.status === "active"
                     ? [
                         {
                           key: "settings",
-                          label: "Настройки",
+                          label: t("settings"),
                           icon: <Pencil className="size-4 text-[#6f7282]" />,
                           onSelect: () => setEditingDoc(doc),
                         },
                         {
                           key: "copy",
-                          label: "Сделать копию",
+                          label: t("copy"),
                           icon: <Copy className="size-4 text-[#6f7282]" />,
                           onSelect: () => handleCopy(doc),
                         },
@@ -256,15 +271,15 @@ export function EquipmentCalibrationDocumentsClient({
                     : []),
                   {
                     key: "print",
-                    label: "Печать",
+                    label: t("print"),
                     icon: <Printer className="size-4 text-[#6f7282]" />,
-                    onSelect: () => openDocumentPdf(doc.id),
+                    onSelect: () => openPdf({ documentId: doc.id }),
                   },
                   ...(doc.status === "active"
                     ? [
                         {
                           key: "archive",
-                          label: "Отправить в закрытые",
+                          label: t("archive"),
                           icon: <Archive className="size-4 text-[#6f7282]" />,
                           onSelect: () => setArchiveDoc(doc),
                         },
@@ -272,7 +287,7 @@ export function EquipmentCalibrationDocumentsClient({
                     : [
                         {
                           key: "restore",
-                          label: "Отправить в активные",
+                          label: t("restore"),
                           icon: <ArchiveRestore className="size-4 text-[#6f7282]" />,
                           onSelect: () => handleStatusChange(doc.id, "active"),
                         },
@@ -281,7 +296,7 @@ export function EquipmentCalibrationDocumentsClient({
                     ? [
                         {
                           key: "delete",
-                          label: "Удалить",
+                          label: t("delete"),
                           icon: <Trash2 className="size-4 text-[#6f7282]" />,
                           tone: "danger" as const,
                           onSelect: () => setDeleteDoc(doc),
@@ -290,7 +305,7 @@ export function EquipmentCalibrationDocumentsClient({
                     : []),
                 ], canManageDocuments)}
                 trigger={
-                  <button className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100">
+                  <button aria-label={t("actions")} className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100">
                     <Ellipsis className="size-5" />
                   </button>
                 }
@@ -304,22 +319,22 @@ export function EquipmentCalibrationDocumentsClient({
       <Dialog open={!!editingDoc} onOpenChange={(open) => !open && setEditingDoc(null)}>
         <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
-            <DialogTitle className="text-[22px] font-semibold text-black">Настройки документа</DialogTitle>
-            <button type="button" className="rounded-md p-1 text-black/80 hover:bg-black/5" onClick={() => setEditingDoc(null)}>
+            <DialogTitle className="text-[22px] font-semibold text-black">{t("settingsTitle")}</DialogTitle>
+            <button type="button" aria-label={t("close")} className="rounded-md p-1 text-black/80 hover:bg-black/5" onClick={() => setEditingDoc(null)}>
               <X className="size-6" />
             </button>
           </DialogHeader>
           <div className="space-y-4 px-7 py-6">
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Название документа</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-10 rounded-xl border-[#dfe1ec] px-5 text-[16px]" />
+              <Label className="text-[14px] text-[#6f7282]">{t("documentTitle")}</Label>
+              <Input aria-label={t("documentTitle")} value={title} onChange={(e) => setTitle(e.target.value)} className="h-10 rounded-xl border-[#dfe1ec] px-5 text-[16px]" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Дата документа</Label>
-              <Input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} className="h-10 rounded-xl border-[#dfe1ec] px-5 text-[16px]" />
+              <Label className="text-[14px] text-[#6f7282]">{t("documentDate")}</Label>
+              <Input type="date" aria-label={t("documentDate")} value={docDate} onChange={(e) => setDocDate(e.target.value)} className="h-10 rounded-xl border-[#dfe1ec] px-5 text-[16px]" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Год</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("year")}</Label>
               <Select value={year} onValueChange={setYear}>
                 <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -330,31 +345,31 @@ export function EquipmentCalibrationDocumentsClient({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Должность &quot;Утверждаю&quot;</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("approvalRole")}</Label>
               <Select value={approveRole} onValueChange={approveCascade.handlePositionChange}>
-                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder="Выберите должность" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder={t("choosePosition")} /></SelectTrigger>
                 <SelectContent>
-                  <PositionSelectItems users={users} />
+                  <EquipmentCalibrationPositionItems users={users} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[14px] text-[#6f7282]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("employee")}</Label>
               <Select value={approveEmployeeId} onValueChange={(value) => {
                 const user = users.find((item) => item.id === value);
                 setApproveEmployeeId(value);
                 setApproveEmployee(user?.name || approveEmployee);
                 if (user) setApproveRole(getUserRoleLabel(user.role));
               }} open={approveCascade.employeeOpen} onOpenChange={approveCascade.setEmployeeOpen}>
-                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder={t("chooseEmployee")} /></SelectTrigger>
                 <SelectContent>
-                  {users.map((u) => <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>)}
+                  {users.map((u) => <SelectItem key={u.id} value={u.id}>{`${positionLabel(getUserPositionLabel(u))} - ${getUserDisplayName(u, t("noName"))}`}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex justify-end pt-1">
               <Button onClick={saveSettings} disabled={isSaving} className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]">
-                {isSaving ? "Сохранение..." : "Сохранить"}
+                {isSaving ? t("saving") : t("save")}
               </Button>
             </div>
           </div>
@@ -366,9 +381,9 @@ export function EquipmentCalibrationDocumentsClient({
         <DialogContent showCloseButton={false} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
             <DialogTitle className="text-[20px] font-semibold text-black">
-              Удаление документа &quot;{deleteDoc?.title}&quot;
+              {t("deleteTitle", { title: deleteDoc ? documentTitle(deleteDoc.title, normalizeEquipmentCalibrationConfig(deleteDoc.config).year) : "" })}
             </DialogTitle>
-            <button type="button" className="rounded-md p-1 text-black/80 hover:bg-black/5" onClick={() => setDeleteDoc(null)}>
+            <button type="button" aria-label={t("close")} className="rounded-md p-1 text-black/80 hover:bg-black/5" onClick={() => setDeleteDoc(null)}>
               <X className="size-6" />
             </button>
           </DialogHeader>
@@ -377,8 +392,7 @@ export function EquipmentCalibrationDocumentsClient({
               onClick={() => deleteDoc && handleDelete(deleteDoc.id)}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              Удалить
-            </Button>
+              {t("delete")}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -388,9 +402,9 @@ export function EquipmentCalibrationDocumentsClient({
         <DialogContent showCloseButton={false} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
             <DialogTitle className="text-[20px] font-semibold text-black">
-              Перенести в архив документ &quot;{archiveDoc?.title}&quot;
+              {t("archiveTitle", { title: archiveDoc ? documentTitle(archiveDoc.title, normalizeEquipmentCalibrationConfig(archiveDoc.config).year) : "" })}
             </DialogTitle>
-            <button type="button" className="rounded-md p-1 text-black/80 hover:bg-black/5" onClick={() => setArchiveDoc(null)}>
+            <button type="button" aria-label={t("close")} className="rounded-md p-1 text-black/80 hover:bg-black/5" onClick={() => setArchiveDoc(null)}>
               <X className="size-6" />
             </button>
           </DialogHeader>
@@ -399,8 +413,7 @@ export function EquipmentCalibrationDocumentsClient({
               onClick={() => archiveDoc && handleStatusChange(archiveDoc.id, "closed")}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              В архив
-            </Button>
+              {t("archiveConfirm")}</Button>
           </div>
         </DialogContent>
       </Dialog>

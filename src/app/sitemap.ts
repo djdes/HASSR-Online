@@ -7,7 +7,8 @@ import { SEO_LANDINGS } from "@/components/landing/seo-journal-landing";
 import { CITY_ORDER } from "@/content/cities";
 import { COMPARISON_ORDER } from "@/content/comparisons";
 import { GLOSSARY } from "@/content/glossary";
-import { publicLocaleRoute, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
+import { publicLocaleRoute, publicLocalesForPath, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
+import { articleLanguageAlternates } from "@/lib/article-language-alternates";
 
 /**
  * Dynamic sitemap for crawlers. Combines:
@@ -29,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articles = await db.article
     .findMany({
       where: { publishedAt: { not: null } },
-      select: { slug: true, publishedAt: true, updatedAt: true },
+      select: { slug: true, publishedAt: true, updatedAt: true, title: true, excerpt: true, body: true, tags: true, translations: true },
       orderBy: { publishedAt: "desc" },
     })
     .catch(() => []);
@@ -85,6 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: a.updatedAt ?? a.publishedAt ?? now,
     changeFrequency: "monthly",
     priority: 0.6,
+    alternates: { languages: articleLanguageAlternates(a, a.translations) },
   }));
 
   // E19 — niche-лендинги (/dlya-kafe, /dlya-bara, /dlya-otelya, /dlya-azs
@@ -131,10 +133,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return pages.flatMap((page) => {
     const pathname = new URL(page.url).pathname;
     if (!publicLocaleRoute(pathname)) return [page];
-    const alternates = { languages: siteLanguageAlternates(pathname) };
-    return [
-      { ...page, alternates },
-      { ...page, url: `${SITE}${localizedHref(pathname, "en")}`, alternates },
-    ];
+    const alternates = page.alternates ?? { languages: siteLanguageAlternates(pathname) };
+    return publicLocalesForPath(pathname)
+      .filter(locale => Boolean(alternates.languages?.[locale]))
+      .map(locale => ({ ...page, url: `${SITE}${localizedHref(pathname, locale)}`, alternates }));
   });
 }

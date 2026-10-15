@@ -1,0 +1,21 @@
+{
+  "price": {
+    "regularBeforePromotion": "Aksiya boshlanishidan oldingi odatiy narx",
+    "regularBeforeDiscount": "Chegirmadan oldingi odatiy narx",
+    "discountedPrice": "Chegirmali narx"
+  },
+  "promotion": {
+    "month": "{month, select, 0 {yanvar} 1 {fevral} 2 {mart} 3 {aprel} 4 {may} 5 {iyun} 6 {iyul} 7 {avgust} 8 {sentabr} 9 {oktabr} 10 {noyabr} 11 {dekabr} other {oy}}",
+    "endDate": "{day, number}-{month}gacha",
+    "endDateTimeLabel": "{day, number}-{month}, soat {time} gacha",
+    "endDateTime": "{date}, soat {time}",
+    "badge": "−{percent, number} % {end}",
+    "endHint": "Aksiya Moskva vaqti bilan {dateTime} da tugaydi"
+  },
+  "discount": {
+    "percent": "−{value, number} %",
+    "fixed": "−{value, number} ₽",
+    "lifetime": "Umrbod chegirmangiz: {amount}",
+    "promoCode": "{lifetime, select, yes {Promokod {code}: {amount} muddatsiz} no {Promokod {code}: {amount}} other {Promokod {code}: {amount}}}"
+  }
+}

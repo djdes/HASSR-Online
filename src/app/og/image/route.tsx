@@ -1,6 +1,10 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
-import { OG_KIND_LABEL, clampOgText, type OgKind } from "@/lib/og-image";
+import { OG_KINDS, clampOgText, type OgKind } from "@/lib/og-image";
+import { parseSiteLocale } from "@/i18n/site-locale";
+import { loadMessages } from "@/i18n/messages";
 
 // nodejs runtime — см. og-default: edge требует wasm-bundle resvg, которого
 // нет в deploy.tar. Кэш — публичный на сутки: next.config и src/proxy.ts
@@ -11,6 +15,19 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SIZE = { width: 1200, height: 630 } as const;
+const FONT_FAMILY = "WeSetup Unicode";
+let fonts: Promise<Array<{ name: string; data: Buffer; weight: 400 | 700; style: "normal" }>> | undefined;
+
+function loadFonts() {
+  return fonts ??= Promise.all(([
+    ["DejaVuSans.ttf", 400], ["DejaVuSans-Bold.ttf", 700],
+  ] as const).map(async ([file, weight]) => ({
+    name: FONT_FAMILY,
+    data: await readFile(join(process.cwd(), "src", "lib", "pdf-fonts", String(file))),
+    weight,
+    style: "normal" as const,
+  })));
+}
 
 /**
  * OG-картинка под конкретную страницу: `/og/image?t=<заголовок>&s=<подзаголовок>&k=<вид>`.
@@ -20,10 +37,12 @@ const SIZE = { width: 1200, height: 630 } as const;
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const title = clampOgText(searchParams.get("t"), 90) || "Электронные журналы СанПиН и ХАССП";
+  const locale = parseSiteLocale(searchParams.get("l"));
+  const copy = (await loadMessages(locale)).publicOg;
+  const title = clampOgText(searchParams.get("t"), 90) || copy.fallbackTitle;
   const subtitle = clampOgText(searchParams.get("s"), 140);
   const kindRaw = searchParams.get("k") ?? "";
-  const kind = (Object.keys(OG_KIND_LABEL) as OgKind[]).includes(kindRaw as OgKind) ? (kindRaw as OgKind) : "page";
+  const kind = OG_KINDS.includes(kindRaw as OgKind) ? (kindRaw as OgKind) : "page";
   const titleSize = title.length > 60 ? 52 : title.length > 40 ? 60 : 72;
 
   const image = new ImageResponse(
@@ -38,7 +57,7 @@ export async function GET(request: Request) {
           padding: "64px 80px",
           background: "linear-gradient(135deg, #0b1024 0%, #1a2147 50%, #2d2670 100%)",
           color: "#ffffff",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: FONT_FAMILY,
           position: "relative",
         }}
       >
@@ -60,7 +79,7 @@ export async function GET(request: Request) {
               display: "flex",
             }}
           >
-            {OG_KIND_LABEL[kind]}
+            {copy.kind[kind]}
           </div>
         </div>
 
@@ -73,7 +92,7 @@ export async function GET(request: Request) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 14, zIndex: 10 }}>
           <div style={{ padding: "10px 18px", borderRadius: 999, background: "rgba(124, 245, 192, 0.18)", color: "#7cf5c0", fontSize: 22, fontWeight: 500, border: "1px solid rgba(124, 245, 192, 0.4)", display: "flex" }}>
-            Бесплатно навсегда
+            {copy.freeForever}
           </div>
           <div style={{ padding: "10px 18px", borderRadius: 999, background: "rgba(255,255,255,0.1)", fontSize: 22, border: "1px solid rgba(255,255,255,0.22)", display: "flex" }}>
             wesetup.ru
@@ -81,8 +100,9 @@ export async function GET(request: Request) {
         </div>
       </div>
     ),
-    { ...SIZE }
+    { ...SIZE, fonts: await loadFonts() }
   );
   image.headers.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+  image.headers.set("Content-Language", locale);
   return image;
 }

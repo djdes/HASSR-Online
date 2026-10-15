@@ -1,5 +1,6 @@
 "use client";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, Loader2, Wand2 } from "lucide-react";
@@ -48,6 +49,7 @@ export function JournalAutoCreateToggle({
   autofillSupported: boolean;
   disabled?: boolean;
 }) {
+  const { controls } = useJournalControls();
   const router = useRouter();
   const [autoCreate, setAutoCreate] = useState(initialAutoCreate);
   const [autoFill, setAutoFill] = useState(initialAutoFill);
@@ -234,6 +236,8 @@ export function JournalAutoCreateToggle({
     setRevertOnDisable(true);
     setFillOffConfirm(true);
   }
+
+  if (controls.specialMode) return null;
 
   return (
     <>

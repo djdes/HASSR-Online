@@ -9,8 +9,13 @@
  */
 
 import { isBlankEntryData } from "@/lib/journal-entry-blank";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
+import ru from "@/i18n/messages/ru.json";
 
-export const REPORT_EMPTY_MESSAGE = "За выбранный период записей нет";
+export const REPORT_EMPTY_MESSAGE = ru.reports.empty;
+export type ReportCopy = Record<"date" | "employee" | "area" | "equipment" | "yes" | "no", string>;
+const DEFAULT_REPORT_COPY: ReportCopy = { ...ru.reports, yes: ru.common.yes, no: ru.common.no };
+type ReportPresentation = { locale?: Locale; copy?: ReportCopy };
 
 export type ReportField = {
   key: string;
@@ -44,18 +49,31 @@ export type ReportTable = {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?$/;
 
+/** Export ranges are calendar dates, never locale-dependent or timestamp inputs. */
+export function parseReportDate(value: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith("0000-")) return null;
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value ? timestamp : null;
+}
+
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
 }
 
 /** Дата записи документа — день без времени (полночь UTC). */
-export function formatReportDay(date: Date): string {
+export function formatReportDay(date: Date, locale: Locale = "ru"): string {
+  if (locale !== "ru") return new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+    timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric",
+  }).format(date);
   return `${pad2(date.getUTCDate())}.${pad2(date.getUTCMonth() + 1)}.${date.getUTCFullYear()}`;
 }
 
 /** Дата и время в поясе организации (для легаси-записей). */
-export function formatReportDateTime(date: Date, timeZone: string): string {
+export function formatReportDateTime(date: Date, timeZone: string, locale: Locale = "ru"): string {
   try {
+    if (locale !== "ru") return new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
+      timeZone, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(date);
     const parts = new Intl.DateTimeFormat("ru-RU", {
       timeZone,
       day: "2-digit",
@@ -74,10 +92,14 @@ export function formatReportDateTime(date: Date, timeZone: string): string {
 }
 
 /** Значение поля записи → текст ячейки. */
-export function formatReportValue(value: unknown, field?: ReportField): string {
+export function formatReportValue(value: unknown, field?: ReportField, presentation: ReportPresentation = {}): string {
+  const { locale = "ru", copy = DEFAULT_REPORT_COPY } = presentation;
   if (value === null || value === undefined) return "";
-  if (typeof value === "boolean") return value ? "Да" : "Нет";
+  if (typeof value === "boolean") return value ? copy.yes : copy.no;
   if (typeof value === "number") {
+    if (locale !== "ru") return Number.isFinite(value) ? new Intl.NumberFormat(FORMAT_LOCALES[locale], {
+      useGrouping: false, maximumSignificantDigits: 21,
+    }).format(value) : "";
     return Number.isFinite(value) ? String(value).replace(".", ",") : "";
   }
   if (typeof value === "string") {
@@ -88,13 +110,13 @@ export function formatReportValue(value: unknown, field?: ReportField): string {
     }
     if (ISO_DATE_RE.test(trimmed)) {
       const parsed = new Date(trimmed);
-      if (!Number.isNaN(parsed.getTime())) return formatReportDay(parsed);
+      if (!Number.isNaN(parsed.getTime())) return formatReportDay(parsed, locale);
     }
     return trimmed;
   }
   if (Array.isArray(value)) {
     return value
-      .map((item) => formatReportValue(item, field))
+      .map((item) => formatReportValue(item, field, presentation))
       .filter((item) => item !== "")
       .join(", ");
   }
@@ -102,7 +124,7 @@ export function formatReportValue(value: unknown, field?: ReportField): string {
     return Object.entries(value as Record<string, unknown>)
       .filter(([key]) => !key.startsWith("_"))
       .map(([key, item]) => {
-        const text = formatReportValue(item);
+        const text = formatReportValue(item, undefined, presentation);
         return text === "" ? "" : `${key}: ${text}`;
       })
       .filter((item) => item !== "")
@@ -135,7 +157,11 @@ export function buildReportTable(input: {
   documentEntries: ReportDocumentEntry[];
   legacyEntries?: ReportLegacyEntry[];
   timeZone: string;
+  locale?: Locale;
+  copy?: ReportCopy;
 }): ReportTable {
+  const { locale = "ru", copy = DEFAULT_REPORT_COPY } = input;
+  const presentation = { locale, copy };
   const fieldByKey = new Map<string, ReportField>();
   for (const field of input.fields) {
     if (field && typeof field.key === "string") fieldByKey.set(field.key, field);
@@ -164,7 +190,7 @@ export function buildReportTable(input: {
   const collectKeys = (data: unknown) => {
     for (const [key, value] of Object.entries(asRecord(data))) {
       if (isServiceKey(key) || referenceKeys.has(key)) continue;
-      if (formatReportValue(value, fieldByKey.get(key)) === "") continue;
+      if (formatReportValue(value, fieldByKey.get(key), presentation) === "") continue;
       usedKeys.add(key);
     }
   };
@@ -183,8 +209,8 @@ export function buildReportTable(input: {
   }
 
   const withLegacyColumns = legacyEntries.length > 0;
-  const headers = ["Дата", "Сотрудник"];
-  if (withLegacyColumns) headers.push("Участок", "Оборудование");
+  const headers = [copy.date, copy.employee];
+  if (withLegacyColumns) headers.push(copy.area, copy.equipment);
   for (const key of orderedKeys) {
     const label = fieldByKey.get(key)?.label?.trim();
     headers.push(label || key);
@@ -193,20 +219,20 @@ export function buildReportTable(input: {
   const valueCells = (data: unknown) => {
     const record = asRecord(data);
     return orderedKeys.map((key) =>
-      formatReportValue(record[key], fieldByKey.get(key))
+      formatReportValue(record[key], fieldByKey.get(key), presentation)
     );
   };
 
   const rows: string[][] = [];
   for (const entry of documentEntries) {
-    const row = [formatReportDay(entry.date), entry.employeeName ?? ""];
+    const row = [formatReportDay(entry.date, locale), entry.employeeName ?? ""];
     if (withLegacyColumns) row.push("", "");
     row.push(...valueCells(entry.data));
     rows.push(row);
   }
   for (const entry of legacyEntries) {
     rows.push([
-      formatReportDateTime(entry.createdAt, input.timeZone),
+      formatReportDateTime(entry.createdAt, input.timeZone, locale),
       entry.filledByName ?? "",
       entry.areaName ?? "",
       entry.equipmentName ?? "",

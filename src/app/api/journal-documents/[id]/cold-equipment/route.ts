@@ -1,3 +1,4 @@
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -47,7 +48,14 @@ export async function POST(
 
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as ColdEquipmentBody;
+  if (body.action === "apply_auto_fill") {
+    const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+    if (blocked) return blocked;
+  }
   const action = body.action;
+  if (action && !["sync_entries", "save_equipment", "ensure_equipment", "apply_auto_fill"].includes(action)) {
+    return NextResponse.json({ error: "Неизвестное действие" }, { status: 400 });
+  }
 
   if (!action) {
     return NextResponse.json({ error: "Не указано действие" }, { status: 400 });

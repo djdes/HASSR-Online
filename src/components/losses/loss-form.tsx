@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { LOSS_CATEGORIES, lossErrorKey, readLossFormData } from "./loss-presentation";
 import { useRouter } from "next/navigation";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import { Button } from "@/components/ui/button";
@@ -16,11 +18,12 @@ interface Props {
 }
 
 export function LossForm({ areas }: Props) {
+  const t = useTranslations("productionLosses");
   const router = useRouter();
   // Двойной тап отправлял два POST подряд: setState применяется только
   // к следующему рендеру. Синхронный замок отсекает второй вход.
   const { busy: isSubmitting, acquire, release } = useSubmitLock();
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ReturnType<typeof lossErrorKey> | null>(null);
   const [category, setCategory] = useState("writeoff");
   const [unit, setUnit] = useState("kg");
   const [areaId, setAreaId] = useState("");
@@ -28,30 +31,23 @@ export function LossForm({ areas }: Props) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!acquire()) return;
-    setError("");
+    setError(null);
     const form = new FormData(e.currentTarget);
 
     try {
       const res = await fetch("/api/losses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category,
-          productName: form.get("productName"),
-          quantity: form.get("quantity"),
-          unit,
-          costRub: form.get("costRub") || null,
-          cause: form.get("cause") || null,
-          areaId: areaId || null,
-        }),
+        body: JSON.stringify(readLossFormData(form, { category, unit, areaId })),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Не удалось сохранить. Попробуйте ещё раз.");
+        setError(lossErrorKey(data?.error, res.status));
+        return;
       }
       router.push("/losses");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      setError("saveFailed");
     } finally {
       release();
     }
@@ -59,57 +55,50 @@ export function LossForm({ areas }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{t(`errors.${error}`)}</p>}
 
       <div className="space-y-2">
-        <Label>Категория потери *</Label>
+        <Label htmlFor="loss-category">{t("form.category")}</Label>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger id="loss-category"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="overweight">Перевес</SelectItem>
-            <SelectItem value="underweight">Недовес</SelectItem>
-            <SelectItem value="packaging_defect">Брак упаковки</SelectItem>
-            <SelectItem value="rework">Переработка</SelectItem>
-            <SelectItem value="writeoff">Списание</SelectItem>
-            <SelectItem value="bottleneck_idle">Простой узкого места</SelectItem>
-            <SelectItem value="raw_material_variance">Разброс сырья</SelectItem>
-            <SelectItem value="other">Другое</SelectItem>
+            {LOSS_CATEGORIES.map(value => <SelectItem key={value} value={value}>{value === "bottleneck_idle" ? t("form.bottleneckIdle") : t(`categories.${value}`)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="productName">Продукт *</Label>
+        <Label htmlFor="productName">{t("form.product")}</Label>
         <Input id="productName" name="productName" required />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <div className="space-y-2">
-          <Label htmlFor="quantity">Количество *</Label>
+          <Label htmlFor="quantity">{t("form.quantity")}</Label>
           <Input id="quantity" name="quantity" type="number" step="0.01" required />
         </div>
         <div className="space-y-2">
-          <Label>Единица</Label>
+          <Label htmlFor="loss-unit">{t("form.unit")}</Label>
           <Select value={unit} onValueChange={setUnit}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="loss-unit"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="kg">кг</SelectItem>
-              <SelectItem value="l">л</SelectItem>
-              <SelectItem value="pcs">шт</SelectItem>
+              <SelectItem value="kg">{t("units.kg")}</SelectItem>
+              <SelectItem value="l">{t("units.l")}</SelectItem>
+              <SelectItem value="pcs">{t("units.pcs")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="costRub">Стоимость (руб)</Label>
+          <Label htmlFor="costRub">{t("form.cost")}</Label>
           <Input id="costRub" name="costRub" type="number" step="0.01" />
         </div>
       </div>
 
       {areas.length > 0 && (
         <div className="space-y-2">
-          <Label>Участок</Label>
+          <Label htmlFor="loss-area">{t("form.area")}</Label>
           <Select value={areaId} onValueChange={setAreaId}>
-            <SelectTrigger><SelectValue placeholder="Выберите..." /></SelectTrigger>
+            <SelectTrigger id="loss-area"><SelectValue placeholder={t("form.select")} /></SelectTrigger>
             <SelectContent>
               {areas.map((a) => (
                 <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -120,16 +109,16 @@ export function LossForm({ areas }: Props) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="cause">Причина</Label>
-        <Textarea id="cause" name="cause" placeholder="Опишите причину потери" />
+        <Label htmlFor="cause">{t("form.cause")}</Label>
+        <Textarea id="cause" name="cause" placeholder={t("form.causePlaceholder")} />
       </div>
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Сохранение..." : "Сохранить"}
+          {isSubmitting ? t("form.saving") : t("form.save")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/losses")}>
-          Отмена
+          {t("form.cancel")}
         </Button>
       </div>
     </form>

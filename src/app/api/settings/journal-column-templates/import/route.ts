@@ -3,7 +3,10 @@ import ExcelJS from "exceljs";
 
 import { authOptions } from "@/lib/auth";
 import { columnsFromHeaderLabels, findHeaderLabels } from "@/lib/journal-column-templates";
-import { hasColumnRegistry, resolveColumns } from "@/lib/journal-columns";
+import { hasColumnRegistry } from "@/lib/journal-columns";
+import { createColumnSample, sampleColumnAliases } from "@/lib/journal-column-sample";
+import { resolveExportLocale } from "@/i18n/export-locale";
+import { translatorFor } from "@/i18n/translator";
 import { getServerSession } from "@/lib/server-session";
 import { isManagementRole } from "@/lib/user-roles";
 
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
   if (labels.length === 0) {
     return NextResponse.json({ error: "В первых строках листа не нашлось шапки таблицы" }, { status: 400 });
   }
-  const preview = columnsFromHeaderLabels(code, labels);
+  const preview = columnsFromHeaderLabels(code, labels, await sampleColumnAliases(code));
   if (preview.matched.length === 0 && preview.custom.length === 0) {
     return NextResponse.json({ error: "Не удалось узнать ни одной колонки" }, { status: 400 });
   }
@@ -77,25 +80,23 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
-  const code = new URL(request.url).searchParams.get("code") ?? "";
+  const params = new URL(request.url).searchParams;
+  const locale = resolveExportLocale(params.get("locale"), session.user);
+  if (!locale) {
+    const t = await translatorFor(resolveExportLocale(null, session.user)!);
+    return NextResponse.json({ code: "INVALID_LOCALE", error: t("language.invalid") }, { status: 400 });
+  }
+  const code = params.get("code") ?? "";
   if (!hasColumnRegistry(code)) {
     return NextResponse.json({ error: "У этого журнала колонки не настраиваются" }, { status: 404 });
   }
-  const columns = resolveColumns(code, {}).filter((column) => !column.hidden && !column.unavailable);
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Форма журнала");
-  sheet.addRow(columns.map((column) => column.label));
-  sheet.addRow(columns.map((_, index) => String(index + 1)));
-  sheet.getRow(1).font = { bold: true };
-  sheet.getRow(1).alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
-  sheet.columns.forEach((column) => {
-    column.width = 22;
-  });
+  const workbook = await createColumnSample(code, locale);
   const buffer = await workbook.xlsx.writeBuffer();
   return new NextResponse(buffer as ArrayBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="journal-form-${code}.xlsx"`,
+      "Content-Language": locale,
     },
   });
 }

@@ -1,6 +1,7 @@
 import { requireAuth } from "@/lib/auth-helpers";
 import { generateLinkToken } from "@/lib/telegram";
 import { NotificationSettings } from "@/components/settings/notification-settings";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export default async function NotificationsSettingsPage() {
   const session = await requireAuth();
@@ -9,6 +10,8 @@ export default async function NotificationsSettingsPage() {
   const linkToken = generateLinkToken(session.user.id);
 
   return (
-    <NotificationSettings botUsername={botUsername} linkToken={linkToken} />
+    <DomainMessagesBoundary namespaces={["notificationSettings", "publicUi"]}>
+      <NotificationSettings botUsername={botUsername} linkToken={linkToken} />
+    </DomainMessagesBoundary>
   );
 }

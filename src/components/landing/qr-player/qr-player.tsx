@@ -1,8 +1,5 @@
 "use client";
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
-import { useSiteLocale } from "@/components/i18n/site-locale-provider";
-
-
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { Player, type CallbackListener, type PlayerRef } from "@remotion/player";
 import { ChevronDown, Pause, Play, SlidersHorizontal, Thermometer, Refrigerator } from "lucide-react";
@@ -21,8 +18,8 @@ import {
   bodyFever,
   chapterAt,
   finalFrameOf,
-  formatDecimal,
   fridgeOutOfRange,
+  type ChapterId,
 } from "./chapters";
 import { QrComposition } from "./composition";
 import { STAGE_BACKGROUND, SceneFrame, type SceneDay } from "./scene";
@@ -71,8 +68,27 @@ function usePlayerFrame(player: PlayerRef | null): number {
 }
 
 export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
-  const locale = useSiteLocale();
-  const tr = usePublicCopy();
+  const t = useTranslations("qrPlayer");
+  const sceneT = useTranslations("qrScene");
+  const format = useFormatter();
+  const temperatureLabel = (value: number) => `${format.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace("-", "−")} °C`;
+  const journalName = useTranslations("journals.names");
+  const chapterText: Record<ChapterId, { label: string; place: string; caption: string; short: string }> = {
+    fridge: { label: sceneT("chapters.fridgeChip"), place: sceneT("chapters.fridgePlace"), caption: sceneT("chapters.fridgeCaption"), short: sceneT("chapters.fridgeShort") },
+    locker: { label: sceneT("chapters.lockerChip"), place: sceneT("chapters.lockerPlace"), caption: sceneT("chapters.lockerCaption"), short: sceneT("chapters.lockerShort") },
+    uv: { label: sceneT("chapters.uvChip"), place: sceneT("chapters.uvPlace"), caption: sceneT("chapters.uvCaption"), short: sceneT("chapters.uvShort") },
+    fryer: { label: sceneT("chapters.fryerChip"), place: sceneT("chapters.fryerPlace"), caption: sceneT("chapters.fryerCaption"), short: sceneT("chapters.fryerShort") },
+    forgot: { label: sceneT("chapters.forgotChip"), place: sceneT("chapters.forgotPlace"), caption: sceneT("chapters.forgotCaption"), short: sceneT("chapters.forgotShort") },
+    sensor: { label: sceneT("chapters.sensorChip"), place: sceneT("chapters.sensorPlace"), caption: sceneT("chapters.sensorCaption"), short: sceneT("chapters.sensorShort") },
+  };
+  const journalCodeByChapter = {
+    fridge: "cold_equipment_control",
+    locker: "hygiene",
+    uv: "uv_lamp_runtime",
+    fryer: "fryer_oil",
+    forgot: "cold_equipment_control",
+    sensor: "cold_equipment_control",
+  } as const satisfies Record<ChapterId, string>;
   const rootRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const reduced = usePrefersReducedMotion();
@@ -211,7 +227,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
   return (
     <div ref={rootRef} onKeyDown={onKeyDown} data-qr-player="" data-frame={frame} data-playing={playing ? "1" : "0"}>
       {/* Вкладки-главы: одна строка со скроллом, заливка = прогресс слайда. */}
-      <nav aria-label={tr("Главы ролика")} className="mb-3">
+      <nav aria-label={t("chrome.chaptersLabel")} className="mb-3">
         <div ref={tabsRef} className="qrp-tabs relative -mx-1 flex gap-2 overflow-x-auto px-1 py-1">
           {CHAPTERS.map((item, chapterIndex) => {
             const current = chapterIndex === index;
@@ -233,7 +249,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
                 <span className={`tabular-nums ${current ? "font-semibold" : "opacity-60"}`} style={current ? { color: item.accent } : undefined}>
                   {chapterIndex + 1}
                 </span>
-                {tr(item.chip)}
+                {chapterText[item.id].label}
               </button>
             );
           })}
@@ -245,8 +261,12 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         tabIndex={0}
         data-qr-stage=""
         role="group"
-        aria-roledescription={tr("ролик")}
-        aria-label={locale === "en" ? `How QR works, chapter ${index + 1} of ${CHAPTERS.length}: ${tr(chapter.chip)}. Space to pause, arrow keys to seek.` : `Ролик «Как работает QR», глава ${index + 1} из ${CHAPTERS.length}: ${tr(chapter.chip)}. Пробел — пауза, стрелки — перемотка.`}
+        aria-roledescription={t("chrome.videoRole")}
+        aria-label={t("chrome.stageAria", {
+          chapterNumber: index + 1,
+          chapterCount: CHAPTERS.length,
+          chapterName: chapterText[chapter.id].label,
+        })}
         onClick={togglePlay}
         className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/60 md:aspect-video"
         style={{
@@ -309,8 +329,12 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           step={1}
           value={frame}
           onChange={(event) => seek(Number(event.target.value))}
-          aria-label={tr("Перемотка")}
-          aria-valuetext={`${formatClock(frame / FPS)} ${locale === "en" ? "of" : "из"} ${formatClock(DURATION_IN_FRAMES / FPS)}, ${locale === "en" ? "chapter" : "глава"} «${tr(chapter.chip)}»`}
+          aria-label={t("chrome.seek")}
+          aria-valuetext={t("chrome.seekValue", {
+            currentTime: formatClock(frame / FPS),
+            totalTime: formatClock(DURATION_IN_FRAMES / FPS),
+            chapterName: chapterText[chapter.id].label,
+          })}
           className="qrp-range qrp-range-thin relative block w-full"
           style={{
             ["--qrp-fill" as string]: `${(frame / (DURATION_IN_FRAMES - 1)) * 100}%`,
@@ -325,7 +349,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         <button
           type="button"
           onClick={togglePlay}
-          aria-label={playing ? tr("Пауза") : tr("Смотреть")}
+          aria-label={playing ? t("chrome.pause") : t("chrome.play")}
           className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.8)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
         >
           {playing ? <Pause className="size-4" fill="currentColor" /> : <Play className="size-4 translate-x-px" fill="currentColor" />}
@@ -334,7 +358,13 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           {formatClock(frame / FPS)} / {formatClock(DURATION_IN_FRAMES / FPS)}
         </span>
         <p className="order-last w-full text-[13.5px] leading-[1.5] text-white/75 sm:order-none sm:w-auto sm:min-w-0 sm:flex-1">
-          {storyboard ? `${locale === "en" ? "Storyboard" : "Раскадровка"} ${index + 1}/${CHAPTERS.length}. ${tr(chapter.caption)}` : tr(chapter.short)}
+          {storyboard
+            ? t("chrome.storyboardCaption", {
+                chapterNumber: index + 1,
+                chapterCount: CHAPTERS.length,
+                caption: chapterText[chapter.id].caption,
+              })
+            : chapterText[chapter.id].short}
         </p>
         <button
           type="button"
@@ -345,7 +375,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           style={{ background: "rgba(255,255,255,0.07)" }}
         >
           <SlidersHorizontal className="size-4 text-[#7cf5c0]" />
-          {tr("Попробуйте сами")}<ChevronDown className={`size-3.5 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
+          {t("chrome.tryIt")}<ChevronDown className={`size-3.5 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
         </button>
       </div>
 
@@ -361,18 +391,14 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
           <TrySlider
             icon="fridge"
-            label={tr("Температура в холодильнике")}
+            label={t("chrome.fridgeTemperature")}
             value={fridgeTemp}
             min={FRIDGE_RANGE.min}
             max={FRIDGE_RANGE.max}
             step={FRIDGE_RANGE.step}
-            display={`${formatDecimal(fridgeTemp)} °C`}
+            display={temperatureLabel(fridgeTemp)}
             bad={fridgeBad}
-            verdict={
-              fridgeBad
-                ? locale === "en" ? `Outside the +${FRIDGE_NORM.min}…+${FRIDGE_NORM.max}°C range: the log entry is red and the responsible person receives an alert.` : `Вне нормы +${FRIDGE_NORM.min}…+${FRIDGE_NORM.max} °C: строка в журнале красная, ответственный получает уведомление.`
-                : locale === "en" ? `Within the +${FRIDGE_NORM.min}…+${FRIDGE_NORM.max}°C range: the reading is saved in the log.` : `В норме +${FRIDGE_NORM.min}…+${FRIDGE_NORM.max} °C: замер ложится в журнал.`
-            }
+            verdict={fridgeBad ? t("chrome.fridgeOutOfRange", { min: FRIDGE_NORM.min, max: FRIDGE_NORM.max }) : t("chrome.fridgeWithinRange", { min: FRIDGE_NORM.min, max: FRIDGE_NORM.max })}
             onChange={(value) => {
               setFridgeTemp(value);
               showResult(0);
@@ -380,18 +406,14 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           />
           <TrySlider
             icon="body"
-            label={tr("Термометр в раздевалке")}
+            label={t("chrome.lockerThermometer")}
             value={bodyTemp}
             min={BODY_RANGE.min}
             max={BODY_RANGE.max}
             step={BODY_RANGE.step}
-            display={`${formatDecimal(bodyTemp)} °C`}
+            display={temperatureLabel(bodyTemp)}
             bad={fever}
-            verdict={
-              fever
-                ? tr("Выше 37 °C: графу про температуру не подписать — «не допущен», заведующей уходит уведомление.")
-                : tr("До 37 °C: три подписи — и сотрудник допущен к работе.")
-            }
+            verdict={fever ? t("chrome.bodyTemperatureHigh") : t("chrome.bodyTemperatureNormal")}
             onChange={(value) => {
               setBodyTemp(value);
               showResult(1);
@@ -404,7 +426,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
       <div className="sr-only">
         {CHAPTERS.map((item, chapterIndex) => (
           <p key={item.id}>
-            {tr("Глава ")}{chapterIndex + 1}, {tr(item.chip)}. {tr(item.journal)}. {tr(item.caption)}
+            {t("chrome.chapterDescription", { chapterNumber: chapterIndex + 1, chapterName: chapterText[item.id].label, journalName: journalName(journalCodeByChapter[item.id]), caption: chapterText[item.id].caption })}
           </p>
         ))}
       </div>

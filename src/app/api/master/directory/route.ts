@@ -78,7 +78,7 @@ export async function PUT(request: Request) {
   const current = await listSharedItems(auth.masterOrgId, kind);
   const diff = diffSharedItems(current, items);
   const { total } = await replaceSharedItems(auth.masterOrgId, kind, items);
-  const pushed = await pushSharedListsToPool(auth.masterOrgId);
+  const pushed = kind === "dish" ? { organizations: 0, documents: 0 } : await pushSharedListsToPool(auth.masterOrgId);
 
   await recordAuditLog({
     request,

@@ -1,0 +1,66 @@
+{
+  "locale": "en",
+  "sourceHash": "0a88a78e26be0da9dc374ff79b577b601062c61e4ff638a3a3887e1e0e481fb7",
+  "title": "SanPiN in 2026: what changed and what stayed the same",
+  "excerpt": "From 1 September 2026, SanPiN 2.3/2.4.4282-26 replaces 3590-20: numbering changes, requirements stay the same. Here is what to know about logs, retention periods, and Article 6.6 fines of the Russian Code of Administrative Offences.",
+  "body": [
+    {
+      "type": "p",
+      "text": "From 1 September 2026, the main food-service regulation is SanPiN 2.3/2.4.4282-26, which replaces 2.3/2.4.3590-20. The clause numbering has changed, but the foundation is the same as it has been since 2021. Here is what you need to keep in mind now."
+    },
+    {
+      "type": "h2",
+      "text": "Required logs"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Employee health log (hygiene log) — every shift, for every employee.",
+        "Finished-product rejection log — for every batch.",
+        "Refrigeration-equipment temperature log — at least twice a day.",
+        "Incoming raw-material inspection — at every delivery.",
+        "Disinfectant-use log — each time disinfectant is used."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Retention periods"
+    },
+    {
+      "type": "p",
+      "text": "The minimum retention period is 12 months. For records connected with HACCP (audits, CAPA, traceability), it is 3 years. If food poisoning is suspected, records for the most recent 12 months are examined first, so they must not be lost."
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Important",
+      "text": "Under Article 6.6 of the Russian Code of Administrative Offences, fines can reach RUB 30,000 for an official and RUB 100,000 for a legal entity. Failing to keep a required log is treated the same as violating the underlying requirement."
+    },
+    {
+      "type": "h2",
+      "text": "The most common inspector findings"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "The responsible person’s signature is missing: an approval or suspension is recorded without a name.",
+        "A shift is missing: Monday’s entry is there, Tuesday’s is not.",
+        "Temperatures are suspiciously identical: +4, +4, +4, +4. An inspector can spot falsification in seconds.",
+        "A batch is not linked to its delivery note: the rejection record lacks supplier details."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "How WeSetup helps"
+    },
+    {
+      "type": "p",
+      "text": "Automation is used where it is safe: work schedules, job roles, and standard products. Where a real measurement is needed—temperature or product rejection—automatic filling is disabled, and the log cannot be closed without an actual value."
+    }
+  ],
+  "tags": [
+    "SanPiN",
+    "Requirements",
+    "Fines"
+  ]
+}

@@ -66,11 +66,13 @@ const HYGIENE_TASK_FORM: TaskFormSchema = {
       type: "select",
       key: "status",
       label: "Состояние",
+      presentationKey: "fields.hygiene.status.label",
       required: true,
       options: HYGIENE_STATUS_OPTIONS.map((opt) => ({
         value: opt.value,
         label: opt.label,
         code: opt.code,
+        presentationKey: `options.hygiene.status.${opt.value}`,
       })),
       defaultValue: "healthy",
     },
@@ -78,6 +80,7 @@ const HYGIENE_TASK_FORM: TaskFormSchema = {
       type: "boolean",
       key: "temperatureAbove37",
       label: "Температура выше 37°C",
+      presentationKey: "fields.hygiene.temperatureAbove37.label",
       defaultValue: false,
     },
   ],
@@ -104,9 +107,12 @@ export function buildHygieneTaskForm(input: {
   if (input.formVersion === 2) {
     return {
       intro: `${input.employeeName ? `${input.employeeName}, подпишите` : "Подпишите"} три пункта перед сменой. ${HYGIENE_V2_RULES}`,
+      introPresentationKey: "dynamic.hygieneV2Intro",
+      introPresentationValues: { employeeName: input.employeeName ?? "", hasEmployee: input.employeeName ? "yes" : "no" },
       submitLabel: "Подписать",
+      submitPresentationKey: "dynamic.sign",
       fields: HEALTH_CONFIRMATIONS.map(
-        (item): TaskFormField => ({ type: "boolean", key: item.key, label: item.label, defaultValue: false })
+        (item): TaskFormField => ({ type: "boolean", key: item.key, label: item.label, presentationKey: `fields.hygiene.${item.key}.label`, defaultValue: false })
       ),
     };
   }
@@ -140,6 +146,8 @@ export function buildHygieneTaskForm(input: {
     intro:
       `${input.employeeName}, отметьте своё состояние перед сменой. ` +
       `Если есть симптомы — выберите «Болен» и сообщите начальнику.`,
+    introPresentationKey: "dynamic.hygieneIntro",
+    introPresentationValues: { employeeName: input.employeeName },
     fields,
   };
 }

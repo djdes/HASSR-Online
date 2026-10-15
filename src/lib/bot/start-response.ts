@@ -1,3 +1,13 @@
+import { createTranslator } from "use-intl/core";
+import type { Locale } from "@/i18n/locales";
+import type { Messages } from "@/i18n/messages";
+import ruMessagesJson from "@/i18n/messages/ru.json";
+
+// Canonical catalogs are validated against MessageContract by the i18n gate;
+// JSON imports widen translated leaves to `string`, so narrow this one
+// canonical runtime default at the catalog contract boundary.
+const ruMessages = ruMessagesJson as Messages;
+
 export type TelegramStartReply = {
   text: string;
   buttonLabel?: string;
@@ -27,27 +37,16 @@ export type TelegramLinkedStartState =
       kind: "readonly";
     };
 
-export const TELEGRAM_COMMANDS = [
-  { command: "start", description: "🏠 Открыть WeSetup" },
-  { command: "shift", description: "🕓 Моя смена · открыть/закрыть" },
-  { command: "tasks", description: "✅ Задачи на сегодня" },
-  { command: "my_digest", description: "📋 Что заполнять сегодня · мне" },
-  { command: "journals", description: "📋 Мои журналы" },
-  { command: "edit", description: "✏️ Изменить документы журналов" },
-  { command: "me", description: "👤 Мой профиль" },
-  { command: "today", description: "📋 Сводка за сегодня (для рук-ва)" },
-  { command: "missing", description: "⏰ Что не заполнено (для рук-ва)" },
-  { command: "staff", description: "👥 Кто на смене (для рук-ва)" },
-  { command: "capa", description: "🛠 Открытые CAPA (для рук-ва)" },
-  { command: "batches", description: "📦 Активные партии (для рук-ва)" },
-  { command: "losses", description: "📦 Списания (для рук-ва)" },
-  { command: "stats", description: "📊 Сводка за неделю (для рук-ва)" },
-  { command: "who_late", description: "⚠️ Кто на смене без активности (для рук-ва)" },
-  { command: "health", description: "🩺 Диагностика бота (для рук-ва)" },
-  { command: "reports", description: "📊 Отчёты и PDF" },
-  { command: "help", description: "❓ Справка и поддержка" },
-  { command: "stop", description: "⛔ Отвязать аккаунт" },
+export const TELEGRAM_COMMAND_NAMES = [
+  "start", "shift", "tasks", "my_digest", "journals", "edit", "me", "today", "missing", "staff",
+  "capa", "batches", "losses", "stats", "who_late", "health", "reports", "help", "stop",
 ] as const;
+
+/** Global/default command menu keeps Russian copy sourced from the canonical catalog. */
+export const TELEGRAM_COMMANDS = TELEGRAM_COMMAND_NAMES.map((command) => ({
+  command,
+  description: ruMessages.telegram.bot.commands[command],
+}));
 
 export function buildTelegramLinkedStartReply(
   state: TelegramLinkedStartState,
@@ -56,67 +55,124 @@ export function buildTelegramLinkedStartReply(
    * White-label: готовый HTML-хвост «🤝 Ваш консультант: …» для клиентов
    * партнёра (см. `telegramConsultantFooter`). Пустая строка — без подписи.
    */
-  consultantFooter = ""
+  consultantFooter = "",
+  locale: Locale = "ru",
+  messages: Messages = ruMessages
 ): TelegramStartReply {
-  const reply = buildLinkedStartReplyBody(state, buttonUrl);
+  const reply = buildLinkedStartReplyBody(state, buttonUrl, locale, messages);
   return consultantFooter ? { ...reply, text: reply.text + consultantFooter } : reply;
 }
 
 function buildLinkedStartReplyBody(
   state: TelegramLinkedStartState,
-  buttonUrl: string | null
+  buttonUrl: string | null,
+  locale: Locale,
+  messages: Messages
 ): TelegramStartReply {
+  const t = createTranslator({
+    locale,
+    messages,
+    namespace: "telegram.bot",
+    onError: (error) => { throw error; },
+  });
   if (!buttonUrl) {
     return {
-      text: `Готово, ${state.name}. Мини-приложение пока не настроено — попросите руководителя подключить WeSetup.`,
+      text: t("start.notConfigured", { name: escape(state.name) }),
     };
   }
 
   if (state.kind === "manager") {
-    const taskLine = state.pendingCount > 0
-      ? `📬 Открыто задач: <b>${state.pendingCount}</b> · сотрудников с задачами: <b>${state.employeesWithPending}</b>`
-      : `✨ Все задачи на сегодня закрыты. Отличная смена!`;
     return {
-      text:
-        `👋 Здравствуйте, <b>${escape(state.name)}</b>!\n\n` +
-        `${taskLine}\n\n` +
-        `В Кабинете — журналы, отчёты, сотрудники и график. Нажмите кнопку, чтобы открыть прямо здесь в Telegram.`,
-      buttonLabel: "🏠 Открыть Кабинет",
+      text: t.markup("start.managerPending", {
+        name: escape(state.name),
+        hasPending: state.pendingCount > 0 ? "yes" : "no",
+        pending: state.pendingCount,
+        employeesWithPending: state.employeesWithPending,
+        b: (chunks) => `<b>${chunks}</b>`,
+      }),
+      buttonLabel: t("start.managerButton"),
       buttonUrl,
     };
   }
 
   if (state.kind === "readonly") {
     return {
-      text:
-        `👋 Здравствуйте, <b>${escape(state.name)}</b>!\n\n` +
-        `У вас режим просмотра: можете открыть журналы, посмотреть отчёты и график смен.\n\n` +
-        `Чтобы получить права на заполнение — обратитесь к руководителю.`,
-      buttonLabel: "📖 Открыть WeSetup",
+      text: t.markup("start.readonlyBody", {
+        name: escape(state.name),
+        b: (chunks) => `<b>${chunks}</b>`,
+      }),
+      buttonLabel: t("start.readonlyButton"),
       buttonUrl,
     };
   }
 
+  const hasAction = Boolean(state.nextActionLabel);
   return {
-    text:
-      `👋 <b>${escape(state.name)}</b>, ваш кабинет готов.\n\n` +
-      (state.nextActionLabel
-        ? `🎯 Следующее действие: <b>${escape(state.nextActionLabel)}</b>\n\n`
-        : `✅ На сегодня обязательные журналы уже закрыты — можно выдохнуть.\n\n`) +
-      `Журналы заполняются в один клик прямо в Telegram — без браузера и бумажек.`,
-    buttonLabel: state.nextActionLabel ? "🎯 Открыть задачу" : "📋 Мои журналы",
+    text: hasAction
+      ? t.markup("start.staffNextAction", {
+          name: escape(state.name),
+          action: escape(state.nextActionLabel ?? ""),
+          b: (chunks) => `<b>${chunks}</b>`,
+        })
+      : t.markup("start.staffNoAction", {
+          name: escape(state.name),
+          b: (chunks) => `<b>${chunks}</b>`,
+        }),
+    buttonLabel: hasAction ? t("start.staffTaskButton") : t("start.staffLogsButton"),
     buttonUrl,
   };
 }
 
-export function buildTelegramUnlinkedStartReply(): TelegramStartReply {
+export function buildTelegramUnlinkedStartReply(
+  locale: Locale = "ru",
+  messages: Messages = ruMessages
+): TelegramStartReply {
+  const t = createTranslator({ locale, messages, namespace: "telegram.bot", onError: (error) => { throw error; } });
   return {
-    text:
-      `👋 Привет! Это <b>WeSetup</b> — электронные журналы СанПиН и ХАССП для общепита.\n\n` +
-      `Ваш Telegram ещё не привязан к рабочему аккаунту. Попросите руководителя выслать персональную ссылку-приглашение или сгенерируйте её в разделе «Сотрудники» → «Telegram-приглашение».\n\n` +
-      `После привязки сможете заполнять журналы, видеть задачи и получать уведомления прямо тут.\n\n` +
-      `Есть вопрос по сервису? Просто напишите его сюда — мы ответим.`,
+    text: t("start.unlinkedBody"),
   };
+}
+
+export function localizedTelegramCommands(messages: Messages) {
+  return TELEGRAM_COMMAND_NAMES.map((command) => ({
+    command,
+    description: messages.telegram.bot.commands[command],
+  }));
+}
+
+/** Install localized descriptions for one recipient without changing the global bot profile. */
+export async function setLocalizedTelegramChatCommands(
+  api: {
+    setMyCommands: (
+      commands: ReturnType<typeof localizedTelegramCommands>,
+      options: { scope: { type: "chat"; chat_id: string } }
+    ) => Promise<unknown>;
+  },
+  chatId: string,
+  messages: Messages,
+  onError: (error: unknown) => void = () => undefined
+): Promise<void> {
+  try {
+    await api.setMyCommands(localizedTelegramCommands(messages), {
+      scope: { type: "chat", chat_id: chatId },
+    });
+  } catch (error) {
+    onError(error);
+  }
+}
+
+export type TelegramStaticStartErrorKey = Exclude<
+  keyof Messages["telegram"]["bot"]["errors"],
+  "inviteSeatLimit"
+>;
+
+export function telegramStartError(
+  key: TelegramStaticStartErrorKey,
+  locale: Locale,
+  messages: Messages
+): string {
+  const t = createTranslator({ locale, messages, namespace: "telegram.bot.errors", onError: (error) => { throw error; } });
+  return t(key);
 }
 
 function escape(value: string): string {

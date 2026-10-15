@@ -1,6 +1,7 @@
 import type { jsPDF } from "jspdf";
+import { journalPdfCopy } from "@/i18n/journal-pdf-copy";
+import type { Locale } from "@/i18n/locales";
 
-import { PLATFORM_BADGE_TEXT } from "@/lib/partners/validation";
 import { JOURNAL_CAP_HEIGHT_EM, JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
 
 /**
@@ -103,7 +104,8 @@ function drawCenteredLabel(
   drawTextCenteredInBox(doc, text, slot);
 }
 
-export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode") {
+export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode", locale: Locale = "ru") {
+  const t = journalPdfCopy(locale);
   const totalPages = doc.getNumberOfPages();
   const byPage = new Map<number, PageLabelSlot>();
   for (const slot of pageLabelSlots) {
@@ -115,7 +117,7 @@ export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode")
     // Размер листа — свой у каждой страницы (приложение бывает альбомным).
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const label = `СТР. ${pageNumber} ИЗ ${totalPages}`;
+    const label = t("page", { page: pageNumber, total: totalPages });
     const slot = byPage.get(pageNumber);
     doc.setFont(fontName, slot?.fontStyle ?? "bold");
     doc.setFontSize(slot?.fontSize ?? 10);
@@ -145,9 +147,10 @@ export type PdfFooterBrand = {
   pdfSignature: string | null;
 };
 
-export function partnerPdfFooterText(brand: PdfFooterBrand): string {
-  const signature = brand.pdfSignature?.trim() || `Сопровождение: ${brand.brandName}`;
-  return `${signature} · ${PLATFORM_BADGE_TEXT}`;
+export function partnerPdfFooterText(brand: PdfFooterBrand, locale: Locale = "ru"): string {
+  const t = journalPdfCopy(locale);
+  const signature = brand.pdfSignature?.trim() || t("partnerSupport", { name: brand.brandName });
+  return t("partnerFooter", { signature });
 }
 
 /** Место справа под «СТР. X ИЗ N» на странице без шапки, мм: подвал партнёра кончается левее. */
@@ -157,10 +160,11 @@ export function stampPartnerPdfFooter(
   doc: jsPDF,
   brand: PdfFooterBrand | null | undefined,
   fontName = "JournalUnicode",
+  locale: Locale = "ru",
 ) {
   if (!brand) return;
   const totalPages = doc.getNumberOfPages();
-  const text = partnerPdfFooterText(brand);
+  const text = partnerPdfFooterText(brand, locale);
 
   doc.setFont(fontName, "normal");
   doc.setFontSize(7);

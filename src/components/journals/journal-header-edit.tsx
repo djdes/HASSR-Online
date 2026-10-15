@@ -15,6 +15,10 @@ import { HEADER_TITLE_MAX, sanitizeHeaderTitle } from "@/lib/journal-header-titl
 import { ORG_JOURNAL_NAME_MAX, sanitizeOrgJournalName } from "@/lib/org-journal-name";
 import { cn } from "@/lib/utils";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useLocale, useTranslations } from "next-intl";
+import { standardPeriodicityKey } from "@/i18n/control-periodicity-presentation";
+import { presentDocumentTitle } from "@/i18n/journal-document-presentation";
+import type { MessageContract } from "@/i18n/message-contract";
 
 /**
  * Правка бумажной шапки прямо в документе: название организации, название
@@ -29,6 +33,8 @@ import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 export type JournalHeaderEditValue = {
   documentId: string;
+  templateCode?: string;
+  titlePresentation?: { sourceNames: string[]; dateFrom: string; dateTo: string };
   /** Карандаши в шапке: право управлять журналами и документ не закрыт. */
   canEditDocument: boolean;
   /**
@@ -71,6 +77,22 @@ export function useJournalHeaderEdit(): JournalHeaderEditValue | null {
   return useContext(JournalHeaderEditContext);
 }
 
+/** Translate known auto-generated names for display, without changing saved titles. */
+export function useDocumentDisplayTitle(title: string): string;
+export function useDocumentDisplayTitle(title: ReactNode): ReactNode;
+export function useDocumentDisplayTitle(title: ReactNode): ReactNode {
+  const edit = useJournalHeaderEdit();
+  const locale = useLocale();
+  const names = useTranslations("journals.names");
+  const t = useTranslations("journalWidgets.headerEdit");
+  const code = edit?.templateCode as keyof MessageContract["journals"]["names"] | undefined;
+  if (typeof title !== "string" || !code || !edit?.titlePresentation || !names.has(code)) return title;
+  return presentDocumentTitle({
+    ...edit.titlePresentation, title, templateCode: code, locale,
+    localizedName: names(code), formatTitle: (name, period) => t("generatedTitle", { name, period }),
+  });
+}
+
 /**
  * Можно ли этому человеку показывать управление документом.
  *
@@ -90,13 +112,13 @@ async function readError(response: Response, fallback: string): Promise<string> 
   return data?.error || fallback;
 }
 
-async function patchDocument(documentId: string, body: Record<string, unknown>) {
+async function patchDocument(documentId: string, body: Record<string, unknown>, fallback: string) {
   const response = await fetch(`/api/journal-documents/${documentId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await readError(response, "Не удалось сохранить шапку"));
+  if (!response.ok) throw new Error(await readError(response, fallback));
 }
 
 /**
@@ -139,6 +161,7 @@ function InlineHeaderEditor({
   children: ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
+  const t = useTranslations("journalWidgets.headerEdit");
   const [draft, setDraft] = useState(initialValue);
   const cancelled = useRef(false);
   const busy = useRef(false);
@@ -202,7 +225,7 @@ function InlineHeaderEditor({
           className={cn("bg-[#f5f6ff] ring-4 ring-[#5566f6]/15", inputClassName)}
         />
         <span className="mt-1 block text-[11px] font-normal normal-case not-italic leading-snug text-[#6f7282]">
-          Enter — сохранить{multiline ? ", Shift+Enter — новая строка" : ""} · Esc — отменить
+          {t(multiline ? "multilineShortcuts" : "shortcuts")}
         </span>
       </span>
     );
@@ -231,6 +254,7 @@ type OrgNameScope = "organization" | "document";
 
 /** Ячейка организации: текст, карандаш и выбор «во всех журналах / только здесь». */
 export function HeaderOrgName({ orgName }: { orgName: string }) {
+  const t = useTranslations("journalWidgets.headerEdit");
   const edit = useJournalHeaderEdit();
   const router = useRouter();
   const [pending, setPending] = useState<{ value: string; finish: () => void } | null>(null);
@@ -253,35 +277,35 @@ export function HeaderOrgName({ orgName }: { orgName: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ journalShortName: value }),
         });
-        if (!response.ok) throw new Error(await readError(response, "Не удалось сохранить название"));
+        if (!response.ok) throw new Error(await readError(response, t("saveNameError")));
         // Своё название этого документа перебивало бы общее — снимаем его.
-        if (context.documentOrgName) await patchDocument(context.documentId, { headerOrgName: "" });
-        toast.success("Название обновлено в шапке всех журналов");
+        if (context.documentOrgName) await patchDocument(context.documentId, { headerOrgName: "" }, t("saveHeaderError"));
+        toast.success(t("organizationUpdated"));
       } else {
-        await patchDocument(context.documentId, { headerOrgName: value });
-        toast.success(value ? "Название изменено только в этом документе" : "В этом документе снова общее название");
+        await patchDocument(context.documentId, { headerOrgName: value }, t("saveHeaderError"));
+        toast.success(value ? t("documentOrganizationUpdated") : t("organizationDefaultRestored"));
       }
       setPending(null);
       finish();
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить название"));
+      toast.error(humanizeFetchError(error, t("saveNameError"), t("networkError")));
     }
   }
 
   const options: Array<{ value: OrgNameScope; label: string; hint: string; disabled: boolean }> = [
     {
       value: "organization",
-      label: "Во всех журналах организации",
+      label: t("allDocuments"),
       hint: context.canEditOrganization
-        ? "Шапка каждого журнала и PDF. Документы с отдельным названием сохранят своё."
-        : "Общее название меняет администратор организации.",
+        ? t("allDocumentsHint")
+        : t("administratorHint"),
       disabled: !context.canEditOrganization,
     },
     {
       value: "document",
-      label: "Только в этом документе",
-      hint: "Остальные журналы не изменятся.",
+      label: t("thisDocument"),
+      hint: t("thisDocumentHint"),
       disabled: false,
     },
   ];
@@ -290,7 +314,7 @@ export function HeaderOrgName({ orgName }: { orgName: string }) {
     <>
       <InlineHeaderEditor
         kind="org"
-        label="Изменить название организации"
+        label={t("editOrganization")}
         initialValue={current}
         maxLength={ORG_JOURNAL_NAME_MAX}
         inputClassName="text-center text-[13px] font-semibold"
@@ -311,17 +335,17 @@ export function HeaderOrgName({ orgName }: { orgName: string }) {
         }}
         onConfirm={save}
         variant="info"
-        title="Где поменять название?"
+        title={t("chooseScope")}
         description={
           pending ? (
             <>
-              В шапке будет: <b className="font-semibold text-[#0b1024]">«{preview(pending.value, scope)}»</b>
+              {t.rich("preview", { name: preview(pending.value, scope), strong: chunks => <b className="font-semibold text-[#0b1024]">{chunks}</b> })}
             </>
           ) : null
         }
-        confirmLabel="Сохранить"
+        confirmLabel={t("save")}
       >
-        <div className="space-y-2" role="radiogroup" aria-label="Где поменять название">
+        <div className="space-y-2" role="radiogroup" aria-label={t("chooseScope")}>
           {options.map((option) => (
             <label
               key={option.value}
@@ -357,6 +381,7 @@ export function HeaderOrgName({ orgName }: { orgName: string }) {
 
 /** Средняя ячейка: название документа (своё из шапки или стандартное бланка). */
 export function HeaderTitle({ title }: { title: string }) {
+  const t = useTranslations("journalWidgets.headerEdit");
   const edit = useJournalHeaderEdit();
   const router = useRouter();
   const shown = edit?.headerTitle || title;
@@ -366,7 +391,7 @@ export function HeaderTitle({ title }: { title: string }) {
   return (
     <InlineHeaderEditor
       kind="title"
-      label="Изменить название документа"
+      label={t("editTitle")}
       initialValue={shown}
       maxLength={HEADER_TITLE_MAX}
       inputClassName="text-center text-[13px] uppercase italic"
@@ -375,12 +400,12 @@ export function HeaderTitle({ title }: { title: string }) {
         // Стандартное название не храним: пусто или совпало — снимаем своё.
         const next = value && value.toLocaleUpperCase("ru") !== title.toLocaleUpperCase("ru") ? value : "";
         try {
-          await patchDocument(context.documentId, { headerTitle: next });
-          toast.success(next ? "Название документа изменено" : "Вернули стандартное название документа");
+          await patchDocument(context.documentId, { headerTitle: next }, t("saveHeaderError"));
+          toast.success(next ? t("titleUpdated") : t("defaultTitleRestored"));
           router.refresh();
           return true;
         } catch (error) {
-          toast.error(humanizeFetchError(error, "Не удалось сохранить название"));
+          toast.error(humanizeFetchError(error, t("saveNameError"), t("networkError")));
           return false;
         }
       }}
@@ -396,37 +421,41 @@ export function HeaderTitle({ title }: { title: string }) {
  * журналов печатает здесь своё поле, и правка ушла бы не туда.
  */
 export function HeaderPeriodicity({ text }: { text: string }) {
+  const t = useTranslations("journalWidgets.headerEdit");
+  const periodicity = useTranslations("journalWidgets.periodicity");
   const edit = useJournalHeaderEdit();
   const router = useRouter();
-  if (!edit?.canEditDocument || text.trim() !== edit.controlPeriodicity.trim()) return <>{text}</>;
+  const key = standardPeriodicityKey(text, edit?.templateCode);
+  const shown = key ? periodicity(key) : text;
+  if (!edit?.canEditDocument || text.trim() !== edit.controlPeriodicity.trim()) return <>{shown}</>;
   const context = edit;
 
   return (
     <InlineHeaderEditor
       kind="periodicity"
-      label="Изменить периодичность контроля"
-      initialValue={text}
+      label={t("editPeriodicity")}
+      initialValue={shown}
       maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
       multiline
       inputClassName="text-[12.5px] leading-[1.4]"
       sanitize={sanitizeControlPeriodicity}
       onCommit={async (value) => {
         try {
-          await patchDocument(context.documentId, { controlPeriodicity: value });
+          await patchDocument(context.documentId, { controlPeriodicity: value }, t("saveHeaderError"));
           toast.success(
             value
-              ? "Периодичность контроля обновлена"
-              : "Строка периодичности скрыта. Вернуть её можно в «Настройках журнала»"
+              ? t("periodicityUpdated")
+              : t("periodicityHidden")
           );
           router.refresh();
           return true;
         } catch (error) {
-          toast.error(humanizeFetchError(error, "Не удалось сохранить периодичность"));
+          toast.error(humanizeFetchError(error, t("savePeriodicityError"), t("networkError")));
           return false;
         }
       }}
     >
-      {text}
+      {shown}
     </InlineHeaderEditor>
   );
 }

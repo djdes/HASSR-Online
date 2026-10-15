@@ -2,6 +2,9 @@
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useState } from "react";
+import { useLocale, useMessages, useTranslations } from "next-intl";
+import { formatNumber } from "@/i18n/locales";
+import { metricsDate, metricsJournalName, type JournalSourceNames } from "./metrics-presentation";
 import Link from "next/link";
 import { ArrowUpRight, FileText, Loader2, Table2, X } from "lucide-react";
 import type { OrgActivity } from "@/lib/org-activity";
@@ -21,13 +24,18 @@ export function ActivityDrawer({
   organizationId,
   organizationName,
   onClose,
+  sourceJournalNames,
 }: {
   organizationId: string;
   organizationName: string;
   onClose: () => void;
+  sourceJournalNames: JournalSourceNames;
 }) {
+  const t = useTranslations("rootMetrics");
+  const locale = useLocale();
+  const messages = useMessages();
   const [data, setData] = useState<OrgActivity | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +45,7 @@ export function ActivityDrawer({
         if (!cancelled) setData(json);
       })
       .catch(() => {
-        if (!cancelled) setError("Не удалось загрузить активность");
+        if (!cancelled) setError(true);
       });
     return () => {
       cancelled = true;
@@ -59,21 +67,20 @@ export function ActivityDrawer({
       <BodyScrollLock />
       <button
         type="button"
-        aria-label="Закрыть"
+        aria-label={t("activity.close")}
         onClick={onClose}
         className="absolute inset-0 bg-[#0b1024]/40 backdrop-blur-sm"
       />
 
       <aside
         role="dialog"
-        aria-label={`Активность: ${organizationName}`}
+        aria-label={t("activity.dialogLabel", { name: organizationName })}
         className="relative flex h-full w-full max-w-[600px] flex-col bg-white shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)]"
       >
         <header className="flex shrink-0 items-start gap-3 border-b border-[#eef0f6] px-5 py-4">
           <div className="min-w-0 flex-1">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-              Чем занимаются
-            </div>
+              {t("activity.title")}</div>
             <h2 className="mt-1 truncate text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
               {organizationName}
             </h2>
@@ -81,14 +88,13 @@ export function ActivityDrawer({
               href={`/root/organizations/${organizationId}`}
               className="mt-1 inline-flex items-center gap-1 text-[13px] text-[#3848c7] hover:underline"
             >
-              Карточка организации
-              <ArrowUpRight className="size-3.5" />
+              {t("activity.organizationCard")}<ArrowUpRight className="size-3.5" />
             </Link>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t("activity.close")}
             className="shrink-0 rounded-lg p-1 text-[#9b9fb3] transition-colors hover:text-[#0b1024]"
           >
             <X className="size-5" />
@@ -98,37 +104,35 @@ export function ActivityDrawer({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {error ? (
             <p className="rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13px] text-[#a13a32]">
-              {error}
+              {t("activity.loadError")}
             </p>
           ) : !data ? (
             <div className="flex items-center gap-2 py-8 text-[13px] text-[#9b9fb3]">
               <Loader2 className="size-4 animate-spin" />
-              Загружаем активность
-            </div>
+              {t("activity.loading")}</div>
           ) : data.timeline.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
               <div className="text-[15px] font-medium text-[#0b1024]">
-                За {data.breakdownDays} дней ни одной записи
+                {t("activity.emptyTitle", { days: data.breakdownDays })}
               </div>
               <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-                Организация зарегистрирована, но журналы не ведёт.
-              </p>
+                {t("activity.emptyBody")}</p>
             </div>
           ) : (
             <>
               <section>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-                  Какие журналы ведут · {data.breakdownDays} дней
+                  {t("activity.journalsHeading", { days: data.breakdownDays })}
                 </div>
                 <div className="mt-3 space-y-2">
                   {data.byJournal.map((j) => (
                     <div key={j.journalCode}>
                       <div className="flex items-baseline justify-between gap-3 text-[13px]">
                         <span className="min-w-0 truncate text-[#0b1024]">
-                          {j.journalName}
+                          {metricsJournalName(locale, j.journalCode, j.journalName, messages.journals.names, sourceJournalNames)}
                         </span>
                         <span className="shrink-0 tabular-nums text-[#6f7282]">
-                          {j.count}
+                          {formatNumber(locale, j.count)}
                         </span>
                       </div>
                       {/* Полоса длиной от самого активного журнала: ROOT'у
@@ -149,8 +153,7 @@ export function ActivityDrawer({
 
               <section className="mt-6">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-                  Последние записи
-                </div>
+                  {t("activity.latest")}</div>
                 <div className="mt-3 space-y-1">
                   {data.timeline.map((e) => (
                     <div
@@ -160,8 +163,8 @@ export function ActivityDrawer({
                       <span
                         title={
                           e.kind === "form"
-                            ? "Журнал-форма"
-                            : "Журнал-таблица: ячейка сотрудник × день"
+                            ? t("activity.formKind")
+                            : t("activity.cellKind")
                         }
                         className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#eef1ff] text-[#5566f6]"
                       >
@@ -173,7 +176,7 @@ export function ActivityDrawer({
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[13px] text-[#0b1024]">
-                          {e.journalName}
+                          {metricsJournalName(locale, e.journalCode, e.journalName, messages.journals.names, sourceJournalNames)}
                         </div>
                         <div className="truncate text-[12px] text-[#6f7282]">
                           {e.who}
@@ -181,7 +184,7 @@ export function ActivityDrawer({
                         </div>
                       </div>
                       <span className="shrink-0 text-[12px] tabular-nums text-[#9b9fb3]">
-                        {new Date(e.at).toLocaleString("ru-RU", {
+                        {metricsDate(e.at, locale, {
                           day: "2-digit",
                           month: "2-digit",
                           hour: "2-digit",

@@ -1,0 +1,17 @@
+{
+  "locale": "en",
+  "sourceHash": "74d15d6998aff4de219deee3f7e51fcedc64184adbb471637f68791bf3e48121",
+  "title": "Finished-product quality log: how to keep it and track each batch",
+  "excerpt": "What the review team assesses, who signs, and why one batch must have one entry. A guide to reviewing finished products and handling a dish that fails inspection.",
+  "tags": ["Product review", "Journals"],
+  "body": [
+    {"type":"p","text":"A finished-product quality review is an assessment of a dish before it is served: appearance, taste, temperature, and compliance with the process chart. From this log, an inspector can reconstruct what was prepared that day and what went out to the dining area."},
+    {"type":"h2","text":"Who carries it out"},
+    {"type":"p","text":"A team of two or three people: the head chef, a food technologist, and sometimes the manager on duty. Small establishments may use the head chef and an administrator. Every team member signs."},
+    {"type":"h2","text":"What to record"},
+    {"type":"ul","items":["Dish name and process chart.","Batch: the cooking or baking run number.","Sensory assessment: appearance, aroma, taste, and consistency.","Temperature when served.","Result: approved / rejected / requires rework.","Team members' signatures."]},
+    {"type":"callout","tone":"warn","title":"Rejection is not a reason to throw it away silently","text":"If a dish fails the review, make a separate entry in the write-off log and state the reason. Simply throwing it in the bin erases the trail and leaves the inspector with questions."},
+    {"type":"h2","text":"How to keep batches straight"},
+    {"type":"p","text":"One batch, one entry. If you bake croissants three times during the day, the log should contain three entries with three sets of signatures. Do not combine them into one “morning bake”: when investigating food poisoning, you need to know exactly which batch was served."}
+  ]
+}

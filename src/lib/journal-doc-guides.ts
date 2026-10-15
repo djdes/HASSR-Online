@@ -1,3 +1,9 @@
+import {
+  DOC_GUIDE_COPY_KEYS,
+  translateDocGuideTree,
+  type JournalDocGuideTranslator,
+} from "@/lib/journal-doc-guide-copy";
+
 /**
  * Подробные инструкции «как заполнять» для каждого журнала ХАССП/СанПиН.
  *
@@ -1395,10 +1401,24 @@ const GUIDES: Record<string, JournalDocGuide> = {
   },
 };
 
-export function getJournalDocGuide(code: string): JournalDocGuide | null {
-  return GUIDES[code] ?? null;
+export const JOURNAL_DOC_GUIDE_CODES: ReadonlySet<string> = new Set(Object.keys(GUIDES));
+
+/** Only original built-in objects have catalog copy; customer content stays verbatim. */
+export function presentJournalDocGuide<T extends JournalDocGuide>(
+  code: string,
+  guide: T,
+  t?: JournalDocGuideTranslator,
+): T {
+  if (!t || !Object.hasOwn(GUIDES, code) || GUIDES[code] !== guide || !Object.hasOwn(DOC_GUIDE_COPY_KEYS, code)) return guide;
+  return translateDocGuideTree(guide, DOC_GUIDE_COPY_KEYS[code as keyof typeof DOC_GUIDE_COPY_KEYS], t);
+}
+
+/** Runtime callers supply request-local copy; omitted copy keeps the legacy RU API. */
+export function getJournalDocGuide(code: string, t?: JournalDocGuideTranslator): JournalDocGuide | null {
+  const guide = Object.hasOwn(GUIDES, code) ? GUIDES[code] : undefined;
+  return guide ? presentJournalDocGuide(code, guide, t) : null;
 }
 
 export function hasJournalDocGuide(code: string): boolean {
-  return code in GUIDES;
+  return Object.hasOwn(GUIDES, code);
 }

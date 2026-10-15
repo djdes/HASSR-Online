@@ -105,6 +105,7 @@ dispatcher/logs/
 /*-snapshot.yml
 /.dev-server*.log
 .agent/tasks/*/e2e/creds.json
+.agent/tasks/brakerage-commission-flow-2026-10-15/raw/test-state.json
 
 # приватные данные рантайма (реквизиты, факсимиле) — см. LEGAL_DIR
 /.data/

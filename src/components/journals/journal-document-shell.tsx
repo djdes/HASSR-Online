@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   DocumentActionsBar,
@@ -8,7 +9,7 @@ import {
   type DocumentBarUndo,
 } from "@/components/journals/document-actions-bar";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
-import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
+import { useCanManageJournalDocument, useDocumentDisplayTitle } from "@/components/journals/journal-header-edit";
 import { JournalDocumentTitle } from "@/components/journals/journal-document-header";
 import { MobileViewToggle } from "@/components/journals/mobile-view-toggle";
 import { TodayProgressStrip } from "@/components/journals/today-progress-strip";
@@ -184,6 +185,8 @@ export function JournalDocumentShell({
   const cardsMode = hasCards && mobileView === "cards";
   // Полоса «Автоматически заполнять журнал» меняет настройку документа —
   // это право руководителя. Сотруднику её не показываем.
+  const t = useTranslations("journalControls.actions");
+  const displayedTitle = useDocumentDisplayTitle(title);
   const canManage = useCanManageJournalDocument();
   // Закрытый документ править нельзя: сервер отвечает 400 «Закрытый
   // документ нельзя редактировать», а кнопка «Настройки» создавала вид,
@@ -199,7 +202,7 @@ export function JournalDocumentShell({
         showPrint={showPrint}
         heading={
           <div>
-            <h1 className={DOC_HEADING_CLASS}>{title}</h1>
+            <h1 className={DOC_HEADING_CLASS}>{displayedTitle}</h1>
             {subtitle ? (
               <p className="mt-2 text-[15px] text-[#6f7282]">{subtitle}</p>
             ) : null}
@@ -231,7 +234,7 @@ export function JournalDocumentShell({
             className="data-[state=unchecked]:bg-[#d4d8ec]"
           />
           <span className={DOC_AUTOFILL_LABEL_CLASS}>
-            {autoFill.label ?? "Автоматически заполнять журнал"}
+            {autoFill.label ?? t("automaticFilling")}
           </span>
         </section>
       ) : null}

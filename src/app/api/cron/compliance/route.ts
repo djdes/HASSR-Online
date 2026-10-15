@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveLocale } from "@/i18n/locales";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
@@ -65,7 +66,7 @@ async function handle(request: Request) {
     // Get all organizations (with their disabled-journal toggle).
     const organizations = await db.organization.findMany({
       where: NOT_DIRECTORY_ORG_WHERE,
-      select: { id: true, name: true, disabledJournalCodes: true, customNamesJson: true },
+      select: { id: true, name: true, disabledJournalCodes: true, customNamesJson: true, locale: true },
     });
 
     // Get all mandatory journal templates
@@ -139,7 +140,7 @@ async function handle(request: Request) {
             role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
             isActive: true,
           },
-          select: { email: true },
+          select: { email: true, locale: true },
         });
 
         for (const user of users) {
@@ -148,6 +149,7 @@ async function handle(request: Request) {
             missingJournals: missingNames,
             organizationName: org.name,
             organizationId: org.id,
+            locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: org.locale }),
           }).catch((err) =>
             console.error(`Compliance email error:`, err)
           );

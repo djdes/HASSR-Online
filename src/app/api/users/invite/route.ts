@@ -19,6 +19,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { checkSeatsForActivation, seatLimitResponse } from "@/lib/billing.server";
+import { resolveLocale } from "@/i18n/locales";
 
 const inviteUserSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа"),
@@ -147,6 +148,7 @@ export async function POST(request: Request) {
       organizationName: session.user.organizationName,
       inviteUrl,
       organizationId,
+      locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: session.user.organizationLocale }),
     }).catch((err) => console.error("sendInviteTokenEmail failed", err));
 
     // Auto-link с TasksFlow по номеру (П-8 спека 2026-05-09).

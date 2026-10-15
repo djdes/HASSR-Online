@@ -1,0 +1,15 @@
+{
+  "locale":"en","sourceHash":"3ee78f120fd98d54f194bbab1fdf07f463356df8867630c17e9c02f9b647208d",
+  "title":"Equipment washing and disinfection: how to document it properly",
+  "excerpt":"Slicers, mixers, and ice makers are a leading source of cross-contamination. Learn the six steps in a washing cycle, what to record in the journal, and why swab tests matter.",
+  "tags":["Equipment","Disinfection"],
+  "body":[
+    {"type":"p","text":"Food-production equipment—slicers, mixers, ovens, and ice makers—is a leading source of cross-contamination. That is why washing and disinfection are recorded in a separate journal, not combined with “general cleaning.”"},
+    {"type":"h2","text":"Washing cycle"},
+    {"type":"ol","items":["Mechanical cleaning: remove product residue.","Wash with detergent according to its instructions (concentration and water temperature).","Rinse with drinking water.","Disinfect according to the instructions (concentration and contact time).","Rinse again if the product instructions require it.","Dry and protect the equipment from recontamination."]},
+    {"type":"h2","text":"What to record in the journal"},
+    {"type":"ul","items":["Equipment: inventory number and area.","Date, shift, and person responsible.","Products used and their concentrations.","Disinfectant contact time.","Swab-test results, if tests were conducted."]},
+    {"type":"callout","tone":"tip","title":"Swab tests","text":"Microbiological swab tests are the best way to show that washing is effective. Attach laboratory reports to the journal and keep them for 3 years."},
+    {"type":"p","text":"The service template fills in the selected product and reminds you of the contact time. This prevents a common mistake: rinsing off a disinfectant after 30 seconds instead of the required 5 minutes."}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "errorSurface": {
+    "updating": "Updating the app",
+    "updatingDescription": "Loading the latest version. This page will refresh automatically.",
+    "errorTitle": "Something went wrong",
+    "errorDescription": "The action could not be completed. Try again or return to the home page.",
+    "globalTitle": "Application error",
+    "globalDescription": "The app could not be loaded. Try again or return to the home page.",
+    "code": "Code: {code}",
+    "home": "Home",
+    "retry": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The link is out of date or the section has moved. Return to the home page to continue.",
+    "about": "About the service",
+    "returnHome": "Return to home",
+    "miniTitle": "This screen could not be opened",
+    "miniDescription": "Try again. If that does not help, close and reopen the app. Previously saved entries will remain available.",
+    "loading": "Loading…",
+    "openingWorkspace": "Opening your workspace…",
+    "loadingDocuments": "Loading log documents…",
+    "loadingDocument": "Loading document…",
+    "loadingJournals": "Loading logs…",
+    "backToJournals": "Back to logs",
+    "journalTitle": "Could not load the log",
+    "journalDescription": "The server did not return the data. Try again — previously saved entries will remain available.",
+    "journalsTitle": "Could not load the log list",
+    "journalsDescription": "The log list could not be loaded. Try loading the page again.",
+    "documentsTitle": "Could not load the log documents",
+    "documentsDescription": "The document list could not be loaded. Try again.",
+    "documentTitle": "Could not open the document",
+    "documentDescription": "The document could not be loaded. Previously saved entries are still available. Try again."
+  }
+}

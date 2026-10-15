@@ -12,6 +12,7 @@ import {
 } from "@/lib/master-brakerage-plan";
 import { listPoolOrganizations } from "@/lib/master-directory";
 import { rememberNames } from "@/lib/name-suggestions-db";
+import { captureMasterDelivery, type MasterDelivery } from "@/lib/master-brakerage-correction";
 
 /**
  * «Добавить в журналы на дату» мастер-кабинета: строки БЖГП на выбранную
@@ -32,6 +33,7 @@ export type MasterBrakerageOrgResult = {
   skipped: number;
   skippedNames: string[];
   error: string | null;
+  delivery?: MasterDelivery;
 };
 
 export type MasterBrakerageResult = {
@@ -157,7 +159,7 @@ async function processOrganization(params: {
     console.info("[master-brakerage] document created", { organizationId: org.id, documentId, date: common.date });
   }
 
-  type Outcome = { error: string | null; added: string[]; skipped: string[] };
+  type Outcome = { error: string | null; added: string[]; skipped: string[]; delivery?: MasterDelivery };
   const outcome = await withDocumentConfigLock<Outcome>(documentId, async (locked) => {
     if (locked.status !== "active") return { result: { error: CLOSED_ERROR, added: [] as string[], skipped: [] as string[] } };
     const people = await peopleFor(org.id, locked.responsibleUserId, locked.verifierUserId);
@@ -173,9 +175,10 @@ async function processOrganization(params: {
     // Заготовка нового документа — одна пустая строка: не оставляем её перед меню.
     const keptRows = documentCreated ? currentRows.filter((row) => !isBlankBrakerageRow(row)) : currentRows;
     const config = { ...raw, rows: [...keptRows, ...plan.rows] };
+    const { date, ...commonFields } = common;
     return {
       config: config as Prisma.InputJsonValue,
-      result: { error: null, added: plan.rows.map((row) => row.productName), skipped: plan.skipped },
+      result: { error: null, added: plan.rows.map((row) => row.productName), skipped: plan.skipped, delivery: captureMasterDelivery({ date, rows, common: commonFields }, plan.rows) },
     };
   });
   const title = (await db.journalDocument.findUnique({ where: { id: documentId }, select: { title: true } }))?.title ?? null;
@@ -195,6 +198,7 @@ async function processOrganization(params: {
     skipped: outcome.skipped.length,
     skippedNames: outcome.skipped,
     error: outcome.error,
+    delivery: outcome.delivery,
   };
 }
 

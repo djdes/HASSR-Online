@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { Copy, Dices, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { ApiError, toastCaughtError } from "@/lib/billing-limit-toast";
+import { ApiError, useBillingError } from "@/lib/billing-limit-toast";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,8 @@ export function StaffAccessDialog({
   onClose: () => void;
   onSaved?: () => void;
 }) {
+  const { toastCaughtError } = useBillingError();
+  const t = useTranslations("staffManagement.access");
   const [data, setData] = useState<AccessPayload | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -82,7 +85,7 @@ export function StaffAccessDialog({
   const load = useCallback(async () => {
     const response = await fetch(`/api/users/${userId}/access`).catch(() => null);
     if (!response?.ok) {
-      toast.error("Не удалось загрузить доступы");
+      toast.error(t("loadFailed"));
       return;
     }
     const payload: AccessPayload = await response.json();
@@ -102,7 +105,7 @@ export function StaffAccessDialog({
     setCodes(
       legacyFullAccess ? payload.catalog.map((item) => item.code) : granted
     );
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,14 +121,14 @@ export function StaffAccessDialog({
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.inviteUrl) {
-        throw new Error(payload?.error ?? "Не удалось выдать приглашение");
+        throw new Error(t("inviteFailed"));
       }
       setInvite({
         inviteUrl: payload.inviteUrl,
         qrPngDataUrl: payload.qrPngDataUrl,
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("genericError"));
     } finally {
       setBusy(false);
     }
@@ -152,7 +155,7 @@ export function StaffAccessDialog({
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new ApiError(payload?.error ?? "Не удалось выдать доступ", payload);
+          throw new ApiError(t("credentialsFailed"), payload);
         }
       }
 
@@ -169,15 +172,14 @@ export function StaffAccessDialog({
         }),
       });
       if (!accessResponse.ok) {
-        const payload = await accessResponse.json().catch(() => null);
-        throw new Error(payload?.error ?? "Не удалось сохранить доступ к журналам");
+        throw new Error(t("saveAccessFailed"));
       }
 
-      toast.success("Доступ сохранён");
+      toast.success(t("saved"));
       onSaved?.();
       onClose();
     } catch (error) {
-      toastCaughtError(error, "Ошибка");
+      toastCaughtError(error, t("genericError"));
     } finally {
       setBusy(false);
     }
@@ -188,7 +190,7 @@ export function StaffAccessDialog({
       <DialogContent className="flex max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[560px]">
         <DialogHeader className="border-b border-[#ececf4] px-6 py-4">
           <DialogTitle className="text-[18px] font-semibold text-[#0b1024]">
-            Добавление доступа
+            {t("title")}
           </DialogTitle>
           {data ? (
             <p className="mt-0.5 text-[13px] text-[#6f7282]">
@@ -201,19 +203,19 @@ export function StaffAccessDialog({
         {!data ? (
           <div className="flex items-center gap-2 px-6 py-10 text-[13.5px] text-[#9b9fb3]">
             <Loader2 className="size-4 animate-spin" />
-            Загружаем доступы
+            {t("loading")}
           </div>
         ) : (
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
             <label className="block space-y-1.5">
               <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                Email сотрудника · необязательно
+                {t("emailLabel")}
               </span>
               <input
                 type="email"
                 value={contactEmail}
                 onChange={(event) => setContactEmail(event.target.value)}
-                placeholder="Личная почта для связи"
+                placeholder={t("emailPlaceholder")}
                 className={FIELD_CLASS}
               />
             </label>
@@ -222,7 +224,7 @@ export function StaffAccessDialog({
               <label className="flex items-center gap-3 rounded-2xl bg-[#f5f6ff] px-4 py-3">
                 <Switch checked={browserOn} onCheckedChange={setBrowserOn} />
                 <span className="text-[14px] font-medium text-[#0b1024]">
-                  Доступ в сервис через браузер
+                  {t("browserAccess")}
                 </span>
               </label>
 
@@ -230,16 +232,14 @@ export function StaffAccessDialog({
                 <div className="space-y-2.5 pl-1">
                   {data.user.hasBrowserAccess && data.user.login ? (
                     <p className="text-[12.5px] text-[#6f7282]">
-                      Доступ уже выдан, логин{" "}
-                      <span className="font-medium text-[#0b1024]">
-                        {data.user.login}
-                      </span>
-                      . Заполните поля ниже, чтобы сменить.
+                      {t.rich("accessAlreadyGranted", {
+                        login: data.user.login,
+                        strong: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+                      })}
                     </p>
                   ) : (
                     <p className="text-[12.5px] text-[#6f7282]">
-                      Придумайте логин и пароль — сотрудник войдёт с ними на
-                      сайте.
+                      {t("createCredentialsHint")}
                     </p>
                   )}
 
@@ -252,7 +252,7 @@ export function StaffAccessDialog({
                     <input
                       value={loginSuffix}
                       onChange={(event) => setLoginSuffix(event.target.value)}
-                      placeholder="логин"
+                      placeholder={t("loginPlaceholder")}
                       autoComplete="off"
                       className="h-11 min-w-0 flex-1 px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:outline-none"
                     />
@@ -264,14 +264,14 @@ export function StaffAccessDialog({
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Пароль"
+                        placeholder={t("passwordPlaceholder")}
                         autoComplete="new-password"
                         className={cn(FIELD_CLASS, "pr-10")}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                        aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[#9b9fb3] transition-colors hover:text-[#0b1024]"
                       >
                         {showPassword ? (
@@ -292,7 +292,7 @@ export function StaffAccessDialog({
                       className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff]"
                     >
                       <Dices className="size-4 text-[#5566f6]" />
-                      Сгенерировать
+                      {t("generatePassword")}
                     </button>
                   </div>
 
@@ -302,13 +302,13 @@ export function StaffAccessDialog({
                       onClick={() => {
                         void navigator.clipboard
                           .writeText(`${data.loginPrefix}${loginSuffix} / ${password}`)
-                          .then(() => toast.success("Логин и пароль скопированы"))
-                          .catch(() => toast.error("Не удалось скопировать"));
+                          .then(() => toast.success(t("credentialsCopied")))
+                          .catch(() => toast.error(t("copyFailed")));
                       }}
                       className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
                     >
                       <Copy className="size-3.5" />
-                      Скопировать логин и пароль
+                      {t("copyCredentials")}
                     </button>
                   ) : null}
                 </div>
@@ -325,7 +325,7 @@ export function StaffAccessDialog({
                   }}
                 />
                 <span className="text-[14px] font-medium text-[#0b1024]">
-                  Доступ в сервис через бота в Telegram
+                  {t("telegramAccess")}
                 </span>
               </label>
 
@@ -333,13 +333,13 @@ export function StaffAccessDialog({
                 <div className="space-y-2 pl-1">
                   {data.user.hasTelegramAccess && !invite ? (
                     <p className="text-[12.5px] text-[#6f7282]">
-                      Telegram уже привязан.
+                      {t("telegramAlreadyLinked")}
                     </p>
                   ) : invite ? (
                     <div className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-3">
                       <Image
                         src={invite.qrPngDataUrl}
-                        alt="QR-код приглашения"
+                        alt={t("inviteQrAlt")}
                         width={128}
                         height={brandQrHeightFor(128)}
                         unoptimized
@@ -348,28 +348,27 @@ export function StaffAccessDialog({
                       />
                       <div className="min-w-0 flex-1 space-y-1.5">
                         <p className="text-[12.5px] leading-snug text-[#6f7282]">
-                          Сотрудник открывает ссылку с телефона — кабинет
-                          активируется при первом входе в Telegram.
+                          {t("telegramInviteHelp")}
                         </p>
                         <button
                           type="button"
                           onClick={() => {
                             void navigator.clipboard
                               .writeText(invite.inviteUrl)
-                              .then(() => toast.success("Ссылка скопирована"))
-                              .catch(() => toast.error("Не удалось скопировать"));
+                              .then(() => toast.success(t("linkCopied")))
+                              .catch(() => toast.error(t("copyFailed")));
                           }}
                           className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
                         >
                           <Copy className="size-3.5" />
-                          Скопировать ссылку
+                          {t("copyLink")}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-[13px] text-[#9b9fb3]">
                       <Loader2 className="size-4 animate-spin" />
-                      Готовим приглашение
+                      {t("preparingInvite")}
                     </div>
                   )}
                 </div>
@@ -378,7 +377,7 @@ export function StaffAccessDialog({
 
             <div className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                Доступ к журналам
+                {t("journalAccess")}
               </div>
               <JournalMultiSelect
                 options={data.catalog}
@@ -397,7 +396,7 @@ export function StaffAccessDialog({
             onClick={onClose}
             className="h-11 rounded-xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#fafbff]"
           >
-            Отмена
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -406,7 +405,7 @@ export function StaffAccessDialog({
             className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Сохранить
+            {t("save")}
           </button>
         </div>
       </DialogContent>

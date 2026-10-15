@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { MiniListSkeleton } from "@/app/mini/_components/mini-list-skeleton";
 import { isSectionRoot } from "@/components/ui/skeleton-routes";
@@ -16,6 +17,7 @@ import { isSectionRoot } from "@/components/ui/skeleton-routes";
  * с крутилкой по центру. Теперь экранам — скелет списка, как у «Сегодня».
  */
 export default function MiniLoading() {
+  const t = useTranslations("errorSurface");
   if (!isSectionRoot(usePathname(), "/mini")) {
     return <MiniListSkeleton />;
   }
@@ -26,7 +28,7 @@ export default function MiniLoading() {
         style={{ color: "var(--mini-accent)" }}
       />
       <div className="text-[18px] font-semibold" style={{ color: "var(--mini-text)" }}>
-        Открываем кабинет…
+        {t("openingWorkspace")}
       </div>
     </div>
   );

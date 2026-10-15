@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQrFillCopy, useQrFeedback, qrResponseFeedback, type QrFeedback } from "@/components/qr-fill/qr-fill-presentation";
+
+import { useEffect, useRef, useState } from "react";
 import { Lightbulb, LightbulbOff, Loader2 } from "lucide-react";
 
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
@@ -9,7 +11,6 @@ import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { WhoRow } from "@/components/qr-fill/who-row";
-import { formatHours } from "@/lib/uv-lamp";
 
 type Employee = { id: string; name: string; positionTitle: string | null; hasPin?: boolean };
 type LampState = {
@@ -29,6 +30,7 @@ const LS_SHARED_EMPLOYEE_KEY = "wesetup.qr-fill.employeeId";
 export function UvLampClient(props: {
   token: string;
   organizationName: string;
+  journalTitle?: string;
   lamp: { id: string; name: string; areaName: string };
   employees: Employee[];
   mode: "public" | "pin" | "auth";
@@ -39,6 +41,9 @@ export function UvLampClient(props: {
   /** Чей пропуск после PIN лежит в cookie организации (30 минут) — ему PIN не спрашиваем. */
   passEmployeeId?: string | null;
 }) {
+  const { t } = useQrFillCopy();
+  const feedback = useQrFeedback();
+  const hydrated = useRef(false);
   const [state, setState] = useState<LampState>(props.initialState);
   const [employeeId, setEmployeeId] = useState("");
   // Единые правила QR (2026-09-22): PIN — шагом до кнопки, дальше пропуск визита.
@@ -48,11 +53,18 @@ export function UvLampClient(props: {
   // Пропуск в cookie (F5, соседняя наклейка): действует для этого сотрудника.
   const [cookiePassFor, setCookiePassFor] = useState<string | null>(props.passEmployeeId ?? null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ title: string; text: string; warn: string | null } | null>(null);
+  const [error, setError] = useState<QrFeedback | null>(null);
+  const [done, setDone] = useState<{ action: "on" | "off"; since?: string; hours?: number; remainingHours?: number; warn?: "over" | "warn" | null } | null>(null);
+  const formatHours = (hours: number) => t("uv.hours", { hours: Math.round(hours) });
+  const duration = (hours: number) => {
+    const minutes = Math.round(hours * 60), wholeHours = Math.floor(minutes / 60), rest = minutes % 60;
+    return wholeHours === 0 ? t("uv.minutes", { minutes: rest }) : rest === 0 ? formatHours(wholeHours) : t("uv.hoursMinutes", { hours: wholeHours, minutes: rest });
+  };
   const fixed = props.mode === "auth" && props.sessionEmployee && !props.sessionEmployee.canPickOthers;
 
   useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
     if (props.sessionEmployee) {
       setEmployeeId(props.sessionEmployee.id);
       return;
@@ -111,7 +123,7 @@ export function UvLampClient(props: {
         body: JSON.stringify({ token: props.token, employeeId, pass: pass ?? undefined, action: running ? "off" : "on" }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось записать");
+      if (!res.ok) { setError(qrResponseFeedback(data, "uv.saveError")); return; }
       try {
         localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, employeeId);
       } catch {
@@ -119,39 +131,37 @@ export function UvLampClient(props: {
       }
       if (data?.state) setState(data.state as LampState);
       if (data?.action === "on") {
-        setDone({ title: "Облучатель включён", text: `Отметка в ${data.since}. Когда выключите — отсканируйте эту же наклейку и нажмите «Я выключил».`, warn: null });
+        setDone({ action: "on", since: String(data.since ?? "") });
       } else {
-        const remaining = typeof data?.remainingHours === "number" ? ` Осталось ресурса: ${formatHours(data.remainingHours)}.` : "";
         setDone({
-          title: "Облучатель выключен",
-          text: `Работал ${data?.durationLabel ?? ""} — записано в журнал.${remaining}`,
-          warn: data?.warn === "over" ? "Ресурс лампы исчерпан — замените лампу. Ответственный уже знает." : data?.warn === "warn" ? "Ресурс лампы почти исчерпан — ответственному отправлено напоминание заказать лампу." : null,
+          action: "off", hours: typeof data?.hours === "number" ? data.hours : 0,
+          remainingHours: typeof data?.remainingHours === "number" ? data.remainingHours : undefined,
+          warn: data?.warn === "over" || data?.warn === "warn" ? data.warn : null,
         });
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось записать");
+    } catch {
+      setError({ key: "uv.saveError" });
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <QrPageShell orgName={props.organizationName} title="Журнал учёта работы УФ-лампы">
+    <QrPageShell orgName={props.organizationName} title={props.journalTitle ?? t("uv.title")}>
       <QrPinUiStyles />
-      <WhoRow label="Лампа" value={props.lamp.name} />
+      <WhoRow label={t("uv.lamp")} value={props.lamp.name} />
       {done ? (
         <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center" role="status">
           <SuccessCheck />
-          <h2 className="text-[24px] font-semibold tracking-[-0.02em]">{done.title}</h2>
-          <p className="mt-2 text-[17px] leading-relaxed text-[#3c4053]">{done.text}</p>
-          {done.warn ? <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{done.warn}</p> : null}
+          <h2 className="text-[24px] font-semibold tracking-[-0.02em]">{t(done.action === "on" ? "uv.onTitle" : "uv.offTitle")}</h2>
+          <p className="mt-2 text-[17px] leading-relaxed text-[#3c4053]">{done.action === "on" ? t("uv.onText", { time: done.since ?? "" }) : t("uv.offText", { duration: duration(done.hours ?? 0) })}{done.remainingHours !== undefined ? ` ${t("uv.remaining", { hours: formatHours(done.remainingHours) })}` : ""}</p>
+          {done.warn ? <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{t(done.warn === "over" ? "uv.resourceOver" : "uv.resourceWarning")}</p> : null}
           <button
             type="button"
             onClick={() => setDone(null)}
             className="mt-6 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white text-[16px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff]"
           >
-            Готово
-          </button>
+            {t("common.done")}</button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -160,7 +170,7 @@ export function UvLampClient(props: {
             value={employeeId}
             onChange={pickEmployee}
             fixedName={fixed ? props.sessionEmployee?.name ?? null : null}
-            label="Кто включает и выключает"
+            label={t("uv.operator")}
           />
           {pinRequired && hasPass && !fixed ? <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} /> : null}
           {!fixed && props.mode !== "auth" && props.employees.length > 1 && !(pinRequired && hasPass) ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
@@ -185,12 +195,11 @@ export function UvLampClient(props: {
           <div className={pinOk ? "qp-rise space-y-4" : "space-y-4"}>
           {state.running ? (
             <div className="rounded-2xl border border-[#fde68a] bg-[#fffbeb] px-4 py-3 text-[17px] text-[#7a4a00]" data-testid="uv-running">
-              Работает с <b>{state.running.since}</b>
-              {state.running.byName ? ` · включил(а) ${state.running.byName}` : ""}
+              {t("uv.running", { time: state.running.since, hasName: state.running.byName ? "yes" : "no", name: state.running.byName ?? "" })}
             </div>
           ) : null}
           {error ? (
-            <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{error}</div>
+            <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{feedback(error)}</div>
           ) : null}
           <button
             type="button"
@@ -202,13 +211,12 @@ export function UvLampClient(props: {
             }`}
           >
             {busy ? <Loader2 className="size-10 animate-spin" /> : running ? <LightbulbOff className="size-10" /> : <Lightbulb className="size-10" />}
-            {running ? "Я выключил облучатель" : "Я включил облучатель"}
+            {running ? t("uv.switchOff") : t("uv.switchOn")}
           </button>
-          <SaveBlockedReason reason={!busy && !employeeId ? "Не выбран сотрудник" : null} />
+          <SaveBlockedReason reason={!busy && !employeeId ? t("reading.noEmployee") : null} />
           {state.lifetimeHours ? (
             <p className="text-center text-[15px] text-[#6f7282]">
-              Наработка {formatHours(state.usedHours)} из {formatHours(state.lifetimeHours)}
-              {state.remainingHours !== null ? ` · осталось ${formatHours(state.remainingHours)}` : ""}
+              {t("uv.usage", { used: formatHours(state.usedHours), total: formatHours(state.lifetimeHours), hasRemaining: state.remainingHours !== null ? "yes" : "no", remaining: state.remainingHours !== null ? formatHours(state.remainingHours) : "" })}
             </p>
           ) : null}
           </div>

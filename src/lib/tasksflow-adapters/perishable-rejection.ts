@@ -58,7 +58,10 @@ function buildPerishableForm(employeeName: string | null): TaskFormSchema {
     intro:
       (employeeName ? `${employeeName}, ` : "") +
       "зафиксируйте приёмку партии скоропортящейся продукции.",
+    introPresentationKey: "dynamic.perishableReceiptIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: "Сохранить приёмку",
+    submitPresentationKey: "dynamic.perishableReceipt.submit",
     fields: [
       {
         type: "text",

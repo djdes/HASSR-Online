@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { toast } from "sonner";
+import { useGenericRegisterCopy } from "./use-generic-register-copy";
+import { registerDate, registerName, registerTitle } from "./generic-register-presentation";
 
 import {
   DocumentActionsMenu,
@@ -18,7 +21,6 @@ import {
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
-import { formatJournalDate } from "@/lib/journal-card-date";
 import { getRegisterJournal } from "@/lib/register-journals";
 
 /**
@@ -56,13 +58,16 @@ export function RegisterDocumentsClient({
   users,
   documents,
 }: Props) {
+  const { t, locale, messages, latest } = useGenericRegisterCopy();
   const journal = getRegisterJournal(templateCode);
+  const displayName = registerName(templateCode, templateName, messages);
+  const displayTitle = (document: RegisterListDocument) => registerTitle(document.title, templateCode, document.dateFrom, document.dateTo, locale, messages, t);
   const actions = useJournalDocumentActions();
 
   return (
     <div className="space-y-8">
       <JournalTopBar
-        heading={activeTab === "closed" ? `${templateName} (закрытые)` : templateName}
+        heading={activeTab === "closed" ? t("list.closedHeading", { title: displayName }) : displayName}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={templateName}
@@ -79,7 +84,7 @@ export function RegisterDocumentsClient({
             <EmptyDocumentsState
               description={
                 journal
-                  ? `${journal.hint} Создайте документ — записи будут готовы к печати и проверке.`
+                  ? messages.genericRegister.journals[templateCode]?.emptyDescription
                   : undefined
               }
               templateCode={templateCode}
@@ -88,8 +93,8 @@ export function RegisterDocumentsClient({
             />
           ) : (
             <EmptyDocumentsState
-              label="Закрытых документов нет"
-              description="Сюда попадают журналы, которые закончили кнопкой «Закончить журнал»."
+              label={t("list.closedEmpty")}
+              description={t("list.closedDescription")}
               canManage={false}
             />
           )
@@ -101,23 +106,23 @@ export function RegisterDocumentsClient({
               href={`/journals/${routeCode}/documents/${document.id}`}
               className={JOURNAL_CARD_TITLE_CLASS}
             >
-              {document.title}
+              {displayTitle(document)}
               <SharedDocumentBadge shared={document.shared} />
             </Link>
             <Link
               href={`/journals/${routeCode}/documents/${document.id}`}
               className={`${JOURNAL_CARD_SECTION_CLASS} justify-self-end`}
             >
-              <div className={JOURNAL_CARD_LABEL_CLASS}>Записей</div>
-              <div className={`${JOURNAL_CARD_VALUE_CLASS} tabular-nums`}>{document.rowsCount}</div>
+              <div className={JOURNAL_CARD_LABEL_CLASS}>{t("list.entryCount")}</div>
+              <div className={`${JOURNAL_CARD_VALUE_CLASS} tabular-nums`}>{new Intl.NumberFormat(locale).format(document.rowsCount)}</div>
             </Link>
             <Link
               href={`/journals/${routeCode}/documents/${document.id}`}
               className={`${JOURNAL_CARD_SECTION_CLASS} justify-self-end`}
             >
-              <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+              <div className={JOURNAL_CARD_LABEL_CLASS}>{t("settings.startDate")}</div>
               <div className={JOURNAL_CARD_VALUE_CLASS}>
-                {formatJournalDate(document.dateFrom) || document.dateFrom}
+                {registerDate(document.dateFrom.slice(0, 10), locale) || document.dateFrom}
               </div>
             </Link>
             <div className="justify-self-end">
@@ -130,18 +135,21 @@ export function RegisterDocumentsClient({
                     ? () =>
                         void actions.deleteDocument({
                           documentId: document.id,
-                          description: `Документ «${document.title}» будет удалён безвозвратно.`,
+                          description: t("list.deleteDescription", { title: displayTitle(document) }),
                           bullets: [
                             {
                               label:
                                 document.rowsCount === 0
-                                  ? "Записей в документе нет"
-                                  : `Записей будет удалено: ${document.rowsCount}`,
+                                  ? t("list.emptyDeleteCount")
+                                  : t("selection.deleteCount", { count: document.rowsCount }),
                               tone: "warn",
                             },
                           ],
-                          successMessage: `Документ «${document.title}» удалён`,
-                          errorMessage: "Не удалось удалить документ",
+                          successMessage: null,
+                          onSuccess: () => {
+                            const current = latest.current;
+                            toast.success(current.t("list.deleted", { title: registerTitle(document.title, templateCode, document.dateFrom, document.dateTo, current.locale, current.messages, current.t) }));
+                          },
                         })
                     : undefined
                 }

@@ -1,0 +1,16 @@
+{
+  "locale":"uz","sourceHash":"ecb9506033484852c8b734c254292d86c4746f90e62bd5c77bf7ae08c89e2f9f",
+  "title":"Kuzatuvchanlik: partiya yo‘lini 20 daqiqada qanday topish mumkin",
+  "excerpt":"“Bu partiya qayerdan kelgan?” degan savolga to‘liq javob topish 2–4 soatgacha vaqt olishi mumkin. Zanjirni qaysi jurnallar bog‘lashi va kuzatuvchanlik bo‘yicha choraklik sinovni qanday o‘tkazishni bilib oling.",
+  "tags":["Kuzatuvchanlik","HACCP"],
+  "body":[
+    {"type":"p","text":"Kuzatuvchanlik — mahsulot yo‘lini yetkazib beruvchi va yuk xati raqamidan tortib mehmonga tortilgan aniq taomgacha tez tiklay olishdir. Inspektor vaqtni hisoblaydi: yaxshi amaliyotga ko‘ra, to‘liq javob 2–4 soatdan oshmasligi kerak."},
+    {"type":"h2","text":"Kuzatuvchanlik sinovi"},
+    {"type":"p","text":"Har chorakda rahbar yoki texnolog mashq o‘tkazadi: tasodifiy partiyani tanlaydi, jamoa esa belgilangan vaqtda zanjirni orqaga (yetkazib beruvchi → transport → qabul qilish → saqlash → ishlov berish → taqdim etish) va oldinga (mahsulot qayerga ketgani, undan qaysi taomlar tayyorlangani) tiklaydi."},
+    {"type":"h2","text":"Nimalar bo‘lishi kerak"},
+    {"type":"ul","items":["Yuk xati raqami ko‘rsatilgan mahsulot qabul qilish jurnali.","Partiyaga bog‘langan kirish nazorati jurnali.","Oshxonadagi markirovka (qadoq qachon ochilgani va mahsulotga qachon ishlov berilgani).","Tayyorlangan taom bo‘yicha brakera jurnali.","Davr uchun savdo cheklari yoki kassa ma’lumotlari."]},
+    {"type":"callout","tone":"tip","title":"Elektron hisob nimani beradi","text":"Yuk xatidagi partiya raqami barcha tegishli jurnallarga avtomatik qo‘shiladi. Partiya bo‘yicha qidiruv bir necha soniya oladi, qog‘oz papkani varaqlash shart emas."},
+    {"type":"h2","text":"Bu biznesga nima uchun kerak"},
+    {"type":"p","text":"Tekshiruvlardan tashqari, kuzatuvchanlik obro‘ni himoya qiladi. Agar zaharlanish holatida taomingiz ayblansa, yaxshi kuzatuvchanlik oshxonangizga nisbatan shubhani bartaraf etadi yoki yetkazib beruvchiga da’vo qilish uchun asos beradi."}
+  ]
+}

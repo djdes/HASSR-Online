@@ -13,9 +13,9 @@ export const dynamic = "force-dynamic";
 
 async function guard(id: string) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) return { session, webhook: null, denied: NextResponse.json({ error: "Доступно руководителям" }, { status: 403 }) };
+  if (!hasFullWorkspaceAccess(session.user)) return { session, webhook: null, denied: NextResponse.json({ error: "Доступно руководителям", errorCode: "WEBHOOK_FORBIDDEN" }, { status: 403 }) };
   const webhook = await db.webhook.findFirst({ where: { id, organizationId: getActiveOrgId(session) } });
-  if (!webhook) return { session, webhook: null, denied: NextResponse.json({ error: "Подписка не найдена" }, { status: 404 }) };
+  if (!webhook) return { session, webhook: null, denied: NextResponse.json({ error: "Подписка не найдена", errorCode: "WEBHOOK_NOT_FOUND" }, { status: 404 }) };
   return { session, webhook, denied: null };
 }
 
@@ -27,12 +27,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = (await request.json().catch(() => ({}))) as { url?: unknown; events?: unknown; enabled?: unknown; rotateSecret?: unknown };
   const data: { url?: string; events?: WebhookEvent[]; enabled?: boolean; secret?: string } = {};
   if (typeof body.url === "string") {
-    if (!isValidWebhookUrl(body.url.trim())) return NextResponse.json({ error: "Укажите адрес https://… на внешнем сервере" }, { status: 400 });
+    if (!isValidWebhookUrl(body.url.trim())) return NextResponse.json({ error: "Укажите адрес https://… на внешнем сервере", errorCode: "WEBHOOK_INVALID_URL" }, { status: 400 });
     data.url = body.url.trim();
   }
   if (Array.isArray(body.events)) {
     const events = body.events.filter(isWebhookEvent) as WebhookEvent[];
-    if (events.length === 0) return NextResponse.json({ error: "Выберите хотя бы одно событие" }, { status: 400 });
+    if (events.length === 0) return NextResponse.json({ error: "Выберите хотя бы одно событие", errorCode: "WEBHOOK_MISSING_EVENTS" }, { status: 400 });
     data.events = events;
   }
   if (typeof body.enabled === "boolean") data.enabled = body.enabled;

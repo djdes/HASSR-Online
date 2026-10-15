@@ -69,7 +69,10 @@ function buildForm(
       "запишите контроль интенсивного охлаждения горячего блюда. " +
       "Начальная температура должна быть 75 °C и выше, конечная — не " +
       "более 6 °C через 90 минут.",
+    introPresentationKey: "dynamic.intensiveCoolingIntro",
+    introPresentationValues: { employeeName: employeeName ?? "", hasEmployee: employeeName ? "yes" : "no" },
     submitLabel: prefill ? "Сохранить изменения" : "Сохранить замер",
+    submitPresentationKey: prefill ? "dynamic.saveChanges" : "dynamic.saveReading",
     fields: [
       {
         type: "text",

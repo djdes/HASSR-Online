@@ -11,6 +11,7 @@
  */
 import { chainBrakerageTimes } from "@/lib/brakerage-times";
 import { hasCommission } from "@/lib/brakerage-commission";
+import { brakerageCommentRequired, brakerageRelease } from "@/lib/brakerage-assessment";
 import { cleanYield, normalizeTypedTime } from "@/lib/finished-product-bulk";
 import {
   createFinishedProductRow,
@@ -125,7 +126,7 @@ export function planMasterBrakerageRows(params: {
       continue;
     }
     seen.add(key);
-    const releaseAllowed = params.common.releaseAllowed === "no" ? "no" : "yes";
+    const releaseAllowed = brakerageRelease(organoleptic);
     const times = chainBrakerageTimes({ productionDateTime, releaseAllowed, offsets: config.timeDefaults });
     out.push(
       createFinishedProductRow({
@@ -140,7 +141,7 @@ export function planMasterBrakerageRows(params: {
         releaseAllowed,
         portionWeight: visible.has("portion") ? item.yield : "",
         productTemp: visible.has("temp") ? collapse(params.common.productTemp).slice(0, 20) : "",
-        note: visible.has("note") ? collapse(params.common.note).slice(0, 500) : "",
+        note: visible.has("note") || brakerageCommentRequired(organoleptic) ? collapse(params.common.note).slice(0, 500) : "",
         responsiblePerson: params.people.responsibleName,
         // С комиссией подписи ставят её члены — ФИО проверяющего не подставляем.
         inspectorName: withCommission ? "" : params.people.verifierName,

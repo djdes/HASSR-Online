@@ -1,0 +1,15 @@
+{
+  "locale": "en",
+  "sourceHash": "cd3387821c671b4f4f4351466823011c2d68b5e846a3d5b5c232b0d07025fbec",
+  "title": "Refrigerator and display-case temperatures: limits and monitoring",
+  "excerpt": "0…+4 °C for finished products, no higher than –18 °C for frozen food, and +14 °C for a refrigerated display case. Regulatory limits and how experienced chefs catch failures between readings.",
+  "tags": ["Temperature", "Practical guidance"],
+  "body": [
+    {"type":"p","text":"“The refrigerator is holding temperature” is an imprecise statement. It is holding temperature at the moment you take a reading. A lot can happen between two readings: the door may be left open, the evaporator may be clogged, or the power may go out overnight. Proper monitoring is therefore not just “take a reading twice a day”; it is a system that catches a failure as soon as it happens."},
+    {"type":"h2","text":"Regulatory limits"},
+    {"type":"ul","items":["Ready-to-eat salads, creams, and cooked meat: 0…+4 °C.","Raw meat and fish: –2…+2 °C.","Dairy products: 0…+6 °C.","Frozen food: no higher than –18 °C.","Refrigerated display cases: no higher than +14 °C; ideally ≤ +8 °C.","Heated display cases: no lower than +65 °C."]},
+    {"type":"h2","text":"What an experienced chef does"},
+    {"type":"ol","items":["Places an autonomous wireless sensor in every critical cold room.","Sets a push alert for readings outside the limit for 30 minutes or longer.","Runs a monthly audit, comparing sensor and log readings to check that shifts are not entering convenient numbers.","Keeps an equipment record: when the evaporator was cleaned and when the unit was serviced."]},
+    {"type":"callout","tone":"info","title":"Why +14 °C is not enough","text":"The limit says “no higher than +14 °C,” but the safety of a ready-to-eat salad starts lower, at around +8 °C. A display case running at +14 °C is at the edge of the risk zone, and any mistake can turn the product into a violation."}
+  ]
+}

@@ -38,7 +38,7 @@ export async function POST(
   const { taskId: taskIdRaw } = await ctx.params;
   const taskId = Number(taskIdRaw);
   if (!Number.isFinite(taskId) || taskId <= 0) {
-    return NextResponse.json({ error: "Bad taskId" }, { status: 400 });
+    return NextResponse.json({ errorCode: "badTaskId", error: "Bad taskId" }, { status: 400 });
   }
 
   let parsed;
@@ -47,11 +47,11 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message ?? "Invalid body" },
+        { errorCode: "invalidBody", error: err.issues[0]?.message ?? "Invalid body" },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return NextResponse.json({ errorCode: "invalidBody", error: "Invalid body" }, { status: 400 });
   }
 
   // Resolve link by HMAC signature
@@ -60,7 +60,7 @@ export async function POST(
     include: { integration: true },
   });
   if (candidates.length === 0) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ errorCode: "taskNotFound", error: "Task not found" }, { status: 404 });
   }
   let link: (typeof candidates)[number] | null = null;
   for (const c of candidates) {
@@ -71,7 +71,7 @@ export async function POST(
     }
   }
   if (!link) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
 
   // Resolve template + permission to close-no-events
@@ -86,7 +86,7 @@ export async function POST(
   });
   if (!template) {
     return NextResponse.json(
-      { error: `Шаблон «${link.journalCode}» не найден` },
+      { errorCode: "templateNotFound", error: `Шаблон «${link.journalCode}» не найден` },
       { status: 400 }
     );
   }
@@ -96,13 +96,13 @@ export async function POST(
   if (parsed.kind === "no-events") {
     if (!template.allowNoEvents) {
       return NextResponse.json(
-        { error: "Для этого журнала нельзя нажать «Не требуется сегодня»" },
+        { errorCode: "noEventsDisabled", error: "Для этого журнала нельзя нажать «Не требуется сегодня»" },
         { status: 403 }
       );
     }
     if (!parsed.reason || parsed.reason.trim() === "") {
       return NextResponse.json(
-        { error: "Укажите причину" },
+        { errorCode: "reasonRequired", error: "Укажите причину" },
         { status: 400 }
       );
     }
@@ -117,7 +117,7 @@ export async function POST(
     ) {
       return NextResponse.json(
         {
-          error:
+          errorCode: "reasonNotAllowed", error:
             "Свободный текст причины не разрешён. Выберите из готового списка.",
         },
         { status: 400 }
@@ -142,7 +142,7 @@ export async function POST(
   if (!result.ok) {
     return NextResponse.json(
       {
-        error:
+        errorCode: "alreadyClosed", error:
           "Журнал уже закрыт за сегодня. Если случилось событие — переоткройте.",
       },
       { status: 409 }

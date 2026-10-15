@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useState } from "react";
@@ -31,10 +32,6 @@ import { PORTAL_FONT_FAMILY } from "@/components/ui/spotlight-tour";
  */
 export type FillGuideTab = "steps" | "rules";
 
-const PAGE_LABEL: Record<WalkthroughPage, string> = {
-  list: "в списке журнала",
-  document: "внутри документа",
-};
 
 export function FillGuideDialog({
   open,
@@ -68,6 +65,7 @@ export function FillGuideDialog({
   showStepHint: (step: WalkthroughStep) => string | null;
   onStartTour: () => void;
 }) {
+  const t = useTranslations("journalControls.guide");
   const [tab, setTab] = useState<FillGuideTab>("steps");
 
   useEffect(() => {
@@ -106,7 +104,7 @@ export function FillGuideDialog({
     >
       <button
         type="button"
-        aria-label="Закрыть"
+        aria-label={t("close")}
         onClick={onClose}
         className="absolute inset-0 bg-[#0b1024]/40 backdrop-blur-sm"
       />
@@ -122,7 +120,7 @@ export function FillGuideDialog({
               </span>
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                  Инструкция
+                  {t("guide")}
                 </div>
                 <h2
                   id="fill-guide-title"
@@ -136,7 +134,7 @@ export function FillGuideDialog({
               type="button"
               onClick={onClose}
               className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-white/70 hover:text-[#0b1024]"
-              aria-label="Закрыть"
+              aria-label={t("close")}
             >
               <X className="size-4" />
             </button>
@@ -145,16 +143,16 @@ export function FillGuideDialog({
           {(
             <div
               role="tablist"
-              aria-label="Разделы"
+              aria-label={t("sections")}
               className="relative mt-4 flex rounded-2xl border border-[#ececf4] bg-white p-1 text-[13px] font-medium"
             >
               <TabButton active={showSteps} onClick={() => setTab("steps")}>
                 <MousePointerClick className="size-4" />
-                Как заполнять
+                {t("how")}
               </TabButton>
               <TabButton active={!showSteps} onClick={() => setTab("rules")}>
                 <BookOpenText className="size-4" />
-                Правила
+                {t("rules")}
               </TabButton>
             </div>
           )}
@@ -182,12 +180,12 @@ export function FillGuideDialog({
                         </div>
                         {step.forManager ? (
                           <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
-                            Руководитель
+                            {t("manager")}
                           </span>
                         ) : null}
                         {elsewhere ? (
                           <span className="text-[11px] text-[#9b9fb3]">
-                            {PAGE_LABEL[step.page]}
+                            {t(step.page)}
                           </span>
                         ) : null}
                       </div>
@@ -203,7 +201,7 @@ export function FillGuideDialog({
                           title={hint ?? undefined}
                           className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7] transition-colors hover:text-[#5566f6] disabled:cursor-not-allowed disabled:text-[#9b9fb3]"
                         >
-                          Показать на экране
+                          {t("show")}
                           <ArrowRight className="size-3.5" />
                         </button>
                       ) : null}
@@ -230,7 +228,7 @@ export function FillGuideDialog({
               className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6f7282] transition-colors hover:text-[#5566f6]"
             >
               <ExternalLink className="size-3.5" />
-              Полная инструкция
+              {t("full")}
             </a>
           ) : (
             <span />
@@ -245,7 +243,7 @@ export function FillGuideDialog({
                 onClick={onStartTour}
                 className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:flex-none"
               >
-                Показать на экране
+                {t("show")}
                 <ArrowRight className="size-4 text-[#5566f6]" />
               </button>
             ) : null}
@@ -254,7 +252,7 @@ export function FillGuideDialog({
               onClick={onClose}
               className="inline-flex h-11 flex-1 items-center justify-center rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_26px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:flex-none"
             >
-              Понятно
+              {t("understood")}
             </button>
           </div>
         </div>

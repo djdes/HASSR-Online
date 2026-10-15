@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 
 import { usePathname } from "next/navigation";
 
@@ -10,8 +12,9 @@ import { isSectionRoot } from "@/components/ui/skeleton-routes";
  * общий скелет страницы, а не раскладка сводных отчётов.
  */
 export default function ReportsLoading() {
+  const tLoading = useTranslations("loadingSurfaces");
   if (!isSectionRoot(usePathname(), "/reports")) {
-    return <PageSkeleton label="Загружаем отчёт…" body="cards" items={4} />;
+    return <PageSkeleton label={tLoading("report")} body="cards" items={4} />;
   }
   return <ReportsSkeleton />;
 }
@@ -22,9 +25,10 @@ export default function ReportsLoading() {
  * ZIP-отчёт, форма генерации.
  */
 function ReportsSkeleton() {
+  const tLoading = useTranslations("loadingSurfaces");
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Загружаем отчёты…</span>
+      <span className="sr-only">{tLoading("reports")}</span>
 
       <SkeletonPageHeader />
 

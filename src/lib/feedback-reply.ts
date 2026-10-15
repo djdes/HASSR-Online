@@ -13,6 +13,7 @@
 
 import { db } from "@/lib/db";
 import { sendFeedbackReplyEmail } from "@/lib/email";
+import { resolveLocale } from "@/i18n/locales";
 import { upsertNotification } from "@/lib/notifications";
 import { escapeTelegramHtml, sendTelegramMessage } from "@/lib/telegram";
 
@@ -34,6 +35,8 @@ type FeedbackReplyReport = {
 type FeedbackReplyRecipient = {
   id: string;
   telegramChatId: string | null;
+  locale?: string | null;
+  organizationLocale?: string | null;
 };
 
 export type FeedbackReplyDeps = {
@@ -61,6 +64,7 @@ export type FeedbackReplyDeps = {
     replyMessage: string;
     originalMessage: string;
     respondedByName: string;
+    locale?: "ru" | "en" | "uz";
   }) => Promise<boolean>;
 };
 
@@ -114,8 +118,13 @@ function defaultDeps(): FeedbackReplyDeps {
           isActive: true,
           archivedAt: null,
         },
-        select: { id: true, telegramChatId: true },
-      });
+        select: { id: true, telegramChatId: true, locale: true, organization: { select: { locale: true } } },
+      }).then((user) => user ? {
+        id: user.id,
+        telegramChatId: user.telegramChatId,
+        locale: user.locale,
+        organizationLocale: user.organization.locale,
+      } : null);
     },
     async pushInAppNotification({
       organizationId,
@@ -129,6 +138,7 @@ function defaultDeps(): FeedbackReplyDeps {
         kind: "feedback.reply",
         dedupeKey: `feedback.reply:${reportId}`,
         title: "Получен ответ на ваше обращение",
+        messageKey: "feedbackReply",
         items: [{ id: reportId, label: responseMessage }],
       });
     },
@@ -137,12 +147,13 @@ function defaultDeps(): FeedbackReplyDeps {
         delivery: { kind: "feedback:reply" },
       });
     },
-    async sendEmail({ to, replyMessage, originalMessage, respondedByName }) {
+    async sendEmail({ to, replyMessage, originalMessage, respondedByName, locale }) {
       return sendFeedbackReplyEmail({
         to,
         replyMessage,
         originalMessage,
         respondedByName,
+        locale,
       });
     },
   };
@@ -261,6 +272,7 @@ export async function applyFeedbackReply(
         replyMessage: responseMessage,
         originalMessage: report.message,
         respondedByName: args.respondedByName,
+        locale: resolveLocale({ authenticated: true, userLocale: recipient?.locale, organizationLocale: recipient?.organizationLocale }),
       });
     } catch (error) {
       console.error("[feedback-reply] email failed:", error);

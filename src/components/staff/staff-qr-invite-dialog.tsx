@@ -3,6 +3,7 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Copy, Loader2, Printer, RefreshCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import { getNativeBridge, printHtml } from "@/lib/native-bridge";
@@ -27,6 +28,8 @@ type GeneratedToken = {
  * или скопировать.
  */
 export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
+  const t = useTranslations("staffManagement.qrInvite");
+  const locale = useLocale();
   // Двойной тап выпускал две одноразовые ссылки подряд — вторая тут же
   // затирала первую на экране, а первая оставалась висеть в базе.
   const { busy, acquire, release } = useSubmitLock();
@@ -56,15 +59,15 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
         error?: string;
       };
       if (!res.ok || !data.joinUrl || !data.qrPngDataUrl) {
-        throw new Error(data.error ?? "Не удалось сгенерировать QR");
+        throw new Error(t("generateFailed"));
       }
       setToken({
         joinUrl: data.joinUrl,
         qrPngDataUrl: data.qrPngDataUrl,
         expiresAt: data.expiresAt ?? "",
       });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+    } catch {
+      setError(t("generateFailed"));
     } finally {
       release();
     }
@@ -74,15 +77,15 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
     if (!token) return;
     navigator.clipboard
       .writeText(token.joinUrl)
-      .then(() => toast.success("Ссылка скопирована"))
-      .catch(() => toast.error("Не удалось скопировать"));
+      .then(() => toast.success(t("linkCopied")))
+      .catch(() => toast.error(t("copyFailed")));
   }
 
   function printQr() {
     if (!token) return;
     const html = `
       <!doctype html>
-      <html><head><title>QR-код для регистрации</title>
+      <html lang="${locale}"><head><title>${t("print.title")}</title>
       <style>
         body { font-family: -apple-system, system-ui, sans-serif; padding: 40px; text-align: center; color: #0b1024; }
         img { width: 320px; height: auto; margin: 24px auto; display: block; }
@@ -91,12 +94,12 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
         .url { font-family: monospace; font-size: 12px; word-break: break-all; margin-top: 16px; color: #3848c7; }
       </style>
       </head><body>
-        <h1>WeSetup — регистрация сотрудника</h1>
-        <p>Отсканируйте QR-код камерой телефона</p>
+        <h1>${t("print.heading")}</h1>
+        <p>${t("print.scan")}</p>
         <img src="${token.qrPngDataUrl}" alt="QR" />
-        <p>или откройте ссылку:</p>
+        <p>${t("print.orOpen")}</p>
         <div class="url">${token.joinUrl}</div>
-        <p style="margin-top:24px;font-size:12px">Ссылка одноразовая, действует 7 дней.</p>
+        <p style="margin-top:24px;font-size:12px">${t("print.expiry")}</p>
       </body></html>
     `;
     // В приложении WeSetup новых окон нет — печатаем листок системной печатью.
@@ -106,7 +109,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
     }
     const w = window.open("", "_blank", "width=600,height=800");
     if (!w) {
-      toast.error("Разрешите всплывающие окна для печати");
+      toast.error(t("allowPopups"));
       return;
     }
     w.document.write(html);
@@ -129,17 +132,17 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#3848c7]">
-              QR-приглашение
+              {t("eyebrow")}
             </div>
             <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              Пригласить сотрудника по QR-коду
+              {t("title")}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-full p-1.5 text-[#9b9fb3] hover:bg-[#fafbff] hover:text-[#0b1024]"
-            aria-label="Закрыть"
+            aria-label={t("close")}
           >
             <X className="size-4" />
           </button>
@@ -148,18 +151,16 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
         {!token ? (
           <>
             <p className="mb-4 text-[13px] leading-[1.55] text-[#6f7282]">
-              Сотрудник сам введёт ФИО, телефон, выберет должность и придумает
-              пароль. После регистрации он сразу получит доступ к журналам по
-              своей должности и (если настроена интеграция) задачи в TasksFlow.
+              {t("description")}
             </p>
 
-            <Field label="Подсказка должности (необязательно)">
+            <Field label={t("positionHintLabel")}>
               <select
                 value={posId}
                 onChange={(e) => setPosId(e.target.value)}
                 className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               >
-                <option value="">— любая, выберет сам —</option>
+                <option value="">{t("anyPosition")}</option>
                 {positions.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -168,10 +169,10 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
               </select>
             </Field>
 
-            <Field label="Метка (для админа, необязательно)">
+            <Field label={t("labelField")}>
               <input
                 type="text"
-                placeholder="Например, «Иванов И.И. 2-й цех»"
+                placeholder={t("labelPlaceholder")}
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
@@ -191,7 +192,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
               className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c8cbe0]"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {busy ? "Генерируем…" : "Сгенерировать QR-код"}
+              {busy ? t("generating") : t("generate")}
             </button>
           </>
         ) : (
@@ -199,12 +200,12 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
             <div className="mb-4 flex items-center justify-center rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
               <img
                 src={token.qrPngDataUrl}
-                alt="QR-код"
+                alt={t("qrAlt")}
                 className="h-auto w-[260px] rounded-md bg-white"
               />
             </div>
 
-            <Field label="Ссылка">
+            <Field label={t("linkLabel")}>
               <div className="flex gap-2">
                 <input
                   readOnly
@@ -215,7 +216,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
                   type="button"
                   onClick={copyLink}
                   className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
-                  title="Скопировать"
+                  title={t("copy")}
                 >
                   <Copy className="size-4" />
                 </button>
@@ -223,14 +224,11 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
             </Field>
 
             <p className="mt-2 text-[12px] text-[#6f7282]">
-              Одноразовая ссылка. Действует до{" "}
-              {token.expiresAt
-                ? new Date(token.expiresAt).toLocaleDateString("ru-RU", {
-                    day: "numeric",
-                    month: "long",
-                  })
-                : "7 дней"}
-              . После регистрации сотрудника ссылка станет недействительной.
+              {t("linkExpiry", {
+                expiration: token.expiresAt
+                  ? new Date(token.expiresAt).toLocaleDateString(locale, { day: "numeric", month: "long" })
+                  : t("sevenDays"),
+              })}
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2">
@@ -240,7 +238,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
                 className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
               >
                 <Printer className="size-4" />
-                Распечатать
+                {t("printAction")}
               </button>
               <button
                 type="button"
@@ -248,7 +246,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#6f7282] transition-colors hover:border-[#5566f6]/50 hover:bg-[#f5f6ff]"
               >
                 <RefreshCcw className="size-4" />
-                Ещё один
+                {t("another")}
               </button>
             </div>
           </>

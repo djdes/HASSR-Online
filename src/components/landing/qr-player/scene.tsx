@@ -1,7 +1,8 @@
 "use client";
 
-import { usePublicCopy } from "@/components/i18n/use-public-copy";
+import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import { FORMAT_LOCALES } from "@/i18n/locales";
 import type { CSSProperties, ReactNode } from "react";
 import {
   AlertTriangle,
@@ -19,9 +20,8 @@ import {
   Wifi,
 } from "lucide-react";
 
-import { HEALTH_CONFIRMATIONS, healthDecision } from "@/lib/health-qr";
-import { HYGIENE_V2_COLUMNS, HYGIENE_V2_FORM_CAPTION } from "@/lib/hygiene-v2";
-import { formatDuration, formatHours } from "@/lib/uv-lamp";
+import { HEALTH_CONFIRMATIONS, healthDecision, type HealthConfirmationKey } from "@/lib/health-qr";
+import { HYGIENE_V2_COLUMNS } from "@/lib/hygiene-v2";
 
 import { ease, interpolate, progress, windowed } from "./clock";
 import {
@@ -29,17 +29,30 @@ import {
   DEMO,
   FPS,
   FRIDGE_NORM,
-  FRYER_FIELDS,
   JOURNALS,
-  PDF,
-  UI,
   bodyFever,
   chapterAt,
-  formatDecimal,
   fridgeOutOfRange,
   type Chapter,
 } from "./chapters";
 import type { QrMatrix } from "./qr-sticker";
+
+const HEALTH_MESSAGE_KEYS = {
+  temperature: { confirmation: "health.confirmation.temperature", complaint: "health.complaint.temperature" },
+  infection: { confirmation: "health.confirmation.infection", complaint: "health.complaint.infection" },
+  respiratorySkin: { confirmation: "health.confirmation.respiratorySkin", complaint: "health.complaint.respiratorySkin" },
+} as const satisfies Record<HealthConfirmationKey, { confirmation: string; complaint: string }>;
+
+const HYGIENE_COLUMN_KEYS = {
+  n: "number",
+  name: "employee",
+  position: "position",
+  temperature: "temperatureSignature",
+  infection: "infectionSignature",
+  respiratorySkin: "respiratoryAndSkinSignature",
+  result: "inspectionResult",
+  verifier: "verifierSignature",
+} as const;
 
 /**
  * Кадр ролика — чистая функция `frame` и значений «Попробуйте сами».
@@ -127,18 +140,28 @@ function typed(text: string, t: number, from: number, perChar = 0.09): string {
 }
 
 /** Число как в печатной форме журнала (`formatNumberShort` в document-pdf). */
-function pdfNumber(value: number): string {
-  return value.toFixed(2).replace(/\.?0+$/, "");
+function pdfNumber(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value).replace(/-/g, "−");
 }
 
-function dateLabel(day: SceneDay, d = day.day): string {
-  return `${String(d).padStart(2, "0")}.${String(day.month).padStart(2, "0")}.${day.year}`;
+function decimalLabel(value: number, locale: string, digits = 1): string {
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value).replace(/-/g, "−");
 }
 
-const WEEKDAYS = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+function dateLabel(day: SceneDay, locale: string, d = day.day): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(day.year, day.month - 1, d)));
+}
 
-function weekday(day: SceneDay, d: number): string {
-  return WEEKDAYS[new Date(Date.UTC(day.year, day.month - 1, d)).getUTCDay()];
+function weekday(day: SceneDay, d: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(day.year, day.month - 1, d)));
 }
 
 /** Касание пальцем: круг расходится и гаснет. */
@@ -259,7 +282,6 @@ function PhoneFrame({ clock, children }: { clock: string; children: ReactNode })
 
 /** Шапка QR-страницы — как `QrPageShell`: организация и журнал. */
 function QrHeader({ title }: { title: string }) {
-  const tr = usePublicCopy();
   return (
     <div
       style={{
@@ -289,7 +311,7 @@ function QrHeader({ title }: { title: string }) {
       </span>
       <span style={{ minWidth: 0 }}>
         <span style={{ display: "block", fontSize: "0.6em", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {tr(DEMO.org)}
+          {DEMO.org}
         </span>
         <span
           style={{
@@ -389,7 +411,8 @@ const VIEWFINDER_LAYOUT: Record<
 };
 
 function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: ScanObject; qr: QrMatrix; bodyTemp: number; photo?: string }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
   const hide = progress(t, 0.85, 0.25, ease.inOut);
   if (hide >= 1) return null;
   const lock = progress(t, 0.35, 0.3, ease.out);
@@ -454,8 +477,8 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
         >
           {/* Фирменный QR с полосой «Отсканировать» — SVG собран на сервере (qr-matrix.ts). */}
           <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: qr.printed }} />
-          <div style={{ marginTop: "0.38em", textAlign: "center", color: P.ink, fontWeight: 700, fontSize: "0.6em", lineHeight: 1.15 }}>{tr(layout.title)}</div>
-          <div style={{ marginTop: "0.18em", textAlign: "center", color: P.muted, fontSize: "0.5em", lineHeight: 1.1 }}>{tr(DEMO.org)}</div>
+          <div style={{ marginTop: "0.38em", textAlign: "center", color: P.ink, fontWeight: 700, fontSize: "0.6em", lineHeight: 1.15 }}>{object === "thermometer" ? journal("hygiene") : layout.title}</div>
+          <div style={{ marginTop: "0.18em", textAlign: "center", color: P.muted, fontSize: "0.5em", lineHeight: 1.1 }}>{DEMO.org}</div>
         </div>
         <div
           style={{
@@ -516,15 +539,16 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
         })}
       >
         <QrCode style={{ width: "1.1em", height: "1.1em", color: P.indigo }} />
-        {tr("wesetup.ru — открыть")}</div>
+        {tr("storefrontLink")}</div>
       <div style={{ position: "absolute", left: 0, right: 0, top: "1.2em", textAlign: "center", fontSize: "0.66em", color: "rgba(255,255,255,0.75)" }}>
-        {tr("Наведите камеру на наклейку")}</div>
+        {tr("scanInstruction")}</div>
     </div>
   );
 }
 
 /** Показание настенного термометра — поверх фото или рисунка раздевалки. */
 function ThermometerReadout({ bodyTemp }: { bodyTemp: number }) {
+  const locale = FORMAT_LOCALES[useSiteLocale()];
   const fever = bodyFever(bodyTemp);
   return (
     <div
@@ -547,7 +571,7 @@ function ThermometerReadout({ bodyTemp }: { bodyTemp: number }) {
       }}
     >
       <Thermometer style={{ width: "1.1em", height: "1.1em" }} />
-      {formatDecimal(bodyTemp)} °C
+      {decimalLabel(bodyTemp, locale)} °C
     </div>
   );
 }
@@ -586,7 +610,6 @@ function ObjectArt({ object, bodyTemp }: { object: ScanObject; bodyTemp: number 
 }
 
 function EmployeeList({ t, tapAt, label }: { t: number; tapAt: number; label: string }) {
-  const tr = usePublicCopy();
   const people = [DEMO.cook, ...DEMO.others];
   const chosen = t >= tapAt + 0.1;
   return (
@@ -596,7 +619,7 @@ function EmployeeList({ t, tapAt, label }: { t: number; tapAt: number; label: st
         const on = chosen && index === 0;
         return (
           <div
-            key={tr(person.name)}
+            key={person.name}
             style={{
               display: "flex",
               alignItems: "center",
@@ -609,14 +632,14 @@ function EmployeeList({ t, tapAt, label }: { t: number; tapAt: number; label: st
             }}
           >
             <span style={{ display: "inline-flex", width: "1.7em", height: "1.7em", flex: "none", alignItems: "center", justifyContent: "center", borderRadius: "999px", background: P.indigoTint, color: P.indigoDeep, fontSize: "0.72em", fontWeight: 700 }}>
-              {tr(person.name)
+              {person.name
                 .split(" ")
                 .map((part) => part[0])
                 .join("")}
             </span>
             <span style={{ minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: "0.86em", fontWeight: 600 }}>{tr(person.name)}</span>
-              <span style={{ display: "block", fontSize: "0.68em", color: P.muted }}>{tr(person.position)}</span>
+              <span style={{ display: "block", fontSize: "0.86em", fontWeight: 600 }}>{person.name}</span>
+              <span style={{ display: "block", fontSize: "0.68em", color: P.muted }}>{person.position}</span>
             </span>
             {on ? <Check style={{ marginLeft: "auto", width: "1em", height: "1em", color: P.indigo }} /> : null}
           </div>
@@ -628,13 +651,13 @@ function EmployeeList({ t, tapAt, label }: { t: number; tapAt: number; label: st
 }
 
 function PinStep({ t, from, whoLabel }: { t: number; from: number; whoLabel: string }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
   const dots = [0, 1, 2, 3].filter((index) => t >= from + 0.15 + index * 0.13).length;
   const ok = progress(t, from + 0.7, 0.25);
   return (
     <>
-      <WhoRow label={whoLabel} value={tr(DEMO.cook.name)} />
-      <div style={{ fontSize: "0.95em", fontWeight: 700, margin: "0.6em 0.1em 0.4em" }}>{tr(UI.pinLabel)}</div>
+      <WhoRow label={whoLabel} value={DEMO.cook.name} />
+      <div style={{ fontSize: "0.95em", fontWeight: 700, margin: "0.6em 0.1em 0.4em" }}>{tr('ui.pinLabel')}</div>
       <div
         style={{
           height: "2.5em",
@@ -654,8 +677,8 @@ function PinStep({ t, from, whoLabel }: { t: number; from: number; whoLabel: str
           <span key={index} style={{ width: "0.5em", height: "0.5em", borderRadius: "999px", background: index < dots ? P.ink : P.lineStrong }} />
         ))}
       </div>
-      <p style={{ margin: "0.5em 0.1em 0.7em", fontSize: "0.66em", color: P.ink2 }}>{tr(UI.pinHint)}</p>
-      <PrimaryButton pressed={press(t, from + 0.62)}>{tr(UI.pinContinue)}</PrimaryButton>
+      <p style={{ margin: "0.5em 0.1em 0.7em", fontSize: "0.66em", color: P.ink2 }}>{tr('ui.pinHint')}</p>
+      <PrimaryButton pressed={press(t, from + 0.62)}>{tr('ui.pinContinue')}</PrimaryButton>
       {ok > 0 ? (
         <div style={fade(ok, { position: "absolute", left: 0, right: 0, top: "38%" })}>
           <DrawnCheck t={t} at={from + 0.7} size="3.6em" />
@@ -695,7 +718,9 @@ const cell: CSSProperties = {
 const headCell: CSSProperties = { ...cell, background: P.paperHead, fontWeight: 700 };
 
 function Paper({ stampLabel, title, subtitle, caption, children, startedDay }: { stampLabel: string; title: string; subtitle?: string; caption?: string; children: ReactNode; startedDay: SceneDay }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
+  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const startedDate = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(startedDay.year, startedDay.month - 1, 1)));
   return (
     <div className={`absolute overflow-hidden ${POS.paper}`} style={{ background: P.paper, color: P.paperInk, borderRadius: "0.5em", boxShadow: "0 1.6em 3.2em -1.2em rgba(0,0,0,0.55), 0 0 0 0.06em rgba(255,255,255,0.4)" }}>
       <div style={{ padding: "1em 1.1em", fontFamily: "inherit" }}>
@@ -707,13 +732,13 @@ function Paper({ stampLabel, title, subtitle, caption, children, startedDay }: {
           </colgroup>
           <tbody>
             <tr>
-              <td rowSpan={2} style={{ ...cell, fontWeight: 700 }}>{tr(DEMO.org)}</td>
-              <td style={cell}>{tr(PDF.stamp)}</td>
-              <td style={{ ...cell, textAlign: "left", whiteSpace: "nowrap" }}>{tr("Начат 01-")}{String(startedDay.month).padStart(2, "0")}-{startedDay.year}</td>
+              <td rowSpan={2} style={{ ...cell, fontWeight: 700 }}>{DEMO.org}</td>
+              <td style={cell}>{tr('pdf.stamp')}</td>
+              <td style={{ ...cell, textAlign: "left", whiteSpace: "nowrap" }}>{tr("documentStartedOn", { date: startedDate })}</td>
             </tr>
             <tr>
               <td style={{ ...cell, fontStyle: "italic", fontSize: "0.9em" }}>{stampLabel.toUpperCase()}</td>
-              <td style={cell}>{tr("СТР. 1 ИЗ 1")}</td>
+              <td style={cell}>{tr("pageIndicator")}</td>
             </tr>
           </tbody>
         </table>
@@ -784,7 +809,8 @@ function pastValue(seed: number, d: number, base: number, spread: number): numbe
 type ColdRow = { name: string; norm: string; seed: number; base: number; spread: number; today?: { at: number; value: string; bad: boolean } | null; todayMissing?: boolean };
 
 function ColdSheet({ t, day, rows, codeAt, missingPulse }: { t: number; day: SceneDay; rows: ColdRow[]; codeAt: number | null; missingPulse?: number }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
+  const locale = FORMAT_LOCALES[useSiteLocale()];
   const { days, isMobileVisible, mobileCount } = dayWindow(day);
   const hideOnMobile = (d: number) => (isMobileVisible(d) ? "" : "hidden md:table-cell");
   // Ячейки на всю ширину — в двух вариантах: на телефоне видно меньше дней,
@@ -807,31 +833,31 @@ function ColdSheet({ t, day, rows, codeAt, missingPulse }: { t: number; day: Sce
       </colgroup>
       <thead>
         <tr>
-          <th colSpan={2} rowSpan={2} style={headCell}>{tr(PDF.coldName)}</th>
-          {spanRow(<>{tr("Месяц ")}{day.monthLabel}</>, headCell)}
+          <th colSpan={2} rowSpan={2} style={headCell}>{tr('pdf.coldName')}</th>
+          {spanRow(tr("monthLabel", { month: day.monthLabel }), headCell)}
         </tr>
         <tr>
           {days.map((d) => (
             <th key={d} className={hideOnMobile(d)} style={{ ...headCell, fontWeight: d === day.day ? 800 : 600, background: d === day.day ? P.highlight : P.paperHead, padding: "0.2em 0" }}>
               {d}
-              <span style={{ display: "block", fontSize: "0.78em", fontWeight: 500 }}>{tr(weekday(day, d)).toUpperCase()}</span>
+              <span style={{ display: "block", fontSize: "0.78em", fontWeight: 500 }}>{weekday(day, d, locale).toUpperCase()}</span>
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
-        <tr>{spanRow(tr(PDF.coldTemp), { ...cell, fontWeight: 700 }, 2)}</tr>
+        <tr>{spanRow(tr('pdf.coldTemp'), { ...cell, fontWeight: 700 }, 2)}</tr>
         {rows.map((row) => (
-          <tr key={tr(row.name)}>
+          <tr key={row.name}>
             <td colSpan={2} style={{ ...cell, textAlign: "left" }}>
-              {tr(row.name)}
-              <span style={{ color: "#55555e" }}>{"  "}{tr(row.norm)}</span>
+              {row.name}
+              <span style={{ color: "#55555e" }}>{"  "}{row.norm}</span>
             </td>
             {days.map((d) => {
               if (d < day.day) {
                 return (
                   <td key={d} className={hideOnMobile(d)} style={{ ...cell, padding: "0.28em 0" }}>
-                    {pdfNumber(pastValue(row.seed, d, row.base, row.spread))}
+                    {pdfNumber(pastValue(row.seed, d, row.base, row.spread), locale)}
                   </td>
                 );
               }
@@ -855,23 +881,23 @@ function ColdSheet({ t, day, rows, codeAt, missingPulse }: { t: number; day: Sce
           </tr>
         ))}
         <tr>
-          <td style={{ ...cell, fontSize: "0.86em" }}>{tr(PDF.coldResponsible)}</td>
+          <td style={{ ...cell, fontSize: "0.86em" }}>{tr('pdf.coldResponsible')}</td>
           <td style={{ ...cell, textAlign: "left", fontSize: "0.86em" }}>
-            {tr("С1 - ")}{tr(DEMO.cook.short)}
+            {"С1 - "}{DEMO.cook.short}
             <br />
-            {tr("С2 - Петров О.")}</td>
+            {"С2 - Петров О."}</td>
           {days.map((d) => {
             if (d < day.day) {
               return (
                 <td key={d} className={hideOnMobile(d)} style={{ ...cell, padding: "0.28em 0" }}>
-                  {d % 3 === 0 ? tr("С2") : tr("С1")}
+                  {d % 3 === 0 ? "С2" : "С1"}
                 </td>
               );
             }
             if (d === day.day && codeAt !== null) {
               return (
                 <Ink key={d} t={t} at={codeAt} style={{ padding: "0.28em 0" }}>
-                  {tr("С1")}</Ink>
+                  {"С1"}</Ink>
               );
             }
             return <td key={d} className={hideOnMobile(d)} style={cell} />;
@@ -930,7 +956,6 @@ function Toast({ t, at, channel, title, lines, tone = "bad", mail = false }: { t
 type RailStep = { label: string; at: number };
 
 function Rail({ t, steps }: { t: number; steps: RailStep[] }) {
-  const tr = usePublicCopy();
   const active = steps.reduce((acc, step, index) => (t >= step.at ? index : acc), -1);
   return (
     <ol className={`absolute m-0 flex list-none flex-col gap-[0.5em] p-0 md:flex-row md:gap-[0.6em] ${POS.rail}`} style={{ color: "#ffffff" }}>
@@ -938,7 +963,7 @@ function Rail({ t, steps }: { t: number; steps: RailStep[] }) {
         const done = index < active;
         const now = index === active;
         return (
-          <li key={tr(step.label)} className="flex min-w-0 items-center gap-[0.5em] md:flex-1 md:flex-col md:items-start md:gap-[0.45em]" style={{ opacity: now ? 1 : done ? 0.78 : 0.4 }}>
+          <li key={step.label} className="flex min-w-0 items-center gap-[0.5em] md:flex-1 md:flex-col md:items-start md:gap-[0.45em]" style={{ opacity: now ? 1 : done ? 0.78 : 0.4 }}>
             <span className="hidden h-[0.22em] w-full rounded-full md:block" style={{ background: done || now ? "linear-gradient(90deg,#5566f6,#8b97ff)" : "rgba(255,255,255,0.16)" }} />
             <span className="flex min-w-0 items-center gap-[0.45em]">
               <span
@@ -959,7 +984,7 @@ function Rail({ t, steps }: { t: number; steps: RailStep[] }) {
               >
                 {done ? <Check style={{ width: "0.95em", height: "0.95em" }} strokeWidth={3} /> : index + 1}
               </span>
-              <span style={{ fontWeight: now ? 700 : 500, lineHeight: 1.2 }}>{tr(step.label)}</span>
+              <span style={{ fontWeight: now ? 700 : 500, lineHeight: 1.2 }}>{step.label}</span>
             </span>
           </li>
         );
@@ -1023,15 +1048,23 @@ function Backdrop({ chapter, t }: { chapter: Chapter; t: number }) {
 }
 
 function Place({ chapter }: { chapter: Chapter }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
   const Icon = { fridge: Refrigerator, locker: Thermometer, uv: Lightbulb, fryer: CookingPot, forgot: BellRing, sensor: Wifi }[chapter.id];
+  const placeKey = {
+    fridge: "chapters.fridgePlace",
+    locker: "chapters.lockerPlace",
+    uv: "chapters.uvPlace",
+    fryer: "chapters.fryerPlace",
+    forgot: "chapters.forgotPlace",
+    sensor: "chapters.sensorPlace",
+  } as const satisfies Record<Chapter["id"], string>;
   return (
     <div className={`absolute flex items-center gap-[0.5em] ${POS.place}`} style={{ color: "#ffffff" }}>
       <span style={{ display: "inline-flex", width: "1.8em", height: "1.8em", flex: "none", alignItems: "center", justifyContent: "center", borderRadius: "0.6em", background: "rgba(124,245,192,0.14)", color: "#7cf5c0" }}>
         <Icon style={{ width: "1.05em", height: "1.05em" }} />
       </span>
       <span className="min-w-0 truncate" style={{ fontWeight: 600 }}>
-        {tr(chapter.place)}
+        {tr(placeKey[chapter.id])}
       </span>
       <MapPin className="hidden md:block" style={{ width: "0.95em", height: "0.95em", opacity: 0.45, flex: "none" }} />
     </div>
@@ -1042,48 +1075,50 @@ function Place({ chapter }: { chapter: Chapter }) {
  * Главы
  * ------------------------------------------------------------------- */
 
-const SCAN_STEPS = (value: string, save: string): RailStep[] => [
-  { label: "Скан наклейки", at: 0 },
-  { label: "Кто заполняет", at: 1.0 },
-  { label: "PIN", at: 1.9 },
+const SCAN_STEPS = (scan: string, who: string, pin: string, value: string, save: string): RailStep[] => [
+  { label: scan, at: 0 },
+  { label: who, at: 1.0 },
+  { label: pin, at: 1.9 },
   { label: value, at: 2.8 },
   { label: save, at: 4.2 },
 ];
 
 function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number; today: SceneDay; qr: QrMatrix; photo: string }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
+  const locale = FORMAT_LOCALES[useSiteLocale()];
   const bad = fridgeOutOfRange(value);
   const shown = String(Math.round(value * 10) / 10).replace("-", "−");
-  const typedValue = typed(formatDecimal(value), t, 3.0);
+  const typedValue = typed(decimalLabel(value, locale), t, 3.0);
   const save = bad ? 4.35 : 4.1;
   return (
     <>
-      <Paper stampLabel={tr(JOURNALS.cold)} title={tr(JOURNALS.cold).toUpperCase()} startedDay={today}>
+      <Paper stampLabel={journal("cold_equipment_control")} title={journal("cold_equipment_control").toUpperCase()} startedDay={today}>
         <ColdSheet
           t={t}
           day={today}
           codeAt={save + 0.5}
           rows={[
-            { name: tr(DEMO.fridge), norm: `${tr("от")} ${FRIDGE_NORM.min}°C ${tr("до")} ${FRIDGE_NORM.max}°C`, seed: 1, base: 3.1, spread: 1.6, today: { at: save + 0.4, value: pdfNumber(value), bad } },
-            { name: tr("Морозильник №2"), norm: tr("от -18°C до -15°C"), seed: 2, base: -17.6, spread: 1.4, today: null },
-            { name: tr(DEMO.vitrine), norm: `${tr("от")} ${FRIDGE_NORM.min}°C ${tr("до")} ${FRIDGE_NORM.max}°C`, seed: 3, base: 3.4, spread: 1.4, today: null },
+            { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: save + 0.4, value: pdfNumber(value, locale), bad } },
+            { name: "Морозильник №2", norm: tr("temperatureRange", { minimum: -18, maximum: -15 }), seed: 2, base: -17.6, spread: 1.4, today: null },
+            { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: null },
           ]}
         />
       </Paper>
       <PhoneFrame clock="08:41">
-        <QrHeader title={tr(JOURNALS.cold)} />
+        <QrHeader title={journal("cold_equipment_control")} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.95}>
-            <WhoRow label={tr(UI.equipment)} value={tr(DEMO.fridge)} />
-            <EmployeeList t={t} tapAt={1.45} label={tr(UI.equipmentWho)} />
+            <WhoRow label={tr('ui.equipment')} value={DEMO.fridge} />
+            <EmployeeList t={t} tapAt={1.45} label={tr('ui.equipmentWho')} />
           </Screen>
           <Screen t={t} from={1.95} to={2.85}>
-            <PinStep t={t} from={1.95} whoLabel={tr(UI.equipmentWho)} />
+            <PinStep t={t} from={1.95} whoLabel={tr('ui.equipmentWho')} />
           </Screen>
           <Screen t={t} from={2.85} to={save + 0.25}>
-            <WhoRow label={tr(UI.equipment)} value={tr(DEMO.fridge)} />
+            <WhoRow label={tr('ui.equipment')} value={DEMO.fridge} />
             <div style={{ borderRadius: "0.85em", border: `0.1em solid ${bad && typedValue ? P.bad : P.indigo}`, background: P.card, padding: "0.45em 0.7em" }}>
-              <div style={{ fontSize: "0.66em", color: P.muted, fontWeight: 600 }}>{tr("Температура, °C")}</div>
+              <div style={{ fontSize: "0.66em", color: P.muted, fontWeight: 600 }}>{tr("temperatureLabelWithUnit")}</div>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "0.4em" }}>
                 <span style={{ fontSize: "1.5em", fontWeight: 700, fontVariantNumeric: "tabular-nums", minHeight: "1.2em" }}>
                   {typedValue}
@@ -1091,7 +1126,7 @@ function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number;
                 </span>
                 {typedValue ? (
                   <span style={{ whiteSpace: "nowrap", fontSize: "0.62em", fontWeight: 700, padding: "0.25em 0.55em", borderRadius: "999px", background: bad ? P.badTint : P.okTint, color: bad ? P.badInk : P.okInk }}>
-                    {bad ? tr("Вне нормы") : tr("Норма")} {tr(" от ")}{FRIDGE_NORM.min} {tr(" до ")}{FRIDGE_NORM.max}
+                    {tr("temperatureStatusRange", { status: bad ? tr("outsideNorm") : tr("norm"), minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}
                   </span>
                 ) : null}
               </div>
@@ -1100,15 +1135,15 @@ function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number;
               <div style={fade(progress(t, 3.45, 0.3), { marginTop: "0.5em", borderRadius: "0.85em", border: `0.07em solid ${P.amberLine}`, background: P.amberTint, color: P.amberInk, padding: "0.5em 0.6em" })}>
                 <div style={{ display: "flex", gap: "0.35em", alignItems: "center", fontSize: "0.74em", fontWeight: 700 }}>
                   <AlertTriangle style={{ width: "1em", height: "1em", flex: "none" }} />
-                  {tr(UI.tempOut)}
+                  {tr('ui.tempOut')}
                 </div>
-                <div style={{ fontSize: "0.64em", marginTop: "0.2em" }}>{tr(UI.managerWillKnow)}</div>
+                <div style={{ fontSize: "0.64em", marginTop: "0.2em" }}>{tr('ui.managerWillKnow')}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3em", marginTop: "0.4em" }}>
-                  {[tr("Вызвал мастера"), tr("Переложил продукты")].map((chip) => {
-                    const on = chip === tr("Переложил продукты") && t >= 3.85;
+                  {[{ id: "masterCalled", label: tr("ui.masterCalled") }, { id: "productsMoved", label: tr("ui.productsMoved") }].map((chip) => {
+                    const on = chip.id === "productsMoved" && t >= 3.85;
                     return (
-                      <span key={chip} style={{ fontSize: "0.6em", fontWeight: 600, padding: "0.3em 0.6em", borderRadius: "999px", background: on ? P.indigo : P.card, color: on ? "#fff" : P.ink2, border: `0.08em solid ${on ? P.indigo : P.amberLine}` }}>
-                        {chip}
+                      <span key={chip.id} style={{ fontSize: "0.6em", fontWeight: 600, padding: "0.3em 0.6em", borderRadius: "999px", background: on ? P.indigo : P.card, color: on ? "#fff" : P.ink2, border: `0.08em solid ${on ? P.indigo : P.amberLine}` }}>
+                        {chip.label}
                       </span>
                     );
                   })}
@@ -1117,30 +1152,30 @@ function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number;
               </div>
             ) : null}
             <PrimaryButton pressed={press(t, save)} style={{ marginTop: "0.6em" }}>
-              {tr(UI.saveReading)}
+              {tr('ui.saveReading')}
             </PrimaryButton>
           </Screen>
           <Screen t={t} from={save + 0.25} to={7}>
-            <Done t={t} at={save + 0.3} title={tr(UI.written)}>
+            <Done t={t} at={save + 0.3} title={tr('ui.written')}>
               <p style={{ margin: "0.45em 0 0", fontSize: "0.7em", color: P.ink2 }}>
-                {tr("Температура ")}{shown}{tr("°C сохранена в журнал на имя ")}{tr(DEMO.cook.name)}.
+                {tr("readingSaved", { value, employee: DEMO.cook.name })}
               </p>
               {bad ? (
-                <p style={{ margin: "0.55em 0 0", fontSize: "0.64em", padding: "0.5em", borderRadius: "0.7em", background: P.badTint, color: P.badInk, textAlign: "left" }}>{tr(UI.readingOutDone)}</p>
+                <p style={{ margin: "0.55em 0 0", fontSize: "0.64em", padding: "0.5em", borderRadius: "0.7em", background: P.badTint, color: P.badInk, textAlign: "left" }}>{tr('ui.readingOutDone')}</p>
               ) : null}
             </Done>
           </Screen>
         </div>
         <Viewfinder t={t} object="fridge" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("Температура"), tr(UI.saveReading))} />
+      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("temperatureLabel"), tr("ui.saveReading"))} />
       {bad ? (
         <Toast
           t={t}
           at={save + 0.75}
-          channel={tr("Telegram · ответственному")}
-          title={tr(UI.deviationTitle)}
-          lines={[`${tr("Оборудование")}: ${tr(DEMO.fridge)}`, `${tr("Сейчас:")} ${shown}°C`, `${tr("Норма:")} ${tr("от")} ${FRIDGE_NORM.min} ${tr("до")} ${FRIDGE_NORM.max}°C`]}
+          channel={tr("telegramResponsibleChannel")}
+          title={tr('ui.deviationTitle')}
+          lines={[`${tr("equipmentLabel")}: ${DEMO.fridge}`, `${tr("currentLabel")} ${shown}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
         />
       ) : null}
     </>
@@ -1148,18 +1183,21 @@ function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number;
 }
 
 function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: number; today: SceneDay; qr: QrMatrix; photo: string }) {
-  const tr = usePublicCopy();
-  const locale = useSiteLocale();
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
+  const hygieneT = useTranslations("hygiene");
+  const hygieneColumnsT = useTranslations("hygiene.columns");
+  const locale = FORMAT_LOCALES[useSiteLocale()];
   const fever = bodyFever(bodyTemp);
   const checkedKeys = HEALTH_CONFIRMATIONS.filter((item, index) => t >= 2.85 + index * 0.3 && !(fever && item.key === "temperature")).map((item) => item.key);
   // Решение — той же функцией, что и настоящий QR «Гигиена и здоровье».
   const decision = healthDecision(fever ? ["infection", "respiratorySkin"] : ["temperature", "infection", "respiratorySkin"]);
   const signAt = 4.0;
-  const mark = (ok: boolean) => (ok ? tr("да") : tr("нет"));
+  const mark = (ok: boolean) => (ok ? tr("yes") : tr("no"));
   const colWidths = ["2.2em", "5.6em", "7.6em", "5.2em", "5.6em", "5.6em", "5.6em", "5.6em", "8em"];
   return (
     <>
-      <Paper stampLabel={tr(JOURNALS.hygiene)} title={tr(JOURNALS.hygiene).toUpperCase()} caption={tr(HYGIENE_V2_FORM_CAPTION)} startedDay={today}>
+      <Paper stampLabel={journal("hygiene")} title={journal("hygiene").toUpperCase()} caption={hygieneT("form.caption")} startedDay={today}>
         <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "50.9em", fontSize: "0.8em" }}>
           <colgroup>
             {colWidths.map((width, index) => (
@@ -1170,7 +1208,7 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
             <tr>
               {HYGIENE_V2_COLUMNS.map((column) => (
                 <th key={column.key} style={{ ...headCell, fontSize: "0.7em", fontWeight: 600, height: "5.4em" }}>
-                  <span style={{ display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{tr(column.label)}</span>
+                  <span style={{ display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{column.key === "date" ? tr("pdf.uvDate") : hygieneColumnsT(HYGIENE_COLUMN_KEYS[column.key as keyof typeof HYGIENE_COLUMN_KEYS])}</span>
                 </th>
               ))}
             </tr>
@@ -1178,27 +1216,27 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
           <tbody>
             <tr>
               <td style={cell}>1</td>
-              <td style={cell}>{dateLabel(today)}</td>
-              <td style={{ ...cell, textAlign: "left" }}>{tr(DEMO.others[0].name)}</td>
-              <td style={{ ...cell, textAlign: "left" }}>{tr(DEMO.others[0].position)}</td>
-              <td style={cell}>{tr("да")}</td>
-              <td style={cell}>{tr("да")}</td>
-              <td style={cell}>{tr("да")}</td>
-              <td style={cell}>{tr("допущен")}</td>
-              <td style={{ ...cell, fontSize: "0.82em" }}>{tr("Козлова Е., зав. производством · 08:10")}</td>
+              <td style={cell}>{dateLabel(today, locale)}</td>
+              <td style={{ ...cell, textAlign: "left" }}>{DEMO.others[0].name}</td>
+              <td style={{ ...cell, textAlign: "left" }}>{DEMO.others[0].position}</td>
+              <td style={cell}>{tr("yes")}</td>
+              <td style={cell}>{tr("yes")}</td>
+              <td style={cell}>{tr("yes")}</td>
+              <td style={cell}>{tr("ui.admitted")}</td>
+              <td style={{ ...cell, fontSize: "0.82em" }}>Козлова Е., зав. производством · 08:10</td>
             </tr>
             <tr>
               <Ink t={t} at={signAt + 0.45}>2</Ink>
-              <Ink t={t} at={signAt + 0.45}>{dateLabel(today)}</Ink>
-              <Ink t={t} at={signAt + 0.5} style={{ textAlign: "left" }}>{tr(DEMO.cook.name)}</Ink>
-              <Ink t={t} at={signAt + 0.5} style={{ textAlign: "left" }}>{tr(DEMO.cook.position)}</Ink>
+              <Ink t={t} at={signAt + 0.45}>{dateLabel(today, locale)}</Ink>
+              <Ink t={t} at={signAt + 0.5} style={{ textAlign: "left" }}>{DEMO.cook.name}</Ink>
+              <Ink t={t} at={signAt + 0.5} style={{ textAlign: "left" }}>{DEMO.cook.position}</Ink>
               <Ink t={t} at={signAt + 0.6} tone={decision.confirmations.temperature ? "ink" : "bad"}>{mark(decision.confirmations.temperature)}</Ink>
               <Ink t={t} at={signAt + 0.65}>{mark(decision.confirmations.infection)}</Ink>
               <Ink t={t} at={signAt + 0.7}>{mark(decision.confirmations.respiratorySkin)}</Ink>
-              {decision.admitted ? <Ink t={t} at={5.25}>{tr("допущен")}</Ink> : <td style={cell} />}
+              {decision.admitted ? <Ink t={t} at={5.25}>{tr("ui.admitted")}</Ink> : <td style={cell} />}
               {decision.admitted ? (
                 <Ink t={t} at={5.3} style={{ fontSize: "0.82em" }}>
-                  {tr("Козлова Е., зав. производством · 08:53")}</Ink>
+                  Козлова Е., зав. производством · 08:53</Ink>
               ) : (
                 <td style={cell} />
               )}
@@ -1222,21 +1260,21 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
             })}
           >
             {decision.admitted ? <Check style={{ width: "1em", height: "1em" }} /> : <AlertTriangle style={{ width: "1em", height: "1em" }} />}
-            {decision.admitted ? tr("Журнал здоровья: подпись «+»") : locale === "en" ? `Today’s status: Unfit for work · health log: ${decision.complaints.map(tr).join(", ")}. The responsible person has been notified.` : `Статус дня: Отстранён · журнал здоровья: «${decision.health.measures}»`}
+            {decision.admitted ? tr("health.signatureConfirmed") : tr("health.needsReview", { reasons: HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ") })}
           </div>
         ) : null}
       </Paper>
       <PhoneFrame clock="08:52">
-        <QrHeader title={`${tr(JOURNALS.hygiene)} ${tr("и журнал здоровья")}`} />
+        <QrHeader title={tr("hygieneAndHealthJournals", { hygieneJournal: journal("hygiene") })} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.9}>
-            <EmployeeList t={t} tapAt={1.4} label={tr(UI.whoFills)} />
+            <EmployeeList t={t} tapAt={1.4} label={tr('ui.whoFills')} />
           </Screen>
           <Screen t={t} from={1.9} to={2.75}>
-            <PinStep t={t} from={1.9} whoLabel={tr(UI.whoFills)} />
+            <PinStep t={t} from={1.9} whoLabel={tr('ui.whoFills')} />
           </Screen>
           <Screen t={t} from={2.75} to={signAt + 0.25}>
-            <div style={{ fontSize: "0.95em", fontWeight: 700, margin: "0 0.1em 0.45em" }}>{tr(UI.sign)}</div>
+            <div style={{ fontSize: "0.95em", fontWeight: 700, margin: "0 0.1em 0.45em" }}>{tr('ui.sign')}</div>
             {HEALTH_CONFIRMATIONS.map((item) => {
               const on = checkedKeys.includes(item.key);
               return (
@@ -1256,37 +1294,37 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
                   <span style={{ display: "inline-flex", width: "1.3em", height: "1.3em", flex: "none", alignItems: "center", justifyContent: "center", borderRadius: "0.3em", background: on ? P.ok : P.card, border: `0.1em solid ${on ? P.ok : P.lineStrong}`, color: "#fff" }}>
                     {on ? <Check style={{ width: "0.9em", height: "0.9em" }} strokeWidth={3} /> : null}
                   </span>
-                  <span style={{ fontSize: "0.64em", fontWeight: 600, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{tr(item.label)}</span>
+                  <span style={{ fontSize: "0.64em", fontWeight: 600, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{tr(HEALTH_MESSAGE_KEYS[item.key].confirmation)}</span>
                 </div>
               );
             })}
             <PrimaryButton pressed={press(t, signAt)} style={{ marginTop: "0.5em" }}>
-              {tr(UI.signButton)}
+              {tr('ui.signButton')}
             </PrimaryButton>
           </Screen>
           <Screen t={t} from={signAt + 0.25} to={7}>
             {decision.admitted ? (
-              <Done t={t} at={signAt + 0.3} title={tr(UI.admitted)}>
-                <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("Сохранено: гигиенический журнал и журнал здоровья · ")}{tr(DEMO.cook.name)} · 08:52</p>
+              <Done t={t} at={signAt + 0.3} title={tr('ui.admitted')}>
+                <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("health.entrySaved", { journals: tr("hygieneAndHealthJournals", { hygieneJournal: journal("hygiene") }), employee: DEMO.cook.name, time: "08:52" })}</p>
               </Done>
             ) : (
-              <Done t={t} at={signAt + 0.3} title={tr(UI.notAdmitted)} tone="bad">
+              <Done t={t} at={signAt + 0.3} title={tr('ui.notAdmitted')} tone="bad">
                 <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.badInk }}>
-                  {tr("Причина: ")}{decision.complaints.map(tr).join(", ")}. {tr(UI.headKnows)} {tr(" — дождитесь его решения.")}</p>
+                  {tr("health.needsReview", { reasons: HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ") })}</p>
               </Done>
             )}
           </Screen>
         </div>
         <Viewfinder t={t} object="thermometer" qr={qr} bodyTemp={bodyTemp} photo={photo} />
       </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("Три подписи"), tr(UI.signButton))} />
+      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("threeSignatures"), tr("ui.signButton"))} />
       {decision.admitted ? null : (
         <Toast
           t={t}
           at={signAt + 0.9}
-          channel={tr("Telegram и почта · заведующей")}
-          title={`${tr(DEMO.cook.name)} ${tr(UI.notAdmittedNotice)}`}
-          lines={[locale === "en" ? `Reason: ${decision.complaints.map(tr).join(", ")} (QR entry at 08:52).` : `Причина: ${decision.complaints.map(tr).join(", ")} (отметка через QR в 08:52).`]}
+          channel={tr("telegramEmailSupervisor")}
+          title={`${DEMO.cook.name} ${tr('ui.notAdmittedNotice')}`}
+          lines={[tr("health.needsReview", { reasons: HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ") })]}
           mail
         />
       )}
@@ -1295,9 +1333,10 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
 }
 
 function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMatrix; photo: string }) {
-  const tr = usePublicCopy();
-  const locale = useSiteLocale();
-  const hoursLabel = (value: number) => locale === "en" ? `${Math.round(value).toLocaleString("en-GB")} h` : formatHours(value);
+  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
+  const hoursLabel = (value: number) => tr("ui.hoursValue", { value: Math.round(value) });
   const onAt = 2.55;
   const offAt = 4.35;
   const running = t >= onAt + 0.1 && t < offAt + 0.1;
@@ -1306,7 +1345,7 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
   const skip = windowed(t, 3.55, 4.05, 0.15);
   return (
     <>
-      <Paper stampLabel={tr(PDF.uvStampLabel)} subtitle={tr(DEMO.lamp).toUpperCase()} title={tr(JOURNALS.uv)} startedDay={today}>
+      <Paper stampLabel={tr('pdf.uvStampLabel')} subtitle={DEMO.lamp.toUpperCase()} title={journal("uv_lamp_runtime")} startedDay={today}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.82em" }}>
           <colgroup>
             <col style={{ width: "18%" }} />
@@ -1317,7 +1356,7 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
           </colgroup>
           <thead>
             <tr>
-              {[tr(PDF.uvDate), tr(PDF.uvOn), tr(PDF.uvOff), tr(PDF.uvTotal), tr(PDF.uvWho)].map((label) => (
+              {[tr('pdf.uvDate'), tr('pdf.uvOn'), tr('pdf.uvOff'), tr('pdf.uvTotal'), tr('pdf.uvWho')].map((label) => (
                 <th key={label} style={{ ...headCell, fontWeight: 600, fontSize: "0.86em" }}>
                   {label}
                 </th>
@@ -1329,65 +1368,65 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
               const d = Math.max(1, today.day - back);
               return (
                 <tr key={back}>
-                  <td style={cell}>{dateLabel(today, d)}</td>
+                  <td style={cell}>{dateLabel(today, locale, d)}</td>
                   <td style={cell}>09:05</td>
                   <td style={cell}>09:35</td>
                   <td style={cell}>30</td>
-                  <td style={{ ...cell, textAlign: "left" }}>{back === 2 ? tr("Петров Олег") : tr(DEMO.cook.name)}</td>
+                  <td style={{ ...cell, textAlign: "left" }}>{back === 2 ? "Петров Олег" : DEMO.cook.name}</td>
                 </tr>
               );
             })}
             <tr>
-              <Ink t={t} at={onAt + 0.35}>{dateLabel(today)}</Ink>
+              <Ink t={t} at={onAt + 0.35}>{dateLabel(today, locale)}</Ink>
               <Ink t={t} at={onAt + 0.35}>09:00</Ink>
               <Ink t={t} at={offAt + 0.4}>09:30</Ink>
               <Ink t={t} at={offAt + 0.45}>30</Ink>
               <Ink t={t} at={onAt + 0.4} style={{ textAlign: "left" }}>
-                {tr(DEMO.cook.name)}
+                {DEMO.cook.name}
               </Ink>
             </tr>
             <EmptyRows count={4} columns={5} />
           </tbody>
         </table>
         <div style={{ marginTop: "0.8em", fontSize: "0.8em", color: "#4a4a52" }}>
-          {tr("Наработка ")}{hoursLabel(used)} {tr(" из ")}{hoursLabel(DEMO.lampLifetime)}
+          {tr("lampUsage", { used: hoursLabel(used), total: hoursLabel(DEMO.lampLifetime) })}
         </div>
       </Paper>
       <PhoneFrame clock={t >= 4 ? "09:30" : "09:00"}>
-        <QrHeader title={tr("Журнал учёта работы УФ-лампы")} />
+        <QrHeader title={journal("uv_lamp_runtime")} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.75}>
-            <WhoRow label={tr("Лампа")} value={tr(DEMO.lamp)} />
-            <EmployeeList t={t} tapAt={1.3} label={tr(UI.uvWho)} />
+            <WhoRow label={tr("ui.lampLabel")} value={DEMO.lamp} />
+            <EmployeeList t={t} tapAt={1.3} label={tr('ui.uvWho')} />
           </Screen>
           <Screen t={t} from={1.75} to={2.35}>
-            <PinStep t={t} from={1.6} whoLabel={tr(UI.uvWho)} />
+            <PinStep t={t} from={1.6} whoLabel={tr('ui.uvWho')} />
           </Screen>
           <Screen t={t} from={2.35} to={7}>
-            <WhoRow label={tr("Лампа")} value={tr(DEMO.lamp)} />
+            <WhoRow label={tr("ui.lampLabel")} value={DEMO.lamp} />
             {t < onAt + 0.15 || (t >= 4.05 && t < offAt + 0.15) ? (
               <>
                 {running ? (
                   <div style={{ borderRadius: "0.8em", border: `0.07em solid ${P.amberLine}`, background: P.amberTint, color: P.amberInk, padding: "0.45em 0.6em", fontSize: "0.72em", marginBottom: "0.5em" }}>
-                    {tr("Работает с ")}<b>09:00</b> {tr(" · включил(а) ")}{tr(DEMO.cook.name)}
+                    {tr("lampRunningSince", { time: "09:00", employee: DEMO.cook.name })}
                   </div>
                 ) : null}
                 <PrimaryButton pressed={press(t, running ? offAt : onAt)} color={running ? P.bad : P.ok} style={{ minHeight: "5.6em", flexDirection: "column", borderRadius: "1.1em", fontSize: "1em", boxShadow: "0 1em 2em -1em rgba(11,16,36,0.5)" }}>
                   {running ? <LightbulbOff style={{ width: "1.8em", height: "1.8em" }} /> : <Lightbulb style={{ width: "1.8em", height: "1.8em" }} />}
-                  {running ? tr(UI.uvOff) : tr(UI.uvOn)}
+                  {running ? tr('ui.uvOff') : tr('ui.uvOn')}
                 </PrimaryButton>
                 <p style={{ textAlign: "center", fontSize: "0.66em", color: P.muted, margin: "0.6em 0 0" }}>
-                  {tr("Наработка ")}{hoursLabel(used)} {tr(" из ")}{hoursLabel(DEMO.lampLifetime)} {tr(" · осталось ")}{hoursLabel(remaining)}
+                  {tr("lampUsageRemaining", { used: hoursLabel(used), total: hoursLabel(DEMO.lampLifetime), remaining: hoursLabel(remaining) })}
                 </p>
               </>
             ) : t < 4.05 ? (
-              <Done t={t} at={onAt + 0.2} title={tr(UI.uvOnDone)}>
-                <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("Отметка в 09:00. Когда выключите — отсканируйте эту же наклейку и нажмите «Я выключил».")}</p>
+              <Done t={t} at={onAt + 0.2} title={tr('ui.uvOnDone')}>
+                <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("lampOffInstruction")}</p>
               </Done>
             ) : (
-              <Done t={t} at={offAt + 0.2} title={tr(UI.uvOffDone)}>
+              <Done t={t} at={offAt + 0.2} title={tr('ui.uvOffDone')}>
                 <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>
-                  {tr("Работал ")}{locale === "en" ? "30 min" : formatDuration(0.5)} {tr(" — записано в журнал. ")}{tr(UI.uvRemaining)}: {hoursLabel(remaining)}.
+                  {tr("lampRuntimeSaved", { duration: tr("halfHour"), remainingLabel: tr("ui.uvRemaining"), remaining: hoursLabel(remaining) })}
                 </p>
               </Done>
             )}
@@ -1396,8 +1435,8 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
         {skip > 0 ? (
           <div style={fade(skip, { position: "absolute", inset: 0, zIndex: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(11,16,36,0.82)", color: "#fff", textAlign: "center", fontWeight: 700 })}>
             <span>
-              <span style={{ display: "block", fontSize: "1.8em", fontVariantNumeric: "tabular-nums" }}>{tr("+30 мин")}</span>
-              <span style={{ display: "block", fontSize: "0.72em", fontWeight: 500, opacity: 0.8, marginTop: "0.3em" }}>{tr("снова скан той же наклейки")}</span>
+              <span style={{ display: "block", fontSize: "1.8em", fontVariantNumeric: "tabular-nums" }}>{tr("skipThirtyMinutes")}</span>
+              <span style={{ display: "block", fontSize: "0.72em", fontWeight: 500, opacity: 0.8, marginTop: "0.3em" }}>{tr("rescanSameSticker")}</span>
             </span>
           </div>
         ) : null}
@@ -1406,11 +1445,11 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
       <Rail
         t={t}
         steps={[
-          { label: tr("Скан наклейки"), at: 0 },
-          { label: tr("Кто включает"), at: 0.9 },
+          { label: tr("scanSticker"), at: 0 },
+          { label: tr("whoSwitchesLamp"), at: 0.9 },
           { label: "PIN", at: 1.75 },
-          { label: tr("Я включил"), at: 2.35 },
-          { label: tr("Я выключил"), at: 4.05 },
+          { label: tr("lampTurnedOn"), at: 2.35 },
+          { label: tr("lampTurnedOff"), at: 4.05 },
         ]}
       />
     </>
@@ -1418,18 +1457,20 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
 }
 
 function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMatrix; photo: string }) {
-  const tr = usePublicCopy();
+  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
   const save = 4.15;
   const fields: Array<{ label: string; value: string; at: number }> = [
-    { label: tr(FRYER_FIELDS.fat), value: tr(DEMO.fat), at: 2.9 },
-    { label: tr(FRYER_FIELDS.equipment), value: tr(DEMO.fryer), at: 3.15 },
-    { label: tr(FRYER_FIELDS.product), value: tr(DEMO.product), at: 3.4 },
-    { label: tr(FRYER_FIELDS.qualityStart), value: "5", at: 3.65 },
+    { label: tr('fields.fat'), value: DEMO.fat, at: 2.9 },
+    { label: tr('fields.equipment'), value: DEMO.fryer, at: 3.15 },
+    { label: tr('fields.product'), value: DEMO.product, at: 3.4 },
+    { label: tr('fields.qualityStart'), value: "5", at: 3.65 },
   ];
   const widths = ["7.4em", "7em", "7.2em", "6.6em", "6.4em", "6em", "7.2em", "5.6em", "5.6em", "8em"];
   return (
     <>
-      <Paper stampLabel={tr(JOURNALS.fryer)} title={tr(JOURNALS.fryer).toUpperCase()} startedDay={today}>
+      <Paper stampLabel={journal("fryer_oil")} title={journal("fryer_oil").toUpperCase()} startedDay={today}>
         <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "67em", fontSize: "0.8em" }}>
           <colgroup>
             {widths.map((width, index) => (
@@ -1438,42 +1479,42 @@ function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: Q
           </colgroup>
           <thead>
             <tr>
-              {[tr(PDF.fryerStart), tr(PDF.fryerFat), tr(PDF.fryerQualityStart), tr(PDF.fryerEquipment), tr(PDF.fryerProduct), tr(PDF.fryerEnd), tr(PDF.fryerQualityEnd)].map((label) => (
+              {[tr('pdf.fryerStart'), tr('pdf.fryerFat'), tr('pdf.fryerQualityStart'), tr('pdf.fryerEquipment'), tr('pdf.fryerProduct'), tr('pdf.fryerEnd'), tr('pdf.fryerQualityEnd')].map((label) => (
                 <th key={label} rowSpan={2} style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>
                   {label}
                 </th>
               ))}
               <th colSpan={2} style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>
-                {tr(PDF.fryerLeftover)}
+                {tr('pdf.fryerLeftover')}
               </th>
               <th rowSpan={2} style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>
-                {tr(PDF.fryerController)}
+                {tr('pdf.fryerController')}
               </th>
             </tr>
             <tr>
-              <th style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>{tr(PDF.fryerCarry)}</th>
-              <th style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>{tr(PDF.fryerDisposed)}</th>
+              <th style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>{tr('pdf.fryerCarry')}</th>
+              <th style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>{tr('pdf.fryerDisposed')}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td style={cell}>{dateLabel(today, Math.max(1, today.day - 1))} 10:20</td>
-              <td style={cell}>{tr(DEMO.fat)}</td>
-              <td style={cell}>{tr("Отличное")}</td>
-              <td style={cell}>{tr(DEMO.fryer)}</td>
-              <td style={cell}>{tr(DEMO.product)}</td>
+              <td style={cell}>{dateLabel(today, locale, Math.max(1, today.day - 1))} 10:20</td>
+              <td style={cell}>{DEMO.fat}</td>
+              <td style={cell}>{tr("qualityExcellent")}</td>
+              <td style={cell}>{DEMO.fryer}</td>
+              <td style={cell}>{DEMO.product}</td>
               <td style={cell}>21:40</td>
-              <td style={cell}>{tr("Хорошее")}</td>
+              <td style={cell}>{tr("qualityGood")}</td>
               <td style={cell}>2,5</td>
               <td style={cell}>-</td>
-              <td style={cell}>{tr("Повар, Петров О.")}</td>
+              <td style={cell}>Повар, Петров О.</td>
             </tr>
             <tr>
-              <Ink t={t} at={save + 0.4}>{dateLabel(today)}</Ink>
-              <Ink t={t} at={save + 0.45}>{tr(DEMO.fat)}</Ink>
-              <Ink t={t} at={save + 0.5}>{tr("Отличное")}</Ink>
-              <Ink t={t} at={save + 0.55}>{tr(DEMO.fryer)}</Ink>
-              <Ink t={t} at={save + 0.6}>{tr(DEMO.product)}</Ink>
+              <Ink t={t} at={save + 0.4}>{dateLabel(today, locale)}</Ink>
+              <Ink t={t} at={save + 0.45}>{DEMO.fat}</Ink>
+              <Ink t={t} at={save + 0.5}>{tr("qualityExcellent")}</Ink>
+              <Ink t={t} at={save + 0.55}>{DEMO.fryer}</Ink>
+              <Ink t={t} at={save + 0.6}>{DEMO.product}</Ink>
               <td style={cell} />
               <td style={cell} />
               <td style={cell}>-</td>
@@ -1485,13 +1526,13 @@ function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: Q
         </table>
       </Paper>
       <PhoneFrame clock="10:15">
-        <QrHeader title={tr(JOURNALS.fryer)} />
+        <QrHeader title={journal("fryer_oil")} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.85}>
-            <EmployeeList t={t} tapAt={1.35} label={tr(UI.whoFills)} />
+            <EmployeeList t={t} tapAt={1.35} label={tr('ui.whoFills')} />
           </Screen>
           <Screen t={t} from={1.85} to={2.75}>
-            <PinStep t={t} from={1.85} whoLabel={tr(UI.whoFills)} />
+            <PinStep t={t} from={1.85} whoLabel={tr('ui.whoFills')} />
           </Screen>
           <Screen t={t} from={2.75} to={save + 0.25}>
             {fields.map((field) => (
@@ -1501,42 +1542,43 @@ function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: Q
               </div>
             ))}
             <PrimaryButton pressed={press(t, save)} style={{ marginTop: "0.5em", fontSize: "0.82em" }}>
-              {tr(UI.genericSubmit)}
+              {tr('ui.genericSubmit')}
             </PrimaryButton>
           </Screen>
           <Screen t={t} from={save + 0.25} to={7}>
-            <Done t={t} at={save + 0.3} title={tr(UI.entrySaved)}>
-              <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("Сохранено: журнал учета использования фритюрных жиров · ")}{tr(DEMO.cook.name)} · 10:15</p>
+            <Done t={t} at={save + 0.3} title={tr('ui.entrySaved')}>
+              <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("fryer.entrySaved", { journal: journal("fryer_oil"), employee: DEMO.cook.name, time: "10:15" })}</p>
             </Done>
           </Screen>
         </div>
         <Viewfinder t={t} object="fryer" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("Жир и оценка"), tr("Готово"))} />
+      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("oilAndQuality"), tr("done"))} />
     </>
   );
 }
 
 function ForgotScene({ t, today }: { t: number; today: SceneDay }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
   const stages = [
-    { at: 0.6, time: "12:00", prefix: tr(UI.remindSoft), mail: false },
-    { at: 2.3, time: "17:00", prefix: tr(UI.remindWarn), mail: true },
-    { at: 4.0, time: "21:00", prefix: tr(UI.remindUrgent), mail: true },
+    { at: 0.6, time: "12:00", prefix: tr('ui.remindSoft'), mail: false },
+    { at: 2.3, time: "17:00", prefix: tr('ui.remindWarn'), mail: true },
+    { at: 4.0, time: "21:00", prefix: tr('ui.remindUrgent'), mail: true },
   ];
   const current = stages.reduce((acc, stage) => (t >= stage.at ? stage : acc), { at: 0, time: "11:40", prefix: "", mail: false });
   const pulse = (Math.sin(t * Math.PI * 2) + 1) / 2;
   return (
     <>
-      <Paper stampLabel={tr(JOURNALS.cold)} title={tr(JOURNALS.cold).toUpperCase()} startedDay={today}>
+      <Paper stampLabel={journal("cold_equipment_control")} title={journal("cold_equipment_control").toUpperCase()} startedDay={today}>
         <ColdSheet
           t={t}
           day={today}
           codeAt={null}
           missingPulse={pulse}
           rows={[
-            { name: tr(DEMO.fridge), norm: `${tr("от")} ${FRIDGE_NORM.min}°C ${tr("до")} ${FRIDGE_NORM.max}°C`, seed: 1, base: 3.1, spread: 1.6, todayMissing: true },
-            { name: tr("Морозильник №2"), norm: tr("от -18°C до -15°C"), seed: 2, base: -17.6, spread: 1.4, todayMissing: true },
+            { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, todayMissing: true },
+            { name: "Морозильник №2", norm: tr("temperatureRange", { minimum: -18, maximum: -15 }), seed: 2, base: -17.6, spread: 1.4, todayMissing: true },
           ]}
         />
       </Paper>
@@ -1547,23 +1589,23 @@ function ForgotScene({ t, today }: { t: number; today: SceneDay }) {
           </span>
           <span>
             <span style={{ display: "block", fontSize: "0.86em", fontWeight: 700 }}>WeSetup</span>
-            <span style={{ display: "block", fontSize: "0.62em", color: P.muted }}>{tr("бот · руководителю")}</span>
+            <span style={{ display: "block", fontSize: "0.62em", color: P.muted }}>{tr("botForManager")}</span>
           </span>
         </div>
         <div style={{ padding: "0.7em 0.6em", display: "flex", flexDirection: "column", gap: "0.5em", background: "#e7ebf3", height: "100%" }}>
           {stages.map((stage) => {
             if (t < stage.at) return null;
             const p = progress(t, stage.at, 0.35, ease.outBack);
-            const urgent = stage.prefix === tr(UI.remindUrgent);
+            const urgent = stage.prefix === tr('ui.remindUrgent');
             return (
               <div key={stage.time} style={{ opacity: Math.min(1, p * 1.4), transform: `translateY(${(1 - p) * 0.8}em)`, alignSelf: "flex-start", maxWidth: "94%", borderRadius: "0.9em 0.9em 0.9em 0.25em", background: P.card, padding: "0.45em 0.6em", boxShadow: "0 0.3em 0.8em -0.5em rgba(0,0,0,0.35)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.3em", fontSize: "0.7em", fontWeight: 700, color: urgent ? P.badInk : P.ink }}>
                   {urgent ? <AlertTriangle style={{ width: "1em", height: "1em", flex: "none" }} /> : <BellRing style={{ width: "1em", height: "1em", flex: "none" }} />}
-                  {stage.prefix}: {tr(UI.remindBody)}
+                  {stage.prefix}: {tr('ui.remindBody')}
                 </div>
-                <div style={{ fontSize: "0.62em", color: P.ink2, marginTop: "0.25em", lineHeight: 1.3 }}>• {tr(JOURNALS.cold)}</div>
+                <div style={{ fontSize: "0.62em", color: P.ink2, marginTop: "0.25em", lineHeight: 1.3 }}>• {journal("cold_equipment_control")}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.25em", fontSize: "0.56em", color: P.muted }}>
-                  <span>{stage.mail ? tr("и письмо на почту") : tr("только Telegram")}</span>
+                  <span>{tr(stage.mail ? "emailChannel" : "telegramOnlyChannel")}</span>
                   <span style={{ fontVariantNumeric: "tabular-nums" }}>{stage.time}</span>
                 </div>
               </div>
@@ -1574,9 +1616,9 @@ function ForgotScene({ t, today }: { t: number; today: SceneDay }) {
       <Rail
         t={t}
         steps={[
-          { label: tr("12:00 · Напоминание"), at: 0.6 },
-          { label: tr("17:00 · Внимание + почта"), at: 2.3 },
-          { label: tr("21:00 · СРОЧНО"), at: 4.0 },
+          { label: tr("reminderAtNoon"), at: 0.6 },
+          { label: tr("reminderAtFive"), at: 2.3 },
+          { label: tr("reminderAtNine"), at: 4.0 },
         ]}
       />
     </>
@@ -1584,7 +1626,9 @@ function ForgotScene({ t, today }: { t: number; today: SceneDay }) {
 }
 
 function SensorScene({ t, today }: { t: number; today: SceneDay }) {
-  const tr = usePublicCopy();
+  const tr = useTranslations("qrScene");
+  const journal = useTranslations("journals.names");
+  const locale = FORMAT_LOCALES[useSiteLocale()];
   const readings = [
     { at: 0.5, time: "09:00", value: 3.8 },
     { at: 2.0, time: "10:00", value: 4.1 },
@@ -1595,14 +1639,14 @@ function SensorScene({ t, today }: { t: number; today: SceneDay }) {
   const beat = readings.some((reading) => t >= reading.at && t < reading.at + 0.5) ? 1 - progress(t, current.at, 0.5) : 0;
   return (
     <>
-      <Paper stampLabel={tr(JOURNALS.cold)} title={tr(JOURNALS.cold).toUpperCase()} startedDay={today}>
+      <Paper stampLabel={journal("cold_equipment_control")} title={journal("cold_equipment_control").toUpperCase()} startedDay={today}>
         <ColdSheet
           t={t}
           day={today}
           codeAt={0}
           rows={[
-            { name: tr(DEMO.fridge), norm: `${tr("от")} ${FRIDGE_NORM.min}°C ${tr("до")} ${FRIDGE_NORM.max}°C`, seed: 1, base: 3.1, spread: 1.6, today: { at: 0, value: "4", bad: false } },
-            { name: tr(DEMO.vitrine), norm: `${tr("от")} ${FRIDGE_NORM.min}°C ${tr("до")} ${FRIDGE_NORM.max}°C`, seed: 3, base: 3.4, spread: 1.4, today: { at: current.at + 0.35, value: pdfNumber(current.value), bad } },
+            { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: 0, value: "4", bad: false } },
+            { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: { at: current.at + 0.35, value: pdfNumber(current.value, locale), bad } },
           ]}
         />
       </Paper>
@@ -1610,35 +1654,35 @@ function SensorScene({ t, today }: { t: number; today: SceneDay }) {
         <div style={{ fontSize: "5.3cqw", color: "#ffffff", paddingTop: "1.2em" }}>
           <div style={{ position: "relative", margin: "0 auto", width: "78%", aspectRatio: "1 / 1.05", borderRadius: "1.6em", background: "linear-gradient(160deg,#f7f8fc,#d9dcea)", boxShadow: "0 1.6em 3em -1em rgba(0,0,0,0.6)", padding: "1em", color: P.ink }}>
             <div style={{ borderRadius: "0.8em", background: bad ? "#ffe3df" : "#dfe9e3", padding: "0.8em 0.6em", textAlign: "center", boxShadow: "inset 0 0.15em 0.4em rgba(0,0,0,0.15)" }}>
-              <div style={{ fontSize: "2.3em", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: bad ? P.badInk : "#1d3a2a", lineHeight: 1 }}>{formatDecimal(current.value)}°</div>
+              <div style={{ fontSize: "2.3em", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: bad ? P.badInk : "#1d3a2a", lineHeight: 1 }}>{decimalLabel(current.value, locale)}°</div>
               <div style={{ fontSize: "0.7em", marginTop: "0.3em", color: P.ink2, fontVariantNumeric: "tabular-nums" }}>{current.time}</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35em", marginTop: "0.7em", fontSize: "0.72em", fontWeight: 600, color: P.ink2 }}>
               <Wifi style={{ width: "1.1em", height: "1.1em", color: P.indigo }} />
-              {tr("Wi-Fi датчик")}</div>
+              {tr("wifiSensor")}</div>
             {beat > 0 ? (
               <span aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "1.6em", boxShadow: `0 0 0 ${(1 - beat) * 1.2}em rgba(124,245,192,${beat * 0.45})` }} />
             ) : null}
           </div>
-          <div style={{ textAlign: "center", marginTop: "1em", fontSize: "0.8em", fontWeight: 600 }}>{tr(DEMO.vitrine)}</div>
-          <div style={{ textAlign: "center", marginTop: "0.3em", fontSize: "0.66em", color: "rgba(255,255,255,0.65)" }}>{tr("показание раз в час — в журнал, без телефона")}</div>
+          <div style={{ textAlign: "center", marginTop: "1em", fontSize: "0.8em", fontWeight: 600 }}>{DEMO.vitrine}</div>
+          <div style={{ textAlign: "center", marginTop: "0.3em", fontSize: "0.66em", color: "rgba(255,255,255,0.65)" }}>{tr("hourlyReadingWithoutPhone")}</div>
         </div>
       </div>
       <Rail
         t={t}
         steps={[
-          { label: tr("Датчик меряет"), at: 0 },
-          { label: tr("Раз в час — в журнал"), at: 0.85 },
-          { label: tr("Вне нормы — уведомление"), at: 3.9 },
+          { label: tr("sensorMeasures"), at: 0 },
+          { label: tr("hourlyJournalLog"), at: 0.85 },
+          { label: tr("outOfRangeNotification"), at: 3.9 },
         ]}
       />
       {bad ? (
         <Toast
           t={t}
           at={3.95}
-          channel={tr("Telegram · ответственному")}
-          title={tr(UI.deviationTitle)}
-          lines={[`${tr("Оборудование")}: ${tr(DEMO.vitrine)}`, `${tr("Сейчас:")} ${pdfNumber(current.value)}°C`, `${tr("Норма:")} ${tr("от")} ${FRIDGE_NORM.min} ${tr("до")} ${FRIDGE_NORM.max}°C`]}
+          channel={tr("telegramResponsibleChannel")}
+          title={tr('ui.deviationTitle')}
+          lines={[`${tr("equipmentLabel")}: ${DEMO.vitrine}`, `${tr("currentLabel")} ${pdfNumber(current.value, locale)}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
         />
       ) : null}
     </>

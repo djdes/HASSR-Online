@@ -48,8 +48,7 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
-  restoreMenuItems,
-  useRestoreDocument,
+  useRestoreMenuItems,
   useCanManageDocuments,
   JournalTabs,
 } from "@/components/journals/document-list-ui";
@@ -271,7 +270,7 @@ export function GlassControlDocumentsClient(props: Props) {
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
-  const restore = useRestoreDocument();
+  const restoreMenu = useRestoreMenuItems();
   const [creating, setCreating] = useState(false);
   const [editingDocument, setEditingDocument] = useState<DocumentItem | null>(null);
   const createDefaults = useJournalCreateDefaults();
@@ -438,7 +437,7 @@ export function GlassControlDocumentsClient(props: Props) {
                     },
                     // Закрытый документ раньше уходил навсегда: вернуть
                     // его в активные было нечем.
-                    ...restoreMenuItems({ document, siblings: props.documents, restore }),
+                    ...restoreMenu({ document, siblings: props.documents }),
                     ...(document.status === "active"
                       ? [
                           {

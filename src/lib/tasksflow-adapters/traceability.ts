@@ -40,12 +40,12 @@ function buildForm(config: TraceabilityDocumentConfig): TaskFormSchema {
     label: p,
   }));
   const fields: TaskFormField[] = [
-    { type: "select", key: "rawMaterialName", label: "Наименование сырья", required: true, options: rawMaterialOptions.length > 0 ? rawMaterialOptions : [{ value: "", label: "Не выбрано" }] },
+    { type: "select", key: "rawMaterialName", label: "Наименование сырья", required: true, options: rawMaterialOptions.length > 0 ? rawMaterialOptions : [{ value: "", label: "Не выбрано", presentationKey: "fields.traceability.rawMaterialName.options.__empty" }] },
     { type: "text", key: "batchNumber", label: "Номер партии ПФ", required: true, maxLength: 100 },
     { type: "date", key: "packagingDate", label: "Дата фасовки", required: true },
     { type: "text", key: "quantityPieces", label: "Кол-во, шт.", required: false, maxLength: 50 },
     { type: "text", key: "quantityKg", label: "Кол-во, кг", required: false, maxLength: 50 },
-    { type: "select", key: "productName", label: "Наименование ПФ", required: true, options: productOptions.length > 0 ? productOptions : [{ value: "", label: "Не выбрано" }] },
+    { type: "select", key: "productName", label: "Наименование ПФ", required: true, options: productOptions.length > 0 ? productOptions : [{ value: "", label: "Не выбрано", presentationKey: "fields.traceability.productName.options.__empty" }] },
     { type: "text", key: "quantityPacksPieces", label: "Кол-во фасовок, шт.", required: false, maxLength: 50 },
     { type: "text", key: "quantityPacksKg", label: "Кол-во фасовок, кг", required: false, maxLength: 50 },
   ];

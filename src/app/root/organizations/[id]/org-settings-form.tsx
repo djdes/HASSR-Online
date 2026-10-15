@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { organizationError } from "./organization-presentation";
 import { useRouter } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -12,12 +14,12 @@ import { toast } from "sonner";
  * на просьбу клиента «продлите нам месяц» уходил заход на сервер.
  */
 
-const PLANS: Array<{ value: string; label: string }> = [
-  { value: "free", label: "Бесплатный" },
-  { value: "paid", label: "Платный" },
-  { value: "paused", label: "Приостановлен" },
-  { value: "cancelled", label: "Отменён" },
-];
+const PLANS = [
+  { value: "free", label: "plans.free" },
+  { value: "paid", label: "plans.paid" },
+  { value: "paused", label: "plans.paused" },
+  { value: "cancelled", label: "plans.cancelled" },
+] as const;
 
 /** `Date` → `YYYY-MM-DD` для `<input type="date">`. */
 function toDateInput(value: string | null): string {
@@ -37,6 +39,9 @@ export function OrgSettingsForm({
   /** ISO-строка или null. */
   initialSubscriptionEnd: string | null;
 }) {
+  const t = useTranslations("rootOrganizationManagement");
+  const currentCopy = useRef(t);
+  currentCopy.current = t;
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [plan, setPlan] = useState(initialPlan);
@@ -66,12 +71,13 @@ export function OrgSettingsForm({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        toast.error(organizationError(data, currentCopy.current, "settings.failed"));
+        return;
       }
-      toast.success("Сохранено");
+      toast.success(currentCopy.current("settings.saved"));
       router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+    } catch {
+      toast.error(currentCopy.current("settings.failed"));
     } finally {
       setBusy(false);
     }
@@ -81,8 +87,7 @@ export function OrgSettingsForm({
     <div className="grid gap-4 sm:grid-cols-3">
       <label className="space-y-1.5">
         <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Название
-        </span>
+          {t("settings.name")}</span>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
@@ -92,16 +97,16 @@ export function OrgSettingsForm({
 
       <label className="space-y-1.5">
         <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Тариф
-        </span>
+          {t("subscription.plan")}</span>
         <select
           value={plan}
           onChange={(event) => setPlan(event.target.value)}
           className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
         >
+          {!PLANS.some(item => item.value === plan) ? <option value={plan}>{plan}</option> : null}
           {PLANS.map((item) => (
             <option key={item.value} value={item.value}>
-              {item.label}
+              {t(item.label)}
             </option>
           ))}
         </select>
@@ -109,8 +114,7 @@ export function OrgSettingsForm({
 
       <label className="space-y-1.5">
         <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Действует до
-        </span>
+          {t("subscription.until")}</span>
         <input
           type="date"
           value={endsAt}
@@ -118,8 +122,7 @@ export function OrgSettingsForm({
           className="h-10 w-full rounded-xl border border-[#dcdfed] px-3.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
         />
         <span className="block text-[11px] text-[#9b9fb3]">
-          Пусто — бессрочно
-        </span>
+          {t("settings.noExpiry")}</span>
       </label>
 
       <div className="sm:col-span-3">
@@ -134,7 +137,7 @@ export function OrgSettingsForm({
           ) : (
             <Save className="size-4" />
           )}
-          {dirty ? "Сохранить" : "Сохранено"}
+          {dirty ? t("settings.save") : t("settings.saved")}
         </button>
       </div>
     </div>

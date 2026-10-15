@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import { hasRecordedMeasurements } from "@/lib/journal-measurement-attribution";
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { SensorCameraSetting } from "@/components/journals/sensor-camera-setting";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { DocumentActionsBar } from "@/components/journals/document-actions-bar";
 import { useJournalUndo } from "@/lib/journal-undo";
 import {
-  COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
   COLD_EQUIPMENT_PRESETS,
   collectColdEquipmentDeviations,
   isColdEquipmentValueOutOfRange,
@@ -14,9 +16,7 @@ import {
   expandColdEquipmentReadingSlots,
   COLD_EQUIPMENT_STATUSES,
   COLD_EQUIPMENT_STATUS_SHORT,
-  COLD_EQUIPMENT_STATUS_TITLE,
-  COLD_EQUIPMENT_DOCUMENT_TITLE,
-  COLD_EQUIPMENT_LEGAL_BASIS,
+  COLD_EQUIPMENT_REGULATION,
   formatColdEquipmentCell,
   parseColdEquipmentCellInput,
   setColdEquipmentSlotStatus,
@@ -89,9 +89,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { getCleaningGridMonthLabel } from "@/lib/cleaning-document";
-import { pluralRu } from "@/lib/plural-ru";
-import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
+import { formatDate as formatLocalizedDate, formatNumber, type Locale } from "@/i18n/locales";
+import { useCanManageJournalDocument, useDocumentDisplayTitle } from "@/components/journals/journal-header-edit";
 import {
   createColdEquipmentConfigItem,
   coldEquipmentSlotKeys,
@@ -105,10 +104,7 @@ import {
 } from "@/lib/cold-equipment-document";
 import {
   buildDateKeys,
-  getDayNumber,
-  getWeekdayShort,
   isWeekend,
-  toDateKey,
 } from "@/lib/hygiene-document";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { useCopyYesterdayAction } from "@/components/journals/copy-yesterday-button";
@@ -138,10 +134,32 @@ import {
 import { useTodayKey } from "@/lib/use-today-key";
 import { NO_ROW_EMPLOYEE_MESSAGE, useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import {
-  NOT_TODAY_MESSAGE,
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+
+const PRESET_MESSAGE_KEYS = {
+  fridge: { label: "ui.presets.fridge", hint: "ui.presetHints.fridge" },
+  freezer: { label: "ui.presets.freezer", hint: "ui.presetHints.freezer" },
+  poultry: { label: "ui.presets.poultry", hint: "ui.presetHints.poultry" },
+  drinks: { label: "ui.presets.drinks", hint: "ui.presetHints.drinks" },
+  butter: { label: "ui.presets.butter", hint: "ui.presetHints.butter" },
+  "fridge-wide": { label: "ui.presets.fridgeWide", hint: "ui.presetHints.fridgeWide" },
+  caviar: { label: "ui.presets.caviar", hint: "ui.presetHints.caviar" },
+  display: { label: "ui.presets.display", hint: "ui.presetHints.display" },
+  custom: { label: "ui.presets.custom", hint: "ui.presetHints.custom" },
+} as const;
+
+const READING_MODE_MESSAGE_KEYS = {
+  once: "ui.readingModes.once",
+  twice: "ui.readingModes.twice",
+  thrice: "ui.readingModes.thrice",
+} as const;
+
+const STATUS_MESSAGE_KEYS = {
+  service: { label: "ui.statusService", short: "ui.statusServiceShort" },
+  repair: { label: "ui.statusRepair", short: "ui.statusRepairShort" },
+} as const;
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
  * `cleaning-document-client.tsx` / `hygiene-document-client.tsx`).
@@ -192,11 +210,51 @@ type Props = {
   useV2?: boolean;
 };
 
-function formatRange(min: number | null, max: number | null) {
-  if (min == null && max == null) return "Норма не задана";
-  if (min != null && max != null) return `от ${min}°C до ${max}°C`;
-  if (min != null) return `от ${min}°C`;
-  return `до ${max}°C`;
+type ColdEquipmentTranslator = ReturnType<typeof useTranslations<"coldEquipment">>;
+
+function formatRange(
+  min: number | null,
+  max: number | null,
+  t: ColdEquipmentTranslator,
+) {
+  if (min == null && max == null) return t("ui.normNotSet");
+  if (min != null && max != null) return t("ui.rangeBetween", { minimum: min, maximum: max });
+  if (min != null) return t("ui.rangeMinimum", { minimum: min });
+  return t("ui.rangeMaximum", { maximum: max ?? 0 });
+}
+
+function formatColdCellDisplay(
+  value: number | null | undefined,
+  status: ColdEquipmentStatus | null | undefined,
+  locale: Locale,
+  t: ColdEquipmentTranslator,
+) {
+  if (status) return t(STATUS_MESSAGE_KEYS[status].short);
+  return value == null ? "—" : formatNumber(locale, value);
+}
+
+function dateOnlyValue(dateKey: string) {
+  const [year, month, day] = dateKey.slice(0, 10).split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 12));
+}
+
+function formatGridDay(dateKey: string, locale: Locale) {
+  const date = dateOnlyValue(dateKey);
+  return {
+    day: formatNumber(locale, date.getUTCDate()),
+    weekday: formatLocalizedDate(locale, date, "UTC", { weekday: "short" }),
+  };
+}
+
+function formatMonthRange(dateFrom: string, dateTo: string, locale: Locale) {
+  const options: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
+  const from = dateOnlyValue(dateFrom);
+  const to = dateOnlyValue(dateTo);
+  const formatter = (date: Date) => formatLocalizedDate(locale, date, "UTC", options);
+  if (from.getUTCFullYear() === to.getUTCFullYear() && from.getUTCMonth() === to.getUTCMonth()) {
+    return formatter(from);
+  }
+  return `${formatter(from)} — ${formatter(to)}`;
 }
 
 function buildResponsibleCodes(
@@ -208,10 +266,10 @@ function buildResponsibleCodes(
   const usedIds = new Set<string>();
 
   rows.forEach((row) => {
-    if (row.employeeId) usedIds.add(row.employeeId);
+    if (row.employeeId && hasRecordedMeasurements(row.data)) usedIds.add(row.employeeId);
   });
 
-  if (defaultResponsibleUserId) usedIds.add(defaultResponsibleUserId);
+  if (defaultResponsibleUserId && usedIds.size > 0) usedIds.add(defaultResponsibleUserId);
 
   Array.from(usedIds).forEach((employeeId, index) => {
     codeMap[employeeId] = `С${index + 1}`;
@@ -325,9 +383,12 @@ function EquipmentDialog({
     nextMode: ColdEquipmentReadingModeId
   ) => number;
 }) {
+  const t = useTranslations("coldEquipment");
+  const common = useTranslations("common");
+  const locale = useLocale() as Locale;
   const [name, setName] = useState(initialItem?.name || "");
-  const [min, setMin] = useState(initialItem?.min?.toString() || "");
-  const [max, setMax] = useState(initialItem?.max?.toString() || "");
+  const [min, setMin] = useState(initialItem?.min == null ? "" : formatNumber(locale, initialItem.min));
+  const [max, setMax] = useState(initialItem?.max == null ? "" : formatNumber(locale, initialItem.max));
   const [presetId, setPresetId] = useState<string>("fridge");
   const [readingMode, setReadingMode] = useState<ColdEquipmentReadingModeId>(
     initialItem?.readingMode ?? "once",
@@ -376,8 +437,8 @@ function EquipmentDialog({
   function pickFromDirectory(option: DirectoryOption) {
     setLinkedEquipmentId(option.id);
     setName(option.name);
-    setMin(option.min == null ? "" : String(option.min));
-    setMax(option.max == null ? "" : String(option.max));
+    setMin(option.min == null ? "" : formatNumber(locale, option.min));
+    setMax(option.max == null ? "" : formatNumber(locale, option.max));
     const matched = COLD_EQUIPMENT_PRESETS.find(
       (preset) =>
         preset.id !== "custom" &&
@@ -390,8 +451,8 @@ function EquipmentDialog({
   useEffect(() => {
     if (!open) return;
     setName(initialItem?.name || "");
-    setMin(initialItem?.min?.toString() || "");
-    setMax(initialItem?.max?.toString() || "");
+    setMin(initialItem?.min == null ? "" : formatNumber(locale, initialItem.min));
+    setMax(initialItem?.max == null ? "" : formatNumber(locale, initialItem.max));
     setReadingMode(initialItem?.readingMode ?? "once");
     setLinkedEquipmentId(initialItem?.sourceEquipmentId ?? null);
     // При правке подсвечиваем тот пресет, чьи нормы совпадают с
@@ -409,18 +470,18 @@ function EquipmentDialog({
     // строка уходила без нормы.
     if (!initialItem) {
       const fridge = COLD_EQUIPMENT_PRESETS.find((preset) => preset.id === "fridge");
-      setMin(fridge?.min == null ? "" : String(fridge.min));
-      setMax(fridge?.max == null ? "" : String(fridge.max));
+      setMin(fridge?.min == null ? "" : formatNumber(locale, fridge.min));
+      setMax(fridge?.max == null ? "" : formatNumber(locale, fridge.max));
     }
-  }, [initialItem, open]);
+  }, [initialItem, locale, open]);
 
   /** Выбор типа сразу подставляет норму — вспоминать цифры не нужно. */
   function applyPreset(id: string) {
     setPresetId(id);
     const preset = COLD_EQUIPMENT_PRESETS.find((item) => item.id === id);
     if (!preset || preset.id === "custom") return;
-    setMin(preset.min === null ? "" : String(preset.min));
-    setMax(preset.max === null ? "" : String(preset.max));
+    setMin(preset.min === null ? "" : formatNumber(locale, preset.min));
+    setMax(preset.max === null ? "" : formatNumber(locale, preset.max));
   }
 
   async function handleSave() {
@@ -431,19 +492,18 @@ function EquipmentDialog({
       if (lostValues > 0) {
         const previousMode = initialItem.readingMode ?? "once";
         const confirmed = await confirmAsync({
-          title: "Сократить число замеров в день?",
-          description:
-            "Лишние замеры будут удалены из журнала за весь период документа.",
+          title: t("dialogs.changeFrequencyTitle"),
+          description: t("dialogs.changeFrequencyDescription"),
           variant: "danger",
-          confirmLabel: "Сократить и удалить замеры",
+          confirmLabel: t("dialogs.changeFrequencyConfirm"),
           bullets: [
-            { label: `Будет удалено замеров: ${lostValues}`, tone: "warn" },
+            { label: t("dialogs.lostMeasurements", { count: lostValues }), tone: "warn" },
             {
-              label: `Строка: ${initialItem.name || "без названия"}`,
+              label: t("dialogs.rowName", { name: initialItem.name || t("dialogs.unnamed") }),
               tone: "info",
             },
             {
-              label: "Отмена оставит прежний режим замеров",
+              label: t("dialogs.frequencyCancel"),
               tone: "default",
             },
           ],
@@ -472,12 +532,12 @@ function EquipmentDialog({
       setLinkedEquipmentId(saved.sourceEquipmentId ?? null);
       if (gotLinkedNow && initialItem) {
         // Строка только что попала в справочник — покажем QR, не закрывая окно.
-        toast.success("Сохранено. QR-код готов — его можно распечатать ниже.");
+        toast.success(t("toasts.equipmentSavedQrReady"));
         return;
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить оборудование"));
+      toast.error(humanizeFetchError(error, t("errors.saveEquipment")));
     } finally {
       setIsSubmitting(false);
     }
@@ -500,7 +560,7 @@ function EquipmentDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            {initialItem ? "Редактирование оборудования" : "Добавление оборудования"}
+            {initialItem ? t("dialogs.equipmentEditTitle") : t("dialogs.equipmentAddTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -512,14 +572,13 @@ function EquipmentDialog({
           {!initialItem ? (
             <div className="space-y-3">
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                Выбрать из справочника
+                {t("dialogs.directoryTitle")}
               </Label>
               {directoryLoading ? (
-                <p className="text-[12.5px] text-[#6f7282]">Загружаем справочник…</p>
+                <p className="text-[12.5px] text-[#6f7282]">{t("dialogs.directoryLoading")}</p>
               ) : directoryOptions.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[12.5px] leading-[1.5] text-[#6f7282]">
-                  В справочнике «Оборудование» нет холодильников, которых ещё
-                  нет в этом журнале. Заведите новую единицу ниже.
+                  {t("dialogs.directoryEmpty")}
                 </p>
               ) : (
                 <div className="max-h-[220px] space-y-1.5 overflow-y-auto">
@@ -541,12 +600,12 @@ function EquipmentDialog({
                         </span>
                         <span className="block text-[12px] text-[#6f7282]">
                           {option.areaName ? `${option.areaName} · ` : ""}
-                          {formatRange(option.min, option.max) || "норма не задана"}
+                          {formatRange(option.min, option.max, t)}
                         </span>
                       </span>
                       {linkedEquipmentId === option.id ? (
                         <span className="shrink-0 text-[12px] font-medium text-[#3848c7]">
-                          Выбрано
+                          {t("ui.directorySelected")}
                         </span>
                       ) : null}
                     </button>
@@ -554,27 +613,27 @@ function EquipmentDialog({
                 </div>
               )}
               <p className="text-[12px] leading-[1.5] text-[#6f7282]">
-                Или заведите новую единицу — заполните поля ниже.
+                {t("ui.directoryPrompt")}
               </p>
             </div>
           ) : null}
 
           <div className="space-y-3">
             <Label htmlFor="equipment-name" className="text-[13px] font-medium text-[#3c4053]">
-              Наименование
+              {t("ui.equipmentName")}
             </Label>
             <Input
               id="equipment-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Например: Холодильная камера"
+              placeholder={t("ui.equipmentPlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
 
           <div className="space-y-3">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Сколько раз снимаются показания
+              {t("ui.frequencyLabel")}
             </Label>
             <div className="flex flex-wrap gap-2">
               {COLD_EQUIPMENT_READING_MODES.map((mode) => (
@@ -589,7 +648,7 @@ function EquipmentDialog({
                       : "border-[#dfe1ec] bg-white text-[#3c4053] hover:bg-[#fafbff]",
                   )}
                 >
-                  {mode.label}
+                  {t(READING_MODE_MESSAGE_KEYS[mode.id])}
                 </button>
               ))}
             </div>
@@ -600,7 +659,7 @@ function EquipmentDialog({
               СанПиН он наизусть не помнит. */}
           <div className="space-y-3">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Данное оборудование
+              {t("ui.presetHeading")}
             </Label>
             <div className="space-y-1.5">
               {COLD_EQUIPMENT_PRESETS.map((preset) => (
@@ -622,12 +681,10 @@ function EquipmentDialog({
                   />
                   <span className="min-w-0">
                     <span className="block text-[13.5px] text-[#0b1024]">
-                      {preset.label}
+                      {t(PRESET_MESSAGE_KEYS[preset.id as keyof typeof PRESET_MESSAGE_KEYS].label)}
                     </span>
                     <span className="block text-[12px] text-[#6f7282]">
-                      {preset.id === "custom"
-                        ? preset.hint
-                        : `температура должна быть ${preset.hint}`}
+                      {t(PRESET_MESSAGE_KEYS[preset.id as keyof typeof PRESET_MESSAGE_KEYS].hint)}
                     </span>
                   </span>
                 </label>
@@ -638,7 +695,7 @@ function EquipmentDialog({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-3">
               <Label htmlFor="equipment-min" className="text-[13px] font-medium text-[#3c4053]">
-                Температура от
+                {t("ui.temperatureFrom")}
               </Label>
               <Input
                 id="equipment-min"
@@ -650,7 +707,7 @@ function EquipmentDialog({
             </div>
             <div className="space-y-3">
               <Label htmlFor="equipment-max" className="text-[13px] font-medium text-[#3c4053]">
-                Температура до
+                {t("ui.temperatureTo")}
               </Label>
               <Input
                 id="equipment-max"
@@ -666,12 +723,11 @@ function EquipmentDialog({
             <QrFillPreview
               kind="equipment"
               id={linkedEquipmentId}
-              emptyHint="QR появится после сохранения: строка будет добавлена в справочник «Оборудование» и получит код, по которому сотрудник вносит температуру с телефона."
+              emptyHint={t("ui.qrExistingHint")}
             />
           ) : (
             <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[12.5px] leading-[1.5] text-[#6f7282]">
-              После добавления строка попадёт в справочник «Оборудование» и получит
-              QR-код для заполнения с телефона — откройте её по клику на название.
+              {t("ui.qrNewHint")}
             </p>
           )}
 
@@ -685,7 +741,7 @@ function EquipmentDialog({
                   disabled={isSubmitting}
                   className="h-9 rounded-xl border-[#ffd7d3] px-3.5 text-[13.5px] text-[#ff3b30] hover:bg-[#fff3f2]"
                 >
-                  Удалить строку
+                  {common("delete")}
                 </Button>
               ) : null}
             </div>
@@ -696,7 +752,7 @@ function EquipmentDialog({
               disabled={isSubmitting || name.trim() === ""}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Сохранение..." : initialItem ? "Сохранить" : "Добавить"}
+              {isSubmitting ? common("saving") : initialItem ? common("save") : t("ui.addEquipment")}
             </Button>
           </div>
         </div>
@@ -735,6 +791,8 @@ function JournalSettingsDialog({
   }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("coldEquipment");
+  const common = useTranslations("common");
 
   const [name, setName] = useState(title);
   // Первого сотрудника из списка не подставляем: в настройках видно ровно
@@ -789,8 +847,8 @@ function JournalSettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки документа"
-        description="Название документа, ответственный сотрудник и режим заполнения."
+        title={t("ui.docTitle")}
+        description={t("ui.docSubtitle")}
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -801,7 +859,7 @@ function JournalSettingsDialog({
             htmlFor="cold-journal-title-v2"
             className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
           >
-            Название документа
+            {t("ui.documentName")}
           </Label>
           <Input
             id="cold-journal-title-v2"
@@ -815,30 +873,30 @@ function JournalSettingsDialog({
             htmlFor="cold-journal-periodicity-v2"
             className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
           >
-            Периодичность контроля
+            {t("ui.controlPeriodicity")}
           </Label>
           <Textarea
             id="cold-journal-periodicity-v2"
             value={periodicity}
             maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
             onChange={(event) => setPeriodicity(event.target.value)}
-            placeholder="Строка «Периодичность контроля» в шапке журнала"
+            placeholder={t("ui.periodicityPlaceholder")}
             className="min-h-[72px] rounded-xl border-[#dcdfed] px-3.5 py-2 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
           <p className="text-[12px] leading-[1.45] text-[#6f7282]">
-            Печатается в шапке этого документа и в PDF. Пусто — строка не печатается.
+            {t("ui.periodicityHint")}
           </p>
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного за снятие показателей
+            {t("ui.responsiblePosition")}
           </Label>
           <Select
             value={position}
             onValueChange={cascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={common("select")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={employees} />
@@ -847,7 +905,7 @@ function JournalSettingsDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
+            {t("ui.employee")}
           </Label>
           <Select
             value={userId}
@@ -856,7 +914,7 @@ function JournalSettingsDialog({
             onOpenChange={cascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={common("select")} />
             </SelectTrigger>
             <SelectContent>
               {(position ? cascade.candidates : employees).map((employee) => (
@@ -873,8 +931,9 @@ function JournalSettingsDialog({
             checked={skipWeekends}
             onCheckedChange={(checked) => setSkipWeekends(checked === true)}
           />
-          <span className="text-[14px] text-[#0b1024]">Не заполнять в выходные дни</span>
+          <span className="text-[14px] text-[#0b1024]">{t("ui.skipWeekends")}</span>
         </label>
+        <SensorCameraSetting code="cold_equipment_control" />
       </JournalSettingsModal>
     );
   }
@@ -884,14 +943,14 @@ function JournalSettingsDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("ui.docTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-8 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="journal-title" className="text-[13px] font-medium text-[#3c4053]">
-              Название документа
+              {t("ui.documentName")}
             </Label>
             <Input
               id="journal-title"
@@ -903,28 +962,28 @@ function JournalSettingsDialog({
 
           <div className="space-y-3">
             <Label htmlFor="cold-journal-periodicity-v1" className="text-[13px] font-medium text-[#3c4053]">
-              Периодичность контроля
+              {t("ui.controlPeriodicity")}
             </Label>
             <Textarea
               id="cold-journal-periodicity-v1"
               value={periodicity}
               maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
               onChange={(event) => setPeriodicity(event.target.value)}
-              placeholder="Строка «Периодичность контроля» в шапке журнала"
+              placeholder={t("ui.periodicityPlaceholder")}
               className="min-h-[96px] rounded-[24px] border-[#dfe1ec] px-8 py-4 text-[18px]"
             />
           </div>
 
           <div className="space-y-3">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Должность ответственного за снятие показателей
+              {t("ui.responsiblePosition")}
             </Label>
             <Select
               value={position}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-22 rounded-[24px] border-[#dfe1ec] bg-[#fafbff] px-8 text-[15px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={t("ui.selectPosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={employees} />
@@ -933,7 +992,7 @@ function JournalSettingsDialog({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("ui.employee")}</Label>
             <Select
               value={userId}
               onValueChange={cascade.handleEmployeeChange}
@@ -941,7 +1000,7 @@ function JournalSettingsDialog({
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-22 rounded-[24px] border-[#dfe1ec] bg-[#fafbff] px-8 text-[15px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={t("ui.selectEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(position ? cascade.candidates : employees).map((employee) => (
@@ -963,7 +1022,7 @@ function JournalSettingsDialog({
               htmlFor="skip-weekends"
               className="cursor-pointer text-[15px] font-normal text-black"
             >
-              Не заполнять в выходные дни
+              {t("ui.skipWeekends")}
             </Label>
           </div>
 
@@ -974,10 +1033,11 @@ function JournalSettingsDialog({
               disabled={isSubmitting}
               className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
+        <SensorCameraSetting code="cold_equipment_control" />
       </DialogContent>
     </Dialog>
   );
@@ -1013,7 +1073,11 @@ function ColdTemperatureCell({
   /** Фото замера из QR-формы — миниатюра рядом с полем, открывается крупно. */
   photo?: ReadingPhotoRef | null;
 }) {
-  const stored = value === "" || value == null ? "" : String(value);
+  const t = useTranslations("coldEquipment");
+  const locale = useLocale() as Locale;
+  const stored = value === "" || value == null
+    ? ""
+    : formatNumber(locale, Number(value), { maximumFractionDigits: 2 });
   const [draft, setDraft] = useState(stored);
 
   // Значение поменялось снаружи (автозаполнение, отмена, синк) — подхватываем.
@@ -1025,15 +1089,15 @@ function ColdTemperatureCell({
     return (
       <div className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-3 py-1.5" data-testid="cold-cell-status">
         <span className="min-w-0 truncate text-[15px] text-[#3848c7]">
-          <b className="font-semibold">{COLD_EQUIPMENT_STATUS_SHORT[status]}</b>
-          <span className="text-[13px]"> · {COLD_EQUIPMENT_STATUS_TITLE[status]}</span>
+          <b className="font-semibold">{t(STATUS_MESSAGE_KEYS[status].short)}</b>
+          <span className="text-[13px]"> · {t(STATUS_MESSAGE_KEYS[status].label)}</span>
         </span>
         <button
           type="button"
           onClick={() => onCommit("")}
           className="shrink-0 rounded-full px-2.5 py-1 text-[13px] font-medium text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
-          Снять
+          {t("ui.clearStatus")}
         </button>
       </div>
     );
@@ -1092,18 +1156,18 @@ function ColdTemperatureCell({
           />
           {/* Вместо температуры — «обсл» (обслуживание) или «рем» (ремонт). */}
           <ResponsiveMenu
-            title="Вместо температуры"
+            title={t("ui.statusTitle")}
             items={COLD_EQUIPMENT_STATUSES.map((option) => ({
               key: option,
-              label: `${COLD_EQUIPMENT_STATUS_TITLE[option]} — «${COLD_EQUIPMENT_STATUS_SHORT[option]}»`,
+              label: `${t(STATUS_MESSAGE_KEYS[option].label)} (“${t(STATUS_MESSAGE_KEYS[option].short)}”)`,
               icon: <Wrench className="size-4 text-[#6f7282]" />,
               onSelect: () => onCommit(COLD_EQUIPMENT_STATUS_SHORT[option]),
             }))}
             trigger={
               <button
                 type="button"
-                aria-label="Обслуживание или ремонт вместо температуры"
-                title="Обслуживание («обсл») или ремонт («рем») вместо температуры"
+                aria-label={t("ui.statusMenuLabel")}
+                title={t("ui.statusMenuTitle")}
                 className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               >
                 <Wrench className="size-4" />
@@ -1133,8 +1197,14 @@ export function ColdEquipmentDocumentClient({
   viewer,
   useV2 = false,
 }: Props) {
+  const t = useTranslations("coldEquipment");
+  const journalT = useTranslations("journals");
+  const locale = useLocale() as Locale;
+  const { controls: journalControls } = useJournalControls();
+  const scopeT = useTranslations("journalWidgets.headerEdit");
   const router = useRouter();
   const [documentTitle, setDocumentTitle] = useState(title);
+  const displayedDocumentTitle = useDocumentDisplayTitle(documentTitle);
   const viewerId = useRosterViewerId(employees);
   // «Сегодня» считаем после mount (см. useTodayKey): new Date() в
   // рендере давал hydration mismatch и подсветку не того дня.
@@ -1151,7 +1221,7 @@ export function ColdEquipmentDocumentClient({
   /** Причина, по которой день закрыт для зрителя, или null. */
   function dayLockReason(dateKey: string): string | null {
     if (viewerHasFullAccess || !viewer) return null;
-    if (todayKey !== "" && dateKey !== todayKey) return NOT_TODAY_MESSAGE;
+    if (todayKey !== "" && dateKey !== todayKey) return scopeT("notToday");
     return null;
   }
   const [rows, setRows] = useState<EntryRow[]>(initialEntries);
@@ -1204,7 +1274,7 @@ export function ColdEquipmentDocumentClient({
     ).catch(() => null);
 
     if (!response?.ok) {
-      toast.error("Не удалось сохранить комментарий");
+      toast.error(t("errors.saveComment"));
       return;
     }
 
@@ -1429,7 +1499,7 @@ export function ColdEquipmentDocumentClient({
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить документ");
+      throw new Error(result?.error || t("errors.saveDocument"));
     }
 
     return result;
@@ -1444,7 +1514,7 @@ export function ColdEquipmentDocumentClient({
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось синхронизировать строки");
+      throw new Error(result?.error || t("errors.syncRows"));
     }
   }
 
@@ -1473,7 +1543,7 @@ export function ColdEquipmentDocumentClient({
       router.refresh();
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сменить ответственного")
+        humanizeFetchError(error, t("errors.changeResponsible"))
       );
     } finally {
       setIsSwitching(false);
@@ -1493,7 +1563,7 @@ export function ColdEquipmentDocumentClient({
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.item) {
-      throw new Error(result?.error || "Не удалось сохранить оборудование");
+      throw new Error(result?.error || t("errors.saveEquipment"));
     }
     const saved = result.item as ColdEquipmentConfigItem;
     setEditingEquipment((current) => (current ? saved : current));
@@ -1518,13 +1588,13 @@ export function ColdEquipmentDocumentClient({
       const result = await response.json().catch(() => null);
       const equipmentIds: string[] = Array.isArray(result?.equipmentIds) ? result.equipmentIds : [];
       if (!response.ok || equipmentIds.length === 0) {
-        throw new Error(result?.error || "Не удалось подготовить QR-коды");
+        throw new Error(result?.error || t("errors.prepareQr"));
       }
       router.push(
         `/settings/qr-posters?kind=equipment&layout=sheet&ids=${encodeURIComponent(equipmentIds.join(","))}`
       );
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось подготовить QR-коды"));
+      toast.error(humanizeFetchError(error, t("errors.prepareQr")));
     } finally {
       setIsPreparingQr(false);
     }
@@ -1549,7 +1619,7 @@ export function ColdEquipmentDocumentClient({
     const doomed = config.equipment.find((item) => item.id === itemId);
     const nextEquipment = config.equipment.filter((item) => item.id !== itemId);
     if (nextEquipment.length === 0) {
-      toast.error("В журнале должна остаться хотя бы одна строка оборудования.");
+      toast.error(t("errors.keepEquipment"));
       return false;
     }
 
@@ -1559,16 +1629,15 @@ export function ColdEquipmentDocumentClient({
       coldEquipmentSlotKeys(itemId, doomed?.readingMode)
     );
     const confirmed = await confirmAsync({
-      title: `Удалить строку «${doomed?.name || "без названия"}»?`,
-      description:
-        "Оборудование исчезнет из журнала вместе со всеми замерами температуры за весь период.",
+      title: t("dialogs.deleteOneTitle", { name: doomed?.name || t("dialogs.unnamed") }),
+      description: t("dialogs.deleteEquipmentDescription"),
       variant: "danger",
-      confirmLabel: "Удалить строку",
+      confirmLabel: t("dialogs.deleteOneConfirm"),
       bullets: [
         lostValues > 0
-          ? { label: `Будет удалено замеров: ${lostValues}`, tone: "warn" as const }
-          : { label: "Замеров по этой строке ещё нет", tone: "info" as const },
-        { label: `Останется строк: ${nextEquipment.length}`, tone: "default" as const },
+          ? { label: t("dialogs.lostMeasurements", { count: lostValues }), tone: "warn" as const }
+          : { label: t("dialogs.noRowMeasurements"), tone: "info" as const },
+        { label: t("dialogs.remainingRows", { count: nextEquipment.length }), tone: "default" as const },
       ],
     });
     if (!confirmed) return false;
@@ -1586,13 +1655,13 @@ export function ColdEquipmentDocumentClient({
       router.refresh();
       toast.success(
         lostValues > 0
-          ? `Строка удалена. Удалено замеров: ${lostValues}`
-          : "Строка удалена"
+          ? t("toasts.rowDeletedWithMeasurements", { count: lostValues })
+          : t("toasts.rowDeleted")
       );
       return true;
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось удалить строку")
+        humanizeFetchError(error, t("errors.deleteRow"))
       );
       return false;
     } finally {
@@ -1607,7 +1676,7 @@ export function ColdEquipmentDocumentClient({
       (item) => !selectedEquipmentIds.includes(item.id)
     );
     if (nextEquipment.length === 0) {
-      toast.error("В журнале должна остаться хотя бы одна строка оборудования.");
+      toast.error(t("errors.keepEquipment"));
       return;
     }
 
@@ -1618,17 +1687,16 @@ export function ColdEquipmentDocumentClient({
         .flatMap((item) => coldEquipmentSlotKeys(item.id, item.readingMode))
     );
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные строки?",
-      description:
-        "Оборудование исчезнет из журнала вместе со всеми замерами температуры за весь период.",
+      title: t("dialogs.deleteManyTitle"),
+      description: t("dialogs.deleteEquipmentDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: t("dialogs.deleteManyConfirm"),
       bullets: [
-        { label: `Строк будет удалено: ${selectedEquipmentIds.length}`, tone: "warn" },
+        { label: t("dialogs.rowsToDelete", { count: selectedEquipmentIds.length }), tone: "warn" },
         lostValues > 0
-          ? { label: `Будет удалено замеров: ${lostValues}`, tone: "warn" as const }
-          : { label: "Замеров по этим строкам ещё нет", tone: "info" as const },
-        { label: `Останется строк: ${nextEquipment.length}`, tone: "default" },
+          ? { label: t("dialogs.lostMeasurements", { count: lostValues }), tone: "warn" as const }
+          : { label: t("dialogs.noSelectedMeasurements"), tone: "info" as const },
+        { label: t("dialogs.remainingRows", { count: nextEquipment.length }), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -1645,11 +1713,11 @@ export function ColdEquipmentDocumentClient({
       setSelectedEquipmentIds([]);
       router.refresh();
       toast.success(
-        `Удалено строк: ${selectedEquipmentIds.length}; замеров: ${lostValues}`
+        t("toasts.deletedRows", { rows: selectedEquipmentIds.length, measurements: lostValues })
       );
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось удалить выбранные строки")
+        humanizeFetchError(error, t("errors.deleteSelected"))
       );
     } finally {
       setIsDeleting(false);
@@ -1674,7 +1742,7 @@ export function ColdEquipmentDocumentClient({
 
         const result = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new Error(result?.error || "Не удалось применить автозаполнение");
+          throw new Error(result?.error || t("errors.applyAutofill"));
         }
       }
 
@@ -1682,7 +1750,7 @@ export function ColdEquipmentDocumentClient({
     } catch (error) {
       setCheckedAutoFill(!value);
       toast.error(
-        humanizeFetchError(error, "Ошибка обновления автозаполнения")
+        humanizeFetchError(error, t("errors.autofillUpdate"))
       );
     } finally {
       setIsSwitching(false);
@@ -1776,7 +1844,7 @@ export function ColdEquipmentDocumentClient({
 
     if (submit.status === "queued") {
       toast.info(
-        "Нет сети — запись сохранена локально, отправлю как только появится интернет."
+        t("errors.offlineSaved")
       );
       // Optimistic: обновляем UI как будто успешно сохранили.
       setRows((currentRows) => {
@@ -1799,7 +1867,7 @@ export function ColdEquipmentDocumentClient({
     const response = submit.response;
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.entry) {
-      const message = result?.error || "Не удалось сохранить значение";
+      const message = result?.error || t("errors.saveValue");
       if (options?.silent) throw new Error(message);
       toast.error(message);
       return;
@@ -1852,25 +1920,25 @@ export function ColdEquipmentDocumentClient({
     status === "active" ? (
       <div className={DOC_ADD_ROW_IN_SHEET_CLASS}>
         <div className="flex items-stretch overflow-hidden rounded-lg">
-          <Button
-            type="button"
-            onClick={() => {
+         <Button
+           type="button"
+           onClick={() => {
               setEditingEquipment(null);
               setEquipmentDialogOpen(true);
             }}
-            title="Добавить единицу холодильного или морозильного оборудования"
+            title={t("actions.addEquipmentTitle")}
             className="h-11 gap-2 rounded-none rounded-l-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
           >
             <Plus className="size-5" strokeWidth={2.5} />
-            Добавить
+            {t("ui.addEquipment")}
           </Button>
-          <ResponsiveMenu
-            title="Добавить"
+         <ResponsiveMenu
+            title={t("ui.addEquipment")}
             align="start"
             items={[
               {
                 key: "add-equipment",
-                label: "Добавить холодильник или камеру",
+                label: t("actions.addEquipmentTitle"),
                 icon: <Plus className="size-4 text-[#6f7282]" />,
                 onSelect: () => {
                   setEditingEquipment(null);
@@ -1879,7 +1947,7 @@ export function ColdEquipmentDocumentClient({
               },
               {
                 key: "add-responsible",
-                label: "Добавить ответственного",
+                label: t("ui.addResponsible"),
                 icon: <UserPlus className="size-4 text-[#6f7282]" />,
                 onSelect: () => setSettingsOpen(true),
               },
@@ -1887,7 +1955,7 @@ export function ColdEquipmentDocumentClient({
             trigger={
               <Button
                 type="button"
-                aria-label="Что добавить"
+                aria-label={t("ui.addMenuLabel")}
                 className="h-11 w-11 rounded-none rounded-r-lg border-l border-white/25 bg-[#5566f6] px-0 text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
               >
                 <ChevronDown className="size-5" strokeWidth={2.5} />
@@ -1905,18 +1973,18 @@ export function ColdEquipmentDocumentClient({
         onClear={() => setSelectedEquipmentIds([])}
         onDelete={handleDeleteSelectedEquipment}
         deleting={isDeleting}
-        hint="Оборудование будет удалено вместе с замерами температуры"
+        hint={t("ui.selectionHint")}
       >
         <Button
           type="button"
           variant="outline"
           onClick={() => void handlePrintSelectedQr()}
           disabled={isPreparingQr || isDeleting}
-          title="Распечатать наклейки с QR-кодом для выбранных строк — все на одном листе A4"
+          title={t("actions.printSelectedLabels")}
           className="h-10 gap-1.5 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[14px] font-semibold text-[#0b1024] shadow-none transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <QrCode className="size-4 text-[#5566f6]" />
-          {isPreparingQr ? "Готовим…" : "QR-коды"}
+          {isPreparingQr ? t("toasts.preparing") : t("toasts.qrCodes")}
         </Button>
       </JournalSelectionBar>
     ) : null;
@@ -1929,7 +1997,7 @@ export function ColdEquipmentDocumentClient({
         <DocumentActionsBar
           backHref="/journals/cold_equipment_control"
           documentId={documentId}
-          heading={<h1 className={DOC_HEADING_CLASS}>{documentTitle}</h1>}
+          heading={<h1 className={DOC_HEADING_CLASS}>{displayedDocumentTitle}</h1>}
           onSettings={status === "active" ? () => setSettingsOpen(true) : undefined}
           undo={{
             canUndo: undoStack.canUndo,
@@ -1943,24 +2011,23 @@ export function ColdEquipmentDocumentClient({
               ? [
                   {
                     key: "copy-yesterday",
-                    label: "Скопировать вчерашнее",
+                  label: t("actions.copyYesterday"),
                     icon: <Copy className="size-4" />,
-                    title:
-                      "Создать сегодняшние строки по вчерашним значениям — удобно, когда ничего не поменялось.",
+                    title: t("actions.copyYesterdayHint"),
                     onSelect: () => void copyYesterday.run(false),
                     disabled: copyYesterday.busy,
                   },
                   {
                     // Лист A4 с QR на каждый холодильник этого бланка.
                     key: "qr-posters",
-                    label: "QR-плакаты",
+                    label: t("actions.qrPosters"),
                     icon: <QrCode className="size-4" />,
-                    title: "Распечатать A4-плакаты с QR-кодом для холодильников этого журнала",
+                    title: t("actions.printQrPosters"),
                     onSelect: () => router.push(`/settings/qr-posters?kind=equipment&doc=${documentId}`),
                   },
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("actions.finishJournal"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => void closeAction.closeDocument(),
                     disabled: closeAction.isClosing,
@@ -1973,7 +2040,7 @@ export function ColdEquipmentDocumentClient({
         </DocumentActionsBar>
         {status !== "active" ? (
           <div className="mb-8">
-            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать показания." documentId={documentId} />
+            <JournalClosedBanner hint={t("ui.closedHint")} documentId={documentId} />
           </div>
         ) : null}
 
@@ -1983,7 +2050,7 @@ export function ColdEquipmentDocumentClient({
             полоса всегда держала эталонную высоту. */}
         {/* Автозаполнение — настройка документа, право руководителя.
             У сотрудника PATCH отвечал 403, а тумблер стоял на виду. */}
-        {canManageDocument ? (
+        {canManageDocument && !journalControls.specialMode ? (
         <div
           className={cn(
             DOC_AUTOFILL_STRIP_CLASS,
@@ -2002,7 +2069,7 @@ export function ColdEquipmentDocumentClient({
             className="data-[state=unchecked]:bg-[#d6d9ee]"
           />
           <span className={DOC_AUTOFILL_LABEL_CLASS}>
-            Автоматически заполнять журнал
+            {t("ui.autoFillTitle")}
           </span>
 
           {checkedAutoFill ? (
@@ -2066,10 +2133,10 @@ export function ColdEquipmentDocumentClient({
                   }}
                 >
                   <SelectTrigger className="h-9 w-full rounded-[10px] border-[#dcdfed] bg-white text-[13.5px]">
-                    <SelectValue placeholder="Не назначен" />
+                    <SelectValue placeholder={t("ui.unassigned")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__empty__">Не назначен</SelectItem>
+                    <SelectItem value="__empty__">{t("ui.unassigned")}</SelectItem>
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         {employee.name}
@@ -2081,8 +2148,7 @@ export function ColdEquipmentDocumentClient({
 
               <div className="flex flex-wrap items-center gap-2 pt-1 text-[13px] text-[#3c4053]">
                 <span className="rounded-full bg-white px-3 py-1.5">
-                  Период: {getColdEquipmentDateLabel(dateFrom)} -{" "}
-                  {getColdEquipmentDateLabel(dateTo)}
+                  {t("ui.period", { period: `${formatMonthRange(dateFrom, dateFrom, locale)} — ${formatMonthRange(dateTo, dateTo, locale)}` })}
                 </span>
                 {config.skipWeekends ? (
                   <span className="rounded-full bg-white px-3 py-1.5">
@@ -2101,14 +2167,14 @@ export function ColdEquipmentDocumentClient({
           <TodayProgressStrip
             filled={todayProgress.filled}
             total={todayProgress.total}
-            label="единиц оборудования"
+            label={t("ui.equipmentCount")}
             onJumpToToday={scrollToTodayColumn}
             warning={
               todayOutOfNorm > 0
-                ? `${todayOutOfNorm} ${pluralRu(todayOutOfNorm, "замер", "замера", "замеров")} вне нормы — опишите, что сделали`
+              ? t("ui.outOfRangeWarning", { count: todayOutOfNorm })
                 : null
             }
-            warningActionLabel="Что сделали?"
+            warningActionLabel={t("ui.warningAction")}
             onWarningAction={
               deviations.length > 0 ? scrollToCorrections : undefined
             }
@@ -2171,7 +2237,7 @@ export function ColdEquipmentDocumentClient({
                           setEquipmentDialogOpen(true);
                         }
                       : undefined,
-                  editLabel: `Изменить ${item.name}`,
+                  editLabel: `${t("actions.editNameAndNorm")}: ${item.name}`,
                   trailing:
                     status === "active" ? (
                       // На телефоне управление стоит отдельной строкой (см. day-first-cards) —
@@ -2192,7 +2258,7 @@ export function ColdEquipmentDocumentClient({
                       </div>
                     ) : (
                       <span className="flex items-center gap-2 text-[14px] text-[#0b1024]">
-                        {formatColdEquipmentCell(value, cellStatus) || "—"}
+                        {formatColdCellDisplay(value, cellStatus, locale, t)}
                         {(() => {
                           const photo = photoFor(todayKey, item);
                           return photo ? <ReadingPhotoView url={photo.url} caption={photo.caption} /> : null;
@@ -2201,7 +2267,7 @@ export function ColdEquipmentDocumentClient({
                     ),
                 };
               })}
-              emptyLabel="Добавьте единицу холодильного оборудования."
+              emptyLabel={t("ui.emptyEquipment")}
             />
             {status === "active" && config.equipment.length > 1 ? (
               <button
@@ -2209,7 +2275,7 @@ export function ColdEquipmentDocumentClient({
                 onClick={() => setRunnerOpen(true)}
                 className="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
               >
-                Заполнить подряд
+                {t("ui.fillSequentially")}
               </button>
             ) : null}
           </div>
@@ -2220,8 +2286,7 @@ export function ColdEquipmentDocumentClient({
           <div className={`space-y-2 ${viewClasses.cards}`}>
             {config.equipment.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-                Добавьте единицу холодильного оборудования через кнопку
-                «Добавить» сверху.
+                {t("ui.addEquipmentHint")}
               </div>
             ) : null}
             {readingSlots.map((item) => {
@@ -2267,11 +2332,11 @@ export function ColdEquipmentDocumentClient({
                           {item.slotLabel ? <span className="ml-1.5 text-[12px] font-semibold text-[#3848c7]">{item.slotLabel}</span> : null}
                         </div>
                         <div className="line-clamp-2 break-words text-[12px] text-[#6f7282]">
-                          {formatRange(item.min, item.max)}
+                          {formatRange(item.min, item.max, t)}
                         </div>
                       </div>
                       <span className="shrink-0 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-semibold text-[#5566f6]">
-                        {filledCount}/{dateKeys.length}
+                        {formatNumber(locale, filledCount)}/{formatNumber(locale, dateKeys.length)}
                       </span>
                       <ChevronDown
                         className={`size-4 shrink-0 text-[#6f7282] transition-transform ${
@@ -2288,8 +2353,8 @@ export function ColdEquipmentDocumentClient({
                           setEditingEquipment(item);
                           setEquipmentDialogOpen(true);
                         }}
-                        title="Изменить название и норму, показать QR-код"
-                        aria-label={`Изменить ${item.name}`}
+                        title={t("ui.editEquipment")}
+                        aria-label={`${t("actions.editNameAndNorm")}: ${item.name}`}
                         className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
                       >
                         <Pencil className="size-4" />
@@ -2311,8 +2376,8 @@ export function ColdEquipmentDocumentClient({
                             }`}
                           >
                             <span className="w-14 shrink-0 text-center text-[13px] font-medium text-[#6f7282]">
-                              {getDayNumber(dateKey)}{" "}
-                              {getWeekdayShort(dateKey)}.
+                              {formatGridDay(dateKey, locale).day}{" "}
+                              {formatGridDay(dateKey, locale).weekday}.
                             </span>
                             {status === "active" && !dayLockReason(dateKey) ? (
                               <ColdTemperatureCell
@@ -2331,7 +2396,11 @@ export function ColdEquipmentDocumentClient({
                                   title={dayLockReason(dateKey) ?? undefined}
                                   className="flex-1 rounded-lg bg-[#fafbff] px-3 py-2 text-[14px] text-[#0b1024]"
                                 >
-                                  {formatColdEquipmentCell(value, cellStatus) || "—"}
+                                  {cellStatus
+                                    ? t(STATUS_MESSAGE_KEYS[cellStatus].short)
+                                    : value == null
+                                      ? "—"
+                                      : formatNumber(locale, value)}
                                 </span>
                                 {(() => {
                                   const photo = photoFor(dateKey, item);
@@ -2340,9 +2409,9 @@ export function ColdEquipmentDocumentClient({
                               </>
                             )}
                             <span className="w-12 shrink-0 text-right text-[11px] text-[#9b9fb3]">
-                              {responsibleCodes.codeMap[
+                              {(value != null || cellStatus) ? responsibleCodes.codeMap[
                                 row?.employeeId || responsibleUserId || ""
-                              ] || ""}
+                              ] || "" : ""}
                             </span>
                           </div>
                         );
@@ -2405,7 +2474,7 @@ export function ColdEquipmentDocumentClient({
           <div className={`${DOC_PAPER_HEADER_CLASS} print:mb-2`}>
           <JournalDocumentHeader
             orgName={organizationName}
-            title={COLD_EQUIPMENT_DOCUMENT_TITLE}
+            title={journalT("names.cold_equipment_control")}
             startedAt={dateFrom}
             finishedAt={status === "closed" ? dateTo : null}
             controlPeriodicity={controlPeriodicity}
@@ -2413,10 +2482,10 @@ export function ColdEquipmentDocumentClient({
           </div>
 
         <div className={DOC_CAPS_TITLE_CLASS}>
-          <JournalDocumentTitle>{COLD_EQUIPMENT_DOCUMENT_TITLE}</JournalDocumentTitle>
+          <JournalDocumentTitle>{journalT("names.cold_equipment_control")}</JournalDocumentTitle>
           {/* Основание формы — как на первой странице печати. */}
           <p className="mt-1 text-center text-[12px] leading-snug text-[#6f7282] print:text-[10px]">
-            {COLD_EQUIPMENT_LEGAL_BASIS}
+            {t("print.legalBasis", { regulation: COLD_EQUIPMENT_REGULATION })}
           </p>
         </div>
         {/* Без JS-гейта по mobileView: внешний контейнер в cards-режиме
@@ -2455,7 +2524,7 @@ export function ColdEquipmentDocumentClient({
                   rowSpan={2}
                   data-grid-label
                 >
-                  Наименование или номер ХК
+                  {t("ui.nameOrNumber")}
                 </th>
                 <th
                   className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center text-[13px] font-semibold leading-tight`}
@@ -2464,7 +2533,7 @@ export function ColdEquipmentDocumentClient({
                   {/* X6: `toLocaleDateString` даёт «август 2026 г.» со
                       строчной, эталон печатает «Месяц Август 2026 г.».
                       Общий хелпер сетки — тот же, что у журнала уборки. */}
-                  Месяц {getCleaningGridMonthLabel(dateFrom, dateTo)}
+                  {t("ui.monthHeading", { month: formatMonthRange(dateFrom, dateTo, locale) })}
                 </th>
               </tr>
               <tr>
@@ -2485,9 +2554,9 @@ export function ColdEquipmentDocumentClient({
                         : ""
                     }`}
                   >
-                    <div className="text-[13px]">{getDayNumber(dateKey)}</div>
+                    <div className="text-[13px]">{formatGridDay(dateKey, locale).day}</div>
                     <div className="text-[11px] font-normal uppercase text-[#666]">
-                      {getWeekdayShort(dateKey)}
+                      {formatGridDay(dateKey, locale).weekday}
                     </div>
                   </th>
                 ))}
@@ -2513,7 +2582,7 @@ export function ColdEquipmentDocumentClient({
                   className={`${GRID_CELL_CLASS} px-2 py-1 text-center text-[13px] font-semibold leading-tight`}
                   colSpan={dateKeys.length + 1}
                 >
-                  Температура °C
+                  {t("ui.temperatureColumn")}
                 </td>
               </tr>
 
@@ -2549,7 +2618,7 @@ export function ColdEquipmentDocumentClient({
                         setEditingEquipment(item);
                         setEquipmentDialogOpen(true);
                       }}
-                      title="Изменить название и норму, показать QR-код для заполнения с телефона"
+                      title={t("ui.editEquipmentForPhone")}
                       className="group flex w-full items-center gap-2 px-2 py-1 text-left transition-colors duration-150 enabled:hover:bg-[#f5f6ff] disabled:cursor-default"
                     >
                       <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -2557,7 +2626,7 @@ export function ColdEquipmentDocumentClient({
                           {item.name}
                         </span>
                         <span className="text-[12px] text-[#6f7282]">
-                          {formatRange(item.min, item.max)}
+                          {formatRange(item.min, item.max, t)}
                         </span>
                         {item.slotLabel ? (
                           <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-semibold text-[#3848c7] print:bg-transparent print:px-0 print:text-black">
@@ -2578,7 +2647,7 @@ export function ColdEquipmentDocumentClient({
                     const row = rowByDate[dateKey];
                     const value = row?.data.temperatures[item.slotKey];
                     const cellStatus = row?.data.statuses?.[item.slotKey] ?? null;
-                    const cellText = formatColdEquipmentCell(value, cellStatus);
+                    const cellText = formatColdCellDisplay(value, cellStatus, locale, t);
                     const photo = photoFor(dateKey, item);
 
                     return (
@@ -2602,10 +2671,18 @@ export function ColdEquipmentDocumentClient({
                             key={cellText}
                             type="text"
                             defaultValue={cellText}
-                            title="Температура или «обсл» / «рем»"
+                            title={t("ui.tempOrStatus")}
                             onBlur={(event) => {
-                              if (event.target.value.trim() === cellText) return;
-                              void handleTemperatureBlur(dateKey, item.slotKey, event.target.value);
+                              const next = event.target.value.trim();
+                              if (next === cellText) return;
+                              const selectedStatus = COLD_EQUIPMENT_STATUSES.find(
+                                (candidate) => t(STATUS_MESSAGE_KEYS[candidate].short) === next,
+                              );
+                              void handleTemperatureBlur(
+                                dateKey,
+                                item.slotKey,
+                                selectedStatus ? COLD_EQUIPMENT_STATUS_SHORT[selectedStatus] : next,
+                              );
                             }}
                             className={cn(
                               "h-7 min-w-[44px] border-0 px-1 text-center text-[13px] shadow-none focus-visible:ring-1",
@@ -2647,7 +2724,7 @@ export function ColdEquipmentDocumentClient({
                   leading={1}
                   labelSpan={1}
                   trailing={dateKeys.length}
-                  label="Добавить оборудование"
+                  label={t("ui.addEquipment")}
                   onClick={() => {
                     setEditingEquipment(null);
                     setEquipmentDialogOpen(true);
@@ -2668,7 +2745,7 @@ export function ColdEquipmentDocumentClient({
                       data-grid-service
                     >
                       <span className={GRID_SERVICE_LABEL_CLASS}>
-                        Ответственный за снятие показателей
+                        {t("ui.responsibleForReadings")}
                       </span>
                     </div>
                     <div className={`flex-1 border-l ${GRID_BORDER_CLASS} px-3 py-1 text-[13px]`}>
@@ -2677,7 +2754,7 @@ export function ColdEquipmentDocumentClient({
                           <div key={item.employeeId}>{item.label}</div>
                         ))
                       ) : (
-                        <span className="text-[#9b9fb3]">Не назначен</span>
+                        <span className="text-[#9b9fb3]">{t("ui.unassigned")}</span>
                       )}
                     </div>
                   </div>
@@ -2716,28 +2793,26 @@ export function ColdEquipmentDocumentClient({
           {deviations.length > 0 ? (
             <section className="mt-6" id="cold-corrections">
               <div className={DOC_CAPS_TITLE_CLASS}>
-                <JournalDocumentTitle>Корректирующие действия</JournalDocumentTitle>
+                <JournalDocumentTitle>{t("ui.correctiveActions")}</JournalDocumentTitle>
               </div>
               <p className="mt-1 text-center text-[12px] leading-snug text-[#a13a32] print:text-[10px]">
-                Температура вышла за норму — опишите, что сделали. Пустая
-                графа при проверке читается как «нарушение заметили и
-                проигнорировали».
+                {t("ui.deviationInstructions")}
               </p>
               <div className={`mt-3 ${JOURNAL_TABLE_SCROLL_CLASS}`}>
                 <table className="w-full border-collapse text-[13px]">
                   <thead>
                     <tr>
                       <th className={`${GRID_CELL_CLASS} w-[110px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                        Дата
+                        {t("ui.date")}
                       </th>
                       <th className={`${GRID_CELL_CLASS} w-[200px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                        Точка контроля
+                        {t("ui.controlPoint")}
                       </th>
                       <th className={`${GRID_CELL_CLASS} w-[190px] px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                        Зафиксированный параметр
+                        {t("ui.recordedValue")}
                       </th>
                       <th className={`${GRID_CELL_CLASS} px-2 py-1.5 font-semibold text-[#3c4053]`}>
-                        Комментарий / действие
+                        {t("ui.commentAction")}
                       </th>
                     </tr>
                   </thead>
@@ -2745,21 +2820,25 @@ export function ColdEquipmentDocumentClient({
                     {deviations.map((d) => (
                       <tr key={d.key} className="bg-[#fff4f2]">
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center tabular-nums`}>
-                          {d.date}
+                          {formatLocalizedDate(locale, dateOnlyValue(d.date), "UTC", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
                         </td>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1`}>
                           {d.equipmentName}
                         </td>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center font-medium text-[#d2453d]`}>
-                          T, {d.value} °C
+                          {t("ui.temperatureValue", { value: d.value })}
                           <span className="ml-1 text-[11px] font-normal text-[#a13a32]">
-                            (норма {d.min ?? "—"}…{d.max ?? "—"})
+                            ({t("ui.norm", { range: formatRange(d.min, d.max, t) })})
                           </span>
                         </td>
                         <td className={`${GRID_CELL_CLASS} p-0`}>
                           <JournalCellInput
                             defaultValue={d.comment}
-                            placeholder="Что сделали: переставили продукт, вызвали мастера…"
+                            placeholder={t("ui.correctionPlaceholder")}
                             disabled={status !== "active"}
                             onBlur={(event) =>
                               void saveCorrection(
@@ -2811,7 +2890,9 @@ export function ColdEquipmentDocumentClient({
           автопереход к следующему незаполненному. */}
       <FillRunner
         open={runnerOpen}
-        title={`Замеры за ${getDayNumber(todayKey)} ${getWeekdayShort(todayKey)}.`}
+        title={t("ui.todayMeasurementsTitle", {
+          date: formatLocalizedDate(locale, dateOnlyValue(todayKey), "UTC", { day: "numeric", month: "long" }),
+        })}
         onClose={() => setRunnerOpen(false)}
         steps={readingSlots.map((item) => {
           const value = rowByDate[todayKey]?.data.temperatures[item.slotKey];
@@ -2819,7 +2900,7 @@ export function ColdEquipmentDocumentClient({
           return {
             id: item.slotKey,
             title: item.slotLabel ? `${item.name} · ${item.slotLabel}` : item.name,
-            subtitle: formatRange(item.min, item.max),
+            subtitle: formatRange(item.min, item.max, t),
             done: value != null || cellStatus !== null,
             render: () => (
               <ColdTemperatureCell

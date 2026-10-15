@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { ApiError, toastCaughtError } from "@/lib/billing-limit-toast";
+import { ApiError, useBillingError } from "@/lib/billing-limit-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useTranslations } from "next-intl";
 
 /**
  * Быстрое создание сотрудника прямо в журнале.
@@ -38,7 +39,7 @@ const NEW_POSITION = "__new__";
 
 export function QuickAddEmployee({
   onCreated,
-  submitLabel = "Создать и добавить",
+  submitLabel,
   className,
 }: {
   /** Сотрудник создан. Вызывающий ставит его строку в документ. */
@@ -46,6 +47,8 @@ export function QuickAddEmployee({
   submitLabel?: string;
   className?: string;
 }) {
+  const { toastCaughtError } = useBillingError();
+  const t = useTranslations("journalControls.quickAdd");
   const [positions, setPositions] = useState<Position[] | null>(null);
   const [positionId, setPositionId] = useState("");
   const [newPositionName, setNewPositionName] = useState("");
@@ -97,7 +100,7 @@ export function QuickAddEmployee({
           | { position?: Position; error?: string }
           | null;
         if (!res.ok || !data?.position) {
-          throw new Error(data?.error ?? "Не удалось создать должность");
+          throw new Error(t("positionCreateFailed"));
         }
         jobPositionId = data.position.id;
       }
@@ -111,15 +114,15 @@ export function QuickAddEmployee({
         | { user?: { id: string; name: string }; error?: string }
         | null;
       if (!res.ok || !data?.user) {
-        throw new ApiError(data?.error ?? "Не удалось создать сотрудника", data);
+        throw new ApiError(t("createEmployeeFailed"), data);
       }
 
       setFullName("");
       setNewPositionName("");
       await onCreated(data.user);
     } catch (error) {
-      if (error instanceof ApiError) toastCaughtError(error, "Ошибка");
-      else toast.error(humanizeFetchError(error, "Ошибка"));
+      if (error instanceof ApiError) toastCaughtError(error, t("genericError"));
+      else toast.error(humanizeFetchError(error, t("genericError"), t("genericError")));
     } finally {
       setPending(false);
     }
@@ -130,7 +133,7 @@ export function QuickAddEmployee({
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1.5">
           <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            Ф.И.О. сотрудника
+            {t("fullName")}
           </span>
           <Input
             value={fullName}
@@ -138,19 +141,19 @@ export function QuickAddEmployee({
             onKeyDown={(event) => {
               if (event.key === "Enter") void submit();
             }}
-            placeholder="Иванова Ольга Петровна"
+            placeholder={t("fullNamePlaceholder")}
             className="h-11 rounded-2xl border-[#dcdfed] text-[15px]"
           />
         </label>
 
         <label className="space-y-1.5">
           <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            Должность
+            {t("position")}
           </span>
           <Select value={positionId} onValueChange={setPositionId}>
             <SelectTrigger className="h-11 w-full rounded-2xl border-[#dcdfed] text-[15px]">
               <SelectValue
-                placeholder={positions === null ? "Загружаем…" : "Выберите"}
+                placeholder={positions === null ? t("loading") : t("choose")}
               />
             </SelectTrigger>
             <SelectContent>
@@ -162,7 +165,7 @@ export function QuickAddEmployee({
               <SelectItem value={NEW_POSITION}>
                 <span className="inline-flex items-center gap-1.5">
                   <Plus className="size-3.5" />
-                  Новая должность
+                  {t("newPosition")}
                 </span>
               </SelectItem>
             </SelectContent>
@@ -173,7 +176,7 @@ export function QuickAddEmployee({
       {creatingPosition ? (
         <label className="mt-3 block space-y-1.5">
           <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            Название должности
+            {t("positionName")}
           </span>
           <Input
             value={newPositionName}
@@ -181,7 +184,7 @@ export function QuickAddEmployee({
             onKeyDown={(event) => {
               if (event.key === "Enter") void submit();
             }}
-            placeholder="Повар"
+            placeholder={t("positionPlaceholder")}
             className="h-11 rounded-2xl border-[#dcdfed] text-[15px]"
           />
         </label>
@@ -192,7 +195,7 @@ export function QuickAddEmployee({
           href="/settings/users"
           className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7] hover:underline"
         >
-          Все сотрудники и их карточки
+          {t("directoryLink")}
           <ArrowUpRight className="size-3.5" />
         </Link>
         <Button
@@ -202,12 +205,12 @@ export function QuickAddEmployee({
           loading={pending}
           className="h-11 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0] sm:w-auto"
         >
-          {submitLabel}
+          {submitLabel ?? t("submit")}
         </Button>
       </div>
 
       <p className="mt-2 text-[12.5px] leading-[1.45] text-[#9b9fb3]">
-        Телефон, точки и график выходных можно заполнить позже в карточке
+        {t("laterHint")}
         сотрудника.
       </p>
     </div>

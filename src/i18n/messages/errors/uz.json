@@ -1,0 +1,33 @@
+{
+  "errorSurface": {
+    "updating": "Ilova yangilanmoqda",
+    "updatingDescription": "Eng yangi versiya yuklanmoqda. Sahifa avtomatik yangilanadi.",
+    "errorTitle": "Xatolik yuz berdi",
+    "errorDescription": "Amalni bajarib bo‘lmadi. Qayta urinib ko‘ring yoki bosh sahifaga qayting.",
+    "globalTitle": "Ilovada xatolik",
+    "globalDescription": "Ilovani yuklab bo‘lmadi. Qayta urinib ko‘ring yoki bosh sahifaga qayting.",
+    "code": "Kod: {code}",
+    "home": "Bosh sahifa",
+    "retry": "Qayta urinish",
+    "notFoundTitle": "Sahifa topilmadi",
+    "notFoundDescription": "Havola eskirgan yoki bo‘lim ko‘chirilgan. Ishni davom ettirish uchun bosh sahifaga qayting.",
+    "about": "Xizmat haqida",
+    "returnHome": "Bosh sahifaga qaytish",
+    "miniTitle": "Bu ekranni ochib bo‘lmadi",
+    "miniDescription": "Qayta urinib ko‘ring. Yordam bermasa, ilovani yoping va qayta oching. Avval saqlangan yozuvlar joyida qoladi.",
+    "loading": "Yuklanmoqda…",
+    "openingWorkspace": "Kabinet ochilmoqda…",
+    "loadingDocuments": "Jurnal hujjatlari yuklanmoqda…",
+    "loadingDocument": "Hujjat yuklanmoqda…",
+    "loadingJournals": "Jurnallar yuklanmoqda…",
+    "backToJournals": "Jurnallar ro‘yxatiga qaytish",
+    "journalTitle": "Jurnalni yuklab bo‘lmadi",
+    "journalDescription": "Server ma’lumotlarni qaytarmadi. Qayta urinib ko‘ring — avval saqlangan yozuvlar joyida qoladi.",
+    "journalsTitle": "Jurnallar ro‘yxatini yuklab bo‘lmadi",
+    "journalsDescription": "Jurnallar ro‘yxati yuklanmadi. Sahifani qayta yuklab ko‘ring.",
+    "documentsTitle": "Jurnal hujjatlarini yuklab bo‘lmadi",
+    "documentsDescription": "Hujjatlar ro‘yxati yuklanmadi. Qayta urinib ko‘ring.",
+    "documentTitle": "Hujjatni ochib bo‘lmadi",
+    "documentDescription": "Hujjat yuklanmadi. Avval saqlangan yozuvlar joyida qolgan. Qayta urinib ko‘ring."
+  }
+}

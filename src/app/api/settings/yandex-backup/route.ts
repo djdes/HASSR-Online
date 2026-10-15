@@ -19,7 +19,7 @@ const PutSchema = z.object({
 export async function GET() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "YANDEX_BACKUP_FORBIDDEN" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   const org = await db.organization.findUnique({
@@ -46,19 +46,19 @@ export async function GET() {
 export async function PUT(request: Request) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "YANDEX_BACKUP_FORBIDDEN" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON", errorCode: "YANDEX_BACKUP_INVALID_INPUT" }, { status: 400 });
   }
   const parsed = PutSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid input", errorCode: "YANDEX_BACKUP_INVALID_INPUT" },
       { status: 400 }
     );
   }
@@ -66,7 +66,7 @@ export async function PUT(request: Request) {
   const ping = await pingDisk(parsed.data.token);
   if (!ping.ok) {
     return NextResponse.json(
-      { error: `Не удалось подключиться: ${ping.reason}` },
+      { error: `Не удалось подключиться: ${ping.reason}`, errorCode: "YANDEX_BACKUP_CONNECT_FAILED" },
       { status: 400 }
     );
   }
@@ -92,7 +92,7 @@ export async function PUT(request: Request) {
 export async function DELETE() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "YANDEX_BACKUP_FORBIDDEN" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   await db.organization.update({

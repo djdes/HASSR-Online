@@ -37,7 +37,7 @@ import type { TaskFormField } from "@/lib/tasksflow-adapters/task-form";
  * Все иконки — outlined, без фона (фон рисует обёртка карточки).
  */
 export function fieldIcon(field: TaskFormField): LucideIcon {
-  const haystack = `${field.key ?? ""} ${field.label ?? ""}`.toLowerCase();
+  const haystack = `${field.key ?? ""} ${field.sourceLabel ?? field.label ?? ""}`.toLowerCase();
 
   // Температура / охлаждение
   if (
@@ -120,7 +120,7 @@ export function fieldIconTone(field: TaskFormField): {
   bg: string;
   fg: string;
 } {
-  const haystack = `${field.key ?? ""} ${field.label ?? ""}`.toLowerCase();
+  const haystack = `${field.key ?? ""} ${field.sourceLabel ?? field.label ?? ""}`.toLowerCase();
 
   // Температура — тёплый красный
   if (/темпера|temp|°с|°c|нагрев|жар/i.test(haystack)) {

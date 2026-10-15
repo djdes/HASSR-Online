@@ -150,10 +150,11 @@ export async function handleBrakerageList(ctx: {
     };
     // Права по ролям: зав правит блюдо/время/выход/оценку, комиссия — оценку
     // и время бракеража; «Допущено»/«Не допущено» — подпись (brakerage-qr-post).
-    const { editsByDoc, signsByDoc } = parseBrakerageListPost(field, list.rows, role, {
+    const { editsByDoc, signsByDoc, error } = parseBrakerageListPost(field, list.rows, role, {
       isFinished: ctx.isFinished,
       gradeValues: list.gradeOptions.map((option) => option.value),
     });
+    if (error) return renderList(error, 400);
 
     let changed = 0;
     if (role.editor) {
@@ -165,7 +166,7 @@ export async function handleBrakerageList(ctx: {
     }
 
     if (!role.evaluator || signsByDoc.size === 0) {
-      if (role.evaluator && changed === 0) return renderList("Отметьте «Допущено» или «Не допущено» у блюд, которые проверили.");
+      if (role.evaluator && changed === 0) return renderList("Выберите оценку у блюд, которые проверили.");
       return redirectTo(ctx.listLink({ done: "saved", n: String(changed) }));
     }
     let signed = 0;

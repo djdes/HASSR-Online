@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +39,8 @@ export function JournalDocGuideOverlay({
   basePath?: "site" | "mini";
   bottomOffset?: number;
 } = {}) {
+  const t = useTranslations("journalControls.guide");
+  const tDocGuide = useTranslations("journalDocGuides");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   // Портал в body доступен только после гидрации — иначе SSR и клиент
@@ -54,8 +57,8 @@ export function JournalDocGuideOverlay({
   }, [pathname, explicitCode]);
 
   const guide = useMemo(
-    () => (code ? getJournalDocGuide(code) : null),
-    [code]
+    () => (code ? getJournalDocGuide(code, tDocGuide) : null),
+    [code, tDocGuide]
   );
   const walkthrough = code ? hasJournalWalkthrough(code) : false;
 
@@ -95,8 +98,8 @@ export function JournalDocGuideOverlay({
     <>
       <JournalGuideFab
         onClick={() => setOpen(true)}
-        label="Как заполнять"
-        ariaLabel="Как заполнять этот журнал"
+        label={t("how")}
+        ariaLabel={t("hint")}
         bottomOffset={bottomOffset}
       />
       {open && guide ? (
@@ -113,6 +116,7 @@ function GuideSheet({
   guide: JournalDocGuide;
   onClose: () => void;
 }) {
+  const t = useTranslations("journalControls.guide");
   // Portal в document.body — чтобы sheet оказался ВНЕ .app-shell. Иначе
   // dark-mode CSS-правила в app-theme.css переопределяют bg-white →
   // var(--app-surface) внутри sheet'а и весь модал съезжает в dark-mode
@@ -126,7 +130,7 @@ function GuideSheet({
       data-app-theme="light"
       role="dialog"
       aria-modal="true"
-      aria-label="Инструкция по заполнению"
+      aria-label={t("how")}
     >
       {/* Backdrop. z-0 — иначе position:absolute рисуется поверх sheet'а
           (который flex-item с position:static), и 55%-ное затемнение
@@ -150,10 +154,10 @@ function GuideSheet({
               </span>
               <div>
                 <div className="text-[11px] uppercase tracking-[0.16em] text-[#6f7282]">
-                  Инструкция по заполнению
+                  {t("how")}
                 </div>
                 <h2 className="mt-1 text-[20px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]">
-                  Как заполнять этот журнал
+                  {t("hint")}
                 </h2>
               </div>
             </div>
@@ -161,7 +165,7 @@ function GuideSheet({
               type="button"
               onClick={onClose}
               className="rounded-xl p-2 text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
-              aria-label="Закрыть"
+              aria-label={t("close")}
             >
               <X className="size-5" />
             </button>
@@ -182,7 +186,7 @@ function GuideSheet({
             onClick={onClose}
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_26px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
-            Понятно, поехали
+            {t("understood")}
           </button>
         </div>
       </div>

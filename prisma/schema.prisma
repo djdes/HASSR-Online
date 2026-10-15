@@ -50,6 +50,11 @@ model OrganizationMember {
 }
 
 model Organization {
+  masterBrakerageBatches         MasterBrakerageBatch[]
+  knowledgeDocuments            KnowledgeDocument[]
+  checklistTemplates            ChecklistTemplate[]
+  checklistInspections          ChecklistInspection[]
+  checklistAttachments          ChecklistAttachment[]
   id                             String                         @id @default(cuid())
   /// Автопродление подписки включено.
   ///
@@ -447,6 +452,100 @@ model Organization {
   @@index([isDemo, demoExpiresAt])
 }
 
+model MasterBrakerageBatch {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  input          Json
+  revisions      Json         @default("[]")
+  result         Json?
+  createdByName  String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+model KnowledgeDocument {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  fileName       String
+  mimeType       String
+  sizeBytes      Int
+  content        Bytes
+  uploadedByName String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+model ChecklistTemplate {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  definition     Json
+  archived       Boolean               @default(false)
+  version        Int                   @default(1)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  inspections    ChecklistInspection[]
+  attachments    ChecklistAttachment[]
+
+  @@index([organizationId, archived])
+}
+
+model ChecklistInspection {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateId     String
+  template       ChecklistTemplate @relation(fields: [templateId], references: [id])
+  title          String
+  templateVersion Int
+  snapshot       Json
+  answers        Json              @default("{}")
+  evidence       Json              @default("{}")
+  categoryInstances Json           @default("{}")
+  result         Json?
+  status         String            @default("draft")
+  createdById    String
+  createdByName  String
+  completedByName String?
+  completedById  String?
+  completedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  attachments    ChecklistAttachment[]
+
+  @@index([organizationId, createdAt])
+}
+
+model ChecklistAttachment {
+  id             String              @id @default(cuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateId     String?
+  template       ChecklistTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  inspectionId   String?
+  inspection     ChecklistInspection? @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  questionId     String
+  purpose        String
+  fileName       String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String
+  content        Bytes
+  createdById    String
+  createdAt      DateTime            @default(now())
+
+  @@index([organizationId, inspectionId, questionId])
+  @@index([organizationId, templateId])
+}
+
 /// Общий планшет, привязанный к организации. Планшет живёт под device-cookie
 /// `wesetup.kiosk` (id + HMAC), а не под чьей-то сессией: сам по себе даёт
 /// только список сотрудников и ввод ПИН. `secretHash` — хеш device-секрета,
@@ -722,6 +821,8 @@ model EmployeeJoinToken {
 
 model User {
   id                          String                   @id @default(cuid())
+  /// Personal interface language; null inherits the active organization's default.
+  locale                      String?
   /// Контактная почта сотрудника. Отдельно от `email`: тот занят
   /// логином (или синтетикой вида staff-…@org.local.haccp) и
   /// уникален на всю платформу, а личный адрес может быть общим
@@ -1292,8 +1393,27 @@ model Article {
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  translations ArticleTranslation[]
 
   @@index([publishedAt])
+}
+
+/// Version-bound display content. Original article IDs, slugs and bodies stay intact.
+model ArticleTranslation {
+  id         String   @id @default(cuid())
+  articleId  String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  locale     String
+  sourceHash String
+  title      String
+  excerpt    String
+  body       Json
+  /// Display tags correspond positionally to the source tags; filtering uses source tags.
+  tags       String[] @default([])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([articleId, locale])
 }
 
 /// User-submitted feedback from the in-app "Оставить обратную связь" modal.
@@ -1414,9 +1534,13 @@ model Notification {
   /// instead of piling up duplicates.
   dedupeKey        String
   title            String
+  /// Optional catalog reference. Legacy title remains the compatibility fallback.
+  messageKey       String?
+  messageParams    Json?
   /// Optional inline link target, e.g. "/journals/hygiene".
   linkHref         String?
   linkLabel        String?
+  linkLabelKey     String?
   items            Json         @default("[]")
   /// Подзадачи (items.id), которые юзер уже отметил как прочитанные.
   /// При выдаче GET /api/notifications эти id фильтруются из items;
@@ -2349,6 +2473,8 @@ model PrintJob {
   /// Снимок названия: документ могут закрыть или удалить, а история печати
   /// должна читаться и через год.
   docTitle       String
+  /// Export language captured when enqueued; old jobs retain Russian.
+  locale         String           @default("ru")
   createdById    String?
   /// Снимок имени отправителя — по той же причине, что и docTitle.
   createdByName  String?
