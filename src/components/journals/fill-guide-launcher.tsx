@@ -18,6 +18,7 @@ import {
   type WalkthroughStep,
 } from "@/lib/journal-ui-walkthroughs";
 import { useSeenNotice } from "@/lib/use-seen-notice";
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import { FillGuideDialog } from "@/components/journals/fill-guide-dialog";
 import { JournalGuideFab } from "@/components/journals/journal-guide-fab";
 import {
@@ -80,6 +81,10 @@ export function FillGuideLauncher({
   const tWalkthrough = useTranslations("journalControls.walkthroughs");
   const tDocGuide = useTranslations("journalDocGuides");
   const router = useRouter();
+  const { controls, loaded } = useJournalControls();
+  // Mandatory commission setup must finish before an automatic guide or tour.
+  const deferGuide = basePath === "site" && code === "finished_product" &&
+    (!loaded || !controls.brakerageSetup.finished_product);
   const narrow = useIsNarrowViewport();
   // Окно открывается у ЛЮБОГО журнала: свои шаги, если есть, иначе общие.
   const steps = useMemo(() => getJournalWalkthroughOrGeneric(code, tWalkthrough), [code, tWalkthrough]);
@@ -151,6 +156,7 @@ export function FillGuideLauncher({
   // (router.replace на dynamic-страницах — лишний серверный round-trip;
   // `?tab=` и state роутера сохраняем).
   useEffect(() => {
+    if (deferGuide) return;
     const url = new URL(window.location.href);
     const requested = url.searchParams.get("tour");
     if (!requested) return;
@@ -163,17 +169,17 @@ export function FillGuideLauncher({
     markSeen();
     void startTourRef.current(requested);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [deferGuide]);
 
   // Автооткрытие один раз: отметку ставим сразу при открытии — даже если
   // человек уйдёт со страницы, не закрыв окно, второй раз оно не всплывёт.
   const autoOpened = useRef(false);
   useEffect(() => {
-    if (seen !== false || autoOpened.current) return;
+    if (deferGuide || seen !== false || autoOpened.current) return;
     autoOpened.current = true;
     markSeen();
     setDialogOpen(true);
-  }, [seen, markSeen]);
+  }, [deferGuide, seen, markSeen]);
 
   function showStepHint(step: WalkthroughStep): string | null {
     if (step.page === "document" && page === "list" && !firstDocumentId) {
