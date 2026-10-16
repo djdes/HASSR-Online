@@ -722,7 +722,8 @@ async function writeConfigEntries(params: {
   return { written: entries.length };
 }
 
-function usesConfigWriter(templateCode: string) {
+/** Журнал хранит строки в `config` документа (реестры, приёмка, прослеживаемость). */
+export function isConfigWriterJournal(templateCode: string) {
   return CONFIG_WRITER_NORMALIZERS.has(templateCode);
 }
 
@@ -874,7 +875,7 @@ export async function dispatchExternalEntries(params: {
       });
     }
 
-    if (usesConfigWriter(template.code)) {
+    if (isConfigWriterJournal(template.code)) {
       const configEntries = normalized.map((entry) => ({
         ...entry,
         data: normalizeEntryPayload(template.code, entry.data, documentConfig, directoryRooms),

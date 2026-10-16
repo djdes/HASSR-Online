@@ -60,11 +60,14 @@ import { orgTodayKey } from "@/lib/timezone";
 const ACTION_TTL_MS = 10 * 60 * 1000;
 const MAX_CELLS = 2000;
 
-const addStaffSchema = z.object({
-  fullName: z.string().trim().min(2).max(200),
-  jobPositionId: z.string().min(1).max(100),
-  phone: z.string().trim().max(30).optional(),
+// Схемы экспортируются для MCP и REST API (src/lib/public-api): описания
+// полей уходят модели в JSON Schema инструментов.
+export const assistantAddStaffSchema = z.object({
+  fullName: z.string().trim().min(2).max(200).describe("ФИО сотрудника полностью, как в документах"),
+  jobPositionId: z.string().min(1).max(100).describe("id должности из list_employees → positions"),
+  phone: z.string().trim().max(30).optional().describe("Телефон в любом формате; можно не указывать"),
 });
+const addStaffSchema = assistantAddStaffSchema;
 
 const primitive = z.union([z.string().max(500), z.number(), z.boolean(), z.null()]);
 
@@ -82,15 +85,23 @@ const fillValuesSchema = z.union([
   }),
 ]);
 
-const fillCellsSchema = z.object({
-  documentId: z.string().min(1).max(100),
-  employeeIds: z.array(z.string().min(1).max(100)).min(1).max(50),
+export const assistantFillCellsSchema = z.object({
+  documentId: z.string().min(1).max(100).describe("id документа журнала из list_journals → documents"),
+  employeeIds: z
+    .array(z.string().min(1).max(100))
+    .min(1)
+    .max(50)
+    .describe("id сотрудников из list_employees — строки документа"),
   dates: z
     .array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
     .min(1)
-    .max(62),
-  values: fillValuesSchema,
+    .max(62)
+    .describe("Даты в формате YYYY-MM-DD внутри периода документа"),
+  values: fillValuesSchema.describe(
+    "Что записать: status — статус гигиенического журнала; auto — типовое заполнение по графику (hygiene, health_check); data — только значения, которые пользователь назвал сам"
+  ),
 });
+const fillCellsSchema = assistantFillCellsSchema;
 
 export type ProposedAction =
   | { kind: "add_staff"; input: z.infer<typeof addStaffSchema> }
@@ -338,7 +349,8 @@ export function verifyActionToken(
 // Исполнение
 
 export type ExecuteResult =
-  | { ok: true; summary: string }
+  /** `entityId` — id созданного сотрудника для add_staff. */
+  | { ok: true; summary: string; entityId?: string }
   | { ok: false; error: string };
 
 export async function verifyAndExecuteAction(
@@ -351,29 +363,44 @@ export async function verifyAndExecuteAction(
     userId: ctx.actor.id,
   });
   if (!verified.ok) return { ok: false, error: t(`assistantActions.${verified.code}`) };
+  return executeProposedAction(verified.action, ctx);
+}
 
+/**
+ * Исполнение уже проверенного действия: полный набор боевых guard'ов и,
+ * если `audit` не `false`, строка AuditLog. Подпись проверяет вызывающая
+ * сторона: чат-помощник — токеном, MCP и REST API — ключом
+ * (они пишут свой аудит `public_api.call` и передают `audit: false`).
+ */
+export async function executeProposedAction(
+  action: ProposedAction,
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale },
+  opts: { audit?: { action: string; details?: Record<string, unknown> } | false } = {}
+): Promise<ExecuteResult> {
+  const audit = opts.audit === undefined ? { action: "ai_assistant.action" } : opts.audit;
   const result =
-    verified.action.kind === "add_staff"
-      ? await executeAddStaff(verified.action.input, ctx)
-      : await executeFillCells(verified.action.input, ctx);
+    action.kind === "add_staff"
+      ? await executeAddStaff(action.input, ctx)
+      : await executeFillCells(action.input, ctx);
 
-  if (result.ok) {
+  if (result.ok && audit) {
     await db.auditLog
       .create({
         data: {
           organizationId: ctx.orgId,
           userId: ctx.actor.id,
           userName: ctx.actor.name,
-          action: "ai_assistant.action",
-          entity: verified.action.kind,
+          action: audit.action,
+          entity: action.kind,
           entityId:
-            verified.action.kind === "fill_journal_cells"
-              ? verified.action.input.documentId
+            action.kind === "fill_journal_cells"
+              ? action.input.documentId
               : null,
           details: {
-            kind: verified.action.kind,
-            input: JSON.parse(JSON.stringify(verified.action.input)),
+            kind: action.kind,
+            input: JSON.parse(JSON.stringify(action.input)),
             summary: result.summary,
+            ...audit.details,
           },
         },
       })
@@ -399,6 +426,7 @@ async function executeAddStaff(
   return {
     ok: true,
     summary: t("assistantActions.staffAdded", { name: result.user.name, position: result.positionName }),
+    entityId: result.user.id,
   };
 }
 

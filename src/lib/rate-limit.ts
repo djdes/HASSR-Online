@@ -261,3 +261,9 @@ export const supportBroadcastLimiter = createRateLimiter({
   tokensPerInterval: 1,
   intervalMs: 10 * 60_000,
 });
+
+/** MCP и REST API v1 (src/lib/public-api): 120 вызовов в минуту на ключ. */
+export const publicApiRateLimiter = createRateLimiter({
+  tokensPerInterval: 120,
+  intervalMs: 60_000,
+});

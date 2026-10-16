@@ -50,6 +50,7 @@ model OrganizationMember {
 }
 
 model Organization {
+  apiAccessKeys                 ApiAccessKey[]
   masterBrakerageBatches         MasterBrakerageBatch[]
   knowledgeDocuments            KnowledgeDocument[]
   logo                          OrganizationLogo?
@@ -840,6 +841,7 @@ model EmployeeJoinToken {
 }
 
 model User {
+  apiAccessKeys               ApiAccessKey[]
   id                          String                   @id @default(cuid())
   /// Personal interface language; null inherits the active organization's default.
   locale                      String?
@@ -4241,4 +4243,28 @@ model MailingRecipient {
   @@index([userId])
   @@index([contactId])
   @@index([email])
+}
+
+/// Персональный ключ ИИ-ассистентов и API (/settings/api). Действует с
+/// правами владельца в организации, где выпущен. Хранится только хеш.
+model ApiAccessKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  /// "write" | "read"; запись включает чтение.
+  access         String       @default("write")
+  tokenHash      String       @unique
+  /// "wsk_" + первые 8 символов — чтобы узнать ключ в списке.
+  displayPrefix  String
+  lastUsedAt     DateTime?
+  /// "mcp" | "rest"
+  lastUsedVia    String?
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, revokedAt])
+  @@index([userId])
 }
