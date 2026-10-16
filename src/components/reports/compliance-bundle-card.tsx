@@ -69,7 +69,12 @@ function buildPresets(): Preset[] {
  * dialog handles big archives — no need to hold the whole blob in JS
  * memory.
  */
-export function ComplianceBundleCard() {
+export function ComplianceBundleCard({
+  bare = false,
+}: {
+  /** Только выбор периода и кнопка — без своей карточки и заголовка (шаг «Пришла проверка»). */
+  bare?: boolean;
+} = {}) {
   const [from, setFrom] = useState<string>(firstOfCurrentMonth());
   const [to, setTo] = useState<string>(todayYmd());
   const [busy, setBusy] = useState(false);
@@ -111,6 +116,81 @@ export function ComplianceBundleCard() {
     }
   }
 
+  const controls = (
+    <>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {presets.map((preset) => {
+          const active = preset.from === from && preset.to === to;
+          return (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => {
+                setFrom(preset.from);
+                setTo(preset.to);
+              }}
+              className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                active
+                  ? "border-[#5566f6] bg-[#5566f6] text-white"
+                  : "border-[#dcdfed] bg-white text-[#3c4053] hover:bg-[#f5f6ff]"
+              }`}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+        <div>
+          <label className="text-[12px] font-medium text-[#6f7282]">
+            С
+          </label>
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="mt-1 h-11 rounded-2xl border-[#dcdfed]"
+          />
+        </div>
+        <div>
+          <label className="text-[12px] font-medium text-[#6f7282]">
+            По
+          </label>
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="mt-1 h-11 rounded-2xl border-[#dcdfed]"
+          />
+        </div>
+        <div className="flex items-end">
+          <Button
+            type="button"
+            onClick={download}
+            disabled={busy}
+            className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
+          >
+            {busy ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            {busy ? "Собираем…" : "Скачать архив"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2 text-[12px] text-[#9b9fb3]">
+        <CalendarRange className="size-3.5" />
+        Включаются все документы, чей период пересекается с выбранным.
+        Максимум 400 дней за один архив.
+      </div>
+    </>
+  );
+
+  if (bare) return <div data-compliance-bundle>{controls}</div>;
+
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
       <div className="flex items-start gap-4">
@@ -127,74 +207,7 @@ export function ComplianceBundleCard() {
             сам. Внутри лежат PDF каждого журнала + манифест с перечнем.
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {presets.map((preset) => {
-              const active = preset.from === from && preset.to === to;
-              return (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => {
-                    setFrom(preset.from);
-                    setTo(preset.to);
-                  }}
-                  className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
-                    active
-                      ? "border-[#5566f6] bg-[#5566f6] text-white"
-                      : "border-[#dcdfed] bg-white text-[#3c4053] hover:bg-[#f5f6ff]"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-            <div>
-              <label className="text-[12px] font-medium text-[#6f7282]">
-                С
-              </label>
-              <Input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="mt-1 h-11 rounded-2xl border-[#dcdfed]"
-              />
-            </div>
-            <div>
-              <label className="text-[12px] font-medium text-[#6f7282]">
-                По
-              </label>
-              <Input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="mt-1 h-11 rounded-2xl border-[#dcdfed]"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                type="button"
-                onClick={download}
-                disabled={busy}
-                className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
-              >
-                {busy ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Download className="size-4" />
-                )}
-                {busy ? "Собираем…" : "Скачать архив"}
-              </Button>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-2 text-[12px] text-[#9b9fb3]">
-            <CalendarRange className="size-3.5" />
-            Включаются все документы, чей период пересекается с выбранным.
-            Максимум 400 дней за один архив.
-          </div>
+          {controls}
         </div>
       </div>
     </div>

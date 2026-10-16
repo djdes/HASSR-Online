@@ -12,6 +12,7 @@
  */
 
 import { sanitizeOrgJournalName } from "@/lib/org-journal-name";
+import { ORG_LOGO_PATH_PATTERN } from "@/lib/org-logo-file";
 import { normalizeOwnership, normalizeSphere } from "@/lib/org-profile";
 
 export const ORG_PROFILE_FIELDS = [
@@ -120,7 +121,8 @@ export function parseOrganizationProfilePatch(
   if (has("logoUrl")) {
     const v = typeof body.logoUrl === "string" ? body.logoUrl.trim() : "";
     if (v === "") data.logoUrl = null;
-    else if (!URL_PATTERN.test(v)) errors.push("URL логотипа должен начинаться с http:// или https://");
+    // Загруженный в кабинете файл живёт по внутреннему адресу (lib/org-logo.ts).
+    else if (!URL_PATTERN.test(v) && !ORG_LOGO_PATH_PATTERN.test(v)) errors.push("URL логотипа должен начинаться с http:// или https://");
     else data.logoUrl = v.slice(0, 500);
   }
   if (has("shiftEndHour")) {

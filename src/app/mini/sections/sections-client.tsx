@@ -2,37 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  BadgeCheck,
-  Bell,
-  BookOpen,
-  Building2,
-  CalendarRange,
-  ChevronRight,
-  ClipboardList,
-  Coins,
-  CreditCard,
-  FileText,
-  Gauge,
-  GitBranch,
-  GraduationCap,
-  History,
-  LayoutGrid,
-  Lightbulb,
-  Package,
-  Palette,
-  Plug,
-  ScrollText,
-  Search,
-  Settings2,
-  ShieldCheck,
-  TrendingDown,
-  TrendingUp,
-  Users,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronRight, LayoutGrid, Search } from "lucide-react";
+import { NavIcon } from "@/components/layout/nav-icons";
 
 export type MiniSectionItemView = {
   href: string;
@@ -46,39 +17,6 @@ export type MiniSectionGroupView = {
   title: string;
   subtitle: string;
   items: MiniSectionItemView[];
-};
-
-/**
- * Соответствие «имя иконки → компонент» живёт здесь, в клиенте.
- * Серверный компонент передаёт только строку: функции через границу
- * RSC не сериализуются. Появился новый раздел — иконку добавляем сюда.
- */
-const SECTION_ICONS: Record<string, LucideIcon> = {
-  AlertTriangle,
-  BadgeCheck,
-  Bell,
-  BookOpen,
-  Building2,
-  CalendarRange,
-  ClipboardList,
-  Coins,
-  CreditCard,
-  FileText,
-  Gauge,
-  GitBranch,
-  GraduationCap,
-  History,
-  Lightbulb,
-  Package,
-  Palette,
-  Plug,
-  ScrollText,
-  Settings2,
-  ShieldCheck,
-  TrendingDown,
-  TrendingUp,
-  Users,
-  Wrench,
 };
 
 function normalize(value: string): string {
@@ -181,6 +119,7 @@ export function MiniSectionsClient({
 
       {filtered.map((group) => (
         <section key={group.id} className="space-y-2">
+          {group.title ? (
           <div className="px-1">
             <h2
               className="text-[17px] font-semibold"
@@ -201,8 +140,8 @@ export function MiniSectionsClient({
               </p>
             ) : null}
           </div>
+          ) : null}
           {group.items.map((item) => {
-            const Icon = SECTION_ICONS[item.icon] ?? LayoutGrid;
             return (
               // Пункт — строка списка QR-страниц: плитка, название
               // крупно, пояснение под ним.
@@ -212,11 +151,11 @@ export function MiniSectionsClient({
                 className="mini-item mini-press"
               >
                 <span className="mini-tile">
-                  <Icon className="size-5" />
+                  <NavIcon name={item.icon} className="size-5" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{item.label}</span>
-                  <span className="mini-item-hint">{item.hint}</span>
+                  {item.hint ? <span className="mini-item-hint">{item.hint}</span> : null}
                 </span>
                 <ChevronRight
                   className="size-5 shrink-0"

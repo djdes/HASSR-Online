@@ -3,7 +3,11 @@ import { decode } from "next-auth/jwt";
 import { pageNavigationGuard } from "@/lib/page-navigation-guard";
 import { publicLocaleRoute, SITE_LOCALE_COOKIE, SITE_LOCALE_HEADER } from "@/i18n/site-locale";
 import { pickSessionCookie } from "@/lib/auth-cookies";
-import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
+import {
+  canAccessWebPath,
+  hasFullWorkspaceAccess,
+  isStaffRestrictedWebPath,
+} from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
 import {
   MINI_SHELL_COOKIE,
@@ -138,28 +142,6 @@ function partnerDenied(req: NextRequest, reason: string): NextResponse {
   return NextResponse.redirect(url);
 }
 
-const STAFF_RESTRICTED_WEB_PREFIXES = [
-  "/dashboard",
-  "/settings",
-  "/reports",
-  "/plans",
-  "/changes",
-  "/losses",
-  "/batches",
-  "/competencies",
-  "/capa",
-  "/sanpin",
-] as const;
-
-function matchesPrefix(pathname: string, prefix: string): boolean {
-  return pathname === prefix || pathname.startsWith(`${prefix}/`);
-}
-
-function isStaffRestrictedWebPath(pathname: string): boolean {
-  return STAFF_RESTRICTED_WEB_PREFIXES.some((prefix) =>
-    matchesPrefix(pathname, prefix)
-  );
-}
 
 /**
  * Global proxy (Next 16: файл `proxy.ts`, раньше — `middleware.ts`;

@@ -34,7 +34,8 @@ import { currentAnnouncement } from "@/lib/platform-status";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
 import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
-import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
+import { orgDisplayName } from "@/lib/org-display-name";
 import { hasCapability } from "@/lib/permission-presets";
 import { getBalance } from "@/lib/balance/ledger";
 import { db } from "@/lib/db";
@@ -49,7 +50,10 @@ import { BillingAnnouncement } from "@/components/billing/billing-announcement";
 import { BillingTransitionGate } from "@/components/billing/billing-transition-gate";
 import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
 import { PageNav, PageNavProvider } from "@/components/layout/page-nav";
-import { LayoutLocationTabs } from "@/components/layout/location-tabs";
+import { SectionTabs } from "@/components/layout/section-tabs";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppNavProvider } from "@/components/layout/app-nav-context";
+import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banner";
 import {
@@ -285,6 +289,11 @@ export default async function DashboardLayout({
     // берут меню, крошки и страницы через CustomNamesProvider.
     getOrgCustomNames(activeOrgId),
   ]);
+  // Меню кабинета (девять разделов слева, 2026-10-16): что человек
+  // откроет — то и показываем. Один расчёт на сайдбар, вкладки, крошки,
+  // мобильное меню и ⌘K.
+  const navFacts = await loadNavFacts(session.user);
+  const navModel = await buildNavModel({ user: session.user, facts: navFacts, customNames });
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
   // Тема первого кадра — та, что сейчас на этом устройстве (кука), иначе
@@ -393,6 +402,18 @@ export default async function DashboardLayout({
               кнопок. На телефоне их было три, и они закрывали правый
               нижний угол страницы. */}
           <FabDockProvider>
+          <AppNavProvider model={navModel}>
+          {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
+              страница, футер. Сайдбар — только когда разделов два и больше. */}
+          <div className="flex min-h-screen flex-1">
+          {navModel.showSidebar ? (
+            <AppSidebar
+              logoUrl={headerLogoUrl}
+              organizationName={orgDisplayName(impersonatedName ?? session.user.organizationName ?? "", "") || "WeSetup"}
+              homeHref={getWebHomeHref(session.user)}
+            />
+          ) : null}
+          <div className="flex min-w-0 flex-1 flex-col">
           {impersonatedName ? (
             <ImpersonationBanner organizationName={impersonatedName} />
           ) : null}
@@ -437,19 +458,25 @@ export default async function DashboardLayout({
             organizationName={impersonatedName ?? session.user.organizationName ?? ""}
             organizationLogoUrl={headerLogoUrl}
             userRole={session.user.role ?? ""}
-            positionTitle={profile?.positionTitle ?? ""}
             isRoot={session.user.isRoot === true}
             balanceRub={balanceRub}
             cabinetPlan={cabinetPlan}
             ownCabinet={!isImpersonating(session) && !partnerAccess}
             organizations={organizations}
             activeOrganizationId={activeOrgId}
-            buildings={buildingContext.canSwitch ? buildingContext.buildings : []}
-            activeBuildingId={buildingContext.activeBuildingId}
+            currentPoint={{
+              // Точек несколько — переключатель; одна — название организации:
+              // для заведения с одним адресом точка и есть компания.
+              name: orgDisplayName(impersonatedName ?? session.user.organizationName ?? "", ""),
+              buildings: buildingContext.canSwitch ? buildingContext.buildings : [],
+              activeBuildingId: buildingContext.activeBuildingId,
+              manageHref: hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null,
+            }}
             canCreateOrganization={Boolean(ownedAccount)}
             organizationSphere={brandedOrg?.type ?? "restaurant"}
             partnerCabinet={partnerCabinet}
             partnerHint={partnerHint}
+            whiteLabel={Boolean(consultant)}
             canEditBranding={hasCapability(session.user, "admin.full")}
           />
           {/* Быстрый старт только что созданной точки. Живёт в layout'е,
@@ -490,16 +517,10 @@ export default async function DashboardLayout({
               {/* Провайдер оборачивает и навигацию, и контент: страницы
                   уточняют крошки через <PageCrumbs>, а рисует их PageNav. */}
               <PageNavProvider>
-                {/* Точки: строка вкладок над крошками — на всех страницах,
-                    кроме дашборда (там вкладки со счётчиками рисует сама
-                    страница). Не липкая: уезжает вместе со страницей. */}
-                <LayoutLocationTabs
-                  buildings={buildingContext.canSwitch ? buildingContext.buildings : []}
-                  activeBuildingId={buildingContext.activeBuildingId}
-                  manageHref={
-                    hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null
-                  }
-                />
+                {/* Вкладки раздела на его корневых страницах; глубже —
+                    крошки (PageNav). Вместе не показываются. Точка —
+                    в центре шапки. */}
+                <SectionTabs />
                 <PageNav
                   organizationName={
                     impersonatedName ?? session.user.organizationName ?? ""
@@ -539,6 +560,8 @@ export default async function DashboardLayout({
               владельца: «наш футер на каждой странице»). `mt-auto`
               прижимает его к низу на коротких экранах. */}
           <DashboardFooter partnerBrandName={consultant?.brandName ?? null} />
+          </div>
+          </div>
           {/* AI помощник — доступен ВСЕМ авторизованным (решение
               владельца 2026-09-02): отвечает по текущей странице и данным
               организации, действия предлагает карточкой с подтверждением.
@@ -594,6 +617,7 @@ export default async function DashboardLayout({
           <CommandPalette />
           {/* P2.A.1 — Ctrl+Shift+N → срочный журнал → /journals/[code]/new */}
           <UrgentJournalHotkey />
+          </AppNavProvider>
           </FabDockProvider>
         </div>
         <Toaster />
@@ -680,6 +704,13 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     ]);
 
   const impersonatedName = impersonatedOrg?.name ?? null;
+  // Те же разделы и вкладки, что на сайте (П-3): вкладки раздела — над
+  // страницей и в приложении.
+  const navModel = await buildNavModel({
+    user: session.user,
+    facts: await loadNavFacts(session.user),
+    customNames,
+  });
 
   // Окно решения и плашка сотруднику — те же, что на сайте (П-3); анонс
   // периода в приложении живёт в профиле.
@@ -712,6 +743,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
           бы за атрибут. */}
       <SiteThemeProvider initialTheme={shell.initialTheme} controlled>
         <MiniAppShell {...shell}>
+            <AppNavProvider model={navModel}>
             <PageNavProvider>
               {/* Человек должен видеть, что он в чужом кабинете или в
                   песочнице, — в телефоне это важнее, чем на сайте:
@@ -738,6 +770,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 </Suspense>
               ) : null}
               {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
+              <SectionTabs />
               {children}
               {billing?.gate ? (
                 <BillingTransitionGate
@@ -748,6 +781,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 />
               ) : null}
             </PageNavProvider>
+            </AppNavProvider>
         </MiniAppShell>
       </SiteThemeProvider>
       </CustomNamesProvider>

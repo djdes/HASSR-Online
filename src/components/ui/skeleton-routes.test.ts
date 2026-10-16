@@ -38,7 +38,6 @@ describe("скелетон по адресу: подстраница не гру
 
   it("вложенные loading.tsx выбирают скелет по адресу", () => {
     for (const file of [
-      `${APP}/settings/loading.tsx`,
       `${APP}/dashboard/loading.tsx`,
       `${APP}/reports/loading.tsx`,
       `${APP}/journals/loading.tsx`,
@@ -51,9 +50,10 @@ describe("скелетон по адресу: подстраница не гру
       assert.match(src, /usePathname\(\)/, file);
       assert.match(src, /isSectionRoot|journalsSkeletonFor/, file);
     }
-    // Хаб настроек сохранил свой скелет с тёмным баннером, подстраницы — нет.
+    // Хаба настроек больше нет (меню 2026-10-16): у всех подстраниц один
+    // скелет — шапка и панель, без тёмного баннера.
     const settings = read(`${APP}/settings/loading.tsx`);
-    assert.match(settings, /bg-\[#0b1024\]/);
+    assert.doesNotMatch(settings, /bg-\[#0b1024\]/);
     assert.match(settings, /<PageSkeleton label=\{tLoading\("settings"\)\} body="panel" \/>/);
   });
 });

@@ -1,4 +1,46 @@
 {
+  "productionControl": {
+    "kinds": {
+      "ppk": "Ishlab chiqarish nazorati dasturi",
+      "haccp_plan": "HACCP rejasi"
+    },
+    "empty": "Hozircha fayl yo‘q",
+    "uploaded": "Yuklangan: {date}",
+    "open": "Ochish",
+    "replace": "Almashtirish",
+    "upload": "Fayl yuklash",
+    "order": "Ishlab chiqishga buyurtma berish",
+    "remove": "Faylni o‘chirish",
+    "removeTitle": "Fayl o‘chirilsinmi?",
+    "removeBody": "«{name}» bo‘limdan o‘chadi. Yangisini istalgan vaqtda yuklash mumkin.",
+    "uploading": "Yuklanmoqda…",
+    "uploadedToast": "Fayl yuklandi",
+    "removedToast": "Fayl o‘chirildi",
+    "uploadFailed": "Faylni yuklab bo‘lmadi",
+    "removeFailed": "Faylni o‘chirib bo‘lmadi",
+    "formats": "PDF, Word yoki skan · 25 MB gacha",
+    "askManager": "Faylni rahbar yuklay oladi"
+  },
+  "inspectionDay": {
+    "qrTitle": "QR-kodni tekshiruvchiga ko‘rsating",
+    "fullscreen": "To‘liq ekran",
+    "print": "Varaqni chop etish",
+    "close": "Yopish",
+    "noQr": "QR-kod hali chiqarilmagan",
+    "issueQr": "QR-kod chiqarish",
+    "issuing": "Chiqarilmoqda…",
+    "issued": "QR-kod tayyor",
+    "issueFailed": "QR-kodni chiqarib bo‘lmadi",
+    "askManager": "QR-kod chiqarishni rahbardan so‘rang",
+    "archiveTitle": "Barcha jurnallar bitta arxivda",
+    "readinessTitle": "Tekshiruvga tayyorgarlik",
+    "readinessScore": "{total} tadan {ok} tasi joyida",
+    "fix": "Tuzatish",
+    "allChecks": "Barcha tekshiruvlar",
+    "allGood": "Kamchiliklar yo‘q",
+    "visitsTitle": "Kim ko‘rdi",
+    "noVisits": "Hali hech kim jurnallarni QR orqali ochmagan"
+  },
   "common": {
     "save": "Saqlash",
     "cancel": "Bekor qilish",
@@ -1466,6 +1508,69 @@
     "ppe_issuance": "Xodimlarga shaxsiy himoya vositalarini berish jurnali"
   },
   "navigation": {
+    "shell": {
+      "sections": {
+        "company": "Mening kompaniyam",
+        "staff": "Xodimlar",
+        "points": "Savdo nuqtalari",
+        "journals": "Jurnallar",
+        "checklists": "Chek-listlar",
+        "productionControl": "Ishlab chiqarish nazorati",
+        "billing": "To‘lov",
+        "more": "Boshqalar",
+        "inspection": "Tekshiruv keldi"
+      },
+      "tabs": {
+        "main": "Asosiy",
+        "organization": "Rekvizitlar",
+        "appearance": "Ko'rinish",
+        "names": "Nomlar",
+        "onboarding": "Tezkor sozlash",
+        "users": "Xodimlar",
+        "team": "Jamoa",
+        "schedule": "Jadval",
+        "health": "Tibbiy daftarchalar",
+        "setup": "Sozlash",
+        "buildings": "Nuqtalar",
+        "areas": "Xonalar",
+        "equipment": "Uskunalar",
+        "qr": "QR-kodlar",
+        "today": "Bugun",
+        "all": "Barcha jurnallar",
+        "verify": "Tekshirish",
+        "program": "Dastur",
+        "orders": "Buyruqlar",
+        "knowledge": "Yo‘riqnomalar",
+        "sanpin": "SanPiN",
+        "plan": "Tarif",
+        "balance": "Balans",
+        "services": "Xizmatlar",
+        "inspectionDay": "Nima qilish kerak",
+        "portal": "QR-kirish",
+        "readiness": "Tayyorgarlik"
+      },
+      "groups": {
+        "staff": "Xodimlar",
+        "points": "Nuqtalar",
+        "journals": "Jurnallar",
+        "tasks": "Vazifalarni taqsimlash",
+        "work": "Ish",
+        "connections": "Ulanishlar",
+        "other": "Boshqa"
+      },
+      "point": {
+        "list": "Nuqtalar",
+        "switch": "Nuqtani almashtirish",
+        "manage": "Nuqtalarni sozlash",
+        "switched": "Nuqta: {name}",
+        "failed": "Nuqtani almashtirib bo‘lmadi"
+      },
+      "sidebarAria": "Kabinet bo‘limlari",
+      "tabsAria": "Bo‘limchalar",
+      "menu": "Menyu",
+      "logout": "Chiqish",
+      "brand": "WeSetup"
+    },
     "header": {
       "staff": "Xodimlar",
       "settings": "Sozlamalar",
@@ -1617,6 +1722,15 @@
       }
     },
     "routes": {
+      "inspection": "Tekshiruv keldi",
+      "production_control": "Ishlab chiqarish nazorati dasturi",
+      "more": "Boshqalar",
+      "knowledge": "Yo‘riqnomalar",
+      "checklists": "Chek-listlar",
+      "settings_staff_health": "Tibbiy daftarchalar va o‘qitish",
+      "settings_sections_journals": "Jurnallar sozlamalari",
+      "settings_sections_staff": "Xodimlar sozlamalari",
+      "settings_sections_points": "Nuqtalar sozlamalari",
       "batches": "Partiyalar",
       "batches_new": "Yangi partiya",
       "capa": "Nomuvofiqliklar",
@@ -1686,7 +1800,7 @@
       "ideas": "G‘oyalar va ovoz berish",
       "changes": "O‘zgarishlar",
       "competencies": "Kompetensiyalar",
-      "dashboard": "Bosh sahifa",
+      "dashboard": "Bugun",
       "dashboard_catch_up": "Qoldirilgan yozuvlarni to‘ldirish",
       "dashboard_compliance_audit": "Tekshiruvga tayyorgarlik",
       "equipment_fill": "Uskuna bo‘yicha yozuv",
@@ -7258,6 +7372,34 @@
         }
       },
       "cards": {
+        "plans": {
+          "title": "Ishlab chiqarish rejasi",
+          "description": "Smenada nima va qancha tayyorlanadi"
+        },
+        "capa": {
+          "title": "Nomuvofiqliklar",
+          "description": "Nima topildi va qanday tuzatildi"
+        },
+        "reports": {
+          "title": "Hisobotlar",
+          "description": "Jurnallarni PDF va Excelga yuklash"
+        },
+        "ideas": {
+          "title": "G‘oyalar va ovoz berish",
+          "description": "Takomillashtirishni taklif qiling va ovoz bering"
+        },
+        "mercury": {
+          "title": "Kiruvchi veterinariya hujjatlari",
+          "description": "Veterinariya hujjatlarini bitta oynada qabul qilish va so‘ndirish"
+        },
+        "settings_integrations_mercury": {
+          "title": "Merkuriy federal axborot tizimi",
+          "description": "Kiruvchi veterinariya hujjatlari uchun Merkuriyga ulanish"
+        },
+        "settings_print_agent": {
+          "title": "Onlayn printer",
+          "description": "Jurnal va yorliqlarni muassasa printerida chop etish"
+        },
         "orders": {
           "title": "Buyruqlar",
           "description": "Tashkilot rekvizitlarini kiriting va korxona buyruqlarini chop eting."
@@ -7483,6 +7625,15 @@
         "brandAnswer": "Bu brendingizning asosiy rangi, masalan, logotip va Mini App tugmalari rangi. Kabinetni o‘z uslubingizda ko‘rsatish uchun korporativ hex-kodni kiriting."
       },
       "form": {
+        "logoTitle": "Logotip",
+        "logoHint": "Chap menyuning tepasida. PNG, JPG yoki SVG, 500 KB gacha.",
+        "logoUpload": "Logotip yuklash",
+        "logoReplace": "Almashtirish",
+        "logoRemove": "Logotipni o‘chirish",
+        "logoUploaded": "Logotip yuklandi",
+        "logoRemoved": "Logotip o‘chirildi",
+        "logoFailed": "Logotipni yuklab bo‘lmadi",
+        "logoByUrl": "yoki rasm havolasini ko‘rsatish",
         "spheres": {
           "restaurant": "Restoran",
           "cafe": "Kafe / Qahvaxona",

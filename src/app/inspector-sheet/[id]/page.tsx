@@ -7,6 +7,7 @@ import { isInspectorQrRecord } from "@/lib/inspector-qr";
 import { inspectorQrSvg, inspectorQrUrl } from "@/lib/inspector-qr-service";
 import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
+import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PrintButton } from "./print-button";
 
@@ -25,7 +26,11 @@ export const metadata = {
  */
 export default async function InspectorSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  // Заведующая тоже: проверяющий часто приходит, когда она одна на месте
+  // («Пришла проверка», 2026-10-16). Выпускать и отзывать QR — руководству.
+  if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) {
+    redirect("/journals");
+  }
   const { id } = await params;
   const orgId = getActiveOrgId(session);
 

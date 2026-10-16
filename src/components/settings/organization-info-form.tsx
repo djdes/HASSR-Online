@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { OrgLogoUpload } from "@/components/settings/org-logo-upload";
 import {
   ORG_OWNERSHIP,
   ORG_SPHERES,
@@ -576,33 +577,32 @@ export function OrganizationInfoForm({
           </div>
         </FormRow>
         <FormRow
-          label={t("form.logoUrl")}
-          hint={t("form.logoUrlHint")}
+          label={t("form.logoTitle")}
+          hint={t("form.logoHint")}
           icon={<ImageIcon className="size-4" />}
         >
-          <input
-            type="url"
-            value={form.logoUrl ?? ""}
-            onChange={(e) => set("logoUrl", e.target.value || null)}
-            className="form-input"
-            placeholder="https://example.com/logo.png"
+          {/* Файл сохраняется сразу, без кнопки «Сохранить»: так логотип
+              видно в меню слева, как только он загружен. */}
+          <OrgLogoUpload
+            url={form.logoUrl}
+            onChange={(url) => {
+              set("logoUrl", url);
+              router.refresh();
+            }}
           />
-          {form.logoUrl ? (
-            <div className="mt-2 flex items-center gap-3 rounded-xl border border-[#ececf4] bg-[#fafbff] p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={form.logoUrl}
-                alt={t("form.preview")}
-                className="size-12 rounded-lg object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <span className="text-[12px] text-[#6f7282]">
-                {t("form.currentLogoPreview")}
-              </span>
-            </div>
-          ) : null}
+          <details className="mt-2 group">
+            <summary className="cursor-pointer list-none text-[12.5px] text-[#6f7282] transition-colors duration-150 hover:text-[#5566f6]">
+              {t("form.logoByUrl")}
+            </summary>
+            <input
+              type="url"
+              value={form.logoUrl ?? ""}
+              onChange={(e) => set("logoUrl", e.target.value || null)}
+              className="form-input mt-2"
+              placeholder="https://example.com/logo.png"
+              aria-label={t("form.logoUrl")}
+            />
+          </details>
         </FormRow>
       </FormSection>
 

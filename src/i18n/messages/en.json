@@ -1,4 +1,46 @@
 {
+  "productionControl": {
+    "kinds": {
+      "ppk": "Production control program",
+      "haccp_plan": "HACCP plan"
+    },
+    "empty": "No file yet",
+    "uploaded": "Uploaded {date}",
+    "open": "Open",
+    "replace": "Replace",
+    "upload": "Upload file",
+    "order": "Order development",
+    "remove": "Delete file",
+    "removeTitle": "Delete the file?",
+    "removeBody": "“{name}” will be removed from this section. You can upload a new one at any time.",
+    "uploading": "Uploading…",
+    "uploadedToast": "File uploaded",
+    "removedToast": "File deleted",
+    "uploadFailed": "Couldn't upload the file",
+    "removeFailed": "Couldn't delete the file",
+    "formats": "PDF, Word or a scan · up to 25 MB",
+    "askManager": "A manager can upload the file"
+  },
+  "inspectionDay": {
+    "qrTitle": "Show the QR code to the inspector",
+    "fullscreen": "Full screen",
+    "print": "Print the sheet",
+    "close": "Close",
+    "noQr": "No QR code issued yet",
+    "issueQr": "Issue QR code",
+    "issuing": "Issuing…",
+    "issued": "QR code is ready",
+    "issueFailed": "Couldn't issue the QR code",
+    "askManager": "Ask a manager to issue the QR code",
+    "archiveTitle": "All journals in one archive",
+    "readinessTitle": "Inspection readiness",
+    "readinessScore": "{ok} of {total} in order",
+    "fix": "Fix",
+    "allChecks": "All checks",
+    "allGood": "No issues",
+    "visitsTitle": "Who viewed",
+    "noVisits": "Nobody has opened the journals by QR yet"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -1466,6 +1508,69 @@
     "ppe_issuance": "Log for issuing personal protective equipment to employees"
   },
   "navigation": {
+    "shell": {
+      "sections": {
+        "company": "My company",
+        "staff": "Staff",
+        "points": "Outlets",
+        "journals": "Journals",
+        "checklists": "Checklists",
+        "productionControl": "Production control",
+        "billing": "Billing",
+        "more": "More",
+        "inspection": "Inspection visit"
+      },
+      "tabs": {
+        "main": "Main",
+        "organization": "Details",
+        "appearance": "Appearance",
+        "names": "Names",
+        "onboarding": "Quick setup",
+        "users": "Staff",
+        "team": "Team",
+        "schedule": "Schedule",
+        "health": "Medical books",
+        "setup": "Settings",
+        "buildings": "Outlets",
+        "areas": "Rooms",
+        "equipment": "Equipment",
+        "qr": "QR codes",
+        "today": "Today",
+        "all": "All journals",
+        "verify": "Verification",
+        "program": "Program",
+        "orders": "Orders",
+        "knowledge": "Instructions",
+        "sanpin": "SanPiN",
+        "plan": "Plan",
+        "balance": "Balance",
+        "services": "Services",
+        "inspectionDay": "What to do",
+        "portal": "QR access",
+        "readiness": "Readiness"
+      },
+      "groups": {
+        "staff": "Staff",
+        "points": "Outlets",
+        "journals": "Journals",
+        "tasks": "Task assignment",
+        "work": "Work",
+        "connections": "Connections",
+        "other": "Other"
+      },
+      "point": {
+        "list": "Outlets",
+        "switch": "Change outlet",
+        "manage": "Manage outlets",
+        "switched": "Outlet: {name}",
+        "failed": "Couldn't switch outlet"
+      },
+      "sidebarAria": "Cabinet sections",
+      "tabsAria": "Subsections",
+      "menu": "Menu",
+      "logout": "Log out",
+      "brand": "WeSetup"
+    },
     "header": {
       "staff": "Staff",
       "settings": "Settings",
@@ -1617,6 +1722,15 @@
       }
     },
     "routes": {
+      "inspection": "Inspection visit",
+      "production_control": "Production control program",
+      "more": "More",
+      "knowledge": "Instructions",
+      "checklists": "Checklists",
+      "settings_staff_health": "Medical books and training",
+      "settings_sections_journals": "Journal settings",
+      "settings_sections_staff": "Staff settings",
+      "settings_sections_points": "Outlet settings",
       "batches": "Batches",
       "batches_new": "New batch",
       "capa": "Non-conformities",
@@ -1686,7 +1800,7 @@
       "ideas": "Ideas and voting",
       "changes": "Changes",
       "competencies": "Competencies",
-      "dashboard": "Home",
+      "dashboard": "Today",
       "dashboard_catch_up": "Catch up on missed entries",
       "dashboard_compliance_audit": "Inspection readiness",
       "equipment_fill": "Equipment entry",
@@ -7258,6 +7372,34 @@
         }
       },
       "cards": {
+        "plans": {
+          "title": "Production plan",
+          "description": "What and how much to cook per shift"
+        },
+        "capa": {
+          "title": "Non-conformities",
+          "description": "What was found and how it was fixed"
+        },
+        "reports": {
+          "title": "Reports",
+          "description": "Journal exports to PDF and Excel"
+        },
+        "ideas": {
+          "title": "Ideas and voting",
+          "description": "Suggest an improvement and vote"
+        },
+        "mercury": {
+          "title": "Incoming veterinary documents",
+          "description": "Accept and redeem veterinary documents in one window"
+        },
+        "settings_integrations_mercury": {
+          "title": "Mercury federal information system",
+          "description": "Connect Mercury for incoming veterinary documents"
+        },
+        "settings_print_agent": {
+          "title": "Online printer",
+          "description": "Print journals and labels on your venue printer"
+        },
         "orders": {
           "title": "Orders",
           "description": "Fill in organization details and print company orders."
@@ -7483,6 +7625,15 @@
         "brandAnswer": "It is your brand accent color, for example, for the logo and Mini App buttons. Enter your corporate hex color to give the workspace a white-label look."
       },
       "form": {
+        "logoTitle": "Logo",
+        "logoHint": "At the top of the left menu. PNG, JPG or SVG up to 500 KB.",
+        "logoUpload": "Upload logo",
+        "logoReplace": "Replace",
+        "logoRemove": "Delete logo",
+        "logoUploaded": "Logo uploaded",
+        "logoRemoved": "Logo deleted",
+        "logoFailed": "Couldn't upload the logo",
+        "logoByUrl": "or use an image link",
         "spheres": {
           "restaurant": "Restaurant",
           "cafe": "Café / Coffee shop",

@@ -134,7 +134,7 @@ export function LogoUploader({
  * фон сохраняется). Не-PNG растровые (jpeg/webp) тоже конвертируем в PNG —
  * сервер принимает только PNG и SVG. SVG возвращаем нетронутым.
  */
-async function prepareLogo(file: File): Promise<File> {
+export async function prepareLogo(file: File): Promise<File> {
   const isSvg = file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
   if (isSvg) return file;
   if (!file.type.startsWith("image/")) throw new Error("Поддерживаются только PNG и SVG");

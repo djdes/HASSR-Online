@@ -74,7 +74,7 @@ export function JournalSelectionBar({
     // `data-touch-zone` — полоса живёт в <body>, вне `main`; метка
     // включает на телефоне правила «крупнее» кабинета (app-theme.css).
     <div
-      className={bottom ? "fixed inset-x-0 bottom-0 z-40 print:hidden" : JOURNAL_DOCUMENT_SELECTION_BAR_CLASS}
+      className={bottom ? "fixed bottom-0 left-[var(--app-sidebar-w,0px)] right-0 z-40 print:hidden" : JOURNAL_DOCUMENT_SELECTION_BAR_CLASS}
       data-selection-bar={placement}
       data-touch-zone=""
     >

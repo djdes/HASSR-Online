@@ -12,7 +12,8 @@ import { customSectionName } from "@/lib/custom-names";
 
 /**
  * Хлебные крошки раздела журналов:
- * «<Организация> › Журналы › <Журнал> › <Документ>».
+ * «Журналы › <Журнал> › <Документ>». Организацию и точку показывают
+ * сайдбар и шапка (меню 2026-10-16) — в цепочке они были бы повтором.
  *
  * Тонкая обёртка над общими `Breadcrumbs` — разметка одна на весь кабинет.
  *
@@ -51,7 +52,7 @@ export function JournalBreadcrumbs({
  * «Новая запись», «Проверка».
  */
 export function JournalPageCrumbs({
-  organizationName,
+  organizationName: _organizationName,
   journalName,
   journalCode,
   journalMenu,
@@ -83,7 +84,6 @@ export function JournalPageCrumbs({
   const journalLabel = journalName ? displayedName : journalName;
 
   const items: JournalCrumb[] = [
-    { label: organizationName, href: "/dashboard" },
     {
       label: customSectionName(customNames, "journals") ?? t("journals"),
       href: "/journals",

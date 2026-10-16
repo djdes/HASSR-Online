@@ -1,4 +1,3 @@
-import { WorkspaceResourceCards } from "@/components/dashboard/workspace-resource-cards";
 import Link from "next/link";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { redirect } from "next/navigation";
@@ -6,65 +5,38 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
-  BookOpen,
-  ClipboardList,
-  Coins,
-  FileDown,
-  GraduationCap,
+  History,
   Inbox,
-  Medal,
-  Package,
-  Printer,
   SlidersHorizontal,
-  ShieldCheck,
   Sparkles,
-  Stethoscope,
-  ThermometerSun,
-  TrendingDown,
-  Trophy,
   User as UserIcon,
-  Users,
   Wifi,
 } from "lucide-react";
+import { AlertPill } from "@/components/dashboard/alert-pill";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
-import { TemperatureChart } from "@/components/charts/temperature-chart";
 import { CloseDayCard } from "@/components/dashboard/close-day-card";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { DashboardJournalsGrid } from "@/components/dashboard/dashboard-journals-grid";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
 import { LiveClaimsCard } from "@/components/dashboard/live-claims-card";
-import { MedBooksExpiryCard } from "@/components/dashboard/med-books-expiry-card";
 import {
   DashboardSection,
   DashboardSectionPersistScript,
 } from "@/components/dashboard/dashboard-section";
-import { StaffTrainingCard } from "@/components/dashboard/staff-training-card";
-import { StaleCapaNag } from "@/components/dashboard/stale-capa-nag";
 import { SuperUserDevTools } from "@/components/dashboard/super-user-dev-tools";
 import { isSuperUser } from "@/lib/super-user";
-import { OrgHealthWidget } from "@/components/dashboard/org-health-widget";
-import { QuickStartCard } from "@/components/dashboard/quick-start-card";
-import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
-import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
-import { runOrgHealthCheck } from "@/lib/org-health-check";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
-import { LocationTabs } from "@/components/layout/location-tabs";
-import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderboard";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { normalizeSphere } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
-import { cn } from "@/lib/utils";
 import { orgDisplayName } from "@/lib/org-display-name";
-import { ConsultantCard } from "@/components/dashboard/consultant-card";
 import { PausedBanner } from "@/components/dashboard/paused-banner";
-import { getVisibleOrgBranding } from "@/lib/partners/branding";
-import { toConsultantContact } from "@/lib/partners/consultant-contact";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -132,10 +104,6 @@ export default async function DashboardPage() {
     pendingApproval,
     activeTemplates,
     recentEntries,
-    openCapaCount,
-    weekLossCount,
-    expiringBatches,
-    iotEquipment,
     templates,
     org,
   ] = await Promise.all([
@@ -153,26 +121,6 @@ export default async function DashboardPage() {
         area: { select: { name: true } },
         equipment: { select: { name: true } },
       },
-    }),
-    db.capaTicket.count({
-      where: { organizationId, status: { not: "closed" } },
-    }),
-    db.lossRecord.count({
-      where: {
-        organizationId,
-        date: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
-      },
-    }),
-    db.batch.count({
-      where: {
-        organizationId,
-        expiryDate: { lte: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000) },
-        status: { notIn: ["expired", "written_off", "shipped"] },
-      },
-    }),
-    db.equipment.findMany({
-      where: { area: { organizationId }, tuyaDeviceId: { not: null } },
-      select: { id: true, name: true, tuyaDeviceId: true },
     }),
     db.journalTemplate.findMany({
       where: { isActive: true },
@@ -211,34 +159,13 @@ export default async function DashboardPage() {
     (paper) => !disabledPaper.has(paper.id)
   );
 
-  // Soft-block: количество CAPA, которые открыты > 7 дней — это
-  // знак что менеджер забыл их закрыть. Показываем nag-модалку на
-  // dashboard. Dismissable per-session, появляется снова после
-  // следующей перезагрузки.
-  const staleCapaCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const [staleCapaCount, healthCheck] = await Promise.all([
-    db.capaTicket.count({
-      where: {
-        organizationId,
-        status: { not: "closed" },
-        createdAt: { lt: staleCapaCutoff },
-      },
-    }),
-    runOrgHealthCheck(organizationId),
-  ]);
-
-  const [filledTodayIds, leaderboard, strugglers] =
-    await Promise.all([
-      getTemplatesFilledToday(
-        organizationId,
-        now,
-        templates.map((t) => ({ id: t.id, code: t.code })),
-        disabledCodes,
-        { treatAperiodicAsFilled: false, buildingId: activeBuildingId }
-      ),
-      getWorkerLeaderboard(organizationId, 3, 30),
-      getStrugglingWorkers(organizationId, 3, 30),
-    ]);
+  const filledTodayIds = await getTemplatesFilledToday(
+    organizationId,
+    now,
+    templates.map((t) => ({ id: t.id, code: t.code })),
+    disabledCodes,
+    { treatAperiodicAsFilled: false, buildingId: activeBuildingId }
+  );
 
   // Treat every enabled journal as required for today. This keeps the
   // dashboard and the TasksFlow fan-out on the same selected count.
@@ -264,86 +191,31 @@ export default async function DashboardPage() {
     .map((t) => ({ id: t.id, name: t.name, code: t.code, description: t.description }));
   const unfilledCount = complianceItems.filter((c) => !c.filled).length;
   const filledCount = complianceItems.length - unfilledCount;
-  // Точки: сводка по точкам — заполнено сегодня на каждой, клик переключает.
-  const buildingContext = await loadBuildingContext(session);
-  const locationItems = buildingContext.canSwitch
-    ? await Promise.all(
-        buildingContext.buildings.map(async (building) => {
-          const filled =
-            building.id === activeBuildingId
-              ? filledTodayIds
-              : await getTemplatesFilledToday(
-                  organizationId,
-                  now,
-                  templates.map((t) => ({ id: t.id, code: t.code })),
-                  disabledCodes,
-                  { treatAperiodicAsFilled: false, buildingId: building.id }
-                );
-          return {
-            id: building.id,
-            name: building.name,
-            address: building.address,
-            filled: selectedEnabledTemplates.filter((t) => filled.has(t.id)).length,
-            total: selectedEnabledTemplates.length,
-          };
-        })
-      )
-    : [];
-  // Партнёр-консультант (white-label): блок «Ваш консультант» показываем
-  // после стартовой карточки. null — партнёра нет или клиент выбрал
-  // стандартный интерфейс WeSetup.
-  const consultant = toConsultantContact(await getVisibleOrgBranding(organizationId));
   // Свои названия журналов — для ленты последних записей (карточки
   // журналов берут их сами, из CustomNamesProvider).
   const customNames = await getOrgCustomNames(organizationId);
   return (
     <div className="space-y-5">
+      {/* «Журналы → Сегодня» (меню кабинета 2026-10-16): только то, что
+          нужно сделать сегодня. Остальные блоки бывшей главной переехали
+          в свои разделы: медкнижки и обучение — «Сотрудники», датчики и
+          принтер — «Торговые точки», готовность к проверке — «Пришла
+          проверка», нарушения и партии — «Остальное», быстрый старт —
+          «Моя компания». */}
       {/* Сотрудник отметился с телефона — «сегодня осталось» и карточки
           журналов обновляются сами, без F5 (событие `journal`). */}
       <LiveRefresh />
-      <WorkspaceResourceCards />
       {/* Persist для DashboardSection (collapsible-блоки): inline-script
           читает localStorage и настраивает initial open state. */}
       <DashboardSectionPersistScript />
-      {/* Точки: первой строкой — вкладки со счётчиком «заполнено сегодня»
-          на каждой точке. Нажатие переключает точку, дашборд ниже — уже
-          для неё. */}
-      {locationItems.length >= 2 ? (
-        <LocationTabs
-          buildings={locationItems}
-          activeBuildingId={activeBuildingId}
-          counters={Object.fromEntries(
-            locationItems.map((item) => [item.id, { filled: item.filled, total: item.total }])
-          )}
-          manageHref="/settings/buildings"
-        />
-      ) : null}
-      {/* Soft-block: nag-modal для админа когда CAPA открыты > 7 дней.
-          Dismissable per-session, появляется снова после reload. */}
-      <StaleCapaNag count={staleCapaCount} />
 
       {/* Super-user dev-tools (видны ТОЛЬКО специальному dev-аккаунту,
           см. src/lib/super-user.ts). Очистка журналов + force-bulk-assign
           в TF без time-фильтра — для итеративного тестирования. */}
       <SuperUserDevTools enabled={isSuperUser(session)} />
 
-      {/* Quick Start — карточка прогресса настройки для новых
-          организаций: кликабельна целиком, ведёт в /settings/onboarding.
-          Auto-hide когда всё настроено. Только для management ролей. */}
-      {hasFullWorkspaceAccess(session.user) ? (
-        <QuickStartCard organizationId={getActiveOrgId(session)} />
-      ) : null}
-
       {org?.subscriptionPlan === "paused" ? <PausedBanner /> : null}
-      {consultant ? <ConsultantCard consultant={consultant} /> : null}
 
-      {/* Action-first: what the user needs to do TODAY.
-          Карточка получает мягкий gradient-фон в зависимости от
-          compliance-tone (зелёный 100%, жёлтый частично, красный
-          ничего) — сразу понятно как дела с заполнением. */}
-      {/* Без собственной рамки: внутри уже лежат карточки-секции, и
-          обёртка добавляла третий уровень коробок — «блок в блоке в
-          блоке». Заголовок и прогресс просто стоят на фоне страницы. */}
       <section className="space-y-4">
           {complianceItems.length > 0 && (
             <DashboardSection
@@ -357,8 +229,18 @@ export default async function DashboardPage() {
               flat
               defaultOpen={true}
               titleAside={
-                // Тихая иконка без рамки: квадрат слева от заголовка
-                // владелец просил убрать, а выбор набора журналов нужен.
+                // Тихие иконки без рамки: догнать пропуски и выбрать набор
+                // журналов. Квадрат слева от заголовка владелец просил
+                // убрать, а сами действия нужны.
+                <>
+                <Link
+                  href="/dashboard/catch-up"
+                  title="Догнать пропуски"
+                  aria-label="Догнать пропуски"
+                  className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                >
+                  <History className="size-[18px]" />
+                </Link>
                 <Link
                   href="/settings/journals"
                   title="Выбрать, какие журналы вести"
@@ -367,6 +249,7 @@ export default async function DashboardPage() {
                 >
                   <SlidersHorizontal className="size-[18px]" />
                 </Link>
+                </>
               }
               badge={
                 unfilledCount > 0
@@ -392,39 +275,15 @@ export default async function DashboardPage() {
             </DashboardSection>
           )}
 
-          {/* «Онлайн принтер» — прямо под журналами, как просил владелец:
-              решение «распечатать журнал» принимается, когда смотришь на
-              список журналов, а не в настройках. */}
-          <DashboardSection
-            storageKey="print-agent"
-            title="Онлайн принтер"
-            subtitle="Печать журнала с телефона — на принтер заведения."
-            icon={Printer}
-            defaultOpen={false}
-          >
-            <DomainMessagesBoundary namespaces={["printAgent"]}>
-              <PrintAgentCard />
-            </DomainMessagesBoundary>
-          </DashboardSection>
-
-          {/* Compliance audit shortcut */}
-          <Link
-            href="/dashboard/compliance-audit"
-            className="group flex items-center gap-3 rounded-3xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4 transition-all hover:translate-y-[-1px] hover:border-[#5566f6]/40 hover:shadow-[0_8px_20px_-12px_rgba(85,102,246,0.35)]"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white">
-              <ShieldCheck className="size-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[14px] font-semibold leading-tight text-[#0b1024]">
-                Готовность к проверке Роспотребнадзора
-              </div>
-              <div className="mt-0.5 text-[12px] text-[#6f7282]">
-                12 проверок · оценка от 0 до 100 · конкретные «починить» по каждому пункту
-              </div>
-            </div>
-            <ArrowRight className="size-4 shrink-0 text-[#5566f6] transition-transform group-hover:translate-x-1" />
-          </Link>
+          {pendingApproval > 0 && (
+            <AlertPill
+              href="/journals"
+              tone="indigo"
+              icon={AlertTriangle}
+              value={pendingApproval}
+              label="записей ждут проверки"
+            />
+          )}
 
           <DashboardSection
             storageKey="live-claims"
@@ -435,263 +294,7 @@ export default async function DashboardPage() {
           >
             <LiveClaimsCard />
           </DashboardSection>
-
-          <DashboardSection
-            storageKey="med-books-expiry"
-            title="Медицинские книжки"
-            subtitle="Сроки действия и истекающие в ближайшие 30 дней."
-            icon={Stethoscope}
-            defaultOpen={false}
-          >
-            <MedBooksExpiryCard />
-          </DashboardSection>
-
-          <DashboardSection
-            storageKey="staff-training"
-            title="Обучение и инструктажи"
-            subtitle="Кому пора пройти повторный инструктаж по СанПиН."
-            icon={GraduationCap}
-            defaultOpen={false}
-          >
-            <StaffTrainingCard />
-          </DashboardSection>
       </section>
-
-      {/* Зона «Требует внимания» показывается только когда есть что
-          показать: пустой блок «всё хорошо» — шум, отсутствие тревоги
-          и так означает, что всё в порядке (см. DASHBOARD.md). */}
-      {(openCapaCount > 0 ||
-        expiringBatches > 0 ||
-        weekLossCount > 0 ||
-        pendingApproval > 0) && <ZoneHeading>Требует внимания</ZoneHeading>}
-
-      {/* Health-check виджет — self-audit конфигурации (кратко в свёрнутом
-          виде, разворачивается по клику). Не показываем когда score=100%
-          — пустой шум на готовой настройке. */}
-      {healthCheck.scorePercent < 100 ? (
-        <OrgHealthWidget
-          checks={healthCheck.checks}
-          scorePercent={healthCheck.scorePercent}
-          warnCount={healthCheck.warnCount}
-          okCount={healthCheck.okCount}
-          totalCount={healthCheck.totalCount}
-        />
-      ) : null}
-
-      {/* Worker leaderboard — топ-3 за месяц по числу записей. Показываем
-          только когда есть хотя бы 1 человек с записями (на пустой
-          компании не выглядит странно). Геймификация для команды. */}
-      {leaderboard.length > 0 && (
-        <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff8eb] text-[#b25f00]">
-              <Trophy className="size-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-[18px] font-semibold text-[#0b1024]">
-                Топ за месяц
-              </h2>
-              <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Кто заполнял журналы чаще всех за последние 30 дней.
-              </p>
-              <ol className="mt-4 space-y-2">
-                {leaderboard.map((row, idx) => {
-                  const medalColor =
-                    idx === 0
-                      ? { bg: "#fff8eb", fg: "#b25f00", emoji: "🥇" }
-                      : idx === 1
-                        ? { bg: "#f3f4f6", fg: "#52525b", emoji: "🥈" }
-                        : { bg: "#fef3c7", fg: "#92400e", emoji: "🥉" };
-                  return (
-                    <li
-                      key={row.userId}
-                      className="flex items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3"
-                    >
-                      <span
-                        className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[18px]"
-                        style={{
-                          backgroundColor: medalColor.bg,
-                          color: medalColor.fg,
-                        }}
-                      >
-                        {medalColor.emoji}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium text-[#0b1024]">
-                          {row.userName}
-                        </span>
-                        {row.positionTitle ? (
-                          <span className="block truncate text-[12px] text-[#6f7282]">
-                            {row.positionTitle}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="flex shrink-0 flex-col items-end text-right">
-                        <span className="text-[14px] font-semibold tabular-nums text-[#0b1024]">
-                          {row.entryCount}
-                          <span className="ml-1 text-[12px] font-normal text-[#6f7282]">
-                            записей
-                          </span>
-                        </span>
-                        {row.bonusKopecks > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-[12px] tabular-nums text-[#116b2a]">
-                            <Coins className="size-3" />
-                            +{(row.bonusKopecks / 100).toFixed(0)} ₽
-                          </span>
-                        ) : null}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Strugglers — bottom-3 за месяц. Показываем только если есть
-          разрыв (топ-1 хотя бы вдвое впереди отстающих) — иначе шум. */}
-      {strugglers.length > 0 &&
-        leaderboard[0] &&
-        leaderboard[0].entryCount > strugglers[0].entryCount * 2 && (
-          <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-            <div className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4f2] text-[#a13a32]">
-                <UserIcon className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-[18px] font-semibold text-[#0b1024]">
-                  Кому помочь
-                </h2>
-                <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                  Сотрудники с наименьшим числом записей за 30 дней —
-                  поддержите их или проверьте загрузку.
-                </p>
-                <ol className="mt-4 space-y-2">
-                  {strugglers.map((row) => (
-                    <li
-                      key={row.userId}
-                      className="flex items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3"
-                    >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff4f2] text-[#a13a32]">
-                        <UserIcon className="size-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium text-[#0b1024]">
-                          {row.userName}
-                        </span>
-                        {row.positionTitle ? (
-                          <span className="block truncate text-[12px] text-[#6f7282]">
-                            {row.positionTitle}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="text-right text-[14px] font-semibold tabular-nums text-[#0b1024]">
-                        {row.entryCount}
-                        <span className="ml-1 text-[12px] font-normal text-[#6f7282]">
-                          записей
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          </section>
-        )}
-
-      {/* Alerts — shown only when something's off */}
-      {(openCapaCount > 0 || expiringBatches > 0 || weekLossCount > 0 || pendingApproval > 0) && (
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {pendingApproval > 0 && (
-            <AlertPill
-              href="/journals"
-              tone="indigo"
-              icon={AlertTriangle}
-              value={pendingApproval}
-              label="записей ждут проверки"
-            />
-          )}
-          {openCapaCount > 0 && (
-            <AlertPill
-              href="/capa"
-              tone="red"
-              icon={AlertTriangle}
-              value={openCapaCount}
-              label="открытых CAPA"
-            />
-          )}
-          {expiringBatches > 0 && (
-            <AlertPill
-              href="/batches?status=received"
-              tone="amber"
-              icon={Package}
-              value={expiringBatches}
-              label="партий скоро истекут"
-            />
-          )}
-          {weekLossCount > 0 && (
-            <AlertPill
-              href="/losses"
-              tone="orange"
-              icon={TrendingDown}
-              value={weekLossCount}
-              label="потерь за неделю"
-            />
-          )}
-        </section>
-      )}
-
-      <ZoneHeading>Разделы и настройка</ZoneHeading>
-
-      {/* Quick actions — big tappable buttons */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <QuickAction
-          href="/journals"
-          icon={ClipboardList}
-          title="Журналы"
-          subtitle="Все журналы и записи"
-          primary
-        />
-        <QuickAction
-          href="/settings/users"
-          icon={Users}
-          title="Сотрудники"
-          subtitle="Должности, графики"
-        />
-        <QuickAction
-          href="/reports"
-          icon={FileDown}
-          title="Отчёты"
-          subtitle="Сводки за период"
-        />
-        <QuickAction
-          href="/sanpin"
-          icon={BookOpen}
-          title="Справочник"
-          subtitle="Нормативы СанПиН"
-        />
-      </section>
-
-      {/* Temperature from IoT sensors */}
-      {iotEquipment.length > 0 && (
-        <section className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
-              <ThermometerSun className="size-5" />
-            </span>
-            <div>
-              <h2 className="text-[18px] font-semibold text-[#0b1024]">
-                Температура с датчиков
-              </h2>
-              <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Показания за последние сутки. Клик по линии — подробнее.
-              </p>
-            </div>
-          </div>
-          <TemperatureChart equipmentList={iotEquipment} />
-        </section>
-      )}
 
       {/* Recent activity table */}
       <section className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
@@ -817,150 +420,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
-/**
- * Заголовок зоны дашборда. По гайду DASHBOARD.md экран делится на три
- * зоны — «Что сделать сегодня», «Требует внимания», «Разделы и
- * настройка». Заголовок — это то, что читает человек, когда не
- * понимает, куда смотреть.
- */
-function ZoneHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-      {children}
-    </h2>
-  );
-}
-
-
-function AlertPill({
-  href,
-  tone,
-  icon: Icon,
-  value,
-  label,
-}: {
-  href: string;
-  tone: "red" | "amber" | "orange" | "indigo";
-  icon: typeof AlertTriangle;
-  value: number;
-  label: string;
-}) {
-  const palette: Record<
-    typeof tone,
-    { card: string; ring: string; fg: string }
-  > = {
-    red: {
-      card: "border-[#ffd2cd] bg-[#fff4f2]",
-      ring: "bg-[#ffe1dc] text-[#d2453d]",
-      fg: "text-[#d2453d]",
-    },
-    amber: {
-      card: "border-[#ffe2a0] bg-[#fff8eb]",
-      ring: "bg-[#ffe9b0] text-[#b25f00]",
-      fg: "text-[#b25f00]",
-    },
-    orange: {
-      card: "border-[#ffd1a8] bg-[#fff2e5]",
-      ring: "bg-[#ffe0c2] text-[#c2510a]",
-      fg: "text-[#c2510a]",
-    },
-    indigo: {
-      card: "border-[#c7ccea] bg-[#eef1ff]",
-      ring: "bg-[#dadfff] text-[#5566f6]",
-      fg: "text-[#5566f6]",
-    },
-  };
-  const c = palette[tone];
-  return (
-    <Link
-      href={href}
-      className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(11,16,36,0.15)] ${c.card}`}
-    >
-      <span
-        className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${c.ring}`}
-      >
-        <Icon className="size-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className={`text-[20px] font-semibold tabular-nums ${c.fg}`}>
-          {value}
-        </div>
-        <div className={`text-[12px] leading-tight opacity-85 ${c.fg}`}>
-          {label}
-        </div>
-      </div>
-      <ArrowRight
-        className={`size-4 shrink-0 opacity-60 transition-transform group-hover:translate-x-0.5 ${c.fg}`}
-      />
-    </Link>
-  );
-}
-
-function QuickAction({
-  href,
-  icon: Icon,
-  title,
-  subtitle,
-  primary,
-}: {
-  href: string;
-  icon: typeof ClipboardList;
-  title: string;
-  subtitle: string;
-  primary?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex items-start gap-3 rounded-2xl border px-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(85,102,246,0.18)]",
-        primary
-          ? "border-[#5566f6] bg-[#5566f6] text-white"
-          : "border-[#ececf4] bg-white text-[#0b1024] hover:border-[#d6d9ee]"
-      )}
-    >
-      <span
-        className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
-          primary ? "bg-white/15 text-white ring-1 ring-white/20" : "bg-[#eef1ff] text-[#5566f6]"
-        )}
-      >
-        <Icon className="size-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <div
-            className={cn(
-              "text-[15px] font-semibold",
-              primary ? "text-white" : "text-[#0b1024]"
-            )}
-          >
-            {title}
-          </div>
-          <ArrowRight
-            className={cn(
-              "size-4 shrink-0 transition-transform group-hover:translate-x-0.5",
-              primary ? "text-white/70" : "text-[#c7ccea]"
-            )}
-          />
-        </div>
-        <div
-          className={cn(
-            "mt-1 text-[12px] leading-tight",
-            primary ? "text-white/80" : "text-[#6f7282]"
-          )}
-        >
-          {subtitle}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/**
- * Compliance items are consumed in the section above via <CheckCircle2 /> and
- * <XCircle /> — the unused ShieldCheck + ThermometerSun imports here are for
- * the future "badges" feature and should stay so lint stays honest.
- */
-void ShieldCheck;

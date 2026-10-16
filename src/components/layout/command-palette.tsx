@@ -8,18 +8,15 @@ import {
   ArrowRight,
   Boxes,
   ClipboardList,
-  Cog,
   FileSpreadsheet,
   Loader2,
   Search,
-  Sparkles,
   User,
   Wand2,
-  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
-import { customSectionNameByHref } from "@/lib/custom-names";
-import { useCustomNames } from "@/components/shared/custom-names-provider";
+import { useAppNav } from "@/components/layout/app-nav-context";
+import { navIcon } from "@/components/layout/nav-icons";
 
 /**
  * J5+ — ⌘K / Ctrl+K command palette.
@@ -100,29 +97,9 @@ const ACTION_ITEMS: StaticItem[] = [
   },
 ];
 
-// «Партии», «Изменения», «Потери», «Компетенции» и «Премии» убраны из
-// поиска вместе с меню (решение владельца 2026-09-25) — страницы
-// открываются по адресу. Список — `MENU_HIDDEN_HREFS` в `app-sections.ts`.
-const ROUTE_ITEMS: StaticItem[] = [
-  { kind: "route", label: "Главная", href: "/dashboard", icon: Sparkles, keywords: ["dashboard", "главная"] },
-  { kind: "route", label: "Журналы", href: "/journals", icon: ClipboardList, keywords: ["journals", "журналы"] },
-  { kind: "route", label: "Отчёты", href: "/reports", icon: FileSpreadsheet, keywords: ["reports", "compliance", "heatmap"] },
-  { kind: "route", label: "CAPA", href: "/capa", icon: Cog, keywords: ["capa", "корректирующее"] },
-  { kind: "route", label: "Идеи и голосование", href: "/ideas", icon: Lightbulb, keywords: ["ideas", "идеи", "голосование", "предложить"] },
-  { kind: "route", label: "Планы", href: "/plans", icon: Cog, keywords: ["plans"] },
-  { kind: "route", label: "Настройки — Сотрудники", href: "/settings/users", icon: User, keywords: ["staff", "users"] },
-  { kind: "route", label: "Настройки — Журналы", href: "/settings/journals", icon: ClipboardList, keywords: ["templates"] },
-  { kind: "route", label: "Настройки — Оборудование", href: "/settings/equipment", icon: Boxes, keywords: ["equipment", "холодильник"] },
-  { kind: "route", label: "Настройки — Подписка", href: "/settings/subscription", icon: Cog, keywords: ["billing", "тариф"] },
-  { kind: "route", label: "Настройки — Compliance", href: "/settings/compliance", icon: Cog, keywords: ["closed day", "закрытый день"] },
-  { kind: "route", label: "Настройки — Аудит", href: "/settings/audit", icon: Cog, keywords: ["audit"] },
-  { kind: "route", label: "Настройки — TasksFlow", href: "/settings/integrations/tasksflow", icon: Cog, keywords: ["tasksflow", "tf"] },
-  { kind: "route", label: "Входящие ВСД (Меркурий)", href: "/mercury", icon: Cog, keywords: ["меркурий", "всд", "mercury", "ветис", "гашение"] },
-  { kind: "route", label: "Настройки — ФГИС «Меркурий»", href: "/settings/integrations/mercury", icon: Cog, keywords: ["меркурий", "ветис", "vetis"] },
-  { kind: "route", label: "Настройки — Портал инспектора", href: "/settings/inspector-portal", icon: Cog, keywords: ["inspector", "сэс"] },
-  { kind: "route", label: "Справочник СанПиН", href: "/sanpin", icon: FileSpreadsheet, keywords: ["санпин", "нормы"] },
-];
-
+// Разделы для поиска — из меню кабинета (`lib/app-nav.ts`): ровно то,
+// что человек откроет, со своими названиями организации. Раньше здесь
+// был свой список на 17 адресов без проверки прав.
 const KIND_ICON = {
   user: User,
   template: ClipboardList,
@@ -156,17 +133,24 @@ export function CommandPalette() {
   const [actionRunning, setActionRunning] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const reqIdRef = useRef(0);
-  // Свои названия разделов организации; стандартное остаётся в поиске.
-  const customNames = useCustomNames();
-  const routeItems = useMemo(
+  const nav = useAppNav();
+  const routeItems = useMemo<StaticItem[]>(
     () =>
-      ROUTE_ITEMS.map((item) => {
-        const custom = customSectionNameByHref(customNames, item.href);
-        if (!custom) return item;
-        const prefix = item.label.startsWith("Настройки — ") ? "Настройки — " : "";
-        return { ...item, label: `${prefix}${custom}`, keywords: [...(item.keywords ?? []), item.label] };
-      }),
-    [customNames]
+      nav.sections.flatMap((section) =>
+        section.tabs.map((tab) => ({
+          kind: "route" as const,
+          label: section.tabs.length > 1 ? `${section.label} · ${tab.label}` : section.label,
+          href: tab.href,
+          icon: navIcon(section.icon),
+          keywords: [section.label, tab.label],
+        })),
+      ),
+    [nav]
+  );
+  // «Закрыть день» и «Догнать пропуски» — у кого есть «Сегодня».
+  const actionItems = useMemo(
+    () => (nav.sections.some((section) => section.tabs.some((tab) => tab.href === "/dashboard")) ? ACTION_ITEMS : []),
+    [nav]
   );
 
   useEffect(() => {
@@ -227,8 +211,8 @@ export function CommandPalette() {
     const q = query.trim();
     const filteredActions =
       q.length === 0
-        ? ACTION_ITEMS
-        : ACTION_ITEMS.filter((a) => fuzzyMatch(a, q));
+        ? actionItems
+        : actionItems.filter((a) => fuzzyMatch(a, q));
     const filteredRoutes =
       q.length === 0
         ? routeItems.slice(0, 8)
@@ -263,7 +247,7 @@ export function CommandPalette() {
       });
     }
     return blocks;
-  }, [query, hits, routeItems]);
+  }, [query, hits, routeItems, actionItems]);
 
   const flatItems = useMemo<FlatItem[]>(() => {
     return sections.flatMap((s) => s.items);

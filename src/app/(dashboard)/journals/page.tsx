@@ -1,4 +1,3 @@
-import { WorkspaceResourceCards } from "@/components/dashboard/workspace-resource-cards";
 import { redirect } from "next/navigation";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import Link from "next/link";
@@ -179,7 +178,6 @@ export default async function JournalsPage() {
           },
         ]}
       />
-      <WorkspaceResourceCards knowledge={false} checklists={!allowedCodes || allowedCodes.includes("custom_checklists")} />
       <JournalsBrowser templates={items} canBulkCreate={isManager} canToggle={isManager} />
     </div>
   );

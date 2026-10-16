@@ -16,6 +16,14 @@ import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader } from "@/components/ui/page-header";
 import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { EmailVerifyCard } from "@/components/settings/email-verify-card";
+import { isEmailVerified } from "@/lib/email-verification";
+import { QuickStartCard } from "@/components/dashboard/quick-start-card";
+import { OrgHealthWidget } from "@/components/dashboard/org-health-widget";
+import { runOrgHealthCheck } from "@/lib/org-health-check";
+import { ConsultantCard } from "@/components/dashboard/consultant-card";
+import { getVisibleOrgBranding } from "@/lib/partners/branding";
+import { toConsultantContact } from "@/lib/partners/consultant-contact";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +65,7 @@ export default async function OrganizationInfoPage() {
   if (!org) redirect("/settings");
   // Бейдж: код заводится заранее (ничего не публикует — страница открывается
   // только у включённого), процент считается и для живого примера.
-  const [badgeCode, badgeStatus, conversion] = await Promise.all([
+  const [badgeCode, badgeStatus, conversion, me, healthCheck, branding] = await Promise.all([
     prepareBadgeCode(organizationId, org.badgeCode),
     getBadgeStatusForOrganization(organizationId).catch(() => null),
     // «Перевести в партнёрский кабинет» — только владельцу с партнёрским
@@ -70,7 +78,13 @@ export default async function OrganizationInfoPage() {
       console.error(`[partners] conversion preview failed org=${organizationId}`, error);
       return null;
     }),
+    // Ниже — бывшие блоки главной (меню 2026-10-16): почта, быстрый
+    // старт, самопроверка настройки и консультант — всё про компанию.
+    db.user.findUnique({ where: { id: session.user.id }, select: { email: true, emailVerifiedAt: true } }),
+    runOrgHealthCheck(organizationId),
+    getVisibleOrgBranding(organizationId),
   ]);
+  const consultant = toConsultantContact(branding);
   const badge = describeBadge({ badgeEnabled: org.badgeEnabled, badgeCode }, badgeStatus?.percent ?? null);
 
   return (
@@ -80,6 +94,19 @@ export default async function OrganizationInfoPage() {
         title={t("page.title")}
         description={t("page.description")}
       />
+
+      {me && !isEmailVerified(me) ? <EmailVerifyCard email={me.email} /> : null}
+      <QuickStartCard organizationId={organizationId} />
+      {healthCheck.scorePercent < 100 ? (
+        <OrgHealthWidget
+          checks={healthCheck.checks}
+          scorePercent={healthCheck.scorePercent}
+          warnCount={healthCheck.warnCount}
+          okCount={healthCheck.okCount}
+          totalCount={healthCheck.totalCount}
+        />
+      ) : null}
+      {consultant ? <ConsultantCard consultant={consultant} /> : null}
 
       {conversion ? (
         <PartnerConversionCard

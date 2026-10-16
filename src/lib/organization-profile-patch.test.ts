@@ -34,3 +34,14 @@ test("пустое основное название по-прежнему за�
   const parsed = parseOrganizationProfilePatch({ name: " ", journalShortName: "Кафе" }, ORG_PROFILE_FIELDS);
   assert.equal(parsed.ok, false);
 });
+
+test("логотип: принимается и внешний адрес, и загруженный файл кабинета", () => {
+  const external = parseOrganizationProfilePatch({ logoUrl: "https://cdn.example.com/logo.png" }, ORG_PROFILE_FIELDS);
+  assert.deepEqual(external, { ok: true, data: { logoUrl: "https://cdn.example.com/logo.png" } });
+
+  const uploaded = parseOrganizationProfilePatch({ logoUrl: "/api/org-assets/org_123/logo?v=4" }, ORG_PROFILE_FIELDS);
+  assert.deepEqual(uploaded, { ok: true, data: { logoUrl: "/api/org-assets/org_123/logo?v=4" } });
+
+  const foreign = parseOrganizationProfilePatch({ logoUrl: "/api/other/x" }, ORG_PROFILE_FIELDS);
+  assert.equal(foreign.ok, false);
+});

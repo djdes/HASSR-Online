@@ -9,11 +9,11 @@ import { loadMessages } from "@/i18n/messages";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { ROUTE_TITLES, ROUTE_TITLE_KEYS, getRouteTitle, getDynamicRouteTitle, getSiblingRoutes } from "./route-titles";
 import { buildJournalSwitcherMenu, journalSwitcherOptions, filterCrumbMenu, matchingHidden } from "./crumb-menu";
-import { APP_SECTIONS, appSectionLabel } from "./app-sections";
+import { NAV_SECTIONS } from "./app-nav";
 import type { Session } from "next-auth";
 
-test("92 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
-  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 92);
+test("101 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
+  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 101);
   assert.deepEqual(Object.keys(ROUTE_TITLE_KEYS), Object.keys(ROUTE_TITLES));
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
@@ -30,9 +30,13 @@ test("92 static routes and dynamic journal-task route resolve typed localized ti
     assert.equal(getDynamicRouteTitle("/settings/journals/custom-id/scope/", t), t("journal_scope"));
     assert.equal(getRouteTitle("/unknown/id", t), null);
     assert.equal(getRouteTitle("constructor", t), null);
-    for (const section of APP_SECTIONS) {
-      assert.ok(appSectionLabel(section, t, nav));
-      if (locale !== "ru") assert.doesNotMatch(appSectionLabel(section, t, nav), /\p{Script=Cyrillic}/u, section.href);
+    // Меню кабинета (девять разделов и их вкладки) — на каждом языке.
+    for (const section of NAV_SECTIONS) {
+      const labels = [nav(`shell.sections.${section.key}`), ...section.tabs.map((tab) => nav(`shell.tabs.${tab.label}`))];
+      for (const label of labels) {
+        assert.ok(label, section.key);
+        if (locale !== "ru") assert.doesNotMatch(label, /\p{Script=Cyrillic}/u, `${section.key}: ${label}`);
+      }
     }
   }
 });

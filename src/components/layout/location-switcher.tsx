@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Check, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 
 /**
- * Точки (2026-09-05): переключение активной точки. С 2026-09-23 основной
- * путь — вкладки над страницей (`location-tabs.tsx`); здесь остаются хук
- * и запасной список в мобильном меню.
+ * Точки (2026-09-05): переключение активной точки. С 2026-10-16 —
+ * из центра шапки (`current-point-switcher.tsx`) и из мобильного меню;
+ * здесь хук переключения и список точек для листа на телефоне.
  *
  * Страницы остаются одно-точечными: журналы, «сегодня» и пул задач
  * показываются для выбранной точки, а не сводятся в один экран. Список
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
  */
 
 export function useSwitchBuilding() {
+  const t = useTranslations("navigation.shell.point");
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -33,11 +35,11 @@ export function useSwitchBuilding() {
         body: JSON.stringify({ buildingId: building.id }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось переключить точку");
-      toast.success(`Точка: ${building.name}`);
+      if (!response.ok) throw new Error(data?.error ?? t("failed"));
+      toast.success(t("switched", { name: building.name }));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("failed"));
     } finally {
       setBusyId(null);
     }
@@ -54,6 +56,7 @@ export function LocationSwitcherList({
   buildings: BuildingOption[];
   activeBuildingId: string | null;
 }) {
+  const t = useTranslations("navigation.shell.point");
   const { switchTo, busyId } = useSwitchBuilding();
   if (buildings.length < 2) return null;
   const activeId = activeBuildingId ?? buildings[0]?.id ?? null;
@@ -61,7 +64,7 @@ export function LocationSwitcherList({
   return (
     <div className="mb-1 border-b border-[#ececf4] pb-2">
       <div className="px-3 pb-1 pt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-        Точка
+        {t("list")}
       </div>
       {buildings.map((building) => {
         const isActive = building.id === activeId;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TemperatureChart } from "@/components/charts/temperature-chart";
 import {
   AlertTriangle,
   MapPin,
@@ -7,6 +8,7 @@ import {
   Wifi,
   WifiOff,
   Wrench,
+  ThermometerSun,
 } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -97,8 +99,24 @@ export default async function EquipmentSettingsPage() {
     isRoot: session.user.isRoot === true,
   });
 
+  // Датчики температуры (раньше — на главной, меню 2026-10-16).
+  const iotEquipment = equipment
+    .filter((item) => item.tuyaDeviceId)
+    .map((item) => ({ id: item.id, name: item.name, tuyaDeviceId: item.tuyaDeviceId }));
+
   return (
     <div className="space-y-5">
+      {iotEquipment.length > 0 ? (
+        <section className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+              <ThermometerSun className="size-5" />
+            </span>
+            <h2 className="text-[18px] font-semibold text-[#0b1024]">Температура с датчиков</h2>
+          </div>
+          <TemperatureChart equipmentList={iotEquipment} />
+        </section>
+      ) : null}
       <PageGuide
         title="Как настроить оборудование"
         storageKey="settings-equipment-v2"

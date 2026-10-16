@@ -52,6 +52,7 @@ model OrganizationMember {
 model Organization {
   masterBrakerageBatches         MasterBrakerageBatch[]
   knowledgeDocuments            KnowledgeDocument[]
+  logo                          OrganizationLogo?
   checklistTemplates            ChecklistTemplate[]
   checklistInspections          ChecklistInspection[]
   checklistAttachments          ChecklistAttachment[]
@@ -476,10 +477,29 @@ model KnowledgeDocument {
   sizeBytes      Int
   content        Bytes
   uploadedByName String
+  /// Документ с особым местом в кабинете: "ppk" — программа
+  /// производственного контроля, "haccp_plan" — ХАССП-план (раздел
+  /// «Производственный контроль»). null — обычный документ базы знаний.
+  /// Один документ каждого вида на организацию.
+  kind           String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  @@unique([organizationId, kind])
   @@index([organizationId, createdAt])
+}
+
+/// Логотип организации — для сайдбара кабинета (2026-10-16). Отдельной
+/// таблицей, чтобы байты не тянулись в каждый `organization.findUnique`.
+/// Отдаётся через /api/org-assets/<organizationId>/logo?v=<version>;
+/// `Organization.logoUrl` указывает на этот адрес.
+model OrganizationLogo {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bytes          Bytes
+  mime           String
+  version        Int          @default(1)
+  updatedAt      DateTime     @updatedAt
 }
 
 model ChecklistTemplate {

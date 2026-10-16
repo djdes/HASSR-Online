@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CheckCircle2, Lock, Sparkles } from "lucide-react";
@@ -35,11 +35,17 @@ export function ServicesCatalog({
   balanceRub,
   canOrder,
   contact,
+  initialServiceKey = null,
 }: {
   groups: Group[];
   balanceRub: number;
   canOrder: boolean;
   contact: { name: string; phone: string; email: string };
+  /**
+   * `?order=<key>` — пришли из «Производственного контроля» по кнопке
+   * «Заказать разработку»: сразу открываем диалог этой услуги.
+   */
+  initialServiceKey?: string | null;
 }) {
   const router = useRouter();
   // В приложении WeSetup без слова «оплатить»: правила магазинов про
@@ -53,6 +59,16 @@ export function ServicesCatalog({
   const price = active?.priceRub ?? 0;
   const payable = active ? isInstantPayable(active) : false;
   const enoughBalance = payable && balanceRub >= price;
+
+  useEffect(() => {
+    if (!initialServiceKey || !canOrder) return;
+    const service = groups
+      .flatMap((group) => group.items)
+      .find((item) => item.key === initialServiceKey);
+    if (service) setActive(service);
+    // Только при входе на страницу: дальше диалогом управляет человек.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function openService(service: PlatformServiceItem) {
     setActive(service);

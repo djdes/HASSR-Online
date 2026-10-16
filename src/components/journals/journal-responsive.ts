@@ -150,7 +150,7 @@ export const JOURNAL_LIST_CARDS_CLASS = "space-y-4";
  * При пустом выделении компонент вообще не рендерится, в печать не идёт.
  */
 export const JOURNAL_DOCUMENT_SELECTION_BAR_CLASS =
-  "fixed inset-x-0 top-[72px] z-40 print:hidden";
+  "fixed left-[var(--app-sidebar-w,0px)] right-0 top-[72px] z-40 print:hidden";
 
 /**
  * Внутренняя «пилюля» полосы: ровно по ширине контентной колонки страницы

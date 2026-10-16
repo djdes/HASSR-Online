@@ -20,6 +20,34 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
+/**
+ * Разделы, куда `proxy.ts` не пускает линейного сотрудника (кроме
+ * разрешённых `STAFF_WEB_ALLOWED_PREFIXES`). Лежит здесь, а не в proxy:
+ * тот же список читает меню (`lib/app-nav.ts`) — пункт, ведущий на
+ * редирект, показывать нельзя.
+ */
+export const STAFF_RESTRICTED_WEB_PREFIXES = [
+  "/dashboard",
+  "/settings",
+  "/reports",
+  "/plans",
+  "/changes",
+  "/losses",
+  "/batches",
+  "/competencies",
+  "/capa",
+  "/sanpin",
+  "/more",
+  "/production-control",
+] as const;
+
+export function isStaffRestrictedWebPath(pathname: string): boolean {
+  const normalized = normalizePathname(pathname);
+  return STAFF_RESTRICTED_WEB_PREFIXES.some((prefix) =>
+    matchesPrefix(normalized, prefix)
+  );
+}
+
 export function hasFullWorkspaceAccess(actor: RoleAccessActor): boolean {
   return actor.isRoot === true || isManagementRole(actor.role);
 }

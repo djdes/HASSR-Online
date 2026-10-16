@@ -1,11 +1,8 @@
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
-import { appSectionLabel, visibleAppSectionGroups } from "@/lib/app-sections";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { customSectionNameByHref } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
-import { getTranslations } from "next-intl/server";
-import { navigationSectionHintKey } from "@/i18n/navigation-presentation";
+import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
 
 import { MiniSectionsClient, type MiniSectionGroupView } from "./sections-client";
 
@@ -14,38 +11,34 @@ export const dynamic = "force-dynamic";
 /**
  * «Все разделы» — вход из мини-приложения в любую страницу кабинета.
  *
- * Список считается на сервере теми же проверками, что и на сайте
- * (`visibleAppSectionGroups` → `canAccessWebPath` + правило доступа
- * самой страницы, `AppSection.access`).
- * Новых правил доступа тут нет и быть не должно: страницы сайта
- * открываются в оболочке приложения как есть, со своими guard'ами, и
- * этот экран лишь показывает то, что человеку и так доступно.
+ * Те же девять разделов, что слева на сайте (меню 2026-10-16,
+ * `lib/app-nav.ts`), с теми же правами: страницы сайта открываются в
+ * оболочке приложения как есть, со своими guard'ами (П-3, П-4). Внутри
+ * раздела — те же вкладки сверху. Под названием раздела — его вкладки,
+ * чтобы было видно, что внутри.
  *
  * Иконки уезжают на клиент строками — компоненты lucide через границу
  * RSC не сериализуются (см. правило про `WhatsNewModal` в CLAUDE.md).
  */
 export default async function MiniSectionsPage() {
-  const [tRoutes, tNavigation] = await Promise.all([
-    getTranslations("navigation.routes"), getTranslations("navigation"),
-  ]);
   const session = await getServerSession(authOptions).catch(() => null);
   const user = session?.user ?? null;
-  // Свои названия разделов организации — те же, что в меню сайта.
-  const customNames = session ? await getOrgCustomNames(getActiveOrgId(session)) : null;
-
-  const groups: MiniSectionGroupView[] = user
-    ? visibleAppSectionGroups(user).map((group) => ({
-        id: group.id,
-        title: tNavigation(`groups.${group.id}.title`),
-        subtitle: tNavigation(`groups.${group.id}.subtitle`),
-        items: group.sections.map((section) => ({
-          href: section.href,
-          label: customSectionNameByHref(customNames, section.href) ?? appSectionLabel(section, tRoutes, tNavigation),
-          hint: navigationSectionHintKey(section.href) ? tNavigation(navigationSectionHintKey(section.href)!) : section.hint,
-          icon: section.icon,
-        })),
-      }))
-    : [];
+  const groups: MiniSectionGroupView[] = [];
+  if (session && user) {
+    const customNames = await getOrgCustomNames(getActiveOrgId(session));
+    const model = await buildNavModel({ user, facts: await loadNavFacts(user), customNames });
+    groups.push({
+      id: "sections",
+      title: "",
+      subtitle: "",
+      items: model.sections.map((section) => ({
+        href: section.rootHref,
+        label: section.label,
+        hint: section.tabs.length > 1 ? section.tabs.map((tab) => tab.label).join(" · ") : "",
+        icon: section.icon,
+      })),
+    });
+  }
 
   return <MiniSectionsClient groups={groups} authed={Boolean(user)} />;
 }

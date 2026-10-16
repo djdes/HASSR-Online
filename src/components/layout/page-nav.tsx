@@ -8,7 +8,9 @@ import { ArrowLeft } from "lucide-react";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { getRouteTitle, getSiblingRoutes } from "@/lib/route-titles";
 import { customSectionNameByHref } from "@/lib/custom-names";
+import { sectionForPath } from "@/lib/app-nav";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
+import { useSectionPlace } from "@/components/layout/section-tabs";
 
 /**
  * Единая навигация страницы кабинета: «← Назад» + хлебные крошки.
@@ -125,6 +127,9 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   const { override } = useContext(BreadcrumbContext);
   // Свои названия разделов организации — и в звене, и в списке соседей.
   const customNames = useCustomNames();
+  // Раздел меню: первое звено цепочки и граница списка соседей.
+  const { section, atRoot } = useSectionPlace();
+  const sectionKey = sectionForPath(pathname)?.section ?? null;
 
   // Каждое звено раскрывается в соседей по уровню: из «Здания и
   // помещения» — сразу в «Оборудование», не возвращаясь в список
@@ -136,14 +141,22 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     let prefix = "";
     parts.forEach((segment, index) => {
       prefix += `/${segment}`;
+      // Хаба `/settings` больше нет — его звено только запутало бы.
+      if (prefix === "/settings") return;
+      const isLast = index === parts.length - 1;
       const title = customSectionNameByHref(customNames, prefix) ?? getRouteTitle(prefix, tRoutes);
       if (!title) return;
-      const isLast = index === parts.length - 1;
+      // «Журналы › Журналы»: звено, повторяющее раздел, не нужно.
+      if (section && !isLast && (prefix === section.rootHref || title === section.label)) return;
       const here = prefix;
-      const siblings = getSiblingRoutes(here, tRoutes, locale).map((sibling) => ({
-        ...sibling,
-        title: customSectionNameByHref(customNames, sibling.path) ?? sibling.title,
-      }));
+      // Соседи — только из того же раздела меню: из «Оборудования» в
+      // «Помещения», но не в «Тариф».
+      const siblings = getSiblingRoutes(here, tRoutes, locale)
+        .filter((sibling) => !sectionKey || sectionForPath(sibling.path)?.section === sectionKey)
+        .map((sibling) => ({
+          ...sibling,
+          title: customSectionNameByHref(customNames, sibling.path) ?? sibling.title,
+        }));
       result.push({
         label: title,
         href: isLast ? undefined : here,
@@ -158,10 +171,13 @@ export function PageNav({ organizationName }: { organizationName: string }) {
       });
     });
     return result;
-  }, [pathname, customNames, tRoutes, tCrumbs, locale]);
+  }, [pathname, customNames, tRoutes, tCrumbs, locale, section, sectionKey]);
 
+  // Первое звено — раздел меню (как в сайдбаре); раздел скрыт — организация.
   const crumbs: Crumb[] = [
-    { label: organizationName, href: "/dashboard" },
+    section
+      ? { label: section.label, href: section.rootHref }
+      : { label: organizationName, href: "/dashboard" },
     ...(override?.items ?? autoCrumbs),
   ];
 
@@ -170,10 +186,9 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   const parentHref =
     [...crumbs].reverse().find((crumb) => crumb.href)?.href ?? "/dashboard";
 
-  // Скрыт только на самой «Главной»: она и есть корень, возвращаться с
-  // неё некуда, а цепочка из одного звена ничего не объясняет. Везде
-  // остальное — включая `/settings` — навигация есть всегда.
-  if (pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return null;
+  // На корне раздела вместо крошек — вкладки (`SectionTabs`): цепочка из
+  // одного звена ничего не объясняет. Журналы рисуют крошки сами.
+  if (atRoot || pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return null;
 
   // Кнопка и крошки — одной строкой. Раньше они стояли друг под другом в
   // 6px и одинаковым серым: читались как две строки одного текста, а не

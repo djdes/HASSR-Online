@@ -177,7 +177,10 @@ test("selection bar sticks under the app header and never prints", () => {
   assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /\bfixed\b/);
   assert.doesNotMatch(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /\bsticky\b/);
   assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /top-\[72px\]/);
-  assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /inset-x-0/);
+  // Слева — от края сайдбара (меню кабинета, 2026-10-16), справа — до края.
+  assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /left-\[var\(--app-sidebar-w,0px\)\]/);
+  assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /\bright-0\b/);
+  assert.doesNotMatch(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /inset-x-0/);
   assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /\bz-40\b/);
   assert.match(JOURNAL_DOCUMENT_SELECTION_BAR_CLASS, /print:hidden/);
   // Горизонтально — ровно по контентной колонке страницы.

@@ -26,6 +26,7 @@ import {
   MessageCircleMore,
   Building2,
   Moon,
+  PanelLeft,
   Plug,
   QrCode,
   ScrollText,
@@ -95,6 +96,7 @@ function isCategoryNote(
  * нельзя (server→client serialization), поэтому держим mapping здесь.
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "Новое меню кабинета": PanelLeft,
   "Тема, названия и фото замеров": Camera,
   "Свои названия разделов и журналов": SquarePen,
   "Распознавание с фото": Camera,

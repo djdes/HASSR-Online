@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { hasCapability } from "@/lib/permission-presets";
 import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName } from "@/lib/building-scope";
@@ -72,11 +73,14 @@ export async function GET(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
+  // Заведующая тоже скачивает архив: проверяющий часто приходит, когда
+  // она одна на месте («Пришла проверка», 2026-10-16).
   if (
     !hasFullWorkspaceAccess({
       role: session.user.role,
       isRoot: session.user.isRoot,
-    })
+    }) &&
+    !hasCapability(session.user, "tasks.verify")
   ) {
     return new Response(JSON.stringify({ error: "Это действие доступно руководителю" }), {
       status: 403,

@@ -1,4 +1,46 @@
 {
+  "productionControl": {
+    "kinds": {
+      "ppk": "Программа производственного контроля",
+      "haccp_plan": "ХАССП-план"
+    },
+    "empty": "Файла пока нет",
+    "uploaded": "Загружен {date}",
+    "open": "Открыть",
+    "replace": "Заменить",
+    "upload": "Загрузить файл",
+    "order": "Заказать разработку",
+    "remove": "Удалить файл",
+    "removeTitle": "Удалить файл?",
+    "removeBody": "«{name}» пропадёт из раздела. Новый можно загрузить в любой момент.",
+    "uploading": "Загружаем…",
+    "uploadedToast": "Файл загружен",
+    "removedToast": "Файл удалён",
+    "uploadFailed": "Не удалось загрузить файл",
+    "removeFailed": "Не удалось удалить файл",
+    "formats": "PDF, Word или скан · до 25 МБ",
+    "askManager": "Загрузить файл может руководитель"
+  },
+  "inspectionDay": {
+    "qrTitle": "Покажите QR проверяющему",
+    "fullscreen": "На весь экран",
+    "print": "Распечатать лист",
+    "close": "Закрыть",
+    "noQr": "QR ещё не выпущен",
+    "issueQr": "Выпустить QR",
+    "issuing": "Выпускаем…",
+    "issued": "QR готов",
+    "issueFailed": "Не удалось выпустить QR",
+    "askManager": "Попросите руководителя выпустить QR",
+    "archiveTitle": "Журналы одним архивом",
+    "readinessTitle": "Готовность к проверке",
+    "readinessScore": "{ok} из {total} в порядке",
+    "fix": "Исправить",
+    "allChecks": "Все проверки",
+    "allGood": "Замечаний нет",
+    "visitsTitle": "Кто смотрел",
+    "noVisits": "Пока никто не открывал журналы по QR"
+  },
   "common": {
     "save": "Сохранить",
     "cancel": "Отмена",
@@ -1466,6 +1508,69 @@
     "ppe_issuance": "Журнал учета выдачи средств индивидуальной защиты сотрудникам"
   },
   "navigation": {
+    "shell": {
+      "sections": {
+        "company": "Моя компания",
+        "staff": "Сотрудники",
+        "points": "Торговые точки",
+        "journals": "Журналы",
+        "checklists": "Чек-листы",
+        "productionControl": "Производственный контроль",
+        "billing": "Оплата",
+        "more": "Остальное",
+        "inspection": "Пришла проверка"
+      },
+      "tabs": {
+        "main": "Главное",
+        "organization": "Реквизиты",
+        "appearance": "Оформление",
+        "names": "Названия",
+        "onboarding": "Быстрая настройка",
+        "users": "Сотрудники",
+        "team": "Команда",
+        "schedule": "График",
+        "health": "Медкнижки",
+        "setup": "Настройка",
+        "buildings": "Точки",
+        "areas": "Помещения",
+        "equipment": "Оборудование",
+        "qr": "QR-коды",
+        "today": "Сегодня",
+        "all": "Все журналы",
+        "verify": "Проверка",
+        "program": "Программа",
+        "orders": "Приказы",
+        "knowledge": "Инструкции",
+        "sanpin": "СанПиН",
+        "plan": "Тариф",
+        "balance": "Баланс",
+        "services": "Услуги",
+        "inspectionDay": "Что делать",
+        "portal": "QR-доступы",
+        "readiness": "Готовность"
+      },
+      "groups": {
+        "staff": "Сотрудники",
+        "points": "Точки",
+        "journals": "Журналы",
+        "tasks": "Раздача задач",
+        "work": "Работа",
+        "connections": "Подключения",
+        "other": "Прочее"
+      },
+      "point": {
+        "list": "Точки",
+        "switch": "Сменить точку",
+        "manage": "Настроить точки",
+        "switched": "Точка: {name}",
+        "failed": "Не удалось переключить точку"
+      },
+      "sidebarAria": "Разделы кабинета",
+      "tabsAria": "Подразделы",
+      "menu": "Меню",
+      "logout": "Выйти",
+      "brand": "WeSetup"
+    },
     "header": {
       "staff": "Сотрудники",
       "settings": "Настройки",
@@ -1617,6 +1722,15 @@
       }
     },
     "routes": {
+      "inspection": "Пришла проверка",
+      "production_control": "Программа производственного контроля",
+      "more": "Остальное",
+      "knowledge": "Инструкции",
+      "checklists": "Чек-листы",
+      "settings_staff_health": "Медкнижки и обучение",
+      "settings_sections_journals": "Настройка журналов",
+      "settings_sections_staff": "Настройка сотрудников",
+      "settings_sections_points": "Настройка точек",
       "batches": "Партии",
       "batches_new": "Новая партия",
       "capa": "Нарушения",
@@ -1686,7 +1800,7 @@
       "ideas": "Идеи и голосование",
       "changes": "Изменения",
       "competencies": "Компетенции",
-      "dashboard": "Главная",
+      "dashboard": "Сегодня",
       "dashboard_catch_up": "Догнать пропуски",
       "dashboard_compliance_audit": "Готовность к проверке",
       "equipment_fill": "Заполнение оборудования",
@@ -7258,6 +7372,34 @@
         }
       },
       "cards": {
+        "plans": {
+          "title": "Производственный план",
+          "description": "Что и сколько готовим на смену"
+        },
+        "capa": {
+          "title": "Нарушения",
+          "description": "Что нашли и как исправили"
+        },
+        "reports": {
+          "title": "Отчёты",
+          "description": "Выгрузки журналов в PDF и Excel"
+        },
+        "ideas": {
+          "title": "Идеи и голосование",
+          "description": "Предложить улучшение и проголосовать"
+        },
+        "mercury": {
+          "title": "Входящие ВСД",
+          "description": "Принять и погасить ветеринарные документы в одном окне"
+        },
+        "settings_integrations_mercury": {
+          "title": "ФГИС «Меркурий»",
+          "description": "Подключение к Меркурию для входящих ВСД"
+        },
+        "settings_print_agent": {
+          "title": "Онлайн-принтер",
+          "description": "Печать журналов и этикеток на принтер заведения"
+        },
         "orders": {
           "title": "Приказы",
           "description": "Приказы по предприятию: заполнить реквизитами и распечатать"
@@ -7483,6 +7625,15 @@
         "brandAnswer": "Это акцентный цвет бренда: например, для логотипа и кнопок Mini App. Чтобы оформить кабинет в фирменном стиле, укажите hex-код корпоративного цвета."
       },
       "form": {
+        "logoTitle": "Логотип",
+        "logoHint": "Наверху меню слева. PNG, JPG или SVG до 500 КБ.",
+        "logoUpload": "Загрузить логотип",
+        "logoReplace": "Заменить",
+        "logoRemove": "Удалить логотип",
+        "logoUploaded": "Логотип загружен",
+        "logoRemoved": "Логотип удалён",
+        "logoFailed": "Не удалось загрузить логотип",
+        "logoByUrl": "или указать ссылку на картинку",
         "spheres": {
           "restaurant": "Ресторан",
           "cafe": "Кафе / Кофейня",

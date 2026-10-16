@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { headerNavSections } from "@/lib/app-sections";
+import { NAV_SECTIONS } from "@/lib/app-nav";
+import { SETTINGS_CARDS } from "@/lib/settings-cards";
 import { buildJournalSwitcherMenu, filterCrumbMenu } from "@/lib/crumb-menu";
 import {
   CUSTOM_NAME_LENGTH_ERROR,
@@ -162,11 +163,16 @@ test("шаблоны: своё название для показа, офици�
   assert.deepEqual(filterCrumbMenu(menu.items, "утренн").map((i) => i.label), ["Утренний осмотр"]);
 });
 
-test("меню: каждый пункт шапки сайта можно переименовать, стандартные названия совпадают", () => {
+test("меню: переименовываемые разделы — это пункты меню и карточки «Остальное»", () => {
   const byHref = new Map<string, string>(RENAMABLE_SECTIONS.map((s) => [s.href, s.label]));
-  for (const item of headerNavSections()) {
-    assert.equal(byHref.get(item.href), item.label, item.href);
+  const menuHrefs = new Set<string>([
+    ...NAV_SECTIONS.flatMap((section) => (section.renameHref ? [section.renameHref] : [])),
+    ...SETTINGS_CARDS.map((card) => card.href),
+  ]);
+  for (const href of byHref.keys()) {
+    assert.ok(menuHrefs.has(href), href);
   }
+  assert.equal(byHref.get("/journals"), "Журналы");
   assert.equal(byHref.get("/settings/users"), "Сотрудники");
   // Служебные пункты не переименовываются.
   assert.equal(byHref.has("/settings"), false);

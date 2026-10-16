@@ -20,8 +20,13 @@ export const metadata = {
  * заявкой владельцу; фиксированную цену можно закрыть баллами, которые
  * организация уже накопила за приглашения и отзывы.
  */
-export default async function ServicesPage() {
+export default async function ServicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ order?: string | string[] }>;
+}) {
   const session = await requireAuth();
+  const { order } = await searchParams;
   const organizationId = getActiveOrgId(session);
   const canOrder = hasFullWorkspaceAccess(session.user);
 
@@ -58,6 +63,7 @@ export default async function ServicesPage() {
         groups={groupServices(services)}
         balanceRub={balanceRub}
         canOrder={canOrder}
+        initialServiceKey={typeof order === "string" ? order : null}
         contact={{
           name: user?.name ?? "",
           phone: user?.phone ?? org?.phone ?? "",

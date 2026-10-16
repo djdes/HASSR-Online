@@ -97,7 +97,16 @@ export const ROUTE_TITLE_KEYS = {
   "/task-fill": "task_fill",
   "/tasks": "tasks",
   "/team": "team",
-  "/verifications": "verifications"
+  "/verifications": "verifications",
+  "/inspection": "inspection",
+  "/production-control": "production_control",
+  "/more": "more",
+  "/knowledge": "knowledge",
+  "/checklists": "checklists",
+  "/settings/staff-health": "settings_staff_health",
+  "/settings/sections/journals": "settings_sections_journals",
+  "/settings/sections/staff": "settings_sections_staff",
+  "/settings/sections/points": "settings_sections_points"
 } as const satisfies Record<string, RouteTitleKey>;
 
 /**
@@ -120,7 +129,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/changes/new": "Новое изменение",
   "/competencies": "Компетенции",
   "/control-board": "Панель контроля",
-  "/dashboard": "Главная",
+  "/dashboard": "Сегодня",
   "/dashboard/catch-up": "Догнать пропуски",
   "/dashboard/compliance-audit": "Готовность к проверке",
   "/equipment-fill": "Заполнение оборудования",
@@ -202,6 +211,15 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/tasks": "Задачи",
   "/team": "Команда",
   "/verifications": "Подтверждения",
+  "/inspection": "Пришла проверка",
+  "/production-control": "Программа производственного контроля",
+  "/more": "Остальное",
+  "/knowledge": "Инструкции",
+  "/checklists": "Чек-листы",
+  "/settings/staff-health": "Медкнижки и обучение",
+  "/settings/sections/journals": "Настройка журналов",
+  "/settings/sections/staff": "Настройка сотрудников",
+  "/settings/sections/points": "Настройка точек",
 };
 
 /**

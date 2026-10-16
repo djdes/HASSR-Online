@@ -57,7 +57,8 @@ export default async function JournalCodeLayout({ children, params }: { children
   const journalMessages = Object.hasOwn(JOURNAL_MESSAGES, code) ? JOURNAL_MESSAGES[code] : [];
   return (
     // Full-bleed белая подложка: `<main>` в (dashboard)/layout ограничен
-    // 1800px, поэтому выходим из контейнера через w-screen + центрирование —
+    // 1800px, поэтому выходим из контейнера на ширину колонки (экран минус
+    // сайдбар, `--app-sidebar-w`) + центрирование —
     // белый фон тянется от края до края, как на эталоне (body имеет
     // overflow-x-clip, поэтому скроллбар не появляется).
     // `min-h-[calc(100vh-140px)]` — белая подложка раздела доходит до низа
@@ -71,7 +72,7 @@ export default async function JournalCodeLayout({ children, params }: { children
        объёма бланка и вместе с вертикальными паддингами выдавливала
        лишний пустой лист. Белая подложка нужна только экрану. */
     <DomainMessagesBoundary namespaces={["journalFields", "journalForm", "journalWidgets", "hygiene", "reports", "journalDocGuides", "journalFillingGuides", ...journalMessages]}>
-    <div className="relative left-1/2 -my-4 min-h-[calc(100vh-140px)] w-screen -translate-x-1/2 bg-white py-4 md:-my-6 md:py-6 print:min-h-0 print:py-0 md:print:py-0">
+    <div className="relative left-1/2 -my-4 min-h-[calc(100vh-140px)] w-[calc(100vw-var(--app-sidebar-w,0px))] -translate-x-1/2 bg-white py-4 md:-my-6 md:py-6 print:min-h-0 print:py-0 md:print:py-0">
       {/* 1800px — раздел журналов идёт во всю ширину экрана (R1).
           Широкие таблицы журналов скроллятся внутри собственного
           viewport-контейнера (JOURNAL_TABLE_VIEWPORT_CLASS). */}

@@ -12,7 +12,6 @@ import {
   LogOut,
   Palette,
   Plus,
-  Settings,
   ShieldCheck,
 } from "lucide-react";
 
@@ -194,13 +193,6 @@ export function ProfileSheet({
         <Link href="/settings/subscription" onClick={onClose} className={SHEET_ROW_CLASS}>
           <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
           <span className="min-w-0 flex-1">{t("profile.plan")}</span>
-        </Link>
-      ) : null}
-
-      {fullAccess ? (
-        <Link href="/settings" onClick={onClose} className={SHEET_ROW_CLASS}>
-          <Settings className="size-5 shrink-0 text-[#6f7282]" />
-          <span className="min-w-0 flex-1">{t("header.settings")}</span>
         </Link>
       ) : null}
 
