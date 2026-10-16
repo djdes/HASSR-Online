@@ -10,15 +10,15 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
  */
 export function keyAdminGuard(
   session: Session
-): { ok: true; orgId: string; user: { id: string; name: string } } | { ok: false; status: 403; error: string } {
+): { ok: true; orgId: string; user: { id: string; name: string } } | { ok: false; status: 403; code: "role" | "impersonation" | "partner"; error: string } {
   if (!hasFullWorkspaceAccess({ role: session.user.role, isRoot: session.user.isRoot === true })) {
-    return { ok: false, status: 403, error: "Ключи выпускает руководитель" };
+    return { ok: false, status: 403, code: "role", error: "Ключи выпускает руководитель" };
   }
   if (isImpersonating(session)) {
-    return { ok: false, status: 403, error: "Ключ выпускает сам руководитель организации" };
+    return { ok: false, status: 403, code: "impersonation", error: "Ключ выпускает сам руководитель организации" };
   }
   if (session.user.partnerAccess) {
-    return { ok: false, status: 403, error: "Партнёр не выпускает ключи клиента" };
+    return { ok: false, status: 403, code: "partner", error: "Партнёр не выпускает ключи клиента" };
   }
   return {
     ok: true,

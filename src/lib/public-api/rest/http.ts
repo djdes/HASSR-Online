@@ -1,7 +1,9 @@
 import { db } from "@/lib/db";
+import { prismaIdempotencyStore } from "@/lib/idempotency";
 import { authenticateApiKey, publicBaseUrl } from "../auth";
 import { runTool } from "../run-tool";
 import { PUBLIC_API_TOOLS } from "../tools";
+import { restIdempotencyKey, runIdempotent } from "./idempotency";
 import { buildOpenApiDocument } from "./openapi";
 import { matchRestRoute } from "./router";
 
@@ -64,31 +66,19 @@ export async function handleRestRequest(request: Request, segments: string[]): P
   }
 
   // Idempotency-Key: повтор той же записи возвращает прежний ответ без дубля.
-  const idempotencyHeader = request.method === "POST" ? request.headers.get("idempotency-key")?.trim() : undefined;
-  const idempotencyKey = idempotencyHeader ? `v1:${ctx.keyId}:${idempotencyHeader.slice(0, 120)}` : null;
-  if (idempotencyKey) {
-    const cached = await db.journalExternalIdempotency.findUnique({ where: { key: idempotencyKey } }).catch(() => null);
-    if (cached) return json(cached.httpStatus, cached.response, { "idempotent-replayed": "true" });
-  }
-
-  const result = await runTool(match.tool, input, ctx);
-  if (!result.ok) return json(result.status, { ok: false, error: result.error });
-
-  const responseBody = { ok: true, data: result.data };
-  if (idempotencyKey) {
-    await db.journalExternalIdempotency
-      .create({
-        data: {
-          key: idempotencyKey,
-          organizationId: ctx.orgId,
-          journalCode: match.tool.name,
-          httpStatus: 200,
-          response: JSON.parse(JSON.stringify(responseBody)),
-        },
-      })
-      .catch(() => {
-        // Дубликат ключа — параллельный запрос уже сохранил тот же ответ.
-      });
-  }
-  return json(200, responseBody);
+  const reply = await runIdempotent({
+    store: prismaIdempotencyStore(db),
+    key: request.method === "POST" ? restIdempotencyKey(ctx.keyId, match.tool.name, request.headers.get("idempotency-key")) : null,
+    organizationId: ctx.orgId,
+    run: async () => {
+      const result = await runTool(match.tool, input, ctx);
+      return result.ok
+        ? { status: 200, body: JSON.parse(JSON.stringify({ ok: true, data: result.data })) }
+        : { status: result.status, body: { ok: false, error: result.error } };
+    },
+  });
+  const headers: Record<string, string> = {};
+  if (reply.replayed) headers["idempotent-replayed"] = "true";
+  if (reply.inFlight) headers["Retry-After"] = "2";
+  return json(reply.status, reply.body, headers);
 }

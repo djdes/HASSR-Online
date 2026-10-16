@@ -40,10 +40,13 @@ export function AiConnectClient({
   baseUrl,
   initialKeys,
   tools,
+  manageBlockedReason = null,
 }: {
   baseUrl: string;
   initialKeys: ApiKeyView[];
   tools: ToolInfo[];
+  /** Причина из keyAdminGuard (ROOT «войти как», партнёр): форма и отзыв скрыты. */
+  manageBlockedReason?: string | null;
 }) {
   const t = useTranslations("settingsManagement.aiConnect");
   const copy = useCopy();
@@ -83,6 +86,13 @@ export function AiConnectClient({
         <div className={STEP}>{t("create.step")}</div>
         <h2 className="mt-1 text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("create.title")}</h2>
 
+        {manageBlockedReason ? (
+          <p className="mt-4 flex items-start gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 text-[14px] text-[#3c4053]">
+            <ShieldAlert className="mt-0.5 size-[18px] shrink-0 text-[#5566f6]" />
+            {manageBlockedReason}
+          </p>
+        ) : (
+        <>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <label className="block">
             <span className="text-[13px] font-medium text-[#3c4053]">{t("create.nameLabel")}</span>
@@ -138,6 +148,8 @@ export function AiConnectClient({
           {pending ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
           {pending ? t("create.creating") : t("create.submit")}
         </button>
+        </>
+        )}
 
         {created ? (
           <div className="mt-5 rounded-2xl border border-[#5566f6]/30 bg-[#f5f6ff] p-4 sm:p-5">
@@ -201,7 +213,11 @@ export function AiConnectClient({
         </div>
       </section>
 
-      <ApiKeysList keys={keys} onRevoked={(id) => setKeys((list) => list.filter((k) => k.id !== id))} />
+      <ApiKeysList
+        keys={keys}
+        canManage={!manageBlockedReason}
+        onRevoked={(id) => setKeys((list) => list.filter((k) => k.id !== id))}
+      />
     </div>
   );
 }

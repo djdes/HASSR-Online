@@ -22,10 +22,10 @@ test("повар → 403", () => {
 
 test("ROOT в режиме «войти как» → 403", () => {
   const res = keyAdminGuard(session({ isRoot: true, role: "manager", actingAsOrganizationId: "org9" }));
-  assert.deepEqual(res, { ok: false, status: 403, error: "Ключ выпускает сам руководитель организации" });
+  assert.deepEqual(res, { ok: false, status: 403, code: "impersonation", error: "Ключ выпускает сам руководитель организации" });
 });
 
 test("партнёр в кабинете клиента → 403", () => {
   const res = keyAdminGuard(session({ partnerAccess: { partnerId: "p1", organizationId: "org1", level: "edit" } }));
-  assert.deepEqual(res, { ok: false, status: 403, error: "Партнёр не выпускает ключи клиента" });
+  assert.deepEqual(res, { ok: false, status: 403, code: "partner", error: "Партнёр не выпускает ключи клиента" });
 });

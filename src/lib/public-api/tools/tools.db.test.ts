@@ -83,6 +83,19 @@ test("инструменты публичного API на живой базе",
       assert.equal(res.ok ? 200 : res.status, 404);
     });
 
+    await t.test("документ выключенного журнала по id: get_journal_document и fill_journal_cells → 404", async () => {
+      const fryer = await makeDoc(org.id, "fryer_oil");
+      const read = await call("get_journal_document", { documentId: fryer.id });
+      assert.equal(read.ok ? 200 : read.status, 404);
+      const write = await call("fill_journal_cells", {
+        documentId: fryer.id,
+        employeeIds: [anna.id],
+        dates: [today],
+        values: { kind: "data", data: { note: "x" } },
+      });
+      assert.equal(write.ok ? 200 : write.status, 404);
+    });
+
     await t.test("get_journal_document журнала-конфига с config длиннее 30 000 символов → configTruncated", async () => {
       const big = await makeDoc(org.id, "cleaning", { config: { notes: "x".repeat(40_000) } });
       const res = await call("get_journal_document", { documentId: big.id });

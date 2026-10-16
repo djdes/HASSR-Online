@@ -29,6 +29,14 @@ function documentUrl(ctx: ApiCallContext, code: string, documentId: string): str
   return `${ctx.baseUrl}/journals/${code}/documents/${documentId}`;
 }
 
+/**
+ * Журнал, выключенный организацией, для ИИ не существует — и в списке,
+ * и по известному id (ответ как на чужой документ, чтобы не раскрывать).
+ */
+async function isJournalDisabled(ctx: ApiCallContext, code: string): Promise<boolean> {
+  return code !== "" && (await getDisabledJournalCodes(ctx.orgId)).has(code);
+}
+
 function aclActor(ctx: ApiCallContext) {
   return { id: ctx.actor.id, role: ctx.actor.role, isRoot: false };
 }
@@ -152,8 +160,8 @@ export const getJournalDocumentTool: ApiTool = {
         building: { select: { name: true } },
       },
     });
-    if (!doc) return toolError(404, "Документ не найден.");
-    const code = doc.template?.code ?? "";
+    const code = doc?.template?.code ?? "";
+    if (!doc || (await isJournalDisabled(ctx, code))) return toolError(404, "Документ не найден.");
     if (code && !(await hasJournalAccess(aclActor(ctx), code))) {
       return toolError(403, "Нет доступа к этому журналу.");
     }
@@ -232,8 +240,8 @@ export const fillJournalCellsTool: ApiTool = {
       where: { id: input.documentId, organizationId: ctx.orgId },
       select: { id: true, template: { select: { code: true, name: true } } },
     });
-    if (!doc) return toolError(404, "Документ не найден.");
-    const code = doc.template?.code ?? "";
+    const code = doc?.template?.code ?? "";
+    if (!doc || (await isJournalDisabled(ctx, code))) return toolError(404, "Документ не найден.");
     const url = documentUrl(ctx, code, doc.id);
     if (!isCellJournal(code)) {
       const messages = await loadMessages(ctx.locale);

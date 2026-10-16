@@ -11,7 +11,16 @@ function formatWhen(locale: string, iso: string): string {
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 }
 
-export function ApiKeysList({ keys, onRevoked }: { keys: ApiKeyView[]; onRevoked: (id: string) => void }) {
+export function ApiKeysList({
+  keys,
+  canManage = true,
+  onRevoked,
+}: {
+  keys: ApiKeyView[];
+  /** false — ROOT «войти как» или партнёр: список виден, отзыв недоступен. */
+  canManage?: boolean;
+  onRevoked: (id: string) => void;
+}) {
   const t = useTranslations("settingsManagement.aiConnect.keys");
   const tCreate = useTranslations("settingsManagement.aiConnect.create");
   const locale = useLocale();
@@ -72,15 +81,17 @@ export function ApiKeysList({ keys, onRevoked }: { keys: ApiKeyView[]; onRevoked
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setTarget(key)}
-                disabled={pending}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-[#f3c9c4] bg-[#fff4f2] px-3 text-[13px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#ffe9e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a13a32]/15 disabled:opacity-60 sm:self-auto"
-              >
-                <Trash2 className="size-4" />
-                {t("revoke")}
-              </button>
+              {canManage ? (
+                <button
+                  type="button"
+                  onClick={() => setTarget(key)}
+                  disabled={pending}
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-[#f3c9c4] bg-[#fff4f2] px-3 text-[13px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#ffe9e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a13a32]/15 disabled:opacity-60 sm:self-auto"
+                >
+                  <Trash2 className="size-4" />
+                  {t("revoke")}
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>

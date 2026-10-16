@@ -7173,7 +7173,12 @@
         "submit": "Kalit yaratish",
         "creating": "Yaratilmoqda…",
         "created": "Kalit yaratildi — uni hozir nusxalab oling",
-        "failed": "Kalitni yaratib bo‘lmadi"
+        "failed": "Kalitni yaratib bo‘lmadi",
+        "blocked": {
+          "role": "Kalitlarni tashkilot rahbari chiqaradi.",
+          "impersonation": "Siz kabinetni «sifatida kirish» rejimida ko‘ryapsiz. Kalitni tashkilot rahbarining o‘zi — o‘z huquqlari bilan chiqaradi.",
+          "partner": "Siz mijoz kabinetida hamkor sifatida ishlayapsiz. Tashkilot kalitlarini uning rahbari chiqaradi."
+        }
       },
       "secret": {
         "title": "Kalit bir marta ko‘rsatiladi",

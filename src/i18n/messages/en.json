@@ -7173,7 +7173,12 @@
         "submit": "Create key",
         "creating": "Creating…",
         "created": "Key created — copy it now",
-        "failed": "Could not create the key"
+        "failed": "Could not create the key",
+        "blocked": {
+          "role": "Keys are issued by the organization’s manager.",
+          "impersonation": "You are viewing this cabinet in “log in as” mode. The organization’s manager issues keys personally — with their own permissions.",
+          "partner": "You are working in a client’s cabinet as a partner. The organization’s keys are issued by its manager."
+        }
       },
       "secret": {
         "title": "The key is shown once",

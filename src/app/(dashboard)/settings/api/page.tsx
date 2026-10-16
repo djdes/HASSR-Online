@@ -10,6 +10,7 @@ import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { publicBaseUrl } from "@/lib/public-api/auth";
 import { listOrgApiKeys } from "@/lib/public-api/key-admin";
+import { keyAdminGuard } from "@/lib/public-api/key-admin-guard";
 import { PUBLIC_API_TOOLS } from "@/lib/public-api/tools";
 import { AiConnectClient } from "./ai-connect-client";
 import { ApiTokenManager } from "./api-token-manager";
@@ -32,6 +33,10 @@ export default async function ExternalApiSettingsPage() {
     listOrgApiKeys(orgId, session.user.id),
   ]);
   const prompts = [t("showcase.prompt1"), t("showcase.prompt2"), t("showcase.prompt3")];
+  // Тот же guard, что у /api/settings/api-keys: ROOT «войти как» и партнёр
+  // видят список, но не форму — иначе нажатие кончалось бы ошибкой 403.
+  const guard = keyAdminGuard(session);
+  const manageBlockedReason = guard.ok ? null : t(`create.blocked.${guard.code}`);
 
   return (
     <DomainMessagesBoundary namespaces={["settingsManagement"]}>
@@ -84,6 +89,7 @@ export default async function ExternalApiSettingsPage() {
           baseUrl={publicBaseUrl()}
           initialKeys={keys}
           tools={PUBLIC_API_TOOLS.map((tool) => ({ name: tool.name, access: tool.access }))}
+          manageBlockedReason={manageBlockedReason}
         />
 
         <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6">
