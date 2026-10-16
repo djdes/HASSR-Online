@@ -183,6 +183,15 @@ export function formatDecimal(value: number, digits = 1): string {
 /** Момент сцены (в секундах), когда запись уже сохранена и видна в журнале. */
 export const RESULT_SECONDS = 5.6;
 
+/**
+ * Кадр итога главы: камера стоит на бланке, запись уже в графе. Из них —
+ * раскадровка при reduced-motion (последний кадр главы уже смазан
+ * склейкой на следующую).
+ */
+export function resultFrameOf(index: number): number {
+  return CHAPTERS[index].from + Math.round(RESULT_SECONDS * FPS);
+}
+
 /* ---------------------------------------------------------------------
  * Тексты экранов — дословно из продукта. Источник каждой строки — в
  * `UI_SOURCES` (проверяется тестом).

@@ -40,6 +40,7 @@ import {
 import { PublicFooter } from "@/components/public/public-chrome";
 import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-theme";
 import { QrPlayer } from "@/components/landing/qr-player/qr-player";
+import { InterfaceShowcase, type ShowcaseIcon } from "@/components/landing/interface-showcase";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
 import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
@@ -124,6 +125,21 @@ const CAPABILITIES = [
     text: "landing.capabilities.syncIiko1c.text",
   },
 ] as const;
+
+/**
+ * Экраны кабинета для слайдера «Кабинет руководителя». Снимки — настоящие
+ * страницы на демо-данных (public/landing/screens: desktop 1440×900,
+ * mobile 390×800 при плотности 2×). Порядок — от «что видно каждый день»
+ * к «что нужно раз в квартал».
+ */
+const SHOWCASE_SLIDES: ReadonlyArray<{ id: "dashboard" | "journals" | "grid" | "qr" | "inspection" | "staff"; icon: ShowcaseIcon; address: string }> = [
+  { id: "dashboard", icon: "dashboard", address: "wesetup.ru/dashboard" },
+  { id: "journals", icon: "journals", address: "wesetup.ru/journals" },
+  { id: "grid", icon: "grid", address: "wesetup.ru/journals/cold_equipment_control" },
+  { id: "qr", icon: "qr", address: "wesetup.ru/settings/qr-posters" },
+  { id: "inspection", icon: "inspection", address: "wesetup.ru/inspection" },
+  { id: "staff", icon: "staff", address: "wesetup.ru/settings/users" },
+];
 
 /** Самые частые журналы — ссылками в строку под сферами. */
 const POPULAR_JOURNALS = [
@@ -684,6 +700,34 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* КАБИНЕТ РУКОВОДИТЕЛЯ — настоящие экраны слайдером. Ролик выше
+          показывает сотрудника у оборудования, здесь — что видит
+          заведующая. Скриншотов на главной не было с упаковки лендинга. */}
+      <section id="interface" className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}>
+        <LandingSectionHeader title={copy("landing.showcase.title")} lead={copy("landing.showcase.lead")} />
+        <InterfaceShowcase
+          slides={SHOWCASE_SLIDES.map((slide) => ({
+            id: slide.id,
+            icon: slide.icon,
+            address: slide.address,
+            tab: copy(`landing.showcase.slides.${slide.id}.tab`),
+            title: copy(`landing.showcase.slides.${slide.id}.title`),
+            text: copy(`landing.showcase.slides.${slide.id}.text`),
+            desktop: { src: `/landing/screens/${slide.id}-desktop.webp`, width: 1440, height: 900 },
+            mobile: { src: `/landing/screens/${slide.id}-mobile.webp`, width: 390, height: 800 },
+          }))}
+          labels={{
+            region: copy("landing.showcase.region"),
+            tabs: copy("landing.showcase.tabs"),
+            previous: copy("landing.showcase.previous"),
+            next: copy("landing.showcase.next"),
+            positions: SHOWCASE_SLIDES.map((_, index) =>
+              copy("landing.showcase.position", { current: index + 1, total: SHOWCASE_SLIDES.length }),
+            ),
+          }}
+        />
       </section>
 
       {/* ЧТО ЕЩЁ УМЕЕТ — вместо восьми карточек «Что внутри» (2 200 px на

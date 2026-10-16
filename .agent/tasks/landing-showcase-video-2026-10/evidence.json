@@ -1,0 +1,22 @@
+{
+  "task": "landing-showcase-video-2026-10",
+  "base": "origin/master c4dc64ee",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/components/landing/interface-showcase.tsx", "public/landing/screens/*.webp (12 files, 41-161 KB)", "raw/showcase-desktop-light.webp", "raw/showcase-mobile-dark.webp", "raw/mobile-360-390-prod-build.webp", "interface-showcase.test.ts 3/3"] },
+    "AC2": { "status": "PASS", "evidence": ["scene.tsx POS (world layout)", "scene-camera.test.ts: phone/rail above paper on both layouts", "raw/video-desktop-phone-top.webp", "raw/video-desktop-journal-bottom.webp", "raw/video-mobile-sequence.webp"] },
+    "AC3": { "status": "PASS", "evidence": ["qr-player.tsx single control row", "globals.css .qrp-range-thin/.qrp-range-try 4px tracks", "390px: seek 214px, try button 58px icon-only", "raw/video-desktop-compact-controls.webp"] },
+    "AC4": { "status": "PASS", "evidence": ["scene-camera.test.ts: same frame -> same markup for all chapters, no timers/CSS animations in scene", "raw/video-desktop-push-in.webp", "raw/video-desktop-qr-detect.webp", "raw/video-desktop-flight.webp", "raw/video-desktop-chapters-2-6.webp"] },
+    "AC5": { "status": "PASS", "evidence": ["qr-player.test.ts green", "qr-scene-localization.test.ts green (ru/en/uz, normal/deviation)", "resultFrameOf storyboard before whip cut", "no horizontal overflow at 360/390"] },
+    "AC6": {
+      "status": "PASS",
+      "commands": {
+        "typecheck": "npx tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json -> exit 0",
+        "eslint": "0 errors, 2 pre-existing warnings (qr-player.tsx set-state-in-effect)",
+        "tests": "node --import tsx --test src/i18n/*.test.ts src/components/landing/*.test.ts src/components/landing/qr-player/*.test.ts src/lib/app-nav.test.ts -> 120/121; message-contract.test.ts fails only on CRLF Windows checkout (confirm/ru stale, untouched); scripts/i18n-types.mjs --check on LF copy -> exit 0",
+        "build": "npx next build --webpack -> exit 0 (final code)"
+      },
+      "deploy": "pending push"
+    }
+  }
+}

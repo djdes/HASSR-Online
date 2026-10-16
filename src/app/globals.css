@@ -2329,24 +2329,48 @@ html, body {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--qrp-accent) 40%, transparent), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
+/* Компактные ползунки «Попробуйте сами»: полоса 4px, бегунок 16px,
+   зона касания 24px. */
+.qrp-range-try {
+  height: 24px;
+}
+.qrp-range-try::-webkit-slider-runnable-track {
+  height: 4px;
+}
+.qrp-range-try::-moz-range-track {
+  height: 4px;
+}
+.qrp-range-try::-moz-range-progress {
+  height: 4px;
+}
+.qrp-range-try::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+}
+.qrp-range-try::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+}
+
 /* Тонкая перемотка под сценой: полоса всегда, бегунок проявляется на
    hover/focus (как у видеоплееров). Кликабельная зона остаётся 22px. */
 .qrp-range-thin {
   height: 22px;
 }
 .qrp-range-thin::-webkit-slider-runnable-track {
-  height: 5px;
+  height: 4px;
 }
 .qrp-range-thin::-moz-range-track {
-  height: 5px;
+  height: 4px;
 }
 .qrp-range-thin::-moz-range-progress {
-  height: 5px;
+  height: 4px;
 }
 .qrp-range-thin::-webkit-slider-thumb {
   width: 13px;
   height: 13px;
-  margin-top: -4px;
+  margin-top: -4.5px;
   opacity: 0;
   transition: opacity 150ms ease, box-shadow 150ms ease;
 }
@@ -2374,6 +2398,37 @@ html, body {
 }
 .qrp-tabs::-webkit-scrollbar {
   display: none;
+}
+
+/* Слайдер «Как выглядит кабинет» (`interface-showcase.tsx`): строка
+   вкладок без скроллбара с растворёнными краями и заливка-таймер
+   активной вкладки (пауза — через animation-play-state). */
+/* `.app-shell [role="tablist"]` на телефоне переносит вкладки в
+   несколько строк — здесь строка одна, с прокруткой. */
+.app-shell .showcase-tabs,
+.showcase-tabs {
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent);
+}
+.showcase-tabs::-webkit-scrollbar {
+  display: none;
+}
+@keyframes showcase-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+.showcase-fill {
+  width: 0;
+  animation-name: showcase-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }
 
 /* Спойлер «Попробуйте сами»: мягкое появление. */

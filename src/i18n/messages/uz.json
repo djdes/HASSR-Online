@@ -4077,6 +4077,47 @@
       "title": "Elektron HACCP va SanPiN jurnallari",
       "subtitle": "Umumiy ovqatlanish va ishlab chiqarishda oziq-ovqat xavfsizligi",
       "features": "{count, number} ta jurnal · QR orqali yozuv · Eslatmalar"
+    },
+    "showcase": {
+      "title": "Rahbar kabineti: hammasi bir qarashda",
+      "lead": "WeSetup’ning haqiqiy ekranlari. Xodimlar jurnallarni telefondan QR orqali to‘ldiradi — natijani shu yerda ko‘rasiz: nima bajarilgan, nima kechikkan va kim mas’ul.",
+      "region": "WeSetup kabineti ekranlari",
+      "tabs": "Kabinet ekranlari",
+      "previous": "Oldingi ekran",
+      "next": "Keyingi ekran",
+      "position": "{current, number} / {total, number}",
+      "slides": {
+        "dashboard": {
+          "tab": "Xulosa",
+          "title": "Kunlik xulosa",
+          "text": "Bugun qaysi jurnallar to‘ldirilgan, nima o‘tkazib yuborilgan va kimga eslatish kerak — kabinetning birinchi ekranida."
+        },
+        "journals": {
+          "tab": "Jurnallar",
+          "title": "Nuqtaning barcha jurnallari",
+          "text": "SanPiN va HACCP bitta ro‘yxatda: bugungi holat, mas’ullar va jurnalga bir bosishda kirish."
+        },
+        "grid": {
+          "tab": "Jurnal",
+          "title": "Jurnal xuddi qog‘ozdagidek",
+          "text": "Ustunlar bosma blankadagidek. QR va datchiklardan kelgan qiymatlar o‘zi tushadi, me’yordan chetlanishlar ajratib ko‘rsatiladi."
+        },
+        "qr": {
+          "tab": "QR-stikerlar",
+          "title": "Uskunalar uchun QR-stikerlar",
+          "text": "Stikerlarni A4 varaqqa chop etasiz — xodim skanerlaydi va jurnalni parol va ilovasiz to‘ldiradi."
+        },
+        "inspection": {
+          "tab": "Tekshiruv keldi",
+          "title": "Tekshiruvga tayyor",
+          "text": "Tekshiruvga tayyorlik, jurnallar bitta arxivda va tekshiruvchi uchun QR — bitta ekranda."
+        },
+        "staff": {
+          "tab": "Xodimlar",
+          "title": "Jamoa va ruxsatlar",
+          "text": "Lavozimlar, PIN va har bir xodimning jurnallari: xodim faqat o‘zi to‘ldiradiganini ko‘radi."
+        }
+      }
     }
   },
   "landingComponents": {

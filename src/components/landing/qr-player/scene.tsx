@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { FORMAT_LOCALES } from "@/i18n/locales";
-import type { CSSProperties, ReactNode } from "react";
+import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
 import {
   AlertTriangle,
   BellRing,
@@ -114,16 +114,69 @@ const P = {
 } as const;
 
 /* ---------------------------------------------------------------------
- * Раскладка кадра: 4:5 на телефоне, 16:9 от md.
+ * Мир и камера: 4:5 на телефоне, 16:9 от md.
+ *
+ * Кадр — окно камеры в вертикальный «мир» высотой WORLD_H сцен: сверху
+ * место и телефон со сканированием, снизу — журнал. Глава открывается
+ * наездом на видоискатель, камера отъезжает к телефону, а в момент
+ * сохранения спускается к журналу вслед за значением. Координаты мира —
+ * в процентах ширины (x) и высоты сцены (y, 0…WORLD_H·100); в классах
+ * Tailwind ниже они уже пересчитаны в проценты высоты мира.
  * ------------------------------------------------------------------- */
 
+const WORLD_H = 1.8;
+/** На сколько высот сцены камера опускается к журналу: низ телефона с
+    итогом остаётся в кадре над бланком — видно, откуда пришла запись. */
+const PAN = 0.7;
+
 const POS = {
-  place: "left-[4%] top-[3%] max-w-[92%] [font-size:3.1cqw] md:left-[34%] md:top-[4.6%] md:max-w-[62%] md:[font-size:1.2cqw]",
-  paper: "left-[4%] right-[4%] top-[10%] h-[38.5%] [font-size:3.1cqw] md:left-[34%] md:right-[3.5%] md:top-[12%] md:h-[59%] md:[font-size:1.3cqw]",
-  phone: "left-[4%] top-[51.5%] w-[50%] md:left-[5%] md:top-[6.5%] md:w-[24.5%]",
-  rail: "left-[58%] right-[3%] top-[53%] [font-size:2.75cqw] md:left-[34%] md:right-[3.5%] md:top-[75.5%] md:[font-size:1.12cqw]",
-  toast: "left-[55%] right-[2.5%] top-[74%] [font-size:2.5cqw] md:left-auto md:right-[2%] md:top-[7.5%] md:w-[31%] md:[font-size:1.02cqw]",
+  /* Экранные (поверх камеры). */
+  place: "left-[4%] top-[3%] max-w-[92%] [font-size:3.1cqw] md:left-[35.5%] md:top-[7%] md:max-w-[60%] md:[font-size:1.2cqw]",
+  toast: "left-[30%] right-[3%] top-[72%] [font-size:2.6cqw] md:left-auto md:right-[2.5%] md:top-[5%] md:w-[30%] md:[font-size:1.02cqw]",
+  /* Мировые (в % высоты мира): телефон 9…92 % сцены на телефоне и 6…93 %
+     на десктопе, шаги справа от него, бланк 96…176 %. */
+  phone: "left-[4%] top-[5%] w-[52%] md:left-[6%] md:top-[3.333%] md:w-[24.5%]",
+  rail: "left-[59.5%] right-[3%] top-[7.778%] [font-size:2.75cqw] md:left-[35.5%] md:right-auto md:top-[11.111%] md:w-[27%] md:[font-size:1.25cqw]",
+  paper: "left-[4%] right-[4%] top-[53.333%] h-[44.444%] [font-size:3.1cqw] md:left-[3.5%] md:right-[3.5%] md:[font-size:1.36cqw]",
+  /* Камера: точка наезда (видоискатель) и сила наезда — по раскладке. */
+  camera: "[--fx:30%] [--fy:25.5%] [--z0:1.3] md:[--fx:20%] md:[--fy:25%] md:[--z0:1.55]",
 } as const;
+
+/** Монохромный шум: зерно плёнки поверх кадра и фактура бумаги. */
+const NOISE =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
+/** Точка мира → CSS: y в процентах высоты мира. */
+function worldY(y: number): string {
+  return `${(y / WORLD_H).toFixed(3)}%`;
+}
+
+type WorldPoint = { x: number; y: number };
+/** `tag` — где встаёт метка «когда и кто»: под графой или справа от неё (на пустых днях). */
+type Leg = { from: WorldPoint; to: WorldPoint; tag?: "below" | "right" };
+/** Путь значения из телефона в графу — своя пара точек на каждую раскладку. */
+type FlightPath = { mobile: Leg; desktop: Leg };
+
+/**
+ * Время главы и положение камеры — общие для всех деталей кадра: телефон
+ * покачивается в руке, бланк «поднимается» навстречу камере, фон уходит в
+ * глубину. Контекст, а не пропсы: так не надо тянуть `t` через шесть сцен.
+ */
+type CameraState = { t: number; frame: number; pan: number; push: number; journalAt: number };
+const CameraContext = createContext<CameraState>({ t: 0, frame: 0, pan: 0, push: 0, journalAt: 99 });
+
+/** Закрытая форма пружины с критическим затуханием: 0 → 1, без перелёта. */
+function spring(t: number, from: number, omega = 6.4): number {
+  if (t <= from) return 0;
+  const x = (t - from) * omega;
+  return 1 - (1 + x) * Math.exp(-x);
+}
+
+/** Детерминированный «шум» для зерна и дрожания: одно число на кадр. */
+function hash(n: number): number {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
 
 /* ---------------------------------------------------------------------
  * Мелкие детали
@@ -225,25 +278,93 @@ function DrawnCheck({ t, at, size = "4.4em" }: { t: number; at: number; size?: s
  * Телефон и экраны QR-формы
  * ------------------------------------------------------------------- */
 
-function PhoneFrame({ clock, children }: { clock: string; children: ReactNode }) {
+/**
+ * Телефон в руке: металлическая рамка с кнопками, стекло с бликом, тень на
+ * «полу». Наклон небольшой и живой — рука чуть покачивается, блик ходит
+ * вслед за наклоном. `ping` — момент распознавания QR: от корпуса
+ * расходятся две волны.
+ */
+function PhoneFrame({ clock, children, ping }: { clock: string; children: ReactNode; ping?: number }) {
+  const { t, pan } = useContext(CameraContext);
+  const tiltY = -5 + Math.sin(t * 0.8) * 1.4;
+  const tiltX = 3 + Math.cos(t * 0.6) * 0.9;
+  const roll = -0.7 + Math.sin(t * 0.45) * 0.45;
+  const bob = Math.sin(t * 0.9) * 0.22;
+  const glare = 46 + tiltY * 5;
   return (
     <div className={`absolute @container ${POS.phone}`}>
       <div
+        aria-hidden="true"
         style={{
+          position: "absolute",
+          left: "8%",
+          right: "4%",
+          bottom: "-3.5%",
+          height: "7%",
+          borderRadius: "50%",
+          background: "radial-gradient(closest-side, rgba(0,0,0,0.6), rgba(0,0,0,0))",
+        }}
+      />
+      <div
+        style={{
+          position: "relative",
           fontSize: "5.3cqw",
           width: "100%",
           aspectRatio: "1 / 2",
-          background: P.bezel,
-          borderRadius: "2.4em",
-          padding: "0.4em",
-          boxShadow: "0 2.4em 4em -1.6em rgba(0,0,0,0.65), inset 0 0 0 0.08em rgba(255,255,255,0.14)",
+          borderRadius: "2.5em",
+          padding: "0.2em",
+          background: "linear-gradient(150deg,#727892 0%,#262934 16%,#0d0f15 46%,#2c303c 74%,#808699 100%)",
+          boxShadow: "0 2.8em 4.4em -1.6em rgba(0,0,0,0.78), 0 1em 1.8em -0.9em rgba(0,0,0,0.55)",
+          transform: `perspective(60em) translateY(${bob}em) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${roll}deg)`,
+          transformOrigin: "50% 60%",
         }}
       >
+        {[
+          { side: "left", top: "17%", height: "5%" },
+          { side: "left", top: "25%", height: "9%" },
+          { side: "right", top: "22%", height: "12%" },
+        ].map((button) => (
+          <span
+            key={`${button.side}-${button.top}`}
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              [button.side]: "-0.12em",
+              top: button.top,
+              width: "0.14em",
+              height: button.height,
+              borderRadius: "0.1em",
+              background: "linear-gradient(90deg,#3e4251,#a3a9bd,#3e4251)",
+            }}
+          />
+        ))}
+        {ping !== undefined
+          ? [0, 0.14].map((delay) => {
+              const wave = progress(t, ping + delay, 0.55, ease.out);
+              if (t < ping + delay || wave >= 1) return null;
+              return (
+                <span
+                  key={delay}
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "2.5em",
+                    border: "0.12em solid rgba(124,245,192,0.9)",
+                    transform: `scale(${1 + wave * 0.14})`,
+                    opacity: 1 - wave,
+                    pointerEvents: "none",
+                  }}
+                />
+              );
+            })
+          : null}
+        <div style={{ height: "100%", borderRadius: "2.32em", padding: "0.24em", background: "#040507", boxShadow: "inset 0 0 0 0.05em rgba(255,255,255,0.1)" }}>
         <div
           style={{
             position: "relative",
             height: "100%",
-            borderRadius: "2em",
+            borderRadius: "2.08em",
             overflow: "hidden",
             background: P.screen,
             color: P.ink,
@@ -267,13 +388,29 @@ function PhoneFrame({ clock, children }: { clock: string; children: ReactNode })
             }}
           >
             <span style={{ fontVariantNumeric: "tabular-nums" }}>{clock}</span>
-            <span style={{ width: "4.6em", height: "1.2em", borderRadius: "999px", background: P.bezel }} />
+            <span style={{ width: "4.6em", height: "1.2em", borderRadius: "999px", background: "#000000", boxShadow: "inset 0 0 0 0.06em rgba(255,255,255,0.06)" }} />
             <span style={{ display: "inline-flex", gap: "0.3em", alignItems: "center" }}>
               <Wifi style={{ width: "1.05em", height: "1.05em" }} />
-              <span style={{ width: "1.6em", height: "0.8em", borderRadius: "0.2em", border: "0.1em solid rgba(255,255,255,0.8)" }} />
+              <span style={{ width: "1.6em", height: "0.8em", borderRadius: "0.2em", border: "0.1em solid rgba(255,255,255,0.8)", padding: "0.08em" }}>
+                <span style={{ display: "block", width: "72%", height: "100%", borderRadius: "0.08em", background: "rgba(255,255,255,0.9)" }} />
+              </span>
             </span>
           </div>
           <div style={{ position: "absolute", inset: "1.9em 0 0 0", display: "flex", flexDirection: "column" }}>{children}</div>
+          {/* Камера у журнала: телефон уходит из фокуса в тень. */}
+          {pan > 0.01 ? <div aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 8, background: "#080b1a", opacity: pan * 0.62 }} /> : null}
+          {/* Стекло: мягкий диагональный блик идёт за наклоном телефона. */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 9,
+              pointerEvents: "none",
+              background: `linear-gradient(115deg, rgba(255,255,255,0) ${glare - 20}%, rgba(255,255,255,0.12) ${glare}%, rgba(255,255,255,0) ${glare + 18}%)`,
+            }}
+          />
+        </div>
         </div>
       </div>
     </div>
@@ -420,6 +557,10 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
   const bracket = interpolate(lock, [0, 1], [1.35, 1]);
   const scan = (t * 1.6) % 1;
   const layout = VIEWFINDER_LAYOUT[object];
+  // Камера «ищет» фокус: кадр на миг мылится и собирается к моменту захвата.
+  const focusBlur = 3.4 * windowed(t, 0.04, 0.42, 0.14);
+  // Захват QR — короткая вспышка, как у настоящего сканера.
+  const flash = windowed(t, 0.55, 0.8, 0.06) * 0.55;
   return (
     <div style={fade(1 - hide, { position: "absolute", inset: 0, zIndex: 4, background: "#1a1f33", overflow: "hidden" })}>
       {photo ? (
@@ -437,7 +578,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
               height: "100%",
               objectFit: "cover",
               objectPosition: layout.pos,
-              filter: "brightness(0.9) saturate(0.95)",
+              filter: `brightness(0.9) saturate(0.95)${focusBlur > 0.05 ? ` blur(${focusBlur.toFixed(2)}px)` : ""}`,
               transformOrigin: layout.zoom?.origin ?? "50% 50%",
               transform: `translate(${Math.sin(t * 1.1) * 0.8}%, ${Math.cos(t * 0.8) * 0.6}%) scale(${layout.zoom?.scale ?? 1.07})`,
             }}
@@ -542,6 +683,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
         {tr("storefrontLink")}</div>
       <div style={{ position: "absolute", left: 0, right: 0, top: "1.2em", textAlign: "center", fontSize: "0.66em", color: "rgba(255,255,255,0.75)" }}>
         {tr("scanInstruction")}</div>
+      {flash > 0 ? <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "#ffffff", opacity: flash }} /> : null}
     </div>
   );
 }
@@ -721,8 +863,22 @@ function Paper({ stampLabel, title, subtitle, caption, children, startedDay }: {
   const tr = useTranslations("qrScene");
   const locale = FORMAT_LOCALES[useSiteLocale()];
   const startedDate = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(startedDay.year, startedDay.month - 1, 1)));
+  // Лист «лежит на столе» и поднимается навстречу камере, пока она
+  // спускается к журналу.
+  const { pan } = useContext(CameraContext);
+  const tilt = (1 - pan) * 16;
   return (
-    <div className={`absolute overflow-hidden ${POS.paper}`} style={{ background: P.paper, color: P.paperInk, borderRadius: "0.5em", boxShadow: "0 1.6em 3.2em -1.2em rgba(0,0,0,0.55), 0 0 0 0.06em rgba(255,255,255,0.4)" }}>
+    <div
+      className={`absolute overflow-hidden ${POS.paper}`}
+      style={{
+        background: P.paper,
+        color: P.paperInk,
+        borderRadius: "0.5em",
+        boxShadow: "0 2.2em 4em -1.4em rgba(0,0,0,0.7), 0 0 0 0.06em rgba(255,255,255,0.4)",
+        transform: tilt > 0.01 ? `perspective(110em) rotateX(${tilt.toFixed(2)}deg)` : undefined,
+        transformOrigin: "50% 0%",
+      }}
+    >
       <div style={{ padding: "1em 1.1em", fontFamily: "inherit" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.82em" }}>
           <colgroup>
@@ -748,6 +904,8 @@ function Paper({ stampLabel, title, subtitle, caption, children, startedDay }: {
         <div className="hidden md:block" style={{ textAlign: "center", fontWeight: 700, margin: subtitle ? "0.2em 0 0.7em" : "0.8em 0 0.7em", fontSize: "0.92em", letterSpacing: "0.01em" }}>{title}</div>
         {children}
       </div>
+      {/* Фактура бумаги: еле заметное зерно. */}
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, backgroundImage: NOISE, opacity: 0.07, mixBlendMode: "multiply", pointerEvents: "none" }} />
       {/* Правый край бланка уходит «за кадр» — лист шире сцены. */}
       <div aria-hidden="true" style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: "3em", background: `linear-gradient(90deg, rgba(255,253,248,0), ${P.paper})` }} />
       <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "2em", background: `linear-gradient(180deg, rgba(255,253,248,0), ${P.paper})` }} />
@@ -953,38 +1111,81 @@ function Toast({ t, at, channel, title, lines, tone = "bad", mail = false }: { t
   );
 }
 
-type RailStep = { label: string; at: number };
+type RailStep = { label: string; at: number; value?: ReactNode };
 
+/**
+ * Шаги сценария — вертикальная дорожка справа от телефона. Пройденный шаг
+ * показывает, что в нём записано (кто, PIN, значение, время): запись
+ * собирается на глазах, а потом уезжает в журнал.
+ */
 function Rail({ t, steps }: { t: number; steps: RailStep[] }) {
+  const { push } = useContext(CameraContext);
   const active = steps.reduce((acc, step, index) => (t >= step.at ? index : acc), -1);
+  const pulse = (Math.sin(t * 5.5) + 1) / 2;
   return (
-    <ol className={`absolute m-0 flex list-none flex-col gap-[0.5em] p-0 md:flex-row md:gap-[0.6em] ${POS.rail}`} style={{ color: "#ffffff" }}>
+    <ol className={`absolute m-0 flex list-none flex-col p-0 ${POS.rail}`} style={{ color: "#ffffff", opacity: 1 - push * 0.85 }}>
       {steps.map((step, index) => {
         const done = index < active;
         const now = index === active;
+        const last = index === steps.length - 1;
+        const next = steps[index + 1];
+        // Линия к следующему шагу заполняется, пока идёт текущий.
+        const fill = done ? 1 : now && next ? progress(t, step.at, Math.max(0.2, next.at - step.at), ease.linear) : 0;
+        const valueAt = next ? next.at : step.at + 0.35;
+        const valueIn = step.value !== undefined && t >= valueAt ? progress(t, valueAt, 0.3) : 0;
         return (
-          <li key={step.label} className="flex min-w-0 items-center gap-[0.5em] md:flex-1 md:flex-col md:items-start md:gap-[0.45em]" style={{ opacity: now ? 1 : done ? 0.78 : 0.4 }}>
-            <span className="hidden h-[0.22em] w-full rounded-full md:block" style={{ background: done || now ? "linear-gradient(90deg,#5566f6,#8b97ff)" : "rgba(255,255,255,0.16)" }} />
-            <span className="flex min-w-0 items-center gap-[0.45em]">
+          <li
+            key={step.label}
+            className="relative flex min-w-0 gap-[0.65em]"
+            style={{ paddingBottom: last ? 0 : "0.95em", opacity: now ? 1 : done ? 0.9 : 0.42 }}
+          >
+            {last ? null : (
               <span
-                style={{
-                  display: "inline-flex",
-                  width: "1.55em",
-                  height: "1.55em",
-                  flex: "none",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "999px",
-                  fontSize: "0.82em",
-                  fontWeight: 700,
-                  background: done ? "#7cf5c0" : now ? P.indigo : "rgba(255,255,255,0.1)",
-                  color: done ? "#0b3a26" : "#ffffff",
-                  boxShadow: now ? "0 0 0 0.3em rgba(85,102,246,0.3)" : undefined,
-                }}
+                aria-hidden="true"
+                style={{ position: "absolute", left: "0.75em", top: "1.8em", bottom: "0.2em", width: "0.1em", borderRadius: "999px", background: "rgba(255,255,255,0.16)", overflow: "hidden" }}
               >
-                {done ? <Check style={{ width: "0.95em", height: "0.95em" }} strokeWidth={3} /> : index + 1}
+                <span style={{ display: "block", width: "100%", height: `${(fill * 100).toFixed(1)}%`, background: "linear-gradient(180deg,#7cf5c0,#8b97ff)" }} />
               </span>
-              <span style={{ fontWeight: now ? 700 : 500, lineHeight: 1.2 }}>{step.label}</span>
+            )}
+            <span
+              style={{
+                display: "inline-flex",
+                width: "1.6em",
+                height: "1.6em",
+                flex: "none",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "999px",
+                fontWeight: 700,
+                background: done ? "#7cf5c0" : now ? P.indigo : "rgba(255,255,255,0.1)",
+                color: done ? "#0b3a26" : "#ffffff",
+                boxShadow: now ? `0 0 0 ${(0.2 + pulse * 0.16).toFixed(3)}em rgba(85,102,246,${(0.38 - pulse * 0.14).toFixed(3)})` : undefined,
+              }}
+            >
+              {done ? <Check style={{ width: "0.95em", height: "0.95em" }} strokeWidth={3} /> : <span style={{ fontSize: "0.82em" }}>{index + 1}</span>}
+            </span>
+            <span className="min-w-0" style={{ paddingTop: "0.14em" }}>
+              <span style={{ display: "block", fontWeight: now ? 700 : 500, lineHeight: 1.25 }}>{step.label}</span>
+              {valueIn > 0 ? (
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: "0.18em",
+                    fontSize: "0.86em",
+                    fontWeight: 600,
+                    lineHeight: 1.25,
+                    color: "#7cf5c0",
+                    fontVariantNumeric: "tabular-nums",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    opacity: valueIn,
+                    transform: `translateY(${((1 - valueIn) * 0.3).toFixed(3)}em)`,
+                  }}
+                >
+                  {step.value}
+                </span>
+              ) : null}
             </span>
           </li>
         );
@@ -993,14 +1194,177 @@ function Rail({ t, steps }: { t: number; steps: RailStep[] }) {
   );
 }
 
+/* ---------------------------------------------------------------------
+ * Перелёт значения из телефона в журнал
+ * ------------------------------------------------------------------- */
+
+const FLIGHT_SECONDS = 0.85;
+
 /**
- * Фото настоящего места — «смена помещения» между главами: свой кадр и
- * своя цветовая вуаль у каждой главы. Фото приглушено и затемнено книзу,
- * чтобы журнал, телефон и рельса шагов читались как раньше; точечная
- * сетка воспроизводится поверх — фактура ролика сохраняется. Всё —
- * функция t: перемотка детерминирована.
+ * Значение уходит из телефона в журнал: капсула летит по дуге, за ней
+ * тянется след, в графе расходится волна и появляется метка «когда и кто».
+ * Камера в это время спускается к бланку — капсула ведёт взгляд.
  */
-function Backdrop({ chapter, t }: { chapter: Chapter; t: number }) {
+function Flight({ t, at, path, children, tone = "ok", meta }: { t: number; at: number; path: FlightPath; children: ReactNode; tone?: "ok" | "bad"; meta?: string }) {
+  if (t < at) return null;
+  return (
+    <>
+      <div className="md:hidden">
+        <FlightLeg t={t} at={at} leg={path.mobile} tone={tone} meta={meta} size="3cqw" id="m">
+          {children}
+        </FlightLeg>
+      </div>
+      <div className="hidden md:block">
+        <FlightLeg t={t} at={at} leg={path.desktop} tone={tone} meta={meta} size="1.25cqw" id="d">
+          {children}
+        </FlightLeg>
+      </div>
+    </>
+  );
+}
+
+function FlightLeg({ t, at, leg, children, tone, meta, size, id }: { t: number; at: number; leg: Leg; children: ReactNode; tone: "ok" | "bad"; meta?: string; size: string; id: string }) {
+  const raw = Math.min(1, Math.max(0, (t - at) / FLIGHT_SECONDS));
+  const s = ease.inOut(raw);
+  const { from, to } = leg;
+  // Дуга «подбрасывания»: вправо и чуть вверх, потом вниз в графу.
+  const c = { x: to.x * 0.8 + from.x * 0.2, y: from.y - 8 };
+  const bez = (a: number, ctrl: number, b: number) => (1 - s) * (1 - s) * a + 2 * (1 - s) * s * ctrl + s * s * b;
+  const x = bez(from.x, c.x, to.x);
+  const y = bez(from.y, c.y, to.y);
+  // След — «хвост кометы»: последний отрезок кривой за капсулой.
+  const tailFrom = Math.max(0, s - 0.38);
+  const tail = Array.from({ length: 13 }, (_, step) => {
+    const k = tailFrom + ((s - tailFrom) * step) / 12;
+    const point = (a: number, ctrl: number, b: number) => (1 - k) * (1 - k) * a + 2 * (1 - k) * k * ctrl + k * k * b;
+    return `${point(from.x, c.x, to.x).toFixed(3)} ${point(from.y, c.y, to.y).toFixed(3)}`;
+  });
+  const landAt = at + FLIGHT_SECONDS * 0.92;
+  const trail = 1 - progress(t, landAt, 0.3, ease.inOut);
+  const scale = raw < 0.18 ? 0.55 + (raw / 0.18) * 0.6 : 1.15 - ((raw - 0.18) / 0.82) * 0.5;
+  const alpha = raw < 0.1 ? raw / 0.1 : raw > 0.8 ? Math.max(0, 1 - (raw - 0.8) / 0.2) : 1;
+  const ring = progress(t, landAt, 0.55, ease.out);
+  const tag = windowed(t, landAt + 0.05, landAt + 1.8, 0.2);
+  const bright = tone === "bad" ? "#ff8f86" : "#7cf5c0";
+  const deep = tone === "bad" ? "#d2453d" : "#5566f6";
+  const gradientId = `qr-flight-${id}`;
+  return (
+    <div style={{ fontSize: size }}>
+      {trail > 0 ? (
+        <svg
+          aria-hidden="true"
+          viewBox={`0 0 100 ${WORLD_H * 100}`}
+          preserveAspectRatio="none"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none", zIndex: 29 }}
+        >
+          <defs>
+            <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={tail[0].split(" ")[0]} y1={tail[0].split(" ")[1]} x2={x.toFixed(3)} y2={y.toFixed(3)}>
+              <stop offset="0" stopColor={deep} stopOpacity="0" />
+              <stop offset="1" stopColor={bright} />
+            </linearGradient>
+          </defs>
+          {[
+            { width: 10, opacity: 0.18 },
+            { width: 3.5, opacity: 1 },
+          ].map((stroke) => (
+            <path
+              key={stroke.width}
+              d={`M ${tail.join(" L ")}`}
+              fill="none"
+              stroke={`url(#${gradientId})`}
+              strokeWidth={stroke.width}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              opacity={trail * stroke.opacity}
+            />
+          ))}
+        </svg>
+      ) : null}
+      {alpha > 0 && raw < 1 ? (
+        <div
+          style={{
+            position: "absolute",
+            left: `${x.toFixed(3)}%`,
+            top: worldY(y),
+            zIndex: 30,
+            transform: `translate(-50%, -50%) scale(${scale.toFixed(4)})`,
+            opacity: alpha,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.4em",
+            whiteSpace: "nowrap",
+            padding: "0.42em 0.85em",
+            borderRadius: "999px",
+            color: "#ffffff",
+            fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+            background: tone === "bad" ? "linear-gradient(135deg,#f43f5e,#d2453d)" : "linear-gradient(135deg,#5566f6,#7a5cff)",
+            boxShadow: `0 0.7em 1.8em -0.5em ${tone === "bad" ? "rgba(210,69,61,0.85)" : "rgba(85,102,246,0.9)"}, inset 0 0 0 0.07em rgba(255,255,255,0.35)`,
+          }}
+        >
+          {children}
+        </div>
+      ) : null}
+      {t >= landAt && ring < 1 ? (
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: `${to.x}%`,
+            top: worldY(to.y),
+            zIndex: 28,
+            width: "3em",
+            height: "3em",
+            marginLeft: "-1.5em",
+            marginTop: "-1.5em",
+            borderRadius: "999px",
+            border: `0.14em solid ${bright}`,
+            transform: `scale(${(0.3 + ring * 1.6).toFixed(4)})`,
+            opacity: 1 - ring,
+          }}
+        />
+      ) : null}
+      {meta && tag > 0 ? (
+        <div
+          style={{
+            position: "absolute",
+            left: `${to.x}%`,
+            top: worldY(to.y),
+            zIndex: 31,
+            transform:
+              leg.tag === "right"
+                ? `translate(${(2.5 + (1 - tag) * 0.35).toFixed(3)}em, -50%)`
+                : `translate(-50%, ${(1.15 + (1 - tag) * 0.35).toFixed(3)}em)`,
+            opacity: tag,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35em",
+            whiteSpace: "nowrap",
+            padding: "0.32em 0.7em",
+            borderRadius: "999px",
+            background: "#0b1024",
+            color: "#ffffff",
+            fontSize: "0.8em",
+            fontWeight: 600,
+            fontVariantNumeric: "tabular-nums",
+            boxShadow: "0 0.6em 1.4em -0.6em rgba(0,0,0,0.6)",
+          }}
+        >
+          <Check style={{ width: "1em", height: "1em", color: bright }} strokeWidth={3} />
+          {meta}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Фото настоящего места — «смена помещения» между главами. Фото темнее
+ * переднего плана, чтобы в фокусе были телефон и бланк. Пока камера идёт
+ * к журналу, фон уходит вверх медленнее переднего плана (параллакс) и
+ * темнеет до «стола», на котором лежит бланк. Всё — функция t.
+ */
+function Backdrop({ chapter, t, pan, push }: { chapter: Chapter; t: number; pan: number; push: number }) {
   const enter = progress(t, 0, 0.45, ease.out);
   const drift = progress(t, 0, CHAPTER_SECONDS, ease.linear);
   return (
@@ -1011,36 +1375,55 @@ function Backdrop({ chapter, t }: { chapter: Chapter; t: number }) {
         alt=""
         style={{
           position: "absolute",
-          inset: 0,
+          left: 0,
+          top: "-6%",
           width: "100%",
-          height: "100%",
+          height: "124%",
           objectFit: "cover",
-          opacity: 0.64 * enter,
-          filter: "saturate(0.78) brightness(0.7) contrast(1.06)",
-          transform: `scale(${1.09 - 0.05 * drift}) translateX(${(1 - enter) * 2.2}%)`,
+          opacity: 0.88 * (0.55 + 0.45 * enter),
+          filter: "saturate(0.86) brightness(0.62) contrast(1.06)",
+          transform: `translateY(${(-pan * 14).toFixed(3)}%) scale(${((1.1 - 0.05 * drift) * (1 + 0.08 * push)).toFixed(4)}) translateX(${((1 - enter) * 2.2).toFixed(3)}%)`,
+          willChange: "transform",
         }}
       />
+      <div style={{ position: "absolute", inset: 0, background: `radial-gradient(110% 80% at 0% 0%, ${chapter.accent}3d, transparent 55%)` }} />
+      {/* Подложка под шаги: справа от телефона на десктопе, справа колонкой на телефоне. */}
+      <div className="md:hidden" style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(8,11,26,0.25) 0%, rgba(8,11,26,0.4) 50%, rgba(8,11,26,0.72) 100%)" }} />
+      <div className="hidden md:block" style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(8,11,26,0.2) 0%, rgba(8,11,26,0.66) 33%, rgba(8,11,26,0.5) 63%, rgba(8,11,26,0.12) 100%)" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,11,26,0) 45%, rgba(8,11,26,0.7) 100%)" }} />
+      {/* «Стол» под журналом проступает, пока камера спускается. */}
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${P.stage}cc, ${P.stage})`, opacity: pan * 0.78 }} />
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: `linear-gradient(180deg, ${chapter.accent}38 0%, rgba(11,15,34,0.5) 46%, rgba(11,15,34,0.84) 100%)`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: `radial-gradient(110% 80% at 0% 0%, ${chapter.accent}40, transparent 55%)`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.55,
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)",
+          opacity: 0.45 + pan * 0.35,
+          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0)",
           backgroundSize: "22px 22px",
+          backgroundPosition: `0 ${(-pan * 36).toFixed(1)}px`,
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Плёнка поверх кадра: виньетка и зерно, своё на каждый кадр. Зерно —
+ * один слой шире кадра, который каждый кадр сдвигается transform'ом:
+ * это работа компоновщика, без перерисовки.
+ */
+function FilmFinish({ frame }: { frame: number }) {
+  return (
+    <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(125% 95% at 50% 42%, rgba(4,6,14,0) 58%, rgba(4,6,14,0.5) 100%)" }} />
+      <div
+        style={{
+          position: "absolute",
+          inset: "-180px",
+          backgroundImage: NOISE,
+          opacity: 0.05,
+          transform: `translate(${Math.floor(hash(frame) * 180) - 90}px, ${Math.floor(hash(frame + 7) * 180) - 90}px)`,
+          willChange: "transform",
         }}
       />
     </div>
@@ -1075,37 +1458,92 @@ function Place({ chapter }: { chapter: Chapter }) {
  * Главы
  * ------------------------------------------------------------------- */
 
-const SCAN_STEPS = (scan: string, who: string, pin: string, value: string, save: string): RailStep[] => [
-  { label: scan, at: 0 },
-  { label: who, at: 1.0 },
-  { label: pin, at: 1.9 },
-  { label: value, at: 2.8 },
-  { label: save, at: 4.2 },
+/** Ключевые моменты глав: когда сохраняют и когда камера идёт к журналу. */
+const MOMENT = {
+  fridgeSave: (bad: boolean) => (bad ? 4.35 : 4.1),
+  lockerSign: 4.0,
+  uvOn: 2.55,
+  uvOff: 4.35,
+  fryerSave: 4.15,
+  forgotJournal: 4.3,
+  sensorJournal: 3.3,
+} as const;
+
+type Layer = "world" | "screen";
+
+const SCAN_STEPS = (scan: string, who: string, pin: string, value: string, save: string, values: { who?: ReactNode; value?: ReactNode; save?: ReactNode } = {}): RailStep[] => [
+  { label: scan, at: 0, value: <QrCode style={{ width: "1em", height: "1em" }} /> },
+  { label: who, at: 1.0, value: values.who },
+  { label: pin, at: 1.9, value: "• • • •" },
+  { label: value, at: 2.8, value: values.value },
+  { label: save, at: 4.2, value: values.save },
 ];
 
-function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number; today: SceneDay; qr: QrMatrix; photo: string }) {
+/**
+ * Точки перелёта (в координатах мира): старт — экран телефона, финиш —
+ * графа «сегодня» в бланке. Графа холодильников зависит от числа месяца —
+ * считаем столбец так же, как `ColdSheet`.
+ */
+function coldTodayX(day: SceneDay, layout: "mobile" | "desktop"): number {
+  const { days, isMobileVisible } = dayWindow(day);
+  if (layout === "desktop") {
+    const index = Math.max(0, days.indexOf(day.day));
+    // Лист 3.5…96.5 % ширины; колонки названий — 17.6em при 0.8 от 1.36cqw.
+    const inner = 93 - 2 * 1.1 * 1.36;
+    const names = 17.6 * 0.8 * 1.36;
+    return 3.5 + 1.1 * 1.36 + names + ((index + 0.5) * (inner - names)) / days.length;
+  }
+  const visible = days.filter(isMobileVisible);
+  const index = Math.max(0, visible.indexOf(day.day));
+  const inner = 92 - 2 * 1.1 * 3.1;
+  const names = 17.6 * 0.8 * 3.1;
+  return 4 + 1.1 * 3.1 + names + ((index + 0.5) * (inner - names)) / visible.length;
+}
+
+/** Строка бланка холодильников: y центра n-й строки оборудования (0 — первая). */
+function coldRowY(row: number, layout: "mobile" | "desktop"): number {
+  return layout === "desktop" ? 129 + row * 4.1 : 133 + row * 8.6;
+}
+
+/** Откуда вылетает значение: кнопка «Сохранить» на экране телефона. */
+const PHONE_OUT = { mobile: { x: 30, y: 46 }, desktop: { x: 18.5, y: 43 } } as const;
+
+function FridgeScene({ t, value, today, qr, photo, layer }: { t: number; value: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const locale = FORMAT_LOCALES[useSiteLocale()];
   const bad = fridgeOutOfRange(value);
   const shown = String(Math.round(value * 10) / 10).replace("-", "−");
   const typedValue = typed(decimalLabel(value, locale), t, 3.0);
-  const save = bad ? 4.35 : 4.1;
+  const save = MOMENT.fridgeSave(bad);
+  const landed = save + FLIGHT_SECONDS * 0.92;
+  if (layer === "screen") {
+    return bad ? (
+      <Toast
+        t={t}
+        at={landed + 0.3}
+        channel={tr("telegramResponsibleChannel")}
+        title={tr('ui.deviationTitle')}
+        lines={[`${tr("equipmentLabel")}: ${DEMO.fridge}`, `${tr("currentLabel")} ${shown}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
+      />
+    ) : null;
+  }
+  const valueLabel = `${decimalLabel(value, locale)} °C`;
   return (
     <>
       <Paper stampLabel={journal("cold_equipment_control")} title={journal("cold_equipment_control").toUpperCase()} startedDay={today}>
         <ColdSheet
           t={t}
           day={today}
-          codeAt={save + 0.5}
+          codeAt={landed + 0.15}
           rows={[
-            { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: save + 0.4, value: pdfNumber(value, locale), bad } },
+            { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: landed, value: pdfNumber(value, locale), bad } },
             { name: "Морозильник №2", norm: tr("temperatureRange", { minimum: -18, maximum: -15 }), seed: 2, base: -17.6, spread: 1.4, today: null },
             { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: null },
           ]}
         />
       </Paper>
-      <PhoneFrame clock="08:41">
+      <PhoneFrame clock="08:41" ping={0.55}>
         <QrHeader title={journal("cold_equipment_control")} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.95}>
@@ -1168,21 +1606,32 @@ function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number;
         </div>
         <Viewfinder t={t} object="fridge" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("temperatureLabel"), tr("ui.saveReading"))} />
-      {bad ? (
-        <Toast
-          t={t}
-          at={save + 0.75}
-          channel={tr("telegramResponsibleChannel")}
-          title={tr('ui.deviationTitle')}
-          lines={[`${tr("equipmentLabel")}: ${DEMO.fridge}`, `${tr("currentLabel")} ${shown}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
-        />
-      ) : null}
+      <Rail
+        t={t}
+        steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("temperatureLabel"), tr("ui.saveReading"), {
+          who: DEMO.cook.short,
+          value: valueLabel,
+          save: "08:41",
+        })}
+      />
+      <Flight
+        t={t}
+        at={save}
+        tone={bad ? "bad" : "ok"}
+        meta={`08:41 · ${DEMO.cook.short} · С1`}
+        path={{
+          mobile: { from: PHONE_OUT.mobile, to: { x: coldTodayX(today, "mobile"), y: coldRowY(0, "mobile") } },
+          desktop: { from: PHONE_OUT.desktop, to: { x: coldTodayX(today, "desktop"), y: coldRowY(0, "desktop") }, tag: "right" },
+        }}
+      >
+        {bad ? <AlertTriangle style={{ width: "1em", height: "1em" }} /> : <Check style={{ width: "1em", height: "1em" }} strokeWidth={3} />}
+        {valueLabel}
+      </Flight>
     </>
   );
 }
 
-function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: number; today: SceneDay; qr: QrMatrix; photo: string }) {
+function LockerScene({ t, bodyTemp, today, qr, photo, layer }: { t: number; bodyTemp: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const hygieneT = useTranslations("hygiene");
@@ -1192,9 +1641,24 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
   const checkedKeys = HEALTH_CONFIRMATIONS.filter((item, index) => t >= 2.85 + index * 0.3 && !(fever && item.key === "temperature")).map((item) => item.key);
   // Решение — той же функцией, что и настоящий QR «Гигиена и здоровье».
   const decision = healthDecision(fever ? ["infection", "respiratorySkin"] : ["temperature", "infection", "respiratorySkin"]);
-  const signAt = 4.0;
+  const signAt = MOMENT.lockerSign;
+  const landed = signAt + FLIGHT_SECONDS * 0.92;
   const mark = (ok: boolean) => (ok ? tr("yes") : tr("no"));
   const colWidths = ["2.2em", "5.6em", "7.6em", "5.2em", "5.6em", "5.6em", "5.6em", "5.6em", "8em"];
+  const reasons = HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ");
+  if (layer === "screen") {
+    return decision.admitted ? null : (
+      <Toast
+        t={t}
+        at={landed + 0.35}
+        channel={tr("telegramEmailSupervisor")}
+        title={`${DEMO.cook.name} ${tr('ui.notAdmittedNotice')}`}
+        lines={[tr("health.needsReview", { reasons })]}
+        mail
+      />
+    );
+  }
+  const temperatureLabel = `${decimalLabel(bodyTemp, locale)} °C`;
   return (
     <>
       <Paper stampLabel={journal("hygiene")} title={journal("hygiene").toUpperCase()} caption={hygieneT("form.caption")} startedDay={today}>
@@ -1226,16 +1690,16 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
               <td style={{ ...cell, fontSize: "0.82em" }}>Козлова Е., зав. производством · 08:10</td>
             </tr>
             <tr>
-              <Ink t={t} at={signAt + 0.45}>2</Ink>
-              <Ink t={t} at={signAt + 0.45}>{dateLabel(today, locale)}</Ink>
-              <Ink t={t} at={signAt + 0.5} style={{ textAlign: "left" }}>{DEMO.cook.name}</Ink>
-              <Ink t={t} at={signAt + 0.5} style={{ textAlign: "left" }}>{DEMO.cook.position}</Ink>
-              <Ink t={t} at={signAt + 0.6} tone={decision.confirmations.temperature ? "ink" : "bad"}>{mark(decision.confirmations.temperature)}</Ink>
-              <Ink t={t} at={signAt + 0.65}>{mark(decision.confirmations.infection)}</Ink>
-              <Ink t={t} at={signAt + 0.7}>{mark(decision.confirmations.respiratorySkin)}</Ink>
-              {decision.admitted ? <Ink t={t} at={5.25}>{tr("ui.admitted")}</Ink> : <td style={cell} />}
+              <Ink t={t} at={landed}>2</Ink>
+              <Ink t={t} at={landed}>{dateLabel(today, locale)}</Ink>
+              <Ink t={t} at={landed + 0.05} style={{ textAlign: "left" }}>{DEMO.cook.name}</Ink>
+              <Ink t={t} at={landed + 0.05} style={{ textAlign: "left" }}>{DEMO.cook.position}</Ink>
+              <Ink t={t} at={landed + 0.15} tone={decision.confirmations.temperature ? "ink" : "bad"}>{mark(decision.confirmations.temperature)}</Ink>
+              <Ink t={t} at={landed + 0.2}>{mark(decision.confirmations.infection)}</Ink>
+              <Ink t={t} at={landed + 0.25}>{mark(decision.confirmations.respiratorySkin)}</Ink>
+              {decision.admitted ? <Ink t={t} at={landed + 0.45}>{tr("ui.admitted")}</Ink> : <td style={cell} />}
               {decision.admitted ? (
-                <Ink t={t} at={5.3} style={{ fontSize: "0.82em" }}>
+                <Ink t={t} at={landed + 0.5} style={{ fontSize: "0.82em" }}>
                   Козлова Е., зав. производством · 08:53</Ink>
               ) : (
                 <td style={cell} />
@@ -1244,9 +1708,9 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
             <EmptyRows count={2} columns={9} />
           </tbody>
         </table>
-        {t >= signAt + 0.8 ? (
+        {t >= landed + 0.4 ? (
           <div
-            style={fade(progress(t, signAt + 0.8, 0.3), {
+            style={fade(progress(t, landed + 0.4, 0.3), {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.4em",
@@ -1260,11 +1724,11 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
             })}
           >
             {decision.admitted ? <Check style={{ width: "1em", height: "1em" }} /> : <AlertTriangle style={{ width: "1em", height: "1em" }} />}
-            {decision.admitted ? tr("health.signatureConfirmed") : tr("health.needsReview", { reasons: HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ") })}
+            {decision.admitted ? tr("health.signatureConfirmed") : tr("health.needsReview", { reasons })}
           </div>
         ) : null}
       </Paper>
-      <PhoneFrame clock="08:52">
+      <PhoneFrame clock="08:52" ping={0.55}>
         <QrHeader title={tr("hygieneAndHealthJournals", { hygieneJournal: journal("hygiene") })} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.9}>
@@ -1310,35 +1774,47 @@ function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: n
             ) : (
               <Done t={t} at={signAt + 0.3} title={tr('ui.notAdmitted')} tone="bad">
                 <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.badInk }}>
-                  {tr("health.needsReview", { reasons: HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ") })}</p>
+                  {tr("health.needsReview", { reasons })}</p>
               </Done>
             )}
           </Screen>
         </div>
         <Viewfinder t={t} object="thermometer" qr={qr} bodyTemp={bodyTemp} photo={photo} />
       </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("threeSignatures"), tr("ui.signButton"))} />
-      {decision.admitted ? null : (
-        <Toast
-          t={t}
-          at={signAt + 0.9}
-          channel={tr("telegramEmailSupervisor")}
-          title={`${DEMO.cook.name} ${tr('ui.notAdmittedNotice')}`}
-          lines={[tr("health.needsReview", { reasons: HEALTH_CONFIRMATIONS.filter((item) => !decision.confirmations[item.key]).map((item) => tr(HEALTH_MESSAGE_KEYS[item.key].complaint)).join(", ") })]}
-          mail
-        />
-      )}
+      <Rail
+        t={t}
+        steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("threeSignatures"), tr("ui.signButton"), {
+          who: DEMO.cook.short,
+          value: `${checkedKeys.length}/${HEALTH_CONFIRMATIONS.length}`,
+          save: "08:52",
+        })}
+      />
+      <Flight
+        t={t}
+        at={signAt}
+        tone={decision.admitted ? "ok" : "bad"}
+        meta={`08:52 · ${decision.admitted ? tr("ui.admitted") : `${DEMO.cook.short} ${tr("ui.notAdmittedNotice")}`}`}
+        path={{
+          mobile: { from: PHONE_OUT.mobile, to: { x: 36, y: 131 } },
+          desktop: { from: PHONE_OUT.desktop, to: { x: 17.6, y: 133.5 } },
+        }}
+      >
+        {decision.admitted ? <Check style={{ width: "1em", height: "1em" }} strokeWidth={3} /> : <AlertTriangle style={{ width: "1em", height: "1em" }} />}
+        {temperatureLabel}
+      </Flight>
     </>
   );
 }
 
-function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMatrix; photo: string }) {
+function UvScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
   const locale = FORMAT_LOCALES[useSiteLocale()];
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const hoursLabel = (value: number) => tr("ui.hoursValue", { value: Math.round(value) });
-  const onAt = 2.55;
-  const offAt = 4.35;
+  const onAt = MOMENT.uvOn;
+  const offAt = MOMENT.uvOff;
+  const landed = offAt + FLIGHT_SECONDS * 0.92;
+  if (layer === "screen") return null;
   const running = t >= onAt + 0.1 && t < offAt + 0.1;
   const used = DEMO.lampUsed + (t >= offAt + 0.1 ? 0.5 : 0);
   const remaining = DEMO.lampLifetime - used;
@@ -1379,8 +1855,8 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
             <tr>
               <Ink t={t} at={onAt + 0.35}>{dateLabel(today, locale)}</Ink>
               <Ink t={t} at={onAt + 0.35}>09:00</Ink>
-              <Ink t={t} at={offAt + 0.4}>09:30</Ink>
-              <Ink t={t} at={offAt + 0.45}>30</Ink>
+              <Ink t={t} at={landed}>09:30</Ink>
+              <Ink t={t} at={landed + 0.08}>30</Ink>
               <Ink t={t} at={onAt + 0.4} style={{ textAlign: "left" }}>
                 {DEMO.cook.name}
               </Ink>
@@ -1392,7 +1868,7 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
           {tr("lampUsage", { used: hoursLabel(used), total: hoursLabel(DEMO.lampLifetime) })}
         </div>
       </Paper>
-      <PhoneFrame clock={t >= 4 ? "09:30" : "09:00"}>
+      <PhoneFrame clock={t >= 4 ? "09:30" : "09:00"} ping={0.55}>
         <QrHeader title={journal("uv_lamp_runtime")} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.75}>
@@ -1445,22 +1921,36 @@ function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMa
       <Rail
         t={t}
         steps={[
-          { label: tr("scanSticker"), at: 0 },
-          { label: tr("whoSwitchesLamp"), at: 0.9 },
-          { label: "PIN", at: 1.75 },
-          { label: tr("lampTurnedOn"), at: 2.35 },
-          { label: tr("lampTurnedOff"), at: 4.05 },
+          { label: tr("scanSticker"), at: 0, value: <QrCode style={{ width: "1em", height: "1em" }} /> },
+          { label: tr("whoSwitchesLamp"), at: 0.9, value: DEMO.cook.short },
+          { label: "PIN", at: 1.75, value: "• • • •" },
+          { label: tr("lampTurnedOn"), at: 2.35, value: "09:00" },
+          { label: tr("lampTurnedOff"), at: 4.05, value: "09:30" },
         ]}
       />
+      <Flight
+        t={t}
+        at={offAt}
+        meta={`09:30 · ${DEMO.cook.short}`}
+        path={{
+          mobile: { from: PHONE_OUT.mobile, to: { x: 41.9, y: 133.5 } },
+          desktop: { from: PHONE_OUT.desktop, to: { x: 41.5, y: 132.5 } },
+        }}
+      >
+        <LightbulbOff style={{ width: "1em", height: "1em" }} />
+        09:00 – 09:30
+      </Flight>
     </>
   );
 }
 
-function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMatrix; photo: string }) {
+function FryerScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
   const locale = FORMAT_LOCALES[useSiteLocale()];
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
-  const save = 4.15;
+  const save = MOMENT.fryerSave;
+  const landed = save + FLIGHT_SECONDS * 0.92;
+  if (layer === "screen") return null;
   const fields: Array<{ label: string; value: string; at: number }> = [
     { label: tr('fields.fat'), value: DEMO.fat, at: 2.9 },
     { label: tr('fields.equipment'), value: DEMO.fryer, at: 3.15 },
@@ -1510,11 +2000,11 @@ function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: Q
               <td style={cell}>Повар, Петров О.</td>
             </tr>
             <tr>
-              <Ink t={t} at={save + 0.4}>{dateLabel(today, locale)}</Ink>
-              <Ink t={t} at={save + 0.45}>{DEMO.fat}</Ink>
-              <Ink t={t} at={save + 0.5}>{tr("qualityExcellent")}</Ink>
-              <Ink t={t} at={save + 0.55}>{DEMO.fryer}</Ink>
-              <Ink t={t} at={save + 0.6}>{DEMO.product}</Ink>
+              <Ink t={t} at={landed}>{dateLabel(today, locale)}</Ink>
+              <Ink t={t} at={landed + 0.05}>{DEMO.fat}</Ink>
+              <Ink t={t} at={landed + 0.1}>{tr("qualityExcellent")}</Ink>
+              <Ink t={t} at={landed + 0.15}>{DEMO.fryer}</Ink>
+              <Ink t={t} at={landed + 0.2}>{DEMO.product}</Ink>
               <td style={cell} />
               <td style={cell} />
               <td style={cell}>-</td>
@@ -1525,7 +2015,7 @@ function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: Q
           </tbody>
         </table>
       </Paper>
-      <PhoneFrame clock="10:15">
+      <PhoneFrame clock="10:15" ping={0.55}>
         <QrHeader title={journal("fryer_oil")} />
         <div style={{ position: "relative", flex: 1 }}>
           <Screen t={t} from={0.9} to={1.85}>
@@ -1553,14 +2043,27 @@ function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: Q
         </div>
         <Viewfinder t={t} object="fryer" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("oilAndQuality"), tr("done"))} />
+      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("oilAndQuality"), tr("done"), { who: DEMO.cook.short, value: "5 / 5", save: "10:15" })} />
+      <Flight
+        t={t}
+        at={save}
+        meta={`10:15 · ${DEMO.product}`}
+        path={{
+          mobile: { from: PHONE_OUT.mobile, to: { x: 34.4, y: 134.7 } },
+          desktop: { from: PHONE_OUT.desktop, to: { x: 16.9, y: 130.2 } },
+        }}
+      >
+        <CookingPot style={{ width: "1em", height: "1em" }} />
+        5 / 5
+      </Flight>
     </>
   );
 }
 
-function ForgotScene({ t, today }: { t: number; today: SceneDay }) {
+function ForgotScene({ t, today, layer }: { t: number; today: SceneDay; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
+  if (layer === "screen") return null;
   const stages = [
     { at: 0.6, time: "12:00", prefix: tr('ui.remindSoft'), mail: false },
     { at: 2.3, time: "17:00", prefix: tr('ui.remindWarn'), mail: true },
@@ -1625,7 +2128,7 @@ function ForgotScene({ t, today }: { t: number; today: SceneDay }) {
   );
 }
 
-function SensorScene({ t, today }: { t: number; today: SceneDay }) {
+function SensorScene({ t, today, layer }: { t: number; today: SceneDay; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const locale = FORMAT_LOCALES[useSiteLocale()];
@@ -1637,6 +2140,20 @@ function SensorScene({ t, today }: { t: number; today: SceneDay }) {
   const current = readings.reduce((acc, reading) => (t >= reading.at ? reading : acc), readings[0]);
   const bad = fridgeOutOfRange(current.value);
   const beat = readings.some((reading) => t >= reading.at && t < reading.at + 0.5) ? 1 - progress(t, current.at, 0.5) : 0;
+  const lastReading = readings[readings.length - 1];
+  // Последний замер летит в журнал на глазах у камеры, прежние ложатся сразу.
+  const inkAt = current === lastReading ? current.at + FLIGHT_SECONDS * 0.92 : current.at + 0.35;
+  if (layer === "screen") {
+    return bad ? (
+      <Toast
+        t={t}
+        at={inkAt + 0.3}
+        channel={tr("telegramResponsibleChannel")}
+        title={tr("ui.deviationTitle")}
+        lines={[`${tr("equipmentLabel")}: ${DEMO.vitrine}`, `${tr("currentLabel")} ${pdfNumber(current.value, locale)}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
+      />
+    ) : null;
+  }
   return (
     <>
       <Paper stampLabel={journal("cold_equipment_control")} title={journal("cold_equipment_control").toUpperCase()} startedDay={today}>
@@ -1646,7 +2163,7 @@ function SensorScene({ t, today }: { t: number; today: SceneDay }) {
           codeAt={0}
           rows={[
             { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: 0, value: "4", bad: false } },
-            { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: { at: current.at + 0.35, value: pdfNumber(current.value, locale), bad } },
+            { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: { at: inkAt, value: pdfNumber(current.value, locale), bad } },
           ]}
         />
       </Paper>
@@ -1671,20 +2188,24 @@ function SensorScene({ t, today }: { t: number; today: SceneDay }) {
       <Rail
         t={t}
         steps={[
-          { label: tr("sensorMeasures"), at: 0 },
-          { label: tr("hourlyJournalLog"), at: 0.85 },
-          { label: tr("outOfRangeNotification"), at: 3.9 },
+          { label: tr("sensorMeasures"), at: 0, value: `${decimalLabel(current.value, locale)} °C` },
+          { label: tr("hourlyJournalLog"), at: 0.85, value: readings.filter((reading) => t >= reading.at).map((reading) => reading.time).join(" · ") },
+          { label: tr("outOfRangeNotification"), at: 3.9, value: <Send style={{ width: "1em", height: "1em" }} /> },
         ]}
       />
-      {bad ? (
-        <Toast
-          t={t}
-          at={3.95}
-          channel={tr("telegramResponsibleChannel")}
-          title={tr('ui.deviationTitle')}
-          lines={[`${tr("equipmentLabel")}: ${DEMO.vitrine}`, `${tr("currentLabel")} ${pdfNumber(current.value, locale)}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
-        />
-      ) : null}
+      <Flight
+        t={t}
+        at={lastReading.at}
+        tone={fridgeOutOfRange(lastReading.value) ? "bad" : "ok"}
+        meta={`${lastReading.time} · ${tr("wifiSensor")}`}
+        path={{
+          mobile: { from: { x: 30, y: 30 }, to: { x: coldTodayX(today, "mobile"), y: coldRowY(1, "mobile") } },
+          desktop: { from: { x: 18.5, y: 27 }, to: { x: coldTodayX(today, "desktop"), y: coldRowY(1, "desktop") }, tag: "right" },
+        }}
+      >
+        <Wifi style={{ width: "1em", height: "1em" }} />
+        {`${decimalLabel(lastReading.value, locale)} °C`}
+      </Flight>
     </>
   );
 }
@@ -1693,22 +2214,96 @@ function SensorScene({ t, today }: { t: number; today: SceneDay }) {
  * Кадр целиком
  * ------------------------------------------------------------------- */
 
+/** Когда камера уходит к журналу — момент сохранения в главе. */
+function journalAtFor(chapter: Chapter, fridgeTemp: number): number {
+  switch (chapter.id) {
+    case "fridge":
+      return MOMENT.fridgeSave(fridgeOutOfRange(fridgeTemp));
+    case "locker":
+      return MOMENT.lockerSign;
+    case "uv":
+      return MOMENT.uvOff;
+    case "fryer":
+      return MOMENT.fryerSave;
+    case "forgot":
+      return MOMENT.forgotJournal;
+    case "sensor":
+      return MOMENT.sensorJournal;
+  }
+}
+
+/**
+ * Кадр — камера над миром главы. Порядок движений:
+ * 1) наезд: глава открывается крупным планом видоискателя и отъезжает к
+ *    телефону (пружина, без перелёта);
+ * 2) спуск: в момент сохранения камера опускается к журналу вслед за
+ *    значением, бланк поднимается навстречу, фон уходит в глубину;
+ * 3) дожим: медленный наезд на бланк до конца главы;
+ * 4) склейка «на скорости»: в последние 0.2 с камера рывком уходит вверх,
+ *    новая глава прилетает в движении (смаз) — у первой главы входа нет,
+ *    её первый кадр — чистая обложка.
+ * Плюс «ручная» камера: едва заметный дрейф. Всё — функция кадра.
+ */
 export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProps) {
-  const { chapter, local } = chapterAt(frame);
+  const { chapter, index, local } = chapterAt(frame);
   const t = local / FPS;
-  // Короткий «вход» главы: без чёрного кадра, просто мягкое проявление.
-  const enter = interpolate(t, [0, 0.25], [0.35, 1], { easing: ease.out });
+  const journalAt = journalAtFor(chapter, fridgeTemp);
+  const pan = spring(t, journalAt, 5.4);
+  const push = 1 - spring(t, 0.1, 3.9);
+  const settle = progress(t, journalAt + 0.8, CHAPTER_SECONDS - journalAt - 0.8, ease.inOut);
+  const whipIn = index > 0 ? 1 - progress(t, 0, 0.3, ease.out) : 0;
+  const tail = Math.max(0, (t - (CHAPTER_SECONDS - 0.2)) / 0.2);
+  const whipOut = tail * tail;
+  const whip = Math.max(whipIn, whipOut);
+  const driftX = Math.sin(t * 0.7) * 0.22;
+  const driftY = Math.cos(t * 0.55) * 0.1 + (whipOut - whipIn) * 4.5;
+  const journalX = 50;
+  const journalY = (PAN * 100 + 50) / WORLD_H;
+  const zoom = 1 + 0.06 * settle;
+  const transform = [
+    `translate(${driftX.toFixed(3)}%, ${driftY.toFixed(3)}%)`,
+    `translateY(${((-pan * PAN * 100) / WORLD_H).toFixed(3)}%)`,
+    // Наезд «смотрит» на телефон: точка F уезжает в центр кадра и
+    // увеличивается в z0 раз. Для точки мира p: T + z·p, T = (1 − z)·F + push·(C − F).
+    `translate(calc((1 - var(--z0)) * ${push.toFixed(4)} * var(--fx) + ${push.toFixed(4)} * (50% - var(--fx))), calc((1 - var(--z0)) * ${push.toFixed(4)} * var(--fy) + ${push.toFixed(4)} * (${(50 / WORLD_H).toFixed(3)}% - var(--fy)))) scale(calc(1 + (var(--z0) - 1) * ${push.toFixed(4)}))`,
+    `translate(${journalX}%, ${journalY.toFixed(3)}%) scale(${zoom.toFixed(4)}) translate(-${journalX}%, -${journalY.toFixed(3)}%)`,
+  ].join(" ");
+  const camera: CameraState = { t, frame, pan, push, journalAt };
+  const scene = (layer: Layer) => (
+    <>
+      {chapter.id === "fridge" ? <FridgeScene t={t} value={fridgeTemp} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
+      {chapter.id === "locker" ? <LockerScene t={t} bodyTemp={bodyTemp} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
+      {chapter.id === "uv" ? <UvScene t={t} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
+      {chapter.id === "fryer" ? <FryerScene t={t} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
+      {chapter.id === "forgot" ? <ForgotScene t={t} today={today} layer={layer} /> : null}
+      {chapter.id === "sensor" ? <SensorScene t={t} today={today} layer={layer} /> : null}
+    </>
+  );
   return (
-    <div style={{ position: "absolute", inset: 0, opacity: enter }}>
-      <Backdrop chapter={chapter} t={t} />
-      <Place chapter={chapter} />
-      {chapter.id === "fridge" ? <FridgeScene t={t} value={fridgeTemp} today={today} qr={qr} photo={chapter.photo} /> : null}
-      {chapter.id === "locker" ? <LockerScene t={t} bodyTemp={bodyTemp} today={today} qr={qr} photo={chapter.photo} /> : null}
-      {chapter.id === "uv" ? <UvScene t={t} today={today} qr={qr} photo={chapter.photo} /> : null}
-      {chapter.id === "fryer" ? <FryerScene t={t} today={today} qr={qr} photo={chapter.photo} /> : null}
-      {chapter.id === "forgot" ? <ForgotScene t={t} today={today} /> : null}
-      {chapter.id === "sensor" ? <SensorScene t={t} today={today} /> : null}
-    </div>
+    <CameraContext.Provider value={camera}>
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        <Backdrop chapter={chapter} t={t} pan={pan} push={push} />
+        <div
+          className={`absolute left-0 top-0 w-full ${POS.camera}`}
+          style={{
+            height: `${WORLD_H * 100}%`,
+            transformOrigin: "0 0",
+            transform,
+            opacity: 1 - whip * 0.3,
+            filter: whip > 0.02 ? `blur(${(whip * 7).toFixed(2)}px)` : undefined,
+          }}
+        >
+          {scene("world")}
+        </div>
+        {/* Подпись места видна, пока камера у телефона: на наезде и у
+            журнала она только мешала бы. */}
+        <div style={{ position: "absolute", inset: 0, opacity: (1 - whip) * (1 - push) ** 2 * Math.max(0, 1 - pan * 2.5) }}>
+          <Place chapter={chapter} />
+        </div>
+        <div style={{ position: "absolute", inset: 0, opacity: 1 - whip }}>{scene("screen")}</div>
+        <FilmFinish frame={frame} />
+      </div>
+    </CameraContext.Provider>
   );
 }
 

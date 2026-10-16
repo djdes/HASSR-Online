@@ -17,8 +17,8 @@ import {
   RESULT_SECONDS,
   bodyFever,
   chapterAt,
-  finalFrameOf,
   fridgeOutOfRange,
+  resultFrameOf,
   type ChapterId,
 } from "./chapters";
 import { QrComposition } from "./composition";
@@ -157,7 +157,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
     if (!reduced || !player) return;
     wantsPlay.current = false;
     player.pause();
-    player.seekTo(finalFrameOf(0));
+    player.seekTo(resultFrameOf(0));
   }, [reduced, player]);
 
   const seek = useCallback(
@@ -190,7 +190,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
 
   const goToChapter = (target: number) => {
     const next = (target + CHAPTERS.length) % CHAPTERS.length;
-    seek(storyboard ? finalFrameOf(next) : CHAPTERS[next].from);
+    seek(storyboard ? resultFrameOf(next) : CHAPTERS[next].from);
   };
 
   const showResult = (chapterIndex: number) => {
@@ -314,70 +314,73 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         ) : null}
       </div>
 
-      {/* Тонкая перемотка вплотную под сценой: полоса с метками глав,
-          бегунок проявляется на hover/focus. */}
-      <div className="relative mt-3">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-[6px] top-1/2 h-[5px] -translate-y-1/2">
-          {tickPercents.map((percent) => (
-            <span key={percent} className="absolute top-0 h-full w-[2px] -translate-x-1/2 rounded-full" style={{ left: `${percent}%`, background: "rgba(255,255,255,0.35)" }} />
-          ))}
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={DURATION_IN_FRAMES - 1}
-          step={1}
-          value={frame}
-          onChange={(event) => seek(Number(event.target.value))}
-          aria-label={t("chrome.seek")}
-          aria-valuetext={t("chrome.seekValue", {
-            currentTime: formatClock(frame / FPS),
-            totalTime: formatClock(DURATION_IN_FRAMES / FPS),
-            chapterName: chapterText[chapter.id].label,
-          })}
-          className="qrp-range qrp-range-thin relative block w-full"
-          style={{
-            ["--qrp-fill" as string]: `${(frame / (DURATION_IN_FRAMES - 1)) * 100}%`,
-            /* Полоса перемотки красится в цвет текущей главы. */
-            ["--qrp-accent" as string]: chapter.accent,
-          }}
-        />
-      </div>
-
-      {/* Одна строка: пауза, время, короткая подпись главы, спойлер. */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      {/* Компактное управление — одна строка: пауза, тонкая перемотка с
+          метками глав (бегунок проявляется на hover/focus), время и
+          «Попробуйте сами». Подпись главы — строкой ниже. */}
+      <div className="mt-3 flex items-center gap-2.5 sm:gap-3">
         <button
           type="button"
           onClick={togglePlay}
           aria-label={playing ? t("chrome.pause") : t("chrome.play")}
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.8)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
+          className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.8)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
         >
-          {playing ? <Pause className="size-4" fill="currentColor" /> : <Play className="size-4 translate-x-px" fill="currentColor" />}
+          {playing ? <Pause className="size-3.5" fill="currentColor" /> : <Play className="size-3.5 translate-x-px" fill="currentColor" />}
         </button>
-        <span className="shrink-0 text-[12.5px] font-medium tabular-nums text-white/60">
+        <div className="relative min-w-0 flex-1">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-[6px] top-1/2 h-[4px] -translate-y-1/2">
+            {tickPercents.map((percent) => (
+              <span key={percent} className="absolute top-0 h-full w-[2px] -translate-x-1/2 rounded-full" style={{ left: `${percent}%`, background: "rgba(255,255,255,0.35)" }} />
+            ))}
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={DURATION_IN_FRAMES - 1}
+            step={1}
+            value={frame}
+            onChange={(event) => seek(Number(event.target.value))}
+            aria-label={t("chrome.seek")}
+            aria-valuetext={t("chrome.seekValue", {
+              currentTime: formatClock(frame / FPS),
+              totalTime: formatClock(DURATION_IN_FRAMES / FPS),
+              chapterName: chapterText[chapter.id].label,
+            })}
+            className="qrp-range qrp-range-thin relative block w-full"
+            style={{
+              ["--qrp-fill" as string]: `${(frame / (DURATION_IN_FRAMES - 1)) * 100}%`,
+              /* Полоса перемотки красится в цвет текущей главы. */
+              ["--qrp-accent" as string]: chapter.accent,
+            }}
+          />
+        </div>
+        <span className="hidden shrink-0 text-[12px] font-medium tabular-nums text-white/60 sm:inline">
           {formatClock(frame / FPS)} / {formatClock(DURATION_IN_FRAMES / FPS)}
         </span>
-        <p className="order-last w-full text-[13.5px] leading-[1.5] text-white/75 sm:order-none sm:w-auto sm:min-w-0 sm:flex-1">
-          {storyboard
-            ? t("chrome.storyboardCaption", {
-                chapterNumber: index + 1,
-                chapterCount: CHAPTERS.length,
-                caption: chapterText[chapter.id].caption,
-              })
-            : chapterText[chapter.id].short}
-        </p>
         <button
           type="button"
           onClick={() => setTryOpen((value) => !value)}
           aria-expanded={tryOpen}
           aria-controls="qrp-try-panel"
-          className="ms-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium text-white/85 transition-colors duration-150 hover:bg-[rgba(255,255,255,0.12)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 sm:ms-0"
-          style={{ background: "rgba(255,255,255,0.07)" }}
+          title={t("chrome.tryIt")}
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium text-white/85 transition-colors duration-150 hover:bg-[rgba(255,255,255,0.12)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
+          style={{ background: tryOpen ? "rgba(124,245,192,0.14)" : "rgba(255,255,255,0.07)" }}
         >
-          <SlidersHorizontal className="size-4 text-[#7cf5c0]" />
-          {t("chrome.tryIt")}<ChevronDown className={`size-3.5 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
+          <SlidersHorizontal className="size-3.5 text-[#7cf5c0]" />
+          {/* На узком телефоне — только значок: иначе перемотке остаётся
+              меньше сотни пикселей. Подпись остаётся для скринридера. */}
+          <span className="max-[420px]:sr-only">{t("chrome.tryIt")}</span>
+          <ChevronDown className={`size-3.5 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
         </button>
       </div>
+      <p className="mt-1.5 text-[13px] leading-[1.45] text-white/70 sm:truncate">
+        {storyboard
+          ? t("chrome.storyboardCaption", {
+              chapterNumber: index + 1,
+              chapterCount: CHAPTERS.length,
+              caption: chapterText[chapter.id].caption,
+            })
+          : chapterText[chapter.id].short}
+      </p>
 
       {/* Спойлер: оба ползунка сразу — сдвиг перематывает на итог своей
           главы. Свёрнут по умолчанию, чтобы под роликом было пусто. */}
@@ -385,10 +388,10 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         id="qrp-try-panel"
         data-qrp-try=""
         hidden={!tryOpen}
-        className="mt-3 rounded-2xl border border-[rgba(255,255,255,0.12)] p-4"
+        className="mt-2.5 rounded-2xl border border-[rgba(255,255,255,0.12)] px-3.5 py-3"
         style={{ background: "rgba(255,255,255,0.04)" }}
       >
-        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           <TrySlider
             icon="fridge"
             label={t("chrome.fridgeTemperature")}
@@ -451,11 +454,11 @@ function TrySlider(props: {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={`qrp-try-${props.icon}`} className="flex items-center gap-1.5 text-[13.5px] text-white/80">
-          <Icon className="size-4 text-[#8b97ff]" />
-          {props.label}
+        <label htmlFor={`qrp-try-${props.icon}`} className="flex min-w-0 items-center gap-1.5 text-[13px] text-white/80">
+          <Icon className="size-3.5 shrink-0 text-[#8b97ff]" />
+          <span className="truncate">{props.label}</span>
         </label>
-        <span className="text-[18px] font-semibold tabular-nums" style={{ color: props.bad ? "#ff8f86" : "#7cf5c0" }}>
+        <span className="shrink-0 rounded-full px-2 py-0.5 text-[13.5px] font-semibold tabular-nums" style={{ color: props.bad ? "#ff8f86" : "#7cf5c0", background: props.bad ? "rgba(255,143,134,0.12)" : "rgba(124,245,192,0.12)" }}>
           {props.display}
         </span>
       </div>
@@ -468,10 +471,10 @@ function TrySlider(props: {
         step={props.step}
         value={props.value}
         onChange={(event) => props.onChange(Number(event.target.value))}
-        className="qrp-range qrp-range-try mt-2 block w-full"
+        className="qrp-range qrp-range-try mt-1 block w-full"
         style={{ ["--qrp-fill" as string]: `${percent}%`, ["--qrp-accent" as string]: props.bad ? "#ff8f86" : "#7cf5c0" }}
       />
-      <p className="mt-2 text-[13px] leading-[1.5]" style={{ color: props.bad ? "#ffb3ab" : "rgba(255,255,255,0.72)" }} aria-live="polite">
+      <p className="mt-1 text-[12.5px] leading-[1.45]" style={{ color: props.bad ? "#ffb3ab" : "rgba(255,255,255,0.72)" }} aria-live="polite">
         {props.verdict}
       </p>
     </div>

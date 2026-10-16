@@ -4077,6 +4077,47 @@
       "title": "Digital HACCP & SanPiN logs",
       "subtitle": "Food safety records for food service and production",
       "features": "{count, number} logs · QR entry · Automated reminders"
+    },
+    "showcase": {
+      "title": "The manager’s workspace at a glance",
+      "lead": "Real WeSetup screens. Staff fill in logs from their phones by scanning a QR code — you see the result here: what is done, what is overdue and who is responsible.",
+      "region": "WeSetup workspace screens",
+      "tabs": "Workspace screens",
+      "previous": "Previous screen",
+      "next": "Next screen",
+      "position": "{current, number} of {total, number}",
+      "slides": {
+        "dashboard": {
+          "tab": "Overview",
+          "title": "Today’s overview",
+          "text": "Which logs are filled in today, what was missed and who to remind — on the first screen of the workspace."
+        },
+        "journals": {
+          "tab": "Logs",
+          "title": "Every log for the site",
+          "text": "Sanitary and HACCP logs in one list: today’s status, responsible staff and one click to open a log."
+        },
+        "grid": {
+          "tab": "Log",
+          "title": "Looks like the paper form",
+          "text": "Columns match the printed form. Values from QR codes and sensors fill in automatically, deviations are highlighted."
+        },
+        "qr": {
+          "tab": "QR stickers",
+          "title": "QR stickers for equipment",
+          "text": "Print stickers on A4 — staff scan them and fill in the log without a password or an app."
+        },
+        "inspection": {
+          "tab": "Inspection",
+          "title": "Ready for an inspection",
+          "text": "Inspection readiness, all logs in one archive and a QR code for the inspector — on one screen."
+        },
+        "staff": {
+          "tab": "Staff",
+          "title": "Team and access",
+          "text": "Roles, PINs and each person’s logs: staff only see what they fill in themselves."
+        }
+      }
     }
   },
   "landingComponents": {
