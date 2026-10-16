@@ -82,7 +82,7 @@ function dig(source: Catalog, path: string[]): unknown {
 test("все 51 карточка бывшего хаба на месте — вкладкой или карточкой раздела", () => {
   assert.equal(FORMER_HUB_HREFS.length, 51);
   const tabHrefs = NAV_SECTIONS.flatMap((section) =>
-    section.tabs.flatMap((tab) => [tab.href, ...(tab.match ?? [])]),
+    section.tabs.map((tab) => tab.href),
   );
   const cardHrefs = SETTINGS_CARDS.map((card) => card.href);
   const missing = FORMER_HUB_HREFS.filter(

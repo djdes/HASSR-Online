@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
+import { recordAuditLog } from "@/lib/audit-log";
 import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName } from "@/lib/building-scope";
@@ -301,6 +302,22 @@ export async function GET(request: Request) {
   });
   const uint8 = new Uint8Array(archive);
   const archiveName = `compliance-${ymd(from)}__${ymd(to)}.zip`;
+
+  // В архиве персональные данные, а скачать его может и заведующая — пишем в журнал действий.
+  await recordAuditLog({
+    request,
+    session,
+    organizationId,
+    action: "reports.compliance-bundle",
+    entity: "Organization",
+    entityId: organizationId,
+    details: {
+      from: ymd(from),
+      to: ymd(to),
+      included: totals.included,
+      failed: totals.failed,
+    },
+  });
 
   return new Response(uint8, {
     status: 200,

@@ -45,6 +45,8 @@ export type SettingsCard = {
 
 const STAFF_PATH: NavAccess = { kind: "staffPath" };
 const FULL_ACCESS: NavAccess = { kind: "fullAccess" };
+// Страницы прав и иерархии пускают по праву `settings.permissions` из БД.
+const PERMISSIONS_FACT: NavAccess = { kind: "fact", fact: "settingsPermissions" };
 const ADMIN: NavAccess = { kind: "anyOf", capabilities: ["admin.full"] };
 
 const INDIGO = { iconClass: "text-[#3848c7]", bgClass: "bg-[#eef1ff]" };
@@ -56,9 +58,9 @@ const MINT = { iconClass: "text-[#10b981]", bgClass: "bg-[#ecfdf5]" };
 
 export const SETTINGS_CARDS: SettingsCard[] = [
   // ---- Сотрудники → Настройка -----------------------------------------
-  { id: "settings_permissions", href: "/settings/permissions", icon: "ShieldCheck", ...INDIGO, section: "staff", group: "staff", access: FULL_ACCESS },
+  { id: "settings_permissions", href: "/settings/permissions", icon: "ShieldCheck", ...INDIGO, section: "staff", group: "staff", access: PERMISSIONS_FACT },
   { id: "settings_role_presets", href: "/settings/role-presets", icon: "ShieldCheck", ...INDIGO, section: "staff", group: "staff", access: ADMIN },
-  { id: "settings_staff_hierarchy", href: "/settings/staff-hierarchy", icon: "Network", ...AMBER, section: "staff", group: "staff", access: FULL_ACCESS },
+  { id: "settings_staff_hierarchy", href: "/settings/staff-hierarchy", icon: "Network", ...AMBER, section: "staff", group: "staff", access: PERMISSIONS_FACT },
   { id: "settings_position_staff_visibility", href: "/settings/position-staff-visibility", icon: "Users", ...SKY, section: "staff", group: "staff", access: FULL_ACCESS },
   { id: "settings_workload_balance", href: "/settings/workload-balance", icon: "Scale", ...MINT, section: "staff", group: "staff", access: ADMIN },
   { id: "settings_phone", href: "/settings/phone", icon: "Phone", ...INDIGO, section: "staff", group: "staff", access: STAFF_PATH },

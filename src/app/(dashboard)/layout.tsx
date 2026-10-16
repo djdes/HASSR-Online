@@ -292,7 +292,7 @@ export default async function DashboardLayout({
   // Меню кабинета (девять разделов слева, 2026-10-16): что человек
   // откроет — то и показываем. Один расчёт на сайдбар, вкладки, крошки,
   // мобильное меню и ⌘K.
-  const navFacts = await loadNavFacts(session.user);
+  const navFacts = await loadNavFacts(session);
   const navModel = await buildNavModel({ user: session.user, facts: navFacts, customNames });
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
@@ -405,12 +405,15 @@ export default async function DashboardLayout({
           <AppNavProvider model={navModel}>
           {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
               страница, футер. Сайдбар — только когда разделов два и больше. */}
-          <div className="flex min-h-screen flex-1">
+          <div className="flex min-h-screen flex-1 print:block">
           {navModel.showSidebar ? (
             <AppSidebar
               logoUrl={headerLogoUrl}
               organizationName={orgDisplayName(impersonatedName ?? session.user.organizationName ?? "", "") || "WeSetup"}
-              homeHref={getWebHomeHref(session.user)}
+              homeHref={
+                (navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
+                getWebHomeHref(session.user)
+              }
             />
           ) : null}
           <div className="flex min-w-0 flex-1 flex-col">
@@ -708,7 +711,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
   // страницей и в приложении.
   const navModel = await buildNavModel({
     user: session.user,
-    facts: await loadNavFacts(session.user),
+    facts: await loadNavFacts(session),
     customNames,
   });
 

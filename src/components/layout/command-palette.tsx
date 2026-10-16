@@ -134,19 +134,32 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const reqIdRef = useRef(0);
   const nav = useAppNav();
-  const routeItems = useMemo<StaticItem[]>(
-    () =>
-      nav.sections.flatMap((section) =>
-        section.tabs.map((tab) => ({
-          kind: "route" as const,
-          label: section.tabs.length > 1 ? `${section.label} · ${tab.label}` : section.label,
-          href: tab.href,
-          icon: navIcon(section.icon),
-          keywords: [section.label, tab.label],
-        })),
-      ),
-    [nav]
-  );
+  const routeItems = useMemo<StaticItem[]>(() => {
+    const tabItems = nav.sections.flatMap((section) =>
+      section.tabs.map((tab) => ({
+        kind: "route" as const,
+        label: section.tabs.length > 1 ? `${section.label} · ${tab.label}` : section.label,
+        href: tab.href,
+        icon: navIcon(section.icon),
+        keywords: [section.label, tab.label],
+      })),
+    );
+    // Карточки настроек («Отчёты», «Нарушения», «Аудит» и т.п.) — без дублей по адресу.
+    const seen = new Set(tabItems.map((item) => item.href));
+    const cardItems: StaticItem[] = [];
+    for (const card of nav.search ?? []) {
+      if (seen.has(card.href)) continue;
+      seen.add(card.href);
+      cardItems.push({
+        kind: "route",
+        label: card.sectionLabel ? `${card.sectionLabel} · ${card.label}` : card.label,
+        href: card.href,
+        icon: navIcon(card.icon),
+        keywords: [card.label, card.sectionLabel],
+      });
+    }
+    return [...tabItems, ...cardItems];
+  }, [nav]);
   // «Закрыть день» и «Догнать пропуски» — у кого есть «Сегодня».
   const actionItems = useMemo(
     () => (nav.sections.some((section) => section.tabs.some((tab) => tab.href === "/dashboard")) ? ACTION_ITEMS : []),

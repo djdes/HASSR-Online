@@ -8,6 +8,7 @@ import {
   navAllows,
   sectionForPath,
   visibleNav,
+  visibleSettingsCards,
   type NavAccess,
   type NavActor,
   type NavFacts,
@@ -26,8 +27,8 @@ const cleaner: NavActor = { role: "cook", permissionPreset: "cleaner" };
 // Линейная роль, но пресет заведующей: проверяет задачи, видит команду.
 const verifyOnly: NavActor = { role: "cook", permissionPreset: "head_chef" };
 
-const noChecklists: NavFacts = { checklists: false };
-const withChecklists: NavFacts = { checklists: true };
+const noChecklists: NavFacts = { checklists: false, settingsPermissions: false };
+const withChecklists: NavFacts = { checklists: true, settingsPermissions: false };
 
 const DASHBOARD_DIR = join(process.cwd(), "src", "app", "(dashboard)");
 
@@ -224,7 +225,7 @@ function guardTokens(access: NavAccess): string[][] {
     case "staffPath":
       return [];
     case "fullAccess":
-      return [["hasFullWorkspaceAccess(", "isManagementRole(", "sessionHasPermission("]];
+      return [["hasFullWorkspaceAccess(", "isManagementRole("]];
     case "anyOf":
       return [access.capabilities.map((capability) => `"${capability}"`)];
     case "fullAccessOr":
@@ -237,7 +238,9 @@ function guardTokens(access: NavAccess): string[][] {
     case "all":
       return access.rules.flatMap(guardTokens);
     case "fact":
-      return [["hasJournalAccess("]];
+      return [
+        [access.fact === "settingsPermissions" ? "sessionHasPermission(" : "hasJournalAccess("],
+      ];
   }
 }
 
@@ -259,6 +262,33 @@ test("правило каждой вкладки и карточки повто�
       );
     }
   }
+});
+
+test("карточки прав и иерархии зависят от права settings.permissions, а не от роли", () => {
+  const rights = SETTINGS_CARDS.filter((card) =>
+    ["settings_permissions", "settings_staff_hierarchy"].includes(card.id),
+  );
+  assert.equal(rights.length, 2);
+  const without: NavFacts = { checklists: false, settingsPermissions: false };
+  const withRight: NavFacts = { checklists: false, settingsPermissions: true };
+  for (const card of rights) {
+    assert.deepEqual(card.access, { kind: "fact", fact: "settingsPermissions" }, card.id);
+    assert.equal(navAllows(manager, card.href, card.access, without), false, card.id);
+    assert.equal(navAllows(manager, card.href, card.access, withRight), true, card.id);
+  }
+});
+
+test("«Шаблон заведения» — вкладка раздела «Моя компания»", () => {
+  const company = NAV_SECTIONS.find((section) => section.key === "company");
+  assert.ok(company?.tabs.some((tab) => tab.href === "/settings/onboarding-template"));
+});
+
+test("поиск: управляющей доступны карточки настроек, повару — нет", () => {
+  const hrefs = visibleSettingsCards(manager, withChecklists).map((card) => card.href);
+  for (const href of ["/reports", "/capa", "/settings/journals"]) {
+    assert.ok(hrefs.includes(href), href);
+  }
+  assert.deepEqual(visibleSettingsCards(cook, noChecklists), []);
 });
 
 test("у каждой иконки меню и карточек есть компонент", async () => {

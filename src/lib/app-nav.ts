@@ -21,7 +21,7 @@ import {
   hasFullWorkspaceAccess,
   isStaffRestrictedWebPath,
 } from "@/lib/role-access";
-import { SETTINGS_CARDS } from "@/lib/settings-cards";
+import { SETTINGS_CARDS, type SettingsCard } from "@/lib/settings-cards";
 
 export type NavSectionKey =
   | "company"
@@ -42,7 +42,11 @@ export type NavActor = {
 };
 
 /** То, что нельзя вывести из роли: ACL журнала чек-листов и т.п. */
-export type NavFacts = { checklists: boolean };
+export type NavFacts = {
+  checklists: boolean;
+  /** Право `settings.permissions` из БД (роль/категория должности). */
+  settingsPermissions: boolean;
+};
 
 /**
  * Какая проверка стоит на странице.
@@ -68,6 +72,7 @@ export type NavTabLabel =
   | "appearance"
   | "names"
   | "onboarding"
+  | "template"
   | "users"
   | "team"
   | "schedule"
@@ -153,7 +158,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "onboarding",
         href: "/settings/onboarding",
         access: ADMIN,
-        match: ["/settings/onboarding-template"],
+      },
+      {
+        id: "template",
+        label: "template",
+        href: "/settings/onboarding-template",
+        access: ADMIN,
       },
     ],
   },
@@ -323,6 +333,14 @@ export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[
     });
   }
   return result;
+}
+
+/** Карточки настроек, которые человек откроет (для поиска ⌘K). */
+export function visibleSettingsCards(actor: NavActor, facts: NavFacts): SettingsCard[] {
+  const sections = new Set<string>(visibleNav(actor, facts).map((section) => section.key));
+  return SETTINGS_CARDS.filter(
+    (card) => sections.has(card.section) && navAllows(actor, card.href, card.access, facts),
+  );
 }
 
 type PathOwner = {

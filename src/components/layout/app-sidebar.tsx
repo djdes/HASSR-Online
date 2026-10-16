@@ -43,7 +43,7 @@ export function AppSidebar({
         className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[#ececf4] px-5 transition-colors duration-150 hover:bg-[#fafbff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#5566f6]/15"
         data-sidebar-logo
       >
-        <OrganizationMark logoUrl={logoUrl} name={organizationName} />
+        <OrganizationMark key={logoUrl ?? "none"} logoUrl={logoUrl} name={organizationName} />
       </Link>
 
       <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">

@@ -26,7 +26,7 @@ export async function SectionSettingsPage({
 }) {
   const organizationId = getActiveOrgId(session);
   const [facts, customNames, controls, tRoutes] = await Promise.all([
-    loadNavFacts(session.user),
+    loadNavFacts(session),
     getOrgCustomNames(organizationId),
     section === "journals" ? getJournalControls(organizationId) : Promise.resolve(null),
     getTranslations("navigation.routes"),

@@ -1521,6 +1521,7 @@
         "inspection": "Inspection visit"
       },
       "tabs": {
+        "template": "Venue template",
         "main": "Main",
         "organization": "Details",
         "appearance": "Appearance",

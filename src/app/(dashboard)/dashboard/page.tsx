@@ -35,20 +35,10 @@ import { paperJournalsFor } from "@/lib/sphere-journal-rules";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
-import { orgDisplayName } from "@/lib/org-display-name";
 import { PausedBanner } from "@/components/dashboard/paused-banner";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function formatDayLabel(date: Date): string {
-  return date.toLocaleDateString("ru-RU", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 function formatTime(date: Date): string {
   return date.toLocaleString("ru-RU", {
@@ -102,7 +92,6 @@ export default async function DashboardPage() {
 
   const [
     pendingApproval,
-    activeTemplates,
     recentEntries,
     templates,
     org,
@@ -110,7 +99,6 @@ export default async function DashboardPage() {
     db.journalEntry.count({
       where: { organizationId, status: "submitted" },
     }),
-    db.journalTemplate.count({ where: { isActive: true } }),
     db.journalEntry.findMany({
       where: { organizationId, createdAt: { gte: cutoff48h } },
       orderBy: { createdAt: "desc" },
@@ -136,14 +124,6 @@ export default async function DashboardPage() {
       },
     }),
   ]);
-
-  // Show the «заполнить всё» one-click only if there's an enabled
-  // TasksFlow integration to fan out into.
-  const tfIntegration = await db.tasksFlowIntegration.findFirst({
-    where: { organizationId, enabled: true },
-    select: { id: true },
-  });
-  const hasTasksflowIntegration = Boolean(tfIntegration);
 
   // Selected journal set comes from organization settings:
   // active templates minus disabled journal codes.

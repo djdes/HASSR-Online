@@ -1,5 +1,5 @@
 import { OrganizationSpecialModeCard } from "@/components/settings/organization-special-mode-card";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
@@ -62,7 +62,7 @@ export default async function OrganizationInfoPage() {
       deletionRequestedAt: true,
     },
   });
-  if (!org) redirect("/settings");
+  if (!org) notFound();
   // Бейдж: код заводится заранее (ничего не публикует — страница открывается
   // только у включённого), процент считается и для живого примера.
   const [badgeCode, badgeStatus, conversion, me, healthCheck, branding] = await Promise.all([

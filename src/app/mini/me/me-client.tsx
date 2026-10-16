@@ -23,7 +23,6 @@ import {
   LogOut,
   MessageCircleMore,
   Palette,
-  Settings,
   ShieldCheck,
   Trash2,
   Unlink,
@@ -385,11 +384,11 @@ export function MiniMeClient({
                 />
               </Link>
             )}
-            <Link href="/settings" className="mini-item mini-press">
+            <Link href="/mini/sections" className="mini-item mini-press">
               <ProfileRow
-                icon={Settings}
-                label="Настройки"
-                hint="организация и журналы"
+                icon={LayoutGrid}
+                label="Все разделы"
+                hint="меню кабинета"
               />
             </Link>
           </>

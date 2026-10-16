@@ -233,7 +233,7 @@ export function Header({
             )}
             aria-label={t("header.homeAria", { organization: organizationName || "WeSetup" })}
           >
-            <OrganizationMark logoUrl={organizationLogoUrl ?? null} name={organizationName || "WeSetup"} compact />
+            <OrganizationMark key={organizationLogoUrl ?? "none"} logoUrl={organizationLogoUrl ?? null} name={organizationName || "WeSetup"} compact />
           </Link>
           {/* На телефоне зона нажатия 44×44 — значок тот же, еле заметный. */}
           {partnerHint ? <PartnerHint rates={partnerHint} className="max-sm:size-11" /> : null}

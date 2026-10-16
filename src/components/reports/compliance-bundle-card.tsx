@@ -189,7 +189,14 @@ export function ComplianceBundleCard({
     </>
   );
 
-  if (bare) return <div data-compliance-bundle>{controls}</div>;
+  // В bare-режиме у первого блока нет верхнего отступа: его уже даёт шаг-обёртка.
+  if (bare) {
+    return (
+      <div data-compliance-bundle className="[&>*:first-child]:mt-0">
+        {controls}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">

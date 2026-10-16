@@ -84,7 +84,6 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
     <div className="space-y-5">
       <PageCrumbs
         items={[
-          { label: "Настройки", href: "/settings" },
           { label: "Сотрудники", href: "/settings/users" },
           { label: user.name || contactLabel || "Сотрудник" },
         ]}

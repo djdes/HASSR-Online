@@ -88,7 +88,7 @@ export function InspectionQr({
           <Maximize2 className="size-4" />
           {t("fullscreen")}
         </button>
-        <a href={`/inspector-sheet/${qr.id}`} target="_blank" rel="noopener" className={OUTLINE}>
+        <a href={`/inspector-sheet/${qr.id}`} className={OUTLINE}>
           <Printer className="size-4 text-[#5566f6]" />
           {t("print")}
         </a>

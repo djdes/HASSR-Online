@@ -26,7 +26,7 @@ export default async function MiniSectionsPage() {
   const groups: MiniSectionGroupView[] = [];
   if (session && user) {
     const customNames = await getOrgCustomNames(getActiveOrgId(session));
-    const model = await buildNavModel({ user, facts: await loadNavFacts(user), customNames });
+    const model = await buildNavModel({ user, facts: await loadNavFacts(session), customNames });
     groups.push({
       id: "sections",
       title: "",

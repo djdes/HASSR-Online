@@ -30,8 +30,12 @@ export default async function InspectionPage() {
 
   const [inspector, report, org, t, tRoutes, locale] = await Promise.all([
     loadCabinetInspectorData(organizationId),
-    showReadiness ? runComplianceAudit(organizationId) : Promise.resolve(null),
-    db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
+    // Сбой аудита готовности не должен ронять экран — шаг ③ просто не рисуется.
+    showReadiness ? runComplianceAudit(organizationId).catch(() => null) : Promise.resolve(null),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true, timezone: true },
+    }),
     getTranslations("inspectionDay"),
     getTranslations("navigation.routes"),
     getLocale(),
@@ -53,7 +57,7 @@ export default async function InspectionPage() {
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Europe/Moscow",
+    timeZone: org?.timezone || "Europe/Moscow",
   });
 
   return (

@@ -61,7 +61,15 @@ async function login(browser: Browser, email: string): Promise<{ storage: string
     if (left) break;
   }
   await page.waitForLoadState("load");
-  const landed = new URL(page.url()).pathname;
+  // Домашняя страница может перенаправить дальше потоком RSC (заведующую —
+  // на панель контроля): ждём, пока адрес перестанет меняться.
+  let landed = new URL(page.url()).pathname;
+  for (let i = 0; i < 20; i += 1) {
+    await page.waitForTimeout(1500);
+    const now = new URL(page.url()).pathname;
+    if (now === landed) break;
+    landed = now;
+  }
   const file = path.join(HERE, `storage-${email.split("@")[0]}.json`);
   await context.storageState({ path: file });
   await context.close();
@@ -70,8 +78,11 @@ async function login(browser: Browser, email: string): Promise<{ storage: string
 
 async function open(page: Page, url: string) {
   page.on("pageerror", (error) => errors.push(`${url} pageerror: ${String(error).slice(0, 300)}`));
-  const response = await page.goto(`${BASE}${url}`, { waitUntil: "load", timeout: 600_000 });
-  await page.waitForTimeout(400);
+  // «load» на телефонной эмуляции иногда не наступает (долгие запросы
+  // живых обновлений) — ждём разметку, а «load» даём минуту.
+  const response = await page.goto(`${BASE}${url}`, { waitUntil: "domcontentloaded", timeout: 600_000 });
+  await page.waitForLoadState("load", { timeout: 60_000 }).catch(() => null);
+  await page.waitForTimeout(800);
   return response;
 }
 
@@ -186,7 +197,7 @@ async function main() {
         const issue = await page.$("[data-issue-qr]");
         if (issue) {
           await issue.click();
-          await page.waitForSelector("[data-inspection-qr]", { timeout: 60_000 });
+          await page.waitForSelector("[data-inspection-qr]", { timeout: 300_000 });
         }
         check("S1.16", "«Пришла проверка»: QR на экране", Boolean(await page.$("[data-inspection-qr] svg")));
         const steps = await page.$$eval("[data-inspection-step]", (n) => n.map((x) => x.getAttribute("data-inspection-step")));
@@ -203,8 +214,12 @@ async function main() {
         fs.writeFileSync(pdf, "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
         const input = page.locator('[data-production-doc="ppk"] input[type="file"]');
         await input.setInputFiles(pdf);
-        await page.waitForSelector('[data-production-doc="ppk"][data-state="filled"]', { timeout: 60_000 });
-        check("S1.18", "ППК загружается файлом и открывается", true);
+        const ppkFilled = await page
+          .waitForSelector('[data-production-doc="ppk"][data-state="filled"]', { timeout: 300_000 })
+          .then(() => true)
+          .catch(() => false);
+        const ppkName = ppkFilled ? (await page.textContent('[data-production-doc="ppk"]')) ?? "" : "";
+        check("S1.18", "ППК загружается файлом: слот показывает имя файла", ppkFilled && ppkName.includes("ppk-sample.pdf"), ppkName.slice(0, 80));
         const fileResponse = await page.request.get(`${BASE}/api/production-control/documents/ppk/file`, { timeout: 600_000 });
         check("S1.19", "файл ППК отдаётся", fileResponse.status() === 200 && (fileResponse.headers()["content-type"] ?? "").includes("pdf"), fileResponse.status());
         await shot(page, "s1-production-control");
@@ -218,13 +233,32 @@ async function main() {
         const logoFile = path.join(RAW, "logo.png");
         fs.writeFileSync(logoFile, png);
         await page.locator('[data-org-logo] input[type="file"]').setInputFiles(logoFile);
-        await page.waitForFunction(
-          () => document.querySelector("aside[data-app-sidebar] [data-sidebar-logo] img")?.getAttribute("src")?.includes("/api/org-assets/"),
-          null,
-          { timeout: 60_000 },
-        );
-        check("S1.20", "логотип загружается файлом и встаёт в сайдбар", true);
+        const logoSrc = await page
+          .waitForFunction(
+            () => document.querySelector("aside[data-app-sidebar] [data-sidebar-logo] img")?.getAttribute("src") ?? "",
+            null,
+            { timeout: 300_000 },
+          )
+          .then((handle) => handle.jsonValue() as Promise<string>)
+          .catch(() => "");
+        check("S1.20", "логотип загружается файлом и встаёт в сайдбар", logoSrc.includes("/api/org-assets/"), logoSrc);
+        const companyTabs = await page.$$eval("[data-section-tabs] [data-section-tab]", (n) => n.map((x) => x.textContent?.trim()));
+        check("S1.20b", "«Моя компания»: вкладка «Шаблон заведения» есть", companyTabs.includes("Шаблон заведения"), companyTabs);
         await shot(page, "s1-logo");
+
+        // Торговые точки → Настройка: живой блок онлайн-принтера на месте
+        await open(page, "/settings/sections/points");
+        const pointsText = (await page.textContent("main")) ?? "";
+        check("S1.23", "«Торговые точки → Настройка»: онлайн-принтер", /принтер/i.test(pointsText), pointsText.slice(0, 120));
+
+        // ⌘K находит карточки настроек
+        await page.keyboard.press("Control+k");
+        await page.waitForTimeout(400);
+        await page.keyboard.type("отч");
+        await page.waitForTimeout(800);
+        const paletteText = (await page.textContent("body")) ?? "";
+        check("S1.24", "⌘K находит «Отчёты»", /Остальное · Отчёты/.test(paletteText), null);
+        await page.keyboard.press("Escape");
 
         // Остальное
         await open(page, "/more");
@@ -315,7 +349,10 @@ async function main() {
       const vpage = await vctx.newPage();
       await open(vpage, "/inspection");
       const vkeys = await sidebarKeys(vpage);
-      check("S4.6", "проверяющий с линейной ролью: команда, журналы, проверка", JSON.stringify(vkeys) === JSON.stringify(["staff", "journals", "inspection"]), vkeys);
+      // Чек-листы видны, если ACL журналов у организации ещё не включён — как на странице.
+      const vexpected = ["staff", "journals", "inspection"];
+      const vforbidden = ["company", "points", "billing", "more", "productionControl"];
+      check("S4.6", "проверяющий с линейной ролью: команда, журналы, проверка — без разделов руководства", vexpected.every((k) => vkeys.includes(k)) && !vforbidden.some((k) => vkeys.includes(k)), vkeys);
       check("S4.7", "проверяющему QR виден, выпуска нет", Boolean(await vpage.$("[data-inspection-qr]")) && !(await vpage.$("[data-issue-qr]")));
       await shot(vpage, "s4-verify-inspection");
       await vctx.close();

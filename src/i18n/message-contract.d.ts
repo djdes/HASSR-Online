@@ -1522,6 +1522,7 @@ export type MessageContract = {
         "inspection": "Пришла проверка"
       },
       "tabs": {
+        "template": "Шаблон заведения",
         "main": "Главное",
         "organization": "Реквизиты",
         "appearance": "Оформление",

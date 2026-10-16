@@ -61,7 +61,6 @@ export default async function PaperJournalPage({
     <div className="space-y-5">
       <PageCrumbs
         items={[
-          { label: "Настройки", href: "/settings" },
           { label: "Набор журналов", href: "/settings/journals#paper" },
           { label: journal.name },
         ]}

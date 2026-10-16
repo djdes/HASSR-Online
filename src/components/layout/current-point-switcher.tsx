@@ -59,7 +59,7 @@ export function CurrentPointSwitcher({
     </>
   );
   const base =
-    "inline-flex h-10 min-w-0 max-w-full items-center gap-2 rounded-2xl px-3 text-[15px] font-semibold text-[#0b1024] max-sm:h-11 max-sm:text-[14px]";
+    "inline-flex h-10 min-w-0 max-w-[min(40vw,420px)] items-center gap-2 rounded-2xl px-3 text-[15px] font-semibold text-[#0b1024] max-sm:h-11 max-sm:text-[14px]";
 
   if (!label) return null;
 

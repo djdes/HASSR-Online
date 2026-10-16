@@ -116,8 +116,6 @@ export function DocumentSlot({
             {document ? (
               <a
                 href={`/api/production-control/documents/${kind}/file`}
-                target="_blank"
-                rel="noopener"
                 className={PRIMARY}
               >
                 <ExternalLink className="size-4" />
