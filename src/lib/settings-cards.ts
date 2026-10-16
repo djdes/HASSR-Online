@@ -109,11 +109,11 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "settings_notifications", href: "/settings/notifications", icon: "Bell", ...MINT, section: "more", group: "connections", access: STAFF_PATH },
   { id: "settings_integrations_tasksflow", href: "/settings/integrations/tasksflow", icon: "Plug", ...SKY, section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_integrations_mercury", href: "/settings/integrations/mercury", icon: "Plug", ...SKY, section: "more", group: "connections", access: FULL_ACCESS },
-  { id: "settings_api", href: "/settings/api", icon: "KeyRound", iconClass: "text-[#8b5cf6]", bgClass: "bg-[#f5f3ff]", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_webhooks", href: "/settings/webhooks", icon: "Webhook", ...INDIGO, section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_calendar", href: "/settings/calendar", icon: "CalendarDays", ...INDIGO, section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_backup", href: "/settings/backup", icon: "CloudUpload", ...INDIGO, section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_accounting", href: "/settings/accounting", icon: "FileSpreadsheet", ...INDIGO, section: "more", group: "connections", access: FULL_ACCESS },
+  { id: "settings_api", href: "/settings/api", icon: "KeyRound", iconClass: "text-[#8b5cf6]", bgClass: "bg-[#f5f3ff]", section: "more", group: "connections", access: FULL_ACCESS },
 
   // ---- Остальное: прочее ----------------------------------------------
   { id: "settings_audit", href: "/settings/audit", icon: "ScrollText", iconClass: "text-[#6b7280]", bgClass: "bg-[#f3f4f6]", section: "more", group: "other", access: FULL_ACCESS },

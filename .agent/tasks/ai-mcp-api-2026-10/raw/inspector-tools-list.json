@@ -1,0 +1,269 @@
+{
+  "tools": [
+    {
+      "name": "get_context",
+      "title": "Кто я и где",
+      "description": "Кто я и где: организация, сегодняшняя дата в её часовом поясе, права ключа. Вызови в начале разговора.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "title": "Кто я и где",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_journals",
+      "title": "Журналы на дату",
+      "description": "Журналы организации на дату: заполнен ли каждый ежедневный журнал, активные документы с id и ссылками. Ответ на вопрос «что сегодня не заполнено».",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "Дата YYYY-MM-DD; по умолчанию — сегодня в часовом поясе организации"
+          }
+        }
+      },
+      "annotations": {
+        "title": "Журналы на дату",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_journal_document",
+      "title": "Записи документа",
+      "description": "Записи документа журнала за период (до 31 дня): ячейки сотрудник × день с данными. Для журналов-конфигов (storage = document) — содержимое документа.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "id документа из list_journals → documents"
+          },
+          "from": {
+            "description": "Начало периода YYYY-MM-DD; по умолчанию — 7 дней до сегодня",
+            "type": "string",
+            "maxLength": 10
+          },
+          "to": {
+            "description": "Конец периода YYYY-MM-DD",
+            "type": "string",
+            "maxLength": 10
+          }
+        },
+        "required": [
+          "documentId"
+        ]
+      },
+      "annotations": {
+        "title": "Записи документа",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "fill_journal_cells",
+      "title": "Заполнить ячейки журнала",
+      "description": "Заполнить ячейки журнала-сетки (storage = cells): сотрудники × даты. Значения замеров — только названные пользователем. Права, закрытые дни и документы проверяются как в интерфейсе.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "id документа журнала из list_journals → documents"
+          },
+          "employeeIds": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "description": "id сотрудников из list_employees — строки документа"
+          },
+          "dates": {
+            "minItems": 1,
+            "maxItems": 62,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "description": "Даты в формате YYYY-MM-DD внутри периода документа"
+          },
+          "values": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "status"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "healthy",
+                      "day_off",
+                      "sick_leave",
+                      "suspended",
+                      "vacation"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "status"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "auto"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "data"
+                  },
+                  "data": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "maxLength": 60
+                    },
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "data"
+                ]
+              }
+            ],
+            "description": "Что записать: status — статус гигиенического журнала; auto — типовое заполнение по графику (hygiene, health_check); data — только значения, которые пользователь назвал сам"
+          }
+        },
+        "required": [
+          "documentId",
+          "employeeIds",
+          "dates",
+          "values"
+        ]
+      },
+      "annotations": {
+        "title": "Заполнить ячейки журнала",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_employees",
+      "title": "Сотрудники и должности",
+      "description": "Активные сотрудники с должностями и телефонами, а также список должностей с id — для add_employee.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "description": "Часть ФИО для поиска, без учёта регистра",
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      },
+      "annotations": {
+        "title": "Сотрудники и должности",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "add_employee",
+      "title": "Добавить сотрудника",
+      "description": "Добавить сотрудника: ФИО, id должности, телефон по желанию. Только для руководителя; учитывает лимит тарифа.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200,
+            "description": "ФИО сотрудника полностью, как в документах"
+          },
+          "jobPositionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "id должности из list_employees → positions"
+          },
+          "phone": {
+            "description": "Телефон в любом формате; можно не указывать",
+            "type": "string",
+            "maxLength": 30
+          },
+          "allowDuplicate": {
+            "description": "true — создать, даже если такой сотрудник уже есть",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "fullName",
+          "jobPositionId"
+        ]
+      },
+      "annotations": {
+        "title": "Добавить сотрудника",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

@@ -148,7 +148,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/sanpin": "Справочник СанПиН",
   "/settings": "Настройки",
   "/settings/accounting": "Бухгалтерия",
-  "/settings/api": "API интеграций",
+  "/settings/api": "ИИ-ассистенты и API",
   "/settings/areas": "Цеха и участки",
   "/settings/audit": "Журнал действий",
   "/settings/auto-journals": "Автосоздание журналов",

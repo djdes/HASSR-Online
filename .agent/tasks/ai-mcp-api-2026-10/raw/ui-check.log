@@ -1,0 +1,60 @@
+login ok → http://localhost:3011/dashboard
+page rendered
+key created: wsk_KdWtwgIm… (length 47)
+tab ChatGPT: snippets with key = 1
+tab Cursor и Claude Code: snippets with key = 2
+tab Свой код (REST): snippets with key = 1
+tab Claude: snippets with key = 1
+after reload full key visible: 0
+360px horizontal overflow: 0px
+revoke: keys 3 → 2
+console errors: 4 — [next-auth][error][CLIENT_FETCH_ERROR] 
+https://next-auth.js.org/errors#client_fetch_error Failed to fetch {error: Object, url: /api/auth/session, message: Failed to fetch} | Failed to load resource: the server responded with a status of 500 (Internal Server Error) | SyntaxError: Unexpected end of JSON input | A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RedirectErrorBoundary router={{...}}>
+      <InnerLayoutRouter url="/settings/api" tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} ...>
+        <SegmentViewNode type="page" pagePath="(dashboard...">
+          <SegmentTrieNode>
+          <ExternalApiSettingsPage>
+            <DomainMessagesBoundary>
+              <DomainMessagesProvider messages={{...}}>
+                <NextIntlClientProvider locale="ru" messages={{common:{...}, ...}}>
+                  <IntlProvider locale="ru" messages={{common:{...}, ...}}>
+                    <div className="space-y-5">
+                      <div>
+                      <PageGuide>
+                      <section>
+                      <AiConnectClient baseUrl="http://loc..." initialKeys={[...]} tools={[...]}>
+                        <div className="space-y-5">
+                          <section className="rounded-3x...">
+                            <div>
+                            <h2>
+                            <div className="mt-5 grid ...">
+                              <label className="block">
+                                <span>
+                                <input
+                                  value="Мой ИИ-ассистент"
+                                  maxLength={60}
+                                  onChange={function onChange}
+                                  className="mt-1.5 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text..."
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                            ...
+                          ...
+                      ...
+        ...
+      ...
+

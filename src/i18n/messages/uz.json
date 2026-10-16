@@ -1746,7 +1746,7 @@
       "sanpin": "SanPiN ma'lumotnomasi",
       "settings": "Sozlamalar",
       "settings_accounting": "Buxgalteriya",
-      "settings_api": "Integratsiya API",
+      "settings_api": "SI-yordamchilar va API",
       "settings_areas": "Ishlab chiqarish hududlari",
       "settings_audit": "Harakatlar jurnali",
       "settings_auto_journals": "Jurnallarni avtomatik yaratish",
@@ -7134,6 +7134,152 @@
       "cancel": "Bekor qilish",
       "typeToConfirm": "BEKOR QILISH"
     },
+    "aiConnect": {
+      "title": "SI-yordamchilar va API",
+      "description": "ChatGPT, Claude yoki dasturchingizni ulang — jurnallar holatini biling, kataklarni belgilang va xodimlarni to‘g‘ridan-to‘g‘ri chatda qo‘shing.",
+      "badgeMcp": "SI uchun MCP",
+      "badgeRest": "REST API · OpenAPI",
+      "guide": {
+        "title": "Bu qanday ishlaydi",
+        "b1": "Kalit yarating — u sizning huquqlaringiz bilan va faqat shu tashkilotda ishlaydi.",
+        "b2": "Havola yoki kalitni ChatGPT, Claude yoki Cursor’ga qo‘ying — bosqichma-bosqich yo‘riqnoma pastda.",
+        "b3": "Yordamchiga oddiy tilda yozing: u kerakli jurnal, hujjat va xodimlarni o‘zi topadi.",
+        "q1": "Bu xavfsizmi?",
+        "a1": "Biz kalitning faqat izini saqlaymiz, uni bir bosishda bekor qilish mumkin. SI orqali qilingan har bir yozuv amallar jurnalida kalit nomi bilan ko‘rinadi.",
+        "q2": "SI nimani yoza oladi?",
+        "a2": "Jadval-jurnallardagi belgilar (xodim × kun) va yangi xodimlar — interfeysdagi qoidalar bo‘yicha. Yopilgan kunlar va hujjatlarni o‘zgartirmaydi, o‘lchov qiymatlarini o‘ylab topmaydi.",
+        "q3": "MCP API’dan nimasi bilan farq qiladi?",
+        "a3": "MCP — SI-yordamchilar xizmatdan o‘zlari foydalanadigan standart. REST API — dasturchingiz uchun: xuddi shu amallar oddiy HTTP so‘rovlari bilan, tavsifi OpenAPI’da."
+      },
+      "showcase": {
+        "title": "Chatda to‘ldiriladigan jurnallar",
+        "text": "Yordamchiga hamkasbingizga yozgandek yozing:",
+        "prompt1": "Bugun qaysi jurnallar to‘ldirilmagan?",
+        "prompt2": "Smirnovani 12–16 oktyabr kunlari kasallik ta’tilida deb belgila",
+        "prompt3": "Oshpaz Anna Ivanovani qo‘sh, +7 900 000-00-00"
+      },
+      "create": {
+        "step": "1-qadam",
+        "title": "Kalit yarating",
+        "nameLabel": "Kalit nomi",
+        "nameDefault": "Mening SI-yordamchim",
+        "nameHint": "Keyin ro‘yxatda kalitni tanib olish uchun, masalan «Boshqaruvchining ChatGPT’si».",
+        "accessLabel": "Yordamchiga nimaga ruxsat",
+        "accessWrite": "O‘qish va yozish",
+        "accessWriteHint": "Holatni bilish, jurnallarni belgilash, xodim qo‘shish",
+        "accessRead": "Faqat o‘qish",
+        "accessReadHint": "Holatni bilish va yozuvlarni ko‘rish, hech narsani o‘zgartirmasdan",
+        "recommended": "tavsiya etamiz",
+        "submit": "Kalit yaratish",
+        "creating": "Yaratilmoqda…",
+        "created": "Kalit yaratildi — uni hozir nusxalab oling",
+        "failed": "Kalitni yaratib bo‘lmadi"
+      },
+      "secret": {
+        "title": "Kalit bir marta ko‘rsatiladi",
+        "hint": "Kalit yoki havolani saqlab qo‘ying: sahifa yangilangach kalitning faqat boshi qoladi.",
+        "copyKey": "Kalitni nusxalash",
+        "copyLink": "Claude va ChatGPT uchun havolani nusxalash",
+        "warning": "Kalitli havola — bu parol: uni e’lon qilmang va umumiy chatlarga yubormang.",
+        "copied": "Nusxalandi",
+        "copyFailed": "Nusxalab bo‘lmadi — matnni qo‘lda belgilang"
+      },
+      "connect": {
+        "step": "2-qadam",
+        "title": "Yordamchini ulang",
+        "placeholder": "KALITINGIZ",
+        "noKeyHint": "1-qadamda kalit yarating — u yo‘riqnomaga o‘zi qo‘yiladi.",
+        "copy": "Nusxalash",
+        "plansNote": "O‘z konnektorlaringiz ChatGPT va Claude’ning barcha tariflarida mavjud emas.",
+        "tabs": {
+          "claude": "Claude",
+          "chatgpt": "ChatGPT",
+          "dev": "Cursor va Claude Code",
+          "rest": "O‘z kodingiz (REST)"
+        },
+        "claude": {
+          "s1": "claude.ai yoki Claude ilovasini oching → «Sozlamalar» → «Konnektorlar».",
+          "s2": "«O‘z konnektoringizni qo‘shish»ni bosing va uni «WeSetup» deb nomlang.",
+          "s3": "Pastdagi havolani qo‘ying va saqlang. Yangi chatda vositalar ro‘yxatida WeSetup’ni yoqing."
+        },
+        "chatgpt": {
+          "s1": "ChatGPT → «Sozlamalar» → «Ilovalar va konnektorlar» → «Kengaytirilgan»ni oching va dasturchi rejimini yoqing.",
+          "s2": "«Yaratish»ni bosing, konnektorni «WeSetup» deb nomlang, autentifikatsiya — «Autentifikatsiyasiz».",
+          "s3": "Pastdagi havolani qo‘ying va tasdiqlang. Chatda vositalar menyusidan WeSetup’ni tanlang."
+        },
+        "dev": {
+          "s1": "Claude Code: buyruqni terminalda bajaring.",
+          "s2": "Cursor va boshqa muharrirlar: serverni mcp.json’ga qo‘shing."
+        },
+        "rest": {
+          "s1": "Kalitni Authorization sarlavhasida yuboring. Javob — ok va data maydonli JSON.",
+          "s2": "Barcha usullar va maydonlar OpenAPI’da tavsiflangan:",
+          "openapi": "openapi.json’ni ochish",
+          "docs": "Dasturchilar uchun hujjatlar"
+        }
+      },
+      "tools": {
+        "title": "Yordamchi nimalarni qila oladi",
+        "read": "O‘qish",
+        "write": "Yozish",
+        "get_context": {
+          "title": "Qayerda ishlayotganini biladi",
+          "text": "Tashkilot, bugungi sana va kalit huquqlari"
+        },
+        "list_journals": {
+          "title": "Jurnallar holati",
+          "text": "Bugun nima to‘ldirilgan, nima yo‘q, hujjatlarga havolalar"
+        },
+        "get_journal_document": {
+          "title": "Hujjat yozuvlari",
+          "text": "31 kungacha bo‘lgan davr uchun hujjat kataklari"
+        },
+        "fill_journal_cells": {
+          "title": "Jurnallarni belgilaydi",
+          "text": "Xodim × kun kataklari — interfeys qoidalari bo‘yicha"
+        },
+        "list_employees": {
+          "title": "Xodimlar",
+          "text": "Lavozimlar va telefonlar bilan ro‘yxat"
+        },
+        "add_employee": {
+          "title": "Xodim qo‘shadi",
+          "text": "Tarif va rahbar huquqlarini hisobga olib"
+        }
+      },
+      "keys": {
+        "title": "Tashkilot kalitlari",
+        "empty": "Hozircha kalitlar yo‘q — birinchisini yuqorida yarating.",
+        "you": "siz",
+        "owner": "Egasi: {name}",
+        "created": "Yaratilgan: {date}",
+        "lastUsed": "Oxirgi chaqiruv: {date} · {via}",
+        "neverUsed": "Hali ishlatilmagan",
+        "viaMcp": "SI-yordamchi",
+        "viaRest": "API",
+        "revoke": "Bekor qilish",
+        "revoked": "«{name}» kaliti bekor qilindi",
+        "revokeFailed": "Kalitni bekor qilib bo‘lmadi",
+        "confirmTitle": "«{name}» kalitini bekor qilasizmi?",
+        "confirmDescription": "Kalit keyingi so‘rovdan boshlab ishlamay qoladi.",
+        "confirmBullet1": "Shu kalitli SI-yordamchilar darhol kirish huquqini yo‘qotadi.",
+        "confirmBullet2": "Bekor qilingan kalitni qaytarib bo‘lmaydi — faqat yangisini chiqarish mumkin.",
+        "confirmLabel": "Kalitni bekor qilish",
+        "cancel": "Bekor",
+        "typeToConfirm": "BEKOR"
+      },
+      "security": {
+        "title": "Xavfsizlik",
+        "owner": "Kalit egasining huquqlari bilan va faqat shu tashkilotda ishlaydi.",
+        "audit": "SI orqali qilingan har bir yozuv amallar jurnalida ko‘rinadi.",
+        "auditLink": "Amallar jurnalini ochish",
+        "hash": "Kalit iz ko‘rinishida saqlanadi — uni tiklab bo‘lmaydi, faqat qayta chiqarish mumkin."
+      },
+      "legacy": {
+        "title": "Sensorlar va eski integratsiyalar uchun kalit",
+        "hint": "POST /api/external/* uchun tashkilotning umumiy kaliti. SI-yordamchilarga yuqoridagi shaxsiy kalit kerak."
+      }
+    },
     "accounting": {
       "title": "Buxgalteriya",
       "description": "Haftada bir marta buxgalterga so‘nggi 7 kunlik hisobdan chiqarishlar CSV faylini yuboramiz («Yo‘qotishlar va brak» jurnali). UTF-8 BOM fayli nuqtali vergul bilan ajratiladi, Excel’da ochiladi va jadval hujjatidan 1C’ga import qilinadi.",
@@ -7615,8 +7761,8 @@
           "description": "Sanitariya inspektorlari uchun amal qilish muddati bor, faqat ko'rish mumkin bo'lgan havola yarating."
         },
         "settings_api": {
-          "title": "Integratsiya API",
-          "description": "Tashqi tizimlar va sensorlar foydalanadigan kalitni boshqaring."
+          "title": "SI-yordamchilar va API",
+          "description": "ChatGPT, Claude va REST API: chat orqali jurnallar va xodimlar"
         },
         "settings_integrations_tasksflow": {
           "title": "TasksFlow integratsiyasi",

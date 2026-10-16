@@ -1,0 +1,399 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"date\": \"2026-10-17\",\n  \"journals\": [\n    {\n      \"code\": \"hygiene\",\n      \"name\": \"Гигиенический журнал (сотрудники)\",\n      \"daily\": true,\n      \"filled\": true,\n      \"storage\": \"cells\",\n      \"documents\": [\n        {\n          \"id\": \"cmvbips480005is9m7yn6ct0l\",\n          \"title\": \"Гигиенический журнал\",\n          \"periodFrom\": \"2026-10-01\",\n          \"periodTo\": \"2026-10-31\",\n          \"status\": \"active\",\n          \"point\": null,\n          \"url\": \"http://localhost:3011/journals/hygiene/documents/cmvbips480005is9m7yn6ct0l\"\n        }\n      ]\n    },\n    {\n      \"code\": \"health_check\",\n      \"name\": \"Журнал здоровья\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"climate_control\",\n      \"name\": \"Журнал учёта температуры и влажности на складах\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"cold_equipment_control\",\n      \"name\": \"Журнал учёта температурного режима холодильного и морозильного оборудования\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"cleaning_ventilation_checklist\",\n      \"name\": \"Чек-лист уборки и проветривания помещений\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"cleaning\",\n      \"name\": \"Журнал уборки\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"general_cleaning\",\n      \"name\": \"График и учет генеральных уборок\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"uv_lamp_runtime\",\n      \"name\": \"Журнал учета работы УФ бактерицидной установки\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"finished_product\",\n      \"name\": \"Журнал бракеража готовой пищевой продукции\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"perishable_rejection\",\n      \"name\": \"Журнал бракеража скоропортящейся пищевой продукции\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"incoming_control\",\n      \"name\": \"Журнал приемки и входного контроля продукции\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"fryer_oil\",\n      \"name\": \"Журнал учета использования фритюрных жиров\",\n      \"daily\": true,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"med_books\",\n      \"name\": \"Медицинские книжки\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"training_plan\",\n      \"name\": \"План обучения персонала\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"staff_training\",\n      \"name\": \"Журнал регистрации инструктажей (обучения) сотрудников\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"disinfectant_usage\",\n      \"name\": \"Журнал учета дезинфицирующих средств\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"sanitary_day_control\",\n      \"name\": \"Чек-лист (памятка) проведения санитарного дня\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"equipment_maintenance\",\n      \"name\": \"График профилактического обслуживания оборудования\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"breakdown_history\",\n      \"name\": \"Карточка истории поломок\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"equipment_calibration\",\n      \"name\": \"График поверки средств измерений\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"incoming_raw_materials_control\",\n      \"name\": \"Журнал входного контроля сырья, ингредиентов, упаковочных материалов\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"ppe_issuance\",\n      \"name\": \"Журнал учета выдачи СИЗ\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"accident_journal\",\n      \"name\": \"Журнал учета аварий\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"complaint_register\",\n      \"name\": \"Журнал регистрации жалоб\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"product_writeoff\",\n      \"name\": \"Акт забраковки\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"audit_plan\",\n      \"name\": \"План-программа внутренних аудитов\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"audit_protocol\",\n      \"name\": \"Протокол внутреннего аудита\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"audit_report\",\n      \"name\": \"Отчет о внутреннем аудите\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"traceability_test\",\n      \"name\": \"Журнал прослеживаемости продукции\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"metal_impurity\",\n      \"name\": \"Журнал учета металлопримесей в сырье\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"equipment_cleaning\",\n      \"name\": \"Журнал мойки и дезинфекции оборудования\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"intensive_cooling\",\n      \"name\": \"Журнал контроля интенсивного охлаждения горячих блюд\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"glass_items_list\",\n      \"name\": \"Перечень изделий из стекла и хрупкого пластика\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"glass_control\",\n      \"name\": \"Журнал контроля изделий из стекла и хрупкого пластика\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"pest_control\",\n      \"name\": \"Журнал учета дезинфекции, дезинсекции и дератизации\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"cells\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"daily_samples\",\n      \"name\": \"Журнал отбора и хранения суточных проб\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"vitaminization\",\n      \"name\": \"Журнал проведения витаминизации третьих и сладких блюд\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"ration_control\",\n      \"name\": \"Ведомость контроля за рационом питания\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"transport_temperature\",\n      \"name\": \"Журнал контроля температуры при транспортировке\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"tableware_breakage\",\n      \"name\": \"Журнал учёта боя посуды\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"pool_water_control\",\n      \"name\": \"Журнал контроля качества воды в бассейне\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"inventory_condition\",\n      \"name\": \"Журнал оценки состояния металлического и пластикового инвентаря\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"instrument_sterilization\",\n      \"name\": \"Журнал контроля стерилизации инструментов\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"medical_waste_b\",\n      \"name\": \"Журнал учёта отходов класса Б\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    },\n    {\n      \"code\": \"batch_release\",\n      \"name\": \"Журнал допуска партии продукции к отгрузке\",\n      \"daily\": false,\n      \"filled\": false,\n      \"storage\": \"document\",\n      \"documents\": []\n    }\n  ],\n  \"summary\": {\n    \"dailyTotal\": 10,\n    \"dailyFilled\": 1,\n    \"notFilled\": [\n      \"Журнал здоровья\",\n      \"Журнал учёта температуры и влажности на складах\",\n      \"Журнал учёта температурного режима холодильного и морозильного оборудования\",\n      \"Чек-лист уборки и проветривания помещений\",\n      \"Журнал уборки\",\n      \"Журнал учета работы УФ бактерицидной установки\",\n      \"Журнал бракеража готовой пищевой продукции\",\n      \"Журнал бракеража скоропортящейся пищевой продукции\",\n      \"Журнал учета использования фритюрных жиров\"\n    ]\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "date": "2026-10-17",
+    "journals": [
+      {
+        "code": "hygiene",
+        "name": "Гигиенический журнал (сотрудники)",
+        "daily": true,
+        "filled": true,
+        "storage": "cells",
+        "documents": [
+          {
+            "id": "cmvbips480005is9m7yn6ct0l",
+            "title": "Гигиенический журнал",
+            "periodFrom": "2026-10-01",
+            "periodTo": "2026-10-31",
+            "status": "active",
+            "point": null,
+            "url": "http://localhost:3011/journals/hygiene/documents/cmvbips480005is9m7yn6ct0l"
+          }
+        ]
+      },
+      {
+        "code": "health_check",
+        "name": "Журнал здоровья",
+        "daily": true,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "climate_control",
+        "name": "Журнал учёта температуры и влажности на складах",
+        "daily": true,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "cold_equipment_control",
+        "name": "Журнал учёта температурного режима холодильного и морозильного оборудования",
+        "daily": true,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "cleaning_ventilation_checklist",
+        "name": "Чек-лист уборки и проветривания помещений",
+        "daily": true,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "cleaning",
+        "name": "Журнал уборки",
+        "daily": true,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "general_cleaning",
+        "name": "График и учет генеральных уборок",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "uv_lamp_runtime",
+        "name": "Журнал учета работы УФ бактерицидной установки",
+        "daily": true,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "finished_product",
+        "name": "Журнал бракеража готовой пищевой продукции",
+        "daily": true,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "perishable_rejection",
+        "name": "Журнал бракеража скоропортящейся пищевой продукции",
+        "daily": true,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "incoming_control",
+        "name": "Журнал приемки и входного контроля продукции",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "fryer_oil",
+        "name": "Журнал учета использования фритюрных жиров",
+        "daily": true,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "med_books",
+        "name": "Медицинские книжки",
+        "daily": false,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "training_plan",
+        "name": "План обучения персонала",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "staff_training",
+        "name": "Журнал регистрации инструктажей (обучения) сотрудников",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "disinfectant_usage",
+        "name": "Журнал учета дезинфицирующих средств",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "sanitary_day_control",
+        "name": "Чек-лист (памятка) проведения санитарного дня",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "equipment_maintenance",
+        "name": "График профилактического обслуживания оборудования",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "breakdown_history",
+        "name": "Карточка истории поломок",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "equipment_calibration",
+        "name": "График поверки средств измерений",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "incoming_raw_materials_control",
+        "name": "Журнал входного контроля сырья, ингредиентов, упаковочных материалов",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "ppe_issuance",
+        "name": "Журнал учета выдачи СИЗ",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "accident_journal",
+        "name": "Журнал учета аварий",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "complaint_register",
+        "name": "Журнал регистрации жалоб",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "product_writeoff",
+        "name": "Акт забраковки",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "audit_plan",
+        "name": "План-программа внутренних аудитов",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "audit_protocol",
+        "name": "Протокол внутреннего аудита",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "audit_report",
+        "name": "Отчет о внутреннем аудите",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "traceability_test",
+        "name": "Журнал прослеживаемости продукции",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "metal_impurity",
+        "name": "Журнал учета металлопримесей в сырье",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "equipment_cleaning",
+        "name": "Журнал мойки и дезинфекции оборудования",
+        "daily": false,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "intensive_cooling",
+        "name": "Журнал контроля интенсивного охлаждения горячих блюд",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "glass_items_list",
+        "name": "Перечень изделий из стекла и хрупкого пластика",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "glass_control",
+        "name": "Журнал контроля изделий из стекла и хрупкого пластика",
+        "daily": false,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "pest_control",
+        "name": "Журнал учета дезинфекции, дезинсекции и дератизации",
+        "daily": false,
+        "filled": false,
+        "storage": "cells",
+        "documents": []
+      },
+      {
+        "code": "daily_samples",
+        "name": "Журнал отбора и хранения суточных проб",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "vitaminization",
+        "name": "Журнал проведения витаминизации третьих и сладких блюд",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "ration_control",
+        "name": "Ведомость контроля за рационом питания",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "transport_temperature",
+        "name": "Журнал контроля температуры при транспортировке",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "tableware_breakage",
+        "name": "Журнал учёта боя посуды",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "pool_water_control",
+        "name": "Журнал контроля качества воды в бассейне",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "inventory_condition",
+        "name": "Журнал оценки состояния металлического и пластикового инвентаря",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "instrument_sterilization",
+        "name": "Журнал контроля стерилизации инструментов",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "medical_waste_b",
+        "name": "Журнал учёта отходов класса Б",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      },
+      {
+        "code": "batch_release",
+        "name": "Журнал допуска партии продукции к отгрузке",
+        "daily": false,
+        "filled": false,
+        "storage": "document",
+        "documents": []
+      }
+    ],
+    "summary": {
+      "dailyTotal": 10,
+      "dailyFilled": 1,
+      "notFilled": [
+        "Журнал здоровья",
+        "Журнал учёта температуры и влажности на складах",
+        "Журнал учёта температурного режима холодильного и морозильного оборудования",
+        "Чек-лист уборки и проветривания помещений",
+        "Журнал уборки",
+        "Журнал учета работы УФ бактерицидной установки",
+        "Журнал бракеража готовой пищевой продукции",
+        "Журнал бракеража скоропортящейся пищевой продукции",
+        "Журнал учета использования фритюрных жиров"
+      ]
+    }
+  },
+  "isError": false
+}

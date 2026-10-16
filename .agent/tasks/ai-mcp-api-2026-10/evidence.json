@@ -1,0 +1,21 @@
+{
+  "task": "ai-mcp-api-2026-10",
+  "branch": "feat/ai-mcp-api",
+  "base": "c4dc64ee",
+  "environment": "worktree D:/wt/ai-mcp-api, db wesetup_wt_aimcp, next dev --webpack :3011",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/ui-check.log", "raw/settings-api-1280-created.png", "raw/settings-api-revoke-dialog.png"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/public-api/key-admin.db.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/public-api/mcp/handle-message.test.ts", "raw/protocol-checks.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/public-api/tools/tools.db.test.ts", "src/lib/public-api/auth.db.test.ts"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/public-api/rest/router.test.ts", "src/lib/public-api/rest/openapi.test.ts", "raw/protocol-checks.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/protocol-checks.txt", "src/lib/audit-labels.ts"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/protocol-checks.txt"] },
+    "AC8": { "status": "PASS", "evidence": ["raw/protocol-checks.txt"] },
+    "AC9": { "status": "PASS", "evidence": ["raw/ui-check.log", "raw/settings-api-360.png", "src/lib/settings-cards.ts"] },
+    "AC10": { "status": "PASS", "evidence": ["raw/inspector-tools-list.json", "raw/inspector-list-journals.json", "raw/inspector-fill-cells.json"] },
+    "AC11": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts", "src/app/developers/page.tsx"] },
+    "AC12": { "status": "PASS", "evidence": ["npm run typecheck", "npm run i18n:check", "pre-commit test:gate 3890/3890", "task tests 83/83"] }
+  },
+  "notVerified": ["ChatGPT и claude.ai на аккаунтах владельца", "проверка на проде после деплоя"]
+}

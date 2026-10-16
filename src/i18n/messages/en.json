@@ -1746,7 +1746,7 @@
       "sanpin": "SanPiN reference",
       "settings": "Settings",
       "settings_accounting": "Accounting",
-      "settings_api": "Integration API",
+      "settings_api": "AI assistants & API",
       "settings_areas": "Production areas",
       "settings_audit": "Activity log",
       "settings_auto_journals": "Automatic journal creation",
@@ -7134,6 +7134,152 @@
       "cancel": "Cancel",
       "typeToConfirm": "REVOKE"
     },
+    "aiConnect": {
+      "title": "AI assistants & API",
+      "description": "Connect ChatGPT, Claude or your developer — check journal status, fill cells and add employees right in the chat.",
+      "badgeMcp": "MCP for AI",
+      "badgeRest": "REST API · OpenAPI",
+      "guide": {
+        "title": "How it works",
+        "b1": "Create a key — it acts with your permissions and only in this organization.",
+        "b2": "Paste the link or key into ChatGPT, Claude or Cursor — step-by-step guide below.",
+        "b3": "Talk to the assistant in plain language: it finds the right journal, document and employees itself.",
+        "q1": "Is it safe?",
+        "a1": "We store only a fingerprint of the key, and you can revoke it in one click. Every entry made through AI appears in the activity log with the key name.",
+        "q2": "What can the AI write?",
+        "a2": "Marks in grid journals (employee × day) and new employees — by the same rules as the interface. It never changes closed days or documents and does not invent measurement values.",
+        "q3": "How is MCP different from the API?",
+        "a3": "MCP is the standard that lets AI assistants use the service on their own. The REST API is for your developer: the same operations as plain HTTP requests, described in OpenAPI."
+      },
+      "showcase": {
+        "title": "Journals that get filled in the chat",
+        "text": "Write to the assistant the way you would write to a colleague:",
+        "prompt1": "Which journals are not filled today?",
+        "prompt2": "Mark Smirnova on sick leave from October 12 to 16",
+        "prompt3": "Add cook Anna Ivanova, +7 900 000-00-00"
+      },
+      "create": {
+        "step": "Step 1",
+        "title": "Create a key",
+        "nameLabel": "Key name",
+        "nameDefault": "My AI assistant",
+        "nameHint": "So you can recognise the key in the list later, for example “Manager’s ChatGPT”.",
+        "accessLabel": "What the assistant may do",
+        "accessWrite": "Read and write",
+        "accessWriteHint": "Check status, fill journals, add employees",
+        "accessRead": "Read only",
+        "accessReadHint": "Check status and view entries without changing anything",
+        "recommended": "recommended",
+        "submit": "Create key",
+        "creating": "Creating…",
+        "created": "Key created — copy it now",
+        "failed": "Could not create the key"
+      },
+      "secret": {
+        "title": "The key is shown once",
+        "hint": "Save the key or link: after a page reload only the beginning of the key remains.",
+        "copyKey": "Copy key",
+        "copyLink": "Copy link for Claude and ChatGPT",
+        "warning": "The link with the key is a password: do not publish it or forward it to group chats.",
+        "copied": "Copied",
+        "copyFailed": "Could not copy — select the text manually"
+      },
+      "connect": {
+        "step": "Step 2",
+        "title": "Connect the assistant",
+        "placeholder": "YOUR_KEY",
+        "noKeyHint": "Create a key in step 1 — it will be filled into the instructions automatically.",
+        "copy": "Copy",
+        "plansNote": "Custom connectors are not available on every ChatGPT and Claude plan.",
+        "tabs": {
+          "claude": "Claude",
+          "chatgpt": "ChatGPT",
+          "dev": "Cursor & Claude Code",
+          "rest": "Your code (REST)"
+        },
+        "claude": {
+          "s1": "Open claude.ai or the Claude app → “Settings” → “Connectors”.",
+          "s2": "Click “Add custom connector” and name it “WeSetup”.",
+          "s3": "Paste the link below and save. In a new chat, enable WeSetup in the tools list."
+        },
+        "chatgpt": {
+          "s1": "Open ChatGPT → “Settings” → “Apps & Connectors” → “Advanced” and turn on developer mode.",
+          "s2": "Click “Create”, name the connector “WeSetup”, authentication — “No authentication”.",
+          "s3": "Paste the link below and confirm. In the chat, choose WeSetup in the tools menu."
+        },
+        "dev": {
+          "s1": "Claude Code: run the command in your terminal.",
+          "s2": "Cursor and other editors: add the server to mcp.json."
+        },
+        "rest": {
+          "s1": "Pass the key in the Authorization header. The response is JSON with ok and data fields.",
+          "s2": "All methods and fields are described in OpenAPI:",
+          "openapi": "Open openapi.json",
+          "docs": "Developer documentation"
+        }
+      },
+      "tools": {
+        "title": "What the assistant can do",
+        "read": "Read",
+        "write": "Write",
+        "get_context": {
+          "title": "Knows where it works",
+          "text": "Organization, today’s date and key permissions"
+        },
+        "list_journals": {
+          "title": "Journal status",
+          "text": "What is filled today, what is not, links to documents"
+        },
+        "get_journal_document": {
+          "title": "Document entries",
+          "text": "Document cells for a period of up to 31 days"
+        },
+        "fill_journal_cells": {
+          "title": "Fills journals",
+          "text": "Employee × day cells — by the interface rules"
+        },
+        "list_employees": {
+          "title": "Employees",
+          "text": "A list with positions and phone numbers"
+        },
+        "add_employee": {
+          "title": "Adds employees",
+          "text": "Respecting the plan and manager permissions"
+        }
+      },
+      "keys": {
+        "title": "Organization keys",
+        "empty": "No keys yet — create the first one above.",
+        "you": "you",
+        "owner": "Owner: {name}",
+        "created": "Created {date}",
+        "lastUsed": "Last call {date} · {via}",
+        "neverUsed": "Not used yet",
+        "viaMcp": "AI assistant",
+        "viaRest": "API",
+        "revoke": "Revoke",
+        "revoked": "Key “{name}” revoked",
+        "revokeFailed": "Could not revoke the key",
+        "confirmTitle": "Revoke key “{name}”?",
+        "confirmDescription": "The key stops working from the next request.",
+        "confirmBullet1": "AI assistants using this key lose access immediately.",
+        "confirmBullet2": "A revoked key cannot be restored — only a new one can be issued.",
+        "confirmLabel": "Revoke key",
+        "cancel": "Cancel",
+        "typeToConfirm": "REVOKE"
+      },
+      "security": {
+        "title": "Security",
+        "owner": "The key acts with the owner’s permissions and only in this organization.",
+        "audit": "Every entry made through AI appears in the activity log.",
+        "auditLink": "Open the activity log",
+        "hash": "Only a fingerprint of the key is stored — it cannot be recovered, only reissued."
+      },
+      "legacy": {
+        "title": "Key for sensors and legacy integrations",
+        "hint": "Shared organization key for POST /api/external/*. AI assistants need a personal key above."
+      }
+    },
     "accounting": {
       "title": "Accounting",
       "description": "Once a week, we email the accountant a CSV of write-offs from the Losses and Waste journal for the last 7 days. The UTF-8 BOM file uses a semicolon delimiter, opens in Excel, and can be imported into 1C from a spreadsheet document.",
@@ -7615,8 +7761,8 @@
           "description": "Create a read-only link for sanitary inspectors with an expiry time."
         },
         "settings_api": {
-          "title": "Integration API",
-          "description": "Manage the key used by external systems and sensors."
+          "title": "AI assistants & API",
+          "description": "ChatGPT, Claude and REST API: journals and employees via chat"
         },
         "settings_integrations_tasksflow": {
           "title": "TasksFlow integration",

@@ -1,0 +1,50 @@
+### legacy initialize
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"wesetup","title":"WeSetup","version":"1.0.0"},"instructions":"WeSetup — электронные журналы СанПиН и ХАССП пищевого производства. Ты работаешь от имени сотрудника, чей ключ под
+### legacy tools/list (names)
+get_context,list_journals,get_journal_document,fill_journal_cells,list_employees,add_employee
+### modern tools/call list_journals (secret link)
+resultType complete isError false summary {"dailyTotal":10,"dailyFilled":0,"notFilled":["Гигиенический журнал (сотрудники)","Журнал здоровья","Журнал учёта температуры и влажности на складах","Журнал учёта температурного режима холодильного и морозильного оборудования","Чек-лист уборки и проветривания помещений","Журнал уборки","Журнал учета работы УФ бактерицидной установки","Журнал бракеража готовой пищевой продукции","Журнал бракеража скоропортящейся пищевой продукции","Журнал учета использования фритюрных жиров"]}
+### modern server/discover
+{"jsonrpc":"2.0","id":4,"result":{"resultType":"complete","supportedVersions":["2026-07-28","2025-11-25","2025-06-18","2025-03-26"],"capabilities":{"tools":{"listChanged":false}},"instructions":"WeSet
+### no key
+HTTP/1.1 401 Unauthorized
+www-authenticate: Bearer realm="WeSetup"
+### GET
+405
+### evil origin
+403
+### openapi
+{"openapi":"3.1.0","info":{"title":"WeSetup API","version":"1.0.0","description":"Электронные журналы 
+### REST GET /api/v1/journals
+{"ok":true,"data":{"date":"2026-10-17","journals":[{"code":"hygiene","name":"Гигиенический журнал (сотрудники)","daily":true,"filled":false,"storage":"cells","documents":[
+### REST POST cells (Idempotency-Key)
+HTTP/1.1 200 OK
+{"ok":true,"data":{"summary":"Заполнено ячеек: 1","details":["Гигиенический журнал (сотрудники) — «Гигиенический журнал»","Сотрудники: Иванова Анна","День: 2026-10-17 (ячеек: 1)","Значение: Выходной / отгул"],"url":"http://localhost:3011/journals/hygiene/documents/cmvbips480005is9m7yn6ct0l"}}
+
+### REST POST cells repeat
+HTTP/1.1 200 OK
+idempotent-replayed: true
+
+### REST DELETE employees
+405
+}
+
+Node.js v25.8.2
+         ^
+SyntaxError: The requested module '@/lib/db' does not provide an export named 'db'
+
+Node.js v25.8.2
+public_api.call | fill_journal_cells | rest | Мой ИИ-ассистент | Ольга Руководитель
+api_key.revoked | api_key | - | Мой ИИ-ассистент | Ольга Руководитель
+api_key.created | api_key | - | Мой ИИ-ассистент | Ольга Руководитель
+api_key.created | api_key | - | Мой ИИ-ассистент | Ольга Руководитель
+api_key.revoked | api_key | - | Мой ИИ-ассистент | Ольга Руководитель
+api_key.created | api_key | - | Мой ИИ-ассистент | Ольга Руководитель
+### AC8 legacy org token → /api/external/summary
+{"ok":true,"organizationId":"cmvbiprjl0000is9m1720vrxy","date":"2026-10-16","totalJournals":45,"filledJournals":0,"journ
+### legacy org token → MCP
+{"jsonrpc":"2.0","id":null,"error":{"code":-32000,"message":"Это ключ интеграций для /api/external. Для ИИ-ассистента создайте персональный ключ на странице «ИИ-ассистенты и API»."}}
+    115 200
+     10 429
+HTTP/1.1 429 Too Many Requests
+retry-after: 14
