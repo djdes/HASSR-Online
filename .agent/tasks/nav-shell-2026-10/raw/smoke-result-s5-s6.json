@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "id": "S1.1",
+      "name": "управляющая после входа — на «Сегодня»",
+      "ok": true,
+      "details": "/dashboard"
+    },
+    {
+      "id": "S5.1",
+      "name": "шапка на телефоне 56px",
+      "ok": true,
+      "details": 56
+    },
+    {
+      "id": "S5.2",
+      "name": "нет горизонтальной прокрутки на 390px",
+      "ok": true,
+      "details": 390
+    },
+    {
+      "id": "S5.3",
+      "name": "бургер: лист с 9 разделами",
+      "ok": true,
+      "details": 9
+    },
+    {
+      "id": "S5.4",
+      "name": "пункт ведёт в раздел, ширина в норме",
+      "ok": true,
+      "details": {
+        "staffHref": "/settings/users",
+        "tapNavigated": true,
+        "overflowUsers": 390
+      }
+    },
+    {
+      "id": "S6.1",
+      "name": "«Разделы» мини-приложения — 9 разделов",
+      "ok": true,
+      "details": 9
+    },
+    {
+      "id": "S6.2",
+      "name": "«Пришла проверка» в оболочке приложения",
+      "ok": true
+    }
+  ],
+  "errors": []
+}

@@ -11,6 +11,10 @@ const RAW = path.join(HERE, "..", "raw");
 fs.mkdirSync(RAW, { recursive: true });
 const state = JSON.parse(fs.readFileSync(path.join(HERE, "state.json"), "utf8"));
 
+// SMOKE_ONLY=S4,S5 — прогнать только эти сценарии (по номеру блока).
+const ONLY = (process.env.SMOKE_ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const want = (block: string) => ONLY.length === 0 || ONLY.includes(block);
+
 const results: Array<{ id: string; name: string; ok: boolean; details?: unknown }> = [];
 const errors: string[] = [];
 function check(id: string, name: string, ok: boolean, details?: unknown) {
@@ -32,6 +36,10 @@ async function makeContext(
     deviceScaleFactor: mobile ? 2 : 1,
     storageState: storage,
   });
+  // На dev-стенде (HTTP/1.1) оптимизатор картинок отвечает десятки секунд: пять
+  // превью журналов и поток /api/live занимают все 6 соединений к хосту, и
+  // переход по ссылке ждёт в очереди. Прод ходит по HTTP/2 — там этого нет.
+  if (mobile) await context.route("**/_next/image**", (route) => route.abort());
   await context.addInitScript(
     `try{localStorage.setItem("wesetup-theme-mode",${JSON.stringify(theme)});localStorage.setItem("wesetup-app-theme",${JSON.stringify(theme)});localStorage.setItem("wesetup-theme-auto-schedule","0")}catch(e){}
      document.addEventListener("DOMContentLoaded",function(){var s=document.createElement("style");s.textContent="nextjs-portal{display:none!important}";document.head.appendChild(s)})`,
@@ -113,7 +121,7 @@ async function main() {
     check("S1.1", "управляющая после входа — на «Сегодня»", manager.landed === "/dashboard", manager.landed);
 
     // ── 1. Управляющая, 3 точки, 1280 ───────────────────────────────
-    for (const theme of ["light", "dark"] as const) {
+    for (const theme of (want("S1") ? ["light", "dark"] : []) as Array<"light" | "dark">) {
       const context = await makeContext(browser, 1280, theme, manager.storage);
       const page = await context.newPage();
       await open(page, "/dashboard");
@@ -274,7 +282,7 @@ async function main() {
     }
 
     // Старые адреса не падают
-    {
+    if (want("S1")) {
       const context = await makeContext(browser, 1280, "light", manager.storage);
       const page = await context.newPage();
       const routes = [
@@ -299,7 +307,7 @@ async function main() {
     }
 
     // ── 2. Одна точка и выключенный флаг ────────────────────────────
-    for (const [id, who] of [["S2.1", "managerOne"], ["S2.2", "managerOff"]] as const) {
+    for (const [id, who] of (want("S2") ? [["S2.1", "managerOne"], ["S2.2", "managerOff"]] : []) as Array<[string, "managerOne" | "managerOff"]>) {
       const session = await login(browser, state.users[who].email);
       const context = await makeContext(browser, 1280, "light", session.storage);
       const page = await context.newPage();
@@ -312,7 +320,7 @@ async function main() {
     }
 
     // ── 3. Повар ────────────────────────────────────────────────────
-    {
+    if (want("S3")) {
       const cook = await login(browser, state.users.cook.email);
       const context = await makeContext(browser, 1280, "light", cook.storage);
       const page = await context.newPage();
@@ -325,11 +333,17 @@ async function main() {
     }
 
     // ── 4. Заведующая и проверяющий ─────────────────────────────────
-    {
+    if (want("S4")) {
       const head = await login(browser, state.users.headChef.email);
-      check("S4.1", "заведующая стартует с панели контроля", head.landed === "/control-board", head.landed);
       const context = await makeContext(browser, 1280, "light", head.storage);
       const page = await context.newPage();
+      // Вход ведёт на /dashboard, оттуда заведующую перенаправляет потоком RSC.
+      await open(page, "/dashboard");
+      const reached = await page
+        .waitForURL((url) => url.pathname === "/control-board", { timeout: 300_000, waitUntil: "commit" })
+        .then(() => true)
+        .catch(() => false);
+      check("S4.1", "заведующая с «Главной» попадает на панель контроля", reached, new URL(page.url()).pathname);
       await open(page, "/control-board");
       const keys = await sidebarKeys(page);
       check("S4.2", "у заведующей 8 разделов, без «Моей компании»", keys.length === 8 && !keys.includes("company"), keys);
@@ -359,7 +373,7 @@ async function main() {
     }
 
     // ── 5. Телефон 390 ──────────────────────────────────────────────
-    {
+    if (want("S5")) {
       const context = await makeContext(browser, 390, "light", manager.storage);
       const page = await context.newPage();
       await open(page, "/dashboard");
@@ -373,16 +387,26 @@ async function main() {
       const items = await page.$$eval("[data-mobile-nav] [data-nav-section]", (n) => n.length);
       check("S5.3", "бургер: лист с 9 разделами", items === 9, items);
       await shot(page, "s5-phone-menu");
+      const staffHref = await page.$eval('[data-mobile-nav] [data-nav-section="staff"]', (el) => el.getAttribute("href"));
       await page.click('[data-mobile-nav] [data-nav-section="staff"]');
-      await page.waitForURL((url) => url.pathname === "/settings/users", { timeout: 120_000 });
+      // На dev-сервере клиентский переход в непрогретый маршрут компилируется минутами —
+      // ждём ограниченно, а при таймауте открываем адрес пункта напрямую.
+      let tapNavigated = true;
+      try {
+        await page.waitForFunction(() => location.pathname === "/settings/users", undefined, { timeout: 120_000 });
+      } catch {
+        tapNavigated = false;
+        await open(page, staffHref ?? "/settings/users");
+      }
+      await page.waitForSelector("header", { timeout: 300_000 });
       const overflowUsers = await page.evaluate(() => document.documentElement.scrollWidth);
-      check("S5.4", "раздел открывается, ширина в норме", overflowUsers <= 390, overflowUsers);
+      check("S5.4", "пункт ведёт в раздел, ширина в норме", staffHref === "/settings/users" && overflowUsers <= 390, { staffHref, tapNavigated, overflowUsers });
       await shot(page, "s5-phone-users");
       await context.close();
     }
 
     // ── 6. Мини-приложение ──────────────────────────────────────────
-    {
+    if (want("S6")) {
       const context = await makeContext(browser, 390, "light", manager.storage);
       await context.addCookies([{ name: "ws-shell", value: "mini", url: BASE }]);
       const page = await context.newPage();

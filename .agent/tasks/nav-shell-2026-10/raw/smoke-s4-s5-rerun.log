@@ -1,0 +1,19 @@
+PASS [S1.1] управляющая после входа — на «Сегодня» "/dashboard"
+PASS [S4.1] заведующая с «Главной» попадает на панель контроля "/control-board"
+PASS [S4.2] у заведующей 8 разделов, без «Моей компании» ["staff","points","journals","checklists","productionControl","billing","more","inspection"]
+PASS [S4.3] заведующей: QR и архив, без готовности ["1","2"]
+PASS [S4.4] лист печати открывается заведующей 200
+PASS [S4.5] архив журналов скачивается заведующей 200
+PASS [S4.6] проверяющий с линейной ролью: команда, журналы, проверка — без разделов руководства ["staff","journals","checklists","inspection"]
+PASS [S4.7] проверяющему QR виден, выпуска нет
+PASS [S5.1] шапка на телефоне 56px 56
+PASS [S5.2] нет горизонтальной прокрутки на 390px 390
+PASS [S5.3] бургер: лист с 9 разделами 9
+page.waitForURL: Timeout 300000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "commit"
+============================================================
+    at main (D:\wt\nav-shell\.agent\tasks\nav-shell-2026-10\e2e\smoke.ts:387:18) {
+  name: 'TimeoutError'
+}
+EXIT 1

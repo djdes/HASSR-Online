@@ -1,0 +1,27 @@
+{
+  "task": "nav-shell-2026-10",
+  "commits": ["77145571", "e3890922"],
+  "checks": {
+    "typecheck": "npx tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json → exit 0",
+    "tests": "node --import tsx --test \"src/**/*.test.ts\" → 3830 pass / 0 fail",
+    "deploy": "e3890922 в master, прод .build-sha e38909222e14…, pm2 online, /login 200",
+    "i18n": "node scripts/i18n-types.mjs --check → OK",
+    "precommit": "typecheck + test:gate → OK (оба коммита)",
+    "e2e": ".agent/tasks/nav-shell-2026-10/e2e/smoke.ts на localhost:3025 + wesetup_e2e: S1–S6 PASS (raw/smoke-s1-s4-full.log, raw/smoke-s4-s5-rerun.log, raw/smoke-s5-s6.log, raw/smoke-result-s5-s6.json)"
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": "src/lib/app-nav.test.ts: 9 разделов в порядке, каждая page.tsx в разделе, правила вкладок и карточек сверены с guard'ами страниц" },
+    "AC2": { "status": "PASS", "evidence": "app-nav.test.ts (владелец/управляющая/ROOT 9, заведующая 8, повар ≤1, verify-only); e2e S1.2, S4.2, S4.6, S3.1" },
+    "AC3": { "status": "PASS", "evidence": "e2e S1.2, S1.7, S1.8, S1.9; снимок raw/s1-dashboard-1280-light.png" },
+    "AC4": { "status": "PASS", "evidence": "e2e S1.4, S1.5, S1.13" },
+    "AC5": { "status": "PASS", "evidence": "e2e S5.1 (56px), S5.2 (scrollWidth 390), S5.3 (лист с 9 разделами), S5.4 (тап по пункту открывает /settings/users, ширина 390)" },
+    "AC6": { "status": "PASS", "evidence": "settings-cards.test.ts (51 бывшая карточка: вкладка или карточка), no-settings-hub-links.test.ts, e2e S1.10–S1.12, S1.20b" },
+    "AC7": { "status": "PASS", "evidence": "e2e S1.16–S1.19, S1.21, S1.23, S4.3–S4.5, S4.7" },
+    "AC8": { "status": "PASS", "evidence": "org-logo-file.test.ts (PNG, SVG со скриптом отклоняется), e2e S1.20" },
+    "AC9": { "status": "PASS", "evidence": "journal-responsive.test.ts, e2e S1.14 (left 256), S1.15 (печать left 0)" },
+    "AC10": { "status": "PASS", "evidence": "dashboard/page.tsx без вкладок точек и карточек-ссылок; e2e S1.6" },
+    "AC11": { "status": "PASS", "evidence": "/mini/sections из buildNavModel; e2e S6.1 (9 разделов), S6.2 («Пришла проверка» в оболочке) — raw/smoke-result-s5-s6.json" },
+    "AC12": { "status": "PASS", "evidence": "catalog-validation.test.ts, i18n-types --check, whats-new-notes.ts категория «Новое меню кабинета»" },
+    "AC13": { "status": "PASS", "evidence": "typecheck/lint/test:gate зелёные; e2e S1–S6 PASS — raw/smoke-*.log, raw/smoke-result-s5-s6.json, снимки raw/*.png" }
+  }
+}
