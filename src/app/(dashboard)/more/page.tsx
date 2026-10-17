@@ -40,7 +40,7 @@ export default async function MorePage() {
   const hasAlerts = openCapaCount > 0 || expiringBatches > 0 || weekLossCount > 0;
 
   return (
-    <SectionSettingsPage session={session} section="more" titleKey="more">
+    <SectionSettingsPage session={session} section="more">
       <StaleCapaNag count={staleCapaCount} />
       {hasAlerts ? (
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-more-alerts>

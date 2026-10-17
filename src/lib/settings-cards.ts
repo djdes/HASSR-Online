@@ -1,8 +1,9 @@
 /**
  * Карточки настроек. Раньше они жили одной стеной на хабе `/settings`
  * (~50 штук в семи группах); с 2026-10-16 хаба нет — каждая карточка
- * живёт в своём разделе меню (`lib/app-nav.ts`): на странице «Настройка»
- * раздела или на «Остальном».
+ * живёт в своём разделе меню (`lib/app-nav.ts`): на странице «Настройка
+ * журналов» или на «Остальном». С 2026-10-17 карточки сотрудников и точек
+ * стали пунктами меню своих разделов (у раздела своё левое меню).
  *
  * Название и описание — в каталогах `settingsManagement.home.cards.<id>`.
  * Иконка — строкой: модуль читают и сервер, и клиент.
@@ -14,17 +15,10 @@ import type { MessageContract } from "@/i18n/message-contract";
 /** Ключ карточки = ключ её текстов в каталоге. */
 export type SettingsCardId = keyof MessageContract["settingsManagement"]["home"]["cards"];
 
-export type SettingsCardSection = "staff" | "points" | "journals" | "more";
+export type SettingsCardSection = "journals" | "more";
 
 /** Группа на странице: заголовок `navigation.shell.groups.<group>`. */
-export type SettingsCardGroup =
-  | "staff"
-  | "points"
-  | "journals"
-  | "tasks"
-  | "work"
-  | "connections"
-  | "other";
+export type SettingsCardGroup = "journals" | "tasks" | "work" | "connections" | "other";
 
 export type SettingsCard = {
   /** Ключ текстов `settingsManagement.home.cards.<id>`. */
@@ -45,8 +39,6 @@ export type SettingsCard = {
 
 const STAFF_PATH: NavAccess = { kind: "staffPath" };
 const FULL_ACCESS: NavAccess = { kind: "fullAccess" };
-// Страницы прав и иерархии пускают по праву `settings.permissions` из БД.
-const PERMISSIONS_FACT: NavAccess = { kind: "fact", fact: "settingsPermissions" };
 const ADMIN: NavAccess = { kind: "anyOf", capabilities: ["admin.full"] };
 
 const INDIGO = { iconClass: "text-[#3848c7]", bgClass: "bg-[#eef1ff]" };
@@ -57,25 +49,8 @@ const AMBER = { iconClass: "text-[#f59e0b]", bgClass: "bg-[#fff8eb]" };
 const MINT = { iconClass: "text-[#10b981]", bgClass: "bg-[#ecfdf5]" };
 
 export const SETTINGS_CARDS: SettingsCard[] = [
-  // ---- Сотрудники → Настройка -----------------------------------------
-  { id: "settings_permissions", href: "/settings/permissions", icon: "ShieldCheck", ...INDIGO, section: "staff", group: "staff", access: PERMISSIONS_FACT },
-  { id: "settings_role_presets", href: "/settings/role-presets", icon: "ShieldCheck", ...INDIGO, section: "staff", group: "staff", access: ADMIN },
-  { id: "settings_staff_hierarchy", href: "/settings/staff-hierarchy", icon: "Network", ...AMBER, section: "staff", group: "staff", access: PERMISSIONS_FACT },
-  { id: "settings_position_staff_visibility", href: "/settings/position-staff-visibility", icon: "Users", ...SKY, section: "staff", group: "staff", access: FULL_ACCESS },
-  { id: "settings_workload_balance", href: "/settings/workload-balance", icon: "Scale", ...MINT, section: "staff", group: "staff", access: ADMIN },
-  { id: "settings_phone", href: "/settings/phone", icon: "Phone", ...INDIGO, section: "staff", group: "staff", access: STAFF_PATH },
-
-  // ---- Торговые точки → Настройка -------------------------------------
-  { id: "settings_print_agent", href: "/settings/print-agent", icon: "Printer", ...BRIGHT, section: "points", group: "points", access: FULL_ACCESS },
-  { id: "settings_kiosk", href: "/settings/kiosk", icon: "TabletSmartphone", ...BRIGHT, section: "points", group: "points", access: FULL_ACCESS },
-  { id: "settings_products", href: "/settings/products", icon: "Package", ...AMBER, section: "points", group: "points", access: FULL_ACCESS },
-  { id: "settings_master_cabinet", href: "/settings/master-cabinet", icon: "Library", ...INDIGO, section: "points", group: "points", access: FULL_ACCESS },
-
-  // ---- Журналы → Настройка: журналы -----------------------------------
+  // ---- Журналы → Настройка журналов: журналы --------------------------
   { id: "settings_journals", href: "/settings/journals", icon: "ClipboardList", iconClass: "text-[#d946ef]", bgClass: "bg-[#fdf4ff]", section: "journals", group: "journals", access: FULL_ACCESS },
-  { id: "settings_journal_responsibles", href: "/settings/journal-responsibles", icon: "Network", ...VIOLET, section: "journals", group: "journals", access: ADMIN },
-  { id: "settings_journal_access", href: "/settings/journal-access", icon: "KeyRound", ...BRIGHT, section: "journals", group: "journals", access: FULL_ACCESS },
-  { id: "settings_journals_by_position", href: "/settings/journals-by-position", icon: "Network", ...VIOLET, section: "journals", group: "journals", access: FULL_ACCESS },
   { id: "settings_journal_periods", href: "/settings/journal-periods", icon: "CalendarRange", ...MINT, section: "journals", group: "journals", access: FULL_ACCESS },
   { id: "settings_auto_journals", href: "/settings/auto-journals", icon: "Sparkles", ...BRIGHT, section: "journals", group: "journals", access: FULL_ACCESS, hideWhen: "specialMode" },
   { id: "settings_compliance", href: "/settings/compliance", icon: "ShieldCheck", ...INDIGO, section: "journals", group: "journals", access: FULL_ACCESS },
@@ -91,7 +66,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   },
   { id: "settings_journal_checklists", href: "/settings/journal-checklists", icon: "ListChecks", iconClass: "text-emerald-700", bgClass: "bg-emerald-100", section: "journals", group: "journals", access: ADMIN },
 
-  // ---- Журналы → Настройка: раздача задач -----------------------------
+  // ---- Журналы → Настройка журналов: раздача задач ---------------------
   { id: "settings_journal_task_mode", href: "/settings/journal-task-mode", icon: "Settings2", ...INDIGO, section: "journals", group: "tasks", access: FULL_ACCESS },
   { id: "settings_journal_flow", href: "/settings/journal-flow", icon: "Shuffle", ...VIOLET, section: "journals", group: "tasks", access: ADMIN },
   { id: "settings_task_visibility", href: "/settings/task-visibility", icon: "Eye", ...INDIGO, section: "journals", group: "tasks", access: ADMIN },

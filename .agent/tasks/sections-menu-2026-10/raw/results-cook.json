@@ -1,0 +1,23 @@
+{
+  "base": "http://localhost:3053",
+  "startedAt": "2026-10-17T21:46:24.585Z",
+  "roles": {
+    "cook": {
+      "desktop": {
+        "sections": {},
+        "home": "http://localhost:3053/mini/today",
+        "sidebar": false
+      },
+      "mobile": {
+        "burger": false,
+        "menuButton": false
+      },
+      "mini": {
+        "burger": false,
+        "menuButton": false
+      }
+    }
+  },
+  "finishedAt": "2026-10-17T21:47:25.334Z",
+  "problems": []
+}

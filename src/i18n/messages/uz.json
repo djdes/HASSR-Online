@@ -754,6 +754,8 @@
     }
   },
   "inspectionDay": {
+    "title": "Sizga tekshiruv keldi (yoki keladi)",
+    "lead": "Tekshiruvchi allaqachon shu yerdami? Uch qadam: QR-kodni ko‘rsating, jurnallarni bitta arxivda bering, nimani tuzatish kerakligini ko‘ring.",
     "qrTitle": "QR-kodni tekshiruvchiga ko‘rsating",
     "fullscreen": "To‘liq ekran",
     "print": "Varaqni chop etish",
@@ -2300,43 +2302,131 @@
       "menu": "Menyu",
       "logout": "Chiqish",
       "brand": "WeSetup",
-      "items": {
-        "team": "HACCP guruhi",
-        "policy": "Sifat siyosati",
-        "products": "Mahsulot tavsifi (TR TS)",
-        "flowcharts": "Texnologik jarayon sxemalari",
-        "hazards": "Xavflar tahlili",
-        "control-points": "KNN va ish varaqlari",
-        "audit": "Chek-varaqlar va audit",
-        "instructions": "Ish yoʻriqnomalari",
-        "procedures": "Hujjatlashtirilgan tartiblar",
-        "orders": "Buyruqlar",
-        "posters": "Ishlab chiqarish plakatlari",
-        "storage": "Hujjatlar ombori",
-        "floor-plans": "Xonalar va oqimlar rejasi",
-        "pest-control": "Dezinseksiya va deratizatsiya",
-        "lab": "Laboratoriya tekshiruvlari",
-        "norm-documents": "Meʼyoriy hujjatlar",
-        "program": "IChN dasturi"
+      "menus": {
+        "company": {
+          "groups": {
+            "more": "Yana"
+          },
+          "items": {
+            "organization": "Rekvizitlar",
+            "names": "Bo‘lim nomlari",
+            "onboarding": "Tezkor sozlash",
+            "template": "Muassasa shabloni",
+            "appearance": "Ko‘rinish"
+          }
+        },
+        "staff": {
+          "groups": {
+            "directories": "Ma’lumotnomalar",
+            "more": "Yana"
+          },
+          "items": {
+            "users": "Xodimlar",
+            "access": "Kirish va huquqlar",
+            "team": "Jamoa",
+            "schedule": "Smenalar jadvali",
+            "health": "Tibbiy daftarchalar va o‘qitish",
+            "responsibles": "Jurnal mas’ullari",
+            "hierarchy": "Boshqaruv ierarxiyasi",
+            "visibility": "Hamkasblarni ko‘rish",
+            "workload": "Xodimlar yuklamasi",
+            "phone": "Telefonni ulash"
+          },
+          "tabs": {
+            "permissions": "Kirish huquqlari",
+            "presets": "Huquq to‘plamlari",
+            "journals": "Xodimlar jurnallari",
+            "positions": "Lavozim × jurnal"
+          }
+        },
+        "points": {
+          "groups": {
+            "more": "Yana"
+          },
+          "items": {
+            "buildings": "Nuqtalar",
+            "areas": "Sexlar va xonalar",
+            "equipment": "Uskunalar",
+            "qr": "QR-stikerlar va plakatlar",
+            "printer": "Onlayn printer",
+            "kiosk": "Umumiy planshet",
+            "products": "Mahsulotlar katalogi",
+            "master": "Master-kabinet"
+          }
+        },
+        "journals": {
+          "items": {
+            "today": "Bugun",
+            "control": "Bugun",
+            "all": "Barcha jurnallar",
+            "verify": "Yozuvlarni tekshirish",
+            "setup": "Jurnallarni sozlash"
+          }
+        },
+        "checklists": {
+          "items": {
+            "builder": "Chek-list konstruktori"
+          }
+        },
+        "productionControl": {
+          "groups": {
+            "haccp": "HACCP",
+            "documents": "Hujjatlar"
+          },
+          "items": {
+            "team": "HACCP guruhi",
+            "policy": "Sifat siyosati",
+            "products": "Mahsulot tavsifi (TR TS)",
+            "flowcharts": "Texnologik jarayon sxemalari",
+            "hazards": "Xavflar tahlili",
+            "control-points": "KNN va ish varaqlari",
+            "audit": "Chek-varaqlar va audit",
+            "instructions": "Ish yoʻriqnomalari",
+            "procedures": "Hujjatlashtirilgan tartiblar",
+            "orders": "Buyruqlar",
+            "posters": "Ishlab chiqarish plakatlari",
+            "storage": "Hujjatlar ombori",
+            "floor-plans": "Xonalar va oqimlar rejasi",
+            "pest-control": "Dezinseksiya va deratizatsiya",
+            "lab": "Laboratoriya tekshiruvlari",
+            "norm-documents": "Meʼyoriy hujjatlar",
+            "program": "IChN dasturi"
+          },
+          "tabs": {
+            "overview": "Umumiy",
+            "program": "Dastur",
+            "haccpPlan": "HACCP rejasi",
+            "members": "Tarkib",
+            "regulation": "Nizom",
+            "text": "Matn",
+            "qrSheet": "QR varaq",
+            "points": "Nuqtalar",
+            "worksheets": "Ish varaqlari",
+            "list": "Roʻyxat",
+            "guidelines": "Uslubiy tavsiyalar",
+            "sanpin": "SanPiN meʼyorlari",
+            "meetings": "Yigʻilishlar"
+          }
+        },
+        "billing": {
+          "items": {
+            "plan": "Tarif",
+            "balance": "Balans va bonuslar",
+            "services": "Mutaxassis xizmatlari"
+          }
+        },
+        "inspection": {
+          "items": {
+            "now": "Hozir nima qilish kerak",
+            "portal": "Tekshiruvchi uchun QR",
+            "readiness": "Tekshiruvga tayyorgarlik"
+          }
+        }
       },
-      "menuGroups": {
-        "haccp": "HACCP",
-        "documents": "Hujjatlar"
-      },
-      "subtabs": {
-        "overview": "Umumiy",
-        "program": "Dastur",
-        "haccpPlan": "HACCP rejasi",
-        "members": "Tarkib",
-        "regulation": "Nizom",
-        "text": "Matn",
-        "qrSheet": "QR varaq",
-        "points": "Nuqtalar",
-        "worksheets": "Ish varaqlari",
-        "list": "Roʻyxat",
-        "guidelines": "Uslubiy tavsiyalar",
-        "sanpin": "SanPiN meʼyorlari",
-        "meetings": "Yigʻilishlar"
+      "addLogo": "Logotip qo‘shish",
+      "leads": {
+        "journalsSetup": "Qaysi jurnallarni yuritasiz, ularni kim to‘ldiradi va vazifalar qanday taqsimlanadi — keraklisini oching.",
+        "staffHealth": "Tibbiy daftarchalar muddati va xodimlarni o‘qitish: kimga tez orada uzaytirish kerak va kim hali yo‘riqnomadan o‘tmagan."
       },
       "backToMain": "Asosiy menyu",
       "sectionMenuAria": "Boʻlim menyusi",

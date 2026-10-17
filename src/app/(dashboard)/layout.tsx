@@ -417,6 +417,8 @@ export default async function DashboardLayout({
                 (navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
                 getWebHomeHref(session.user)
               }
+              canEditBranding={hasCapability(session.user, "admin.full")}
+              whiteLabel={Boolean(consultant)}
             />
           ) : null}
           <div className="flex min-w-0 flex-1 flex-col">
@@ -685,6 +687,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
           where: { id: activeOrgId },
           select: {
             name: true,
+            logoUrl: true,
             isDemo: true,
             demoExpiresAt: true,
             _count: {
@@ -779,7 +782,15 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 </Suspense>
               ) : null}
               {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
-              <SectionMenuButton />
+              {/* Меню раздела — с логотипом компании клиента, как на сайте (П-3). */}
+              <SectionMenuButton
+                brand={{
+                  logoUrl: orgRow?.logoUrl ?? null,
+                  name: orgDisplayName(impersonatedName ?? orgRow?.name ?? "", "") || "WeSetup",
+                  homeHref: shell.homeHref,
+                  canEditBranding: hasCapability(session.user, "admin.full"),
+                }}
+              />
               <SectionTabs />
               <SectionFrame>{children}</SectionFrame>
               {billing?.gate ? (

@@ -5,14 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { sectionForPath } from "@/lib/app-nav";
+import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelSection } from "@/lib/app-nav.server";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/logo";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { NavIcon } from "@/components/layout/nav-icons";
+import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { SectionStatusDot } from "@/components/layout/section-status-dot";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
+
 
 const SIDEBAR_ITEM =
   "flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
@@ -21,21 +24,26 @@ const SIDEBAR_ITEM =
  * Меню кабинета слева (≥1024px): логотип компании и разделы. «Пришла
  * проверка» прижата к низу — в спешке её ищут глазами первой.
  *
- * Раздел с собственным меню (`section.menu`, сейчас «Производственный
- * контроль») меняет левое меню целиком: две панели лежат на ленте шириной
- * 200%, при входе в раздел лента сдвигается на панель раздела (логотип,
+ * У раздела своё меню (`section.menu`, эскизы руководителя 2026-10-17): при
+ * входе в раздел левое меню меняется целиком. Две панели лежат на ленте
+ * шириной 200%, при входе лента сдвигается на панель раздела (логотип,
  * «‹ Главное меню», заголовок раздела и его пункты), а «‹ Главное меню»
- * возвращает обычный список, не меняя страницу. Подразделы остальных
- * разделов — вкладки над основным окном.
+ * возвращает обычный список, не меняя страницу. Раздел без меню
+ * («Остальное») — обычный список, подразделы — вкладки над основным окном.
  */
 export function AppSidebar({
   logoUrl,
   organizationName,
   homeHref,
+  canEditBranding = false,
+  whiteLabel = false,
 }: {
   logoUrl: string | null;
   organizationName: string;
   homeHref: string;
+  canEditBranding?: boolean;
+  /** White-label партнёра: отметку «сетап» внизу не ставим. */
+  whiteLabel?: boolean;
 }) {
   const t = useTranslations("navigation.shell");
   const { sections } = useAppNav();
@@ -45,9 +53,17 @@ export function AppSidebar({
   const main = sections.filter((section) => section.key !== "inspection");
   const inspection = sections.find((section) => section.key === "inspection");
 
-  // Раздел с меню: тот, где человек; вне него — любой, у кого меню есть
-  // (чтобы вход в раздел был сдвигом ленты, а не внезапной панелью).
-  const menuSection = placeSection?.menu ? placeSection : sections.find((section) => section.menu);
+  // Панель раздела рисуется заранее, чтобы вход и выход были сдвигом ленты.
+  // Вне раздела с меню в ней — последний открытый раздел с меню: при уходе в
+  // «Остальное» за 200 мс сдвига не мелькает меню чужого раздела.
+  const [lastMenuKey, setLastMenuKey] = useState<NavSectionKey | null>(
+    placeSection?.menu ? placeSection.key : null,
+  );
+  if (placeSection?.menu && placeSection.key !== lastMenuKey) setLastMenuKey(placeSection.key);
+  const menuSection: NavModelSection | undefined = placeSection?.menu
+    ? placeSection
+    : (sections.find((section) => section.key === lastMenuKey && section.menu) ??
+      sections.find((section) => section.menu));
   const inSection = Boolean(placeSection?.menu);
   // «Показано главное меню» помним вместе с путём: при смене пути оно само сбрасывается.
   const [mainShownFor, setMainShownFor] = useState<string | null>(null);
@@ -67,14 +83,36 @@ export function AppSidebar({
     else if (active) asideRef.current?.querySelector<HTMLElement>(`[data-nav-section="${active}"]`)?.focus();
   }, [showSection, active]);
 
+  // Пункт раздела с меню возвращает его панель, даже если путь не меняется:
+  // уже внутри раздела — не уводим на его корень, только возвращаем панель.
+  const selectHandler = (section: NavModelSection) =>
+    section.menu
+      ? (event: MouseEvent<HTMLAnchorElement>) => {
+          if (inSection && active === section.key) {
+            event.preventDefault();
+            focusAfter.current = true;
+          }
+          setMainShownFor(null);
+        }
+      : undefined;
+
   const logo = (
-    <Link
-      href={homeHref}
-      className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[#ececf4] px-5 transition-colors duration-150 hover:bg-[#fafbff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#5566f6]/15"
-      data-sidebar-logo
-    >
-      <OrganizationMark key={logoUrl ?? "none"} logoUrl={logoUrl} name={organizationName} />
-    </Link>
+    <div className="flex h-[72px] shrink-0 items-center border-b border-[#ececf4] px-5" data-sidebar-logo>
+      <OrganizationBrand
+        logoUrl={logoUrl}
+        name={organizationName}
+        homeHref={homeHref}
+        canEditBranding={canEditBranding}
+      />
+    </div>
+  );
+
+  // Маленькая отметка «сетап» внизу (решение по эскизам: логотип клиента
+  // сверху, наш знак — тихо снизу).
+  const brandMark = whiteLabel ? null : (
+    <div className="shrink-0 px-5 pt-2 pb-4 text-[#b4b8c8]" data-sidebar-brand-mark>
+      <BrandLogo height={12} title={t("brand")} />
+    </div>
   );
 
   const mainPane = (
@@ -87,29 +125,24 @@ export function AppSidebar({
               key={section.key}
               section={section}
               active={active === section.key}
-              // Пункт раздела с меню возвращает его панель, даже если путь не меняется.
-              onSelect={
-                section.menu
-                  ? (event) => {
-                      // Уже внутри раздела: не уводим на его корень, только возвращаем панель раздела.
-                      if (inSection && active === section.key) {
-                        event.preventDefault();
-                        focusAfter.current = true;
-                      }
-                      setMainShownFor(null);
-                    }
-                  : undefined
-              }
+              onSelect={selectHandler(section)}
               chevron={Boolean(section.menu) && active === section.key}
             />
           ))}
         </div>
         {inspection ? (
           <div className="mt-auto border-t border-[#ececf4] pt-3">
-            <SidebarItem section={inspection} active={active === "inspection"} accent />
+            <SidebarItem
+              section={inspection}
+              active={active === "inspection"}
+              accent
+              onSelect={selectHandler(inspection)}
+              chevron={Boolean(inspection.menu) && active === "inspection"}
+            />
           </div>
         ) : null}
       </nav>
+      {brandMark}
     </>
   );
 
@@ -152,6 +185,7 @@ export function AppSidebar({
                 focusAfter.current = true;
                 setMainShownFor(pathname);
               }}
+              data-back-to-main
               className="inline-flex h-9 items-center gap-1 rounded-xl px-2.5 text-[13.5px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
               <ChevronLeft className="size-4" aria-hidden />
@@ -203,6 +237,7 @@ export function AppSidebar({
               </div>
             ))}
           </nav>
+          {brandMark}
         </div>
       </div>
     </aside>
@@ -244,54 +279,5 @@ function SidebarItem({
       <span className="min-w-0 flex-1">{section.label}</span>
       {chevron ? <ChevronRight className="size-4 shrink-0 text-[#5566f6]" aria-hidden /> : null}
     </Link>
-  );
-}
-
-/** Логотип организации; нет логотипа — монограмма и название. */
-export function OrganizationMark({
-  logoUrl,
-  name,
-  compact = false,
-}: {
-  logoUrl: string | null;
-  name: string;
-  compact?: boolean;
-}) {
-  // Битая ссылка на логотип не должна оставлять пустое место — монограмма.
-  const [failed, setFailed] = useState(false);
-  if (logoUrl && !failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={logoUrl}
-        alt={name}
-        className={cn("w-auto object-contain object-left", compact ? "h-7 max-w-[120px]" : "max-h-10 max-w-[200px]")}
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-  const initials = name
-    .replace(/[«»"']/g, "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toLocaleUpperCase("ru-RU") ?? "")
-    .join("");
-  return (
-    <span className="flex min-w-0 items-center gap-2.5">
-      <span
-        aria-hidden
-        className={cn(
-          "flex shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] font-semibold text-[#3848c7]",
-          compact ? "size-8 text-[13px]" : "size-9 text-[14px]",
-        )}
-      >
-        {initials || "W"}
-      </span>
-      {compact ? null : (
-        <span className="truncate text-[15px] font-semibold text-[#0b1024]">{name}</span>
-      )}
-    </span>
   );
 }

@@ -5,6 +5,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { isAgentOnline } from "@/lib/print-agent-auth";
 import { PageHeader } from "@/components/ui/page-header";
+import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
 import { PrintAgentSettingsClient } from "./print-agent-settings-client";
 import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -87,6 +88,10 @@ export default async function PrintAgentSettingsPage() {
           online: isAgentOnline(a.lastSeenAt),
         }))}
       />
+
+      {/* Последние задания печати — раньше их показывала «Настройка точек»,
+          которая стала меню раздела. Подключение и машины — выше. */}
+      <PrintAgentCard historyOnly />
     </div>
     </DomainMessagesBoundary>
   );

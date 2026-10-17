@@ -68,7 +68,7 @@ export async function PpkTodayCard({ summary }: { summary: PpkTodaySummary }) {
                 href={ppkBlockHref(next)}
                 className="rounded-md font-medium text-[#5566f6] transition-colors duration-150 hover:text-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               >
-                {t("today.next", { block: nav(`shell.items.${next.key}`) })}
+                {t("today.next", { block: nav(`shell.menus.productionControl.items.${next.key}`) })}
               </Link>
             </p>
           ) : null}
