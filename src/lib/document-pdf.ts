@@ -4246,9 +4246,10 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
     didParseCell: (data) => breakWideHyphenatedWords(doc, data, perishableWidths[data.column.index]?.cellWidth ?? 0),
   });
 
-  // Подписи прежней бракеражной комиссии (у скоропорта её больше нет, графы
-  // в форме приложения № 5 для них нет) — отдельным блоком под таблицей,
-  // чтобы подписанные ранее записи не потеряли подписи в печати.
+  // Подписи бракеражной комиссии (графы в форме приложения № 5 для них нет) —
+  // отдельным блоком под таблицей. Документ с действующей комиссией (метка
+  // сервера `commissionEnabled`) — «Подписи бракеражной комиссии», без неё —
+  // подписи прежней формы журнала.
   const legacySignatures = perishableSignatureLines(params.config.rows, locale, t);
   if (legacySignatures.length > 0) {
     const tableEnd =
@@ -4274,7 +4275,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
         fillColor: [255, 255, 255],
         textColor: [0, 0, 0],
       },
-      head: [[t("signatures.title")]],
+      head: [[params.config.commissionEnabled ? t("signatures.commissionTitle") : t("signatures.title")]],
       body: legacySignatures.map((line) => [line]),
     });
   }

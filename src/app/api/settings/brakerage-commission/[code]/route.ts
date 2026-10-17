@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ code: string }> };
 
 /**
- * «Сторонняя бракеражная комиссия» журнала.
+ * Бракеражная комиссия журнала (готовая продукция — «сторонняя»; скоропорт).
  *   GET — состав + кандидаты (сотрудники организации по группам
  *         «Комиссия / Руководство / Сотрудники», у каждого — задан ли ПИН);
  *   PUT { members: [{ employeeId, role }] } — сохранить состав организации и
@@ -28,7 +28,7 @@ async function guard(ctx: Ctx) {
   if (!session) return { error: NextResponse.json({ error: "Не авторизован" }, { status: 401 }) } as const;
   const { code } = await ctx.params;
   if (!isCommissionJournalCode(code)) {
-    return { error: NextResponse.json({ error: "Сторонняя комиссия есть только у бракеража готовой продукции" }, { status: 400 }) } as const;
+    return { error: NextResponse.json({ error: "Бракеражная комиссия есть только у бракеража готовой и скоропортящейся продукции" }, { status: 400 }) } as const;
   }
   return { session, code, organizationId: getActiveOrgId(session) } as const;
 }

@@ -17,11 +17,12 @@ import {
   createPerishableRejectionRow,
   normalizePerishableOrganoleptic,
   normalizePerishableRejectionConfig,
+  PERISHABLE_ORGANOLEPTIC_VALUES,
   type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
 import { orgTodayKey } from "@/lib/timezone";
 import { commissionSignDefaultTime, deriveBrakerageTimes, withLocalTime } from "@/lib/brakerage-times";
-import { aggregateBrakerageAssessment, brakerageCommentRequired, parseBrakerageTimeDigits } from "@/lib/brakerage-assessment";
+import { aggregateBrakerageAssessment, brakerageCommentRequired, brakerageCommentRequiredFor, parseBrakerageTimeDigits } from "@/lib/brakerage-assessment";
 
 /**
  * Подпись членов бракеражной комиссии под строками (п. 2, 12 ТЗ).
@@ -206,8 +207,23 @@ export async function signBrakerageRows(params: {
     if (doc.templateCode === "perishable_rejection") {
       const config = normalizePerishableRejectionConfig(doc.config);
       const member = config.commissionMembers.find((item) => item.employeeId === params.signer.id);
+      // Состав действует только с меткой сервера `commissionEnabled` —
+      // нормализатор отдаёт старую копию без метки пустой.
       if (!member) {
         return { result: { ok: false, error: "Подписывают только члены комиссии этого журнала", status: 403 } };
+      }
+      // Вся пачка проверяется до первой подписи — события подписей неизменяемы.
+      for (const entry of params.entries) {
+        const row = config.rows.find((item) => item.id === entry.rowId);
+        if (!row) return { result: { ok: false, error: "Строка не найдена — обновите страницу", status: 404 } };
+        if (!row.productName.trim()) return { result: { ok: false, error: "Сначала внесите наименование продукции", status: 400 } };
+        if (entry.grade && !(PERISHABLE_ORGANOLEPTIC_VALUES as readonly string[]).includes(entry.grade)) {
+          return { result: { ok: false, error: "Выберите оценку из списка", status: 400 } };
+        }
+        const grade = entry.grade || row.organolepticResult;
+        if (brakerageCommentRequiredFor(false, grade) && !entry.note?.trim() && !row.note.trim()) {
+          return { result: { ok: false, error: `Добавьте комментарий к оценке позиции «${row.productName}»`, status: 400 } };
+        }
       }
       let signed = 0;
       const rows: PerishableRejectionRow[] = [];
@@ -218,10 +234,12 @@ export async function signBrakerageRows(params: {
           rows.push(row);
           continue;
         }
+        const note = entry.note?.trim() ?? "";
         const next = createPerishableRejectionRow({
           ...row,
           ...(entry.grade ? { organolepticResult: normalizePerishableOrganoleptic(entry.grade) } : {}),
-          ...(entry.note !== undefined ? { note: entry.note } : {}),
+          // Пустой комментарий члена комиссии не стирает примечание строки.
+          ...(note ? { note } : {}),
         });
         const signature: BrakerageRowSignature = {
           userId: params.signer.id,
@@ -230,6 +248,7 @@ export async function signBrakerageRows(params: {
           signedAt: now.toISOString(),
           method: params.method,
           grade: next.organolepticResult,
+          ...(note ? { note } : {}),
           snapshot: signatureSnapshot(next as unknown as Record<string, unknown>),
         };
         rows.push({ ...next, signatures: withSignature(row.signatures, signature) });

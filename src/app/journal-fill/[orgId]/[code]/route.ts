@@ -307,9 +307,10 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   }
 
   const isBrakerage = isBrakerageJournalCode(code);
-  // Сторонняя комиссия — только у бракеража готовой продукции (скоропорт — внутренний).
+  // Бракеражная комиссия — у готовой продукции и скоропорта (у скоропорта
+  // состав действует с меткой сервера, см. effectiveCommissionMembers).
   const hasCommissionFlow = isCommissionJournalCode(code);
-  // Бракераж в режиме «через вход» без сессии: сторонняя комиссия входит по PIN.
+  // Бракераж в режиме «через вход» без сессии: комиссия входит по PIN.
   const commissionOnly = hasCommissionFlow && mode === "auth" && q.get("commission") === "1";
 
   // Режим «через вход»: без сессии — на страницу входа и обратно сюда.
@@ -319,7 +320,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     const loginHref = `/login?next=${encodeURIComponent(`${path}${url.search}`)}`;
     if (!resolved.ok && resolved.reason === "no-session" && hasCommissionFlow && !commissionOnly) {
       const gateTemplate = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
-      return page(gateTemplate ? journalDisplayName(customNames, code, gateTemplate.name) : "Бракераж", renderCommissionGate({ loginHref, pinHref: link({ commission: "1" }) }));
+      return page(gateTemplate ? journalDisplayName(customNames, code, gateTemplate.name) : "Бракераж", renderCommissionGate({ loginHref, pinHref: link({ commission: "1" }), isFinished: code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE }));
     }
     if (!resolved.ok && resolved.reason === "no-session" && !commissionOnly) return relativeRedirect(loginHref);
     if (!resolved.ok && !commissionOnly) {
