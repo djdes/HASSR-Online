@@ -4,6 +4,8 @@
 
 Работа начата прошлым агентом (прерван по лимитам), доделана и проверена в этой сессии. Итог по критериям — ниже; сырые артефакты — `raw/`.
 
+PNG-превью (`*-p1.png`, снимки форм) в git не попадают (`.gitignore`: `.agent/**/*.png`) — лежат в worktree; в коммите — исходные PDF (`raw/samples/*.pdf`, `raw/ui/*.pdf`), JSON и скрипты, из которых PNG пересобираются (`raw/gen-samples.ts`, `raw/ui-check.ts`, `raw/print-probe.ts`). Pre-commit gate: tsc OK, тесты pass=4084, fail=0.
+
 ## Итог
 
 | AC | Статус | Доказательство |
