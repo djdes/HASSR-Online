@@ -6,6 +6,7 @@ import {
   logInspectorEvent,
 } from "@/lib/inspector-access";
 import { inspectionVisitFileAccessible } from "@/lib/inspection-visits";
+import { inspectionVisitIdsFromHeaders } from "@/lib/inspection-visit-cookie";
 import {
   findInspectionVisitFile,
   inspectionVisitFileResponse,
@@ -17,9 +18,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * Вложение посещения для проверяющего: только записи, внесённые этим же
- * токеном, и только пока токен действует. Неизвестный, отозванный или
- * истёкший токен, чужой файл, чужая организация — один и тот же 404 без
- * подсказки, есть ли такой файл (AC3).
+ * токеном и этим браузером (cookie), не скрытые, и только пока токен
+ * действует. Неизвестный, отозванный или истёкший токен, чужой файл, чужая
+ * организация, нет cookie — один и тот же 404 без подсказки (AC3).
  */
 export async function GET(request: Request, ctx: { params: Promise<{ token: string; fileId: string }> }) {
   const { token, fileId } = await ctx.params;
@@ -36,7 +37,14 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
   const file = await findInspectionVisitFile(fileId);
   const allowed = inspectionVisitFileAccessible({
     file,
-    viewer: { kind: "token", organizationId: access.token.organizationId, tokenId: access.token.id, active: true },
+    viewer: {
+      kind: "token",
+      organizationId: access.token.organizationId,
+      tokenId: access.token.id,
+      active: true,
+      // Только записи, внесённые этим браузером (подписанная cookie).
+      visitIds: inspectionVisitIdsFromHeaders(request.headers, access.token.id),
+    },
   });
   if (!file || !allowed) return inspectionVisitNotFound();
   await logInspectorEvent({

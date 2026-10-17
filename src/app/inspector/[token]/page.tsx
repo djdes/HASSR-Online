@@ -13,6 +13,7 @@ import {
 } from "@/components/inspector/portal-sections";
 import { loadInspectionNorms } from "@/lib/inspection-norms.server";
 import { listInspectionVisits } from "@/lib/inspection-visits.server";
+import { inspectionVisitIdsFromHeaders } from "@/lib/inspection-visit-cookie";
 import { loadInspectorChecklistResults, loadInspectorMedBookCounts } from "@/lib/inspector-portal-extras.server";
 import { logInspectorEvent } from "@/lib/inspector-access";
 import { loadInspectorJournals } from "@/lib/inspector-journals";
@@ -59,7 +60,12 @@ export default async function InspectorLandingPage({
     loadInspectionNorms(orgId),
     loadInspectorChecklistResults(orgId, period.from, period.to),
     loadInspectorMedBookCounts(orgId),
-    listInspectionVisits(orgId, { tokenId: access.token.id, take: 20 }),
+    // Только записи, внесённые этим браузером: QR постоянный, его сканируют разные проверяющие.
+    listInspectionVisits(orgId, {
+      tokenId: access.token.id,
+      ids: inspectionVisitIdsFromHeaders(ctx.headers, access.token.id),
+      take: 20,
+    }),
   ]);
   const timeZone = access.org.timezone || "Europe/Moscow";
   await logInspectorEvent({

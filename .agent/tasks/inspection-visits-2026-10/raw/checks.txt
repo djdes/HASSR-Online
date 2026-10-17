@@ -24,3 +24,18 @@ node --import tsx --test (новые и затронутые)         -> 225 т�
   inspector-qr.test.ts, no-settings-hub-links.test.ts, journal-order-scans.test.ts, src/lib/ppk/*.test.ts
 
 Playwright (e2e/smoke.ts против next dev :3043)        -> 32/32 PASS (e2e/smoke-result.json), скриншоты в raw/*.png
+
+--- после ревью безопасности (2026-10-18) ---
+prisma validate / db push / generate (hiddenAt, hiddenById, hiddenByName, hiddenReason) -> ok, без потери данных
+tsc --noEmit (tsconfig.typecheck.json, 8 ГБ кучи)    -> exit=0
+npx eslint <25 изменённых файлов>                     -> 0 problems
+npm run i18n:check                                    -> 82/82
+node --import tsx --test:
+  src/lib/order-scan-bombs.test.ts (7)                -> pass
+  src/lib/inspection-visits-data.test.ts (10)         -> pass
+  src/lib/inspection-visits.test.ts (14)              -> pass
+  src/app/api/inspector/[token]/visits/route.test.ts (10)            -> pass
+  src/app/api/inspector/[token]/visit-files/[fileId]/route.test.ts (4) -> pass
+  src/lib/journal-order-scans.test.ts (7, общий валидатор)          -> pass
+Playwright                                            -> 43/43 PASS (SR1-png-bomb, SR3-race: 12 одновременно -> ровно 10 x 201,
+                                                         SR3-hide/zip-hidden/portal-hidden/show-hidden/restore/head, SR4-*, SR5-411)

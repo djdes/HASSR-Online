@@ -51,13 +51,15 @@ export default async function InspectionPage() {
       where: { id: organizationId },
       select: { name: true, timezone: true },
     }),
-    listInspectionVisits(organizationId),
+    // Со скрытыми: показать их можно переключателем в журнале.
+    listInspectionVisits(organizationId, { includeHidden: true }),
     loadInspectionNorms(organizationId),
     fullAccess ? readActiveServices().catch(() => []) : Promise.resolve([]),
     getTranslations("inspectionDay"),
     getLocale(),
   ]);
   const timeZone = org?.timezone || "Europe/Moscow";
+  const shownVisits = visits.filter((visit) => !visit.hiddenAt).length;
 
   // Действующий QR — самый долгий: его и показываем, и печатаем.
   const activeQr = inspector.tokens
@@ -97,14 +99,14 @@ export default async function InspectionPage() {
         number={3}
         title={t("visits.title")}
         aside={
-          visits.length > 0 ? (
+          shownVisits > 0 ? (
             <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] font-medium tabular-nums text-[#3848c7]">
-              {t("visits.count", { count: visits.length })}
+              {t("visits.count", { count: shownVisits })}
             </span>
           ) : null
         }
       >
-        <InspectionVisitsCard visits={visits} timeZone={timeZone} />
+        <InspectionVisitsCard visits={visits} timeZone={timeZone} canHide={hasCapability(session.user, "admin.full")} />
       </Step>
 
       <Step id="archive" number={4} title={t("archiveTitle")}>

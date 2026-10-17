@@ -4,8 +4,9 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { FileText, ImageIcon, Loader2, NotebookPen, Paperclip, Plus, QrCode, X } from "lucide-react";
+import { Eye, EyeOff, FileText, ImageIcon, Loader2, NotebookPen, Paperclip, Plus, QrCode, RotateCcw, X } from "lucide-react";
 
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
 import {
   INSPECTION_VISIT_ACCEPT,
   INSPECTION_VISIT_FILE_MAX_BYTES,
+  INSPECTION_VISIT_HIDE_REASON_MAX,
   INSPECTION_VISIT_KINDS,
   INSPECTION_VISIT_MAX_FILES,
   INSPECTION_VISIT_MAX_TOTAL_BYTES,
@@ -53,14 +55,17 @@ async function readError(response: Response, fallback: string): Promise<{ messag
  * документу проверки „Посещение“»). Проверяющий вносит запись сам по QR;
  * здесь руководство видит записи, открывает сканы, добавляет запись само и
  * прикладывает скан к записи без него. Записи не удаляются — как в бумажном
- * журнале.
+ * журнале; ошибочную (мусор, дубль) руководитель скрывает с причиной.
  */
 export function InspectionVisitsCard({
   visits,
   timeZone,
+  canHide = false,
 }: {
   visits: InspectionVisitListItem[];
   timeZone: string;
+  /** Руководитель (`admin.full`): «Скрыть как ошибочную» и «Вернуть». */
+  canHide?: boolean;
 }) {
   const t = useTranslations("inspectionDay.visits");
   const locale = useLocale();
@@ -70,6 +75,28 @@ export function InspectionVisitsCard({
   const [attaching, setAttaching] = useState<string | null>(null);
   const attachInput = useRef<HTMLInputElement>(null);
   const attachTarget = useRef<string | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
+  const [hideTarget, setHideTarget] = useState<InspectionVisitListItem | null>(null);
+  const [hideReason, setHideReason] = useState("");
+  const [restoring, setRestoring] = useState<string | null>(null);
+
+  const hiddenCount = visits.filter((visit) => visit.hiddenAt).length;
+  const shown = showHidden ? visits : visits.filter((visit) => !visit.hiddenAt);
+
+  async function setHidden(visit: InspectionVisitListItem, hidden: boolean, reason = ""): Promise<boolean> {
+    const response = await fetch(`/api/inspection/visits/${encodeURIComponent(visit.id)}/hidden`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hidden, reason }),
+    });
+    if (!response.ok) {
+      toast.error((await readError(response, t("hideFailed"))).message);
+      return false;
+    }
+    toast.success(hidden ? t("hiddenDone") : t("restored"));
+    router.refresh();
+    return true;
+  }
 
   const dateTime = new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -127,18 +154,49 @@ export function InspectionVisitsCard({
         </button>
       </div>
 
-      {visits.length === 0 ? (
+      {hiddenCount > 0 ? (
+        <button
+          type="button"
+          onClick={() => setShowHidden((value) => !value)}
+          aria-pressed={showHidden}
+          className="mt-3 inline-flex h-9 items-center gap-2 rounded-full border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          data-toggle-hidden
+        >
+          {showHidden ? <EyeOff className="size-4 text-[#5566f6]" aria-hidden /> : <Eye className="size-4 text-[#5566f6]" aria-hidden />}
+          {showHidden ? t("hideHidden") : t("showHidden", { count: String(hiddenCount) })}
+        </button>
+      ) : null}
+
+      {shown.length === 0 ? (
         <div className="mt-4 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
           <NotebookPen className="mx-auto size-6 text-[#9b9fb3]" aria-hidden />
-          <p className="mx-auto mt-2 max-w-[420px] text-[13.5px] text-[#6f7282]">{t("empty")}</p>
+          <p className="mx-auto mt-2 max-w-[420px] text-[13.5px] text-[#6f7282]">{hiddenCount > 0 ? t("allHidden") : t("empty")}</p>
         </div>
       ) : (
         <ul className="mt-4 divide-y divide-[#ececf4] rounded-2xl border border-[#ececf4]">
-          {visits.map((visit) => {
-            const canAttach = visit.files.length < INSPECTION_VISIT_MAX_FILES;
+          {shown.map((visit) => {
+            const isHidden = visit.hiddenAt !== null;
+            const canAttach = !isHidden && visit.files.length < INSPECTION_VISIT_MAX_FILES;
             return (
-              <li key={visit.id} className="grid gap-2 p-4 md:grid-cols-[1fr_auto] md:items-start" data-visit-row={visit.id}>
-                <div className="min-w-0">
+              <li
+                key={visit.id}
+                className={`grid gap-2 p-4 md:grid-cols-[1fr_auto] md:items-start ${isHidden ? "bg-[#fafbff]" : ""}`}
+                data-visit-row={visit.id}
+                data-visit-hidden={isHidden ? "true" : undefined}
+              >
+                <div className={`min-w-0 ${isHidden ? "opacity-60" : ""}`}>
+                  {isHidden ? (
+                    <div className="mb-2 inline-flex max-w-full items-start gap-1.5 rounded-2xl bg-[#fff4f2] px-3 py-1.5 text-[12.5px] text-[#a13a32]">
+                      <EyeOff className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      <span className="[overflow-wrap:anywhere]">
+                        {t("hiddenNote", {
+                          reason: visit.hiddenReason ?? "—",
+                          name: visit.hiddenByName ?? "—",
+                          date: dateTime.format(new Date(visit.hiddenAt as string)),
+                        })}
+                      </span>
+                    </div>
+                  ) : null}
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                     <span className="text-[15px] font-semibold text-[#0b1024] [overflow-wrap:anywhere]">{visit.inspectorName}</span>
                     {visit.inspectorPosition ? (
@@ -198,25 +256,64 @@ export function InspectionVisitsCard({
                     <div className="mt-2 text-[12.5px] text-[#a13a32]">{t("noScan")}</div>
                   )}
                 </div>
-                {canAttach ? (
-                  <button
-                    type="button"
-                    className={`${OUTLINE} h-10 justify-self-start text-[13.5px] md:justify-self-end`}
-                    disabled={attaching !== null}
-                    onClick={() => {
-                      attachTarget.current = visit.id;
-                      attachInput.current?.click();
-                    }}
-                    data-attach-visit={visit.id}
-                  >
-                    {attaching === visit.id ? (
-                      <Loader2 className="size-4 animate-spin text-[#5566f6]" aria-hidden />
-                    ) : (
-                      <Paperclip className="size-4 text-[#5566f6]" aria-hidden />
-                    )}
-                    {attaching === visit.id ? t("attaching") : t("attach")}
-                  </button>
-                ) : null}
+                <div className="flex flex-wrap gap-2 justify-self-start md:flex-col md:items-end md:justify-self-end">
+                  {canAttach ? (
+                    <button
+                      type="button"
+                      className={`${OUTLINE} h-10 text-[13.5px]`}
+                      disabled={attaching !== null}
+                      onClick={() => {
+                        attachTarget.current = visit.id;
+                        attachInput.current?.click();
+                      }}
+                      data-attach-visit={visit.id}
+                    >
+                      {attaching === visit.id ? (
+                        <Loader2 className="size-4 animate-spin text-[#5566f6]" aria-hidden />
+                      ) : (
+                        <Paperclip className="size-4 text-[#5566f6]" aria-hidden />
+                      )}
+                      {attaching === visit.id ? t("attaching") : t("attach")}
+                    </button>
+                  ) : null}
+                  {canHide && !isHidden ? (
+                    <button
+                      type="button"
+                      className="inline-flex h-10 items-center gap-2 rounded-2xl px-3 text-[13px] font-medium text-[#6f7282] transition-colors duration-150 hover:bg-[#fff4f2] hover:text-[#a13a32] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                      onClick={() => {
+                        setHideReason("");
+                        setHideTarget(visit);
+                      }}
+                      data-hide-visit={visit.id}
+                    >
+                      <EyeOff className="size-4" aria-hidden />
+                      {t("hide")}
+                    </button>
+                  ) : null}
+                  {canHide && isHidden ? (
+                    <button
+                      type="button"
+                      className={`${OUTLINE} h-10 text-[13.5px]`}
+                      disabled={restoring !== null}
+                      onClick={async () => {
+                        setRestoring(visit.id);
+                        try {
+                          await setHidden(visit, false);
+                        } finally {
+                          setRestoring(null);
+                        }
+                      }}
+                      data-restore-visit={visit.id}
+                    >
+                      {restoring === visit.id ? (
+                        <Loader2 className="size-4 animate-spin text-[#5566f6]" aria-hidden />
+                      ) : (
+                        <RotateCcw className="size-4 text-[#5566f6]" aria-hidden />
+                      )}
+                      {t("restore")}
+                    </button>
+                  ) : null}
+                </div>
               </li>
             );
           })}
@@ -233,6 +330,35 @@ export function InspectionVisitsCard({
         aria-hidden
         onChange={(event) => void attach(event.target.files)}
       />
+
+      <ConfirmDialog
+        open={hideTarget !== null}
+        onClose={() => setHideTarget(null)}
+        onConfirm={async () => {
+          if (!hideTarget) return;
+          if (await setHidden(hideTarget, true, hideReason)) setHideTarget(null);
+        }}
+        variant="warn"
+        icon={EyeOff}
+        title={t("hideTitle")}
+        description={hideTarget ? t("hideLead", { name: hideTarget.inspectorName }) : undefined}
+        bullets={[{ label: t("hideBullet1") }, { label: t("hideBullet2") }, { label: t("hideBullet3"), tone: "info" }]}
+        confirmLabel={t("hideConfirm")}
+        confirmDisabled={hideReason.trim().length < 3}
+      >
+        <label className="grid gap-1.5">
+          <span className={LABEL}>{t("hideReason")}</span>
+          <textarea
+            value={hideReason}
+            onChange={(event) => setHideReason(event.target.value)}
+            maxLength={INSPECTION_VISIT_HIDE_REASON_MAX}
+            rows={2}
+            placeholder={t("hideReasonPlaceholder")}
+            className="w-full resize-none rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            data-hide-reason
+          />
+        </label>
+      </ConfirmDialog>
 
       <AddVisitDialog
         key={dialogKey}

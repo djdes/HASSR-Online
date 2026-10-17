@@ -219,6 +219,9 @@ export function PortalVisitJournal({
 }) {
   return (
     <PortalSection id="visit" title="Журнал посещений" data="visits">
+      <p className="mt-3 text-[13px] leading-relaxed text-[#5b6170]" data-own-visits-note>
+        Здесь видны записи, внесённые с этого устройства. Все записи журнала посещений видит руководство организации.
+      </p>
       {visits.length > 0 ? (
         <ol className="border-b border-[#e3e5ea]" data-own-visits>
           {visits.map((visit) => (

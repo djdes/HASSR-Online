@@ -15,6 +15,20 @@
     "AC8": { "status": "PASS", "evidence": ["28 new tests in 4 files, all passing"] },
     "AC9": { "status": "PASS", "evidence": ["tsc --noEmit (tsconfig.typecheck.json): exit 0", "eslint changed files: 0 errors, 0 warnings", "225 related tests: 0 failures", "Playwright 32/32 at 1440x900 and 390x800", "raw/*.png"] }
   },
+  "security_review": {
+    "reviewed_commit": "ebd473b2",
+    "findings": {
+      "1_decompression_bomb_HIGH": { "status": "FIXED", "evidence": ["src/lib/order-scan-bombs.test.ts (7)", "src/lib/journal-order-scans.test.ts (7, unchanged, green)", "e2e SR1-png-bomb"] },
+      "2_spoofed_xff_MEDIUM": { "status": "FIXED", "evidence": ["src/lib/inspection-visits-data.test.ts: IP", "visits route.test: XFF spoof + per-token limiter"] },
+      "3_daily_limit_race_hide_zip_MEDIUM": { "status": "FIXED", "evidence": ["src/lib/inspection-visits-data.test.ts: lock/count/create, volume, hidden excluded, bundle without content", "src/lib/inspection-visits.test.ts: hide schema, planBundleAttachments", "e2e SR3-race (12 parallel -> exactly 10 created), SR3-hide, SR3-zip-hidden, SR3-portal-hidden, SR3-show-hidden, SR3-restore, SR3-head"] },
+      "4_shared_qr_privacy_LOW_MEDIUM": { "status": "FIXED", "evidence": ["src/lib/inspection-visits-data.test.ts: signed cookie", "visit-files route.test: cookie rules", "e2e SR4-no-cookie-file, SR4-other-browser"] },
+      "5_missing_content_length_LOW": { "status": "FIXED", "evidence": ["src/lib/inspection-visits.test.ts: 411/413", "visits route.test: 411", "e2e SR5-411"] },
+      "6_attach_limit_race_LOW": { "status": "FIXED", "evidence": ["src/lib/inspection-visits-data.test.ts: attach under lock"] },
+      "7_pdf_header_window_OPTIONAL": { "status": "FIXED", "evidence": ["src/lib/order-scan-bombs.test.ts: HTML prefix + valid PDF rejected"] }
+    },
+    "not_changed": ["PPK PDF on the portal contains the acknowledgement sheet with staff names — 152-FZ question for the owner"],
+    "playwright": "43/43 PASS"
+  },
   "commands": [
     { "cmd": "npx prisma validate", "result": "valid" },
     { "cmd": "npx prisma db push (wesetup_inspection)", "result": "in sync, no data-loss warnings" },

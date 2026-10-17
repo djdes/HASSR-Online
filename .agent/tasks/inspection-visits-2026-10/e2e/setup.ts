@@ -148,6 +148,8 @@ async function main() {
   const revoked = await qrToken(a.id, { label: "отозван", revoked: true });
   const expired = await qrToken(a.id, { label: "истёк", expired: true });
   const qrB = await qrToken(b.id, { label: "QR B" });
+  // Отдельный QR (организация B, чтобы не трогать журнал A) — гонка суточного лимита.
+  const qrRace = await qrToken(b.id, { label: "гонка" });
 
   // Организация B: посещение со сканом — руководитель A не должен его открыть.
   const scanB = await pdf("Foreign org decision");
@@ -170,7 +172,7 @@ async function main() {
     orgA: a.id,
     orgB: b.id,
     users: { manager: manager.email, headChef: headChef.email, cook: cook.email, managerB: managerB.email },
-    tokens: { qr: qr.raw, qrId: qr.id, revoked: revoked.raw, expired: expired.raw, qrB: qrB.raw },
+    tokens: { qr: qr.raw, qrId: qr.id, revoked: revoked.raw, expired: expired.raw, qrB: qrB.raw, qrRace: qrRace.raw },
     foreignFileId: visitB.files[0].id,
   };
   fs.writeFileSync(path.join(HERE, "state.json"), JSON.stringify(state, null, 2));

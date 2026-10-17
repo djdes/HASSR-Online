@@ -2,16 +2,11 @@ import { NextResponse } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
-import {
-  INSPECTION_VISIT_ERRORS,
-  canUseInspectionVisits,
-  parseInspectionVisitFields,
-  parseVisitedAt,
-} from "@/lib/inspection-visits";
+import { canUseInspectionVisits, parseInspectionVisitFields, parseVisitedAt } from "@/lib/inspection-visits";
 import {
   checkInspectionVisitFiles,
   createInspectionVisit,
-  inspectionVisitRequestTooBig,
+  inspectionVisitRequestSizeError,
   listInspectionVisits,
   visitFilesFromForm,
 } from "@/lib/inspection-visits.server";
@@ -22,18 +17,19 @@ export const dynamic = "force-dynamic";
 /**
  * Журнал посещений в кабинете («Пришла проверка»).
  *
- *   GET  — список посещений организации (без файлов).
+ *   GET  — список посещений организации (без файлов); `?hidden=1` — со скрытыми.
  *   POST — multipart: поля посещения, visitedAt? (ISO), file (0–5 шт.).
  *          Запись вносит руководство или заведующая, если проверяющий не
  *          внёс её сам по QR.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!canUseInspectionVisits(auth.session.user)) {
     return NextResponse.json({ error: "Журнал посещений доступен руководству" }, { status: 403 });
   }
-  const visits = await listInspectionVisits(getActiveOrgId(auth.session));
+  const includeHidden = new URL(request.url).searchParams.get("hidden") === "1";
+  const visits = await listInspectionVisits(getActiveOrgId(auth.session), { includeHidden });
   return NextResponse.json({ visits }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
@@ -44,9 +40,8 @@ export async function POST(request: Request) {
   if (!canUseInspectionVisits(session.user)) {
     return NextResponse.json({ error: "Журнал посещений доступен руководству" }, { status: 403 });
   }
-  if (inspectionVisitRequestTooBig(request)) {
-    return NextResponse.json({ error: INSPECTION_VISIT_ERRORS.requestTooBig }, { status: 413 });
-  }
+  const sizeError = inspectionVisitRequestSizeError(request);
+  if (sizeError) return sizeError;
   const organizationId = getActiveOrgId(session);
 
   let form: FormData;
@@ -65,7 +60,6 @@ export async function POST(request: Request) {
 
   const visit = await createInspectionVisit({
     organizationId,
-    tokenId: null,
     source: "manager",
     fields: parsed.fields,
     visitedAt: visitedAt.date,

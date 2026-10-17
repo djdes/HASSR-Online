@@ -8,15 +8,22 @@ import {
   INSPECTION_VISIT_FILE_MAX_BYTES,
   INSPECTION_VISIT_MAX_REQUEST_BYTES,
   INSPECTION_VISIT_MAX_TOTAL_BYTES,
+  canHideInspectionVisits,
   canUseInspectionVisits,
   inspectionVisitBasisRu,
   inspectionVisitFileAccessible,
   inspectionVisitFileName,
+  inspectionVisitHideSchema,
   inspectionVisitKindLabelRu,
   parseInspectionVisitFields,
   parseVisitedAt,
+  planBundleAttachments,
 } from "@/lib/inspection-visits";
-import { checkInspectionVisitFiles, storedVisitFileName } from "@/lib/inspection-visits.server";
+import {
+  checkInspectionVisitFiles,
+  inspectionVisitRequestSizeError,
+  storedVisitFileName,
+} from "@/lib/inspection-visits.server";
 
 function form(values: Record<string, string>) {
   return { get: (name: string) => (name in values ? values[name] : null) };
@@ -97,31 +104,76 @@ test("журнал посещений в кабинете: руководств�
   assert.equal(canUseInspectionVisits({ role: "waiter", permissionPreset: "cashier" }), false);
 });
 
-const file = (organizationId: string, tokenId: string | null) => ({
+const file = (organizationId: string, tokenId: string | null, opts: { visitId?: string; hiddenAt?: Date | null } = {}) => ({
   organizationId,
-  visit: { organizationId, tokenId },
+  visitId: opts.visitId ?? "visit-1",
+  visit: { organizationId, tokenId, hiddenAt: opts.hiddenAt ?? null },
 });
 
-test("вложение: кабинет — только своя организация и только с правом", () => {
+test("вложение: кабинет — только своя организация и только с правом (скрытые тоже)", () => {
   const own = file("org-a", "tok-1");
   assert.equal(inspectionVisitFileAccessible({ file: own, viewer: { kind: "cabinet", organizationId: "org-a", allowed: true } }), true);
   assert.equal(inspectionVisitFileAccessible({ file: own, viewer: { kind: "cabinet", organizationId: "org-a", allowed: false } }), false);
   assert.equal(inspectionVisitFileAccessible({ file: own, viewer: { kind: "cabinet", organizationId: "org-b", allowed: true } }), false);
   assert.equal(inspectionVisitFileAccessible({ file: null, viewer: { kind: "cabinet", organizationId: "org-a", allowed: true } }), false);
+  const hidden = file("org-a", "tok-1", { hiddenAt: new Date() });
+  assert.equal(inspectionVisitFileAccessible({ file: hidden, viewer: { kind: "cabinet", organizationId: "org-a", allowed: true } }), true);
 });
 
-test("вложение: проверяющий — только записи своего токена и пока токен действует", () => {
-  const viewer = { kind: "token" as const, organizationId: "org-a", tokenId: "tok-1", active: true };
+test("вложение: проверяющий — только свои записи (токен + cookie браузера), не скрытые, пока токен действует", () => {
+  const viewer = { kind: "token" as const, organizationId: "org-a", tokenId: "tok-1", active: true, visitIds: ["visit-1"] };
   assert.equal(inspectionVisitFileAccessible({ file: file("org-a", "tok-1"), viewer }), true);
   assert.equal(inspectionVisitFileAccessible({ file: file("org-a", "tok-2"), viewer }), false, "чужой токен");
   assert.equal(inspectionVisitFileAccessible({ file: file("org-a", null), viewer }), false, "запись руководства");
   assert.equal(inspectionVisitFileAccessible({ file: file("org-b", "tok-1"), viewer }), false, "чужая организация");
   assert.equal(inspectionVisitFileAccessible({ file: file("org-a", "tok-1"), viewer: { ...viewer, active: false } }), false, "токен истёк");
+  // Тот же постоянный QR, но запись внёс другой проверяющий (не в cookie этого браузера).
+  assert.equal(inspectionVisitFileAccessible({ file: file("org-a", "tok-1", { visitId: "visit-march" }), viewer }), false, "чужая запись того же QR");
+  assert.equal(inspectionVisitFileAccessible({ file: file("org-a", "tok-1"), viewer: { ...viewer, visitIds: [] } }), false, "без cookie");
+  assert.equal(inspectionVisitFileAccessible({ file: file("org-a", "tok-1", { hiddenAt: new Date() }), viewer }), false, "скрыта");
   // Подделанная строка: организация файла и посещения расходятся — отказ.
   assert.equal(
-    inspectionVisitFileAccessible({ file: { organizationId: "org-a", visit: { organizationId: "org-b", tokenId: "tok-1" } }, viewer }),
+    inspectionVisitFileAccessible({
+      file: { organizationId: "org-a", visitId: "visit-1", visit: { organizationId: "org-b", tokenId: "tok-1", hiddenAt: null } },
+      viewer,
+    }),
     false
   );
+});
+
+test("скрыть как ошибочную: причина обязательна, вернуть — без причины; только руководитель", () => {
+  assert.equal(inspectionVisitHideSchema.safeParse({ hidden: true, reason: "  " }).success, false);
+  assert.equal(inspectionVisitHideSchema.safeParse({ hidden: true }).success, false);
+  const ok = inspectionVisitHideSchema.safeParse({ hidden: true, reason: "  тестовая   запись " });
+  assert.ok(ok.success && ok.data.reason === "тестовая запись");
+  assert.equal(inspectionVisitHideSchema.safeParse({ hidden: true, reason: "я".repeat(301) }).success, false);
+  assert.ok(inspectionVisitHideSchema.safeParse({ hidden: false }).success);
+  assert.equal(canHideInspectionVisits({ role: "manager" }), true);
+  assert.equal(canHideInspectionVisits({ role: "cook", permissionPreset: "head_chef" }), false, "заведующая только смотрит и вносит");
+  assert.equal(canHideInspectionVisits({ role: "cook" }), false);
+});
+
+test("архив: вложения в пределах объёма, остальные — в счёт пропущенных", () => {
+  const files = [
+    { id: "a", sizeBytes: 40 },
+    { id: "b", sizeBytes: 70 },
+    { id: "c", sizeBytes: 50 },
+    { id: "d", sizeBytes: 10 },
+  ];
+  const plan = planBundleAttachments(files, 100);
+  assert.deepEqual(plan.included.map((item) => item.id), ["a", "c", "d"]);
+  assert.deepEqual(plan.skipped, { count: 1, bytes: 70 });
+  assert.equal(planBundleAttachments(files).skipped.count, 0, "по умолчанию 100 МБ");
+});
+
+test("размер тела: без Content-Length — 411, больше предела — 413", async () => {
+  const req = (headers: Record<string, string>) => new Request("https://wesetup.ru/x", { method: "POST", headers });
+  const missing = inspectionVisitRequestSizeError(req({}));
+  assert.equal(missing?.status, 411);
+  assert.equal((await missing?.json()).error, INSPECTION_VISIT_ERRORS.lengthRequired);
+  assert.equal(inspectionVisitRequestSizeError(req({ "content-length": "abc" }))?.status, 411);
+  assert.equal(inspectionVisitRequestSizeError(req({ "content-length": String(INSPECTION_VISIT_MAX_REQUEST_BYTES + 1) }))?.status, 413);
+  assert.equal(inspectionVisitRequestSizeError(req({ "content-length": "1024" })), null);
 });
 
 test("имя файла и основание для печати", () => {

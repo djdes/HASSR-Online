@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { INSPECTION_VISIT_ERRORS, canUseInspectionVisits } from "@/lib/inspection-visits";
+import { canUseInspectionVisits } from "@/lib/inspection-visits";
 import {
+  attachInspectionVisitFiles,
   checkInspectionVisitFiles,
-  inspectionVisitRequestTooBig,
+  inspectionVisitRequestSizeError,
   visitFilesFromForm,
 } from "@/lib/inspection-visits.server";
 
@@ -16,7 +17,8 @@ export const dynamic = "force-dynamic";
 /**
  * Приложить скан основания к уже внесённому посещению (проверяющий записал
  * себя по QR без скана — руководитель фотографирует решение сам).
- * POST multipart: file (1–5 шт., всего у посещения не больше 5).
+ * POST multipart: file (1–5 шт., всего у посещения не больше 5 — пересчёт
+ * под блокировкой записи, параллельные загрузки предел не обойдут).
  */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireApiAuth();
@@ -25,9 +27,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   if (!canUseInspectionVisits(session.user)) {
     return NextResponse.json({ error: "Журнал посещений доступен руководству" }, { status: 403 });
   }
-  if (inspectionVisitRequestTooBig(request)) {
-    return NextResponse.json({ error: INSPECTION_VISIT_ERRORS.requestTooBig }, { status: 413 });
-  }
+  const sizeError = inspectionVisitRequestSizeError(request);
+  if (sizeError) return sizeError;
   const organizationId = getActiveOrgId(session);
   const { id } = await ctx.params;
   const visit = /^[A-Za-z0-9_-]{1,64}$/.test(id)
@@ -48,20 +49,18 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   }
   const incoming = visitFilesFromForm(form);
   if (incoming.length === 0) return NextResponse.json({ error: "Файл не выбран" }, { status: 400 });
+  // Быстрый отказ по уже известному числу файлов; окончательно — под блокировкой.
   const files = await checkInspectionVisitFiles(incoming, visit._count.files);
   if (!files.ok) return NextResponse.json({ error: files.error }, { status: files.status });
 
-  await db.inspectionVisitFile.createMany({
-    data: files.files.map((file) => ({
-      visitId: visit.id,
-      organizationId,
-      fileName: file.fileName,
-      mimeType: file.mimeType,
-      sizeBytes: file.bytes.length,
-      content: file.bytes,
-      uploadedByName: session.user.name ?? null,
-    })),
+  const attached = await attachInspectionVisitFiles({
+    visitId: visit.id,
+    organizationId,
+    files: files.files,
+    uploadedByName: session.user.name ?? null,
   });
+  if (!attached.ok) return NextResponse.json({ error: attached.error }, { status: attached.status });
+
   await recordAuditLog({
     request,
     session,
@@ -71,5 +70,5 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     entityId: visit.id,
     details: { files: files.files.map((file) => ({ name: file.fileName, mime: file.mimeType, size: file.bytes.length })) },
   });
-  return NextResponse.json({ ok: true, added: files.files.length }, { status: 201 });
+  return NextResponse.json({ ok: true, added: attached.added }, { status: 201 });
 }

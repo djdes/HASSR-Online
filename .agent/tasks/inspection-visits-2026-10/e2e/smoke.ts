@@ -167,8 +167,11 @@ async function main() {
   await p.locator('[data-portal-section="visits"]').scrollIntoViewIfNeeded();
   await p.screenshot({ path: path.join(RAW, "portal-after-visit-1440.png"), fullPage: true });
 
-  const ownFile = await anon.get(ownFileHref ?? "/");
+  // Свой скан — из того же браузера (cookie «мои записи»).
+  const ownFile = await p.request.get(`${BASE}${ownFileHref}`);
   check("AC3-token-own", "проверяющий открывает скан своей записи: 200, image/jpeg, private/no-store/nosniff", ownFile.status() === 200 && ownFile.headers()["content-type"] === "image/jpeg" && hardened(ownFile.headers()), { status: ownFile.status(), headers: ownFile.headers() });
+  const noCookieFile = await anon.get(ownFileHref ?? "/");
+  check("SR4-no-cookie-file", "тот же QR без cookie этого браузера: скан — 404", noCookieFile.status() === 404 && hardened(noCookieFile.headers()), noCookieFile.status());
   const fileId = ownFileHref?.split("/").pop() ?? "";
   for (const [label, token] of [
     ["отозванный", state.tokens.revoked],
@@ -192,6 +195,45 @@ async function main() {
   });
   check("AC2-heic", "запись: HEIC — 400 с понятной причиной", heic.status() === 400 && /HEIC/.test((await heic.json()).error), heic.status());
 
+  // Ревью безопасности: PNG-бомба, запрос без Content-Length, гонка суточного лимита.
+  const bombPng = Buffer.alloc(33);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]).copy(bombPng, 0);
+  bombPng.writeUInt32BE(20_000, 16);
+  bombPng.writeUInt32BE(20_000, 20);
+  const bomb = await anon.post(`/api/inspector/${state.tokens.qr}/visits`, {
+    multipart: { ...form, file: { name: "bomb.png", mimeType: "image/png", buffer: bombPng } },
+  });
+  const bombBody = await bomb.json();
+  check("SR1-png-bomb", "PNG 20000×20000: 400 «слишком большая картинка», сервер жив", bomb.status() === 400 && /мегапиксел/.test(bombBody.error), { status: bomb.status(), error: bombBody.error });
+
+  const chunked = await fetch(`${BASE}/api/inspector/${state.tokens.qr}/visits`, {
+    method: "POST",
+    headers: { "content-type": "multipart/form-data; boundary=x" },
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("--x--\r\n"));
+        controller.close();
+      },
+    }),
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
+  check("SR5-411", "запрос без Content-Length (chunked) — 411", chunked.status === 411, chunked.status);
+
+  const raceForm = { inspectorName: "Гонка Тестовая", inspectorPosition: "Инспектор", authority: "РПН", kind: "planned" };
+  const raceStatuses = await Promise.all(
+    Array.from({ length: 12 }, (_, i) =>
+      anon
+        .post(`/api/inspector/${state.tokens.qrRace}/visits`, { multipart: raceForm, headers: { "x-real-ip": `198.51.100.${i + 1}` } })
+        .then((res) => res.status())
+    )
+  );
+  check(
+    "SR3-race",
+    "12 одновременных записей по одному токену: создано ровно 10, остальные — 429",
+    raceStatuses.filter((s) => s === 201).length === 10 && raceStatuses.filter((s) => s === 429).length === 2,
+    raceStatuses
+  );
+
   // Мобильный портал.
   const mctx = await newContext(browser, MOBILE);
   const mp = await mctx.newPage();
@@ -200,9 +242,17 @@ async function main() {
   await dismissModals(mp);
   const mScroll = await noHorizontalScroll(mp);
   check("AC9-portal-390", "портал 390px без горизонтальной прокрутки", mScroll.ok, mScroll);
+  // Другой браузер с тем же QR: чужих записей (ФИО, сканов) не видно.
+  const otherBrowserVisits = await mp.locator("[data-own-visit]").count();
+  const otherBrowserText = await mp.locator("body").innerText();
+  check(
+    "SR4-other-browser",
+    "тот же QR в другом браузере: записи первого проверяющего не видны",
+    otherBrowserVisits === 0 && !otherBrowserText.includes("Иванова Анна Петровна") && (await mp.locator("[data-own-visits-note]").count()) === 1,
+    { otherBrowserVisits }
+  );
   await mp.screenshot({ path: path.join(RAW, "portal-mobile-390.png"), fullPage: true });
   await mctx.close();
-  await pctx.close();
 
   // ---------- Кабинет руководителя (AC4, AC5, AC7) ----------
   const { context: mgr, page: m } = await login(browser, state.users.manager);
@@ -278,6 +328,44 @@ async function main() {
   );
   fs.writeFileSync(path.join(RAW, "compliance-bundle-visits.json"), JSON.stringify({ visitFiles, manifest }, null, 2));
 
+  // Ревью безопасности: «Скрыть как ошибочную» (запись проверяющего).
+  const inspectorRow = m.locator("[data-visit-row]", { hasText: "Иванова Анна Петровна" });
+  await inspectorRow.locator("[data-hide-visit]").click();
+  await m.locator("[data-hide-reason]").fill("тестовая запись при проверке");
+  await m.screenshot({ path: path.join(RAW, "cabinet-hide-dialog-1440.png") });
+  const [hideResponse] = await Promise.all([
+    m.waitForResponse((r) => /\/api\/inspection\/visits\/[^/]+\/hidden$/.test(r.url()), { timeout: 120_000 }),
+    m.getByRole("button", { name: "Скрыть запись" }).click(),
+  ]);
+  await m.waitForFunction(() => document.querySelectorAll("[data-visit-row]").length === 1, null, { timeout: 60_000 });
+  const toggleText = (await m.locator("[data-toggle-hidden]").innerText()).trim();
+  check("SR3-hide", "руководитель скрыл запись через диалог: из списка пропала, есть «Показать скрытые (1)»", hideResponse.status() === 200 && /\(1\)/.test(toggleText), { status: hideResponse.status(), toggleText });
+
+  const zip2Response = await m.request.get(`${BASE}/api/reports/compliance-bundle?from=${today.slice(0, 8)}01&to=${today}`, { timeout: 600_000 });
+  const zip2 = await JSZip.loadAsync(await zip2Response.body());
+  const manifest2 = zip2.files["ОТЧЁТ.txt"] ? await zip2.files["ОТЧЁТ.txt"].async("string") : "";
+  check("SR3-zip-hidden", "скрытая запись не попадает в архив", /Посещения проверяющих: записей 1, сканов оснований 1/.test(manifest2), manifest2.split(/\r?\n/).find((l) => l.includes("Посещения")));
+
+  await goto(p, portal);
+  await p.waitForSelector("[data-visit-form]", { timeout: 300_000 });
+  const portalAfterHide = await p.locator("[data-own-visit]").count();
+  const hiddenFile = await p.request.get(`${BASE}${ownFileHref}`);
+  check("SR3-portal-hidden", "скрытая запись пропала с портала и её скан — 404 даже своему браузеру", portalAfterHide === 0 && hiddenFile.status() === 404, { portalAfterHide, file: hiddenFile.status() });
+
+  await m.locator("[data-toggle-hidden]").click();
+  const hiddenRow = m.locator('[data-visit-row][data-visit-hidden="true"]');
+  await hiddenRow.waitFor({ timeout: 30_000 });
+  const hiddenRowText = await hiddenRow.innerText();
+  await m.screenshot({ path: path.join(RAW, "cabinet-hidden-shown-1440.png"), fullPage: true });
+  check("SR3-show-hidden", "«Показать скрытые»: запись видна с причиной и тем, кто скрыл", /тестовая запись при проверке/.test(hiddenRowText) && /Марина Соколова/.test(hiddenRowText), hiddenRowText);
+  const [restoreResponse] = await Promise.all([
+    m.waitForResponse((r) => /\/api\/inspection\/visits\/[^/]+\/hidden$/.test(r.url()), { timeout: 120_000 }),
+    hiddenRow.locator("[data-restore-visit]").click(),
+  ]);
+  await m.waitForFunction(() => document.querySelectorAll('[data-visit-row][data-visit-hidden="true"]').length === 0, null, { timeout: 60_000 });
+  check("SR3-restore", "«Вернуть»: запись снова в журнале", restoreResponse.status() === 200 && (await m.locator("[data-visit-row]").count()) === 2, restoreResponse.status());
+  await pctx.close();
+
   // «Реквизиты»: ссылка на блок вместо переключателя.
   await goto(m, `${BASE}/settings/organization`);
   await dismissModals(m);
@@ -312,6 +400,10 @@ async function main() {
   const headNormPdf = await h.request.get(`${BASE}/api/production-control/haccp-plan/pdf`);
   const headFile = await h.request.get(`${BASE}${cabinetHref}`);
   check("AC7-head", "заведующая: спецрежим только статус, без услуг, PDF ХАССП-плана и скан открываются", headSwitch && headExperts === 0 && headNormPdf.status() === 200 && headFile.status() === 200, { headSwitch, headExperts, pdf: headNormPdf.status(), file: headFile.status() });
+  const headHideButtons = await h.locator("[data-hide-visit]").count();
+  const anyVisitId = await h.locator("[data-visit-row]").first().getAttribute("data-visit-row");
+  const headHide = await h.request.post(`${BASE}/api/inspection/visits/${anyVisitId}/hidden`, { data: { hidden: true, reason: "попытка заведующей" } });
+  check("SR3-head", "заведующая не скрывает записи: кнопок нет, API — 403", headHideButtons === 0 && headHide.status() === 403, { headHideButtons, status: headHide.status() });
   await h.screenshot({ path: path.join(RAW, "cabinet-inspection-head-chef-1440.png"), fullPage: true });
   await head.close();
 

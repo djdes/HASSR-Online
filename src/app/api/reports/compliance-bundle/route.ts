@@ -11,9 +11,9 @@ import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName } from "@/lib/building-scope";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
 import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
-import { loadInspectionVisitsForBundle } from "@/lib/inspection-visits.server";
+import { loadInspectionVisitFileContent, loadInspectionVisitsForBundle } from "@/lib/inspection-visits.server";
 import { buildInspectionVisitsPdf } from "@/lib/inspection-visits-pdf";
-import { inspectionVisitFileName } from "@/lib/inspection-visits";
+import { inspectionVisitFileName, planBundleAttachments } from "@/lib/inspection-visits";
 import {
   buildCapaSummaryPdf,
   buildRegulatorCoverPdf,
@@ -252,15 +252,28 @@ export async function GET(request: Request) {
         rows: visits.map((visit) => ({ ...visit, fileCount: visit.files.length })),
       })
     );
-    let fileCount = 0;
-    visits.forEach((visit, index) => {
+    // Сканы — по одному файлу из БД и в пределах общего объёма архива.
+    const entries = visits.flatMap((visit, index) => {
       const sub = sanitizeForZip(`${String(index + 1).padStart(2, "0")} ${ymd(visit.visitedAt)} ${visit.authority}`);
-      visit.files.forEach((file, fileIndex) => {
-        zip.file(`${folder}/${sub}/${fileIndex + 1} ${inspectionVisitFileName(file.fileName, file.mimeType)}`, file.content);
-        fileCount += 1;
-      });
+      return visit.files.map((file, fileIndex) => ({
+        ...file,
+        path: `${folder}/${sub}/${fileIndex + 1} ${inspectionVisitFileName(file.fileName, file.mimeType)}`,
+      }));
     });
+    const plan = planBundleAttachments(entries);
+    let fileCount = 0;
+    for (const entry of plan.included) {
+      const content = await loadInspectionVisitFileContent(entry.id, organizationId);
+      if (!content) continue;
+      zip.file(entry.path, content);
+      fileCount += 1;
+    }
     manifestLines.push(`Посещения проверяющих: записей ${visits.length}, сканов оснований ${fileCount}`);
+    if (plan.skipped.count > 0) {
+      manifestLines.push(
+        `! Не вошли в архив по объёму: сканов ${plan.skipped.count} (${(plan.skipped.bytes / 1024 / 1024).toFixed(1)} МБ) — откройте их в кабинете: «Пришла проверка» → «Журнал посещений»`
+      );
+    }
   } catch (err) {
     manifestLines.push("✗ Посещения проверяющих — не удалось собрать журнал посещений");
     console.error("[compliance-bundle] inspection visits failed", err);

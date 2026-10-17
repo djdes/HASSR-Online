@@ -1328,6 +1328,12 @@ model InspectionVisit {
   createdByName     String?
   ipAddress         String?
   userAgent         String?
+  /// «Скрыта как ошибочная» (мусор или дубль): руководитель (`admin.full`)
+  /// скрывает запись из журнала, архива и портала. Физически не удаляем.
+  hiddenAt          DateTime?
+  hiddenById        String?
+  hiddenByName      String?
+  hiddenReason      String?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   files             InspectionVisitFile[]

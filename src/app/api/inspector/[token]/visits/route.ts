@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   inspectorClientIp,
   inspectorLimitKey,
+  inspectorTokenUploadLimiter,
   inspectorUploadLimiter,
   inspectorViewerCookie,
   loadInspectorAccess,
@@ -14,27 +15,40 @@ import {
   parseInspectionVisitFields,
 } from "@/lib/inspection-visits";
 import {
+  appendInspectionVisitId,
+  cookieFromHeader,
+  INSPECTION_VISIT_COOKIE_MAX_AGE,
+  inspectionVisitCookieName,
+} from "@/lib/inspection-visit-cookie";
+import {
   checkInspectionVisitFiles,
   countTokenVisitsLastDay,
-  createInspectionVisit,
-  inspectionVisitRequestTooBig,
+  createTokenInspectionVisit,
+  inspectionVisitRequestSizeError,
   visitFilesFromForm,
 } from "@/lib/inspection-visits.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function tooMany(message: string): NextResponse {
+  return NextResponse.json({ error: message }, { status: 429, headers: { "Retry-After": "600" } });
+}
+
 /**
  * Запись проверяющего в журнал посещений — без входа, только по токену QR.
  *
  * POST /api/inspector/[token]/visits — multipart: inspectorName,
  * inspectorPosition, authority, kind, kindNote?, basisNumber?, basisDate?
- * (YYYY-MM-DD), file (0–5 шт., PDF/JPG/PNG до 10 МБ, тип по содержимому).
+ * (YYYY-MM-DD), file (0–5 шт., PDF/JPG/PNG до 10 МБ, вместе до 25 МБ,
+ * тип и размер картинки — по содержимому, PDF — в изолированном потоке).
  *
- * Неизвестный токен — 404, отозванный или истёкший — 410. Лимит запросов
- * тратится до разбора формы. Организация берётся только из токена; данные
- * журналов не меняются. Имя проверяющего ставится в cookie «кто смотрит»,
- * как у прежней отметки о просмотре.
+ * Неизвестный токен — 404, отозванный или истёкший — 410. Лимиты запросов
+ * (токен+IP и один токен) тратятся до разбора формы; без Content-Length —
+ * 411, больше предела — 413. Суточные лимиты записей и объёма сканов на
+ * токен проверяются под блокировкой токена вместе с созданием записи.
+ * Организация — только из токена. id записи добавляется в подписанную
+ * cookie браузера: на портале проверяющий видит только свои записи.
  */
 export async function POST(request: Request, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params;
@@ -42,15 +56,15 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
   if (access.status === "not_found") return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   if (access.status !== "ok") return NextResponse.json({ error: "Доступ отозван или истёк" }, { status: 410 });
 
+  const tokenId = access.token.id;
   const ip = inspectorClientIp(request.headers);
-  if (!inspectorUploadLimiter.consume(inspectorLimitKey(access.token.id, ip))) {
-    return NextResponse.json({ error: "Слишком много запросов. Повторите через несколько минут." }, { status: 429 });
+  if (!inspectorUploadLimiter.consume(inspectorLimitKey(tokenId, ip)) || !inspectorTokenUploadLimiter.consume(tokenId)) {
+    return tooMany("Слишком много запросов. Повторите через несколько минут.");
   }
-  if (inspectionVisitRequestTooBig(request)) {
-    return NextResponse.json({ error: INSPECTION_VISIT_ERRORS.requestTooBig }, { status: 413 });
-  }
-  if ((await countTokenVisitsLastDay(access.token.id)) >= INSPECTION_VISITS_PER_TOKEN_PER_DAY) {
-    return NextResponse.json({ error: INSPECTION_VISIT_ERRORS.dailyLimit }, { status: 429 });
+  const sizeError = inspectionVisitRequestSizeError(request);
+  if (sizeError) return sizeError;
+  if ((await countTokenVisitsLastDay(tokenId)) >= INSPECTION_VISITS_PER_TOKEN_PER_DAY) {
+    return tooMany(INSPECTION_VISIT_ERRORS.dailyLimit);
   }
 
   let form: FormData;
@@ -64,19 +78,22 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
 
   const files = await checkInspectionVisitFiles(visitFilesFromForm(form));
   if (!files.ok) {
-    console.warn("[inspection-visits] inspector upload rejected", { tokenId: access.token.id, reason: files.error });
+    console.warn("[inspection-visits] inspector upload rejected", { tokenId, reason: files.error });
     return NextResponse.json({ error: files.error, field: "file" }, { status: files.status });
   }
 
-  const visit = await createInspectionVisit({
+  const created = await createTokenInspectionVisit({
     organizationId: access.token.organizationId,
-    tokenId: access.token.id,
+    tokenId,
     source: "inspector",
     fields: parsed.fields,
     files: files.files,
     ipAddress: ip,
     userAgent: request.headers.get("user-agent"),
   });
+  if (!created.ok) return tooMany(created.error);
+  const { visit } = created;
+
   const name = parsed.fields.inspectorName;
   await logInspectorEvent({
     access,
@@ -97,12 +114,21 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
     { ok: true, visitId: visit.id, visitedAt: visit.visitedAt.toISOString(), files: visit.files.length },
     { status: 201 }
   );
-  response.cookies.set(inspectorViewerCookie(access.token.id), `${name}, ${parsed.fields.inspectorPosition}`.slice(0, 160), {
+  const cookieOptions = {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
+  };
+  response.cookies.set(inspectorViewerCookie(tokenId), `${name}, ${parsed.fields.inspectorPosition}`.slice(0, 160), {
+    ...cookieOptions,
     maxAge: 60 * 60 * 24 * 7,
   });
+  const visitsCookie = inspectionVisitCookieName(tokenId);
+  response.cookies.set(
+    visitsCookie,
+    appendInspectionVisitId(tokenId, cookieFromHeader(request.headers.get("cookie"), visitsCookie), visit.id),
+    { ...cookieOptions, maxAge: INSPECTION_VISIT_COOKIE_MAX_AGE }
+  );
   return response;
 }

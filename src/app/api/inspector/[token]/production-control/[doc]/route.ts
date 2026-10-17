@@ -2,6 +2,7 @@ import {
   inspectorClientIp,
   inspectorLimitKey,
   inspectorPdfLimiter,
+  inspectorTokenPdfLimiter,
   loadInspectorAccess,
   logInspectorEvent,
 } from "@/lib/inspector-access";
@@ -38,7 +39,11 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
   if (access.status === "not_found") return plain(404, "Не найдено");
   if (access.status !== "ok") return plain(410, "Доступ отозван или истёк");
   if (!isInspectionNormDoc(doc)) return plain(404, "Не найдено");
-  if (!inspectorPdfLimiter.consume(inspectorLimitKey(access.token.id, inspectorClientIp(request.headers)))) {
+  // Сборка PDF тяжёлая: лимит на токен+IP и отдельно на токен (смена IP не помогает).
+  if (
+    !inspectorPdfLimiter.consume(inspectorLimitKey(access.token.id, inspectorClientIp(request.headers))) ||
+    !inspectorTokenPdfLimiter.consume(access.token.id)
+  ) {
     return plain(429, "Слишком много запросов. Повторите через минуту.");
   }
   const organizationId = access.token.organizationId;

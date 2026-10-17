@@ -63,6 +63,13 @@ export const INSPECTION_VISIT_MAX_TOTAL_BYTES = 25 * 1024 * 1024;
  * 413 до разбора формы, чтобы чужой гигабайт не читался в память.
  */
 export const INSPECTION_VISIT_MAX_REQUEST_BYTES = INSPECTION_VISIT_MAX_TOTAL_BYTES + 512 * 1024;
+/** Сканов по одному токену за сутки, всего: мусор нельзя удалить — только скрыть. */
+export const INSPECTION_VISIT_TOKEN_DAILY_BYTES = 100 * 1024 * 1024;
+/**
+ * Вложения посещений в одном архиве для проверки. Архив собирается в
+ * памяти — больше не кладём, остальное открывается в кабинете.
+ */
+export const INSPECTION_BUNDLE_ATTACHMENTS_MAX_BYTES = 100 * 1024 * 1024;
 
 export const INSPECTION_VISIT_ACCEPT = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
 
@@ -71,9 +78,54 @@ export const INSPECTION_VISIT_ERRORS = {
   empty: "Файл пустой — выберите скан или фото документа",
   tooMany: `К посещению можно приложить не больше ${INSPECTION_VISIT_MAX_FILES} файлов`,
   requestTooBig: "Файлы в сумме больше 25 МБ — приложите меньше листов или сфотографируйте их заново",
+  lengthRequired: "Не удалось определить размер запроса — обновите страницу и отправьте ещё раз",
   dailyLimit: "По этой ссылке сегодня уже внесено много записей. Попросите руководителя добавить запись в кабинете.",
+  dailyVolume: "По этой ссылке за сутки загружено слишком много файлов. Попросите руководителя приложить скан в кабинете.",
   fields: "Проверьте поля записи",
+  hideReason: "Напишите, почему запись ошибочная (от 3 символов)",
 } as const;
+
+/* ---------------- «Скрыть как ошибочную» ---------------- */
+
+export const INSPECTION_VISIT_HIDE_REASON_MAX = 300;
+
+/** Тело `POST /api/inspection/visits/[id]/hidden`: скрыть с причиной или вернуть. */
+export const inspectionVisitHideSchema = z
+  .object({
+    hidden: z.boolean(),
+    reason: z
+      .union([z.string(), z.null(), z.undefined()])
+      .transform((value) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : ""))
+      .pipe(z.string().max(INSPECTION_VISIT_HIDE_REASON_MAX)),
+  })
+  .superRefine((value, ctx) => {
+    if (value.hidden && value.reason.length < 3) {
+      ctx.addIssue({ code: "custom", path: ["reason"], message: INSPECTION_VISIT_ERRORS.hideReason });
+    }
+  });
+
+/**
+ * Какие файлы посещений войдут в архив: по порядку, пока помещаются в
+ * предел; не поместившиеся пропускаются (о них — строка в `ОТЧЁТ.txt`).
+ */
+export function planBundleAttachments<T extends { id: string; sizeBytes: number }>(
+  files: T[],
+  budgetBytes = INSPECTION_BUNDLE_ATTACHMENTS_MAX_BYTES
+): { included: T[]; skipped: { count: number; bytes: number } } {
+  const included: T[] = [];
+  const skipped = { count: 0, bytes: 0 };
+  let left = budgetBytes;
+  for (const file of files) {
+    if (file.sizeBytes <= left) {
+      included.push(file);
+      left -= file.sizeBytes;
+    } else {
+      skipped.count += 1;
+      skipped.bytes += file.sizeBytes;
+    }
+  }
+  return { included, skipped };
+}
 
 const text = (max: number) =>
   z
@@ -180,25 +232,40 @@ export function canUseInspectionVisits(user: CabinetUser): boolean {
   return hasFullWorkspaceAccess(user) || hasCapability(user, "tasks.verify");
 }
 
+/** Скрыть запись как ошибочную и вернуть её — руководитель (как удаление в кабинете). */
+export function canHideInspectionVisits(user: CabinetUser): boolean {
+  return hasCapability(user, "admin.full");
+}
+
 /**
  * Можно ли отдать вложение посещения. Кабинет — только своей организации и
- * тем, кто видит журнал посещений. Проверяющий — только вложения записей,
- * внесённых его токеном, и пока токен действует (отозванный или истёкший
- * токен сюда не доходит: `loadInspectorAccess` его не пропускает, но правило
- * проверяем и здесь). Иначе маршрут отвечает 404.
+ * тем, кто видит журнал посещений (скрытые записи тоже: руководство видит
+ * всё). Проверяющий — только вложения записей, внесённых его токеном И этим
+ * браузером (подписанная cookie со списком записей: постоянный QR сканируют
+ * разные проверяющие, мартовский не должен видеть решение октябрьского),
+ * не скрытых, и пока токен действует. Иначе маршрут отвечает 404.
  */
 export function inspectionVisitFileAccessible(input: {
-  file: { organizationId: string; visit: { organizationId: string; tokenId: string | null } } | null;
+  file: {
+    organizationId: string;
+    visitId: string;
+    visit: { organizationId: string; tokenId: string | null; hiddenAt: Date | string | null };
+  } | null;
   viewer:
     | { kind: "cabinet"; organizationId: string; allowed: boolean }
-    | { kind: "token"; organizationId: string; tokenId: string; active: boolean };
+    | { kind: "token"; organizationId: string; tokenId: string; active: boolean; visitIds: readonly string[] };
 }): boolean {
   const { file, viewer } = input;
   if (!file) return false;
   if (file.organizationId !== file.visit.organizationId) return false;
   if (file.organizationId !== viewer.organizationId) return false;
   if (viewer.kind === "cabinet") return viewer.allowed;
-  return viewer.active && file.visit.tokenId === viewer.tokenId;
+  return (
+    viewer.active &&
+    file.visit.tokenId === viewer.tokenId &&
+    file.visit.hiddenAt === null &&
+    viewer.visitIds.includes(file.visitId)
+  );
 }
 
 /** Имя файла для скачивания: без символов, ломающих заголовок и ФС. */
