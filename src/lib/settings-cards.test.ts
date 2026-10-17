@@ -9,7 +9,8 @@ import { NAV_SECTIONS } from "./app-nav";
 /**
  * Карточки бывшего хаба `/settings` (до 2026-10-16). Хаб растворился в
  * разделах — ни одна настройка не должна потеряться: каждая теперь либо
- * вкладка раздела, либо карточка на странице «Настройка» / «Остальное».
+ * вкладка раздела, либо пункт (вкладка пункта) меню раздела, либо карточка
+ * на «Настройке журналов» / «Остальном».
  */
 const FORMER_HUB_HREFS = [
   "/settings/onboarding",
@@ -134,6 +135,31 @@ test("карточки раздаются по страницам раздело
     ],
   );
   assert.ok(settingsCardsFor("more").some((card) => card.href === "/capa"));
-  assert.ok(settingsCardsFor("staff").some((card) => card.href === "/settings/permissions"));
-  assert.ok(settingsCardsFor("points").some((card) => card.href === "/settings/print-agent"));
+});
+
+test("карточки сотрудников и точек стали пунктами меню своих разделов (2026-10-17)", () => {
+  const menuOf = (key: string) =>
+    (NAV_SECTIONS.find((section) => section.key === key)?.menu ?? []).flatMap((group) =>
+      group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)]),
+    );
+  for (const href of [
+    "/settings/permissions",
+    "/settings/role-presets",
+    "/settings/staff-hierarchy",
+    "/settings/position-staff-visibility",
+    "/settings/workload-balance",
+    "/settings/phone",
+    "/settings/journal-responsibles",
+    "/settings/journal-access",
+    "/settings/journals-by-position",
+  ]) {
+    assert.ok(menuOf("staff").includes(href), href);
+  }
+  for (const href of ["/settings/print-agent", "/settings/kiosk", "/settings/products", "/settings/master-cabinet"]) {
+    assert.ok(menuOf("points").includes(href), href);
+  }
+  assert.deepEqual(
+    [...new Set(SETTINGS_CARDS.map((card) => card.section))].sort(),
+    ["journals", "more"],
+  );
 });

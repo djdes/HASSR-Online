@@ -1,14 +1,10 @@
 import { redirect } from "next/navigation";
-import { requireAuth } from "@/lib/auth-helpers";
-import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { SectionSettingsPage } from "@/components/settings/section-settings-page";
 
-export const dynamic = "force-dynamic";
-
-export default async function StaffSettingsSectionPage() {
-  const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
-  return (
-    <SectionSettingsPage session={session} section="staff" titleKey="settings_sections_staff" />
-  );
+/**
+ * Бывшая вкладка «Настройка» раздела «Сотрудники». С 2026-10-17 у раздела
+ * своё левое меню, и все её карточки (права, иерархия, нагрузка, телефон…)
+ * стали его пунктами. Старые ссылки и закладки ведут к сотрудникам.
+ */
+export default function StaffSettingsSectionPage() {
+  redirect("/settings/users");
 }

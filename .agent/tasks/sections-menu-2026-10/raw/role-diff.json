@@ -1,0 +1,110 @@
+{
+  "owner/plain": {
+    "before": 91,
+    "after": 89,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "owner/full": {
+    "before": 94,
+    "after": 92,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "manager/plain": {
+    "before": 91,
+    "after": 89,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "manager/full": {
+    "before": 94,
+    "after": 92,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "headChef/plain": {
+    "before": 75,
+    "after": 73,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "headChef/full": {
+    "before": 78,
+    "after": 76,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "verifyOnly/plain": {
+    "before": 4,
+    "after": 4,
+    "missing": [],
+    "replacedHubs": [],
+    "added": []
+  },
+  "verifyOnly/full": {
+    "before": 5,
+    "after": 5,
+    "missing": [],
+    "replacedHubs": [],
+    "added": []
+  },
+  "settingsManager/plain": {
+    "before": 72,
+    "after": 70,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "settingsManager/full": {
+    "before": 75,
+    "after": 73,
+    "missing": [],
+    "replacedHubs": [
+      "/settings/sections/points",
+      "/settings/sections/staff"
+    ],
+    "added": []
+  },
+  "cook/plain": {
+    "before": 0,
+    "after": 0,
+    "missing": [],
+    "replacedHubs": [],
+    "added": []
+  },
+  "cook/full": {
+    "before": 1,
+    "after": 1,
+    "missing": [],
+    "replacedHubs": [],
+    "added": []
+  }
+}

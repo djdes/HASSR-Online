@@ -1,0 +1,911 @@
+{
+  "base": "http://localhost:3053",
+  "startedAt": "2026-10-17T21:48:33.144Z",
+  "roles": {
+    "headchef": {
+      "desktop": {
+        "sections": {
+          "staff": {
+            "label": "Сотрудники",
+            "href": "/settings/users",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Сотрудники",
+            "items": [
+              {
+                "id": "users",
+                "href": "/settings/users",
+                "label": "Сотрудники",
+                "current": true
+              },
+              {
+                "id": "access",
+                "href": "/settings/permissions",
+                "label": "Доступ и права",
+                "current": false
+              },
+              {
+                "id": "team",
+                "href": "/team",
+                "label": "Команда",
+                "current": false
+              },
+              {
+                "id": "schedule",
+                "href": "/settings/schedule",
+                "label": "График смен",
+                "current": false
+              },
+              {
+                "id": "health",
+                "href": "/settings/staff-health",
+                "label": "Медкнижки и обучение",
+                "current": false
+              },
+              {
+                "id": "hierarchy",
+                "href": "/settings/staff-hierarchy",
+                "label": "Иерархия управления",
+                "current": false
+              },
+              {
+                "id": "visibility",
+                "href": "/settings/position-staff-visibility",
+                "label": "Кто видит коллег",
+                "current": false
+              },
+              {
+                "id": "phone",
+                "href": "/settings/phone",
+                "label": "Привязка телефона",
+                "current": false
+              }
+            ],
+            "pages": {
+              "users": {
+                "href": "/settings/users",
+                "status": 200,
+                "finalPath": "/settings/users",
+                "active": "page",
+                "mode": "section",
+                "h1": "Сотрудники"
+              },
+              "access": {
+                "href": "/settings/permissions",
+                "status": 200,
+                "finalPath": "/settings/permissions",
+                "active": "page",
+                "mode": "section",
+                "h1": "Права доступа"
+              },
+              "team": {
+                "href": "/team",
+                "status": 200,
+                "finalPath": "/team",
+                "active": "page",
+                "mode": "section",
+                "h1": "Моя команда"
+              },
+              "schedule": {
+                "href": "/settings/schedule",
+                "status": 200,
+                "finalPath": "/settings/schedule",
+                "active": "page",
+                "mode": "section",
+                "h1": "График смен"
+              },
+              "health": {
+                "href": "/settings/staff-health",
+                "status": 200,
+                "finalPath": "/settings/staff-health",
+                "active": "page",
+                "mode": "section",
+                "h1": "Медкнижки и обучение"
+              },
+              "hierarchy": {
+                "href": "/settings/staff-hierarchy",
+                "status": 200,
+                "finalPath": "/settings/staff-hierarchy",
+                "active": "page",
+                "mode": "section",
+                "h1": "Иерархия управления"
+              },
+              "visibility": {
+                "href": "/settings/position-staff-visibility",
+                "status": 200,
+                "finalPath": "/settings/position-staff-visibility",
+                "active": "page",
+                "mode": "section",
+                "h1": "Видимость сотрудников по должностям"
+              },
+              "phone": {
+                "href": "/settings/phone",
+                "status": 200,
+                "finalPath": "/settings/phone",
+                "active": "page",
+                "mode": "section",
+                "h1": "Привязка телефона"
+              }
+            }
+          },
+          "points": {
+            "label": "Торговые точки",
+            "href": "/settings/buildings",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Точки и помещения",
+            "items": [
+              {
+                "id": "buildings",
+                "href": "/settings/buildings",
+                "label": "Точки",
+                "current": true
+              },
+              {
+                "id": "areas",
+                "href": "/settings/areas",
+                "label": "Цеха и помещения",
+                "current": false
+              },
+              {
+                "id": "equipment",
+                "href": "/settings/equipment",
+                "label": "Оборудование",
+                "current": false
+              },
+              {
+                "id": "qr",
+                "href": "/settings/qr-posters",
+                "label": "QR-наклейки и плакаты",
+                "current": false
+              },
+              {
+                "id": "printer",
+                "href": "/settings/print-agent",
+                "label": "Онлайн-принтер",
+                "current": false
+              },
+              {
+                "id": "kiosk",
+                "href": "/settings/kiosk",
+                "label": "Общий планшет",
+                "current": false
+              },
+              {
+                "id": "products",
+                "href": "/settings/products",
+                "label": "Справочник продуктов",
+                "current": false
+              },
+              {
+                "id": "master",
+                "href": "/settings/master-cabinet",
+                "label": "Мастер-кабинет",
+                "current": false
+              }
+            ],
+            "pages": {
+              "buildings": {
+                "href": "/settings/buildings",
+                "status": 200,
+                "finalPath": "/settings/buildings",
+                "active": "page",
+                "mode": "section",
+                "h1": "Точки и помещения"
+              },
+              "areas": {
+                "href": "/settings/areas",
+                "status": 200,
+                "finalPath": "/settings/areas",
+                "active": "page",
+                "mode": "section",
+                "h1": "Цеха и участки"
+              },
+              "equipment": {
+                "href": "/settings/equipment",
+                "status": 200,
+                "finalPath": "/settings/equipment",
+                "active": "page",
+                "mode": "section",
+                "h1": "Оборудование"
+              },
+              "qr": {
+                "href": "/settings/qr-posters",
+                "status": 200,
+                "finalPath": "/settings/qr-posters",
+                "active": "page",
+                "mode": "section",
+                "h1": "QR-коды"
+              },
+              "printer": {
+                "href": "/settings/print-agent",
+                "status": 200,
+                "finalPath": "/settings/print-agent",
+                "active": "page",
+                "mode": "section",
+                "h1": "Онлайн принтер"
+              },
+              "kiosk": {
+                "href": "/settings/kiosk",
+                "status": 200,
+                "finalPath": "/settings/kiosk",
+                "active": "page",
+                "mode": "section",
+                "h1": "Общий планшет"
+              },
+              "products": {
+                "href": "/settings/products",
+                "status": 200,
+                "finalPath": "/settings/products",
+                "active": "page",
+                "mode": "section",
+                "h1": "Справочник продуктов"
+              },
+              "master": {
+                "href": "/settings/master-cabinet",
+                "status": 200,
+                "finalPath": "/settings/master-cabinet",
+                "active": "page",
+                "mode": "section",
+                "h1": "Мастер-кабинет справочников"
+              }
+            }
+          },
+          "journals": {
+            "label": "Журналы",
+            "href": "/control-board",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Панель контроля",
+            "items": [
+              {
+                "id": "control",
+                "href": "/control-board",
+                "label": "Сегодня",
+                "current": true
+              },
+              {
+                "id": "verify",
+                "href": "/verifications",
+                "label": "Проверка записей",
+                "current": false
+              },
+              {
+                "id": "setup",
+                "href": "/settings/sections/journals",
+                "label": "Настройка журналов",
+                "current": false
+              }
+            ],
+            "pages": {
+              "control": {
+                "href": "/control-board",
+                "status": 200,
+                "finalPath": "/control-board",
+                "active": "page",
+                "mode": "section",
+                "h1": "Панель контроля"
+              },
+              "verify": {
+                "href": "/verifications",
+                "status": 200,
+                "finalPath": "/verifications",
+                "active": "page",
+                "mode": "section",
+                "h1": "Проверка задач"
+              },
+              "setup": {
+                "href": "/settings/sections/journals",
+                "status": 200,
+                "finalPath": "/settings/sections/journals",
+                "active": "page",
+                "mode": "section",
+                "h1": "Настройка журналов"
+              }
+            }
+          },
+          "checklists": {
+            "label": "Чек-листы",
+            "href": "/checklists",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Конструктор чек-листов",
+            "items": [
+              {
+                "id": "builder",
+                "href": "/checklists",
+                "label": "Конструктор чек-листов",
+                "current": true
+              }
+            ],
+            "pages": {
+              "builder": {
+                "href": "/checklists",
+                "status": 200,
+                "finalPath": "/checklists",
+                "active": "page",
+                "mode": "section",
+                "h1": "Конструктор чек-листов"
+              }
+            }
+          },
+          "productionControl": {
+            "label": "Производственный контроль",
+            "href": "/production-control",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Электронная программа производственного контроля",
+            "items": [
+              {
+                "id": "program",
+                "href": "/production-control",
+                "label": "ППК",
+                "current": true
+              },
+              {
+                "id": "procedures",
+                "href": "/production-control/documents/procedures",
+                "label": "Документированные процедуры",
+                "current": false
+              },
+              {
+                "id": "floor-plans",
+                "href": "/production-control/sanitation/floor-plans",
+                "label": "План помещений и потоков",
+                "current": false
+              },
+              {
+                "id": "products",
+                "href": "/production-control/haccp/products",
+                "label": "Описание продукции (ТР ТС)",
+                "current": false
+              },
+              {
+                "id": "pest-control",
+                "href": "/production-control/sanitation/pest-control",
+                "label": "Дезинсекция и дератизация",
+                "current": false
+              },
+              {
+                "id": "lab",
+                "href": "/production-control/sanitation/lab",
+                "label": "Лабораторные исследования",
+                "current": false
+              },
+              {
+                "id": "flowcharts",
+                "href": "/production-control/haccp/flowcharts",
+                "label": "Блок-схемы техпроцессов",
+                "current": false
+              },
+              {
+                "id": "team",
+                "href": "/production-control/haccp/team",
+                "label": "Группа ХАССП",
+                "current": false
+              },
+              {
+                "id": "policy",
+                "href": "/production-control/haccp/policy",
+                "label": "Политика качества",
+                "current": false
+              },
+              {
+                "id": "hazards",
+                "href": "/production-control/haccp/hazards",
+                "label": "Анализ опасностей",
+                "current": false
+              },
+              {
+                "id": "control-points",
+                "href": "/production-control/haccp/control-points",
+                "label": "ККТ и рабочие листы",
+                "current": false
+              },
+              {
+                "id": "audit",
+                "href": "/production-control/haccp/audit",
+                "label": "Чек-листы и аудит",
+                "current": false
+              },
+              {
+                "id": "orders",
+                "href": "/orders",
+                "label": "Приказы",
+                "current": false
+              },
+              {
+                "id": "posters",
+                "href": "/production-control/documents/posters",
+                "label": "Плакаты для производства",
+                "current": false
+              },
+              {
+                "id": "norm-documents",
+                "href": "/production-control/norms/documents",
+                "label": "Нормативные документы",
+                "current": false
+              },
+              {
+                "id": "storage",
+                "href": "/production-control/documents/storage",
+                "label": "Хранилище документов",
+                "current": false
+              }
+            ],
+            "pages": {
+              "program": {
+                "href": "/production-control",
+                "status": 200,
+                "finalPath": "/production-control",
+                "active": "page",
+                "mode": "section",
+                "h1": "Электронная программа производственного контроля"
+              },
+              "procedures": {
+                "href": "/production-control/documents/procedures",
+                "status": 200,
+                "finalPath": "/production-control/documents/procedures",
+                "active": "page",
+                "mode": "section",
+                "h1": "Документированные процедуры"
+              },
+              "floor-plans": {
+                "href": "/production-control/sanitation/floor-plans",
+                "status": 200,
+                "finalPath": "/production-control/sanitation/floor-plans",
+                "active": "page",
+                "mode": "section",
+                "h1": "План помещений и потоков"
+              },
+              "products": {
+                "href": "/production-control/haccp/products",
+                "status": 200,
+                "finalPath": "/production-control/haccp/products",
+                "active": "page",
+                "mode": "section",
+                "h1": "Описание продукции (ТР ТС)"
+              },
+              "pest-control": {
+                "href": "/production-control/sanitation/pest-control",
+                "status": 200,
+                "finalPath": "/production-control/sanitation/pest-control",
+                "active": "page",
+                "mode": "section",
+                "h1": "Дезинсекция и дератизация"
+              },
+              "lab": {
+                "href": "/production-control/sanitation/lab",
+                "status": 200,
+                "finalPath": "/production-control/sanitation/lab",
+                "active": "page",
+                "mode": "section",
+                "h1": "Лабораторные исследования"
+              },
+              "flowcharts": {
+                "href": "/production-control/haccp/flowcharts",
+                "status": 200,
+                "finalPath": "/production-control/haccp/flowcharts",
+                "active": "page",
+                "mode": "section",
+                "h1": "Блок-схемы техпроцессов"
+              },
+              "team": {
+                "href": "/production-control/haccp/team",
+                "status": 200,
+                "finalPath": "/production-control/haccp/team",
+                "active": "page",
+                "mode": "section",
+                "h1": "Группа ХАССП"
+              },
+              "policy": {
+                "href": "/production-control/haccp/policy",
+                "status": 200,
+                "finalPath": "/production-control/haccp/policy",
+                "active": "page",
+                "mode": "section",
+                "h1": "Политика качества"
+              },
+              "hazards": {
+                "href": "/production-control/haccp/hazards",
+                "status": 200,
+                "finalPath": "/production-control/haccp/hazards",
+                "active": "page",
+                "mode": "section",
+                "h1": "Анализ опасностей"
+              },
+              "control-points": {
+                "href": "/production-control/haccp/control-points",
+                "status": 200,
+                "finalPath": "/production-control/haccp/control-points",
+                "active": "page",
+                "mode": "section",
+                "h1": "ККТ и рабочие листы"
+              },
+              "audit": {
+                "href": "/production-control/haccp/audit",
+                "status": 200,
+                "finalPath": "/production-control/haccp/audit",
+                "active": "page",
+                "mode": "section",
+                "h1": "Чек-листы и аудит"
+              },
+              "orders": {
+                "href": "/orders",
+                "status": 200,
+                "finalPath": "/orders",
+                "active": "page",
+                "mode": "section",
+                "h1": "Приказы"
+              },
+              "posters": {
+                "href": "/production-control/documents/posters",
+                "status": 200,
+                "finalPath": "/production-control/documents/posters",
+                "active": "page",
+                "mode": "section",
+                "h1": "Плакаты для производства"
+              },
+              "norm-documents": {
+                "href": "/production-control/norms/documents",
+                "status": 200,
+                "finalPath": "/production-control/norms/documents",
+                "active": "page",
+                "mode": "section",
+                "h1": "Нормативные документы"
+              },
+              "storage": {
+                "href": "/production-control/documents/storage",
+                "status": 200,
+                "finalPath": "/production-control/documents/storage",
+                "active": "page",
+                "mode": "section",
+                "h1": "Хранилище документов"
+              }
+            }
+          },
+          "billing": {
+            "label": "Оплата",
+            "href": "/settings/subscription",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Улучшение тарифа",
+            "items": [
+              {
+                "id": "plan",
+                "href": "/settings/subscription",
+                "label": "Тариф",
+                "current": true
+              },
+              {
+                "id": "balance",
+                "href": "/settings/balance",
+                "label": "Баланс и бонусы",
+                "current": false
+              },
+              {
+                "id": "services",
+                "href": "/settings/services",
+                "label": "Услуги специалиста",
+                "current": false
+              }
+            ],
+            "pages": {
+              "plan": {
+                "href": "/settings/subscription",
+                "status": 200,
+                "finalPath": "/settings/subscription",
+                "active": "page",
+                "mode": "section",
+                "h1": "Улучшение тарифа"
+              },
+              "balance": {
+                "href": "/settings/balance",
+                "status": 200,
+                "finalPath": "/settings/balance",
+                "active": "page",
+                "mode": "section",
+                "h1": "Баланс и бонусы"
+              },
+              "services": {
+                "href": "/settings/services",
+                "status": 200,
+                "finalPath": "/settings/services",
+                "active": "page",
+                "mode": "section",
+                "h1": "Услуги"
+              }
+            }
+          },
+          "more": {
+            "label": "Остальное",
+            "href": "/more",
+            "mode": "main",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "Остальное",
+            "items": [],
+            "pages": {}
+          },
+          "inspection": {
+            "label": "Пришла проверка",
+            "href": "/inspection",
+            "mode": "section",
+            "brand": "СБ\nСтоловая «Берёзка»",
+            "h1": "К вам пришла проверка (или придёт)",
+            "items": [
+              {
+                "id": "now",
+                "href": "/inspection",
+                "label": "Что делать сейчас",
+                "current": true
+              },
+              {
+                "id": "portal",
+                "href": "/settings/inspector-portal",
+                "label": "QR для проверяющего",
+                "current": false
+              }
+            ],
+            "pages": {
+              "now": {
+                "href": "/inspection",
+                "status": 200,
+                "finalPath": "/inspection",
+                "active": "page",
+                "mode": "section",
+                "h1": "К вам пришла проверка (или придёт)"
+              },
+              "portal": {
+                "href": "/settings/inspector-portal",
+                "status": 200,
+                "finalPath": "/settings/inspector-portal",
+                "active": "page",
+                "mode": "section",
+                "h1": "Портал инспектора"
+              }
+            }
+          }
+        },
+        "home": "http://localhost:3053/control-board",
+        "sidebar": true,
+        "mainMenu": [
+          {
+            "key": "staff",
+            "href": "/settings/users",
+            "label": "Сотрудники"
+          },
+          {
+            "key": "points",
+            "href": "/settings/buildings",
+            "label": "Торговые точки"
+          },
+          {
+            "key": "journals",
+            "href": "/control-board",
+            "label": "Журналы"
+          },
+          {
+            "key": "checklists",
+            "href": "/checklists",
+            "label": "Чек-листы"
+          },
+          {
+            "key": "productionControl",
+            "href": "/production-control",
+            "label": "Производственный контроль"
+          },
+          {
+            "key": "billing",
+            "href": "/settings/subscription",
+            "label": "Оплата"
+          },
+          {
+            "key": "more",
+            "href": "/more",
+            "label": "Остальное"
+          },
+          {
+            "key": "inspection",
+            "href": "/inspection",
+            "label": "Пришла проверка"
+          }
+        ]
+      },
+      "mobile": {
+        "staff": {
+          "mode": "section",
+          "items": [
+            "users",
+            "access",
+            "team",
+            "schedule",
+            "health",
+            "hierarchy",
+            "visibility",
+            "phone"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "points": {
+          "mode": "section",
+          "items": [
+            "buildings",
+            "areas",
+            "equipment",
+            "qr",
+            "printer",
+            "kiosk",
+            "products",
+            "master"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "journals": {
+          "mode": "section",
+          "items": [
+            "control",
+            "verify",
+            "setup"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "checklists": {
+          "mode": "section",
+          "items": [
+            "builder"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "productionControl": {
+          "mode": "section",
+          "items": [
+            "program",
+            "procedures",
+            "floor-plans",
+            "products",
+            "pest-control",
+            "lab",
+            "flowcharts",
+            "team",
+            "policy",
+            "hazards",
+            "control-points",
+            "audit",
+            "orders",
+            "posters",
+            "norm-documents",
+            "storage"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "billing": {
+          "mode": "section",
+          "items": [
+            "plan",
+            "balance",
+            "services"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "more": {
+          "mode": "main",
+          "items": [],
+          "brand": 1,
+          "mainSections": null
+        },
+        "inspection": {
+          "mode": "section",
+          "items": [
+            "now",
+            "portal"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        }
+      },
+      "mini": {
+        "staff": {
+          "menuButton": true,
+          "items": [
+            "users",
+            "access",
+            "team",
+            "schedule",
+            "health",
+            "hierarchy",
+            "visibility",
+            "phone"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "points": {
+          "menuButton": true,
+          "items": [
+            "buildings",
+            "areas",
+            "equipment",
+            "qr",
+            "printer",
+            "kiosk",
+            "products",
+            "master"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "journals": {
+          "menuButton": true,
+          "items": [
+            "control",
+            "verify",
+            "setup"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "checklists": {
+          "menuButton": true,
+          "items": [
+            "builder"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "productionControl": {
+          "menuButton": true,
+          "items": [
+            "program",
+            "procedures",
+            "floor-plans",
+            "products",
+            "pest-control",
+            "lab",
+            "flowcharts",
+            "team",
+            "policy",
+            "hazards",
+            "control-points",
+            "audit",
+            "orders",
+            "posters",
+            "norm-documents",
+            "storage"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "billing": {
+          "menuButton": true,
+          "items": [
+            "plan",
+            "balance",
+            "services"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        },
+        "more": {
+          "menuButton": false
+        },
+        "inspection": {
+          "menuButton": true,
+          "items": [
+            "now",
+            "portal"
+          ],
+          "brand": 1,
+          "mainSections": 8
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-10-17T22:01:17.734Z",
+  "problems": []
+}

@@ -57,7 +57,11 @@ const STATUS: Record<
   cancelled: { className: "text-[#9b9fb3]", icon: XCircle },
 };
 
-export function PrintAgentCard() {
+/**
+ * `historyOnly` — на странице «Онлайн-принтер», где подключение и машины уже
+ * показаны: только предупреждение «не на связи» и последние задания.
+ */
+export function PrintAgentCard({ historyOnly = false }: { historyOnly?: boolean } = {}) {
   const t = useTranslations("printAgent.card");
   const locale = useLocale();
   const [agents, setAgents] = useState<Agent[] | null>(null);
@@ -88,9 +92,11 @@ export function PrintAgentCard() {
   const online = agents?.filter((a) => a.online) ?? [];
   const connected = (agents?.length ?? 0) > 0;
 
+  if (historyOnly && jobs.length === 0 && !(connected && online.length === 0)) return null;
+
   return (
     <div className="space-y-4">
-      {!connected ? (
+      {historyOnly ? null : !connected ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-8 text-center">
           <span className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
             <Printer className="size-5" />

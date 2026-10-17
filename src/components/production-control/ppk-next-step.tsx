@@ -20,7 +20,7 @@ export async function PpkNextStep({ blockKey }: { blockKey: PpkBlockKey }) {
         </span>
         <div className="min-w-0">
           <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            {t("nextStep", { block: nav(`shell.items.${blockKey}`) })}
+            {t("nextStep", { block: nav(`shell.menus.productionControl.items.${blockKey}`) })}
           </h2>
           <p className="mt-0.5 text-[13.5px] text-[#6f7282]">{t(`blocks.${blockKey}.hint`)}</p>
         </div>

@@ -63,7 +63,7 @@ import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabine
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { CurrentPointSwitcher } from "@/components/layout/current-point-switcher";
 import { MobileNavSheet } from "@/components/layout/mobile-nav-sheet";
-import { OrganizationMark } from "@/components/layout/app-sidebar";
+import { OrganizationMark } from "@/components/layout/organization-brand";
 
 function getInitials(name: string): string {
   return name
@@ -509,6 +509,12 @@ export function Header({
           buildings={currentPoint.buildings}
           activeBuildingId={currentPoint.activeBuildingId}
           onLogout={handleLogout}
+          brand={{
+            logoUrl: organizationLogoUrl ?? null,
+            name: organizationName || "WeSetup",
+            homeHref,
+            canEditBranding,
+          }}
         />
       ) : null}
 

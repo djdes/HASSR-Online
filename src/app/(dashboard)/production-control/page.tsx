@@ -19,7 +19,7 @@ import { PpkStarterWizard } from "@/components/production-control/ppk-starter-wi
 import { PpkNextStep } from "@/components/production-control/ppk-next-step";
 import { PpkProgressBar } from "@/components/production-control/ppk-progress-bar";
 import { PpkStatusDot } from "@/components/production-control/ppk-status-dot";
-import { OrganizationMark } from "@/components/layout/app-sidebar";
+import { OrganizationMark } from "@/components/layout/organization-brand";
 
 export const dynamic = "force-dynamic";
 
@@ -118,7 +118,7 @@ export default async function ProductionControlPage() {
                 className="rounded-3xl border border-[#ececf4] bg-white p-5 transition-shadow duration-150 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)]"
               >
                 <h3 className="flex items-baseline justify-between gap-2 text-[16px] font-semibold text-[#0b1024]">
-                  <span>{group.key === "main" ? t("overview.mapMain") : nav(`shell.menuGroups.${group.key}`)}</span>
+                  <span>{group.key === "main" ? t("overview.mapMain") : nav(`shell.menus.productionControl.groups.${group.key}`)}</span>
                   {counted.length > 0 ? (
                     <span className="text-[13px] font-normal tabular-nums text-[#9b9fb3]">
                       {groupDone}/{counted.length}
@@ -132,7 +132,7 @@ export default async function ProductionControlPage() {
                         href={ppkBlockHref(block)}
                         className="-mx-2 flex min-h-[36px] items-center gap-2 rounded-xl px-2 text-[14px] text-[#3c4053] transition-colors duration-150 hover:bg-[#fafbff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                       >
-                        <span className="min-w-0 flex-1">{nav(`shell.items.${block.key}`)}</span>
+                        <span className="min-w-0 flex-1">{nav(`shell.menus.productionControl.items.${block.key}`)}</span>
                         <PpkStatusDot status={statuses[block.key]} />
                       </Link>
                     </li>

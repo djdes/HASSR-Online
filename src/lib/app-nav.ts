@@ -4,8 +4,13 @@
  * `docs/superpowers/specs/2026-10-16-cabinet-sidebar-nav-design.md`).
  *
  * Один список на всё: сайдбар и мобильный лист сайта, вкладки раздела,
- * хлебные крошки, ⌘K и «Разделы» мини-приложения (П-3). Подразделы — не
- * пункты сайдбара, а вкладки над основным окном.
+ * хлебные крошки, ⌘K и «Разделы» мини-приложения (П-3).
+ *
+ * С 2026-10-17 (эскизы руководителя, план «Кабинет по эскизам», 4.0) у
+ * каждого раздела, кроме «Остального», своё левое меню (`menu`): при входе в
+ * раздел сайдбар целиком меняется на его пункты, у пункта могут быть вкладки
+ * над страницей (третий уровень). Вкладки раздела (`tabs`) остаются только
+ * кандидатами на корень раздела для разных ролей.
  *
  * Правила доступа новых не вводят: каждая вкладка повторяет guard своей
  * страницы и проверку `proxy.ts`. Пункт, ведущий на редирект, — обман,
@@ -112,20 +117,35 @@ export type NavTab = {
   hideIfVisible?: string;
 };
 
-/** Вкладка пункта меню раздела (над страницей). Подпись — `navigation.shell.subtabs.<id>`. */
+/**
+ * Подписи меню раздела — своё пространство на раздел:
+ * `navigation.shell.menus.<раздел>.groups/items/tabs.<id>`. У разных разделов
+ * одинаковые id (`team`, `points`) значат разное, поэтому плоских ключей нет.
+ */
+/** Вкладка пункта меню раздела (над страницей). Подпись — `menus.<раздел>.tabs.<id>`. */
 export type NavMenuTab = { id: string; href: string; access: NavAccess };
 
-/** Пункт меню раздела (левое меню целиком меняется). Подпись — `navigation.shell.items.<id>`. */
+/** Пункт меню раздела (левое меню целиком меняется). Подпись — `menus.<раздел>.items.<id>`. */
 export type NavMenuItem = {
   id: string;
   icon: string;
   href: string;
   access: NavAccess;
   tabs?: NavMenuTab[];
+  /**
+   * Другие пути пункта (префиксом): страницы-карточки и подстраницы, у которых
+   * своего пункта нет, — например карточки «Настройки журналов».
+   */
+  match?: string[];
+  /** Пункт не показываем, если виден пункт с этим id (как у вкладок). */
+  hideIfVisible?: string;
 };
 
-/** Группа пунктов меню раздела; подпись — `navigation.shell.menuGroups.<label>`, null — без подписи. */
-export type NavMenuGroup = { label: "haccp" | "documents" | null; items: NavMenuItem[] };
+/** Ключ подписи группы: `menus.<раздел>.groups.<label>`. */
+export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "more";
+
+/** Группа пунктов меню раздела; `label: null` — группа без подписи. */
+export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[] };
 
 export type NavSection = {
   key: NavSectionKey;
@@ -156,7 +176,7 @@ export type VisibleNavMenuItem = {
   href: string;
   tabs?: { id: string; href: string }[];
 };
-export type VisibleNavMenuGroup = { label: NavMenuGroup["label"]; items: VisibleNavMenuItem[] };
+export type VisibleNavMenuGroup = { label: NavMenuGroupLabel | null; items: VisibleNavMenuItem[] };
 
 export type VisibleNavSection = {
   key: NavSectionKey;
@@ -175,6 +195,11 @@ const fullAccessOr = (...capabilities: Capability[]): NavAccess => ({
   capabilities,
 });
 const ADMIN = anyOf("admin.full");
+// Страницы прав и иерархии пускают по праву `settings.permissions` из БД.
+const PERMISSIONS_FACT: NavAccess = { kind: "fact", fact: "settingsPermissions" };
+const CHECKLISTS_FACT: NavAccess = { kind: "fact", fact: "checklists" };
+// `/dashboard` без `journals.view` уводит на панель контроля.
+const JOURNALS_TODAY: NavAccess = { kind: "all", rules: [anyOf("journals.view"), FULL_ACCESS] };
 
 /** Правило пункта реестра ППК — по виду доступа блока. */
 const PPK_ACCESS: Record<PpkBlockAccess, NavAccess> = {
@@ -189,7 +214,7 @@ const PPK_ACCESS: Record<PpkBlockAccess, NavAccess> = {
  */
 function ppkMenu(): NavMenuGroup[] {
   return PPK_MENU_GROUPS.map((group): NavMenuGroup => ({
-    label: group.labelled ? (group.key as "haccp" | "documents") : null,
+    label: group.labelled ? (group.key as Exclude<typeof group.key, "main">) : null,
     items: ppkMenuBlocks(group.key).map((block): NavMenuItem => {
       const tabs = ppkReadyTabs(block);
       return {
@@ -204,6 +229,134 @@ function ppkMenu(): NavMenuGroup[] {
     }),
   })).filter((group) => group.items.length > 0);
 }
+
+/**
+ * Меню разделов по эскизам руководителя (сканы 82–83, 2026-10-17): у раздела
+ * своё левое меню. Пункт — существующая страница; вкладки раздела (`tabs`)
+ * остаются кандидатами на корень раздела для разных ролей и в разделе с меню
+ * не рисуются. Что не нарисовано на эскизе, — в нижней группе «Ещё».
+ */
+const COMPANY_MENU: NavMenuGroup[] = [
+  { label: null, items: [{ id: "organization", icon: "Building2", href: "/settings/organization", access: ADMIN }] },
+  {
+    label: "more",
+    items: [
+      { id: "names", icon: "PenLine", href: "/settings/names", access: FULL_ACCESS },
+      { id: "onboarding", icon: "Rocket", href: "/settings/onboarding", access: ADMIN },
+      { id: "template", icon: "LayoutTemplate", href: "/settings/onboarding-template", access: ADMIN },
+      { id: "appearance", icon: "Palette", href: "/settings/appearance", access: ADMIN },
+    ],
+  },
+];
+
+const STAFF_MENU: NavMenuGroup[] = [
+  {
+    label: "directories",
+    items: [
+      { id: "users", icon: "Users", href: "/settings/users", access: FULL_ACCESS },
+      {
+        // «Доступ и права» — четыре страницы прав вкладками одного пункта
+        // (одна страница вместо четырёх — следующая задача).
+        id: "access",
+        icon: "ShieldCheck",
+        href: "/settings/journal-access",
+        access: FULL_ACCESS,
+        tabs: [
+          { id: "permissions", href: "/settings/permissions", access: PERMISSIONS_FACT },
+          { id: "presets", href: "/settings/role-presets", access: ADMIN },
+          { id: "journals", href: "/settings/journal-access", access: FULL_ACCESS },
+          { id: "positions", href: "/settings/journals-by-position", access: FULL_ACCESS },
+        ],
+      },
+    ],
+  },
+  {
+    label: "more",
+    items: [
+      { id: "team", icon: "UsersRound", href: "/team", access: anyOf("staff.view", "tasks.verify", "admin.full") },
+      { id: "schedule", icon: "CalendarDays", href: "/settings/schedule", access: FULL_ACCESS },
+      { id: "health", icon: "HeartPulse", href: "/settings/staff-health", access: FULL_ACCESS },
+      { id: "responsibles", icon: "UserCheck", href: "/settings/journal-responsibles", access: ADMIN },
+      { id: "hierarchy", icon: "Network", href: "/settings/staff-hierarchy", access: PERMISSIONS_FACT },
+      { id: "visibility", icon: "Eye", href: "/settings/position-staff-visibility", access: FULL_ACCESS },
+      { id: "workload", icon: "Scale", href: "/settings/workload-balance", access: ADMIN },
+      { id: "phone", icon: "Phone", href: "/settings/phone", access: STAFF_PATH },
+    ],
+  },
+];
+
+const POINTS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "buildings", icon: "Store", href: "/settings/buildings", access: FULL_ACCESS },
+      { id: "areas", icon: "DoorOpen", href: "/settings/areas", access: STAFF_PATH },
+      { id: "equipment", icon: "Refrigerator", href: "/settings/equipment", access: STAFF_PATH },
+      { id: "qr", icon: "QrCode", href: "/settings/qr-posters", access: FULL_ACCESS },
+    ],
+  },
+  {
+    label: "more",
+    items: [
+      { id: "printer", icon: "Printer", href: "/settings/print-agent", access: FULL_ACCESS },
+      { id: "kiosk", icon: "TabletSmartphone", href: "/settings/kiosk", access: FULL_ACCESS },
+      { id: "products", icon: "Package", href: "/settings/products", access: FULL_ACCESS },
+      { id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS },
+    ],
+  },
+];
+
+/** Пути карточек «Настройки журналов» — они подсвечивают её пункт. */
+const JOURNAL_SETUP_MATCH = SETTINGS_CARDS.filter((card) => card.section === "journals").flatMap((card) => [
+  card.href,
+  ...(card.match ?? []),
+]);
+
+const JOURNALS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "today", icon: "CalendarCheck", href: "/dashboard", access: JOURNALS_TODAY, match: ["/dashboard/catch-up"] },
+      // «Сегодня» заведующей — панель контроля (у управляющей есть своё «Сегодня»).
+      {
+        id: "control",
+        icon: "CalendarCheck",
+        href: "/control-board",
+        access: anyOf("tasks.verify", "admin.full"),
+        hideIfVisible: "today",
+      },
+      { id: "all", icon: "ClipboardList", href: "/journals", access: anyOf("journals.view") },
+      { id: "verify", icon: "BadgeCheck", href: "/verifications", access: anyOf("tasks.verify") },
+      { id: "setup", icon: "Settings2", href: "/settings/sections/journals", access: FULL_ACCESS, match: JOURNAL_SETUP_MATCH },
+    ],
+  },
+];
+
+const CHECKLISTS_MENU: NavMenuGroup[] = [
+  { label: null, items: [{ id: "builder", icon: "ListChecks", href: "/checklists", access: CHECKLISTS_FACT }] },
+];
+
+const BILLING_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "plan", icon: "CreditCard", href: "/settings/subscription", access: FULL_ACCESS },
+      { id: "balance", icon: "Wallet", href: "/settings/balance", access: STAFF_PATH },
+      { id: "services", icon: "Handshake", href: "/settings/services", access: STAFF_PATH },
+    ],
+  },
+];
+
+const INSPECTION_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
+      { id: "portal", icon: "QrCode", href: "/settings/inspector-portal", access: FULL_ACCESS },
+      { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
+    ],
+  },
+];
 
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -230,13 +383,16 @@ export const NAV_SECTIONS: NavSection[] = [
         access: ADMIN,
       },
     ],
+    menu: COMPANY_MENU,
   },
   {
     key: "staff",
     icon: "Users",
     access: fullAccessOr("staff.view", "tasks.verify"),
     renameHref: "/settings/users",
-    hiddenMatch: ["/staff", "/competencies"],
+    // `/settings/sections/staff` — бывшая «Настройка»: её карточки стали
+    // пунктами меню, сама страница уводит к сотрудникам.
+    hiddenMatch: ["/staff", "/competencies", "/settings/sections/staff"],
     tabs: [
       { id: "users", label: "users", href: "/settings/users", access: FULL_ACCESS },
       {
@@ -247,20 +403,22 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       { id: "schedule", label: "schedule", href: "/settings/schedule", access: FULL_ACCESS },
       { id: "health", label: "health", href: "/settings/staff-health", access: FULL_ACCESS },
-      { id: "setup", label: "setup", href: "/settings/sections/staff", access: FULL_ACCESS },
     ],
+    menu: STAFF_MENU,
   },
   {
     key: "points",
     icon: "Store",
     access: FULL_ACCESS,
+    // `/settings/sections/points` — бывшая «Настройка», см. «Сотрудники».
+    hiddenMatch: ["/settings/sections/points"],
     tabs: [
       { id: "buildings", label: "buildings", href: "/settings/buildings", access: FULL_ACCESS },
       { id: "areas", label: "areas", href: "/settings/areas", access: STAFF_PATH },
       { id: "equipment", label: "equipment", href: "/settings/equipment", access: STAFF_PATH },
       { id: "qr", label: "qr", href: "/settings/qr-posters", access: FULL_ACCESS },
-      { id: "setup", label: "setup", href: "/settings/sections/points", access: FULL_ACCESS },
     ],
+    menu: POINTS_MENU,
   },
   {
     key: "journals",
@@ -272,8 +430,7 @@ export const NAV_SECTIONS: NavSection[] = [
         id: "today",
         label: "today",
         href: "/dashboard",
-        // `/dashboard` без `journals.view` уводит на панель контроля.
-        access: { kind: "all", rules: [anyOf("journals.view"), FULL_ACCESS] },
+        access: JOURNALS_TODAY,
         match: ["/dashboard/catch-up"],
       },
       {
@@ -289,13 +446,13 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: "verify", label: "verify", href: "/verifications", access: anyOf("tasks.verify") },
       { id: "setup", label: "setup", href: "/settings/sections/journals", access: FULL_ACCESS },
     ],
+    menu: JOURNALS_MENU,
   },
   {
     key: "checklists",
     icon: "ListChecks",
-    tabs: [
-      { id: "main", label: "main", href: "/checklists", access: { kind: "fact", fact: "checklists" } },
-    ],
+    tabs: [{ id: "main", label: "main", href: "/checklists", access: CHECKLISTS_FACT }],
+    menu: CHECKLISTS_MENU,
   },
   {
     key: "productionControl",
@@ -316,12 +473,14 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: "balance", label: "balance", href: "/settings/balance", access: STAFF_PATH },
       { id: "services", label: "services", href: "/settings/services", access: STAFF_PATH },
     ],
+    menu: BILLING_MENU,
   },
   {
     key: "more",
     icon: "LayoutGrid",
     access: FULL_ACCESS,
     // Убраны из меню владельцем 2026-09-25 — открываются по адресу.
+    // Своего меню нет: раздел — одна страница с карточками.
     hiddenMatch: ["/batches", "/losses", "/changes", "/bonuses"],
     tabs: [{ id: "main", label: "main", href: "/more", access: FULL_ACCESS }],
   },
@@ -340,6 +499,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: "portal", label: "portal", href: "/settings/inspector-portal", access: FULL_ACCESS },
       { id: "readiness", label: "readiness", href: "/dashboard/compliance-audit", access: ADMIN },
     ],
+    menu: INSPECTION_MENU,
   },
 ];
 
@@ -377,24 +537,33 @@ export function navAllows(
 /**
  * Меню раздела, которое человек откроет: пункты и вкладки — через `navAllows`;
  * у пункта с вкладками адрес — первая видимая вкладка, без видимых вкладок
- * пункт убирается; пустые группы тоже.
+ * пункт убирается; пункт с `hideIfVisible` прячется, если виден тот пункт;
+ * пустые группы тоже убираются.
  */
 function visibleMenu(actor: NavActor, groups: NavMenuGroup[], facts: NavFacts): VisibleNavMenuGroup[] {
-  const result: VisibleNavMenuGroup[] = [];
-  for (const group of groups) {
-    const items: VisibleNavMenuItem[] = [];
+  const allowed = groups.map((group) => {
+    const items: (VisibleNavMenuItem & { hideIfVisible?: string })[] = [];
     for (const item of group.items) {
       if (!navAllows(actor, item.href, item.access, facts)) continue;
+      const hide = item.hideIfVisible ? { hideIfVisible: item.hideIfVisible } : {};
       if (!item.tabs) {
-        items.push({ id: item.id, icon: item.icon, href: item.href });
+        items.push({ id: item.id, icon: item.icon, href: item.href, ...hide });
         continue;
       }
       const tabs = item.tabs
         .filter((tab) => navAllows(actor, tab.href, tab.access, facts))
         .map(({ id, href }) => ({ id, href }));
       if (tabs.length === 0) continue;
-      items.push({ id: item.id, icon: item.icon, href: tabs[0].href, tabs });
+      items.push({ id: item.id, icon: item.icon, href: tabs[0].href, tabs, ...hide });
     }
+    return { label: group.label, items };
+  });
+  const allowedIds = new Set(allowed.flatMap((group) => group.items.map((item) => item.id)));
+  const result: VisibleNavMenuGroup[] = [];
+  for (const group of allowed) {
+    const items = group.items
+      .filter((item) => !item.hideIfVisible || !allowedIds.has(item.hideIfVisible))
+      .map(({ hideIfVisible: _hidden, ...item }) => item);
     if (items.length > 0) result.push({ label: group.label, items });
   }
   return result;
@@ -464,6 +633,19 @@ const PATH_OWNERS: PathOwner[] = (() => {
             exact: false,
             menuItemId: item.id,
             menuTabHref: item.tabs ? href : null,
+          });
+        }
+        // Пути без своего пункта (карточки, подстраницы) — глубина пункта:
+        // подсвечивают его, а над страницей стоит «‹ {пункт}».
+        for (const extra of item.match ?? []) {
+          owners.push({
+            prefix: extra,
+            section: section.key,
+            ownerHref: item.href,
+            tabRoot: false,
+            exact: false,
+            menuItemId: item.id,
+            menuTabHref: null,
           });
         }
       }

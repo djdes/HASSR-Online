@@ -1,0 +1,12 @@
+owner/plain: 91 → 89; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+owner/full: 94 → 92; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+manager/plain: 91 → 89; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+manager/full: 94 → 92; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+headChef/plain: 75 → 73; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+headChef/full: 78 → 76; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+verifyOnly/plain: 4 → 4; пропало: —; хабы-редиректы: —; добавилось: —
+verifyOnly/full: 5 → 5; пропало: —; хабы-редиректы: —; добавилось: —
+settingsManager/plain: 72 → 70; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+settingsManager/full: 75 → 73; пропало: —; хабы-редиректы: /settings/sections/points, /settings/sections/staff; добавилось: —
+cook/plain: 0 → 0; пропало: —; хабы-редиректы: —; добавилось: —
+cook/full: 1 → 1; пропало: —; хабы-редиректы: —; добавилось: —

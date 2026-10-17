@@ -279,23 +279,28 @@ test("правило каждой вкладки и карточки повто�
   }
 });
 
-test("карточки прав и иерархии зависят от права settings.permissions, а не от роли", () => {
-  const rights = SETTINGS_CARDS.filter((card) =>
-    ["settings_permissions", "settings_staff_hierarchy"].includes(card.id),
+test("права и иерархия зависят от права settings.permissions, а не от роли", () => {
+  const staff = NAV_SECTIONS.find((section) => section.key === "staff");
+  const links = (staff?.menu ?? []).flatMap((group) =>
+    group.items.flatMap((item) => [item, ...(item.tabs ?? [])]),
+  );
+  const rights = links.filter((link) =>
+    ["/settings/permissions", "/settings/staff-hierarchy"].includes(link.href),
   );
   assert.equal(rights.length, 2);
   const without: NavFacts = { checklists: false, settingsPermissions: false };
   const withRight: NavFacts = { checklists: false, settingsPermissions: true };
-  for (const card of rights) {
-    assert.deepEqual(card.access, { kind: "fact", fact: "settingsPermissions" }, card.id);
-    assert.equal(navAllows(manager, card.href, card.access, without), false, card.id);
-    assert.equal(navAllows(manager, card.href, card.access, withRight), true, card.id);
+  for (const link of rights) {
+    assert.deepEqual(link.access, { kind: "fact", fact: "settingsPermissions" }, link.href);
+    assert.equal(navAllows(manager, link.href, link.access, without), false, link.href);
+    assert.equal(navAllows(manager, link.href, link.access, withRight), true, link.href);
   }
 });
 
-test("«Шаблон заведения» — вкладка раздела «Моя компания»", () => {
+test("«Шаблон заведения» — вкладка и пункт меню раздела «Моя компания»", () => {
   const company = NAV_SECTIONS.find((section) => section.key === "company");
   assert.ok(company?.tabs.some((tab) => tab.href === "/settings/onboarding-template"));
+  assert.ok(company?.menu?.some((group) => group.items.some((item) => item.href === "/settings/onboarding-template")));
 });
 
 test("поиск: управляющей доступны карточки настроек, повару — нет", () => {
@@ -376,9 +381,10 @@ test("пункт меню — владелец своего адреса: пун
   assert.equal(root?.isTabRoot, true);
   // Адрес без своего пункта (блок ещё не готов) остаётся в разделе, у «ППК».
   assert.equal(sectionForPath("/production-control/sanitation/lab")?.section, "productionControl");
-  // Карточки и обычные вкладки пунктов меню не имеют.
+  // Карточки «Остального» и адреса без пункта пунктов меню не имеют.
   assert.equal(sectionForPath("/settings")?.menuItemId, null);
-  assert.equal(sectionForPath("/settings/users")?.menuItemId, null);
+  assert.equal(sectionForPath("/capa")?.menuItemId, null);
+  assert.equal(sectionForPath("/more")?.menuItemId, null);
 });
 
 test("видимое меню: у пункта с вкладками адрес — первая видимая вкладка", () => {
@@ -408,4 +414,139 @@ test("управляющая с правом просмотра журналов
 
 test("повар: раздела «Производственный контроль» нет", () => {
   assert.ok(!keys(cook, withChecklists).includes("productionControl"));
+});
+
+/** Пункты меню раздела: пары «подпись группы — id пунктов». */
+function menuShape(key: string): [string | null, string[]][] {
+  const section = NAV_SECTIONS.find((item) => item.key === key);
+  return (section?.menu ?? []).map((group) => [group.label, group.items.map((item) => item.id)]);
+}
+
+test("у каждого раздела, кроме «Остального», своё меню — пункты по эскизам руководителя", () => {
+  for (const section of NAV_SECTIONS) {
+    if (section.key === "more") assert.equal(section.menu, undefined);
+    else assert.ok(section.menu && section.menu.length > 0, section.key);
+  }
+  assert.deepEqual(menuShape("company"), [
+    [null, ["organization"]],
+    ["more", ["names", "onboarding", "template", "appearance"]],
+  ]);
+  assert.deepEqual(menuShape("staff"), [
+    ["directories", ["users", "access"]],
+    ["more", ["team", "schedule", "health", "responsibles", "hierarchy", "visibility", "workload", "phone"]],
+  ]);
+  assert.deepEqual(menuShape("points"), [
+    [null, ["buildings", "areas", "equipment", "qr"]],
+    ["more", ["printer", "kiosk", "products", "master"]],
+  ]);
+  assert.deepEqual(menuShape("journals"), [[null, ["today", "control", "all", "verify", "setup"]]]);
+  assert.deepEqual(menuShape("checklists"), [[null, ["builder"]]]);
+  assert.deepEqual(menuShape("billing"), [[null, ["plan", "balance", "services"]]]);
+  assert.deepEqual(menuShape("inspection"), [[null, ["now", "portal", "readiness"]]]);
+  const access = NAV_SECTIONS.find((item) => item.key === "staff")?.menu?.[0].items.find((item) => item.id === "access");
+  assert.deepEqual(access?.tabs?.map((tab) => tab.href), [
+    "/settings/permissions",
+    "/settings/role-presets",
+    "/settings/journal-access",
+    "/settings/journals-by-position",
+  ]);
+});
+
+test("id пунктов и вкладок меню в разделе не повторяются", () => {
+  for (const section of NAV_SECTIONS) {
+    const items = (section.menu ?? []).flatMap((group) => group.items);
+    const ids = items.map((item) => item.id);
+    assert.equal(new Set(ids).size, ids.length, section.key);
+    for (const item of items) {
+      const tabIds = (item.tabs ?? []).map((tab) => tab.id);
+      assert.equal(new Set(tabIds).size, tabIds.length, `${section.key}/${item.id}`);
+    }
+  }
+});
+
+test("каждая вкладка раздела с меню — пункт или вкладка пункта его меню", () => {
+  for (const section of NAV_SECTIONS) {
+    if (!section.menu) continue;
+    const hrefs = new Set(
+      section.menu.flatMap((group) =>
+        group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)]),
+      ),
+    );
+    for (const tab of section.tabs) assert.ok(hrefs.has(tab.href), `${section.key}: ${tab.href}`);
+  }
+});
+
+test("match пункта: карточки и подстраницы подсвечивают свой пункт", () => {
+  const periods = sectionForPath("/settings/journal-periods");
+  assert.equal(periods?.section, "journals");
+  assert.equal(periods?.menuItemId, "setup");
+  assert.equal(periods?.ownerHref, "/settings/sections/journals");
+  assert.equal(sectionForPath("/settings/journal-pipelines-tree/x")?.menuItemId, "setup");
+  assert.equal(sectionForPath("/settings/journals/x/scope")?.menuItemId, "setup");
+  assert.equal(sectionForPath("/settings/users/x/access")?.menuItemId, "users");
+  const presets = sectionForPath("/settings/role-presets");
+  assert.equal(presets?.section, "staff");
+  assert.equal(presets?.menuItemId, "access");
+  assert.equal(presets?.menuTabHref, "/settings/role-presets");
+  assert.equal(sectionForPath("/settings/print-agent")?.menuItemId, "printer");
+  assert.equal(sectionForPath("/settings/equipment/qr-sheet")?.menuItemId, "equipment");
+  assert.equal(sectionForPath("/dashboard/catch-up")?.menuItemId, "today");
+  assert.equal(sectionForPath("/dashboard/compliance-audit")?.menuItemId, "readiness");
+  assert.equal(sectionForPath("/control-board")?.menuItemId, "control");
+  assert.equal(sectionForPath("/journals/hygiene/documents/x")?.menuItemId, "all");
+  assert.equal(sectionForPath("/checklists/inspections/1")?.menuItemId, "builder");
+  // Бывшие «Настройки» сотрудников и точек — в своих разделах (редиректы).
+  assert.equal(sectionForPath("/settings/sections/staff")?.section, "staff");
+  assert.equal(sectionForPath("/settings/sections/points")?.section, "points");
+  // ППК не задет.
+  assert.equal(sectionForPath("/production-control/haccp/team")?.section, "productionControl");
+  assert.equal(sectionForPath("/production-control/haccp/team")?.menuItemId, "team");
+});
+
+function visibleItemIds(actor: NavActor, key: string, facts: NavFacts = withChecklists): string[] {
+  const section = visibleNav(actor, facts).find((item) => item.key === key);
+  return (section?.menu ?? []).flatMap((group) => group.items.map((item) => item.id));
+}
+
+test("«Сегодня»: у управляющей — журналы дня, у заведующей — панель контроля", () => {
+  assert.deepEqual(visibleItemIds(manager, "journals"), ["today", "all", "verify", "setup"]);
+  assert.deepEqual(visibleItemIds(headChef, "journals"), ["control", "verify", "setup"]);
+  const journals = visibleNav(headChef, withChecklists).find((item) => item.key === "journals");
+  assert.equal(journals?.menu?.[0].items[0].href, "/control-board");
+});
+
+test("заведующая: пунктов только для admin.full нет", () => {
+  assert.deepEqual(visibleItemIds(headChef, "staff"), [
+    "users",
+    "access",
+    "team",
+    "schedule",
+    "health",
+    "visibility",
+    "phone",
+  ]);
+  const access = visibleNav(headChef, withChecklists)
+    .find((item) => item.key === "staff")
+    ?.menu?.[0].items.find((item) => item.id === "access");
+  // «Права» — по праву из БД, «Наборы прав» — admin.full: заведующей — две вкладки.
+  assert.deepEqual(access?.tabs?.map((tab) => tab.id), ["journals", "positions"]);
+  assert.equal(access?.href, "/settings/journal-access");
+  assert.deepEqual(visibleItemIds(headChef, "inspection"), ["now", "portal"]);
+  assert.deepEqual(visibleItemIds(headChef, "billing"), ["plan", "balance", "services"]);
+});
+
+test("руководитель видит все пункты меню каждого раздела", () => {
+  const full: NavFacts = { checklists: true, settingsPermissions: true };
+  for (const section of NAV_SECTIONS) {
+    const all = (section.menu ?? []).flatMap((group) =>
+      group.items.filter((item) => !item.hideIfVisible).map((item) => item.id),
+    );
+    assert.deepEqual(visibleItemIds(owner, section.key, full), all, section.key);
+  }
+});
+
+test("пресет заведующей у линейной роли: в «Сотрудниках» — только команда", () => {
+  // `/settings/phone` линейной роли закрывает proxy.ts — пункта нет, как не было и карточки.
+  assert.deepEqual(visibleItemIds(verifyOnly, "staff", noChecklists), ["team"]);
+  assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["now"]);
 });
