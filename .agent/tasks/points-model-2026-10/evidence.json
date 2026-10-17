@@ -1,0 +1,75 @@
+{
+  "task_id": "points-model-2026-10",
+  "branch": "feat/points-model",
+  "database": "wesetup_points (127.0.0.1:5432, local copy)",
+  "verified_at": "2026-10-18",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": ["raw/db-push.txt", "raw/db-after-push.json"],
+      "summary": "Area.buildingId String? + relation to Building (onDelete SetNull, FK confdeltype=n), @@index([organizationId, buildingId]); prisma validate ok; db push on wesetup_points without data loss (10 areas / 23 equipment before and after)."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": ["raw/backfill-run.txt", "raw/areas-after-backfill.txt", "raw/fixture-before-backfill.txt", "src/lib/area-building.test.ts"],
+      "summary": "dry-run plan -> --apply updated=10 -> repeat --apply assign=0 updated=0; branches room-name=9, single-building=1, ambiguous=1, no-match=1, no-buildings=1."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": ["raw/api-smoke.txt", "raw/lib-smoke.txt"],
+      "summary": "11 live API checks (rooms POST/PATCH/DELETE, areas POST/PUT incl. foreign building 400) + ensureDefaultArea/soleBuildingId; onboarding template verified by code and tsc only (not applied live).",
+      "notes": "Onboarding now uses pickMirrorArea (same rule as POST rooms)."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": ["raw/node-tests.txt", "raw/api-smoke.txt"],
+      "summary": "room-kinds.ts with RU/EN/UZ labels; API zod schemas, room editor, buildings list and room directory picker use it; guessRoomKind('Основное производство') = production; live POST with kind=production -> 200."
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": ["raw/playwright-report.txt", "raw/areas-all-1440x900.png", "raw/areas-all-390x800.png", "raw/areas-active-1440x900.png", "raw/areas-active-390x800.png", "raw/area-dialog-1440x900.png"],
+      "summary": "Groups by building in sortOrder, 'Без точки' last; active building -> only it and 'Без точки'; area dialog has building select with >= 2 buildings."
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": ["raw/playwright-report.txt", "raw/equipment-all-1440x900.png", "raw/equipment-all-390x800.png", "raw/equipment-active-1440x900.png", "raw/equipment-active-390x800.png", "raw/equipment-dialog-1440x900.png", "raw/equipment-dialog-places-1440x900.png", "raw/api-smoke.txt"],
+      "summary": "Equipment grouped by its area's building with active-building filter; dialog Точка -> Помещение (grouped); roomId without area creates area with the room's building; foreign areaId/roomId -> 404 (POST) / 400 (PUT)."
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": ["raw/api-smoke.txt", "raw/fryer-lists-dialog-1440x900.png", "src/lib/fryer-oil-equipment-link.test.ts"],
+      "summary": "equipmentLinks in config, sourceEquipmentId on rows; sync on document create, fryer create/update/delete, document open and sticker open; building filter (fryer of point B not in point A document); Lists dialog badge 'из «Оборудования»'."
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": ["raw/api-smoke.txt", "raw/api-smoke-pages.txt", "raw/fryer-sticker-1440x900.png", "raw/fryer-sticker-390x800.png", "src/lib/equipment-fill-page-localization.test.ts"],
+      "summary": "Fryer sticker shows frying-fat form (RU/EN/UZ); start -> row in the fryer's point document with sourceEquipmentId; second scan -> same row; end without start 409; no active document 409 + yellow plaque; other fryer's token 401.",
+      "notes": "Two FAILs in raw/api-smoke.txt are a smoke-script bug (?t= instead of ?token=); re-checked in raw/api-smoke-pages.txt (PASS). PIN mode not exercised live (org in public mode); same actor/filler helpers as the equipment sticker."
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": ["raw/node-tests.txt", "raw/test-gate.txt"],
+      "summary": "38/38 targeted node tests; full baseline gate pass=4088 fail=0."
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": ["raw/tsc.txt", "raw/eslint.txt", "raw/playwright-report.txt"],
+      "summary": "tsc exit 0; ESLint on 46 changed files: no new findings (all 15 pre-exist at HEAD); Playwright 1440x900 and 390x800 without page horizontal scroll; commit on feat/points-model, not pushed."
+    }
+  },
+  "decisions": [
+    "Reverted .github/workflows/deploy.yml: previous agent added backfill --apply to deploy; deploy changes need owner consent.",
+    "seed-mirror-rooms-to-areas.ts sets buildingId when the room name exists in exactly one building.",
+    "demo-organization.ts assigns its single building to areas.",
+    "onboarding-template uses pickMirrorArea instead of exact name match across the org.",
+    "room-directory-picker-dialog.tsx uses room-kinds.ts labels.",
+    "POST /api/areas without buildingId and >= 2 buildings -> no building.",
+    "Area dialog shows building select also with 1 building when the area has none."
+  ],
+  "environment_notes": [
+    "node_modules hard-linked with D:/wt/sections-menu; .prisma/client detached before prisma generate.",
+    "next-intl's nested @swc/core refuses its native cache (ACL: BSQL\\Yaroslav has full control on C:\\Users\\Two); dev server run with a local scratchpad shim, nothing added to the repo.",
+    "Playwright expects chromium rev 1217, installed 1243; run with PW_CHROMIUM."
+  ]
+}

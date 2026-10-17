@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { roomKindOptions } from "@/lib/room-kinds";
 import { useRouter } from "next/navigation";
 import { Building2, Check, Copy, MapPin, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
@@ -51,14 +52,10 @@ type Building = {
   rooms: Room[];
 };
 
-const KIND_LABELS: Record<string, string> = {
-  guest: "Гостевая зона",
-  kitchen: "Кухня / горячий цех",
-  wash: "Мойка",
-  bar: "Бар",
-  storage: "Склад",
-  other: "Другое",
-};
+// Виды — общий список (`room-kinds.ts`); экран пока только на русском.
+const KIND_LABELS: Record<string, string> = Object.fromEntries(
+  roomKindOptions("ru").map((option) => [option.value, option.label]),
+);
 
 export function BuildingsClient({
   initial,

@@ -52,6 +52,8 @@ export const journalEntrySchema = z.object({
 export const areaSchema = z.object({
   name: z.string().min(1, "Название обязательно").max(200),
   description: z.string().max(1000).optional(),
+  /** Точка цеха; `null` — без точки, не передана — единственная точка организации. */
+  buildingId: z.string().max(64).nullable().optional(),
 });
 
 export const equipmentSchema = z.object({
@@ -65,7 +67,9 @@ export const equipmentSchema = z.object({
   tempMin: z.number().finite().optional(),
   tempMax: z.number().finite().optional(),
   tuyaDeviceId: z.string().max(100).optional(),
-  areaId: z.string().min(1, "Выберите зону"),
+  /** Цех. Вместо него можно прислать `roomId` — помещение точки без цеха. */
+  areaId: z.string().max(64).optional(),
+  roomId: z.string().max(64).optional(),
   /** «Кто заполняет» по QR; пусто — все. */
   fillerUserIds: z.array(z.string().min(1).max(64)).max(200).optional(),
   /** УФ-лампа: модель, ресурс, дата установки, уже отработала. */
@@ -73,6 +77,9 @@ export const equipmentSchema = z.object({
   lampLifetimeHours: z.number().int().min(1).max(100000).optional(),
   lampInstalledAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   lampUsedHours: z.number().min(0).max(100000).optional(),
+}).refine((value) => Boolean(value.areaId || value.roomId), {
+  message: "Выберите помещение",
+  path: ["areaId"],
 });
 
 export const competencySchema = z.object({

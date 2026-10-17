@@ -4,7 +4,7 @@ import { readRememberValue, rememberCookieName } from "@/lib/qr-remember";
 import { passEmployeeIdFromCookie } from "@/lib/qr-object-pass";
 import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
-import { resolveEquipmentFillTargets } from "@/lib/equipment-fill-targets";
+import { resolveEquipmentFillTargets, resolveFryerFillTarget } from "@/lib/equipment-fill-targets";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { orgTodayKey } from "@/lib/timezone";
 import { redirect } from "next/navigation";
@@ -15,6 +15,9 @@ import { stampFor } from "@/lib/quick-values";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { EquipmentFillClient } from "./equipment-fill-client";
 import { UvLampClient } from "./uv-lamp-client";
+import { FryerFillClient } from "./fryer-fill-client";
+import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
+import { formatTime, FRYER_OIL_TEMPLATE_CODE } from "@/lib/fryer-oil-document";
 import { isUvLampType } from "@/lib/uv-lamp";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
@@ -99,6 +102,7 @@ export default async function EquipmentFillPage({
           id: true,
           name: true,
           organizationId: true,
+          buildingId: true,
           organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true } },
         },
       },
@@ -167,6 +171,61 @@ export default async function EquipmentFillPage({
         rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
         passEmployeeId={passEmployeeId}
         initialState={state ?? { running: null, lifetimeHours: null, usedHours: 0, remainingHours: null }}
+      />
+    );
+  }
+
+  // Фритюрница: форма журнала фритюрных жиров вместо замера (2026-10-17).
+  // Цель записи решает тот же код, что и POST (`resolveFryerFillTarget`).
+  if (isFryerEquipmentType(equipment.type)) {
+    const fryerTz = equipment.area.organization.timezone || "Europe/Moscow";
+    const fryerDay = new Date(`${orgTodayKey(fryerTz, new Date())}T00:00:00.000Z`);
+    const [roster, target] = await Promise.all([
+      db.user.findMany({
+        where: { organizationId, ...ORG_ROSTER_WHERE },
+        select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+        orderBy: { name: "asc" },
+      }),
+      resolveFryerFillTarget({
+        equipment: { id: equipment.id, name: equipment.name, buildingId: equipment.area.buildingId },
+        organizationId,
+        day: fryerDay,
+      }),
+    ]);
+    const startedRow = target && target.row.kind === "existing" && target.phase === "end" ? target.row.entry.data : null;
+    // Прошлый жир/продукция могли уйти из списка документа — показываем и их.
+    const withLast = (list: string[], last: string | undefined) =>
+      last && !list.includes(last) ? [last, ...list] : list;
+    return wrap(
+      <FryerFillClient
+        token={token}
+        organizationName={equipment.area.organization.name}
+        journalTitle={customJournalName(customNames, FRYER_OIL_TEMPLATE_CODE) ?? messages.equipmentFill.fryer.title}
+        fryer={{ id: equipment.id, name: equipment.name }}
+        employees={(sessionEmployee && !sessionEmployee.canPickOthers
+          ? roster.filter((e) => e.id === sessionEmployee!.id)
+          : filterAllowedFillers(roster, equipment.fillerUserIds)
+        ).map((e) => ({ id: e.id, name: e.name, positionTitle: position(e) || null, hasPin: Boolean(e.qrPinHash) }))}
+        mode={qrMode}
+        sessionEmployee={sessionEmployee}
+        rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
+        passEmployeeId={passEmployeeId}
+        target={
+          target
+            ? {
+                phase: target.phase,
+                fatTypes: withLast(target.config.lists.fatTypes, target.last?.fatType),
+                productTypes: withLast(target.config.lists.productTypes, target.last?.productType),
+                defaults: {
+                  fatType: target.last?.fatType || target.config.lists.fatTypes[0] || "",
+                  productType: target.last?.productType || target.config.lists.productTypes[0] || "",
+                },
+                started: startedRow
+                  ? { time: formatTime(startedRow.startHour, startedRow.startMinute), fatType: startedRow.fatType, productType: startedRow.productType }
+                  : null,
+              }
+            : null
+        }
       />
     );
   }

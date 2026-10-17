@@ -6,6 +6,8 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { syncRoomChecklistItems } from "@/lib/cleaning-room-checklist-sync";
 import { parseScopeSteps, type ScopeStep } from "@/lib/cleaning-document";
+import { ROOM_KINDS } from "@/lib/room-kinds";
+import { deleteRoomMirrorArea, renameRoomMirrorArea } from "@/lib/area-building-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,9 +25,7 @@ const ClimateMetricSchema = z
 
 const UpdateSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
-  kind: z
-    .enum(["guest", "kitchen", "wash", "bar", "storage", "other"])
-    .optional(),
+  kind: z.enum(ROOM_KINDS).optional(),
   sortOrder: z.number().int().optional(),
   // Cleaning unification: scope/days/detergent теперь хранятся на Room.
   // См. docs/superpowers/specs/2026-05-08-cleaning-unification.md
@@ -125,7 +125,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const previous = await db.room.findFirst({
     where: { id, building: { organizationId: orgId } },
-    select: { id: true, name: true },
+    select: { id: true, name: true, buildingId: true },
   });
   if (!previous) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
@@ -235,16 +235,17 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   // Зеркальная Area (legacy split: Area — оборудование/записи, Room —
   // журналы). Переименование помещения раньше не доходило до Area, и
-  // связь по имени рвалась.
+  // связь по имени рвалась. С 2026-10-17 — только цех этой точки (или без
+  // точки: он получает точку), одноимённый цех другой точки не трогаем.
   if (body.name !== undefined && body.name !== previous.name) {
-    await db.area
-      .updateMany({
-        where: { organizationId: orgId, name: previous.name },
-        data: { name: body.name },
-      })
-      .catch(() => {
-        /* best-effort: дубликат имени в Area не должен ломать PATCH */
-      });
+    await renameRoomMirrorArea({
+      organizationId: orgId,
+      buildingId: previous.buildingId,
+      previousName: previous.name,
+      nextName: body.name,
+    }).catch(() => {
+      /* best-effort: сбой зеркала не должен ломать PATCH */
+    });
   }
   return NextResponse.json({ room: updated });
 }
@@ -259,26 +260,14 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const room = await db.room.findFirst({
     where: { id, building: { organizationId: orgId } },
-    select: { id: true, name: true },
+    select: { id: true, name: true, buildingId: true },
   });
   if (!room) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
   await db.room.delete({ where: { id } });
-  // Зеркальная Area удаляется только если к ней ничего не привязано
-  // (оборудование, записи журналов) — иначе остаётся.
-  const mirrors = await db.area.findMany({
-    where: { organizationId: orgId, name: room.name },
-    select: {
-      id: true,
-      _count: { select: { equipment: true, journalEntries: true } },
-    },
-  });
-  const removable = mirrors
-    .filter((a) => a._count.equipment === 0 && a._count.journalEntries === 0)
-    .map((a) => a.id);
-  if (removable.length > 0) {
-    await db.area.deleteMany({ where: { id: { in: removable } } });
-  }
+  // Зеркальная Area этой точки удаляется только если к ней ничего не
+  // привязано (оборудование, записи журналов) — иначе остаётся.
+  await deleteRoomMirrorArea({ organizationId: orgId, buildingId: room.buildingId, name: room.name });
   return NextResponse.json({ ok: true });
 }

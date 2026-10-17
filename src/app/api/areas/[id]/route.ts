@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { resolveBuildingInput } from "@/lib/area-building-sync";
 
 export async function PUT(
   request: Request,
@@ -38,6 +39,11 @@ export async function PUT(
     if (typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "Название обязательно" }, { status: 400 });
     }
+    // Точка цеха: не передана — не меняем, null — «без точки».
+    const buildingInput = await resolveBuildingInput(area.organizationId, body?.buildingId);
+    if (!buildingInput.ok) {
+      return NextResponse.json({ error: "Точка не найдена" }, { status: 400 });
+    }
 
     const updated = await db.area.update({
       where: { id },
@@ -47,6 +53,7 @@ export async function PUT(
           typeof description === "string" && description.trim()
             ? description.trim().slice(0, 1000)
             : null,
+        ...(buildingInput.buildingId !== undefined ? { buildingId: buildingInput.buildingId } : {}),
       },
     });
 

@@ -1,0 +1,8 @@
+# npx tsc --noEmit --skipLibCheck (D:/wt/points-model, 2026-10-17/18)
+# run 1 (before `prisma generate`): 80 errors — stale generated client without Area.buildingId,
+#   and message types without equipmentFill.fryer (contract not regenerated).
+# fixes: npx prisma generate (into a detached node_modules/.prisma/client, see evidence.md),
+#   node scripts/i18n-types.mjs, node scripts/generate-qr-fill-fallback.cjs
+# run 2: 1 error — src/i18n/equipment-fill-ru.generated.ts lacked `fryer` (fallback not regenerated)
+# run 3 (final, after all source edits): exit=0, no output
+exit=0

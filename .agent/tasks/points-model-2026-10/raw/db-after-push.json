@@ -1,0 +1,15 @@
+{
+ "hasColumn": true,
+ "indexes": [
+  "Area_pkey",
+  "Area_organizationId_buildingId_idx"
+ ],
+ "counts": {
+  "areas": "10",
+  "loose": "10",
+  "buildings": "0",
+  "rooms": "0",
+  "orgs": "1",
+  "equipment": "23"
+ }
+}

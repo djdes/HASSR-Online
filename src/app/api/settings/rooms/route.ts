@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { ROOM_KINDS } from "@/lib/room-kinds";
+import { ensureRoomMirrorArea } from "@/lib/area-building-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,9 +12,7 @@ export const dynamic = "force-dynamic";
 const CreateSchema = z.object({
   buildingId: z.string().min(1),
   name: z.string().trim().min(1, "Название обязательно").max(120),
-  kind: z
-    .enum(["guest", "kitchen", "wash", "bar", "storage", "other"])
-    .default("other"),
+  kind: z.enum(ROOM_KINDS).default("other"),
   sortOrder: z.number().int().optional(),
 });
 
@@ -72,27 +72,17 @@ export async function POST(request: Request) {
   // Auto-mirror в Area: schema разделяет Building/Room и Area
   // (legacy split — Area для оборудования + climate-журналов,
   // Building/Room — для journal-уборки). Юзер не должен ходить
-  // в две страницы; теперь когда он создаёт «горячий цех» в
-  // Buildings — мы автоматически создаём Area с тем же именем.
-  // Equipment-диалог сразу видит цех в dropdown'е, climate-журнал
-  // тоже подтягивает.
-  // Idempotent: skip если уже есть Area с таким именем.
-  const existingArea = await db.area.findFirst({
-    where: { organizationId: orgId, name: body.name },
-    select: { id: true },
+  // в две страницы: «горячий цех» в Buildings сразу появляется цехом
+  // в окне оборудования и в climate-журнале.
+  // С 2026-10-17 цех знает точку: зеркало — цех этой точки (или цех без
+  // точки, который её получает); у «Кухни» двух точек — два цеха.
+  await ensureRoomMirrorArea({
+    organizationId: orgId,
+    room: { id: created.id, name: body.name, buildingId: body.buildingId },
+  }).catch(() => {
+    // Best-effort — если что-то пошло не так с Area, Room уже создан.
+    // Юзер всегда может зайти в /settings/areas и создать вручную.
   });
-  if (!existingArea) {
-    await db.area.create({
-      data: {
-        organizationId: orgId,
-        name: body.name,
-        description: `Авто-создан из Помещения «${body.name}» (Building/Room ${created.id})`,
-      },
-    }).catch(() => {
-      // Best-effort — если что-то пошло не так с Area, Room уже создан.
-      // Юзер всегда может зайти в /settings/areas и создать вручную.
-    });
-  }
 
   return NextResponse.json({ room: created });
 }

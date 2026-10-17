@@ -1,0 +1,25 @@
+PASS login admin@haccp.local
+PASS AC3/AC4 POST rooms: kind=production принят; цех без точки с тем же названием получил точку помещения — {"status":200,"areas":[{"id":"cmvbfyemt0000uw9mywdjiurr-Холодильный цех","buildingId":"fx-building-mira"}]}
+PASS AC3 POST rooms: одноимённое помещение другой точки — свой цех (два цеха, разные точки) — [{"id":"cmvcvq2em0004eg9myd3limol","buildingId":"fx-building-lenina"},{"id":"cmvbfyemt0000uw9mywdjiurr-Кондитерский цех","buildingId":"fx-building-mira"}]
+PASS AC3 PATCH rooms: переименован цех этой точки, одноимённый цех другой точки не тронут — {"renamed":[{"id":"cmvcvq2em0004eg9myd3limol","buildingId":"fx-building-lenina"}],"pastryAfter":[{"id":"cmvbfyemt0000uw9mywdjiurr-Кондитерский цех","buildingId":"fx-building-mira"}]}
+PASS AC3 DELETE rooms: удалён только зеркальный цех этой точки — {"deleted":[],"pastryKept":[{"id":"cmvbfyemt0000uw9mywdjiurr-Кондитерский цех","buildingId":"fx-building-mira"}]}
+PASS AC3 PATCH rooms: цех без точки переименован и получил точку помещения — [{"id":"cmvbfyemt0000uw9mywdjiurr-Мойка","buildingId":"fx-building-lenina"}]
+PASS AC3 POST /api/areas: чужая точка → 400 — {"status":400,"error":"Точка не найдена"}
+PASS AC3 POST /api/areas: buildingId своей точки сохранён, помещение появилось в этой точке — {"status":201,"buildingId":"fx-building-mira","rooms":"1"}
+PASS AC3 PUT /api/areas/[id]: null — «без точки»; чужая точка → 400 и ничего не меняет — {"put":200,"foreign":400,"now":null}
+PASS AC3 PUT /api/areas/[id]: точка не передана — не меняется — {"buildingId":null}
+PASS AC3 POST /api/areas без buildingId при двух точках — без точки (не угадываем) — {"status":201,"buildingId":null}
+PASS AC6 POST /api/equipment с roomId помещения без цеха: цех создан с точкой помещения — {"status":201,"prodAreas":[{"id":"cmvcvqady0008eg9m3mkq4s5z","buildingId":"fx-building-mira"}],"e1Area":"cmvcvqady0008eg9m3mkq4s5z"}
+PASS AC6 чужие areaId/roomId → 4xx (POST и PUT), оборудование не переехало — {"post":[404,404],"put":[400,400]}
+PASS AC7 создание документа точки: фритюрница этой точки сразу в списке, образцы «Фритюрница №1–3» убраны — {"status":201,"b1":["Фритюрница 8л"],"links":[{"name":"Фритюрница 8л","sourceEquipmentId":"cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л"}]}
+PASS AC7 создание фритюрницы: попала в общий документ, НЕ попала в документ другой точки — {"general":["Фритюрница настольная","Фритюрница напольная","Жарочный шкаф","Фритюрница 8л","Фритюрница Мира"],"b1":["Фритюрница 8л"]}
+PASS AC7 переименование в справочнике доходит до списка документа — ["Фритюрница настольная","Фритюрница напольная","Жарочный шкаф","Фритюрница 8л","Фритюрница Мира большая"]
+INFO qrFillMode=public employee=Белова Елена Андреевна fryerUrl=http://localhost:3042/equipment-fill/cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л?t=cmvbfyemt0000uw9mywdjiurr-%D0%93%D0%BE%D1%80%D1%8F%D1%87%D0%B8%D0%B9%20%D1%86%D0%B5%D1%85-%D0%A4%D1%80%D0%B8%D1%82%D1%8E%D1%80%D0%BD%D0%B8%D1%86%D0%B0%208%D0%BB.1792270761333.CeGiU5B8Pgsb9ZwT85pSHCi4hJBlbAgEEVndkp-c8QY
+FAIL AC8 GET /equipment-fill/[id] фритюрницы: форма журнала фритюрных жиров, не форма температуры — {"status":404,"len":144746}
+PASS AC8 окончание без начала → 409 needStart — {"error":"Сначала отметьте начало жарки","errorCode":"equipmentFill.fryer.needStart"}
+PASS AC8 первый скан — начало жарки: строка в документе точки фритюрницы со ссылкой на неё — {"status":200,"body":{"ok":true,"phase":"start","time":"23:59","documentId":"cmvcvqfyz000aeg9mu242bq95"},"entry":{"doc":"cmvcvqfyz000aeg9mu242bq95","data":{"endHour":null,"fatType":"Подсолнечное масло","endMinute":null,"startDate":"2026-10-17","startHour":23,"disposedKg":0,"qualityEnd":null,"carryoverKg":0,"productType":"Картофель фри","startMinute":59,"qualityStart":5,"equipmentType":"Фритюрница 8л","controllerName":"Белова Елена Андреевна","qualityStartNote":"Доброкачественное, без постороннего запаха","sourceEquipmentId":"cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л"}}}
+PASS AC8 второй скан — окончание жарки в ту же строку дня — {"status":200,"rows":"1","end":{"qualityEnd":3,"endHour":23}}
+PASS AC8 наклейка другой фритюрницы → 401 — 401
+FAIL AC8 нет активного документа: 409 no-active-document и плашка на странице — {"status":409,"code":"no-active-document","autoCreatedDocs":0}
+PASS AC7 удаление фритюрницы: связь снята, имя в списке осталось — [{"name":"Фритюрница 8л","sourceEquipmentId":"cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л"}]
+SUMMARY FAIL checks=23 failed=2

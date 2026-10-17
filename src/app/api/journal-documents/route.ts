@@ -1,4 +1,6 @@
 import type { Prisma } from "@prisma/client";
+import { FRYER_OIL_TEMPLATE_CODE } from "@/lib/fryer-oil-document";
+import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { NextResponse } from "next/server";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
@@ -1147,6 +1149,12 @@ export async function POST(request: Request) {
       err
     );
   });
+
+  // Журнал фритюра: фритюрницы из «Оборудования» сразу в списке документа
+  // вместо образцов «Фритюрница №1–3» (2026-10-17).
+  if (resolvedTemplateCode === FRYER_OIL_TEMPLATE_CODE) {
+    await syncFryerOilDocumentsSafe(getActiveOrgId(session), { documentIds: [doc.id] });
+  }
 
   return NextResponse.json({ document: doc }, { status: 201 });
 }
