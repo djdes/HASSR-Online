@@ -452,6 +452,8 @@ model Organization {
   kioskPhotoRequired             Boolean                        @default(false)
   /// Сканы приказов к журналам (2026-09-24, пожелание РПН).
   journalOrderScans              JournalOrderScan[]
+  /// «Пришла проверка» → журнал посещений (2026-10-17).
+  inspectionVisits               InspectionVisit[]
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -1265,6 +1267,8 @@ model InspectorToken {
   /// инспектора" forensics. Nullable for legacy and ROOT-issued tokens.
   createdById    String?
   visits         InspectorVisit[]
+  /// Записи журнала посещений, внесённые по этому токену.
+  inspectionVisits InspectionVisit[]
 
   @@index([organizationId])
   @@index([expiresAt])
@@ -1289,6 +1293,67 @@ model InspectorVisit {
   templatesViewed Json?
 
   @@index([tokenId])
+}
+
+/// «Пришла проверка» → журнал посещений (2026-10-17, скан 83): документ
+/// «Посещение». Запись вносит проверяющий на портале по QR (`tokenId`) или
+/// руководство в кабинете (`tokenId` = null). Основание проверки (решение,
+/// распоряжение) — сканы и фото в `InspectionVisitFile`. Вложения отдаются
+/// только руководству организации и владельцу токена, пока токен действует.
+/// Записи не удаляются: журнал посещений ведётся как бумажный.
+model InspectionVisit {
+  id                String                @id @default(cuid())
+  organizationId    String
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Токен портала, через который запись внёс проверяющий; null — внесло руководство.
+  tokenId           String?
+  token             InspectorToken?       @relation(fields: [tokenId], references: [id], onDelete: SetNull)
+  /// "inspector" — проверяющий по QR; "manager" — руководство в кабинете.
+  source            String
+  /// Когда проверяющий пришёл (у записи по QR — время записи).
+  visitedAt         DateTime              @default(now())
+  inspectorName     String
+  inspectorPosition String?
+  /// Орган контроля (надзора), например «Управление Роспотребнадзора по …».
+  authority         String
+  /// planned | unplanned | complaint | other (`src/lib/inspection-visits.ts`).
+  kind              String
+  /// Пояснение к виду «иное».
+  kindNote          String?
+  /// Номер решения (распоряжения) о проверке.
+  basisNumber       String?
+  /// Дата решения (распоряжения), полночь UTC.
+  basisDate         DateTime?
+  createdById       String?
+  createdByName     String?
+  ipAddress         String?
+  userAgent         String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  files             InspectionVisitFile[]
+
+  @@index([organizationId, visitedAt])
+  @@index([tokenId])
+}
+
+/// Скан или фото документа-основания к посещению (PDF, JPG, PNG до 10 МБ;
+/// тип проверен по содержимому, как у `JournalOrderScan`).
+model InspectionVisitFile {
+  id             String          @id @default(cuid())
+  visitId        String
+  visit          InspectionVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  /// Копия организации посещения — проверка доступа без лишнего запроса.
+  organizationId String
+  fileName       String
+  /// application/pdf | image/jpeg | image/png
+  mimeType       String
+  sizeBytes      Int
+  content        Bytes
+  uploadedByName String?
+  createdAt      DateTime        @default(now())
+
+  @@index([visitId])
+  @@index([organizationId])
 }
 
 /// Замер времени заполнения формы — «сколько секунд от open до submit».

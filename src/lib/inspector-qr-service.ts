@@ -124,6 +124,9 @@ const ACTIVITY_TEXT: Record<string, string> = {
   document_pdf: "Скачал PDF документа",
   summary_pdf: "Скачал сводный PDF",
   introduce: "Представился",
+  visit: "Внёс запись в журнал посещений",
+  ppk_document: "Открыл документ производственного контроля",
+  visit_file: "Открыл основание проверки",
 };
 
 export async function loadCabinetInspectorData(organizationId: string): Promise<{

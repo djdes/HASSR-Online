@@ -9,17 +9,32 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
 import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
+import { listInspectionVisits } from "@/lib/inspection-visits.server";
+import { loadInspectionNorms } from "@/lib/inspection-norms.server";
+import { readActiveServices } from "@/lib/services/catalog";
+import { PageHeader } from "@/components/ui/page-header";
 import { InspectionQr } from "@/components/inspection/inspection-qr";
+import { InspectionGuide } from "@/components/inspection/inspection-guide";
+import { InspectionVisitsCard } from "@/components/inspection/inspection-visits-card";
+import { InspectionNormsCard } from "@/components/inspection/inspection-norms-card";
+import { InspectionSpecialModeCard } from "@/components/inspection/inspection-special-mode-card";
+import { InspectionExpertsCard } from "@/components/inspection/inspection-experts-card";
 import { ComplianceBundleCard } from "@/components/reports/compliance-bundle-card";
 
 export const dynamic = "force-dynamic";
 
 /**
- * «Пришла проверка» — один экран на случай, когда проверяющий уже в
- * дверях (решение владельца 2026-10-16): ① показать QR, ② отдать журналы
- * архивом, ③ посмотреть, что исправить. Открыт и заведующей: проверка
- * часто приходит, когда она одна на месте. Выпускать QR и смотреть
- * готовность — руководству (как на их собственных страницах).
+ * «К вам пришла проверка (или придёт)» — один экран на случай, когда
+ * проверяющий уже в дверях (решение владельца 2026-10-16, скан 83 от
+ * 2026-10-17): «Что делать сейчас» по шагам, и блоки с теми же номерами —
+ * ② показать QR, ③ журнал посещений со сканом основания, ④ документы
+ * архивом, ⑤ специальный режим; рядом нормативка, готовность и помощь
+ * эксперта. Открыт и заведующей: проверка часто
+ * приходит, когда она одна на месте. Выпускать QR, смотреть готовность и
+ * заказывать услуги — руководству (как на их собственных страницах).
+ *
+ * Блоки — отдельные компоненты: когда у раздела появится своё меню, каждый
+ * станет страницей пункта без переделки.
  */
 export default async function InspectionPage() {
   const session = await requireAuth();
@@ -28,18 +43,21 @@ export default async function InspectionPage() {
   const organizationId = getActiveOrgId(session);
   const showReadiness = hasCapability(session.user, "admin.full");
 
-  const [inspector, report, org, t, tRoutes, locale] = await Promise.all([
+  const [inspector, report, org, visits, norms, services, t, locale] = await Promise.all([
     loadCabinetInspectorData(organizationId),
-    // Сбой аудита готовности не должен ронять экран — шаг ③ просто не рисуется.
+    // Сбой аудита готовности не должен ронять экран — шаг просто не рисуется.
     showReadiness ? runComplianceAudit(organizationId).catch(() => null) : Promise.resolve(null),
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, timezone: true },
     }),
+    listInspectionVisits(organizationId),
+    loadInspectionNorms(organizationId),
+    fullAccess ? readActiveServices().catch(() => []) : Promise.resolve([]),
     getTranslations("inspectionDay"),
-    getTranslations("navigation.routes"),
     getLocale(),
   ]);
+  const timeZone = org?.timezone || "Europe/Moscow";
 
   // Действующий QR — самый долгий: его и показываем, и печатаем.
   const activeQr = inspector.tokens
@@ -51,20 +69,22 @@ export default async function InspectionPage() {
         .sort((a, b) => (a.status === b.status ? b.weight - a.weight : a.status === "fail" ? -1 : 1))
         .slice(0, 3)
     : [];
-  const visits = inspector.activity.slice(0, 5);
+  const recentViews = inspector.activity.slice(0, 5);
   const dateTime = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: org?.timezone || "Europe/Moscow",
+    timeZone,
   });
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">{tRoutes("inspection")}</h1>
+      <PageHeader title={t("pageTitle")} description={t("pageLead")} />
 
-      <Step number={1} title={t("qrTitle")}>
+      <InspectionGuide />
+
+      <Step id="qr" number={2} title={t("qrTitle")}>
         <InspectionQr
           qr={activeQr ? { id: activeQr.id, svg: activeQr.qrSvg ?? "" } : null}
           organizationName={orgDisplayName(org?.name ?? "", "")}
@@ -72,13 +92,32 @@ export default async function InspectionPage() {
         />
       </Step>
 
-      <Step number={2} title={t("archiveTitle")}>
+      <Step
+        id="visits"
+        number={3}
+        title={t("visits.title")}
+        aside={
+          visits.length > 0 ? (
+            <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] font-medium tabular-nums text-[#3848c7]">
+              {t("visits.count", { count: visits.length })}
+            </span>
+          ) : null
+        }
+      >
+        <InspectionVisitsCard visits={visits} timeZone={timeZone} />
+      </Step>
+
+      <Step id="archive" number={4} title={t("archiveTitle")}>
         <ComplianceBundleCard bare />
       </Step>
 
+      <InspectionSpecialModeCard step={5} canManage={hasCapability(session.user, "admin.full")} />
+
+      <InspectionNormsCard norms={norms} />
+
       {report ? (
         <Step
-          number={3}
+          id="readiness"
           title={t("readinessTitle")}
           aside={
             <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] font-medium tabular-nums text-[#3848c7]">
@@ -127,6 +166,8 @@ export default async function InspectionPage() {
         </Step>
       ) : null}
 
+      {fullAccess ? <InspectionExpertsCard services={services} /> : null}
+
       <section
         className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
         data-inspection-visits
@@ -134,11 +175,11 @@ export default async function InspectionPage() {
         <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
           {t("visitsTitle")}
         </h2>
-        {visits.length === 0 ? (
+        {recentViews.length === 0 ? (
           <p className="mt-2 text-[14px] text-[#9b9fb3]">{t("noVisits")}</p>
         ) : (
           <ul className="mt-2 divide-y divide-[#ececf4]">
-            {visits.map((visit) => (
+            {recentViews.map((visit) => (
               <li key={visit.id} className="grid gap-0.5 py-2 text-[13.5px] sm:grid-cols-[140px_1fr] sm:gap-4">
                 <span className="tabular-nums text-[#6f7282]">{dateTime.format(new Date(visit.at))}</span>
                 <span className="min-w-0 text-[#0b1024] [overflow-wrap:anywhere]">
@@ -156,25 +197,31 @@ export default async function InspectionPage() {
 
 /** Шаг: крупная цифра, короткий заголовок — человек видит порядок действий. */
 function Step({
+  id,
   number,
   title,
   aside,
   children,
 }: {
-  number: number;
+  id: string;
+  /** Номер шага инструкции «Что делать сейчас»; без номера — справочный блок. */
+  number?: number;
   title: string;
   aside?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section
-      className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
-      data-inspection-step={number}
+      id={id}
+      className="scroll-mt-24 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
+      data-inspection-step={number ?? id}
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[15px] font-semibold text-white tabular-nums">
-          {number}
-        </span>
+        {number ? (
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[15px] font-semibold text-white tabular-nums">
+            {number}
+          </span>
+        ) : null}
         <h2 className="min-w-0 flex-1 text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
           {title}
         </h2>

@@ -1,0 +1,39 @@
+{
+  "task_id": "inspection-visits-2026-10",
+  "branch": "feat/inspection-visits",
+  "date": "2026-10-18",
+  "database": "localhost:5432/wesetup_inspection",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["prisma/schema.prisma: InspectionVisit, InspectionVisitFile (additive)", "raw/checks.txt: prisma validate, db push, generate"] },
+    "AC2": { "status": "PASS", "evidence": ["src/app/api/inspector/[token]/visits/route.test.ts (7 tests)", "e2e/smoke-result.json: AC2-ui, AC2-tokens, AC2-heic"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/inspection-visits.test.ts: inspectionVisitFileAccessible", "src/app/api/inspector/[token]/visit-files/[fileId]/route.test.ts (3 tests)", "e2e/smoke-result.json: AC3-token-*, AC3-cabinet*, AC7-head, AC4-cook"], "note": "Route sets 'private, no-store'; global next.config headers() replaces it with stricter 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'." },
+    "AC4": { "status": "PASS", "evidence": ["e2e/smoke-result.json: AC4-list, AC4-attach, AC4-add, AC4-add-row, AC4-cook", "raw/cabinet-inspection-desktop-1440.png", "raw/cabinet-add-visit-dialog-1440.png"] },
+    "AC5": { "status": "PASS", "evidence": ["e2e/smoke-result.json: AC5-zip", "raw/compliance-bundle-visits.json"] },
+    "AC6": { "status": "PASS", "evidence": ["e2e/smoke-result.json: AC6a, AC6a-list, AC6b, AC6b-api, AC6b-revoked, AC6c, AC6d, AC6e", "src/lib/inspector-portal-extras.test.ts (7 tests)", "raw/portal-desktop-1440.png", "raw/portal-after-visit-1440.png", "raw/portal-mobile-390.png"] },
+    "AC7": { "status": "PASS", "evidence": ["e2e/smoke-result.json: AC7-guide, AC7-norms, AC7-special, AC7-requisites, AC7-experts, AC7-head", "npm run i18n:check: 82/82", "raw/requisites-special-mode-link-1440.png", "raw/cabinet-inspection-head-chef-1440.png"] },
+    "AC8": { "status": "PASS", "evidence": ["28 new tests in 4 files, all passing"] },
+    "AC9": { "status": "PASS", "evidence": ["tsc --noEmit (tsconfig.typecheck.json): exit 0", "eslint changed files: 0 errors, 0 warnings", "225 related tests: 0 failures", "Playwright 32/32 at 1440x900 and 390x800", "raw/*.png"] }
+  },
+  "commands": [
+    { "cmd": "npx prisma validate", "result": "valid" },
+    { "cmd": "npx prisma db push (wesetup_inspection)", "result": "in sync, no data-loss warnings" },
+    { "cmd": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json", "result": "exit 0" },
+    { "cmd": "npx eslint <changed files>", "result": "0 problems" },
+    { "cmd": "npm run i18n:check", "result": "82 pass, 0 fail" },
+    { "cmd": "node --import tsx --test <new + related tests>", "result": "225 pass, 0 fail" },
+    { "cmd": "BASE=http://localhost:3043 npx tsx .agent/tasks/inspection-visits-2026-10/e2e/smoke.ts", "result": "32/32 PASS" }
+  ],
+  "decisions": [
+    "Files per request capped at 25 MB total (proxyClientMaxBodySize 27mb truncates larger bodies); each file still up to 10 MB.",
+    "Per-token visit limit: 10 records per rolling 24h (429), plus 10 requests per 10 min per token+IP.",
+    "Inspector file route returns 404 for unknown/revoked/expired token (AC3); POST keeps 404/410 (AC2).",
+    "Cache-Control overridden by global next.config headers() with a stricter no-store value; shared config not changed.",
+    "API error texts stay Russian in EN/UZ cabinet, consistent with other project APIs."
+  ],
+  "environment_notes": [
+    "next-intl's @swc/core refuses to load for this Windows profile (cache dir ACL grants another user full control); dev server ran with an out-of-repo shim stubbing @swc/core for next-intl only.",
+    "node_modules/core-js/modules/es.string.starts-with.js was corrupted on disk; restored from core-js-3.48.0.tgz with lockfile-matching sha512.",
+    "Playwright 1.59.1 expects headless shell 1217; installed 1243 used via PW_CHROMIUM_PATH."
+  ]
+}

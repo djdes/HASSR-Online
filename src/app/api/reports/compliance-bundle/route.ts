@@ -11,6 +11,9 @@ import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName } from "@/lib/building-scope";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
 import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { loadInspectionVisitsForBundle } from "@/lib/inspection-visits.server";
+import { buildInspectionVisitsPdf } from "@/lib/inspection-visits-pdf";
+import { inspectionVisitFileName } from "@/lib/inspection-visits";
 import {
   buildCapaSummaryPdf,
   buildRegulatorCoverPdf,
@@ -142,7 +145,7 @@ export async function GET(request: Request) {
   const [organization] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true, journalShortName: true, legalProfileJson: true },
+      select: { name: true, journalShortName: true, legalProfileJson: true, timezone: true },
     }),
   ]);
 
@@ -234,6 +237,33 @@ export async function GET(request: Request) {
   } catch (err) {
     manifestLines.push("✗ Производственный контроль — не удалось собрать документы из разделов");
     console.error("[compliance-bundle] assembled production control docs failed", err);
+  }
+  // Журнал посещений проверяющих за период и сканы оснований проверок.
+  try {
+    const visits = await loadInspectionVisitsForBundle(organizationId, from, toEndOfDay);
+    const folder = "Посещения проверяющих";
+    zip.file(
+      `${folder}/Журнал посещений.pdf`,
+      buildInspectionVisitsPdf({
+        organizationName,
+        periodFrom: from,
+        periodTo: to,
+        timeZone: organization?.timezone || "Europe/Moscow",
+        rows: visits.map((visit) => ({ ...visit, fileCount: visit.files.length })),
+      })
+    );
+    let fileCount = 0;
+    visits.forEach((visit, index) => {
+      const sub = sanitizeForZip(`${String(index + 1).padStart(2, "0")} ${ymd(visit.visitedAt)} ${visit.authority}`);
+      visit.files.forEach((file, fileIndex) => {
+        zip.file(`${folder}/${sub}/${fileIndex + 1} ${inspectionVisitFileName(file.fileName, file.mimeType)}`, file.content);
+        fileCount += 1;
+      });
+    });
+    manifestLines.push(`Посещения проверяющих: записей ${visits.length}, сканов оснований ${fileCount}`);
+  } catch (err) {
+    manifestLines.push("✗ Посещения проверяющих — не удалось собрать журнал посещений");
+    console.error("[compliance-bundle] inspection visits failed", err);
   }
   zip.file(`ОТЧЁТ.txt`, manifestLines.join("\r\n"));
 

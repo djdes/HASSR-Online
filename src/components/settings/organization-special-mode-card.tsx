@@ -1,25 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
-import { saveJournalControls, useJournalControls } from "@/components/journals/journal-controls-provider";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
+
+/**
+ * «Специальный режим» переехал в «Пришла проверка» (скан 83, решение
+ * 2026-10-17): переключатель с пояснением — там, рядом с QR проверяющего.
+ * В реквизитах остаётся ссылка и текущее состояние.
+ */
 export function OrganizationSpecialModeCard() {
   const t = useTranslations("settingsManagement.organizationProfile");
-  const { controls, loaded, refresh } = useJournalControls();
-  const [saving, setSaving] = useState(false);
-  return <section className="rounded-3xl border border-[#ececf4] bg-white p-6">
-    <div className="flex items-start justify-between gap-4">
-      <div><h2 className="text-[18px] font-semibold text-[#0b1024]">{t("specialMode.title")}</h2>
-        <p className="mt-2 text-[14px] text-[#6f7282]">{t("specialMode.description")}</p></div>
-      <Switch aria-label={t("specialMode.title")} checked={loaded && controls.specialMode} disabled={!loaded || saving} onCheckedChange={async (specialMode) => {
-        setSaving(true);
-        try { await saveJournalControls({ specialMode }); await refresh(); toast.success(t("form.saved")); }
-        catch { toast.error(t("specialMode.saveError")); }
-        finally { setSaving(false); }
-      }} />
-    </div>
-  </section>;
+  const { controls, loaded } = useJournalControls();
+  return (
+    <section className="flex flex-col gap-4 rounded-3xl border border-[#ececf4] bg-white p-6 sm:flex-row sm:items-center" data-special-mode-moved>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+        <ShieldCheck className="size-5" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-[18px] font-semibold text-[#0b1024]">{t("specialMode.movedTitle")}</h2>
+          {loaded ? (
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[12px] font-medium ${
+                controls.specialMode ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#f5f6ff] text-[#3848c7]"
+              }`}
+            >
+              {controls.specialMode ? t("specialMode.statusOn") : t("specialMode.statusOff")}
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-1 text-[14px] text-[#6f7282]">{t("specialMode.movedBody")}</p>
+      </div>
+      <Link
+        href="/inspection#special-mode"
+        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+      >
+        {t("specialMode.movedLink")}
+        <ArrowRight className="size-4 text-[#5566f6]" aria-hidden />
+      </Link>
+    </section>
+  );
 }

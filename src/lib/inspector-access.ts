@@ -120,6 +120,8 @@ export async function bumpInspectorAccess(tokenId: string): Promise<void> {
  */
 export const inspectorViewLimiter = createRateLimiter({ tokensPerInterval: 300, intervalMs: 60_000 });
 export const inspectorPdfLimiter = createRateLimiter({ tokensPerInterval: 20, intervalMs: 60_000 });
+/** Запись в журнал посещений со сканами — тяжёлый запрос: 10 за 10 минут. */
+export const inspectorUploadLimiter = createRateLimiter({ tokensPerInterval: 10, intervalMs: 10 * 60_000 });
 
 export function inspectorLimitKey(tokenId: string, ip: string | null): string {
   return `${tokenId}:${ip ?? "-"}`;
@@ -162,7 +164,7 @@ export function inspectorClientIp(headers: HeaderSource): string | null {
 export async function logInspectorEvent(input: {
   access: InspectorAccess;
   headers: HeaderSource;
-  action: "inspector.view" | "inspector.download" | "inspector.introduce";
+  action: "inspector.view" | "inspector.download" | "inspector.introduce" | "inspector.visit";
   viewer: string | null;
   details: Record<string, unknown>;
 }): Promise<void> {

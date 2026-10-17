@@ -1,0 +1,26 @@
+inspection-visits-2026-10 — прогоны проверок (2026-10-18, worktree D:/wt/inspection-visits, база localhost:5432/wesetup_inspection)
+
+npx prisma validate                                   -> "The schema at prisma\schema.prisma is valid"
+npx prisma db push (wesetup_inspection)               -> "Your database is now in sync with your Prisma schema" (без предупреждений о потере данных)
+npx prisma generate                                   -> Generated Prisma Client (v7.4.2)
+
+NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+                                                      -> exit=0 (0 ошибок; --extendedDiagnostics: Memory used 3.3 GB)
+  примечание: прогон с кучей по умолчанию (~4.2 GB) параллельно с dev-сервером один раз упал по OOM;
+  первый полный прогон нашёл 10 ошибок типов в новых файлах (Uint8Array<ArrayBufferLike> vs Bytes,
+  readonly orderBy в select) — исправлены.
+
+npx eslint <33 изменённых .ts/.tsx>                   -> 0 errors, 0 warnings (одно предупреждение про лишний eslint-disable убрано)
+
+npm run i18n:check                                    -> tests 82, pass 82, fail 0
+  (до исправления: "Argument mismatch: inspectionDay.visits.count" — в uz был {count} вместо plural)
+
+node --import tsx --test (новые и затронутые)         -> 225 тестов, 0 падений:
+  src/lib/inspection-visits.test.ts (11)
+  src/lib/inspector-portal-extras.test.ts (7)
+  src/app/api/inspector/[token]/visits/route.test.ts (7)
+  src/app/api/inspector/[token]/visit-files/[fileId]/route.test.ts (3)
+  src/lib/app-nav.test.ts, custom-names-official.test.ts, production-control-docs.test.ts,
+  inspector-qr.test.ts, no-settings-hub-links.test.ts, journal-order-scans.test.ts, src/lib/ppk/*.test.ts
+
+Playwright (e2e/smoke.ts против next dev :3043)        -> 32/32 PASS (e2e/smoke-result.json), скриншоты в raw/*.png
