@@ -13,7 +13,9 @@ import {
 import { PPK_MENU_GROUPS, ppkBlockHref, ppkMenuBlocks } from "@/lib/ppk/registry";
 import { loadPpkStatuses } from "@/lib/ppk/facts.server";
 import { ppkNextStep, ppkProgress } from "@/lib/ppk/status";
+import { STARTER_BLOCKS } from "@/lib/ppk/starter-packs";
 import { DocumentSlot } from "@/components/production-control/document-slot";
+import { PpkStarterWizard } from "@/components/production-control/ppk-starter-wizard";
 import { PpkNextStep } from "@/components/production-control/ppk-next-step";
 import { PpkProgressBar } from "@/components/production-control/ppk-progress-bar";
 import { PpkStatusDot } from "@/components/production-control/ppk-status-dot";
@@ -32,7 +34,7 @@ export default async function ProductionControlPage() {
   const organizationId = getActiveOrgId(session);
   const canManage = hasCapability(session.user, "admin.full");
 
-  const [rows, organization, statuses, t, nav] = await Promise.all([
+  const [rows, organization, statuses, t, nav, blockCounts] = await Promise.all([
     db.knowledgeDocument.findMany({
       where: { organizationId, kind: { in: [...PRODUCTION_DOC_KINDS] } },
       select: { kind: true, fileName: true, mimeType: true, sizeBytes: true, updatedAt: true },
@@ -41,7 +43,14 @@ export default async function ProductionControlPage() {
     loadPpkStatuses(organizationId),
     getTranslations("productionControl"),
     getTranslations("navigation"),
+    db.ppkRecord.groupBy({
+      by: ["block"],
+      where: { organizationId, block: { in: [...STARTER_BLOCKS] } },
+      _count: { _all: true },
+    }),
   ]);
+  // Блоки, где уже есть данные: мастер «типовыми за 10 минут» их не тронет.
+  const filledBlocks = STARTER_BLOCKS.filter((block) => blockCounts.some((row) => row.block === block));
 
   const { done, total } = ppkProgress(statuses);
   const next = ppkNextStep(statuses);
@@ -89,6 +98,8 @@ export default async function ProductionControlPage() {
           );
         })}
       </div>
+
+      {total > 0 && done / total < 0.4 ? <PpkStarterWizard filled={filledBlocks} /> : null}
 
       {next ? <PpkNextStep blockKey={next.key} /> : null}
 

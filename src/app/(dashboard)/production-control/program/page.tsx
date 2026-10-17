@@ -67,6 +67,8 @@ export default async function ProgramPage() {
       today={moscowToday()}
     />
     <PpkPrintSheet
+      pdfHref="/api/production-control/program/pdf"
+      pdfLabel={t("downloadPdf")}
       org={org}
       title="Программа производственного контроля"
       subtitle={approval ? `Версия ${approval.version} от ${ruDate(approval.approvedAt)}` : org.orgName}

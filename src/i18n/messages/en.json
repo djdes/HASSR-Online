@@ -608,7 +608,8 @@
     "program": {
       "emptySection": "This section is empty. Fill in the \"{block}\" block and it will appear here by itself.",
       "fill": "Fill in",
-      "notFilled": "Not filled in"
+      "notFilled": "Not filled in",
+      "downloadPdf": "Download PDF"
     },
     "reminders": {
       "hint": "We'll remind managers in Telegram 7, 3 and 1 day before the due date and when it's overdue."
@@ -699,6 +700,57 @@
       "copyLink": "Link for employees",
       "linkCopied": "Link copied",
       "pill": "Read {done}/{total}"
+    },
+    "starter": {
+      "cardTitle": "Fill in the basics in 10 minutes",
+      "cardLead": "Pick your venue type and products, hazards, flowcharts, lab and pest control plans appear at once. You only need to adjust them.",
+      "choose": "Choose venue type",
+      "dialogTitle": "Venue type",
+      "dialogLead": "We add standard data to empty sections only. You can change everything afterwards.",
+      "kinds": {
+        "cafe": {
+          "title": "Cafe, restaurant",
+          "hint": "Hot and cold kitchen"
+        },
+        "canteen": {
+          "title": "School or kindergarten canteen",
+          "hint": "Children's meals, hot and cold kitchen"
+        },
+        "bakery": {
+          "title": "Bakery, pastry shop",
+          "hint": "Baked goods and cream pastries"
+        },
+        "shop": {
+          "title": "Shop with a deli counter",
+          "hint": "Salads, baked goods, sliced deli"
+        }
+      },
+      "willAdd": "What will be added",
+      "items": {
+        "products": "{count, plural, one {# product} other {# products}}",
+        "hazards": "{count, plural, one {# hazard} other {# hazards}}",
+        "flowcharts": "{count, plural, one {# flowchart} other {# flowcharts}}",
+        "labPlan": "lab plan",
+        "pestPlan": "pest control plan",
+        "norms": "{count, plural, one {# regulation} other {# regulations}}",
+        "policy": "policy text"
+      },
+      "blockNames": {
+        "products": "products",
+        "hazards": "hazards",
+        "flowchart": "flowcharts",
+        "lab-plan": "lab plan",
+        "pest-plan": "pest control plan",
+        "norms": "regulations",
+        "policy": "policy"
+      },
+      "alreadyFilled": "Already filled, left as is: {blocks}",
+      "fill": "Fill in",
+      "filling": "Filling in…",
+      "cancel": "Cancel",
+      "done": "Done: added {summary}",
+      "nothing": "Everything is already filled in, nothing added",
+      "failed": "Could not fill in"
     }
   },
   "inspectionDay": {

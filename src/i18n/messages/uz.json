@@ -608,7 +608,8 @@
     "program": {
       "emptySection": "Bu bo'lim hozircha bo'sh. \"{block}\" blokini to'ldiring — u bu yerga o'zi tushadi.",
       "fill": "To'ldirish",
-      "notFilled": "To'ldirilmagan"
+      "notFilled": "To'ldirilmagan",
+      "downloadPdf": "PDF yuklab olish"
     },
     "reminders": {
       "hint": "Muddatdan 7, 3 va 1 kun oldin hamda muddat oʻtganda rahbarlarga Telegramda eslatamiz."
@@ -699,6 +700,57 @@
       "copyLink": "Xodimlar uchun havola",
       "linkCopied": "Havola nusxalandi",
       "pill": "Tanishgan {done}/{total}"
+    },
+    "starter": {
+      "cardTitle": "10 daqiqada tipik ma'lumotlar bilan to'ldiramiz",
+      "cardLead": "Muassasa turini tanlang: mahsulotlar, xavflar, blok-sxemalar, laboratoriya va dezinsektsiya rejalari darhol paydo bo'ladi, faqat o'zingizga moslashtirish qoladi.",
+      "choose": "Muassasa turini tanlash",
+      "dialogTitle": "Muassasa turi",
+      "dialogLead": "Tipik ma'lumotlar faqat bo'sh bo'limlarga qo'shiladi. Keyin hammasini o'zgartirish mumkin.",
+      "kinds": {
+        "cafe": {
+          "title": "Kafe, restoran",
+          "hint": "Issiq va sovuq sex"
+        },
+        "canteen": {
+          "title": "Maktab yoki bolalar bog'chasi oshxonasi",
+          "hint": "Bolalar ovqati, issiq va sovuq sex"
+        },
+        "bakery": {
+          "title": "Nonvoyxona, qandolatxona",
+          "hint": "Pishiriqlar va kremli mahsulotlar"
+        },
+        "shop": {
+          "title": "Kulinariyali do'kon",
+          "hint": "Salatlar, pishiriqlar, gastronomiya kesmasi"
+        }
+      },
+      "willAdd": "Nima qo'shiladi",
+      "items": {
+        "products": "{count, plural, one {# mahsulot} other {# mahsulot}}",
+        "hazards": "{count, plural, one {# xavf} other {# xavf}}",
+        "flowcharts": "{count, plural, one {# blok-sxema} other {# blok-sxema}}",
+        "labPlan": "laboratoriya rejasi",
+        "pestPlan": "dezinsektsiya rejasi",
+        "norms": "{count, plural, one {# me'yoriy hujjat} other {# me'yoriy hujjat}}",
+        "policy": "siyosat matni"
+      },
+      "blockNames": {
+        "products": "mahsulotlar",
+        "hazards": "xavflar",
+        "flowchart": "blok-sxemalar",
+        "lab-plan": "laboratoriya rejasi",
+        "pest-plan": "dezinsektsiya rejasi",
+        "norms": "me'yoriy hujjatlar",
+        "policy": "siyosat"
+      },
+      "alreadyFilled": "Allaqachon to'ldirilgan, tegmaymiz: {blocks}",
+      "fill": "To'ldirish",
+      "filling": "To'ldirilmoqda…",
+      "cancel": "Bekor qilish",
+      "done": "Tayyor: qo'shildi {summary}",
+      "nothing": "Hammasi allaqachon to'ldirilgan, hech narsa qo'shilmadi",
+      "failed": "To'ldirib bo'lmadi"
     }
   },
   "inspectionDay": {

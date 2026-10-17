@@ -68,6 +68,8 @@ export default async function HaccpPlanPage() {
         today={moscowToday()}
       />
       <PpkPrintSheet
+        pdfHref="/api/production-control/haccp-plan/pdf"
+        pdfLabel={t("downloadPdf")}
         org={org}
         title="План ХАССП"
         subtitle={approval ? `Версия ${approval.version} от ${ruDate(approval.approvedAt)}` : org.orgName}

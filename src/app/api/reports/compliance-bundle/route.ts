@@ -9,6 +9,8 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName } from "@/lib/building-scope";
+import { loadPpkBundle } from "@/lib/ppk/assemble.server";
+import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
 import {
   buildCapaSummaryPdf,
   buildRegulatorCoverPdf,
@@ -211,6 +213,27 @@ export async function GET(request: Request) {
     );
   } catch (err) {
     console.error("[compliance-bundle] production control docs failed", err);
+  }
+  // Собранные из разделов ППК и ХАССП-план — всегда, рядом со своими файлами:
+  // проверяющий видит актуальное состояние, даже если файл не загружали.
+  try {
+    const bundle = await loadPpkBundle(organizationId);
+    const assembled: Array<[string, () => Buffer]> = [
+      ["ППК (собрано из разделов).pdf", () => buildPpkProgramPdf(bundle)],
+      ["ХАССП-план (собрано из разделов).pdf", () => buildHaccpPlanPdf(bundle)],
+    ];
+    for (const [name, build] of assembled) {
+      try {
+        zip.file(`Производственный контроль/${name}`, build());
+        manifestLines.push(`✓ Производственный контроль / ${name}`);
+      } catch (err) {
+        manifestLines.push(`✗ Производственный контроль / ${name} — ошибка сборки`);
+        console.error(`[compliance-bundle] ${name} failed`, err);
+      }
+    }
+  } catch (err) {
+    manifestLines.push("✗ Производственный контроль — не удалось собрать документы из разделов");
+    console.error("[compliance-bundle] assembled production control docs failed", err);
   }
   zip.file(`ОТЧЁТ.txt`, manifestLines.join("\r\n"));
 

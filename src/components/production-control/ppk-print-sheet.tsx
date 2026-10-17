@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Download } from "lucide-react";
 import { db } from "@/lib/db";
 import { currentOrgSnapshot } from "@/lib/orders/store";
 import type { OrderOrgSnapshot } from "@/lib/orders/render";
@@ -37,17 +38,32 @@ export function PpkPrintSheet({
   org,
   title,
   subtitle,
+  pdfHref,
+  pdfLabel,
   children,
 }: {
   org: PpkPrintOrg;
   title: string;
   subtitle?: string;
+  /** Адрес PDF собранного документа: рядом с печатью появляется «Скачать PDF». */
+  pdfHref?: string;
+  pdfLabel?: string;
   children: ReactNode;
 }) {
   const requisites = [org.orgInn ? `ИНН ${org.orgInn}` : null, org.orgAddress].filter(Boolean).join(", ");
   return (
     <div className="space-y-4">
-      <div className="flex justify-end print:hidden">
+      <div className="flex justify-end gap-2 print:hidden">
+        {pdfHref ? (
+          <a
+            href={pdfHref}
+            download
+            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          >
+            <Download className="size-4" aria-hidden />
+            {pdfLabel}
+          </a>
+        ) : null}
         <PrintJournalButton />
       </div>
       <article className="mx-auto w-full max-w-[794px] rounded-3xl border border-[#ececf4] bg-white p-6 text-[14px] leading-[1.6] text-[#0b1024] shadow-[0_20px_60px_-40px_rgba(11,16,36,0.35)] sm:p-12 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">

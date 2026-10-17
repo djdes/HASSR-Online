@@ -4,6 +4,8 @@ import { NORM_CATALOG } from "./norm-catalog";
 import { labNextDate } from "./sanitation";
 import { loadPpkStaff } from "./staff.server";
 import { loadEnabledJournals } from "./journals.server";
+import { loadDocVersions } from "./review.server";
+import { approvalOf } from "./review";
 import {
   PPK_RECORD_SCHEMAS,
   type ControlPointData,
@@ -52,7 +54,13 @@ export type PpkBundle = {
   positions: string[];
   /** Ответственные за журналы (по назначениям «Ответственные за журналы»). */
   responsibles: BundleResponsible[];
+  /** Сотрудники ростера: Ф. И. О. и должности (лист ознакомления). */
+  roster: { name: string; title: string }[];
+  /** Последняя утверждённая версия документа (для «УТВЕРЖДАЮ» и подзаголовка) или null. */
+  approvals: Record<"ppk" | "haccp-plan", BundleApproval | null>;
 };
+
+export type BundleApproval = NonNullable<ReturnType<typeof approvalOf>>;
 
 const TEAM_ORDER: Record<TeamMember["role"], number> = { leader: 0, deputy: 1, member: 2, secretary: 3 };
 
@@ -61,7 +69,7 @@ const TEAM_ORDER: Record<TeamMember["role"], number> = { leader: 0, deputy: 1, m
  * пропускаются: одна испорченная строка не должна ломать документ.
  */
 export async function loadPpkBundle(organizationId: string): Promise<PpkBundle> {
-  const [org, rows, staff, journals, orgSettings] = await Promise.all([
+  const [org, rows, staff, journals, orgSettings, versionRows] = await Promise.all([
     loadPpkPrintOrg(organizationId),
     db.ppkRecord.findMany({
       where: { organizationId },
@@ -71,6 +79,7 @@ export async function loadPpkBundle(organizationId: string): Promise<PpkBundle> 
     loadPpkStaff(organizationId),
     loadEnabledJournals(organizationId),
     db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } }),
+    loadDocVersions(organizationId),
   ]);
 
   const valid = <T,>(block: keyof typeof PPK_RECORD_SCHEMAS): { id: string; data: T }[] =>
@@ -155,5 +164,10 @@ export async function loadPpkBundle(organizationId: string): Promise<PpkBundle> 
     staffCount: staff.length,
     positions: [...new Set(staff.map((person) => person.title).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru")),
     responsibles,
+    roster: staff.map((person) => ({ name: person.name, title: person.title })),
+    approvals: {
+      ppk: approvalOf(versionRows.map((row) => row.data), "ppk", staff),
+      "haccp-plan": approvalOf(versionRows.map((row) => row.data), "haccp-plan", staff),
+    },
   };
 }
