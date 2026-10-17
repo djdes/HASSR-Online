@@ -9,6 +9,7 @@
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { DOCUMENT_ORG_SELECT } from "@/lib/document-org-block";
 import { findOrderTemplate, type OrderTemplate } from "./catalog";
 import { buildOrgSnapshot, readOrgSnapshot } from "./org-snapshot";
 import type { OrderOrgSnapshot, OrderValues } from "./render";
@@ -91,7 +92,7 @@ export async function currentOrgSnapshot(
 ): Promise<OrderOrgSnapshot | null> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { name: true, inn: true, address: true, legalProfileJson: true },
+    select: DOCUMENT_ORG_SELECT,
   });
   return org ? buildOrgSnapshot(org) : null;
 }

@@ -45,3 +45,46 @@ test("логотип: принимается и внешний адрес, и з
   const foreign = parseOrganizationProfilePatch({ logoUrl: "/api/other/x" }, ORG_PROFILE_FIELDS);
   assert.equal(foreign.ok, false);
 });
+
+test("правки реквизитов поверх ЕГРЮЛ: пусто — очистить правку (null), формат КПП и ОГРН проверяется", () => {
+  const parsed = parseOrganizationProfilePatch(
+    {
+      legalFullName: "  Общество с ограниченной   ответственностью «Ромашка» ",
+      kpp: "7701 01 001",
+      ogrn: "1027700132195",
+      legalAddress: "109012, г Москва, ул Ильинка, д 4",
+      directorName: "Петров Пётр Петрович",
+      directorPost: "",
+    },
+    ORG_PROFILE_FIELDS,
+  );
+  assert.deepEqual(parsed, {
+    ok: true,
+    data: {
+      legalFullName: "Общество с ограниченной ответственностью «Ромашка»",
+      legalAddress: "109012, г Москва, ул Ильинка, д 4",
+      directorName: "Петров Пётр Петрович",
+      directorPost: null,
+      kpp: "770101001",
+      ogrn: "1027700132195",
+    },
+  });
+
+  // КПП с буквами причины постановки (с 2019 г.) и ОГРНИП из 15 цифр.
+  assert.deepEqual(parseOrganizationProfilePatch({ kpp: "7701ab001", ogrn: "321774600000012" }, ORG_PROFILE_FIELDS), {
+    ok: true,
+    data: { kpp: "7701AB001", ogrn: "321774600000012" },
+  });
+  // Пустые — очистка правки.
+  assert.deepEqual(parseOrganizationProfilePatch({ kpp: "", ogrn: " " }, ORG_PROFILE_FIELDS), {
+    ok: true,
+    data: { kpp: null, ogrn: null },
+  });
+
+  const bad = parseOrganizationProfilePatch({ kpp: "12345", ogrn: "123" }, ORG_PROFILE_FIELDS);
+  assert.deepEqual(bad, { ok: false, error: "КПП — 9 знаков, например 770101001; ОГРН — 13 цифр, ОГРНИП — 15 цифр" });
+
+  // Консультант партнёра этих полей не правит: их нет в его списке.
+  const partner = parseOrganizationProfilePatch({ name: "Кафе", kpp: "770101001" }, ["name"]);
+  assert.deepEqual(partner, { ok: true, data: { name: "Кафе" } });
+});

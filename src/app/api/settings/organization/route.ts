@@ -83,6 +83,12 @@ export async function PATCH(request: Request) {
       shiftEndHour: true,
       lockPastDayEdits: true,
       requireAdminForJournalEdit: true,
+      legalFullName: true,
+      kpp: true,
+      ogrn: true,
+      legalAddress: true,
+      directorName: true,
+      directorPost: true,
     },
   });
 

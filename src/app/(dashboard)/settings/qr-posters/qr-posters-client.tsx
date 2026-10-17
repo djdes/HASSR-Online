@@ -511,7 +511,7 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
         </button>
       </JournalSelectionBar>
 
-      <QrPrintSheets pages={pages} posters={posters} />
+      <QrPrintSheets pages={pages} posters={posters} brand={view.brand} />
       <style>{`.qr-box svg { display: block; width: 100%; height: auto; }`}</style>
     </div>
   );

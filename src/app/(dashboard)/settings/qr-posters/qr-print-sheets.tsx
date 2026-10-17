@@ -1,9 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
 import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
+import { brandPalette, type DocumentBrand } from "@/lib/document-brand";
 import { isJournalObjectQrCode } from "@/lib/journal-qr-target";
 import { formatQrValidUntil, posterDetailLine, type QrPoster, type QrPrintFormat } from "@/lib/qr-fill-types";
 import type { QrPrintPage } from "@/lib/qr-print-layout";
@@ -25,6 +26,10 @@ import type { QrPrintPage } from "@/lib/qr-print-layout";
  *     (`globals.css`, `@media print`) их прячет и перекрашивает.
  * Цвета — свои классы с явными значениями: тёмная тема кабинета
  * перекрашивает `bg-white`/`text-[#…]`, а на бумаге нужно чёрное по белому.
+ *
+ * Логотип организации — над плакатом A4/A5 и перед названием организации на
+ * наклейке; фирменный цвет — полоса по верху плаката (`border-top`: рамки
+ * печатаются и без «фоновой графики»). Без логотипа и цвета — как раньше.
  */
 
 const STEPS_JOURNAL = ["Наведите камеру телефона на код.", "Выберите себя в списке.", "Заполните форму и нажмите «Сохранить»."];
@@ -84,11 +89,19 @@ function Code({ poster, mm, className, fluid = false }: { poster: QrPoster; mm: 
   );
 }
 
-function PosterA4({ poster }: { poster: QrPoster }) {
+/** Логотип организации на листе; адрес — загруженный файл или ссылка из «Реквизитов». */
+function Logo({ brand, className }: { brand: DocumentBrand | null; className: string }) {
+  if (!brand?.logoUrl) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={brand.logoUrl} alt="" className={className} />;
+}
+
+function PosterA4({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
   const detail = posterDetailLine(poster);
   const validity = validityLine(poster);
   return (
-    <div className="qrp-a4">
+    <div className={`qrp-a4${brand?.color ? " qrp-brand-band" : ""}`}>
+      <Logo brand={brand} className="qrp-a4-logo" />
       <div className="qrp-eyebrow">{eyebrowFor(poster)}</div>
       <div className="qrp-a4-title">{poster.title}</div>
       <div className="qrp-org">{poster.orgName}</div>
@@ -106,13 +119,15 @@ function PosterA4({ poster }: { poster: QrPoster }) {
   );
 }
 
-function PosterA5({ poster }: { poster: QrPoster }) {
+function PosterA5({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
   const detail = posterDetailLine(poster);
   const validity = validityLine(poster);
   return (
     <div className="qrp-a5">
       <Code poster={poster} mm={78} className="qrp-a5-code" />
-      <div className="qrp-a5-text">
+      {/* Полоса — над текстом, а не над листом: пунктир реза между A5 остаётся. */}
+      <div className={`qrp-a5-text${brand?.color ? " qrp-brand-band" : ""}`}>
+        <Logo brand={brand} className="qrp-a5-logo" />
         <div className="qrp-eyebrow">{eyebrowFor(poster)}</div>
         <div className="qrp-a5-title">{poster.title}</div>
         <div className="qrp-org">{poster.orgName}</div>
@@ -130,31 +145,34 @@ function PosterA5({ poster }: { poster: QrPoster }) {
   );
 }
 
-function Sticker({ poster }: { poster: QrPoster }) {
+function Sticker({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
   const detail = posterDetailLine(poster);
   const validity = validityLine(poster);
   return (
     <div className="qrp-sticker">
       <Code poster={poster} mm={36} className="qrp-sticker-code" fluid />
       <div className="qrp-sticker-title">{poster.title}</div>
-      <div className="qrp-sticker-org">{poster.orgName}</div>
+      <div className="qrp-sticker-org">
+        <Logo brand={brand} className="qrp-sticker-logo" />
+        {poster.orgName}
+      </div>
       {detail ? <div className="qrp-sticker-detail">{detail}</div> : null}
       {validity ? <div className="qrp-sticker-detail">{validity}</div> : null}
     </div>
   );
 }
 
-function Sheet({ page, posters }: { page: QrPrintPage; posters: Map<string, QrPoster> }) {
+function Sheet({ page, posters, brand }: { page: QrPrintPage; posters: Map<string, QrPoster>; brand: DocumentBrand | null }) {
   const list = page.keys.map((key) => posters.get(key)).filter((poster): poster is QrPoster => Boolean(poster));
   const format: QrPrintFormat = page.format;
   return (
     <div className={`qrp-sheet qrp-sheet-${format}`} data-qr-sheet={format}>
-      {format === "a4" ? list.map((poster) => <PosterA4 key={poster.id} poster={poster} />) : null}
-      {format === "a5" ? list.map((poster) => <PosterA5 key={poster.id} poster={poster} />) : null}
+      {format === "a4" ? list.map((poster) => <PosterA4 key={poster.id} poster={poster} brand={brand} />) : null}
+      {format === "a5" ? list.map((poster) => <PosterA5 key={poster.id} poster={poster} brand={brand} />) : null}
       {format === "sticker" ? (
         <div className="qrp-sticker-grid">
           {list.map((poster) => (
-            <Sticker key={poster.id} poster={poster} />
+            <Sticker key={poster.id} poster={poster} brand={brand} />
           ))}
         </div>
       ) : null}
@@ -168,16 +186,26 @@ export function useHydrated(): boolean {
   return useSyncExternalStore(noopSubscribe, () => true, () => false);
 }
 
-export function QrPrintSheets({ pages, posters }: { pages: QrPrintPage[]; posters: Map<string, QrPoster> }) {
+export function QrPrintSheets({
+  pages,
+  posters,
+  brand = null,
+}: {
+  pages: QrPrintPage[];
+  posters: Map<string, QrPoster>;
+  /** Логотип и фирменный цвет организации («Моя компания → Логотип и цвета»). */
+  brand?: DocumentBrand | null;
+}) {
   const hydrated = useHydrated();
   if (!hydrated) return null;
   const target = document.body;
+  const style = brand?.color ? ({ "--qrp-brand": brandPalette(brand.color).ink } as CSSProperties) : undefined;
   return createPortal(
-    <div className="qrp-root" data-qr-print-root="" aria-hidden>
+    <div className="qrp-root" data-qr-print-root="" aria-hidden style={style}>
       {/* Стиль — первым: у последнего ЛИСТА должен быть `:last-child`. */}
       <style>{PRINT_CSS}</style>
       {pages.map((page, index) => (
-        <Sheet key={`${page.format}-${index}`} page={page} posters={posters} />
+        <Sheet key={`${page.format}-${index}`} page={page} posters={posters} brand={brand} />
       ))}
     </div>,
     target
@@ -206,6 +234,12 @@ const PRINT_CSS = `
   .qrp-steps li { margin-top: 1.6mm; }
   .qrp-valid { margin-top: 4mm; font-size: 11pt; font-weight: 600; border: 0.3mm solid #000; padding: 1.5mm 3mm; display: inline-block; }
 
+  /* Фирменная полоса — рамкой: фон обнулён правилом выше и без «фоновой графики» не печатается. */
+  .qrp-brand-band { border-top: 2mm solid var(--qrp-brand, #000) !important; }
+  .qrp-a5-text.qrp-brand-band { padding-top: 3mm; }
+  .qrp-a4-logo { display: block; height: 12mm; width: auto; max-width: 60mm; object-fit: contain; margin-bottom: 3mm; }
+  .qrp-a5-logo { display: block; height: 10mm; width: auto; max-width: 50mm; object-fit: contain; margin-bottom: 2.5mm; }
+  .qrp-sticker-logo { display: inline-block; height: 2.6mm; width: auto; max-width: 12mm; object-fit: contain; vertical-align: -0.4mm; margin-right: 1mm; }
   .qrp-a4 { height: 250mm; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 6mm; }
   .qrp-a4-title { font-size: 24pt; font-weight: 700; line-height: 1.15; margin-top: 4mm; max-width: 175mm; }
   .qrp-a4-code { margin-top: 8mm; }

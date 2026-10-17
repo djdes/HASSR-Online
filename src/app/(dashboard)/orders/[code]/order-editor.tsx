@@ -8,8 +8,10 @@ import { ArrowLeft, Info, Save } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { PrintJournalButton } from "@/components/journals/print-journal-button";
+import { brandPalette, type DocumentBrand } from "@/lib/document-brand";
 import type { OrderTemplate } from "@/lib/orders/catalog";
 import {
+  orderRequisitesLine,
   renderOrder,
   type OrderOrgSnapshot,
   type OrderValues,
@@ -29,6 +31,7 @@ const FIELD_CLASS =
 export function OrderEditor({
   template,
   org,
+  brand = null,
   canManage,
   existing,
   initialNumber,
@@ -39,6 +42,8 @@ export function OrderEditor({
 }: {
   template: OrderTemplate;
   org: OrderOrgSnapshot;
+  /** Логотип и фирменный цвет организации для шапки листа. */
+  brand?: DocumentBrand | null;
   canManage: boolean;
   existing: {
     id: string;
@@ -274,15 +279,26 @@ export function OrderEditor({
         {/* Лист приказа. На печати остаётся только он. */}
         <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-10 print:rounded-none print:border-0 print:p-0 print:shadow-none">
           <article className="mx-auto max-w-[720px] text-[14px] leading-[1.6] text-[#0b1024]">
+            {brand?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={brand.logoUrl} alt="" className="mx-auto mb-3 h-12 w-auto max-w-[200px] object-contain" />
+            ) : null}
             <div className="text-center text-[15px] font-semibold">
               {org.orgName || " "}
             </div>
-            {org.orgInn || org.orgAddress ? (
+            {orderRequisitesLine(org) ? (
               <div className="mt-1 text-center text-[12px] text-[#6f7282]">
-                {[org.orgInn ? `ИНН ${org.orgInn}` : null, org.orgAddress]
-                  .filter(Boolean)
-                  .join(", ")}
+                {orderRequisitesLine(org)}
               </div>
+            ) : null}
+            {brand?.color ? (
+              // `data-print-keep-bg` — опт-аут из ч/б сброса печати кабинета (`app-theme.css`).
+              <div
+                aria-hidden
+                data-print-keep-bg
+                className="mt-3 h-[3px] rounded-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                style={{ background: brandPalette(brand.color).ink }}
+              />
             ) : null}
 
             <div className="mt-8 text-center text-[18px] font-semibold tracking-[-0.01em]">

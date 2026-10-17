@@ -12,8 +12,10 @@ import fs from "fs";
 import path from "path";
 import { jsPDF } from "jspdf";
 
+import { brandInk, hexToRgb, normalizeBrandColor } from "@/lib/document-brand";
+import { drawPdfLogo, type PdfLogo } from "@/lib/pdf-logo";
 import type { OrderTemplate } from "./catalog";
-import { renderOrder, type OrderOrgSnapshot, type OrderValues } from "./render";
+import { orderRequisitesLine, renderOrder, type OrderOrgSnapshot, type OrderValues } from "./render";
 
 /**
  * Тот же список, что в `document-pdf.ts`: сначала шрифт из репозитория
@@ -55,6 +57,13 @@ export type OrderPdfInput = {
   values: OrderValues;
   number: string;
   issuedAt: Date | string;
+  /** Логотип организации над названием; нет — шапка без логотипа. */
+  logo?: PdfLogo | null;
+  /**
+   * Фирменный цвет — тонкая линия под реквизитами. Нет — приказ строго ч/б
+   * (правило печати 2026-09-27); текст всегда чёрный.
+   */
+  brandColor?: string | null;
 };
 
 /** Транслитерация для имени файла: кириллица в Content-Disposition ломает часть клиентов. */
@@ -109,7 +118,14 @@ export function renderOrderPdf(input: OrderPdfInput): {
     y += opts.gapAfter ?? 0;
   };
 
-  // Шапка: название организации и реквизиты под ним.
+  // Шапка: логотип, название организации и реквизиты под ним. Текст шапки
+  // центрируется по листу (`PAGE_WIDTH / 2`), поэтому логотип и фирменная
+  // линия — тоже по центру листа, а не колонки текста со смещённым полем.
+  const headerLeft = (PAGE_WIDTH - CONTENT_WIDTH) / 2;
+  if (input.logo) {
+    const { h } = drawPdfLogo(doc, input.logo, { x: headerLeft, y: y - 4, maxW: CONTENT_WIDTH, maxH: 14, align: "center" });
+    y += h + 2;
+  }
   writeParagraph(order.title ? input.org.orgName : input.org.orgName, {
     size: 12,
     style: "bold",
@@ -117,16 +133,18 @@ export function renderOrderPdf(input: OrderPdfInput): {
     gapAfter: 1,
   });
 
-  const requisites = [
-    input.org.orgInn ? `ИНН ${input.org.orgInn}` : null,
-    input.org.orgAddress,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const requisites = orderRequisitesLine(input.org);
   if (requisites) {
     writeParagraph(requisites, { size: 9, align: "center", gapAfter: 6 });
   } else {
     y += 6;
+  }
+  const brandColor = normalizeBrandColor(input.brandColor);
+  if (brandColor) {
+    doc.setFillColor(...hexToRgb(brandInk(brandColor)));
+    doc.rect(headerLeft, y - 4.5, CONTENT_WIDTH, 0.6, "F");
+    doc.setFillColor(255, 255, 255);
+    y += 2;
   }
 
   writeParagraph(order.heading, {

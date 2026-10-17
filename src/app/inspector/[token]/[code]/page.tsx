@@ -11,8 +11,7 @@ import { getInspectorDocPdf, inspectorDocVersion } from "@/lib/inspector-doc-she
 import { loadInspectorPage } from "@/lib/inspector-page";
 import { listOrderScans } from "@/lib/journal-order-scans-db";
 import { dayKeyOf, formatDayKeyRu, periodBounds } from "@/lib/inspector-qr";
-import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
-import { resolveOrgJournalName } from "@/lib/org-journal-name";
+import { buildDocumentOrgBlock } from "@/lib/document-org-block";
 import { buildingPrintName } from "@/lib/building-scope";
 import { describeSignature, loadSignatureEvidence, matchSignature } from "@/lib/signature-evidence";
 
@@ -97,13 +96,9 @@ export default async function InspectorJournalPage({
     : [];
   const responsibleName = new Map(responsibles.map((u) => [u.id, u.name]));
 
-  const snapshot = buildOrgSnapshot({
-    name: access.org.name,
-    inn: access.org.inn,
-    address: access.org.address,
-    legalProfileJson: access.org.legalProfileJson,
-  });
-  const orgTitle = resolveOrgJournalName(access.org);
+  // Реквизиты — общий блок сведений для документов.
+  const block = buildDocumentOrgBlock({ org: access.org });
+  const orgTitle = block.org.journalName;
   const tz = access.org.timezone || "Europe/Moscow";
   const generatedAt = new Date().toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short", timeZone: tz });
 
@@ -160,7 +155,13 @@ export default async function InspectorJournalPage({
             >
               ← Опись журналов
             </Link>
-            <span className="min-w-0 truncate">{orgTitle}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              {block.brand.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={block.brand.logoUrl} alt="" className="h-5 w-auto max-w-[80px] shrink-0 object-contain" data-org-logo />
+              ) : null}
+              <span className="min-w-0 truncate">{orgTitle}</span>
+            </span>
           </div>
           <h1 className={`${SERIF} mt-5 text-[24px] leading-[1.2] sm:text-[30px]`} data-journal-title>
             {template.name}
@@ -265,8 +266,8 @@ export default async function InspectorJournalPage({
               {version ? (
                 <div className="border-t border-dashed border-[#c3c7cf] pt-5">
                   <ElectronicMark
-                    orgName={snapshot.orgShortName}
-                    inn={snapshot.orgInn}
+                    orgName={block.org.shortName}
+                    inn={block.org.inn}
                     journal={template.name}
                     period={`${formatDayKeyRu(docFrom)} - ${formatDayKeyRu(docTo)}`}
                     generatedAt={generatedAt}

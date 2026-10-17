@@ -27,6 +27,10 @@ export type OrderOrgSnapshot = {
   /** Короткое: «ООО „Ромашка“». */
   orgShortName: string;
   orgInn: string | null;
+  /** КПП (у точки — свой). Необязательное: снимки старых приказов его не хранят. */
+  orgKpp?: string | null;
+  /** ОГРН или ОГРНИП. Необязательное, как `orgKpp`. */
+  orgOgrn?: string | null;
   orgAddress: string | null;
   directorName: string | null;
   directorPost: string | null;
@@ -34,6 +38,23 @@ export type OrderOrgSnapshot = {
 };
 
 export type OrderValues = Record<string, string>;
+
+/**
+ * Реквизиты под названием организации в шапке приказа (лист в редакторе и
+ * PDF): «ИНН …, КПП …, ОГРН …, адрес». Пустые части пропускаются.
+ */
+export function orderRequisitesLine(org: OrderOrgSnapshot): string {
+  const ogrn = org.orgOgrn?.trim() || null;
+  const ogrnLabel = ogrn && ogrn.replace(/\D/g, "").length === 15 ? "ОГРНИП" : "ОГРН";
+  return [
+    org.orgInn ? `ИНН ${org.orgInn}` : null,
+    org.orgKpp ? `КПП ${org.orgKpp}` : null,
+    ogrn ? `${ogrnLabel} ${ogrn}` : null,
+    org.orgAddress,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
 
 export type RenderedOrder = {
   /** «ПРИКАЗ № 12-ОД» */

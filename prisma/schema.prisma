@@ -142,6 +142,17 @@ model Organization {
   /// численность, капитал, финансы. Обновляется анкетой и кнопкой в настройках.
   legalProfileJson               Json?
   legalProfileUpdatedAt          DateTime?
+  /// «Моя компания → Реквизиты» (2026-10-17): правки реквизитов поверх
+  /// снимка ЕГРЮЛ. Пусто — в документы идёт значение из `legalProfileJson`;
+  /// снимок не перезаписывается и остаётся значением по умолчанию. Сборка —
+  /// `src/lib/document-org-block.ts`.
+  legalFullName                  String?
+  kpp                            String?
+  /// ОГРН (13 цифр) или ОГРНИП (15 цифр).
+  ogrn                           String?
+  legalAddress                   String?
+  directorName                   String?
+  directorPost                   String?
   address                        String?
   phone                          String?
   /// Аккаунт-владелец. Nullable только на время миграции существующих
