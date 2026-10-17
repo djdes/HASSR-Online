@@ -431,7 +431,25 @@
       "noJournal": "No log",
       "dialogTitle": "Control point",
       "emptyHint": "Run the decision tree for a significant hazard — the point will appear here.",
-      "next": "Next"
+      "next": "Next",
+      "lastMeasurement": "Last measurement",
+      "withinLimit": "Within limits",
+      "outOfLimit": "Out of limits",
+      "noRecords30": "No records for 30 days — enter a measurement in the \"CCP monitoring\" log",
+      "deviationBanner": "Deviation {when}: {value} (limit {limit})",
+      "deviationBannerNoLimit": "Deviation {when}: {value}",
+      "deviations30": "Deviations in 30 days: {n}",
+      "capaDeviationTitle": "Deviation at {number}: {value}",
+      "capaDescMeasured": "{number}: measured {value} ({when}).",
+      "capaDescLimit": "Limit: {limit}.",
+      "capaDescJournalAction": "Recorded in the log: {action}",
+      "capaDescCorrective": "Corrective actions per plan: {corrective}",
+      "numericLimit": "Numeric limit — optional",
+      "limitFrom": "From",
+      "limitTo": "To",
+      "limitUnit": "Unit",
+      "numericLimitHint": "If you enter numbers, the system will check log measurements against them automatically.",
+      "limitError": "Check the limits: numbers only, and \"from\" must not exceed \"to\"."
     },
     "worksheet": {
       "title": "Worksheet {number}",
@@ -617,7 +635,10 @@
       "cancel": "Cancel",
       "done": "Marked. Next due date: {date}",
       "doneNoNext": "Marked",
-      "uploadFailed": "Could not upload the file \"{name}\""
+      "uploadFailed": "Could not upload the file \"{name}\"",
+      "chooseFile": "Choose file",
+      "noFile": "No file chosen",
+      "removeFile": "Remove file"
     }
   },
   "inspectionDay": {
@@ -13857,6 +13878,11 @@
       "allDoneCallback": "All done ✓",
       "openCallbackCount": "Open: {count, number}",
       "snoozedUntil": "Snoozed until {time}"
+    },
+    "ppk": {
+      "noAccess": "No access to this item",
+      "done": "Marked as done",
+      "doneNext": "Marked as done. Next due date: {date}"
     }
   },
   "phoneBinding": {

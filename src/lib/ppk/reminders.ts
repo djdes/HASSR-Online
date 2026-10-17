@@ -2,7 +2,17 @@ import { escapeHtml } from "../html-escape";
 import type { LabPlanItem, PestPlanItem } from "./records";
 import { labNextDate } from "./sanitation";
 
-export type PpkReminderItem = { block: "lab" | "pest"; title: string; nextDate: string; daysLeft: number };
+export type PpkReminderItem = {
+  /** Id записи `PpkRecord` — по нему кнопка «✅» в Telegram находит пункт плана. */
+  recordId: string;
+  block: "lab" | "pest";
+  title: string;
+  nextDate: string;
+  daysLeft: number;
+};
+
+/** Пункт плана вместе с id записи (id нужен только рассылке; без него recordId пустой). */
+type WithId<T> = T & { id?: string };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -42,22 +52,22 @@ export function daysBetween(fromYmd: string, toYmd: string): number {
 
 /** Пункты планов, отобранные правилом `accept(daysLeft)`: просроченные сверху, затем по дате. */
 function collectByRule(
-  input: { lab: LabPlanItem[]; pest: PestPlanItem[]; today: string },
+  input: { lab: WithId<LabPlanItem>[]; pest: WithId<PestPlanItem>[]; today: string },
   accept: (daysLeft: number) => boolean,
 ): PpkReminderItem[] {
   const out: PpkReminderItem[] = [];
-  const push = (block: "lab" | "pest", title: string, nextDate: string | null) => {
+  const push = (recordId: string, block: "lab" | "pest", title: string, nextDate: string | null) => {
     if (!nextDate) return;
     const daysLeft = daysBetween(input.today, nextDate);
     if (!accept(daysLeft)) return;
-    out.push({ block, title, nextDate, daysLeft });
+    out.push({ recordId, block, title, nextDate, daysLeft });
   };
   for (const item of input.lab) {
     const base = `${LAB_OBJECT_RU[item.object]}: ${item.subject}`;
-    push("lab", item.indicator ? `${base} — ${item.indicator}` : base, labNextDate(item));
+    push(item.id ?? "", "lab", item.indicator ? `${base} — ${item.indicator}` : base, labNextDate(item));
   }
   for (const item of input.pest) {
-    push("pest", `${PEST_KIND_RU[item.kind]}: ${item.object}`, item.nextDate);
+    push(item.id ?? "", "pest", `${PEST_KIND_RU[item.kind]}: ${item.object}`, item.nextDate);
   }
   return out.sort((a, b) => {
     const aOver = a.daysLeft < 0 ? 0 : 1;
@@ -69,8 +79,8 @@ function collectByRule(
 
 /** Пункты планов, о которых сегодня нужно напомнить: просроченные сверху, затем по дате. */
 export function collectPpkReminders(input: {
-  lab: LabPlanItem[];
-  pest: PestPlanItem[];
+  lab: WithId<LabPlanItem>[];
+  pest: WithId<PestPlanItem>[];
   today: string;
 }): PpkReminderItem[] {
   return collectByRule(input, isReminderDay);
@@ -78,7 +88,7 @@ export function collectPpkReminders(input: {
 
 /** Для плашки на главной: всё просроченное и всё, что наступит в пределах `horizonDays`. */
 export function ppkDueSoon(
-  input: { lab: LabPlanItem[]; pest: PestPlanItem[]; today: string },
+  input: { lab: WithId<LabPlanItem>[]; pest: WithId<PestPlanItem>[]; today: string },
   horizonDays = 7,
 ): PpkReminderItem[] {
   return collectByRule(input, (daysLeft) => daysLeft <= horizonDays);
@@ -108,6 +118,27 @@ export function ppkReminderMessage(items: PpkReminderItem[]): string {
     ...section("lab", "🧪 <b>Лабораторные исследования</b>"),
     ...section("pest", "🪲 <b>Дезинсекция и дератизация</b>"),
     "",
-    "Отметьте выполнение в плане — следующая дата посчитается сама.",
+    "Нажмите ✅, когда выполнено — отметим и посчитаем следующий срок.",
   ].join("\n");
+}
+
+/** Короткий заголовок для кнопки: «✅ » + текст, всего не больше 32 символов, с «…» при обрезке. */
+function buttonTitle(title: string): string {
+  const prefix = "✅ ";
+  const room = 32 - prefix.length;
+  const chars = Array.from(title);
+  return prefix + (chars.length <= room ? title : chars.slice(0, room - 1).join("").trimEnd() + "…");
+}
+
+/** Клавиатура под напоминанием: по кнопке «✅» на пункт (до 8) и «Открыть план» последней строкой. */
+export function buildPpkReminderKeyboard(
+  items: PpkReminderItem[],
+  openUrl: string | null,
+): { inline_keyboard: ({ text: string; callback_data: string } | { text: string; web_app: { url: string } })[][] } {
+  const rows: ({ text: string; callback_data: string } | { text: string; web_app: { url: string } })[][] = items
+    .filter((i) => i.recordId)
+    .slice(0, 8)
+    .map((i) => [{ text: buttonTitle(i.title), callback_data: `ppk:done:${i.recordId}` }]);
+  if (openUrl) rows.push([{ text: "Открыть план", web_app: { url: openUrl } }]);
+  return { inline_keyboard: rows };
 }

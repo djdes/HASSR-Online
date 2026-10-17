@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Paperclip, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -42,6 +43,7 @@ export function MarkDoneDialog({
   const [touched, setTouched] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const changeDate = (value: string) => {
     setDate(value);
@@ -112,14 +114,40 @@ export function MarkDoneDialog({
             </p>
           )}
 
-          <label className="block">
+          <div className="block">
             <span className={PPK_LABEL_CLASS}>{fileKind === "protocol" ? t("attachProtocol") : t("attachAct")}</span>
             <input
+              ref={fileInput}
               type="file"
+              className="hidden"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              className="block w-full text-[14px] text-[#3c4053] file:mr-3 file:h-10 file:cursor-pointer file:rounded-2xl file:border file:border-[#dcdfed] file:bg-white file:px-4 file:text-[14px] file:font-medium file:text-[#0b1024] hover:file:bg-[#f5f6ff]"
             />
-          </label>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => fileInput.current?.click()} className={PPK_BUTTON_OUTLINE_CLASS}>
+                <Paperclip className="size-4" aria-hidden />
+                {t("chooseFile")}
+              </button>
+              {file ? (
+                <span className="flex min-w-0 items-center gap-1 text-[14px] text-[#3c4053]">
+                  <span className="truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    aria-label={t("removeFile")}
+                    title={t("removeFile")}
+                    onClick={() => {
+                      setFile(null);
+                      if (fileInput.current) fileInput.current.value = "";
+                    }}
+                    className="inline-flex size-7 shrink-0 items-center justify-center rounded-xl text-[#6b7084] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  >
+                    <X className="size-4" aria-hidden />
+                  </button>
+                </span>
+              ) : (
+                <span className="text-[14px] text-[#6b7084]">{t("noFile")}</span>
+              )}
+            </div>
+          </div>
         </div>
 
         <DialogFooter className="shrink-0 gap-2 border-t border-[#ececf4] px-6 py-4">

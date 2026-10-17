@@ -5,6 +5,7 @@ import { registerStopHandler } from "./handlers/stop";
 import { registerInlineQueryHandler } from "./handlers/inline";
 import { registerShortcutHandlers } from "./handlers/shortcut";
 import { registerEditHandlers } from "./handlers/edit";
+import { registerPpkHandlers } from "./handlers/ppk";
 import {
   registerOwnerStatsHandlers,
   registerOwnerExtendedHandlers,
@@ -89,6 +90,7 @@ export function getInboundBot(): Bot | null {
   registerOwnerExtendedHandlers(composer);
   registerStaffToolsHandlers(composer);
   registerEditHandlers(composer);
+  registerPpkHandlers(composer);
   registerInlineQueryHandler(composer);
   // Строго последним из message-обработчиков: catch-all `on("message:text")`
   // ловит всё, что не разобрали команды выше, и отправляет это в поддержку.

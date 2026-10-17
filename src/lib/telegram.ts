@@ -767,50 +767,38 @@ export async function sendTelegramInviteLinkMessage(args: {
   );
 }
 
-// Send notification to all owners/technologists of an organization
-export async function notifyOrganization(
+export type OrganizationRecipient = {
+  id: string;
+  name: string | null;
+  telegramChatId: string | null;
+  notificationPrefs: unknown;
+};
+
+/**
+ * Получатели рассылки руководству: активные пользователи нужных ролей с Telegram
+ * (или, когда включён push в приложение, с включённым push на устройстве),
+ * у которых тип уведомления не отключён в `notificationPrefs`.
+ */
+export async function listOrganizationRecipients(
   organizationId: string,
-  message: string,
   roles: string[] = ["owner", "technologist"],
-  type?: NotificationType,
-  action?: { label: string; miniAppUrl: string },
-  opts?: {
-    /**
-     * false — без push в приложение: то же событие уже создаёт
-     * уведомление в колокольчике руководителям (`notifyManagement`),
-     * и push уходит оттуда. Одно событие — один push.
-     */
-    appPush?: boolean;
-  }
-): Promise<void> {
-  // Import db here to avoid circular deps
+  type?: NotificationType
+): Promise<OrganizationRecipient[]> {
   const { db } = await import("./db");
-  const { telegramConsultantFooter } = await import("./partners/branding");
+  const mobilePush = await import("./mobile-push");
 
   const dbRoles =
     roles[0] === "owner" || roles[0] === "manager"
       ? getDbRoleValuesWithLegacy(MANAGEMENT_ROLES)
       : roles;
 
-  // White-label: у клиентов партнёра под уведомлением руководству стоит
-  // подпись «Ваш консультант: <бренд>, <контакт>». Пустая строка, если
-  // партнёра нет или клиент скрыл брендинг.
-  const consultantFooter = await telegramConsultantFooter(organizationId);
-
-  const mobilePush = await import("./mobile-push");
-  // Push в приложение: руководитель, который пользуется только
-  // приложением, без Telegram, тоже должен узнать о тревоге. Сводки и
-  // отчёты push'ем не шлём — правило в `organizationAlertPush`.
-  const alertPush =
-    opts?.appPush !== false && mobilePush.isMobilePushConfigured()
-      ? mobilePush.organizationAlertPush(message, type)
-      : null;
+  const withAppPush = mobilePush.isMobilePushConfigured();
 
   const users = await db.user.findMany({
     where: {
       organizationId,
       role: { in: dbRoles },
-      ...(alertPush
+      ...(withAppPush
         ? {
             OR: [
               { telegramChatId: { not: null } },
@@ -829,13 +817,73 @@ export async function notifyOrganization(
   });
 
   // Filter by notification preference if type is specified
-  const filtered = type
+  return type
     ? users.filter((u) => {
         if (!u.notificationPrefs) return true; // null = all enabled
         const prefs = u.notificationPrefs as Record<string, boolean>;
         return prefs[type] !== false;
       })
     : users;
+}
+
+/**
+ * Push в приложение получателям рассылки. «Отложить» глушит и push; в тихие часы
+ * push молчит, кроме срочного (температура, отклонения — см. `isUrgentKind`).
+ * Сводки и отчёты push'ем не шлём — правило в `organizationAlertPush`.
+ */
+export async function pushToOrganizationRecipients(
+  recipients: OrganizationRecipient[],
+  message: string,
+  type?: NotificationType,
+  url?: string | null
+): Promise<void> {
+  const mobilePush = await import("./mobile-push");
+  if (!mobilePush.isMobilePushConfigured()) return;
+  if (!mobilePush.organizationAlertPush(message, type)) return;
+  const now = new Date();
+  const urgent = isUrgentKind(type ?? null);
+  await Promise.allSettled(
+    recipients.map(async (u) => {
+      if (mobilePush.isNotificationSnoozed(u.notificationPrefs, now)) return;
+      if (!urgent && (await quietUntilForUser(u.id))) return;
+      const personal = mobilePush.organizationAlertPush(
+        personalizeMessage(message, { name: u.name }),
+        type
+      );
+      if (!personal) return;
+      mobilePush.sendMobilePushInBackground(
+        u.id,
+        { ...personal, url: url ?? null },
+        "bot"
+      );
+    })
+  );
+}
+
+// Send notification to all owners/technologists of an organization
+export async function notifyOrganization(
+  organizationId: string,
+  message: string,
+  roles: string[] = ["owner", "technologist"],
+  type?: NotificationType,
+  action?: { label: string; miniAppUrl: string },
+  opts?: {
+    /**
+     * false — без push в приложение: то же событие уже создаёт
+     * уведомление в колокольчике руководителям (`notifyManagement`),
+     * и push уходит оттуда. Одно событие — один push.
+     */
+    appPush?: boolean;
+  }
+): Promise<void> {
+  const { telegramConsultantFooter } = await import("./partners/branding");
+
+  // White-label: у клиентов партнёра под уведомлением руководству стоит
+  // подпись «Ваш консультант: <бренд>, <контакт>». Пустая строка, если
+  // партнёра нет или клиент скрыл брендинг.
+  const consultantFooter = await telegramConsultantFooter(organizationId);
+
+  const filtered = await listOrganizationRecipients(organizationId, roles, type);
 
   const replyMarkup = action
     ? buildTelegramWebAppKeyboard({
@@ -844,29 +892,11 @@ export async function notifyOrganization(
       })
     : undefined;
 
-  if (alertPush) {
-    // Как в notifyEmployee: «Отложить» глушит и push; в тихие часы
-    // push молчит, кроме срочного (температура, отклонения — см.
-    // `isUrgentKind`). Где то же событие шлёт push колокольчика,
-    // вызывающий передаёт `appPush: false`.
-    const now = new Date();
-    const urgent = isUrgentKind(type ?? null);
-    await Promise.allSettled(
-      filtered.map(async (u) => {
-        if (mobilePush.isNotificationSnoozed(u.notificationPrefs, now)) return;
-        if (!urgent && (await quietUntilForUser(u.id))) return;
-        const personal = mobilePush.organizationAlertPush(
-          personalizeMessage(message, { name: u.name }),
-          type
-        );
-        if (!personal) return;
-        mobilePush.sendMobilePushInBackground(
-          u.id,
-          { ...personal, url: action?.miniAppUrl ?? null },
-          "bot"
-        );
-      })
-    );
+  // Push в приложение: руководитель, который пользуется только приложением,
+  // без Telegram, тоже должен узнать о тревоге. Где то же событие шлёт push
+  // колокольчика, вызывающий передаёт `appPush: false`.
+  if (opts?.appPush !== false) {
+    await pushToOrganizationRecipients(filtered, message, type, action?.miniAppUrl);
   }
 
   await Promise.allSettled(

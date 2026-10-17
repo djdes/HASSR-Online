@@ -431,7 +431,25 @@
       "noJournal": "Jurnalsiz",
       "dialogTitle": "Nazorat nuqtasi",
       "emptyHint": "Muhim xavf uchun qaror daraxtidan o'ting — nuqta shu yerda paydo bo'ladi.",
-      "next": "Keyingi"
+      "next": "Keyingi",
+      "lastMeasurement": "So'nggi o'lchov",
+      "withinLimit": "Chegarada",
+      "outOfLimit": "Chegaradan tashqarida",
+      "noRecords30": "30 kundan beri yozuv yo'q — «KNN monitoringi» jurnaliga o'lchovni kiriting",
+      "deviationBanner": "Og'ish {when}: {value} (chegara {limit})",
+      "deviationBannerNoLimit": "Og'ish {when}: {value}",
+      "deviations30": "30 kundagi og'ishlar: {n}",
+      "capaDeviationTitle": "{number} bo'yicha og'ish: {value}",
+      "capaDescMeasured": "{number}: o'lchandi {value} ({when}).",
+      "capaDescLimit": "Chegara: {limit}.",
+      "capaDescJournalAction": "Jurnalga yozilgan: {action}",
+      "capaDescCorrective": "Reja bo'yicha tuzatuvchi harakatlar: {corrective}",
+      "numericLimit": "Raqamli chegara — majburiy emas",
+      "limitFrom": "Dan",
+      "limitTo": "Gacha",
+      "limitUnit": "Birlik",
+      "numericLimitHint": "Raqamlarni kiritsangiz, tizim jurnaldagi o'lchovlarni o'zi tekshiradi.",
+      "limitError": "Chegaralarni tekshiring: raqamlar kerak va «dan» «gacha»dan oshmasligi kerak."
     },
     "worksheet": {
       "title": "{number} ish varag'i",
@@ -617,7 +635,10 @@
       "cancel": "Bekor qilish",
       "done": "Belgilandi. Keyingi muddat: {date}",
       "doneNoNext": "Belgilandi",
-      "uploadFailed": "«{name}» faylini yuklab bo‘lmadi"
+      "uploadFailed": "«{name}» faylini yuklab bo‘lmadi",
+      "chooseFile": "Fayl tanlash",
+      "noFile": "Fayl tanlanmagan",
+      "removeFile": "Faylni olib tashlash"
     }
   },
   "inspectionDay": {
@@ -13857,6 +13878,11 @@
       "allDoneCallback": "Hammasi bajarildi ✓",
       "openCallbackCount": "Ochiq: {count, number}",
       "snoozedUntil": "{time} gacha kechiktirildi"
+    },
+    "ppk": {
+      "noAccess": "Bu bandga ruxsat yo'q",
+      "done": "Belgilandi",
+      "doneNext": "Belgilandi. Keyingi muddat — {date}"
     }
   },
   "phoneBinding": {

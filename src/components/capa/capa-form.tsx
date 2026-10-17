@@ -37,9 +37,11 @@ interface Props {
   users: { id: string; name: string }[];
   /** Заголовок, подставленный по ссылке (например, из ККТ). */
   initialTitle?: string;
+  /** Описание, подставленное по ссылке (например, отклонение из ККТ). */
+  initialDescription?: string;
 }
 
-export function CapaForm({ users, initialTitle }: Props) {
+export function CapaForm({ users, initialTitle, initialDescription }: Props) {
   const t = useTranslations("capaManagement");
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -145,6 +147,7 @@ export function CapaForm({ users, initialTitle }: Props) {
           id="description"
           name="description"
           ref={descRef}
+          defaultValue={initialDescription}
           rows={6}
           placeholder={t("form.descriptionPlaceholder")}
         />

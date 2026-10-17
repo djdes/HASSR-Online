@@ -127,6 +127,10 @@ export type ControlPointData = {
   responsibleId: string | null;
   corrective: string;
   journalCode: string | null;
+  /** Числовой предел для автосверки с журналом «Мониторинг ККТ» (необязательно). */
+  limitMin: number | null;
+  limitMax: number | null;
+  unit: string;
 };
 
 /** Короткие поля: обрезаются, до 200 символов. */
@@ -190,8 +194,15 @@ const controlPointSchema = z
     responsibleId: id().nullable(),
     corrective: long(),
     journalCode: short(64).nullable(),
+    // Старые записи без числовых пределов остаются валидными.
+    limitMin: z.number().finite().nullable().default(null),
+    limitMax: z.number().finite().nullable().default(null),
+    unit: short(16).default(""),
   })
   .superRefine((value, ctx) => {
+    if (value.limitMin !== null && value.limitMax !== null && value.limitMin > value.limitMax) {
+      ctx.addIssue({ code: "custom", path: ["limitMin"], message: "Нижний предел больше верхнего" });
+    }
     // У ККТ и ОПП номер обязателен: по нему ссылаются журнал и рабочий лист.
     if ((value.kind === "ccp" || value.kind === "oprp") && value.number.length === 0) {
       ctx.addIssue({ code: "custom", path: ["number"], message: "Укажите номер ККТ или ОПП" });

@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { limitText } from "@/lib/ppk/ccp-monitoring";
 import type { ControlPointData, HazardData } from "@/lib/ppk/records";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { loadEnabledJournals } from "@/lib/ppk/journals.server";
@@ -63,7 +64,7 @@ export default async function ControlPointWorksheetsPage({
           [tw("step"), hazard?.step ?? "—"],
           [tw("hazard"), hazard ? `${hazard.hazard} (${th(`types.${hazard.type}`)})` : t("hazardDeleted")],
           [tw("kind"), t(`kinds.${data.kind}`)],
-          [tw("limits"), data.limits || "—"],
+          [tw("limits"), [data.limits, limitText(data)].filter(Boolean).join("\n") || "—"],
           [tw("monitoring"), data.monitoring || "—"],
           [tw("frequency"), data.frequency || "—"],
           [tw("responsible"), person ? `${person.name}${person.title ? `, ${person.title}` : ""}` : "—"],

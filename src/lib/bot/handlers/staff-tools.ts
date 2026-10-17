@@ -26,7 +26,7 @@ import { createTranslator } from "use-intl/core";
  * Callback-кнопки start/end обновляют WorkShift.status (working/ended).
  */
 
-type LinkedUser = {
+export type LinkedUser = {
   id: string;
   name: string | null;
   organizationId: string;
@@ -50,7 +50,7 @@ function roleLabelFor(messages: Messages, locale: Locale, role: string): string 
   }
 }
 
-async function resolveLinkedUser(
+export async function resolveLinkedUser(
   chatId: number | string | undefined
 ): Promise<LinkedUser | null> {
   if (chatId === undefined || chatId === null) return null;

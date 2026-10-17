@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
-import { notifyOrganization } from "@/lib/telegram";
+import { listOrganizationRecipients, pushToOrganizationRecipients, sendTelegramMessage } from "@/lib/telegram";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { buildMiniAppUrl, getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { PPK_RECORD_SCHEMAS, type LabPlanItem, type PestPlanItem } from "@/lib/ppk/records";
-import { collectPpkReminders, ppkReminderMessage } from "@/lib/ppk/reminders";
+import { buildPpkReminderKeyboard, collectPpkReminders, ppkReminderMessage } from "@/lib/ppk/reminders";
+import { moscowToday } from "@/lib/ppk/plan-done";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,12 +22,7 @@ export const dynamic = "force-dynamic";
  * `?dryRun=1` — ничего не отправлять, только посчитать организации и пункты.
  */
 
-/** Сегодняшняя дата по Москве (UTC+3, без перехода на летнее время), YYYY-MM-DD. */
-function moscowToday(now: Date = new Date()): string {
-  return new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
-
-type OrgPlans = { lab: LabPlanItem[]; pest: PestPlanItem[] };
+type OrgPlans = { lab: (LabPlanItem & { id: string })[]; pest: (PestPlanItem & { id: string })[] };
 
 async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
@@ -42,7 +38,7 @@ async function handle(request: Request) {
         block: { in: ["lab-plan", "pest-plan"] },
         organization: NOT_DIRECTORY_ORG_WHERE,
       },
-      select: { organizationId: true, block: true, data: true },
+      select: { id: true, organizationId: true, block: true, data: true },
     });
 
     const byOrg = new Map<string, OrgPlans>();
@@ -54,13 +50,14 @@ async function handle(request: Request) {
         plans = { lab: [], pest: [] };
         byOrg.set(row.organizationId, plans);
       }
-      if (row.block === "lab-plan") plans.lab.push(parsed.data as LabPlanItem);
-      else plans.pest.push(parsed.data as PestPlanItem);
+      if (row.block === "lab-plan") plans.lab.push({ ...(parsed.data as LabPlanItem), id: row.id });
+      else plans.pest.push({ ...(parsed.data as PestPlanItem), id: row.id });
     }
 
     const miniBase = getMiniAppBaseUrlFromEnv();
     let organizations = 0;
     let itemsTotal = 0;
+    let recipientsTotal = 0;
 
     for (const [orgId, plans] of byOrg) {
       try {
@@ -68,19 +65,26 @@ async function handle(request: Request) {
         if (items.length === 0) continue;
         organizations += 1;
         itemsTotal += items.length;
+
+        const recipients = await listOrganizationRecipients(orgId, ["owner", "technologist"], "compliance");
+        const withTelegram = recipients.filter((u) => u.telegramChatId);
+        recipientsTotal += withTelegram.length;
         if (dryRun) continue;
 
         const path = items[0].block === "lab"
           ? "/production-control/sanitation/lab"
           : "/production-control/sanitation/pest-control";
         const miniAppUrl = buildMiniAppUrl(miniBase, path);
-        await notifyOrganization(
-          orgId,
-          ppkReminderMessage(items),
-          ["owner", "technologist"],
-          "compliance",
-          miniAppUrl ? { label: "Открыть план", miniAppUrl } : undefined,
+        const html = ppkReminderMessage(items);
+        const reply_markup = buildPpkReminderKeyboard(items, miniAppUrl ?? null);
+        // Каждому — отдельное сообщение: у кнопок «✅» общий смысл, но ответ идёт по chat id.
+        await Promise.allSettled(
+          withTelegram.map((u) =>
+            sendTelegramMessage(u.telegramChatId!, html, { userId: u.id, reply_markup }),
+          ),
         );
+        // Push в приложение — один на организацию, без кнопок.
+        await pushToOrganizationRecipients(recipients, html, "compliance", miniAppUrl ?? null);
       } catch (error) {
         console.error(`[cron/ppk-reminders] org ${orgId}`, error);
       }
@@ -88,7 +92,7 @@ async function handle(request: Request) {
 
     return NextResponse.json(
       dryRun
-        ? { dryRun: true, organizations, items: itemsTotal }
+        ? { dryRun: true, organizations, items: itemsTotal, recipients: recipientsTotal }
         : { organizations, items: itemsTotal },
     );
   } catch (error) {

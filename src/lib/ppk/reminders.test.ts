@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { collectPpkReminders, daysBetween, isReminderDay, ppkDueSoon, ppkReminderMessage } from "./reminders";
+import { buildPpkReminderKeyboard, collectPpkReminders, daysBetween, isReminderDay, ppkDueSoon, ppkReminderMessage } from "./reminders";
 import type { LabPlanItem, PestPlanItem } from "./records";
 
 const TODAY = "2026-10-17";
@@ -83,10 +83,10 @@ test("collectPpkReminders: просроченные сверху, затем п�
 
 test("ppkReminderMessage: экранирует разметку, статусы и пустые секции", () => {
   const msg = ppkReminderMessage([
-    { block: "pest", title: "Дератизация: <Склад>", nextDate: "2026-10-16", daysLeft: -1 },
-    { block: "pest", title: "Дезинфекция: Зал", nextDate: "2026-10-17", daysLeft: 0 },
-    { block: "pest", title: "Дезинсекция: Кухня", nextDate: "2026-10-18", daysLeft: 1 },
-    { block: "pest", title: "Дезинсекция: Бар", nextDate: "2026-10-24", daysLeft: 7 },
+    { recordId: "r1", block: "pest", title: "Дератизация: <Склад>", nextDate: "2026-10-16", daysLeft: -1 },
+    { recordId: "r1", block: "pest", title: "Дезинфекция: Зал", nextDate: "2026-10-17", daysLeft: 0 },
+    { recordId: "r1", block: "pest", title: "Дезинсекция: Кухня", nextDate: "2026-10-18", daysLeft: 1 },
+    { recordId: "r1", block: "pest", title: "Дезинсекция: Бар", nextDate: "2026-10-24", daysLeft: 7 },
   ]);
   assert.match(msg, /^🔔 <b>Производственный контроль: сроки<\/b>/);
   assert.ok(msg.includes("Дератизация: &lt;Склад&gt; — просрочено на 1 дн. (16.10)"));
@@ -95,7 +95,7 @@ test("ppkReminderMessage: экранирует разметку, статусы 
   assert.ok(msg.includes("— через 7 дн. (24.10)"));
   assert.ok(msg.includes("🪲 <b>Дезинсекция и дератизация</b>"));
   assert.ok(!msg.includes("🧪"));
-  assert.ok(msg.endsWith("Отметьте выполнение в плане — следующая дата посчитается сама."));
+  assert.ok(msg.endsWith("Нажмите ✅, когда выполнено — отметим и посчитаем следующий срок."));
 });
 
 test("ppkDueSoon: всё просроченное и всё в пределах 7 дней, без правила дней напоминания", () => {
@@ -118,4 +118,28 @@ test("ppkDueSoon: лаборатория без lastDate пропускаетс�
   });
   assert.equal(out.length, 1);
   assert.equal(out[0].title, "Вода: Питьевая вода — микробиология");
+});
+
+test("buildPpkReminderKeyboard: кнопки ✅ с recordId, обрезка заголовка, «Открыть план» последней", () => {
+  const long = "Вода: очень длинное название пункта плана для проверки";
+  const items = [
+    { recordId: "abc1234567890", block: "lab" as const, title: long, nextDate: TODAY, daysLeft: 0 },
+    { recordId: "def1234567890", block: "pest" as const, title: "Кухня", nextDate: TODAY, daysLeft: 0 },
+  ];
+  const kb = buildPpkReminderKeyboard(items, "https://x/y");
+  assert.equal(kb.inline_keyboard.length, 3);
+  const first = kb.inline_keyboard[0][0] as { text: string; callback_data: string };
+  assert.equal(first.callback_data, "ppk:done:abc1234567890");
+  assert.ok(first.text.startsWith("✅ ") && first.text.endsWith("…") && first.text.length <= 32);
+  assert.deepEqual(kb.inline_keyboard[2][0], { text: "Открыть план", web_app: { url: "https://x/y" } });
+  assert.equal(buildPpkReminderKeyboard(items, null).inline_keyboard.length, 2);
+});
+
+test("buildPpkReminderKeyboard: не больше 8 кнопок пунктов", () => {
+  const items = Array.from({ length: 12 }, (_, i) => ({ recordId: `id${String(i).padStart(10, "0")}`, block: "pest" as const, title: `П${i}`, nextDate: TODAY, daysLeft: 0 }));
+  assert.equal(buildPpkReminderKeyboard(items, null).inline_keyboard.length, 8);
+});
+
+test("ppkReminderMessage: подсказка про ✅", () => {
+  assert.match(ppkReminderMessage([]), /Нажмите ✅, когда выполнено/);
 });

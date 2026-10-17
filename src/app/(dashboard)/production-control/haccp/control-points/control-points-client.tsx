@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, ArrowLeft, ClipboardList, ExternalLink, FileText, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, ClipboardList, ExternalLink, XCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,12 @@ import {
   type ControlKind,
   type DecisionAnswers,
 } from "@/lib/ppk/haccp";
+import {
+  limitText,
+  matchesCcp,
+  summarizeCcp,
+  type CcpJournalEntry,
+} from "@/lib/ppk/ccp-monitoring";
 import type { ControlPointData, HazardData } from "@/lib/ppk/records";
 import { usePpkRecords, type PpkRecordRow } from "@/components/production-control/use-ppk-records";
 import {
@@ -85,6 +91,8 @@ export function ControlPointsClient({
   hazards,
   staff,
   journals,
+  ccpEntries,
+  nowIso,
   focusHazardId,
   header,
 }: {
@@ -92,6 +100,8 @@ export function ControlPointsClient({
   hazards: HazardRow[];
   staff: StaffPickerOption[];
   journals: Journal[];
+  ccpEntries: CcpJournalEntry[];
+  nowIso: string;
   focusHazardId: string | null;
   header: ReactNode;
 }) {
@@ -224,6 +234,15 @@ export function ControlPointsClient({
                 ) : data.limits ? (
                   <p className="mt-3 text-[13.5px] text-[#3c4053]">{data.limits}</p>
                 ) : null}
+                {important ? (
+                  <CcpMonitoring
+                    data={data}
+                    step={hazard?.step ?? ""}
+                    entries={ccpEntries}
+                    nowIso={nowIso}
+                    label={pointLabel(data)}
+                  />
+                ) : null}
                 {important && data.corrective ? (
                   <p className="mt-2 text-[13.5px] text-[#3c4053]">
                     <span className="text-[#9b9fb3]">{t("corrective")}: </span>
@@ -297,6 +316,109 @@ export function ControlPointsClient({
   );
 }
 
+/** «dd.MM HH:mm» в часовом поясе браузера; сервер и клиент могут отличаться — предупреждение гидратации гасим на месте. */
+function formatWhen(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** Сверка точки с журналом «Мониторинг ККТ»: последнее измерение, отклонения, ссылка на создание нарушения. */
+function CcpMonitoring({
+  data,
+  step,
+  entries,
+  nowIso,
+  label,
+}: {
+  data: ControlPointData;
+  step: string;
+  entries: CcpJournalEntry[];
+  nowIso: string;
+  label: string;
+}) {
+  const t = useTranslations("productionControl.controlPoints");
+  const summary = useMemo(
+    () =>
+      summarizeCcp(
+        data,
+        entries.filter((item) => matchesCcp({ number: data.number, step }, item.ccpName)),
+        nowIso,
+      ),
+    [data, step, entries, nowIso],
+  );
+  const { last, lastDeviation, lastOkAt, deviations30 } = summary;
+  const limit = limitText(data);
+  const freshDeviation = lastDeviation !== null && (lastOkAt === null || lastDeviation.createdAt > lastOkAt);
+
+  if (!last) {
+    return (
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-[#fff7e6] px-3 py-2 text-[13px] text-[#8a5a00]">
+        <span className="inline-flex items-center gap-1.5">
+          <AlertTriangle className="size-4 shrink-0" />
+          {t("noRecords30")}
+        </span>
+        <Link
+          href="/journals/ccp_monitoring"
+          className="font-medium underline underline-offset-2 transition-colors duration-150 hover:text-[#5c3d00]"
+        >
+          {t("openJournal")}
+        </Link>
+      </div>
+    );
+  }
+
+  const details = [last.actualValue, formatWhen(last.createdAt), last.filledByName].filter(Boolean).join(" · ");
+  const deviationValue = lastDeviation
+    ? lastDeviation.actualValue || (lastDeviation.value !== null ? String(lastDeviation.value) : "—")
+    : "";
+  const deviationWhen = lastDeviation ? formatWhen(lastDeviation.createdAt) : "";
+  const capaParams = lastDeviation
+    ? new URLSearchParams({
+        title: t("capaDeviationTitle", { number: label, value: deviationValue }).slice(0, 200),
+        description: [
+          t("capaDescMeasured", { number: label, value: deviationValue, when: deviationWhen }),
+          limit ? t("capaDescLimit", { limit }) : "",
+          lastDeviation.correctiveAction ? t("capaDescJournalAction", { action: lastDeviation.correctiveAction }) : "",
+          data.corrective ? t("capaDescCorrective", { corrective: data.corrective }) : "",
+        ]
+          .filter(Boolean)
+          .join("\n")
+          .slice(0, 2000),
+      })
+    : null;
+
+  return (
+    <div className="mt-3 space-y-2">
+      <p className="flex flex-wrap items-center gap-1.5 text-[13.5px] text-[#3c4053]" suppressHydrationWarning>
+        {last.ok === true ? <CheckCircle2 className="size-4 shrink-0 text-[#1f9d55]" aria-label={t("withinLimit")} /> : null}
+        {last.ok === false ? <XCircle className="size-4 shrink-0 text-[#a13a32]" aria-label={t("outOfLimit")} /> : null}
+        <span>
+          <span className="text-[#9b9fb3]">{t("lastMeasurement")}: </span>
+          {details}
+        </span>
+      </p>
+      {freshDeviation && lastDeviation && capaParams ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13.5px] text-[#a13a32]"
+          suppressHydrationWarning
+        >
+          <span className="font-medium">
+            {limit
+              ? t("deviationBanner", { when: deviationWhen, value: deviationValue, limit })
+              : t("deviationBannerNoLimit", { when: deviationWhen, value: deviationValue })}
+          </span>
+          <Link href={`/capa/new?${capaParams.toString()}`} className={PPK_BUTTON_TEXT_DANGER_CLASS}>
+            <ClipboardList className="size-4" />
+            {t("createCapa")}
+          </Link>
+        </div>
+      ) : null}
+      <p className="text-[12px] text-[#9b9fb3]">{t("deviations30", { n: String(deviations30) })}</p>
+    </div>
+  );
+}
+
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
@@ -349,6 +471,9 @@ function PointWizard({
   const [frequency, setFrequency] = useState(row?.data.frequency ?? "");
   const [responsibleId, setResponsibleId] = useState<string | null>(row?.data.responsibleId ?? null);
   const [corrective, setCorrective] = useState(row?.data.corrective ?? "");
+  const [limitMinText, setLimitMinText] = useState(row?.data.limitMin != null ? String(row.data.limitMin) : "");
+  const [limitMaxText, setLimitMaxText] = useState(row?.data.limitMax != null ? String(row.data.limitMax) : "");
+  const [unit, setUnit] = useState(row ? row.data.unit : "°C");
   const [journalCode, setJournalCode] = useState<string | null>(
     row ? row.data.journalCode : journals.some((j) => j.code === "ccp_monitoring") ? "ccp_monitoring" : null,
   );
@@ -395,7 +520,18 @@ function PointWizard({
   };
 
   const important = kind === "ccp" || kind === "oprp";
-  const canSave = !saving && (!important || number.trim().length > 0);
+  // Числовой предел: пустое поле — «не задано»; «от» не больше «до».
+  const toNumber = (text: string): number | null | "bad" => {
+    const clean = text.trim().replace(",", ".");
+    if (!clean) return null;
+    const value = Number(clean);
+    return Number.isFinite(value) ? value : "bad";
+  };
+  const minValue = toNumber(limitMinText);
+  const maxValue = toNumber(limitMaxText);
+  const limitsInvalid =
+    minValue === "bad" || maxValue === "bad" || (minValue !== null && maxValue !== null && minValue > maxValue);
+  const canSave = !saving && !(important && limitsInvalid) && (!important || number.trim().length > 0);
 
   const submit = async () => {
     if (!canSave) return;
@@ -411,6 +547,9 @@ function PointWizard({
       responsibleId: important ? responsibleId : null,
       corrective: important ? corrective.trim() : "",
       journalCode: important ? journalCode : null,
+      limitMin: important && minValue !== "bad" ? minValue : null,
+      limitMax: important && maxValue !== "bad" ? maxValue : null,
+      unit: important && (minValue !== null || maxValue !== null) ? unit.trim().slice(0, 16) : "",
     });
     setSaving(false);
     if (saved) onClose();
@@ -517,6 +656,36 @@ function PointWizard({
                     <span className={PPK_LABEL_CLASS}>{t("limits")}</span>
                     <textarea value={limits} onChange={(e) => setLimits(e.target.value)} rows={2} className={PPK_TEXTAREA_CLASS} />
                   </label>
+                  <fieldset className="space-y-2">
+                    <legend className={PPK_LABEL_CLASS}>{t("numericLimit")}</legend>
+                    <div className="grid grid-cols-3 gap-2">
+                      <label className="block">
+                        <span className="text-[12px] text-[#9b9fb3]">{t("limitFrom")}</span>
+                        <input
+                          value={limitMinText}
+                          onChange={(e) => setLimitMinText(e.target.value)}
+                          inputMode="decimal"
+                          className={PPK_FIELD_CLASS}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-[12px] text-[#9b9fb3]">{t("limitTo")}</span>
+                        <input
+                          value={limitMaxText}
+                          onChange={(e) => setLimitMaxText(e.target.value)}
+                          inputMode="decimal"
+                          className={PPK_FIELD_CLASS}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-[12px] text-[#9b9fb3]">{t("limitUnit")}</span>
+                        <input value={unit} onChange={(e) => setUnit(e.target.value)} maxLength={16} className={PPK_FIELD_CLASS} />
+                      </label>
+                    </div>
+                    <p className={cn("text-[12.5px]", limitsInvalid ? "text-[#a13a32]" : "text-[#6f7282]")}>
+                      {limitsInvalid ? t("limitError") : t("numericLimitHint")}
+                    </p>
+                  </fieldset>
                   <label className="block">
                     <span className={PPK_LABEL_CLASS}>{t("monitoring")}</span>
                     <textarea value={monitoring} onChange={(e) => setMonitoring(e.target.value)} rows={2} className={PPK_TEXTAREA_CLASS} />

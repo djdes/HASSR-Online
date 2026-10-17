@@ -97,6 +97,21 @@ test("ККТ: для ccp/oprp номер обязателен; ссылки null
   assert.equal(ok("control-points", { ...base, kind: "magic" }), false);
 });
 
+test("ККТ: числовые пределы необязательны, старые записи проходят; от > до — ошибка", () => {
+  const base = {
+    hazardId: null, kind: "ccp", answers: { q1: true, q2: true, q3: null, q4: null }, number: "ККТ-1",
+    limits: "", monitoring: "", frequency: "", responsibleId: null, corrective: "", journalCode: null,
+  };
+  const parsed = PPK_RECORD_SCHEMAS["control-points"].safeParse(base);
+  assert.equal(parsed.success, true);
+  const out = (parsed.success ? parsed.data : {}) as { limitMin?: number | null; limitMax?: number | null; unit?: string };
+  assert.deepEqual([out.limitMin, out.limitMax, out.unit], [null, null, ""]);
+  assert.equal(ok("control-points", { ...base, limitMin: 75, limitMax: null, unit: "°C" }), true);
+  assert.equal(ok("control-points", { ...base, limitMin: 2, limitMax: 6 }), true);
+  assert.equal(ok("control-points", { ...base, limitMin: 7, limitMax: 6 }), false);
+  assert.equal(ok("control-points", { ...base, unit: "x".repeat(17) }), false);
+});
+
 test("нормативы: выбранные id из каталога и свои документы; лимиты 50 и 300 символов", () => {
   const base = { selected: ["fz-52", "sanpin-4282"], custom: [{ title: "ГОСТ 31987-2012" }] };
   assert.equal(ok("norms", base), true);

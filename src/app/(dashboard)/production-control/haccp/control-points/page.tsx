@@ -8,11 +8,15 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { loadEnabledJournals } from "@/lib/ppk/journals.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
+import type { CcpJournalEntry } from "@/lib/ppk/ccp-monitoring";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { PPK_BUTTON_OUTLINE_CLASS } from "@/components/production-control/ppk-ui";
 import { ControlPointsClient } from "./control-points-client";
 
 export const dynamic = "force-dynamic";
+
+/** Текущее время вынесено из компонента: страница всегда рендерится на сервере по запросу. */
+const currentTime = () => new Date();
 
 /** ХАССП, шаг 6 — ККТ: дерево решений для значимых опасностей и список контрольных точек. */
 export default async function ControlPointsPage({
@@ -28,15 +32,38 @@ export default async function ControlPointsPage({
 
   const select = { id: true, data: true, sortOrder: true, updatedAt: true } as const;
   const orderBy = [{ sortOrder: "asc" as const }, { createdAt: "asc" as const }];
-  const [hazards, points, staff, journals, t] = await Promise.all([
+  const now = currentTime();
+  const since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const [hazards, points, staff, journals, journalEntries, t] = await Promise.all([
     db.ppkRecord.findMany({ where: { organizationId, block: "hazards" }, select, orderBy }),
     db.ppkRecord.findMany({ where: { organizationId, block: "control-points" }, select, orderBy }),
     loadPpkStaff(organizationId),
     loadEnabledJournals(organizationId),
+    // Измерения из журнала «Мониторинг ККТ» за 30 дней — для сверки с пределами точек.
+    db.journalEntry.findMany({
+      where: { organizationId, template: { code: "ccp_monitoring" }, createdAt: { gte: since } },
+      select: { id: true, createdAt: true, data: true, filledBy: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+    }),
     getTranslations("productionControl.controlPoints"),
   ]);
 
   const toRow = <R extends { updatedAt: Date }>(row: R) => ({ ...row, updatedAt: row.updatedAt.toISOString() });
+
+  const text = (value: unknown) => (typeof value === "string" ? value.trim() : typeof value === "number" ? String(value) : "");
+  const ccpEntries: CcpJournalEntry[] = journalEntries.map((row) => {
+    const data = (row.data ?? {}) as Record<string, unknown>;
+    return {
+      id: row.id,
+      createdAt: row.createdAt.toISOString(),
+      filledByName: row.filledBy?.name ?? null,
+      ccpName: text(data.ccpName),
+      actualValue: text(data.actualValue),
+      withinLimit: typeof data.withinLimit === "boolean" ? data.withinLimit : null,
+      correctiveAction: text(data.correctiveAction),
+    };
+  });
 
   const header = (
     <PpkBlockHeader
@@ -57,6 +84,8 @@ export default async function ControlPointsPage({
       hazards={parsePpkRecords("hazards", hazards).map(toRow)}
       staff={staff}
       journals={journals}
+      ccpEntries={ccpEntries}
+      nowIso={now.toISOString()}
       focusHazardId={focusHazardId}
       header={header}
     />

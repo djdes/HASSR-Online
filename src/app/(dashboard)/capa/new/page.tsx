@@ -6,12 +6,14 @@ import { CapaForm } from "@/components/capa/capa-form";
 export default async function NewCapaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ title?: string | string[] }>;
+  searchParams: Promise<{ title?: string | string[]; description?: string | string[] }>;
 }) {
   const session = await requireAuth();
   const t = await getTranslations("capaManagement");
-  const { title } = await searchParams;
+  const { title, description } = await searchParams;
   const initialTitle = typeof title === "string" ? title.slice(0, 200) : undefined;
+
+  const initialDescription = typeof description === "string" ? description.slice(0, 2000) : undefined;
 
   const users = await db.user.findMany({
     where: { organizationId: getActiveOrgId(session), isActive: true },
@@ -26,7 +28,7 @@ export default async function NewCapaPage({
       <p className="text-[14px] text-[#6f7282]">
         {t("newDescription")}
       </p>
-      <CapaForm users={users} initialTitle={initialTitle} />
+      <CapaForm users={users} initialTitle={initialTitle} initialDescription={initialDescription} />
     </div>
   );
 }

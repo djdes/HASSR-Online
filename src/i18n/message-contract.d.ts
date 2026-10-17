@@ -432,7 +432,25 @@ export type MessageContract = {
       "noJournal": "Без журнала",
       "dialogTitle": "Контрольная точка",
       "emptyHint": "Пройдите дерево решений для значимой опасности — точка появится здесь.",
-      "next": "Далее"
+      "next": "Далее",
+      "lastMeasurement": "Последнее измерение",
+      "withinLimit": "В пределах",
+      "outOfLimit": "Вне пределов",
+      "noRecords30": "Записей нет 30 дней — внесите измерение в журнал «Мониторинг ККТ»",
+      "deviationBanner": "Отклонение {when}: {value} (предел {limit})",
+      "deviationBannerNoLimit": "Отклонение {when}: {value}",
+      "deviations30": "Отклонений за 30 дней: {n}",
+      "capaDeviationTitle": "Отклонение в {number}: {value}",
+      "capaDescMeasured": "{number}: измерено {value} ({when}).",
+      "capaDescLimit": "Предел: {limit}.",
+      "capaDescJournalAction": "Записано в журнале: {action}",
+      "capaDescCorrective": "Корректирующие действия по плану: {corrective}",
+      "numericLimit": "Числовой предел — необязательно",
+      "limitFrom": "От",
+      "limitTo": "До",
+      "limitUnit": "Единица",
+      "numericLimitHint": "Если указать числа, система сама сверит измерения из журнала.",
+      "limitError": "Проверьте пределы: нужны числа, и «от» не больше «до»."
     },
     "worksheet": {
       "title": "Рабочий лист {number}",
@@ -618,7 +636,10 @@ export type MessageContract = {
       "cancel": "Отмена",
       "done": "Отмечено. Следующий срок — {date}",
       "doneNoNext": "Отмечено",
-      "uploadFailed": "Не удалось загрузить файл «{name}»"
+      "uploadFailed": "Не удалось загрузить файл «{name}»",
+      "chooseFile": "Выбрать файл",
+      "noFile": "Файл не выбран",
+      "removeFile": "Убрать файл"
     }
   },
   "inspectionDay": {
@@ -13858,6 +13879,11 @@ export type MessageContract = {
       "allDoneCallback": "Всё закрыто ✓",
       "openCallbackCount": "Открыто: {count, number}",
       "snoozedUntil": "Отложено до {time}"
+    },
+    "ppk": {
+      "noAccess": "Нет доступа к этому пункту",
+      "done": "Отмечено",
+      "doneNext": "Отмечено. Следующий срок — {date}"
     }
   },
   "phoneBinding": {
