@@ -13,8 +13,14 @@
  * при 26 зерно сцены даёт 16,7 МБ, лимит главной — 15 МБ),
  * `VIDEO_BROWSER` — путь к Chromium, если Remotion не может скачать свой.
  *
- * Проверка кадров без рендера ролика:
+ * Цвет — стандартный для веба и телефонов: `yuv420p`, ограниченный диапазон,
+ * BT.709 (`colorSpace: "bt709"`). Без него кадры-JPEG дают full range
+ * (`yuvj420p`), а с ним iPhone/Safari и часть Android-плееров ошибаются в
+ * цвете.
+ *
+ * Проверка кадров и куска ролика без полного рендера:
  *   npm run video:render -- --stills 120,900,2400 --out <папка>
+ *   npm run video:render -- --frames 0-90 --out <файл.mp4>
  */
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -88,7 +94,9 @@ async function main() {
     return;
   }
 
-  const mp4 = path.join(OUT_DIR, `${BASENAME}.mp4`);
+  // Кусок ролика для проверки (цвет, звук): в public/ не пишется.
+  const frames = option("frames")?.split("-").map(Number) as [number, number] | undefined;
+  const mp4 = frames ? path.resolve(option("out") ?? path.join(tmpdir(), "qr-tour-part.mp4")) : path.join(OUT_DIR, `${BASENAME}.mp4`);
   let lastLogged = -1;
   await renderMedia({
     composition,
@@ -98,11 +106,13 @@ async function main() {
     crf: CRF,
     x264Preset: "slow",
     pixelFormat: "yuv420p",
+    colorSpace: "bt709",
     audioCodec: "aac",
     audioBitrate: "128k",
     imageFormat: "jpeg",
     jpegQuality: 92,
     outputLocation: mp4,
+    ...(frames ? { frameRange: frames } : {}),
     browserExecutable,
     onProgress: ({ progress }) => {
       const percent = Math.floor(progress * 100);
@@ -112,6 +122,11 @@ async function main() {
       }
     },
   });
+
+  if (frames) {
+    console.log(`Кусок ${frames.join("–")}: ${mp4}`);
+    return;
+  }
 
   // Постер — вступление: логотип и обе строки титра уже на месте.
   const introPart = timeline.parts[0];

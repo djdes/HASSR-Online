@@ -26,8 +26,8 @@
       "poster": "public/landing/video/qr-tour-ru.jpg",
       "captions": "public/landing/video/qr-tour-ru.vtt",
       "durationSeconds": 88.7,
-      "bytes": 13995701,
-      "video": "h264 High 1920x1080 30fps yuvj420p",
+      "bytes": 13043379,
+      "video": "h264 High 1920x1080 30fps yuv420p, color_range=tv, bt709",
       "audio": "aac LC 48kHz stereo",
       "crf": 28,
       "voice": "Marina (warm), eleven_multilingual_v2"
@@ -37,6 +37,7 @@
       "tscRemotion": "exit 0 (remotion/tsconfig.json)",
       "eslintChangedFiles": "0 errors, 2 pre-existing warnings",
       "unitTests": "narrated-video.test.ts 9/9; qr-player + i18n 110/110",
+      "color": "frame 197 decoded per tags vs Chrome still: mean |diff| 1.4/255",
       "playwright": "30/30 PASS",
       "ffprobe": "raw/ffprobe-stage2.txt"
     },

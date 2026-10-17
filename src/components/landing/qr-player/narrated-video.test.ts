@@ -191,6 +191,12 @@ test("рендер: пакеты Remotion 4.0.528 только в devDependencie
     if (name.startsWith("@remotion/")) assert.equal(version, "4.0.528", name);
   }
   assert.match(pkg.scripts["video:render"], /scripts\/landing-video\/render\.ts/);
+  // Цвет для телефонов: yuv420p, ограниченный диапазон BT.709 (не full range yuvj420p).
+  const render = read("scripts/landing-video/render.ts");
+  assert.match(render, /pixelFormat: "yuv420p"/);
+  assert.match(render, /colorSpace: "bt709"/);
+  assert.match(render, /codec: "h264"/);
+  assert.match(render, /audioCodec: "aac"/);
 
   // Главная и ролик не тянут пакеты рендера (весь src/ проверен grep — evidence AC9).
   const offenders: string[] = [];
