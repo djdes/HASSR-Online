@@ -9,6 +9,8 @@
  * типа помещения по названию (без БД, с тестами).
  */
 
+import type { RoomKind } from "@/lib/room-kinds";
+
 /** Нормализация названия для сравнения: регистр, ё→е, пробелы. */
 export function normalizePlaceName(name: string): string {
   return name.toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
@@ -26,12 +28,15 @@ export function orphanAreas<T extends { id: string; name: string }>(
   });
 }
 
-export type GuessedRoomKind = "guest" | "kitchen" | "wash" | "bar" | "storage" | "other";
+export type GuessedRoomKind = RoomKind;
 
 /** Тип помещения (Room.kind) по названию цеха. */
 export function guessRoomKind(name: string): GuessedRoomKind {
   const n = normalizePlaceName(name);
   if (n.includes("склад")) return "storage";
+  // «Основное производство» — свой вид (2026-10-17); «Производственный цех»
+  // остаётся цехом.
+  if (/(^|[^а-я])(основное )?производство($|[^а-я])/.test(n)) return "production";
   if (/(^|[^а-я])бар/.test(n)) return "bar";
   if (n.includes("мойк") || n.includes("моечн")) return "wash";
   if (/(^|[^а-я])зал/.test(n) || n.includes("гост")) return "guest";

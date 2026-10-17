@@ -14,7 +14,7 @@ import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { QrPinStep } from "@/components/qr-fill/qr-pin-step";
 import { QrFillPresentationProvider } from "@/components/qr-fill/qr-fill-presentation";
 
-async function fixture(input: { uv?: boolean; cookie?: string; personal?: Locale | null; authenticated?: boolean; orgLocale?: string; invalid?: boolean; authMode?: boolean; customTitle?: string; unrelatedControlOnly?: boolean }) {
+async function fixture(input: { uv?: boolean; fryer?: boolean; fryerNoDocument?: boolean; cookie?: string; personal?: Locale | null; authenticated?: boolean; orgLocale?: string; invalid?: boolean; authMode?: boolean; customTitle?: string; unrelatedControlOnly?: boolean }) {
   const require = createRequire(import.meta.url), calls: string[] = [];
   const source = ts.transpileModule(readFileSync("src/app/equipment-fill/[equipmentId]/page.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const mod = { exports: {} };
@@ -26,12 +26,12 @@ async function fixture(input: { uv?: boolean; cookie?: string; personal?: Locale
     if(id==="@/lib/server-session")return {getServerSession:async()=>input.authenticated?{user:{id:"viewer",locale:input.personal,organizationLocale:"ru",organizationId:"unrelated"}}:null};
     if(id==="@/i18n/site-locale-server")return {getSiteLocale:async()=>input.cookie??"ru"};
     if(id==="@/lib/equipment-qr-token")return {verifyEquipmentQrToken:()=>input.invalid?{ok:false,reason:"invalid"}:{ok:true,equipmentId:"equipment"}};
-    if(id==="@/lib/db")return {db:{equipment:{findUnique:async()=>{calls.push("equipment");return {id:"equipment",name:"Customer freezer",type:input.uv?"uv_lamp":"freezer",tempMin:0,tempMax:8,fillerUserIds:[],sensorMappings:[],area:{id:"area",name:"Customer area",organizationId:"verified-org",organization:{name:"Customer organization",timezone:"Asia/Tashkent",qrFillMode:input.authMode?"auth":"public",locale:input.orgLocale??"uz"}}};}},user:{findMany:async(query:{where:{organizationId:string}})=>{assert.equal(query.where.organizationId,"verified-org");return [employee];}}}};
+    if(id==="@/lib/db")return {db:{equipment:{findUnique:async()=>{calls.push("equipment");return {id:"equipment",name:"Customer freezer",type:input.uv?"uv_lamp":input.fryer?"fryer":"freezer",tempMin:0,tempMax:8,fillerUserIds:[],sensorMappings:[],area:{id:"area",name:"Customer area",organizationId:"verified-org",organization:{name:"Customer organization",timezone:"Asia/Tashkent",qrFillMode:input.authMode?"auth":"public",locale:input.orgLocale??"uz"}}};}},user:{findMany:async(query:{where:{organizationId:string}})=>{assert.equal(query.where.organizationId,"verified-org");return [employee];}}}};
     if(id==="@/lib/org-custom-names")return {getOrgCustomNames:async(org:string)=>{assert.equal(org,"verified-org");calls.push("custom");return {journals:input.customTitle?{cold_equipment_control:input.customTitle,[input.unrelatedControlOnly?"uv_lamp_control":"uv_lamp_runtime"]:input.customTitle}:{},sections:{}};}};
     if(id==="@/lib/qr-fill-actor")return {normalizeQrFillMode:(value:string)=>value,sessionEmployeeForQr:async()=>({ok:false,reason:"no-session"})};
     if(id==="@/lib/qr-object-pass")return {passEmployeeIdFromCookie:async()=>null};
     if(id==="@/lib/qr-remember")return {readRememberValue:()=>null,rememberCookieName:()=>"remember"};
-    if(id==="@/lib/equipment-fill-targets")return {resolveEquipmentFillTargets:async()=>({hasActiveDocument:true,climate:null})};
+    if(id==="@/lib/equipment-fill-targets")return {resolveEquipmentFillTargets:async()=>({hasActiveDocument:true,climate:null}),resolveFryerFillTarget:async()=>input.fryerNoDocument?null:({documentId:"doc",phase:"start",row:{kind:"new"},last:null,config:{lists:{fatTypes:["Подсолнечное масло"],productTypes:["Картофель фри"],equipmentTypes:["Customer freezer"]},equipmentLinks:[]}})};
     if(id==="@/lib/qr-fill-siblings")return {listEquipmentSiblings:async()=>[]};
     if(id==="@/lib/uv-lamp-runs")return {listLampOperators:async()=>[employee],lampState:async()=>({running:null,lifetimeHours:100,usedHours:3,remainingHours:97})};
     if(id==="@/lib/plan-limits.server")return {hasPaidPlan:async()=>false};
@@ -70,4 +70,16 @@ test("shared QR children render RU without an opt-in provider and localized PIN/
   const child=createElement(EmployeePicker,{employees,value:"",onChange:()=>{}});
   assert.ok(renderToStaticMarkup(child).includes("Кто снимает показания"));
   for(const locale of ["ru","en","uz"] as const){const messages=await loadMessages(locale);const tree=createElement(QrFillPresentationProvider,{locale,messages:messages.equipmentFill,children:createElement(QrPinStep,{kind:"equipment",objectId:"equipment",token:"fixture",employeeId:"person",employeeName:"Customer name",hasPin:false,remember:true,onPass:()=>{}})});const html=renderToStaticMarkup(tree);assert.ok(html.includes(messages.equipmentFill.pin.requestAccess));assert.ok(html.includes(messages.equipmentFill.pin.personalRequired));}
+});
+test("fryer sticker opens the frying-fat form instead of the temperature form in every locale",async()=>{
+  for(const cookie of ["ru","en","uz"] as const){
+    const result=await fixture({fryer:true,cookie});const messages=await loadMessages(cookie);
+    assert.ok(result.html.includes(messages.equipmentFill.fryer.title));
+    assert.ok(result.html.includes(messages.equipmentFill.fryer.startHeading));
+    assert.ok(result.html.includes("Подсолнечное масло"));
+    assert.ok(!result.html.includes(messages.equipmentFill.page.journalTitle));
+    assert.ok(!result.html.includes("MISSING_MESSAGE"));
+  }
+  const missing=await fixture({fryer:true,fryerNoDocument:true,cookie:"ru"});
+  assert.ok(missing.html.includes((await loadMessages("ru")).equipmentFill.fryer.noDocument));
 });

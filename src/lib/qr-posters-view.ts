@@ -1,4 +1,6 @@
 import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
+import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
+import { isUvLampType } from "@/lib/uv-lamp";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { JOURNAL_FILL_HUB_CODE, journalFillValidUntil, todayKeyFor } from "@/lib/journal-fill";
@@ -79,6 +81,7 @@ const CAPTION = {
   objectMain: "Показывает статус объектов за сегодня. Записывают по наклейке на самом объекте.",
   equipment: "Сотрудник сканирует наклейку на дверце и вносит температуру.",
   uv: "Сотрудник сканирует наклейку на лампе и отмечает включение.",
+  fryer: "Сотрудник сканирует наклейку на фритюрнице: жир, продукция и оценка — в журнал фритюрных жиров.",
   room: "Сотрудник сканирует наклейку в помещении и вносит температуру и влажность.",
 } as const;
 
@@ -322,7 +325,14 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
       defaultFormat: format,
       label: poster.title,
       sublabel: poster.norms.length > 0 ? `норма ${poster.norms.join(", ")}` : null,
-      caption: kind === "room" ? CAPTION.room : CAPTION.equipment,
+      caption:
+        kind === "room"
+          ? CAPTION.room
+          : isFryerEquipmentType(loaded.equipmentTypes?.[poster.id])
+            ? CAPTION.fryer
+            : isUvLampType(loaded.equipmentTypes?.[poster.id] ?? "")
+              ? CAPTION.uv
+              : CAPTION.equipment,
       location: loaded.locations?.[poster.id] ?? null,
       search: [poster.title, loaded.locations?.[poster.id]],
     })),

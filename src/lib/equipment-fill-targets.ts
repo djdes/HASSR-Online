@@ -21,6 +21,19 @@ import {
 } from "@/lib/climate-document";
 import { findClimateRowForEquipment } from "@/lib/climate-fill";
 import { ensureQrPeriodDocuments } from "@/lib/journal-qr-rollover";
+import {
+  FRYER_OIL_TEMPLATE_CODE,
+  normalizeFryerOilDocumentConfig,
+  normalizeFryerOilEntryData,
+  type FryerOilDocumentConfig,
+} from "@/lib/fryer-oil-document";
+import {
+  fryerQrPhase,
+  lastFryerValues,
+  pickFryerQrRow,
+  type FryerQrRow,
+} from "@/lib/fryer-oil-equipment-link";
+import { syncFryerOilDocuments } from "@/lib/fryer-oil-equipment-sync";
 
 /** Текст 409 и жёлтой плашки — один на страницу и на API. */
 export const EQUIPMENT_FILL_NO_DOCUMENT_ERROR =
@@ -128,4 +141,91 @@ async function resolveClimateTarget(params: {
   if (!row) return null;
 
   return { documentId: document.id, config, row };
+}
+
+/** Текст 409 и жёлтой плашки наклейки фритюрницы. */
+export const FRYER_FILL_NO_DOCUMENT_ERROR =
+  "Сегодня эта фритюрница не входит ни в один активный журнал учёта фритюрных жиров. Попросите управляющего создать документ журнала.";
+
+export type FryerFillTarget = {
+  documentId: string;
+  config: FryerOilDocumentConfig;
+  /** Строка фритюрницы за сегодня (или заготовка дня, или «новая»). */
+  row: FryerQrRow;
+  /** Начало жарки или её окончание. */
+  phase: "start" | "end";
+  /** Жир и продукция прошлой жарки этой фритюрницы — значения по умолчанию. */
+  last: { fatType: string; productType: string } | null;
+};
+
+/**
+ * Куда ляжет запись с наклейки фритюрницы (2026-10-17): активный на
+ * сегодня документ журнала фритюрных жиров, в списке которого есть эта
+ * фритюрница (`equipmentLinks`). Сначала документ точки фритюрницы, потом
+ * общий. Перед поиском — переход периода (как у холодильников) и
+ * синхронизация со справочником: фритюрница, заведённая минуту назад, уже
+ * в журнале. `null` — записать некуда, «Сохранить» заблокировано.
+ */
+export async function resolveFryerFillTarget(params: {
+  equipment: { id: string; name: string; buildingId: string | null };
+  organizationId: string;
+  /** Начало сегодняшнего дня в зоне организации. */
+  day: Date;
+}): Promise<FryerFillTarget | null> {
+  const { equipment, organizationId, day } = params;
+  const todayKey = day.toISOString().slice(0, 10);
+  await ensureQrPeriodDocuments({
+    organizationId,
+    templateCode: FRYER_OIL_TEMPLATE_CODE,
+    todayKey,
+    anchor: equipment.buildingId ? { buildingId: equipment.buildingId } : undefined,
+    source: "equipment-fill",
+  });
+  try {
+    await syncFryerOilDocuments(organizationId);
+  } catch (error) {
+    console.error("[equipment-fill] fryer sync failed", error);
+  }
+  const documents = await db.journalDocument.findMany({
+    where: {
+      organizationId,
+      status: "active",
+      template: { code: FRYER_OIL_TEMPLATE_CODE },
+      dateFrom: { lte: day },
+      dateTo: { gte: day },
+    },
+    select: { id: true, buildingId: true, config: true },
+    orderBy: { dateFrom: "desc" },
+  });
+  const linked = documents
+    .map((doc) => ({ ...doc, parsed: normalizeFryerOilDocumentConfig(doc.config) }))
+    .filter((doc) => doc.parsed.equipmentLinks.some((link) => link.sourceEquipmentId === equipment.id));
+  const document =
+    linked.find((doc) => equipment.buildingId && doc.buildingId === equipment.buildingId) ??
+    linked.find((doc) => !doc.buildingId) ??
+    linked[0];
+  if (!document) return null;
+
+  // Документ — на период (обычно месяц): строк немного, берём все — нужны
+  // и сегодняшняя строка, и вчерашние жир с продукцией для подсказки.
+  const entries = (
+    await db.journalDocumentEntry.findMany({
+      where: { documentId: document.id },
+      select: { id: true, date: true, data: true },
+      orderBy: { date: "asc" },
+    })
+  ).map((entry) => ({
+    id: entry.id,
+    date: entry.date.toISOString(),
+    data: normalizeFryerOilEntryData(entry.data),
+  }));
+  const target = { equipmentId: equipment.id, equipmentName: equipment.name, dayKey: todayKey };
+  const row = pickFryerQrRow(entries, target);
+  return {
+    documentId: document.id,
+    config: document.parsed,
+    row,
+    phase: fryerQrPhase(row),
+    last: lastFryerValues(entries, target),
+  };
 }

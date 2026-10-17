@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { ComponentProps } from "react";
+import type { Prisma } from "@prisma/client";
 import { TemperatureChart } from "@/components/charts/temperature-chart";
 import {
   AlertTriangle,
@@ -19,6 +21,10 @@ import { PageGuide } from "@/components/ui/page-guide";
 import { getUserDisplayTitle, isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { BuildingGroupHeader } from "@/components/settings/building-group-header";
+import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
+import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
+import { pluralRu } from "@/lib/plural-ru";
 
 export const dynamic = "force-dynamic";
 
@@ -46,23 +52,39 @@ export default async function EquipmentSettingsPage() {
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
 
-  const [equipment, areas, staff] = await Promise.all([
+  const [equipment, areas, staff, buildings, rooms, buildingContext] = await Promise.all([
     db.equipment.findMany({
       where: { area: { organizationId: orgId } },
       orderBy: { name: "asc" },
-      include: { area: { select: { id: true, name: true } } },
+      include: { area: { select: { id: true, name: true, buildingId: true } } },
     }),
     db.area.findMany({
       where: { organizationId: orgId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true },
+      select: { id: true, name: true, buildingId: true },
     }),
     db.user.findMany({
       where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
       orderBy: { name: "asc" },
       select: { id: true, name: true, role: true, positionTitle: true, canManageSettings: true, jobPosition: { select: { name: true } } },
     }),
+    listOrganizationBuildings(orgId),
+    db.room.findMany({
+      where: { building: { organizationId: orgId } },
+      select: { id: true, name: true, buildingId: true },
+    }),
+    loadBuildingContext(session),
   ]);
+  // Точка → помещение → оборудование (2026-10-17). Выбрана точка в шапке —
+  // её оборудование и оборудование цехов без точки.
+  const groups = groupByBuilding(equipment, (item) => item.area.buildingId, buildings, {
+    activeBuildingId: buildingContext.activeBuildingId,
+    keepEmpty: true,
+  });
+  const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
+  const places = buildPlaceOptions({ buildings, areas, rooms });
+  const defaultBuildingId =
+    buildingContext.activeBuildingId ?? (buildings.length === 1 ? buildings[0].id : null);
   // «Кто заполняет» по QR: руководство заполняет любой объект — в выборе не нужно.
   const fillerOptions = staff.map((user) => ({
     id: user.id,
@@ -99,6 +121,14 @@ export default async function EquipmentSettingsPage() {
     isRoot: session.user.isRoot === true,
   });
 
+  const dialogProps: EquipmentDialogShared = {
+    areas,
+    buildings: buildingOptions,
+    places,
+    existingNames: equipmentNames,
+    fillerOptions,
+  };
+
   // Датчики температуры (раньше — на главной, меню 2026-10-16).
   const iotEquipment = equipment
     .filter((item) => item.tuyaDeviceId)
@@ -124,7 +154,7 @@ export default async function EquipmentSettingsPage() {
           { title: "Закрепите сотрудника за холодильником или складом", body: "Карточка оборудования (карандаш) → «Кто заполняет по QR» → отметьте людей → «Сохранить». На наклейке останутся только они; остальным наклейка откажет даже с верным PIN. Руководство заполняет любой объект." },
           { title: "Одна наклейка — один объект", body: "Распечатайте «QR-наклейки» и приклейте на каждый холодильник. Сменить холодильник на телефоне нельзя — замер делают у самого оборудования." },
           { title: "УФ-лампа", body: "Тип «УФ-лампа» → модель (ресурс подставится) → «Уже отработала» для не новой лампы. На наклейке лампы — кнопки «Я включил» и «Я выключил»; наработка считается сама, за 10 % до конца ресурса придёт уведомление." },
-          { title: "Сначала создайте цех", body: "Оборудование привязывается к помещению. Если цехов нет — откройте «Здания и помещения» (соседний раздел) и заведите хотя бы один." },
+          { title: "Точка → помещение → оборудование", body: "Оборудование стоит в помещении своей точки. Если помещений нет — заведите их в «Точках и помещениях», они сразу появятся в окне оборудования. Выбрана точка в шапке — список показывает её оборудование." },
           { title: "Заполните min/max температуру", body: "Например, холодильник: 2°C - 6°C. Эти значения попадут в журнал температурного режима как нормативный диапазон. Сотрудник увидит «выход за пределы» сразу." },
           { title: "Tuya Device ID — опционально", body: "Если стоит WiFi-датчик температуры (HACCP/Aubess) — введите Device ID, и WeSetup сам будет писать показания в журнал каждый час." },
         ]}
@@ -146,7 +176,9 @@ export default async function EquipmentSettingsPage() {
                 Оборудование
               </h1>
               <p className="mt-0.5 text-[14px] text-[#6f7282]">
-                Холодильники, датчики, печи — по цехам
+                {buildings.length > 1
+                  ? "Холодильники, датчики, печи — по точкам и помещениям"
+                  : "Холодильники, датчики, печи — по цехам"}
               </p>
             </div>
           </div>
@@ -173,7 +205,14 @@ export default async function EquipmentSettingsPage() {
             </Link>
           ) : null}
           {canManage && (
-            <EquipmentDialog areas={areas} existingNames={equipmentNames} fillerOptions={fillerOptions} />
+            <EquipmentDialog
+              areas={areas}
+              buildings={buildingOptions}
+              places={places}
+              defaultBuildingId={defaultBuildingId}
+              existingNames={equipmentNames}
+              fillerOptions={fillerOptions}
+            />
           )}
         </div>
       </div>
@@ -189,161 +228,220 @@ export default async function EquipmentSettingsPage() {
           </h3>
           <p className="mt-2 text-[14px] text-[#6f7282]">
             {canManage
-              ? "Сначала добавьте цех, потом оборудование в нём."
+              ? "Сначала заведите помещение точки, потом оборудование в нём."
               : "Администратор ещё не добавил оборудование."}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-          <table className="w-full min-w-[720px] text-[15px]">
-            <thead className="bg-[#f8f9fc] text-[13px] text-[#6f7282]">
-              <tr>
-                {/* Закреплена: на телефоне таблицу крутят вбок, и без
-                    названия остаются безымянные строки. */}
-                <th className="sticky left-0 z-10 bg-[#f8f9fc] px-6 py-3 text-left font-medium">
-                  Название
-                </th>
-                <th className="px-6 py-3 text-left font-medium">Тип</th>
-                <th className="px-6 py-3 text-left font-medium">Цех</th>
-                <th className="px-6 py-3 text-left font-medium">T° диапазон</th>
-                <th className="px-6 py-3 text-center font-medium">IoT</th>
+        buildings.length === 0 ? (
+          <EquipmentTable
+            items={equipment}
+            readings={readings}
+            canManage={canManage}
+            canDelete={canDelete}
+            dialog={dialogProps}
+          />
+        ) : (
+          <div className="space-y-6">
+            {groups.map((group) => (
+              <section key={group.building?.id ?? "loose"} className="space-y-3" data-testid="equipment-building-group">
+                <BuildingGroupHeader
+                  building={group.building}
+                  countLabel={`${group.items.length} ${pluralRu(group.items.length, "единица", "единицы", "единиц")}`}
+                  looseHint="Цех этого оборудования не привязан к точке — выберите точку цеха в «Цехах и участках»."
+                />
+                {group.items.length > 0 ? (
+                  <EquipmentTable
+                    items={group.items}
+                    readings={readings}
+                    canManage={canManage}
+                    canDelete={canDelete}
+                    dialog={dialogProps}
+                  />
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-6 text-[13px] text-[#6f7282]">
+                    В этой точке пока нет оборудования.
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
+type EquipmentDialogShared = Pick<
+  ComponentProps<typeof EquipmentDialog>,
+  "areas" | "buildings" | "places" | "existingNames" | "fillerOptions"
+>;
+
+type EquipmentRow = Prisma.EquipmentGetPayload<{
+  include: { area: { select: { id: true; name: true; buildingId: true } } };
+}>;
+
+function EquipmentTable({
+  items,
+  readings,
+  canManage,
+  canDelete,
+  dialog,
+}: {
+  items: EquipmentRow[];
+  readings: Record<string, { temp: number; time: Date }>;
+  canManage: boolean;
+  canDelete: boolean;
+  dialog: EquipmentDialogShared;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+      <table className="w-full min-w-[720px] text-[15px]">
+        <thead className="bg-[#f8f9fc] text-[13px] text-[#6f7282]">
+          <tr>
+            {/* Закреплена: на телефоне таблицу крутят вбок, и без
+                названия остаются безымянные строки. */}
+            <th className="sticky left-0 z-10 bg-[#f8f9fc] px-6 py-3 text-left font-medium">
+              Название
+            </th>
+            <th className="px-6 py-3 text-left font-medium">Тип</th>
+            <th className="px-6 py-3 text-left font-medium">Помещение</th>
+            <th className="px-6 py-3 text-left font-medium">T° диапазон</th>
+            <th className="px-6 py-3 text-center font-medium">IoT</th>
+            {canManage && (
+              <th className="w-[100px] px-6 py-3 text-right font-medium">
+                Действия
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => {
+            const reading = readings[item.id];
+            const minutesAgo = reading
+              ? Math.round(
+                  (Date.now() - reading.time.getTime()) / 60000
+                )
+              : null;
+            const online =
+              minutesAgo !== null && minutesAgo <= 120;
+            const outOfRange =
+              reading &&
+              ((item.tempMin != null && reading.temp < item.tempMin) ||
+                (item.tempMax != null && reading.temp > item.tempMax));
+
+            return (
+              <tr
+                key={item.id}
+                className="border-t border-[#f0f1f8] transition-colors hover:bg-[#fafbff]"
+              >
+                <td className="sticky left-0 z-10 bg-white px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-8 items-center justify-center rounded-lg bg-[#f5f3ff] text-[#7a5cff]">
+                      <Thermometer className="size-4" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-[#0b1024]">
+                        {item.name}
+                      </div>
+                      {item.serialNumber && (
+                        <div className="text-[12px] text-[#9b9fb3]">
+                          S/N {item.serialNumber}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-[#6f7282]">
+                  {TYPE_LABELS[item.type] ?? item.type}
+                </td>
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center gap-1.5 text-[14px] text-[#6f7282]">
+                    <MapPin className="size-3" />
+                    {item.area.name}
+                  </span>
+                </td>
+                <td className="px-6 py-4 font-mono text-[14px] text-[#0b1024]">
+                  {tempRange(item.tempMin, item.tempMax)}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  {item.tuyaDeviceId ? (
+                    <div className="inline-flex flex-col items-center gap-1">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                          online
+                            ? "bg-[#ecfdf5] text-[#136b2a]"
+                            : "bg-[#fff4f2] text-[#d2453d]"
+                        }`}
+                      >
+                        {online ? (
+                          <Wifi className="size-3" />
+                        ) : (
+                          <WifiOff className="size-3" />
+                        )}
+                        {online ? "Online" : "Offline"}
+                      </span>
+                      {reading && (
+                        <span
+                          className={`inline-flex items-center gap-1 text-[13px] font-semibold tabular-nums ${
+                            outOfRange
+                              ? "text-[#d2453d]"
+                              : "text-[#136b2a]"
+                          }`}
+                        >
+                          {outOfRange && (
+                            <AlertTriangle className="size-3" />
+                          )}
+                          {reading.temp}°C
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[13px] text-[#c7ccea]">—</span>
+                  )}
+                </td>
                 {canManage && (
-                  <th className="w-[100px] px-6 py-3 text-right font-medium">
-                    Действия
-                  </th>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-1">
+                      <CopyIdButton
+                        id={item.id}
+                        hint="Скопировать Equipment ID (для DIY-датчика, скрипта)"
+                      />
+                      <EquipmentDialog
+                        {...dialog}
+                        equipmentBuildingId={item.area.buildingId}
+                        equipment={{
+                          id: item.id,
+                          name: item.name,
+                          type: item.type,
+                          areaId: item.area.id,
+                          serialNumber: item.serialNumber,
+                          tempMin: item.tempMin,
+                          tempMax: item.tempMax,
+                          tuyaDeviceId: item.tuyaDeviceId ?? null,
+                          fillerUserIds: item.fillerUserIds,
+                          lampModel: item.lampModel,
+                          lampLifetimeHours: item.lampLifetimeHours,
+                          lampInstalledAt: item.lampInstalledAt ? item.lampInstalledAt.toISOString().slice(0, 10) : null,
+                          lampUsedHours: item.lampUsedHours,
+                        }}
+                      />
+                      {canDelete && (
+                        <DeleteButton
+                          id={item.id}
+                          endpoint="/api/equipment"
+                          entityName={`оборудование «${item.name}»`}
+                          usageEndpoint={`/api/equipment/${item.id}/usage`}
+                        />
+                      )}
+                    </div>
+                  </td>
                 )}
               </tr>
-            </thead>
-            <tbody>
-              {equipment.map((item) => {
-                const reading = readings[item.id];
-                const minutesAgo = reading
-                  ? Math.round(
-                      (Date.now() - reading.time.getTime()) / 60000
-                    )
-                  : null;
-                const online =
-                  minutesAgo !== null && minutesAgo <= 120;
-                const outOfRange =
-                  reading &&
-                  ((item.tempMin != null && reading.temp < item.tempMin) ||
-                    (item.tempMax != null && reading.temp > item.tempMax));
-
-                return (
-                  <tr
-                    key={item.id}
-                    className="border-t border-[#f0f1f8] transition-colors hover:bg-[#fafbff]"
-                  >
-                    <td className="sticky left-0 z-10 bg-white px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-lg bg-[#f5f3ff] text-[#7a5cff]">
-                          <Thermometer className="size-4" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-[#0b1024]">
-                            {item.name}
-                          </div>
-                          {item.serialNumber && (
-                            <div className="text-[12px] text-[#9b9fb3]">
-                              S/N {item.serialNumber}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-[#6f7282]">
-                      {TYPE_LABELS[item.type] ?? item.type}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 text-[14px] text-[#6f7282]">
-                        <MapPin className="size-3" />
-                        {item.area.name}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-mono text-[14px] text-[#0b1024]">
-                      {tempRange(item.tempMin, item.tempMax)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {item.tuyaDeviceId ? (
-                        <div className="inline-flex flex-col items-center gap-1">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                              online
-                                ? "bg-[#ecfdf5] text-[#136b2a]"
-                                : "bg-[#fff4f2] text-[#d2453d]"
-                            }`}
-                          >
-                            {online ? (
-                              <Wifi className="size-3" />
-                            ) : (
-                              <WifiOff className="size-3" />
-                            )}
-                            {online ? "Online" : "Offline"}
-                          </span>
-                          {reading && (
-                            <span
-                              className={`inline-flex items-center gap-1 text-[13px] font-semibold tabular-nums ${
-                                outOfRange
-                                  ? "text-[#d2453d]"
-                                  : "text-[#136b2a]"
-                              }`}
-                            >
-                              {outOfRange && (
-                                <AlertTriangle className="size-3" />
-                              )}
-                              {reading.temp}°C
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-[13px] text-[#c7ccea]">—</span>
-                      )}
-                    </td>
-                    {canManage && (
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-1">
-                          <CopyIdButton
-                            id={item.id}
-                            hint="Скопировать Equipment ID (для DIY-датчика, скрипта)"
-                          />
-                          <EquipmentDialog
-                            areas={areas}
-                            existingNames={equipmentNames}
-                            equipment={{
-                              id: item.id,
-                              name: item.name,
-                              type: item.type,
-                              areaId: item.area.id,
-                              serialNumber: item.serialNumber,
-                              tempMin: item.tempMin,
-                              tempMax: item.tempMax,
-                              tuyaDeviceId: item.tuyaDeviceId ?? null,
-                              fillerUserIds: item.fillerUserIds,
-                              lampModel: item.lampModel,
-                              lampLifetimeHours: item.lampLifetimeHours,
-                              lampInstalledAt: item.lampInstalledAt ? item.lampInstalledAt.toISOString().slice(0, 10) : null,
-                              lampUsedHours: item.lampUsedHours,
-                            }}
-                            fillerOptions={fillerOptions}
-                          />
-                          {canDelete && (
-                            <DeleteButton
-                              id={item.id}
-                              endpoint="/api/equipment"
-                              entityName={`оборудование «${item.name}»`}
-                              usageEndpoint={`/api/equipment/${item.id}/usage`}
-                            />
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

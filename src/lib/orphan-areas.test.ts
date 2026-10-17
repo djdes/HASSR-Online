@@ -38,7 +38,9 @@ test("guessRoomKind", () => {
   assert.equal(guessRoomKind("Гостевой зал"), "guest");
   assert.equal(guessRoomKind("Горячий цех"), "kitchen");
   assert.equal(guessRoomKind("Кухня"), "kitchen");
-  assert.equal(guessRoomKind("Основное производство"), "kitchen");
+  assert.equal(guessRoomKind("Основное производство"), "production");
+  assert.equal(guessRoomKind("Производство"), "production");
+  assert.equal(guessRoomKind("Производственный цех"), "kitchen");
   assert.equal(guessRoomKind("Заготовочная"), "kitchen");
   assert.equal(guessRoomKind("Коридор"), "other");
 });

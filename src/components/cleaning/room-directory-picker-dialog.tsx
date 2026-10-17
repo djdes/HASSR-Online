@@ -27,20 +27,18 @@ import { Label } from "@/components/ui/label";
 import type { DirectoryBuilding, DirectoryRoom, OrphanArea } from "@/lib/room-directory";
 import { guessRoomKind, normalizePlaceName } from "@/lib/orphan-areas";
 import { pluralRu } from "@/lib/plural-ru";
+import { roomKindOptions } from "@/lib/room-kinds";
 
 function equipmentLabel(count: number): string {
   if (count <= 0) return "цех · без оборудования";
   return `цех · ${count} ${pluralRu(count, "единица", "единицы", "единиц")} оборудования`;
 }
 
-const KIND_LABELS: Record<string, string> = {
-  guest: "Гостевая зона",
-  kitchen: "Кухня / горячий цех",
-  wash: "Мойка",
-  bar: "Бар",
-  storage: "Склад",
-  other: "Другое",
-};
+// Виды — общий список (`room-kinds.ts`): `guessRoomKind` уже умеет
+// «Основное производство», и подпись должна быть, а не код `production`.
+const KIND_LABELS: Record<string, string> = Object.fromEntries(
+  roomKindOptions("ru").map((option) => [option.value, option.label]),
+);
 
 export type RoomDirectoryPickerDialogProps = {
   open: boolean;

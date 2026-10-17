@@ -11,7 +11,8 @@ import {
   Pencil,
   Plus,
   Trash2,
-  Upload, Database, } from "lucide-react";
+  Upload, Database, Wrench, ArrowRight, } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -70,6 +71,7 @@ import {
   type FryerOilDocumentConfig,
   type FryerOilEntryData,
   type FryerOilSelectLists,
+  type FryerOilEquipmentLink,
 } from "@/lib/fryer-oil-document";
 
 import { toast } from "sonner";
@@ -749,19 +751,22 @@ function EntryDialog(props: {
   );
 }
 
-function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; lists: FryerOilSelectLists; onSave: (lists: FryerOilSelectLists) => Promise<void> }) {
+function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; lists: FryerOilSelectLists; equipmentLinks: FryerOilEquipmentLink[]; onSave: (lists: FryerOilSelectLists) => Promise<void> }) {
   const t = useTranslations("fryerOil");
   const [lists, setLists] = useState(props.lists);
   const [isSaving, setIsSaving] = useState(false);
   // «Из справочника организации»: жиры — это продукты со склада, виды
-  // продукции — наименования из журналов. Оборудование своего справочника
-  // не имеет, поэтому кнопки там нет.
+  // продукции — наименования из журналов. Фритюрницы приходят из раздела
+  // «Оборудование» сами (2026-10-17): связанные помечены, имя меняют там.
   const [directoryKey, setDirectoryKey] = useState<keyof FryerOilSelectLists | null>(null);
   const DIRECTORY_KIND: Partial<Record<keyof FryerOilSelectLists, OrgDirectoryKind>> = {
     fatTypes: "product",
     productTypes: "dish",
   };
   const tabs: Array<[keyof FryerOilSelectLists, string]> = [["fatTypes", t("fatTab")], ["equipmentTypes", t("equipmentTab")], ["productTypes", t("productTab")]];
+  const linkedNames = new Set(props.equipmentLinks.map((link) => link.name.trim().toLowerCase()));
+  const isLinked = (key: keyof FryerOilSelectLists, item: string) =>
+    key === "equipmentTypes" && linkedNames.has(item.trim().toLowerCase());
 
   /**
    * Читаем первый столбец первого листа. Формат намеренно самый простой:
@@ -836,7 +841,24 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
             <TabsList className="mb-5 w-full">{tabs.map(([key, label]) => <TabsTrigger key={key} value={key} className="flex-1">{label}</TabsTrigger>)}</TabsList>
             {tabs.map(([key]) => (
               <TabsContent key={key} value={key} className="space-y-2">
-                {lists[key].map((item, index) => (
+                {key === "equipmentTypes" ? (
+                  <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 text-[13px] leading-relaxed text-[#3c4053] sm:flex-row sm:items-center sm:justify-between">
+                    <span className="flex gap-2">
+                      <Wrench className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
+                      {t("equipmentLinkedHint")}
+                    </span>
+                    <Link href="/settings/equipment" className="inline-flex shrink-0 items-center gap-1 font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#0b1024]">
+                      {t("openEquipment")}
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </div>
+                ) : null}
+                {lists[key].map((item, index) => isLinked(key, item) ? (
+                  <div key={`${key}:${index}`} className="flex h-10 items-center gap-2 rounded-xl border border-[#ececf4] bg-[#fafbff] px-3" data-testid="fryer-linked-equipment">
+                    <span className="min-w-0 flex-1 truncate text-[14px] text-[#0b1024]">{item}</span>
+                    <span className="shrink-0 rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[12px] font-medium text-[#3848c7]">{t("equipmentLinked")}</span>
+                  </div>
+                ) : (
                   <div key={`${key}:${index}`} className="flex items-center gap-2">
                     <Input value={item} onChange={(e) => setLists((v) => ({ ...v, [key]: v[key].map((x, i) => i === index ? e.target.value : x) }))} className="h-10 rounded-xl" />
                     <Button type="button" variant="outline" className="h-10 rounded-xl border-[#ffd7d3] text-[#ff3b30]" onClick={() => setLists((v) => ({ ...v, [key]: v[key].filter((_, i) => i !== index) }))}><Trash2 className="size-4" /></Button>
@@ -1496,7 +1518,7 @@ export function FryerOilDocumentClient(props: Props) {
       </div>
 
       <EntryDialog key={dialogSeq} open={entryOpen} onOpenChange={(open) => { if (open) setEntryOpen(true); else seq.cancelled(); }} lists={config.lists} users={props.users} currentUserId={props.currentUserId} shift={config.shift} dayEntries={dayEntries} focusEntryId={focusEntryId} titleSuffix={seq.progress ?? undefined} onSave={saveDay} />
-      <ListsDialog key={JSON.stringify(config.lists)} open={listsOpen} onOpenChange={setListsOpen} lists={config.lists} onSave={async (lists) => { const nextConfig = { ...config, lists }; const response = await fetch(`/api/journal-documents/${props.documentId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config: nextConfig }) }); if (!response.ok) throw new Error(t("saveListsError")); setConfig(nextConfig); router.refresh(); }} />
+      <ListsDialog key={JSON.stringify(config.lists)} open={listsOpen} onOpenChange={setListsOpen} lists={config.lists} equipmentLinks={config.equipmentLinks} onSave={async (lists) => { const nextConfig = { ...config, lists }; const response = await fetch(`/api/journal-documents/${props.documentId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config: nextConfig }) }); if (!response.ok) throw new Error(t("saveListsError")); setConfig(nextConfig); router.refresh(); }} />
       <SettingsDialog key={`${title}-${dateFrom}-${status}`} open={settingsOpen} onOpenChange={setSettingsOpen} title={title} dateFrom={dateFrom} status={status} shift={config.shift} useV2={props.useV2} onSave={async (v) => { const nextConfig = { ...config, shift: v.shift, finishedAt: v.status === "closed" ? config.finishedAt || new Date().toISOString() : null }; const response = await fetch(`/api/journal-documents/${props.documentId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: v.title, dateFrom: v.dateFrom, status: v.status, config: nextConfig }) }); if (!response.ok) throw new Error(t("saveSettingsError")); setTitle(v.title); setDateFrom(v.dateFrom); setStatus(v.status); setConfig(nextConfig); router.refresh(); }} />
     </div>
   );

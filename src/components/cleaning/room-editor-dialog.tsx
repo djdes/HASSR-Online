@@ -42,20 +42,15 @@ import type { RoomResponsibleUser } from "@/lib/room-responsible-candidates";
 import { Switch } from "@/components/ui/switch";
 import { QrFillPreview } from "@/components/qr/qr-fill-preview";
 import { ChevronDown } from "lucide-react";
+import { roomKindOptions } from "@/lib/room-kinds";
 import {
   DEFAULT_CLIMATE_HUMIDITY,
   DEFAULT_CLIMATE_TEMPERATURE,
   type ClimateRoomNorms,
 } from "@/lib/climate-document";
 
-const KIND_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "guest", label: "Гостевая зона" },
-  { value: "kitchen", label: "Кухня / горячий цех" },
-  { value: "wash", label: "Мойка" },
-  { value: "bar", label: "Бар" },
-  { value: "storage", label: "Склад" },
-  { value: "other", label: "Другое" },
-];
+// Виды — общий список (`room-kinds.ts`); экран пока только на русском.
+const KIND_OPTIONS: Array<{ value: string; label: string }> = roomKindOptions("ru");
 
 export type RoomEditorInitial = {
   id: string;

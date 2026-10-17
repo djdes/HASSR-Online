@@ -308,6 +308,8 @@ export async function seedDemoOrganizationData(input: {
       data: {
         organizationId: orgId,
         name: area.name,
+        // Точка у демо одна — цех сразу в ней (2026-10-17).
+        buildingId: building.id,
         equipment: {
           create: area.equipment.map((item) => ({
             name: item.name,

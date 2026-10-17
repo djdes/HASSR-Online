@@ -770,6 +770,8 @@ model Building {
   journalObligations JournalObligation[]
   /// Площадки этой точки в ФГИС «Меркурий».
   mercuryEnterprises MercuryEnterprise[]
+  /// Цеха точки (2026-10-17): «точка → помещения → оборудование».
+  areas              Area[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -1359,8 +1361,16 @@ model Area {
   lng            Float?
   organizationId String
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Точка цеха (2026-10-17, план 4.3): «точка → помещения → оборудование».
+  /// Заполняется зеркалом «помещение ↔ цех по названию» (api/settings/rooms)
+  /// и скриптом scripts/backfill-area-building.ts. Пусто — цех без точки,
+  /// виден на каждой точке. Точку удалили — цех и оборудование остаются.
+  buildingId     String?
+  building       Building?      @relation(fields: [buildingId], references: [id], onDelete: SetNull)
   equipment      Equipment[]
   journalEntries JournalEntry[]
+
+  @@index([organizationId, buildingId])
 }
 
 model Equipment {
