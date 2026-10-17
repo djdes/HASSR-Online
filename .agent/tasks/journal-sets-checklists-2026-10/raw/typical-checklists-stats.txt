@@ -1,0 +1,6 @@
+sanpin | Соответствие СанПиН 2.3/2.4.4282-26 | разделов 8 | вопросов 50 (всего 51) | критичных 7 | {"datetime":1,"yes_no":40,"number":5,"choice":1,"text":1,"photo":1,"signature":1}
+haccp | Соответствие принципам ХАССП (ГОСТ Р 51705.1) | разделов 5 | вопросов 49 (всего 50) | критичных 8 | {"datetime":1,"yes_no":39,"multi":1,"choice":3,"number":2,"text":1,"photo":1,"signature":1}
+territorial-manager | Проверка территориального управляющего | разделов 8 | вопросов 48 (всего 49) | критичных 5 | {"datetime":1,"text":3,"yes_no":31,"scale":3,"number":4,"multi":1,"choice":2,"photo":1,"signature":2}
+chief-technologist | Проверка главного технолога | разделов 9 | вопросов 44 (всего 45) | критичных 7 | {"datetime":1,"text":3,"yes_no":27,"number":5,"scale":4,"choice":1,"photo":1,"signature":2}
+rospotrebnadzor-prep | Подготовка к проверке Роспотребнадзора | разделов 9 | вопросов 44 (всего 45) | критичных 6 | {"datetime":1,"yes_no":36,"multi":1,"choice":2,"number":1,"text":1,"photo":1,"signature":1}
+haccp-audit | Аудит группы ХАССП | разделов 5 | вопросов 42 (всего 43) | критичных 5 | {"datetime":1,"text":2,"yes_no":29,"choice":4,"number":3,"photo":1,"signature":2}

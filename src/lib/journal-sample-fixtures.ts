@@ -1,4 +1,5 @@
 import { getRegisterJournal } from "@/lib/register-journals";
+import { CCP_MONITORING_FIELDS, CCP_MONITORING_TEMPLATE_CODE } from "@/lib/ccp-monitoring-journal";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { getDefaultConfigForJournal } from "@/lib/journal-default-configs";
 import {
@@ -163,7 +164,9 @@ function sampleTemplate(code: string, name: string) {
     description: null,
     // Реестрам без своего экрана колонки бланка дают поля шаблона —
     // без них образец печатался бы одной колонкой «№».
-    fields: (getRegisterJournal(code)?.fields ?? []) as unknown as never,
+    // Мониторинг ККТ — журнал записей: колонки бланка — поля его формы.
+    fields: (getRegisterJournal(code)?.fields ??
+      (code === CCP_MONITORING_TEMPLATE_CODE ? CCP_MONITORING_FIELDS : [])) as unknown as never,
     isActive: true,
     sortOrder: 0,
     isMandatorySanpin: true,
@@ -384,6 +387,36 @@ const SAMPLE_REGISTER_ROWS: Record<string, Array<Record<string, string>>> = {
   ],
 };
 
+/**
+ * Образец «Мониторинга ККТ»: две точки плана ХАССП через день, одно
+ * отклонение с корректирующим действием — видно, как журнал ведут.
+ */
+function buildCcpMonitoringEntries() {
+  const points = [
+    { ccpName: "ККТ-1 Тепловая обработка котлет", controlParameter: "Температура в толще изделия", criticalLimit: "не ниже +75 °C", values: ["82 °C", "79 °C", "71 °C", "80 °C", "84 °C"] },
+    { ccpName: "ККТ-2 Хранение скоропортящихся продуктов", controlParameter: "Температура в холодильной камере", criticalLimit: "+2…+6 °C", values: ["+4 °C", "+3 °C", "+5 °C", "+4 °C", "+3 °C"] },
+  ];
+  const dateKeys = sampleDateKeys().filter((_, index) => index % 3 === 0).slice(0, 5);
+  const out: ReturnType<typeof sampleEntry>[] = [];
+  dateKeys.forEach((dateKey, dayIndex) => {
+    for (const point of points) {
+      const actualValue = point.values[dayIndex];
+      const withinLimit = actualValue !== "71 °C";
+      out.push(
+        sampleEntry(SAMPLE_USERS[1]?.id ?? SAMPLE_USERS[0].id, dateKey, {
+          ccpName: point.ccpName,
+          controlParameter: point.controlParameter,
+          criticalLimit: point.criticalLimit,
+          actualValue,
+          withinLimit,
+          correctiveAction: withinLimit ? "" : "Партия возвращена на дожарку, повторный замер 81 °C",
+        }),
+      );
+    }
+  });
+  return out;
+}
+
 export function buildJournalSampleInput(
   code: SampleJournalCode
 ): JournalDocumentPdfInput {
@@ -416,6 +449,8 @@ export function buildJournalSampleInput(
     entries = buildClimateEntries(config);
   } else if (code === "cold_equipment_control") {
     entries = buildColdEquipmentEntries(config);
+  } else if (code === CCP_MONITORING_TEMPLATE_CODE) {
+    entries = buildCcpMonitoringEntries();
   }
   // Остальные журналы ведут строки в самом `config`, а не в entries:
   // их бланк заполнен ровно настолько, насколько его заполняет

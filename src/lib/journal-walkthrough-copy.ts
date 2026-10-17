@@ -262,6 +262,12 @@ export const FILLING_GUIDE_WALKTHROUGH_COPY_KEYS = {
     "guides.pest_control.recordFindings",
     "guides.pest_control.scheduleTreatment",
     "guides.pest_control.fileReports"
+  ],
+  "ccp_monitoring": [
+    "guides.ccp_monitoring.takePoint",
+    "guides.ccp_monitoring.measure",
+    "guides.ccp_monitoring.record",
+    "guides.ccp_monitoring.actOnDeviation"
   ]
 } as const satisfies Record<string, readonly WalkthroughStepCopyKey[]>;
 

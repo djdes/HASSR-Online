@@ -3251,6 +3251,7 @@
       "audit_plan": "Reja — kalendar yil uchun; ichki auditlar — jadval bo‘yicha, kamida yiliga bir marta.",
       "audit_protocol": "Har bir ichki audit yakunida rasmiylashtiriladi.",
       "audit_report": "Har bir ichki audit yakunida; rahbariyat tomonidan ko‘rib chiqish — kamida yiliga bir marta.",
+      "ccp_monitoring": "HACCP rejasi bo‘yicha — har bir kritik nazorat nuqtasi uchun belgilangan monitoring davriyligida.",
       "fallback": "Zaruratga qarab."
     }
   },
@@ -4365,6 +4366,24 @@
           "fileReports": {
             "title": "Dalolatnomalarni tikib qo‘ying",
             "body": "Pudratchi dalolatnomasi ko‘chirmasini sana bilan DDD jurnaliga, aslini «Shartnomalar» papkasiga joylang. Tekshiruvda Rospotrebnadzor asl nusxani so‘raydi."
+          }
+        },
+        "ccp_monitoring": {
+          "takePoint": {
+            "title": "HACCP rejasidan nuqtani oling",
+            "body": "«Ishlab chiqarish nazorati» → «KNN» bo‘limini oching. Nuqtaning parametri, kritik chegarasi va qanchalik tez-tez o‘lchashni ko‘ring. Nomni rejadagidek yozing, masalan «KNN-1 Issiqlik ishlovi»."
+          },
+          "measure": {
+            "title": "Parametrni o‘lchang",
+            "body": "Rejada ko‘rsatilganini qiyoslangan asbob bilan o‘lchang: mahsulot ichidagi harorat, vaqt, pH. Xotiradan emas, nazorat paytida o‘lchang."
+          },
+          "record": {
+            "title": "Qiymatni yozing",
+            "body": "Yangi yozuv: KNN nomi, parametr, kritik chegara va birliklari bilan haqiqiy qiymat, masalan «78 °C». Qiymat chegarada ekanini belgilang."
+          },
+          "actOnDeviation": {
+            "title": "Chetlanish — darhol harakat qiling",
+            "body": "Qiymat chegaradan tashqarida: 1) mahsulotni chetga oling, 2) sababini toping, 3) uni bartaraf eting, 4) nazoratni takrorlang. Nima qilganingizni «Tuzatuvchi harakat» maydoniga yozing."
           }
         }
       },
@@ -11851,6 +11870,21 @@
         "missingReports": "Dalolatnomalarni saqlamaslik: ularsiz jurnaldagi belgi tasdiqlanmaydi."
       },
       "regulationRef": "SanPiN 3.5.2.3472-17 “Dezinseksiya tadbirlarini tashkil etish va o‘tkazishga sanitariya-epidemiologik talablar”. SanPiN 3.5.3.3223-14 (deratizatsiya). SanPiN 2.3/2.4.4282-26. Rospotrebnadzor qabul qilishi uchun shartnoma va dalolatnomalar majburiy."
+    },
+    "ccp_monitoring": {
+      "summary": "HACCP rejasining kritik nazorat nuqtasidagi (KNN) har bir o‘lchovni yozasiz: nimani o‘lchadingiz, chegara qancha va qanday qiymat chiqdi. Chegaradan chiqsa — darhol tuzatasiz va nima qilganingizni yozasiz.",
+      "materials": {
+        "haccpPlan": "KNN ro‘yxati va kritik chegaralari bor HACCP rejasi",
+        "instrument": "Rejadagi qiyoslangan asbob: termozond, termometr, taymer yoki pH-metr",
+        "journal": "Telefon yoki planshetdagi «KNN monitoringi» jurnali"
+      },
+      "completionCriteria": "Har bir KNN bo‘yicha HACCP rejasidagi davriylikda yozuvlar bor, har bir chetlanish uchun tuzatuvchi harakat yozilgan.",
+      "mistakes": {
+        "wordsInsteadOfNumber": "Raqam o‘rniga «me’yor» deb yozish — qiymatni chegara bilan solishtirib bo‘lmaydi.",
+        "nameMismatch": "KNN nomi rejadagidan farq qilsa, yozuv «KNN» bo‘limi solishtiruviga tushmaydi.",
+        "releasedWithDeviation": "Chetlanishli mahsulotni tuzatuvchi harakatdan oldin chiqarish."
+      },
+      "regulationRef": "TR TS 021/2011, 10-modda — kritik nazorat nuqtalari monitoringi va uning yozuvlari; GOST R 51705.1 — HACCP tamoyillari."
     }
   },
   "taskFill": {
@@ -12363,6 +12397,7 @@
           "duties": "Lavozim vazifalari",
           "kkt": "KKN",
           "sanitation": "Sanitariya va gigiyena",
+          "haccp": "HACCP tamoyillari",
           "fire": "Yong‘in xavfsizligi"
         },
         "attestation": {

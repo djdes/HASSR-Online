@@ -30,10 +30,13 @@ const CATALOG_ORDER_2026_09_24 = [
   "instrument_sterilization", "medical_waste_b", "batch_release",
 ];
 
+// Октябрь 2026: мониторинг ККТ — в конец, sortOrder прежних не меняется.
+const CATALOG_ORDER = [...CATALOG_ORDER_2026_09_24, "ccp_monitoring"];
+
 test("порядок каталога и sortOrder не изменились", () => {
   assert.deepEqual(
     ACTIVE_JOURNAL_CATALOG.map((item) => item.code),
-    CATALOG_ORDER_2026_09_24,
+    CATALOG_ORDER,
   );
   ACTIVE_JOURNAL_TEMPLATES.forEach((item, index) => {
     assert.equal(item.sortOrder, index + 1, item.code);
@@ -42,6 +45,8 @@ test("порядок каталога и sortOrder не изменились", (
   assert.equal(sortOrder.get("daily_samples"), 36);
   assert.equal(sortOrder.get("vitaminization"), 37);
   assert.equal(sortOrder.get("ration_control"), 38);
+  assert.equal(sortOrder.get("batch_release"), 45);
+  assert.equal(sortOrder.get("ccp_monitoring"), 46);
 });
 
 test("журналы для школ — в базовом тарифе", () => {
@@ -65,7 +70,7 @@ test("тарифы делят каталог без пересечений и в
   const extendedOnly: string[] = EXTENDED_ONLY_TARIFF_JOURNALS.map((item) => item.code);
   assert.equal(basic.length + extendedOnly.length, JOURNALS_TOTAL);
   assert.equal(new Set([...basic, ...extendedOnly]).size, JOURNALS_TOTAL);
-  const order = CATALOG_ORDER_2026_09_24;
+  const order = CATALOG_ORDER;
   assert.deepEqual(basic, order.filter((code) => basic.includes(code)));
   assert.deepEqual(extendedOnly, order.filter((code) => extendedOnly.includes(code)));
   assert.equal(JOURNAL_TARIFFS.basic.journals, BASIC_TARIFF_JOURNALS);

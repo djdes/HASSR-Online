@@ -19,7 +19,7 @@ import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
 export const JOURNAL_ENABLE_AUDIT_ACTION = "journal.enable";
 
 /** Откуда включили журнал — в детали записи AuditLog. */
-export type JournalEnableSource = "blank-qr-signup" | "blank-qr" | "journal-page";
+export type JournalEnableSource = "blank-qr-signup" | "blank-qr" | "journal-page" | "journal-set";
 
 const CATALOG_CODES = new Set<string>(ACTIVE_JOURNAL_CATALOG.map((item) => item.code));
 

@@ -1,0 +1,69 @@
+{
+  "task_id": "journal-sets-checklists-2026-10",
+  "branch": "feat/journal-sets",
+  "base_commit": "b91388b0",
+  "database": "wesetup_e2e (localhost:5432)",
+  "dev_server": "http://localhost:3031",
+  "verified_at": "2026-10-18",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": ["src/lib/journal-sets.ts", "src/lib/journal-sets.test.ts", "raw/targeted-tests.txt"],
+      "summary": "standard = 11 пунктов эскиза по порядку (+ health_check связанный), haccp = 19, extra = остаток (17), пересечение только climate_control и cold_equipment_control, объединение = каталог (46)."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": ["src/app/api/settings/journals/sets/route.ts", "raw/api-check-results.json", "raw/api-sets-get-initial.json", "raw/api-sets-enable-haccp.json", "raw/db-audit-log.json"],
+      "summary": "401/403/400 по правам и наборам; POST haccp → changed из 17 кодов; повтор → changed []; 17 записей journal.enable с via journal-set; health_check не включается."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": ["src/lib/journal-catalog.ts", "src/lib/onboarding-presets.ts", "prisma/seed.ts", "src/lib/new-journals-default-off.ts", "raw/seed-0-before-deactivate.json", "raw/seed-1-template-inactive.json", "raw/seed-2-after-first-seed.json", "raw/seed-3-after-second-seed.json", "raw/seed-run-1.log", "raw/seed-run-2.log", "raw/ccp-readiness-results.json", "raw/ccp-entries-report.pdf", "raw/db-new-org-defaults.json"],
+      "summary": "Первая активация сидом выключает журнал у всех существующих организаций до активации; повтор ничего не меняет и не трогает включённое человеком; форма, запись через /api/journals, PDF записей и образец бланка работают."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": ["src/lib/staff-training-document.ts", "src/lib/staff-training-document.test.ts", "src/components/journals/staff-training-document-client.tsx", "raw/training-topic-hint-desktop.png", "raw/training-topic-hint-mobile.png", "raw/training-topic-hint.json"],
+      "summary": "Тема haccp «Принципы ХАССП», описание у всех тем (ККТ исправлена на критические контрольные точки), переводы ru/en/uz, подсказка видна в форме на десктопе и телефоне."
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": ["src/lib/sphere-journal-rules.ts", "src/lib/sphere-journal-rules.test.ts", "raw/db-new-org-defaults.json"],
+      "summary": "Новый ресторан: обязательные + 11 стандартных (12 включено), health_check выключен; производство — прежние 6."
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": ["src/lib/compliance-standard-set.ts", "src/lib/compliance-standard-set.test.ts", "src/lib/compliance-audit.ts", "raw/ccp-readiness-results.json"],
+      "summary": "11 из 11 → 9 из 11 с названиями выключенных → «Включить весь набор» → 11 из 11; вес 10, балл = включено/11."
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": ["src/lib/checklist-templates/", "src/app/api/checklists/templates/typical/route.ts", "src/lib/checklist-templates/typical-checklists.test.ts", "raw/api-check-results.json", "raw/api-typical-get-initial.json", "raw/typical-checklists-stats.txt"],
+      "summary": "6 шаблонов, 43–51 вопрос, 5–9 разделов, 5–8 критичных; GET/POST с правами чек-листов; повтор не плодит копию; PDF и проверка по каждой копии."
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": ["raw/tsc.txt", "raw/eslint.txt", "raw/targeted-tests.txt", "raw/full-fails.txt", "raw/baseline-fails.txt"],
+      "summary": "tsc 0 ошибок; eslint без новых проблем (8/8 как на HEAD); тесты 4092/4088 pass/0 fail/4 skipped против базы 4064/1 fail; API-проверки 38 + 22 PASS."
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": ["git status"],
+      "summary": "Нет новых page.tsx, нет правок src/lib/app-nav.ts и src/components/layout/*; коммит в feat/journal-sets без пуша."
+    }
+  },
+  "commands": {
+    "tsc": "npx tsc --noEmit --skipLibCheck → exit 0",
+    "eslint": "npx eslint <40 изменённых файлов> → 8 errors / 8 warnings, все на HEAD",
+    "tests_targeted": "node --import tsx --test <10 файлов> → 69/69",
+    "tests_full": "node --import tsx --test \"src/**/*.test.ts\" → tests 4092, pass 4088, fail 0, skipped 4",
+    "i18n": "node scripts/i18n-types.mjs --check → exit 0",
+    "api": "e2e/api-check.mjs → 38 PASS; e2e/ccp-readiness-check.mjs → 22 PASS"
+  },
+  "human_dependencies": [
+    "Просмотр владельцем перед master: меняются регистрация общепита и «Готовность».",
+    "Интерфейс кнопок «Включить весь набор» и «Добавить типовой шаблон» — следующая задача.",
+    "Содержательная вычитка 6 типовых чек-листов технологом не проводилась."
+  ]
+}

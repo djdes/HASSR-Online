@@ -1,0 +1,38 @@
+{
+  "JS-тест Ресторан": {
+    "sphere": "restaurant",
+    "enabledCount": 12,
+    "enabled": [
+      "hygiene",
+      "climate_control",
+      "cold_equipment_control",
+      "general_cleaning",
+      "uv_lamp_runtime",
+      "finished_product",
+      "perishable_rejection",
+      "fryer_oil",
+      "med_books",
+      "staff_training",
+      "disinfectant_usage",
+      "pest_control"
+    ],
+    "standardAllEnabled": true,
+    "healthCheckDisabled": true,
+    "ccpMonitoringDisabled": true
+  },
+  "JS-тест Производство": {
+    "sphere": "production",
+    "enabledCount": 6,
+    "enabled": [
+      "hygiene",
+      "climate_control",
+      "cold_equipment_control",
+      "finished_product",
+      "incoming_raw_materials_control",
+      "metal_impurity"
+    ],
+    "standardAllEnabled": false,
+    "healthCheckDisabled": true,
+    "ccpMonitoringDisabled": true
+  }
+}

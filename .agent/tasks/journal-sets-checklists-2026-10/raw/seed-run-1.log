@@ -1,0 +1,51 @@
+ROOT_EMAIL not set — skipping platform/root seed
+Seeding journal templates...
+  Впервые включаем ccp_monitoring: у существующих организаций выключено — 1 из 5
+  Done: incoming_control: Журнал приемки и входного контроля продукции
+  Done: incoming_raw_materials_control: Журнал входного контроля сырья, ингредиентов, упаковочных материалов
+  Done: finished_product: Журнал бракеража готовой пищевой продукции
+  Done: hygiene: Гигиенический журнал (сотрудники)
+  Done: ccp_monitoring: Журнал мониторинга критических контрольных точек
+  Done: cleaning: Журнал уборки
+  Done: pest_control: Журнал учета дезинфекции, дезинсекции и дератизации
+  Done: equipment_calibration: График поверки средств измерений
+  Done: product_writeoff: Акт забраковки
+  Done: health_check: Журнал здоровья
+  Done: climate_control: Журнал учёта температуры и влажности на складах
+  Done: cold_equipment_control: Журнал учёта температурного режима холодильного и морозильного оборудования
+  Done: fryer_oil: Журнал учета использования фритюрных жиров
+  Done: general_cleaning: График и учет генеральных уборок
+  Done: training_plan: План обучения персонала
+  Done: breakdown_history: Карточка истории поломок
+  Done: disinfectant_usage: Журнал учета дезинфицирующих средств
+  Done: equipment_maintenance: График профилактического обслуживания оборудования
+  Done: staff_training: Журнал регистрации инструктажей (обучения) сотрудников
+  Done: ppe_issuance: Журнал учета выдачи СИЗ
+  Done: complaint_register: Журнал регистрации жалоб
+  Done: accident_journal: Журнал учета аварий
+  Done: sanitary_day_control: Чек-лист (памятка) проведения санитарного дня
+  Done: uv_lamp_runtime: Журнал учета работы УФ бактерицидной установки
+  Done: traceability_test: Журнал прослеживаемости продукции
+  Done: audit_plan: План-программа внутренних аудитов
+  Done: audit_protocol: Протокол внутреннего аудита
+  Done: audit_report: Отчет о внутреннем аудите
+  Done: metal_impurity: Журнал учета металлопримесей в сырье
+  Done: glass_control: Журнал контроля изделий из стекла и хрупкого пластика
+  Done: glass_items_list: Перечень изделий из стекла и хрупкого пластика
+  Done: med_books: Медицинские книжки
+  Done: perishable_rejection: Журнал бракеража скоропортящейся пищевой продукции
+  Done: equipment_cleaning: Журнал мойки и дезинфекции оборудования
+  Done: intensive_cooling: Журнал контроля интенсивного охлаждения горячих блюд
+  Done: cleaning_ventilation_checklist: Чек-лист уборки и проветривания помещений
+  Done: daily_samples: Журнал отбора и хранения суточных проб
+  Done: vitaminization: Журнал проведения витаминизации третьих и сладких блюд
+  Done: ration_control: Ведомость контроля за рационом питания
+  Done: transport_temperature: Журнал контроля температуры при транспортировке
+  Done: tableware_breakage: Журнал учёта боя посуды
+  Done: pool_water_control: Журнал контроля качества воды в бассейне
+  Done: inventory_condition: Журнал оценки состояния металлического и пластикового инвентаря
+  Done: instrument_sterilization: Журнал контроля стерилизации инструментов
+  Done: medical_waste_b: Журнал учёта отходов класса Б
+  Done: batch_release: Журнал допуска партии продукции к отгрузке
+Seeding example areas and equipment (demo orgs only)...
+Seeding complete.

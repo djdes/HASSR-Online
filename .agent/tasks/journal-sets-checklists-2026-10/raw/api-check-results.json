@@ -1,0 +1,282 @@
+[
+  {
+    "name": "наборы: без входа — 401",
+    "ok": true,
+    "detail": 401
+  },
+  {
+    "name": "наборы: повар — 403",
+    "ok": true,
+    "detail": 403
+  },
+  {
+    "name": "включить набор: повар — 403",
+    "ok": true,
+    "detail": 403
+  },
+  {
+    "name": "наборы: GET руководителя — 200, три набора",
+    "ok": true,
+    "detail": [
+      "standard:11/11",
+      "haccp:2/19",
+      "extra:1/17"
+    ]
+  },
+  {
+    "name": "стандартный набор у новой организации-ресторана — 11 из 11",
+    "ok": true,
+    "detail": 11
+  },
+  {
+    "name": "журнал здоровья — связанный пункт, выключен",
+    "ok": true,
+    "detail": {
+      "code": "hygiene",
+      "name": "Гигиенический журнал (сотрудники)",
+      "enabled": true,
+      "related": [
+        {
+          "code": "health_check",
+          "name": "Журнал здоровья",
+          "enabled": false
+        }
+      ]
+    }
+  },
+  {
+    "name": "набор ХАССП — 19 пунктов, включены только 2 общих со стандартным",
+    "ok": true,
+    "detail": 2
+  },
+  {
+    "name": "«Доп. журналы» целиком не включаются — 400",
+    "ok": true,
+    "detail": {
+      "error": "Дополнительные журналы включаются по одному — выберите нужные"
+    }
+  },
+  {
+    "name": "неизвестный набор — 400",
+    "ok": true,
+    "detail": {
+      "error": "Неизвестный набор журналов"
+    }
+  },
+  {
+    "name": "стандартный уже включён — повтор ничего не меняет",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "name": "включить набор ХАССП — 17 журналов включено, 19 из 19",
+    "ok": true,
+    "detail": [
+      "intensive_cooling",
+      "incoming_control",
+      "incoming_raw_materials_control",
+      "traceability_test",
+      "equipment_maintenance",
+      "breakdown_history",
+      "glass_items_list",
+      "training_plan",
+      "audit_plan",
+      "audit_protocol",
+      "audit_report",
+      "accident_journal",
+      "complaint_register",
+      "transport_temperature",
+      "inventory_condition",
+      "batch_release",
+      "ccp_monitoring"
+    ]
+  },
+  {
+    "name": "ККТ включён набором ХАССП",
+    "ok": true
+  },
+  {
+    "name": "повторное включение ХАССП — идемпотентно",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "name": "типовые: без входа — 401",
+    "ok": true,
+    "detail": 401
+  },
+  {
+    "name": "типовые: GET — 6 шаблонов, ни один не добавлен",
+    "ok": true,
+    "detail": [
+      "sanpin:51",
+      "haccp:50",
+      "territorial-manager:49",
+      "chief-technologist:45",
+      "rospotrebnadzor-prep:45",
+      "haccp-audit:43"
+    ]
+  },
+  {
+    "name": "добавить типовой: повар — 403",
+    "ok": true,
+    "detail": 403
+  },
+  {
+    "name": "неизвестный ключ — 400",
+    "ok": true,
+    "detail": {
+      "error": "Неизвестный типовой шаблон"
+    }
+  },
+  {
+    "name": "добавить «sanpin» — 201",
+    "ok": true,
+    "detail": "Соответствие СанПиН 2.3/2.4.4282-26"
+  },
+  {
+    "name": "добавить «haccp» — 201",
+    "ok": true,
+    "detail": "Соответствие принципам ХАССП (ГОСТ Р 51705.1)"
+  },
+  {
+    "name": "добавить «territorial-manager» — 201",
+    "ok": true,
+    "detail": "Проверка территориального управляющего"
+  },
+  {
+    "name": "добавить «chief-technologist» — 201",
+    "ok": true,
+    "detail": "Проверка главного технолога"
+  },
+  {
+    "name": "добавить «rospotrebnadzor-prep» — 201",
+    "ok": true,
+    "detail": "Подготовка к проверке Роспотребнадзора"
+  },
+  {
+    "name": "добавить «haccp-audit» — 201",
+    "ok": true,
+    "detail": "Аудит группы ХАССП"
+  },
+  {
+    "name": "повторное добавление — 200, копия не плодится",
+    "ok": true,
+    "detail": {
+      "template": {
+        "id": "cmvcu757e004wfs9mhzwevkf0",
+        "title": "Соответствие СанПиН 2.3/2.4.4282-26",
+        "version": 1
+      },
+      "created": false
+    }
+  },
+  {
+    "name": "типовые: после добавления — все отмечены",
+    "ok": true,
+    "detail": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "name": "копии лежат в ChecklistTemplate организации",
+    "ok": true,
+    "detail": [
+      "Аудит группы ХАССП",
+      "Подготовка к проверке Роспотребнадзора",
+      "Проверка главного технолога",
+      "Проверка территориального управляющего",
+      "Соответствие принципам ХАССП (ГОСТ Р 51705.1)",
+      "Соответствие СанПиН 2.3/2.4.4282-26"
+    ]
+  },
+  {
+    "name": "PDF шаблона «sanpin»",
+    "ok": true,
+    "detail": {
+      "pdfBytes": 83795
+    }
+  },
+  {
+    "name": "проверка по шаблону «sanpin» создаётся",
+    "ok": true,
+    "detail": {
+      "id": "cmvcu7irv0058fs9m3t29shw2"
+    }
+  },
+  {
+    "name": "PDF шаблона «haccp»",
+    "ok": true,
+    "detail": {
+      "pdfBytes": 81642
+    }
+  },
+  {
+    "name": "проверка по шаблону «haccp» создаётся",
+    "ok": true,
+    "detail": {
+      "id": "cmvcu7kaz005afs9mtytcnw8w"
+    }
+  },
+  {
+    "name": "PDF шаблона «territorial-manager»",
+    "ok": true,
+    "detail": {
+      "pdfBytes": 80479
+    }
+  },
+  {
+    "name": "проверка по шаблону «territorial-manager» создаётся",
+    "ok": true,
+    "detail": {
+      "id": "cmvcu7llu005cfs9mufol437m"
+    }
+  },
+  {
+    "name": "PDF шаблона «chief-technologist»",
+    "ok": true,
+    "detail": {
+      "pdfBytes": 80081
+    }
+  },
+  {
+    "name": "проверка по шаблону «chief-technologist» создаётся",
+    "ok": true,
+    "detail": {
+      "id": "cmvcu7muh005efs9mwh0ms5f9"
+    }
+  },
+  {
+    "name": "PDF шаблона «rospotrebnadzor-prep»",
+    "ok": true,
+    "detail": {
+      "pdfBytes": 83018
+    }
+  },
+  {
+    "name": "проверка по шаблону «rospotrebnadzor-prep» создаётся",
+    "ok": true,
+    "detail": {
+      "id": "cmvcu7o41005gfs9m3gwyqsyo"
+    }
+  },
+  {
+    "name": "PDF шаблона «haccp-audit»",
+    "ok": true,
+    "detail": {
+      "pdfBytes": 78128
+    }
+  },
+  {
+    "name": "проверка по шаблону «haccp-audit» создаётся",
+    "ok": true,
+    "detail": {
+      "id": "cmvcu7pi2005ifs9mls9x67yb"
+    }
+  }
+]

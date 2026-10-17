@@ -473,6 +473,7 @@ const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
     "blank-qr-signup": "регистрация по QR со скачанного шаблона",
     "blank-qr": "«Включить журнал» после QR со скачанного шаблона",
     "journal-page": "кнопка «Включить журнал»",
+    "journal-set": "кнопка «Включить весь набор»",
     qr_join_token: "QR-приглашение",
     "dashboard.close_day": "кнопка «Закрыть день»",
     "dashboard.catch_up": "«Догнать пропуски»",

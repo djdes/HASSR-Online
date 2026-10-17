@@ -37,6 +37,7 @@ import {
   TRAINING_TYPES,
   TRAINING_TOPICS,
   ATTESTATION_RESULTS,
+  trainingTopicDescription,
   type StaffTrainingConfig,
   type StaffTrainingRow,
 } from "@/lib/staff-training-document";
@@ -719,6 +720,14 @@ export function StaffTrainingDocumentClient({
                 ))}
               </SelectContent>
             </Select>
+            {/* Подсказка «о чём рассказать» — чтобы инструктаж по теме
+                (например, «Принципы ХАССП») провели по существу. */}
+            {trainingTopicDescription(draftRow.topic) && (
+              <p className="-mt-1 rounded-2xl bg-[#f5f6ff] px-3.5 py-2.5 text-[13px] leading-[1.55] text-[#3c4053]">
+                <span className="font-medium text-[#3848c7]">О чём рассказать: </span>
+                {trainingTopicDescription(draftRow.topic)}
+              </p>
+            )}
 
             <Label>Причина проведения внепланового инструктажа</Label>
             <Textarea
