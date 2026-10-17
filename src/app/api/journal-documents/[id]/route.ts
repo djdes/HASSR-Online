@@ -51,6 +51,7 @@ import { syncDocumentToTasksFlow } from "@/lib/tasksflow-sync";
 import { isJournalSupported } from "@/lib/tasksflow-adapters";
 import { syncTodayMatrixChanges } from "@/lib/cleaning-cell-override-sync";
 import { isManagementRole } from "@/lib/user-roles";
+import { isControlGroupMember } from "@/lib/permission-presets";
 import { canWriteJournal, hasJournalAccess } from "@/lib/journal-acl";
 import {
   ORG_ROSTER_WHERE,
@@ -150,6 +151,11 @@ export async function PATCH(
   const doc = await db.journalDocument.findUnique({ where: { id } });
   if (!doc || doc.organizationId !== getActiveOrgId(session)) {
     return errors.response("DOCUMENT_NOT_FOUND");
+  }
+  // Контроль-группа проверяет, а не заполняет: правка и закрытие документа
+  // ей запрещены даже с ролью руководителя (ACL — src/lib/journal-acl.ts).
+  if (isControlGroupMember(session.user)) {
+    return errors.response("MANAGEMENT_REQUIRED");
   }
 
   // Оборванный или пустой запрос — это ошибка клиента, а не 500 сервера.
@@ -654,7 +660,7 @@ export async function DELETE(
   const errors = await journalApiErrors(request, session?.user);
   if (!session) return errors.response("UNAUTHORIZED");
 
-  if (!isManagementRole(session.user.role)) {
+  if (!isManagementRole(session.user.role) || isControlGroupMember(session.user)) {
     return errors.response("MANAGEMENT_REQUIRED");
   }
 

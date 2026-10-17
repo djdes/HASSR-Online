@@ -3,10 +3,11 @@ import Link from "next/link";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import {
+  ALL_CAPABILITIES,
+  CAPABILITY_LABELS,
   getDefaultCapabilities,
   hasCapability,
   listAllPresets,
-  type PermissionPreset,
 } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -14,21 +15,6 @@ import { RolePresetsClient } from "@/components/settings/role-presets-client";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
-
-const CAPABILITY_LABELS: Record<string, string> = {
-  "journals.view": "Видит журналы как журналы",
-  "journals.manage": "Редактирует журналы и документы",
-  "staff.manage": "Управление сотрудниками",
-  "staff.view": "Видит сотрудников (read-only)",
-  "tasks.verify": "Проверка выполненных задач",
-  "reports.view": "Доступ к отчётам",
-  "admin.full": "Полные права админа",
-  "mini.tasks": "Mini App — задачи смены",
-  "mini.acceptance": "Mini App — приёмка",
-  "mini.writeoff": "Mini App — списания",
-  "mini.cashier": "Mini App — касса",
-  "stats.view": "Видит compliance-статистику",
-};
 
 export default async function RolePresetsPage() {
   const session = await getServerSession(authOptions);
@@ -49,9 +35,10 @@ export default async function RolePresetsPage() {
 
   const presets = listAllPresets().map((p) => ({
     ...p,
-    defaults: getDefaultCapabilities(p.value as PermissionPreset),
+    defaults: getDefaultCapabilities(p.value),
   }));
-  const capabilityKeys = Object.keys(CAPABILITY_LABELS);
+  // Списки пресетов и возможностей — из permission-presets.ts, как в API.
+  const capabilityKeys = [...ALL_CAPABILITIES];
 
   return (
     <div className="space-y-5">

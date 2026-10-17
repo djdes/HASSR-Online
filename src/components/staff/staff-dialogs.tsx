@@ -43,6 +43,9 @@ const POSITION_HINTS_VISIBLE = 8;
 
 type Close = { onClose: () => void; open: boolean };
 
+/** Простая проверка почты на клиенте; окончательная — zod на сервере. */
+const CONTACT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /** Служебное значение select'а «+ Новая должность…» на шаге 2. */
 const NEW_POSITION_OPTION = "__new-position__";
 
@@ -152,6 +155,54 @@ function FlagCheckbox(props: {
   );
 }
 
+/** Текст поля «Штатная численность» → число 0…999, null (пусто) или ошибка. */
+function parseHeadcountInput(value: string): { ok: true; value: number | null } | { ok: false } {
+  const trimmed = value.trim();
+  if (trimmed === "") return { ok: true, value: null };
+  if (!/^\d{1,3}$/.test(trimmed)) return { ok: false };
+  return { ok: true, value: Number(trimmed) };
+}
+
+/**
+ * Поле «Штатная численность» в окнах создания и правки должности.
+ * Пусто — «не задано»: пилюля «занято N из M» тогда не показывается.
+ */
+function HeadcountField(props: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const t = useTranslations("staffManagement.dialogs");
+  const invalid = !parseHeadcountInput(props.value).ok;
+  return (
+    <div>
+      {floatingLabel({
+        id: props.id,
+        label: t("headcountLabel"),
+        children: (
+          <Input
+            id={props.id}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={3}
+            value={props.value}
+            onChange={(e) => props.onChange(e.target.value.replace(/[^\d]/g, "").slice(0, 3))}
+            placeholder={t("headcountPlaceholder")}
+            aria-invalid={invalid || undefined}
+            aria-describedby={`${props.id}-hint`}
+            data-testid="position-headcount"
+            className="h-12 rounded-xl border-[#dcdfed] bg-white pl-4 pr-4 pt-6 text-[14px] tabular-nums text-[#0b1024] placeholder:text-[#9b9fb3] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          />
+        ),
+      })}
+      <p id={`${props.id}-hint`} className="mt-1 text-[11px] leading-snug text-[#6f7282]">
+        {invalid ? t("headcountInvalid") : t("headcountHint")}
+      </p>
+    </div>
+  );
+}
+
 export function StaffEditPositionDialog(props: {
   position: StaffPosition;
   onUpdated: () => void;
@@ -161,6 +212,9 @@ export function StaffEditPositionDialog(props: {
   const [categoryKey, setCategoryKey] = useState<PositionCategory>(
     props.position.categoryKey
   );
+  const [headcount, setHeadcount] = useState(
+    props.position.plannedHeadcount == null ? "" : String(props.position.plannedHeadcount)
+  );
   const [pending, setPending] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
@@ -169,12 +223,17 @@ export function StaffEditPositionDialog(props: {
       toast.error(t("positionNameRequired"));
       return;
     }
+    const plannedHeadcount = parseHeadcountInput(headcount);
+    if (!plannedHeadcount.ok) {
+      toast.error(t("headcountInvalid"));
+      return;
+    }
     setPending(true);
     try {
       const res = await fetch(`/api/positions/${props.position.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), categoryKey }),
+        body: JSON.stringify({ name: name.trim(), categoryKey, plannedHeadcount: plannedHeadcount.value }),
       });
       if (!res.ok) {
         toast.error(t("saveFailed"));
@@ -237,6 +296,7 @@ export function StaffEditPositionDialog(props: {
                 />
               ),
             })}
+            <HeadcountField id="edit-pos-headcount" value={headcount} onChange={setHeadcount} />
           </div>,
           <div className="flex w-full items-center justify-between">
             <button
@@ -331,6 +391,7 @@ export function StaffAddFlowDialog(props: {
 
   // Шаг 1.
   const [posName, setPosName] = useState("");
+  const [posHeadcount, setPosHeadcount] = useState("");
   const [posPending, setPosPending] = useState(false);
   // Только что созданные должности — props.positions обновится лишь
   // после router.refresh(), а выбор в select нужен мгновенно.
@@ -410,6 +471,12 @@ export function StaffAddFlowDialog(props: {
       return;
     }
 
+    const plannedHeadcount = parseHeadcountInput(posHeadcount);
+    if (!plannedHeadcount.ok) {
+      toast.error(t("headcountInvalid"));
+      return;
+    }
+
     setPosPending(true);
     try {
       const res = await fetch("/api/positions", {
@@ -418,6 +485,7 @@ export function StaffAddFlowDialog(props: {
         body: JSON.stringify({
           name,
           categoryKey: props.categoryKey,
+          ...(plannedHeadcount.value !== null ? { plannedHeadcount: plannedHeadcount.value } : {}),
         }),
       });
       const data = (await res.json().catch(() => null)) as
@@ -435,6 +503,7 @@ export function StaffAddFlowDialog(props: {
       setCreatedPositions((prev) => [...prev, data.position as StaffPosition]);
       setPositionId(data.position.id);
       setPosName("");
+      setPosHeadcount("");
       props.onPositionCreated?.();
       setStep(2);
     } finally {
@@ -584,6 +653,7 @@ export function StaffAddFlowDialog(props: {
                   </div>
                 </div>
               ) : null}
+              <HeadcountField id="pos-headcount" value={posHeadcount} onChange={setPosHeadcount} />
               {positions.length > 0 ? (
                 <button
                   type="button"
@@ -735,6 +805,7 @@ export function StaffEditEmployeeDialog(props: {
   onSave: (patch: {
     name?: string;
     phone?: string | null;
+    contactEmail?: string | null;
     weeklyDaysOff?: number[];
     buildingIds?: string[];
     canEditBrakerageDishes?: boolean;
@@ -748,6 +819,7 @@ export function StaffEditEmployeeDialog(props: {
   const { employee, open, onClose, pending, onSave, onOpenAccess } = props;
   const [name, setName] = useState(employee.name);
   const [phone, setPhone] = useState(employee.phone ?? "");
+  const [contactEmail, setContactEmail] = useState(employee.contactEmail ?? "");
   const [weeklyDaysOff, setWeeklyDaysOff] = useState<number[]>(
     () => normalizeWeeklyDaysOff(employee.weeklyDaysOff)
   );
@@ -764,6 +836,7 @@ export function StaffEditEmployeeDialog(props: {
     if (open) {
       setName(employee.name);
       setPhone(employee.phone ?? "");
+      setContactEmail(employee.contactEmail ?? "");
       setWeeklyDaysOff(normalizeWeeklyDaysOff(employee.weeklyDaysOff));
       setBuildingIds(employee.buildingIds ?? []);
       setCanEditDishes(employee.canEditBrakerageDishes === true);
@@ -778,6 +851,7 @@ export function StaffEditEmployeeDialog(props: {
     employee.id,
     employee.name,
     employee.phone,
+    employee.contactEmail,
     employee.weeklyDaysOff,
     employee.buildingIds,
   ]);
@@ -788,15 +862,24 @@ export function StaffEditEmployeeDialog(props: {
       toast.error(t("editEmployee.nameRequired"));
       return;
     }
+    const trimmedEmail = contactEmail.trim();
+    if (trimmedEmail && !CONTACT_EMAIL_RE.test(trimmedEmail)) {
+      toast.error(t("editEmployee.emailInvalid"));
+      return;
+    }
     const patch: {
       name?: string;
       phone?: string | null;
+      contactEmail?: string | null;
       weeklyDaysOff?: number[];
       buildingIds?: string[];
       canEditBrakerageDishes?: boolean;
       keepsCoreJournals?: boolean;
       canManageSettings?: boolean;
     } = {};
+    if (trimmedEmail !== (employee.contactEmail ?? "")) {
+      patch.contactEmail = trimmedEmail === "" ? null : trimmedEmail;
+    }
     if (canEditDishes !== (employee.canEditBrakerageDishes === true)) {
       patch.canEditBrakerageDishes = canEditDishes;
     }
@@ -845,6 +928,26 @@ export function StaffEditEmployeeDialog(props: {
               />
               <p className="mt-1 text-[11px] leading-snug text-[#6f7282]">
                 {t("editEmployee.phoneHint")}
+              </p>
+            </div>
+            <div>
+              <Input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder={t("editEmployee.emailPlaceholder")}
+                autoComplete="email"
+                inputMode="email"
+                data-testid="staff-contact-email"
+                aria-invalid={
+                  contactEmail.trim() !== "" && !CONTACT_EMAIL_RE.test(contactEmail.trim()) ? true : undefined
+                }
+                className="h-12 rounded-xl border-[#dcdfed] bg-white text-[14px] text-[#0b1024] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 aria-[invalid=true]:border-[#e6a19a]"
+              />
+              <p className="mt-1 text-[11px] leading-snug text-[#6f7282]">
+                {contactEmail.trim() !== "" && !CONTACT_EMAIL_RE.test(contactEmail.trim())
+                  ? t("editEmployee.emailInvalid")
+                  : t("editEmployee.emailHint")}
               </p>
             </div>
             <div className="space-y-1.5">

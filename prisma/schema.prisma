@@ -1081,6 +1081,10 @@ model JobPosition {
   categoryKey     String
   name            String
   sortOrder       Int                        @default(0)
+  /// Штатная численность — сколько человек на должности «по штатному
+  /// расписанию». null = не задана; «занято N из M» считает
+  /// `src/lib/staffing.ts` по активным сотрудникам.
+  plannedHeadcount Int?
   createdAt       DateTime                   @default(now())
   updatedAt       DateTime                   @updatedAt
   users           User[]

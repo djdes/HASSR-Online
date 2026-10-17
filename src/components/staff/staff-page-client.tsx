@@ -23,7 +23,9 @@ import {
   ChevronUp,
   ExternalLink,
   KeyRound,
+  Mail,
   Pencil,
+  Phone,
   Plus,
   Printer,
   QrCode,
@@ -85,6 +87,8 @@ import type {
 import { StaffAccessDialog } from "@/components/staff/staff-access-dialog";
 import { printPage } from "@/lib/native-bridge";
 import { staffApiErrorKey } from "@/components/staff/staff-api-error";
+import { occupiesSeat, positionStaffing } from "@/lib/staffing";
+import { formatPhone } from "@/lib/phone";
 
 type TabKey = "work-off" | "vacations" | "sick-leaves" | "dismissals";
 
@@ -1422,14 +1426,21 @@ function CategoryColumn(props: {
                     <button
                       type="button"
                       onClick={() => props.togglePosition(p.id)}
-                      className="flex flex-1 items-center gap-3 text-left"
+                      className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-left"
                     >
                       <span className="text-[14px] font-medium text-[#0b1024]">
                         {p.name}
                       </span>
-                      <span className="inline-flex h-4 items-center rounded-full bg-[#f5f6ff] px-1.5 text-[10px] font-medium text-[#9b9fb3]">
-                        {employees.length}
-                      </span>
+                      {p.plannedHeadcount != null ? (
+                        <StaffingPill
+                          planned={p.plannedHeadcount}
+                          occupied={employees.filter(occupiesSeat).length}
+                        />
+                      ) : (
+                        <span className="inline-flex h-4 items-center rounded-full bg-[#f5f6ff] px-1.5 text-[10px] font-medium text-[#9b9fb3]">
+                          {employees.length}
+                        </span>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -1489,11 +1500,44 @@ function CategoryColumn(props: {
                               onChange={() => props.toggleSelected(e.id)}
                               className="size-4 cursor-pointer rounded border-[#d0d4e6] text-[#5566f6] focus:ring-[#5566f6]"
                             />
-                            <span className="flex-1">
-                              {e.name}
-                              {e.isSelf ? (
-                                <span className="ml-1.5 text-[11px] text-[#9b9fb3]">
-                                  {t("self")}
+                            <span className="min-w-0 flex-1">
+                              <span className="block">
+                                {e.name}
+                                {e.isSelf ? (
+                                  <span className="ml-1.5 text-[11px] text-[#9b9fb3]">
+                                    {t("self")}
+                                  </span>
+                                ) : null}
+                              </span>
+                              {/* Контакты — сразу в строке: позвонить или написать
+                                  можно, не открывая карточку. */}
+                              {e.phone || e.contactEmail ? (
+                                <span
+                                  className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-[11.5px] text-[#6f7282]"
+                                  data-testid="staff-row-contacts"
+                                >
+                                  {e.phone ? (
+                                    <a
+                                      href={`tel:${e.phone}`}
+                                      onClick={(event) => event.stopPropagation()}
+                                      aria-label={`${t("phoneLabel")}: ${e.phone}`}
+                                      className="inline-flex items-center gap-1 tabular-nums transition-colors hover:text-[#3848c7]"
+                                    >
+                                      <Phone className="size-3 shrink-0" />
+                                      {formatPhone(e.phone)}
+                                    </a>
+                                  ) : null}
+                                  {e.contactEmail ? (
+                                    <a
+                                      href={`mailto:${e.contactEmail}`}
+                                      onClick={(event) => event.stopPropagation()}
+                                      aria-label={`${t("emailLabel")}: ${e.contactEmail}`}
+                                      className="inline-flex min-w-0 items-center gap-1 transition-colors hover:text-[#3848c7]"
+                                    >
+                                      <Mail className="size-3 shrink-0" />
+                                      <span className="truncate">{e.contactEmail}</span>
+                                    </a>
+                                  ) : null}
                                 </span>
                               ) : null}
                             </span>
@@ -1594,6 +1638,41 @@ function CategoryColumn(props: {
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Пилюля «занято N из M» у должности со штатной численностью: зелёная —
+ * штат укомплектован, янтарная — есть вакансии, розовая — сверх штата.
+ * Расчёт — тот же, что у `GET /api/positions` (`src/lib/staffing.ts`).
+ */
+function StaffingPill(props: { planned: number; occupied: number }) {
+  const t = useTranslations("staffManagement.page");
+  const staffing = positionStaffing(props.planned, props.occupied);
+  const tone =
+    staffing.overstaffed > 0
+      ? "bg-[#fff4f2] text-[#a13a32]"
+      : staffing.vacancies > 0
+        ? "bg-[#fff8eb] text-[#b25f00]"
+        : "bg-[#ecfdf5] text-[#116b2a]";
+  const hint =
+    staffing.overstaffed > 0
+      ? t("staffingOver", { count: staffing.overstaffed })
+      : staffing.vacancies > 0
+        ? t("staffingVacancies", { count: staffing.vacancies })
+        : t("staffingFull");
+  return (
+    <span
+      title={hint}
+      data-testid="staffing-pill"
+      className={cn(
+        "inline-flex h-5 items-center rounded-full px-2 text-[11px] font-medium tabular-nums",
+        tone
+      )}
+    >
+      {t("staffingPill", { occupied: String(staffing.occupied), planned: String(props.planned) })}
+      <span className="sr-only">. {hint}</span>
+    </span>
   );
 }
 

@@ -4423,7 +4423,11 @@
       "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring.",
       "invalidPin": "PIN 4 dan 6 tagacha raqamdan iborat bo‘lishi kerak",
       "roleAria": "Komissiyadagi roli: {name}",
-      "loadFailed": "Komissiya tarkibini yuklab bo‘lmadi"
+      "loadFailed": "Komissiya tarkibini yuklab bo‘lmadi",
+      "titlePerishable": "Tez buziladigan mahsulotlarni tekshirish komissiyasi",
+      "descriptionPerishable": "Komissiya a’zolari har bir kelib tushgan mahsulotni imzolaydilar. Kamida bitta a’zoning imzosisiz tekshiruv yozuvi yopilmaydi va jurnalni yakunlab bo‘lmaydi.",
+      "newPersonHintPerishable": "Shaxs xodimlar sahifasining “Komissiya” ustunida mahsulot sifatini tekshirish jurnallariga kirish huquqi bilan ko‘rinadi. Shu PIN bilan jurnal QR-kodi orqali yozuvlarni imzolaydi.",
+      "nextHintPerishable": "Keyin a’zo jurnal QR-kodini skanerlaydi, o‘zini tanlaydi va PINni kiritib, bugungi mahsulotlarni ko‘radi. Baho qo‘yib imzolaydi; imzo hujjatda — yozuv yonida va jadval ostidagi “Nazorat komissiyasi imzolari” blokida ko‘rinadi."
     },
     "orgDirectory": {
       "failed": "Ma’lumotnomani yuklab bo‘lmadi",
@@ -7073,7 +7077,69 @@
       "preparingInvite": "Taklifnoma tayyorlanmoqda",
       "journalAccess": "Jurnallarga kirish",
       "cancel": "Bekor qilish",
-      "save": "Saqlash"
+      "save": "Saqlash",
+      "presetTitle": "Huquqlar to‘plami",
+      "presetHint": "Xodim saytda va Telegramda nimani ko‘radi va nima qila oladi. Odatda to‘plam lavozimdan olinadi.",
+      "presetAuto": "Lavozim bo‘yicha (avtomatik)",
+      "presetAutoHint": "Hozir: {preset}",
+      "presetGives": "«{preset}» nima beradi",
+      "presetCapabilitiesCount": "{count, plural, one {# imkoniyat} other {# imkoniyat}}",
+      "presetCurrent": "hozir",
+      "presetSelfLocked": "O‘zingizdan «Administrator»ni olib tashlab bo‘lmaydi: sozlamalarga kirish yo‘qoladi. Boshqa administratordan so‘rang.",
+      "presetReadOnly": "Huquqlar to‘plamini administrator o‘zgartiradi.",
+      "presetControlGroupNote": "Nazorat guruhi jurnallarni to‘ldirmaydi: ko‘radi, bajarilganini tasdiqlaydi va o‘z «Ierarxiya»sidagi odamlarga vazifa beradi.",
+      "presetSaveFailed": "Huquqlar to‘plamini saqlab bo‘lmadi",
+      "presets": {
+        "admin": {
+          "label": "Administrator",
+          "description": "To‘liq kirish: jurnallar, xodimlar, sozlamalar, hisobotlar va to‘lov."
+        },
+        "head_chef": {
+          "label": "Mudir / Bosh oshpaz",
+          "description": "Xodimlarni ko‘radi va bajarilgan vazifalarni tekshiradi. Jurnallarni jurnal sifatida ko‘rmaydi."
+        },
+        "control_group": {
+          "label": "Nazorat guruhi",
+          "description": "Jurnallar, xodimlar, hisobotlar va statistikani ko‘radi, bajarilganini tasdiqlaydi va vazifa beradi. O‘zi to‘ldirmaydi."
+        },
+        "cook": {
+          "label": "Oshpaz",
+          "description": "Ilovada faqat o‘z smenasi vazifalari."
+        },
+        "waiter": {
+          "label": "Ofitsiant",
+          "description": "Ilovada faqat o‘z smenasi vazifalari."
+        },
+        "seller": {
+          "label": "Sotuvchi",
+          "description": "Smena vazifalari va yetkazib berishlarni qabul qilish."
+        },
+        "cashier": {
+          "label": "Kassir",
+          "description": "Smena vazifalari, qabul qilish, hisobdan chiqarish va kassa."
+        },
+        "cleaner": {
+          "label": "Farrosh",
+          "description": "Ilovada faqat tozalash vazifalari."
+        }
+      },
+      "capabilities": {
+        "journals_view": "Jurnallarni ko‘radi",
+        "journals_manage": "Jurnallarni yaratadi va tahrirlaydi",
+        "staff_manage": "Xodimlarni boshqaradi",
+        "staff_view": "Xodimlarni ko‘radi",
+        "tasks_verify": "Bajarilgan vazifalarni tasdiqlaydi",
+        "tasks_assign": "Xodimlarga vazifa beradi",
+        "reports_view": "Hisobotlarni ochadi",
+        "admin_full": "Barcha sozlamalar va to‘lov",
+        "mini_tasks": "Smena vazifalarini bajaradi",
+        "mini_acceptance": "Yetkazib berishlarni qabul qiladi",
+        "mini_writeoff": "Hisobdan chiqarishni rasmiylashtiradi",
+        "mini_cashier": "Kassa bilan ishlaydi",
+        "stats_view": "Statistikani ko‘radi"
+      },
+      "presetChange": "O‘zgartirish",
+      "presetCollapse": "Yig‘ish"
     },
     "bulkAdd": {
       "pasteNoRows": "Birorta ham qator topilmadi. Har bir qatorda ism-familiya va lavozim bo‘lishi kerak.",
@@ -7220,7 +7286,13 @@
       },
       "notSet": "belgilanmagan",
       "sortReset": "Saralashni bekor qilish",
-      "sortBy": "«{label}» bo‘yicha saralash"
+      "sortBy": "«{label}» bo‘yicha saralash",
+      "staffingPill": "{planned} tadan {occupied} band",
+      "staffingFull": "Shtat to‘liq",
+      "staffingVacancies": "Yetishmaydi: {count, plural, one {# kishi} other {# kishi}}",
+      "staffingOver": "Shtatdan ortiq: {count, plural, one {# kishi} other {# kishi}}",
+      "phoneLabel": "Telefon",
+      "emailLabel": "Pochta"
     },
     "dialogs": {
       "positionNameRequired": "Nomini kiriting",
@@ -7292,7 +7364,10 @@
         "dishesHint": "Jurnal QR sahifasida bugungi taomlarni ko‘rib, nomi va vaqtini tuzatishi mumkin. Odatda bu ishlab chiqarish mudiri bo‘ladi.",
         "manageSettingsHint": "Rahbar darajasidagi kabinetni ochadi: sozlamalar, jurnallar, xodimlar, QR plakatlar va uskunalar. Shaxsiy QR va PIN orqali kiradi. Bu ruxsat o‘zgargach, xodim qayta kirishi kerak.",
         "pinSaveFailed": "PINni saqlab bo‘lmadi",
-        "addAccess": "Ruxsat qo‘shish"
+        "addAccess": "Ruxsat qo‘shish",
+        "emailPlaceholder": "Pochta · ivanova@mail.ru",
+        "emailHint": "Xatlar va hisobotlar uchun shaxsiy pochta. Bu kirish logini emas. O‘chirish uchun maydonni bo‘sh qoldiring.",
+        "emailInvalid": "Pochta formati noto‘g‘ri. Misol: ivanova@mail.ru"
       },
       "archive": {
         "title": "{name} arxivga o‘tkazilsinmi?",
@@ -7360,7 +7435,11 @@
         "rootCannotArchive": "ROOT hisobini arxivlab bo‘lmaydi",
         "cannotArchiveSelf": "O‘zingizni arxivlay olmaysiz",
         "requestFailed": "So‘rov bajarilmadi (xato {status, number})"
-      }
+      },
+      "headcountLabel": "Shtat bo‘yicha soni",
+      "headcountPlaceholder": "Belgilanmagan",
+      "headcountHint": "Shtat jadvali bo‘yicha bu lavozimda nechta odam kerak. Shtat yuritilmasa, bo‘sh qoldiring.",
+      "headcountInvalid": "Shtat soni 0 dan 999 gacha butun son bo‘lishi kerak"
     },
     "positionSuggestions": {
       "position_001": "Boshqaruvchi",
@@ -13138,7 +13217,25 @@
       "title": "Yozuvlar bo‘yicha nazorat komissiyasi imzolari (jurnalning oldingi shaklidan saqlangan)",
       "unnamedProduct": "Nomsiz mahsulot",
       "unnamedPerson": "Ism ko‘rsatilmagan",
-      "arrival": "kelib tushgan vaqt: {date}"
+      "arrival": "kelib tushgan vaqt: {date}",
+      "commissionTitle": "Nazorat komissiyasi imzolari"
+    },
+    "commission": {
+      "title": "Komissiya",
+      "members": "Nazorat komissiyasi: {names}",
+      "notSet": "Komissiya tayinlanmagan — yozuvlar uning imzosisiz yopiladi. Tarkibni “Komissiya” tugmasi orqali tayinlang.",
+      "waiting": "Komissiya imzosini kutmoqda",
+      "signedBy": "Imzolangan: {names}",
+      "statusLabel": "Komissiya imzosi",
+      "signedRows": "Imzolangan yozuvlar: {count, number}",
+      "signFailed": "Yozuvlarni imzolab bo‘lmadi",
+      "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring.",
+      "todaySigned": "Bugun: {total, plural, one {# ta yozuv} other {# ta yozuv}}, barchasi komissiya tomonidan imzolangan",
+      "todayWaiting": "Bugun: {total, plural, one {# ta yozuv} other {# ta yozuv}}, {waiting, plural, one {# tasi} other {# tasi}} komissiya imzosini kutmoqda",
+      "todayWaitingCanSign": "Bugun: {total, plural, one {# ta yozuv} other {# ta yozuv}}, {waiting, plural, one {# tasi} other {# tasi}} komissiya imzosini kutmoqda — ularni belgilab, “Imzolash” tugmasini bosing",
+      "blockTitle": "Jurnalni yakunlab bo‘lmaydi: {count, plural, one {# ta yozuv} other {# ta yozuv}} komissiya imzosini kutmoqda",
+      "blockDescription": "Tekshiruv yozuvi kamida bitta komissiya a’zosi imzolaganda yopiladi. A’zo jurnal QR-kodi (PIN) orqali yoki saytda imzolaydi — yozuvlarni belgilab, “Imzolash” tugmasini bosing.",
+      "more": "…va yana {count, number} ta"
     }
   },
   "archiveExport": {
