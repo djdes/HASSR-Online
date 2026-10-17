@@ -146,6 +146,7 @@ import {
   isTrackedDocumentTemplate,
   type TrackedDocumentTemplateCode,
 } from "@/lib/tracked-document";
+import { CCP_MONITORING_TEMPLATE_CODE } from "@/lib/ccp-monitoring-journal";
 import {
   TRACEABILITY_DOCUMENT_TEMPLATE_CODE,
   formatTraceabilityQuantity,
@@ -360,6 +361,9 @@ import {
   VACCINATION_REFERENCE_DATA,
   VACCINATION_TYPE_LABELS,
 } from "@/lib/med-book-document";
+
+/** Название бланка мониторинга ККТ — как в каталоге журналов. */
+const CCP_MONITORING_PDF_TITLE = "Журнал мониторинга критических контрольных точек";
 
 /**
  * Шрифт для PDF — «JournalUnicode» из репозитория (Liberation Serif —
@@ -8056,6 +8060,22 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
           top: options.top,
         }),
     });
+  } else if (templateCode === CCP_MONITORING_TEMPLATE_CODE) {
+    // Мониторинг ККТ — журнал записей; бланк (образец для каталога) —
+    // та же таблица полей формы, что у отслеживаемых документов.
+    drawTrackedPdf(doc, {
+      organizationName,
+      title: document.title || CCP_MONITORING_PDF_TITLE,
+      dateFrom: document.dateFrom,
+      dateTo: document.dateTo,
+      fields: trackedFields,
+      entries: entries.map((entry) => ({
+        employeeId: entry.employeeId,
+        date: entry.date,
+        data: (entry.data as Record<string, unknown>) || {},
+      })),
+      users,
+    });
   } else if (isTrackedDocumentTemplate(templateCode)) {
     drawTrackedPdf(doc, {
       organizationName,
@@ -8179,6 +8199,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
               ? getRegisterDocumentFilePrefix(templateCode)
               : isTrackedDocumentTemplate(templateCode)
                 ? getTrackedFilePrefix(templateCode)
+              : templateCode === CCP_MONITORING_TEMPLATE_CODE
+                ? "ccp-monitoring-journal"
               : (() => {
                   throw new Error(`Не удалось определить префикс PDF для кода: ${templateCode}`);
                 })();

@@ -1,0 +1,9 @@
+{
+  "label": "2-after-first-seed",
+  "templateActive": true,
+  "orgsTotal": 5,
+  "orgsWithCcpDisabled": 5,
+  "orgsWithCcpEnabled": [],
+  "restaurantCcpDisabled": true,
+  "disabledListsHash": "cmvcu5nu70002qc9msdwmsgrv:18,cmvcu5nwt0004qc9m7lukmad0:40,e2e-org-loc0:42,e2e-org-loc1:42,e2e-org-loc:42"
+}

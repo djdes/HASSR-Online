@@ -1,0 +1,158 @@
+[
+  {
+    "name": "страница /journals/ccp_monitoring — 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "страница журнала с названием из каталога",
+    "ok": true,
+    "detail": null
+  },
+  {
+    "name": "форма /journals/ccp_monitoring/new — 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "форма содержит поле «Название ККТ»",
+    "ok": true
+  },
+  {
+    "name": "форма содержит поле «Параметр контроля»",
+    "ok": true
+  },
+  {
+    "name": "форма содержит поле «Критический предел»",
+    "ok": true
+  },
+  {
+    "name": "форма содержит поле «Фактическое значение»",
+    "ok": true
+  },
+  {
+    "name": "форма содержит поле «В пределах нормы»",
+    "ok": true
+  },
+  {
+    "name": "запись в пределах — создаётся",
+    "ok": true,
+    "detail": {
+      "entry": {
+        "id": "cmvcu941r005lfs9mgmv2gnol",
+        "templateId": "cmvcn2fia0004d09mnasmhiqq",
+        "organizationId": "cmvcu5nu70002qc9msdwmsgrv",
+        "areaId": null,
+        "equipmentId": null,
+        "filledById": "cmvcu5nr00000qc9m7qk9tsyx",
+        "data": {
+          "ccpName": "ККТ-1 Тепловая обработка",
+          "actualValue": "81 °C",
+          "withinLimit": true,
+          "criticalLimit": "не ниже +75 °C",
+          "controlParameter": "Температура в толще изделия"
+        },
+        "status": "submitted",
+        "batchKey": null,
+        "createdAt": "2026-10-17T20:17:50.271Z",
+        "updatedAt": "2026-10-17T20:17:50.271Z"
+      }
+    }
+  },
+  {
+    "name": "запись с отклонением и корректирующим действием — создаётся",
+    "ok": true,
+    "detail": {
+      "entry": {
+        "id": "cmvcu94h4005nfs9m8p7d7dcr",
+        "templateId": "cmvcn2fia0004d09mnasmhiqq",
+        "organizationId": "cmvcu5nu70002qc9msdwmsgrv",
+        "areaId": null,
+        "equipmentId": null,
+        "filledById": "cmvcu5nr00000qc9m7qk9tsyx",
+        "data": {
+          "ccpName": "ККТ-1 Тепловая обработка",
+          "actualValue": "71 °C",
+          "withinLimit": false,
+          "criticalLimit": "не ниже +75 °C",
+          "controlParameter": "Температура в толще изделия",
+          "correctiveAction": "Возврат на дожарку, повторный замер 80 °C"
+        },
+        "status": "submitted",
+        "batchKey": null,
+        "createdAt": "2026-10-17T20:17:50.824Z",
+        "updatedAt": "2026-10-17T20:17:50.824Z"
+      }
+    }
+  },
+  {
+    "name": "записи появились в списке журнала (+2)",
+    "ok": true,
+    "detail": {
+      "before": 0,
+      "after": 2
+    }
+  },
+  {
+    "name": "страница записи показывает значения и корректирующее действие",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "PDF записей /api/reports/pdf — 200, application/pdf",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "bytes": 160002
+    }
+  },
+  {
+    "name": "образец бланка /api/journal-samples/ccp_monitoring/pdf — 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "bytes": 364371
+    }
+  },
+  {
+    "name": "страница ППК «ККТ» открывается",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "«Готовность» — 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "проверка называется «Журналы стандартного набора включены»",
+    "ok": true
+  },
+  {
+    "name": "все 11 включены — так и написано",
+    "ok": true,
+    "detail": "Включены все 11 журналов стандартного набора."
+  },
+  {
+    "name": "выключили «Медкнижки» и «Инструктажи» через настройки",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "«Готовность»: 9 из 11 и названия выключенных",
+    "ok": true,
+    "detail": "Включено 9 из 11 журналов стандартного набора. Не включены: «Медицинские книжки», «Журнал регистрации инструктажей (обучения) сотрудников»."
+  },
+  {
+    "name": "«Включить весь набор» вернул ровно два журнала",
+    "ok": true,
+    "detail": [
+      "med_books",
+      "staff_training"
+    ]
+  },
+  {
+    "name": "«Готовность» снова: все 11",
+    "ok": true
+  }
+]

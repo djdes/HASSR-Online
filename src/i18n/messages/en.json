@@ -3161,6 +3161,7 @@
       "audit_plan": "Plan — for the calendar year; internal audits — according to schedule, at least annually.",
       "audit_protocol": "Prepared after every internal audit.",
       "audit_report": "After every internal audit; management review — at least annually.",
+      "ccp_monitoring": "Per the HACCP plan — at the monitoring frequency set for each critical control point.",
       "fallback": "As needed."
     }
   },
@@ -4275,6 +4276,24 @@
           "fileReports": {
             "title": "File the reports",
             "body": "Put a dated copy of the contractor’s report in the pest control journal and the original in the “Contracts” folder. Rospotrebnadzor requests the original during inspections."
+          }
+        },
+        "ccp_monitoring": {
+          "takePoint": {
+            "title": "Take the point from the HACCP plan",
+            "body": "Open “Production control” → “CCP”. Check the point’s parameter, critical limit and how often to measure. Use the name from the plan, for example “CCP-1 Heat treatment”."
+          },
+          "measure": {
+            "title": "Measure the parameter",
+            "body": "Use a verified instrument to measure what the plan says: core temperature of the product, time, pH. Measure at the moment of control, not from memory."
+          },
+          "record": {
+            "title": "Record the value",
+            "body": "New entry: CCP name, parameter, critical limit and the actual value with units, for example “78 °C”. Mark whether the value is within the limit."
+          },
+          "actOnDeviation": {
+            "title": "Deviation — act at once",
+            "body": "Value outside the limit: 1) set the products aside, 2) find the cause, 3) eliminate it, 4) repeat the check. Write what you did in the “Corrective action” field."
           }
         }
       },
@@ -11757,6 +11776,21 @@
         "missingReports": "Not retaining reports: without them, a tick in the log has no supporting evidence."
       },
       "regulationRef": "SanPiN 3.5.2.3472-17 “Sanitary and epidemiological requirements for organising and conducting insect control”. SanPiN 3.5.3.3223-14 (rodent control). SanPiN 2.3/2.4.4282-26. Contracts and reports are required for Rospotrebnadzor acceptance."
+    },
+    "ccp_monitoring": {
+      "summary": "Record every measurement at a critical control point (CCP) of the HACCP plan: what you measured, the limit and the value you got. If it is outside the limit, fix it at once and record what you did.",
+      "materials": {
+        "haccpPlan": "HACCP plan with the list of CCPs and critical limits",
+        "instrument": "A verified instrument from the plan: probe thermometer, thermometer, timer or pH meter",
+        "journal": "The “CCP monitoring” log on a phone or tablet"
+      },
+      "completionCriteria": "Every CCP has records at the frequency set in the HACCP plan, and every deviation has a recorded corrective action.",
+      "mistakes": {
+        "wordsInsteadOfNumber": "Writing “OK” instead of a number leaves nothing to compare with the limit.",
+        "nameMismatch": "A CCP name that differs from the plan keeps the record out of the “CCP” section check.",
+        "releasedWithDeviation": "Releasing products with a deviation before the corrective action."
+      },
+      "regulationRef": "TR CU 021/2011, Article 10 — monitoring of critical control points and its records; GOST R 51705.1 — HACCP principles."
     }
   },
   "taskFill": {
@@ -12269,6 +12303,7 @@
           "duties": "Job duties",
           "kkt": "CCP",
           "sanitation": "Sanitation and hygiene",
+          "haccp": "HACCP principles",
           "fire": "Fire safety"
         },
         "attestation": {

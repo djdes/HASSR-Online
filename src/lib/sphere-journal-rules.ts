@@ -1,4 +1,5 @@
 import { withDefaultOffCodes } from "@/lib/health-check-default-off";
+import { STANDARD_JOURNAL_CODES } from "@/lib/journal-sets";
 import { ALL_JOURNAL_CODES } from "@/lib/onboarding-presets";
 import type { OrgSphere } from "@/lib/org-profile";
 
@@ -618,6 +619,9 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "sanitary_day_control",
       "inventory_condition",
       "batch_release",
+      // Записи мониторинга ККТ сверяет блок ППК «ККТ»; обязанность вести
+      // их отдельным журналом зависит от плана ХАССП — поэтому рекомендуем.
+      "ccp_monitoring",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -969,16 +973,48 @@ export function requiredCodesFor(sphere: OrgSphere): string[] {
 }
 
 /**
+ * Сферы общественного питания: здесь действует СанПиН 2.3/2.4.4282-26, и
+ * новой организации включаем весь «Стандартный набор журналов» (11
+ * журналов эскиза руководителя, 17.10.2026), а не только обязательный
+ * минимум сферы. Школы и медицина — тоже общепит (питание в детских и
+ * медицинских организациях). Не входят: пищевое производство (ТР ТС, свой
+ * набор по ХАССП), магазин, фитнес, салоны и «Другое».
+ */
+export const FOOD_SERVICE_SPHERES: ReadonlySet<OrgSphere> = new Set<OrgSphere>([
+  "restaurant",
+  "cafe",
+  "bar",
+  "canteen",
+  "fastfood",
+  "bakery",
+  "catering",
+  "hotel",
+  "gas_station",
+  "education",
+  "medical",
+]);
+
+/** Журналы, включённые у новой организации сферы: обязательные + стандартный набор у общепита. */
+export function defaultEnabledCodesFor(sphere: OrgSphere): string[] {
+  const enabled = new Set(requiredCodesFor(sphere));
+  if (FOOD_SERVICE_SPHERES.has(sphere)) {
+    for (const code of STANDARD_JOURNAL_CODES) enabled.add(code);
+  }
+  return [...enabled];
+}
+
+/**
  * Что записать в `Organization.disabledJournalCodes` для новой
- * организации: всё, кроме обязательного минимума. Хранилище негативное
- * («всё, кроме»), поэтому набор считается вычитанием.
+ * организации: всё, кроме включённого по умолчанию. Хранилище негативное
+ * («всё, кроме»), поэтому набор считается вычитанием. Существующих
+ * организаций это не касается — у них список уже записан.
  */
 export function defaultDisabledCodesFor(sphere: OrgSphere): string[] {
-  const required = new Set(requiredCodesFor(sphere));
+  const enabled = new Set(defaultEnabledCodesFor(sphere));
   // Через withDefaultOffCodes: журнал здоровья выключен у новых
   // организаций всегда, даже если его по ошибке вернут в какой-то набор.
   return withDefaultOffCodes(
-    ALL_JOURNAL_CODES.filter((code) => !required.has(code))
+    ALL_JOURNAL_CODES.filter((code) => !enabled.has(code))
   );
 }
 

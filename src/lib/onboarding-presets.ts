@@ -102,6 +102,7 @@ export const ALL_JOURNAL_CODES: readonly string[] = [
   "instrument_sterilization",
   "medical_waste_b",
   "batch_release",
+  "ccp_monitoring",
 ] as const;
 
 // Каноничные группы журналов — переиспользуем во всех пресетах.

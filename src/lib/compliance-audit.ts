@@ -9,6 +9,7 @@
 
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { standardSetCheck } from "@/lib/compliance-standard-set";
 import { getJournalSpec } from "@/lib/journal-specs";
 import { getEffectiveTaskMode } from "@/lib/journal-task-modes";
 import {
@@ -173,27 +174,17 @@ export async function runComplianceAudit(
       ? (org!.disabledJournalCodes as string[])
       : [],
   );
-  const enabledJournalCount =
-    ACTIVE_JOURNAL_CATALOG.length - disabledCodes.size;
+  // Обязательные — 11 журналов стандартного набора, а не весь каталог.
+  const standardSet = standardSetCheck(disabledCodes);
   checks.push({
     id: "journals.enabled",
     category: "responsibles",
-    title: "Обязательные журналы включены",
-    status:
-      enabledJournalCount < 10
-        ? "fail"
-        : enabledJournalCount < 25
-          ? "warn"
-          : "ok",
-    detail: `Включено ${enabledJournalCount} из ${ACTIVE_JOURNAL_CATALOG.length} обязательных.`,
+    title: "Журналы стандартного набора включены",
+    status: standardSet.status,
+    detail: standardSet.detail,
     fixUrl: "/settings/journals",
     weight: 10,
-    score:
-      enabledJournalCount < 10
-        ? 0
-        : enabledJournalCount < 25
-          ? 0.6
-          : 1,
+    score: standardSet.score,
   });
 
   // 7. Responsibles — у каждого включённого журнала есть ответственный (15 баллов)
