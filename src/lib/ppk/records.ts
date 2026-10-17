@@ -37,6 +37,9 @@ export const PPK_RECORD_LIMITS: Record<PpkRecordBlock, number> = {
   norms: 1,
 };
 
+/** Блоки, где в организации может быть одна запись (лимит 1). БД не даст второй: см. `PpkRecord.singleton`. */
+export const PPK_SINGLETON_BLOCKS = ["policy", "norms"] as const satisfies readonly PpkRecordBlock[];
+
 export const PPK_PRODUCT_CATEGORIES = [
   "ready-meals",
   "semi-finished",

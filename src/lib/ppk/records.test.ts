@@ -5,6 +5,7 @@ import {
   PPK_RECORD_BLOCKS,
   PPK_RECORD_LIMITS,
   PPK_RECORD_SCHEMAS,
+  PPK_SINGLETON_BLOCKS,
   isPpkRecordBlock,
   parsePpkRecords,
   checkTeamGroup,
@@ -130,4 +131,10 @@ test("checkTeamGroup: один руководитель, сотрудник не
   assert.equal(checkTeamGroup(others, { userId: "u2", role: "leader", duties: "" }), "Руководитель группы уже назначен");
   assert.equal(checkTeamGroup(others, { userId: "u1", role: "member", duties: "" }), "Сотрудник уже в группе");
   assert.equal(checkTeamGroup([], { userId: "u1", role: "leader", duties: "" }), null);
+});
+
+test("блоки-одиночки — ровно те, у которых лимит 1", () => {
+  const singles = PPK_RECORD_BLOCKS.filter((block) => PPK_RECORD_LIMITS[block] === 1);
+  assert.deepEqual([...PPK_SINGLETON_BLOCKS].sort(), [...singles].sort());
+  assert.deepEqual([...PPK_SINGLETON_BLOCKS], ["policy", "norms"]);
 });

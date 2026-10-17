@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
 import { checkPpkRefs, checkPpkTeamGroup, ppkValidationError } from "@/lib/ppk/records.server";
-import { PPK_RECORD_LIMITS, PPK_RECORD_SCHEMAS, isPpkRecordBlock } from "@/lib/ppk/records";
+import { PPK_RECORD_LIMITS, PPK_RECORD_SCHEMAS, PPK_SINGLETON_BLOCKS, isPpkRecordBlock } from "@/lib/ppk/records";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,10 +45,10 @@ export async function POST(request: Request) {
   const value = parsed.data as Record<string, unknown>;
 
   const organizationId = auth.organizationId;
+  const limitError = block === "policy" ? "Политика уже создана" : "Слишком много записей";
   const count = await db.ppkRecord.count({ where: { organizationId, block } });
   if (count >= PPK_RECORD_LIMITS[block]) {
-    const error = block === "policy" ? "Политика уже создана" : "Слишком много записей";
-    return NextResponse.json({ error }, { status: 409 });
+    return NextResponse.json({ error: limitError }, { status: 409 });
   }
 
   const refError = await checkPpkRefs(organizationId, block, value);
@@ -66,16 +66,29 @@ export async function POST(request: Request) {
     where: { organizationId, block },
     _max: { sortOrder: true },
   });
-  const record = await db.ppkRecord.create({
-    data: {
-      organizationId,
-      block,
-      data: data as Prisma.InputJsonValue,
-      sortOrder: (last._max.sortOrder ?? 0) + 1,
-      createdById: auth.session.user.id ?? null,
-    },
-    select: SELECT,
-  });
+  // Блок-одиночка пишет себя в `singleton`: уникальный индекс в БД не даст
+  // второй записи, даже если два запроса проверили счётчик одновременно.
+  const singleton = (PPK_SINGLETON_BLOCKS as readonly string[]).includes(block) ? block : null;
+  let record;
+  try {
+    record = await db.ppkRecord.create({
+      data: {
+        organizationId,
+        block,
+        data: data as Prisma.InputJsonValue,
+        sortOrder: (last._max.sortOrder ?? 0) + 1,
+        createdById: auth.session.user.id ?? null,
+        singleton,
+      },
+      select: SELECT,
+    });
+  } catch (error) {
+    // P2002 — нарушение уникальности: параллельный запрос уже создал единственную запись.
+    if (singleton && typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: limitError }, { status: 409 });
+    }
+    throw error;
+  }
 
   await recordAuditLog({
     request,

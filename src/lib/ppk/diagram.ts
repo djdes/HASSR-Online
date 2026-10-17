@@ -174,3 +174,23 @@ export function newDiagramId(prefix: string): string {
 }
 
 export type { DiagramData };
+
+/**
+ * Подписи этапов всех блок-схем: узлы `step` каждой схемы сверху вниз, без пустых и
+ * повторов (без учёта регистра), в порядке схем.
+ */
+export function flowchartStepLabels(charts: Pick<DiagramData, "nodes">[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const chart of charts) {
+    const steps = chart.nodes.filter((node) => node.kind === "step").sort((a, b) => a.y - b.y || a.x - b.x);
+    for (const node of steps) {
+      const label = node.label.trim();
+      const key = label.toLowerCase();
+      if (!label || seen.has(key)) continue;
+      seen.add(key);
+      out.push(label);
+    }
+  }
+  return out;
+}

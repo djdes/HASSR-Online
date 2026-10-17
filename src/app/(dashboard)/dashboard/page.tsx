@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PpkTodayCard } from "@/components/production-control/ppk-today-card";
+import { loadPpkTodaySummary } from "@/lib/ppk/today.server";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { redirect } from "next/navigation";
 import {
@@ -95,6 +97,7 @@ export default async function DashboardPage() {
     recentEntries,
     templates,
     org,
+    ppkToday,
   ] = await Promise.all([
     db.journalEntry.count({
       where: { organizationId, status: "submitted" },
@@ -123,6 +126,8 @@ export default async function DashboardPage() {
         subscriptionPlan: true,
       },
     }),
+    // Плашка «Производственный контроль»: сбой загрузки её скрывает, главная не ломается.
+    loadPpkTodaySummary(organizationId).catch(() => null),
   ]);
 
   // Selected journal set comes from organization settings:
@@ -264,6 +269,8 @@ export default async function DashboardPage() {
               label="записей ждут проверки"
             />
           )}
+
+          {ppkToday ? <PpkTodayCard summary={ppkToday} /> : null}
 
           <DashboardSection
             storageKey="live-claims"

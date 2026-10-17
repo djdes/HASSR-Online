@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { collectPpkReminders, daysBetween, isReminderDay, ppkReminderMessage } from "./reminders";
+import { collectPpkReminders, daysBetween, isReminderDay, ppkDueSoon, ppkReminderMessage } from "./reminders";
 import type { LabPlanItem, PestPlanItem } from "./records";
 
 const TODAY = "2026-10-17";
@@ -96,4 +96,26 @@ test("ppkReminderMessage: экранирует разметку, статусы 
   assert.ok(msg.includes("🪲 <b>Дезинсекция и дератизация</b>"));
   assert.ok(!msg.includes("🧪"));
   assert.ok(msg.endsWith("Отметьте выполнение в плане — следующая дата посчитается сама."));
+});
+
+test("ppkDueSoon: всё просроченное и всё в пределах 7 дней, без правила дней напоминания", () => {
+  const mk = (d: string) => pest({ object: d, nextDate: d });
+  const out = ppkDueSoon({
+    lab: [],
+    pest: [mk("2026-10-24"), mk("2026-10-25"), mk("2026-10-19"), mk("2026-10-02"), mk("2026-10-15")],
+    today: TODAY,
+  });
+  // 8 дней вперёд не попадает; просроченные сверху, затем по дате
+  assert.deepEqual(out.map((i) => i.daysLeft), [-15, -2, 2, 7]);
+  assert.deepEqual(ppkDueSoon({ lab: [], pest: [mk("2026-10-25")], today: TODAY }, 10).map((i) => i.daysLeft), [8]);
+});
+
+test("ppkDueSoon: лаборатория без lastDate пропускается, заголовки как в напоминаниях", () => {
+  const out = ppkDueSoon({
+    lab: [lab({ lastDate: null }), lab({ lastDate: "2026-09-20", indicator: "микробиология" })],
+    pest: [],
+    today: TODAY,
+  });
+  assert.equal(out.length, 1);
+  assert.equal(out[0].title, "Вода: Питьевая вода — микробиология");
 });

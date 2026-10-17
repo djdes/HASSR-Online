@@ -6,7 +6,9 @@ import {
   formatServicePrice,
   groupServices,
   isInstantPayable,
+  missingLaterServices,
   SERVICE_CATEGORY_ORDER,
+  SERVICES_ADDED_LATER,
 } from "@/lib/services/catalog";
 
 /**
@@ -78,4 +80,38 @@ test("группировка не теряет и не дублирует усл
 test("нулевая цена не считается оплачиваемой", () => {
   assert.equal(isInstantPayable({ priceRub: 0, priceFrom: false }), false);
   assert.equal(isInstantPayable({ priceRub: null, priceFrom: false }), false);
+});
+
+test("новые услуги: цена по запросу и понятные категории", () => {
+  const pest = DEFAULT_SERVICES.find((item) => item.key === "pest-control-service");
+  assert.ok(pest);
+  assert.equal(pest.title, "Подключение дезинфекционной службы");
+  assert.equal(pest.category, "setup");
+  assert.equal(pest.priceRub, null);
+  assert.equal(pest.priceFrom, false);
+  assert.equal(pest.unit, null);
+  assert.equal(normalizeSpaces(formatServicePrice(pest)), "Цена по запросу");
+
+  const norms = DEFAULT_SERVICES.find((item) => item.key === "norms-subscription");
+  assert.ok(norms);
+  assert.equal(norms.title, "Подписка на обновления нормативов");
+  assert.equal(norms.category, "consult");
+  assert.equal(norms.priceRub, null);
+  assert.equal(norms.priceFrom, false);
+  assert.equal(norms.unit, "в месяц");
+  assert.equal(normalizeSpaces(formatServicePrice(norms)), "Цена по запросу");
+});
+
+test("досеивание: в непустой каталог докладываются только недостающие добавленные позже услуги", () => {
+  const all = DEFAULT_SERVICES.map((item) => item.key);
+  assert.deepEqual(missingLaterServices(all), []);
+
+  const legacy = all.filter((key) => !(SERVICES_ADDED_LATER as readonly string[]).includes(key));
+  assert.deepEqual(
+    missingLaterServices(legacy).map((item) => item.key),
+    [...SERVICES_ADDED_LATER]
+  );
+
+  // Услугу, которую владелец выключил (active=false), в строках всё равно видно: ключ есть, досеивания нет.
+  assert.deepEqual(missingLaterServices([...legacy, ...SERVICES_ADDED_LATER]), []);
 });

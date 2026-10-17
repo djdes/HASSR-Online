@@ -77,6 +77,7 @@ import { PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
 import { MiniAppShell } from "@/app/mini/_components/mini-app-shell";
 import { loadMiniShellData } from "@/app/mini/_components/mini-shell-data";
 import { CustomNamesProvider } from "@/components/shared/custom-names-provider";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import "@/app/app-theme.css";
 // Оболочка мини-приложения показывает эти же страницы в телефоне, и её
@@ -731,6 +732,9 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
   });
 
   return (
+    // Сообщения пространства miniHome нужны навигации мини-приложения
+    // (mini-nav); без них next-intl пишет MISSING_MESSAGE в консоль.
+    <DomainMessagesBoundary namespaces={["miniHome"]}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
@@ -792,5 +796,6 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       </SiteThemeProvider>
       </CustomNamesProvider>
     </AuthSessionProvider>
+    </DomainMessagesBoundary>
   );
 }

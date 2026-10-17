@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import {
   DEFAULT_SERVICES,
   SERVICE_CATEGORY_ORDER,
+  missingLaterServices,
   type PlatformServiceItem,
   type ServiceCategory,
 } from "./constants";
@@ -47,7 +48,16 @@ export async function readServices(): Promise<PlatformServiceItem[]> {
   const rows = await db.platformService.findMany({
     orderBy: [{ sort: "asc" }, { key: "asc" }],
   });
-  if (rows.length > 0) return rows.map(toItem);
+  if (rows.length > 0) {
+    // Услуги, появившиеся после первого засева, досеиваем в уже непустую таблицу.
+    const missing = missingLaterServices(rows.map((row) => row.key));
+    if (missing.length === 0) return rows.map(toItem);
+    await db.platformService.createMany({ data: missing, skipDuplicates: true });
+    const merged = await db.platformService.findMany({
+      orderBy: [{ sort: "asc" }, { key: "asc" }],
+    });
+    return merged.map(toItem);
+  }
 
   await db.platformService.createMany({
     data: DEFAULT_SERVICES,

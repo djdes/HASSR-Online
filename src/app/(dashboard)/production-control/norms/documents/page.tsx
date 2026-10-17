@@ -52,7 +52,7 @@ export default async function NormsDocumentsPage() {
           <p className="mt-1 max-w-[560px] text-[13.5px] text-[#6f7282]">{t("norms.subscriptionHint")}</p>
         </div>
         <Link
-          href="/settings/services?order=consulting"
+          href="/settings/services?order=norms-subscription"
           className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           {t("norms.order")}

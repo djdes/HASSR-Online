@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { DIAGRAM_LIMITS, FLOW_STYLES, diagramBounds, fitView, nodeAt, diagramStats, edgeAnchors, flowchartTemplate, snap, type DiagramData } from "./diagram";
+import { flowchartStepLabels, DIAGRAM_LIMITS, FLOW_STYLES, diagramBounds, fitView, nodeAt, diagramStats, edgeAnchors, flowchartTemplate, snap, type DiagramData } from "./diagram";
 import { PPK_RECORD_BLOCKS, PPK_RECORD_LIMITS, PPK_RECORD_SCHEMAS } from "./records";
 
 const node = (id: string, x: number, y: number, kind: "step" | "room" = "step") => ({
@@ -128,4 +128,13 @@ test("clampDiagram: лимиты сервера по размерам и коо�
   assert.equal(DIAGRAM_LIMITS.nodes, 150);
   assert.equal(DIAGRAM_LIMITS.edges, 300);
   assert.equal(DIAGRAM_LIMITS.points, 50);
+});
+
+test("flowchartStepLabels: этапы схем сверху вниз, без помещений, пустых и повторов", () => {
+  const node = (label: string, y: number, kind: "step" | "room" = "step") => ({ id: label + y, x: 0, y, w: 10, h: 10, label, kind, ccp: null, areaId: null });
+  const charts = [
+    { nodes: [node("Нарезка", 100), node("Приёмка", 0), node("Цех", 50, "room"), node(" ", 20)] },
+    { nodes: [node("приёмка", 0), node("Выдача", 10)] },
+  ];
+  assert.deepEqual(flowchartStepLabels(charts), ["Приёмка", "Нарезка", "Выдача"]);
 });

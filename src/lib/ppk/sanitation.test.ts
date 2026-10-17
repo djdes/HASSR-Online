@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { dueState, labNextDate } from "./sanitation";
+import { dueState, labNextDate, pestNextDate } from "./sanitation";
 
 test("labNextDate: последняя дата плюс периодичность в месяцах; без последней даты — null", () => {
   assert.equal(labNextDate({ lastDate: "2026-10-01", everyMonths: 3 }), "2027-01-01");
@@ -29,4 +29,24 @@ test("dueState: сегодня и ближайшие 14 дней → soon, да�
   assert.equal(dueState("2026-10-31", "2026-10-17"), "soon");
   assert.equal(dueState("2026-11-01", "2026-10-17"), "ok");
   assert.equal(dueState("2027-03-01", "2026-10-17"), "ok");
+});
+
+test("pestNextDate: периодичность из подсказок плюс дни или месяцы", () => {
+  assert.equal(pestNextDate("Еженедельно", "2026-10-01"), "2026-10-08");
+  assert.equal(pestNextDate("Ежемесячно", "2026-10-17"), "2026-11-17");
+  assert.equal(pestNextDate("Ежеквартально", "2026-10-17"), "2027-01-17");
+  assert.equal(pestNextDate("Раз в полгода", "2026-10-17"), "2027-04-17");
+  assert.equal(pestNextDate("Раз в год", "2026-10-17"), "2027-10-17");
+  assert.equal(pestNextDate("Ежегодно", "2026-10-17"), "2027-10-17");
+});
+
+test("pestNextDate: регистр и пробелы не важны; конец месяца ограничивается", () => {
+  assert.equal(pestNextDate("  ЕЖЕМЕСЯЧНО ", "2026-01-31"), "2026-02-28");
+  assert.equal(pestNextDate("ежемесячно", "2028-01-31"), "2028-02-29");
+});
+
+test("pestNextDate: «По заявке», пустое и неизвестное — null", () => {
+  assert.equal(pestNextDate("По заявке", "2026-10-17"), null);
+  assert.equal(pestNextDate("", "2026-10-17"), null);
+  assert.equal(pestNextDate("когда-нибудь", "2026-10-17"), null);
 });

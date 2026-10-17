@@ -198,7 +198,8 @@
       "removeTitle": "Delete hazard?",
       "removeBody": "Linked CCPs will remain but will lose their link to the hazard.",
       "save": "Save",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "stepsFromFlowcharts": "Steps from your flowcharts"
     },
     "diagram": {
       "select": "Select",
@@ -505,7 +506,8 @@
       "remove": "Delete",
       "removeTitle": "Delete action?",
       "removeBody": "The row will be removed from the plan. The journal and files are not affected.",
-      "openOrder": "Open the order"
+      "openOrder": "Open the order",
+      "done": "Done"
     },
     "lab": {
       "lead": "What the laboratory checks and how often. The system calculates the next date itself and highlights overdue items.",
@@ -557,7 +559,8 @@
           "subject": "Drinking water",
           "indicator": "Microbiological and organoleptic indicators"
         }
-      }
+      },
+      "done": "Done"
     },
     "posters": {
       "lead": "Posters for workshops and restrooms with your logo. Print them and hang them in a visible place.",
@@ -591,6 +594,30 @@
     },
     "reminders": {
       "hint": "We'll remind managers in Telegram 7, 3 and 1 day before the due date and when it's overdue."
+    },
+    "today": {
+      "title": "Production control",
+      "progress": "{done} of {total}",
+      "overdue": "overdue by {days} d",
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "inDays": "in {days} d",
+      "next": "Next step: {block}",
+      "more": "and {count} more"
+    },
+    "markDone": {
+      "title": "Mark as done",
+      "date": "Completion date",
+      "next": "Next treatment",
+      "nextPreview": "Next test: {date}",
+      "noNext": "The next due date is not calculated",
+      "attachProtocol": "Attach report",
+      "attachAct": "Attach certificate",
+      "submit": "Mark done",
+      "cancel": "Cancel",
+      "done": "Marked. Next due date: {date}",
+      "doneNoNext": "Marked",
+      "uploadFailed": "Could not upload the file \"{name}\""
     }
   },
   "inspectionDay": {

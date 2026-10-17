@@ -4,7 +4,8 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PPK_SIGNIFICANCE_THRESHOLD } from "@/lib/ppk/haccp";
-import type { HazardData } from "@/lib/ppk/records";
+import { flowchartStepLabels } from "@/lib/ppk/diagram";
+import type { DiagramData, HazardData } from "@/lib/ppk/records";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { PpkCreateButton } from "@/components/production-control/ppk-ui";
 import { HazardsClient } from "./hazards-client";
@@ -17,10 +18,15 @@ export default async function HazardsPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [rows, t] = await Promise.all([
+  const [rows, flowcharts, t] = await Promise.all([
     db.ppkRecord.findMany({
       where: { organizationId, block: "hazards" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+    db.ppkRecord.findMany({
+      where: { organizationId, block: "flowchart" },
+      select: { data: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
     getTranslations("productionControl.hazards"),
@@ -33,6 +39,9 @@ export default async function HazardsPage() {
     updatedAt: row.updatedAt.toISOString(),
   }));
 
+  // Этапы из блок-схем организации — подсказки для поля «Этап».
+  const flowSteps = flowchartStepLabels(flowcharts.map((row) => row.data as unknown as DiagramData));
+
   const header = (
     <PpkBlockHeader
       blockKey="hazards"
@@ -41,5 +50,5 @@ export default async function HazardsPage() {
     />
   );
 
-  return <HazardsClient initial={initial} header={header} />;
+  return <HazardsClient initial={initial} flowSteps={flowSteps} header={header} />;
 }

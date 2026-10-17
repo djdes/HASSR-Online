@@ -11,7 +11,12 @@ import {
   ppkReadyTabs,
 } from "./registry";
 
-const SERVICE_KEYS = ["haccp-package", "pre-inspection-audit", "layout-planning", "consulting", "ppk-development"];
+const SERVICE_KEYS = ["haccp-package", "pre-inspection-audit", "layout-planning", "consulting", "ppk-development", "pest-control-service", "norms-subscription"];
+
+test("CTA ведёт в свою услугу: дезинсекция — служба, нормативы — подписка", () => {
+  assert.equal(ppkBlock("pest-control").serviceKey, "pest-control-service");
+  assert.equal(ppkBlock("norm-documents").serviceKey, "norms-subscription");
+});
 
 test("группы меню: главная без подписи, ХАССП и документы с подписью", () => {
   assert.deepEqual(

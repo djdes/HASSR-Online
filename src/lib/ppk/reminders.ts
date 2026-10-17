@@ -40,17 +40,16 @@ export function daysBetween(fromYmd: string, toYmd: string): number {
   return Math.round((utcDay(toYmd) - utcDay(fromYmd)) / DAY_MS);
 }
 
-/** Пункты планов, о которых сегодня нужно напомнить: просроченные сверху, затем по дате. */
-export function collectPpkReminders(input: {
-  lab: LabPlanItem[];
-  pest: PestPlanItem[];
-  today: string;
-}): PpkReminderItem[] {
+/** Пункты планов, отобранные правилом `accept(daysLeft)`: просроченные сверху, затем по дате. */
+function collectByRule(
+  input: { lab: LabPlanItem[]; pest: PestPlanItem[]; today: string },
+  accept: (daysLeft: number) => boolean,
+): PpkReminderItem[] {
   const out: PpkReminderItem[] = [];
   const push = (block: "lab" | "pest", title: string, nextDate: string | null) => {
     if (!nextDate) return;
     const daysLeft = daysBetween(input.today, nextDate);
-    if (!isReminderDay(daysLeft)) return;
+    if (!accept(daysLeft)) return;
     out.push({ block, title, nextDate, daysLeft });
   };
   for (const item of input.lab) {
@@ -66,6 +65,23 @@ export function collectPpkReminders(input: {
     if (aOver !== bOver) return aOver - bOver;
     return a.nextDate.localeCompare(b.nextDate);
   });
+}
+
+/** Пункты планов, о которых сегодня нужно напомнить: просроченные сверху, затем по дате. */
+export function collectPpkReminders(input: {
+  lab: LabPlanItem[];
+  pest: PestPlanItem[];
+  today: string;
+}): PpkReminderItem[] {
+  return collectByRule(input, isReminderDay);
+}
+
+/** Для плашки на главной: всё просроченное и всё, что наступит в пределах `horizonDays`. */
+export function ppkDueSoon(
+  input: { lab: LabPlanItem[]; pest: PestPlanItem[]; today: string },
+  horizonDays = 7,
+): PpkReminderItem[] {
+  return collectByRule(input, (daysLeft) => daysLeft <= horizonDays);
 }
 
 function shortDate(ymd: string): string {

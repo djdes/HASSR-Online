@@ -81,6 +81,20 @@ export const DEFAULT_SERVICES: PlatformServiceItem[] = [
     sort: 20,
   },
   {
+    key: "pest-control-service",
+    title: "Подключение дезинфекционной службы",
+    summary:
+      "Подберём аккредитованную службу, заключим договор и внесём план обработок в кабинет.",
+    description:
+      "Подбираем дезинсекционную и дератизационную службу с нужной аккредитацией под ваш объект и график работы. Помогаем сравнить предложения, проверить документы и заключить договор. План обработок (дезинсекция, дератизация, дезинфекция) заносим в кабинет, чтобы даты и ответственные были видны всей команде.",
+    priceRub: null,
+    priceFrom: false,
+    unit: null,
+    category: "setup",
+    active: true,
+    sort: 25,
+  },
+  {
     key: "consulting",
     title: "Консультационные услуги в области пищевой безопасности",
     summary:
@@ -121,6 +135,20 @@ export const DEFAULT_SERVICES: PlatformServiceItem[] = [
     category: "consult",
     active: true,
     sort: 50,
+  },
+  {
+    key: "norms-subscription",
+    title: "Подписка на обновления нормативов",
+    summary:
+      "Сообщим об изменениях СанПиН и регламентов и поможем обновить документы заведения.",
+    description:
+      "Следим за изменениями санитарных правил, технических регламентов и ГОСТ, которые касаются вашего вида деятельности. Когда норматив меняется, присылаем короткую выжимку: что изменилось, с какого срока, какие журналы и инструкции нужно обновить. По запросу помогаем внести правки в документы и перенастроить журналы под новые требования.",
+    priceRub: null,
+    priceFrom: false,
+    unit: "в месяц",
+    category: "consult",
+    active: true,
+    sort: 55,
   },
   {
     key: "pre-inspection-audit",
@@ -193,6 +221,22 @@ export const DEFAULT_SERVICES: PlatformServiceItem[] = [
     sort: 100,
   },
 ];
+
+/**
+ * Услуги, которых не было в первом засеве. Непустую таблицу (её уже
+ * могли поправить руками) они не получают сами: `readServices` досеивает
+ * именно эти ключи. Удалённую админом услугу из списка так вернём — поэтому
+ * выключать её надо через `active`, а не удалением.
+ */
+export const SERVICES_ADDED_LATER = ["pest-control-service", "norms-subscription"] as const;
+
+/** Стартовые услуги из `SERVICES_ADDED_LATER`, которых нет среди уже записанных ключей. */
+export function missingLaterServices(existingKeys: readonly string[]): PlatformServiceItem[] {
+  const present = new Set(existingKeys);
+  return DEFAULT_SERVICES.filter(
+    (item) => (SERVICES_ADDED_LATER as readonly string[]).includes(item.key) && !present.has(item.key)
+  );
+}
 
 /**
  * Подпись цены: «5 000 ₽ за услугу», «от 15 000 ₽ за аудит»,

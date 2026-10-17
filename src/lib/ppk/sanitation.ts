@@ -42,6 +42,20 @@ export function labNextDate(item: Pick<LabPlanItem, "lastDate" | "everyMonths">)
   return addMonths(item.lastDate, item.everyMonths);
 }
 
+/**
+ * Следующая обработка по периодичности из подсказок («Еженедельно» … «Раз в год»).
+ * Регистр и пробелы не важны; «По заявке» и незнакомый текст — null.
+ */
+export function pestNextDate(frequency: string, fromYmd: string): string | null {
+  const key = frequency.trim().toLowerCase().replace(/\s+/g, " ");
+  if (key === "еженедельно") return addDays(fromYmd, 7);
+  if (key === "ежемесячно") return addMonths(fromYmd, 1);
+  if (key === "ежеквартально") return addMonths(fromYmd, 3);
+  if (key === "раз в полгода") return addMonths(fromYmd, 6);
+  if (key === "раз в год" || key === "ежегодно") return addMonths(fromYmd, 12);
+  return null;
+}
+
 /** Срок относительно сегодняшней даты: дата раньше сегодня — просрочено. */
 export function dueState(nextDate: string | null, today: string): DueState {
   if (!nextDate) return "none";

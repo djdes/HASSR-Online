@@ -71,7 +71,7 @@ export const PPK_BLOCKS: readonly PpkBlock[] = [
   { key: "procedures", menuGroup: "main", href: "/production-control/documents/procedures", icon: "ListOrdered", counted: true, access: "fullAccess", serviceKey: "haccp-package", ready: true },
   { key: "floor-plans", menuGroup: "main", href: "/production-control/sanitation/floor-plans", icon: "Map", counted: true, access: "fullAccess", serviceKey: "layout-planning", ready: true },
   { key: "products", menuGroup: "main", href: "/production-control/haccp/products", icon: "Package", counted: true, access: "fullAccess", serviceKey: "haccp-package", ready: true },
-  { key: "pest-control", menuGroup: "main", href: "/production-control/sanitation/pest-control", icon: "Bug", counted: true, access: "fullAccess", serviceKey: "consulting", ready: true },
+  { key: "pest-control", menuGroup: "main", href: "/production-control/sanitation/pest-control", icon: "Bug", counted: true, access: "fullAccess", serviceKey: "pest-control-service", ready: true },
   { key: "lab", menuGroup: "main", href: "/production-control/sanitation/lab", icon: "FlaskConical", counted: true, access: "fullAccess", serviceKey: "consulting", ready: true },
   { key: "flowcharts", menuGroup: "main", href: "/production-control/haccp/flowcharts", icon: "Workflow", counted: true, access: "fullAccess", serviceKey: "haccp-package", ready: true },
   // Группа «ХАССП».
@@ -106,7 +106,7 @@ export const PPK_BLOCKS: readonly PpkBlock[] = [
   { key: "posters", menuGroup: "documents", href: "/production-control/documents/posters", icon: "Image", counted: false, access: "fullAccess", ready: true },
   {
     key: "norm-documents", menuGroup: "documents", href: "/production-control/norms/documents", icon: "Scale", counted: true, access: "fullAccess",
-    serviceKey: "consulting", ready: true,
+    serviceKey: "norms-subscription", ready: true,
     tabs: [
       { id: "list", href: "/production-control/norms/documents", access: "fullAccess", ready: true },
       { id: "guidelines", href: "/production-control/norms/guidelines", access: "fullAccess", ready: true },

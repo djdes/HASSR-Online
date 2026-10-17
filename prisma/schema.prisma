@@ -508,9 +508,13 @@ model PpkRecord {
   data           Json
   sortOrder      Int          @default(0)
   createdById    String?
+  /// Блок-одиночка (policy, norms): равен `block`, иначе NULL. Уникальность
+  /// в паре с organizationId гарантирует одну запись в БД; NULL не конфликтуют.
+  singleton      String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  @@unique([organizationId, singleton])
   @@index([organizationId, block, sortOrder])
   @@index([block])
 }

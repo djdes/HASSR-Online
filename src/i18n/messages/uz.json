@@ -198,7 +198,8 @@
       "removeTitle": "Xavf oʻchirilsinmi?",
       "removeBody": "Bogʻliq KNNlar qoladi, lekin xavfga havolasini yoʻqotadi.",
       "save": "Saqlash",
-      "cancel": "Bekor qilish"
+      "cancel": "Bekor qilish",
+      "stepsFromFlowcharts": "Blok-sxemalaringizdagi bosqichlar"
     },
     "diagram": {
       "select": "Tanlash",
@@ -505,7 +506,8 @@
       "remove": "O'chirish",
       "removeTitle": "Tadbirni o'chirasizmi?",
       "removeBody": "Qator rejadan o'chadi. Jurnal va fayllarga ta'sir qilmaydi.",
-      "openOrder": "Buyruqni ochish"
+      "openOrder": "Buyruqni ochish",
+      "done": "Bajarildi"
     },
     "lab": {
       "lead": "Laboratoriya nimani va qanchalik tez tekshiradi. Keyingi sanani tizim o'zi hisoblaydi va muddati o'tganini ajratib ko'rsatadi.",
@@ -557,7 +559,8 @@
           "subject": "Ichimlik suvi",
           "indicator": "Mikrobiologik va organoleptik ko'rsatkichlar"
         }
-      }
+      },
+      "done": "Bajarildi"
     },
     "posters": {
       "lead": "Sexlar va hojatxonalar uchun logotipingiz bilan plakatlar. Chop eting va ko'zga ko'rinadigan joyga osing.",
@@ -591,6 +594,30 @@
     },
     "reminders": {
       "hint": "Muddatdan 7, 3 va 1 kun oldin hamda muddat oʻtganda rahbarlarga Telegramda eslatamiz."
+    },
+    "today": {
+      "title": "Ishlab chiqarish nazorati",
+      "progress": "{total} dan {done}",
+      "overdue": "{days} kunga kechikkan",
+      "today": "bugun",
+      "tomorrow": "ertaga",
+      "inDays": "{days} kundan keyin",
+      "next": "Keyingi qadam: {block}",
+      "more": "yana {count} ta"
+    },
+    "markDone": {
+      "title": "Bajarilganini belgilash",
+      "date": "Bajarilgan sana",
+      "next": "Keyingi ishlov",
+      "nextPreview": "Keyingi tekshiruv: {date}",
+      "noNext": "Keyingi muddat hisoblanmaydi",
+      "attachProtocol": "Bayonnomani biriktirish",
+      "attachAct": "Dalolatnomani biriktirish",
+      "submit": "Belgilash",
+      "cancel": "Bekor qilish",
+      "done": "Belgilandi. Keyingi muddat: {date}",
+      "doneNoNext": "Belgilandi",
+      "uploadFailed": "«{name}» faylini yuklab bo‘lmadi"
     }
   },
   "inspectionDay": {

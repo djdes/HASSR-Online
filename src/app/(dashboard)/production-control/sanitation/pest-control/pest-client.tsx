@@ -2,11 +2,12 @@
 
 import { useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { CircleCheck, Pencil, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { PestPlanItem } from "@/lib/ppk/records";
-import { dueState, todayKey } from "@/lib/ppk/sanitation";
+import { dueState, pestNextDate, todayKey } from "@/lib/ppk/sanitation";
+import { MarkDoneDialog } from "@/components/production-control/mark-done-dialog";
 import { usePpkRecords, type PpkRecordRow } from "@/components/production-control/use-ppk-records";
 import {
   PPK_BUTTON_OUTLINE_CLASS,
@@ -40,6 +41,7 @@ export function PestClient({ initial, header }: { initial: Row[]; header: ReactN
   /** `null` — окно закрыто; `{ row: null }` — создание; иначе — правка строки. */
   const [dialog, setDialog] = useState<{ row: Row | null } | null>(null);
   const [pendingRemove, setPendingRemove] = useState<Row | null>(null);
+  const [marking, setMarking] = useState<Row | null>(null);
   const [filling, setFilling] = useState(false);
   const today = todayKey();
 
@@ -61,6 +63,10 @@ export function PestClient({ initial, header }: { initial: Row[]; header: ReactN
 
   const actions = (row: Row) => (
     <>
+      <button type="button" onClick={() => setMarking(row)} className={PPK_BUTTON_TEXT_CLASS}>
+        <CircleCheck className="size-4" />
+        {t("done")}
+      </button>
       <button type="button" onClick={() => setDialog({ row })} className={PPK_BUTTON_TEXT_CLASS}>
         <Pencil className="size-4" />
         {t("edit")}
@@ -189,6 +195,18 @@ export function PestClient({ initial, header }: { initial: Row[]; header: ReactN
           row={dialog.row}
           onClose={() => setDialog(null)}
           onSave={(data) => (dialog.row ? update(dialog.row.id, data) : create(data))}
+        />
+      ) : null}
+
+      {marking ? (
+        <MarkDoneDialog
+          key={marking.id}
+          computeNext={(date) => pestNextDate(marking.data.frequency, date)}
+          editableNext
+          fileKind="act"
+          folder="pest-acts"
+          onClose={() => setMarking(null)}
+          onSubmit={(date, nextDate) => update(marking.id, { ...marking.data, lastDate: date, nextDate })}
         />
       ) : null}
 

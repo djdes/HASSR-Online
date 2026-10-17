@@ -2,11 +2,12 @@
 
 import { useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { CircleCheck, Pencil, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { LabPlanItem } from "@/lib/ppk/records";
 import { dueState, labNextDate, todayKey } from "@/lib/ppk/sanitation";
+import { MarkDoneDialog } from "@/components/production-control/mark-done-dialog";
 import { usePpkRecords, type PpkRecordRow } from "@/components/production-control/use-ppk-records";
 import {
   PPK_BUTTON_OUTLINE_CLASS,
@@ -42,6 +43,7 @@ export function LabClient({ initial, header }: { initial: Row[]; header: ReactNo
   /** `null` — окно закрыто; `{ row: null }` — создание; иначе — правка строки. */
   const [dialog, setDialog] = useState<{ row: Row | null } | null>(null);
   const [pendingRemove, setPendingRemove] = useState<Row | null>(null);
+  const [marking, setMarking] = useState<Row | null>(null);
   const [filling, setFilling] = useState(false);
   const today = todayKey();
 
@@ -64,6 +66,10 @@ export function LabClient({ initial, header }: { initial: Row[]; header: ReactNo
 
   const actions = (row: Row) => (
     <>
+      <button type="button" onClick={() => setMarking(row)} className={PPK_BUTTON_TEXT_CLASS}>
+        <CircleCheck className="size-4" />
+        {t("done")}
+      </button>
       <button type="button" onClick={() => setDialog({ row })} className={PPK_BUTTON_TEXT_CLASS}>
         <Pencil className="size-4" />
         {t("edit")}
@@ -202,6 +208,18 @@ export function LabClient({ initial, header }: { initial: Row[]; header: ReactNo
           row={dialog.row}
           onClose={() => setDialog(null)}
           onSave={(data) => (dialog.row ? update(dialog.row.id, data) : create(data))}
+        />
+      ) : null}
+
+      {marking ? (
+        <MarkDoneDialog
+          key={marking.id}
+          computeNext={(date) => labNextDate({ lastDate: date, everyMonths: marking.data.everyMonths })}
+          editableNext={false}
+          fileKind="protocol"
+          folder="lab-protocols"
+          onClose={() => setMarking(null)}
+          onSubmit={(date) => update(marking.id, { ...marking.data, lastDate: date })}
         />
       ) : null}
 

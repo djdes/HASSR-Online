@@ -57,7 +57,7 @@ function sortByRisk(rows: Row[]): Row[] {
  * Анализ опасностей (ХАССП, шаг 5): таблица на десктопе и карточки на телефоне,
  * матрица 4×4 рядом (на телефоне — над списком), окно правки опасности.
  */
-export function HazardsClient({ initial, header }: { initial: Row[]; header: ReactNode }) {
+export function HazardsClient({ initial, flowSteps, header }: { initial: Row[]; flowSteps: string[]; header: ReactNode }) {
   const t = useTranslations("productionControl.hazards");
   const { records, create, update, remove } = usePpkRecords<HazardData>("hazards", initial);
 
@@ -174,6 +174,7 @@ export function HazardsClient({ initial, header }: { initial: Row[]; header: Rea
         <HazardDialog
           key={dialog.row?.id ?? "new"}
           row={dialog.row}
+          flowSteps={flowSteps}
           onClose={() => setDialog(null)}
           onSave={(data) => (dialog.row ? update(dialog.row.id, data) : create(data))}
         />
@@ -316,10 +317,12 @@ function HazardMatrix({ rows }: { rows: Row[] }) {
 /** Окно опасности: этап с подсказками, вид, вероятность и тяжесть сегментами, живой риск. */
 function HazardDialog({
   row,
+  flowSteps,
   onClose,
   onSave,
 }: {
   row: Row | null;
+  flowSteps: string[];
   onClose: () => void;
   onSave: (data: HazardData) => Promise<boolean>;
 }) {
@@ -369,10 +372,11 @@ function HazardDialog({
               className={PPK_FIELD_CLASS}
             />
             <datalist id="ppk-hazard-steps">
-              {TYPICAL_STEPS.map((step) => (
+              {[...flowSteps, ...TYPICAL_STEPS.filter((step) => !flowSteps.includes(step))].map((step) => (
                 <option key={step} value={step} />
               ))}
             </datalist>
+            {flowSteps.length > 0 ? <span className="mt-1 block text-[12px] text-[#9b9fb3]">{t("stepsFromFlowcharts")}</span> : null}
           </label>
 
           <label className="block">
