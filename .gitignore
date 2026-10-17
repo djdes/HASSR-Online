@@ -120,3 +120,7 @@ dispatcher/logs/
 /docs/FEATURES_AND_AUTOMATION.md
 /docs/superpowers/plans/2026-05-09-race-siblings-fix.md
 /.agent/tasks/telegram-notifications/DEPLOY_GUIDE.md
+
+# Рабочие файлы планов и субагентов superpowers (ledger, брифы) — не в репозиторий;
+# заодно их не сканирует Tailwind (пути Windows в брифах ломали сборку CSS).
+/.superpowers/

@@ -1,0 +1,23 @@
+менеджер cmvawxbab0005l49msxzjws0l Лидия Руководитель
+
+=== P8 ===
+PASS [P8.1] бургер → лист в режиме section с пунктами 17
+PASS [P8.2] «Главное меню» в листе → список разделов 9
+PASS [P8.3] scrollWidth ≤ 390 на анализе опасностей 390
+PASS [P8.4] scrollWidth ≤ 390 на обзоре 390
+
+=== P9 ===
+FAIL [P9.1] Mini App: анализ опасностей открывается в оболочке без ошибок {"status":200,"shell":true,"newErrors":["http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Unexpected end of JSON input"]}
+
+=== P6 ===
+PASS [P6.1] прогресс «Заполнено N из M», N > 0 "Заполнено 5 из 14 блоков"
+PASS [P6.2] «Следующий шаг» ведёт на незаполненный блок {"nextKey":"instructions","nextHref":"/knowledge"}
+PASS [P6.3] Программа ПК: открывается, есть разделы {"status":200,"sections":18}
+PASS [P6.4] ХАССП-план: открывается, есть разделы {"status":200,"sections":14}
+
+итого: 50/52 без FAIL, pageerrors: 5
+http://localhost:3025/production-control pageerror: SyntaxError: Invalid or unexpected token
+http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token
+http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token
+http://localhost:3025/production-control pageerror: SyntaxError: Invalid or unexpected token
+http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Unexpected end of JSON input

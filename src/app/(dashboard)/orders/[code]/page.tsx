@@ -10,6 +10,10 @@ import {
   suggestNextNumber,
 } from "@/lib/orders/store";
 import { defaultOrderValues } from "@/lib/orders/render";
+import { db } from "@/lib/db";
+import { loadPpkStaff } from "@/lib/ppk/staff.server";
+import { buildHaccpTeamOrderValues } from "@/lib/ppk/team-order";
+import type { TeamMember } from "@/lib/ppk/records";
 import { OrderEditor } from "./order-editor";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +75,31 @@ export default async function OrderPage({
   const today = new Date();
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
+  // Из блока «Группа ХАССП»: руководитель и состав подставляются в приказ.
+  const defaults = defaultOrderValues(template, today);
+  let initialValues = defaults;
+  let preferInitial = false;
+  if (query.prefill === "ppk-team" && template.code === "haccp-team" && canManage && !existing) {
+    const [rows, staff] = await Promise.all([
+      db.ppkRecord.findMany({
+        where: { organizationId, block: "team" },
+        select: { data: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      }),
+      loadPpkStaff(organizationId),
+    ]);
+    if (rows.length > 0) {
+      initialValues = {
+        ...defaults,
+        ...buildHaccpTeamOrderValues(
+          rows.map((row) => row.data as unknown as TeamMember),
+          staff,
+        ),
+      };
+      preferInitial = true;
+    }
+  }
+
   return (
     <OrderEditor
       template={template}
@@ -98,7 +127,8 @@ export default async function OrderPage({
       }
       initialNumber={suggestNextNumber(orders)}
       initialIssuedAt={todayIso}
-      initialValues={defaultOrderValues(template, today)}
+      initialValues={initialValues}
+      preferInitial={preferInitial}
       returnTo={returnTo}
     />
   );

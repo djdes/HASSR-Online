@@ -1,0 +1,79 @@
+менеджер cmvawxbab0005l49msxzjws0l Лидия Руководитель
+очистка: записей 25, файлов 1
+
+=== P1 ===
+PASS [P1.1] на /dashboard сайдбар без section-режима "main"
+PASS [P1.2] клик по разделу → /production-control, режим section
+PASS [P1.3] первые 8 пунктов меню ["program","instructions","procedures","floor-plans","products","pest-control","lab","flowcharts"]
+PASS [P1.4] затем ХАССП и документы ["team","policy","hazards","control-points","audit","orders","posters","norm-documents","storage"]
+PASS [P1.5] активный пункт — program "program"
+PASS [P1.6] на корне раздела крошек нет 0
+PASS [P1.7] «Главное меню» → режим main, адрес прежний "http://localhost:3025/production-control"
+PASS [P1.8] клик по «Производственный контроль» в главном меню → section
+PASS [P1.9] /orders → активный orders "orders"
+PASS [P1.10] /sanpin → активный norm-documents и 3 вкладки {"active":"norm-documents","tabsSan":["Перечень","Методические рекомендации","Нормы СанПиН"]}
+PASS [P1.11] worksheets: вкладки «Точки · Рабочие листы», активна вторая [{"t":"Точки","cur":null},{"t":"Рабочие листы","cur":"page"}]
+PASS [P1.12] на страницах раздела крошек нет 0
+
+=== P2 ===
+PASS [P2.1] «Заполнить типовыми» → 10 строк 10
+PASS [P2.2] в ККТ блок «Нужно решение» не пуст 9
+PASS [P2.3] мастер: Да, Да → итог ККТ "ЗакрытьКонтрольная точкаПриёмка сырья · Патогенные микроорганизмы в сыром мясе и птице (сальмонеллы, листерии)РезультатК"
+PASS [P2.4] после сохранения — карточка «ККТ-1»
+PASS [P2.5] worksheets содержит «Рабочий лист ККТ-1» "ТочкиРабочие листыКафе «Точки»Рабочий лист ККТ-1ЭтапПриёмка сырьяОпасный факторПатогенные микроорганизмы в сыром мясе и "
+PASS [P2.6] член группы создан через API 201
+PASS [P2.7] положение содержит имя руководителя {"managerName":"Лидия Руководитель","snippet":"СоставПоложениеКафе «Точки»Положение о группе ХАССПУТВЕРЖДАЮРуководитель—/«____» ______________ 20__"}
+PASS [P2.8] «Оформить приказ» → /orders/haccp-team?prefill=ppk-team, руководитель подставлен {"url":"http://localhost:3025/orders/haccp-team?prefill=ppk-team","filled":{"byInput":true,"byText":true,"values":["1","2026-10-17","Лидия Руководитель","Управляющий"]}}
+PASS [P2.9] политика создана, токен выдан {"status":201,"tokenLen":22}
+PASS [P2.10] policy/print содержит svg QR {"svgCount":38}
+PASS [P2.11] публичная /policy/<token> без cookie — 200 и название организации {"status":200,"orgName":"Кафе «Точки»"}
+PASS [P2.12] /policy/badtoken123456789 — 404 404
+
+=== P3 ===
+PASS [P3.1] блок-схема из шаблона «Горячий цех»: в SVG ≥ 8 этапов 8
+PASS [P3.2] двойной клик по этапу открывает поле правки подписи {"hasInput":true}
+PASS [P3.2b] правка подписи (через панель), подпись в SVG, автосохранение «Сохранено» {"labelInSvg":true,"savedShown":true}
+PASS [P3.3] …/[id]/print — SVG есть, правка сохранена {"svg":38,"edited":true}
+PASS [P3.4] план помещений создан через API (2 помещения, 1 поток) {"status":201}
+PASS [P3.5] печать по потокам: секция потока «Сырьё» есть {"status":200,"snippet":"Моя компания\nСотрудники\nТорговые точки\nЖурналы\nЧек-листы\nПроизводственный контроль\nОплата\nОстальное\nПришла проверка\nГлавное меню\nПроизводственный конт"}
+
+=== P4 ===
+PASS [P4.1] дезинсекция: «Заполнить типовым» → 3 строки 3
+PASS [P4.2] лаборатория: «Заполнить типовым» → 4 строки 4
+PASS [P4.3] файл в папке lab-contract в списке, ссылка отдаёт 200 {"name":"ppk-e2e.pdf","status":200}
+PASS [P4.4] удаление файла через диалог true
+
+=== P5 ===
+PASS [P5.1] плакаты: 6 превью 6
+PASS [P5.2] плакат hand-washing: «Как правильно мыть руки» "Моя компания\nСотрудники\nТорговые точки\nЖурналы\nЧек-листы\nПроизводственный контро"
+PASS [P5.3] нормативы: «Отметить рекомендуемые» → «Сохранить» → после перезагрузки отмечены {"checkedBefore":10,"checkedAfter":10}
+PASS [P5.4] процедуры: загрузка файла true
+
+=== P7 ===
+PASS [P7.1] повар: GET records?block=hazards → 403 403
+PASS [P7.2] повара с /production-control уводит "/mini/today"
+PASS [P7.3] заведующая: меню раздела без instructions {"landed":"/production-control","ids":["program","procedures","floor-plans","products","pest-control","lab","flowcharts","team","policy","hazards","control-points","audit","orders","posters","norm-documents","storage"],"apiStatus":200}
+
+=== P8 ===
+PASS [P8.1] бургер → лист в режиме section с пунктами 17
+PASS [P8.2] «Главное меню» в листе → список разделов 9
+PASS [P8.3] scrollWidth ≤ 390 на анализе опасностей 390
+FAIL [P8.ERR] P8: сценарий упал "Error: page.goto: net::ERR_ABORTED at http://localhost:3025/production-control\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3025/production-control\", waiting until \"domcontentloaded\"\u001b[22m\n"
+
+=== P9 ===
+FAIL [P9.1] Mini App: анализ опасностей открывается в оболочке без ошибок {"status":200,"shell":true,"newErrors":["http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token","http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token"]}
+
+=== P10 ===
+PASS [P10.1] снимки тёмной темы сделаны "p10-overview-dark.png, p10-hazards-dark.png"
+
+=== P6 ===
+PASS [P6.1] прогресс «Заполнено N из M», N > 0 "Заполнено 5 из 14 блоков"
+PASS [P6.2] «Следующий шаг» ведёт на незаполненный блок {"nextKey":"instructions","nextHref":"/knowledge"}
+PASS [P6.3] Программа ПК: открывается, есть разделы {"status":200,"sections":18}
+FAIL [P6.4] ХАССП-план: открывается, есть разделы {"status":0,"sections":14}
+
+итого: 49/52 без FAIL, pageerrors: 3
+http://localhost:3025/production-control pageerror: SyntaxError: Invalid or unexpected token
+http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token
+http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token
+EXIT 0

@@ -1,0 +1,53 @@
+{
+  "task": "ppk-section-2026-10",
+  "checks": {
+    "tests": "npm run test:gate → 3922 pass / 0 fail",
+    "typecheck": "tsc exit 0",
+    "i18n": "i18n:check exit 0",
+    "eslint": "0 errors",
+    "build": "next build exit 0",
+    "e2e": "raw/smoke-result.json"
+  },
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "e2e P1: сайдбар в режиме section на /production-control, /orders, /sanpin; порядок пунктов по схеме; app-nav.test.ts"
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "e2e P1: «‹ Главное меню» без смены адреса; вкладки третьего уровня (norm-documents, control-points); ссылка «‹ пункт» на уровне 4 (P3)"
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "e2e P8 (лист бургера, scrollWidth 390), P9 (кнопка меню раздела в Mini App)"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "e2e P6: прогресс, два документа со «Собрать из разделов», следующий шаг, карта"
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": "e2e P2–P5; records/registry/status тесты в src/lib/ppk/*.test.ts"
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": "e2e P3; diagram.test.ts (nodeAt, fitView, edgeAnchors, шаблоны)"
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": "e2e P2 (политика с QR, положение, рабочие листы, публичная страница без входа), P5 (плакаты), P6 (ППК, ХАССП-план)"
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": "предзаполнение приказа (P2), журналы и сотрудники (P2), помещения в плане, ZIP и проверки готовности (compliance.test.ts), ⌘K (app-nav.test.ts)"
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": "e2e P7: повар 403 и уход со страницы; API фильтрует по organizationId (ревью)"
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": "test:gate, tsc, i18n:check, eslint, build; WhatsNew — категория «Производственный контроль»"
+    }
+  }
+}

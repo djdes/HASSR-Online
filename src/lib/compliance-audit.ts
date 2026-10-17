@@ -15,10 +15,13 @@ import {
   getVerifierSlotId,
   getSchemaForJournal,
 } from "@/lib/journal-responsible-schemas";
+import { loadPpkStatuses } from "@/lib/ppk/facts.server";
+import { ppkProgress } from "@/lib/ppk/status";
+import { productionControlChecks } from "@/lib/ppk/compliance";
 
 export type ComplianceCheck = {
   id: string;
-  category: "structure" | "team" | "responsibles" | "records" | "capa" | "tasksflow";
+  category: "structure" | "team" | "responsibles" | "records" | "capa" | "tasksflow" | "productionControl";
   title: string;
   status: "ok" | "warn" | "fail";
   detail?: string;
@@ -381,6 +384,25 @@ export async function runComplianceAudit(
     weight: 2,
     score: 1,
   });
+
+  // 13. Производственный контроль: программа, группа ХАССП, критические точки
+  try {
+    const [statuses, programFile] = await Promise.all([
+      loadPpkStatuses(organizationId),
+      db.knowledgeDocument.count({ where: { organizationId, kind: "ppk" } }),
+    ]);
+    checks.push(
+      ...productionControlChecks({
+        hasProgramFile: programFile > 0,
+        progress: ppkProgress(statuses),
+        teamStatus: statuses.team,
+        controlPointsStatus: statuses["control-points"],
+      }).map((check) => ({ ...check, category: "productionControl" as const })),
+    );
+  } catch (error) {
+    // Сбой раздела не должен ронять весь аудит.
+    console.error("[compliance-audit] production control checks failed", error);
+  }
 
   // Итог
   const totalWeight = checks.reduce((s, c) => s + c.weight, 0);

@@ -187,8 +187,10 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     [...crumbs].reverse().find((crumb) => crumb.href)?.href ?? "/dashboard";
 
   // На корне раздела вместо крошек — вкладки (`SectionTabs`): цепочка из
-  // одного звена ничего не объясняет. Журналы рисуют крошки сами.
-  if (atRoot || pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return null;
+  // одного звена ничего не объясняет. Журналы рисуют крошки сами. В разделе
+  // с меню крошек нет совсем: где человек, показывает меню слева, а на
+  // глубоких страницах — ссылка «назад» (`SectionFrame`).
+  if (atRoot || section?.menu || pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return null;
 
   // Кнопка и крошки — одной строкой. Раньше они стояли друг под другом в
   // 6px и одинаковым серым: читались как две строки одного текста, а не

@@ -39,6 +39,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   records: "Записи и периодичность",
   capa: "CAPA — корректирующие действия",
   tasksflow: "Интеграция TasksFlow",
+  productionControl: "Производственный контроль",
 };
 
 export default async function ComplianceAuditPage() {
@@ -166,8 +167,8 @@ export default async function ComplianceAuditPage() {
       </div>
 
       <div className="rounded-2xl border border-[#5566f6]/15 bg-[#f5f6ff]/50 p-4 text-[13px] leading-relaxed text-[#3848c7]">
-        <strong>Как считается оценка:</strong> 100 баллов разделены между 12
-        проверками с разными весами. Самые важные — записи за 30 дней (15),
+        <strong>Как считается оценка:</strong> 100 баллов разделены между{" "}
+        {report.checks.length} проверками с разными весами. Самые важные — записи за 30 дней (15),
         ответственные (15), журналы включены (10), TasksFlow (10),
         заполнение вовремя (10). 90+ баллов — готово к проверке, 70+ — норма
         с мелкими доработками, 50+ — нужно подтянуть, ниже — высокий риск.

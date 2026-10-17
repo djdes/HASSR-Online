@@ -19,7 +19,576 @@
     "uploadFailed": "Faylni yuklab bo‘lmadi",
     "removeFailed": "Faylni o‘chirib bo‘lmadi",
     "formats": "PDF, Word yoki skan · 25 MB gacha",
-    "askManager": "Faylni rahbar yuklay oladi"
+    "askManager": "Faylni rahbar yuklay oladi",
+    "specialistHelp": "Biz siz uchun toʻldiramiz",
+    "staffPicker": {
+      "placeholder": "Xodimni tanlang",
+      "search": "Ism yoki lavozim boʻyicha qidirish",
+      "recommended": "Tavsiya etamiz",
+      "managers": "Rahbariyat",
+      "staff": "Xodimlar",
+      "empty": "Hech kim topilmadi",
+      "clear": "Tanlanmagan"
+    },
+    "overview": {
+      "title": "Ishlab chiqarish nazoratining elektron dasturi",
+      "progress": "{total} ta blokdan {done} tasi toʻldirilgan",
+      "fillForYou": "Biz siz uchun toʻldiramiz",
+      "mapTitle": "Dastur boʻlimlari",
+      "mapMain": "Dastur"
+    },
+    "group": {
+      "progress": "{total} tadan {done} tasi toʻldirilgan"
+    },
+    "nextStep": "Keyingi qadam: {block}",
+    "openBlock": "Ochish",
+    "orderHelp": "Mutaxassisdan buyurtma berish",
+    "folder": {
+      "upload": "Fayllarni yuklash",
+      "uploading": "Yuklanmoqda…",
+      "uploaded": "Yuklangan fayllar: {count}",
+      "removed": "Fayl oʻchirildi",
+      "remove": "Faylni oʻchirish",
+      "removeTitle": "Fayl oʻchirilsinmi?",
+      "removeBody": "“{name}” boʻlimdan butunlay oʻchiriladi.",
+      "emptyTitle": "Hozircha fayl yoʻq",
+      "emptyHint": "PDF, Word, Excel, skanlar va arxivlar — 25 MB gacha.",
+      "failed": "{name} yuklanmadi",
+      "loadFailed": "Fayllarni yuklab bo‘lmadi",
+      "retry": "Qayta urinish"
+    },
+    "blocks": {
+      "team": {
+        "hint": "HACCP tizimi uchun kim javobgar va har kim nima qiladi"
+      },
+      "policy": {
+        "hint": "Siyosat matni va xodimlar uchun QR varaq"
+      },
+      "products": {
+        "hint": "Mahsulotlar va TR TS boʻyicha xavfsizlik koʻrsatkichlari"
+      },
+      "flowcharts": {
+        "hint": "Qabul qilishdan tarqatishgacha jarayon bosqichlari"
+      },
+      "hazards": {
+        "hint": "Bosqichlardagi xavfli omillar va ularning ahamiyati"
+      },
+      "control-points": {
+        "hint": "Kritik nuqtalar, chegaralar va masʼullar"
+      },
+      "audit": {
+        "hint": "Reja va chek-varaqlar boʻyicha tizim tekshiruvlari"
+      },
+      "instructions": {
+        "hint": "Ish joylaridagi xodimlar uchun yoʻriqnomalar"
+      },
+      "procedures": {
+        "hint": "Muassasaning standart tartiblari (SOP)",
+        "lead": "Muassasaning standart tartiblarini yuklang: qabul qilish, saqlash, yuvish, tozalash. Ular dastur bilan birga tekshiriladi."
+      },
+      "orders": {
+        "hint": "Tayinlash va hujjatlarni tasdiqlash buyruqlari"
+      },
+      "posters": {
+        "hint": "Logotipingiz bilan sexlar uchun plakatlar"
+      },
+      "storage": {
+        "hint": "Shartnomalar, sertifikatlar va boshqa fayllar",
+        "lead": "Tekshiruvda qoʻl ostida boʻlishi kerak boʻlgan hamma narsa: shartnomalar, sertifikatlar, deklaratsiyalar, uskunalar pasportlari."
+      },
+      "floor-plans": {
+        "hint": "Xonalar sxemasi va oqimlarni ajratish"
+      },
+      "pest-control": {
+        "hint": "Tadbirlar rejasi, shartnoma va dalolatnomalar"
+      },
+      "lab": {
+        "hint": "Tekshiruvlar rejasi, shartnoma va bayonnomalar"
+      },
+      "norm-documents": {
+        "hint": "Muassasa qaysi meʼyorlarni qoʻllaydi"
+      },
+      "guidelines": {
+        "hint": "Uslubiy qoʻllanmalar va nazorat tushuntirishlari",
+        "lead": "Siz tayanadigan uslubiy tavsiyalar va nazorat xatlari."
+      },
+      "sanpin": {
+        "hint": "Asosiy SanPiN meʼyorlari maʼlumotnomasi"
+      },
+      "program": {
+        "hint": "Ishlab chiqarish nazorati dasturi va HACCP rejasi"
+      }
+    },
+    "products": {
+      "lead": "Mahsulotni tavsiflang: tarkibi, saqlash, yaroqlilik muddati va xavfsizlik koʻrsatkichlari. Bu HACCPning ikkinchi bosqichi.",
+      "add": "Mahsulot qoʻshish",
+      "emptyTitle": "Mahsulotlar hali yoʻq",
+      "emptyHint": "Eng koʻp tayyorlaydigan taomlaringizdan boshlang.",
+      "name": "Nomi",
+      "category": "Mahsulot guruhi",
+      "composition": "Tarkibi",
+      "storage": "Saqlash shartlari",
+      "shelfLife": "Yaroqlilik muddati",
+      "usage": "Foydalanish va sotish usuli",
+      "packaging": "Qadoqlash",
+      "indicators": "Xavfsizlik koʻrsatkichlari",
+      "indicatorName": "Koʻrsatkich",
+      "indicatorNorm": "Meʼyor",
+      "addIndicator": "Koʻrsatkich qoʻshish",
+      "usePreset": "Typik koʻrsatkichlarni qoʻyish",
+      "usePresetTitle": "Koʻrsatkichlar typiklari bilan almashtirilsinmi?",
+      "usePresetBody": "Joriy qatorlar tanlangan guruh koʻrsatkichlari bilan almashtiriladi.",
+      "indicatorsNote": "Typik koʻrsatkichlar TR TI 021/2011 boʻyicha. Oʻz kichik guruhingiz meʼyorlarini reglament va texnologik xarita bilan tekshiring.",
+      "indicatorsCount": "Koʻrsatkichlar: {count}",
+      "search": "Mahsulotni topish",
+      "edit": "Tahrirlash",
+      "remove": "Oʻchirish",
+      "removeTitle": "«{name}» oʻchirilsinmi?",
+      "removeBody": "Mahsulot tavsif va HACCP rejasidan chiqib ketadi.",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "categories": {
+        "ready-meals": "Tayyor taomlar (kulinariya mahsuloti)",
+        "semi-finished": "Kulinariya yarim tayyor mahsulotlari",
+        "dairy": "Sut mahsulotlari",
+        "meat": "Goʻsht mahsulotlari",
+        "fish": "Baliq mahsulotlari",
+        "bakery": "Non va qandolat mahsulotlari",
+        "drinks": "Ichimliklar"
+      },
+      "notFound": "Hech narsa topilmadi"
+    },
+    "hazards": {
+      "lead": "Har bir bosqich uchun mehmonga zarar yetkazishi mumkin boʻlgan narsani belgilang va xavfni baholang. {threshold} va undan yuqori xavf — ahamiyatli xavf, unga KNN yoki OPN kerak.",
+      "add": "Xavf qoʻshish",
+      "fillTypical": "Typik xavflar bilan toʻldirish",
+      "filled": "Qoʻshilgan xavflar: {count}",
+      "emptyTitle": "Hali xavflar yoʻq",
+      "emptyHint": "Umumiy ovqatlanish uchun typik xavflardan boshlang, keyin oʻzingizga moslang.",
+      "step": "Bosqich",
+      "hazard": "Xavfli omil",
+      "type": "Turi",
+      "risk": "Xavf",
+      "measures": "Boshqarish choralari",
+      "significant": "ahamiyatli",
+      "toCcp": "KNNni aniqlash",
+      "matrix": "Xavf matritsasi",
+      "probability": "Ehtimollik",
+      "severity": "Ogʻirlik",
+      "types": {
+        "bio": "Biologik",
+        "chem": "Kimyoviy",
+        "phys": "Fizikaviy",
+        "allergen": "Allergen"
+      },
+      "probabilityLevels": {
+        "1": "amalda istisno",
+        "2": "kam ehtimolli",
+        "3": "ehtimolli",
+        "4": "juda ehtimolli"
+      },
+      "severityLevels": {
+        "1": "yengil",
+        "2": "oʻrta",
+        "3": "ogʻir",
+        "4": "kritik"
+      },
+      "edit": "Tahrirlash",
+      "remove": "Oʻchirish",
+      "removeTitle": "Xavf oʻchirilsinmi?",
+      "removeBody": "Bogʻliq KNNlar qoladi, lekin xavfga havolasini yoʻqotadi.",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish"
+    },
+    "diagram": {
+      "select": "Tanlash",
+      "step": "Bosqich",
+      "connect": "Bog‘lanish",
+      "room": "Xona",
+      "flow": "Oqim",
+      "remove": "O‘chirish",
+      "undo": "Bekor qilish",
+      "zoomIn": "Kattaroq",
+      "zoomOut": "Kichikroq",
+      "fit": "Sig‘dirish",
+      "label": "Yozuv",
+      "isCcp": "Bu KBN",
+      "noCcp": "Avval KBN larni belgilang",
+      "toCcp": "KBN larni ochish",
+      "ccpNone": "KBN emas",
+      "fromAreas": "Kabinetdagi xonalardan",
+      "areaNone": "Tanlanmagan",
+      "flowKind": "Oqim turi",
+      "flows": {
+        "raw": "Xom ashyo",
+        "ready": "Tayyor mahsulot",
+        "waste": "Chiqindi",
+        "staff": "Xodimlar",
+        "dishes": "Iflos idish"
+      },
+      "legend": "Belgilar",
+      "saving": "Saqlanmoqda…",
+      "saved": "Saqlandi",
+      "saveFailed": "Saqlanmadi — aloqani tekshiring",
+      "editOnDesktop": "Kompyuterda chizish qulayroq — bu yerda sxemani faqat ko‘rish mumkin.",
+      "hintSelect": "O‘zgartirish uchun elementni tanlang. Bosqich yoki xonaga ikki marta bosing — yozuvni tahrirlash.",
+      "hintStep": "Bosqich qo‘yish uchun maydonga bosing.",
+      "hintRoom": "Maydonda to‘rtburchak chizing.",
+      "hintFlow": "Nuqta qo‘yish uchun bosing. Tugatish uchun ikki marta bosing.",
+      "hintConnect": "Avval bosqichga, keyin keyingisiga bosing.",
+      "print": "Chop etish",
+      "printByFlow": "Oqimlar bo‘yicha chop etish",
+      "rename": "Nomini o‘zgartirish",
+      "titleField": "Sxema nomi",
+      "selected": "Tanlangan element",
+      "nothingSelected": "Bosqich, xona yoki bog‘lanishni tanlang.",
+      "newStep": "Yangi bosqich",
+      "newRoom": "Xona",
+      "finishFlow": "Tugatish",
+      "editLabel": "Element yozuvi",
+      "canvas": "Sxema maydoni",
+      "noFlowsOnPlan": "Rejada bironta oqim yo‘q",
+      "unnamed": "Nomsiz",
+      "limitNodes": "Chegaraga yetildi: sxemada {count} tadan ortiq element bo'lmaydi",
+      "limitEdges": "Chegaraga yetildi: sxemada {count} tadan ortiq bog'lanish bo'lmaydi",
+      "limitPoints": "Chegaraga yetildi: bitta chiziqda {count} tadan ortiq nuqta bo'lmaydi. Chiziqni yakunlang (Enter)"
+    },
+    "flowcharts": {
+      "lead": "Texnologik jarayon bosqichlari: qabul qilishdan tarqatishgacha. KBN turgan bosqichlarni belgilang.",
+      "new": "Yangi sxema",
+      "pick": "Nimadan boshlash",
+      "templates": {
+        "blank": "Bo‘sh",
+        "hot": "Issiq sex",
+        "cold": "Sovuq sex",
+        "pastry": "Qandolat sexi"
+      },
+      "name": "Nomi",
+      "namePlaceholder": "Masalan, Issiq sex",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "stats": "Bosqichlar: {steps}",
+      "updated": "O‘zgartirilgan: {date}",
+      "open": "Ochish",
+      "emptyTitle": "Blok-sxemalar hali yo‘q",
+      "emptyHint": "Sex shablonidan sxema yarating — bosqichlar joylashtirilgan, faqat KBN larni belgilash qoladi.",
+      "remove": "O‘chirish",
+      "removeTitle": "“{name}” sxemasi o‘chirilsinmi?",
+      "removeBody": "Sxema qaytarib bo‘lmaydigan tarzda o‘chiriladi.",
+      "createFailed": "Sxemani yaratib bo‘lmadi"
+    },
+    "floorPlans": {
+      "lead": "Xonalar va oqimlarni chizing — xom ashyo, tayyor mahsulot, chiqindi, xodimlar, idish — shunda ular kesishmasligi ko‘rinadi.",
+      "new": "Yangi reja",
+      "name": "Nomi",
+      "namePlaceholder": "Masalan, Asosiy sex",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "stats": "Xonalar: {rooms} · oqimlar: {flows}",
+      "updated": "O‘zgartirilgan: {date}",
+      "open": "Ochish",
+      "emptyTitle": "Xonalar rejalari hali yo‘q",
+      "emptyHint": "Xonalarni to‘rtburchak qilib chizing va ular orasida oqimlarni turli ranglarda o‘tkazing.",
+      "remove": "O‘chirish",
+      "removeTitle": "“{name}” rejasi o‘chirilsinmi?",
+      "removeBody": "Reja qaytarib bo‘lmaydigan tarzda o‘chiriladi.",
+      "createFailed": "Rejani yaratib bo‘lmadi"
+    },
+    "records": {
+      "saveFailed": "Saqlab bo‘lmadi",
+      "offline": "Server bilan aloqa yo‘q"
+    },
+    "team": {
+      "lead": "HACCP tizimiga kim javob beradi. Guruh rahbari hujjatlarni imzolaydi va yig‘ilishlarni o‘tkazadi.",
+      "add": "Guruhga qo‘shish",
+      "noLeader": "Guruh rahbarini tayinlang — usiz buyruq va nizomni rasmiylashtirib bo‘lmaydi.",
+      "emptyTitle": "Guruhda hozircha hech kim yo‘q",
+      "emptyHint": "HACCP bilan shug‘ullanadigan xodimlarni qo‘shing: odatda bu boshqaruvchi, oshpaz va texnolog.",
+      "roles": {
+        "leader": "Guruh rahbari",
+        "deputy": "O‘rinbosar",
+        "member": "Guruh a’zosi",
+        "secretary": "Kotib"
+      },
+      "leaderTaken": "Rahbar allaqachon bor",
+      "duties": "Vazifalar",
+      "employee": "Xodim",
+      "role": "Guruhdagi roli",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "edit": "O‘zgartirish",
+      "remove": "Guruhdan chiqarish",
+      "removeTitle": "{name} guruhdan chiqarilsinmi?",
+      "removeBody": "Xodim kabinetda qoladi, faqat guruh tarkibi o‘zgaradi.",
+      "formerEmployee": "Endi ishlamaydi",
+      "docsTitle": "Guruh hujjatlari",
+      "order": "Guruh tuzish to‘g‘risidagi buyruq",
+      "orderIssued": "{date} dagi {number}-sonli buyruq",
+      "orderCreate": "Buyruqni rasmiylashtirish",
+      "orderNeedsLeader": "Avval rahbarni tayinlang",
+      "regulation": "HACCP guruhi to‘g‘risidagi nizom",
+      "open": "Ochish",
+      "openPrint": "Chop etish uchun ochish",
+      "signed": "Imzolangan hujjatlar",
+      "saved": "Saqlandi"
+    },
+    "policy": {
+      "lead": "Siyosat — rahbariyatning xavfsiz mahsulot chiqarish va’dasi. QR varaqni sexga osib qo‘ying: xodim uni telefonidan o‘qiydi.",
+      "text": "Siyosat matni",
+      "approvedBy": "Tasdiqlagan",
+      "approvedAt": "Tasdiqlangan sana",
+      "save": "Saqlash",
+      "saved": "Saqlandi",
+      "draft": "Qoralama",
+      "approved": "Tasdiqlangan",
+      "qrTitle": "QR varaq",
+      "qrHint": "QR siyosat matni bor sahifaga olib boradi — kabinetga kirish shart emas.",
+      "print": "Chop etish uchun ochish",
+      "publicPage": "Xodimlar uchun sahifa",
+      "rotate": "Havolani almashtirish",
+      "rotateTitle": "QR havolasi almashtirilsinmi?",
+      "rotateBody": "Allaqachon chop etilgan varaqlardagi QR ochilmay qoladi — ularni qayta chop etish kerak bo‘ladi.",
+      "rotated": "Havola yangilandi",
+      "rotateFailed": "Havolani almashtirib bo‘lmadi"
+    },
+    "publicPolicy": {
+      "notFound": "Havola eskirgan — rahbardan yangi QR varaq so‘rang."
+    },
+    "print": {
+      "emptyTeam": "Guruh a’zolarini qo‘shing — nizom o‘zi to‘ladi.",
+      "toBlock": "Guruhga o‘tish",
+      "scanHint": "Skanerlang — siyosat telefonda ochiladi",
+      "emptyPolicy": "Avval siyosat matnini saqlang — QR varaqasi o‘zi yig‘iladi.",
+      "toPolicyText": "Matnga o‘tish"
+    },
+    "controlPoints": {
+      "lead": "Har bir muhim xavf uchun 4 ta savolga javob bering — tizim kritik nazorat nuqtasi kerakligini aytadi. KNN uchun chegaralar, nazorat va mas'ulni belgilang.",
+      "needDecision": "Qaror kerak",
+      "runTree": "Qaror daraxtidan o'tish",
+      "noHazards": "Avval «Xavflar tahlili»da xavflarni belgilang",
+      "toHazards": "Xavflar tahlilini ochish",
+      "questionOf": "{n}-savol, jami 4 ta",
+      "yes": "Ha",
+      "no": "Yo'q",
+      "back": "Orqaga",
+      "q1": "Bu xavfning oldini oladigan choralar bormi?",
+      "q1hint": "Masalan: harorat rejimi, kirish nazorati, alohida jihozlar.",
+      "q2": "Bu bosqich xavfni bartaraf etish yoki ruxsat etilgan darajagacha kamaytirish uchun maxsus mo'ljallanganmi?",
+      "q2hint": "Masalan, termik ishlov mikroorganizmlarni yo'q qiladi.",
+      "q3": "Bu bosqichda xavf ruxsat etilgan darajadan oshib ketishi mumkinmi?",
+      "q3hint": "Bosqich buzilish bilan o'tsa nima bo'lishini o'ylab ko'ring.",
+      "q4": "Keyingi bosqich xavfni bartaraf etadimi yoki ruxsat etilgan darajagacha kamaytiradimi?",
+      "q4hint": "Agar ha bo'lsa, nazorat keyingi bosqichga o'tadi.",
+      "result": "Natija",
+      "kinds": {
+        "ccp": "KNN",
+        "oprp": "OAD",
+        "prp": "OD",
+        "none": "Talab qilinmaydi"
+      },
+      "explain": {
+        "ccp": "Kritik nazorat nuqtasi: xavf shu yerda bartaraf etiladi, doimiy nazorat va chegaralar kerak.",
+        "oprp": "Operatsion dastur: xavf nazorat qilinadi, lekin boshqa bosqichda bartaraf etiladi.",
+        "prp": "Umumiy sanitariya choralari yetarli — alohida nuqta kerak emas.",
+        "none": "Oldini oluvchi choralar yo'q — bosqichni yoki texnologiyani qayta ko'rib chiqing."
+      },
+      "changeKind": "Turini o'zgartirish",
+      "number": "Raqam",
+      "limits": "Kritik chegaralar",
+      "monitoring": "Nimani va qanday nazorat qilamiz",
+      "frequency": "Davriylik",
+      "responsible": "Mas'ul",
+      "corrective": "Tuzatuvchi harakatlar",
+      "journal": "Yozuvlar uchun jurnal",
+      "comment": "Izoh",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "allWorksheets": "Barcha ish varaqlari",
+      "worksheet": "Ish varag'i",
+      "openJournal": "Jurnalni ochish",
+      "createCapa": "Nomuvofiqlik yaratish",
+      "capaTitle": "{number} bo'yicha og'ish: {hazard}",
+      "hazardDeleted": "Xavf o'chirilgan",
+      "noResponsible": "Mas'ulni tayinlang",
+      "edit": "Tahrirlash",
+      "remove": "O'chirish",
+      "removeTitle": "{number} o'chirilsinmi?",
+      "removeBody": "Bu nuqtaning ish varag'i ham yo'qoladi.",
+      "freq": {
+        "batch": "Har bir partiya",
+        "load": "Har bir yuklama",
+        "twiceShift": "Smenada ikki marta",
+        "daily": "Har kuni",
+        "weekly": "Har hafta"
+      },
+      "empty": "Hozircha nuqtalar yo'q",
+      "limitsShort": "Chegara",
+      "monitoringShort": "Monitoring",
+      "step": "Bosqich",
+      "hazard": "Xavfli omil",
+      "pickResponsible": "Mas'ulni tanlang",
+      "noJournal": "Jurnalsiz",
+      "dialogTitle": "Nazorat nuqtasi",
+      "emptyHint": "Muhim xavf uchun qaror daraxtidan o'ting — nuqta shu yerda paydo bo'ladi.",
+      "next": "Keyingi"
+    },
+    "worksheet": {
+      "title": "{number} ish varag'i",
+      "step": "Bosqich",
+      "hazard": "Xavfli omil",
+      "kind": "Nuqta turi",
+      "limits": "Kritik chegaralar",
+      "monitoring": "Monitoring (nima va qanday)",
+      "frequency": "Davriylik",
+      "responsible": "Mas'ul",
+      "corrective": "Tuzatuvchi harakatlar",
+      "records": "Yozuvlar",
+      "acquainted": "Tanishdim",
+      "emptyHint": "KNN ni aniqlang — ish varaqlari shu yerda paydo bo'ladi.",
+      "toPoints": "Nazorat nuqtalariga",
+      "date": "sana"
+    },
+    "audit": {
+      "lead": "Audit HACCP tizimi ishlayotganini tekshiradi: yillik reja, tekshiruv bayonnomalari, hisobot va izohlar bo'yicha harakatlar.",
+      "journalsTitle": "Audit jurnallari",
+      "lastDoc": "Oxirgi hujjat: {date}",
+      "noDocs": "Hujjatlar yo'q",
+      "open": "Ochish",
+      "disabled": "O'chirilgan",
+      "enable": "Yoqish",
+      "checklistsTitle": "Audit uchun chek-varaqlar",
+      "runsYear": "Yil davomidagi tekshiruvlar: {count}",
+      "openChecklists": "Chek-varaqlarni ochish",
+      "noRuns": "Hozircha tekshiruvlar bo'lmagan",
+      "status": {
+        "draft": "Qoralama",
+        "completed": "Yakunlangan"
+      }
+    },
+    "pest": {
+      "lead": "Ishlov berish rejasi, xizmat shartnomasi va dalolatnomalar. Monitoring dezinseksiya jurnalida olib boriladi.",
+      "plan": "Tadbirlar rejasi",
+      "add": "Tadbir qo'shish",
+      "fillTypical": "Tipik reja bilan to'ldirish",
+      "kind": "Turi",
+      "kinds": {
+        "disinsection": "Dezinseksiya",
+        "deratization": "Deratizatsiya",
+        "disinfection": "Dezinfeksiya"
+      },
+      "object": "Ob'ekt",
+      "frequency": "Chastotasi",
+      "contractor": "Ijrochi",
+      "lastDate": "Oxirgi ishlov",
+      "nextDate": "Keyingi",
+      "overdue": "Muddati o'tgan",
+      "soon": "Tez orada",
+      "freq": {
+        "monthly": "Oylik",
+        "quarterly": "Choraklik",
+        "halfYear": "Yiliga ikki marta",
+        "onRequest": "So'rov bo'yicha"
+      },
+      "typicalObject": "Barcha xonalar",
+      "journals": "Jurnallar",
+      "openJournal": "Jurnalni ochish",
+      "disabled": "O'chirilgan",
+      "enable": "Yoqish",
+      "order": "Dezinfeksiya, dezinseksiya va deratizatsiya buyrug'i",
+      "contract": "Dezinfeksiya xizmati bilan shartnoma",
+      "acts": "Bajarilgan ishlar dalolatnomalari",
+      "emptyTitle": "Tadbirlar hali yo'q",
+      "emptyHint": "Ishlov kamida oyiga bir marta o'tkaziladi — rejani qo'shing.",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "edit": "Tahrirlash",
+      "remove": "O'chirish",
+      "removeTitle": "Tadbirni o'chirasizmi?",
+      "removeBody": "Qator rejadan o'chadi. Jurnal va fayllarga ta'sir qilmaydi.",
+      "openOrder": "Buyruqni ochish"
+    },
+    "lab": {
+      "lead": "Laboratoriya nimani va qanchalik tez tekshiradi. Keyingi sanani tizim o'zi hisoblaydi va muddati o'tganini ajratib ko'rsatadi.",
+      "plan": "Tekshiruvlar rejasi",
+      "add": "Tekshiruv qo'shish",
+      "fillTypical": "Tipik reja bilan to'ldirish",
+      "objects": {
+        "product": "Mahsulot",
+        "swabs": "Artmalar",
+        "water": "Suv",
+        "air": "Havo",
+        "other": "Boshqa"
+      },
+      "object": "Ob'ekt",
+      "subject": "Nima tekshiriladi",
+      "indicator": "Ko'rsatkichlar",
+      "everyMonths": "Har {count} oyda",
+      "everyMonthsLabel": "Chastotasi, oylarda",
+      "laboratory": "Laboratoriya",
+      "lastDate": "Oxirgi tekshiruv",
+      "nextDate": "Keyingi",
+      "overdue": "Muddati o'tgan",
+      "soon": "Tez orada",
+      "contract": "Akkreditatsiyalangan laboratoriya bilan shartnoma",
+      "protocols": "Tekshiruv bayonnomalari",
+      "acts": "Bajarilgan ishlar dalolatnomalari",
+      "emptyTitle": "Tekshiruvlar hali yo'q",
+      "emptyHint": "Umumiy ovqatlanish uchun tipik reja bilan boshlang.",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "edit": "Tahrirlash",
+      "remove": "O'chirish",
+      "removeTitle": "Tekshiruvni o'chirasizmi?",
+      "removeBody": "Qator rejadan o'chadi. Papkadagi bayonnomalar qoladi.",
+      "typical": {
+        "ready": {
+          "subject": "Tayyor taomlar",
+          "indicator": "Mikrobiologik ko'rsatkichlar"
+        },
+        "equipment": {
+          "subject": "Jihoz va inventardan artmalar",
+          "indicator": "Koliform bakteriyalar"
+        },
+        "hands": {
+          "subject": "Xodimlar qo'lidan artmalar",
+          "indicator": "Koliform bakteriyalar, S. aureus"
+        },
+        "water": {
+          "subject": "Ichimlik suvi",
+          "indicator": "Mikrobiologik va organoleptik ko'rsatkichlar"
+        }
+      }
+    },
+    "posters": {
+      "lead": "Sexlar va hojatxonalar uchun logotipingiz bilan plakatlar. Chop eting va ko'zga ko'rinadigan joyga osing.",
+      "printAll": "Hammasini chop etish",
+      "print": "Chop etish",
+      "open": "Ochish"
+    },
+    "norms": {
+      "lead": "Muassasa ishlaydigan hujjatlarni belgilang. Ular ishlab chiqarish nazorati dasturiga kiradi.",
+      "sanpinLink": "SanPiN me'yorlari ma'lumotnomasi",
+      "catalog": "Asosiy hujjatlar",
+      "recommended": "tavsiya etiladi",
+      "selectRecommended": "Tavsiya etilganlarni belgilash",
+      "custom": "O'z hujjatlari",
+      "customPlaceholder": "Masalan: GOST 31987-2012 «Jamoat ovqatlanish xizmatlari»",
+      "add": "Qo'shish",
+      "remove": "O'chirish",
+      "save": "Saqlash",
+      "saved": "Saqlandi",
+      "unsaved": "Saqlanmagan o'zgarishlar",
+      "subscriptionTitle": "Yangilanishlarga obuna",
+      "subscriptionHint": "Me'yorlar o'zgarganda mutaxassis xabar beradi va muassasa hujjatlarini yangilashga yordam beradi.",
+      "order": "Buyurtma berish",
+      "files": "Me'yoriy hujjatlar fayllari"
+    },
+    "assemble": "Bo'limlardan yig'ish",
+    "program": {
+      "emptySection": "Bu bo'lim hozircha bo'sh. \"{block}\" blokini to'ldiring — u bu yerga o'zi tushadi.",
+      "fill": "To'ldirish",
+      "notFilled": "To'ldirilmagan"
+    }
   },
   "inspectionDay": {
     "qrTitle": "QR-kodni tekshiruvchiga ko‘rsating",
@@ -1539,16 +2108,13 @@
         "today": "Bugun",
         "all": "Barcha jurnallar",
         "verify": "Tekshirish",
-        "program": "Dastur",
-        "orders": "Buyruqlar",
-        "knowledge": "Yo‘riqnomalar",
-        "sanpin": "SanPiN",
         "plan": "Tarif",
         "balance": "Balans",
         "services": "Xizmatlar",
         "inspectionDay": "Nima qilish kerak",
         "portal": "QR-kirish",
-        "readiness": "Tayyorgarlik"
+        "readiness": "Tayyorgarlik",
+        "program": "Dastur"
       },
       "groups": {
         "staff": "Xodimlar",
@@ -1570,7 +2136,51 @@
       "tabsAria": "Bo‘limchalar",
       "menu": "Menyu",
       "logout": "Chiqish",
-      "brand": "WeSetup"
+      "brand": "WeSetup",
+      "items": {
+        "team": "HACCP guruhi",
+        "policy": "Sifat siyosati",
+        "products": "Mahsulot tavsifi (TR TS)",
+        "flowcharts": "Texnologik jarayon sxemalari",
+        "hazards": "Xavflar tahlili",
+        "control-points": "KNN va ish varaqlari",
+        "audit": "Chek-varaqlar va audit",
+        "instructions": "Ish yoʻriqnomalari",
+        "procedures": "Hujjatlashtirilgan tartiblar",
+        "orders": "Buyruqlar",
+        "posters": "Ishlab chiqarish plakatlari",
+        "storage": "Hujjatlar ombori",
+        "floor-plans": "Xonalar va oqimlar rejasi",
+        "pest-control": "Dezinseksiya va deratizatsiya",
+        "lab": "Laboratoriya tekshiruvlari",
+        "norm-documents": "Meʼyoriy hujjatlar",
+        "program": "IChN dasturi"
+      },
+      "menuGroups": {
+        "haccp": "HACCP",
+        "documents": "Hujjatlar"
+      },
+      "subtabs": {
+        "overview": "Umumiy",
+        "program": "Dastur",
+        "haccpPlan": "HACCP rejasi",
+        "members": "Tarkib",
+        "regulation": "Nizom",
+        "text": "Matn",
+        "qrSheet": "QR varaq",
+        "points": "Nuqtalar",
+        "worksheets": "Ish varaqlari",
+        "list": "Roʻyxat",
+        "guidelines": "Uslubiy tavsiyalar",
+        "sanpin": "SanPiN meʼyorlari"
+      },
+      "backToMain": "Asosiy menyu",
+      "sectionMenuAria": "Boʻlim menyusi",
+      "status": {
+        "done": "Toʻldirilgan",
+        "started": "Boshlangan",
+        "empty": "Boʻsh"
+      }
     },
     "header": {
       "staff": "Xodimlar",
@@ -1824,7 +2434,27 @@
       "task_fill": "Vazifani to‘ldirish",
       "tasks": "Vazifalar",
       "verifications": "Tasdiqlashlar",
-      "journal_scope": "Jurnal vazifalari"
+      "journal_scope": "Jurnal vazifalari",
+      "production_control_documents_procedures": "Hujjatlashtirilgan tartib-qoidalar",
+      "production_control_documents_storage": "Hujjatlar ombori",
+      "production_control_norms_guidelines": "Uslubiy tavsiyalar",
+      "production_control_haccp_products": "Mahsulot tavsifi",
+      "production_control_haccp_hazards": "Xavflar tahlili",
+      "production_control_haccp_control_points": "Kritik nazorat nuqtalari",
+      "production_control_haccp_control_points_worksheets": "KNN ish varaqlari",
+      "production_control_haccp_audit": "Ichki audit",
+      "production_control_haccp_flowcharts": "Texnologik jarayon sxemalari",
+      "production_control_sanitation_floor_plans": "Xonalar va oqimlar rejasi",
+      "production_control_sanitation_pest_control": "Dezinseksiya va deratizatsiya",
+      "production_control_sanitation_lab": "Laboratoriya tekshiruvlari",
+      "production_control_haccp_team": "HACCP guruhi",
+      "production_control_haccp_team_regulation": "HACCP guruhi nizomi",
+      "production_control_haccp_policy": "Sifat siyosati",
+      "production_control_haccp_policy_print": "Sifat siyosati — QR varaq",
+      "production_control_documents_posters": "Ishlab chiqarish plakatlari",
+      "production_control_norms_documents": "Me'yoriy hujjatlar",
+      "production_control_program": "Dasturni yig'ish",
+      "production_control_haccp_plan": "HACCP rejasini yig'ish"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",

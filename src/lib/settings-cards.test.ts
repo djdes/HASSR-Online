@@ -79,11 +79,19 @@ function dig(source: Catalog, path: string[]): unknown {
   );
 }
 
-test("все 51 карточка бывшего хаба на месте — вкладкой или карточкой раздела", () => {
+/** Адреса вкладок разделов и пунктов меню раздела (с их вкладками) — всё, куда ведёт меню. */
+function navMenuHrefs(): string[] {
+  return NAV_SECTIONS.flatMap((section) => [
+    ...section.tabs.map((tab) => tab.href),
+    ...(section.menu ?? []).flatMap((group) =>
+      group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)]),
+    ),
+  ]);
+}
+
+test("все 51 карточка бывшего хаба на месте — вкладкой, пунктом меню раздела или карточкой", () => {
   assert.equal(FORMER_HUB_HREFS.length, 51);
-  const tabHrefs = NAV_SECTIONS.flatMap((section) =>
-    section.tabs.map((tab) => tab.href),
-  );
+  const tabHrefs = navMenuHrefs();
   const cardHrefs = SETTINGS_CARDS.map((card) => card.href);
   const missing = FORMER_HUB_HREFS.filter(
     (href) => !tabHrefs.includes(href) && !cardHrefs.includes(href),
@@ -92,7 +100,7 @@ test("все 51 карточка бывшего хаба на месте — в�
 });
 
 test("карточка не дублирует вкладку и не повторяется", () => {
-  const tabHrefs = new Set(NAV_SECTIONS.flatMap((section) => section.tabs.map((tab) => tab.href)));
+  const tabHrefs = new Set(navMenuHrefs());
   const seen = new Set<string>();
   for (const card of SETTINGS_CARDS) {
     assert.ok(!tabHrefs.has(card.href), `${card.id} уже вкладка`);

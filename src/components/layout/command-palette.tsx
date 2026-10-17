@@ -144,8 +144,38 @@ export function CommandPalette() {
         keywords: [section.label, tab.label],
       })),
     );
+    // Меню раздела: пункты («Производственный контроль · Приказы») и вкладки
+    // пунктов («Нормативные документы · СанПиН»).
+    const itemItems = nav.sections.flatMap((section) =>
+      (section.menu ?? []).flatMap((group) =>
+        group.items.flatMap((item) => [
+          {
+            kind: "route" as const,
+            label: `${section.label} · ${item.label}`,
+            href: item.href,
+            icon: navIcon(item.icon),
+            keywords: [section.label, item.label, ...(item.tabs ?? []).map((tab) => tab.label)],
+          },
+          ...(item.tabs ?? []).map((tab) => ({
+            kind: "route" as const,
+            label: `${item.label} · ${tab.label}`,
+            href: tab.href,
+            icon: navIcon(item.icon),
+            keywords: [section.label, item.label, tab.label],
+          })),
+        ]),
+      ),
+    );
     // Карточки настроек («Отчёты», «Нарушения», «Аудит» и т.п.) — без дублей по адресу.
-    const seen = new Set(tabItems.map((item) => item.href));
+    const seen = new Set([...tabItems, ...itemItems].map((item) => item.href));
+    // Адрес пункта и его первой вкладки (и корня раздела) совпадает — одна строка.
+    const sectionItems: StaticItem[] = [];
+    const listed = new Set<string>();
+    for (const entry of [...tabItems, ...itemItems]) {
+      if (listed.has(entry.href)) continue;
+      listed.add(entry.href);
+      sectionItems.push(entry);
+    }
     const cardItems: StaticItem[] = [];
     for (const card of nav.search ?? []) {
       if (seen.has(card.href)) continue;
@@ -158,7 +188,7 @@ export function CommandPalette() {
         keywords: [card.label, card.sectionLabel],
       });
     }
-    return [...tabItems, ...cardItems];
+    return [...sectionItems, ...cardItems];
   }, [nav]);
   // «Закрыть день» и «Догнать пропуски» — у кого есть «Сегодня».
   const actionItems = useMemo(

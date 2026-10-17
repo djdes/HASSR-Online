@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Camera,
   Coins,
+  FileCheck2,
   FileText,
   Gauge,
   Gift,
@@ -96,6 +97,7 @@ function isCategoryNote(
  * нельзя (server→client serialization), поэтому держим mapping здесь.
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "Производственный контроль": FileCheck2,
   "Новое меню кабинета": PanelLeft,
   "Тема, названия и фото замеров": Camera,
   "Свои названия разделов и журналов": SquarePen,

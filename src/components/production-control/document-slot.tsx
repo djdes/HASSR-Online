@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ExternalLink, FileCheck2, FilePlus2, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
+import { ExternalLink, FileCheck2, FilePlus2, Layers, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { PRODUCTION_DOC_ACCEPT, type ProductionDocKind } from "@/lib/production-control-docs";
@@ -25,11 +25,14 @@ export function DocumentSlot({
   document,
   canManage,
   orderHref,
+  assembleHref,
 }: {
   kind: ProductionDocKind;
   document: { fileName: string; sizeBytes: number; updatedAt: string } | null;
   canManage: boolean;
   orderHref: string;
+  /** Страница сборки документа из заполненных блоков раздела. */
+  assembleHref?: string;
 }) {
   const t = useTranslations("productionControl");
   const locale = useLocale();
@@ -136,6 +139,12 @@ export function DocumentSlot({
                 )}
                 {busy ? t("uploading") : document ? t("replace") : t("upload")}
               </button>
+            ) : null}
+            {assembleHref ? (
+              <Link href={assembleHref} className={OUTLINE}>
+                <Layers className="size-4 text-[#5566f6]" />
+                {t("assemble")}
+              </Link>
             ) : null}
             {canManage && !document ? (
               <Link href={orderHref} className={OUTLINE}>

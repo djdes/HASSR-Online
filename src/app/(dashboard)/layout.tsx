@@ -50,7 +50,9 @@ import { BillingAnnouncement } from "@/components/billing/billing-announcement";
 import { BillingTransitionGate } from "@/components/billing/billing-transition-gate";
 import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
 import { PageNav, PageNavProvider } from "@/components/layout/page-nav";
+import { SectionMenuButton } from "@/components/layout/section-menu-button";
 import { SectionTabs } from "@/components/layout/section-tabs";
+import { SectionFrame } from "@/components/layout/section-frame";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
 import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
@@ -554,7 +556,7 @@ export default async function DashboardLayout({
                 <Suspense fallback={null}>
                   <NpsBanner ask={nps.ask} canPreview={nps.eligible} />
                 </Suspense>
-                {children}
+                <SectionFrame>{children}</SectionFrame>
               </PageNavProvider>
             </div>
           </main>
@@ -773,8 +775,9 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 </Suspense>
               ) : null}
               {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
+              <SectionMenuButton />
               <SectionTabs />
-              {children}
+              <SectionFrame>{children}</SectionFrame>
               {billing?.gate ? (
                 <BillingTransitionGate
                   copy={billing.gate.copy}

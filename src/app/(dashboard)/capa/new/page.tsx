@@ -3,9 +3,15 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { CapaForm } from "@/components/capa/capa-form";
 
-export default async function NewCapaPage() {
+export default async function NewCapaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ title?: string | string[] }>;
+}) {
   const session = await requireAuth();
   const t = await getTranslations("capaManagement");
+  const { title } = await searchParams;
+  const initialTitle = typeof title === "string" ? title.slice(0, 200) : undefined;
 
   const users = await db.user.findMany({
     where: { organizationId: getActiveOrgId(session), isActive: true },
@@ -20,7 +26,7 @@ export default async function NewCapaPage() {
       <p className="text-[14px] text-[#6f7282]">
         {t("newDescription")}
       </p>
-      <CapaForm users={users} />
+      <CapaForm users={users} initialTitle={initialTitle} />
     </div>
   );
 }

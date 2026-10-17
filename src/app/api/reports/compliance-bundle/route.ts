@@ -190,6 +190,28 @@ export async function GET(request: Request) {
   manifestLines.push(
     `Итого: включено ${totals.included}, ошибок ${totals.failed}, всего документов ${documents.length}.`
   );
+
+  // Производственный контроль: загруженные ППК и ХАССП-план кладём отдельной папкой.
+  try {
+    const productionDocs = await db.knowledgeDocument.findMany({
+      where: { organizationId, kind: { in: ["ppk", "haccp_plan"] } },
+      select: { kind: true, fileName: true, content: true },
+    });
+    const usedNames = new Set<string>();
+    for (const doc of productionDocs) {
+      let name = sanitizeForZip(doc.fileName) || doc.kind || "document";
+      if (usedNames.has(name)) name = `${doc.kind}-${name}`;
+      usedNames.add(name);
+      zip.file(`Производственный контроль/${name}`, doc.content);
+    }
+    const hasPpk = productionDocs.some((doc) => doc.kind === "ppk");
+    const hasPlan = productionDocs.some((doc) => doc.kind === "haccp_plan");
+    manifestLines.push(
+      `Производственный контроль: ППК — ${hasPpk ? "есть" : "нет"}, ХАССП-план — ${hasPlan ? "есть" : "нет"}`
+    );
+  } catch (err) {
+    console.error("[compliance-bundle] production control docs failed", err);
+  }
   zip.file(`ОТЧЁТ.txt`, manifestLines.join("\r\n"));
 
   // --- CAPA за период (открытые к моменту сборки + закрытые в диапазоне)

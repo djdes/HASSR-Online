@@ -34,6 +34,7 @@ export function OrderEditor({
   initialNumber,
   initialIssuedAt,
   initialValues,
+  preferInitial = false,
   returnTo = null,
 }: {
   template: OrderTemplate;
@@ -48,6 +49,8 @@ export function OrderEditor({
   initialNumber: string;
   initialIssuedAt: string;
   initialValues: OrderValues;
+  /** Не восстанавливать черновик из localStorage: значения пришли из блока ППК и важнее старого черновика. */
+  preferInitial?: boolean;
   /** Куда вернуть после сохранения (быстрый старт, `?from=onboarding`). */
   returnTo?: string | null;
 }) {
@@ -64,7 +67,7 @@ export function OrderEditor({
   // Черновик восстанавливаем только для нового приказа: у изданного
   // источник правды — база, и подменять его старым черновиком нельзя.
   useEffect(() => {
-    if (existing) return;
+    if (existing || preferInitial) return;
     try {
       const raw = window.localStorage.getItem(draftKey);
       if (!raw) return;
@@ -79,7 +82,7 @@ export function OrderEditor({
     } catch {
       /* localStorage закрыт — работаем с пустой формой */
     }
-  }, [draftKey, existing]);
+  }, [draftKey, existing, preferInitial]);
 
   useEffect(() => {
     if (existing) return;

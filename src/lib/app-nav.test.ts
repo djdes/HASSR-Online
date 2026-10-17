@@ -14,6 +14,7 @@ import {
   type NavFacts,
 } from "./app-nav";
 import { SETTINGS_CARDS } from "./settings-cards";
+import { PPK_MENU_GROUPS, ppkMenuBlocks } from "./ppk/registry";
 import { isStaffRestrictedWebPath } from "./role-access";
 
 const owner: NavActor = { role: "owner", permissionPreset: "admin" };
@@ -246,9 +247,23 @@ function guardTokens(access: NavAccess): string[][] {
 
 test("правило каждой вкладки и карточки повторяет guard страницы", () => {
   const links = [
-    ...NAV_SECTIONS.flatMap((section) =>
-      section.tabs.map((tab) => ({ name: `${section.key}/${tab.id}`, href: tab.href, access: tab.access })),
-    ),
+    ...NAV_SECTIONS.flatMap((section) => [
+      ...section.tabs.map((tab) => ({
+        name: `${section.key}/${tab.id}`,
+        href: tab.href,
+        access: tab.access,
+      })),
+      ...(section.menu ?? []).flatMap((group) =>
+        group.items.flatMap((item) => [
+          { name: `${section.key}/${item.id}`, href: item.href, access: item.access },
+          ...(item.tabs ?? []).map((tab) => ({
+            name: `${section.key}/${item.id}/${tab.id}`,
+            href: tab.href,
+            access: tab.access,
+          })),
+        ]),
+      ),
+    ]),
     ...SETTINGS_CARDS.map((card) => ({ name: `card ${card.id}`, href: card.href, access: card.access })),
   ];
   for (const link of links) {
@@ -296,7 +311,101 @@ test("у каждой иконки меню и карточек есть ком�
   for (const name of [
     ...NAV_SECTIONS.map((section) => section.icon),
     ...SETTINGS_CARDS.map((card) => card.icon),
+    ...NAV_SECTIONS.flatMap((section) =>
+      (section.menu ?? []).flatMap((group) => group.items.map((item) => item.icon)),
+    ),
   ]) {
     assert.ok(hasNavIcon(name), name);
   }
+});
+
+test("«Производственный контроль»: вкладок-групп нет, есть меню раздела из реестра", () => {
+  const section = NAV_SECTIONS.find((item) => item.key === "productionControl");
+  assert.ok(section);
+  // Одна вкладка — корень раздела: вкладок над страницей не будет.
+  assert.deepEqual(section.tabs.map((tab) => tab.href), ["/production-control"]);
+  assert.ok(section.menu);
+  assert.deepEqual(
+    section.menu.map((group) => group.label),
+    PPK_MENU_GROUPS.filter((group) => ppkMenuBlocks(group.key).length > 0).map((group) =>
+      group.labelled ? group.key : null,
+    ),
+  );
+  const main = section.menu[0];
+  assert.equal(main.label, null);
+  assert.deepEqual(
+    main.items.map((item) => item.id),
+    ppkMenuBlocks("main").map((block) => block.key),
+  );
+  assert.deepEqual(main.items.slice(0, 3).map((item) => item.id), ["program", "instructions", "procedures"]);
+  const documents = section.menu.find((group) => group.label === "documents");
+  const norms = documents?.items.find((item) => item.id === "norm-documents");
+  assert.equal(norms?.href, "/production-control/norms/documents");
+  assert.deepEqual(norms?.tabs?.map((tab) => tab.id), ["list", "guidelines", "sanpin"]);
+});
+
+test("у каждого пункта и вкладки меню раздела есть страница", () => {
+  for (const section of NAV_SECTIONS) {
+    for (const group of section.menu ?? []) {
+      for (const item of group.items) {
+        assert.ok(pageFileFor(item.href), `${section.key}/${item.id}: ${item.href}`);
+        for (const tab of item.tabs ?? []) {
+          assert.ok(pageFileFor(tab.href), `${section.key}/${item.id}/${tab.id}: ${tab.href}`);
+        }
+      }
+    }
+  }
+});
+
+test("пункт меню — владелец своего адреса: пункт и вкладка для пути", () => {
+  const order = sectionForPath("/orders/x");
+  assert.equal(order?.section, "productionControl");
+  assert.equal(order?.menuItemId, "orders");
+  assert.equal(sectionForPath("/sanpin")?.menuItemId, "norm-documents");
+  assert.equal(sectionForPath("/sanpin")?.menuTabHref, "/sanpin");
+  assert.equal(sectionForPath("/production-control/norms/guidelines")?.menuItemId, "norm-documents");
+  assert.equal(
+    sectionForPath("/production-control/norms/guidelines")?.menuTabHref,
+    "/production-control/norms/guidelines",
+  );
+  assert.equal(sectionForPath("/production-control/haccp/products/x")?.menuItemId, "products");
+  assert.equal(sectionForPath("/knowledge")?.menuItemId, "instructions");
+  // Корень раздела — пункт «ППК» и корень вкладки.
+  const root = sectionForPath("/production-control");
+  assert.equal(root?.menuItemId, "program");
+  assert.equal(root?.isTabRoot, true);
+  // Адрес без своего пункта (блок ещё не готов) остаётся в разделе, у «ППК».
+  assert.equal(sectionForPath("/production-control/sanitation/lab")?.section, "productionControl");
+  // Карточки и обычные вкладки пунктов меню не имеют.
+  assert.equal(sectionForPath("/settings")?.menuItemId, null);
+  assert.equal(sectionForPath("/settings/users")?.menuItemId, null);
+});
+
+test("видимое меню: у пункта с вкладками адрес — первая видимая вкладка", () => {
+  const section = visibleNav(manager, withChecklists).find((item) => item.key === "productionControl");
+  assert.ok(section?.menu);
+  const items = section.menu.flatMap((group) => group.items);
+  const norms = items.find((item) => item.id === "norm-documents");
+  assert.equal(norms?.href, "/production-control/norms/documents");
+  assert.deepEqual(norms?.tabs?.map((tab) => tab.href), ["/production-control/norms/documents", "/production-control/norms/guidelines", "/sanpin"]);
+  assert.equal(section.rootHref, "/production-control");
+  for (const group of section.menu) assert.ok(group.items.length > 0);
+});
+
+test("заведующая: пункта «Рабочие инструкции» нет, «Процедуры» есть", () => {
+  const section = visibleNav(headChef, withChecklists).find((item) => item.key === "productionControl");
+  assert.ok(section?.menu);
+  const ids = section.menu.flatMap((group) => group.items.map((item) => item.id));
+  assert.ok(!ids.includes("instructions"));
+  assert.ok(ids.includes("procedures"));
+});
+
+test("управляющая с правом просмотра журналов видит «Рабочие инструкции»", () => {
+  const section = visibleNav(manager, withChecklists).find((item) => item.key === "productionControl");
+  const ids = section?.menu?.flatMap((group) => group.items.map((item) => item.id)) ?? [];
+  assert.ok(ids.includes("instructions"));
+});
+
+test("повар: раздела «Производственный контроль» нет", () => {
+  assert.ok(!keys(cook, withChecklists).includes("productionControl"));
 });

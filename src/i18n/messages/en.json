@@ -19,7 +19,576 @@
     "uploadFailed": "Couldn't upload the file",
     "removeFailed": "Couldn't delete the file",
     "formats": "PDF, Word or a scan · up to 25 MB",
-    "askManager": "A manager can upload the file"
+    "askManager": "A manager can upload the file",
+    "specialistHelp": "We'll fill it in for you",
+    "staffPicker": {
+      "placeholder": "Choose an employee",
+      "search": "Search by name or position",
+      "recommended": "Recommended",
+      "managers": "Management",
+      "staff": "Employees",
+      "empty": "No one found",
+      "clear": "Not selected"
+    },
+    "overview": {
+      "title": "Electronic production control program",
+      "progress": "{done} of {total} blocks completed",
+      "fillForYou": "We'll fill it in for you",
+      "mapTitle": "Program sections",
+      "mapMain": "Program"
+    },
+    "group": {
+      "progress": "{done} of {total} completed"
+    },
+    "nextStep": "Next step: {block}",
+    "openBlock": "Open",
+    "orderHelp": "Order from a specialist",
+    "folder": {
+      "upload": "Upload files",
+      "uploading": "Uploading…",
+      "uploaded": "Files uploaded: {count}",
+      "removed": "File deleted",
+      "remove": "Delete file",
+      "removeTitle": "Delete the file?",
+      "removeBody": "\"{name}\" will be permanently removed from the section.",
+      "emptyTitle": "No files yet",
+      "emptyHint": "PDF, Word, Excel, scans and archives up to 25 MB.",
+      "failed": "Couldn't upload {name}",
+      "loadFailed": "Could not load the files",
+      "retry": "Retry"
+    },
+    "blocks": {
+      "team": {
+        "hint": "Who runs the HACCP system and what each person does"
+      },
+      "policy": {
+        "hint": "Policy text and a QR sheet for staff"
+      },
+      "products": {
+        "hint": "Products and safety indicators under TR CU"
+      },
+      "flowcharts": {
+        "hint": "Process steps from receiving to serving"
+      },
+      "hazards": {
+        "hint": "Hazards at each step and how significant they are"
+      },
+      "control-points": {
+        "hint": "Critical points, limits and who is responsible"
+      },
+      "audit": {
+        "hint": "Scheduled checks of the system with checklists"
+      },
+      "instructions": {
+        "hint": "Instructions for staff at their workstations"
+      },
+      "procedures": {
+        "hint": "Your standard operating procedures (SOPs)",
+        "lead": "Upload your standard procedures: receiving, storage, washing, cleaning. Inspectors review them together with the program."
+      },
+      "orders": {
+        "hint": "Orders on appointments and document approval"
+      },
+      "posters": {
+        "hint": "Workshop posters with your logo"
+      },
+      "storage": {
+        "hint": "Contracts, certificates and other files",
+        "lead": "Everything to keep at hand for an inspection: contracts, certificates, declarations, equipment passports."
+      },
+      "floor-plans": {
+        "hint": "Room layout and separated flows"
+      },
+      "pest-control": {
+        "hint": "Activity plan, contract and reports"
+      },
+      "lab": {
+        "hint": "Test plan, contract and lab reports"
+      },
+      "norm-documents": {
+        "hint": "Which regulations your business follows"
+      },
+      "guidelines": {
+        "hint": "Guidance and regulator explanations",
+        "lead": "Guidelines and regulator letters you rely on."
+      },
+      "sanpin": {
+        "hint": "Reference of key SanPiN standards"
+      },
+      "program": {
+        "hint": "Production control program and HACCP plan"
+      }
+    },
+    "products": {
+      "lead": "Describe the products: composition, storage, shelf life and safety indicators. This is the second HACCP step.",
+      "add": "Add product",
+      "emptyTitle": "No products yet",
+      "emptyHint": "Start with the dishes you cook most often.",
+      "name": "Name",
+      "category": "Product group",
+      "composition": "Composition",
+      "storage": "Storage conditions",
+      "shelfLife": "Shelf life",
+      "usage": "How it is used and sold",
+      "packaging": "Packaging",
+      "indicators": "Safety indicators",
+      "indicatorName": "Indicator",
+      "indicatorNorm": "Limit",
+      "addIndicator": "Add indicator",
+      "usePreset": "Use typical ones",
+      "usePresetTitle": "Replace indicators with typical ones?",
+      "usePresetBody": "Current rows will be replaced with the indicators for the selected group.",
+      "indicatorsNote": "Typical indicators per TR CU 021/2011. Check the limits for your subgroup against the regulation and the technological card.",
+      "indicatorsCount": "Indicators: {count}",
+      "search": "Find product",
+      "edit": "Edit",
+      "remove": "Delete",
+      "removeTitle": "Delete “{name}”?",
+      "removeBody": "The product will disappear from the description and the HACCP plan.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "categories": {
+        "ready-meals": "Ready meals (culinary products)",
+        "semi-finished": "Culinary semi-finished products",
+        "dairy": "Dairy products",
+        "meat": "Meat products",
+        "fish": "Fish products",
+        "bakery": "Bakery and confectionery",
+        "drinks": "Drinks"
+      },
+      "notFound": "Nothing found"
+    },
+    "hazards": {
+      "lead": "For each step, note what could harm the guest and assess the risk. A risk of {threshold} or more makes the hazard significant: it needs a CCP or an OPRP.",
+      "add": "Add hazard",
+      "fillTypical": "Fill with typical ones",
+      "filled": "Hazards added: {count}",
+      "emptyTitle": "No hazards yet",
+      "emptyHint": "Start with the typical catering hazards, then adjust them to your kitchen.",
+      "step": "Step",
+      "hazard": "Hazard",
+      "type": "Type",
+      "risk": "Risk",
+      "measures": "Control measures",
+      "significant": "significant",
+      "toCcp": "Define CCP",
+      "matrix": "Risk matrix",
+      "probability": "Probability",
+      "severity": "Severity",
+      "types": {
+        "bio": "Biological",
+        "chem": "Chemical",
+        "phys": "Physical",
+        "allergen": "Allergen"
+      },
+      "probabilityLevels": {
+        "1": "practically excluded",
+        "2": "unlikely",
+        "3": "likely",
+        "4": "very likely"
+      },
+      "severityLevels": {
+        "1": "mild",
+        "2": "moderate",
+        "3": "severe",
+        "4": "critical"
+      },
+      "edit": "Edit",
+      "remove": "Delete",
+      "removeTitle": "Delete hazard?",
+      "removeBody": "Linked CCPs will remain but will lose their link to the hazard.",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "diagram": {
+      "select": "Select",
+      "step": "Step",
+      "connect": "Link",
+      "room": "Room",
+      "flow": "Flow",
+      "remove": "Delete",
+      "undo": "Undo",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fit": "Fit",
+      "label": "Label",
+      "isCcp": "This is a CCP",
+      "noCcp": "Define your CCPs first",
+      "toCcp": "Open CCPs",
+      "ccpNone": "Not a CCP",
+      "fromAreas": "From the account's rooms",
+      "areaNone": "Not selected",
+      "flowKind": "Flow type",
+      "flows": {
+        "raw": "Raw materials",
+        "ready": "Finished products",
+        "waste": "Waste",
+        "staff": "Staff",
+        "dishes": "Dirty dishes"
+      },
+      "legend": "Legend",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "saveFailed": "Not saved — check your connection",
+      "editOnDesktop": "Drawing is easier on a computer — here you can view the diagram.",
+      "hintSelect": "Select an item to change it. Double-click a step or room to edit its label.",
+      "hintStep": "Click the canvas to place a step.",
+      "hintRoom": "Drag a rectangle on the canvas.",
+      "hintFlow": "Click to add points. Double-click to finish.",
+      "hintConnect": "Click a step, then the next one.",
+      "print": "Print",
+      "printByFlow": "Print by flow",
+      "rename": "Rename",
+      "titleField": "Diagram name",
+      "selected": "Selected item",
+      "nothingSelected": "Select a step, room or link.",
+      "newStep": "New step",
+      "newRoom": "Room",
+      "finishFlow": "Finish",
+      "editLabel": "Item label",
+      "canvas": "Diagram canvas",
+      "noFlowsOnPlan": "There are no flows on the plan",
+      "unnamed": "Untitled",
+      "limitNodes": "Limit reached: a diagram holds at most {count} elements",
+      "limitEdges": "Limit reached: a diagram holds at most {count} connections",
+      "limitPoints": "Limit reached: a line has at most {count} points. Finish the line (Enter)"
+    },
+    "flowcharts": {
+      "lead": "Process steps from receiving to serving. Mark the steps where CCPs are.",
+      "new": "New diagram",
+      "pick": "Start from",
+      "templates": {
+        "blank": "Blank",
+        "hot": "Hot kitchen",
+        "cold": "Cold kitchen",
+        "pastry": "Pastry shop"
+      },
+      "name": "Name",
+      "namePlaceholder": "For example, Hot kitchen",
+      "create": "Create",
+      "cancel": "Cancel",
+      "stats": "Steps: {steps}",
+      "updated": "Changed {date}",
+      "open": "Open",
+      "emptyTitle": "No flowcharts yet",
+      "emptyHint": "Create a diagram from a kitchen template — the steps are already laid out, you only need to mark the CCPs.",
+      "remove": "Delete",
+      "removeTitle": "Delete the diagram \"{name}\"?",
+      "removeBody": "The diagram will be removed permanently.",
+      "createFailed": "Could not create the diagram"
+    },
+    "floorPlans": {
+      "lead": "Draw rooms and flows — raw materials, finished products, waste, staff, dishes — so it is clear they do not cross.",
+      "new": "New plan",
+      "name": "Name",
+      "namePlaceholder": "For example, Main kitchen",
+      "create": "Create",
+      "cancel": "Cancel",
+      "stats": "Rooms: {rooms} · flows: {flows}",
+      "updated": "Changed {date}",
+      "open": "Open",
+      "emptyTitle": "No floor plans yet",
+      "emptyHint": "Draw rooms as rectangles and route flows between them in different colors.",
+      "remove": "Delete",
+      "removeTitle": "Delete the plan \"{name}\"?",
+      "removeBody": "The plan will be removed permanently.",
+      "createFailed": "Could not create the plan"
+    },
+    "records": {
+      "saveFailed": "Could not save",
+      "offline": "No connection to the server"
+    },
+    "team": {
+      "lead": "Who is responsible for the HACCP system. The team leader signs documents and chairs meetings.",
+      "add": "Add to team",
+      "noLeader": "Appoint a team leader — without one the order and regulation cannot be issued.",
+      "emptyTitle": "No one in the team yet",
+      "emptyHint": "Add the people who run HACCP: usually the manager, the chef and the technologist.",
+      "roles": {
+        "leader": "Team leader",
+        "deputy": "Deputy",
+        "member": "Team member",
+        "secretary": "Secretary"
+      },
+      "leaderTaken": "There is already a leader",
+      "duties": "Duties",
+      "employee": "Employee",
+      "role": "Role in the team",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "remove": "Remove from team",
+      "removeTitle": "Remove {name} from the team?",
+      "removeBody": "The employee stays in the account, only the team changes.",
+      "formerEmployee": "No longer works here",
+      "docsTitle": "Team documents",
+      "order": "Order creating the team",
+      "orderIssued": "Order No. {number} dated {date}",
+      "orderCreate": "Issue the order",
+      "orderNeedsLeader": "Appoint a leader first",
+      "regulation": "HACCP team regulation",
+      "open": "Open",
+      "openPrint": "Open for printing",
+      "signed": "Signed documents",
+      "saved": "Saved"
+    },
+    "policy": {
+      "lead": "The policy is management's promise to produce safe food. Hang the QR sheet in the workshop: staff can read it on their phones.",
+      "text": "Policy text",
+      "approvedBy": "Approved by",
+      "approvedAt": "Approval date",
+      "save": "Save",
+      "saved": "Saved",
+      "draft": "Draft",
+      "approved": "Approved",
+      "qrTitle": "QR sheet",
+      "qrHint": "The QR opens a page with the policy text — no login needed.",
+      "print": "Open for printing",
+      "publicPage": "Page for staff",
+      "rotate": "Change link",
+      "rotateTitle": "Change the QR link?",
+      "rotateBody": "The QR on sheets already printed will stop working — they will need to be printed again.",
+      "rotated": "Link updated",
+      "rotateFailed": "Could not change the link"
+    },
+    "publicPolicy": {
+      "notFound": "This link is out of date — ask your manager for a new QR sheet."
+    },
+    "print": {
+      "emptyTeam": "Add team members — the regulation will fill itself in.",
+      "toBlock": "Go to the team",
+      "scanHint": "Scan — the policy opens on your phone",
+      "emptyPolicy": "Save the policy text first and the QR sheet will be built automatically.",
+      "toPolicyText": "Go to the text"
+    },
+    "controlPoints": {
+      "lead": "Answer 4 questions for each significant hazard — the system will suggest whether a critical control point is needed. For a CCP, set limits, monitoring and a responsible person.",
+      "needDecision": "Decision needed",
+      "runTree": "Run the decision tree",
+      "noHazards": "First mark hazards in the Hazard analysis",
+      "toHazards": "Open hazard analysis",
+      "questionOf": "Question {n} of 4",
+      "yes": "Yes",
+      "no": "No",
+      "back": "Back",
+      "q1": "Are there measures that prevent this hazard?",
+      "q1hint": "For example: temperature control, incoming inspection, separate equipment.",
+      "q2": "Is this step specifically designed to eliminate the hazard or reduce it to an acceptable level?",
+      "q2hint": "For example, heat treatment destroys microorganisms.",
+      "q3": "Could the hazard at this step exceed an acceptable level?",
+      "q3hint": "Think about what happens if the step goes wrong.",
+      "q4": "Will a later step eliminate the hazard or reduce it to an acceptable level?",
+      "q4hint": "If yes, control moves to that later step.",
+      "result": "Result",
+      "kinds": {
+        "ccp": "CCP",
+        "oprp": "OPRP",
+        "prp": "PRP",
+        "none": "Not required"
+      },
+      "explain": {
+        "ccp": "Critical control point: the hazard is eliminated here, so it needs constant monitoring and limits.",
+        "oprp": "Operational prerequisite program: the hazard is controlled here but eliminated at another step.",
+        "prp": "General sanitation measures are enough — no separate point is needed.",
+        "none": "There are no preventive measures — review the step or the technology."
+      },
+      "changeKind": "Change type",
+      "number": "Number",
+      "limits": "Critical limits",
+      "monitoring": "What and how we monitor",
+      "frequency": "Frequency",
+      "responsible": "Responsible person",
+      "corrective": "Corrective actions",
+      "journal": "Log for records",
+      "comment": "Comment",
+      "save": "Save",
+      "cancel": "Cancel",
+      "allWorksheets": "All worksheets",
+      "worksheet": "Worksheet",
+      "openJournal": "Open log",
+      "createCapa": "Report a nonconformity",
+      "capaTitle": "Deviation at {number}: {hazard}",
+      "hazardDeleted": "Hazard deleted",
+      "noResponsible": "Assign a responsible person",
+      "edit": "Edit",
+      "remove": "Delete",
+      "removeTitle": "Delete {number}?",
+      "removeBody": "The worksheet for this point will be removed as well.",
+      "freq": {
+        "batch": "Every batch",
+        "load": "Every load",
+        "twiceShift": "Twice per shift",
+        "daily": "Daily",
+        "weekly": "Weekly"
+      },
+      "empty": "No points yet",
+      "limitsShort": "Limit",
+      "monitoringShort": "Monitoring",
+      "step": "Step",
+      "hazard": "Hazard",
+      "pickResponsible": "Choose a responsible person",
+      "noJournal": "No log",
+      "dialogTitle": "Control point",
+      "emptyHint": "Run the decision tree for a significant hazard — the point will appear here.",
+      "next": "Next"
+    },
+    "worksheet": {
+      "title": "Worksheet {number}",
+      "step": "Step",
+      "hazard": "Hazard",
+      "kind": "Point type",
+      "limits": "Critical limits",
+      "monitoring": "Monitoring (what and how)",
+      "frequency": "Frequency",
+      "responsible": "Responsible person",
+      "corrective": "Corrective actions",
+      "records": "Records",
+      "acquainted": "Acknowledged",
+      "emptyHint": "Define a CCP — worksheets will appear here.",
+      "toPoints": "To control points",
+      "date": "date"
+    },
+    "audit": {
+      "lead": "The audit checks that the HACCP system works: the yearly plan, audit protocols, the report and actions on findings.",
+      "journalsTitle": "Audit logs",
+      "lastDoc": "Latest document: {date}",
+      "noDocs": "No documents",
+      "open": "Open",
+      "disabled": "Off",
+      "enable": "Turn on",
+      "checklistsTitle": "Checklists for audits",
+      "runsYear": "Inspections this year: {count}",
+      "openChecklists": "Open checklists",
+      "noRuns": "No inspections yet",
+      "status": {
+        "draft": "Draft",
+        "completed": "Completed"
+      }
+    },
+    "pest": {
+      "lead": "Treatment plan, the service contract and acts. Monitoring is kept in the pest control journal.",
+      "plan": "Action plan",
+      "add": "Add action",
+      "fillTypical": "Fill with typical plan",
+      "kind": "Type",
+      "kinds": {
+        "disinsection": "Disinsection",
+        "deratization": "Deratization",
+        "disinfection": "Disinfection"
+      },
+      "object": "Object",
+      "frequency": "Frequency",
+      "contractor": "Contractor",
+      "lastDate": "Last treatment",
+      "nextDate": "Next",
+      "overdue": "Overdue",
+      "soon": "Soon",
+      "freq": {
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "halfYear": "Twice a year",
+        "onRequest": "On request"
+      },
+      "typicalObject": "All premises",
+      "journals": "Journals",
+      "openJournal": "Open journal",
+      "disabled": "Disabled",
+      "enable": "Enable",
+      "order": "Order on disinfection, disinsection and deratization",
+      "contract": "Contract with the pest control service",
+      "acts": "Work completion acts",
+      "emptyTitle": "No actions yet",
+      "emptyHint": "Treatments are carried out at least once a month — add the plan.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "remove": "Delete",
+      "removeTitle": "Delete action?",
+      "removeBody": "The row will be removed from the plan. The journal and files are not affected.",
+      "openOrder": "Open the order"
+    },
+    "lab": {
+      "lead": "What the laboratory checks and how often. The system calculates the next date itself and highlights overdue items.",
+      "plan": "Research plan",
+      "add": "Add research",
+      "fillTypical": "Fill with typical plan",
+      "objects": {
+        "product": "Products",
+        "swabs": "Swabs",
+        "water": "Water",
+        "air": "Air",
+        "other": "Other"
+      },
+      "object": "Object",
+      "subject": "What we test",
+      "indicator": "Indicators",
+      "everyMonths": "Every {count} mo.",
+      "everyMonthsLabel": "Frequency, months",
+      "laboratory": "Laboratory",
+      "lastDate": "Last research",
+      "nextDate": "Next",
+      "overdue": "Overdue",
+      "soon": "Soon",
+      "contract": "Contract with the accredited laboratory",
+      "protocols": "Research protocols",
+      "acts": "Work completion acts",
+      "emptyTitle": "No research yet",
+      "emptyHint": "Start with the typical plan for catering.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "remove": "Delete",
+      "removeTitle": "Delete research?",
+      "removeBody": "The row will be removed from the plan. Protocols in the folder stay.",
+      "typical": {
+        "ready": {
+          "subject": "Ready meals",
+          "indicator": "Microbiological indicators"
+        },
+        "equipment": {
+          "subject": "Swabs from equipment and utensils",
+          "indicator": "Coliform bacteria"
+        },
+        "hands": {
+          "subject": "Swabs from staff hands",
+          "indicator": "Coliform bacteria, S. aureus"
+        },
+        "water": {
+          "subject": "Drinking water",
+          "indicator": "Microbiological and organoleptic indicators"
+        }
+      }
+    },
+    "posters": {
+      "lead": "Posters for workshops and restrooms with your logo. Print them and hang them in a visible place.",
+      "printAll": "Print all",
+      "print": "Print",
+      "open": "Open"
+    },
+    "norms": {
+      "lead": "Mark the documents your establishment works under. They will go into the production control program.",
+      "sanpinLink": "SanPiN standards reference",
+      "catalog": "Main documents",
+      "recommended": "recommended",
+      "selectRecommended": "Mark recommended",
+      "custom": "Own documents",
+      "customPlaceholder": "For example: GOST 31987-2012 “Catering services”",
+      "add": "Add",
+      "remove": "Remove",
+      "save": "Save",
+      "saved": "Saved",
+      "unsaved": "Unsaved changes",
+      "subscriptionTitle": "Update subscription",
+      "subscriptionHint": "A specialist will tell you when the norms change and help update the establishment's documents.",
+      "order": "Order",
+      "files": "Regulatory document files"
+    },
+    "assemble": "Assemble from sections",
+    "program": {
+      "emptySection": "This section is empty. Fill in the \"{block}\" block and it will appear here by itself.",
+      "fill": "Fill in",
+      "notFilled": "Not filled in"
+    }
   },
   "inspectionDay": {
     "qrTitle": "Show the QR code to the inspector",
@@ -1539,16 +2108,13 @@
         "today": "Today",
         "all": "All journals",
         "verify": "Verification",
-        "program": "Program",
-        "orders": "Orders",
-        "knowledge": "Instructions",
-        "sanpin": "SanPiN",
         "plan": "Plan",
         "balance": "Balance",
         "services": "Services",
         "inspectionDay": "What to do",
         "portal": "QR access",
-        "readiness": "Readiness"
+        "readiness": "Readiness",
+        "program": "Program"
       },
       "groups": {
         "staff": "Staff",
@@ -1570,7 +2136,51 @@
       "tabsAria": "Subsections",
       "menu": "Menu",
       "logout": "Log out",
-      "brand": "WeSetup"
+      "brand": "WeSetup",
+      "items": {
+        "team": "HACCP team",
+        "policy": "Quality policy",
+        "products": "Product descriptions (TR CU)",
+        "flowcharts": "Process flow diagrams",
+        "hazards": "Hazard analysis",
+        "control-points": "CCPs and worksheets",
+        "audit": "Checklists and audit",
+        "instructions": "Work instructions",
+        "procedures": "Documented procedures",
+        "orders": "Orders",
+        "posters": "Workshop posters",
+        "storage": "Document storage",
+        "floor-plans": "Floor plan and flows",
+        "pest-control": "Pest control",
+        "lab": "Laboratory tests",
+        "norm-documents": "Regulatory documents",
+        "program": "PCP"
+      },
+      "menuGroups": {
+        "haccp": "HACCP",
+        "documents": "Documents"
+      },
+      "subtabs": {
+        "overview": "Overview",
+        "program": "Program",
+        "haccpPlan": "HACCP plan",
+        "members": "Members",
+        "regulation": "Regulation",
+        "text": "Text",
+        "qrSheet": "QR sheet",
+        "points": "Points",
+        "worksheets": "Worksheets",
+        "list": "List",
+        "guidelines": "Guidelines",
+        "sanpin": "SanPiN standards"
+      },
+      "backToMain": "Main menu",
+      "sectionMenuAria": "Section menu",
+      "status": {
+        "done": "Done",
+        "started": "Started",
+        "empty": "Empty"
+      }
     },
     "header": {
       "staff": "Staff",
@@ -1824,7 +2434,27 @@
       "task_fill": "Task entry",
       "tasks": "Tasks",
       "verifications": "Verifications",
-      "journal_scope": "Journal tasks"
+      "journal_scope": "Journal tasks",
+      "production_control_documents_procedures": "Documented procedures",
+      "production_control_documents_storage": "Document storage",
+      "production_control_norms_guidelines": "Guidelines",
+      "production_control_haccp_products": "Product descriptions",
+      "production_control_haccp_hazards": "Hazard analysis",
+      "production_control_haccp_control_points": "Critical control points",
+      "production_control_haccp_control_points_worksheets": "CCP worksheets",
+      "production_control_haccp_audit": "Internal audit",
+      "production_control_haccp_flowcharts": "Process flow diagrams",
+      "production_control_sanitation_floor_plans": "Floor plan and flows",
+      "production_control_sanitation_pest_control": "Pest control",
+      "production_control_sanitation_lab": "Laboratory tests",
+      "production_control_haccp_team": "HACCP team",
+      "production_control_haccp_team_regulation": "HACCP team regulation",
+      "production_control_haccp_policy": "Quality policy",
+      "production_control_haccp_policy_print": "Quality policy — QR sheet",
+      "production_control_documents_posters": "Posters for production",
+      "production_control_norms_documents": "Regulatory documents",
+      "production_control_program": "Program assembly",
+      "production_control_haccp_plan": "HACCP plan assembly"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",

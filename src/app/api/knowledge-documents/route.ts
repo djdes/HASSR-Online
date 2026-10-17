@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const auth = await requireKnowledgeAccess();
   if (!auth.ok) return auth.response;
-  // `kind` — документы раздела «Производственный контроль» (ППК, ХАССП-план): у них своё место.
-  const documents = await db.knowledgeDocument.findMany({ where: { organizationId: auth.organizationId, kind: null }, select: { id: true, title: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true, uploadedByName: true }, orderBy: { createdAt: "desc" }, take: 500 });
+  // `kind` и `folder` — документы раздела «Производственный контроль» (ППК, ХАССП-план, папки блоков): у них своё место.
+  const documents = await db.knowledgeDocument.findMany({ where: { organizationId: auth.organizationId, kind: null, folder: null }, select: { id: true, title: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true, uploadedByName: true }, orderBy: { createdAt: "desc" }, take: 500 });
   return NextResponse.json({ documents }, { headers: { "Cache-Control": "private, no-store" } });
 }
 

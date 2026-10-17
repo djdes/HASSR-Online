@@ -18,9 +18,12 @@ import { useAppNav } from "@/components/layout/app-nav-context";
  * строка со скроллом вбок (как у прежних вкладок точек).
  */
 /**
- * Где мы относительно меню: на корне раздела (адрес одной из ВИДИМЫХ
- * человеку вкладок) — рисуем вкладки и не рисуем крошки; глубже — наоборот.
- * Один расчёт на `SectionTabs` и `PageNav`, чтобы они не разошлись.
+ * Где мы относительно меню. В обычном разделе: на корне (адрес одной из
+ * ВИДИМЫХ вкладок) — рисуем вкладки и не рисуем крошки, глубже — наоборот.
+ * В разделе с меню (`section.menu`): `menuItem` — пункт меню, которому
+ * принадлежит путь, `menuTab` — его вкладка; `depth` — "item" на самом пункте
+ * (или адресе его вкладки), "deep" — глубже. Один расчёт на `SectionTabs`,
+ * `SectionFrame`, `PageNav` и сайдбар, чтобы они не разошлись.
  */
 export function useSectionPlace() {
   const { sections } = useAppNav();
@@ -29,13 +32,28 @@ export function useSectionPlace() {
   const section = owner ? sections.find((item) => item.key === owner.section) : undefined;
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
   const atRoot = Boolean(section?.tabs.some((tab) => tab.href === clean));
-  return { section, atRoot, activeHref: atRoot ? clean : null };
+  const menuItem = owner?.menuItemId
+    ? section?.menu?.flatMap((group) => group.items).find((entry) => entry.id === owner.menuItemId)
+    : undefined;
+  const menuTab = menuItem?.tabs?.find((tab) => tab.href === clean);
+  let depth: "item" | "deep" | null = null;
+  if (menuItem) depth = clean === menuItem.href || menuTab ? "item" : "deep";
+  const activeHref = section?.menu ? (menuTab?.href ?? null) : atRoot ? clean : null;
+  return { section, atRoot, menuItem, menuTab, depth, activeHref };
 }
 
 export function SectionTabs({ className }: { className?: string }) {
   const t = useTranslations("navigation.shell");
-  const { section, atRoot, activeHref } = useSectionPlace();
-  const tabs = atRoot ? section?.tabs ?? [] : [];
+  const { section, atRoot, menuItem, depth, activeHref } = useSectionPlace();
+  // В разделе с меню — вкладки текущего пункта (только на самом пункте);
+  // в остальных разделах — вкладки раздела на их корнях.
+  const tabs = section?.menu
+    ? depth === "item"
+      ? (menuItem?.tabs ?? [])
+      : []
+    : atRoot
+      ? (section?.tabs ?? [])
+      : [];
 
   const scroller = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });

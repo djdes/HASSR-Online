@@ -34,7 +34,16 @@ export default async function MiniSectionsPage() {
       items: model.sections.map((section) => ({
         href: section.rootHref,
         label: section.label,
-        hint: section.tabs.length > 1 ? section.tabs.map((tab) => tab.label).join(" · ") : "",
+        // Раздел с меню — первые четыре пункта; остальные — вкладки раздела.
+        hint: section.menu
+          ? section.menu
+              .flatMap((group) => group.items)
+              .slice(0, 4)
+              .map((item) => item.label)
+              .join(" · ")
+          : section.tabs.length > 1
+            ? section.tabs.map((tab) => tab.label).join(" · ")
+            : "",
         icon: section.icon,
       })),
     });

@@ -35,9 +35,11 @@ export const DEFAULT_PRIORITY = "medium";
 
 interface Props {
   users: { id: string; name: string }[];
+  /** Заголовок, подставленный по ссылке (например, из ККТ). */
+  initialTitle?: string;
 }
 
-export function CapaForm({ users }: Props) {
+export function CapaForm({ users, initialTitle }: Props) {
   const t = useTranslations("capaManagement");
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -132,6 +134,7 @@ export function CapaForm({ users }: Props) {
           name="title"
           required
           ref={titleRef}
+          defaultValue={initialTitle}
           placeholder={t("form.titlePlaceholder")}
         />
       </div>

@@ -22,6 +22,14 @@ import {
   isStaffRestrictedWebPath,
 } from "@/lib/role-access";
 import { SETTINGS_CARDS, type SettingsCard } from "@/lib/settings-cards";
+import {
+  PPK_MENU_GROUPS,
+  PPK_OVERVIEW_HREF,
+  ppkBlockHref,
+  ppkMenuBlocks,
+  ppkReadyTabs,
+  type PpkBlockAccess,
+} from "@/lib/ppk/registry";
 
 export type NavSectionKey =
   | "company"
@@ -86,9 +94,6 @@ export type NavTabLabel =
   | "all"
   | "verify"
   | "program"
-  | "orders"
-  | "knowledge"
-  | "sanpin"
   | "plan"
   | "balance"
   | "services"
@@ -107,6 +112,21 @@ export type NavTab = {
   hideIfVisible?: string;
 };
 
+/** Вкладка пункта меню раздела (над страницей). Подпись — `navigation.shell.subtabs.<id>`. */
+export type NavMenuTab = { id: string; href: string; access: NavAccess };
+
+/** Пункт меню раздела (левое меню целиком меняется). Подпись — `navigation.shell.items.<id>`. */
+export type NavMenuItem = {
+  id: string;
+  icon: string;
+  href: string;
+  access: NavAccess;
+  tabs?: NavMenuTab[];
+};
+
+/** Группа пунктов меню раздела; подпись — `navigation.shell.menuGroups.<label>`, null — без подписи. */
+export type NavMenuGroup = { label: "haccp" | "documents" | null; items: NavMenuItem[] };
+
 export type NavSection = {
   key: NavSectionKey;
   icon: string;
@@ -114,6 +134,8 @@ export type NavSection = {
   access?: NavAccess;
   /** Первая видимая вкладка — корень раздела для этого человека. */
   tabs: NavTab[];
+  /** Меню раздела: при входе в раздел левое меню меняется на него. */
+  menu?: NavMenuGroup[];
   /** Пути раздела без вкладки и карточки (скрытые из меню страницы). */
   hiddenMatch?: string[];
   /** Точные адреса раздела (редиректы, `/settings`). */
@@ -122,13 +144,26 @@ export type NavSection = {
   renameHref?: "/journals" | "/settings/users";
 };
 
-export type VisibleNavTab = { id: string; label: NavTabLabel; href: string };
+export type VisibleNavTab = {
+  id: string;
+  label: NavTabLabel;
+  href: string;
+};
+
+export type VisibleNavMenuItem = {
+  id: string;
+  icon: string;
+  href: string;
+  tabs?: { id: string; href: string }[];
+};
+export type VisibleNavMenuGroup = { label: NavMenuGroup["label"]; items: VisibleNavMenuItem[] };
 
 export type VisibleNavSection = {
   key: NavSectionKey;
   icon: string;
   rootHref: string;
   tabs: VisibleNavTab[];
+  menu?: VisibleNavMenuGroup[];
   renameHref?: NavSection["renameHref"];
 };
 
@@ -140,6 +175,35 @@ const fullAccessOr = (...capabilities: Capability[]): NavAccess => ({
   capabilities,
 });
 const ADMIN = anyOf("admin.full");
+
+/** Правило пункта реестра ППК — по виду доступа блока. */
+const PPK_ACCESS: Record<PpkBlockAccess, NavAccess> = {
+  fullAccess: FULL_ACCESS,
+  journalsView: anyOf("journals.view"),
+  staffPath: STAFF_PATH,
+};
+
+/**
+ * Меню «Производственного контроля» строит реестр блоков: группы, готовые
+ * блоки и их готовые вкладки. Адрес пункта — первая готовая вкладка.
+ */
+function ppkMenu(): NavMenuGroup[] {
+  return PPK_MENU_GROUPS.map((group): NavMenuGroup => ({
+    label: group.labelled ? (group.key as "haccp" | "documents") : null,
+    items: ppkMenuBlocks(group.key).map((block): NavMenuItem => {
+      const tabs = ppkReadyTabs(block);
+      return {
+        id: block.key,
+        icon: block.icon,
+        href: ppkBlockHref(block),
+        access: PPK_ACCESS[block.access],
+        ...(tabs.length > 0
+          ? { tabs: tabs.map((tab) => ({ id: tab.id, href: tab.href, access: PPK_ACCESS[tab.access] })) }
+          : {}),
+      };
+    }),
+  })).filter((group) => group.items.length > 0);
+}
 
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -237,12 +301,9 @@ export const NAV_SECTIONS: NavSection[] = [
     key: "productionControl",
     icon: "FileCheck2",
     access: FULL_ACCESS,
-    tabs: [
-      { id: "program", label: "program", href: "/production-control", access: FULL_ACCESS },
-      { id: "orders", label: "orders", href: "/orders", access: FULL_ACCESS },
-      { id: "knowledge", label: "knowledge", href: "/knowledge", access: anyOf("journals.view") },
-      { id: "sanpin", label: "sanpin", href: "/sanpin", access: STAFF_PATH },
-    ],
+    // Вкладка одна — корень раздела; навигация внутри — меню раздела слева.
+    tabs: [{ id: "program", label: "program", href: PPK_OVERVIEW_HREF, access: FULL_ACCESS }],
+    menu: ppkMenu(),
   },
   {
     key: "billing",
@@ -313,6 +374,32 @@ export function navAllows(
   return ruleAllows(actor, access, facts);
 }
 
+/**
+ * Меню раздела, которое человек откроет: пункты и вкладки — через `navAllows`;
+ * у пункта с вкладками адрес — первая видимая вкладка, без видимых вкладок
+ * пункт убирается; пустые группы тоже.
+ */
+function visibleMenu(actor: NavActor, groups: NavMenuGroup[], facts: NavFacts): VisibleNavMenuGroup[] {
+  const result: VisibleNavMenuGroup[] = [];
+  for (const group of groups) {
+    const items: VisibleNavMenuItem[] = [];
+    for (const item of group.items) {
+      if (!navAllows(actor, item.href, item.access, facts)) continue;
+      if (!item.tabs) {
+        items.push({ id: item.id, icon: item.icon, href: item.href });
+        continue;
+      }
+      const tabs = item.tabs
+        .filter((tab) => navAllows(actor, tab.href, tab.access, facts))
+        .map(({ id, href }) => ({ id, href }));
+      if (tabs.length === 0) continue;
+      items.push({ id: item.id, icon: item.icon, href: tabs[0].href, tabs });
+    }
+    if (items.length > 0) result.push({ label: group.label, items });
+  }
+  return result;
+}
+
 /** Разделы и вкладки, которые человек откроет. Пустые разделы отброшены. */
 export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[] {
   const result: VisibleNavSection[] = [];
@@ -322,13 +409,15 @@ export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[
     const allowedIds = new Set(allowed.map((tab) => tab.id));
     const tabs = allowed
       .filter((tab) => !tab.hideIfVisible || !allowedIds.has(tab.hideIfVisible))
-      .map(({ id, label, href }) => ({ id, label, href }));
+      .map((tab): VisibleNavTab => ({ id: tab.id, label: tab.label, href: tab.href }));
     if (tabs.length === 0) continue;
+    const menu = visibleMenu(actor, section.menu ?? [], facts);
     result.push({
       key: section.key,
       icon: section.icon,
       rootHref: tabs[0].href,
       tabs,
+      ...(menu.length > 0 ? { menu } : {}),
       ...(section.renameHref ? { renameHref: section.renameHref } : {}),
     });
   }
@@ -346,31 +435,57 @@ export function visibleSettingsCards(actor: NavActor, facts: NavFacts): Settings
 type PathOwner = {
   prefix: string;
   section: NavSectionKey;
-  /** Адрес вкладки, которую подсвечивает путь (или сам путь). */
+  /** Адрес, который подсвечивает путь (вкладка, пункт меню или сам путь). */
   ownerHref: string;
   tabRoot: boolean;
   exact: boolean;
+  /** Пункт меню раздела, которому принадлежит путь. */
+  menuItemId: string | null;
+  /** Вкладка пункта меню, к которой относится путь. */
+  menuTabHref: string | null;
 };
 
 const PATH_OWNERS: PathOwner[] = (() => {
   const owners: PathOwner[] = [];
   for (const section of NAV_SECTIONS) {
+    const sectionTabHrefs = new Set(section.tabs.map((tab) => tab.href));
+    // Пункт меню — владелец своего адреса и адресов своих вкладок (префикс):
+    // `/orders/x` — это «Приказы», `/sanpin` — вкладка «Нормативных документов».
+    // Идут раньше вкладок раздела: при равном адресе (корень раздела) выигрывает пункт.
+    for (const group of section.menu ?? []) {
+      for (const item of group.items) {
+        const hrefs = item.tabs ? item.tabs.map((tab) => tab.href) : [item.href];
+        for (const href of hrefs) {
+          owners.push({
+            prefix: href,
+            section: section.key,
+            ownerHref: href,
+            tabRoot: sectionTabHrefs.has(href),
+            exact: false,
+            menuItemId: item.id,
+            menuTabHref: item.tabs ? href : null,
+          });
+        }
+      }
+    }
     for (const tab of section.tabs) {
-      owners.push({ prefix: tab.href, section: section.key, ownerHref: tab.href, tabRoot: true, exact: false });
+      if (!owners.some((owner) => owner.section === section.key && owner.prefix === tab.href)) {
+        owners.push({ prefix: tab.href, section: section.key, ownerHref: tab.href, tabRoot: true, exact: false, menuItemId: null, menuTabHref: null });
+      }
       for (const extra of tab.match ?? []) {
-        owners.push({ prefix: extra, section: section.key, ownerHref: tab.href, tabRoot: false, exact: false });
+        owners.push({ prefix: extra, section: section.key, ownerHref: tab.href, tabRoot: false, exact: false, menuItemId: null, menuTabHref: null });
       }
     }
     for (const hidden of section.hiddenMatch ?? []) {
-      owners.push({ prefix: hidden, section: section.key, ownerHref: hidden, tabRoot: false, exact: false });
+      owners.push({ prefix: hidden, section: section.key, ownerHref: hidden, tabRoot: false, exact: false, menuItemId: null, menuTabHref: null });
     }
     for (const alias of section.aliases ?? []) {
-      owners.push({ prefix: alias, section: section.key, ownerHref: alias, tabRoot: false, exact: true });
+      owners.push({ prefix: alias, section: section.key, ownerHref: alias, tabRoot: false, exact: true, menuItemId: null, menuTabHref: null });
     }
   }
   for (const card of SETTINGS_CARDS) {
     for (const prefix of [card.href, ...(card.match ?? [])]) {
-      owners.push({ prefix, section: card.section, ownerHref: card.href, tabRoot: false, exact: false });
+      owners.push({ prefix, section: card.section, ownerHref: card.href, tabRoot: false, exact: false, menuItemId: null, menuTabHref: null });
     }
   }
   return owners;
@@ -386,9 +501,13 @@ function normalize(pathname: string): string {
  * `/`. `isTabRoot` — путь и есть адрес вкладки (там рисуем вкладки, а не
  * крошки).
  */
-export function sectionForPath(
-  pathname: string,
-): { section: NavSectionKey; ownerHref: string; isTabRoot: boolean } | null {
+export function sectionForPath(pathname: string): {
+  section: NavSectionKey;
+  ownerHref: string;
+  isTabRoot: boolean;
+  menuItemId: string | null;
+  menuTabHref: string | null;
+} | null {
   const path = normalize(pathname);
   let best: PathOwner | null = null;
   for (const owner of PATH_OWNERS) {
@@ -402,5 +521,8 @@ export function sectionForPath(
     section: best.section,
     ownerHref: best.ownerHref,
     isTabRoot: best.tabRoot && path === best.prefix,
+    menuItemId: best.menuItemId,
+    // Вкладка пункта — только когда путь равен её адресу или лежит глубже.
+    menuTabHref: best.menuTabHref,
   };
 }

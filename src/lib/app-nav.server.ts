@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import type { Session } from "next-auth";
 import { CHECKLIST_CODE } from "@/lib/custom-checklists";
 import { customSectionNameByHref, type CustomNames } from "@/lib/custom-names";
+import type { PpkBlockKey, PpkTabKey } from "@/lib/ppk/registry";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -15,12 +16,23 @@ import {
 
 /** Готовая к показу модель меню: подписи уже переведены. Сериализуема. */
 export type NavModelTab = { id: string; href: string; label: string };
+export type NavModelMenuItem = {
+  id: string;
+  icon: string;
+  href: string;
+  label: string;
+  tabs?: NavModelTab[];
+};
+/** Группа меню раздела; `label: null` — группа без подписи. */
+export type NavModelMenuGroup = { label: string | null; items: NavModelMenuItem[] };
 export type NavModelSection = {
   key: NavSectionKey;
   icon: string;
   label: string;
   rootHref: string;
   tabs: NavModelTab[];
+  /** Меню раздела: при входе в раздел левое меню меняется на него. */
+  menu?: NavModelMenuGroup[];
 };
 /** Пункт поиска ⌘K — карточка настроек, которую человек откроет. */
 export type NavModelSearchItem = {
@@ -65,7 +77,33 @@ export async function buildNavModel(input: {
       customSectionNameByHref(input.customNames, section.renameHref) ??
       t(`sections.${section.key}`),
     rootHref: section.rootHref,
-    tabs: section.tabs.map((tab) => ({ id: tab.id, href: tab.href, label: t(`tabs.${tab.label}`) })),
+    tabs: section.tabs.map((tab) => ({
+      id: tab.id,
+      href: tab.href,
+      label: t(`tabs.${tab.label}`),
+    })),
+    ...(section.menu
+      ? {
+          menu: section.menu.map((group) => ({
+            label: group.label ? t(`menuGroups.${group.label}`) : null,
+            items: group.items.map((item) => ({
+              id: item.id,
+              icon: item.icon,
+              href: item.href,
+              label: t(`items.${item.id as PpkBlockKey}`),
+              ...(item.tabs
+                ? {
+                    tabs: item.tabs.map((tab) => ({
+                      id: tab.id,
+                      href: tab.href,
+                      label: t(`subtabs.${tab.id as PpkTabKey}`),
+                    })),
+                  }
+                : {}),
+            })),
+          })),
+        }
+      : {}),
   }));
   const sectionLabels = new Map<string, string>(sections.map((s) => [s.key, s.label]));
   const search = visibleSettingsCards(input.user, input.facts).map((card) => ({

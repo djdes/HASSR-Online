@@ -1,0 +1,90 @@
+import { randomBytes } from "node:crypto";
+import type { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { recordAuditLog } from "@/lib/audit-log";
+import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { checkPpkRefs, checkPpkTeamGroup, ppkValidationError } from "@/lib/ppk/records.server";
+import { PPK_RECORD_LIMITS, PPK_RECORD_SCHEMAS, isPpkRecordBlock } from "@/lib/ppk/records";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const SELECT = { id: true, data: true, sortOrder: true, updatedAt: true } as const;
+
+/** GET ?block=<блок> — записи блока раздела ППК по порядку. */
+export async function GET(request: Request) {
+  const auth = await requirePpkAccess();
+  if (!auth.ok) return auth.response;
+  const block = new URL(request.url).searchParams.get("block");
+  if (!isPpkRecordBlock(block)) {
+    return NextResponse.json({ error: "Неизвестный блок" }, { status: 400 });
+  }
+  const records = await db.ppkRecord.findMany({
+    where: { organizationId: auth.organizationId, block },
+    select: SELECT,
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+  return NextResponse.json({ records }, { headers: { "Cache-Control": "private, no-store" } });
+}
+
+/** POST { block, data } — новая запись блока. */
+export async function POST(request: Request) {
+  const auth = await requirePpkAccess();
+  if (!auth.ok) return auth.response;
+  const body = await request.json().catch(() => null);
+  const block = body?.block;
+  if (!isPpkRecordBlock(block)) {
+    return NextResponse.json({ error: "Неизвестный блок" }, { status: 400 });
+  }
+  const parsed = PPK_RECORD_SCHEMAS[block].safeParse(body?.data);
+  if (!parsed.success) {
+    return NextResponse.json({ error: ppkValidationError(parsed.error) }, { status: 400 });
+  }
+  // Схема блока уже проверила данные; тип в реестре общий, поэтому приводим здесь.
+  const value = parsed.data as Record<string, unknown>;
+
+  const organizationId = auth.organizationId;
+  const count = await db.ppkRecord.count({ where: { organizationId, block } });
+  if (count >= PPK_RECORD_LIMITS[block]) {
+    const error = block === "policy" ? "Политика уже создана" : "Слишком много записей";
+    return NextResponse.json({ error }, { status: 409 });
+  }
+
+  const refError = await checkPpkRefs(organizationId, block, value);
+  if (refError) return NextResponse.json({ error: refError }, { status: 400 });
+
+  if (block === "team") {
+    const groupError = await checkPpkTeamGroup(organizationId, value);
+    if (groupError) return NextResponse.json({ error: groupError }, { status: 409 });
+  }
+
+  // Токен политики ставит сервер: по нему открывается публичная страница и QR.
+  const data = block === "policy" ? { ...value, token: randomBytes(16).toString("base64url") } : value;
+
+  const last = await db.ppkRecord.aggregate({
+    where: { organizationId, block },
+    _max: { sortOrder: true },
+  });
+  const record = await db.ppkRecord.create({
+    data: {
+      organizationId,
+      block,
+      data: data as Prisma.InputJsonValue,
+      sortOrder: (last._max.sortOrder ?? 0) + 1,
+      createdById: auth.session.user.id ?? null,
+    },
+    select: SELECT,
+  });
+
+  await recordAuditLog({
+    request,
+    session: auth.session,
+    organizationId,
+    action: "production-control.record-create",
+    entity: "PpkRecord",
+    entityId: record.id,
+    details: { block },
+  });
+  return NextResponse.json({ record }, { status: 201 });
+}

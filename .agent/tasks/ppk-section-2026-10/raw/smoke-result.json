@@ -1,0 +1,485 @@
+{
+  "results": [
+    {
+      "id": "P1.1",
+      "name": "на /dashboard сайдбар без section-режима",
+      "ok": true,
+      "status": "PASS",
+      "details": "main"
+    },
+    {
+      "id": "P1.2",
+      "name": "клик по разделу → /production-control, режим section",
+      "ok": true,
+      "status": "PASS"
+    },
+    {
+      "id": "P1.3",
+      "name": "первые 8 пунктов меню",
+      "ok": true,
+      "status": "PASS",
+      "details": [
+        "program",
+        "instructions",
+        "procedures",
+        "floor-plans",
+        "products",
+        "pest-control",
+        "lab",
+        "flowcharts"
+      ]
+    },
+    {
+      "id": "P1.4",
+      "name": "затем ХАССП и документы",
+      "ok": true,
+      "status": "PASS",
+      "details": [
+        "team",
+        "policy",
+        "hazards",
+        "control-points",
+        "audit",
+        "orders",
+        "posters",
+        "norm-documents",
+        "storage"
+      ]
+    },
+    {
+      "id": "P1.5",
+      "name": "активный пункт — program",
+      "ok": true,
+      "status": "PASS",
+      "details": "program"
+    },
+    {
+      "id": "P1.6",
+      "name": "на корне раздела крошек нет",
+      "ok": true,
+      "status": "PASS",
+      "details": 0
+    },
+    {
+      "id": "P1.7",
+      "name": "«Главное меню» → режим main, адрес прежний",
+      "ok": true,
+      "status": "PASS",
+      "details": "http://localhost:3025/production-control"
+    },
+    {
+      "id": "P1.8",
+      "name": "клик по «Производственный контроль» в главном меню → section",
+      "ok": true,
+      "status": "PASS"
+    },
+    {
+      "id": "P1.9",
+      "name": "/orders → активный orders",
+      "ok": true,
+      "status": "PASS",
+      "details": "orders"
+    },
+    {
+      "id": "P1.10",
+      "name": "/sanpin → активный norm-documents и 3 вкладки",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "active": "norm-documents",
+        "tabsSan": [
+          "Перечень",
+          "Методические рекомендации",
+          "Нормы СанПиН"
+        ]
+      }
+    },
+    {
+      "id": "P1.11",
+      "name": "worksheets: вкладки «Точки · Рабочие листы», активна вторая",
+      "ok": true,
+      "status": "PASS",
+      "details": [
+        {
+          "t": "Точки",
+          "cur": null
+        },
+        {
+          "t": "Рабочие листы",
+          "cur": "page"
+        }
+      ]
+    },
+    {
+      "id": "P1.12",
+      "name": "на страницах раздела крошек нет",
+      "ok": true,
+      "status": "PASS",
+      "details": 0
+    },
+    {
+      "id": "P2.1",
+      "name": "«Заполнить типовыми» → 10 строк",
+      "ok": true,
+      "status": "PASS",
+      "details": 10
+    },
+    {
+      "id": "P2.2",
+      "name": "в ККТ блок «Нужно решение» не пуст",
+      "ok": true,
+      "status": "PASS",
+      "details": 9
+    },
+    {
+      "id": "P2.3",
+      "name": "мастер: Да, Да → итог ККТ",
+      "ok": true,
+      "status": "PASS",
+      "details": "ЗакрытьКонтрольная точкаПриёмка сырья · Патогенные микроорганизмы в сыром мясе и птице (сальмонеллы, листерии)РезультатК"
+    },
+    {
+      "id": "P2.4",
+      "name": "после сохранения — карточка «ККТ-1»",
+      "ok": true,
+      "status": "PASS"
+    },
+    {
+      "id": "P2.5",
+      "name": "worksheets содержит «Рабочий лист ККТ-1»",
+      "ok": true,
+      "status": "PASS",
+      "details": "ТочкиРабочие листыКафе «Точки»Рабочий лист ККТ-1ЭтапПриёмка сырьяОпасный факторПатогенные микроорганизмы в сыром мясе и "
+    },
+    {
+      "id": "P2.6",
+      "name": "член группы создан через API",
+      "ok": true,
+      "status": "PASS",
+      "details": 201
+    },
+    {
+      "id": "P2.7",
+      "name": "положение содержит имя руководителя",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "managerName": "Лидия Руководитель",
+        "snippet": "СоставПоложениеКафе «Точки»Положение о группе ХАССПУТВЕРЖДАЮРуководитель—/«____» ______________ 20__"
+      }
+    },
+    {
+      "id": "P2.8",
+      "name": "«Оформить приказ» → /orders/haccp-team?prefill=ppk-team, руководитель подставлен",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "url": "http://localhost:3025/orders/haccp-team?prefill=ppk-team",
+        "filled": {
+          "byInput": true,
+          "byText": true,
+          "values": [
+            "1",
+            "2026-10-17",
+            "Лидия Руководитель",
+            "Управляющий"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P2.9",
+      "name": "политика создана, токен выдан",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "status": 201,
+        "tokenLen": 22
+      }
+    },
+    {
+      "id": "P2.10",
+      "name": "policy/print содержит svg QR",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "svgCount": 38
+      }
+    },
+    {
+      "id": "P2.11",
+      "name": "публичная /policy/<token> без cookie — 200 и название организации",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "status": 200,
+        "orgName": "Кафе «Точки»"
+      }
+    },
+    {
+      "id": "P2.12",
+      "name": "/policy/badtoken123456789 — 404",
+      "ok": true,
+      "status": "PASS",
+      "details": 404
+    },
+    {
+      "id": "P3.1",
+      "name": "блок-схема из шаблона «Горячий цех»: в SVG ≥ 8 этапов",
+      "ok": true,
+      "status": "PASS",
+      "details": 8
+    },
+    {
+      "id": "P3.2",
+      "name": "двойной клик по этапу открывает поле правки подписи",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "hasInput": true
+      }
+    },
+    {
+      "id": "P3.3",
+      "name": "…/[id]/print — SVG есть, правка сохранена",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "svg": 38,
+        "edited": true
+      }
+    },
+    {
+      "id": "P3.4",
+      "name": "план помещений создан через API (2 помещения, 1 поток)",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "status": 201
+      }
+    },
+    {
+      "id": "P3.5",
+      "name": "печать по потокам: секция потока «Сырьё» есть",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "status": 200,
+        "snippet": "Моя компания\nСотрудники\nТорговые точки\nЖурналы\nЧек-листы\nПроизводственный контроль\nОплата\nОстальное\nПришла проверка\nГлавное меню\nПроизводственный конт"
+      }
+    },
+    {
+      "id": "P3.2b",
+      "name": "правка подписи (через панель), подпись в SVG, автосохранение «Сохранено»",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "labelInSvg": true,
+        "savedShown": true
+      }
+    },
+    {
+      "id": "P4.1",
+      "name": "дезинсекция: «Заполнить типовым» → 3 строки",
+      "ok": true,
+      "status": "PASS",
+      "details": 3
+    },
+    {
+      "id": "P4.2",
+      "name": "лаборатория: «Заполнить типовым» → 4 строки",
+      "ok": true,
+      "status": "PASS",
+      "details": 4
+    },
+    {
+      "id": "P4.3",
+      "name": "файл в папке lab-contract в списке, ссылка отдаёт 200",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "name": "ppk-e2e.pdf",
+        "status": 200
+      }
+    },
+    {
+      "id": "P4.4",
+      "name": "удаление файла через диалог",
+      "ok": true,
+      "status": "PASS",
+      "details": true
+    },
+    {
+      "id": "P5.1",
+      "name": "плакаты: 6 превью",
+      "ok": true,
+      "status": "PASS",
+      "details": 6
+    },
+    {
+      "id": "P5.2",
+      "name": "плакат hand-washing: «Как правильно мыть руки»",
+      "ok": true,
+      "status": "PASS",
+      "details": "Моя компания\nСотрудники\nТорговые точки\nЖурналы\nЧек-листы\nПроизводственный контро"
+    },
+    {
+      "id": "P5.3",
+      "name": "нормативы: «Отметить рекомендуемые» → «Сохранить» → после перезагрузки отмечены",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "checkedBefore": 10,
+        "checkedAfter": 10
+      }
+    },
+    {
+      "id": "P5.4",
+      "name": "процедуры: загрузка файла",
+      "ok": true,
+      "status": "PASS",
+      "details": true
+    },
+    {
+      "id": "P7.1",
+      "name": "повар: GET records?block=hazards → 403",
+      "ok": true,
+      "status": "PASS",
+      "details": 403
+    },
+    {
+      "id": "P7.2",
+      "name": "повара с /production-control уводит",
+      "ok": true,
+      "status": "PASS",
+      "details": "/mini/today"
+    },
+    {
+      "id": "P7.3",
+      "name": "заведующая: меню раздела без instructions",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "landed": "/production-control",
+        "ids": [
+          "program",
+          "procedures",
+          "floor-plans",
+          "products",
+          "pest-control",
+          "lab",
+          "flowcharts",
+          "team",
+          "policy",
+          "hazards",
+          "control-points",
+          "audit",
+          "orders",
+          "posters",
+          "norm-documents",
+          "storage"
+        ],
+        "apiStatus": 200
+      }
+    },
+    {
+      "id": "P8.1",
+      "name": "бургер → лист в режиме section с пунктами",
+      "ok": true,
+      "status": "PASS",
+      "details": 17
+    },
+    {
+      "id": "P8.2",
+      "name": "«Главное меню» в листе → список разделов",
+      "ok": true,
+      "status": "PASS",
+      "details": 9
+    },
+    {
+      "id": "P8.3",
+      "name": "scrollWidth ≤ 390 на анализе опасностей",
+      "ok": true,
+      "status": "PASS",
+      "details": 390
+    },
+    {
+      "id": "P9.1",
+      "name": "Mini App: анализ опасностей открывается в оболочке без ошибок",
+      "ok": false,
+      "status": "FAIL",
+      "details": {
+        "status": 200,
+        "shell": true,
+        "newErrors": [
+          "http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Unexpected end of JSON input"
+        ]
+      }
+    },
+    {
+      "id": "P10.1",
+      "name": "снимки тёмной темы сделаны",
+      "ok": true,
+      "status": "PASS",
+      "details": "p10-overview-dark.png, p10-hazards-dark.png"
+    },
+    {
+      "id": "P8.4",
+      "name": "scrollWidth ≤ 390 на обзоре",
+      "ok": true,
+      "status": "PASS",
+      "details": 390
+    },
+    {
+      "id": "P6.1",
+      "name": "прогресс «Заполнено N из M», N > 0",
+      "ok": true,
+      "status": "PASS",
+      "details": "Заполнено 5 из 14 блоков"
+    },
+    {
+      "id": "P6.2",
+      "name": "«Следующий шаг» ведёт на незаполненный блок",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "nextKey": "instructions",
+        "nextHref": "/knowledge"
+      }
+    },
+    {
+      "id": "P6.3",
+      "name": "Программа ПК: открывается, есть разделы",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "status": 200,
+        "sections": 18
+      }
+    },
+    {
+      "id": "P6.4",
+      "name": "ХАССП-план: открывается, есть разделы",
+      "ok": true,
+      "status": "PASS",
+      "details": {
+        "status": 200,
+        "sections": 14
+      }
+    },
+    {
+      "id": "P8.ERR",
+      "name": "P8: сценарий упал",
+      "ok": false,
+      "status": "FAIL",
+      "details": "Error: page.goto: net::ERR_ABORTED at http://localhost:3025/production-control\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3025/production-control\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    }
+  ],
+  "errors": [
+    "http://localhost:3025/production-control pageerror: SyntaxError: Invalid or unexpected token",
+    "http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token",
+    "http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Invalid or unexpected token",
+    "http://localhost:3025/production-control pageerror: SyntaxError: Invalid or unexpected token",
+    "http://localhost:3025/production-control/haccp/hazards pageerror: SyntaxError: Unexpected end of JSON input"
+  ]
+}

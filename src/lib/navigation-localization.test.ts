@@ -10,10 +10,11 @@ import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { ROUTE_TITLES, ROUTE_TITLE_KEYS, getRouteTitle, getDynamicRouteTitle, getSiblingRoutes } from "./route-titles";
 import { buildJournalSwitcherMenu, journalSwitcherOptions, filterCrumbMenu, matchingHidden } from "./crumb-menu";
 import { NAV_SECTIONS } from "./app-nav";
+import type { PpkBlockKey, PpkTabKey } from "./ppk/registry";
 import type { Session } from "next-auth";
 
-test("101 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
-  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 101);
+test("121 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
+  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 121);
   assert.deepEqual(Object.keys(ROUTE_TITLE_KEYS), Object.keys(ROUTE_TITLES));
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
@@ -32,7 +33,18 @@ test("101 static routes and dynamic journal-task route resolve typed localized t
     assert.equal(getRouteTitle("constructor", t), null);
     // Меню кабинета (девять разделов и их вкладки) — на каждом языке.
     for (const section of NAV_SECTIONS) {
-      const labels = [nav(`shell.sections.${section.key}`), ...section.tabs.map((tab) => nav(`shell.tabs.${tab.label}`))];
+      const menuLabels = (section.menu ?? []).flatMap((group) => [
+        ...(group.label ? [nav(`shell.menuGroups.${group.label}`)] : []),
+        ...group.items.flatMap((item) => [
+          nav(`shell.items.${item.id as PpkBlockKey}`),
+          ...(item.tabs ?? []).map((tab) => nav(`shell.subtabs.${tab.id as PpkTabKey}`)),
+        ]),
+      ]);
+      const labels = [
+        nav(`shell.sections.${section.key}`),
+        ...section.tabs.map((tab) => nav(`shell.tabs.${tab.label}`)),
+        ...menuLabels,
+      ];
       for (const label of labels) {
         assert.ok(label, section.key);
         if (locale !== "ru") assert.doesNotMatch(label, /\p{Script=Cyrillic}/u, `${section.key}: ${label}`);
