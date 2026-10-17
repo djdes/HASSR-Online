@@ -25,6 +25,7 @@ import { FullscreenPlayer, type FullscreenResult } from "./fullscreen-player";
 import { DESKTOP_COMPOSITION, DESKTOP_QUERY, MOBILE_COMPOSITION, usePlayerFrame, usePlayerPlaying } from "./player-state";
 import { STAGE_BACKGROUND, SceneFrame, type SceneDay } from "./scene";
 import type { QrMatrix } from "./qr-sticker";
+import { WatchVideoButton, type NarratedVideo } from "./video-lightbox";
 
 /**
  * Интерактивный ролик «как работает QR» на Remotion: кадр двигает
@@ -33,6 +34,8 @@ import type { QrMatrix } from "./qr-sticker";
  * сценой (их заливка — прогресс), две маленькие кнопки в углу сцены
  * («пауза» и «развернуть»), подпись главы и «Попробуйте сами» спойлером.
  * Нажатие на сцену открывает ролик на весь экран (`fullscreen-player.tsx`).
+ * Если отрендерено видео с голосом (`video`, только русская главная), над
+ * роликом — кнопка «Смотреть видео со звуком» (`video-lightbox.tsx`).
  * Ролик идёт сам только в зоне видимости и на видимой вкладке; при
  * `prefers-reduced-motion` — без автозапуска, раскадровка из итоговых
  * кадров глав.
@@ -40,7 +43,7 @@ import type { QrMatrix } from "./qr-sticker";
 
 const SEEK_STEP_SECONDS = 2;
 
-export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
+export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: SceneDay; video?: NarratedVideo | null }) {
   const t = useTranslations("qrPlayer");
   const sceneT = useTranslations("qrScene");
   const format = useFormatter();
@@ -101,12 +104,14 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
   // ролик на странице стоит.
   const [expandedFrom, setExpandedFrom] = useState<number | null>(null);
   const expanded = expandedFrom !== null;
+  // Пока открыто видео со звуком, немой ролик на странице тоже стоит.
+  const [videoOpen, setVideoOpen] = useState(false);
 
   // Автозапуск — один раз, когда ролик впервые попал в кадр; вне зоны
   // видимости, на фоновой вкладке и под полноэкранным плеером он стоит.
   useEffect(() => {
     if (!player) return;
-    if (!onScreen || expanded) {
+    if (!onScreen || expanded || videoOpen) {
       player.pause();
       return;
     }
@@ -116,7 +121,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
       wantsPlay.current = true;
     }
     if (wantsPlay.current) player.play();
-  }, [player, onScreen, reduced, expanded]);
+  }, [player, onScreen, reduced, expanded, videoOpen]);
 
   // reduced-motion: стоим на итоговом кадре главы — это раскадровка.
   useEffect(() => {
@@ -190,6 +195,9 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
+    // События порталов (плеер на весь экран, окно видео) всплывают сюда по
+    // дереву React: их клавиши — не для ролика на странице.
+    if (!rootRef.current?.contains(target)) return;
     if (target.dataset.tryIt === "1") return;
     if (event.key === "Enter" && target === stageRef.current) {
       event.preventDefault();
@@ -227,6 +235,13 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
 
   return (
     <div ref={rootRef} onKeyDown={onKeyDown} data-qr-player="" data-frame={frame} data-playing={playing ? "1" : "0"}>
+      {/* Видео с голосом — над немым роликом: что нажать и что откроется. */}
+      {video ? (
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <WatchVideoButton video={video} onOpenChange={setVideoOpen} />
+          <p className="text-[13px] leading-[1.45] text-white/60">{t("chrome.watchVideoHint")}</p>
+        </div>
+      ) : null}
       {/* Вкладки-главы: одна строка со скроллом, заливка = прогресс слайда. */}
       <nav aria-label={t("chrome.chaptersLabel")} className="mb-3">
         <div ref={tabsRef} className="qrp-tabs relative -mx-1 flex gap-2 overflow-x-auto px-1 py-1">

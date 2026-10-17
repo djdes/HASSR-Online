@@ -43,6 +43,7 @@ import { QrPlayer } from "@/components/landing/qr-player/qr-player";
 import { InterfaceShowcase, type ShowcaseIcon } from "@/components/landing/interface-showcase";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
+import { narratedVideoFor } from "@/components/landing/qr-player/narrated-video";
 import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
 import { CursorGlow } from "@/components/public/cursor-glow";
@@ -349,6 +350,7 @@ export default async function LandingPage() {
   // настоящий, ведёт на этот блок.
   const qrMatrix = await buildQrMatrix(`https://wesetup.ru${localizedHref("/#qr", locale)}`, locale);
   const sceneToday = moscowSceneDay(new Date(), locale);
+  const narratedVideo = narratedVideoFor(locale);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -695,7 +697,7 @@ export default async function LandingPage() {
             </div>
             <div className="mt-7 sm:mt-9">
               <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene"]}>
-                <QrPlayer qr={qrMatrix} today={sceneToday} />
+                <QrPlayer qr={qrMatrix} today={sceneToday} video={narratedVideo} />
               </DomainMessagesBoundary>
             </div>
           </div>

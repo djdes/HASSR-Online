@@ -5009,7 +5009,11 @@
       "bodyTemperatureHigh": "Above 37°C: the temperature field cannot be signed; the employee is not cleared to work, and the manager is notified.",
       "bodyTemperatureNormal": "Up to 37°C: three signatures clear the employee to work.",
       "storyboardCaption": "Storyboard {chapterNumber, number}/{chapterCount, number}. {caption}",
-      "chapterDescription": "Chapter {chapterNumber, number}: {chapterName}. Log: {journalName}. {caption}"
+      "chapterDescription": "Chapter {chapterNumber, number}: {chapterName}. Log: {journalName}. {caption}",
+      "watchVideo": "Watch the video with sound",
+      "watchVideoHint": "A video with voice-over and subtitles opens in a player",
+      "videoLabel": "How QR works — video with sound",
+      "videoSubtitles": "Subtitles"
     },
     "chapter": {
       "fridge": {

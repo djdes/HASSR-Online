@@ -1,0 +1,11 @@
+{
+  // Проверка типов видео: `npx tsc --noEmit -p remotion/tsconfig.json`.
+  // Основной tsconfig смотрит только в src/ — пакеты рендера (devDependencies)
+  // в сборку и проверку сайта не попадают.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "plugins": []
+  },
+  "include": ["./**/*.ts", "./**/*.tsx", "../remotion.config.ts", "../src/types/**/*.d.ts"]
+}

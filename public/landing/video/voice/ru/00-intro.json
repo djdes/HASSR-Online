@@ -1,0 +1,88 @@
+{
+  "id": "intro",
+  "text": "Сетап — электронные журналы по принципам ХАССП. Смотрите, как это работает на кухне.",
+  "say": "Се́тап — электронные журналы по принципам Хассп. Смотрите, как это работает на кухне.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "ymDCYd8puC7gYjxIamPt",
+  "settings": {
+    "stability": 0.55,
+    "similarity_boost": 0.8,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 4242,
+  "fingerprint": "0fc2d321dd0eb789",
+  "characters": 85,
+  "audioSeconds": 6.191,
+  "speechStart": 0,
+  "speechEnd": 6.13,
+  "words": [
+    {
+      "text": "Сетап",
+      "start": 0,
+      "end": 0.511
+    },
+    {
+      "text": "—",
+      "start": 0.662,
+      "end": 0.778
+    },
+    {
+      "text": "электронные",
+      "start": 0.894,
+      "end": 1.533
+    },
+    {
+      "text": "журналы",
+      "start": 1.591,
+      "end": 2.078
+    },
+    {
+      "text": "по",
+      "start": 2.125,
+      "end": 2.218
+    },
+    {
+      "text": "принципам",
+      "start": 2.264,
+      "end": 2.798
+    },
+    {
+      "text": "ХАССП.",
+      "start": 2.914,
+      "end": 3.483
+    },
+    {
+      "text": "Смотрите,",
+      "start": 3.808,
+      "end": 4.331
+    },
+    {
+      "text": "как",
+      "start": 4.354,
+      "end": 4.505
+    },
+    {
+      "text": "это",
+      "start": 4.574,
+      "end": 4.667
+    },
+    {
+      "text": "работает",
+      "start": 4.69,
+      "end": 5.12
+    },
+    {
+      "text": "на",
+      "start": 5.178,
+      "end": 5.248
+    },
+    {
+      "text": "кухне.",
+      "start": 5.306,
+      "end": 6.13
+    }
+  ],
+  "voiceName": "Marina (warm)"
+}

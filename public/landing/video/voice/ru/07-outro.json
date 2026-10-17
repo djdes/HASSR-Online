@@ -1,0 +1,73 @@
+{
+  "id": "outro",
+  "text": "Без бумаги, без паролей и без установки приложений. Это сетап.",
+  "say": "Без бумаги, без паролей и без установки приложений. Это се́тап.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "ymDCYd8puC7gYjxIamPt",
+  "settings": {
+    "stability": 0.55,
+    "similarity_boost": 0.8,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 4242,
+  "fingerprint": "af761b38bd3207e2",
+  "characters": 63,
+  "audioSeconds": 5.12,
+  "speechStart": 0,
+  "speechEnd": 5.062,
+  "words": [
+    {
+      "text": "Без",
+      "start": 0,
+      "end": 0.232
+    },
+    {
+      "text": "бумаги,",
+      "start": 0.302,
+      "end": 0.871
+    },
+    {
+      "text": "без",
+      "start": 0.906,
+      "end": 1.057
+    },
+    {
+      "text": "паролей",
+      "start": 1.126,
+      "end": 1.637
+    },
+    {
+      "text": "и",
+      "start": 1.73,
+      "end": 1.788
+    },
+    {
+      "text": "без",
+      "start": 1.846,
+      "end": 1.985
+    },
+    {
+      "text": "установки",
+      "start": 2.055,
+      "end": 2.577
+    },
+    {
+      "text": "приложений.",
+      "start": 2.624,
+      "end": 3.402
+    },
+    {
+      "text": "Это",
+      "start": 3.611,
+      "end": 3.913
+    },
+    {
+      "text": "сетап.",
+      "start": 3.994,
+      "end": 5.062
+    }
+  ],
+  "voiceName": "Marina (warm)"
+}
