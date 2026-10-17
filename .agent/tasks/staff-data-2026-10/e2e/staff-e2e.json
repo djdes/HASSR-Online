@@ -1,0 +1,553 @@
+{
+  "base": "http://localhost:3044",
+  "at": "2026-10-17T22:30:47.336Z",
+  "passed": 52,
+  "failed": 0,
+  "checks": [
+    {
+      "ac": "AC1.4",
+      "name": "PATCH plannedHeadcount=1000 → 400",
+      "ok": true,
+      "detail": {
+        "error": "Штатная численность — целое число от 0 до 999"
+      }
+    },
+    {
+      "ac": "AC1.4",
+      "name": "PATCH plannedHeadcount=\"3\" → 400",
+      "ok": true,
+      "detail": {
+        "error": "Штатная численность — целое число от 0 до 999"
+      }
+    },
+    {
+      "ac": "AC1.4",
+      "name": "POST plannedHeadcount=1.5 → 400",
+      "ok": true,
+      "detail": {
+        "error": "Штатная численность — целое число от 0 до 999"
+      }
+    },
+    {
+      "ac": "AC1.4",
+      "name": "PATCH cmvbh5x6v0003u89m76q3wkqm plannedHeadcount=2 → 200",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "ac": "AC1.4",
+      "name": "PATCH cmvbh5wzw0001u89mxi20jpsa plannedHeadcount=1 → 200",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "ac": "AC1.4",
+      "name": "PATCH cmvbh608i0009u89mtwtcu480 plannedHeadcount=0 → 200",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "ac": "AC1.4",
+      "name": "POST с plannedHeadcount=4 → 200",
+      "ok": true,
+      "detail": {
+        "position": {
+          "id": "cmvcyrl1p001rwc9mtbxdz2z8",
+          "organizationId": "cmvbfyemt0000uw9mywdjiurr",
+          "categoryKey": "staff",
+          "name": "E2E Пекарь",
+          "sortOrder": 23,
+          "plannedHeadcount": 4,
+          "createdAt": "2026-10-17T22:24:10.573Z",
+          "updatedAt": "2026-10-17T22:24:10.573Z",
+          "permissionsJson": null,
+          "visibleUserIds": [],
+          "seesAllTasks": false
+        }
+      }
+    },
+    {
+      "ac": "AC1.4",
+      "name": "PATCH plannedHeadcount=null («не задано») → 200",
+      "ok": true
+    },
+    {
+      "ac": "AC1.3",
+      "name": "GET /api/positions: занято 1 из 2, вакансия 1",
+      "ok": true,
+      "detail": {
+        "id": "cmvbh5x6v0003u89m76q3wkqm",
+        "name": "Повар горячего цеха",
+        "categoryKey": "staff",
+        "sortOrder": 3,
+        "plannedHeadcount": 2,
+        "_count": {
+          "users": 1
+        },
+        "occupied": 1,
+        "vacancies": 1,
+        "overstaffed": 0,
+        "staffingLabel": "занято 1 из 2"
+      }
+    },
+    {
+      "ac": "AC1.3",
+      "name": "GET /api/positions: перебор при плане 0",
+      "ok": true,
+      "detail": {
+        "id": "cmvbh608i0009u89mtwtcu480",
+        "name": "Официант",
+        "categoryKey": "staff",
+        "sortOrder": 9,
+        "plannedHeadcount": 0,
+        "_count": {
+          "users": 1
+        },
+        "occupied": 1,
+        "vacancies": 0,
+        "overstaffed": 1,
+        "staffingLabel": "занято 1 из 0"
+      }
+    },
+    {
+      "ac": "AC1.3",
+      "name": "GET /api/positions: план не задан — «занято N»",
+      "ok": true,
+      "detail": {
+        "id": "cmvbh5wjg0000u89mqmlfo07l",
+        "name": "Управляющий",
+        "categoryKey": "management",
+        "sortOrder": 0,
+        "plannedHeadcount": null,
+        "_count": {
+          "users": 1
+        },
+        "occupied": 1,
+        "vacancies": 0,
+        "overstaffed": 0,
+        "staffingLabel": "занято 1"
+      }
+    },
+    {
+      "ac": "AC1.3",
+      "name": "GET /api/positions: итоги totals",
+      "ok": true,
+      "detail": {
+        "positions": 24,
+        "withPlan": 3,
+        "planned": 3,
+        "occupied": 23,
+        "occupiedPlanned": 3,
+        "vacancies": 1,
+        "overstaffed": 1,
+        "staffingLabel": "занято 3 из 3"
+      }
+    },
+    {
+      "ac": "AC1.5",
+      "name": "PUT /api/positions/order сохраняет порядок",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "sorted": [
+          "cmvbh64us000ku89mr8da6ez2",
+          "cmvbh63rg000hu89mt5y42f79",
+          "cmvbh5wzw0001u89mxi20jpsa",
+          "cmvbh5wjg0000u89mqmlfo07l"
+        ]
+      }
+    },
+    {
+      "ac": "AC1.5",
+      "name": "PUT order с чужим/неизвестным id → 404",
+      "ok": true,
+      "detail": {
+        "error": "Должность не найдена",
+        "ids": [
+          "cm-unknown-position"
+        ]
+      }
+    },
+    {
+      "ac": "AC1.5",
+      "name": "PUT order с повтором → 400",
+      "ok": true,
+      "detail": {
+        "error": "Должности в списке повторяются"
+      }
+    },
+    {
+      "ac": "AC1.5",
+      "name": "PUT order с пустым списком → 400",
+      "ok": true,
+      "detail": {
+        "error": "Передайте список должностей"
+      }
+    },
+    {
+      "ac": "AC1.5",
+      "name": "PUT order от повара → 403",
+      "ok": true,
+      "detail": {
+        "error": "Это действие доступно руководителю"
+      }
+    },
+    {
+      "ac": "AC6.1",
+      "name": "PUT /api/users/[id] с неверной почтой → 400",
+      "ok": true,
+      "detail": {
+        "error": "Некорректный формат почты. Пример: ivanova@mail.ru"
+      }
+    },
+    {
+      "ac": "AC6.1",
+      "name": "PUT /api/users/[id] с почтой → 200",
+      "ok": true,
+      "detail": {
+        "user": {
+          "id": "cmvbfyf7t0004uw9ml20urf7g",
+          "name": "Волкова Анна Дмитриевна",
+          "email": "hotcook1@haccp.local",
+          "role": "operator",
+          "positionTitle": "Повар горячего цеха",
+          "isActive": true,
+          "phone": "+79851234567",
+          "contactEmail": "volkova@example.com"
+        }
+      }
+    },
+    {
+      "ac": "AC1.6",
+      "name": "в строке должности пилюля «занято N из M»",
+      "ok": true,
+      "detail": [
+        "занято 1 из 1. Штат укомплектован",
+        "занято 1 из 2. Не хватает: 1 человек",
+        "занято 1 из 0. Сверх штата: 1 человек"
+      ]
+    },
+    {
+      "ac": "AC6.1",
+      "name": "в строке сотрудника видны телефон и почта",
+      "ok": true,
+      "detail": "+7 985 123-45-67volkova@example.com"
+    },
+    {
+      "ac": "AC1.6",
+      "name": "в окне правки должности есть «Штатная численность» = 2",
+      "ok": true
+    },
+    {
+      "ac": "AC1.6",
+      "name": "сохранение поля из окна → plannedHeadcount=3",
+      "ok": true,
+      "detail": {
+        "plannedHeadcount": 3
+      }
+    },
+    {
+      "ac": "AC6.1",
+      "name": "в окне правки сотрудника есть поле «Почта»",
+      "ok": true
+    },
+    {
+      "ac": "AC6.1",
+      "name": "окно правки отправляет PUT /api/users/[id] → 200",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "ac": "AC6.1",
+      "name": "почта из окна сохраняется через PUT /api/users/[id]",
+      "ok": true,
+      "detail": {
+        "contactEmail": "anna.volkova@example.com"
+      }
+    },
+    {
+      "ac": "AC2.1",
+      "name": "GET /api/users/[id]/access отдаёт permissionPreset и effectivePreset",
+      "ok": true,
+      "detail": {
+        "p": null,
+        "e": "head_chef"
+      }
+    },
+    {
+      "ac": "AC2.2",
+      "name": "блок «Набор прав» показывает текущий выбор «По должности»",
+      "ok": true
+    },
+    {
+      "ac": "AC2.2",
+      "name": "у пресета — описание и список возможностей",
+      "ok": true,
+      "detail": "Контроль-группа6 возможностейВидит журналы, сотрудников, отчёты и статистику, подтверждает выполненное и назначает задачи. Сам не заполняет.Видит журналыВидит сотрудниковПодтверждает выполненные задачиНазначает задачи сотрудникамОткрывает отчётыВидит статистику"
+    },
+    {
+      "ac": "AC2.2",
+      "name": "POST /api/staff/[id]/preset → 200",
+      "ok": true,
+      "detail": "{\"ok\":true,\"permissionPreset\":\"control_group\",\"effectivePreset\":\"control_group\",\"changed\":true}"
+    },
+    {
+      "ac": "AC2.2",
+      "name": "сохранение вызывает POST /api/staff/[id]/preset при изменении",
+      "ok": true,
+      "detail": {
+        "techAfter": {
+          "permissionPreset": "control_group"
+        },
+        "presetCalls": []
+      }
+    },
+    {
+      "ac": "AC2.2",
+      "name": "без изменения пресета запрос не уходит",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "ac": "AC2.3",
+      "name": "себе нельзя снять «Администратора» → 400 SELF_LOCKOUT",
+      "ok": true,
+      "detail": {
+        "error": "Нельзя снять с себя «Администратора»: вы потеряете доступ к настройкам. Попросите другого администратора",
+        "code": "SELF_LOCKOUT"
+      }
+    },
+    {
+      "ac": "AC2.3",
+      "name": "себе «по должности» (управляющий = администратор) → 200",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "permissionPreset": null,
+        "effectivePreset": "admin",
+        "changed": false
+      }
+    },
+    {
+      "ac": "AC2.3",
+      "name": "в окне на себе «Контроль-группа» недоступна",
+      "ok": true
+    },
+    {
+      "ac": "AC3.1",
+      "name": "руководитель ставит пресет «Контроль-группа»",
+      "ok": true
+    },
+    {
+      "ac": "AC3.3",
+      "name": "руководитель настраивает «Иерархию» контроль-группы",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "ac": "AC3.5",
+      "name": "GET /api/staff/control-group: участники с описанием иерархии и кандидаты",
+      "ok": true,
+      "detail": {
+        "hallMember": {
+          "id": "cmvbfyfme000luw9m0yckmtoe",
+          "name": "Громова Алина Павловна",
+          "position": "Менеджер зала",
+          "role": "manager",
+          "scopeId": "cmvcyvmpo002ywc9mo30ee16u",
+          "scope": {
+            "configured": true,
+            "viewMode": "job_positions",
+            "viewJobPositions": [
+              {
+                "id": "cmvbh5x6v0003u89m76q3wkqm",
+                "name": "Повар горячего цеха"
+              }
+            ],
+            "viewUsers": [],
+            "assignableJournals": [
+              {
+                "code": "hygiene",
+                "name": "Гигиенический журнал (сотрудники)"
+              }
+            ],
+            "sees": "Видит должности: Повар горячего цеха",
+            "assigns": "Назначает задачи: Гигиенический журнал (сотрудники)"
+          }
+        },
+        "candidates": 19
+      }
+    },
+    {
+      "ac": "AC3.3",
+      "name": "контроль-группа назначает своему сотруднику свой журнал",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "claim": {
+          "id": "cmvcywe500030wc9msnmfd9y1",
+          "organizationId": "cmvbfyemt0000uw9mywdjiurr",
+          "journalCode": "hygiene",
+          "scopeKey": "e2e-staff-data-hygiene-cmvbfyf7t0004uw9ml20urf7g",
+          "scopeLabel": "E2E проверка назначения",
+          "dateKey": "2026-10-17T00:00:00.000Z",
+          "userId": "cmvbfyf7t0004uw9ml20urf7g",
+          "status": "active",
+          "claimedAt": "2026-10-17T22:27:54.899Z",
+          "completedAt": null,
+          "releasedAt": null,
+          "parentHint": null,
+          "entryId": null,
+          "tasksFlowTaskId": null
+        }
+      }
+    },
+    {
+      "ac": "AC3.3",
+      "name": "сотрудник вне ManagerScope → 403",
+      "ok": true,
+      "detail": {
+        "error": "Этот сотрудник вне вашей зоны. Кого вы видите, настраивает руководитель в «Иерархии»",
+        "code": "TARGET_OUT_OF_SCOPE"
+      }
+    },
+    {
+      "ac": "AC3.3",
+      "name": "журнал вне assignableJournalCodes → 403",
+      "ok": true,
+      "detail": {
+        "error": "Задачи по этому журналу вам не назначены. Список журналов настраивает руководитель в «Иерархии»",
+        "code": "JOURNAL_OUT_OF_SCOPE"
+      }
+    },
+    {
+      "ac": "AC3.3",
+      "name": "участнику контроль-группы задачу не назначить (даже руководителем) → 409",
+      "ok": true,
+      "detail": {
+        "error": "Участник контроль-группы не заполняет журналы — назначьте задачу сотруднику, который их ведёт",
+        "code": "TARGET_CONTROL_GROUP"
+      }
+    },
+    {
+      "ac": "AC3.4",
+      "name": "контроль-группа не меняет «Иерархию»: POST → 403",
+      "ok": true,
+      "detail": {
+        "error": "Контроль-группа не меняет иерархию — её настраивает руководитель"
+      }
+    },
+    {
+      "ac": "AC3.4",
+      "name": "контроль-группа не меняет «Иерархию»: DELETE → 403",
+      "ok": true,
+      "detail": {
+        "error": "Контроль-группа не меняет иерархию — её настраивает руководитель"
+      }
+    },
+    {
+      "ac": "AC3.2",
+      "name": "ACL: контроль-группа (роль руководителя) не берёт задачу на заполнение → 403",
+      "ok": true,
+      "detail": {
+        "error": "Нет доступа к этому журналу"
+      }
+    },
+    {
+      "ac": "AC3.2",
+      "name": "контроль-группа не закрывает документ → 403",
+      "ok": true,
+      "detail": {
+        "code": "MANAGEMENT_REQUIRED",
+        "error": "Это действие доступно руководителю"
+      }
+    },
+    {
+      "ac": "AC3.2",
+      "name": "контроль-группа открывает /journals (чтение)",
+      "ok": true,
+      "detail": "http://localhost:3044/journals"
+    },
+    {
+      "ac": "AC5.2",
+      "name": "GET /api/staff/inspectors-auditors → 200, без хэшей токенов",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "ac": "AC5.1",
+      "name": "внешние: QR портала с видом, статусом и тем, кто выпустил",
+      "ok": true,
+      "detail": [
+        {
+          "id": "cmvcyxyqg0032wc9mmvz0xcgt",
+          "kind": "qr",
+          "label": "E2E СЭС",
+          "periodFrom": null,
+          "periodTo": null,
+          "expiresAt": "2026-10-24T22:29:08.241Z",
+          "status": "active",
+          "active": true,
+          "issuedBy": {
+            "id": "cmvbfyeu60001uw9mqbomodi2",
+            "name": "Крылов Денис Сергеевич"
+          },
+          "accessCount": 0,
+          "lastAccessedAt": null,
+          "createdAt": "2026-10-17T22:29:08.248Z",
+          "visits": []
+        },
+        {
+          "id": "cmvc6djur000iqw9mb74686k9",
+          "kind": "qr",
+          "label": null,
+          "periodFrom": null,
+          "periodTo": null,
+          "expiresAt": "2027-10-17T09:09:26.580Z",
+          "status": "active",
+          "active": true,
+          "issuedBy": {
+            "id": "cmvbfyeu60001uw9mqbomodi2",
+            "name": "Крылов Денис Сергеевич"
+          },
+          "accessCount": 3,
+          "lastAccessedAt": "2026-10-17T09:39:00.015Z",
+          "createdAt": "2026-10-17T09:09:26.595Z",
+          "visits": []
+        }
+      ]
+    },
+    {
+      "ac": "AC5.1",
+      "name": "внутренние: люди с ролями проверки",
+      "ok": true,
+      "detail": [
+        [
+          "Громова Алина Павловна",
+          [
+            "document_verifier"
+          ]
+        ],
+        [
+          "Крылов Денис Сергеевич",
+          [
+            "document_verifier"
+          ]
+        ]
+      ]
+    },
+    {
+      "ac": "AC5.2",
+      "name": "повару список недоступен → 403",
+      "ok": true,
+      "detail": 403
+    },
+    {
+      "ac": "AC1.6",
+      "name": "390 px: страница без горизонтального скролла",
+      "ok": true
+    }
+  ]
+}
