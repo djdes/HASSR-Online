@@ -1,0 +1,15 @@
+{
+  "task": "landing-video-2026-10",
+  "stage1": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PENDING",
+    "artifacts": ["raw/verify-stage1.mjs", "raw/verify-stage1.json", "raw/tsc-stage1.txt", "raw/lint-stage1.txt", "raw/shots/"]
+  },
+  "stage2": {}
+}

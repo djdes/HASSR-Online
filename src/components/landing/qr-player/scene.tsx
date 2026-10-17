@@ -27,12 +27,12 @@ import { ease, interpolate, progress, windowed } from "./clock";
 import {
   CHAPTER_SECONDS,
   DEMO,
-  FPS,
   FRIDGE_NORM,
   JOURNALS,
   bodyFever,
   chapterAt,
   fridgeOutOfRange,
+  sceneSeconds,
   type Chapter,
 } from "./chapters";
 import type { QrMatrix } from "./qr-sticker";
@@ -2246,7 +2246,7 @@ function journalAtFor(chapter: Chapter, fridgeTemp: number): number {
  */
 export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProps) {
   const { chapter, index, local } = chapterAt(frame);
-  const t = local / FPS;
+  const t = sceneSeconds(local);
   const journalAt = journalAtFor(chapter, fridgeTemp);
   const pan = spring(t, journalAt, 5.4);
   const push = 1 - spring(t, 0.1, 3.9);

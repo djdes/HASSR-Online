@@ -12,6 +12,7 @@ import { formatClock, interpolate } from "./clock";
 import {
   BODY_RANGE,
   CHAPTERS,
+  CHAPTER_FRAMES,
   CHAPTER_SECONDS,
   DURATION_IN_FRAMES,
   FPS,
@@ -22,32 +23,66 @@ import {
   RESULT_SECONDS,
   UI,
   UI_SOURCES,
+  TIME_SCALE,
   bodyFever,
   chapterAt,
   finalFrameOf,
   fridgeOutOfRange,
+  resultFrameOf,
+  sceneFrame,
+  sceneSeconds,
 } from "./chapters";
 
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
 
-test("шесть глав по ~6 с, ролик 0:36", () => {
+test("шесть глав по 8 с, ролик 0:48", () => {
   assert.deepEqual(
     CHAPTERS.map((chapter) => chapter.id),
     ["fridge", "locker", "uv", "fryer", "forgot", "sensor"]
   );
-  for (const chapter of CHAPTERS) assert.equal(chapter.duration, CHAPTER_SECONDS * FPS);
-  assert.equal(formatClock(DURATION_IN_FRAMES / FPS), "0:36");
+  assert.equal(CHAPTER_FRAMES, 8 * FPS);
+  for (const chapter of CHAPTERS) assert.equal(chapter.duration, CHAPTER_FRAMES);
+  assert.equal(formatClock(DURATION_IN_FRAMES / FPS), "0:48");
   assert.equal(formatClock(7.9), "0:07");
+});
+
+test("темп одной константой: сцена 6 с растянута на 8 с равномерно", () => {
+  assert.equal(TIME_SCALE, 0.75);
+  assert.equal(sceneSeconds(0), 0);
+  assert.equal(sceneSeconds(CHAPTER_FRAMES), CHAPTER_SECONDS);
+  assert.equal(sceneSeconds(CHAPTER_FRAMES / 2), CHAPTER_SECONDS / 2);
+  assert.equal(sceneFrame(CHAPTER_SECONDS), CHAPTER_FRAMES);
+  for (const seconds of [0.3, 1, 2.5, RESULT_SECONDS]) {
+    assert.ok(Math.abs(sceneSeconds(sceneFrame(seconds)) - seconds) <= TIME_SCALE / FPS, String(seconds));
+  }
+  for (let index = 0; index < CHAPTERS.length; index += 1) {
+    assert.equal(resultFrameOf(index), CHAPTERS[index].from + sceneFrame(RESULT_SECONDS));
+  }
 });
 
 test("кадр — функция времени: chapterAt и finalFrameOf детерминированы", () => {
   assert.deepEqual(chapterAt(0), { chapter: CHAPTERS[0], index: 0, local: 0 });
-  assert.equal(chapterAt(181).index, 1);
-  assert.equal(chapterAt(181).local, 1);
+  assert.equal(chapterAt(CHAPTER_FRAMES + 1).index, 1);
+  assert.equal(chapterAt(CHAPTER_FRAMES + 1).local, 1);
   assert.equal(chapterAt(DURATION_IN_FRAMES + 50).index, CHAPTERS.length - 1);
   assert.equal(chapterAt(finalFrameOf(3)).index, 3);
-  assert.ok(RESULT_SECONDS * FPS < CHAPTER_SECONDS * FPS);
+  assert.ok(RESULT_SECONDS < CHAPTER_SECONDS);
+});
+
+test("хром на странице: без нижней перемотки и времени, кнопки в углу, плеер на весь экран", () => {
+  const player = read("src/components/landing/qr-player/qr-player.tsx");
+  assert.doesNotMatch(player, /chrome\.seek/, "перемотка под роликом убрана");
+  assert.doesNotMatch(player, /formatClock/, "время «0:12 / 0:48» под роликом убрано");
+  assert.doesNotMatch(player, /qrp-range-thin/, "тонкая полоса перемотки убрана");
+  assert.ok(player.includes("data-qr-corner"), "кнопки в углу сцены");
+  assert.ok(player.includes('t("chrome.expand")'), "кнопка «Развернуть»");
+  assert.ok(player.includes("chrome.tryIt"), "«Попробуйте сами» осталось");
+  assert.ok(player.includes("onClick={openExpanded}"), "нажатие на сцену открывает плеер");
+  const fullscreen = read("src/components/landing/qr-player/fullscreen-player.tsx");
+  for (const token of ["createPortal", "requestFullscreen", "fullscreenchange", '"Escape"', "fixed inset-0", "100dvh", "inert", 't("chrome.close")']) {
+    assert.ok(fullscreen.includes(token), `fullscreen-player: ${token}`);
+  }
 });
 
 test("interpolate: зажим по краям и линейность", () => {

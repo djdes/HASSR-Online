@@ -10,8 +10,29 @@
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 
 export const FPS = 30;
+/**
+ * Длина главы во времени СЦЕНЫ: все моменты внутри сцен (`MOMENT`,
+ * `RESULT_SECONDS`, окна `windowed`) рассчитаны на 6 секунд.
+ */
 export const CHAPTER_SECONDS = 6;
-const CHAPTER_FRAMES = CHAPTER_SECONDS * FPS;
+/**
+ * Темп ролика: секунда сцены идёт `1 / TIME_SCALE` секунды на экране.
+ * 0.75 — вся анимация равномерно медленнее на треть: глава 8 с, цикл
+ * 48 с. Поменять темп — поменять только это число (отрендеренное видео
+ * получит тот же темп).
+ */
+export const TIME_SCALE = 0.75;
+export const CHAPTER_FRAMES = Math.round((CHAPTER_SECONDS / TIME_SCALE) * FPS);
+
+/** Кадр главы → время сцены в секундах. */
+export function sceneSeconds(localFrame: number): number {
+  return (localFrame / FPS) * TIME_SCALE;
+}
+
+/** Время сцены в секундах → кадр от начала главы. */
+export function sceneFrame(seconds: number): number {
+  return Math.round((seconds / TIME_SCALE) * FPS);
+}
 
 export type ChapterId = "fridge" | "locker" | "uv" | "fryer" | "forgot" | "sensor";
 
@@ -180,7 +201,7 @@ export function formatDecimal(value: number, digits = 1): string {
   return value.toFixed(digits).replace(".", ",").replace("-", "−");
 }
 
-/** Момент сцены (в секундах), когда запись уже сохранена и видна в журнале. */
+/** Момент сцены (в секундах сцены), когда запись уже сохранена и видна в журнале. */
 export const RESULT_SECONDS = 5.6;
 
 /**
@@ -189,7 +210,7 @@ export const RESULT_SECONDS = 5.6;
  * склейкой на следующую).
  */
 export function resultFrameOf(index: number): number {
-  return CHAPTERS[index].from + Math.round(RESULT_SECONDS * FPS);
+  return CHAPTERS[index].from + sceneFrame(RESULT_SECONDS);
 }
 
 /* ---------------------------------------------------------------------

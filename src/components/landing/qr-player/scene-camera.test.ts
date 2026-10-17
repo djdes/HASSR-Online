@@ -9,7 +9,7 @@ import { NextIntlClientProvider } from "next-intl";
 
 import { loadMessages, pickMessages } from "@/i18n/messages";
 
-import { CHAPTERS, CHAPTER_SECONDS, FPS, RESULT_SECONDS, chapterAt, resultFrameOf } from "./chapters";
+import { CHAPTERS, CHAPTER_SECONDS, RESULT_SECONDS, chapterAt, resultFrameOf, sceneSeconds } from "./chapters";
 import { SceneFrame } from "./scene";
 
 const ROOT = process.cwd();
@@ -35,12 +35,12 @@ async function render(frame: number, fridgeTemp = 4) {
 
 test("кадр — чистая функция номера кадра: одинаковый кадр даёт одинаковую разметку", async () => {
   for (const chapter of CHAPTERS) {
-    for (const offset of [0, 20, 75, 130, 150, resultFrameOf(0) - CHAPTERS[0].from, chapter.duration - 1]) {
+    for (const offset of [0, 20, 100, 170, 200, resultFrameOf(0) - CHAPTERS[0].from, chapter.duration - 1]) {
       const frame = chapter.from + offset;
       assert.equal(await render(frame), await render(frame), `${chapter.id} @ ${offset}`);
     }
   }
-  assert.equal(await render(140, 12), await render(140, 12), "отклонение тоже детерминировано");
+  assert.equal(await render(190, 12), await render(190, 12), "отклонение тоже детерминировано");
 });
 
 test("в сцене нет своих часов: ни таймеров, ни CSS-анимаций", () => {
@@ -74,7 +74,7 @@ test("раскадровка reduced-motion стоит на итоге глав�
   for (let index = 0; index < CHAPTERS.length; index += 1) {
     const frame = resultFrameOf(index);
     assert.equal(chapterAt(frame).index, index);
-    assert.ok(chapterAt(frame).local / FPS < CHAPTER_SECONDS - 0.2, `${CHAPTERS[index].id}: итог раньше склейки`);
+    assert.ok(sceneSeconds(chapterAt(frame).local) < CHAPTER_SECONDS - 0.2, `${CHAPTERS[index].id}: итог раньше склейки`);
   }
   assert.ok(RESULT_SECONDS < CHAPTER_SECONDS - 0.2);
 });

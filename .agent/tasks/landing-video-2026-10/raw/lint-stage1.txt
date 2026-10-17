@@ -1,0 +1,14 @@
+# npm run lint (весь репозиторий), 2026-10-17T20:46:13+03:00
+✖ 4508 problems (1828 errors, 2680 warnings)
+  5 errors and 7 warnings potentially fixable with the `--fix` option.
+
+
+## Файлы этапа 1 в выводе линта:
+D:\wt\landing-video\src\components\landing\qr-player\player-state.ts
+D:\wt\landing-video\src\components\landing\qr-player\player-state.ts:35:5
+D:\wt\landing-video\src\components\landing\qr-player\qr-player.tsx
+D:\wt\landing-video\src\components\landing\qr-player\qr-player.tsx:78:19
+
+## npx eslint src/components/landing/qr-player/
+✖ 2 problems (0 errors, 2 warnings)
+
