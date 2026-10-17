@@ -588,6 +588,9 @@
       "emptySection": "This section is empty. Fill in the \"{block}\" block and it will appear here by itself.",
       "fill": "Fill in",
       "notFilled": "Not filled in"
+    },
+    "reminders": {
+      "hint": "We'll remind managers in Telegram 7, 3 and 1 day before the due date and when it's overdue."
     }
   },
   "inspectionDay": {

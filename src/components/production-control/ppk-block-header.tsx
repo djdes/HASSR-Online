@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
-import { Sparkles } from "lucide-react";
+import { BellRing, Sparkles } from "lucide-react";
 import { ppkBlock, type PpkBlockKey } from "@/lib/ppk/registry";
 
 /**
@@ -13,10 +13,13 @@ export async function PpkBlockHeader({
   blockKey,
   lead,
   actions,
+  reminderHint,
 }: {
   blockKey: PpkBlockKey;
   lead: ReactNode;
   actions?: ReactNode;
+  /** Тихая строка «Напомним руководству в Telegram…» под пояснением (планы со сроками). */
+  reminderHint?: boolean;
 }) {
   const nav = await getTranslations("navigation");
   const pc = await getTranslations("productionControl");
@@ -29,6 +32,12 @@ export async function PpkBlockHeader({
           {nav(`shell.items.${blockKey}`)}
         </h1>
         <p className="mt-1.5 max-w-[640px] text-[14px] text-[#6f7282]">{lead}</p>
+        {reminderHint ? (
+          <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-[#6f7282]">
+            <BellRing className="size-3.5 shrink-0" aria-hidden />
+            {pc("reminders.hint")}
+          </p>
+        ) : null}
       </div>
       {actions || serviceKey ? (
         <div className="flex flex-wrap items-center gap-2 md:shrink-0">

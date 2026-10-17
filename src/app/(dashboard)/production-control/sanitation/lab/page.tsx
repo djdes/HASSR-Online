@@ -32,6 +32,7 @@ export default async function LabPage() {
     <PpkBlockHeader
       blockKey="lab"
       lead={t("lead")}
+      reminderHint
       actions={<PpkCreateButton label={t("add")} />}
     />
   );

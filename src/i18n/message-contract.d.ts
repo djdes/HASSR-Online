@@ -589,6 +589,9 @@ export type MessageContract = {
       "emptySection": "Раздел пока пуст. Заполните блок «{block}» — он попадёт сюда сам.",
       "fill": "Заполнить",
       "notFilled": "Не заполнено"
+    },
+    "reminders": {
+      "hint": "Напомним руководству в Telegram за 7, 3 и 1 день до срока и при просрочке."
     }
   },
   "inspectionDay": {

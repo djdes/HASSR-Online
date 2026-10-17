@@ -53,6 +53,7 @@ export default async function PestControlPage() {
     <PpkBlockHeader
       blockKey="pest-control"
       lead={t("lead")}
+      reminderHint
       actions={<PpkCreateButton label={t("add")} />}
     />
   );

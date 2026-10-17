@@ -588,6 +588,9 @@
       "emptySection": "Bu bo'lim hozircha bo'sh. \"{block}\" blokini to'ldiring — u bu yerga o'zi tushadi.",
       "fill": "To'ldirish",
       "notFilled": "To'ldirilmagan"
+    },
+    "reminders": {
+      "hint": "Muddatdan 7, 3 va 1 kun oldin hamda muddat oʻtganda rahbarlarga Telegramda eslatamiz."
     }
   },
   "inspectionDay": {
