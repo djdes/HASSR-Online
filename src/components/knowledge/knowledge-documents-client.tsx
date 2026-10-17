@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Download, Eye, FileText, Pencil, Trash2, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { ackKnowledgeKey } from "@/lib/ppk/acknowledge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -21,6 +23,8 @@ export function KnowledgeDocumentsClient({ canManage }: { canManage: boolean }) 
   const [renaming, setRenaming] = useState<KnowledgeDocumentItem | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [deleting, setDeleting] = useState<KnowledgeDocumentItem | null>(null);
+  const [ack, setAck] = useState<Record<string, { acknowledged: number; total: number }>>({});
+  const tAck = useTranslations("productionControl.ack");
   const load = useCallback(async () => {
     setError("");
     try {
@@ -28,9 +32,17 @@ export function KnowledgeDocumentsClient({ canManage }: { canManage: boolean }) 
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Не удалось загрузить документы");
       setDocuments(body.documents);
+      // Руководителю — сколько сотрудников ознакомились с каждой инструкцией. Ошибка не мешает списку.
+      if (canManage && body.documents.length) {
+        const keys = (body.documents as KnowledgeDocumentItem[]).map((doc) => ackKnowledgeKey(doc.id)).join(",");
+        void fetch(`/api/production-control/acknowledgements?docKeys=${encodeURIComponent(keys)}`, { cache: "no-store" })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => { if (data?.stats) setAck(data.stats); })
+          .catch(() => {});
+      }
     } catch (err) { setError(err instanceof Error ? err.message : "Не удалось загрузить документы"); }
     finally { setLoading(false); }
-  }, []);
+  }, [canManage]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     setPreview(null);
@@ -71,7 +83,7 @@ export function KnowledgeDocumentsClient({ canManage }: { canManage: boolean }) 
     {error ? <div role="alert" className="rounded-2xl bg-[#fff4f2] p-4 text-[#a13a32]">{error}<Button variant="outline" className="ml-3" onClick={() => void load()}>Повторить</Button></div> : null}
     {loading ? <p>Загрузка…</p> : !documents.length && !error ? <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-10 text-center text-[#6f7282]">Документов пока нет. Загрузите инструкции, сканы и рабочие файлы организации.</div> : null}
     <div className="space-y-3">{documents.map((document) => <article key={document.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#ececf4] bg-white p-4">
-      <FileText className="size-6 shrink-0 text-[#5566f6]" /><div className="min-w-0 flex-1"><h2 className="break-words text-[15px] font-medium text-[#0b1024]">{document.title}</h2><p className="mt-1 break-words text-[12px] text-[#6f7282]">{document.fileName} · {(document.sizeBytes / 1024 / 1024).toFixed(2)} МБ · {document.uploadedByName}</p></div>
+      <FileText className="size-6 shrink-0 text-[#5566f6]" /><div className="min-w-0 flex-1"><h2 className="break-words text-[15px] font-medium text-[#0b1024]">{document.title}</h2><p className="mt-1 break-words text-[12px] text-[#6f7282]">{document.fileName} · {(document.sizeBytes / 1024 / 1024).toFixed(2)} МБ · {document.uploadedByName}</p>{ack[ackKnowledgeKey(document.id)] ? <span className="mt-1.5 inline-flex rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[12px] font-medium text-[#3848c7]">{tAck("pill", { done: String(ack[ackKnowledgeKey(document.id)].acknowledged), total: String(ack[ackKnowledgeKey(document.id)].total) })}</span> : null}</div>
       <div className="flex flex-wrap gap-2"><Button variant="outline" aria-label={`Предпросмотр: ${document.title}`} onClick={() => setViewing(document)}><Eye className="size-4" />Просмотр</Button><a className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] px-3 text-[14px]" href={`/api/knowledge-documents/${document.id}/file?download=1`}><Download className="size-4" />Скачать</a>
       {canManage ? <><Button variant="outline" aria-label={`Переименовать: ${document.title}`} onClick={() => { setRenaming(document); setNewTitle(document.title); }}><Pencil className="size-4" /></Button><Button variant="outline" aria-label={`Удалить: ${document.title}`} onClick={() => setDeleting(document)}><Trash2 className="size-4" /></Button></> : null}</div>
     </article>)}</div>

@@ -37,6 +37,7 @@ export function PolicyClient({
   staff,
   token,
   qrSvg,
+  ack,
 }: {
   header: ReactNode;
   record: PolicyRecord | null;
@@ -44,6 +45,8 @@ export function PolicyClient({
   staff: StaffPickerOption[];
   token: string | null;
   qrSvg: string | null;
+  /** Сводка ознакомления сотрудников (только когда политика сохранена). */
+  ack?: ReactNode;
 }) {
   const t = useTranslations("productionControl.policy");
   const router = useRouter();
@@ -139,6 +142,8 @@ export function PolicyClient({
           </button>
         </div>
       </section>
+
+      {ack}
 
       {token && qrSvg ? (
         <section className="flex flex-col gap-5 rounded-3xl border border-[#ececf4] bg-white p-5 sm:flex-row sm:items-center">

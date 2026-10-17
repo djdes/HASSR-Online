@@ -7,6 +7,8 @@ import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { PpkCreateButton } from "@/components/production-control/ppk-ui";
+import { ackSummaryFor } from "@/lib/ppk/acknowledge.server";
+import { AckSummary } from "@/components/production-control/ack-summary";
 import { TeamClient } from "./team-client";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +34,8 @@ export default async function TeamPage() {
     getTranslations("productionControl.team"),
     getLocale(),
   ]);
+  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } });
+  const ack = rows.length ? await ackSummaryFor(organizationId, "team-regulation", org?.timezone ?? "Europe/Moscow") : null;
 
   const initial = parsePpkRecords("team", rows).map((row) => ({ ...row, updatedAt: row.updatedAt.toISOString() }));
 
@@ -44,6 +48,7 @@ export default async function TeamPage() {
       initial={initial}
       staff={staff}
       header={header}
+      ack={ack ? <AckSummary docKey="team-regulation" stats={ack} /> : null}
       order={
         order
           ? {

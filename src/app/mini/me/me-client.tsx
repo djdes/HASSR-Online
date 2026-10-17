@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Coins,
   CreditCard,
+  FileSignature,
   LogOut,
   MessageCircleMore,
   Palette,
@@ -367,6 +368,14 @@ export function MiniMeClient({
           профиля на сайте (`components/layout/profile-sheet.tsx`); они
           открываются здесь же, в оболочке приложения (П-3). */}
       <section className="space-y-2">
+        {/* Ознакомление с документами — для всех сотрудников. */}
+        <Link href="/acknowledge" className="mini-item mini-press">
+          <ProfileRow
+            icon={FileSignature}
+            label="Документы для ознакомления"
+            hint="политика и инструкции"
+          />
+        </Link>
         {/* Баланс и бонусы — тот же пункт, что в меню профиля на сайте. */}
         <Link href="/settings/balance" className="mini-item mini-press">
           <ProfileRow icon={Coins} label="Баланс и бонусы" hint="отзыв и приглашения" />

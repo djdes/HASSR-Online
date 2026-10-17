@@ -639,6 +639,66 @@
       "chooseFile": "Choose file",
       "noFile": "No file chosen",
       "removeFile": "Remove file"
+    },
+    "versions": {
+      "none": "Not approved yet",
+      "current": "Version {version} · approved {date}",
+      "approve": "Approve a new version",
+      "history": "Version history",
+      "versionLabel": "Version {version}",
+      "noApprover": "Approver not specified",
+      "dialogTitle": "Approve version {version}",
+      "dialogHint": "We record who approved this edition and when. The version number is assigned automatically. The printed sheet shows the number, the date and the approver's signature line.",
+      "who": "Approved by",
+      "date": "Approval date",
+      "note": "What changed",
+      "notePlaceholder": "For example: added a new workshop, reviewed the CCPs",
+      "save": "Approve",
+      "cancel": "Cancel"
+    },
+    "meetings": {
+      "lead": "Minutes of HACCP team meetings. By the regulation, the team meets at least once a quarter.",
+      "add": "Record a meeting",
+      "nextDue": "Next meeting is due by {date}",
+      "nextOverdue": "The next meeting was due by {date}",
+      "nextNone": "Hold the first meeting",
+      "emptyTitle": "No meetings yet",
+      "emptyHint": "Hold a team meeting, record the topic and decisions, and the minutes are assembled for printing.",
+      "attended": "Present: {count}",
+      "protocol": "Minutes",
+      "edit": "Edit",
+      "remove": "Delete",
+      "removeTitle": "Delete the meeting of {date}?",
+      "removeBody": "The minutes will disappear from the list and can no longer be opened for printing.",
+      "dialogAdd": "New meeting",
+      "dialogEdit": "Team meeting",
+      "date": "Meeting date",
+      "topic": "Topic",
+      "topicPlaceholder": "For example: review of the hazard analysis",
+      "decisions": "Decisions",
+      "decisionsPlaceholder": "What was decided. One decision per line.",
+      "attendees": "Present",
+      "addOther": "Add another employee",
+      "otherPlaceholder": "Employee",
+      "formerEmployee": "No longer works here",
+      "noMembers": "The team is empty — mark who was present with \"Add another employee\".",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "ack": {
+      "title": "Employee acknowledgement",
+      "summary": "{done} of {total} have read it",
+      "noAudience": "Nobody to acknowledge: the staff list is empty",
+      "acknowledged": "Have read it",
+      "pending": "Not yet",
+      "nobody": "Nobody",
+      "remind": "Remind in Telegram",
+      "reminded": "Reminder sent: {count}",
+      "remindFailed": "Could not send the reminder",
+      "allDone": "Everyone has read it, nobody to remind",
+      "copyLink": "Link for employees",
+      "linkCopied": "Link copied",
+      "pill": "Read {done}/{total}"
     }
   },
   "inspectionDay": {
@@ -2223,7 +2283,8 @@
         "worksheets": "Worksheets",
         "list": "List",
         "guidelines": "Guidelines",
-        "sanpin": "SanPiN standards"
+        "sanpin": "SanPiN standards",
+        "meetings": "Meetings"
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",
@@ -2505,7 +2566,9 @@
       "production_control_documents_posters": "Posters for production",
       "production_control_norms_documents": "Regulatory documents",
       "production_control_program": "Program assembly",
-      "production_control_haccp_plan": "HACCP plan assembly"
+      "production_control_haccp_plan": "HACCP plan assembly",
+      "production_control_haccp_team_meetings": "HACCP team meetings",
+      "acknowledge": "Documents to read"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",
@@ -16103,5 +16166,23 @@
     "electronicAnswer": "Yes. SanPiN 2.3/2.4.4282-26 does not require paper: the important points are being able to see who made an entry and when, and preventing unnoticed retrospective changes. For an inspection, print the electronic log for the required period.",
     "retentionQuestion": "How long should I keep {name}?",
     "retentionAnswer": "Inspectors usually request records for the last 12 months, so one year is a practical minimum. Keep logs connected with a food poisoning investigation or a complaint until the proceedings are closed."
+  },
+  "acknowledge": {
+    "title": "Documents to read",
+    "lead": "Read the documents and press \"I have read it\". The mark is kept for inspections and audits.",
+    "needed": "Needs your review",
+    "doneOn": "Read on {date}",
+    "emptyTitle": "No documents to read",
+    "emptyHint": "When a manager adds a policy or instructions, they will appear here.",
+    "open": "Read",
+    "back": "Back to the documents",
+    "button": "I have read it",
+    "saving": "Saving...",
+    "done": "You read this on {date} at {time}",
+    "failed": "Could not save the mark. Please try again.",
+    "membersTitle": "HACCP team members",
+    "openFile": "Open the document",
+    "fileHint": "Open the document, read it and come back to press \"I have read it\".",
+    "publicButton": "I am an employee - confirm reading"
   }
 }

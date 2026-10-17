@@ -14,6 +14,7 @@ import { canSelfClaim, normalizeTaskFlowMode } from "@/lib/journal-task-flow-rul
 import { hasCapability } from "@/lib/permission-presets";
 import { customJournalName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { countPendingAckForUser } from "@/lib/ppk/acknowledge.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -316,9 +317,13 @@ export async function GET() {
     session.user.isRoot === true || hasCapability(session.user, "admin.full")
   );
 
+  // Документы, с которыми сотрудник ещё не ознакомился (политика, инструкции).
+  const pendingAck = await countPendingAckForUser(organizationId, userId).catch(() => 0);
+
   return NextResponse.json({
     dateKey,
     groups,
+    pendingAck,
     canSelfClaim: selfClaimAllowed,
     scheduleStatus,
     // Готовая подпись для плашки: «Сегодня у вас по графику: отпуск до 25.09».

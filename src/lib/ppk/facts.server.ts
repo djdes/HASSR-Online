@@ -39,6 +39,9 @@ type ValidRecords = {
   "pest-plan": Valid<PestPlanItem>[];
   "lab-plan": Valid<LabPlanItem>[];
   norms: Valid<NormsData>[];
+  /** Версии и заседания в статус блоков не входят — только разбираются вместе с остальными. */
+  "doc-versions": Valid<unknown>[];
+  "team-meetings": Valid<unknown>[];
 };
 
 /**
@@ -46,7 +49,7 @@ type ValidRecords = {
  * испорченная строка не должна ломать весь раздел.
  */
 function groupValidRecords(rows: { id: string; block: string; data: unknown }[]): ValidRecords {
-  const out: ValidRecords = { team: [], policy: [], products: [], hazards: [], "control-points": [], flowchart: [], "floor-plan": [], "pest-plan": [], "lab-plan": [], norms: [] };
+  const out: ValidRecords = { team: [], policy: [], products: [], hazards: [], "control-points": [], flowchart: [], "floor-plan": [], "pest-plan": [], "lab-plan": [], norms: [], "doc-versions": [], "team-meetings": [] };
   for (const row of rows) {
     if (!(PPK_RECORD_BLOCKS as readonly string[]).includes(row.block)) continue;
     const block = row.block as PpkRecordBlock;

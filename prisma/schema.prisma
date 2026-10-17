@@ -55,6 +55,7 @@ model Organization {
   knowledgeDocuments            KnowledgeDocument[]
   logo                          OrganizationLogo?
   ppkRecords                    PpkRecord[]
+  ppkAcknowledgements           PpkAcknowledgement[]
   checklistTemplates            ChecklistTemplate[]
   checklistInspections          ChecklistInspection[]
   checklistAttachments          ChecklistAttachment[]
@@ -519,6 +520,23 @@ model PpkRecord {
   @@index([block])
 }
 
+/// Ознакомление сотрудника с документом ППК (политика, положение о группе,
+/// инструкции базы знаний). `version` — версия документа на момент отметки:
+/// после правки документа нужна новая отметка.
+model PpkAcknowledgement {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  docKey         String
+  version        String
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  acknowledgedAt DateTime     @default(now())
+
+  @@unique([organizationId, docKey, version, userId])
+  @@index([organizationId, docKey, version])
+}
+
 /// Логотип организации — для сайдбара кабинета (2026-10-16). Отдельной
 /// таблицей, чтобы байты не тянулись в каждый `organization.findUnique`.
 /// Отдаётся через /api/org-assets/<organizationId>/logo?v=<version>;
@@ -871,6 +889,7 @@ model EmployeeJoinToken {
 
 model User {
   apiAccessKeys               ApiAccessKey[]
+  ppkAcknowledgements         PpkAcknowledgement[]
   id                          String                   @id @default(cuid())
   /// Personal interface language; null inherits the active organization's default.
   locale                      String?

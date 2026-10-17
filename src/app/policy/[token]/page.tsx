@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import type { PolicyData } from "@/lib/ppk/records";
 
@@ -26,6 +28,7 @@ export default async function PublicPolicyPage({ params }: { params: Promise<{ t
   });
   if (!record) notFound();
   const data = record.data as unknown as PolicyData;
+  const t = await getTranslations("acknowledge");
 
   const paragraphs = data.text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
   return (
@@ -47,6 +50,13 @@ export default async function PublicPolicyPage({ params }: { params: Promise<{ t
               <p key={index}>{paragraph}</p>
             ))}
           </div>
+          {/* Сотрудник входит в кабинет и отмечает ознакомление (нужен вход). */}
+          <Link
+            href="/acknowledge/policy"
+            className="mt-7 inline-flex h-11 items-center rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          >
+            {t("publicButton")}
+          </Link>
         </div>
       </div>
     </main>

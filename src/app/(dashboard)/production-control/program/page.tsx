@@ -3,9 +3,14 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
+import { loadPpkStaff } from "@/lib/ppk/staff.server";
+import { loadDocVersions } from "@/lib/ppk/review.server";
+import { approvalOf } from "@/lib/ppk/review";
+import { moscowToday } from "@/lib/ppk/plan-done";
 import { EMERGENCIES, MEDICAL_PHRASE } from "@/lib/ppk/program-content";
 import { ppkBlock, type PpkBlockKey } from "@/lib/ppk/registry";
 import { PpkPrintSheet } from "@/components/production-control/ppk-print-sheet";
+import { PpkDocVersions } from "@/components/production-control/ppk-doc-versions";
 import {
   PpkApproveBlock,
   PpkDocSection,
@@ -33,8 +38,10 @@ export default async function ProgramPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [bundle, t, nav] = await Promise.all([
+  const [bundle, versionRows, staff, t, nav] = await Promise.all([
     loadPpkBundle(organizationId),
+    loadDocVersions(organizationId),
+    loadPpkStaff(organizationId),
     getTranslations("productionControl.program"),
     getTranslations("navigation"),
   ]);
@@ -46,12 +53,25 @@ export default async function ProgramPage() {
     linkText: t("fill"),
   });
 
+  const approval = approvalOf(versionRows.map((row) => row.data), "ppk", staff);
   const leader = bundle.team.find((member) => member.role === "leader");
-  const acquaintanceRows = Array.from({ length: Math.min(Math.max(bundle.staffCount, 1), ACQUAINTANCE_MAX) });
+  // Лист ознакомления: Ф. И. О. и должности — из списка сотрудников, даты и подписи ставят от руки.
+  const acquaintanceRows = staff.slice(0, ACQUAINTANCE_MAX);
 
   return (
-    <PpkPrintSheet org={org} title="Программа производственного контроля" subtitle={org.orgName}>
-      <PpkApproveBlock org={org} />
+    <div className="space-y-4">
+    <PpkDocVersions
+      doc="ppk"
+      initial={versionRows.map((row) => ({ ...row, updatedAt: row.updatedAt.toISOString() }))}
+      staff={staff}
+      today={moscowToday()}
+    />
+    <PpkPrintSheet
+      org={org}
+      title="Программа производственного контроля"
+      subtitle={approval ? `Версия ${approval.version} от ${ruDate(approval.approvedAt)}` : org.orgName}
+    >
+      <PpkApproveBlock org={org} approval={approval} />
 
       <PpkDocSection title="1. Общие сведения">
         <PpkDocTable
@@ -173,9 +193,14 @@ export default async function ProgramPage() {
       <PpkDocSection title="9. Лист ознакомления">
         <PpkDocTable
           heads={["Ф. И. О.", "Должность", "Дата", "Подпись"]}
-          rows={acquaintanceRows.map(() => [<span key="gap" className="block h-5" />, "", "", ""])}
+          rows={
+            acquaintanceRows.length
+              ? acquaintanceRows.map((person) => [person.name, person.title, "", ""])
+              : [[<span key="gap" className="block h-5" />, "", "", ""]]
+          }
         />
       </PpkDocSection>
     </PpkPrintSheet>
+    </div>
   );
 }

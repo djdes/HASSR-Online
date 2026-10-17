@@ -17,6 +17,8 @@ export const PPK_RECORD_BLOCKS = [
   "pest-plan",
   "lab-plan",
   "norms",
+  "doc-versions",
+  "team-meetings",
 ] as const;
 export type PpkRecordBlock = (typeof PPK_RECORD_BLOCKS)[number];
 
@@ -35,6 +37,8 @@ export const PPK_RECORD_LIMITS: Record<PpkRecordBlock, number> = {
   "pest-plan": 100,
   "lab-plan": 100,
   norms: 1,
+  "doc-versions": 200,
+  "team-meetings": 200,
 };
 
 /** Блоки, где в организации может быть одна запись (лимит 1). БД не даст второй: см. `PpkRecord.singleton`. */
@@ -93,6 +97,18 @@ export type LabPlanItem = {
 };
 /** Нормативные документы: выбранные id из каталога и свои документы (до 50 и 50). */
 export type NormsData = { selected: string[]; custom: { title: string }[] };
+/** Утверждённая версия ППК или ХАССП-плана. */
+export type DocVersion = {
+  doc: "ppk" | "haccp-plan";
+  /** Номер версии: 1..999. */
+  version: number;
+  /** Дата YYYY-MM-DD. */
+  approvedAt: string;
+  approvedById: string | null;
+  note: string;
+};
+/** Протокол заседания группы ХАССП. */
+export type TeamMeeting = { date: string; topic: string; decisions: string; attendeeIds: string[] };
 export type DiagramNode = {
   id: string;
   x: number;
@@ -235,6 +251,21 @@ const normsSchema = z.object({
   custom: z.array(z.object({ title: short(300).min(1) })).max(50),
 });
 
+const docVersionSchema = z.object({
+  doc: z.enum(["ppk", "haccp-plan"]),
+  version: z.number().int().min(1).max(999),
+  approvedAt: dateOnly.unwrap(),
+  approvedById: id().nullable(),
+  note: short(500),
+});
+
+const teamMeetingSchema = z.object({
+  date: dateOnly.unwrap(),
+  topic: short(200).min(1),
+  decisions: long(),
+  attendeeIds: z.array(id()).max(30),
+});
+
 const coord = z.number().min(0).max(4000);
 const size = z.number().min(40).max(2000);
 
@@ -306,6 +337,8 @@ export const PPK_RECORD_SCHEMAS: Record<PpkRecordBlock, z.ZodTypeAny> = {
   "pest-plan": pestPlanSchema,
   "lab-plan": labPlanSchema,
   norms: normsSchema,
+  "doc-versions": docVersionSchema,
+  "team-meetings": teamMeetingSchema,
 };
 
 /** Тип данных записи по блоку. */
@@ -320,6 +353,8 @@ export type PpkRecordDataMap = {
   "pest-plan": PestPlanItem;
   "lab-plan": LabPlanItem;
   norms: NormsData;
+  "doc-versions": DocVersion;
+  "team-meetings": TeamMeeting;
 };
 
 export type ParsedPpkRecord<B extends PpkRecordBlock> = {

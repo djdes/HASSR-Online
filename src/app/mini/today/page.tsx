@@ -18,6 +18,7 @@ import {
   CalendarOff,
   CheckCircle2,
   Clock,
+  FileSignature,
   Loader2,
   Lock,
   Palmtree,
@@ -75,6 +76,8 @@ type Payload = {
   } | null;
   /** Взятые и не закрытые задачи прошлых дней. */
   stuckClaims?: StuckClaim[];
+  /** Сколько документов ждёт отметки «Ознакомлен(а)». */
+  pendingAck?: number;
   /** false — режим «Только руководитель назначает»: «Взять» не показываем. */
   canSelfClaim?: boolean;
 };
@@ -408,6 +411,20 @@ export default function MiniTodayPage() {
             обычно.
           </span>
         </div>
+      ) : null}
+
+      {/* Документы на ознакомление: политика, положение, инструкции. */}
+      {(data.pendingAck ?? 0) > 0 ? (
+        <Link href="/acknowledge" className="mini-warn mini-press flex items-center gap-2.5">
+          <FileSignature
+            className="size-5 shrink-0"
+            style={{ color: "var(--mini-warn)" }}
+          />
+          <span className="min-w-0 flex-1">
+            Нужно ознакомиться с документами:{" "}
+            <span className="font-semibold">{data.pendingAck}</span>
+          </span>
+        </Link>
       ) : null}
 
       {/* Незакрытая задача прошлого дня. Раньше она просто блокировала

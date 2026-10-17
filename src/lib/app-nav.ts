@@ -266,7 +266,7 @@ export const NAV_SECTIONS: NavSection[] = [
     key: "journals",
     icon: "ClipboardList",
     renameHref: "/journals",
-    hiddenMatch: ["/journals-progress"],
+    hiddenMatch: ["/journals-progress", "/acknowledge"],
     tabs: [
       {
         id: "today",

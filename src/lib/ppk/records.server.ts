@@ -15,6 +15,10 @@ export async function checkPpkRefs(
   if (block === "team" && typeof data.userId === "string") userIds.push(data.userId);
   if (block === "policy" && typeof data.approvedById === "string") userIds.push(data.approvedById);
   if (block === "control-points" && typeof data.responsibleId === "string") userIds.push(data.responsibleId);
+  if (block === "doc-versions" && typeof data.approvedById === "string") userIds.push(data.approvedById);
+  if (block === "team-meetings" && Array.isArray(data.attendeeIds)) {
+    for (const attendee of data.attendeeIds) if (typeof attendee === "string") userIds.push(attendee);
+  }
 
   if (userIds.length > 0) {
     const found = await db.user.count({ where: { id: { in: userIds }, organizationId } });

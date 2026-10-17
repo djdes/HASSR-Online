@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildPpkReminderKeyboard, collectPpkReminders, daysBetween, isReminderDay, ppkDueSoon, ppkReminderMessage } from "./reminders";
-import type { LabPlanItem, PestPlanItem } from "./records";
+import { buildPpkReminderKeyboard, collectPpkReminders, collectReviewReminders, daysBetween, isReminderDay, ppkDueSoon, ppkReminderMessage } from "./reminders";
+import type { DocVersion, LabPlanItem, PestPlanItem, PolicyData, TeamMeeting } from "./records";
 
 const TODAY = "2026-10-17";
 
@@ -142,4 +142,77 @@ test("buildPpkReminderKeyboard: не больше 8 кнопок пунктов"
 
 test("ppkReminderMessage: подсказка про ✅", () => {
   assert.match(ppkReminderMessage([]), /Нажмите ✅, когда выполнено/);
+});
+
+const policy = (approvedAt: string | null): PolicyData => ({ text: "Текст", approvedById: null, approvedAt, token: "t" });
+const ver = (doc: DocVersion["doc"], version: number, approvedAt: string): DocVersion => ({ doc, version, approvedAt, approvedById: null, note: "" });
+const meet = (date: string): TeamMeeting => ({ date, topic: "Тема", decisions: "", attendeeIds: [] });
+
+test("collectReviewReminders: пересмотр через 12 месяцев — за 7 дней до срока", () => {
+  // Политика утверждена 2025-10-24 → пересмотр 2026-10-24 → через 7 дней.
+  const out = collectReviewReminders({ policy: policy("2025-10-24"), versions: [], meetings: [], teamSize: 0, today: TODAY });
+  assert.equal(out.length, 1);
+  assert.equal(out[0].block, "review");
+  assert.equal(out[0].title, "Политика в области качества");
+  assert.equal(out[0].nextDate, "2026-10-24");
+  assert.equal(out[0].daysLeft, 7);
+  assert.equal(out[0].recordId, "");
+});
+
+test("collectReviewReminders: берёт последнюю версию ППК и ХАССП-плана", () => {
+  const out = collectReviewReminders({
+    policy: null,
+    versions: [ver("ppk", 1, "2024-01-01"), ver("ppk", 2, "2025-10-17"), ver("haccp-plan", 1, "2025-10-18")],
+    meetings: [],
+    teamSize: 0,
+    today: TODAY,
+  });
+  assert.deepEqual(out.map((i) => [i.title, i.daysLeft]), [["Программа производственного контроля", 0], ["План ХАССП", 1]]);
+});
+
+test("collectReviewReminders: нет даты утверждения или не тот день — пусто", () => {
+  assert.deepEqual(collectReviewReminders({ policy: policy(null), versions: [], meetings: [], teamSize: 3, today: TODAY }), []);
+  assert.deepEqual(collectReviewReminders({ policy: policy("2025-10-22"), versions: [], meetings: [], teamSize: 3, today: TODAY }), []);
+});
+
+test("collectReviewReminders: просроченный пересмотр — на 1-й день и каждые 7", () => {
+  const out = collectReviewReminders({ policy: policy("2025-10-16"), versions: [], meetings: [], teamSize: 0, today: TODAY });
+  assert.equal(out[0].daysLeft, -1);
+});
+
+test("collectReviewReminders: очередное заседание — последнее + 3 месяца; без заседаний не напоминаем", () => {
+  const due = collectReviewReminders({ policy: null, versions: [], meetings: [meet("2026-07-20"), meet("2026-04-01")], teamSize: 4, today: TODAY });
+  assert.equal(due.length, 1);
+  assert.equal(due[0].block, "meeting");
+  assert.equal(due[0].nextDate, "2026-10-20");
+  assert.equal(due[0].daysLeft, 3);
+  assert.equal(due[0].title, "Очередное заседание группы ХАССП");
+  assert.deepEqual(collectReviewReminders({ policy: null, versions: [], meetings: [], teamSize: 4, today: TODAY }), []);
+});
+
+test("ppkReminderMessage: секции пересмотра и заседаний, без подсказки про ✅ если только они", () => {
+  const msg = ppkReminderMessage([
+    { recordId: "", block: "review", title: "План ХАССП", nextDate: "2026-10-18", daysLeft: 1 },
+    { recordId: "", block: "meeting", title: "Очередное заседание группы ХАССП", nextDate: "2026-10-17", daysLeft: 0 },
+  ]);
+  assert.ok(msg.includes("📄 <b>Пересмотр документов</b>"));
+  assert.ok(msg.includes("• План ХАССП — завтра (18.10)"));
+  assert.ok(msg.includes("👥 <b>Заседания группы ХАССП</b>"));
+  assert.ok(!msg.includes("Нажмите ✅"));
+  const mixed = ppkReminderMessage([
+    { recordId: "r1", block: "pest", title: "Дезинсекция: Кухня", nextDate: "2026-10-18", daysLeft: 1 },
+    { recordId: "", block: "review", title: "План ХАССП", nextDate: "2026-10-18", daysLeft: 1 },
+  ]);
+  assert.ok(mixed.includes("Нажмите ✅"));
+});
+
+test("buildPpkReminderKeyboard: у пунктов пересмотра и заседаний нет кнопок ✅", () => {
+  const kb = buildPpkReminderKeyboard(
+    [
+      { recordId: "", block: "review", title: "План ХАССП", nextDate: TODAY, daysLeft: 0 },
+      { recordId: "", block: "meeting", title: "Заседание", nextDate: TODAY, daysLeft: 0 },
+    ],
+    null,
+  );
+  assert.equal(kb.inline_keyboard.length, 0);
 });

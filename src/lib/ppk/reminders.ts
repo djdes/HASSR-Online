@@ -1,11 +1,12 @@
 import { escapeHtml } from "../html-escape";
-import type { LabPlanItem, PestPlanItem } from "./records";
+import type { DocVersion, LabPlanItem, PestPlanItem, PolicyData, TeamMeeting } from "./records";
+import { addMonths, latestDocVersion, nextMeetingDate } from "./review";
 import { labNextDate } from "./sanitation";
 
 export type PpkReminderItem = {
   /** Id записи `PpkRecord` — по нему кнопка «✅» в Telegram находит пункт плана. */
   recordId: string;
-  block: "lab" | "pest";
+  block: "lab" | "pest" | "review" | "meeting";
   title: string;
   nextDate: string;
   daysLeft: number;
@@ -94,6 +95,40 @@ export function ppkDueSoon(
   return collectByRule(input, (daysLeft) => daysLeft <= horizonDays);
 }
 
+/**
+ * Пересмотр документов и очередное заседание группы. Пересмотр — через 12 месяцев
+ * после утверждения политики и последней версии ППК и ХАССП-плана; заседание — через
+ * 3 месяца после последнего (нет заседаний — не напоминаем). Правило дней то же, что у
+ * планов. recordId пустой: кнопки «✅» нет, пункт закрывается новой версией или протоколом.
+ */
+export function collectReviewReminders(input: {
+  policy: PolicyData | null;
+  versions: DocVersion[];
+  meetings: TeamMeeting[];
+  teamSize: number;
+  today: string;
+}): PpkReminderItem[] {
+  const out: PpkReminderItem[] = [];
+  const push = (block: "review" | "meeting", title: string, nextDate: string | null) => {
+    if (!nextDate) return;
+    const daysLeft = daysBetween(input.today, nextDate);
+    if (!isReminderDay(daysLeft)) return;
+    out.push({ recordId: "", block, title, nextDate, daysLeft });
+  };
+  push("review", "Политика в области качества", input.policy?.approvedAt ? addMonths(input.policy.approvedAt, 12) : null);
+  const ppk = latestDocVersion(input.versions, "ppk");
+  push("review", "Программа производственного контроля", ppk ? addMonths(ppk.approvedAt, 12) : null);
+  const plan = latestDocVersion(input.versions, "haccp-plan");
+  push("review", "План ХАССП", plan ? addMonths(plan.approvedAt, 12) : null);
+  if (input.teamSize > 0) push("meeting", "Очередное заседание группы ХАССП", nextMeetingDate(input.meetings));
+  return out.sort((a, b) => {
+    const aOver = a.daysLeft < 0 ? 0 : 1;
+    const bOver = b.daysLeft < 0 ? 0 : 1;
+    if (aOver !== bOver) return aOver - bOver;
+    return a.nextDate.localeCompare(b.nextDate);
+  });
+}
+
 function shortDate(ymd: string): string {
   return `${ymd.slice(8, 10)}.${ymd.slice(5, 7)}`;
 }
@@ -108,7 +143,7 @@ function statusText(item: PpkReminderItem): string {
 
 /** Сообщение руководству в Telegram (HTML): секции только с непустыми пунктами. */
 export function ppkReminderMessage(items: PpkReminderItem[]): string {
-  const section = (block: "lab" | "pest", heading: string): string[] => {
+  const section = (block: PpkReminderItem["block"], heading: string): string[] => {
     const rows = items.filter((i) => i.block === block);
     if (rows.length === 0) return [];
     return ["", heading, ...rows.map((i) => `• ${escapeHtml(i.title)} — ${statusText(i)}`)];
@@ -117,8 +152,12 @@ export function ppkReminderMessage(items: PpkReminderItem[]): string {
     "🔔 <b>Производственный контроль: сроки</b>",
     ...section("lab", "🧪 <b>Лабораторные исследования</b>"),
     ...section("pest", "🪲 <b>Дезинсекция и дератизация</b>"),
-    "",
-    "Нажмите ✅, когда выполнено — отметим и посчитаем следующий срок.",
+    ...section("review", "📄 <b>Пересмотр документов</b>"),
+    ...section("meeting", "👥 <b>Заседания группы ХАССП</b>"),
+    // «✅» есть только у пунктов планов; пересмотр и заседания закрываются версией/протоколом.
+    ...(items.length > 0 && items.every((i) => i.block === "review" || i.block === "meeting")
+      ? []
+      : ["", "Нажмите ✅, когда выполнено — отметим и посчитаем следующий срок."]),
   ].join("\n");
 }
 

@@ -40,12 +40,15 @@ export function TeamClient({
   staff,
   header,
   order,
+  ack,
 }: {
   initial: Row[];
   staff: StaffPickerOption[];
   header: ReactNode;
   /** Последний изданный приказ о группе (дата уже отформатирована). */
   order: { id: string; number: string; date: string } | null;
+  /** Сводка ознакомления с положением о группе. */
+  ack?: ReactNode;
 }) {
   const t = useTranslations("productionControl.team");
   const { records, create, update, remove } = usePpkRecords<TeamMember>("team", initial);
@@ -131,6 +134,8 @@ export function TeamClient({
           })}
         </ul>
       )}
+
+      {ack}
 
       <section className="space-y-4 rounded-3xl border border-[#ececf4] bg-white p-5">
         <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("docsTitle")}</h2>

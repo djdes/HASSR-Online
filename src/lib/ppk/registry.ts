@@ -26,7 +26,7 @@ export type PpkBlockKey =
 
 export type PpkTabKey =
   | "overview" | "program" | "haccpPlan"
-  | "members" | "regulation"
+  | "members" | "regulation" | "meetings"
   | "text" | "qrSheet"
   | "points" | "worksheets"
   | "list" | "guidelines" | "sanpin";
@@ -81,6 +81,7 @@ export const PPK_BLOCKS: readonly PpkBlock[] = [
     tabs: [
       { id: "members", href: "/production-control/haccp/team", access: "fullAccess", ready: true },
       { id: "regulation", href: "/production-control/haccp/team/regulation", access: "fullAccess", ready: true },
+      { id: "meetings", href: "/production-control/haccp/team/meetings", access: "fullAccess", ready: true },
     ],
   },
   {

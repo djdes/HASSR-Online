@@ -8,6 +8,8 @@ import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { policyTemplate } from "@/lib/ppk/haccp";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
+import { ackSummaryFor } from "@/lib/ppk/acknowledge.server";
+import { AckSummary } from "@/components/production-control/ack-summary";
 import { PolicyClient } from "./policy-client";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +25,7 @@ export default async function PolicyPage() {
       where: { organizationId, block: "policy" },
       select: { id: true, data: true },
     }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { name: true, timezone: true } }),
     loadPpkStaff(organizationId),
     getTranslations("productionControl.policy"),
   ]);
@@ -33,6 +35,7 @@ export default async function PolicyPage() {
     ? `${process.env.NEXTAUTH_URL ?? "https://wesetup.ru"}/policy/${data.token}`
     : null;
   const qrSvg = publicUrl ? await brandQrSvg(publicUrl) : null;
+  const ack = row ? await ackSummaryFor(organizationId, "policy", org?.timezone ?? "Europe/Moscow") : null;
 
   return (
     <PolicyClient
@@ -42,6 +45,7 @@ export default async function PolicyPage() {
       staff={staff}
       token={data?.token ?? null}
       qrSvg={qrSvg}
+      ack={ack ? <AckSummary docKey="policy" stats={ack} /> : null}
     />
   );
 }

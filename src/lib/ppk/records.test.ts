@@ -15,12 +15,12 @@ const ok = (block: (typeof PPK_RECORD_BLOCKS)[number], data: unknown) =>
   PPK_RECORD_SCHEMAS[block].safeParse(data).success;
 
 test("блоки записей и лимиты", () => {
-  assert.deepEqual([...PPK_RECORD_BLOCKS], ["team", "policy", "products", "hazards", "control-points", "flowchart", "floor-plan", "pest-plan", "lab-plan", "norms"]);
+  assert.deepEqual([...PPK_RECORD_BLOCKS], ["team", "policy", "products", "hazards", "control-points", "flowchart", "floor-plan", "pest-plan", "lab-plan", "norms", "doc-versions", "team-meetings"]);
   assert.equal(isPpkRecordBlock("team"), true);
   assert.equal(isPpkRecordBlock("flowchart"), true);
   assert.equal(isPpkRecordBlock("unknown"), false);
   assert.equal(isPpkRecordBlock(undefined), false);
-  assert.deepEqual(PPK_RECORD_LIMITS, { team: 30, policy: 1, products: 300, hazards: 300, "control-points": 200, flowchart: 50, "floor-plan": 50, "pest-plan": 100, "lab-plan": 100, norms: 1 });
+  assert.deepEqual(PPK_RECORD_LIMITS, { team: 30, policy: 1, products: 300, hazards: 300, "control-points": 200, flowchart: 50, "floor-plan": 50, "pest-plan": 100, "lab-plan": 100, norms: 1, "doc-versions": 200, "team-meetings": 200 });
 });
 
 test("план дезинсекции и лаборатории: вид, периодичность 1..24 месяцев, даты YYYY-MM-DD", () => {
@@ -152,4 +152,26 @@ test("блоки-одиночки — ровно те, у которых лим�
   const singles = PPK_RECORD_BLOCKS.filter((block) => PPK_RECORD_LIMITS[block] === 1);
   assert.deepEqual([...PPK_SINGLETON_BLOCKS].sort(), [...singles].sort());
   assert.deepEqual([...PPK_SINGLETON_BLOCKS], ["policy", "norms"]);
+});
+
+test("версия документа: ППК или ХАССП-план, номер 1..999, дата, комментарий до 500", () => {
+  const version = { doc: "ppk", version: 3, approvedAt: "2026-10-12", approvedById: "u1", note: "Пересмотр" };
+  assert.equal(ok("doc-versions", version), true);
+  assert.equal(ok("doc-versions", { ...version, doc: "haccp-plan", approvedById: null }), true);
+  assert.equal(ok("doc-versions", { ...version, doc: "policy" }), false);
+  assert.equal(ok("doc-versions", { ...version, version: 0 }), false);
+  assert.equal(ok("doc-versions", { ...version, version: 1000 }), false);
+  assert.equal(ok("doc-versions", { ...version, version: 1.5 }), false);
+  assert.equal(ok("doc-versions", { ...version, approvedAt: "12.10.2026" }), false);
+  assert.equal(ok("doc-versions", { ...version, note: "я".repeat(501) }), false);
+});
+
+test("заседание группы: дата, тема 1..200, решения до 4000, присутствовавшие до 30", () => {
+  const meeting = { date: "2026-10-12", topic: "Пересмотр анализа опасностей", decisions: "Решили.", attendeeIds: ["u1", "u2"] };
+  assert.equal(ok("team-meetings", meeting), true);
+  assert.equal(ok("team-meetings", { ...meeting, topic: "" }), false);
+  assert.equal(ok("team-meetings", { ...meeting, topic: "я".repeat(201) }), false);
+  assert.equal(ok("team-meetings", { ...meeting, decisions: "я".repeat(4001) }), false);
+  assert.equal(ok("team-meetings", { ...meeting, date: "вчера" }), false);
+  assert.equal(ok("team-meetings", { ...meeting, attendeeIds: Array.from({ length: 31 }, (_, i) => `u${i}`) }), false);
 });

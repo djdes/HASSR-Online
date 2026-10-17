@@ -79,20 +79,30 @@ export function PpkDocTable({
   );
 }
 
-/** Строка «УТВЕРЖДАЮ»: должность и ФИО руководителя из реквизитов, подпись и дата. */
-export function PpkApproveBlock({ org }: { org: PpkPrintOrg }) {
+/**
+ * Строка «УТВЕРЖДАЮ»: должность и ФИО руководителя из реквизитов, подпись и дата.
+ * Если у документа есть утверждённая версия с утвердившим — вместо руководителя он, с датой версии.
+ */
+export function PpkApproveBlock({
+  org,
+  approval,
+}: {
+  org: PpkPrintOrg;
+  approval?: { approvedAt: string; approver: { name: string; title: string } | null } | null;
+}) {
   const director = org.snapshot;
+  const approver = approval?.approver ?? null;
   return (
     <div className="mb-6 ml-auto w-[260px] text-[13.5px]">
       <div className="font-semibold">УТВЕРЖДАЮ</div>
-      <div>{director?.directorPost || "Руководитель"}</div>
-      <div>{director?.directorName || "—"}</div>
+      <div>{approver ? approver.title || "Руководитель" : director?.directorPost || "Руководитель"}</div>
+      <div>{approver ? approver.name : director?.directorName || "—"}</div>
       <div className="mt-4 flex items-end gap-2">
         <span className="w-[110px] border-b border-[#0b1024]" />
         <span>/</span>
         <span className="w-[80px] border-b border-[#0b1024]" />
       </div>
-      <div className="mt-3">«____» ______________ 20___ г.</div>
+      <div className="mt-3">{approver && approval ? `${ruDate(approval.approvedAt)} г.` : "«____» ______________ 20___ г."}</div>
     </div>
   );
 }

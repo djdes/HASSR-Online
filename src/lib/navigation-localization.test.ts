@@ -13,8 +13,8 @@ import { NAV_SECTIONS } from "./app-nav";
 import type { PpkBlockKey, PpkTabKey } from "./ppk/registry";
 import type { Session } from "next-auth";
 
-test("121 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
-  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 121);
+test("123 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
+  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 123);
   assert.deepEqual(Object.keys(ROUTE_TITLE_KEYS), Object.keys(ROUTE_TITLES));
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);

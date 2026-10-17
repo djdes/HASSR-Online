@@ -3,12 +3,18 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
+import { loadPpkStaff } from "@/lib/ppk/staff.server";
+import { loadDocVersions } from "@/lib/ppk/review.server";
+import { approvalOf } from "@/lib/ppk/review";
+import { moscowToday } from "@/lib/ppk/plan-done";
 import { diagramBounds } from "@/lib/ppk/diagram";
 import { hazardRisk, isSignificantHazard } from "@/lib/ppk/haccp";
 import { ppkBlock, type PpkBlockKey } from "@/lib/ppk/registry";
 import { PpkPrintSheet } from "@/components/production-control/ppk-print-sheet";
+import { PpkDocVersions } from "@/components/production-control/ppk-doc-versions";
 import { DiagramSvg } from "@/components/production-control/diagram-svg";
 import {
+  PpkApproveBlock,
   PpkDocSection,
   PpkDocTable,
   ruDate,
@@ -32,8 +38,10 @@ export default async function HaccpPlanPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [bundle, t, nav] = await Promise.all([
+  const [bundle, versionRows, staff, t, nav] = await Promise.all([
     loadPpkBundle(organizationId),
+    loadDocVersions(organizationId),
+    loadPpkStaff(organizationId),
     getTranslations("productionControl.program"),
     getTranslations("navigation"),
   ]);
@@ -44,13 +52,27 @@ export default async function HaccpPlanPage() {
     linkText: t("fill"),
   });
 
+  const approval = approvalOf(versionRows.map((row) => row.data), "haccp-plan", staff);
+
   // Только ККТ и ОПП — у ПРП нет пределов и мониторинга.
   const controlPoints = bundle.points.filter((point) => point.kind === "ccp" || point.kind === "oprp");
 
   return (
     <>
       <style>{"@page { size: A4 landscape; margin: 10mm; }"}</style>
-      <PpkPrintSheet org={org} title="План ХАССП" subtitle={org.orgName}>
+      <div className="space-y-4">
+      <PpkDocVersions
+        doc="haccp-plan"
+        initial={versionRows.map((row) => ({ ...row, updatedAt: row.updatedAt.toISOString() }))}
+        staff={staff}
+        today={moscowToday()}
+      />
+      <PpkPrintSheet
+        org={org}
+        title="План ХАССП"
+        subtitle={approval ? `Версия ${approval.version} от ${ruDate(approval.approvedAt)}` : org.orgName}
+      >
+        {approval?.approver ? <PpkApproveBlock org={org} approval={approval} /> : null}
         <PpkDocSection title="1. Группа ХАССП" empty={bundle.team.length === 0 ? banner("team") : null}>
           <PpkDocTable
             heads={["Ф. И. О.", "Должность", "Роль в группе", "Обязанности"]}
@@ -169,6 +191,7 @@ export default async function HaccpPlanPage() {
           </p>
         </PpkDocSection>
       </PpkPrintSheet>
+      </div>
     </>
   );
 }

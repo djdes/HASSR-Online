@@ -639,6 +639,66 @@
       "chooseFile": "Fayl tanlash",
       "noFile": "Fayl tanlanmagan",
       "removeFile": "Faylni olib tashlash"
+    },
+    "versions": {
+      "none": "Hali tasdiqlanmagan",
+      "current": "{version}-versiya · {date} sanasida tasdiqlangan",
+      "approve": "Yangi versiyani tasdiqlash",
+      "history": "Versiyalar tarixi",
+      "versionLabel": "{version}-versiya",
+      "noApprover": "Kim tasdiqlagani koʻrsatilmagan",
+      "dialogTitle": "{version}-versiyani tasdiqlash",
+      "dialogHint": "Bu tahrirni kim va qachon tasdiqlagani qayd etiladi. Versiya raqami avtomatik beriladi. Bosma varaqda raqam, sana va tasdiqlovchining imzosi chiqadi.",
+      "who": "Kim tasdiqladi",
+      "date": "Tasdiqlangan sana",
+      "note": "Nima oʻzgardi",
+      "notePlaceholder": "Masalan: yangi sex qoʻshildi, KNN qayta koʻrib chiqildi",
+      "save": "Tasdiqlash",
+      "cancel": "Bekor qilish"
+    },
+    "meetings": {
+      "lead": "HACCP guruhi yigʻilishlari bayonnomalari. Nizomga koʻra guruh kamida chorakda bir marta yigʻiladi.",
+      "add": "Yigʻilishni yozish",
+      "nextDue": "Keyingi yigʻilish — {date} gacha",
+      "nextOverdue": "Keyingi yigʻilishni {date} gacha oʻtkazish kerak edi",
+      "nextNone": "Birinchi yigʻilishni oʻtkazing",
+      "emptyTitle": "Hozircha yigʻilishlar yoʻq",
+      "emptyHint": "Guruh yigʻilishini oʻtkazing, mavzu va qarorlarni yozing — bayonnoma bosma uchun oʻzi tayyorlanadi.",
+      "attended": "Qatnashdi: {count}",
+      "protocol": "Bayonnoma",
+      "edit": "Oʻzgartirish",
+      "remove": "Oʻchirish",
+      "removeTitle": "{date} dagi yigʻilish oʻchirilsinmi?",
+      "removeBody": "Bayonnoma roʻyxatdan yoʻqoladi va bosma uchun ochilmaydi.",
+      "dialogAdd": "Yangi yigʻilish",
+      "dialogEdit": "Guruh yigʻilishi",
+      "date": "Yigʻilish sanasi",
+      "topic": "Mavzu",
+      "topicPlaceholder": "Masalan: xavflar tahlilini qayta koʻrib chiqish",
+      "decisions": "Qarorlar",
+      "decisionsPlaceholder": "Nima qaror qilindi. Har bir qaror yangi qatordan.",
+      "attendees": "Qatnashganlar",
+      "addOther": "Boshqa xodimni qoʻshish",
+      "otherPlaceholder": "Xodim",
+      "formerEmployee": "Endi ishlamaydi",
+      "noMembers": "Guruhda hali hech kim yoʻq — qatnashganlarni «Boshqa xodimni qoʻshish» orqali belgilang.",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish"
+    },
+    "ack": {
+      "title": "Xodimlarning tanishuvi",
+      "summary": "{total} tadan {done} tasi tanishgan",
+      "noAudience": "Tanishadigan hech kim yo'q: xodimlar ro'yxati bo'sh",
+      "acknowledged": "Tanishganlar",
+      "pending": "Hali yo'q",
+      "nobody": "Hech kim",
+      "remind": "Telegramda eslatish",
+      "reminded": "Eslatma yuborildi: {count}",
+      "remindFailed": "Eslatmani yuborib bo'lmadi",
+      "allDone": "Hamma tanishgan, eslatadigan kishi yo'q",
+      "copyLink": "Xodimlar uchun havola",
+      "linkCopied": "Havola nusxalandi",
+      "pill": "Tanishgan {done}/{total}"
     }
   },
   "inspectionDay": {
@@ -2223,7 +2283,8 @@
         "worksheets": "Ish varaqlari",
         "list": "Roʻyxat",
         "guidelines": "Uslubiy tavsiyalar",
-        "sanpin": "SanPiN meʼyorlari"
+        "sanpin": "SanPiN meʼyorlari",
+        "meetings": "Yigʻilishlar"
       },
       "backToMain": "Asosiy menyu",
       "sectionMenuAria": "Boʻlim menyusi",
@@ -2505,7 +2566,9 @@
       "production_control_documents_posters": "Ishlab chiqarish plakatlari",
       "production_control_norms_documents": "Me'yoriy hujjatlar",
       "production_control_program": "Dasturni yig'ish",
-      "production_control_haccp_plan": "HACCP rejasini yig'ish"
+      "production_control_haccp_plan": "HACCP rejasini yig'ish",
+      "production_control_haccp_team_meetings": "HACCP guruhi yigʻilishlari",
+      "acknowledge": "Tanishish uchun hujjatlar"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",
@@ -16103,5 +16166,23 @@
     "electronicAnswer": "Ha. SanPiN 2.3/2.4.4282-26 qog‘oz shaklni talab qilmaydi: yozuvni kim va qachon kiritgani ko‘rinishi hamda uni oldingi sana bilan sezdirmay o‘zgartirib bo‘lmasligi muhim. Tekshiruv uchun elektron jurnal kerakli davr bo‘yicha chop etiladi.",
     "retentionQuestion": "«{name}» qancha vaqt saqlanadi?",
     "retentionAnswer": "Inspektor odatda oxirgi 12 oylik yozuvlarni so‘raydi, shuning uchun bir yil amaliy minimum hisoblanadi. Zaharlanish bo‘yicha tekshiruv yoki shikoyat bilan bog‘liq jurnallar ish yakunlanguncha saqlanadi."
+  },
+  "acknowledge": {
+    "title": "Tanishish uchun hujjatlar",
+    "lead": "Hujjatlarni o'qing va \"Tanishdim\" tugmasini bosing. Belgi tekshiruv va audit uchun saqlanadi.",
+    "needed": "Tanishish kerak",
+    "doneOn": "{date} da tanishilgan",
+    "emptyTitle": "Tanishish uchun hujjat yo'q",
+    "emptyHint": "Rahbar siyosat yoki yo'riqnomalarni qo'shsa, ular shu yerda ko'rinadi.",
+    "open": "O'qish",
+    "back": "Hujjatlar ro'yxatiga",
+    "button": "Tanishdim",
+    "saving": "Saqlanmoqda...",
+    "done": "Siz {date} kuni soat {time} da tanishdingiz",
+    "failed": "Belgini saqlab bo'lmadi. Qayta urinib ko'ring.",
+    "membersTitle": "HACCP guruhi tarkibi",
+    "openFile": "Hujjatni ochish",
+    "fileHint": "Hujjatni oching, o'qing va \"Tanishdim\" tugmasini bosish uchun qaytib keling.",
+    "publicButton": "Men xodimman - tanishganimni belgilash"
   }
 }
