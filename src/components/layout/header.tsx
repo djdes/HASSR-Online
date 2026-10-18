@@ -49,6 +49,7 @@ import type { CabinetPlanCard } from "@/lib/cabinet-plan";
 import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 import { orgDisplayName } from "@/lib/org-display-name";
 import type { BuildingOption } from "@/lib/building-scope";
+import type { HeaderPoint } from "@/lib/header-point";
 import {
   OrganizationSwitcher,
   type CreateDialogKind,
@@ -90,12 +91,13 @@ type HeaderProps = {
   organizations: AccessibleOrganization[];
   activeOrganizationId: string;
   /**
-   * Текущая точка в центре шапки. `buildings` — точки для переключения
-   * (меньше двух — переключателя нет), `name` — что показать без
-   * переключателя: единственная точка или организация.
+   * Текущая точка в центре шапки. `point` — что показать
+   * (`resolveHeaderPoint`: точка, переключатель, «+ Добавить точку» или
+   * ничего — название компании там не повторяется), `buildings` — точки для
+   * переключения в листе меню на телефоне (меньше двух — переключателя нет).
    */
   currentPoint: {
-    name: string;
+    point: HeaderPoint;
     buildings: BuildingOption[];
     activeBuildingId: string | null;
     manageHref: string | null;
@@ -248,7 +250,7 @@ export function Header({
 
         <div className="flex min-w-0 justify-center">
           <CurrentPointSwitcher
-            name={currentPoint.name}
+            point={currentPoint.point}
             buildings={currentPoint.buildings}
             activeBuildingId={currentPoint.activeBuildingId}
             manageHref={currentPoint.manageHref}

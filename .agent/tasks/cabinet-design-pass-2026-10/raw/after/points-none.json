@@ -1,0 +1,21 @@
+{
+  "case": "none",
+  "desktop": {
+    "kind": "add",
+    "caption": null,
+    "title": null,
+    "text": "Добавить точку",
+    "hint": "Откроются «Торговые точки»: добавьте адрес, где ведутся журналы",
+    "href": "/settings/buildings",
+    "company": "СБ\nСтоловая «Берёзка»\nДобавить логотип"
+  },
+  "mobile": {
+    "kind": "add",
+    "caption": null,
+    "title": null,
+    "text": "Добавить точку",
+    "hint": "Откроются «Торговые точки»: добавьте адрес, где ведутся журналы",
+    "href": "/settings/buildings",
+    "company": "СБСтоловая «Берёзка»Добавить логотип"
+  }
+}

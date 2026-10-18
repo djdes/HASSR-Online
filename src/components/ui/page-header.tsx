@@ -53,7 +53,10 @@ export function PageHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+        // max-w-full: действий больше, чем влезает в строку (сотрудники —
+        // восемь кнопок и пилюль), — они переносятся внутри ширины страницы,
+        // а не уезжают за правый край.
+        <div className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
           {actions}
         </div>
       ) : null}

@@ -1,0 +1,148 @@
+
+== headchef
+PASS  AC1 сайдбар: стрелка у staff,points,journals,checklists,productionControl,billing,inspection; без стрелки: more
+      «Производственный контроль»: строк ≈ 2
+      «Пришла проверка» на «Остальном» (возможно, под курсором): фон rgb(245, 246, 255), рамка 1px lab(48.4271 29.0377 -75.7175 / 0.4)
+      «Пришла проверка» открыта: фон lab(48.4271 29.0377 -75.7175 / 0.09), рамка 1px lab(48.4271 29.0377 -75.7175 / 0.25)
+PASS  AC1 mobile /dashboard main-menu: стрелки 7/8, без стрелки: more
+PASS  AC1 mobile /production-control main-menu: стрелки 7/8, без стрелки: more
+PASS  AC1 mini /dashboard main-menu: стрелки 7/8, без стрелки: more
+PASS  AC1 mini /production-control main-menu: стрелки 7/8, без стрелки: more
+PASS  AC1 /mini/sections: без стрелки — Остальное
+PASS  AC1 mobile drill staff: режим section/staff, адрес /more→/more, пунктов 8
+PASS  AC1 mini drill staff: режим section/staff, адрес →/production-control, пунктов 8
+PASS  AC2 desktop /dashboard: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /dashboard: h1=["Панель контроля"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /dashboard: за правым краем 0
+PASS  AC2 desktop /production-control: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /production-control: h1=["Электронная программа производственного контроля"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /production-control: за правым краем 0
+PASS  AC2 desktop /settings/users: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/users: h1=["Сотрудники"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /settings/users: за правым краем 0
+PASS  AC2 desktop /journals: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /journals: h1=["Панель контроля"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /journals: за правым краем 0
+PASS  AC2 desktop /inspection: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /inspection: h1=["К вам пришла проверка (или придёт)"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /inspection: за правым краем 0
+PASS  AC2 desktop main-menu: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC5 desktop main-menu: за правым краем 0
+PASS  AC2 desktop more-sidebar: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC5 desktop more-sidebar: за правым краем 0
+PASS  AC2 mobile /dashboard: центр шапки «Добавить точку» (add), слева «—»
+PASS  AC5 mobile /dashboard: горизонтальная прокрутка false
+PASS  AC2 mobile /production-control: центр шапки «Добавить точку» (add), слева «—»
+PASS  AC5 mobile /production-control: горизонтальная прокрутка false
+PASS  AC5 mini /dashboard: горизонтальная прокрутка false
+PASS  AC5 mini /production-control: горизонтальная прокрутка false
+      mini /dashboard menu-button: «Меню раздела Журналы»
+      mini /production-control menu-button: «Меню раздела Производственный контроль»
+
+== cook
+PASS  AC1 /mini/sections: без стрелки — —
+PASS  AC2 desktop /journals: центр шапки «—» (нет), слева «—»
+PASS  AC4 desktop /journals: h1=["Сегодня"] надстрочная=[] компания в main=null
+PASS  AC5 desktop /journals: за правым краем 0
+PASS  AC2 mobile /journals: центр шапки «—» (нет), слева «—»
+PASS  AC5 mobile /journals: горизонтальная прокрутка false
+PASS  AC5 mini /journals: горизонтальная прокрутка false
+
+== owner
+PASS  AC1 сайдбар: стрелка у company,staff,points,journals,checklists,productionControl,billing,inspection; без стрелки: more
+      «Производственный контроль»: строк ≈ 2
+      «Пришла проверка» на «Остальном» (возможно, под курсором): фон rgb(245, 246, 255), рамка 1px lab(48.4271 29.0377 -75.7175 / 0.4)
+      «Пришла проверка» открыта: фон lab(48.4271 29.0377 -75.7175 / 0.09), рамка 1px lab(48.4271 29.0377 -75.7175 / 0.25)
+PASS  AC1 mobile /dashboard main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mobile /production-control main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mobile /settings/users main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mobile /inspection main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mini /dashboard main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mini /production-control main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mini /settings/users main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 mini /inspection main-menu: стрелки 8/9, без стрелки: more
+PASS  AC1 /mini/sections: без стрелки — Остальное
+PASS  AC1 mobile drill staff: режим section/staff, адрес /more→/more, пунктов 10
+PASS  AC1 mini drill staff: режим section/staff, адрес →/production-control, пунктов 10
+PASS  AC2 desktop /dashboard: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /dashboard: h1=["Сегодня"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /dashboard: за правым краем 0
+PASS  AC2 desktop /production-control: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /production-control: h1=["Электронная программа производственного контроля"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /production-control: за правым краем 0
+PASS  AC2 desktop /settings/users: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/users: h1=["Сотрудники"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /settings/users: за правым краем 0
+PASS  AC2 desktop /settings/organization: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC5 desktop /settings/organization: за правым краем 0
+PASS  AC2 desktop /settings/buildings: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/buildings: h1=["Точки и помещения"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /settings/buildings: за правым краем 0
+PASS  AC2 desktop /journals: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /journals: h1=["Журналы"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /journals: за правым краем 0
+PASS  AC2 desktop /settings/sections/journals: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/sections/journals: h1=["Настройка журналов"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /settings/sections/journals: за правым краем 0
+PASS  AC2 desktop /checklists: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /checklists: h1=["Конструктор чек-листов"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /checklists: за правым краем 0
+PASS  AC2 desktop /settings/subscription: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/subscription: h1=["Улучшение тарифа"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /settings/subscription: за правым краем 0
+PASS  AC2 desktop /more: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /more: h1=["Остальное"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /more: за правым краем 0
+PASS  AC2 desktop /inspection: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /inspection: h1=["К вам пришла проверка (или придёт)"] надстрочная=[] компания в main=false
+PASS  AC5 desktop /inspection: за правым краем 0
+PASS  AC2 desktop main-menu: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC5 desktop main-menu: за правым краем 0
+PASS  AC2 desktop more-sidebar: центр шапки «Добавить точку» (add), слева «Столовая «Берёзка»»
+PASS  AC5 desktop more-sidebar: за правым краем 0
+PASS  AC2 mobile /dashboard: центр шапки «Добавить точку» (add), слева «—»
+PASS  AC5 mobile /dashboard: горизонтальная прокрутка false
+PASS  AC2 mobile /production-control: центр шапки «Добавить точку» (add), слева «—»
+PASS  AC5 mobile /production-control: горизонтальная прокрутка false
+PASS  AC2 mobile /settings/users: центр шапки «Добавить точку» (add), слева «—»
+PASS  AC5 mobile /settings/users: горизонтальная прокрутка false
+PASS  AC2 mobile /inspection: центр шапки «Добавить точку» (add), слева «—»
+PASS  AC5 mobile /inspection: горизонтальная прокрутка false
+PASS  AC5 mini /dashboard: горизонтальная прокрутка false
+PASS  AC5 mini /production-control: горизонтальная прокрутка false
+PASS  AC5 mini /settings/users: горизонтальная прокрутка false
+PASS  AC5 mini /inspection: горизонтальная прокрутка false
+      mini /dashboard menu-button: «Меню раздела Журналы»
+      mini /production-control menu-button: «Меню раздела Производственный контроль»
+      mini /settings/users menu-button: «Меню раздела Сотрудники»
+      mini /inspection menu-button: «Меню раздела Пришла проверка»
+
+== точки: none
+PASS  AC2 none/desktop: add « / Добавить точку» подсказка «Откроются «Торговые точки»: добавьте адрес, где ведутся журналы»
+PASS  AC2 none/mobile: add « / Добавить точку» подсказка «Откроются «Торговые точки»: добавьте адрес, где ведутся журналы»
+
+== точки: same
+PASS  AC2 same/desktop: single «ТОЧКА / ул. Ленина, 5» подсказка «ул. Ленина, 5»
+PASS  AC2 same/mobile: single «ТОЧКА / ул. Ленина, 5» подсказка «ул. Ленина, 5»
+
+== точки: two-shared
+PASS  AC2 two-shared/desktop: all «ТОЧКИ / Все: 2» подсказка «ул. Ленина, 5 · Цех на Мира»
+PASS  AC2 two-shared/mobile: all «ТОЧКИ / Все: 2» подсказка «ул. Ленина, 5 · Цех на Мира»
+
+== точки: two-split
+PASS  AC2 two-split/desktop: switch «ТОЧКА / ул. Ленина, 5» подсказка «ул. Ленина, 5» список ["ул. Ленина, 5","Цех на Мира"]
+PASS  AC2 two-split/mobile: switch «ТОЧКА / ул. Ленина, 5» подсказка «ул. Ленина, 5» список ["","ул. Ленина, 5","Цех на Мира"]
+
+== «Пришла проверка»: admin@haccp.local
+PASS  AC3 сайт, покой: фон rgb(255, 255, 255), рамка 1px rgb(220, 223, 237); у выбранного пункта фон lab(48.4271 29.0377 -75.7175 / 0.09)
+PASS  AC3 сайт, наведение: фон rgb(245, 246, 255), рамка 1px lab(48.4271 29.0377 -75.7175 / 0.4)
+PASS  AC3 сайт, раздел открыт: фон lab(48.4271 29.0377 -75.7175 / 0.09) (как у выбранного пункта)
+PASS  AC3 телефон, лист меню: фон rgb(255, 255, 255), рамка 1px rgb(220, 223, 237); у выбранного rgb(245, 246, 255)
+
+== «Пришла проверка»: chef@haccp.local
+PASS  AC3 сайт, покой: фон rgb(255, 255, 255), рамка 1px rgb(220, 223, 237); у выбранного пункта фон lab(48.4271 29.0377 -75.7175 / 0.09)
+PASS  AC3 сайт, наведение: фон rgb(245, 246, 255), рамка 1px lab(48.4271 29.0377 -75.7175 / 0.4)
+PASS  AC3 сайт, раздел открыт: фон lab(48.4271 29.0377 -75.7175 / 0.09) (как у выбранного пункта)
+PASS  AC3 телефон, лист меню: фон rgb(255, 255, 255), рамка 1px rgb(220, 223, 237); у выбранного rgb(245, 246, 255)
+
+Итого: все проверки PASS

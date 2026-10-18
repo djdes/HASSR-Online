@@ -10,6 +10,8 @@ export type MiniSectionItemView = {
   label: string;
   hint: string;
   icon: string;
+  /** У раздела своё меню — стрелка ›; «Остальное» (одна страница) — без неё. */
+  hasMenu?: boolean;
 };
 
 export type MiniSectionGroupView = {
@@ -157,11 +159,14 @@ export function MiniSectionsClient({
                   <span className="block truncate">{item.label}</span>
                   {item.hint ? <span className="mini-item-hint">{item.hint}</span> : null}
                 </span>
-                <ChevronRight
-                  className="size-5 shrink-0"
-                  style={{ color: "var(--mini-text-muted)" }}
-                  aria-hidden
-                />
+                {item.hasMenu ? (
+                  <ChevronRight
+                    className="size-5 shrink-0"
+                    style={{ color: "var(--mini-text-muted)" }}
+                    aria-hidden
+                    data-nav-chevron
+                  />
+                ) : null}
               </Link>
             );
           })}

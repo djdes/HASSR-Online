@@ -1,0 +1,19 @@
+{
+  "task": "cabinet-design-pass-2026-10",
+  "branch": "feat/sections-menu",
+  "base": "2b5b0bf6",
+  "verifiedAt": "2026-10-18",
+  "servers": { "before": "http://localhost:3053 (.next-sm prod build of 2b5b0bf6)", "after": "http://localhost:3153 (next dev, .next-dp)" },
+  "database": "wesetup_showcase @ localhost:5432",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": { "verdict": "PASS", "evidence": ["raw/after/summary.txt", "raw/after/metrics-owner.json", "raw/after/metrics-headchef-cook.json", "raw/after/*-main-menu.png", "raw/after/*-sheet-drill-staff.png", "raw/after/mini-owner-sections.png"] },
+    "AC2": { "verdict": "PASS", "evidence": ["src/lib/header-point.test.ts (10/10)", "raw/after/points-none.json", "raw/after/points-same.json", "raw/after/points-two-split.json", "raw/after/points-two-shared.json", "raw/after/points-*.png"] },
+    "AC3": { "verdict": "PASS", "evidence": ["raw/after/ac3-admin.json", "raw/after/ac3-chef.json", "raw/before/ac3-admin.json", "raw/after/ac3-*.png"] },
+    "AC4": { "verdict": "PASS", "evidence": ["raw/after/summary.txt (AC4 lines)", "raw/after/desktop-*-production-control.png", "raw/after/desktop-owner-settings_sections_journals.png"] },
+    "AC5": { "verdict": "PASS", "evidence": ["raw/after/summary.txt (AC5 lines)", "raw/after/desktop-owner-settings_users.png", "raw/after/desktop-owner-dashboard.png", "decisions.md"] },
+    "AC6": { "verdict": "PASS", "evidence": ["raw/tsc.txt", "raw/eslint.txt", "raw/tests-nav.txt (71/71)", "raw/i18n-check.txt (82/82)"] },
+    "AC7": { "verdict": "PASS", "evidence": ["raw/before/", "raw/after/", "C:\\Users\\Two\\wesetup-backup-2026-10-17\\design-pass-shots\\"] },
+    "AC8": { "verdict": "PASS", "evidence": ["src/lib/whats-new-notes.ts"] }
+  }
+}

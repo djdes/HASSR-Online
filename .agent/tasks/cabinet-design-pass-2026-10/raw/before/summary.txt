@@ -1,0 +1,118 @@
+
+== headchef
+FAIL  AC1 сайдбар: стрелка у inspection; без стрелки: staff,points,journals,checklists,productionControl,billing,more
+      «Производственный контроль»: строк ≈ 2
+      «Пришла проверка» на «Остальном» (возможно, под курсором): фон oklab(0.580558 0.0100577 -0.213552 / 0.09), рамка 0px oklch(0.922 0 0)
+      «Пришла проверка» открыта: фон oklab(0.580558 0.0100577 -0.213552 / 0.09), рамка 0px oklch(0.922 0 0)
+FAIL  AC1 mobile /dashboard main-menu: стрелки 0/8, без стрелки: staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mobile /production-control main-menu: стрелки 0/8, без стрелки: staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mini /dashboard main-menu: стрелки 0/8, без стрелки: staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mini /production-control main-menu: стрелки 0/8, без стрелки: staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 /mini/sections: без стрелки — —
+FAIL  AC2 desktop /dashboard: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /dashboard: h1=["Панель контроля"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /dashboard: за правым краем 0
+FAIL  AC2 desktop /production-control: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /production-control: h1=["Электронная программа производственного контроля"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /production-control: за правым краем 0
+FAIL  AC2 desktop /settings/users: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/users: h1=["Сотрудники"] надстрочная=null компания в main=undefined
+FAIL  AC5 desktop /settings/users: за правым краем 1 ["button:Инструкция right=1492"]
+FAIL  AC2 desktop /journals: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /journals: h1=["Панель контроля"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /journals: за правым краем 0
+FAIL  AC2 desktop /inspection: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /inspection: h1=["К вам пришла проверка (или придёт)"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /inspection: за правым краем 0
+FAIL  AC2 desktop main-menu: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC5 desktop main-menu: за правым краем 0
+PASS  AC2 mobile /dashboard: центр шапки «Столовая «Берёзка»» (true), слева «—»
+PASS  AC5 mobile /dashboard: горизонтальная прокрутка false
+PASS  AC2 mobile /production-control: центр шапки «Столовая «Берёзка»» (true), слева «—»
+PASS  AC5 mobile /production-control: горизонтальная прокрутка false
+PASS  AC5 mini /dashboard: горизонтальная прокрутка false
+PASS  AC5 mini /production-control: горизонтальная прокрутка false
+      mini /dashboard menu-button: «Журналы Сегодня»
+      mini /production-control menu-button: «Производственный контроль ППК»
+
+== cook
+PASS  AC1 /mini/sections: без стрелки — —
+PASS  AC2 desktop /journals: центр шапки «—» (нет), слева «—»
+PASS  AC4 desktop /journals: h1=["Сегодня"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /journals: за правым краем 0
+PASS  AC2 mobile /journals: центр шапки «—» (нет), слева «—»
+PASS  AC5 mobile /journals: горизонтальная прокрутка false
+PASS  AC5 mini /journals: горизонтальная прокрутка false
+
+== owner
+FAIL  AC1 сайдбар: стрелка у inspection; без стрелки: company,staff,points,journals,checklists,productionControl,billing,more
+      «Производственный контроль»: строк ≈ 2
+      «Пришла проверка» на «Остальном» (возможно, под курсором): фон oklab(0.580558 0.0100577 -0.213552 / 0.09), рамка 0px oklch(0.922 0 0)
+      «Пришла проверка» открыта: фон oklab(0.580558 0.0100577 -0.213552 / 0.09), рамка 0px oklch(0.922 0 0)
+FAIL  AC1 mobile /dashboard main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mobile /production-control main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mobile /settings/users main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mobile /inspection main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mini /dashboard main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mini /production-control main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mini /settings/users main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 mini /inspection main-menu: стрелки 0/9, без стрелки: company,staff,points,journals,checklists,productionControl,billing,more,inspection
+FAIL  AC1 /mini/sections: без стрелки — —
+FAIL  AC2 desktop /dashboard: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+FAIL  AC4 desktop /dashboard: h1=[] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /dashboard: за правым краем 0
+FAIL  AC2 desktop /production-control: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /production-control: h1=["Электронная программа производственного контроля"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /production-control: за правым краем 0
+FAIL  AC2 desktop /settings/users: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/users: h1=["Сотрудники"] надстрочная=null компания в main=undefined
+FAIL  AC5 desktop /settings/users: за правым краем 1 ["button:Инструкция right=1492"]
+FAIL  AC2 desktop /settings/organization: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC5 desktop /settings/organization: за правым краем 0
+FAIL  AC2 desktop /settings/buildings: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/buildings: h1=["Точки и помещения"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /settings/buildings: за правым краем 0
+FAIL  AC2 desktop /journals: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /journals: h1=["Журналы"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /journals: за правым краем 0
+FAIL  AC2 desktop /settings/sections/journals: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/sections/journals: h1=["Настройка журналов"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /settings/sections/journals: за правым краем 0
+FAIL  AC2 desktop /checklists: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /checklists: h1=["Конструктор чек-листов"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /checklists: за правым краем 0
+FAIL  AC2 desktop /settings/subscription: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /settings/subscription: h1=["Улучшение тарифа"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /settings/subscription: за правым краем 0
+FAIL  AC2 desktop /more: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /more: h1=["Остальное"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /more: за правым краем 0
+FAIL  AC2 desktop /inspection: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC4 desktop /inspection: h1=["К вам пришла проверка (или придёт)"] надстрочная=null компания в main=undefined
+PASS  AC5 desktop /inspection: за правым краем 0
+FAIL  AC2 desktop main-menu: центр шапки «Столовая «Берёзка»» (true), слева «Столовая «Берёзка»»
+PASS  AC5 desktop main-menu: за правым краем 0
+PASS  AC2 mobile /dashboard: центр шапки «Столовая «Берёзка»» (true), слева «—»
+PASS  AC5 mobile /dashboard: горизонтальная прокрутка false
+PASS  AC2 mobile /production-control: центр шапки «Столовая «Берёзка»» (true), слева «—»
+PASS  AC5 mobile /production-control: горизонтальная прокрутка false
+PASS  AC2 mobile /settings/users: центр шапки «Столовая «Берёзка»» (true), слева «—»
+PASS  AC5 mobile /settings/users: горизонтальная прокрутка false
+PASS  AC2 mobile /inspection: центр шапки «Столовая «Берёзка»» (true), слева «—»
+PASS  AC5 mobile /inspection: горизонтальная прокрутка false
+PASS  AC5 mini /dashboard: горизонтальная прокрутка false
+PASS  AC5 mini /production-control: горизонтальная прокрутка false
+PASS  AC5 mini /settings/users: горизонтальная прокрутка false
+PASS  AC5 mini /inspection: горизонтальная прокрутка false
+      mini /dashboard menu-button: «Журналы Сегодня»
+      mini /production-control menu-button: «Производственный контроль ППК»
+      mini /settings/users menu-button: «Сотрудники Сотрудники»
+      mini /inspection menu-button: «Пришла проверка Что делать сейчас»
+
+== «Пришла проверка»: admin@haccp.local
+FAIL  AC3 сайт, покой: фон rgb(245, 246, 255), рамка 0px oklch(0.922 0 0); у выбранного пункта фон oklab(0.580558 0.0100577 -0.213552 / 0.09)
+PASS  AC3 сайт, наведение: фон rgb(238, 241, 255), рамка 0px oklch(0.922 0 0)
+PASS  AC3 сайт, раздел открыт: фон oklab(0.580558 0.0100577 -0.213552 / 0.09) (как у выбранного пункта)
+FAIL  AC3 телефон, лист меню: фон rgba(0, 0, 0, 0), рамка 0px oklch(0.922 0 0); у выбранного rgb(245, 246, 255)
+
+Итого: FAIL 39

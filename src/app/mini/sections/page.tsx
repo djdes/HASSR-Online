@@ -45,6 +45,8 @@ export default async function MiniSectionsPage() {
             ? section.tabs.map((tab) => tab.label).join(" · ")
             : "",
         icon: section.icon,
+        // Стрелка › — только у раздела со своим меню (как в меню сайта).
+        hasMenu: Boolean(section.menu),
       })),
     });
   }
