@@ -13,8 +13,8 @@ color_transfer=bt709
 color_primaries=bt709
 r_frame_rate=30/1
 avg_frame_rate=30/1
-duration=88.700000
-bit_rate=1042520
+duration=82.900000
+bit_rate=1060008
 [/STREAM]
 [STREAM]
 index=1
@@ -25,14 +25,14 @@ sample_rate=48000
 channels=2
 r_frame_rate=0/0
 avg_frame_rate=0/0
-duration=88.725333
+duration=82.922667
 bit_rate=125375
 [/STREAM]
 [FORMAT]
 format_name=mov,mp4,m4a,3gp,3g2,mj2
-duration=88.725333
-size=13047177
-bit_rate=1176410
+duration=82.922667
+size=12375317
+bit_rate=1193914
 [/FORMAT]
 
 # одной строкой
@@ -40,12 +40,9 @@ codec_name=h264|profile=100|width=1920|height=1080|pix_fmt=yuv420p|color_range=t
 codec_name=aac|profile=1|sample_rate=48000|channels=2
 
 # размеры файлов (байт)
-public/landing/video/qr-tour-ru.mp4 13047177
-public/landing/video/qr-tour-ru.jpg 91595
-public/landing/video/qr-tour-ru.vtt 2291
+public/landing/video/qr-tour-ru.mp4 12375317
+public/landing/video/qr-tour-ru.jpg 91364
+public/landing/video/qr-tour-ru.vtt 2125
 
 # постер
 mjpeg,1920,1080
-
-# цвет: кадр 197 из MP4 (раскодирован по меткам bt709/tv) против снимка Chrome того же кадра
-mean |diff| RGB (0-255): [1.37, 1.48, 1.53]

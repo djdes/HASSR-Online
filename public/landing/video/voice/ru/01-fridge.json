@@ -3,131 +3,131 @@
   "text": "На дверце холодильника — QR-наклейка. Повар сканирует её телефоном, вводит PIN и температуру. Запись сразу встаёт в журнал, в графу сегодняшнего дня.",
   "say": "На дверце холодильника — кью-ар-наклейка. Повар сканирует её телефоном, вводит пин и температуру. Запись сразу встаёт в журнал, в графу сегодняшнего дня.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "ymDCYd8puC7gYjxIamPt",
+  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
   "settings": {
-    "stability": 0.55,
+    "stability": 0.6,
     "similarity_boost": 0.8,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
   "seed": 4242,
-  "fingerprint": "d2e8cd04075ca790",
+  "fingerprint": "f1c82a4fff9cc673",
   "characters": 153,
-  "audioSeconds": 13.845,
+  "audioSeconds": 12.983,
   "speechStart": 0,
-  "speechEnd": 13.793,
+  "speechEnd": 12.91,
   "words": [
     {
       "text": "На",
       "start": 0,
-      "end": 0.197
+      "end": 0.151
     },
     {
       "text": "дверце",
-      "start": 0.232,
-      "end": 0.615
+      "start": 0.209,
+      "end": 0.58
     },
     {
       "text": "холодильника",
-      "start": 0.685,
-      "end": 1.474
+      "start": 0.65,
+      "end": 1.428
     },
     {
       "text": "—",
-      "start": 1.602,
-      "end": 1.66
+      "start": 1.451,
+      "end": 1.498
     },
     {
       "text": "QR-наклейка.",
-      "start": 1.776,
-      "end": 3.262
+      "start": 1.521,
+      "end": 3.007
     },
     {
       "text": "Повар",
-      "start": 3.866,
-      "end": 4.226
+      "start": 3.448,
+      "end": 3.785
     },
     {
       "text": "сканирует",
-      "start": 4.272,
-      "end": 4.865
+      "start": 3.843,
+      "end": 4.435
     },
     {
       "text": "её",
-      "start": 4.981,
-      "end": 5.108
+      "start": 4.516,
+      "end": 4.667
     },
     {
       "text": "телефоном,",
-      "start": 5.178,
-      "end": 6.002
+      "start": 4.748,
+      "end": 5.573
     },
     {
       "text": "вводит",
-      "start": 6.211,
-      "end": 6.745
+      "start": 5.654,
+      "end": 6.118
     },
     {
       "text": "PIN",
-      "start": 6.815,
-      "end": 7.07
+      "start": 6.188,
+      "end": 6.42
     },
     {
       "text": "и",
-      "start": 7.163,
-      "end": 7.21
+      "start": 6.536,
+      "end": 6.594
     },
     {
       "text": "температуру.",
-      "start": 7.279,
-      "end": 8.278
+      "start": 6.664,
+      "end": 7.755
     },
     {
       "text": "Запись",
-      "start": 8.789,
-      "end": 9.369
+      "start": 8.266,
+      "end": 8.731
     },
     {
       "text": "сразу",
-      "start": 9.485,
-      "end": 9.961
+      "start": 8.754,
+      "end": 9.172
     },
     {
       "text": "встаёт",
-      "start": 9.985,
-      "end": 10.414
+      "start": 9.195,
+      "end": 9.648
     },
     {
       "text": "в",
-      "start": 10.461,
-      "end": 10.484
+      "start": 9.683,
+      "end": 9.706
     },
     {
       "text": "журнал,",
-      "start": 10.519,
-      "end": 11.238
+      "start": 9.764,
+      "end": 10.484
     },
     {
       "text": "в",
-      "start": 11.366,
-      "end": 11.401
+      "start": 10.6,
+      "end": 10.646
     },
     {
       "text": "графу",
-      "start": 11.482,
-      "end": 11.796
+      "start": 10.728,
+      "end": 11.064
     },
     {
       "text": "сегодняшнего",
-      "start": 11.854,
-      "end": 12.574
+      "start": 11.122,
+      "end": 11.912
     },
     {
       "text": "дня.",
-      "start": 12.597,
-      "end": 13.793
+      "start": 11.935,
+      "end": 12.91
     }
   ],
-  "voiceName": "Marina (warm)"
+  "voiceName": "Elena (Calm and Confident)"
 }

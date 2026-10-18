@@ -46,6 +46,29 @@ test("сценарий: вступление, шесть глав сцены, ф
     assert.doesNotMatch(segment.text, /₽|руб|тариф|цен[аы]|купи|попроб|бесплатн|оформ/i, segment.id);
     assert.equal(segment.say.split(/\s+/).length, segment.text.split(/\s+/).length, `${segment.id}: say и text — одно число слов`);
   }
+  // Глава «Забыли?» — коротко, без времени, каналов и «Срочно».
+  const forgot = narration.segments.find((segment) => segment.id === "forgot");
+  assert.equal(forgot?.text, "Не заполнили журнал — ответственный получит уведомление.");
+  assert.equal(forgot?.say, forgot?.text);
+});
+
+test("ударение «сетА́п» записано в say везде одинаково — заглавной «А»", () => {
+  let count = 0;
+  for (const segment of narration.segments) {
+    const shown = segment.text.split(/\s+/);
+    const said = segment.say.split(/\s+/);
+    shown.forEach((word, index) => {
+      if (!/сетап/i.test(word)) return;
+      count += 1;
+      const expected = word.replace("сетап", "сетАп").replace("Сетап", "СетАп");
+      assert.equal(said[index], expected, `${segment.id}: «${word}» в say → «${expected}»`);
+    });
+    // В субтитрах — обычное «сетап»; в say — ни знаков ударения U+0301, ни «сетап» без заглавной «А».
+    assert.doesNotMatch(segment.text, /сетАп|СетАп/, `${segment.id}: text без заглавной «А»`);
+    assert.doesNotMatch(segment.say, /́/, `${segment.id}: без знаков ударения`);
+    assert.doesNotMatch(segment.say, /[Сс]етап/, `${segment.id}: «сетап» без заглавной «А» в say`);
+  }
+  assert.equal(count, 2, "«сетап» — во вступлении и финале");
 });
 
 test("голос: весь сценарий озвучен одним голосом дословно, MP3 рядом", () => {
@@ -63,9 +86,9 @@ test("голос: весь сценарий озвучен одним голос
     const mp3 = path.join(ROOT, VOICE_DIR, `${segment.file}.mp3`);
     assert.ok(existsSync(mp3) && statSync(mp3).size > 10_000, `${segment.file}.mp3`);
   });
-  // Три пробы вступления: два женских голоса и один мужской.
+  // Пробы вступления: два женских голоса и один мужской (17.10) + выбранный 18.10 голос.
   const samples = readdirSync(path.join(ROOT, ".agent/tasks/landing-video-2026-10/voice-samples")).filter((file) => file.endsWith(".mp3"));
-  assert.equal(samples.length, 3);
+  assert.ok(samples.length >= 3, `${samples.length} проб`);
 });
 
 test("глава = max(сцена, голос + 0,5 с): голос не обрезан и не заходит на соседнюю главу", () => {
@@ -220,7 +243,7 @@ test("рендер: пакеты Remotion 4.0.528 только в devDependencie
   const tour = read("remotion/tour.tsx");
   assert.match(tour, /width: 1920, height: 1080, fps: FPS/);
   assert.match(tour, /<SceneFrame /, "главы — та же сцена, что на главной");
-  assert.match(tour, /OUTRO_TAGLINE = "ваш электронный ХАССП"/);
+  assert.match(tour, /OUTRO_TAGLINE = "Ваш электронный ХАССП"/);
   // Сокращение — только кириллицей «ХАССП»: в кадре, сценарии, субтитрах и подписях кнопки/окна.
   const ruPlayer = JSON.stringify((JSON.parse(read("src/i18n/messages/ru.json")) as { qrPlayer: unknown }).qrPlayer);
   const vtt = existsSync(path.join(ROOT, "public/landing/video/qr-tour-ru.vtt")) ? read("public/landing/video/qr-tour-ru.vtt") : "";

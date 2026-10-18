@@ -1,0 +1,15 @@
+{
+  "voiceName": "Elena (Calm and Confident)",
+  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "model": "eleven_multilingual_v2",
+  "settings": {
+    "stability": 0.6,
+    "similarity_boost": 0.8,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 11,
+  "say": "СетАп — электронные журналы по принципам Хассп. Смотрите, как это работает на кухне.",
+  "note": "Выбранный 18.10.2026 голос (проба вступления). Все пробы голосов и ударения, таблица и оценки — C:/Users/Two/wesetup-backup-2026-10-17/video/voices-2026-10-18/README.txt"
+}

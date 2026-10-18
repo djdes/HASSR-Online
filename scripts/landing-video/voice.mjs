@@ -2,7 +2,7 @@
 /**
  * Озвучка ролика «Как работает QR» через ElevenLabs.
  *
- *   node scripts/landing-video/voice.mjs --env D:/www/Wesetup.ru/.env --voice <voice_id>
+ *   node scripts/landing-video/voice.mjs --env D:/www/Wesetup.ru/.env --voice <voice_id> [--name "<имя голоса>"]
  *   node scripts/landing-video/voice.mjs --env … --samples <папка> --voices id1,id2,id3
  *
  * Сценарий — `remotion/narration.ru.json`: `text` идёт в субтитры, `say` — в
@@ -17,7 +17,14 @@
  * (сам Node до прокси на этой машине не достаёт), ключ и прокси уходят ему
  * конфигом через stdin, а не в командной строке; в вывод они не печатаются.
  * Уже озвученный кусок с тем же текстом, голосом и настройками повторно не
- * запрашивается — кредиты не тратятся (`--force` перезаписывает).
+ * запрашивается — кредиты не тратятся (`--force` перезаписывает). Переозвучить
+ * один кусок другим дублем — поле `seed` у сегмента в narration.ru.json.
+ *
+ * Ударение «сетА́п» — заглавной «А» в `say` («СетАп»): eleven_multilingual_v2
+ * знаки ударения U+0301 и SSML-фонемы не гарантирует, заглавную держит
+ * (пробы 18.10.2026). Голос с 18.10.2026 — Elena (Calm and Confident) из
+ * библиотеки ElevenLabs, `--name` подписывает его в JSON (библиотечный голос
+ * не обязан быть в аккаунте).
  */
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -65,8 +72,8 @@ if (!KEY) {
 }
 const narration = JSON.parse(readFileSync(path.join(ROOT, "remotion/narration.ru.json"), "utf8"));
 const MODEL = narration.model;
-/** Спокойная дикция: стабильность чуть выше середины, без «актёрского» стиля. */
-const SETTINGS = { stability: 0.55, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1 };
+/** Ровная деловая дикция: стабильность выше середины, без «актёрского» стиля. */
+const SETTINGS = { stability: 0.6, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1 };
 const SEED = 4242;
 
 const forConfig = (value) => String(value).replace(/\\/g, "/").replace(/"/g, '\\"');
@@ -179,8 +186,10 @@ function wordsFrom(segment, alignment) {
   }));
 }
 
+const seedOf = (segment) => segment.seed ?? SEED;
+
 function fingerprint(segment, voiceId) {
-  return createHash("sha256").update(JSON.stringify({ say: segment.say, voiceId, MODEL, SETTINGS, SEED })).digest("hex").slice(0, 16);
+  return createHash("sha256").update(JSON.stringify({ say: segment.say, voiceId, MODEL, SETTINGS, SEED: seedOf(segment) })).digest("hex").slice(0, 16);
 }
 
 async function synthesize(segment, voiceId, context = {}) {
@@ -188,7 +197,7 @@ async function synthesize(segment, voiceId, context = {}) {
     text: segment.say,
     model_id: MODEL,
     voice_settings: SETTINGS,
-    seed: SEED,
+    seed: seedOf(segment),
     ...(context.previous ? { previous_text: context.previous } : {}),
     ...(context.next ? { next_text: context.next } : {}),
   };
@@ -207,7 +216,7 @@ async function synthesize(segment, voiceId, context = {}) {
       model: MODEL,
       voiceId,
       settings: SETTINGS,
-      seed: SEED,
+      seed: seedOf(segment),
       fingerprint: fingerprint(segment, voiceId),
       characters: segment.say.length,
       audioSeconds: Number(mp3Seconds(audio).toFixed(3)),
@@ -224,6 +233,7 @@ async function usage() {
 }
 
 async function voiceName(voiceId) {
+  if (typeof opts.name === "string") return opts.name;
   try {
     const voice = await api(`/v1/voices/${voiceId}`);
     return voice.name;

@@ -80,7 +80,7 @@ const playing = (page) => page.locator("[data-qr-player]").getAttribute("data-pl
   const waited = ((Date.now() - startedAt) / 1000).toFixed(1);
   const media = await video.evaluate((node) => ({ time: node.currentTime, paused: node.paused, duration: node.duration, error: node.error?.code ?? null, w: node.videoWidth, h: node.videoHeight }));
   check(tag("видео пошло со звуком после нажатия"), media.time > 1 && !media.paused && media.error === null, `${JSON.stringify(media)}, ждали ${waited} с`);
-  check(tag("файл 1920×1080, ~89 с"), media.w === 1920 && media.h === 1080 && media.duration > 85 && media.duration < 92, `${media.w}×${media.h}, ${media.duration?.toFixed?.(2)} с`);
+  check(tag("файл 1920×1080, ~83 с"), media.w === 1920 && media.h === 1080 && media.duration > 78 && media.duration < 90, `${media.w}×${media.h}, ${media.duration?.toFixed?.(2)} с`);
   check(tag("видео загрузилось только после нажатия"), videoRequests.some((url) => url.endsWith(".mp4")), `${videoRequests.length} запросов`);
   check(tag("немой ролик на странице стоит под окном"), (await playing(page)) === "0");
   check(tag("страница не прокручивается под окном"), (await page.evaluate(() => document.documentElement.style.overflow)) === "hidden");
