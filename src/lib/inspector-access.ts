@@ -4,6 +4,7 @@ import { hashInspectorToken } from "@/lib/inspector-tokens";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { orgTodayKey } from "@/lib/timezone";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { trustedClientIp } from "@/lib/page-navigation-guard";
 import {
   documentOverlaps,
   inspectorWindow,
@@ -128,6 +129,14 @@ export async function bumpInspectorAccess(tokenId: string): Promise<void> {
  */
 export const inspectorViewLimiter = createRateLimiter({ tokensPerInterval: 300, intervalMs: 60_000 });
 export const inspectorPdfLimiter = createRateLimiter({ tokensPerInterval: 20, intervalMs: 60_000 });
+/** Запись в журнал посещений со сканами — тяжёлый запрос: 10 за 10 минут. */
+export const inspectorUploadLimiter = createRateLimiter({ tokensPerInterval: 10, intervalMs: 10 * 60_000 });
+/**
+ * Те же тяжёлые запросы с ключом по одному токену (без IP): смена адреса
+ * не даёт обойти лимит. Загрузки — 20 за 10 минут, сборка PDF ППК — 60 в минуту.
+ */
+export const inspectorTokenUploadLimiter = createRateLimiter({ tokensPerInterval: 20, intervalMs: 10 * 60_000 });
+export const inspectorTokenPdfLimiter = createRateLimiter({ tokensPerInterval: 60, intervalMs: 60_000 });
 
 export function inspectorLimitKey(tokenId: string, ip: string | null): string {
   return `${tokenId}:${ip ?? "-"}`;
@@ -153,9 +162,13 @@ export function readInspectorViewer(value: string | undefined | null): string | 
 
 type HeaderSource = { get(name: string): string | null };
 
+/**
+ * IP клиента так, как его выставил наш nginx (X-Real-IP, иначе последний
+ * элемент X-Forwarded-For). Первый элемент XFF присылает сам клиент — по
+ * нему лимиты обходились бы подменой заголовка.
+ */
 function ipFromHeaders(headers: HeaderSource): string | null {
-  const first = (value: string | null) => value?.split(",")[0]?.trim() || null;
-  return first(headers.get("x-forwarded-for")) ?? first(headers.get("x-real-ip"));
+  return trustedClientIp(headers);
 }
 
 export function inspectorClientIp(headers: HeaderSource): string | null {
@@ -170,7 +183,7 @@ export function inspectorClientIp(headers: HeaderSource): string | null {
 export async function logInspectorEvent(input: {
   access: InspectorAccess;
   headers: HeaderSource;
-  action: "inspector.view" | "inspector.download" | "inspector.introduce";
+  action: "inspector.view" | "inspector.download" | "inspector.introduce" | "inspector.visit";
   viewer: string | null;
   details: Record<string, unknown>;
 }): Promise<void> {

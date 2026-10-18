@@ -3,7 +3,18 @@ import { notFound } from "next/navigation";
 
 import { Desk, Sheet, StatusSheet, SERIF } from "@/components/inspector/paper";
 import { PeriodPicker, periodQuery } from "@/components/inspector/period-picker";
-import { ViewerNameForm } from "@/components/inspector/viewer-name-form";
+import {
+  PortalChecklists,
+  PortalMedBooks,
+  PortalNorms,
+  PortalProductionControl,
+  PortalVisitCallout,
+  PortalVisitJournal,
+} from "@/components/inspector/portal-sections";
+import { loadInspectionNorms } from "@/lib/inspection-norms.server";
+import { listInspectionVisits } from "@/lib/inspection-visits.server";
+import { inspectionVisitIdsFromHeaders } from "@/lib/inspection-visit-cookie";
+import { loadInspectorChecklistResults, loadInspectorMedBookCounts } from "@/lib/inspector-portal-extras.server";
 import { logInspectorEvent } from "@/lib/inspector-access";
 import { loadInspectorJournals } from "@/lib/inspector-journals";
 import { loadInspectorPage } from "@/lib/inspector-page";
@@ -43,7 +54,20 @@ export default async function InspectorLandingPage({
   }
   const { access, period, viewer } = ctx;
 
-  const groups = await loadInspectorJournals(access, period.from, period.to);
+  const orgId = access.token.organizationId;
+  const [groups, norms, checklists, medBooks, ownVisits] = await Promise.all([
+    loadInspectorJournals(access, period.from, period.to),
+    loadInspectionNorms(orgId),
+    loadInspectorChecklistResults(orgId, period.from, period.to),
+    loadInspectorMedBookCounts(orgId),
+    // Только записи, внесённые этим браузером: QR постоянный, его сканируют разные проверяющие.
+    listInspectionVisits(orgId, {
+      tokenId: access.token.id,
+      ids: inspectionVisitIdsFromHeaders(ctx.headers, access.token.id),
+      take: 20,
+    }),
+  ]);
+  const timeZone = access.org.timezone || "Europe/Moscow";
   await logInspectorEvent({
     access,
     headers: ctx.headers,
@@ -109,6 +133,8 @@ export default async function InspectorLandingPage({
           Журналы ведутся в электронном виде в системе WeSetup. Записи подписываются сотрудниками
           (личный PIN или вход), время фиксируется автоматически.
         </p>
+
+        <PortalVisitCallout last={ownVisits[0] ?? null} timeZone={timeZone} />
 
         <div className="mt-9 grid gap-6 border-t border-[#d5d8de] pt-6 md:grid-cols-[1fr_auto] md:items-start">
           <div>
@@ -177,10 +203,11 @@ export default async function InspectorLandingPage({
           ))}
         </section>
 
-        <section className="mt-10 border-t border-[#d5d8de] pt-6">
-          <h2 className={`${SERIF} mb-3 text-[17px]`}>Отметка о просмотре</h2>
-          <ViewerNameForm token={token} initialName={viewer} />
-        </section>
+        <PortalProductionControl token={token} norms={norms} />
+        <PortalNorms norms={norms} />
+        <PortalChecklists rows={checklists.rows} total={checklists.total} timeZone={timeZone} />
+        <PortalMedBooks counts={medBooks} />
+        <PortalVisitJournal token={token} visits={ownVisits} timeZone={timeZone} />
 
         <footer className="mt-10 flex flex-wrap justify-between gap-2 border-t border-[#141821] pt-2 text-[12px] text-[#8a8f9c]">
           <span>

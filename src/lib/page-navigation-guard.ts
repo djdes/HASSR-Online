@@ -17,15 +17,22 @@ function canonicalIp(value: string | null): string | null {
   return family === 6 ? new URL(`http://[${ip}]`).hostname : ip;
 }
 
+/**
+ * Client IP as set by our ingress. Requires an ingress that overwrites
+ * X-Real-IP and a non-public origin port. Never use the first XFF entry:
+ * clients may prepend it. Nginx appends its peer.
+ */
+export function trustedClientIp(headers: { get(name: string): string | null }): string | null {
+  return canonicalIp(headers.get("x-real-ip")) ??
+    canonicalIp(headers.get("x-forwarded-for")?.split(",").at(-1) ?? null);
+}
+
 /** Requires an ingress that overwrites X-Real-IP and a non-public origin port. */
 export function pageNavigationSubject(headers: Headers, verifiedUserId?: unknown): string {
   if (typeof verifiedUserId === "string" && verifiedUserId.length > 0 && verifiedUserId.length <= 256) {
     return `user:${verifiedUserId}`;
   }
-  // Never use the first XFF entry: clients may prepend it. Nginx appends its peer.
-  const ip = canonicalIp(headers.get("x-real-ip")) ??
-    canonicalIp(headers.get("x-forwarded-for")?.split(",").at(-1) ?? null);
-  return `ip:${ip ?? "unknown"}`;
+  return `ip:${trustedClientIp(headers) ?? "unknown"}`;
 }
 
 export function isLimitedPageRequest(req: NextRequest): boolean {

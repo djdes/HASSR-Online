@@ -3,9 +3,12 @@ import { PDFDocument } from "pdf-lib";
 import {
   ORDER_SCAN_ERRORS,
   ORDER_SCAN_MAX_BYTES,
+  orderScanImageSize,
+  orderScanImageWithinLimits,
   sniffOrderScanType,
   type OrderScanMime,
 } from "@/lib/journal-order-scans";
+import { checkPdfIsolated, type PdfCheckOptions } from "@/lib/pdf-isolated-check";
 
 /**
  * Серверная часть сканов приказов к журналу: проверка PDF/картинки при
@@ -17,25 +20,28 @@ import {
  * PDF открывается без пароля, а картинка встраивается в PDF (иначе печать
  * журнала потом молча потеряла бы приказ).
  */
-export async function validateOrderScanFile(input: {
-  bytes: Uint8Array;
-  fileName: string;
-  declaredMime: string;
-}): Promise<{ ok: true; mime: OrderScanMime; pages: number } | { ok: false; error: string }> {
+export async function validateOrderScanFile(
+  input: {
+    bytes: Uint8Array;
+    fileName: string;
+    declaredMime: string;
+  },
+  options: { pdfCheck?: PdfCheckOptions } = {}
+): Promise<{ ok: true; mime: OrderScanMime; pages: number } | { ok: false; error: string }> {
   if (input.bytes.length === 0) return { ok: false, error: ORDER_SCAN_ERRORS.empty };
   if (input.bytes.length > ORDER_SCAN_MAX_BYTES) return { ok: false, error: ORDER_SCAN_ERRORS.tooBig };
   const sniffed = sniffOrderScanType(input.bytes, input.fileName, input.declaredMime);
   if (!sniffed.ok) return sniffed;
   if (sniffed.mime === "application/pdf") {
-    try {
-      const pdf = await PDFDocument.load(input.bytes);
-      const pages = pdf.getPageCount();
-      if (pages === 0) return { ok: false, error: ORDER_SCAN_ERRORS.pdf };
-      return { ok: true, mime: sniffed.mime, pages };
-    } catch {
-      return { ok: false, error: ORDER_SCAN_ERRORS.pdf };
-    }
+    // Разбор PDF — в отдельном потоке с пределами памяти, распаковки и времени.
+    const checked = await checkPdfIsolated(input.bytes, options.pdfCheck);
+    if (checked.status === "ok") return { ok: true, mime: sniffed.mime, pages: checked.pages };
+    return { ok: false, error: checked.status === "unreadable" ? ORDER_SCAN_ERRORS.unreadable : ORDER_SCAN_ERRORS.pdf };
   }
+  // Размер картинки — из заголовка, до распаковки (защита от PNG-бомбы).
+  const size = orderScanImageSize(input.bytes, sniffed.mime);
+  if (!size) return { ok: false, error: ORDER_SCAN_ERRORS.image };
+  if (!orderScanImageWithinLimits(size)) return { ok: false, error: ORDER_SCAN_ERRORS.dimensions };
   try {
     const probe = await PDFDocument.create();
     if (sniffed.mime === "image/jpeg") await probe.embedJpg(input.bytes);

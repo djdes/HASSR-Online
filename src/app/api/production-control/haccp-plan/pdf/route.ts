@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { requireProductionDocsAccess } from "@/lib/production-control-docs.server";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
 import { buildHaccpPlanPdf } from "@/lib/ppk/pdf";
 
@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 /** PDF документа, собранного из разделов «Производственного контроля». */
 export async function GET() {
-  const auth = await requirePpkAccess();
+  // Смотреть — и заведующей с «проверкой задач»: «Пришла проверка» → «Нормативка».
+  const auth = await requireProductionDocsAccess();
   if (!auth.ok) return auth.response;
 
   const bundle = await loadPpkBundle(auth.organizationId);

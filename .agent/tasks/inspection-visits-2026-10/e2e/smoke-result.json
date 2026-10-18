@@ -1,0 +1,369 @@
+{
+  "at": "2026-10-17T22:52:42.022Z",
+  "base": "http://localhost:3043",
+  "failed": 0,
+  "checks": [
+    {
+      "id": "AC6a",
+      "name": "портал: напоминание внести запись о посещении",
+      "ok": true,
+      "detail": "todo"
+    },
+    {
+      "id": "AC6b",
+      "name": "портал: ППК/ХАССП-план — PDF и подписанный файл через токен-маршрут",
+      "ok": true,
+      "detail": [
+        "/api/inspector/<token:qr>/production-control/ppk",
+        "/api/inspector/<token:qr>/production-control/ppk?file=1",
+        "/api/inspector/<token:qr>/production-control/haccp-plan"
+      ]
+    },
+    {
+      "id": "AC6c",
+      "name": "портал: перечень нормативных документов",
+      "ok": true,
+      "detail": {
+        "norms": 10
+      }
+    },
+    {
+      "id": "AC6d",
+      "name": "портал: итоги чек-листов за период (2 завершённые, без черновика, балл и нарушения)",
+      "ok": true,
+      "detail": [
+        "17.10.2026\nСанитарный день\n100%, нарушений: 0",
+        "16.10.2026\nОбход кухни — утро\n90%, нарушений: 1"
+      ]
+    },
+    {
+      "id": "AC6e",
+      "name": "портал: медкнижки — действуют 2 / просрочены 1, ФИО сотрудников на странице нет",
+      "ok": true,
+      "detail": {
+        "medValid": "2",
+        "medExpired": "1",
+        "leakedNames": []
+      }
+    },
+    {
+      "id": "AC6b-api",
+      "name": "портал: собранный ППК, ХАССП-план и подписанный ППК отдаются по токену",
+      "ok": true,
+      "detail": {
+        "ppk": 200,
+        "file": 200,
+        "haccp": 200
+      }
+    },
+    {
+      "id": "AC6b-revoked",
+      "name": "ППК по отозванному токену — 410",
+      "ok": true,
+      "detail": 410
+    },
+    {
+      "id": "AC2-ui",
+      "name": "портал: запись внесена (201)",
+      "ok": true,
+      "detail": 201
+    },
+    {
+      "id": "AC6a-list",
+      "name": "портал: своя запись со ссылкой на скан",
+      "ok": true,
+      "detail": "/api/inspector/<token:qr>/visit-files/cmvczqelk0007o09mqu2k19g4"
+    },
+    {
+      "id": "AC3-token-own",
+      "name": "проверяющий открывает скан своей записи: 200, image/jpeg, private/no-store/nosniff",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "strict-transport-security": "max-age=31536000",
+          "permissions-policy": "camera=(), microphone=(self), geolocation=(self)",
+          "x-frame-options": "DENY",
+          "cache-control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          "pragma": "no-cache",
+          "expires": "0",
+          "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+          "content-disposition": "inline; filename*=UTF-8''%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BB%D0%B8%D1%81%D1%821.jpg",
+          "content-length": "16782",
+          "content-type": "image/jpeg",
+          "x-robots-tag": "noindex, nofollow",
+          "date": "Sat, 17 Oct 2026 22:51:17 GMT",
+          "connection": "keep-alive",
+          "keep-alive": "timeout=5"
+        }
+      }
+    },
+    {
+      "id": "SR4-no-cookie-file",
+      "name": "тот же QR без cookie этого браузера: скан — 404",
+      "ok": true,
+      "detail": 404
+    },
+    {
+      "id": "AC3-token-отозванный",
+      "name": "скан по токену (отозванный) — 404 без подсказки",
+      "ok": true,
+      "detail": 404
+    },
+    {
+      "id": "AC3-token-истёкший",
+      "name": "скан по токену (истёкший) — 404 без подсказки",
+      "ok": true,
+      "detail": 404
+    },
+    {
+      "id": "AC3-token-другой организации",
+      "name": "скан по токену (другой организации) — 404 без подсказки",
+      "ok": true,
+      "detail": 404
+    },
+    {
+      "id": "AC3-token-foreign-file",
+      "name": "проверяющий не открывает скан чужой организации — 404",
+      "ok": true,
+      "detail": 404
+    },
+    {
+      "id": "AC2-tokens",
+      "name": "запись: неизвестный 404, отозванный 410, истёкший 410",
+      "ok": true,
+      "detail": [
+        404,
+        410,
+        410
+      ]
+    },
+    {
+      "id": "AC2-heic",
+      "name": "запись: HEIC — 400 с понятной причиной",
+      "ok": true,
+      "detail": 400
+    },
+    {
+      "id": "SR1-png-bomb",
+      "name": "PNG 20000×20000: 400 «слишком большая картинка», сервер жив",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "error": "Слишком большая картинка по числу точек — сохраните скан в меньшем разрешении (до 40 мегапикселей)"
+      }
+    },
+    {
+      "id": "SR5-411",
+      "name": "запрос без Content-Length (chunked) — 411",
+      "ok": true,
+      "detail": 411
+    },
+    {
+      "id": "SR3-race",
+      "name": "12 одновременных записей по одному токену: создано ровно 10, остальные — 429",
+      "ok": true,
+      "detail": [
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        429,
+        201,
+        201,
+        429,
+        201
+      ]
+    },
+    {
+      "id": "AC9-portal-390",
+      "name": "портал 390px без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "id": "SR4-other-browser",
+      "name": "тот же QR в другом браузере: записи первого проверяющего не видны",
+      "ok": true,
+      "detail": {
+        "otherBrowserVisits": 0
+      }
+    },
+    {
+      "id": "AC7-guide",
+      "name": "«Что делать сейчас»: 5 шагов и советы",
+      "ok": true,
+      "detail": {
+        "guideSteps": 5,
+        "tips": 4
+      }
+    },
+    {
+      "id": "AC4-list",
+      "name": "журнал посещений: запись проверяющего (кто, орган, вид, основание, кем внесено, скан)",
+      "ok": true,
+      "detail": "Иванова Анна Петровна\nГлавный специалист-эксперт\nУправление Роспотребнадзора по Московской области·Внеплановая\n18 окт. 2026 г., 01:51\nОснование: № 12-р · 01.10.2026\nвнёс проверяющий по QR\nСкан 1\nПриложить скан\nСкрыть"
+    },
+    {
+      "id": "AC3-cabinet",
+      "name": "руководство открывает скан своей организации: 200, private/no-store/nosniff",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "id": "AC3-cabinet-foreign",
+      "name": "скан чужой организации из кабинета — 404",
+      "ok": true,
+      "detail": 404
+    },
+    {
+      "id": "AC4-attach",
+      "name": "приложить скан к записи — 201",
+      "ok": true,
+      "detail": 201
+    },
+    {
+      "id": "AC4-add",
+      "name": "руководство добавляет запись со сканом — 201",
+      "ok": true,
+      "detail": 201
+    },
+    {
+      "id": "AC4-add-row",
+      "name": "новая запись: «Иное: профилактический визит», внесено руководителем, скан",
+      "ok": true,
+      "detail": "Петров Сергей Николаевич\nВедущий специалист-эксперт\nТерриториальный отдел Роспотребнадзора·Иное: профилактический визит\n18 окт. 2026 г., 01:51\nОснование: № 77\nвнесено: Марина Соколова\nСкан 1\nПриложить скан\nСкрыть"
+    },
+    {
+      "id": "AC7-special",
+      "name": "«Спецрежим»: руководитель может переключить",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "id": "AC7-norms",
+      "name": "«Нормативка»: PDF ППК открывается",
+      "ok": true,
+      "detail": {
+        "href": "/api/production-control/program/pdf",
+        "status": 200
+      }
+    },
+    {
+      "id": "AC7-experts",
+      "name": "кнопки «Подготовка с экспертом» и «Выезд специалиста» ведут на заказ услуг",
+      "ok": true,
+      "detail": [
+        "/settings/services?order=pre-inspection-audit",
+        "/settings/services?order=site-visit"
+      ]
+    },
+    {
+      "id": "AC5-zip",
+      "name": "архив: «Журнал посещений.pdf» + 3 скана посещений периода, строка в ОТЧЁТ.txt",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "visitFiles": [
+          "Посещения проверяющих/Журнал посещений.pdf",
+          "Посещения проверяющих/01 2026-10-17 Территориальный отдел Роспотребнадзора/1 решение-77.pdf",
+          "Посещения проверяющих/02 2026-10-17 Управление Роспотребнадзора по Московской области/1 решение-лист1.jpg",
+          "Посещения проверяющих/02 2026-10-17 Управление Роспотребнадзора по Московской области/2 решение-лист2.pdf"
+        ],
+        "manifestLine": "Посещения проверяющих: записей 2, сканов оснований 3"
+      }
+    },
+    {
+      "id": "SR3-hide",
+      "name": "руководитель скрыл запись через диалог: из списка пропала, есть «Показать скрытые (1)»",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "toggleText": "Показать скрытые (1)"
+      }
+    },
+    {
+      "id": "SR3-zip-hidden",
+      "name": "скрытая запись не попадает в архив",
+      "ok": true,
+      "detail": "Посещения проверяющих: записей 1, сканов оснований 1"
+    },
+    {
+      "id": "SR3-portal-hidden",
+      "name": "скрытая запись пропала с портала и её скан — 404 даже своему браузеру",
+      "ok": true,
+      "detail": {
+        "portalAfterHide": 0,
+        "file": 404
+      }
+    },
+    {
+      "id": "SR3-show-hidden",
+      "name": "«Показать скрытые»: запись видна с причиной и тем, кто скрыл",
+      "ok": true,
+      "detail": "Скрыта как ошибочная: тестовая запись при проверке — Марина Соколова, 18 окт. 2026 г., 01:52\nИванова Анна Петровна\nГлавный специалист-эксперт\nУправление Роспотребнадзора по Московской области·Внеплановая\n18 окт. 2026 г., 01:51\nОснование: № 12-р · 01.10.2026\nвнёс проверяющий по QR\nСкан 1\nСкан 2\nВернуть"
+    },
+    {
+      "id": "SR3-restore",
+      "name": "«Вернуть»: запись снова в журнале",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "id": "AC7-requisites",
+      "name": "«Реквизиты»: ссылка на блок «Спецрежим»",
+      "ok": true,
+      "detail": "/inspection#special-mode"
+    },
+    {
+      "id": "AC9-cabinet-390",
+      "name": "/inspection 390px без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "sw": 390,
+        "cw": 390
+      }
+    },
+    {
+      "id": "AC7-head",
+      "name": "заведующая: спецрежим только статус, без услуг, PDF ХАССП-плана и скан открываются",
+      "ok": true,
+      "detail": {
+        "headSwitch": true,
+        "headExperts": 0,
+        "pdf": 200,
+        "file": 200
+      }
+    },
+    {
+      "id": "SR3-head",
+      "name": "заведующая не скрывает записи: кнопок нет, API — 403",
+      "ok": true,
+      "detail": {
+        "headHideButtons": 0,
+        "status": 403
+      }
+    },
+    {
+      "id": "AC4-cook",
+      "name": "повар: POST 403, скан 404, страница недоступна",
+      "ok": true,
+      "detail": {
+        "post": 403,
+        "file": 404,
+        "url": "http://localhost:3043/journals",
+        "page": 200
+      }
+    }
+  ]
+}
