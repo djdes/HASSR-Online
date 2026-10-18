@@ -93,8 +93,12 @@ export const INSPECTION_VISIT_HIDE_REASON_MAX = 300;
 export const inspectionVisitHideSchema = z
   .object({
     hidden: z.boolean(),
+    // `.nullish()`, а не union с `z.undefined()`: с zod 4.4 ключ с
+    // `z.undefined()` внутри union стал обязательным, и тело без `reason`
+    // («вернуть запись») отклонялось бы.
     reason: z
-      .union([z.string(), z.null(), z.undefined()])
+      .string()
+      .nullish()
       .transform((value) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : ""))
       .pipe(z.string().max(INSPECTION_VISIT_HIDE_REASON_MAX)),
   })
@@ -133,9 +137,11 @@ const text = (max: number) =>
     .transform((value) => value.replace(/\s+/g, " ").trim())
     .pipe(z.string().max(max));
 
+// Отсутствующее поле — то же, что пустое (см. `reason` выше про zod 4.4).
 const optionalText = (max: number) =>
   z
-    .union([z.string(), z.null(), z.undefined()])
+    .string()
+    .nullish()
     .transform((value) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : ""))
     .pipe(z.string().max(max))
     .transform((value) => (value.length > 0 ? value : null));

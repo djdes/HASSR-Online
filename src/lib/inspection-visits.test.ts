@@ -12,6 +12,7 @@ import {
   canUseInspectionVisits,
   inspectionVisitBasisRu,
   inspectionVisitFileAccessible,
+  inspectionVisitFieldsSchema,
   inspectionVisitFileName,
   inspectionVisitHideSchema,
   inspectionVisitKindLabelRu,
@@ -62,6 +63,21 @@ test("поля посещения: ФИО, должность, орган и в�
     assert.equal(noBasis.fields.basisNumber, null);
     assert.equal(noBasis.fields.basisDate, null);
   }
+});
+
+test("поля посещения: необязательных ключей может не быть совсем (JSON без kindNote и основания)", () => {
+  // С zod 4.4 ключ с `z.undefined()` внутри union стал обязательным —
+  // схема держит необязательные поля через `.nullish()`.
+  const parsed = inspectionVisitFieldsSchema.safeParse({
+    inspectorName: valid.inspectorName,
+    inspectorPosition: valid.inspectorPosition,
+    authority: valid.authority,
+    kind: "planned",
+  });
+  assert.ok(parsed.success, JSON.stringify(parsed.error?.issues));
+  assert.equal(parsed.data.kindNote, null);
+  assert.equal(parsed.data.basisNumber, null);
+  assert.equal(parsed.data.basisDate, null);
 });
 
 test("вид «иное» требует пояснения, у других видов пояснение отбрасывается", () => {
