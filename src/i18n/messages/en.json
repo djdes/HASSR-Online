@@ -4532,7 +4532,11 @@
       "network": "Cannot connect to the server. Please try again.",
       "invalidPin": "PIN must contain 4 to 6 digits",
       "roleAria": "Commission role: {name}",
-      "loadFailed": "Could not load commission members"
+      "loadFailed": "Could not load commission members",
+      "titlePerishable": "Perishable food inspection commission",
+      "descriptionPerishable": "Commission members sign each received item. An inspection record stays open until at least one member signs it, and the log cannot be closed.",
+      "newPersonHintPerishable": "The person will appear in the “Commission” column on the employees page, with access to the food inspection logs. They can sign records using this PIN and the journal QR code.",
+      "nextHintPerishable": "Next, the member scans the journal QR code, selects their name and enters their PIN to see today’s items. They assess and sign; the signature appears in the document — next to the record and in the “Inspection commission signatures” block below the table."
     },
     "orgDirectory": {
       "failed": "Could not load the directory",
@@ -7189,7 +7193,69 @@
       "preparingInvite": "Preparing invitation",
       "journalAccess": "Journal access",
       "cancel": "Cancel",
-      "save": "Save"
+      "save": "Save",
+      "presetTitle": "Permission set",
+      "presetHint": "What the employee sees and can do on the website and in Telegram. By default the set follows the position.",
+      "presetAuto": "By position (automatic)",
+      "presetAutoHint": "Currently: {preset}",
+      "presetGives": "What “{preset}” includes",
+      "presetCapabilitiesCount": "{count, plural, one {# permission} other {# permissions}}",
+      "presetCurrent": "current",
+      "presetSelfLocked": "You can't remove “Administrator” from yourself: you would lose access to settings. Ask another administrator.",
+      "presetReadOnly": "Only an administrator can change the permission set.",
+      "presetControlGroupNote": "The control group does not fill in journals: it reviews, confirms completed work and assigns tasks to people in its “Hierarchy”.",
+      "presetSaveFailed": "Couldn't save the permission set",
+      "presets": {
+        "admin": {
+          "label": "Administrator",
+          "description": "Full access: journals, staff, settings, reports and billing."
+        },
+        "head_chef": {
+          "label": "Head chef / Manager",
+          "description": "Sees staff and verifies completed tasks. Does not see journals as journals."
+        },
+        "control_group": {
+          "label": "Control group",
+          "description": "Sees journals, staff, reports and statistics, confirms completed work and assigns tasks. Does not fill anything in."
+        },
+        "cook": {
+          "label": "Cook",
+          "description": "Only their shift tasks in the app."
+        },
+        "waiter": {
+          "label": "Waiter",
+          "description": "Only their shift tasks in the app."
+        },
+        "seller": {
+          "label": "Seller",
+          "description": "Shift tasks and receiving deliveries."
+        },
+        "cashier": {
+          "label": "Cashier",
+          "description": "Shift tasks, receiving, write-offs and the cash desk."
+        },
+        "cleaner": {
+          "label": "Cleaner",
+          "description": "Only cleaning tasks in the app."
+        }
+      },
+      "capabilities": {
+        "journals_view": "Sees journals",
+        "journals_manage": "Creates and edits journals",
+        "staff_manage": "Manages staff",
+        "staff_view": "Sees staff",
+        "tasks_verify": "Confirms completed tasks",
+        "tasks_assign": "Assigns tasks to staff",
+        "reports_view": "Opens reports",
+        "admin_full": "All settings and billing",
+        "mini_tasks": "Completes shift tasks",
+        "mini_acceptance": "Receives deliveries",
+        "mini_writeoff": "Records write-offs",
+        "mini_cashier": "Works the cash desk",
+        "stats_view": "Sees statistics"
+      },
+      "presetChange": "Change",
+      "presetCollapse": "Collapse"
     },
     "bulkAdd": {
       "pasteNoRows": "No rows found. Each row needs a name and position.",
@@ -7336,7 +7402,13 @@
       },
       "notSet": "not set",
       "sortReset": "Reset sorting",
-      "sortBy": "Sort by “{label}”"
+      "sortBy": "Sort by “{label}”",
+      "staffingPill": "{occupied} of {planned} filled",
+      "staffingFull": "Fully staffed",
+      "staffingVacancies": "Short by {count, plural, one {# person} other {# people}}",
+      "staffingOver": "Over plan by {count, plural, one {# person} other {# people}}",
+      "phoneLabel": "Phone",
+      "emailLabel": "Email"
     },
     "dialogs": {
       "positionNameRequired": "Enter a name",
@@ -7408,7 +7480,10 @@
         "dishesHint": "Using the journal QR page, can view all dishes for today and correct their names and times. Usually a production manager.",
         "manageSettingsHint": "Opens a manager-level workspace with settings, journals, staff, QR posters, and equipment. Sign in with a personal QR code and PIN. The employee must sign in again after this permission changes.",
         "pinSaveFailed": "Could not save the PIN",
-        "addAccess": "Add access"
+        "addAccess": "Add access",
+        "emailPlaceholder": "Email · ivanova@mail.ru",
+        "emailHint": "Personal email for letters and reports. It is not a sign-in login. Leave empty to remove it.",
+        "emailInvalid": "Invalid email format. Example: ivanova@mail.ru"
       },
       "archive": {
         "title": "Archive {name}?",
@@ -7476,7 +7551,11 @@
         "rootCannotArchive": "A ROOT account cannot be archived",
         "cannotArchiveSelf": "You cannot archive yourself",
         "requestFailed": "Request failed (error {status, number})"
-      }
+      },
+      "headcountLabel": "Planned headcount",
+      "headcountPlaceholder": "Not set",
+      "headcountHint": "How many people this position needs according to the staffing plan. Leave empty if you don't track it.",
+      "headcountInvalid": "Headcount must be a whole number from 0 to 999"
     },
     "positionSuggestions": {
       "position_001": "Manager",
@@ -13270,7 +13349,25 @@
       "title": "Inspection commission signatures for records (retained from the previous log form)",
       "unnamedProduct": "Unnamed product",
       "unnamedPerson": "Unnamed person",
-      "arrival": "arrival {date}"
+      "arrival": "arrival {date}",
+      "commissionTitle": "Inspection commission signatures"
+    },
+    "commission": {
+      "title": "Commission",
+      "members": "Inspection commission: {names}",
+      "notSet": "No commission assigned — records close without its signature. Use the “Commission” button to assign members.",
+      "waiting": "Awaiting commission signature",
+      "signedBy": "Signed: {names}",
+      "statusLabel": "Commission signature",
+      "signedRows": "Records signed: {count, number}",
+      "signFailed": "Could not sign the records",
+      "network": "No connection to the server. Please try again.",
+      "todaySigned": "Today: {total, plural, one {# record} other {# records}}, all signed by the commission",
+      "todayWaiting": "Today: {total, plural, one {# record} other {# records}}, {waiting, plural, one {# is} other {# are}} awaiting commission signature",
+      "todayWaitingCanSign": "Today: {total, plural, one {# record} other {# records}}, {waiting, plural, one {# is} other {# are}} awaiting commission signature — select them and press “Sign”",
+      "blockTitle": "Cannot close the log: {count, plural, one {# record is} other {# records are}} awaiting a commission signature",
+      "blockDescription": "An inspection record is closed once at least one commission member has signed it. Members sign via the journal QR code (PIN) or on the website — select the records and press “Sign”.",
+      "more": "…and {count, number} more"
     }
   },
   "archiveExport": {

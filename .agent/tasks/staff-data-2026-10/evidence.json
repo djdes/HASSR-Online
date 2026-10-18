@@ -1,0 +1,49 @@
+{
+  "task_id": "staff-data-2026-10",
+  "branch": "feat/staff-data",
+  "verified_at": "2026-10-18",
+  "environment": {
+    "database": "postgresql://localhost:5432/wesetup_staff",
+    "dev_server": "http://localhost:3044 (next dev --webpack, SWC_NATIVE_BINDING_CACHE=C:\\swc-cache-two)"
+  },
+  "overall": "PASS",
+  "criteria": {
+    "AC1.1": { "status": "PASS", "evidence": "prisma/schema.prisma JobPosition.plannedHeadcount Int?; column present in wesetup_staff" },
+    "AC1.2": { "status": "PASS", "evidence": "src/lib/staffing.ts; src/lib/staffing.test.ts 6/6" },
+    "AC1.3": { "status": "PASS", "evidence": "e2e/staff-e2e.json [AC1.3] x4; raw/ac1-positions-api.json" },
+    "AC1.4": { "status": "PASS", "evidence": "e2e/staff-e2e.json [AC1.4] x8 (1000, \"3\", 1.5 -> 400; 0..999 and null -> 200)" },
+    "AC1.5": { "status": "PASS", "evidence": "e2e/staff-e2e.json [AC1.5] x5 (order saved; foreign/unknown 404; dup/empty 400; cook 403)" },
+    "AC1.6": { "status": "PASS", "evidence": "e2e [AC1.6] x4; raw/ac1-ac6-staff-page.png, raw/ac1-edit-position-dialog.png, raw/ac1-ac6-staff-page-mobile.png" },
+    "AC2.1": { "status": "PASS", "evidence": "e2e [AC2.1]: permissionPreset null, effectivePreset head_chef" },
+    "AC2.2": { "status": "PASS", "evidence": "e2e [AC2.2] x5; raw/ac2-access-dialog-preset.png" },
+    "AC2.3": { "status": "PASS", "evidence": "e2e [AC2.3] x3 (SELF_LOCKOUT 400, locked option); control-group-access.test.ts invalidateJournalAcl check; raw/ac2-access-dialog-self-locked.png" },
+    "AC2.4": { "status": "PASS", "evidence": "ru/en/uz staffManagement.access.*; i18n-types --check fresh; pre-commit test:gate fail=0" },
+    "AC3.1": { "status": "PASS", "evidence": "permission-presets.ts control_group + tasks.assign; shared ALL_PRESETS/ALL_CAPABILITIES (test)" },
+    "AC3.2": { "status": "PASS", "evidence": "decideJournalAcl tests; e2e [AC3.2] x3; raw/ac3-control-group-journals.png" },
+    "AC3.3": { "status": "PASS", "evidence": "decideTaskAssignment tests; e2e [AC3.3] x5" },
+    "AC3.4": { "status": "PASS", "evidence": "e2e [AC3.4] POST/DELETE 403; guard test" },
+    "AC3.5": { "status": "PASS", "evidence": "e2e [AC3.5]; raw/ac3-control-group-api.json" },
+    "AC3.6": { "status": "PASS", "evidence": "src/lib/control-group-access.test.ts 20/20" },
+    "AC4.1": { "status": "PASS", "evidence": "e2e/ac4-perishable-commission.json AC4.1; raw/ac4-02-commission-dialog.png" },
+    "AC4.2": { "status": "PASS", "evidence": "e2e AC4.2 x3; brakerage-commission.test.ts, brakerage-row-merge.test.ts; raw/ac4-01-legacy-copy-inactive.png" },
+    "AC4.3": { "status": "PASS", "evidence": "e2e AC4.3 x10; raw/ac4-03, ac4-04, ac4-08, ac4-09, ac4-10" },
+    "AC4.4": { "status": "PASS", "evidence": "e2e AC4.4 x7; raw/ac4-05, ac4-06, ac4-07" },
+    "AC4.5": { "status": "PASS", "evidence": "brakerage-commission.test.ts, brakerage-row-merge.test.ts, perishable-rejection-document.test.ts, brakerage-qr-post.test.ts, perishable-commission-ui.test.ts" },
+    "AC5.1": { "status": "PASS", "evidence": "src/lib/inspectors-auditors.test.ts 4/4; e2e [AC5.1] x2" },
+    "AC5.2": { "status": "PASS", "evidence": "e2e [AC5.2] x2 (200 without tokenHash; cook 403); raw/ac5-inspectors-auditors-api.json" },
+    "AC6.1": { "status": "PASS", "evidence": "e2e [AC6.1] x6; raw/ac6-edit-employee-email.png" },
+    "AC7.1": { "status": "PASS", "evidence": "tsc -p tsconfig.typecheck.json exit 0" },
+    "AC7.2": { "status": "PASS", "evidence": "eslint on changed files: 0 errors" },
+    "AC7.3": { "status": "PASS", "evidence": "pre-commit test:gate pass=4100 fail=0" },
+    "AC7.4": { "status": "PASS", "evidence": "e2e/staff-e2e.json 52/52, e2e/ac4-perishable-commission.json 21/21, raw/*.png" },
+    "AC7.5": { "status": "PASS", "evidence": "commits on feat/staff-data, Russian messages, not pushed" }
+  },
+  "commands": [
+    "npx tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json",
+    "npx eslint <changed files>",
+    "node --import tsx --test src/lib/staffing.test.ts src/lib/control-group-access.test.ts src/lib/inspectors-auditors.test.ts ...",
+    "node scripts/i18n-types.mjs --check",
+    "BASE=http://localhost:3044 npx tsx .agent/tasks/staff-data-2026-10/e2e/staff-e2e.ts",
+    "BASE=http://localhost:3044 npx tsx .agent/tasks/staff-data-2026-10/e2e/ac4-perishable-commission.ts"
+  ]
+}

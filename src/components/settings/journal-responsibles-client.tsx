@@ -2354,7 +2354,7 @@ export function JournalResponsiblesClient({
                                   </div>
                                 </div>
                               ) : null}
-                              {/* Сторонняя комиссия — только у бракеража готовой продукции. */}
+                              {/* Бракеражная комиссия — у готовой продукции и скоропорта. */}
                               {isCommissionJournalCode(j.code) ? (
                                 <CommissionSlotRow code={j.code} />
                               ) : null}

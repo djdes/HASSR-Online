@@ -1,7 +1,7 @@
 import type { BrakerageRowEdit } from "@/lib/brakerage-qr";
 import type { BrakerageQrRole } from "@/lib/brakerage-qr-role";
 import type { BrakerageSignEntry } from "@/lib/brakerage-signatures";
-import { brakerageCommentRequired, parseBrakerageTimeDigits } from "@/lib/brakerage-assessment";
+import { brakerageCommentRequiredFor, parseBrakerageTimeDigits } from "@/lib/brakerage-assessment";
 
 /**
  * Разбор формы QR-списка бракеража с правами по ролям (решение владельца):
@@ -41,6 +41,10 @@ export function parseBrakerageListPost(
   const editsByDoc = new Map<string, BrakerageRowEdit[]>();
   const signsByDoc = new Map<string, BrakerageSignEntry[]>();
   const validGrade = (value: string | undefined) => (value && options.gradeValues.includes(value) ? value : null);
+  // Скоропорт: комментарий нужен только к позиции, не допущенной к реализации.
+  const commentRequired = (grade: string) => brakerageCommentRequiredFor(options.isFinished, grade);
+  const commentError = (name: string) =>
+    options.isFinished ? `Добавьте комментарий к оценке блюда «${name}»` : `Добавьте комментарий к оценке позиции «${name}»`;
 
   for (const row of rows) {
     const id = row.rowId;
@@ -57,7 +61,7 @@ export function parseBrakerageListPost(
       const note = get(`note:${id}`);
       if (note !== undefined && note.trim().slice(0, 500) !== (row.note ?? "")) {
         edit.note = note.trim().slice(0, 500);
-        if (brakerageCommentRequired(grade || row.grade) && !edit.note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: `Добавьте комментарий к оценке блюда «${row.name}»` };
+        if (commentRequired(grade || row.grade) && !edit.note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: commentError(row.name) };
       }
       const name = (get(`name:${id}`) ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
       if (name && name !== row.name) edit.name = name;
@@ -70,7 +74,7 @@ export function parseBrakerageListPost(
       // Оценка редактора — правкой; если он же подписывает — оценка уйдёт с подписью.
       if (grade && grade !== row.grade && !signs) {
         const note = (get(`note:${id}`) ?? "").trim().slice(0, 500);
-        if (brakerageCommentRequired(grade) && !note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: `Добавьте комментарий к оценке блюда «${row.name}»` };
+        if (commentRequired(grade) && !note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: commentError(row.name) };
         edit.grade = grade;
         edit.note = note;
       }
@@ -81,7 +85,7 @@ export function parseBrakerageListPost(
       const entry: BrakerageSignEntry = { rowId: id };
       if (grade) entry.grade = grade;
       const note = (get(`note:${id}`) ?? "").trim().slice(0, 500);
-      if (grade && brakerageCommentRequired(grade) && !note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: `Добавьте комментарий к оценке блюда «${row.name}»` };
+      if (grade && commentRequired(grade) && !note) return { editsByDoc: new Map(), signsByDoc: new Map(), error: commentError(row.name) };
       entry.note = note;
       const rejection = cleanTime(get(`rej:${id}`));
       if (rejection && rejection !== row.rejectionTime) entry.rejectionTime = get(`rej:${id}`);

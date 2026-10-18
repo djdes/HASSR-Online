@@ -117,7 +117,11 @@ export function renderBrakerageList(params: {
   if (list.rows.length === 0) {
     return `${BK_LIST_CSS}${params.who}${params.tabs}${viewerNotice(role)}${renderMessage(
       "muted",
-      role.evaluator ? "Все добавленные блюда оценены комиссией. Новые блюда появятся здесь после внесения в журнал." : `За сегодня ${noun} пока нет. Их добавляет сотрудник, который ведёт журнал.`,
+      role.evaluator
+        ? params.isFinished
+          ? "Все добавленные блюда оценены комиссией. Новые блюда появятся здесь после внесения в журнал."
+          : "Все поступившие позиции оценены комиссией. Новые появятся здесь после внесения в журнал."
+        : `За сегодня ${noun} пока нет. Их добавляет сотрудник, который ведёт журнал.`,
       !role.evaluator && !role.viewer ? `<div class="sticky"><a class="btn" href="${esc(params.addHref)}">Добавить</a></div>` : ""
     )}`;
   }
@@ -145,7 +149,9 @@ export function renderBrakerageList(params: {
             ? valueField("Время бракеража", row.rejectionTime)
             : "";
       const admission = canGrade
-        ? field("Комментарий (обязателен при любой оценке, кроме «Отлично»)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к блюду ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
+        ? params.isFinished
+          ? field("Комментарий (обязателен при любой оценке, кроме «Отлично»)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к блюду ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
+          : field("Комментарий (обязателен, если позиция не соответствует)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к позиции ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
         : "";
       const del = role.editor ? `<a class="bk-del" href="${esc(params.deleteHref(id))}">Удалить строку</a>` : "";
       return `<div class="obj bk">${head}${title}<div class="bk-g2">${production}${params.isFinished ? output : ""}</div>${grade}${rejection}${admission}${del}</div>`;
@@ -155,15 +161,24 @@ export function renderBrakerageList(params: {
   const waiting = list.rows.filter((row) => row.signatures.length === 0).length;
   const readOnly = !role.evaluator && !role.editor;
   const lead = role.evaluator
-    ? `<p class="today">Блюд в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать». Разрешение к реализации определяется оценками автоматически. При любой оценке, кроме «Отлично», добавьте комментарий. Оценку и время бракеража можно поправить; в журнале она встанет на минуту позже времени бракеража.</p>`
+    ? params.isFinished
+      ? `<p class="today">Блюд в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать». Разрешение к реализации определяется оценками автоматически. При любой оценке, кроме «Отлично», добавьте комментарий. Оценку и время бракеража можно поправить; в журнале она встанет на минуту позже времени бракеража.</p>`
+      : `<p class="today">Позиций в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать» — подпись появится в журнале. Если позиция не соответствует, добавьте комментарий.</p>`
     : readOnly
-      ? `${viewerNotice(role)}<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Блюда за сегодня — только просмотр.</p>`
-      : `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`;
+      ? `${viewerNotice(role)}<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}${params.isFinished ? "Блюда" : "Позиции"} за сегодня — только просмотр.</p>`
+      : params.isFinished
+        ? `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`
+        : `<p class="today">Проверьте наименование, оценку и время поступления — исправьте, если нужно. Подписывает комиссия.</p>`;
+  // Когда комментарий обязателен: готовая продукция — кроме «Отлично»,
+  // скоропорт — только у не допущенной позиции (см. brakerageCommentRequiredFor).
+  const noteRule = params.isFinished
+    ? `grade.value.trim().toLocaleLowerCase('ru')!=="отлично"`
+    : `(grade.value==="non_compliant"||grade.value==="poor_quality")`;
   const buttons = role.evaluator
     ? `<button class="btn" type="submit" name="action" value="save" data-sign-btn>${role.editor ? "Сохранить и подписать" : "Подписать"}</button>`
     : `<button class="btn" type="submit" name="action" value="save">Сохранить изменения</button>`;
   const script = role.evaluator
-    ? `<script>(function(){var f=document.getElementById("bk-form");if(!f)return;var b=f.querySelector("[data-sign-btn]");var base=b.textContent;function u(){var chosen=f.querySelectorAll('input[name^="grade:"]:checked');b.textContent=chosen.length?base+" · "+chosen.length:base;var notes=f.querySelectorAll('textarea[name^="note:"]');for(var i=0;i<notes.length;i++){var id=notes[i].name.slice(5);var grade=f.querySelector('input[name="grade:'+CSS.escape(id)+'"]:checked');notes[i].required=!!grade&&grade.value.trim().toLocaleLowerCase('ru')!=="отлично";}}f.addEventListener("change",function(e){var t=e.target;if(t&&t.type==="radio"){var g=f.querySelectorAll('input[name="'+CSS.escape(t.name)+'"]');for(var i=0;i<g.length;i++)g[i].parentNode.classList.toggle("on",g[i].checked);}u();});u();})();</script>`
+    ? `<script>(function(){var f=document.getElementById("bk-form");if(!f)return;var b=f.querySelector("[data-sign-btn]");var base=b.textContent;function u(){var chosen=f.querySelectorAll('input[name^="grade:"]:checked');b.textContent=chosen.length?base+" · "+chosen.length:base;var notes=f.querySelectorAll('textarea[name^="note:"]');for(var i=0;i<notes.length;i++){var id=notes[i].name.slice(5);var grade=f.querySelector('input[name="grade:'+CSS.escape(id)+'"]:checked');notes[i].required=!!grade&&${noteRule};}}f.addEventListener("change",function(e){var t=e.target;if(t&&t.type==="radio"){var g=f.querySelectorAll('input[name="'+CSS.escape(t.name)+'"]');for(var i=0;i<g.length;i++)g[i].parentNode.classList.toggle("on",g[i].checked);}u();});u();})();</script>`
     : "";
   if (readOnly) {
     // Без формы: ни оценки, ни подписи — только карточки.
@@ -190,7 +205,10 @@ export function renderBrakerageDeleteConfirm(params: { action: string; rowId: st
 }
 
 /** Режим «через вход» без сессии: войти в кабинет или — члену комиссии — по PIN. */
-export function renderCommissionGate(params: { loginHref: string; pinHref: string }): string {
-  return `<div class="card"><p class="label">Как войти</p><p class="muted">Записи в этом журнале делаются из кабинета. Член сторонней бракеражной комиссии может подписать блюда по своему PIN.</p>
+export function renderCommissionGate(params: { loginHref: string; pinHref: string; isFinished?: boolean }): string {
+  const who = params.isFinished === false
+    ? "Член бракеражной комиссии может подписать поступившие позиции по своему PIN."
+    : "Член сторонней бракеражной комиссии может подписать блюда по своему PIN.";
+  return `<div class="card"><p class="label">Как войти</p><p class="muted">Записи в этом журнале делаются из кабинета. ${who}</p>
 <div class="sticky"><a class="btn" href="${esc(params.loginHref)}">Войти в кабинет</a><a class="btn second" href="${esc(params.pinHref)}">Я член комиссии — войти по PIN</a></div></div>`;
 }

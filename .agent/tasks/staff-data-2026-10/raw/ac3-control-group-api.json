@@ -1,0 +1,198 @@
+{
+  "members": [
+    {
+      "id": "cmvbfyfme000luw9m0yckmtoe",
+      "name": "Громова Алина Павловна",
+      "position": "Менеджер зала",
+      "role": "manager",
+      "scopeId": "cmvcyvmpo002ywc9mo30ee16u",
+      "scope": {
+        "configured": true,
+        "viewMode": "job_positions",
+        "viewJobPositions": [
+          {
+            "id": "cmvbh5x6v0003u89m76q3wkqm",
+            "name": "Повар горячего цеха"
+          }
+        ],
+        "viewUsers": [],
+        "assignableJournals": [
+          {
+            "code": "hygiene",
+            "name": "Гигиенический журнал (сотрудники)"
+          }
+        ],
+        "sees": "Видит должности: Повар горячего цеха",
+        "assigns": "Назначает задачи: Гигиенический журнал (сотрудники)"
+      }
+    },
+    {
+      "id": "cmvbfyfn2000muw9mta6zwuh9",
+      "name": "Ермакова Нина Сергеевна",
+      "position": "Специалист по санитарной обработке",
+      "role": "operator",
+      "scopeId": null,
+      "scope": {
+        "configured": false,
+        "viewMode": "all",
+        "viewJobPositions": [],
+        "viewUsers": [],
+        "assignableJournals": [],
+        "sees": "Видит всех (иерархия не настроена)",
+        "assigns": "Назначает задачи по всем журналам"
+      }
+    },
+    {
+      "id": "cmvbfyfjv000iuw9m9o4bx1qk",
+      "name": "Лебедева Марина Олеговна",
+      "position": "Технолог",
+      "role": "technologist",
+      "scopeId": null,
+      "scope": {
+        "configured": false,
+        "viewMode": "all",
+        "viewJobPositions": [],
+        "viewUsers": [],
+        "assignableJournals": [],
+        "sees": "Видит всех (иерархия не настроена)",
+        "assigns": "Назначает задачи по всем журналам"
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "id": "cmvbfyfj5000huw9mxwrgxpay",
+      "name": "Белова Елена Андреевна",
+      "position": "Товаровед",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyf7t0004uw9ml20urf7g",
+      "name": "Волкова Анна Дмитриевна",
+      "position": "Повар горячего цеха",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyflj000kuw9mz0oglbqy",
+      "name": "Грачев Виктор Ильич",
+      "position": "Грузчик 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfdx000buw9mb3u2rj7p",
+      "name": "Демин Кирилл Олегович",
+      "position": "Официант 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "waiter"
+    },
+    {
+      "id": "cmvbfyfes000cuw9m1272xpeo",
+      "name": "Егорова Нина Викторовна",
+      "position": "Посудомойщик",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfkp000juw9mczanjd6d",
+      "name": "Ефимов Роман Алексеевич",
+      "position": "Грузчик",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyf740003uw9m5j1ysvr0",
+      "name": "Кузнецов Павел Игоревич",
+      "position": "Су-шеф",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfia000guw9m3rng69nl",
+      "name": "Кузьмин Артем Сергеевич",
+      "position": "Кладовщик",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfce0009uw9m13op875s",
+      "name": "Ларионова Елена Сергеевна",
+      "position": "Повар-кондитер 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfhm000fuw9myxve4a7x",
+      "name": "Леонов Максим Валерьевич",
+      "position": "Уборщик 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfb40008uw9mqf3qpbi9",
+      "name": "Мельникова Софья Романовна",
+      "position": "Повар-кондитер",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyf5f0002uw9mc67qi5cb",
+      "name": "Морозов Илья Андреевич",
+      "position": "Шеф-повар",
+      "permissionPreset": null,
+      "effectivePreset": "head_chef"
+    },
+    {
+      "id": "cmvbfyf9p0006uw9mcuucnq4u",
+      "name": "Орлов Илья Максимович",
+      "position": "Повар холодного цеха",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfgh000euw9mym3feulx",
+      "name": "Савельева Ирина Павловна",
+      "position": "Уборщик",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfd4000auw9mj0ix39gu",
+      "name": "Смирнова Марина Михайловна",
+      "position": "Официант",
+      "permissionPreset": null,
+      "effectivePreset": "waiter"
+    },
+    {
+      "id": "cmvbfyf8z0005uw9mu5fhnihk",
+      "name": "Соколов Андрей Викторович",
+      "position": "Повар горячего цеха 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfnt000nuw9mh6ldc3pu",
+      "name": "Титов Максим Андреевич",
+      "position": "Инженер по оборудованию",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfff000duw9m1egruddy",
+      "name": "Тихонов Артем Сергеевич",
+      "position": "Посудомойщик 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    },
+    {
+      "id": "cmvbfyfai0007uw9m7tt18901",
+      "name": "Федорова Мария Романовна",
+      "position": "Повар холодного цеха 2 смена",
+      "permissionPreset": null,
+      "effectivePreset": "cook"
+    }
+  ],
+  "canManage": true
+}

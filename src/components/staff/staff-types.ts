@@ -8,12 +8,16 @@ export type StaffPosition = {
   categoryKey: PositionCategory;
   name: string;
   sortOrder: number;
+  /** Штатная численность; null — не задана (см. src/lib/staffing.ts). */
+  plannedHeadcount?: number | null;
 };
 
 export type StaffEmployee = {
   id: string;
   name: string;
   email: string;
+  /** Личная почта (не логин), см. User.contactEmail. */
+  contactEmail?: string | null;
   phone: string | null;
   jobPositionId: string | null;
   positionTitle: string | null;

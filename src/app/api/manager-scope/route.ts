@@ -4,8 +4,22 @@ import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isControlGroupMember } from "@/lib/permission-presets";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Контроль-группа «Иерархию» не меняет: иначе выдала бы себе viewMode="all"
+ * и расширила видимость, а с ней — кому назначает задачи.
+ */
+function controlGroupForbidden(user: { permissionPreset?: string | null; isRoot?: boolean | null }) {
+  return isControlGroupMember(user)
+    ? NextResponse.json(
+        { error: "Контроль-группа не меняет иерархию — её настраивает руководитель" },
+        { status: 403 }
+      )
+    : null;
+}
 
 const VALID_VIEW_MODES = new Set([
   "all",
@@ -60,6 +74,8 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+  const controlGroup = controlGroupForbidden(session.user);
+  if (controlGroup) return controlGroup;
 
   const orgId = getActiveOrgId(session);
   const body = (await req.json().catch(() => ({}))) as {
@@ -163,6 +179,8 @@ export async function DELETE(req: NextRequest) {
   ) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+  const controlGroup = controlGroupForbidden(session.user);
+  if (controlGroup) return controlGroup;
 
   const orgId = getActiveOrgId(session);
   const { searchParams } = new URL(req.url);

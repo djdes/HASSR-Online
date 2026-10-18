@@ -20,6 +20,13 @@ import {
   type JournalOption,
 } from "@/components/staff/journal-multi-select";
 import { cn } from "@/lib/utils";
+import type { PermissionPreset } from "@/lib/permission-presets";
+import {
+  AUTO_PRESET,
+  StaffPresetPicker,
+  type PresetChoice,
+  type PresetOption,
+} from "@/components/staff/staff-preset-picker";
 
 /**
  * Окно выдачи доступа сотруднику.
@@ -35,6 +42,13 @@ import { cn } from "@/lib/utils";
 type AccessPayload = {
   loginPrefix: string;
   positionPresetCodes: string[];
+  /** Явный набор прав; null — «по должности (автоматически)». */
+  permissionPreset: PermissionPreset | null;
+  effectivePreset: PermissionPreset;
+  defaultPreset: PermissionPreset;
+  presets: PresetOption[];
+  canChangePreset: boolean;
+  isSelf: boolean;
   user: {
     id: string;
     name: string | null;
@@ -81,6 +95,7 @@ export function StaffAccessDialog({
   } | null>(null);
 
   const [codes, setCodes] = useState<string[]>([]);
+  const [preset, setPreset] = useState<PresetChoice>(AUTO_PRESET);
 
   const load = useCallback(async () => {
     const response = await fetch(`/api/users/${userId}/access`).catch(() => null);
@@ -90,6 +105,7 @@ export function StaffAccessDialog({
     }
     const payload: AccessPayload = await response.json();
     setData(payload);
+    setPreset(payload.permissionPreset ?? AUTO_PRESET);
     setContactEmail(payload.user.contactEmail ?? "");
     setBrowserOn(payload.user.hasBrowserAccess);
     setTelegramOn(payload.user.hasTelegramAccess);
@@ -142,6 +158,21 @@ export function StaffAccessDialog({
         browserOn && (loginSuffix.trim().length > 0 || password.length > 0);
       const contactChanged =
         contactEmail.trim() !== (data.user.contactEmail ?? "");
+
+      // Набор прав — отдельным запросом и только при изменении: сервер
+      // не даст снять «Администратора» с себя и сбросит кэш ACL журналов.
+      const savedPreset: PresetChoice = data.permissionPreset ?? AUTO_PRESET;
+      if (data.canChangePreset && preset !== savedPreset) {
+        const response = await fetch(`/api/staff/${userId}/preset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preset: preset === AUTO_PRESET ? null : preset }),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(payload?.code === "SELF_LOCKOUT" ? t("presetSelfLocked") : t("presetSaveFailed"));
+        }
+      }
 
       if (wantsCredentials || contactChanged) {
         const response = await fetch(`/api/staff/${userId}/credentials`, {
@@ -374,6 +405,16 @@ export function StaffAccessDialog({
                 </div>
               ) : null}
             </div>
+
+            <StaffPresetPicker
+              presets={data.presets}
+              value={preset}
+              saved={data.permissionPreset ?? AUTO_PRESET}
+              defaultPreset={data.defaultPreset}
+              onChange={setPreset}
+              readOnly={!data.canChangePreset}
+              isSelf={data.isSelf}
+            />
 
             <div className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">

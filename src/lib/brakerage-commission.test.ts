@@ -15,6 +15,9 @@ import {
   shortPersonName,
   commissionRowStatus,
   isCommissionJournalCode,
+  isCommissionActive,
+  effectiveCommissionMembers,
+  commissionConfigView,
 } from "./brakerage-commission";
 
 test("состав комиссии: без имени отбрасываем, повтор сотрудника — тоже, не больше 10", () => {
@@ -107,13 +110,52 @@ test("подпись устарела, если строку поменяли п
 });
 
 /**
- * Сторонняя бракеражная комиссия — только у бракеража готовой продукции.
- * Бракераж скоропорта — внутренняя история: комиссии и подписей там нет.
+ * Бракеражная комиссия — у готовой продукции и (с 2026-10) снова у
+ * скоропорта. Остальные журналы без комиссии.
  */
-test("комиссия только у бракеража готовой продукции", () => {
+test("комиссия у бракеража готовой продукции и скоропорта", () => {
   assert.equal(isCommissionJournalCode("finished_product"), true);
-  assert.equal(isCommissionJournalCode("perishable_rejection"), false);
+  assert.equal(isCommissionJournalCode("perishable_rejection"), true);
+  assert.equal(isCommissionJournalCode("hygiene"), false);
   assert.equal(isCommissionJournalCode(null), false);
+});
+
+/**
+ * Старые копии состава в документах скоропорта (до решения 2026-09-22) не
+ * оживают: состав действует только с меткой сервера `commissionEnabled`.
+ * У готовой продукции метка не нужна — как раньше.
+ */
+test("скоропорт: состав действует только с меткой commissionEnabled", () => {
+  const legacy = { commissionMembers: [member], rows: [{ id: "a", productName: "Сметана", arrivalDate: "2026-10-17" }] };
+  assert.equal(isCommissionActive("perishable_rejection", legacy), false);
+  assert.deepEqual(effectiveCommissionMembers("perishable_rejection", legacy), []);
+  assert.deepEqual(effectiveCommissionMembers("perishable_rejection", { ...legacy, commissionEnabled: "true" }), []);
+  const enabled = { ...legacy, commissionEnabled: true };
+  assert.equal(isCommissionActive("perishable_rejection", enabled), true);
+  assert.deepEqual(effectiveCommissionMembers("perishable_rejection", enabled).map((item) => item.employeeId), ["u1"]);
+  // Готовая продукция — без метки, как раньше; журнал без комиссии — никогда.
+  assert.deepEqual(effectiveCommissionMembers("finished_product", legacy).map((item) => item.employeeId), ["u1"]);
+  assert.deepEqual(effectiveCommissionMembers("hygiene", enabled), []);
+  assert.deepEqual(effectiveCommissionMembers("perishable_rejection", null), []);
+});
+
+test("незакрытые строки скоропорта: без метки — нет, с меткой — строки без подписи", () => {
+  const rows = [
+    { id: "a", productName: "Сметана", arrivalDate: "2026-10-17" },
+    { id: "b", productName: "Творог", arrivalDate: "2026-10-17", signatures: signed.map((item) => ({ ...item, grade: "compliant" })) },
+    { id: "c", productName: "", arrivalDate: "" },
+  ];
+  const legacy = { commissionMembers: [member], rows };
+  assert.deepEqual(unsignedRows(commissionConfigView("perishable_rejection", legacy)), []);
+  assert.equal(closeBlockerForUnsigned(commissionConfigView("perishable_rejection", legacy)), null);
+  const enabled = commissionConfigView("perishable_rejection", { ...legacy, commissionEnabled: true });
+  assert.deepEqual(unsignedRows(enabled).map((row) => row.id), ["a"]);
+  assert.deepEqual(closeBlockerForUnsigned(enabled)?.bullets, ["Сметана · 17.10"]);
+  // «Сегодня» скоропорта — по дате поступления.
+  assert.deepEqual(todaySignatureSummary(enabled, "2026-10-17"), { total: 2, waiting: 1 });
+  assert.equal(todaySignatureSummary(commissionConfigView("perishable_rejection", legacy), "2026-10-17"), null);
+  // Мусор вместо строк — пустой список, а не падение.
+  assert.deepEqual(commissionConfigView("perishable_rejection", { rows: "x", commissionEnabled: true }).rows, []);
 });
 
 test("статус подписей строки по утверждённому составу", () => {

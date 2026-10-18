@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { hasCapability } from "@/lib/permission-presets";
+import { getManagerScope } from "@/lib/manager-scope";
+import { canAssignTasks, decideTaskAssignment } from "@/lib/task-assign-rules";
 import { claimJournalTask } from "@/lib/journal-task-claims";
 import { mirrorClaimToTasksFlow } from "@/lib/tasksflow-claim-mirror";
 import { notifyEmployee } from "@/lib/telegram";
@@ -27,7 +28,10 @@ export const dynamic = "force-dynamic";
  * One-active-task rule обходится — admin может назначить даже если у
  * сотрудника уже есть active claim (bypassActiveCheck=true).
  *
- * Доступ: admin.full.
+ * Доступ: admin.full — кому угодно; tasks.assign (контроль-группа) — только
+ * людям и журналам из своей «Иерархии» (ManagerScope). Участнику
+ * контроль-группы задачу не назначить: он не заполняет
+ * (src/lib/task-assign-rules.ts).
  */
 const bodySchema = z.object({
   journalCode: z.string().min(1),
@@ -44,8 +48,8 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
-  if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  if (!canAssignTasks(session.user)) {
+    return NextResponse.json({ error: "Назначать задачи может руководитель или контроль-группа" }, { status: 403 });
   }
 
   let body: z.infer<typeof bodySchema>;
@@ -60,10 +64,30 @@ export async function POST(request: Request) {
   // Проверка что user существует в org.
   const target = await db.user.findUnique({
     where: { id: body.userId },
-    select: { organizationId: true, name: true, telegramChatId: true },
+    select: {
+      id: true,
+      organizationId: true,
+      name: true,
+      telegramChatId: true,
+      jobPositionId: true,
+      permissionPreset: true,
+      isRoot: true,
+    },
   });
   if (!target || target.organizationId !== organizationId) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
+  }
+
+  // Контроль-группа назначает только в пределах своей «Иерархии»;
+  // участнику контроль-группы задачу не назначить никому.
+  const decision = decideTaskAssignment({
+    actor: session.user,
+    target,
+    journalCode: body.journalCode,
+    scope: await getManagerScope(session.user.id, organizationId),
+  });
+  if (!decision.ok) {
+    return NextResponse.json({ error: decision.error, code: decision.code }, { status: decision.status });
   }
 
   const dateKey = new Date(`${body.dateKey}T00:00:00.000Z`);

@@ -1,0 +1,101 @@
+{
+  "external": [
+    {
+      "id": "cmvcyxyqg0032wc9mmvz0xcgt",
+      "kind": "qr",
+      "label": "E2E СЭС",
+      "periodFrom": null,
+      "periodTo": null,
+      "expiresAt": "2026-10-24T22:29:08.241Z",
+      "status": "active",
+      "active": true,
+      "issuedBy": {
+        "id": "cmvbfyeu60001uw9mqbomodi2",
+        "name": "Крылов Денис Сергеевич"
+      },
+      "accessCount": 0,
+      "lastAccessedAt": null,
+      "createdAt": "2026-10-17T22:29:08.248Z",
+      "visits": []
+    },
+    {
+      "id": "cmvc6djur000iqw9mb74686k9",
+      "kind": "qr",
+      "label": null,
+      "periodFrom": null,
+      "periodTo": null,
+      "expiresAt": "2027-10-17T09:09:26.580Z",
+      "status": "active",
+      "active": true,
+      "issuedBy": {
+        "id": "cmvbfyeu60001uw9mqbomodi2",
+        "name": "Крылов Денис Сергеевич"
+      },
+      "accessCount": 3,
+      "lastAccessedAt": "2026-10-17T09:39:00.015Z",
+      "createdAt": "2026-10-17T09:09:26.595Z",
+      "visits": []
+    }
+  ],
+  "internal": [
+    {
+      "userId": "cmvbfyfme000luw9m0yckmtoe",
+      "name": "Громова Алина Павловна",
+      "position": "Менеджер зала",
+      "roles": [
+        {
+          "kind": "document_verifier",
+          "label": "Проверяющий документов",
+          "items": [
+            {
+              "id": "cmvbgyuk10096f89m0o6b8sty",
+              "name": "Бактерицидная установка №1 | Журнал учета работы УФ бактерицидной установки"
+            },
+            {
+              "id": "cmvbgz56600c8f89mmi3oy6xm",
+              "name": "Журнал учета использования фритюрных жиров"
+            },
+            {
+              "id": "cmvbgym7u0090f89mj6zcrt7w",
+              "name": "Журнал учёта температурного режима холодильного и морозильного оборудования"
+            },
+            {
+              "id": "cmvbgyjp3008yf89mpzjxqogy",
+              "name": "Журнал учёта температуры и влажности на складах"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "userId": "cmvbfyeu60001uw9mqbomodi2",
+      "name": "Крылов Денис Сергеевич",
+      "position": "Управляющий",
+      "roles": [
+        {
+          "kind": "document_verifier",
+          "label": "Проверяющий документов",
+          "items": [
+            {
+              "id": "cmvbgy9v70003f89mmcxnxvwc",
+              "name": "Гигиенический журнал (сотрудники) — пример на 7 сотрудников"
+            },
+            {
+              "id": "cmvbgyglc004qf89mj0srakvv",
+              "name": "Журнал здоровья"
+            },
+            {
+              "id": "cmvbgyq0a0092f89m297gnsz8",
+              "name": "Журнал уборки"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "externalActive": 2,
+    "externalTotal": 2,
+    "internalPeople": 2
+  }
+}

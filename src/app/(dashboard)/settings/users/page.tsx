@@ -58,6 +58,7 @@ export default async function StaffPage() {
           id: true,
           name: true,
           email: true,
+          contactEmail: true,
           phone: true,
           telegramChatId: true,
           jobPositionId: true,
@@ -185,11 +186,13 @@ export default async function StaffPage() {
           | "commission",
         name: p.name,
         sortOrder: p.sortOrder,
+        plannedHeadcount: p.plannedHeadcount ?? null,
       }))}
       employees={employees.map((u) => ({
         id: u.id,
         name: u.name,
         email: u.email,
+        contactEmail: u.contactEmail,
         phone: u.phone,
         jobPositionId: u.jobPositionId,
         positionTitle: u.positionTitle,

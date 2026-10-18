@@ -30,6 +30,11 @@ const updateUserSchema = z.object({
     })
     .optional(),
   phone: z.string().trim().nullable().optional(),
+  /// Личная почта сотрудника (не логин): пустая строка или null — стереть.
+  contactEmail: z
+    .union([z.string().trim().max(200).email("Некорректный формат почты. Пример: ivanova@mail.ru"), z.literal("")])
+    .nullable()
+    .optional(),
   positionTitle: z.string().trim().max(120).nullable().optional(),
   isActive: z.boolean().optional(),
   /// Недельное правило выходных (0=Пн … 6=Вс) — правится и в карточке
@@ -78,7 +83,7 @@ export async function PUT(
     }
 
     const body = updateUserSchema.parse(await request.json());
-    const { name, role, phone, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes, keepsCoreJournals, canManageSettings } = body;
+    const { name, role, phone, contactEmail, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes, keepsCoreJournals, canManageSettings } = body;
     // «Разрешение менять настройки» себе не выдают — только другой руководитель.
     if (canManageSettings !== undefined && id === session.user.id) {
       return NextResponse.json({ error: "Разрешение на настройки себе изменить нельзя" }, { status: 400 });
@@ -141,6 +146,7 @@ export async function PUT(
         ...(name !== undefined && { name: name.trim() }),
         ...(role !== undefined && { role: toCanonicalUserRole(role) }),
         ...(normalizedPhone !== undefined && { phone: normalizedPhone }),
+        ...(contactEmail !== undefined && { contactEmail: contactEmail || null }),
         ...(positionTitle !== undefined && {
           positionTitle: positionTitle?.trim() || null,
         }),
@@ -161,6 +167,7 @@ export async function PUT(
         positionTitle: true,
         isActive: true,
         phone: true,
+        contactEmail: true,
       },
     });
     // Права поменялись — старые сессии сотрудника закрываем: новый вход

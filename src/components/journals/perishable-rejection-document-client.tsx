@@ -3,16 +3,32 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/locales";
-import { perishableColumn, perishableCell, perishableDateTime, perishableTitle, perishableSignatureLines, type PerishableTranslator } from "./perishable-rejection-presentation";
+import {
+  perishableColumn,
+  perishableCell,
+  perishableCloseBlocker,
+  perishableCommissionStatus,
+  perishableDateTime,
+  perishableHasCommission,
+  perishableTitle,
+  perishableSignatureLines,
+  perishableTodaySignatures,
+  type PerishableTranslator,
+} from "./perishable-rejection-presentation";
 import { useRouter } from "next/navigation";
-import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2 } from "lucide-react";
+import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2, Users } from "lucide-react";
 import { RecognizeFromPhoto } from "@/components/ai/recognize-from-photo";
 import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
 import {
   SelectionApplyButton,
   SelectionEditButton,
   SelectionRepeatButton,
+  SelectionSignButton,
 } from "@/components/journals/selection-edit-button";
+import { CommissionDialog } from "@/components/journals/commission-dialog";
+import { commissionRoleLabel, isCommissionMember, shortPersonName, todaySignatureSummary } from "@/lib/brakerage-commission";
+import { readLocalizedApiError } from "@/lib/localized-api-error";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import { useNameSuggestions } from "@/components/journals/use-name-suggestions";
@@ -141,9 +157,8 @@ type Props = {
    */
   responsibleUserId?: string | null;
   /**
-   * Кто открыл документ. Не используется: у скоропорта нет сторонней
-   * комиссии и её подписей (решение владельца 2026-09-22); проп оставлен
-   * для совместимости со страницей документа.
+   * Кто открыл документ. Член бракеражной комиссии документа подписывает
+   * выделенные записи («Подписать»), остальные видят статус подписей.
    */
   currentUserId?: string | null;
 };
@@ -280,6 +295,25 @@ function JournalCellOpensRow({
   );
 }
 
+/**
+ * Пилюля статуса подписи комиссии под записью (и в карточке на телефоне):
+ * янтарная «Ждёт подписи комиссии» или зелёная «Подписано: …». Только экран —
+ * в печати подписи идут блоком под таблицей.
+ */
+function CommissionStatusChip({ status, compact = false }: { status: { signed: boolean; text: string }; compact?: boolean }) {
+  return (
+    <span
+      data-testid="perishable-commission-status"
+      data-signed={status.signed ? "1" : "0"}
+      className={`${compact ? "" : "mt-1 "}inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10.5px] font-medium leading-[1.35] break-words print:hidden ${
+        status.signed ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#fff8eb] text-[#9a5b00]"
+      }`}
+    >
+      {status.text}
+    </span>
+  );
+}
+
 export function PerishableRejectionDocumentClient({
   documentId,
   title,
@@ -290,9 +324,11 @@ export function PerishableRejectionDocumentClient({
   initialConfig,
   users,
   responsibleUserId = null,
+  currentUserId = null,
 }: Props) {
   const router = useRouter();
   const t = useTranslations("perishableRejection");
+  const commissionT = useTranslations("journalControls.commissionDialog");
   const locale = useLocale() as Locale;
   const currentTranslations = useRef(t);
   useEffect(() => { currentTranslations.current = t; }, [t]);
@@ -343,7 +379,14 @@ export function PerishableRejectionDocumentClient({
     showNote: legacyFlagsFromColumns("perishable_rejection", next).showNote !== false,
   });
   const readOnly = status === "closed";
-  /** Окно «Сторонняя бракеражная комиссия». */
+  /** Окно «Комиссия» (состав организации, копия в активные документы). */
+  const [commissionOpen, setCommissionOpen] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
+  // Комиссия действует только с меткой сервера — нормализатор конфига
+  // отдаёт старую копию состава без метки пустой.
+  const withCommission = perishableHasCommission(config);
+  const canSign = !readOnly && isCommissionMember(config, currentUserId);
+  const commissionRoleLabels = { chair: commissionT("chair"), member: commissionT("member") };
   // «Настройки журнала» — название документа и дата начала. Раньше их
   // можно было изменить только со страницы списка; теперь доступны из «⋯».
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -353,6 +396,8 @@ export function PerishableRejectionDocumentClient({
   const closeAction = useDocumentCloseAction({
     documentId,
     title: settingsTitle,
+    // Записи без подписи комиссии — журнал не закончить (сервер тоже откажет).
+    blocker: () => perishableCloseBlocker(config, t),
   });
 
   async function saveDocumentSettings() {
@@ -406,6 +451,8 @@ export function PerishableRejectionDocumentClient({
         value: column.custom ? customCellValue(row, column.key) : perishableCell(row, column.key, locale, t),
         hideIfEmpty: true,
       })),
+    // Статус подписи комиссии — на телефоне тоже видно, что запись ждёт.
+    badge: withCommission ? <CommissionStatusChip status={perishableCommissionStatus(row, t)} compact /> : undefined,
   }));
   const [addModalOpen, setAddModalOpen] = useState(false);
   /** «Применить ко всем выделенным» — одно окно на несколько строк. */
@@ -570,6 +617,42 @@ export function PerishableRejectionDocumentClient({
       .catch(() => undefined);
   });
 
+  /**
+   * «Подписать» в полосе выделения: член комиссии подписывает выделенные
+   * записи своей подписью (метод «вход в кабинет») с их текущей оценкой.
+   * Сначала дописываем свои несохранённые правки — подписывается то, что
+   * на сервере.
+   */
+  async function signSelectedRows() {
+    if (!canSign || selectedRows.length === 0) return;
+    setIsSigning(true);
+    try {
+      flushConfigSave();
+      for (let i = 0; i < 50 && inFlightRef.current > 0; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const response = await fetch(`/api/journal-documents/${documentId}/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: selectedRows.map((rowId) => ({ rowId })) }),
+      });
+      const errorResponse = response.clone();
+      const body = (await response.json().catch(() => null)) as { signed?: number; config?: unknown } | null;
+      if (!response.ok) throw new Error(await readLocalizedApiError(errorResponse, locale, t("commission.signFailed")));
+      if (body?.config) {
+        const fresh = normalizePerishableRejectionConfig(body.config);
+        for (const row of fresh.rows) knownRowIdsRef.current.add(row.id);
+        setConfig((prev) => ({ ...prev, rows: fresh.rows }));
+      }
+      setSelectedRows([]);
+      toast.success(t("commission.signedRows", { count: body?.signed ?? selectedRows.length }));
+    } catch (error) {
+      toast.error(humanizeFetchError(error, t("commission.signFailed"), t("commission.network")));
+    } finally {
+      setIsSigning(false);
+    }
+  }
+
   /** Ячейка колонки: одно место для всех колонок бланка и своих. */
   function renderCell(row: PerishableRejectionRow, column: ResolvedJournalColumn) {
     if (column.custom) {
@@ -644,7 +727,11 @@ export function PerishableRejectionDocumentClient({
    * раньше печаталась дата начала.
    */
   async function closeJournal() {
-    applyConfig((prev) => ({ ...prev, finishedAt: localDayKey() }), true);
+    // Записи ждут подписи комиссии — окно объяснит, почему закончить нельзя;
+    // дату закрытия в шапку тогда не ставим.
+    if (!perishableCloseBlocker(config, t)) {
+      applyConfig((prev) => ({ ...prev, finishedAt: localDayKey() }), true);
+    }
     await closeAction.closeDocument();
   }
 
@@ -1115,8 +1202,18 @@ export function PerishableRejectionDocumentClient({
     (weight) =>
       `${((weight / columnWeightsTotal) * (100 - CHECKBOX_COL_PERCENT)).toFixed(3)}%`
   );
-  /** Подписи прежней комиссии — блоком под таблицей (графы для них нет). */
+  /**
+   * Подписи комиссии — блоком под таблицей (в форме приложения № 5 для них
+   * нет графы; так же в печати). Документ с действующей комиссией — «Подписи
+   * бракеражной комиссии», без неё — подписи прежней формы журнала.
+   */
   const legacySignatureLines = useMemo(() => perishableSignatureLines(config.rows, locale, t), [config.rows, locale, t]);
+  /** Колонка, под ячейкой которой показываем статус подписи: наименование или первая видимая. */
+  const statusColumnKey = visibleColumnsView.some((column) => column.key === "product") ? "product" : visibleColumnsView[0]?.key;
+  const todaySummary = withCommission && todayKey ? todaySignatureSummary(config, todayKey) : null;
+  const commissionLine = config.commissionMembers
+    .map((member) => `${shortPersonName(member.employeeName)} (${commissionRoleLabel(member, commissionRoleLabels)})`)
+    .join(", ");
 
   return (
     <div className="text-black">
@@ -1268,11 +1365,39 @@ export function PerishableRejectionDocumentClient({
             disabled={readOnly}
           >
             {t("actions.editLists")}</Button>
+          {/* Бракеражная комиссия: состав организации, копия — в активные документы. */}
+          {!readOnly ? (
+            <Button
+              type="button"
+              variant="outline"
+              className={DOC_SECONDARY_BUTTON_CLASS}
+              onClick={() => setCommissionOpen(true)}
+              data-testid="perishable-commission-button"
+            >
+              <Users className="size-4" />
+              {t("commission.title")}{withCommission ? ` · ${config.commissionMembers.length}` : ""}
+            </Button>
+          ) : null}
           {/* Кнопки «Сохранить» нет: правки уезжают сами (см. applyConfig). */}
           {isSaving ? (
             <span className="text-[13px] text-[#6f7282]">{t("actions.saving")}</span>
           ) : null}
         </div>
+        {withCommission ? (
+          <p className="text-[13px] leading-snug text-[#3c4053] print:hidden" data-testid="perishable-commission-members">
+            {t("commission.members", { names: commissionLine })}
+          </p>
+        ) : null}
+        {todaySummary ? (
+          <p
+            data-testid="perishable-today-signatures"
+            className={`rounded-2xl px-4 py-2.5 text-[13px] font-medium print:hidden ${
+              todaySummary.waiting > 0 ? "bg-[#fff8eb] text-[#9a5b00]" : "bg-[#ecfdf5] text-[#116b2a]"
+            }`}
+          >
+            {perishableTodaySignatures(todaySummary, canSign, t)}
+          </p>
+        ) : null}
 
         {!readOnly ? (
           <JournalSelectionBar
@@ -1284,6 +1409,7 @@ export function PerishableRejectionDocumentClient({
             <SelectionEditButton count={selectedRows.length} disabled={readOnly} onClick={() => seq.start(selectedRows)} />
             <SelectionApplyButton count={selectedRows.length} disabled={readOnly} onClick={() => setApplyOpen(true)} />
             <SelectionRepeatButton count={selectedRows.length} disabled={readOnly} onClick={() => repeatSelectedRows()} />
+            {canSign ? <SelectionSignButton count={selectedRows.length} busy={isSigning} onClick={() => void signSelectedRows()} /> : null}
           </JournalSelectionBar>
         ) : null}
         <ApplyToSelectedDialog open={applyOpen} onOpenChange={setApplyOpen} count={selectedRows.length} fields={applyFields} onApply={applyToSelectedRows} />
@@ -1400,6 +1526,11 @@ export function PerishableRejectionDocumentClient({
                   {visibleColumnsView.map((column) => (
                     <td key={column.key} className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
                       {renderCell(row, column)}
+                      {/* Статус подписи комиссии — только на экране: в печати
+                          подписи идут блоком под таблицей. */}
+                      {withCommission && column.key === statusColumnKey ? (
+                        <CommissionStatusChip status={perishableCommissionStatus(row, t)} />
+                      ) : null}
                     </td>
                   ))}
                 </tr>
@@ -1426,12 +1557,17 @@ export function PerishableRejectionDocumentClient({
             </tbody>
           </table>
         </MobileViewTableWrapper>
-        {/* Подписи прежней бракеражной комиссии: у скоропорта её больше
-            нет, в форме приложения № 5 для них нет графы — подписанные
-            раньше записи не теряют подписи (так же блоком в печати). */}
+        {/* Подписи бракеражной комиссии: в форме приложения № 5 для них нет
+            графы — блоком под таблицей (так же в печати). У документа без
+            действующей комиссии — подписи прежней формы журнала. */}
         {legacySignatureLines.length > 0 ? (
-          <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 print:rounded-none print:border-black print:bg-white">
-            <div className="text-[13px] font-semibold text-[#0b1024]">{t("signatures.title")}</div>
+          <div
+            className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 print:rounded-none print:border-black print:bg-white"
+            data-testid="perishable-signatures"
+          >
+            <div className="text-[13px] font-semibold text-[#0b1024]">
+              {config.commissionEnabled ? t("signatures.commissionTitle") : t("signatures.title")}
+            </div>
             <ul className="mt-1.5 space-y-1 text-[12.5px] leading-[1.45] text-[#3c4053]">
               {legacySignatureLines.map((line, index) => (
                 <li key={index}>{line}</li>
@@ -2402,6 +2538,18 @@ export function PerishableRejectionDocumentClient({
             items
           )
         }
+      />
+
+      {/* Бракеражная комиссия скоропорта: сервер копирует состав в активные
+          документы и ставит метку `commissionEnabled`. */}
+      <CommissionDialog
+        code="perishable_rejection"
+        open={commissionOpen}
+        onClose={() => setCommissionOpen(false)}
+        onSaved={(members) => {
+          setConfig((prev) => ({ ...prev, commissionMembers: members, commissionEnabled: true }));
+          router.refresh();
+        }}
       />
 
       {/* Настройки журнала — название документа и дата начала. */}

@@ -1,0 +1,54 @@
+{
+  "hot": {
+    "id": "cmvbh5x6v0003u89m76q3wkqm",
+    "name": "Повар горячего цеха",
+    "categoryKey": "staff",
+    "sortOrder": 3,
+    "plannedHeadcount": 2,
+    "_count": {
+      "users": 1
+    },
+    "occupied": 1,
+    "vacancies": 1,
+    "overstaffed": 0,
+    "staffingLabel": "занято 1 из 2"
+  },
+  "waiter": {
+    "id": "cmvbh608i0009u89mtwtcu480",
+    "name": "Официант",
+    "categoryKey": "staff",
+    "sortOrder": 9,
+    "plannedHeadcount": 0,
+    "_count": {
+      "users": 1
+    },
+    "occupied": 1,
+    "vacancies": 0,
+    "overstaffed": 1,
+    "staffingLabel": "занято 1 из 0"
+  },
+  "free": {
+    "id": "cmvbh5wjg0000u89mqmlfo07l",
+    "name": "Управляющий",
+    "categoryKey": "management",
+    "sortOrder": 0,
+    "plannedHeadcount": null,
+    "_count": {
+      "users": 1
+    },
+    "occupied": 1,
+    "vacancies": 0,
+    "overstaffed": 0,
+    "staffingLabel": "занято 1"
+  },
+  "totals": {
+    "positions": 24,
+    "withPlan": 3,
+    "planned": 3,
+    "occupied": 23,
+    "occupiedPlanned": 3,
+    "vacancies": 1,
+    "overstaffed": 1,
+    "staffingLabel": "занято 3 из 3"
+  }
+}

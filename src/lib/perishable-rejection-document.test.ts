@@ -132,7 +132,7 @@ test("бракераж: «ФИО, должность» — должность и
   );
 });
 
-test("скоропорт без комиссии: скопированный ранее состав игнорируется, закрытию ничего не мешает", () => {
+test("скоропорт: старая копия состава без метки сервера игнорируется, закрытию ничего не мешает", () => {
   const config = normalizePerishableRejectionConfig({
     commissionMembers: [
       { id: "commission-u1", role: "Председатель", employeeId: "u1", employeeName: "Иванова Анна" },
@@ -140,4 +140,22 @@ test("скоропорт без комиссии: скопированный р�
     rows: [],
   });
   assert.deepEqual(config.commissionMembers, []);
+  assert.equal("commissionEnabled" in config, false);
+});
+
+test("скоропорт: состав с меткой commissionEnabled действует и метка сохраняется", () => {
+  const config = normalizePerishableRejectionConfig({
+    commissionMembers: [
+      { id: "commission-u1", role: "Председатель", employeeId: "u1", employeeName: "Иванова Анна" },
+    ],
+    commissionEnabled: true,
+    rows: [],
+  });
+  assert.deepEqual(config.commissionMembers.map((member) => member.employeeId), ["u1"]);
+  assert.equal(config.commissionEnabled, true);
+  // Метка — только true: «правдивая строка» от клиента её не включает.
+  assert.deepEqual(
+    normalizePerishableRejectionConfig({ commissionMembers: config.commissionMembers, commissionEnabled: "true", rows: [] }).commissionMembers,
+    []
+  );
 });
