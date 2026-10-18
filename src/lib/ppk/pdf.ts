@@ -7,6 +7,9 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellInput } from "jspdf-autotable";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
+import { brandPalette, hexToRgb as brandRgb } from "@/lib/document-brand";
+import { drawPdfLogo } from "@/lib/pdf-logo";
+import { ppkGeneralInfoRows, ppkRequisitesLine } from "./print-org";
 import { FLOW_STYLES, diagramBounds, edgeAnchors } from "./diagram";
 import { hazardRisk, isSignificantHazard } from "./haccp";
 import { EMERGENCIES, MEDICAL_PHRASE } from "./program-content";
@@ -43,8 +46,15 @@ function ruDate(value: string | null | undefined): string {
   return `${day}.${month}.${year}`;
 }
 
-/** Контекст построения: документ, шрифт и текущая вертикальная позиция. */
-type Ctx = { doc: jsPDF; font: string; y: number };
+/** Подложка шапок таблиц и рамки этапов блок-схем без фирменного цвета (цвета WeSetup). */
+const HEAD_FILL: Rgb = [238, 240, 255];
+const NODE_STROKE: Rgb = [85, 102, 246];
+
+/**
+ * Контекст построения: документ, шрифт, текущая вертикальная позиция и
+ * акцент — фирменный цвет организации или прежние цвета WeSetup.
+ */
+type Ctx = { doc: jsPDF; font: string; y: number; headFill: Rgb; accent: Rgb };
 
 function pageSize(ctx: Ctx) {
   return { w: ctx.doc.internal.pageSize.getWidth(), h: ctx.doc.internal.pageSize.getHeight() };
@@ -91,7 +101,7 @@ function table(ctx: Ctx, heads: string[], rows: CellInput[][], small = false) {
     theme: "grid",
     margin: { left: MARGIN, right: MARGIN, bottom: MARGIN + 6 },
     styles: { font: ctx.font, fontSize: small ? 8 : 9, cellPadding: 1.6, textColor: INK, lineColor: [200, 203, 220], lineWidth: 0.2 },
-    headStyles: { font: ctx.font, fontStyle: "bold", fillColor: [238, 240, 255], textColor: INK },
+    headStyles: { font: ctx.font, fontStyle: "bold", fillColor: ctx.headFill, textColor: INK },
   });
   const last = (ctx.doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
   ctx.y = (last?.finalY ?? ctx.y) + 4;
@@ -104,11 +114,29 @@ function list(ctx: Ctx, items: string[], numbered: boolean) {
 
 function start(bundle: PpkBundle, title: string, approval: BundleApproval | null): Ctx {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const ctx: Ctx = { doc, font: registerJournalUnicodeFont(doc), y: MARGIN };
   const { org } = bundle;
+  // Фирменный цвет организации — подложка шапок таблиц, рамки этапов и
+  // полоса под реквизитами; без него — прежние цвета WeSetup, без полосы.
+  const brand = org.block.brand.color ? brandPalette(org.block.brand.color) : null;
+  const ctx: Ctx = {
+    doc,
+    font: registerJournalUnicodeFont(doc),
+    y: MARGIN,
+    headFill: brand ? brandRgb(brand.tint) : HEAD_FILL,
+    accent: brand ? brandRgb(brand.ink) : NODE_STROKE,
+  };
+  if (bundle.logo) {
+    const { h } = drawPdfLogo(doc, bundle.logo, { x: MARGIN, y: ctx.y, maxW: 55, maxH: 14 });
+    ctx.y += h + 3;
+  }
   text(ctx, org.orgName || "—", { size: 11, bold: true, gap: 0.5 });
-  const requisites = [org.orgInn ? `ИНН ${org.orgInn}` : null, org.orgAddress].filter(Boolean).join(", ");
+  const requisites = ppkRequisitesLine(org);
   if (requisites) text(ctx, requisites, { size: 9, color: MUTED, gap: 3 });
+  if (brand) {
+    doc.setFillColor(...ctx.accent);
+    doc.rect(MARGIN, ctx.y - 1.5, pageSize(ctx).w - MARGIN * 2, 0.8, "F");
+    ctx.y += 3;
+  }
 
   approveBlock(ctx, bundle, approval);
 
@@ -247,7 +275,7 @@ function drawFlowchart(ctx: Ctx, chart: DiagramData) {
     const nw = node.w * scale;
     const nh = node.h * scale;
     doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(...(node.kind === "room" ? ([60, 64, 83] as Rgb) : ([85, 102, 246] as Rgb)));
+    doc.setDrawColor(...(node.kind === "room" ? ([60, 64, 83] as Rgb) : ctx.accent));
     doc.setLineWidth(0.4);
     doc.roundedRect(x, y, nw, nh, 1.5, 1.5, "FD");
     const fontSize = Math.max(6, Math.min(10, nh * 0.45));
@@ -276,18 +304,10 @@ function drawFlowchart(ctx: Ctx, chart: DiagramData) {
 export function buildPpkProgramPdf(bundle: PpkBundle): Buffer {
   const approval = bundle.approvals?.ppk ?? null;
   const ctx = start(bundle, "Программа производственного контроля", approval);
-  const requisites = bundle.org.snapshot;
   const leader = bundle.team.find((member) => member.role === "leader");
 
   section(ctx, "1. Общие сведения");
-  table(ctx, ["Показатель", "Значение"], [
-    ["Полное наименование", requisites?.orgName || bundle.org.orgName || "—"],
-    ["Краткое наименование", requisites?.orgShortName || "—"],
-    ["ИНН", bundle.org.orgInn || "—"],
-    ["Адрес", bundle.org.orgAddress || "—"],
-    ["Руководитель", requisites?.directorName ? `${requisites.directorPost || "Руководитель"}, ${requisites.directorName}` : "—"],
-    ["Ответственный за производственный контроль", leader ? `${leader.name}${leader.title ? `, ${leader.title}` : ""}` : "—"],
-  ]);
+  table(ctx, ["Показатель", "Значение"], ppkGeneralInfoRows(bundle.org, leader));
 
   section(ctx, "2. Перечень официально изданных санитарных правил и нормативных документов");
   if (bundle.norms.length) list(ctx, bundle.norms, true);

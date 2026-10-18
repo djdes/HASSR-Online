@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { DOCUMENT_ORG_SELECT } from "@/lib/document-org-block";
 import { hashInspectorToken } from "@/lib/inspector-tokens";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { orgTodayKey } from "@/lib/timezone";
@@ -21,12 +22,10 @@ import {
  */
 
 export const inspectorOrgSelect = {
+  // Реквизиты с правками поверх ЕГРЮЛ, логотип и фирменный цвет — блок
+  // сведений для документов (`document-org-block.ts`).
+  ...DOCUMENT_ORG_SELECT,
   id: true,
-  name: true,
-  journalShortName: true,
-  legalProfileJson: true,
-  inn: true,
-  address: true,
   timezone: true,
   disabledJournalCodes: true,
 } as const;
@@ -48,6 +47,15 @@ export type InspectorAccess = {
     legalProfileJson: unknown;
     inn: string | null;
     address: string | null;
+    phone: string | null;
+    legalFullName: string | null;
+    kpp: string | null;
+    ogrn: string | null;
+    legalAddress: string | null;
+    directorName: string | null;
+    directorPost: string | null;
+    logoUrl: string | null;
+    brandColor: string | null;
     timezone: string;
     disabledJournalCodes: unknown;
   };

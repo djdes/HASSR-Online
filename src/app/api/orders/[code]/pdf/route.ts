@@ -5,10 +5,13 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { clientIp } from "@/lib/client-ip";
 import { journalSampleRateLimiter } from "@/lib/rate-limit";
+import { loadDocumentOrgBlock } from "@/lib/document-org-block.server";
+import { toOrderOrgSnapshot } from "@/lib/document-org-block";
 import { findOrderTemplate } from "@/lib/orders/catalog";
 import { renderOrderPdf } from "@/lib/orders/pdf";
-import { currentOrgSnapshot } from "@/lib/orders/store";
 import { defaultOrderValues, type OrderOrgSnapshot } from "@/lib/orders/render";
+import type { PdfLogo } from "@/lib/pdf-logo";
+import { loadPdfOrgLogo } from "@/lib/pdf-logo.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,9 +61,18 @@ export async function GET(
   const url = new URL(request.url);
   const session = await getServerSession(authOptions).catch(() => null);
 
+  // Залогиненному — реквизиты, логотип и фирменный цвет его организации.
   let org = BLANK_ORG;
+  let logo: PdfLogo | null = null;
+  let brandColor: string | null = null;
   if (session) {
-    org = (await currentOrgSnapshot(getActiveOrgId(session))) ?? BLANK_ORG;
+    const organizationId = getActiveOrgId(session);
+    const block = await loadDocumentOrgBlock(organizationId);
+    if (block) {
+      org = toOrderOrgSnapshot(block);
+      logo = await loadPdfOrgLogo(organizationId, block.brand.logoUrl);
+      brandColor = block.brand.color;
+    }
   }
 
   try {
@@ -74,6 +86,8 @@ export async function GET(
       ),
       number: "",
       issuedAt: "",
+      logo,
+      brandColor,
     });
 
     const disposition = url.searchParams.get("inline") === "1" ? "inline" : "attachment";

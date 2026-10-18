@@ -1,33 +1,35 @@
 import type { ReactNode } from "react";
 import { Download } from "lucide-react";
-import { db } from "@/lib/db";
-import { currentOrgSnapshot } from "@/lib/orders/store";
-import type { OrderOrgSnapshot } from "@/lib/orders/render";
+import { brandPalette } from "@/lib/document-brand";
+import { buildDocumentOrgBlock } from "@/lib/document-org-block";
+import { loadDocumentOrgBlock } from "@/lib/document-org-block.server";
+import { ppkPrintOrgFromBlock, ppkRequisitesLine, type PpkPrintOrg } from "@/lib/ppk/print-org";
 import { PrintJournalButton } from "@/components/journals/print-journal-button";
 
-/** Организация для шапки печатного листа: логотип и реквизиты. */
-export type PpkPrintOrg = {
-  logoUrl: string | null;
-  orgName: string;
-  orgInn: string | null;
-  orgAddress: string | null;
-  /** Полный снимок реквизитов (директор нужен для строки «Утверждаю»). */
-  snapshot: OrderOrgSnapshot | null;
-};
+export type { PpkPrintOrg } from "@/lib/ppk/print-org";
 
-/** Логотип и реквизиты организации — данные для `PpkPrintSheet`. */
+/** Логотип, реквизиты и фирменный цвет организации — данные для `PpkPrintSheet`. */
 export async function loadPpkPrintOrg(organizationId: string): Promise<PpkPrintOrg> {
-  const [org, snapshot] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { name: true, logoUrl: true } }),
-    currentOrgSnapshot(organizationId),
-  ]);
-  return {
-    logoUrl: org?.logoUrl ?? null,
-    orgName: snapshot?.orgName || org?.name || "",
-    orgInn: snapshot?.orgInn ?? null,
-    orgAddress: snapshot?.orgAddress ?? null,
-    snapshot,
-  };
+  const block = (await loadDocumentOrgBlock(organizationId)) ?? buildDocumentOrgBlock({ org: { name: null } });
+  return ppkPrintOrgFromBlock(block);
+}
+
+/**
+ * Фирменная полоса листа: задан цвет организации — он, иначе лист без
+ * полосы. `data-print-keep-bg` — опт-аут из ч/б сброса печати кабинета
+ * (`app-theme.css`), `print-color-adjust: exact` — иначе браузер не
+ * печатает заливку.
+ */
+export function PpkBrandBand({ org, className = "" }: { org: PpkPrintOrg; className?: string }) {
+  if (!org.block.brand.color) return null;
+  return (
+    <div
+      aria-hidden
+      data-print-keep-bg
+      className={`h-[3px] rounded-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${className}`}
+      style={{ background: brandPalette(org.block.brand.color).ink }}
+    />
+  );
 }
 
 /**
@@ -50,7 +52,7 @@ export function PpkPrintSheet({
   pdfLabel?: string;
   children: ReactNode;
 }) {
-  const requisites = [org.orgInn ? `ИНН ${org.orgInn}` : null, org.orgAddress].filter(Boolean).join(", ");
+  const requisites = ppkRequisitesLine(org);
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2 print:hidden">
@@ -67,7 +69,9 @@ export function PpkPrintSheet({
         <PrintJournalButton />
       </div>
       <article className="mx-auto w-full max-w-[794px] rounded-3xl border border-[#ececf4] bg-white p-6 text-[14px] leading-[1.6] text-[#0b1024] shadow-[0_20px_60px_-40px_rgba(11,16,36,0.35)] sm:p-12 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
-        <header className="mb-6 flex items-center gap-4">
+        {/* Шапка листа — `div`, не `header`: печать прячет все `header`
+            (шапку кабинета), а логотип и реквизиты должны уйти на бумагу. */}
+        <div className="mb-6 flex items-center gap-4" data-sheet-org>
           {org.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={org.logoUrl} alt="" className="h-12 w-auto max-w-[160px] object-contain" />
@@ -76,7 +80,8 @@ export function PpkPrintSheet({
             <div className="font-semibold">{org.orgName}</div>
             {requisites ? <div className="text-[12.5px] text-[#6f7282]">{requisites}</div> : null}
           </div>
-        </header>
+        </div>
+        <PpkBrandBand org={org} className="-mt-3 mb-6" />
         <h1 className="text-center text-[20px] font-semibold">{title}</h1>
         {subtitle ? <p className="mt-1 text-center text-[#6f7282]">{subtitle}</p> : null}
         <div className="mt-6">{children}</div>

@@ -20,3 +20,10 @@ test("deletion adapter preserves existing endpoint compatibility without showing
   assert.equal(mapOrganizationDeletionApiError("Введите название организации точно как в настройках"), "confirmNameExactly");
   assert.equal(mapOrganizationDeletionApiError("custom server text"), null);
 });
+
+test("ошибки КПП и ОГРН переводятся в ключи формы", () => {
+  assert.deepEqual(
+    mapOrganizationProfileApiError("КПП — 9 знаков, например 770101001; ОГРН — 13 цифр, ОГРНИП — 15 цифр"),
+    ["invalidKpp", "invalidOgrn"],
+  );
+});

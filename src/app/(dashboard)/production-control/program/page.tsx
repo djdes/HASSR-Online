@@ -9,6 +9,7 @@ import { approvalOf } from "@/lib/ppk/review";
 import { moscowToday } from "@/lib/ppk/plan-done";
 import { EMERGENCIES, MEDICAL_PHRASE } from "@/lib/ppk/program-content";
 import { ppkBlock, type PpkBlockKey } from "@/lib/ppk/registry";
+import { ppkGeneralInfoRows } from "@/lib/ppk/print-org";
 import { PpkPrintSheet } from "@/components/production-control/ppk-print-sheet";
 import { PpkDocVersions } from "@/components/production-control/ppk-doc-versions";
 import {
@@ -46,7 +47,6 @@ export default async function ProgramPage() {
     getTranslations("navigation"),
   ]);
   const { org } = bundle;
-  const requisites = org.snapshot;
   const banner = (key: PpkBlockKey): PpkEmptyBanner => ({
     href: ppkBlock(key).href,
     text: t("emptySection", { block: nav(`shell.menus.productionControl.items.${key}`) }),
@@ -76,25 +76,7 @@ export default async function ProgramPage() {
       <PpkApproveBlock org={org} approval={approval} />
 
       <PpkDocSection title="1. Общие сведения">
-        <PpkDocTable
-          heads={["Показатель", "Значение"]}
-          rows={[
-            ["Полное наименование", requisites?.orgName || org.orgName || "—"],
-            ["Краткое наименование", requisites?.orgShortName || "—"],
-            ["ИНН", org.orgInn || "—"],
-            ["Адрес", org.orgAddress || "—"],
-            [
-              "Руководитель",
-              requisites?.directorName
-                ? `${requisites.directorPost || "Руководитель"}, ${requisites.directorName}`
-                : "—",
-            ],
-            [
-              "Ответственный за производственный контроль",
-              leader ? `${leader.name}${leader.title ? `, ${leader.title}` : ""}` : "—",
-            ],
-          ]}
-        />
+        <PpkDocTable heads={["Показатель", "Значение"]} rows={ppkGeneralInfoRows(org, leader)} />
       </PpkDocSection>
 
       <PpkDocSection

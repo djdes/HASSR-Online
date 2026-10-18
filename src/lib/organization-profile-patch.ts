@@ -31,6 +31,13 @@ export const ORG_PROFILE_FIELDS = [
   "shiftEndHour",
   "lockPastDayEdits",
   "requireAdminForJournalEdit",
+  // Правки реквизитов поверх снимка ЕГРЮЛ (`document-org-block.ts`).
+  "legalFullName",
+  "kpp",
+  "ogrn",
+  "legalAddress",
+  "directorName",
+  "directorPost",
 ] as const;
 
 export type OrgProfileField = (typeof ORG_PROFILE_FIELDS)[number];
@@ -45,6 +52,21 @@ const URL_PATTERN = /^https?:\/\/.+/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INN_PATTERN = /^\d{10}$|^\d{12}$/;
 const PHONE_PATTERN = /^[+\d][\d\s().-]{5,}$/;
+// КПП: 4 цифры кода налогового органа, 2 знака причины (цифры или
+// заглавные латинские с 2019 г.), 3 цифры номера.
+const KPP_PATTERN = /^\d{4}[\dA-Z]{2}\d{3}$/;
+// ОГРН юрлица — 13 цифр, ОГРНИП — 15.
+const OGRN_PATTERN = /^\d{13}$|^\d{15}$/;
+
+/**
+ * Текстовая правка реквизита: пробелы схлопнуты, длина ограничена; пусто →
+ * null — «брать из ЕГРЮЛ».
+ */
+function legalText(value: unknown, max: number): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.replace(/\s+/g, " ").trim().slice(0, max);
+  return text || null;
+}
 
 export type OrgProfilePatchResult =
   | { ok: true; data: Record<string, unknown> }
@@ -135,6 +157,23 @@ export function parseOrganizationProfilePatch(
   }
   if (has("requireAdminForJournalEdit") && typeof body.requireAdminForJournalEdit === "boolean") {
     data.requireAdminForJournalEdit = body.requireAdminForJournalEdit;
+  }
+
+  // Правки реквизитов: пустое значение очищает правку, и в документы снова
+  // идёт снимок ЕГРЮЛ.
+  if (has("legalFullName")) data.legalFullName = legalText(body.legalFullName, 300);
+  if (has("legalAddress")) data.legalAddress = legalText(body.legalAddress, 500);
+  if (has("directorName")) data.directorName = legalText(body.directorName, 200);
+  if (has("directorPost")) data.directorPost = legalText(body.directorPost, 200);
+  if (has("kpp")) {
+    const v = legalText(body.kpp, 20)?.replace(/\s/g, "").toUpperCase() ?? null;
+    if (v !== null && !KPP_PATTERN.test(v)) errors.push("КПП — 9 знаков, например 770101001");
+    else data.kpp = v;
+  }
+  if (has("ogrn")) {
+    const v = legalText(body.ogrn, 20)?.replace(/\s/g, "") ?? null;
+    if (v !== null && !OGRN_PATTERN.test(v)) errors.push("ОГРН — 13 цифр, ОГРНИП — 15 цифр");
+    else data.ogrn = v;
   }
 
   if (errors.length > 0) return { ok: false, error: errors.join("; ") };

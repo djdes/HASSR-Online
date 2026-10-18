@@ -1,8 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { resolveOrgJournalName } from "@/lib/org-journal-name";
-import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
+import { brandInk, hexToRgb } from "@/lib/document-brand";
+import { buildDocumentOrgBlock, documentOrgRows, effectiveKpp } from "@/lib/document-org-block";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
+import { drawPdfLogo } from "@/lib/pdf-logo";
+import { loadPdfOrgLogo } from "@/lib/pdf-logo.server";
 import {
   inspectorClientIp,
   inspectorLimitKey,
@@ -50,13 +52,10 @@ export async function GET(
     to: url.searchParams.get("to") ?? (access.isQr ? null : access.window.to),
   });
   const groups = await loadInspectorJournals(access, period.from, period.to);
-  const snapshot = buildOrgSnapshot({
-    name: access.org.name,
-    inn: access.org.inn,
-    address: access.org.address,
-    legalProfileJson: access.org.legalProfileJson,
-  });
-  const orgTitle = resolveOrgJournalName(access.org);
+  // Реквизиты, логотип и цвет — общий блок сведений для документов.
+  const block = buildDocumentOrgBlock({ org: access.org });
+  const orgTitle = block.org.journalName;
+  const logo = await loadPdfOrgLogo(access.org.id, block.brand.logoUrl);
   const generatedAt = new Date();
   const generatedText = generatedAt.toLocaleString("ru-RU", { timeZone: access.org.timezone || "Europe/Moscow" });
   const periodText = `${formatDayKeyRu(period.from)} - ${formatDayKeyRu(period.to)}`;
@@ -77,22 +76,30 @@ export async function GET(
   doc.setFontSize(9);
   doc.setTextColor(110);
   doc.text("СВОДКА ЖУРНАЛОВ ПРОИЗВОДСТВЕННОГО КОНТРОЛЯ", 20, 18);
-  doc.setDrawColor(40);
-  doc.setLineWidth(0.4);
+  // Линия под заголовком — фирменным цветом организации, если он задан;
+  // иначе тёмно-серая, как раньше (ч/б печать).
+  if (block.brand.color) doc.setDrawColor(...hexToRgb(brandInk(block.brand.color)));
+  else doc.setDrawColor(40);
+  doc.setLineWidth(block.brand.color ? 0.8 : 0.4);
   doc.line(20, 21, pageW - 20, 21);
 
+  // Логотип — справа, на уровне названия организации.
+  let logoBottom = 0;
+  if (logo) {
+    const { h } = drawPdfLogo(doc, logo, { x: pageW - 20 - 45, y: 24, maxW: 45, maxH: 14, align: "right" });
+    logoBottom = 24 + h;
+  }
   doc.setTextColor(20);
   doc.setFontSize(16);
-  doc.text(doc.splitTextToSize(orgTitle, pageW - 40), 20, 31);
+  const titleLines = doc.splitTextToSize(orgTitle, pageW - 40 - (logo ? 50 : 0)) as string[];
+  doc.text(titleLines, 20, 31);
   doc.setFontSize(10);
   doc.setTextColor(60);
-  let y = 40;
-  const requisites = [
-    snapshot.orgName !== orgTitle ? snapshot.orgName : null,
-    snapshot.orgInn ? `ИНН ${snapshot.orgInn}` : null,
-    snapshot.orgAddress ? `Адрес: ${snapshot.orgAddress}` : null,
-    snapshot.directorName ? `${snapshot.directorPost ?? "Руководитель"}: ${snapshot.directorName}` : null,
-  ].filter((v): v is string => Boolean(v));
+  // Реквизиты — под названием (и под логотипом), не налезая на них.
+  let y = Math.max(40, 31 + 6.5 * (titleLines.length - 1) + 9, logoBottom + 4);
+  const requisites = documentOrgRows(block)
+    .filter((row) => row.key !== "shortName" && !(row.key === "fullName" && row.value === orgTitle))
+    .map((row) => (row.key === "fullName" ? row.value : `${row.label}: ${row.value}`));
   for (const line of requisites) {
     const wrapped = doc.splitTextToSize(line, pageW - 40);
     doc.text(wrapped, 20, y);
@@ -152,7 +159,15 @@ export async function GET(
   doc.setFontSize(8.5);
   doc.text("ДОКУМЕНТ СФОРМИРОВАН В ЭЛЕКТРОННОМ ВИДЕ", 24, stampY + 6);
   doc.setFontSize(8);
-  doc.text(doc.splitTextToSize(`Организация: ${snapshot.orgShortName}${snapshot.orgInn ? `, ИНН ${snapshot.orgInn}` : ""}`, 102), 24, stampY + 12);
+  const stampKpp = effectiveKpp(block);
+  doc.text(
+    doc.splitTextToSize(
+      `Организация: ${block.org.shortName}${block.org.inn ? `, ИНН ${block.org.inn}` : ""}${stampKpp ? `, КПП ${stampKpp}` : ""}`,
+      102,
+    ),
+    24,
+    stampY + 12,
+  );
   doc.text(`Период: ${periodText}`, 24, stampY + 20);
   doc.text(`Сформировано: ${generatedText}`, 24, stampY + 24);
   doc.text(`Контрольный код: ${controlCode}`, 24, stampY + 28);

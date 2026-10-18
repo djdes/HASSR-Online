@@ -1,0 +1,79 @@
+{
+  "poster": {
+    "orgHeaderVisible": [
+      true
+    ],
+    "accents": [
+      {
+        "tag": "DIV",
+        "bg": "rgb(194, 65, 12)",
+        "color": "rgb(0, 0, 0)",
+        "adjust": "exact",
+        "webkit": "exact",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      },
+      {
+        "tag": "SPAN",
+        "bg": "rgb(194, 65, 12)",
+        "color": "rgb(255, 255, 255)",
+        "adjust": "exact",
+        "webkit": "exact",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      },
+      {
+        "tag": "SPAN",
+        "bg": "rgb(194, 65, 12)",
+        "color": "rgb(255, 255, 255)",
+        "adjust": "exact",
+        "webkit": "exact",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      }
+    ]
+  },
+  "program": {
+    "orgHeaderVisible": [
+      true
+    ],
+    "accents": [
+      {
+        "tag": "DIV",
+        "bg": "rgb(194, 65, 12)",
+        "color": "rgb(0, 0, 0)",
+        "adjust": "exact",
+        "webkit": "exact",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      },
+      {
+        "tag": "SPAN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "adjust": "economy",
+        "webkit": "economy",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      },
+      {
+        "tag": "SPAN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "adjust": "economy",
+        "webkit": "economy",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      }
+    ]
+  },
+  "order": {
+    "orgHeaderVisible": [
+      true
+    ],
+    "accents": [
+      {
+        "tag": "DIV",
+        "bg": "rgb(194, 65, 12)",
+        "color": "rgb(0, 0, 0)",
+        "adjust": "exact",
+        "webkit": "exact",
+        "border": "lab(90.952 -0.0000596046 0) 0px"
+      }
+    ]
+  }
+}

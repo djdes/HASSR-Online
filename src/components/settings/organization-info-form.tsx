@@ -22,7 +22,9 @@ import {
   Palette,
   Phone,
   RefreshCw,
+  RotateCcw,
   Save,
+  ScrollText,
   Search,
   ShieldCheck,
 } from "lucide-react";
@@ -36,6 +38,13 @@ import {
   normalizeSphere,
 } from "@/lib/org-profile";
 import type { LegalProfile } from "@/lib/org-legal-profile";
+import {
+  buildDocumentOrgBlock,
+  documentOrgRows,
+  journalHeaderOrgText,
+  registryDefaults,
+  type LegalOverrideKey,
+} from "@/lib/document-org-block";
 import {
   ORG_JOURNAL_NAME_MAX,
   resolveOrgJournalName,
@@ -61,7 +70,21 @@ type Form = {
   shiftEndHour: number;
   lockPastDayEdits: boolean;
   requireAdminForJournalEdit: boolean;
-};
+} & Record<LegalOverrideKey, string | null>;
+
+/**
+ * Правки реквизитов поверх ЕГРЮЛ — порядок полей в форме. Пустое поле =
+ * значение из снимка реестра (`document-org-block.ts`).
+ */
+const LEGAL_FIELDS: Array<{ key: LegalOverrideKey; multiline?: boolean; maxLength: number; inputMode?: "numeric" }> = [
+  { key: "legalFullName", maxLength: 300 },
+  // КПП — без цифровой клавиатуры: с 2019 г. в причине постановки бывают латинские буквы.
+  { key: "kpp", maxLength: 9 },
+  { key: "ogrn", maxLength: 15, inputMode: "numeric" },
+  { key: "legalAddress", multiline: true, maxLength: 500 },
+  { key: "directorName", maxLength: 200 },
+  { key: "directorPost", maxLength: 200 },
+];
 
 type Legal = {
   /// Снимок ЕГРЮЛ/ЕГРИП по ИНН (см. org-legal-profile.ts); null — ещё не запрашивали.
@@ -180,7 +203,8 @@ export function OrganizationInfoForm({
     form.logoUrl !== initial.logoUrl ||
     form.shiftEndHour !== initial.shiftEndHour ||
     form.lockPastDayEdits !== initial.lockPastDayEdits ||
-    form.requireAdminForJournalEdit !== initial.requireAdminForJournalEdit;
+    form.requireAdminForJournalEdit !== initial.requireAdminForJournalEdit ||
+    LEGAL_FIELDS.some(({ key }) => (form[key] ?? "") !== (initial[key] ?? ""));
 
   // Что увидит шапка журналов при текущем вводе — те же правила, что у
   // страницы документа и PDF.
@@ -194,6 +218,15 @@ export function OrganizationInfoForm({
   function set<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  // Сведения для документов: значения ЕГРЮЛ по умолчанию и живой блок —
+  // те же правила, что у PDF журналов, ППК, приказов и портала проверяющего.
+  const registry = registryDefaults({ inn: form.inn, legalProfileJson: legal.profile });
+  const docBlock = buildDocumentOrgBlock({
+    org: { ...form, legalProfileJson: legal.profile },
+  });
+  const docRows = documentOrgRows(docBlock);
+  const docHeader = journalHeaderOrgText(docBlock);
 
   async function save() {
     if (saving || !dirty) return;
@@ -225,6 +258,11 @@ export function OrganizationInfoForm({
         payload.lockPastDayEdits = form.lockPastDayEdits;
       if (form.requireAdminForJournalEdit !== initial.requireAdminForJournalEdit)
         payload.requireAdminForJournalEdit = form.requireAdminForJournalEdit;
+      // Пустая правка уходит пустой строкой — сервер очистит её, и в
+      // документы снова пойдёт ЕГРЮЛ.
+      for (const { key } of LEGAL_FIELDS) {
+        if ((form[key] ?? "") !== (initial[key] ?? "")) payload[key] = form[key] ?? "";
+      }
 
       const res = await fetch("/api/settings/organization", {
         method: "PATCH",
@@ -463,6 +501,87 @@ export function OrganizationInfoForm({
         </FormRow>
       </FormSection>
 
+      {/* === СВЕДЕНИЯ ДЛЯ ДОКУМЕНТОВ === */}
+      {/* id — сюда будет вести пункт «Сведения для документов» раздела «Моя компания». */}
+      <FormSection
+        id="documents"
+        title={t("form.docsTitle")}
+        subtitle={t("form.docsSubtitle")}
+        icon={<ScrollText className="size-4" />}
+      >
+        {LEGAL_FIELDS.map(({ key, multiline, maxLength, inputMode }) => {
+          const own = form[key] ?? "";
+          const fromRegistry = registry[key];
+          return (
+            <FormRow key={key} label={t(`form.${key}`)} hint={t(`form.${key}Hint`)}>
+              <div className="space-y-1.5">
+                {multiline ? (
+                  <textarea
+                    value={own}
+                    onChange={(e) => set(key, e.target.value || null)}
+                    className="form-input min-h-[68px]"
+                    placeholder={fromRegistry ?? ""}
+                    maxLength={maxLength}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={own}
+                    onChange={(e) => set(key, e.target.value || null)}
+                    className="form-input"
+                    placeholder={fromRegistry ?? ""}
+                    maxLength={maxLength}
+                    inputMode={inputMode}
+                  />
+                )}
+                {fromRegistry ? (
+                  own.trim() && own.trim() !== fromRegistry ? (
+                    <div className="flex flex-wrap items-center gap-2 text-[12px] leading-snug text-[#6f7282]">
+                      <span className="min-w-0 break-words">{t("form.fromRegistry", { value: fromRegistry })}</span>
+                      <button
+                        type="button"
+                        onClick={() => set(key, null)}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                      >
+                        <RotateCcw className="size-3.5 text-[#5566f6]" />
+                        {t("form.resetToRegistry")}
+                      </button>
+                    </div>
+                  ) : !own.trim() ? (
+                    <div className="flex items-center gap-1.5 text-[12px] text-[#6f7282]">
+                      <ShieldCheck className="size-3.5 text-[#5566f6]" />
+                      {t("form.registryUsed")}
+                    </div>
+                  ) : null
+                ) : null}
+              </div>
+            </FormRow>
+          );
+        })}
+
+        {/* Живой предпросмотр блока — как его печатают документы. */}
+        <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
+            {t("form.docsPreviewTitle")}
+          </div>
+          <div className="mt-3 rounded-xl border border-[#dcdfed] bg-white p-3">
+            <div className="text-[11px] font-medium text-[#9b9fb3]">{t("form.docsPreviewJournal")}</div>
+            <div className="mt-1 text-[13px] font-semibold leading-snug text-[#0b1024]" data-doc-header-preview>
+              {docHeader}
+            </div>
+          </div>
+          <dl className="mt-3 divide-y divide-[#f0f1f7] rounded-xl border border-[#ececf4] bg-white">
+            {docRows.map((row) => (
+              <div key={row.key} className="grid gap-0.5 px-3 py-2 md:grid-cols-[200px_1fr] md:gap-4">
+                <dt className="text-[12px] font-medium text-[#6f7282]">{row.label}</dt>
+                <dd className="text-[13px] leading-snug text-[#0b1024]">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-[11.5px] leading-snug text-[#9b9fb3]">{t("form.docsPreviewNote")}</p>
+        </div>
+      </FormSection>
+
       <FormSection
         title={t("form.registryTitle")}
         subtitle={t("form.registrySubtitle")}
@@ -602,6 +721,8 @@ export function OrganizationInfoForm({
               placeholder="https://example.com/logo.png"
               aria-label={t("form.logoUrl")}
             />
+            {/* Внешнюю ссылку сервер в PDF не скачивает (SSRF) — говорим об этом заранее. */}
+            <p className="mt-1.5 text-[12px] leading-snug text-[#6f7282]">{t("form.logoUrlHint")}</p>
           </details>
         </FormRow>
       </FormSection>

@@ -5,8 +5,8 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isInspectorQrRecord } from "@/lib/inspector-qr";
 import { inspectorQrSvg, inspectorQrUrl } from "@/lib/inspector-qr-service";
-import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
-import { resolveOrgJournalName } from "@/lib/org-journal-name";
+import { brandPalette } from "@/lib/document-brand";
+import { DOCUMENT_ORG_SELECT, buildDocumentOrgBlock, documentOrgRequisitesLine } from "@/lib/document-org-block";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PrintButton } from "./print-button";
@@ -43,9 +43,7 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
       expiresAt: true,
       createdAt: true,
       revokedAt: true,
-      organization: {
-        select: { name: true, journalShortName: true, legalProfileJson: true, inn: true, address: true, timezone: true },
-      },
+      organization: { select: { ...DOCUMENT_ORG_SELECT, timezone: true } },
     },
   });
   if (!token || token.organizationId !== orgId || !isInspectorQrRecord(token)) notFound();
@@ -53,13 +51,10 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
 
   const url = inspectorQrUrl(token.id);
   const svg = inactive ? "" : await inspectorQrSvg(url);
-  const snapshot = buildOrgSnapshot({
-    name: token.organization.name,
-    inn: token.organization.inn,
-    address: token.organization.address,
-    legalProfileJson: token.organization.legalProfileJson,
-  });
-  const orgTitle = resolveOrgJournalName(token.organization);
+  // Реквизиты, логотип и цвет — общий блок сведений для документов.
+  const block = buildDocumentOrgBlock({ org: token.organization });
+  const orgTitle = block.org.journalName;
+  const brand = block.brand.color ? brandPalette(block.brand.color) : null;
   const forever = token.expiresAt.getTime() - token.createdAt.getTime() > 300 * 86_400_000;
   const until = forever
     ? "до отзыва организацией"
@@ -85,6 +80,13 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
           className="mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col border border-[#d8d8d8] bg-white px-[8%] py-[7%] shadow-[0_18px_40px_-26px_rgba(20,24,33,0.45)] print:min-h-[296mm] print:border-0 print:shadow-none"
           data-inspector-sheet
         >
+          {brand ? (
+            <div
+              aria-hidden
+              className="mb-3 h-1 rounded-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+              style={{ background: brand.ink }}
+            />
+          ) : null}
           <div className="flex items-baseline justify-between gap-4 border-b-2 border-[#181818] pb-2 text-[13px] text-[#616161]">
             <span>Для проверяющих органов</span>
             <span>Роспотребнадзор, СЭС</span>
@@ -96,11 +98,13 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
           <p className="mt-2 text-center text-[15px] text-[#616161]">ведутся в электронном виде</p>
 
           <div className="mt-8 border-y border-[#d8d8d8] py-4 text-center">
+            {block.brand.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={block.brand.logoUrl} alt="" className="mx-auto mb-3 h-12 w-auto max-w-[200px] object-contain" data-org-logo />
+            ) : null}
             <div className={`${SERIF} text-[clamp(18px,3.2vw,24px)] leading-tight`}>{orgTitle}</div>
-            {snapshot.orgName !== orgTitle ? <div className="mt-1 text-[14px] text-[#616161]">{snapshot.orgName}</div> : null}
-            <div className="mt-1 text-[13.5px] text-[#616161]">
-              {[snapshot.orgInn ? `ИНН ${snapshot.orgInn}` : null, snapshot.orgAddress].filter(Boolean).join(", ")}
-            </div>
+            {block.org.fullName !== orgTitle ? <div className="mt-1 text-[14px] text-[#616161]">{block.org.fullName}</div> : null}
+            <div className="mt-1 text-[13.5px] text-[#616161]">{documentOrgRequisitesLine(block)}</div>
           </div>
 
           <div className="mt-8 flex justify-center">

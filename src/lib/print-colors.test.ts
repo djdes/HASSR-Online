@@ -304,3 +304,19 @@ test("Word-шаблоны: ни одного цветного атрибута, 
     assert.match(heading2, /<w:color w:val="000000"\/>/, `${code}: Заголовок 2 — чёрный`);
   }
 });
+
+test("фирменный цвет организации: только акцентная заливка, текст и линии — чёрные", async () => {
+  // Журналы: полоса по верху шапки первой страницы.
+  for (const code of ["hygiene", "cleaning"]) {
+    const { buffer } = renderJournalDocumentPdf({ ...buildJournalSampleInput(code), qr: null, brandColor: "#d93a3a" });
+    const colored = (await pdfColorOps(new Uint8Array(buffer))).filter(isColored);
+    assert.ok(colored.length > 0, `${code}: полоса фирменного цвета есть`);
+    assert.deepEqual(colored.filter((op) => op.inText || op.op !== "rg"), [], `${code}: цвет — только заливка вне текста`);
+  }
+  // Приказ: линия под реквизитами.
+  const org = { orgName: "ООО «Ромашка»", orgShortName: "ООО «Ромашка»", orgInn: null, orgAddress: null, directorName: null, directorPost: null, city: null };
+  const { buffer } = renderOrderPdf({ template: ORDER_TEMPLATES[0], org, values: {}, number: "1", issuedAt: new Date("2026-10-17T12:00:00Z"), brandColor: "#d93a3a" });
+  const colored = (await pdfColorOps(new Uint8Array(buffer))).filter(isColored);
+  assert.ok(colored.length > 0, "приказ: линия фирменного цвета есть");
+  assert.deepEqual(colored.filter((op) => op.inText || op.op !== "rg"), [], "приказ: цвет — только заливка вне текста");
+});

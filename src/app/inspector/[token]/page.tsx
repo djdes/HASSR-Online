@@ -8,8 +8,8 @@ import { logInspectorEvent } from "@/lib/inspector-access";
 import { loadInspectorJournals } from "@/lib/inspector-journals";
 import { loadInspectorPage } from "@/lib/inspector-page";
 import { formatDayKeyRu } from "@/lib/inspector-qr";
-import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
-import { resolveOrgJournalName } from "@/lib/org-journal-name";
+import { brandPalette } from "@/lib/document-brand";
+import { buildDocumentOrgBlock, documentOrgRows } from "@/lib/document-org-block";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,14 +52,13 @@ export default async function InspectorLandingPage({
     details: { kind: "summary_page", from: period.from, to: period.to },
   });
 
-  const snapshot = buildOrgSnapshot({
-    name: access.org.name,
-    inn: access.org.inn,
-    address: access.org.address,
-    legalProfileJson: access.org.legalProfileJson,
-  });
-  const orgTitle = resolveOrgJournalName(access.org);
-  const legalName = snapshot.orgName !== orgTitle ? snapshot.orgName : null;
+  // Реквизиты, логотип и цвет — общий блок сведений для документов.
+  const block = buildDocumentOrgBlock({ org: access.org });
+  const orgTitle = block.org.journalName;
+  const legalName = block.org.fullName !== orgTitle ? block.org.fullName : null;
+  // Название — в заголовке; в списке — ИНН, КПП, ОГРН, адреса, руководитель, телефон.
+  const requisites = documentOrgRows(block).filter((row) => row.key !== "fullName" && row.key !== "shortName");
+  const brand = block.brand.color ? brandPalette(block.brand.color) : null;
   const q = periodQuery(period);
   const base = `/inspector/${token}`;
   const totalDocs = groups.reduce((s, g) => s + g.rows.reduce((a, r) => a + r.docCount, 0), 0);
@@ -69,12 +68,29 @@ export default async function InspectorLandingPage({
   return (
     <Desk>
       <Sheet className="px-5 pb-8 pt-6 sm:px-12 sm:pb-12 sm:pt-10">
+        {brand ? (
+          <div
+            aria-hidden
+            className="-mt-1 mb-4 h-1 rounded-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+            style={{ background: brand.ink }}
+            data-brand-band
+          />
+        ) : null}
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[#141821] pb-2 text-[12.5px] text-[#5b6170]">
           <span>Материалы производственного контроля</span>
           <span>Только просмотр</span>
         </div>
 
         <header className="mt-8 text-center sm:mt-10">
+          {block.brand.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={block.brand.logoUrl}
+              alt=""
+              className="mx-auto mb-4 h-14 w-auto max-w-[220px] object-contain"
+              data-org-logo
+            />
+          ) : null}
           <h1 className={`${SERIF} text-[26px] leading-[1.15] sm:text-[34px]`} data-org-title>
             {orgTitle}
           </h1>
@@ -82,12 +98,11 @@ export default async function InspectorLandingPage({
         </header>
 
         <dl className="mx-auto mt-6 max-w-[620px] divide-y divide-[#e3e5ea] border-y border-[#e3e5ea] text-[14px]" data-requisites>
-          <Requisite label="ИНН" value={snapshot.orgInn} />
-          <Requisite label="Адрес" value={snapshot.orgAddress} />
-          <Requisite
-            label={snapshot.directorPost ? capitalize(snapshot.directorPost) : "Руководитель"}
-            value={snapshot.directorName}
-          />
+          {requisites.length ? (
+            requisites.map((row) => <Requisite key={row.key} label={row.label} value={row.value} />)
+          ) : (
+            <Requisite label="ИНН" value={null} />
+          )}
         </dl>
 
         <p className="mx-auto mt-6 max-w-[620px] text-center text-[14px] leading-relaxed text-[#3a3f4c]">
@@ -191,8 +206,4 @@ function Requisite({ label, value }: { label: string; value: string | null }) {
       <dd className="min-w-0 break-words text-[#141821]">{value || "не указано"}</dd>
     </div>
   );
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }

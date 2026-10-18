@@ -1,11 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { buildDocumentOrgBlock } from "@/lib/document-org-block";
 import { buildHaccpPlanPdf, buildPpkProgramPdf } from "./pdf";
+import { ppkPrintOrgFromBlock } from "./print-org";
 import type { PpkBundle } from "./assemble.server";
 
+const testOrg = (inn: string | null, address: string | null) =>
+  ppkPrintOrgFromBlock(buildDocumentOrgBlock({ org: { name: "ООО «Тест»", inn, address } }));
+
 const emptyBundle = (): PpkBundle => ({
-  org: { logoUrl: null, orgName: "ООО «Тест»", orgInn: null, orgAddress: null, snapshot: null },
+  org: testOrg(null, null),
   team: [],
   policy: null,
   products: [],
@@ -25,7 +30,7 @@ const emptyBundle = (): PpkBundle => ({
 
 const smallBundle = (): PpkBundle => ({
   ...emptyBundle(),
-  org: { logoUrl: null, orgName: "ООО «Тест»", orgInn: "7700000000", orgAddress: "Москва", snapshot: null },
+  org: testOrg("7700000000", "Москва"),
   team: [{ userId: "u1", role: "leader", duties: "Руководит", name: "Иванов Иван", title: "Шеф-повар" }],
   norms: ["СанПиН 2.3/2.4.3590-20"],
   positions: ["Повар"],

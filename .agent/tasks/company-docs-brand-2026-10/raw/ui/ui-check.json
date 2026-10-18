@@ -1,0 +1,29 @@
+{
+  "logoRouteDirect": {
+    "status": 200,
+    "contentType": "image/png"
+  },
+  "logoRouteDevServer": 200,
+  "organization": 200,
+  "headerPreview": "Кафе «Точки» · ИНН 7701234567 · КПП 770101001 · г. Москва, ул. Пищевая, д. 12",
+  "previewAfterEdit": "Кафе «Точки» · ИНН 7701234567 · КПП 770199001 · г. Москва, ул. Пищевая, д. 12",
+  "previewAfterReset": "Кафе «Точки» · ИНН 7701234567 · КПП 770101001 · г. Москва, ул. Пищевая, д. 12",
+  "qr-a4": 200,
+  "qr-a4-logos": 2,
+  "qr-a4-brandBand": 2,
+  "qr-a5": 200,
+  "qr-a5-logos": 2,
+  "qr-a5-brandBand": 2,
+  "qr-sticker": 200,
+  "qr-sticker-logos": 2,
+  "qr-sticker-brandBand": 0,
+  "order": 200,
+  "poster": 200,
+  "program": 200,
+  "inspectorSheet": 200,
+  "inspector": 200,
+  "inspectorLogo": 1,
+  "inspectorBand": 1,
+  "inspectorRequisites": "ИНН\n7701234567\nКПП\n770101001\nОГРН\n1027700132195\nЮридический адрес\n123100, г Москва, Пресненская наб, д 12, оф 301\nФактический адрес\nг. Москва, ул. Пищевая, д. 12\nГенеральный директор\nИванова Анна Сергеевна\nТелефон\n+7 495 000-00-00",
+  "errors": []
+}

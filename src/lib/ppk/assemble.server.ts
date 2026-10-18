@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { loadPpkPrintOrg, type PpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
+import type { PdfLogo } from "@/lib/pdf-logo";
+import { loadPdfOrgLogo } from "@/lib/pdf-logo.server";
 import { NORM_CATALOG } from "./norm-catalog";
 import { labNextDate } from "./sanitation";
 import { loadPpkStaff } from "./staff.server";
@@ -36,6 +38,8 @@ export type BundleResponsible = { name: string; title: string; journals: string[
 export type PpkBundle = {
   /** Организация: логотип и реквизиты (в `snapshot` — директор). */
   org: PpkPrintOrg;
+  /** Логотип для PDF (загруженный файл организации); нет — PDF без логотипа. */
+  logo?: PdfLogo | null;
   /** Группа ХАССП: руководитель первым. */
   team: BundleTeamMember[];
   policy: (Omit<PolicyData, "token" | "approvedById"> & { approvedByName: string | null }) | null;
@@ -149,8 +153,11 @@ export async function loadPpkBundle(organizationId: string): Promise<PpkBundle> 
     .map(([userId, names]) => ({ name: people.get(userId)!.name, title: people.get(userId)!.title, journals: names }))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
+  const logo = await loadPdfOrgLogo(organizationId, org.logoUrl);
+
   return {
     org,
+    logo,
     team,
     policy,
     products: valid<ProductData>("products").map(({ data }) => data),
