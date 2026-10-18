@@ -27,6 +27,7 @@
     "capture:source:25-27:auto": "tsx scripts/capture-source-journals.ts --no-login-pause --targets tmp-source-journals/targets-25-27.json --out tmp-source-journals/capture-25-27",
     "capture:source:all": "tsx scripts/crawl-all-source-journals.ts",
     "typecheck": "tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json",
+    "video:render": "tsx scripts/landing-video/render.ts",
     "test": "node --import tsx --test --test-reporter=spec \"src/**/*.test.ts\"",
     "test:watch": "node --import tsx --watch --test \"src/**/*.test.ts\"",
     "test:ci": "node --import tsx --test --test-reporter=tap \"src/**/*.test.ts\"",
@@ -95,6 +96,10 @@
   "devDependencies": {
     "@formatjs/icu-messageformat-parser": "3.5.21",
     "@playwright/test": "^1.59.1",
+    "@remotion/bundler": "4.0.528",
+    "@remotion/cli": "4.0.528",
+    "@remotion/renderer": "4.0.528",
+    "@remotion/tailwind-v4": "4.0.528",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",

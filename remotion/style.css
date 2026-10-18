@@ -1,0 +1,17 @@
+/*
+ * Tailwind для сцены ролика вне Next: те же утилиты, что на главной
+ * (`@container`, `md:`, произвольные значения). Источники — только сцена
+ * и композиция видео, без сканирования всего репозитория.
+ */
+@import "tailwindcss" source(none);
+@source "../src/components/landing/qr-player";
+@source "./";
+
+/* Manrope — шрифт кабинета (self-hosted в репозитории): в видео он один
+   на всех компьютерах, в отличие от системного стека главной. */
+@font-face {
+  font-family: "Manrope";
+  src: url("../src/app/fonts/manrope-variable.ttf") format("truetype");
+  font-weight: 200 800;
+  font-display: block;
+}

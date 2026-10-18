@@ -5257,7 +5257,11 @@
       "bodyTemperatureHigh": "37 °C dan yuqori: harorat maydoniga imzo qo‘yib bo‘lmaydi — xodim ishga qo‘yilmaydi va rahbarga bildirishnoma yuboriladi.",
       "bodyTemperatureNormal": "37 °C gacha: uchta imzo — va xodim ishga ruxsat oladi.",
       "storyboardCaption": "Kadrlar ketma-ketligi {chapterNumber, number}/{chapterCount, number}. {caption}",
-      "chapterDescription": "{chapterNumber, number}-bob: {chapterName}. Jurnal: {journalName}. {caption}"
+      "chapterDescription": "{chapterNumber, number}-bob: {chapterName}. Jurnal: {journalName}. {caption}",
+      "watchVideo": "Videoni ovoz bilan ko‘rish",
+      "watchVideoHint": "Ovoz va subtitrli video pleyerda ochiladi",
+      "videoLabel": "QR qanday ishlashi — ovozli video",
+      "videoSubtitles": "Subtitrlar"
     },
     "chapter": {
       "fridge": {

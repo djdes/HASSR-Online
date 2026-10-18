@@ -1,0 +1,9 @@
+# grep по всему src/: импорты пакетов рендера
+exit(grep, 1 = нет совпадений): 1
+
+# где импортируются пакеты рендера
+remotion/webpack-override.ts:3:import type { WebpackOverrideFn } from "@remotion/bundler";
+remotion/webpack-override.ts:4:import { enableTailwind } from "@remotion/tailwind-v4";
+remotion.config.ts:5:import { Config } from "@remotion/cli/config";
+scripts/landing-video/render.ts:23:import { bundle } from "@remotion/bundler";
+scripts/landing-video/render.ts:24:import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";

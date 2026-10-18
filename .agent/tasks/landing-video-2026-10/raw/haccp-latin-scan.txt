@@ -1,0 +1,12 @@
+# латинское HACCP в русском ролике и подписях кнопки/окна (ожидается: ничего)
+$ grep -rnI "HACCP" remotion scripts/landing-video public/landing/video/qr-tour-ru.vtt public/landing/video/voice src/components/landing/qr-player/video-lightbox.tsx src/components/landing/qr-player/narrated-timeline.ts src/components/landing/qr-player/scene.tsx src/components/landing/qr-player/chapters.ts
+exit 1 (1 = не найдено)
+
+# ru.json: пространства, которые видит ролик и кнопка (qrPlayer, qrScene, journals, hygiene)
+qrPlayer HACCP: 0
+qrScene HACCP: 0
+journals HACCP: 0
+hygiene HACCP: 0
+
+# финальная подпись
+241:export const OUTRO_TAGLINE = "ваш электронный ХАССП";

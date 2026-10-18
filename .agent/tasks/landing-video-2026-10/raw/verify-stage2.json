@@ -1,0 +1,158 @@
+{
+  "base": "http://localhost:3047",
+  "browser": "Google Chrome (H.264/AAC)",
+  "passed": 30,
+  "total": 30,
+  "results": [
+    {
+      "name": "1440x900: кнопка «Смотреть видео со звуком» видна",
+      "ok": true,
+      "detail": "Смотреть видео со звуком"
+    },
+    {
+      "name": "1440x900: до нажатия видео, постер и субтитры не грузятся",
+      "ok": true,
+      "detail": "0 запросов"
+    },
+    {
+      "name": "1440x900: немой ролик идёт, пока окно закрыто",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: окно: <video controls playsInline poster preload=none>",
+      "ok": true,
+      "detail": "{\"controls\":true,\"playsInline\":true,\"preload\":\"none\",\"poster\":\"/landing/video/qr-tour-ru.jpg\",\"src\":\"/landing/video/qr-tour-ru.mp4\",\"track\":\"/landing/video/qr-tour-ru.vtt\"}"
+    },
+    {
+      "name": "1440x900: дорожка субтитров qr-tour-ru.vtt",
+      "ok": true,
+      "detail": "/landing/video/qr-tour-ru.vtt"
+    },
+    {
+      "name": "1440x900: видео 16:9 в окне",
+      "ok": true,
+      "detail": "1045×588"
+    },
+    {
+      "name": "1440x900: видео пошло со звуком после нажатия",
+      "ok": true,
+      "detail": "{\"time\":2.221053,\"paused\":false,\"duration\":88.725333,\"error\":null,\"w\":1920,\"h\":1080}, ждали 2.6 с"
+    },
+    {
+      "name": "1440x900: файл 1920×1080, ~89 с",
+      "ok": true,
+      "detail": "1920×1080, 88.73 с"
+    },
+    {
+      "name": "1440x900: видео загрузилось только после нажатия",
+      "ok": true,
+      "detail": "2 запросов"
+    },
+    {
+      "name": "1440x900: немой ролик на странице стоит под окном",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: страница не прокручивается под окном",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: Пробел в окне не запускает немой ролик",
+      "ok": true,
+      "detail": "видео на паузе: true"
+    },
+    {
+      "name": "1440x900: Esc закрывает окно",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: фокус вернулся на кнопку",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: немой ролик продолжил",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: крестик закрывает окно",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: щелчок мимо окна закрывает",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: плеер на весь экран: Пробел не запускает ролик на странице",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: плеер на весь экран закрылся по Esc",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900: нет ошибок в консоли",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "390x800: кнопка видна целиком, без переполнения",
+      "ok": true,
+      "detail": "286px"
+    },
+    {
+      "name": "390x800: грубый указатель",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "390x800: до нажатия видео не грузится",
+      "ok": true,
+      "detail": "0 запросов"
+    },
+    {
+      "name": "390x800: нажатие сразу открывает нативный полный экран видео",
+      "ok": true,
+      "detail": "{\"fullscreen\":\"VIDEO\",\"native\":true,\"dialog\":false}"
+    },
+    {
+      "name": "390x800: видео идёт; без playsInline (iPhone уходит в свой плеер)",
+      "ok": true,
+      "detail": "{\"time\":2.493062,\"paused\":false,\"playsInline\":false}"
+    },
+    {
+      "name": "390x800: выход из полного экрана закрывает слой",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "390x800: нет ошибок в консоли",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "EN-главная: кнопки видео нет",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "RU без MP4: кнопки видео нет",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "MP4 возвращён на место",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

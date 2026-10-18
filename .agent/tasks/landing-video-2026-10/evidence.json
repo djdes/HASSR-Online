@@ -11,5 +11,47 @@
     "AC8": "PENDING",
     "artifacts": ["raw/verify-stage1.mjs", "raw/verify-stage1.json", "raw/tsc-stage1.txt", "raw/lint-stage1.txt", "raw/shots/"]
   },
-  "stage2": {}
+  "stage2": {
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS",
+    "AC13": "PASS",
+    "AC14": "PASS",
+    "AC15": "PASS",
+    "AC16": "PASS",
+    "AC17": "PASS",
+    "video": {
+      "file": "public/landing/video/qr-tour-ru.mp4",
+      "poster": "public/landing/video/qr-tour-ru.jpg",
+      "captions": "public/landing/video/qr-tour-ru.vtt",
+      "durationSeconds": 88.7,
+      "bytes": 13047177,
+      "outroTagline": "ваш электронный ХАССП",
+      "video": "h264 High 1920x1080 30fps yuv420p, color_range=tv, bt709",
+      "audio": "aac LC 48kHz stereo",
+      "crf": 28,
+      "voice": "Marina (warm), eleven_multilingual_v2"
+    },
+    "checks": {
+      "tscProject": "exit 0 (tsconfig.typecheck.json)",
+      "tscRemotion": "exit 0 (remotion/tsconfig.json)",
+      "eslintChangedFiles": "0 errors, 2 pre-existing warnings",
+      "unitTests": "narrated-video.test.ts 9/9; qr-player + i18n 110/110",
+      "color": "frame 197 decoded per tags vs Chrome still: mean |diff| 1.4/255",
+      "playwright": "30/30 PASS",
+      "ffprobe": "raw/ffprobe-stage2.txt"
+    },
+    "artifacts": [
+      "raw/verify-stage2.mjs",
+      "raw/verify-stage2.json",
+      "raw/ffprobe-stage2.txt",
+      "raw/render-stage2.log",
+      "raw/lint-stage2.txt",
+      "raw/remotion-imports-stage2.txt",
+      "raw/secrets-scan-stage2.txt",
+      "raw/shots/stage2-*.jpg (local, gitignored)",
+      "voice-samples/"
+    ]
+  }
 }

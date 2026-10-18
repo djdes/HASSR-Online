@@ -165,6 +165,12 @@ type FlightPath = { mobile: Leg; desktop: Leg };
 type CameraState = { t: number; frame: number; pan: number; push: number; journalAt: number };
 const CameraContext = createContext<CameraState>({ t: 0, frame: 0, pan: 0, push: 0, journalAt: 99 });
 
+/**
+ * Адрес картинки сцены (фото мест из public/). На сайте — как есть; при
+ * рендере видео (`remotion/`) файлы public отдаются через `staticFile()`.
+ */
+export const SceneAssets = createContext<(src: string) => string>((src) => src);
+
 /** Закрытая форма пружины с критическим затуханием: 0 → 1, без перелёта. */
 function spring(t: number, from: number, omega = 6.4): number {
   if (t <= from) return 0;
@@ -550,6 +556,7 @@ const VIEWFINDER_LAYOUT: Record<
 function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: ScanObject; qr: QrMatrix; bodyTemp: number; photo?: string }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
+  const assetUrl = useContext(SceneAssets);
   const hide = progress(t, 0.85, 0.25, ease.inOut);
   if (hide >= 1) return null;
   const lock = progress(t, 0.35, 0.3, ease.out);
@@ -569,7 +576,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
               руках, а не штатив. Всё — функции t, перемотка детерминирована. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={photo}
+            src={assetUrl(photo)}
             alt=""
             style={{
               position: "absolute",
@@ -1367,11 +1374,12 @@ function FlightLeg({ t, at, leg, children, tone, meta, size, id }: { t: number; 
 function Backdrop({ chapter, t, pan, push }: { chapter: Chapter; t: number; pan: number; push: number }) {
   const enter = progress(t, 0, 0.45, ease.out);
   const drift = progress(t, 0, CHAPTER_SECONDS, ease.linear);
+  const assetUrl = useContext(SceneAssets);
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: P.stage }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={chapter.photo}
+        src={assetUrl(chapter.photo)}
         alt=""
         style={{
           position: "absolute",
@@ -2246,7 +2254,9 @@ function journalAtFor(chapter: Chapter, fridgeTemp: number): number {
  */
 export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProps) {
   const { chapter, index, local } = chapterAt(frame);
-  const t = sceneSeconds(local);
+  // Доля кадра — только у видео с голосом, где глава держит итог
+  // (`narrated-timeline.ts`); Плеер на главной отдаёт целые кадры.
+  const t = sceneSeconds(local + (frame - Math.floor(frame)));
   const journalAt = journalAtFor(chapter, fridgeTemp);
   const pan = spring(t, journalAt, 5.4);
   const push = 1 - spring(t, 0.1, 3.9);

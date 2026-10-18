@@ -5258,7 +5258,11 @@ export type MessageContract = {
       "bodyTemperatureHigh": "Выше 37 °C: графу о температуре нельзя подписать — сотрудник «не допущен», заведующей отправляется уведомление.",
       "bodyTemperatureNormal": "До 37 °C: три подписи — и сотрудник допущен к работе.",
       "storyboardCaption": "Раскадровка {chapterNumber, number}/{chapterCount, number}. {caption}",
-      "chapterDescription": "Глава {chapterNumber, number}: {chapterName}. Журнал: {journalName}. {caption}"
+      "chapterDescription": "Глава {chapterNumber, number}: {chapterName}. Журнал: {journalName}. {caption}",
+      "watchVideo": "Смотреть видео со звуком",
+      "watchVideoHint": "Видео с голосом и субтитрами откроется в плеере",
+      "videoLabel": "Видео «Как работает QR» со звуком",
+      "videoSubtitles": "Субтитры"
     },
     "chapter": {
       "fridge": {
