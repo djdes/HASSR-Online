@@ -14,7 +14,7 @@ color_primaries=bt709
 r_frame_rate=30/1
 avg_frame_rate=30/1
 duration=88.700000
-bit_rate=1042179
+bit_rate=1042520
 [/STREAM]
 [STREAM]
 index=1
@@ -31,8 +31,8 @@ bit_rate=125375
 [FORMAT]
 format_name=mov,mp4,m4a,3gp,3g2,mj2
 duration=88.725333
-size=13043379
-bit_rate=1176068
+size=13047177
+bit_rate=1176410
 [/FORMAT]
 
 # одной строкой
@@ -40,7 +40,7 @@ codec_name=h264|profile=100|width=1920|height=1080|pix_fmt=yuv420p|color_range=t
 codec_name=aac|profile=1|sample_rate=48000|channels=2
 
 # размеры файлов (байт)
-public/landing/video/qr-tour-ru.mp4 13043379
+public/landing/video/qr-tour-ru.mp4 13047177
 public/landing/video/qr-tour-ru.jpg 91595
 public/landing/video/qr-tour-ru.vtt 2291
 
@@ -49,6 +49,3 @@ mjpeg,1920,1080
 
 # цвет: кадр 197 из MP4 (раскодирован по меткам bt709/tv) против снимка Chrome того же кадра
 mean |diff| RGB (0-255): [1.37, 1.48, 1.53]
-   (100, 900) chrome (11, 17, 39) mp4 (9, 16, 38)
-   (960, 420) chrome (10, 16, 40) mp4 (9, 16, 40)
-   (1560, 600) chrome (35, 32, 85) mp4 (35, 32, 83)

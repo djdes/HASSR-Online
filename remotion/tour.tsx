@@ -238,7 +238,7 @@ function IntroCard({ part }: { part: TimelinePart }) {
  * голосу → на «сетап» — крупный логотип и подпись. Без цен и призывов.
  * ------------------------------------------------------------------- */
 
-export const OUTRO_TAGLINE = "ваш электронный HACCP";
+export const OUTRO_TAGLINE = "ваш электронный ХАССП";
 
 function OutroCard({ part }: { part: TimelinePart }) {
   const frame = useCurrentFrame();

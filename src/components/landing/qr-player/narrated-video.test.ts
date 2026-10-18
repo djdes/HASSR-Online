@@ -220,7 +220,13 @@ test("рендер: пакеты Remotion 4.0.528 только в devDependencie
   const tour = read("remotion/tour.tsx");
   assert.match(tour, /width: 1920, height: 1080, fps: FPS/);
   assert.match(tour, /<SceneFrame /, "главы — та же сцена, что на главной");
-  assert.match(tour, /OUTRO_TAGLINE = "ваш электронный HACCP"/);
+  assert.match(tour, /OUTRO_TAGLINE = "ваш электронный ХАССП"/);
+  // Сокращение — только кириллицей «ХАССП»: в кадре, сценарии, субтитрах и подписях кнопки/окна.
+  const ruPlayer = JSON.stringify((JSON.parse(read("src/i18n/messages/ru.json")) as { qrPlayer: unknown }).qrPlayer);
+  const vtt = existsSync(path.join(ROOT, "public/landing/video/qr-tour-ru.vtt")) ? read("public/landing/video/qr-tour-ru.vtt") : "";
+  for (const [name, text] of [["remotion/tour.tsx", tour], ["narration.ru.json", read("remotion/narration.ru.json")], ["qr-tour-ru.vtt", vtt], ["ru.json qrPlayer", ruPlayer]]) {
+    assert.doesNotMatch(text, /HACCP/i, `${name}: латинское HACCP`);
+  }
   // Код без комментариев: в кадре нет QR-наклейки, цен и призывов.
   const code = tour.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
   assert.doesNotMatch(code, /QrSticker|₽|тариф|купи|попроб|бесплатн/i, "финал без QR, цен и призывов");

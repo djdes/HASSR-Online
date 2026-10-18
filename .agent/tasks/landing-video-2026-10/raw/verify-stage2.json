@@ -37,7 +37,7 @@
     {
       "name": "1440x900: видео пошло со звуком после нажатия",
       "ok": true,
-      "detail": "{\"time\":1.214591,\"paused\":false,\"duration\":88.725333,\"error\":null,\"w\":1920,\"h\":1080}, ждали 1.3 с"
+      "detail": "{\"time\":2.221053,\"paused\":false,\"duration\":88.725333,\"error\":null,\"w\":1920,\"h\":1080}, ждали 2.6 с"
     },
     {
       "name": "1440x900: файл 1920×1080, ~89 с",
@@ -127,7 +127,7 @@
     {
       "name": "390x800: видео идёт; без playsInline (iPhone уходит в свой плеер)",
       "ok": true,
-      "detail": "{\"time\":2.563294,\"paused\":false,\"playsInline\":false}"
+      "detail": "{\"time\":2.493062,\"paused\":false,\"playsInline\":false}"
     },
     {
       "name": "390x800: выход из полного экрана закрывает слой",
