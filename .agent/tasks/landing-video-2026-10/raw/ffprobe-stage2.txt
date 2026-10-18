@@ -13,8 +13,8 @@ color_transfer=bt709
 color_primaries=bt709
 r_frame_rate=30/1
 avg_frame_rate=30/1
-duration=58.300000
-bit_rate=1049809
+duration=59.533333
+bit_rate=1032140
 [/STREAM]
 [STREAM]
 index=1
@@ -25,14 +25,14 @@ sample_rate=48000
 channels=2
 r_frame_rate=0/0
 avg_frame_rate=0/0
-duration=58.325333
+duration=59.562667
 bit_rate=125375
 [/STREAM]
 [FORMAT]
 format_name=mov,mp4,m4a,3gp,3g2,mj2
-duration=58.325333
-size=8629043
-bit_rate=1183573
+duration=59.562667
+size=8680158
+bit_rate=1165852
 [/FORMAT]
 
 # одной строкой
@@ -40,9 +40,15 @@ codec_name=h264|profile=100|width=1920|height=1080|pix_fmt=yuv420p|color_range=t
 codec_name=aac|profile=1|sample_rate=48000|channels=2
 
 # размеры файлов (байт)
-public/landing/video/qr-tour-ru.mp4 8629043
+public/landing/video/qr-tour-ru.mp4 8680158
 public/landing/video/qr-tour-ru.jpg 91364
 public/landing/video/qr-tour-ru.vtt 1446
 
 # постер
 mjpeg,1920,1080
+
+# финал в миксе (громкость слов, тишина до конца)
+микс: средняя громкость слова -34.7 LUFS
+  Это      325 мс  -34.0 LUFS (+0.7 к средней)
+  сетап.   952 мс  -29.9 LUFS (+4.8 к средней)
+конец речи 57.95 с, конец ролика 59.56 с, тишина 1.62 с (уровень -131 дБFS)

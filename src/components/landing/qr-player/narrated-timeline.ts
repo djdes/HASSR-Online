@@ -23,6 +23,9 @@ export type VoiceTrack = {
   words: VoiceWord[];
 };
 
+/** Клип голоса внутри части: с какого кадра части звучит. */
+export type PartVoice = { track: VoiceTrack; offset: number };
+
 export type TimelinePart = {
   id: string;
   kind: "intro" | "chapter" | "outro";
@@ -30,9 +33,11 @@ export type TimelinePart = {
   /** Первый кадр части в видео. */
   from: number;
   durationInFrames: number;
-  /** Кадр от начала части, с которого звучит голос. */
+  /** Кадр от начала части, с которого звучит голос (первый клип). */
   voiceOffset: number;
   voice: VoiceTrack;
+  /** Все клипы части по порядку; у финала второй — «Это сетап.» отдельно. */
+  voices: PartVoice[];
 };
 
 export type Timeline = { parts: TimelinePart[]; durationInFrames: number };
@@ -47,15 +52,19 @@ export const CHAPTER_VOICE_OFFSET = 8;
 /** Вступление: сначала логотип, потом голос. */
 export const INTRO_VOICE_OFFSET = 14;
 export const OUTRO_VOICE_OFFSET = 12;
-/** Финал держит логотип ещё 2 с после голоса. */
-export const OUTRO_HOLD_SECONDS = 2;
+/** Пауза перед «Это сетап.» — отдельный клип после «Без бумаги…». */
+export const TAGLINE_PAUSE_SECONDS = 0.5;
+/** Финал держит логотип ещё 1,5 с после «Это сетап.» (тишина до конца ролика ≥ 1 с; ролик ≤ 60 с). */
+export const OUTRO_HOLD_SECONDS = 1.5;
 
 /** Кадр итога сцены (запись уже в бланке) — от него глава держится. */
 export const HOLD_FROM = sceneFrame(RESULT_SECONDS);
 /** Склейка «на скорости» — последние 0,2 с сцены. */
 export const WHIP_FROM = sceneFrame(CHAPTER_SECONDS - 0.2);
 
-const ORDER = ["intro", ...CHAPTERS.map((chapter) => chapter.id), "outro"];
+const ORDER = ["intro", ...CHAPTERS.map((chapter) => chapter.id), "outro", "outroTagline"];
+
+const audioFrames = (track: VoiceTrack) => Math.ceil(Math.max(track.audioSeconds, track.speechEnd) * FPS);
 
 function voiceFrames(track: VoiceTrack): number {
   return Math.ceil((Math.max(track.audioSeconds, track.speechEnd) + VOICE_TAIL_SECONDS) * FPS);
@@ -73,23 +82,28 @@ export function buildTimeline(tracks: VoiceTrack[]): Timeline {
   }
   const parts: TimelinePart[] = [];
   let from = 0;
-  tracks.forEach((voice, index) => {
-    const kind = index === 0 ? "intro" : index === tracks.length - 1 ? "outro" : "chapter";
-    const voiceOffset = kind === "intro" ? INTRO_VOICE_OFFSET : kind === "outro" ? OUTRO_VOICE_OFFSET : CHAPTER_VOICE_OFFSET;
-    const durationInFrames =
-      kind === "chapter"
-        ? chapterFrames(voice)
-        : voiceOffset + voiceFrames(voice) + (kind === "outro" ? Math.round((OUTRO_HOLD_SECONDS - VOICE_TAIL_SECONDS) * FPS) : 0);
-    parts.push({
-      id: voice.id,
-      kind,
-      ...(kind === "chapter" ? { chapterIndex: index - 1 } : {}),
-      from,
-      durationInFrames,
-      voiceOffset,
-      voice,
-    });
-    from += durationInFrames;
+  const push = (part: Omit<TimelinePart, "from" | "voice" | "voiceOffset">) => {
+    parts.push({ ...part, from, voice: part.voices[0].track, voiceOffset: part.voices[0].offset });
+    from += part.durationInFrames;
+  };
+  const intro = tracks[0];
+  push({ id: intro.id, kind: "intro", durationInFrames: INTRO_VOICE_OFFSET + voiceFrames(intro), voices: [{ track: intro, offset: INTRO_VOICE_OFFSET }] });
+  CHAPTERS.forEach((_, index) => {
+    const track = tracks[index + 1];
+    push({ id: track.id, kind: "chapter", chapterIndex: index, durationInFrames: chapterFrames(track), voices: [{ track, offset: CHAPTER_VOICE_OFFSET }] });
+  });
+  // Финал: «Без бумаги…», пауза, «Это сетап.» отдельным клипом, потом логотип держится.
+  const outro = tracks[tracks.length - 2];
+  const tagline = tracks[tracks.length - 1];
+  const taglineOffset = OUTRO_VOICE_OFFSET + audioFrames(outro) + Math.round(TAGLINE_PAUSE_SECONDS * FPS);
+  push({
+    id: outro.id,
+    kind: "outro",
+    durationInFrames: taglineOffset + audioFrames(tagline) + Math.round(OUTRO_HOLD_SECONDS * FPS),
+    voices: [
+      { track: outro, offset: OUTRO_VOICE_OFFSET },
+      { track: tagline, offset: taglineOffset },
+    ],
   });
   return { parts, durationInFrames: from };
 }
@@ -168,13 +182,15 @@ export function cueGroups(words: VoiceWord[]): VoiceWord[][] {
 export function timelineCues(timeline: Timeline): Cue[] {
   const cues: Cue[] = [];
   for (const part of timeline.parts) {
-    const base = (part.from + part.voiceOffset) / FPS;
     const partEnd = (part.from + part.durationInFrames) / FPS;
-    const groups = cueGroups(part.voice.words);
-    groups.forEach((group, index) => {
+    const groups = part.voices.flatMap((voice) => {
+      const base = (part.from + voice.offset) / FPS;
+      return cueGroups(voice.track.words).map((group) => ({ base, group }));
+    });
+    groups.forEach(({ base, group }, index) => {
       const words = group.map((word) => ({ text: word.text, start: round3(base + word.start), end: round3(base + word.end) }));
       const next = groups[index + 1];
-      const limit = next ? base + next[0].start : partEnd;
+      const limit = next ? next.base + next.group[0].start : partEnd;
       cues.push({
         partId: part.id,
         start: words[0].start,

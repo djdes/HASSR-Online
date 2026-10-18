@@ -1,7 +1,7 @@
 {
   "id": "outro",
-  "text": "Без бумаги, без паролей и без установки приложений. Это сетап.",
-  "say": "Без бумаги, без паролей и без установки приложений. Это сетАп.",
+  "text": "Без бумаги, без паролей и без установки приложений.",
+  "say": "Без бумаги, без паролей и без установки приложений.",
   "model": "eleven_multilingual_v2",
   "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
   "settings": {
@@ -11,62 +11,52 @@
     "use_speaker_boost": true,
     "speed": 1
   },
-  "seed": 4303,
-  "fingerprint": "2d14537d60a0e22f",
-  "characters": 62,
-  "audioSeconds": 4.859,
+  "seed": 4242,
+  "fingerprint": "9165127cced00fe5",
+  "characters": 51,
+  "audioSeconds": 4.65,
   "speechStart": 0,
-  "speechEnd": 4.783,
+  "speechEnd": 4.598,
   "words": [
     {
       "text": "Без",
       "start": 0,
-      "end": 0.197
+      "end": 0.267
     },
     {
       "text": "бумаги,",
-      "start": 0.267,
-      "end": 0.766
+      "start": 0.337,
+      "end": 1.057
     },
     {
       "text": "без",
-      "start": 0.801,
-      "end": 0.952
+      "start": 1.138,
+      "end": 1.335
     },
     {
       "text": "паролей",
-      "start": 1.033,
-      "end": 1.486
+      "start": 1.416,
+      "end": 1.997
     },
     {
       "text": "и",
-      "start": 1.544,
-      "end": 1.591
+      "start": 2.322,
+      "end": 2.415
     },
     {
       "text": "без",
-      "start": 1.66,
-      "end": 1.823
+      "start": 2.485,
+      "end": 2.659
     },
     {
       "text": "установки",
-      "start": 1.881,
-      "end": 2.45
+      "start": 2.728,
+      "end": 3.309
     },
     {
       "text": "приложений.",
-      "start": 2.508,
-      "end": 3.297
-    },
-    {
-      "text": "Это",
-      "start": 3.576,
-      "end": 3.855
-    },
-    {
-      "text": "сетап.",
-      "start": 3.924,
-      "end": 4.783
+      "start": 3.355,
+      "end": 4.598
     }
   ],
   "voiceName": "Elena (Calm and Confident)"

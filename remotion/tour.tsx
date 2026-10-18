@@ -37,6 +37,7 @@ import uv from "../public/landing/video/voice/ru/03-uv.json";
 import forgot from "../public/landing/video/voice/ru/05-forgot.json";
 import sensor from "../public/landing/video/voice/ru/06-sensor.json";
 import outro from "../public/landing/video/voice/ru/07-outro.json";
+import outroTagline from "../public/landing/video/voice/ru/08-outro-tagline.json";
 
 /**
  * Видео «Как работает QR» с голосом: та же композиция `SceneFrame`, что на
@@ -52,11 +53,13 @@ import outro from "../public/landing/video/voice/ru/07-outro.json";
  */
 
 export const VIDEO = { width: 1920, height: 1080, fps: FPS } as const;
-export const TRACKS: VoiceTrack[] = [intro, fridge, locker, uv, forgot, sensor, outro];
+export const TRACKS: VoiceTrack[] = [intro, fridge, locker, uv, forgot, sensor, outro, outroTagline];
 export const TIMELINE = buildTimeline(TRACKS);
 export const CUES: Cue[] = timelineCues(TIMELINE);
 
 const FILES = Object.fromEntries(narration.segments.map((segment) => [segment.id, segment.file]));
+/** Усиление клипа (дБ): «Это сетап.» в конце фразы голос произносит тише — выравниваем до средней громкости ролика. */
+const GAIN = Object.fromEntries(narration.segments.map((segment) => [segment.id, "gainDb" in segment ? segment.gainDb : 0]));
 // Те же пространства сообщений, что у ролика на главной (`DomainMessagesBoundary`).
 const MESSAGES = pickMessages(ru as Messages, ["qrPlayer", "qrScene", "journals", "hygiene"]);
 const FONT = "Manrope, 'Segoe UI', system-ui, sans-serif";
@@ -98,9 +101,11 @@ export const QrTourNarrated: React.FC<QrTourProps> = ({ qr, today }) => {
               {part.kind === "intro" ? <IntroCard part={part} /> : null}
               {part.kind === "chapter" ? <ChapterPart part={part} qr={qr} today={today} /> : null}
               {part.kind === "outro" ? <OutroCard part={part} /> : null}
-              <Sequence from={part.voiceOffset} name={`голос ${part.id}`}>
-                <Html5Audio src={staticFile(`landing/video/voice/ru/${FILES[part.id]}.mp3`)} />
-              </Sequence>
+              {part.voices.map((voice) => (
+                <Sequence key={voice.track.id} from={voice.offset} name={`голос ${voice.track.id}`}>
+                  <Html5Audio src={staticFile(`landing/video/voice/ru/${FILES[voice.track.id]}.mp3`)} volume={10 ** ((GAIN[voice.track.id] ?? 0) / 20)} />
+                </Sequence>
+              ))}
             </Sequence>
           ))}
           <Captions />
@@ -243,11 +248,13 @@ function OutroCard({ part }: { part: TimelinePart }) {
   const frame = useCurrentFrame();
   const words = part.voice.words;
   const firstSentenceEnd = sentenceAfter(part);
-  const logoAt = wordAt(part, words.length - 1) - 4;
+  // Логотип — на «сетап» из отдельного клипа «Это сетап.» (после паузы).
+  const tagline = part.voices[part.voices.length - 1];
+  const logoAt = tagline.offset + Math.round(tagline.track.words[tagline.track.words.length - 1].start * FPS) - 4;
   const { value: logoValue, style: logo } = logoIn(frame, logoAt);
   const fadeIn = interpolate(frame, [0, 14], [0, 1], clamp);
   const lift = interpolate(frame, [logoAt - 8, logoAt + 16], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
-  const tagline = interpolate(frame, [logoAt + 20, logoAt + 44], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const caption = interpolate(frame, [logoAt + 20, logoAt + 44], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
   return (
     <AbsoluteFill style={{ opacity: fadeIn }}>
       <HeroBackdrop frame={frame + 400}>
@@ -277,9 +284,9 @@ function OutroCard({ part }: { part: TimelinePart }) {
             fontSize: 38,
             fontWeight: 500,
             color: "rgba(255,255,255,0.78)",
-            letterSpacing: `${(0.14 - 0.1 * tagline).toFixed(3)}em`,
-            opacity: tagline,
-            transform: `translateY(${((1 - tagline) * 14 - 36 * lift).toFixed(2)}px)`,
+            letterSpacing: `${(0.14 - 0.1 * caption).toFixed(3)}em`,
+            opacity: caption,
+            transform: `translateY(${((1 - caption) * 14 - 36 * lift).toFixed(2)}px)`,
           }}
         >
           {OUTRO_TAGLINE}

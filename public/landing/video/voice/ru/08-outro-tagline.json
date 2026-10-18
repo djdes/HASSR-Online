@@ -1,0 +1,33 @@
+{
+  "id": "outroTagline",
+  "text": "Это сетап.",
+  "say": "Это сетАп.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "settings": {
+    "stability": 0.8,
+    "similarity_boost": 0.8,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 0.9
+  },
+  "seed": 5002,
+  "fingerprint": "74518cac0a68f01e",
+  "characters": 10,
+  "audioSeconds": 1.411,
+  "speechStart": 0,
+  "speechEnd": 1.347,
+  "words": [
+    {
+      "text": "Это",
+      "start": 0,
+      "end": 0.325
+    },
+    {
+      "text": "сетап.",
+      "start": 0.395,
+      "end": 1.347
+    }
+  ],
+  "voiceName": "Elena (Calm and Confident)"
+}

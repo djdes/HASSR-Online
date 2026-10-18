@@ -187,16 +187,19 @@ function wordsFrom(segment, alignment) {
 }
 
 const seedOf = (segment) => segment.seed ?? SEED;
+/** Свои настройки у сегмента (например, «Это сетАп.» медленнее и ровнее). */
+const settingsOf = (segment) => ({ ...SETTINGS, ...(segment.settings ?? {}) });
 
 function fingerprint(segment, voiceId) {
-  return createHash("sha256").update(JSON.stringify({ say: segment.say, voiceId, MODEL, SETTINGS, SEED: seedOf(segment) })).digest("hex").slice(0, 16);
+  const settings = settingsOf(segment);
+  return createHash("sha256").update(JSON.stringify({ say: segment.say, voiceId, MODEL, SETTINGS: settings, SEED: seedOf(segment) })).digest("hex").slice(0, 16);
 }
 
 async function synthesize(segment, voiceId, context = {}) {
   const body = {
     text: segment.say,
     model_id: MODEL,
-    voice_settings: SETTINGS,
+    voice_settings: settingsOf(segment),
     seed: seedOf(segment),
     ...(context.previous ? { previous_text: context.previous } : {}),
     ...(context.next ? { next_text: context.next } : {}),
@@ -215,7 +218,7 @@ async function synthesize(segment, voiceId, context = {}) {
       say: segment.say,
       model: MODEL,
       voiceId,
-      settings: SETTINGS,
+      settings: settingsOf(segment),
       seed: seedOf(segment),
       fingerprint: fingerprint(segment, voiceId),
       characters: segment.say.length,

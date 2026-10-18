@@ -33,13 +33,14 @@ const tracks = narration.segments.map(
 const timeline = buildTimeline(tracks);
 const cues = timelineCues(timeline);
 
-test("сценарий: вступление, шесть глав сцены, финал «Это сетап.»", () => {
+test("сценарий: вступление, пять глав сцены, финал и отдельно «Это сетап.»", () => {
   assert.deepEqual(
     narration.segments.map((segment) => segment.id),
-    ["intro", ...CHAPTERS.map((chapter) => chapter.id), "outro"],
+    ["intro", ...CHAPTERS.map((chapter) => chapter.id), "outro", "outroTagline"],
   );
   assert.match(narration.segments[0].text, /^Сетап — электронные журналы по принципам ХАССП\./);
-  assert.equal(narration.segments.at(-1)?.text, "Без бумаги, без паролей и без установки приложений. Это сетап.");
+  assert.equal(narration.segments.at(-2)?.text, "Без бумаги, без паролей и без установки приложений.");
+  assert.equal(narration.segments.at(-1)?.text, "Это сетап.");
   assert.equal(narration.model, "eleven_multilingual_v2");
   // Ни цен, ни тарифов, ни призыва купить или попробовать.
   for (const segment of narration.segments) {
@@ -91,6 +92,25 @@ test("голос: весь сценарий озвучен одним голос
   assert.ok(samples.length >= 3, `${samples.length} проб`);
 });
 
+test("финал «Это сетап.» — отдельный клип после паузы, медленнее и громче; до конца ролика ≥ 1 с тишины", () => {
+  const outro = timeline.parts[timeline.parts.length - 1];
+  assert.equal(outro.kind, "outro");
+  assert.deepEqual(outro.voices.map((voice) => voice.track.id), ["outro", "outroTagline"]);
+  const [main, tagline] = outro.voices;
+  const mainSpeechEnd = main.offset / FPS + main.track.speechEnd;
+  const taglineStart = tagline.offset / FPS + tagline.track.words[0].start;
+  assert.ok(taglineStart - mainSpeechEnd >= 0.4, `пауза перед «Это сетап.» ${(taglineStart - mainSpeechEnd).toFixed(2)} с`);
+  const tail = outro.durationInFrames / FPS - (tagline.offset / FPS + tagline.track.speechEnd);
+  assert.ok(tail >= 1, `тишина после «Это сетап.» ${tail.toFixed(2)} с`);
+  assert.equal(outro.from + outro.durationInFrames, timeline.durationInFrames, "финал — последняя часть ролика");
+  const segment = narration.segments.find((item) => item.id === "outroTagline") as Segment & { file: string; settings?: { speed?: number; stability?: number }; gainDb?: number };
+  assert.equal(segment.say, "Это сетАп.");
+  assert.ok((segment.settings?.speed ?? 1) < 1, "медленнее остальной речи");
+  assert.ok((segment.gainDb ?? 0) > 0, "клип выровнен по громкости");
+  assert.ok(existsSync(path.join(ROOT, VOICE_DIR, `${segment.file}.mp3`)), "отдельный клип");
+  assert.match(read("remotion/tour.tsx"), /volume=\{10 \*\* \(\(GAIN\[voice\.track\.id\] \?\? 0\) \/ 20\)\}/);
+});
+
 test("ролик не длиннее 60 с: вступление, пять глав, финал", () => {
   assert.equal(timeline.parts.length, 7);
   assert.ok(timeline.durationInFrames <= 60 * FPS, `${(timeline.durationInFrames / FPS).toFixed(1)} с`);
@@ -124,8 +144,10 @@ test("глава = max(сцена, голос + 0,5 с): голос не обр�
   for (const part of timeline.parts) {
     assert.equal(part.from, from, `${part.id}: части идут встык`);
     from += part.durationInFrames;
-    const voiceEnd = part.voiceOffset + Math.max(part.voice.audioSeconds, part.voice.speechEnd) * FPS;
-    assert.ok(voiceEnd + VOICE_TAIL_SECONDS * FPS <= part.durationInFrames, `${part.id}: после голоса ≥ 0,5 с тишины`);
+    for (const voice of part.voices) {
+      const voiceEnd = voice.offset + Math.max(voice.track.audioSeconds, voice.track.speechEnd) * FPS;
+      assert.ok(voiceEnd + VOICE_TAIL_SECONDS * FPS <= part.durationInFrames, `${voice.track.id}: после голоса ≥ 0,5 с тишины`);
+    }
     if (part.kind === "chapter") {
       const expected = Math.max(CHAPTER_FRAMES, CHAPTER_VOICE_OFFSET + Math.ceil((part.voice.audioSeconds + VOICE_TAIL_SECONDS) * FPS));
       assert.equal(part.durationInFrames, expected, `${part.id}: длина главы`);
@@ -160,7 +182,7 @@ test("сцена держит итог главы, склейка — в сам�
 test("субтитры: текст = сценарий, время — из таймингов, не длиннее двух строк", () => {
   for (const part of timeline.parts) {
     const own = cues.filter((cue) => cue.partId === part.id);
-    assert.equal(own.map((cue) => cue.text).join(" "), part.voice.text, `${part.id}: реплики складываются в сценарий`);
+    assert.equal(own.map((cue) => cue.text).join(" "), part.voices.map((voice) => voice.track.text).join(" "), `${part.id}: реплики складываются в сценарий`);
     const start = (part.from + part.voiceOffset) / FPS;
     assert.equal(own[0].start, Math.round((start + part.voice.words[0].start) * 1000) / 1000, `${part.id}: время первого слова`);
     for (const cue of own) {
