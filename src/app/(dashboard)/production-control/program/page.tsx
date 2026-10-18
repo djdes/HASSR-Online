@@ -49,7 +49,7 @@ export default async function ProgramPage() {
   const requisites = org.snapshot;
   const banner = (key: PpkBlockKey): PpkEmptyBanner => ({
     href: ppkBlock(key).href,
-    text: t("emptySection", { block: nav(`shell.items.${key}`) }),
+    text: t("emptySection", { block: nav(`shell.menus.productionControl.items.${key}`) }),
     linkText: t("fill"),
   });
 

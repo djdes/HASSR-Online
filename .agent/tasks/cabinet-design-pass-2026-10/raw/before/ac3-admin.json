@@ -1,0 +1,39 @@
+{
+  "email": "admin@haccp.local",
+  "rest": {
+    "bg": "rgb(245, 246, 255)",
+    "border": "0px oklch(0.922 0 0)",
+    "color": "rgb(56, 72, 199)",
+    "current": null
+  },
+  "activeItem": {
+    "bg": "oklab(0.580558 0.0100577 -0.213552 / 0.09)",
+    "border": "0px oklch(0.922 0 0)",
+    "color": "rgb(85, 102, 246)",
+    "current": "page"
+  },
+  "hover": {
+    "bg": "rgb(238, 241, 255)",
+    "border": "0px oklch(0.922 0 0)",
+    "color": "rgb(56, 72, 199)",
+    "current": null
+  },
+  "open": {
+    "bg": "oklab(0.580558 0.0100577 -0.213552 / 0.09)",
+    "border": "0px oklch(0.922 0 0)",
+    "color": "rgb(85, 102, 246)",
+    "current": "page"
+  },
+  "mobileRest": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px oklch(0.922 0 0)",
+    "color": "rgb(60, 64, 83)",
+    "current": null
+  },
+  "mobileActiveItem": {
+    "bg": "rgb(245, 246, 255)",
+    "border": "0px oklch(0.922 0 0)",
+    "color": "rgb(85, 102, 246)",
+    "current": "page"
+  }
+}

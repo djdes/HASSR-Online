@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { sectionForPath } from "@/lib/app-nav";
 import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { LocationSwitcherList } from "@/components/layout/location-switcher";
-import { NavIcon } from "@/components/layout/nav-icons";
-import { SectionMenuList } from "@/components/layout/section-menu-list";
+import { OrganizationBrand } from "@/components/layout/organization-brand";
+import {
+  BackToMainButton,
+  NavSectionsList,
+  SectionMenuList,
+  useSheetMenu,
+} from "@/components/layout/section-menu-list";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
 
@@ -23,9 +26,10 @@ const ROW =
 
 /**
  * Меню на телефоне и планшете (<1024px): тот же список разделов, что в
- * сайдбаре, — листом снизу. Сверху точки (если их несколько), внизу выход.
- * В разделе с меню (`section.menu`) лист открывается с меню раздела: кнопка
- * «‹ Главное меню» переключает его на обычный список разделов.
+ * сайдбаре, — листом снизу. Сверху логотип компании клиента и точки (если их
+ * несколько), внизу выход. В разделе с меню (`section.menu`) лист открывается
+ * с меню раздела: кнопка «‹ Главное меню» переключает его на список разделов,
+ * а нажатие на раздел со стрелкой › раскрывает его меню прямо в листе.
  */
 export function MobileNavSheet({
   open,
@@ -33,35 +37,31 @@ export function MobileNavSheet({
   buildings,
   activeBuildingId,
   onLogout,
+  brand,
 }: {
   open: boolean;
   onClose: () => void;
   buildings: BuildingOption[];
   activeBuildingId: string | null;
   onLogout: () => void;
+  brand: { logoUrl: string | null; name: string; homeHref: string; canEditBranding: boolean };
 }) {
   const t = useTranslations("navigation.shell");
   const { sections } = useAppNav();
   const pathname = usePathname() || "/";
   const active = sectionForPath(pathname)?.section ?? null;
   const { section: placeSection, menuItem } = useSectionPlace();
-  const menuSection = placeSection?.menu ? placeSection : undefined;
-  // «Показан список разделов» помним вместе с путём; закрытие листа сбрасывает.
-  const [mainShownFor, setMainShownFor] = useState<string | null>(null);
-  const showSection = Boolean(menuSection) && mainShownFor !== pathname;
-  const statuses = useSectionStatuses(open && showSection ? menuSection?.key : undefined);
-  // Кнопка «‹ Главное меню» исчезает при переключении — фокус на пункт текущего раздела.
-  const navRef = useRef<HTMLElement>(null);
-  const focusMain = useRef(false);
-  useEffect(() => {
-    if (!focusMain.current || showSection) return;
-    focusMain.current = false;
-    navRef.current
-      ?.querySelector<HTMLElement>(active ? `[data-nav-section="${active}"]` : "a")
-      ?.focus();
-  }, [showSection, active]);
+  // Меню раздела или главное меню в листе; раздел со стрелкой раскрывается на месте.
+  const menu = useSheetMenu({
+    scope: "mobile",
+    sections,
+    currentKey: placeSection?.menu ? placeSection.key : null,
+    pathname,
+  });
+  const shown = menu.shown;
+  const statuses = useSectionStatuses(open && shown ? shown.key : undefined);
   const close = () => {
-    setMainShownFor(null);
+    menu.reset();
     onClose();
   };
 
@@ -82,62 +82,40 @@ export function MobileNavSheet({
       }
     >
       <nav
-        ref={navRef}
+        data-sheet-menu="mobile"
         onClick={(event) => {
           if ((event.target as HTMLElement).closest("a")) close();
         }}
         className="flex flex-col gap-1"
         data-mobile-nav
-        data-mobile-nav-mode={showSection ? "section" : "main"}
+        data-mobile-nav-mode={shown ? "section" : "main"}
+        data-mobile-nav-section={shown?.key}
       >
-        {showSection && menuSection?.menu ? (
+        {/* Логотип компании клиента — над меню, как в сайдбаре (эскиз руководителя). */}
+        <OrganizationBrand
+          logoUrl={brand.logoUrl}
+          name={brand.name}
+          homeHref={brand.homeHref}
+          canEditBranding={brand.canEditBranding}
+          className="mb-1 min-h-12 px-2.5"
+        />
+        {shown?.menu ? (
           <>
-            <button
-              type="button"
-              onClick={() => {
-                focusMain.current = true;
-                setMainShownFor(pathname);
-              }}
-              className="inline-flex h-11 items-center gap-1 self-start rounded-xl px-2.5 text-[15px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-            >
-              <ChevronLeft className="size-5" aria-hidden />
-              {t("backToMain")}
-            </button>
-            <SectionMenuList section={menuSection} activeItemId={menuItem?.id} statuses={statuses} />
+            <BackToMainButton onClick={menu.showMain} />
+            <SectionMenuList
+              section={shown}
+              activeItemId={shown.key === placeSection?.key ? menuItem?.id : undefined}
+              statuses={statuses}
+            />
           </>
-        ) : null}
-        {showSection ? null : buildings.length >= 2 ? (
-          <LocationSwitcherList buildings={buildings} activeBuildingId={activeBuildingId} />
-        ) : null}
-        {showSection ? null : sections.map((section) => {
-          const isActive = active === section.key;
-          const row = (
-            <Link
-              key={section.key}
-              href={section.rootHref}
-              aria-current={isActive ? "page" : undefined}
-              data-nav-section={section.key}
-              className={cn(
-                ROW,
-                isActive ? "bg-[#f5f6ff] text-[#5566f6]" : "text-[#3c4053] hover:bg-[#fafbff]",
-              )}
-            >
-              <NavIcon
-                name={section.icon}
-                className={cn("size-6 shrink-0", isActive ? "text-[#5566f6]" : "text-[#6f7282]")}
-              />
-              <span className="min-w-0">{section.label}</span>
-            </Link>
-          );
-          // «Пришла проверка» — отдельно, под чертой, как в сайдбаре.
-          return section.key === "inspection" ? (
-            <div key={section.key} className="mt-1 border-t border-[#ececf4] pt-2">
-              {row}
-            </div>
-          ) : (
-            row
-          );
-        })}
+        ) : (
+          <>
+            {buildings.length >= 2 ? (
+              <LocationSwitcherList buildings={buildings} activeBuildingId={activeBuildingId} />
+            ) : null}
+            <NavSectionsList sections={sections} active={active} onOpenMenu={menu.openMenu} />
+          </>
+        )}
       </nav>
     </BottomSheet>
   );

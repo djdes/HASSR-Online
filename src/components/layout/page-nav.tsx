@@ -113,7 +113,7 @@ const JOURNALS_STATIC_CHILDREN = new Set(["traceability"]);
  * навигация: белая подложка раздела full-bleed, и крошки должны стоять
  * ВНУТРИ неё, а не над ней на сером фоне.
  */
-function isJournalCodeSubtree(pathname: string): boolean {
+export function isJournalCodeSubtree(pathname: string): boolean {
   const parts = pathname.split("/").filter(Boolean);
   if (parts[0] !== "journals" || parts.length < 2) return false;
   return !JOURNALS_STATIC_CHILDREN.has(parts[1]);

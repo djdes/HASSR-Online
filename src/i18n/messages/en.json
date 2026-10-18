@@ -32,6 +32,7 @@
     },
     "overview": {
       "title": "Electronic production control program",
+      "lead": "Upload a ready-made program or build it section by section below — we mark what is already filled in.",
       "progress": "{done} of {total} blocks completed",
       "fillForYou": "We'll fill it in for you",
       "mapTitle": "Program sections",
@@ -754,6 +755,8 @@
     }
   },
   "inspectionDay": {
+    "title": "An inspection has come (or is coming)",
+    "lead": "Is the inspector already here? Three steps: show the QR code, hand over the journals as one archive, see what to fix.",
     "qrTitle": "Show the QR code to the inspector",
     "fullscreen": "Full screen",
     "print": "Print the sheet",
@@ -2282,7 +2285,7 @@
       "groups": {
         "staff": "Staff",
         "points": "Outlets",
-        "journals": "Journals",
+        "journals": "Keeping journals",
         "tasks": "Task assignment",
         "work": "Work",
         "connections": "Connections",
@@ -2293,50 +2296,146 @@
         "switch": "Change outlet",
         "manage": "Manage outlets",
         "switched": "Outlet: {name}",
-        "failed": "Couldn't switch outlet"
+        "failed": "Couldn't switch outlet",
+        "caption": "Outlet",
+        "captionMany": "Outlets",
+        "main": "Main outlet",
+        "untitled": "Untitled outlet",
+        "all": "All: {count}",
+        "add": "Add outlet",
+        "addHint": "Opens Outlets: add the address where journals are kept"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
       "menu": "Menu",
       "logout": "Log out",
       "brand": "WeSetup",
-      "items": {
-        "team": "HACCP team",
-        "policy": "Quality policy",
-        "products": "Product descriptions (TR CU)",
-        "flowcharts": "Process flow diagrams",
-        "hazards": "Hazard analysis",
-        "control-points": "CCPs and worksheets",
-        "audit": "Checklists and audit",
-        "instructions": "Work instructions",
-        "procedures": "Documented procedures",
-        "orders": "Orders",
-        "posters": "Workshop posters",
-        "storage": "Document storage",
-        "floor-plans": "Floor plan and flows",
-        "pest-control": "Pest control",
-        "lab": "Laboratory tests",
-        "norm-documents": "Regulatory documents",
-        "program": "PCP"
+      "menus": {
+        "company": {
+          "groups": {
+            "more": "More"
+          },
+          "items": {
+            "organization": "Company details",
+            "names": "Section names",
+            "onboarding": "Quick setup",
+            "template": "Venue template",
+            "appearance": "Appearance"
+          }
+        },
+        "staff": {
+          "groups": {
+            "directories": "Directories",
+            "more": "More"
+          },
+          "items": {
+            "users": "Staff",
+            "access": "Access and permissions",
+            "team": "Team",
+            "schedule": "Shift schedule",
+            "health": "Medical books and training",
+            "responsibles": "Journal owners",
+            "hierarchy": "Management hierarchy",
+            "visibility": "Colleague visibility",
+            "workload": "Staff workload",
+            "phone": "Phone connection"
+          },
+          "tabs": {
+            "permissions": "Permissions",
+            "presets": "Role presets",
+            "journals": "Staff journals",
+            "positions": "Job title × journal"
+          }
+        },
+        "points": {
+          "groups": {
+            "more": "More"
+          },
+          "items": {
+            "buildings": "Outlets",
+            "areas": "Workshops and rooms",
+            "equipment": "Equipment",
+            "qr": "QR stickers and posters",
+            "printer": "Online printer",
+            "kiosk": "Shared tablet",
+            "products": "Product directory",
+            "master": "Master cabinet"
+          }
+        },
+        "journals": {
+          "items": {
+            "today": "Today",
+            "control": "Today",
+            "all": "All journals",
+            "verify": "Entry verification",
+            "setup": "Journal settings"
+          }
+        },
+        "checklists": {
+          "items": {
+            "builder": "Checklist builder"
+          }
+        },
+        "productionControl": {
+          "groups": {
+            "haccp": "HACCP",
+            "documents": "Documents"
+          },
+          "items": {
+            "team": "HACCP team",
+            "policy": "Quality policy",
+            "products": "Product descriptions (TR CU)",
+            "flowcharts": "Process flow diagrams",
+            "hazards": "Hazard analysis",
+            "control-points": "CCPs and worksheets",
+            "audit": "Checklists and audit",
+            "instructions": "Work instructions",
+            "procedures": "Documented procedures",
+            "orders": "Orders",
+            "posters": "Workshop posters",
+            "storage": "Document storage",
+            "floor-plans": "Floor plan and flows",
+            "pest-control": "Pest control",
+            "lab": "Laboratory tests",
+            "norm-documents": "Regulatory documents",
+            "program": "PCP"
+          },
+          "tabs": {
+            "overview": "Overview",
+            "program": "Program",
+            "haccpPlan": "HACCP plan",
+            "members": "Members",
+            "regulation": "Regulation",
+            "text": "Text",
+            "qrSheet": "QR sheet",
+            "points": "Points",
+            "worksheets": "Worksheets",
+            "list": "List",
+            "guidelines": "Guidelines",
+            "sanpin": "SanPiN standards",
+            "meetings": "Meetings"
+          }
+        },
+        "billing": {
+          "items": {
+            "plan": "Plan",
+            "balance": "Balance and bonuses",
+            "services": "Specialist services"
+          }
+        },
+        "inspection": {
+          "items": {
+            "now": "What to do now",
+            "portal": "QR for the inspector",
+            "readiness": "Inspection readiness"
+          }
+        }
       },
-      "menuGroups": {
-        "haccp": "HACCP",
-        "documents": "Documents"
-      },
-      "subtabs": {
-        "overview": "Overview",
-        "program": "Program",
-        "haccpPlan": "HACCP plan",
-        "members": "Members",
-        "regulation": "Regulation",
-        "text": "Text",
-        "qrSheet": "QR sheet",
-        "points": "Points",
-        "worksheets": "Worksheets",
-        "list": "List",
-        "guidelines": "Guidelines",
-        "sanpin": "SanPiN standards",
-        "meetings": "Meetings"
+      "addLogo": "Add logo",
+      "leads": {
+        "journalsSetup": "Which journals you keep, who fills them in and how tasks are assigned — open the setting you need.",
+        "staffHealth": "Medical book deadlines and staff training: who needs a renewal soon and who has not been briefed yet.",
+        "today": "Journals to fill in today. Tap a journal to add an entry."
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",

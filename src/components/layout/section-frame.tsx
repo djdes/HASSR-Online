@@ -1,20 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isJournalCodeSubtree } from "@/components/layout/page-nav";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 
 /**
  * Рамка страницы в разделе с меню (`section.menu`): на глубоких страницах
  * пункта — ссылка «‹ {пункт}» на сам пункт. Где человек и что дальше, показывает
  * меню раздела слева, поэтому оглавления, полос и «Назад/Дальше» здесь нет.
- * В остальных разделах и на самих пунктах — дети как есть.
+ * В остальных разделах и на самих пунктах — дети как есть. Страницы журнала
+ * (`/journals/<код>/…`) рисуют свои крошки внутри белой подложки — там ссылки нет.
  */
 export function SectionFrame({ children }: { children: React.ReactNode }) {
   const { menuItem, depth } = useSectionPlace();
+  const pathname = usePathname() || "/";
 
-  if (!menuItem || depth !== "deep") return <>{children}</>;
+  if (!menuItem || depth !== "deep" || isJournalCodeSubtree(pathname)) return <>{children}</>;
 
   return (
     <>

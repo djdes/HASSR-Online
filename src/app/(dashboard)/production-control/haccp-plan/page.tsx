@@ -48,7 +48,7 @@ export default async function HaccpPlanPage() {
   const { org } = bundle;
   const banner = (key: PpkBlockKey): PpkEmptyBanner => ({
     href: ppkBlock(key).href,
-    text: t("emptySection", { block: nav(`shell.items.${key}`) }),
+    text: t("emptySection", { block: nav(`shell.menus.productionControl.items.${key}`) }),
     linkText: t("fill"),
   });
 

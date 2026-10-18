@@ -38,6 +38,8 @@ import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { PausedBanner } from "@/components/dashboard/paused-banner";
+import { getTranslations } from "next-intl/server";
+import { SectionPageHeader } from "@/components/layout/section-page-header";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -179,8 +181,13 @@ export default async function DashboardPage() {
   // Свои названия журналов — для ленты последних записей (карточки
   // журналов берут их сами, из CustomNamesProvider).
   const customNames = await getOrgCustomNames(organizationId);
+  const tLeads = await getTranslations("navigation.shell.leads");
   return (
     <div className="space-y-5">
+      {/* Видимый заголовок «Сегодня» (название пункта меню) и что здесь
+          делать — раньше экран начинался сразу с подзаголовка «Обязательные
+          журналы», и было непонятно, где ты. */}
+      <SectionPageHeader description={tLeads("today")} />
       {/* «Журналы → Сегодня» (меню кабинета 2026-10-16): только то, что
           нужно сделать сегодня. Остальные блоки бывшей главной переехали
           в свои разделы: медкнижки и обучение — «Сотрудники», датчики и

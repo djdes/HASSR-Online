@@ -11,6 +11,7 @@ import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { InspectionQr } from "@/components/inspection/inspection-qr";
 import { ComplianceBundleCard } from "@/components/reports/compliance-bundle-card";
+import { SectionPageHeader } from "@/components/layout/section-page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function InspectionPage() {
   const organizationId = getActiveOrgId(session);
   const showReadiness = hasCapability(session.user, "admin.full");
 
-  const [inspector, report, org, t, tRoutes, locale] = await Promise.all([
+  const [inspector, report, org, t, locale] = await Promise.all([
     loadCabinetInspectorData(organizationId),
     // Сбой аудита готовности не должен ронять экран — шаг ③ просто не рисуется.
     showReadiness ? runComplianceAudit(organizationId).catch(() => null) : Promise.resolve(null),
@@ -37,7 +38,6 @@ export default async function InspectionPage() {
       select: { name: true, timezone: true },
     }),
     getTranslations("inspectionDay"),
-    getTranslations("navigation.routes"),
     getLocale(),
   ]);
 
@@ -62,7 +62,8 @@ export default async function InspectionPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">{tRoutes("inspection")}</h1>
+      {/* Заголовок раздела по эскизу руководителя (скан 83). */}
+      <SectionPageHeader title={t("title")} description={t("lead")} />
 
       <Step number={1} title={t("qrTitle")}>
         <InspectionQr

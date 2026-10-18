@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import type { Session } from "next-auth";
 import { CHECKLIST_CODE } from "@/lib/custom-checklists";
 import { customSectionNameByHref, type CustomNames } from "@/lib/custom-names";
-import type { PpkBlockKey, PpkTabKey } from "@/lib/ppk/registry";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -69,6 +68,10 @@ export async function buildNavModel(input: {
 }): Promise<NavModel> {
   const t = await getTranslations("navigation.shell");
   const tCards = await getTranslations("settingsManagement.home.cards");
+  // Подписи меню раздела — `menus.<раздел>.groups/items/tabs.<id>`. Ключи
+  // собираются из модели (`NAV_SECTIONS`), поэтому их наличие на всех языках
+  // сверяет тест (`navigation-localization.test.ts`), а не тип.
+  const menuLabel = t as unknown as (key: string) => string;
   const visible = visibleNav(input.user, input.facts);
   const sections = visible.map((section) => ({
     key: section.key,
@@ -85,18 +88,18 @@ export async function buildNavModel(input: {
     ...(section.menu
       ? {
           menu: section.menu.map((group) => ({
-            label: group.label ? t(`menuGroups.${group.label}`) : null,
+            label: group.label ? menuLabel(`menus.${section.key}.groups.${group.label}`) : null,
             items: group.items.map((item) => ({
               id: item.id,
               icon: item.icon,
               href: item.href,
-              label: t(`items.${item.id as PpkBlockKey}`),
+              label: menuLabel(`menus.${section.key}.items.${item.id}`),
               ...(item.tabs
                 ? {
                     tabs: item.tabs.map((tab) => ({
                       id: tab.id,
                       href: tab.href,
-                      label: t(`subtabs.${tab.id as PpkTabKey}`),
+                      label: menuLabel(`menus.${section.key}.tabs.${tab.id}`),
                     })),
                   }
                 : {}),

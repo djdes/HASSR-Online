@@ -9,6 +9,6 @@ export default async function JournalSettingsSectionPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   return (
-    <SectionSettingsPage session={session} section="journals" titleKey="settings_sections_journals" />
+    <SectionSettingsPage session={session} section="journals" />
   );
 }

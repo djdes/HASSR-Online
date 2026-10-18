@@ -135,8 +135,10 @@ export function CommandPalette() {
   const reqIdRef = useRef(0);
   const nav = useAppNav();
   const routeItems = useMemo<StaticItem[]>(() => {
+    // У раздела с меню вкладки раздела не рисуются — его страницы ищутся
+    // по пунктам меню («Сотрудники · Доступ и права»), без дублей.
     const tabItems = nav.sections.flatMap((section) =>
-      section.tabs.map((tab) => ({
+      (section.menu ? [] : section.tabs).map((tab) => ({
         kind: "route" as const,
         label: section.tabs.length > 1 ? `${section.label} · ${tab.label}` : section.label,
         href: tab.href,

@@ -29,7 +29,7 @@ export async function PpkBlockHeader({
     <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div className="min-w-0">
         <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-[#0b1024] md:text-[26px]">
-          {nav(`shell.items.${blockKey}`)}
+          {nav(`shell.menus.productionControl.items.${blockKey}`)}
         </h1>
         <p className="mt-1.5 max-w-[640px] text-[14px] text-[#6f7282]">{lead}</p>
         {reminderHint ? (

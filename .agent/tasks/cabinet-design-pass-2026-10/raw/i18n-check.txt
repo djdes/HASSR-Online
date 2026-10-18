@@ -1,0 +1,7 @@
+✔ top-up parser exposes stable validation codes while preserving legacy error strings and bounds (1.4383ms)
+✔ journal route failures and Mini App fallbacks use the selected locale without exposing errors (1589.6327ms)
+✔ error and not-found screens render real translations without disclosing exception details (51.2038ms)
+✔ emergency error screen works without providers; URL, saved choice and document language have deterministic fallbacks (7.196ms)
+ℹ tests 82
+ℹ pass 82
+ℹ fail 0

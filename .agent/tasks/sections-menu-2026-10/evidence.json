@@ -1,0 +1,29 @@
+{
+  "task_id": "sections-menu-2026-10",
+  "branch": "feat/sections-menu",
+  "base": "b91388b0",
+  "verified_at": "2026-10-18",
+  "database": "wesetup_showcase (localhost:5432)",
+  "server": "http://localhost:3053 (.next-sm build 2026-10-17 20:44, newer than all src edits)",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts: menuShape for 7 sections", "guard test covers menu items and item tabs", "raw/tests-nav.txt 45/45"] },
+    "AC2": { "status": "PASS", "evidence": ["app-nav.test.ts: every dashboard page belongs to a section", "settings-cards.test.ts: all 51 former hub hrefs present", "raw/role-diff.txt: role-diff.mjs exit 0, missing=[] for owner, manager, headChef, verifyOnly, settingsManager, cook (only /settings/sections/{staff,points} redirect hubs gone)", "before snapshot regenerated from git show HEAD and equal to stored raw/role-before.json"] },
+    "AC3": { "status": "PASS", "evidence": ["navigation.shell.menus.* 75 labels in ru/en/uz, identical key sets, no Cyrillic in en/uz", "shell.items/menuGroups/subtabs absent", "npm run i18n:check 82/82"] },
+    "AC4": { "status": "PASS", "evidence": ["app-nav.test.ts 'match пункта…': journal-periods→setup, users/x/access→users, role-presets→access+tab, production-control/haccp/team→productionControl/team"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/results-owner.json: 9 sections, 51/51 menu pages ok, more→mode=main", "raw/results-headchef.json: 41/41 menu pages ok", "raw/desktop-*.png"] },
+    "AC6": { "status": "PASS", "evidence": ["mobile sheet mode=section with brand and back-to-main → 9/8 sections", "mini: section menu button + sheet with brand, same items, back-to-main", "raw/mobile-*.png, raw/mini-*.png"] },
+    "AC7": { "status": "PASS", "evidence": ["owner sees all items (unit test + browser)", "headchef: no company section, no responsibles/workload/readiness, access tabs without presets (HTML check), no 'Добавить логотип'", "cook: sidebar=false, no burger, no section menu button (raw/results-cook.json)"] },
+    "AC8": { "status": "PASS", "evidence": ["main h1: Настройка журналов / Медкнижки и обучение / К вам пришла проверка (или придёт)"] },
+    "AC9": { "status": "PASS", "evidence": ["tsc -p tsconfig.typecheck.json: 0 errors", "eslint 34 changed files: 0 errors, 1 pre-existing warning (more/page.tsx Date.now)", "nav tests 45/45", "i18n tests 82/82"] },
+    "AC10": { "status": "PASS", "evidence": ["94 PNG in raw/ (20 desktop, 37 mobile, 37 mini); gitignored (.agent/**/*.png), copy in C:/Users/Two/wesetup-backup-2026-10-17/sections-menu/screenshots-2026-10-18/"] },
+    "AC11": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts: first category 'Интерфейс' with 6 items; icon Settings2 in CATEGORY_ICONS"] }
+  },
+  "findings_outside_scope": [
+    "Demo org legalProfileJson was partial → /settings/organization crashed (okvedsExtra undefined); demo data repaired, code untouched",
+    "page-navigation limiter returns 429 for fast headless crawl; menu-check throttles and honours Retry-After",
+    "Demo head chef had not accepted updated offer; menu-check accepts it via UI",
+    "Users page header actions overflow at 1440 (pre-existing)",
+    "/dashboard has no h1 in main (pre-existing)"
+  ]
+}
