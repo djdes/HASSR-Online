@@ -3,7 +3,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/lib/auth-helpers";
 import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
-import { loadBuildingContext } from "@/lib/active-building";
+import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
+import { resolveHeaderPoint } from "@/lib/header-point";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
 import { ImpersonationBanner } from "@/components/dashboard/impersonation-banner";
@@ -225,6 +226,19 @@ export default async function DashboardLayout({
   // Точки: список для переключателя в шапке и активная точка запроса.
   // Тот же контекст (кэш на запрос) читают страницы журналов.
   const buildingContext = await loadBuildingContext(session);
+  // Центр шапки — точка, а не компания (эскиз руководителя 2026-10-18):
+  // название компании уже стоит слева вверху. Без режима «журналы по точкам»
+  // контекст точек пуст — тогда смотрим все точки организации.
+  const companyName =
+    orgDisplayName(impersonatedOrg?.name ?? session.user.organizationName ?? "", "") || "WeSetup";
+  const headerPoint = resolveHeaderPoint({
+    companyName,
+    organizationBuildings: buildingContext.enabled
+      ? buildingContext.buildings
+      : await listOrganizationBuildings(activeOrgId).catch(() => []),
+    context: buildingContext,
+    canManage: hasFullWorkspaceAccess(session.user),
+  });
 
   // Тариф живёт на аккаунте: у сети из трёх кафе один договор. Пока
   // организация не привязана к аккаунту — тариф самой организации.
@@ -412,7 +426,7 @@ export default async function DashboardLayout({
           {navModel.showSidebar ? (
             <AppSidebar
               logoUrl={headerLogoUrl}
-              organizationName={orgDisplayName(impersonatedName ?? session.user.organizationName ?? "", "") || "WeSetup"}
+              organizationName={companyName}
               homeHref={
                 (navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
                 getWebHomeHref(session.user)
@@ -473,9 +487,9 @@ export default async function DashboardLayout({
             organizations={organizations}
             activeOrganizationId={activeOrgId}
             currentPoint={{
-              // Точек несколько — переключатель; одна — название организации:
-              // для заведения с одним адресом точка и есть компания.
-              name: orgDisplayName(impersonatedName ?? session.user.organizationName ?? "", ""),
+              // Что в центре шапки — `resolveHeaderPoint`: точка, «+ Добавить
+              // точку» руководителю или ничего; название компании — никогда.
+              point: headerPoint,
               buildings: buildingContext.canSwitch ? buildingContext.buildings : [],
               activeBuildingId: buildingContext.activeBuildingId,
               manageHref: hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null,

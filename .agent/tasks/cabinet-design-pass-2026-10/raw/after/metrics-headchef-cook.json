@@ -1,0 +1,673 @@
+{
+  "base": "http://localhost:3153",
+  "tag": "after",
+  "startedAt": "2026-10-18T08:46:21.264Z",
+  "roles": {
+    "headchef": {
+      "desktop /dashboard": {
+        "url": "/control-board",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "Панель контроля"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /production-control": {
+        "url": "/production-control",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "Электронная программа производственного контроля"
+        ],
+        "tabs": [
+          "Обзор",
+          "Программа",
+          "ХАССП-план"
+        ],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /settings/users": {
+        "url": "/settings/users",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "Сотрудники"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /journals": {
+        "url": "/control-board",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "Панель контроля"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /inspection": {
+        "url": "/inspection",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "К вам пришла проверка (или придёт)"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop main-menu": {
+        "url": "/inspection",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "main",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "К вам пришла проверка (или придёт)"
+        ],
+        "tabs": [],
+        "sections": [
+          {
+            "key": "staff",
+            "label": "Сотрудники",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "points",
+            "label": "Торговые точки",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "journals",
+            "label": "Журналы",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "checklists",
+            "label": "Чек-листы",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "productionControl",
+            "label": "Производственный контроль",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 2
+          },
+          {
+            "key": "billing",
+            "label": "Оплата",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "more",
+            "label": "Остальное",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "inspection",
+            "label": "Пришла проверка",
+            "chevron": true,
+            "current": true,
+            "bg": "lab(48.4271 29.0377 -75.7175 / 0.09)",
+            "border": "1px lab(48.4271 29.0377 -75.7175 / 0.25)",
+            "color": "rgb(85, 102, 246)",
+            "lines": 1
+          }
+        ],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop more-sidebar": {
+        "url": "/more",
+        "companyInMain": false,
+        "eyebrows": [],
+        "sidebar": true,
+        "sidebarMode": "main",
+        "sidebarBrand": "СБ Столовая «Берёзка»",
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Добавить точку МИ",
+        "h1s": [
+          "Остальное"
+        ],
+        "tabs": [],
+        "sections": [
+          {
+            "key": "staff",
+            "label": "Сотрудники",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "points",
+            "label": "Торговые точки",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "journals",
+            "label": "Журналы",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "checklists",
+            "label": "Чек-листы",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "productionControl",
+            "label": "Производственный контроль",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 2
+          },
+          {
+            "key": "billing",
+            "label": "Оплата",
+            "chevron": true,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "more",
+            "label": "Остальное",
+            "chevron": false,
+            "current": true,
+            "bg": "lab(48.4271 29.0377 -75.7175 / 0.09)",
+            "border": "0px lab(90.952 -0.0000596046 0)",
+            "color": "rgb(85, 102, 246)",
+            "lines": 1
+          },
+          {
+            "key": "inspection",
+            "label": "Пришла проверка",
+            "chevron": true,
+            "current": false,
+            "bg": "rgb(245, 246, 255)",
+            "border": "1px lab(48.4271 29.0377 -75.7175 / 0.4)",
+            "color": "rgb(56, 72, 199)",
+            "lines": 1
+          }
+        ],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /dashboard": {
+        "url": "/control-board",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": "section",
+        "sidebarBrand": null,
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Меню Добавить точку МИ",
+        "h1s": [
+          "Панель контроля"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /dashboard sheet-mode": "section",
+      "mobile /dashboard main-menu": [
+        {
+          "key": "staff",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "points",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "journals",
+          "chevron": true,
+          "bg": "rgb(245, 246, 255)"
+        },
+        {
+          "key": "checklists",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "productionControl",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "billing",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "more",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "inspection",
+          "chevron": true,
+          "bg": "rgb(255, 255, 255)"
+        }
+      ],
+      "mobile /production-control": {
+        "url": "/production-control",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": "section",
+        "sidebarBrand": null,
+        "headerCenter": "Добавить точку",
+        "headerCenterKind": "add",
+        "headerText": "Меню Добавить точку МИ",
+        "h1s": [
+          "Электронная программа производственного контроля"
+        ],
+        "tabs": [
+          "Обзор",
+          "Программа",
+          "ХАССП-план"
+        ],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /production-control sheet-mode": "section",
+      "mobile /production-control main-menu": [
+        {
+          "key": "staff",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "points",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "journals",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "checklists",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "productionControl",
+          "chevron": true,
+          "bg": "rgb(245, 246, 255)"
+        },
+        {
+          "key": "billing",
+          "chevron": true,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "more",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "inspection",
+          "chevron": true,
+          "bg": "rgb(255, 255, 255)"
+        }
+      ],
+      "mobile drill staff": {
+        "mode": "section",
+        "section": "staff",
+        "urlBefore": "/more",
+        "urlAfter": "/more",
+        "items": [
+          "users",
+          "access",
+          "team",
+          "schedule",
+          "health",
+          "hierarchy",
+          "visibility",
+          "phone"
+        ],
+        "focused": true
+      },
+      "mini /dashboard": {
+        "url": "/control-board",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Панель контроля",
+        "h1s": [
+          "Панель контроля"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /dashboard menu-button": "Меню раздела\nЖурналы",
+      "mini /dashboard main-menu": [
+        {
+          "key": "staff",
+          "chevron": true
+        },
+        {
+          "key": "points",
+          "chevron": true
+        },
+        {
+          "key": "journals",
+          "chevron": true
+        },
+        {
+          "key": "checklists",
+          "chevron": true
+        },
+        {
+          "key": "productionControl",
+          "chevron": true
+        },
+        {
+          "key": "billing",
+          "chevron": true
+        },
+        {
+          "key": "more",
+          "chevron": false
+        },
+        {
+          "key": "inspection",
+          "chevron": true
+        }
+      ],
+      "mini /production-control": {
+        "url": "/production-control",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Программа производственного контроля",
+        "h1s": [
+          "Электронная программа производственного контроля"
+        ],
+        "tabs": [
+          "Обзор",
+          "Программа",
+          "ХАССП-план"
+        ],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /production-control menu-button": "Меню раздела\nПроизводственный контроль",
+      "mini /production-control main-menu": [
+        {
+          "key": "staff",
+          "chevron": true
+        },
+        {
+          "key": "points",
+          "chevron": true
+        },
+        {
+          "key": "journals",
+          "chevron": true
+        },
+        {
+          "key": "checklists",
+          "chevron": true
+        },
+        {
+          "key": "productionControl",
+          "chevron": true
+        },
+        {
+          "key": "billing",
+          "chevron": true
+        },
+        {
+          "key": "more",
+          "chevron": false
+        },
+        {
+          "key": "inspection",
+          "chevron": true
+        }
+      ],
+      "mini drill staff": {
+        "mode": "section",
+        "section": "staff",
+        "urlAfter": "/production-control",
+        "items": [
+          "users",
+          "access",
+          "team",
+          "schedule",
+          "health",
+          "hierarchy",
+          "visibility",
+          "phone"
+        ]
+      },
+      "mini /mini/sections": [
+        {
+          "href": "/settings/users",
+          "label": "Сотрудники",
+          "chevron": true
+        },
+        {
+          "href": "/settings/buildings",
+          "label": "Торговые точки",
+          "chevron": true
+        },
+        {
+          "href": "/control-board",
+          "label": "Журналы",
+          "chevron": true
+        },
+        {
+          "href": "/checklists",
+          "label": "Чек-листы",
+          "chevron": true
+        },
+        {
+          "href": "/production-control",
+          "label": "Производственный контроль",
+          "chevron": true
+        },
+        {
+          "href": "/settings/subscription",
+          "label": "Оплата",
+          "chevron": true
+        },
+        {
+          "href": "/more",
+          "label": "Остальное",
+          "chevron": false
+        },
+        {
+          "href": "/inspection",
+          "label": "Пришла проверка",
+          "chevron": true
+        }
+      ]
+    },
+    "cook": {
+      "desktop /journals": {
+        "url": "/mini/today",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Сегодня",
+        "h1s": [
+          "Сегодня"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /journals": {
+        "url": "/mini/today",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Сегодня",
+        "h1s": [],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /journals": {
+        "url": "/mini/today",
+        "companyInMain": null,
+        "eyebrows": [],
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Сегодня",
+        "h1s": [
+          "Сегодня"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /mini/sections": [
+        {
+          "href": "/checklists",
+          "label": "Чек-листы",
+          "chevron": true
+        }
+      ]
+    }
+  },
+  "finishedAt": "2026-10-18T08:51:14.511Z"
+}

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelSection } from "@/lib/app-nav.server";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { BrandLogo } from "@/components/brand/logo";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { NavIcon } from "@/components/layout/nav-icons";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
+import { NavChevron } from "@/components/layout/section-menu-list";
 import { SectionStatusDot } from "@/components/layout/section-status-dot";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
@@ -22,7 +23,9 @@ const SIDEBAR_ITEM =
 
 /**
  * Меню кабинета слева (≥1024px): логотип компании и разделы. «Пришла
- * проверка» прижата к низу — в спешке её ищут глазами первой.
+ * проверка» прижата к низу — в спешке её ищут глазами первой; это отдельное
+ * действие (контурная кнопка), а не выбранный пункт. У разделов со своим
+ * меню — стрелка ›.
  *
  * У раздела своё меню (`section.menu`, эскизы руководителя 2026-10-17): при
  * входе в раздел левое меню меняется целиком. Две панели лежат на ленте
@@ -126,7 +129,6 @@ export function AppSidebar({
               section={section}
               active={active === section.key}
               onSelect={selectHandler(section)}
-              chevron={Boolean(section.menu) && active === section.key}
             />
           ))}
         </div>
@@ -135,9 +137,8 @@ export function AppSidebar({
             <SidebarItem
               section={inspection}
               active={active === "inspection"}
-              accent
+              action
               onSelect={selectHandler(inspection)}
-              chevron={Boolean(inspection.menu) && active === "inspection"}
             />
           </div>
         ) : null}
@@ -244,17 +245,24 @@ export function AppSidebar({
   );
 }
 
+/**
+ * Пункт главного меню. У раздела со своим меню — постоянная стрелка ›
+ * (руководитель: «все меню, которые разворачиваются, должны быть со
+ * стрелочкой»); у «Остального» её нет — это одна страница.
+ *
+ * `action` — «Пришла проверка» внизу: отдельное действие, а не выбранный
+ * пункт, поэтому в покое это контурная кнопка (белая, с рамкой и индиго-
+ * текстом), а заливка — только когда раздел открыт, как у остальных пунктов.
+ */
 function SidebarItem({
   section,
   active,
-  accent = false,
-  chevron = false,
+  action = false,
   onSelect,
 }: {
   section: NavModelSection;
   active: boolean;
-  accent?: boolean;
-  chevron?: boolean;
+  action?: boolean;
   onSelect?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   return (
@@ -263,21 +271,25 @@ function SidebarItem({
       onClick={onSelect}
       aria-current={active ? "page" : undefined}
       data-nav-section={section.key}
+      data-nav-action={action ? "" : undefined}
       className={cn(
         SIDEBAR_ITEM,
-        active
-          ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
-          : accent
-            ? "bg-[#f5f6ff] text-[#3848c7] hover:bg-[#eef1ff]"
+        "group",
+        action
+          ? active
+            ? "border border-[#5566f6]/25 bg-[#5566f6]/[0.09] text-[#5566f6]"
+            : "border border-[#dcdfed] bg-white text-[#3848c7] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+          : active
+            ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
             : "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]",
       )}
     >
       <NavIcon
         name={section.icon}
-        className={cn("size-5 shrink-0", active || accent ? "text-[#5566f6]" : "text-[#6f7282]")}
+        className={cn("size-5 shrink-0", active || action ? "text-[#5566f6]" : "text-[#6f7282]")}
       />
       <span className="min-w-0 flex-1">{section.label}</span>
-      {chevron ? <ChevronRight className="size-4 shrink-0 text-[#5566f6]" aria-hidden /> : null}
+      {section.menu ? <NavChevron active={active} /> : null}
     </Link>
   );
 }

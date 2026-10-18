@@ -1,0 +1,915 @@
+{
+  "base": "http://localhost:3053",
+  "tag": "before",
+  "startedAt": "2026-10-17T23:15:32.333Z",
+  "roles": {
+    "owner": {
+      "desktop /dashboard": {
+        "url": "/dashboard",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /production-control": {
+        "url": "/production-control",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Электронная программа производственного контроля"
+        ],
+        "tabs": [
+          "Обзор",
+          "Программа",
+          "ХАССП-план"
+        ],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /settings/users": {
+        "url": "/settings/users",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Сотрудники"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": [
+          "button:Инструкция right=1492"
+        ]
+      },
+      "desktop /settings/organization": {
+        "url": "/settings/organization",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Информация об организации"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /settings/buildings": {
+        "url": "/settings/buildings",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Точки и помещения"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /journals": {
+        "url": "/journals",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Журналы"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /settings/sections/journals": {
+        "url": "/settings/sections/journals",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Настройка журналов"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /checklists": {
+        "url": "/checklists",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Конструктор чек-листов"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /settings/subscription": {
+        "url": "/settings/subscription",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Улучшение тарифа"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /more": {
+        "url": "/more",
+        "sidebar": true,
+        "sidebarMode": "main",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "Остальное"
+        ],
+        "tabs": [],
+        "sections": [
+          {
+            "key": "company",
+            "label": "Моя компания",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "staff",
+            "label": "Сотрудники",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "points",
+            "label": "Торговые точки",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "journals",
+            "label": "Журналы",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "checklists",
+            "label": "Чек-листы",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "productionControl",
+            "label": "Производственный контроль",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 2
+          },
+          {
+            "key": "billing",
+            "label": "Оплата",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "more",
+            "label": "Остальное",
+            "chevron": false,
+            "current": true,
+            "bg": "oklab(0.580558 0.0100577 -0.213552 / 0.09)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(85, 102, 246)",
+            "lines": 1
+          },
+          {
+            "key": "inspection",
+            "label": "Пришла проверка",
+            "chevron": false,
+            "current": false,
+            "bg": "rgb(245, 246, 255)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(56, 72, 199)",
+            "lines": 1
+          }
+        ],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop /inspection": {
+        "url": "/inspection",
+        "sidebar": true,
+        "sidebarMode": "section",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "К вам пришла проверка (или придёт)"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "desktop main-menu": {
+        "url": "/inspection",
+        "sidebar": true,
+        "sidebarMode": "main",
+        "sidebarBrand": "СБ Столовая «Берёзка» Добавить логотип",
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Столовая «Берёзка» КД",
+        "h1s": [
+          "К вам пришла проверка (или придёт)"
+        ],
+        "tabs": [],
+        "sections": [
+          {
+            "key": "company",
+            "label": "Моя компания",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "staff",
+            "label": "Сотрудники",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "points",
+            "label": "Торговые точки",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "journals",
+            "label": "Журналы",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "checklists",
+            "label": "Чек-листы",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "productionControl",
+            "label": "Производственный контроль",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 2
+          },
+          {
+            "key": "billing",
+            "label": "Оплата",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "more",
+            "label": "Остальное",
+            "chevron": false,
+            "current": false,
+            "bg": "rgba(0, 0, 0, 0)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(60, 64, 83)",
+            "lines": 1
+          },
+          {
+            "key": "inspection",
+            "label": "Пришла проверка",
+            "chevron": true,
+            "current": true,
+            "bg": "oklab(0.580558 0.0100577 -0.213552 / 0.09)",
+            "border": "0px oklch(0.922 0 0)",
+            "color": "rgb(85, 102, 246)",
+            "lines": 1
+          }
+        ],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /dashboard": {
+        "url": "/dashboard",
+        "sidebar": false,
+        "sidebarMode": "section",
+        "sidebarBrand": null,
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Меню Столовая «Берёзка» КД",
+        "h1s": [],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /dashboard sheet-mode": "section",
+      "mobile /dashboard main-menu": [
+        {
+          "key": "company",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "staff",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "points",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "journals",
+          "chevron": false,
+          "bg": "rgb(245, 246, 255)"
+        },
+        {
+          "key": "checklists",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "productionControl",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "billing",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "more",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "inspection",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "mobile /production-control": {
+        "url": "/production-control",
+        "sidebar": false,
+        "sidebarMode": "section",
+        "sidebarBrand": null,
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Меню Столовая «Берёзка» КД",
+        "h1s": [
+          "Электронная программа производственного контроля"
+        ],
+        "tabs": [
+          "Обзор",
+          "Программа",
+          "ХАССП-план"
+        ],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /production-control sheet-mode": "section",
+      "mobile /production-control main-menu": [
+        {
+          "key": "company",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "staff",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "points",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "journals",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "checklists",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "productionControl",
+          "chevron": false,
+          "bg": "rgb(245, 246, 255)"
+        },
+        {
+          "key": "billing",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "more",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "inspection",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "mobile /settings/users": {
+        "url": "/settings/users",
+        "sidebar": false,
+        "sidebarMode": "section",
+        "sidebarBrand": null,
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Меню Столовая «Берёзка» КД",
+        "h1s": [
+          "Сотрудники"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /settings/users sheet-mode": "section",
+      "mobile /settings/users main-menu": [
+        {
+          "key": "company",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "staff",
+          "chevron": false,
+          "bg": "rgb(245, 246, 255)"
+        },
+        {
+          "key": "points",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "journals",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "checklists",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "productionControl",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "billing",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "more",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "inspection",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "mobile /inspection": {
+        "url": "/inspection",
+        "sidebar": false,
+        "sidebarMode": "section",
+        "sidebarBrand": null,
+        "headerCenter": "Столовая «Берёзка»",
+        "headerCenterKind": "true",
+        "headerText": "Меню Столовая «Берёзка» КД",
+        "h1s": [
+          "К вам пришла проверка (или придёт)"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mobile /inspection sheet-mode": "section",
+      "mobile /inspection main-menu": [
+        {
+          "key": "company",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "staff",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "points",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "journals",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "checklists",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "productionControl",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "billing",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "more",
+          "chevron": false,
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "key": "inspection",
+          "chevron": false,
+          "bg": "rgb(245, 246, 255)"
+        }
+      ],
+      "mini /dashboard": {
+        "url": "/dashboard",
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Сегодня",
+        "h1s": [],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /dashboard menu-button": "Журналы\nСегодня",
+      "mini /dashboard main-menu": [
+        {
+          "key": "company",
+          "chevron": false
+        },
+        {
+          "key": "staff",
+          "chevron": false
+        },
+        {
+          "key": "points",
+          "chevron": false
+        },
+        {
+          "key": "journals",
+          "chevron": false
+        },
+        {
+          "key": "checklists",
+          "chevron": false
+        },
+        {
+          "key": "productionControl",
+          "chevron": false
+        },
+        {
+          "key": "billing",
+          "chevron": false
+        },
+        {
+          "key": "more",
+          "chevron": false
+        },
+        {
+          "key": "inspection",
+          "chevron": false
+        }
+      ],
+      "mini /production-control": {
+        "url": "/production-control",
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Программа производственного контроля",
+        "h1s": [
+          "Электронная программа производственного контроля"
+        ],
+        "tabs": [
+          "Обзор",
+          "Программа",
+          "ХАССП-план"
+        ],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /production-control menu-button": "Производственный контроль\nППК",
+      "mini /production-control main-menu": [
+        {
+          "key": "company",
+          "chevron": false
+        },
+        {
+          "key": "staff",
+          "chevron": false
+        },
+        {
+          "key": "points",
+          "chevron": false
+        },
+        {
+          "key": "journals",
+          "chevron": false
+        },
+        {
+          "key": "checklists",
+          "chevron": false
+        },
+        {
+          "key": "productionControl",
+          "chevron": false
+        },
+        {
+          "key": "billing",
+          "chevron": false
+        },
+        {
+          "key": "more",
+          "chevron": false
+        },
+        {
+          "key": "inspection",
+          "chevron": false
+        }
+      ],
+      "mini /settings/users": {
+        "url": "/settings/users",
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Сотрудники",
+        "h1s": [
+          "Сотрудники"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /settings/users menu-button": "Сотрудники\nСотрудники",
+      "mini /settings/users main-menu": [
+        {
+          "key": "company",
+          "chevron": false
+        },
+        {
+          "key": "staff",
+          "chevron": false
+        },
+        {
+          "key": "points",
+          "chevron": false
+        },
+        {
+          "key": "journals",
+          "chevron": false
+        },
+        {
+          "key": "checklists",
+          "chevron": false
+        },
+        {
+          "key": "productionControl",
+          "chevron": false
+        },
+        {
+          "key": "billing",
+          "chevron": false
+        },
+        {
+          "key": "more",
+          "chevron": false
+        },
+        {
+          "key": "inspection",
+          "chevron": false
+        }
+      ],
+      "mini /inspection": {
+        "url": "/inspection",
+        "sidebar": false,
+        "sidebarMode": null,
+        "sidebarBrand": null,
+        "headerCenter": null,
+        "headerCenterKind": null,
+        "headerText": "W WESETUP Пришла проверка",
+        "h1s": [
+          "К вам пришла проверка (или придёт)"
+        ],
+        "tabs": [],
+        "sections": [],
+        "pageScrollX": false,
+        "overflowRight": []
+      },
+      "mini /inspection menu-button": "Пришла проверка\nЧто делать сейчас",
+      "mini /inspection main-menu": [
+        {
+          "key": "company",
+          "chevron": false
+        },
+        {
+          "key": "staff",
+          "chevron": false
+        },
+        {
+          "key": "points",
+          "chevron": false
+        },
+        {
+          "key": "journals",
+          "chevron": false
+        },
+        {
+          "key": "checklists",
+          "chevron": false
+        },
+        {
+          "key": "productionControl",
+          "chevron": false
+        },
+        {
+          "key": "billing",
+          "chevron": false
+        },
+        {
+          "key": "more",
+          "chevron": false
+        },
+        {
+          "key": "inspection",
+          "chevron": false
+        }
+      ],
+      "mini /mini/sections": [
+        {
+          "href": "/settings/organization",
+          "label": "Моя компания",
+          "chevron": true
+        },
+        {
+          "href": "/settings/users",
+          "label": "Сотрудники",
+          "chevron": true
+        },
+        {
+          "href": "/settings/buildings",
+          "label": "Торговые точки",
+          "chevron": true
+        },
+        {
+          "href": "/dashboard",
+          "label": "Журналы",
+          "chevron": true
+        },
+        {
+          "href": "/checklists",
+          "label": "Чек-листы",
+          "chevron": true
+        },
+        {
+          "href": "/production-control",
+          "label": "Производственный контроль",
+          "chevron": true
+        },
+        {
+          "href": "/settings/subscription",
+          "label": "Оплата",
+          "chevron": true
+        },
+        {
+          "href": "/more",
+          "label": "Остальное",
+          "chevron": true
+        },
+        {
+          "href": "/inspection",
+          "label": "Пришла проверка",
+          "chevron": true
+        }
+      ]
+    }
+  },
+  "finishedAt": "2026-10-17T23:19:33.781Z"
+}

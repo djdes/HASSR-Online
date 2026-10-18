@@ -32,6 +32,7 @@
     },
     "overview": {
       "title": "Electronic production control program",
+      "lead": "Upload a ready-made program or build it section by section below — we mark what is already filled in.",
       "progress": "{done} of {total} blocks completed",
       "fillForYou": "We'll fill it in for you",
       "mapTitle": "Program sections",
@@ -2284,7 +2285,7 @@
       "groups": {
         "staff": "Staff",
         "points": "Outlets",
-        "journals": "Journals",
+        "journals": "Keeping journals",
         "tasks": "Task assignment",
         "work": "Work",
         "connections": "Connections",
@@ -2295,7 +2296,14 @@
         "switch": "Change outlet",
         "manage": "Manage outlets",
         "switched": "Outlet: {name}",
-        "failed": "Couldn't switch outlet"
+        "failed": "Couldn't switch outlet",
+        "caption": "Outlet",
+        "captionMany": "Outlets",
+        "main": "Main outlet",
+        "untitled": "Untitled outlet",
+        "all": "All: {count}",
+        "add": "Add outlet",
+        "addHint": "Opens Outlets: add the address where journals are kept"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
@@ -2426,7 +2434,8 @@
       "addLogo": "Add logo",
       "leads": {
         "journalsSetup": "Which journals you keep, who fills them in and how tasks are assigned — open the setting you need.",
-        "staffHealth": "Medical book deadlines and staff training: who needs a renewal soon and who has not been briefed yet."
+        "staffHealth": "Medical book deadlines and staff training: who needs a renewal soon and who has not been briefed yet.",
+        "today": "Journals to fill in today. Tap a journal to add an entry."
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",

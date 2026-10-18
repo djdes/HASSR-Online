@@ -32,6 +32,7 @@
     },
     "overview": {
       "title": "Ishlab chiqarish nazoratining elektron dasturi",
+      "lead": "Tayyor dasturni yuklang yoki uni quyidagi bo‘limlar bo‘yicha yig‘ing — nima to‘ldirilganini belgilab boramiz.",
       "progress": "{total} ta blokdan {done} tasi toʻldirilgan",
       "fillForYou": "Biz siz uchun toʻldiramiz",
       "mapTitle": "Dastur boʻlimlari",
@@ -2284,7 +2285,7 @@
       "groups": {
         "staff": "Xodimlar",
         "points": "Nuqtalar",
-        "journals": "Jurnallar",
+        "journals": "Jurnallarni yuritish",
         "tasks": "Vazifalarni taqsimlash",
         "work": "Ish",
         "connections": "Ulanishlar",
@@ -2295,7 +2296,14 @@
         "switch": "Nuqtani almashtirish",
         "manage": "Nuqtalarni sozlash",
         "switched": "Nuqta: {name}",
-        "failed": "Nuqtani almashtirib bo‘lmadi"
+        "failed": "Nuqtani almashtirib bo‘lmadi",
+        "caption": "Nuqta",
+        "captionMany": "Nuqtalar",
+        "main": "Asosiy nuqta",
+        "untitled": "Nomsiz nuqta",
+        "all": "Hammasi: {count}",
+        "add": "Nuqta qo‘shish",
+        "addHint": "«Savdo nuqtalari» ochiladi: jurnallar yuritiladigan manzilni qo‘shing"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
@@ -2426,7 +2434,8 @@
       "addLogo": "Logotip qo‘shish",
       "leads": {
         "journalsSetup": "Qaysi jurnallarni yuritasiz, ularni kim to‘ldiradi va vazifalar qanday taqsimlanadi — keraklisini oching.",
-        "staffHealth": "Tibbiy daftarchalar muddati va xodimlarni o‘qitish: kimga tez orada uzaytirish kerak va kim hali yo‘riqnomadan o‘tmagan."
+        "staffHealth": "Tibbiy daftarchalar muddati va xodimlarni o‘qitish: kimga tez orada uzaytirish kerak va kim hali yo‘riqnomadan o‘tmagan.",
+        "today": "Bugun to‘ldirilishi kerak bo‘lgan jurnallar. Yozuv qo‘shish uchun jurnalni bosing."
       },
       "backToMain": "Asosiy menyu",
       "sectionMenuAria": "Boʻlim menyusi",
