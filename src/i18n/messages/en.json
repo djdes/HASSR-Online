@@ -5034,12 +5034,6 @@
         "short": "“I switched it on” / “I switched it off” — the lamp’s service life is tracked automatically.",
         "place": "Sticker on the germicidal lamp"
       },
-      "fryer": {
-        "label": "Deep fryer",
-        "caption": "The deep fryer form asks for the type of oil, product and a quality rating on a five-point scale. The entry is added to the frying oil log.",
-        "short": "Oil, product and rating — one entry in the frying oil log.",
-        "place": "Sticker on the deep fryer"
-      },
       "forgot": {
         "label": "Missed it?",
         "caption": "If the log is left incomplete, the manager gets a Telegram reminder at 12:00, an email as well at 17:00, and an “URGENT” message at 21:00.",
@@ -5048,9 +5042,9 @@
       },
       "sensor": {
         "label": "Sensors",
-        "caption": "The Wi-Fi sensor automatically records the temperature in the log every hour. If it falls outside the allowed range, the responsible person receives an alert.",
-        "short": "The sensor records the temperature automatically and sends an alert if it is out of range.",
-        "place": "Wi-Fi sensor in the refrigerated display case"
+        "caption": "A Wi-Fi sensor in the walk-in cold room records the temperature in the log automatically every hour. If it goes out of range, the responsible person is notified.",
+        "short": "The cold-room sensor records the temperature itself and sends an alert on deviations.",
+        "place": "Wi-Fi sensor in the walk-in cold room"
       }
     }
   },
@@ -5148,11 +5142,6 @@
     "whoSwitchesLamp": "Who turns the lamp on",
     "lampTurnedOn": "I turned on the lamp",
     "lampTurnedOff": "I turned off the lamp",
-    "qualityExcellent": "Excellent",
-    "qualityGood": "Good",
-    "fryerEntrySaved": "Saved: {journal} · {employee} · {time}",
-    "oilAndQuality": "Oil and quality rating",
-    "done": "Done",
     "botForManager": "Bot · to the manager",
     "emailChannel": "Telegram and email",
     "telegramOnlyChannel": "Telegram only",
@@ -5177,7 +5166,6 @@
       "pinLabel": "Your PIN",
       "pinHint": "PIN to confirm your identity",
       "pinContinue": "Sign in",
-      "entrySaved": "Entry recorded",
       "equipment": "Equipment",
       "equipmentWho": "Who is taking the reading?",
       "saveReading": "Save reading",
@@ -5199,7 +5187,6 @@
       "uvOffDone": "Irradiator switched off",
       "lampLabel": "Lamp",
       "uvRemaining": "Resource remaining",
-      "genericSubmit": "Done — record in journal",
       "remindSoft": "Reminder",
       "remindWarn": "Attention",
       "remindUrgent": "URGENT",
@@ -5218,18 +5205,7 @@
       "uvOff": "OFF time",
       "uvTotal": "Total operating time, minutes",
       "uvWho": "Name of responsible person",
-      "uvStampLabel": "Ultraviolet bactericidal unit operating log",
-      "fryerStart": "Date and time frying oil use began",
-      "fryerFat": "Type of frying oil",
-      "fryerQualityStart": "Organoleptic quality assessment of oil at start of frying",
-      "fryerEquipment": "Type of frying equipment",
-      "fryerProduct": "Product type",
-      "fryerEnd": "Frying end time",
-      "fryerQualityEnd": "Organoleptic quality assessment of oil at end of frying",
-      "fryerLeftover": "Use of remaining oil",
-      "fryerCarry": "Carryover, kg",
-      "fryerDisposed": "Disposed, kg",
-      "fryerController": "Controller's position and name"
+      "uvStampLabel": "Ultraviolet bactericidal unit operating log"
     },
     "chapters": {
       "fridgeChip": "Refrigerator",
@@ -5244,24 +5220,14 @@
       "uvPlace": "Sticker on the bactericidal lamp",
       "uvCaption": "Two buttons: “I switched it on” and “I switched it off.” The lamp's operating time and remaining service life are calculated automatically.",
       "uvShort": "“I switched it on” / “I switched it off” — lamp life is calculated automatically.",
-      "fryerChip": "Frying",
-      "fryerPlace": "Sticker on the fryer",
-      "fryerCaption": "The fryer form asks for the oil type, product and a quality rating on a five-point scale. The entry goes into the frying-oil log.",
-      "fryerShort": "Oil, product and rating — an entry in the frying-oil log.",
       "forgotChip": "Missed it?",
       "forgotPlace": "Today's journal is incomplete",
       "forgotCaption": "If the journal is not completed, the manager gets a Telegram reminder at 12:00, an email at 17:00, and an “URGENT” notice at 21:00.",
       "forgotShort": "Reminders at 12:00, 17:00 and 21:00 if the journal is incomplete.",
       "sensorChip": "Sensors",
-      "sensorPlace": "Wi-Fi sensor in the refrigerated display case",
-      "sensorCaption": "The Wi-Fi sensor records the temperature in the journal every hour. If it goes out of range, the responsible person is notified.",
-      "sensorShort": "The sensor records temperatures automatically and reports out-of-range readings."
-    },
-    "fields": {
-      "fat": "Oil type",
-      "equipment": "Equipment",
-      "product": "Product type",
-      "qualityStart": "Quality at start (1–5)"
+      "sensorPlace": "Wi-Fi sensor in the walk-in cold room",
+      "sensorCaption": "A Wi-Fi sensor in the walk-in cold room writes the temperature to the log every hour. If it goes out of range, the responsible person gets an alert.",
+      "sensorShort": "The cold-room sensor logs the temperature itself and alerts on deviations."
     },
     "health": {
       "signatureConfirmed": "Signature recorded in the health log: “+”",
@@ -5277,9 +5243,6 @@
         "infection": "signs of infection in the employee or family",
         "respiratorySkin": "respiratory illness or pustular skin lesions"
       }
-    },
-    "fryer": {
-      "entrySaved": "Saved: {journal} · {employee} · {time}"
     },
     "readingSaved": "Temperature {value, number}°C recorded in the journal under {employee}.",
     "halfHour": "30 min"

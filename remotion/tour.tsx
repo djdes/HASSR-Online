@@ -34,7 +34,6 @@ import intro from "../public/landing/video/voice/ru/00-intro.json";
 import fridge from "../public/landing/video/voice/ru/01-fridge.json";
 import locker from "../public/landing/video/voice/ru/02-locker.json";
 import uv from "../public/landing/video/voice/ru/03-uv.json";
-import fryer from "../public/landing/video/voice/ru/04-fryer.json";
 import forgot from "../public/landing/video/voice/ru/05-forgot.json";
 import sensor from "../public/landing/video/voice/ru/06-sensor.json";
 import outro from "../public/landing/video/voice/ru/07-outro.json";
@@ -53,7 +52,7 @@ import outro from "../public/landing/video/voice/ru/07-outro.json";
  */
 
 export const VIDEO = { width: 1920, height: 1080, fps: FPS } as const;
-export const TRACKS: VoiceTrack[] = [intro, fridge, locker, uv, fryer, forgot, sensor, outro];
+export const TRACKS: VoiceTrack[] = [intro, fridge, locker, uv, forgot, sensor, outro];
 export const TIMELINE = buildTimeline(TRACKS);
 export const CUES: Cue[] = timelineCues(TIMELINE);
 

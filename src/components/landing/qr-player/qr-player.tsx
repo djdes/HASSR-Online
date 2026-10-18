@@ -53,7 +53,6 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
     fridge: { label: sceneT("chapters.fridgeChip"), place: sceneT("chapters.fridgePlace"), caption: sceneT("chapters.fridgeCaption"), short: sceneT("chapters.fridgeShort") },
     locker: { label: sceneT("chapters.lockerChip"), place: sceneT("chapters.lockerPlace"), caption: sceneT("chapters.lockerCaption"), short: sceneT("chapters.lockerShort") },
     uv: { label: sceneT("chapters.uvChip"), place: sceneT("chapters.uvPlace"), caption: sceneT("chapters.uvCaption"), short: sceneT("chapters.uvShort") },
-    fryer: { label: sceneT("chapters.fryerChip"), place: sceneT("chapters.fryerPlace"), caption: sceneT("chapters.fryerCaption"), short: sceneT("chapters.fryerShort") },
     forgot: { label: sceneT("chapters.forgotChip"), place: sceneT("chapters.forgotPlace"), caption: sceneT("chapters.forgotCaption"), short: sceneT("chapters.forgotShort") },
     sensor: { label: sceneT("chapters.sensorChip"), place: sceneT("chapters.sensorPlace"), caption: sceneT("chapters.sensorCaption"), short: sceneT("chapters.sensorShort") },
   };
@@ -61,7 +60,6 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
     fridge: "cold_equipment_control",
     locker: "hygiene",
     uv: "uv_lamp_runtime",
-    fryer: "fryer_oil",
     forgot: "cold_equipment_control",
     sensor: "cold_equipment_control",
   } as const satisfies Record<ChapterId, string>;

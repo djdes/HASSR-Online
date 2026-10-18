@@ -91,8 +91,35 @@ test("голос: весь сценарий озвучен одним голос
   assert.ok(samples.length >= 3, `${samples.length} проб`);
 });
 
+test("ролик не длиннее 60 с: вступление, пять глав, финал", () => {
+  assert.equal(timeline.parts.length, 7);
+  assert.ok(timeline.durationInFrames <= 60 * FPS, `${(timeline.durationInFrames / FPS).toFixed(1)} с`);
+  assert.deepEqual(
+    timeline.parts.map((part) => part.id),
+    ["intro", "fridge", "locker", "uv", "forgot", "sensor", "outro"],
+  );
+});
+
+test("в русском ролике и подписях сцены нет «витрины» и «фритюра»", () => {
+  const ru = JSON.parse(read("src/i18n/messages/ru.json")) as { qrScene: unknown; qrPlayer: unknown };
+  const vtt = existsSync(path.join(ROOT, "public/landing/video/qr-tour-ru.vtt")) ? read("public/landing/video/qr-tour-ru.vtt") : "";
+  const sources: Array<[string, string]> = [
+    ["narration.ru.json", read("remotion/narration.ru.json")],
+    ["qr-tour-ru.vtt", vtt],
+    ["ru.json qrScene", JSON.stringify(ru.qrScene)],
+    ["ru.json qrPlayer", JSON.stringify(ru.qrPlayer)],
+    ["chapters.ts", read("src/components/landing/qr-player/chapters.ts")],
+  ];
+  for (const [name, text] of sources) assert.doesNotMatch(text, /витрин|фритюр/i, name);
+  // Датчик — в сборной холодильной камере (рисунок), не фото витрины.
+  const sensor = CHAPTERS.find((chapter) => chapter.id === "sensor");
+  assert.equal(sensor?.photo, "/landing/places/cold-room.svg");
+  assert.match(read("public/landing/places/cold-room.svg"), /<svg[^>]+viewBox="0 0 1600 1000"/);
+  assert.match(read("src/components/landing/qr-player/scene.tsx"), /data-sensor-wall=""/);
+});
+
 test("глава = max(сцена, голос + 0,5 с): голос не обрезан и не заходит на соседнюю главу", () => {
-  assert.equal(timeline.parts.length, 8);
+  assert.equal(timeline.parts.length, 7);
   let from = 0;
   for (const part of timeline.parts) {
     assert.equal(part.from, from, `${part.id}: части идут встык`);
@@ -107,7 +134,7 @@ test("глава = max(сцена, голос + 0,5 с): голос не обр�
   assert.equal(timeline.durationInFrames, from);
   assert.deepEqual(
     timeline.parts.filter((part) => part.kind === "chapter").map((part) => part.chapterIndex),
-    [0, 1, 2, 3, 4, 5],
+    [0, 1, 2, 3, 4],
   );
 });
 

@@ -34,7 +34,7 @@ export function sceneFrame(seconds: number): number {
   return Math.round((seconds / TIME_SCALE) * FPS);
 }
 
-export type ChapterId = "fridge" | "locker" | "uv" | "fryer" | "forgot" | "sensor";
+export type ChapterId = "fridge" | "locker" | "uv" | "forgot" | "sensor";
 
 export function journalName(code: string): string {
   const item = ACTIVE_JOURNAL_CATALOG.find((entry) => entry.code === code);
@@ -48,7 +48,6 @@ export const JOURNALS = {
   hygiene: journalName("hygiene"),
   health: journalName("health_check"),
   uv: journalName("uv_lamp_runtime"),
-  fryer: journalName("fryer_oil"),
 } as const;
 
 export type Chapter = {
@@ -117,19 +116,6 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     short: "«Я включил» / «Я выключил» — ресурс лампы считается сам.",
   },
   {
-    id: "fryer",
-    accent: "#f59e0b",
-    accentSoft: "#fdf3e1",
-    accentFill: "#fae3b5",
-    photo: "/landing/places/fryer.webp",
-    chip: "Фритюр",
-    place: "Наклейка на фритюрнице",
-    journal: journalName("fryer_oil"),
-    caption:
-      "Форма на фритюрнице спрашивает вид жира, продукцию и оценку качества по пятибалльной шкале. Строка ложится в журнал учёта фритюрных жиров.",
-    short: "Жир, продукция, оценка — строка в журнале фритюрных жиров.",
-  },
-  {
     id: "forgot",
     accent: "#f43f5e",
     accentSoft: "#ffe9ee",
@@ -147,13 +133,15 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     accent: "#10b981",
     accentSoft: "#e6f8f0",
     accentFill: "#c8eedd",
-    photo: "/landing/places/sensor.webp",
+    // Сборная холодильная камера из сэндвич-панелей — рисунок в стиле сцены
+    // (public/landing/places/cold-room.svg), не фото.
+    photo: "/landing/places/cold-room.svg",
     chip: "Датчики",
-    place: "Wi-Fi датчик в холодильной витрине",
+    place: "Wi-Fi датчик в холодильной камере",
     journal: journalName("cold_equipment_control"),
     caption:
-      "Wi-Fi датчик раз в час сам пишет температуру в журнал. Вышла за норму — ответственный получает уведомление.",
-    short: "Датчик пишет температуру сам, о нарушении — уведомление.",
+      "Wi-Fi датчик в холодильной камере раз в час сам пишет температуру в журнал. Вышла за норму — ответственный получает уведомление.",
+    short: "Датчик в камере пишет температуру сам, о нарушении — уведомление.",
   },
 ];
 
@@ -294,17 +282,6 @@ export const UI_SOURCES: Record<keyof typeof UI, string> = {
   remindBody: "src/app/api/cron/compliance/route.ts",
 };
 
-/**
- * Поля QR-формы фритюра — колонки `DEFAULT_PIPELINE_FIELDS.fryer_oil`
- * (`src/lib/journal-default-pipelines.ts`), из которых собирается форма.
- */
-export const FRYER_FIELDS = {
-  fat: "Тип жира",
-  equipment: "Оборудование",
-  product: "Тип продукции",
-  qualityStart: "Качество в начале (1-5)",
-} as const;
-
 /** Подписи граф бумажных бланков — как печатает `src/lib/document-pdf.ts`. */
 export const PDF = {
   stamp: "СИСТЕМА ХАССП",
@@ -317,17 +294,6 @@ export const PDF = {
   uvTotal: "Итого продолжительность работы, минут",
   uvWho: "ФИО ответственного лица",
   uvStampLabel: "Журнал учета работы ультрафиолетовой бактерицидной установки",
-  fryerStart: "Дата, время начала использования фритюрного жира",
-  fryerFat: "Вид фритюрного жира",
-  fryerQualityStart: "Органолептическая оценка качества жира на начало жарки",
-  fryerEquipment: "Тип жарочного оборудования",
-  fryerProduct: "Вид продукции",
-  fryerEnd: "Время окончания фритюрной жарки",
-  fryerQualityEnd: "Органолептическая оценка качества жира по окончании жарки",
-  fryerLeftover: "Использование оставшегося жира",
-  fryerCarry: "Переходящий остаток, кг",
-  fryerDisposed: "Утилизированный, кг",
-  fryerController: "Должность, ФИО контролера",
 } as const;
 
 /** Люди и объекты сцены — условные. */
@@ -340,11 +306,8 @@ export const DEMO = {
   ],
   head: { name: "Козлова Елена", position: "Заведующая производством" },
   fridge: "Холодильник №1",
-  vitrine: "Витрина холодильная",
+  coldRoom: "Холодильная камера №1",
   lamp: "Бактерицидная установка №1",
   lampLifetime: 8000,
   lampUsed: 587.5,
-  fryer: "Фритюрница №1",
-  fat: "Подсолнечное масло",
-  product: "Картофель фри",
 } as const;

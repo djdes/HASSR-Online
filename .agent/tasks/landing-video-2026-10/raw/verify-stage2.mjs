@@ -80,7 +80,7 @@ const playing = (page) => page.locator("[data-qr-player]").getAttribute("data-pl
   const waited = ((Date.now() - startedAt) / 1000).toFixed(1);
   const media = await video.evaluate((node) => ({ time: node.currentTime, paused: node.paused, duration: node.duration, error: node.error?.code ?? null, w: node.videoWidth, h: node.videoHeight }));
   check(tag("видео пошло со звуком после нажатия"), media.time > 1 && !media.paused && media.error === null, `${JSON.stringify(media)}, ждали ${waited} с`);
-  check(tag("файл 1920×1080, ~83 с"), media.w === 1920 && media.h === 1080 && media.duration > 78 && media.duration < 90, `${media.w}×${media.h}, ${media.duration?.toFixed?.(2)} с`);
+  check(tag("файл 1920×1080, не длиннее 60 с"), media.w === 1920 && media.h === 1080 && media.duration > 50 && media.duration <= 60.05, `${media.w}×${media.h}, ${media.duration?.toFixed?.(2)} с`);
   check(tag("видео загрузилось только после нажатия"), videoRequests.some((url) => url.endsWith(".mp4")), `${videoRequests.length} запросов`);
   check(tag("немой ролик на странице стоит под окном"), (await playing(page)) === "0");
   check(tag("страница не прокручивается под окном"), (await page.evaluate(() => document.documentElement.style.overflow)) === "hidden");
@@ -158,6 +158,38 @@ const playing = (page) => page.locator("[data-qr-player]").getAttribute("data-pl
   await page.evaluate(() => document.exitFullscreen());
   await page.waitForTimeout(700);
   check(tag("выход из полного экрана закрывает слой"), (await page.locator("[data-qr-video-dialog]").count()) === 0);
+  check(tag("нет ошибок в консоли"), errors.length === 0, errors.slice(0, 3).join(" | "));
+  await context.close();
+}
+
+// ---------------------------------------------------------------- анимация на главной: 5 глав, датчик в камере
+const BACKUP = "C:/Users/Two/wesetup-backup-2026-10-17/video";
+for (const [label, viewport] of [["390x800", { width: 390, height: 800 }], ["1440x900", { width: 1440, height: 900 }]]) {
+  const { context, page, errors } = await open("/", viewport);
+  const tag = (name) => `${label} анимация: ${name}`;
+  const tabs = (await page.locator("[data-qr-player] nav button").allTextContents()).map((text) => text.replace(/^\d+/, "").trim());
+  check(tag("пять глав, «Фритюра» нет"), tabs.length === 5 && !tabs.some((text) => /фритюр/i.test(text)), tabs.join(" | "));
+  // Сцена «Датчики»: место «в холодильной камере», фон — рисунок камеры, крупный план стены с датчиком.
+  await page.evaluate(() => {
+    const stage = document.querySelector("[data-qr-stage]");
+    window.scrollTo(0, stage.getBoundingClientRect().top + window.scrollY - (window.innerHeight - stage.getBoundingClientRect().height) / 2 - 40);
+  });
+  await page.locator("[data-qr-player] nav button", { hasText: "Датчики" }).click();
+  await page.waitForTimeout(1500);
+  await page.locator("[data-qr-corner] button").first().click();
+  await page.waitForTimeout(400);
+  const scene = await page.evaluate(() => {
+    const stage = document.querySelector("[data-qr-stage]");
+    return {
+      text: stage.innerText,
+      backdrop: Array.from(stage.querySelectorAll("img")).map((img) => img.getAttribute("src")).filter(Boolean),
+      wall: Boolean(stage.querySelector("[data-sensor-wall]")),
+    };
+  });
+  check(tag("датчик в холодильной камере, без «витрины»"), /холодильной камере/.test(scene.text) && /Холодильная камера/.test(scene.text) && !/итрин/i.test(scene.text), scene.text.split("\n").slice(0, 3).join(" / "));
+  check(tag("фон сцены — рисунок камеры, крупный план стены с датчиком"), scene.backdrop.some((src) => src.includes("cold-room.svg")) && scene.wall, scene.backdrop.join(", "));
+  await page.locator("[data-qr-stage]").screenshot({ path: path.join(SHOTS, `stage2-sensor-${label}.jpg`), quality: 85 });
+  await page.locator("[data-qr-stage]").screenshot({ path: `${BACKUP}/scena-datchiki-holodilnaya-kamera-${label}.png` });
   check(tag("нет ошибок в консоли"), errors.length === 0, errors.slice(0, 3).join(" | "));
   await context.close();
 }

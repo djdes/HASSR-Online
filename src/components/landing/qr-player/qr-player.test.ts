@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import { DEFAULT_PIPELINE_FIELDS } from "@/lib/journal-default-pipelines";
 import { HEALTH_CONFIRMATIONS, healthDecision } from "@/lib/health-qr";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import messages from "@/i18n/messages/ru.json";
@@ -17,7 +16,6 @@ import {
   DURATION_IN_FRAMES,
   FPS,
   FRIDGE_RANGE,
-  FRYER_FIELDS,
   JOURNALS,
   PDF,
   RESULT_SECONDS,
@@ -36,14 +34,14 @@ import {
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
 
-test("шесть глав по 8 с, ролик 0:48", () => {
+test("пять глав по 8 с, ролик 0:40 (фритюра в столовых нет — главы нет)", () => {
   assert.deepEqual(
     CHAPTERS.map((chapter) => chapter.id),
-    ["fridge", "locker", "uv", "fryer", "forgot", "sensor"]
+    ["fridge", "locker", "uv", "forgot", "sensor"]
   );
   assert.equal(CHAPTER_FRAMES, 8 * FPS);
   for (const chapter of CHAPTERS) assert.equal(chapter.duration, CHAPTER_FRAMES);
-  assert.equal(formatClock(DURATION_IN_FRAMES / FPS), "0:48");
+  assert.equal(formatClock(DURATION_IN_FRAMES / FPS), "0:40");
   assert.equal(formatClock(7.9), "0:07");
 });
 
@@ -176,17 +174,6 @@ test("подписи граф бланков — как в генераторе 
     uvOff: messages.uvLampRuntime.timeOffShort,
     uvTotal: messages.uvLampRuntime.totalDuration,
     uvWho: messages.uvLampRuntime.responsibleFullName,
-    fryerStart: messages.fryerOil.pdfDateStartTime,
-    fryerFat: messages.fryerOil.pdfFat,
-    fryerQualityStart: messages.fryerOil.pdfQualityStart,
-    fryerEquipment: messages.fryerOil.pdfEquipment,
-    fryerProduct: messages.fryerOil.pdfProduct,
-    fryerEnd: messages.fryerOil.pdfEndTime,
-    fryerQualityEnd: messages.fryerOil.pdfQualityEnd,
-    fryerLeftover: messages.fryerOil.pdfRemainingOil,
-    fryerCarry: messages.fryerOil.pdfCarryover,
-    fryerDisposed: messages.fryerOil.pdfDisposed,
-    fryerController: messages.fryerOil.pdfController,
   };
   for (const [key, label] of Object.entries(PDF)) {
     if (key in localized) {
@@ -195,11 +182,6 @@ test("подписи граф бланков — как в генераторе 
       assert.ok(pdf.includes(label), `«${label}» нет в document-pdf.ts`);
     }
   }
-});
-
-test("поля фритюра — из колонок пайплайна fryer_oil", () => {
-  const labels = new Set(DEFAULT_PIPELINE_FIELDS.fryer_oil.map((field) => field.label));
-  for (const label of Object.values(FRYER_FIELDS)) assert.ok(labels.has(label), label);
 });
 
 test("отклонения из «Попробуйте сами» совпадают с продуктом", () => {

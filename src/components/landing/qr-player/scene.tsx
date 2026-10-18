@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   BellRing,
   Check,
-  CookingPot,
   Lightbulb,
   LightbulbOff,
   Mail,
@@ -529,7 +528,7 @@ function Screen({ t, from, to, children, pad = true }: { t: number; from: number
   );
 }
 
-type ScanObject = "fridge" | "thermometer" | "lamp" | "fryer";
+type ScanObject = "fridge" | "thermometer" | "lamp";
 
 /** Видоискатель камеры: объект, золотая наклейка, рамка распознавания. */
 /**
@@ -545,12 +544,11 @@ const VIEWFINDER_LAYOUT: Record<
 > = {
   // Телефон обрезается низом сцены: видимая зона видоискателя — верхняя
   // половина экрана, наклейки держим в top ≤ 45%. Узкий кроп почти не
-  // слушается objectPosition, поэтому на дверцу и фритюрницу камера
+  // слушается objectPosition, поэтому на дверцу холодильника камера
   // «подходит ближе» зумом (transform-origin в точку объекта на фото).
   fridge: { pos: "50% 50%", left: "52%", top: "42%", tilt: -2.5, title: DEMO.fridge, zoom: { scale: 2.4, origin: "55% 56%" } },
   thermometer: { pos: "40% 50%", left: "50%", top: "44%", tilt: 2, title: JOURNALS.hygiene },
   lamp: { pos: "50% 34%", left: "50%", top: "44%", tilt: -2, title: DEMO.lamp },
-  fryer: { pos: "50% 50%", left: "50%", top: "40%", tilt: 2.5, title: DEMO.fryer, zoom: { scale: 2.2, origin: "58% 96%" } },
 };
 
 function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: ScanObject; qr: QrMatrix; bodyTemp: number; photo?: string }) {
@@ -1440,12 +1438,11 @@ function FilmFinish({ frame }: { frame: number }) {
 
 function Place({ chapter }: { chapter: Chapter }) {
   const tr = useTranslations("qrScene");
-  const Icon = { fridge: Refrigerator, locker: Thermometer, uv: Lightbulb, fryer: CookingPot, forgot: BellRing, sensor: Wifi }[chapter.id];
+  const Icon = { fridge: Refrigerator, locker: Thermometer, uv: Lightbulb, forgot: BellRing, sensor: Wifi }[chapter.id];
   const placeKey = {
     fridge: "chapters.fridgePlace",
     locker: "chapters.lockerPlace",
     uv: "chapters.uvPlace",
-    fryer: "chapters.fryerPlace",
     forgot: "chapters.forgotPlace",
     sensor: "chapters.sensorPlace",
   } as const satisfies Record<Chapter["id"], string>;
@@ -1472,7 +1469,6 @@ const MOMENT = {
   lockerSign: 4.0,
   uvOn: 2.55,
   uvOff: 4.35,
-  fryerSave: 4.15,
   forgotJournal: 4.3,
   sensorJournal: 3.3,
 } as const;
@@ -1547,7 +1543,7 @@ function FridgeScene({ t, value, today, qr, photo, layer }: { t: number; value: 
           rows={[
             { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: landed, value: pdfNumber(value, locale), bad } },
             { name: "Морозильник №2", norm: tr("temperatureRange", { minimum: -18, maximum: -15 }), seed: 2, base: -17.6, spread: 1.4, today: null },
-            { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: null },
+            { name: DEMO.coldRoom, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: null },
           ]}
         />
       </Paper>
@@ -1952,122 +1948,6 @@ function UvScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; q
   );
 }
 
-function FryerScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
-  const locale = FORMAT_LOCALES[useSiteLocale()];
-  const tr = useTranslations("qrScene");
-  const journal = useTranslations("journals.names");
-  const save = MOMENT.fryerSave;
-  const landed = save + FLIGHT_SECONDS * 0.92;
-  if (layer === "screen") return null;
-  const fields: Array<{ label: string; value: string; at: number }> = [
-    { label: tr('fields.fat'), value: DEMO.fat, at: 2.9 },
-    { label: tr('fields.equipment'), value: DEMO.fryer, at: 3.15 },
-    { label: tr('fields.product'), value: DEMO.product, at: 3.4 },
-    { label: tr('fields.qualityStart'), value: "5", at: 3.65 },
-  ];
-  const widths = ["7.4em", "7em", "7.2em", "6.6em", "6.4em", "6em", "7.2em", "5.6em", "5.6em", "8em"];
-  return (
-    <>
-      <Paper stampLabel={journal("fryer_oil")} title={journal("fryer_oil").toUpperCase()} startedDay={today}>
-        <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "67em", fontSize: "0.8em" }}>
-          <colgroup>
-            {widths.map((width, index) => (
-              <col key={index} style={{ width }} />
-            ))}
-          </colgroup>
-          <thead>
-            <tr>
-              {[tr('pdf.fryerStart'), tr('pdf.fryerFat'), tr('pdf.fryerQualityStart'), tr('pdf.fryerEquipment'), tr('pdf.fryerProduct'), tr('pdf.fryerEnd'), tr('pdf.fryerQualityEnd')].map((label) => (
-                <th key={label} rowSpan={2} style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>
-                  {label}
-                </th>
-              ))}
-              <th colSpan={2} style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>
-                {tr('pdf.fryerLeftover')}
-              </th>
-              <th rowSpan={2} style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>
-                {tr('pdf.fryerController')}
-              </th>
-            </tr>
-            <tr>
-              <th style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>{tr('pdf.fryerCarry')}</th>
-              <th style={{ ...headCell, fontSize: "0.72em", fontWeight: 600 }}>{tr('pdf.fryerDisposed')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={cell}>{dateLabel(today, locale, Math.max(1, today.day - 1))} 10:20</td>
-              <td style={cell}>{DEMO.fat}</td>
-              <td style={cell}>{tr("qualityExcellent")}</td>
-              <td style={cell}>{DEMO.fryer}</td>
-              <td style={cell}>{DEMO.product}</td>
-              <td style={cell}>21:40</td>
-              <td style={cell}>{tr("qualityGood")}</td>
-              <td style={cell}>2,5</td>
-              <td style={cell}>-</td>
-              <td style={cell}>Повар, Петров О.</td>
-            </tr>
-            <tr>
-              <Ink t={t} at={landed}>{dateLabel(today, locale)}</Ink>
-              <Ink t={t} at={landed + 0.05}>{DEMO.fat}</Ink>
-              <Ink t={t} at={landed + 0.1}>{tr("qualityExcellent")}</Ink>
-              <Ink t={t} at={landed + 0.15}>{DEMO.fryer}</Ink>
-              <Ink t={t} at={landed + 0.2}>{DEMO.product}</Ink>
-              <td style={cell} />
-              <td style={cell} />
-              <td style={cell}>-</td>
-              <td style={cell}>-</td>
-              <td style={cell} />
-            </tr>
-            <EmptyRows count={4} columns={10} />
-          </tbody>
-        </table>
-      </Paper>
-      <PhoneFrame clock="10:15" ping={0.55}>
-        <QrHeader title={journal("fryer_oil")} />
-        <div style={{ position: "relative", flex: 1 }}>
-          <Screen t={t} from={0.9} to={1.85}>
-            <EmployeeList t={t} tapAt={1.35} label={tr('ui.whoFills')} />
-          </Screen>
-          <Screen t={t} from={1.85} to={2.75}>
-            <PinStep t={t} from={1.85} whoLabel={tr('ui.whoFills')} />
-          </Screen>
-          <Screen t={t} from={2.75} to={save + 0.25}>
-            {fields.map((field) => (
-              <div key={field.label} style={{ borderRadius: "0.75em", border: `0.07em solid ${t >= field.at ? P.lineStrong : P.line}`, background: P.card, padding: "0.35em 0.6em", marginBottom: "0.35em" }}>
-                <div style={{ fontSize: "0.6em", color: P.muted, fontWeight: 600 }}>{field.label}</div>
-                <div style={{ fontSize: "0.86em", fontWeight: 600, minHeight: "1.3em" }}>{typed(field.value, t, field.at, 0.03)}</div>
-              </div>
-            ))}
-            <PrimaryButton pressed={press(t, save)} style={{ marginTop: "0.5em", fontSize: "0.82em" }}>
-              {tr('ui.genericSubmit')}
-            </PrimaryButton>
-          </Screen>
-          <Screen t={t} from={save + 0.25} to={7}>
-            <Done t={t} at={save + 0.3} title={tr('ui.entrySaved')}>
-              <p style={{ margin: "0.45em 0 0", fontSize: "0.68em", color: P.ink2 }}>{tr("fryer.entrySaved", { journal: journal("fryer_oil"), employee: DEMO.cook.name, time: "10:15" })}</p>
-            </Done>
-          </Screen>
-        </div>
-        <Viewfinder t={t} object="fryer" qr={qr} bodyTemp={36.6} photo={photo} />
-      </PhoneFrame>
-      <Rail t={t} steps={SCAN_STEPS(tr("scanSticker"), tr("ui.whoFills"), "PIN", tr("oilAndQuality"), tr("done"), { who: DEMO.cook.short, value: "5 / 5", save: "10:15" })} />
-      <Flight
-        t={t}
-        at={save}
-        meta={`10:15 · ${DEMO.product}`}
-        path={{
-          mobile: { from: PHONE_OUT.mobile, to: { x: 34.4, y: 134.7 } },
-          desktop: { from: PHONE_OUT.desktop, to: { x: 16.9, y: 130.2 } },
-        }}
-      >
-        <CookingPot style={{ width: "1em", height: "1em" }} />
-        5 / 5
-      </Flight>
-    </>
-  );
-}
-
 function ForgotScene({ t, today, layer }: { t: number; today: SceneDay; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
@@ -2158,7 +2038,7 @@ function SensorScene({ t, today, layer }: { t: number; today: SceneDay; layer: L
         at={inkAt + 0.3}
         channel={tr("telegramResponsibleChannel")}
         title={tr("ui.deviationTitle")}
-        lines={[`${tr("equipmentLabel")}: ${DEMO.vitrine}`, `${tr("currentLabel")} ${pdfNumber(current.value, locale)}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
+        lines={[`${tr("equipmentLabel")}: ${DEMO.coldRoom}`, `${tr("currentLabel")} ${pdfNumber(current.value, locale)}°C`, `${tr("normLabel")} ${tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max })}`]}
       />
     ) : null;
   }
@@ -2171,25 +2051,54 @@ function SensorScene({ t, today, layer }: { t: number; today: SceneDay; layer: L
           codeAt={0}
           rows={[
             { name: DEMO.fridge, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 1, base: 3.1, spread: 1.6, today: { at: 0, value: "4", bad: false } },
-            { name: DEMO.vitrine, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: { at: inkAt, value: pdfNumber(current.value, locale), bad } },
+            { name: DEMO.coldRoom, norm: tr("temperatureRange", { minimum: FRIDGE_NORM.min, maximum: FRIDGE_NORM.max }), seed: 3, base: 3.4, spread: 1.4, today: { at: inkAt, value: pdfNumber(current.value, locale), bad } },
           ]}
         />
       </Paper>
-      <div className={`absolute @container ${POS.phone}`}>
+      {/* Крупный план: стена холодильной камеры у двери — белые сэндвич-
+          панели со швами, край двери с ручкой-защёлкой, металлический уголок
+          и Wi-Fi датчик на панели. Показания с него летят в журнал. */}
+      <div className={`absolute @container ${POS.phone}`} data-sensor-wall="">
         <div style={{ fontSize: "5.3cqw", color: "#ffffff", paddingTop: "1.2em" }}>
-          <div style={{ position: "relative", margin: "0 auto", width: "78%", aspectRatio: "1 / 1.05", borderRadius: "1.6em", background: "linear-gradient(160deg,#f7f8fc,#d9dcea)", boxShadow: "0 1.6em 3em -1em rgba(0,0,0,0.6)", padding: "1em", color: P.ink }}>
-            <div style={{ borderRadius: "0.8em", background: bad ? "#ffe3df" : "#dfe9e3", padding: "0.8em 0.6em", textAlign: "center", boxShadow: "inset 0 0.15em 0.4em rgba(0,0,0,0.15)" }}>
-              <div style={{ fontSize: "2.3em", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: bad ? P.badInk : "#1d3a2a", lineHeight: 1 }}>{decimalLabel(current.value, locale)}°</div>
-              <div style={{ fontSize: "0.7em", marginTop: "0.3em", color: P.ink2, fontVariantNumeric: "tabular-nums" }}>{current.time}</div>
+          <div
+            style={{
+              position: "relative",
+              margin: "0 auto",
+              width: "86%",
+              aspectRatio: "1 / 1.05",
+              borderRadius: "1.1em",
+              overflow: "hidden",
+              background:
+                "repeating-linear-gradient(90deg, rgba(0,0,0,0) 0 33.1%, rgba(138,150,170,0.45) 33.1% 33.6%), linear-gradient(165deg,#f8fafc,#dde2ea)",
+              boxShadow: "0 1.6em 3em -1em rgba(0,0,0,0.6), inset 0 0 0 0.1em rgba(255,255,255,0.7)",
+              color: P.ink,
+            }}
+          >
+            {/* Металлический уголок по верху камеры. */}
+            <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: "0.5em", background: "linear-gradient(180deg,#cfd5de,#98a2b1)" }} />
+            {/* Край двери: полотно, уплотнитель, ручка-защёлка. */}
+            <div style={{ position: "absolute", left: 0, top: "0.5em", bottom: 0, width: "29%", background: "linear-gradient(90deg,#eef1f6,#e1e6ee)", boxShadow: "inset -0.22em 0 0 #a9b2c0, inset -0.36em 0 0 #ccd3dd" }}>
+              <div style={{ position: "absolute", right: "22%", top: "40%", width: "0.75em", height: "2.4em", borderRadius: "0.3em", background: "linear-gradient(180deg,#3a4252,#222937)" }}>
+                <div style={{ position: "absolute", right: "0.35em", top: "0.45em", width: "1.35em", height: "0.42em", borderRadius: "0.21em", background: "#323a49" }} />
+                <div style={{ position: "absolute", left: "50%", bottom: "0.35em", width: "0.28em", height: "0.28em", marginLeft: "-0.14em", borderRadius: "999px", background: "#9aa4b3" }} />
+              </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35em", marginTop: "0.7em", fontSize: "0.72em", fontWeight: 600, color: P.ink2 }}>
-              <Wifi style={{ width: "1.1em", height: "1.1em", color: P.indigo }} />
-              {tr("wifiSensor")}</div>
-            {beat > 0 ? (
-              <span aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "1.6em", boxShadow: `0 0 0 ${(1 - beat) * 1.2}em rgba(124,245,192,${beat * 0.45})` }} />
-            ) : null}
+            {/* Датчик на панели: экран с показанием и Wi-Fi. */}
+            <div style={{ position: "absolute", left: "38%", top: "20%", width: "54%", borderRadius: "0.7em", background: "linear-gradient(160deg,#ffffff,#eef1f7)", padding: "0.55em", boxShadow: "0 0.7em 1.4em -0.5em rgba(20,30,60,0.5), inset 0 0 0 0.07em rgba(20,30,60,0.12)" }}>
+              <div style={{ borderRadius: "0.45em", background: bad ? "#ffe3df" : "#dfe9e3", padding: "0.5em 0.3em", textAlign: "center", boxShadow: "inset 0 0.12em 0.3em rgba(0,0,0,0.15)" }}>
+                <div style={{ fontSize: "1.6em", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: bad ? P.badInk : "#1d3a2a", lineHeight: 1 }}>{decimalLabel(current.value, locale)}°</div>
+                <div style={{ fontSize: "0.55em", marginTop: "0.3em", color: P.ink2, fontVariantNumeric: "tabular-nums" }}>{current.time}</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3em", marginTop: "0.5em", fontSize: "0.52em", fontWeight: 600, color: P.ink2 }}>
+                <Wifi style={{ width: "1.1em", height: "1.1em", color: P.indigo }} />
+                {tr("wifiSensor")}
+              </div>
+              {beat > 0 ? (
+                <span aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "0.7em", boxShadow: `0 0 0 ${(1 - beat) * 1.1}em rgba(124,245,192,${beat * 0.45})` }} />
+              ) : null}
+            </div>
           </div>
-          <div style={{ textAlign: "center", marginTop: "1em", fontSize: "0.8em", fontWeight: 600 }}>{DEMO.vitrine}</div>
+          <div style={{ textAlign: "center", marginTop: "1em", fontSize: "0.8em", fontWeight: 600 }}>{DEMO.coldRoom}</div>
           <div style={{ textAlign: "center", marginTop: "0.3em", fontSize: "0.66em", color: "rgba(255,255,255,0.65)" }}>{tr("hourlyReadingWithoutPhone")}</div>
         </div>
       </div>
@@ -2207,8 +2116,8 @@ function SensorScene({ t, today, layer }: { t: number; today: SceneDay; layer: L
         tone={fridgeOutOfRange(lastReading.value) ? "bad" : "ok"}
         meta={`${lastReading.time} · ${tr("wifiSensor")}`}
         path={{
-          mobile: { from: { x: 30, y: 30 }, to: { x: coldTodayX(today, "mobile"), y: coldRowY(1, "mobile") } },
-          desktop: { from: { x: 18.5, y: 27 }, to: { x: coldTodayX(today, "desktop"), y: coldRowY(1, "desktop") }, tag: "right" },
+          mobile: { from: { x: 36, y: 28 }, to: { x: coldTodayX(today, "mobile"), y: coldRowY(1, "mobile") } },
+          desktop: { from: { x: 21.5, y: 25 }, to: { x: coldTodayX(today, "desktop"), y: coldRowY(1, "desktop") }, tag: "right" },
         }}
       >
         <Wifi style={{ width: "1em", height: "1em" }} />
@@ -2231,8 +2140,6 @@ function journalAtFor(chapter: Chapter, fridgeTemp: number): number {
       return MOMENT.lockerSign;
     case "uv":
       return MOMENT.uvOff;
-    case "fryer":
-      return MOMENT.fryerSave;
     case "forgot":
       return MOMENT.forgotJournal;
     case "sensor":
@@ -2284,7 +2191,6 @@ export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProp
       {chapter.id === "fridge" ? <FridgeScene t={t} value={fridgeTemp} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
       {chapter.id === "locker" ? <LockerScene t={t} bodyTemp={bodyTemp} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
       {chapter.id === "uv" ? <UvScene t={t} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
-      {chapter.id === "fryer" ? <FryerScene t={t} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
       {chapter.id === "forgot" ? <ForgotScene t={t} today={today} layer={layer} /> : null}
       {chapter.id === "sensor" ? <SensorScene t={t} today={today} layer={layer} /> : null}
     </>

@@ -5034,12 +5034,6 @@
         "short": "“Yoqdim” / “O‘chirdim” — lampaning resursi avtomatik hisoblanadi.",
         "place": "Bakteritsid lampadagi stiker"
       },
-      "fryer": {
-        "label": "Fritür",
-        "caption": "Fritür shakli yog‘ turi, mahsulot va besh ballik shkala bo‘yicha sifat bahosini so‘raydi. Yozuv fritür yog‘lari hisob jurnaliga qo‘shiladi.",
-        "short": "Yog‘, mahsulot, baho — fritür yog‘lari jurnalidagi bitta qator.",
-        "place": "Fritürdagi stiker"
-      },
       "forgot": {
         "label": "Unutdingizmi?",
         "caption": "Jurnal to‘ldirilmasa, rahbar soat 12:00 da Telegram eslatmasini, 17:00 da qo‘shimcha ravishda emailni, 21:00 da esa “SHOSHILINCH” xabarini oladi.",
@@ -5048,9 +5042,9 @@
       },
       "sensor": {
         "label": "Datchiklar",
-        "caption": "Wi-Fi datchigi har soatda haroratni jurnalga avtomatik yozadi. Harorat me’yordan chiqsa, mas’ul xodim bildirishnoma oladi.",
-        "short": "Datchik haroratni avtomatik yozadi, me’yordan chiqsa bildirishnoma yuboradi.",
-        "place": "Sovutkich vitrinasidagi Wi-Fi datchigi"
+        "caption": "Sovutish kamerasidagi Wi-Fi datchigi har soatda haroratni jurnalga avtomatik yozib boradi. Harorat me’yordan chiqsa, mas’ul xodimga bildirishnoma yuboriladi.",
+        "short": "Kameradagi datchik haroratni o‘zi yozadi, buzilish haqida esa bildirishnoma yuboradi.",
+        "place": "Sovutish kamerasidagi Wi-Fi datchigi"
       }
     }
   },
@@ -5148,11 +5142,6 @@
     "whoSwitchesLamp": "Kim yoqadi",
     "lampTurnedOn": "Yoqdim",
     "lampTurnedOff": "O‘chirdim",
-    "qualityExcellent": "A’lo",
-    "qualityGood": "Yaxshi",
-    "fryerEntrySaved": "Saqlandi: {journal} · {employee} · {time}",
-    "oilAndQuality": "Yog‘ turi va bahosi",
-    "done": "Tayyor",
     "botForManager": "Bot · rahbarga",
     "emailChannel": "Telegram va elektron pochta",
     "telegramOnlyChannel": "Faqat Telegram",
@@ -5177,7 +5166,6 @@
       "pinLabel": "PIN-kodingiz",
       "pinHint": "Shaxsingizni tasdiqlash uchun PIN",
       "pinContinue": "Kirish",
-      "entrySaved": "Qayd yozildi",
       "equipment": "Uskuna",
       "equipmentWho": "Ko‘rsatkichni kim o‘lchaydi?",
       "saveReading": "O‘lchovni saqlash",
@@ -5199,7 +5187,6 @@
       "uvOffDone": "Nurlatgich o‘chirildi",
       "lampLabel": "Lampa",
       "uvRemaining": "Qolgan resurs",
-      "genericSubmit": "Tayyor — jurnalga yozish",
       "remindSoft": "Eslatma",
       "remindWarn": "Diqqat",
       "remindUrgent": "SHOSHILINCH",
@@ -5218,18 +5205,7 @@
       "uvOff": "O‘CHIRILGAN vaqti",
       "uvTotal": "Jami ishlagan vaqt, daqiqa",
       "uvWho": "Mas’ul shaxsning F.I.Sh.",
-      "uvStampLabel": "Ultrabinafsha bakteritsid qurilmaning ishlash jurnali",
-      "fryerStart": "Qovurish yog‘idan foydalanish boshlangan sana va vaqt",
-      "fryerFat": "Qovurish yog‘ining turi",
-      "fryerQualityStart": "Qovurish boshida yog‘ sifatining organoleptik bahosi",
-      "fryerEquipment": "Qovurish uskunasi turi",
-      "fryerProduct": "Mahsulot turi",
-      "fryerEnd": "Qovurish tugagan vaqt",
-      "fryerQualityEnd": "Qovurish oxirida yog‘ sifatining organoleptik bahosi",
-      "fryerLeftover": "Qolgan yog‘dan foydalanish",
-      "fryerCarry": "Keyingi davrga qolgan yog‘, kg",
-      "fryerDisposed": "Utilizatsiya qilingan yog‘, kg",
-      "fryerController": "Nazorat qiluvchining lavozimi va F.I.Sh."
+      "uvStampLabel": "Ultrabinafsha bakteritsid qurilmaning ishlash jurnali"
     },
     "chapters": {
       "fridgeChip": "Sovutkich",
@@ -5244,24 +5220,14 @@
       "uvPlace": "Bakteritsid lampadagi stiker",
       "uvCaption": "Ikkita tugma: «Yoqdim» va «O‘chirdim». Lampaning ishlash vaqti va qolgan resursi avtomatik hisoblanadi.",
       "uvShort": "«Yoqdim» / «O‘chirdim» — lampaning resursi avtomatik hisoblanadi.",
-      "fryerChip": "Qovurish",
-      "fryerPlace": "Fritözdagi stiker",
-      "fryerCaption": "Fritözdagi shakl yog‘ turini, mahsulotni va sifatni besh ballik shkalada baholashni so‘raydi. Qayd qovurish yog‘lari jurnaliga tushadi.",
-      "fryerShort": "Yog‘, mahsulot va baho — qovurish yog‘lari jurnaliga yoziladi.",
       "forgotChip": "Unutdingizmi?",
       "forgotPlace": "Bugungi jurnal to‘ldirilmagan",
       "forgotCaption": "Jurnal to‘ldirilmasa, rahbarga soat 12:00 da Telegram eslatmasi, 17:00 da elektron xat, 21:00 da esa «SHOSHILINCH» xabari keladi.",
       "forgotShort": "Jurnal to‘ldirilmasa, 12:00, 17:00 va 21:00 da eslatmalar keladi.",
       "sensorChip": "Datchiklar",
-      "sensorPlace": "Sovutkich vitrinasidagi Wi-Fi datchik",
-      "sensorCaption": "Wi-Fi datchik har soatda haroratni jurnalga avtomatik yozadi. Harorat me’yordan chiqsa, mas’ul shaxsga bildirishnoma yuboriladi.",
-      "sensorShort": "Datchik haroratni avtomatik yozadi va me’yordan chiqishni bildiradi."
-    },
-    "fields": {
-      "fat": "Yog‘ turi",
-      "equipment": "Uskuna",
-      "product": "Mahsulot turi",
-      "qualityStart": "Boshidagi sifat (1–5)"
+      "sensorPlace": "Sovutish kamerasidagi Wi-Fi datchik",
+      "sensorCaption": "Sovutish kamerasidagi Wi-Fi datchik har soatda haroratni jurnalga o‘zi yozadi. Me’yordan chiqsa, mas’ul xodimga bildirishnoma yuboriladi.",
+      "sensorShort": "Kameradagi datchik haroratni o‘zi yozadi, buzilish haqida bildirishnoma yuboradi."
     },
     "health": {
       "signatureConfirmed": "Sog‘liq jurnaliga imzo qayd etildi: «+»",
@@ -5277,9 +5243,6 @@
         "infection": "xodim yoki oilada infeksiya belgilari",
         "respiratorySkin": "nafas yo‘llari kasalligi yoki yiringli teri shikastlanishi"
       }
-    },
-    "fryer": {
-      "entrySaved": "Saqlandi: {journal} · {employee} · {time}"
     },
     "readingSaved": "Harorat {value, number}°C jurnalda {employee} nomiga qayd etildi.",
     "halfHour": "30 daqiqa"
