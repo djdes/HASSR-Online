@@ -1,0 +1,26 @@
+→ Проверка на секреты...
+→ TypeScript type-check...
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+→ Tests (baseline gate)...
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=4238, fail=4 ===
+
+✗ НОВЫЕ регрессии (нет в baseline):
+  - message argument types are generated from the current source catalog
+  - запись по токену: организация и токен — из токена, сканы проверены, событие inspector.visit, cookie «мои записи»
+  - огромный мусор не подвешивает разбор
+  - тип файла — по содержимому: HEIC, чужой формат, HTML перед PDF, битый PDF и PNG-бомба отклоняются
+
+Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
+Если регрессии — почините код.
+
+✗ НОВАЯ регрессия в тестах. Почините код, или (если осознанно)
+  добавьте имя теста в tests/.legacy-failures.txt.
+exit=1

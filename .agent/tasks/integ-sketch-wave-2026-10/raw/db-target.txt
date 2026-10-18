@@ -1,0 +1,3 @@
+◇ injected env (14) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+DATABASE_URL postgresql://postgres:***@localhost:5432/wesetup_integ?sslmode=disable
+DATABASE_URL_DIRECT postgresql://postgres:***@localhost:5432/wesetup_integ?sslmode=disable
