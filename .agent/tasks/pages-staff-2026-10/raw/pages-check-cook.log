@@ -1,0 +1,15 @@
+== повар (hotcook1@haccp.local)
+  cook/mobile positions: 200 → /journals h1=«»
+  cook/mobile access: 200 → /mini h1=«Сегодня»
+  cook/mobile commission: 200 → /mini h1=«Сегодня»
+  cook/mobile haccpGroup: 200 → /mini h1=«Сегодня»
+  cook/mobile controlGroup: 200 → /mini h1=«Сегодня»
+  cook/mobile inspectors: 200 → /mini h1=«Сегодня»
+  cook/mini positions: 200 → /mini h1=«Сегодня»
+  cook/mini access: 200 → /mini h1=«»
+  cook/mini commission: 200 → /mini h1=«»
+  cook/mini haccpGroup: 200 → /mini h1=«»
+  cook/mini controlGroup: 200 → /mini h1=«»
+  cook/mini inspectors: 200 → /mini h1=«»
+Проблем нет
+exit 0

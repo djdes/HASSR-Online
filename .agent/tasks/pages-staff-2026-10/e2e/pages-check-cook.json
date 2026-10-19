@@ -1,0 +1,176 @@
+{
+  "startedAt": "2026-10-19T17:59:16.217Z",
+  "roles": {
+    "cook": {
+      "mobile": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/journals",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        }
+      },
+      "mini": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nСегодня"
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nВход"
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nСегодня"
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nСегодня"
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nСегодня"
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nВход"
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-10-19T18:05:07.927Z",
+  "problems": [],
+  "notes": [
+    "cook/mobile http://localhost:3071/mini/today: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mobile http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mobile http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mobile http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mobile http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mobile http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mini http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mini http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mini http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mini http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche",
+    "cook/mini http://localhost:3071/mini: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+  ]
+}

@@ -13,7 +13,8 @@
 - `e2e/pages-check.mjs` → `e2e/pages-check.json` — 6 страниц × руководитель и заведующая × сайт
   1440×900, телефон 390×800, Mini App (кука `ws-shell=mini`) + повар на сайте: все 200, у руководства —
   своя страница, h1, подсвеченный пункт меню, без горизонтальной прокрутки на 390; повара уводит
-  (`/journals` → `/mini`), 500 нет.
+  (`/journals` → `/mini`), 500 нет. Повар на телефоне и в Mini App — `e2e/pages-check-cook.json`
+  (19.10, после перезапуска PostgreSQL): все 6 страниц → `/mini` («Сегодня»), 500 нет, проблем нет.
 
 ## Что сделано
 
@@ -70,7 +71,7 @@
 | AC8.1 | PASS | `menuShape("staff")` по spec; подписи RU/EN/UZ (тест локализации); иконки (тест `hasNavIcon`) |
 | AC8.2 | PASS | заведующая видит все новые пункты (`AC8.2-headchef-menu`); повар раздела не видит (тест), прямой заход — редирект, не 500 (`pages-check`, повар на сайте) |
 | AC8.3 | PASS | `app-nav`, `settings-cards`, `navigation-localization`, `no-settings-hub-links`, `components/layout/navigation-localization` + свои — 89/89 |
-| AC9.1 | PASS* | проверки ниже; Playwright: руководитель и заведующая — сайт, телефон, Mini App; повар — сайт. *Повар на телефоне/в Mini App не переснят: при финальном прогоне 19.10 локальный PostgreSQL на 5432 не работал (см. «Ждёт людей») |
+| AC9.1 | PASS | проверки ниже; Playwright: руководитель и заведующая — сайт, телефон, Mini App; повар — сайт, телефон, Mini App (`e2e/pages-check.json`, `e2e/pages-check-cook.json`) |
 | AC9.2 | PASS | текст «Что нового» — ниже |
 
 ## Проверки
@@ -79,7 +80,12 @@
 - `npx eslint <изменённые файлы>` → 0 ошибок (2 прежних предупреждения в `staff-dialogs.tsx`).
 - `node --import tsx --test src/lib/app-nav.test.ts src/lib/settings-cards.test.ts src/lib/navigation-localization.test.ts src/lib/no-settings-hub-links.test.ts src/components/layout/navigation-localization.test.ts src/lib/staff-access-overview.test.ts src/lib/staffing.test.ts src/lib/inspectors-auditors.test.ts src/lib/control-group-access.test.ts src/components/staff/*.test.ts` → 89/89.
 - `npm run i18n:check` → 82/82.
-- `verify-worktree` / `scan-corrupt` — перед коммитом (результат в отчёте коммита).
+- `verify-worktree` → `corrupted: 0` (после восстановления 75 чужих испорченных файлов);
+  `scan-corrupt` → `corruptModifiedByAgent: 0`, `corruptUntracked: 0`.
+- Коммит `2a51a9cb`: pre-commit (секреты, tsc, test:gate) — `pass=4274, fail=0`. Две первые попытки
+  упали на тестах PDF с таймаутами (`order-scan-bombs`, `journal-order-scans`, визиты проверяющего)
+  под нагрузкой машины (CPU 100 %, параллельные прогоны); по отдельности они зелёные; прошло с
+  `TEST_CONCURRENCY=2` (параметр самого hook'а), без `--no-verify`.
 
 ## Решения по ходу
 
@@ -120,11 +126,9 @@
 
 ## Ждёт людей
 
-- **Локальный PostgreSQL на 5432 (`D:\pgdata`) не запущен** с ~9:42 19.10 (в `D:\pgdata` остался
-  старый `postmaster.pid` — похоже на аварийную остановку). Без него не работает ни один dev-сервер
-  копий. Запускать общий сервер сам не стал (диск D «Full Repair Needed», решение за владельцем /
-  координатором). После запуска — дослать снимки повара на телефоне и в Mini App:
-  `ROLES=cook KINDS=mobile,mini node .agent/tasks/pages-staff-2026-10/e2e/pages-check.mjs`.
+- По этой задаче — ничего. (19.10 локальный PostgreSQL 5432 лежал ~9:35–14:40; координатор его
+  перезапустил, повар на телефоне/в Mini App доснят после этого.)
+- Диск D: тихо портит файлы (19.10 — 75 испорченных в этой копии); решение о ремонте — за владельцем.
 
 ## «Что нового» (предложение для S3)
 

@@ -4,7 +4,8 @@
   "base": "76c01cc4",
   "database": "wesetup_pages_staff",
   "devServer": "http://localhost:3071 (остановлен)",
-  "verdict": "PASS_WITH_PENDING",
+  "commit": "2a51a9cb",
+  "verdict": "PASS",
   "criteria": {
     "AC1.1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "e2e/scenarios.json#AC1.1-headchef-manage"] },
     "AC1.2": { "status": "PASS", "evidence": ["e2e/scenarios.json#AC1.2-pills", "e2e/scenarios.json#AC1.2-categories", "raw/ac1-positions-pills.png"] },
@@ -36,10 +37,8 @@
     "AC8.1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "src/lib/navigation-localization.test.ts"] },
     "AC8.2": { "status": "PASS", "evidence": ["e2e/scenarios.json#AC8.2-headchef-menu", "e2e/pages-check.json#roles.cook.desktop", "src/lib/app-nav.test.ts"] },
     "AC8.3": { "status": "PASS", "evidence": ["node --import tsx --test … → 89/89"] },
-    "AC9.1": { "status": "PASS", "note": "tsc 0, eslint 0 ошибок, тесты 89/89, i18n:check 82/82; Playwright: руководитель и заведующая — сайт/телефон/Mini App, повар — сайт. Повар на телефоне и в Mini App не переснят: локальный PostgreSQL 5432 остановлен (ждёт людей).", "evidence": ["e2e/pages-check.json", "raw/"] },
+    "AC9.1": { "status": "PASS", "note": "tsc 0, eslint 0 ошибок, тесты 89/89, i18n:check 82/82, pre-commit test:gate pass=4274 fail=0; Playwright: руководитель и заведующая — сайт/телефон/Mini App, повар — сайт/телефон/Mini App.", "evidence": ["e2e/pages-check.json", "e2e/pages-check-cook.json", "raw/"] },
     "AC9.2": { "status": "PASS", "evidence": ["evidence.md#что-нового"] }
   },
-  "pending": [
-    "Запустить локальный PostgreSQL (D:\\pgdata, порт 5432) и доснять повара на телефоне/в Mini App: ROLES=cook KINDS=mobile,mini node .agent/tasks/pages-staff-2026-10/e2e/pages-check.mjs"
-  ]
+  "pending": []
 }
