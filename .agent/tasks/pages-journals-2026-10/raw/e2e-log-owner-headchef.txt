@@ -1,0 +1,53 @@
+руководитель 1440
+  ✓ owner: /journals/sets/standard 200 200
+  ✓ owner: заголовок стандартного набора "Стандартный набор журналов"
+  ✓ owner: 11 журналов, нумерация 1–11 ["1:finished_product","2:perishable_rejection","3:hygiene","4:climate_control","5:cold_equipment_control","6:uv_lamp_runtime","7:general_cleaning","8:disinfectant_usage","9:pest_control","10:med_books","11:staff_training"]
+  ✓ owner: три выключенных журнала видны как выключенные ["uv_lamp_runtime","pest_control","med_books"]
+  ✓ owner: пилюли «Включено 8 из 11» и «Заполнено сегодня» ["Включено 8 из 11","Заполнено сегодня 1 из 5"]
+  ✓ owner: в сайдбаре группа наборов, «Стандартный набор» активен [{"id":"today","current":null},{"id":"all","current":null},{"id":"standard","current":"page"},{"id":"haccp","current":null},{"id":"extra","current":null},{"id":"verify","current":null},{"id":"setup","current":null}]
+  ✓ owner: связанный журнал у гигиенического показан 1
+  ✓ owner: кнопка «Включить весь набор» есть 
+  ✓ owner: подтверждение перечисляет 3 журнала "Включить весь набор?Включатся 3 журнала: они появятся в «Сегодня» и в списке журналов, сотрудники смогут их заполнять. Остальные журналы не меняются.Журнал учета работы УФ бактерицидной установкиЖурнал учета дезинфекции, дезинсекции и дератизацииМедицинские книжкиОтменаВключить"
+  ✓ owner: тост «Включено журналов: 3» 
+  ✓ owner: после включения все 11 включены []
+  ✓ owner: кнопка пропала 
+  ✓ owner: в базе журналы набора больше не выключены ["cleaning_ventilation_checklist","training_plan","sanitary_day_control","breakdown_history","equipment_calibration","incoming_raw_materials_control","ppe_issuance","accident_journal","complaint_register","product_writeoff","audit_plan","audit_protocol","audit_report","traceability_test","metal_impu
+  ✓ owner: три записи journal.enable в AuditLog 3
+  ✓ owner: есть ежедневный журнал «Не заполнен» ["finished_product:filled","perishable_rejection:notFilled","hygiene:notFilled","climate_control:notFilled","cold_equipment_control:notFilled","uv_lamp_runtime:filled","general_cleaning:notRequired","disinfectant_usage:notRequired","pest_control:notRequired","med_books:notRequired","staff_training:n
+  ✓ owner: запись в журнал perishable_rejection создана 201
+  ✓ owner: perishable_rejection — «Заполнен сегодня» {"code":"perishable_rejection","enabled":true,"today":"filled","number":"2"}
+  ✓ owner: «Открыть журнал» у гигиенического 
+  ✓ owner: /journals/hygiene открылся "http://localhost:3074/journals/hygiene"
+  ✓ owner: /journals/sets/haccp 200 200
+  ✓ owner: ХАССП — 19 журналов 19
+  ✓ owner: ХАССП — кнопка «Включить весь набор» 
+  ✓ owner: /journals/sets/extra 200 200
+  ✓ owner: дополнительные — нет массового включения 
+  ✓ owner: дополнительные — есть выключенный журнал 17
+  ✓ owner: тост «Журнал включён: …» 
+  ✓ owner: «Включить» по одному — cleaning_ventilation_checklist включён {"code":"cleaning_ventilation_checklist","enabled":true,"today":"notFilled","number":"1"}
+руководитель 390
+  ✓ owner 390: /journals/sets/standard 200, без горизонтальной прокрутки {"scrollWidth":390,"innerWidth":390,"ok":true}
+  ✓ owner 390: /journals/sets/haccp 200, без горизонтальной прокрутки {"scrollWidth":390,"innerWidth":390,"ok":true}
+  ✓ owner 390: /journals/sets/extra 200, без горизонтальной прокрутки {"scrollWidth":390,"innerWidth":390,"ok":true}
+заведующая
+  ✓ headchef desktop: /journals/sets/standard 200 {"status":200,"url":"http://localhost:3074/journals/sets/standard"}
+  ✓ headchef desktop: 11 журналов 11
+  ✓ headchef desktop: ХАССП — кнопка видна (API разрешает руководству) 
+  ✓ headchef: в меню «Журналов» — наборы ["control","standard","haccp","extra","verify","setup"]
+  ✓ headchef: «Открыть журнал» ведёт на рабочую страницу журнала {"status":200,"url":"http://localhost:3074/journals/climate_control"}
+  ✓ headchef mobile: /journals/sets/standard 200 {"status":200,"url":"http://localhost:3074/journals/sets/standard"}
+  ✓ headchef mobile: 11 журналов 11
+  ✓ headchef 390: без горизонтальной прокрутки {"scrollWidth":390,"innerWidth":390,"ok":true}
+  ✓ headchef mobile: ХАССП — кнопка видна (API разрешает руководству) 
+повар
+  ✗ cook desktop: прямой заход на /journals/sets/standard — редирект "http://localhost:3074/journals/sets/standard"
+page.goto: net::ERR_ABORTED at http://localhost:3074/journals/sets/extra
+Call log:
+[2m  - navigating to "http://localhost:3074/journals/sets/extra", waiting until "domcontentloaded"[22m
+
+    at goto (D:\wt\pages-journals\.agent\tasks\pages-journals-2026-10\e2e.mjs:73:27)
+    at async main (D:\wt\pages-journals\.agent\tasks\pages-journals-2026-10\e2e.mjs:289:7) {
+  name: 'Error'
+}
+exit=2

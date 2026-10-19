@@ -2489,12 +2489,19 @@
           }
         },
         "journals": {
+          "groups": {
+            "sets": "Journal sets",
+            "more": "More"
+          },
           "items": {
             "today": "Today",
             "control": "Today",
             "all": "All journals",
             "verify": "Entry verification",
-            "setup": "Journal settings"
+            "setup": "Journal settings",
+            "standard": "Standard set",
+            "haccp": "HACCP set",
+            "extra": "Additional"
           }
         },
         "checklists": {
@@ -2808,6 +2815,9 @@
       "journals_progress": "Journal progress",
       "journals_new": "New journal",
       "journals_traceability": "Traceability",
+      "journals_sets_standard": "Standard set",
+      "journals_sets_haccp": "HACCP set",
+      "journals_sets_extra": "Additional journals",
       "losses": "Losses",
       "losses_new": "New loss",
       "reports_by_user": "Employee report",
@@ -16666,5 +16676,82 @@
     "openFile": "Open the document",
     "fileHint": "Open the document, read it and come back to press \"I have read it\".",
     "publicButton": "I am an employee - confirm reading"
+  },
+  "journalSets": {
+    "sets": {
+      "standard": {
+        "title": "Standard journal set",
+        "description": "11 journals every food service business needs under SanPiN: product grading, staff hygiene, temperature, UV lamps, cleaning, disinfectants, pest control, medical records and briefings."
+      },
+      "haccp": {
+        "title": "HACCP journal set",
+        "description": "Journals marked HACCP plus critical control point monitoring — the records TR CU 021/2011 (art. 10) requires from a HACCP system."
+      },
+      "extra": {
+        "title": "Additional journals",
+        "description": "The rest of the catalog: enable the journals your venue needs."
+      }
+    },
+    "basis": "Journals in line with HACCP principles and SanPiN",
+    "pills": {
+      "enabled": "Enabled {enabled} of {total}",
+      "filled": "Filled today {filled} of {required}",
+      "nothingToday": "No entries needed today"
+    },
+    "status": {
+      "on": "Enabled",
+      "off": "Disabled",
+      "filled": "Filled today",
+      "notFilled": "Not filled",
+      "notRequired": "Not needed today"
+    },
+    "related": "Related journal",
+    "relatedHint": "The set does not enable it — enable it separately if you need it.",
+    "open": "Open journal",
+    "enableOne": "Enable",
+    "enableOneDone": "Journal enabled: {name}",
+    "enableAll": "Enable the whole set",
+    "enableAllDone": "Journals enabled: {count}",
+    "enableFailed": "Could not enable the journal. Refresh the page and try again.",
+    "confirm": {
+      "title": "Enable the whole set?",
+      "description": "{count, plural, one {# journal will be enabled} other {# journals will be enabled}}: they appear in “Today” and in the journal list, and staff can fill them in. Other journals stay as they are.",
+      "confirm": "Enable"
+    },
+    "empty": {
+      "title": "No journals in this set yet",
+      "hint": "Every catalog journal is already in the standard set or the HACCP set."
+    },
+    "guide": {
+      "title": "How to work with a journal set",
+      "onOff": {
+        "title": "Enabled / disabled",
+        "body": "enabled journals appear in “Today” and in the journal list, and staff fill them in. Disabled journals are hidden and send no reminders."
+      },
+      "today": {
+        "title": "Filled today",
+        "body": "counted the same way as on the “Today” page: by today’s entries at the selected location."
+      },
+      "notRequired": {
+        "title": "Not needed today",
+        "body": "the journal is kept per event — a delivery, a breakdown, a complaint — not every day. Until the event happens, nothing needs to be done."
+      },
+      "enableAll": {
+        "title": "Enable the whole set",
+        "body": "one button enables the disabled journals of the set. Journals already enabled and journals outside the set do not change."
+      },
+      "enableOne": {
+        "title": "Enable",
+        "body": "additional journals are enabled one at a time — pick the ones your venue needs."
+      },
+      "qaDisable": {
+        "q": "How do I disable a journal?",
+        "a": "In “Journal settings” → “Journal set”. The set itself does not change — the journal simply stops showing."
+      },
+      "qaRelated": {
+        "q": "Why was the related journal not enabled with the set?",
+        "a": "The health journal duplicates the hygiene journal and is off by default. If inspectors require it specifically, enable it with the “Enable” button next to it."
+      }
+    }
   }
 }

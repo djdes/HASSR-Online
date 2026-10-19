@@ -1,0 +1,26 @@
+// Отладка Mini App: ошибки страницы со стеком и меню раздела.
+import { chromium } from "playwright";
+const BASE = "http://localhost:3074";
+const browser = await chromium.launch({ channel: "chrome" });
+const context = await browser.newContext({ viewport: { width: 390, height: 800 }, locale: "ru-RU", isMobile: true, hasTouch: true });
+await context.addCookies([{ name: "ws-shell", value: "mini", url: BASE }]);
+const page = await context.newPage();
+page.on("pageerror", (e) => console.log("PAGEERROR", e.message, (e.stack || "").slice(0, 600)));
+page.on("console", (m) => { if (m.type() === "error") console.log("CONSOLE", m.text().slice(0, 4000)); });
+page.on("response", (r) => { if (r.status() >= 400) console.log("HTTP", r.status(), r.url()); });
+await page.request.post(`${BASE}/api/auth/login`, { data: { email: "admin@haccp.local", password: "admin1234" } });
+await page.goto(`${BASE}/journals/sets/standard`, { waitUntil: "domcontentloaded", timeout: 600000 });
+await page.waitForLoadState("networkidle", { timeout: 20000 }).catch(() => {});
+await page.waitForTimeout(3000);
+console.log("--- haccp");
+await page.goto(`${BASE}/journals/sets/haccp`, { waitUntil: "domcontentloaded", timeout: 600000 });
+await page.waitForLoadState("networkidle", { timeout: 20000 }).catch(() => {});
+await page.waitForTimeout(3000);
+const btn = page.locator("[data-section-menu-button]").first();
+console.log("button visible", await btn.isVisible().catch(() => false));
+await btn.click().catch((e) => console.log("click err", e.message));
+await page.waitForTimeout(1500);
+console.log("modes", await page.locator("[data-mini-menu-mode]").evaluateAll((els) => els.map((el) => el.getAttribute("data-mini-menu-mode"))));
+console.log("menu items", await page.locator("[data-menu-item]").evaluateAll((els) => els.map((el) => [el.getAttribute("data-menu-item"), el.getBoundingClientRect().height > 0])));
+await page.screenshot({ path: ".agent/tasks/pages-journals-2026-10/raw/mini-debug-menu.png" });
+await browser.close();

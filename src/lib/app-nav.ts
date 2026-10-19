@@ -142,7 +142,7 @@ export type NavMenuItem = {
 };
 
 /** Ключ подписи группы: `menus.<раздел>.groups.<label>`. */
-export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "more";
+export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "sets" | "more";
 
 /** Группа пунктов меню раздела; `label: null` — группа без подписи. */
 export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[] };
@@ -326,6 +326,22 @@ const JOURNALS_MENU: NavMenuGroup[] = [
         hideIfVisible: "today",
       },
       { id: "all", icon: "ClipboardList", href: "/journals", access: anyOf("journals.view") },
+    ],
+  },
+  {
+    // Наборы журналов (скан 82, лист 1): состав — `JOURNAL_SETS`, guard — как у
+    // API наборов (`hasFullWorkspaceAccess`).
+    label: "sets",
+    items: [
+      { id: "standard", icon: "ListOrdered", href: "/journals/sets/standard", access: FULL_ACCESS },
+      { id: "haccp", icon: "ShieldCheck", href: "/journals/sets/haccp", access: FULL_ACCESS },
+      { id: "extra", icon: "ListPlus", href: "/journals/sets/extra", access: FULL_ACCESS },
+    ],
+  },
+  {
+    // Безымянная группа после подписанной слилась бы с ней — поэтому «Ещё».
+    label: "more",
+    items: [
       { id: "verify", icon: "BadgeCheck", href: "/verifications", access: anyOf("tasks.verify") },
       { id: "setup", icon: "Settings2", href: "/settings/sections/journals", access: FULL_ACCESS, match: JOURNAL_SETUP_MATCH },
     ],

@@ -1,0 +1,108 @@
+{
+  "base": "http://localhost:3074",
+  "startedAt": "2026-10-19T18:45:02.333Z",
+  "checks": [
+    {
+      "name": "cook desktop: прямой заход на /journals/sets/standard — редирект, списка набора нет",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3074/journals",
+        "first": 200,
+        "items": 0
+      }
+    },
+    {
+      "name": "cook desktop: прямой заход на /journals/sets/extra — редирект, списка набора нет",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3074/mini/today",
+        "first": 200,
+        "items": 0
+      }
+    },
+    {
+      "name": "cook desktop: ссылок на наборы нет",
+      "ok": true
+    },
+    {
+      "name": "cook mobile: прямой заход на /journals/sets/standard — редирект, списка набора нет",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3074/journals",
+        "first": 200,
+        "items": 0
+      }
+    },
+    {
+      "name": "cook mobile: прямой заход на /journals/sets/extra — редирект, списка набора нет",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3074/journals",
+        "first": 200,
+        "items": 0
+      }
+    },
+    {
+      "name": "cook mobile: ссылок на наборы нет",
+      "ok": true
+    },
+    {
+      "name": "mini: /journals/sets/standard 200, список, без прокрутки вбок",
+      "ok": true,
+      "details": {
+        "count": 11,
+        "scroll": {
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "admin@haccp.local: pageerror на http://localhost:3074/journals/sets/haccp",
+      "ok": false,
+      "details": "Invalid or unexpected token"
+    },
+    {
+      "name": "mini: /journals/sets/haccp 200, список, без прокрутки вбок",
+      "ok": true,
+      "details": {
+        "count": 19,
+        "scroll": {
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "admin@haccp.local: pageerror на http://localhost:3074/journals/sets/extra",
+      "ok": false,
+      "details": "Invalid or unexpected token"
+    },
+    {
+      "name": "mini: /journals/sets/extra 200, список, без прокрутки вбок",
+      "ok": true,
+      "details": {
+        "count": 17,
+        "scroll": {
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "mini: заголовок экрана «Дополнительные журналы»",
+      "ok": true,
+      "details": "Дополнительные журналы"
+    },
+    {
+      "name": "mini: в меню раздела — три набора",
+      "ok": false,
+      "details": []
+    }
+  ],
+  "finishedAt": "2026-10-19T18:49:37.286Z",
+  "failures": 3
+}

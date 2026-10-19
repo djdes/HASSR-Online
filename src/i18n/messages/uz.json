@@ -2489,12 +2489,19 @@
           }
         },
         "journals": {
+          "groups": {
+            "sets": "Jurnal to‘plamlari",
+            "more": "Yana"
+          },
           "items": {
             "today": "Bugun",
             "control": "Bugun",
             "all": "Barcha jurnallar",
             "verify": "Yozuvlarni tekshirish",
-            "setup": "Jurnallarni sozlash"
+            "setup": "Jurnallarni sozlash",
+            "standard": "Standart to‘plam",
+            "haccp": "HACCP to‘plami",
+            "extra": "Qo‘shimcha"
           }
         },
         "checklists": {
@@ -2808,6 +2815,9 @@
       "journals_progress": "Jurnallarni to‘ldirish holati",
       "journals_new": "Yangi jurnal",
       "journals_traceability": "Kuzatuvchanlik",
+      "journals_sets_standard": "Standart to‘plam",
+      "journals_sets_haccp": "HACCP to‘plami",
+      "journals_sets_extra": "Qo‘shimcha jurnallar",
       "losses": "Yo‘qotishlar",
       "losses_new": "Yangi yo‘qotish",
       "reports_by_user": "Xodim bo‘yicha hisobot",
@@ -16666,5 +16676,82 @@
     "openFile": "Hujjatni ochish",
     "fileHint": "Hujjatni oching, o'qing va \"Tanishdim\" tugmasini bosish uchun qaytib keling.",
     "publicButton": "Men xodimman - tanishganimni belgilash"
+  },
+  "journalSets": {
+    "sets": {
+      "standard": {
+        "title": "Jurnallarning standart to‘plami",
+        "description": "SanPiN bo‘yicha har qanday umumiy ovqatlanish korxonasiga kerak bo‘lgan 11 ta jurnal: brakeraj, xodimlar gigiyenasi, harorat, UB lampalar, tozalash, dezinfeksiya vositalari, dezinseksiya, tibbiy daftarchalar va yo‘riqnomalar."
+      },
+      "haccp": {
+        "title": "HACCP talablariga muvofiq to‘plam",
+        "description": "HACCP belgisi qo‘yilgan jurnallar va muhim nazorat nuqtalari monitoringi — TR TS 021/2011 (10-modda) HACCP tizimidan talab qiladigan yozuvlar."
+      },
+      "extra": {
+        "title": "Qo‘shimcha jurnallar",
+        "description": "Katalogdagi boshqa jurnallar: muassasangizga keraklilarini yoqing."
+      }
+    },
+    "basis": "HACCP tamoyillari va SanPiN talablariga muvofiq jurnallar",
+    "pills": {
+      "enabled": "Yoqilgan: {enabled} / {total}",
+      "filled": "Bugun to‘ldirilgan: {filled} / {required}",
+      "nothingToday": "Bugun yozuv talab qilinmaydi"
+    },
+    "status": {
+      "on": "Yoqilgan",
+      "off": "O‘chirilgan",
+      "filled": "Bugun to‘ldirilgan",
+      "notFilled": "To‘ldirilmagan",
+      "notRequired": "Bugun talab qilinmaydi"
+    },
+    "related": "Bog‘liq jurnal",
+    "relatedHint": "To‘plam uni yoqmaydi — kerak bo‘lsa, alohida yoqing.",
+    "open": "Jurnalni ochish",
+    "enableOne": "Yoqish",
+    "enableOneDone": "Jurnal yoqildi: {name}",
+    "enableAll": "Butun to‘plamni yoqish",
+    "enableAllDone": "Yoqilgan jurnallar: {count}",
+    "enableFailed": "Jurnalni yoqib bo‘lmadi. Sahifani yangilang va qayta urinib ko‘ring.",
+    "confirm": {
+      "title": "Butun to‘plam yoqilsinmi?",
+      "description": "{count, plural, one {# ta jurnal yoqiladi} other {# ta jurnal yoqiladi}}: ular «Bugun» bo‘limida va jurnallar ro‘yxatida paydo bo‘ladi, xodimlar ularni to‘ldira oladi. Boshqa jurnallar o‘zgarmaydi.",
+      "confirm": "Yoqish"
+    },
+    "empty": {
+      "title": "To‘plamda hozircha jurnal yo‘q",
+      "hint": "Katalogdagi barcha jurnallar standart to‘plam va HACCP to‘plamiga kirgan."
+    },
+    "guide": {
+      "title": "Jurnallar to‘plami bilan qanday ishlash kerak",
+      "onOff": {
+        "title": "Yoqilgan / o‘chirilgan",
+        "body": "yoqilgan jurnallar «Bugun» bo‘limida va jurnallar ro‘yxatida ko‘rinadi, xodimlar ularni to‘ldiradi. O‘chirilganlari yashiriladi va eslatma yubormaydi."
+      },
+      "today": {
+        "title": "Bugun to‘ldirilgan",
+        "body": "«Bugun» sahifasidagi kabi hisoblanadi: tanlangan nuqtadagi bugungi yozuvlar bo‘yicha."
+      },
+      "notRequired": {
+        "title": "Bugun talab qilinmaydi",
+        "body": "jurnal har kuni emas, voqea bo‘yicha yuritiladi — qabul, buzilish, shikoyat. Voqea bo‘lmaguncha hech narsa qilish shart emas."
+      },
+      "enableAll": {
+        "title": "Butun to‘plamni yoqish",
+        "body": "bitta tugma to‘plamdagi o‘chirilgan jurnallarni yoqadi. Allaqachon yoqilgan va to‘plamdan tashqaridagi jurnallar o‘zgarmaydi."
+      },
+      "enableOne": {
+        "title": "Yoqish",
+        "body": "qo‘shimcha jurnallar bittadan yoqiladi — muassasangizga keraklilarini tanlang."
+      },
+      "qaDisable": {
+        "q": "Jurnalni qanday o‘chirish mumkin?",
+        "a": "«Jurnallarni sozlash» → «Jurnallar to‘plami» bo‘limida. To‘plamning o‘zi o‘zgarmaydi — jurnal shunchaki ko‘rinmay qoladi."
+      },
+      "qaRelated": {
+        "q": "Nega bog‘liq jurnal to‘plam bilan birga yoqilmadi?",
+        "a": "Salomatlik jurnali gigiyena jurnalini takrorlaydi va sukut bo‘yicha o‘chirilgan. Agar tekshiruvchilar aynan uni talab qilsa, yonidagi «Yoqish» tugmasi bilan yoqing."
+      }
+    }
   }
 }

@@ -439,7 +439,11 @@ test("у каждого раздела, кроме «Остального», с�
     [null, ["buildings", "areas", "equipment", "qr"]],
     ["more", ["printer", "kiosk", "products", "master"]],
   ]);
-  assert.deepEqual(menuShape("journals"), [[null, ["today", "control", "all", "verify", "setup"]]]);
+  assert.deepEqual(menuShape("journals"), [
+    [null, ["today", "control", "all"]],
+    ["sets", ["standard", "haccp", "extra"]],
+    ["more", ["verify", "setup"]],
+  ]);
   assert.deepEqual(menuShape("checklists"), [[null, ["builder"]]]);
   assert.deepEqual(menuShape("billing"), [[null, ["plan", "balance", "services"]]]);
   assert.deepEqual(menuShape("inspection"), [[null, ["now", "portal", "readiness"]]]);
@@ -509,10 +513,30 @@ function visibleItemIds(actor: NavActor, key: string, facts: NavFacts = withChec
 }
 
 test("«Сегодня»: у управляющей — журналы дня, у заведующей — панель контроля", () => {
-  assert.deepEqual(visibleItemIds(manager, "journals"), ["today", "all", "verify", "setup"]);
-  assert.deepEqual(visibleItemIds(headChef, "journals"), ["control", "verify", "setup"]);
+  assert.deepEqual(visibleItemIds(manager, "journals"), ["today", "all", "standard", "haccp", "extra", "verify", "setup"]);
+  assert.deepEqual(visibleItemIds(headChef, "journals"), ["control", "standard", "haccp", "extra", "verify", "setup"]);
   const journals = visibleNav(headChef, withChecklists).find((item) => item.key === "journals");
   assert.equal(journals?.menu?.[0].items[0].href, "/control-board");
+});
+
+test("«Наборы журналов»: руководству и заведующей — три страницы, повару — нет", () => {
+  const sets = (actor: NavActor) =>
+    visibleNav(actor, withChecklists)
+      .find((item) => item.key === "journals")
+      ?.menu?.find((group) => group.label === "sets")
+      ?.items.map((item) => item.href);
+  const hrefs = ["/journals/sets/standard", "/journals/sets/haccp", "/journals/sets/extra"];
+  assert.deepEqual(sets(owner), hrefs);
+  assert.deepEqual(sets(headChef), hrefs);
+  assert.equal(sets(cook), undefined);
+  assert.equal(sets(verifyOnly), undefined);
+  for (const href of hrefs) {
+    assert.equal(navAllows(cook, href, { kind: "fullAccess" }, withChecklists), false, href);
+  }
+  // Страница набора — свой пункт; страницы журналов остаются у «Все журналы».
+  assert.equal(sectionForPath("/journals/sets/haccp")?.menuItemId, "haccp");
+  assert.equal(sectionForPath("/journals/sets/standard")?.section, "journals");
+  assert.equal(sectionForPath("/journals/hygiene")?.menuItemId, "all");
 });
 
 test("заведующая: пунктов только для admin.full нет", () => {
