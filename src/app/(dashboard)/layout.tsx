@@ -56,7 +56,7 @@ import { SectionTabs } from "@/components/layout/section-tabs";
 import { SectionFrame } from "@/components/layout/section-frame";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
-import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
+import { buildNavModel, loadNavFacts, loadNavMenuData } from "@/lib/app-nav.server";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banner";
 import {
@@ -309,8 +309,14 @@ export default async function DashboardLayout({
   // Меню кабинета (девять разделов слева, 2026-10-16): что человек
   // откроет — то и показываем. Один расчёт на сайдбар, вкладки, крошки,
   // мобильное меню и ⌘K.
+  // Точки человека — пункты «Мои точки» в меню «Торговых точек».
   const navFacts = await loadNavFacts(session);
-  const navModel = await buildNavModel({ user: session.user, facts: navFacts, customNames });
+  const navModel = await buildNavModel({
+    user: session.user,
+    facts: navFacts,
+    customNames,
+    menuData: await loadNavMenuData(session),
+  });
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
   // Тема первого кадра — та, что сейчас на этом устройстве (кука), иначе
@@ -733,6 +739,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     user: session.user,
     facts: await loadNavFacts(session),
     customNames,
+    menuData: await loadNavMenuData(session),
   });
 
   // Окно решения и плашка сотруднику — те же, что на сайте (П-3); анонс

@@ -1,0 +1,18 @@
+{
+  "/settings/buildings/fx-building-lenina": {
+    "status": 200,
+    "finalPath": "/mini/today",
+    "pointsInMenu": false
+  },
+  "/settings/buildings/new": {
+    "status": 200,
+    "finalPath": "/mini/today",
+    "pointsInMenu": false
+  },
+  "/settings/buildings": {
+    "status": 200,
+    "finalPath": "/mini/today",
+    "pointsInMenu": false
+  },
+  "problems": []
+}

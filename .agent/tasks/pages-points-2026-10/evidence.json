@@ -1,0 +1,38 @@
+{
+  "task": "pages-points-2026-10",
+  "branch": "feat/pages-points",
+  "base": "76c01cc4",
+  "verdict": "PASS",
+  "checkedAt": "2026-10-18T16:30:47+03:00",
+  "criteria": {
+    "AC1.1": { "verdict": "PASS", "evidence": ["src/lib/app-nav.ts", "raw/tests-nav.txt"] },
+    "AC1.2": { "verdict": "PASS", "evidence": ["src/lib/app-nav.server.ts", "src/lib/active-building.ts", "raw/results-menu.json", "raw/menu-owner-mini-sheet.png", "raw/menu-owner-mobile-sheet.png", "raw/menu-owner-1440-palette.png"] },
+    "AC1.3": { "verdict": "PASS", "evidence": ["src/components/layout/section-tabs.tsx", "raw/tests-nav.txt", "raw/playwright-run.txt"] },
+    "AC1.4": { "verdict": "PASS", "evidence": ["raw/tests-nav.txt", "raw/results-edit.json"] },
+    "AC1.5": { "verdict": "PASS", "evidence": ["src/lib/app-nav.test.ts", "src/lib/point-wizard.test.ts", "raw/tests-nav.txt"] },
+    "AC2.1": { "verdict": "PASS", "evidence": ["src/app/(dashboard)/settings/buildings/[id]/page.tsx", "raw/results-cook.json", "raw/tests-nav.txt"] },
+    "AC2.2": { "verdict": "PASS", "evidence": ["raw/results-pages.json", "raw/results-edit.json", "raw/page-owner-1440-lenina.png", "raw/edit-3-uv-dialog.png", "raw/wizard-5-point-page.png"] },
+    "AC2.3": { "verdict": "PASS", "evidence": ["raw/edit-4-delete-dialog.png", "raw/edit-5-after-delete.png", "raw/results-edit.json"] },
+    "AC2.4": { "verdict": "PASS", "evidence": ["raw/results-pages.json", "raw/page-owner-390-mira.png", "raw/page-headchef-390-lenina.png"] },
+    "AC3.1": { "verdict": "PASS", "evidence": ["src/components/settings/point-wizard-client.tsx", "raw/wizard-1-head.png", "raw/wizard-2-rooms.png", "raw/wizard-2-rooms-copy.png", "raw/wizard-3-equipment.png", "raw/wizard-4-summary.png"] },
+    "AC3.2": { "verdict": "PASS", "evidence": ["src/components/settings/point-wizard-client.tsx"] },
+    "AC3.3": { "verdict": "PASS", "evidence": ["raw/results-menu-pages-wizard-edit-cook.json", "raw/wizard-5-point-page.png"] },
+    "AC3.4": { "verdict": "PASS", "evidence": ["raw/results-pages.json", "raw/page-owner-1440-overview.png"] },
+    "AC4.1": { "verdict": "PASS", "evidence": ["raw/results-pages.json", "raw/page-headchef-1440-overview.png"] },
+    "AC5.1": { "verdict": "PASS", "evidence": ["raw/i18n-check.txt", "raw/tests-nav.txt", "src/components/layout/nav-icons.ts"] },
+    "AC5.2": { "verdict": "PASS", "evidence": ["raw/results-cook.json", "raw/results-menu.json"] },
+    "AC5.3": { "verdict": "PASS", "evidence": ["raw/tests-nav.txt"] },
+    "AC6.1": { "verdict": "PASS", "evidence": ["raw/tsc.txt", "raw/eslint.txt", "raw/playwright-run.txt", "raw/i18n-check.txt"] },
+    "AC6.2": { "verdict": "PASS", "evidence": ["evidence.md"] }
+  },
+  "checks": {
+    "tsc": "exit 0",
+    "eslint": "19 files, 0 errors, 0 warnings",
+    "tests": "85/85",
+    "i18nCheck": "82/82",
+    "playwright": "45 checks, 0 problems",
+    "verifyWorktree": "corrupted 0",
+    "scanCorrupt": "corruptModifiedByAgent 0, corruptUntracked 0"
+  },
+  "screenshotsCopy": "C:\\Users\\Two\\wesetup-backup-2026-10-17\\pages-shots\\points\\"
+}

@@ -2429,7 +2429,8 @@
         "untitled": "Untitled outlet",
         "all": "All: {count}",
         "add": "Add outlet",
-        "addHint": "Opens Outlets: add the address where journals are kept"
+        "addHint": "Opens the wizard: name and address, rooms, equipment",
+        "open": "Open outlet"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
@@ -2475,9 +2476,12 @@
         },
         "points": {
           "groups": {
+            "myPoints": "My outlets",
+            "allPoints": "All outlets",
             "more": "More"
           },
           "items": {
+            "add": "Add outlet",
             "buildings": "Outlets",
             "areas": "Workshops and rooms",
             "equipment": "Equipment",
@@ -8215,6 +8219,234 @@
     }
   },
   "settingsManagement": {
+    "points": {
+      "equipmentTypes": {
+        "refrigerator": "Refrigerator",
+        "fridge": "Refrigerator",
+        "freezer": "Freezer",
+        "oven": "Oven",
+        "dishwasher": "Dishwasher",
+        "scale": "Scales",
+        "thermometer": "Thermometer",
+        "thermohygrometer": "Thermohygrometer",
+        "sensor": "Sensor",
+        "fryer": "Fryer",
+        "uv_lamp": "UV lamp",
+        "mixer": "Mixer",
+        "other": "Other"
+      },
+      "page": {
+        "noAddress": "No address yet",
+        "guideTitle": "How the outlet page works",
+        "guide": {
+          "head": {
+            "title": "Name and address go into documents",
+            "body": "The name is shown in the menu and the cabinet header. The journal name, address, KPP and phone are printed in the header of this outlet's journals and PDFs."
+          },
+          "rooms": {
+            "title": "Rooms are the basis of cleaning",
+            "body": "Cleaning tasks are assigned by room, and the climate journal is built from rooms. Use Configure to set the cleaning steps and who cleans."
+          },
+          "equipment": {
+            "title": "Equipment stands in a room",
+            "body": "Refrigerators and freezers with a temperature norm go into the journal. UV lamps have their own block showing how much service life is left."
+          },
+          "qr": {
+            "title": "Stickers and posters",
+            "body": "Print stickers for equipment and posters for rooms: an employee scans one and makes an entry without signing in."
+          }
+        },
+        "qa": {
+          "allPoints": {
+            "q": "Where are all outlets at once?",
+            "a": "In the left menu, in the All outlets group: the outlet overview, workshops, equipment and QR codes of all outlets together."
+          },
+          "delete": {
+            "q": "What happens if I delete an outlet?",
+            "a": "The outlet's rooms are deleted. Equipment and journal documents stay in the organization: equipment becomes Without outlet, documents become shared."
+          }
+        }
+      },
+      "head": {
+        "title": "Name and address",
+        "hint": "Goes into this outlet's document details — the journal and PDF header.",
+        "name": "Name",
+        "journalName": "Name for journals",
+        "journalNameHint": "The exact legal name at the place of business. Empty — the header shows “name, address”.",
+        "address": "Address",
+        "kpp": "KPP",
+        "phone": "Phone",
+        "notSet": "not set",
+        "edit": "Edit",
+        "dialogTitle": "Outlet name and address",
+        "dialogHint": "The name is shown in the menu and the cabinet header. Everything else is printed in the header of this outlet's journals and PDFs.",
+        "namePlaceholder": "For example, “Cafe on Mira”",
+        "addressPlaceholder": "City, street, building",
+        "journalNamePlaceholder": "As in your documents",
+        "kppPlaceholder": "9 digits",
+        "phonePlaceholder": "+7 …",
+        "save": "Save",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "saved": "Outlet updated",
+        "nameRequired": "Enter the outlet name",
+        "failed": "Couldn't save"
+      },
+      "rooms": {
+        "title": "Workshops and rooms",
+        "hint": "Cleaning tasks are assigned by room, and the climate journal is built from rooms.",
+        "count": "{count, plural, one {# room} other {# rooms}}",
+        "emptyTitle": "No rooms yet",
+        "emptyBody": "Add a kitchen, storage, washing area — they appear in the cleaning journal and the equipment window right away.",
+        "copyFrom": "Copy from outlet",
+        "copy": "Copy",
+        "copying": "Copying…",
+        "copied": "Rooms copied: {count}",
+        "copyFailed": "Couldn't copy",
+        "name": "Room name",
+        "namePlaceholder": "For example, “Cold shop”",
+        "kind": "Type",
+        "add": "Add room",
+        "adding": "Adding…",
+        "added": "Room “{name}” added",
+        "addFailed": "Couldn't add the room",
+        "configure": "Configure",
+        "configureHint": "Name, type, cleaning steps and who is responsible",
+        "deleteAria": "Delete room “{name}”",
+        "deleteTitle": "Delete the room?",
+        "deleteDescription": "Room “{name}” will be deleted permanently.",
+        "deleteConfirm": "Delete room",
+        "deleted": "Room deleted",
+        "deleteFailed": "Couldn't delete the room",
+        "cleaningSet": "Cleaning set up",
+        "cleaningMissing": "Cleaning not set up",
+        "cleaners": "Cleans: {names}",
+        "noCleaners": "No cleaners assigned"
+      },
+      "equipment": {
+        "title": "Equipment",
+        "hint": "Refrigerators, freezers, ovens — each unit has its own norm and QR sticker.",
+        "count": "{count, plural, one {# unit} other {# units}}",
+        "emptyTitle": "No equipment yet",
+        "emptyBody": "Add a refrigerator or a freezer — its temperature norm goes into the journal.",
+        "noRooms": "Add a room first — equipment stands in a room of the outlet.",
+        "norm": "norm {range}",
+        "noNorm": "no norm",
+        "rangeBoth": "{min}…{max} °C",
+        "rangeFrom": "from {min} °C",
+        "rangeTo": "up to {max} °C"
+      },
+      "uv": {
+        "title": "UV lamps and units",
+        "hint": "Germicidal lamps and recirculators. Operating hours are counted by the “I switched on / I switched off” buttons on the lamp sticker.",
+        "add": "Add UV lamp",
+        "emptyTitle": "No UV lamps yet",
+        "emptyBody": "Add a lamp and choose the model — the rated service life is filled in automatically.",
+        "model": "Model",
+        "noModel": "model not set",
+        "usage": "Operated {used} of {total}",
+        "left": "{hours} left ({percent} %)",
+        "hours": "{value} h",
+        "noResource": "Service life not set — open the lamp and enter it from the datasheet",
+        "warn": "Service life is almost used up — time to order a lamp",
+        "over": "Service life is used up — replace the lamp"
+      },
+      "qr": {
+        "title": "QR stickers and posters",
+        "hint": "A sticker on equipment and a poster in a room: an employee scans it and makes an entry without signing in.",
+        "stickers": "{count, plural, one {# sticker} other {# stickers}}",
+        "stickersHint": "one per equipment unit of the outlet",
+        "posters": "{count, plural, one {# poster} other {# posters}}",
+        "postersHint": "one per room — for the climate journal",
+        "printStickers": "Print stickers",
+        "printPosters": "Room posters",
+        "all": "All organization QR codes",
+        "empty": "Stickers appear once the outlet has equipment or rooms."
+      },
+      "danger": {
+        "title": "Deleting the outlet",
+        "hint": "The outlet's rooms are deleted. Equipment and journal documents stay in the organization.",
+        "button": "Delete outlet",
+        "confirmTitle": "Delete outlet “{name}”?",
+        "confirmDescription": "This can't be undone. What will happen:",
+        "bulletRooms": "The outlet's rooms will be deleted: {count}",
+        "bulletEquipment": "Equipment ({count}) stays and becomes Without outlet in the Equipment section",
+        "bulletDocuments": "This outlet's journal documents become shared — visible at every outlet",
+        "confirm": "Delete outlet",
+        "deleted": "Outlet “{name}” deleted",
+        "failed": "Couldn't delete the outlet"
+      },
+      "wizard": {
+        "description": "Four steps and the outlet is ready for journals. You can adjust everything later on the outlet page.",
+        "progress": "Step {step} of {total}",
+        "steps": {
+          "head": "Name and address",
+          "rooms": "Rooms",
+          "equipment": "Equipment",
+          "summary": "Summary"
+        },
+        "next": "Next",
+        "back": "Back",
+        "create": "Create outlet",
+        "creating": "Creating… {done} of {total}",
+        "head": {
+          "title": "What is the outlet called and where is it?",
+          "hint": "The name is shown in the menu and the cabinet header. The address is printed in the journal and PDF header.",
+          "name": "Name",
+          "namePlaceholder": "For example, “Cafe on Mira”",
+          "address": "Address",
+          "addressPlaceholder": "City, street, building",
+          "nameRequired": "Enter the outlet name",
+          "nameTaken": "An outlet with this name already exists — choose another name"
+        },
+        "rooms": {
+          "title": "Which rooms does the outlet have?",
+          "hint": "Cleaning tasks are assigned by room. Tick what you have — extra rooms can be deleted later.",
+          "typical": "Typical set",
+          "typicalHint": "Tick the rooms",
+          "copy": "Same as another outlet",
+          "copyHint": "Rooms are copied together with cleaning, schedule and responsible people",
+          "copyFrom": "From which outlet",
+          "copyCount": "We will copy {count, plural, one {# room} other {# rooms}}",
+          "custom": "Your own room",
+          "customPlaceholder": "For example, “Pastry shop”",
+          "customAdd": "Add",
+          "customExists": "This room is already on the list",
+          "none": "No rooms selected — you can add them later on the outlet page."
+        },
+        "roomNames": {
+          "hot": "Hot shop",
+          "cold": "Cold shop",
+          "production": "Main production",
+          "storage": "Storage",
+          "wash": "Washing area",
+          "hall": "Dining hall",
+          "bar": "Bar"
+        },
+        "equipment": {
+          "title": "What equipment is there?",
+          "hint": "Set the quantity and the room. We number the names ourselves and fill in typical temperature norms.",
+          "room": "Room",
+          "decrease": "Fewer: {name}",
+          "increase": "More: {name}",
+          "noRooms": "No rooms — equipment can be added on the outlet page once there are rooms.",
+          "norm": "norm {range}",
+          "lamp": "service life {hours} — adjust it on the outlet page"
+        },
+        "summary": {
+          "title": "What will be created",
+          "point": "Outlet",
+          "rooms": "Rooms",
+          "copy": "We will copy from “{name}”",
+          "equipment": "Equipment",
+          "nothing": "Nothing — add later",
+          "note": "After creation the outlet page opens, and the outlet appears in the left menu."
+        },
+        "done": "Outlet “{name}” created",
+        "partial": "Outlet “{name}” created, but not added: {items}. Add the rest on the outlet page.",
+        "failed": "Couldn't create the outlet"
+      }
+    },
     "appearance": {
       "title": "Appearance",
       "description": "Choose a light or dark theme, or follow your system setting.",

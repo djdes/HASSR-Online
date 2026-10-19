@@ -1,0 +1,20 @@
+src\app\(dashboard)\layout.tsx errors=0 warnings=0
+src\app\(dashboard)\settings\buildings\[id]\page.tsx errors=0 warnings=0
+src\app\(dashboard)\settings\buildings\buildings-client.tsx errors=0 warnings=0
+src\app\(dashboard)\settings\buildings\new\page.tsx errors=0 warnings=0
+src\app\(dashboard)\settings\buildings\page.tsx errors=0 warnings=0
+src\app\mini\sections\page.tsx errors=0 warnings=0
+src\components\layout\current-point-switcher.tsx errors=0 warnings=0
+src\components\layout\nav-icons.ts errors=0 warnings=0
+src\components\layout\section-tabs.tsx errors=0 warnings=0
+src\components\settings\equipment-dialog.tsx errors=0 warnings=0
+src\components\settings\point-block.tsx errors=0 warnings=0
+src\components\settings\point-page-client.tsx errors=0 warnings=0
+src\components\settings\point-wizard-client.tsx errors=0 warnings=0
+src\lib\active-building.ts errors=0 warnings=0
+src\lib\app-nav.server.ts errors=0 warnings=0
+src\lib\app-nav.test.ts errors=0 warnings=0
+src\lib\app-nav.ts errors=0 warnings=0
+src\lib\point-wizard.test.ts errors=0 warnings=0
+src\lib\point-wizard.ts errors=0 warnings=0
+TOTAL files=19 errors=0 warnings=0

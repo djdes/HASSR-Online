@@ -5,6 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import {
   ACTIVE_BUILDING_COOKIE,
   ACTIVE_BUILDING_COOKIE_MAX_AGE_SEC,
+  allowedBuildingsForUser,
   decodeBuildingCookie,
   encodeBuildingCookie,
   resolveActiveBuilding,
@@ -59,6 +60,28 @@ export const loadBuildingContext = cache(
       cookieBuildingId:
         cookieBuildingId ?? (homeOrg && user ? user.lastActiveBuildingId : null),
     });
+  },
+);
+
+/**
+ * Точки, доступные человеку (2026-10-18): пункты «Мои точки» в меню раздела
+ * «Торговые точки» и проверка страницы точки. Все точки организации в том же
+ * порядке, что у переключателя в шапке, с учётом `User.buildingIds` в
+ * домашней организации (как `loadBuildingContext`) — независимо от режима
+ * «журналы по точкам». Партнёр и ROOT при импёрсонации видят все точки.
+ */
+export const listPersonBuildings = cache(
+  async (session: Session): Promise<BuildingOption[]> => {
+    const organizationId = getActiveOrgId(session);
+    const [buildings, user] = await Promise.all([
+      listOrganizationBuildings(organizationId),
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: { organizationId: true, buildingIds: true },
+      }),
+    ]);
+    const homeOrg = Boolean(user && user.organizationId === organizationId);
+    return allowedBuildingsForUser(buildings, homeOrg && user ? user.buildingIds : []);
   },
 );
 

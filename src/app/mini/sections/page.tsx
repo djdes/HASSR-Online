@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
-import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
+import { buildNavModel, loadNavFacts, loadNavMenuData } from "@/lib/app-nav.server";
 
 import { MiniSectionsClient, type MiniSectionGroupView } from "./sections-client";
 
@@ -26,7 +26,12 @@ export default async function MiniSectionsPage() {
   const groups: MiniSectionGroupView[] = [];
   if (session && user) {
     const customNames = await getOrgCustomNames(getActiveOrgId(session));
-    const model = await buildNavModel({ user, facts: await loadNavFacts(session), customNames });
+    const model = await buildNavModel({
+      user,
+      facts: await loadNavFacts(session),
+      customNames,
+      menuData: await loadNavMenuData(session),
+    });
     groups.push({
       id: "sections",
       title: "",

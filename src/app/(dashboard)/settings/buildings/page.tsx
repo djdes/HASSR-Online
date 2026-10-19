@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { BuildingsClient } from "./buildings-client";
 import { PageGuide } from "@/components/ui/page-guide";
 import Link from "next/link";
-import { QrCode } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import { Plus, QrCode } from "lucide-react";
+import { listPersonBuildings } from "@/lib/active-building";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +15,12 @@ export default async function BuildingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const orgId = getActiveOrgId(session);
+  const tPoint = await getTranslations("navigation.shell.point");
+  // Консультант уровня «просмотр» видит точки, но не меняет их:
+  // отказ по клику выглядел бы как поломка.
+  const readOnly = session.user.partnerAccess?.level === "view";
 
-  const [buildings, users, organization] = await Promise.all([
+  const [buildings, users, organization, personBuildings] = await Promise.all([
     db.building.findMany({
     where: { organizationId: orgId },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -65,6 +71,8 @@ export default async function BuildingsPage() {
       where: { id: orgId },
       select: { perLocationJournals: true },
     }),
+    // Чью страницу точки человек откроет — у тех «Открыть точку».
+    listPersonBuildings(session),
   ]);
 
   return (
@@ -81,6 +89,7 @@ export default async function BuildingsPage() {
           отдельно по каждой: включается тумблером ниже.
         </p>
       </div>
+      <div className="flex flex-wrap items-center gap-2">
       {buildings.some((building) => building.rooms.length > 0) ? (
         <Link
           href="/settings/qr-posters?kind=rooms"
@@ -91,6 +100,19 @@ export default async function BuildingsPage() {
           QR-плакаты помещений
         </Link>
       ) : null}
+      {/* Мастер новой точки — главное действие страницы (меню: «+ Добавить точку»). */}
+      {readOnly ? null : (
+        <Link
+          href="/settings/buildings/new"
+          data-add-point-header
+          title={tPoint("addHint")}
+          className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        >
+          <Plus className="size-4" />
+          {tPoint("add")}
+        </Link>
+      )}
+      </div>
       </div>
       <PageGuide
         title="Как настроить точки и помещения"
@@ -110,9 +132,8 @@ export default async function BuildingsPage() {
         users={users}
         perLocationJournals={organization?.perLocationJournals === true}
         userBuildingIds={Object.fromEntries(users.map((u) => [u.id, u.buildingIds]))}
-        // Консультант уровня «просмотр» видит точки, но не меняет их:
-        // отказ по клику выглядел бы как поломка.
-        readOnly={session.user.partnerAccess?.level === "view"}
+        readOnly={readOnly}
+        openableIds={personBuildings.map((building) => building.id)}
         unnamedCount={buildings.filter((b) => /^Точка \d+$/.test(b.name)).length}
       />
     </div>

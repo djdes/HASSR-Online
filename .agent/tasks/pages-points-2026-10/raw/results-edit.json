@@ -1,0 +1,38 @@
+{
+  "pointId": "cmvdv1ecg001lus9mgruoabl7",
+  "pointName": "Точка проверки 132702",
+  "rename": {
+    "menuLabel": "Точка проверки 132702 ред",
+    "h1": "Точка проверки 132702 ред",
+    "phoneShown": true,
+    "kppShown": true
+  },
+  "rooms": {
+    "before": 7,
+    "after": 8
+  },
+  "uvDialog": {
+    "type": "УФ-лампа",
+    "building": "Точка проверки 132702 ред",
+    "lampSection": true
+  },
+  "deleteDialog": "Удалить точку «Точка проверки 132702 ред»?\nДействие нельзя отменить. Что произойдёт:\nУдалятся помещения точки: 8\nОборудование (5) останется и окажется «Без точки» в разделе «Оборудование»\nДокументы журналов этой точки станут общими — видимыми на каждой точке\nЧтобы продолжить, введите Точка проверки 132702 ред\nОтмена\nУдалить точку",
+  "confirmDisabledBeforeTyping": true,
+  "afterDelete": {
+    "path": "/settings/buildings",
+    "menu": [
+      "buildings:fx-building-lenina",
+      "buildings:fx-building-mira",
+      "add",
+      "buildings",
+      "areas",
+      "equipment",
+      "qr",
+      "printer",
+      "kiosk",
+      "products",
+      "master"
+    ]
+  },
+  "problems": []
+}

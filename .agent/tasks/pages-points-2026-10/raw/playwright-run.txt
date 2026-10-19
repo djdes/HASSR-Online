@@ -1,0 +1,60 @@
+== menu руководитель 1440
+  ✓ owner /settings/buildings: подсвечен buildings, h1=Точки и помещения
+  ✓ owner /settings/buildings/fx-building-lenina: подсвечен buildings:fx-building-lenina, h1=Берёзка на Ленина
+  ✓ owner /settings/buildings/fx-building-mira: подсвечен buildings:fx-building-mira, h1=Берёзка на Мира
+  ✓ owner /settings/buildings/new: подсвечен add, h1=Добавить точку
+  ✓ owner /settings/equipment: подсвечен equipment, h1=Оборудование
+  ✓ owner: пункты меню buildings:fx-building-lenina,buildings:fx-building-mira,add,buildings,areas,equipment,qr,printer,kiosk,products,master
+  ✓ owner: клик по «Берёзка на Мира» в меню → её страница, пункт подсвечен
+  ✓ owner: ⌘K находит «Торговые точки · Берёзка на Мира»
+== menu заведующая 1440
+  ✓ headchef /settings/buildings: подсвечен buildings, h1=Точки и помещения
+  ✓ headchef /settings/buildings/fx-building-lenina: подсвечен buildings:fx-building-lenina, h1=Берёзка на Ленина
+  ✓ headchef /settings/buildings/fx-building-mira: подсвечен buildings:fx-building-mira, h1=Берёзка на Мира
+  ✓ headchef /settings/buildings/new: подсвечен add, h1=Добавить точку
+  ✓ headchef /settings/equipment: подсвечен equipment, h1=Оборудование
+  ✓ headchef: пункты меню buildings:fx-building-lenina,buildings:fx-building-mira,add,buildings,areas,equipment,qr,printer,kiosk,products,master
+  ✓ headchef: клик по «Берёзка на Мира» в меню → её страница, пункт подсвечен
+  ✓ headchef: ⌘K находит «Торговые точки · Берёзка на Мира»
+== menu руководитель mobile
+  ✓ owner/mobile: в листе buildings:fx-building-lenina, buildings:fx-building-mira, add, buildings…
+== menu заведующая mobile
+  ✓ headchef/mobile: в листе buildings:fx-building-lenina, buildings:fx-building-mira, add, buildings…
+== menu руководитель mini
+  ✓ owner/mini: в листе buildings:fx-building-lenina, buildings:fx-building-mira, add, buildings…
+== menu заведующая mini
+  ✓ headchef/mini: в листе buildings:fx-building-lenina, buildings:fx-building-mira, add, buildings…
+== pages руководитель 1440
+  ✓ owner/1440 /settings/buildings/fx-building-lenina: h1=Берёзка на Ленина блоки=6 без прокрутки
+  ✓ owner/1440 /settings/buildings/fx-building-mira: h1=Берёзка на Мира блоки=6 без прокрутки
+  ✓ owner/1440 /settings/buildings/new: h1=Добавить точку блоки=0 без прокрутки
+  ✓ owner/1440 /settings/buildings: h1=Точки и помещения блоки=0 без прокрутки
+== pages руководитель 390
+  ✓ owner/390 /settings/buildings/fx-building-lenina: h1=Берёзка на Ленина блоки=6 без прокрутки
+  ✓ owner/390 /settings/buildings/fx-building-mira: h1=Берёзка на Мира блоки=6 без прокрутки
+  ✓ owner/390 /settings/buildings/new: h1=Добавить точку блоки=0 без прокрутки
+  ✓ owner/390 /settings/buildings: h1=Точки и помещения блоки=0 без прокрутки
+== pages заведующая 1440
+  ✓ headchef/1440 /settings/buildings/fx-building-lenina: h1=Берёзка на Ленина блоки=6 без прокрутки
+  ✓ headchef/1440 /settings/buildings/fx-building-mira: h1=Берёзка на Мира блоки=6 без прокрутки
+  ✓ headchef/1440 /settings/buildings/new: h1=Добавить точку блоки=0 без прокрутки
+  ✓ headchef/1440 /settings/buildings: h1=Точки и помещения блоки=0 без прокрутки
+== pages заведующая 390
+  ✓ headchef/390 /settings/buildings/fx-building-lenina: h1=Берёзка на Ленина блоки=6 без прокрутки
+  ✓ headchef/390 /settings/buildings/fx-building-mira: h1=Берёзка на Мира блоки=6 без прокрутки
+  ✓ headchef/390 /settings/buildings/new: h1=Добавить точку блоки=0 без прокрутки
+  ✓ headchef/390 /settings/buildings: h1=Точки и помещения блоки=0 без прокрутки
+== wizard руководитель 1440
+  ✓ wizard: «Точка проверки 132702» — в меню
+  ✓ wizard: создано помещений 7, оборудования 4, ламп 1
+== edit руководитель 1440
+  ✓ edit: переименована — в меню «Точка проверки 132702 ред»
+  ✓ edit: помещений 7 → 8
+  ✓ edit: окно УФ-лампы — тип «УФ-лампа», точка «Точка проверки 132702 ред»
+  ✓ edit: точка удалена, меню buildings:fx-building-lenina, buildings:fx-building-mira, add…, адрес /settings/buildings
+== cook
+  ✓ cook /settings/buildings/fx-building-lenina → /mini/today
+  ✓ cook /settings/buildings/new → /mini/today
+  ✓ cook /settings/buildings → /mini/today
+OK: проблем нет
+exit=0
