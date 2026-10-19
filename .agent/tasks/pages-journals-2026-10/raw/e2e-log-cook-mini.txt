@@ -1,0 +1,20 @@
+руководитель 1440
+руководитель 390
+заведующая
+повар
+  ✓ cook desktop: прямой заход на /journals/sets/standard — редирект, списка набора нет {"url":"http://localhost:3074/journals","first":200,"items":0}
+  ✓ cook desktop: прямой заход на /journals/sets/extra — редирект, списка набора нет {"url":"http://localhost:3074/mini/today","first":200,"items":0}
+  ✓ cook desktop: ссылок на наборы нет 
+  ✓ cook mobile: прямой заход на /journals/sets/standard — редирект, списка набора нет {"url":"http://localhost:3074/journals","first":200,"items":0}
+  ✓ cook mobile: прямой заход на /journals/sets/extra — редирект, списка набора нет {"url":"http://localhost:3074/journals","first":200,"items":0}
+  ✓ cook mobile: ссылок на наборы нет 
+Mini App
+  ✓ mini: /journals/sets/standard 200, список, без прокрутки вбок {"count":11,"scroll":{"scrollWidth":390,"innerWidth":390,"ok":true}}
+  ✗ admin@haccp.local: pageerror на http://localhost:3074/journals/sets/haccp "Invalid or unexpected token"
+  ✓ mini: /journals/sets/haccp 200, список, без прокрутки вбок {"count":19,"scroll":{"scrollWidth":390,"innerWidth":390,"ok":true}}
+  ✗ admin@haccp.local: pageerror на http://localhost:3074/journals/sets/extra "Invalid or unexpected token"
+  ✓ mini: /journals/sets/extra 200, список, без прокрутки вбок {"count":17,"scroll":{"scrollWidth":390,"innerWidth":390,"ok":true}}
+  ✓ mini: заголовок экрана «Дополнительные журналы» "Дополнительные журналы"
+  ✗ mini: в меню раздела — три набора []
+ПРОВАЛОВ: 3
+exit=1

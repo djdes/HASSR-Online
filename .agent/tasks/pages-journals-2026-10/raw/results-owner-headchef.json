@@ -1,0 +1,347 @@
+{
+  "base": "http://localhost:3074",
+  "startedAt": "2026-10-19T18:36:43.562Z",
+  "checks": [
+    {
+      "name": "owner: /journals/sets/standard 200",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "owner: заголовок стандартного набора",
+      "ok": true,
+      "details": "Стандартный набор журналов"
+    },
+    {
+      "name": "owner: 11 журналов, нумерация 1–11",
+      "ok": true,
+      "details": [
+        "1:finished_product",
+        "2:perishable_rejection",
+        "3:hygiene",
+        "4:climate_control",
+        "5:cold_equipment_control",
+        "6:uv_lamp_runtime",
+        "7:general_cleaning",
+        "8:disinfectant_usage",
+        "9:pest_control",
+        "10:med_books",
+        "11:staff_training"
+      ]
+    },
+    {
+      "name": "owner: три выключенных журнала видны как выключенные",
+      "ok": true,
+      "details": [
+        "uv_lamp_runtime",
+        "pest_control",
+        "med_books"
+      ]
+    },
+    {
+      "name": "owner: пилюли «Включено 8 из 11» и «Заполнено сегодня»",
+      "ok": true,
+      "details": [
+        "Включено 8 из 11",
+        "Заполнено сегодня 1 из 5"
+      ]
+    },
+    {
+      "name": "owner: в сайдбаре группа наборов, «Стандартный набор» активен",
+      "ok": true,
+      "details": [
+        {
+          "id": "today",
+          "current": null
+        },
+        {
+          "id": "all",
+          "current": null
+        },
+        {
+          "id": "standard",
+          "current": "page"
+        },
+        {
+          "id": "haccp",
+          "current": null
+        },
+        {
+          "id": "extra",
+          "current": null
+        },
+        {
+          "id": "verify",
+          "current": null
+        },
+        {
+          "id": "setup",
+          "current": null
+        }
+      ]
+    },
+    {
+      "name": "owner: связанный журнал у гигиенического показан",
+      "ok": true,
+      "details": 1
+    },
+    {
+      "name": "owner: кнопка «Включить весь набор» есть",
+      "ok": true
+    },
+    {
+      "name": "owner: подтверждение перечисляет 3 журнала",
+      "ok": true,
+      "details": "Включить весь набор?Включатся 3 журнала: они появятся в «Сегодня» и в списке журналов, сотрудники смогут их заполнять. Остальные журналы не меняются.Журнал учета работы УФ бактерицидной установкиЖурнал учета дезинфекции, дезинсекции и дератизацииМедицинские книжкиОтменаВключить"
+    },
+    {
+      "name": "owner: тост «Включено журналов: 3»",
+      "ok": true
+    },
+    {
+      "name": "owner: после включения все 11 включены",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "owner: кнопка пропала",
+      "ok": true
+    },
+    {
+      "name": "owner: в базе журналы набора больше не выключены",
+      "ok": true,
+      "details": [
+        "cleaning_ventilation_checklist",
+        "training_plan",
+        "sanitary_day_control",
+        "breakdown_history",
+        "equipment_calibration",
+        "incoming_raw_materials_control",
+        "ppe_issuance",
+        "accident_journal",
+        "complaint_register",
+        "product_writeoff",
+        "audit_plan",
+        "audit_protocol",
+        "audit_report",
+        "traceability_test",
+        "metal_impurity",
+        "equipment_cleaning",
+        "intensive_cooling",
+        "glass_items_list",
+        "glass_control",
+        "ration_control",
+        "transport_temperature",
+        "tableware_breakage",
+        "pool_water_control",
+        "inventory_condition",
+        "instrument_sterilization",
+        "medical_waste_b",
+        "batch_release",
+        "ccp_monitoring"
+      ]
+    },
+    {
+      "name": "owner: три записи journal.enable в AuditLog",
+      "ok": true,
+      "details": 3
+    },
+    {
+      "name": "owner: есть ежедневный журнал «Не заполнен»",
+      "ok": true,
+      "details": [
+        "finished_product:filled",
+        "perishable_rejection:notFilled",
+        "hygiene:notFilled",
+        "climate_control:notFilled",
+        "cold_equipment_control:notFilled",
+        "uv_lamp_runtime:filled",
+        "general_cleaning:notRequired",
+        "disinfectant_usage:notRequired",
+        "pest_control:notRequired",
+        "med_books:notRequired",
+        "staff_training:notRequired"
+      ]
+    },
+    {
+      "name": "owner: запись в журнал perishable_rejection создана",
+      "ok": true,
+      "details": 201
+    },
+    {
+      "name": "owner: perishable_rejection — «Заполнен сегодня»",
+      "ok": true,
+      "details": {
+        "code": "perishable_rejection",
+        "enabled": true,
+        "today": "filled",
+        "number": "2"
+      }
+    },
+    {
+      "name": "owner: «Открыть журнал» у гигиенического",
+      "ok": true
+    },
+    {
+      "name": "owner: /journals/hygiene открылся",
+      "ok": true,
+      "details": "http://localhost:3074/journals/hygiene"
+    },
+    {
+      "name": "owner: /journals/sets/haccp 200",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "owner: ХАССП — 19 журналов",
+      "ok": true,
+      "details": 19
+    },
+    {
+      "name": "owner: ХАССП — кнопка «Включить весь набор»",
+      "ok": true
+    },
+    {
+      "name": "owner: /journals/sets/extra 200",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "owner: дополнительные — нет массового включения",
+      "ok": true
+    },
+    {
+      "name": "owner: дополнительные — есть выключенный журнал",
+      "ok": true,
+      "details": 17
+    },
+    {
+      "name": "owner: тост «Журнал включён: …»",
+      "ok": true
+    },
+    {
+      "name": "owner: «Включить» по одному — cleaning_ventilation_checklist включён",
+      "ok": true,
+      "details": {
+        "code": "cleaning_ventilation_checklist",
+        "enabled": true,
+        "today": "notFilled",
+        "number": "1"
+      }
+    },
+    {
+      "name": "owner 390: /journals/sets/standard 200, без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "ok": true
+      }
+    },
+    {
+      "name": "owner 390: /journals/sets/haccp 200, без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "ok": true
+      }
+    },
+    {
+      "name": "owner 390: /journals/sets/extra 200, без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "ok": true
+      }
+    },
+    {
+      "name": "headchef desktop: /journals/sets/standard 200",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "url": "http://localhost:3074/journals/sets/standard"
+      }
+    },
+    {
+      "name": "headchef desktop: 11 журналов",
+      "ok": true,
+      "details": 11
+    },
+    {
+      "name": "headchef desktop: ХАССП — кнопка видна (API разрешает руководству)",
+      "ok": true
+    },
+    {
+      "name": "headchef: в меню «Журналов» — наборы",
+      "ok": true,
+      "details": [
+        "control",
+        "standard",
+        "haccp",
+        "extra",
+        "verify",
+        "setup"
+      ]
+    },
+    {
+      "name": "headchef: «Открыть журнал» ведёт на рабочую страницу журнала",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "url": "http://localhost:3074/journals/climate_control"
+      }
+    },
+    {
+      "name": "headchef mobile: /journals/sets/standard 200",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "url": "http://localhost:3074/journals/sets/standard"
+      }
+    },
+    {
+      "name": "headchef mobile: 11 журналов",
+      "ok": true,
+      "details": 11
+    },
+    {
+      "name": "headchef 390: без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "ok": true
+      }
+    },
+    {
+      "name": "headchef mobile: ХАССП — кнопка видна (API разрешает руководству)",
+      "ok": true
+    },
+    {
+      "name": "cook desktop: прямой заход на /journals/sets/standard — редирект",
+      "ok": false,
+      "details": "http://localhost:3074/journals/sets/standard"
+    }
+  ],
+  "prepared": {
+    "organizationId": "cmvbfyemt0000uw9mywdjiurr",
+    "turnedOff": [
+      "uv_lamp_runtime",
+      "pest_control",
+      "med_books"
+    ]
+  },
+  "filledProbe": {
+    "code": "perishable_rejection",
+    "before": "notFilled",
+    "after": "filled"
+  },
+  "haccpPills": [
+    "Включено 4 из 19",
+    "Заполнено сегодня 0 из 2"
+  ],
+  "extraEnabled": "cleaning_ventilation_checklist",
+  "fatal": "page.goto: net::ERR_ABORTED at http://localhost:3074/journals/sets/extra\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3074/journals/sets/extra\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at goto (D:\\wt\\pages-journals\\.agent\\tasks\\pages-journals-2026-10\\e2e.mjs:73:27)\n    at async main (D:\\wt\\pages-journals\\.agent\\tasks\\pages-journals-2026-10\\e2e.mjs:289:7)"
+}

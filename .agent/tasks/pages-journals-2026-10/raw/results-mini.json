@@ -1,0 +1,62 @@
+{
+  "base": "http://localhost:3074",
+  "startedAt": "2026-10-19T18:52:38.804Z",
+  "checks": [
+    {
+      "name": "mini: /journals/sets/standard 200, список, без прокрутки вбок",
+      "ok": true,
+      "details": {
+        "count": 11,
+        "scroll": {
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "mini: /journals/sets/haccp 200, список, без прокрутки вбок",
+      "ok": true,
+      "details": {
+        "count": 19,
+        "scroll": {
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "mini: /journals/sets/extra 200, список, без прокрутки вбок",
+      "ok": true,
+      "details": {
+        "count": 17,
+        "scroll": {
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "mini: заголовок экрана «Дополнительные журналы»",
+      "ok": true,
+      "details": "Дополнительные журналы"
+    },
+    {
+      "name": "mini: в меню раздела — три набора",
+      "ok": true,
+      "details": [
+        "today",
+        "all",
+        "standard",
+        "haccp",
+        "extra",
+        "verify",
+        "setup"
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-19T18:53:20.933Z",
+  "failures": 0
+}

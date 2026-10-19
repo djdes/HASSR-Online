@@ -106,7 +106,7 @@ export function PageBackLink({
  * `journals/[code]/layout.tsx` (в Next.js статический сегмент выигрывает у
  * динамического). Им нужна обычная глобальная навигация.
  */
-const JOURNALS_STATIC_CHILDREN = new Set(["traceability"]);
+const JOURNALS_STATIC_CHILDREN = new Set(["traceability", "sets"]);
 
 /**
  * Подтверждает, что путь лежит в поддереве `journals/[code]`. Там своя

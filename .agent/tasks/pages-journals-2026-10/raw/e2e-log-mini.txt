@@ -1,0 +1,12 @@
+руководитель 1440
+руководитель 390
+заведующая
+повар
+Mini App
+  ✓ mini: /journals/sets/standard 200, список, без прокрутки вбок {"count":11,"scroll":{"scrollWidth":390,"innerWidth":390,"ok":true}}
+  ✓ mini: /journals/sets/haccp 200, список, без прокрутки вбок {"count":19,"scroll":{"scrollWidth":390,"innerWidth":390,"ok":true}}
+  ✓ mini: /journals/sets/extra 200, список, без прокрутки вбок {"count":17,"scroll":{"scrollWidth":390,"innerWidth":390,"ok":true}}
+  ✓ mini: заголовок экрана «Дополнительные журналы» "Дополнительные журналы"
+  ✓ mini: в меню раздела — три набора ["today","all","standard","haccp","extra","verify","setup"]
+ВСЁ ЗЕЛЁНОЕ
+exit=0
