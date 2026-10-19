@@ -142,10 +142,34 @@ export type NavMenuItem = {
 };
 
 /** Ключ подписи группы: `menus.<раздел>.groups.<label>`. */
-export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "more";
+export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "more" | "myPoints" | "allPoints";
 
-/** Группа пунктов меню раздела; `label: null` — группа без подписи. */
-export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[] };
+/**
+ * Источник пунктов из данных (2026-10-18, «Торговые точки»): у группы, кроме
+ * обычных пунктов, — по пункту на запись (точку). Адрес пункта —
+ * `<hrefBase>/<id>`, поэтому в статической модели динамических сегментов нет.
+ */
+export type NavMenuSourceKey = "buildings";
+
+export type NavMenuSource = {
+  icon: string;
+  /** Адрес страницы записи без id: пункт ведёт на `<hrefBase>/<id>`. */
+  hrefBase: string;
+  /** Повторяет guard страницы записи (`<hrefBase>/[id]/page.tsx`). */
+  access: NavAccess;
+};
+
+/** Запись для пунктов из данных: id и подпись (название точки, не через i18n). */
+export type NavSourceRecord = { id: string; name: string };
+
+/** Записи источников, доступные человеку, — готовит сервер (`loadNavMenuData`). */
+export type NavMenuData = Partial<Record<NavMenuSourceKey, ReadonlyArray<NavSourceRecord>>>;
+
+/**
+ * Группа пунктов меню раздела; `label: null` — группа без подписи. `source` —
+ * пункты из данных идут первыми, перед обычными пунктами группы.
+ */
+export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[]; source?: NavMenuSourceKey };
 
 export type NavSection = {
   key: NavSectionKey;
@@ -175,6 +199,8 @@ export type VisibleNavMenuItem = {
   icon: string;
   href: string;
   tabs?: { id: string; href: string }[];
+  /** Подпись пункта из данных (название точки) — не через i18n. */
+  label?: string;
 };
 export type VisibleNavMenuGroup = { label: NavMenuGroupLabel | null; items: VisibleNavMenuItem[] };
 
@@ -285,9 +311,23 @@ const STAFF_MENU: NavMenuGroup[] = [
   },
 ];
 
+/** Источники пунктов из данных: точка — страница `/settings/buildings/<id>`. */
+export const NAV_MENU_SOURCES: Record<NavMenuSourceKey, NavMenuSource> = {
+  buildings: { icon: "Store", hrefBase: "/settings/buildings", access: FULL_ACCESS },
+};
+
+/**
+ * «Торговые точки» (скан 82, лист 5): сверху «Мои точки» — по пункту на точку
+ * и «+ Добавить точку», ниже справочники всех точек.
+ */
 const POINTS_MENU: NavMenuGroup[] = [
   {
-    label: null,
+    label: "myPoints",
+    source: "buildings",
+    items: [{ id: "add", icon: "Plus", href: "/settings/buildings/new", access: FULL_ACCESS }],
+  },
+  {
+    label: "allPoints",
     items: [
       { id: "buildings", icon: "Store", href: "/settings/buildings", access: FULL_ACCESS },
       { id: "areas", icon: "DoorOpen", href: "/settings/areas", access: STAFF_PATH },
@@ -534,15 +574,49 @@ export function navAllows(
   return ruleAllows(actor, access, facts);
 }
 
+/** Id пункта записи источника: `buildings:<id>` — не совпадает со статическими id. */
+export function sourceMenuItemId(source: NavMenuSourceKey, recordId: string): string {
+  return `${source}:${recordId}`;
+}
+
+/**
+ * Пункты из данных — в порядке записей (точки уже отсортированы, как в
+ * переключателе шапки): адрес `<hrefBase>/<id>`, подпись — название.
+ */
+export function sourceMenuItems(
+  source: NavMenuSourceKey,
+  records: ReadonlyArray<NavSourceRecord>,
+): VisibleNavMenuItem[] {
+  const { icon, hrefBase } = NAV_MENU_SOURCES[source];
+  return records.map((record) => ({
+    id: sourceMenuItemId(source, record.id),
+    icon,
+    href: `${hrefBase}/${encodeURIComponent(record.id)}`,
+    label: record.name,
+  }));
+}
+
 /**
  * Меню раздела, которое человек откроет: пункты и вкладки — через `navAllows`;
  * у пункта с вкладками адрес — первая видимая вкладка, без видимых вкладок
  * пункт убирается; пункт с `hideIfVisible` прячется, если виден тот пункт;
+ * пункты из данных (`source`) — первыми, если человеку открыта их страница;
  * пустые группы тоже убираются.
  */
-function visibleMenu(actor: NavActor, groups: NavMenuGroup[], facts: NavFacts): VisibleNavMenuGroup[] {
+function visibleMenu(
+  actor: NavActor,
+  groups: NavMenuGroup[],
+  facts: NavFacts,
+  data: NavMenuData,
+): VisibleNavMenuGroup[] {
   const allowed = groups.map((group) => {
     const items: (VisibleNavMenuItem & { hideIfVisible?: string })[] = [];
+    if (group.source) {
+      const source = NAV_MENU_SOURCES[group.source];
+      if (navAllows(actor, source.hrefBase, source.access, facts)) {
+        items.push(...sourceMenuItems(group.source, data[group.source] ?? []));
+      }
+    }
     for (const item of group.items) {
       if (!navAllows(actor, item.href, item.access, facts)) continue;
       const hide = item.hideIfVisible ? { hideIfVisible: item.hideIfVisible } : {};
@@ -569,8 +643,11 @@ function visibleMenu(actor: NavActor, groups: NavMenuGroup[], facts: NavFacts): 
   return result;
 }
 
-/** Разделы и вкладки, которые человек откроет. Пустые разделы отброшены. */
-export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[] {
+/**
+ * Разделы и вкладки, которые человек откроет. Пустые разделы отброшены.
+ * `data` — записи для пунктов из данных (точки); без него — только статика.
+ */
+export function visibleNav(actor: NavActor, facts: NavFacts, data: NavMenuData = {}): VisibleNavSection[] {
   const result: VisibleNavSection[] = [];
   for (const section of NAV_SECTIONS) {
     if (section.access && !ruleAllows(actor, section.access, facts)) continue;
@@ -580,7 +657,7 @@ export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[
       .filter((tab) => !tab.hideIfVisible || !allowedIds.has(tab.hideIfVisible))
       .map((tab): VisibleNavTab => ({ id: tab.id, label: tab.label, href: tab.href }));
     if (tabs.length === 0) continue;
-    const menu = visibleMenu(actor, section.menu ?? [], facts);
+    const menu = visibleMenu(actor, section.menu ?? [], facts, data);
     result.push({
       key: section.key,
       icon: section.icon,
@@ -707,4 +784,27 @@ export function sectionForPath(pathname: string): {
     // Вкладка пункта — только когда путь равен её адресу или лежит глубже.
     menuTabHref: best.menuTabHref,
   };
+}
+
+/**
+ * Пункт меню раздела для пути с учётом пунктов из данных: `/settings/buildings/<id>`
+ * (и глубже) — пункт этой точки, если он есть в меню человека (`itemIds`);
+ * иначе — пункт по статической модели (`sectionForPath`): на
+ * `/settings/buildings/new` — «Добавить точку», на `/settings/buildings` — «Точки».
+ */
+export function activeMenuItemId(pathname: string, itemIds: ReadonlyArray<string>): string | null {
+  const path = normalize(pathname);
+  for (const [key, source] of Object.entries(NAV_MENU_SOURCES) as [NavMenuSourceKey, NavMenuSource][]) {
+    if (!path.startsWith(`${source.hrefBase}/`)) continue;
+    const segment = path.slice(source.hrefBase.length + 1).split("/")[0];
+    let recordId = segment;
+    try {
+      recordId = decodeURIComponent(segment);
+    } catch {
+      // Битый адрес — пункта точки нет, остаётся статический.
+    }
+    const id = sourceMenuItemId(key, recordId);
+    if (itemIds.includes(id)) return id;
+  }
+  return sectionForPath(pathname)?.menuItemId ?? null;
 }

@@ -4,15 +4,20 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 import {
+  NAV_MENU_SOURCES,
   NAV_SECTIONS,
+  activeMenuItemId,
   navAllows,
   sectionForPath,
+  sourceMenuItems,
   visibleNav,
   visibleSettingsCards,
   type NavAccess,
   type NavActor,
   type NavFacts,
+  type NavMenuData,
 } from "./app-nav";
+import { allowedBuildingsForUser } from "./building-scope";
 import { SETTINGS_CARDS } from "./settings-cards";
 import { PPK_MENU_GROUPS, ppkMenuBlocks } from "./ppk/registry";
 import { isStaffRestrictedWebPath } from "./role-access";
@@ -315,6 +320,7 @@ test("у каждой иконки меню и карточек есть ком�
   const { hasNavIcon } = await import("../components/layout/nav-icons");
   for (const name of [
     ...NAV_SECTIONS.map((section) => section.icon),
+    ...Object.values(NAV_MENU_SOURCES).map((source) => source.icon),
     ...SETTINGS_CARDS.map((card) => card.icon),
     ...NAV_SECTIONS.flatMap((section) =>
       (section.menu ?? []).flatMap((group) => group.items.map((item) => item.icon)),
@@ -435,10 +441,13 @@ test("у каждого раздела, кроме «Остального», с�
     ["directories", ["users", "access"]],
     ["more", ["team", "schedule", "health", "responsibles", "hierarchy", "visibility", "workload", "phone"]],
   ]);
+  // «Мои точки» — пункты из данных (`source`) и «+ Добавить точку»; статическая часть — без точек.
   assert.deepEqual(menuShape("points"), [
-    [null, ["buildings", "areas", "equipment", "qr"]],
+    ["myPoints", ["add"]],
+    ["allPoints", ["buildings", "areas", "equipment", "qr"]],
     ["more", ["printer", "kiosk", "products", "master"]],
   ]);
+  assert.equal(NAV_SECTIONS.find((item) => item.key === "points")?.menu?.[0].source, "buildings");
   assert.deepEqual(menuShape("journals"), [[null, ["today", "control", "all", "verify", "setup"]]]);
   assert.deepEqual(menuShape("checklists"), [[null, ["builder"]]]);
   assert.deepEqual(menuShape("billing"), [[null, ["plan", "balance", "services"]]]);
@@ -549,4 +558,102 @@ test("пресет заведующей у линейной роли: в «Со�
   // `/settings/phone` линейной роли закрывает proxy.ts — пункта нет, как не было и карточки.
   assert.deepEqual(visibleItemIds(verifyOnly, "staff", noChecklists), ["team"]);
   assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["now"]);
+});
+
+// ---- «Торговые точки»: пункты из данных (точки) -------------------------
+
+const LENINA = { id: "b-lenina", name: "Берёзка на Ленина", address: "ул. Ленина, 5" };
+const MIRA = { id: "b-mira", name: "Берёзка на Мира", address: null };
+const SKLAD = { id: "b-sklad", name: "Склад", address: null };
+const records = (list: { id: string; name: string }[]): NavMenuData => ({
+  buildings: list.map(({ id, name }) => ({ id, name })),
+});
+
+function pointsMenu(actor: NavActor, data: NavMenuData) {
+  return visibleNav(actor, withChecklists, data).find((section) => section.key === "points")?.menu ?? [];
+}
+
+test("точки — пункты «Мои точки» в порядке точек, затем «+ Добавить точку»", () => {
+  const menu = pointsMenu(manager, records([LENINA, MIRA]));
+  assert.equal(menu[0].label, "myPoints");
+  assert.deepEqual(
+    menu[0].items.map((item) => [item.id, item.href, item.label ?? null, item.icon]),
+    [
+      ["buildings:b-lenina", "/settings/buildings/b-lenina", "Берёзка на Ленина", "Store"],
+      ["buildings:b-mira", "/settings/buildings/b-mira", "Берёзка на Мира", "Store"],
+      ["add", "/settings/buildings/new", null, "Plus"],
+    ],
+  );
+  // Порядок — как у точек (сортировка переключателя в шапке), не по алфавиту.
+  assert.deepEqual(
+    pointsMenu(manager, records([MIRA, LENINA]))[0].items.map((item) => item.id),
+    ["buildings:b-mira", "buildings:b-lenina", "add"],
+  );
+  // «Все точки» — справочники, как раньше.
+  assert.deepEqual(menu[1].label, "allPoints");
+  assert.deepEqual(menu[1].items.map((item) => item.id), ["buildings", "areas", "equipment", "qr"]);
+  // Заведующая (полный доступ к кабинету) видит точки так же.
+  assert.deepEqual(
+    pointsMenu(headChef, records([LENINA]))[0].items.map((item) => item.id),
+    ["buildings:b-lenina", "add"],
+  );
+});
+
+test("точек нет — в группе только «+ Добавить точку»", () => {
+  for (const data of [{}, records([])]) {
+    const menu = pointsMenu(owner, data);
+    assert.deepEqual(menu[0].items.map((item) => item.id), ["add"]);
+  }
+});
+
+test("в меню только точки, доступные человеку; чужие — не попадают", () => {
+  // `User.buildingIds` = [Мира] — в меню только Мира (то же правило, что у переключателя).
+  const allowed = allowedBuildingsForUser([LENINA, MIRA, SKLAD], [MIRA.id]);
+  assert.deepEqual(
+    pointsMenu(manager, records(allowed))[0].items.map((item) => item.id),
+    ["buildings:b-mira", "add"],
+  );
+  // Повар раздела не видит вовсе, даже если данные передали.
+  assert.equal(
+    visibleNav(cook, withChecklists, records([LENINA])).some((section) => section.key === "points"),
+    false,
+  );
+  // Чистая подстановка: адрес без лишнего, пусто — пусто.
+  assert.deepEqual(sourceMenuItems("buildings", []), []);
+  assert.equal(sourceMenuItems("buildings", [{ id: "a b", name: "X" }])[0].href, "/settings/buildings/a%20b");
+});
+
+test("статическая модель без динамических сегментов; правило пунктов точек — guard страницы точки", () => {
+  for (const section of NAV_SECTIONS) {
+    for (const group of section.menu ?? []) {
+      for (const item of group.items) assert.ok(!/[[\]]/.test(item.href), `${section.key}/${item.id}: ${item.href}`);
+    }
+  }
+  for (const source of Object.values(NAV_MENU_SOURCES)) {
+    const file = join(DASHBOARD_DIR, ...source.hrefBase.split("/").filter(Boolean), "[id]", "page.tsx");
+    const text = readFileSync(file, "utf8");
+    for (const alternatives of guardTokens(source.access)) {
+      assert.ok(alternatives.some((token) => text.includes(token)), `${file}: нет ${alternatives.join(", ")}`);
+    }
+  }
+  assert.equal(sectionForPath("/settings/buildings/new")?.menuItemId, "add");
+  assert.equal(sectionForPath("/settings/buildings/x")?.section, "points");
+});
+
+test("активный пункт: точка — на своей странице, «Добавить точку» — на мастере, остальное — как раньше", () => {
+  const ids = pointsMenu(manager, records([LENINA, MIRA])).flatMap((group) => group.items.map((item) => item.id));
+  assert.equal(activeMenuItemId("/settings/buildings/b-mira", ids), "buildings:b-mira");
+  assert.equal(activeMenuItemId("/settings/buildings/b-mira/", ids), "buildings:b-mira");
+  assert.equal(activeMenuItemId("/settings/buildings/b-lenina/anything", ids), "buildings:b-lenina");
+  assert.equal(activeMenuItemId("/settings/buildings/new", ids), "add");
+  assert.equal(activeMenuItemId("/settings/buildings", ids), "buildings");
+  // Точки нет в меню человека (чужая, удалена) — не подсвечиваем чужое, остаётся «Точки».
+  assert.equal(activeMenuItemId("/settings/buildings/b-sklad", ids), "buildings");
+  assert.equal(activeMenuItemId("/settings/buildings/%E0%A4%A", ids), "buildings");
+  assert.equal(activeMenuItemId("/settings/equipment/qr-sheet", ids), "equipment");
+  assert.equal(activeMenuItemId("/settings/areas", ids), "areas");
+  // Другие разделы не задеты.
+  assert.equal(activeMenuItemId("/orders/x", []), "orders");
+  assert.equal(activeMenuItemId("/settings/users/x/access", []), "users");
+  assert.equal(activeMenuItemId("/more", []), null);
 });

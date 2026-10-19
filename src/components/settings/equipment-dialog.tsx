@@ -101,6 +101,10 @@ interface EquipmentDialogProps {
   existingNames?: string[];
   /** Сотрудники для «Кто заполняет». */
   fillerOptions?: FillerOption[];
+  /** Тип нового оборудования по умолчанию (блок «УФ-лампы» страницы точки). */
+  defaultType?: string;
+  /** Подпись кнопки «Добавить …» вместо «Добавить оборудование». */
+  triggerLabel?: string;
 }
 
 /**
@@ -123,6 +127,8 @@ export function EquipmentDialog({
   equipment,
   existingNames = [],
   fillerOptions = [],
+  defaultType,
+  triggerLabel,
 }: EquipmentDialogProps) {
   const router = useRouter();
   const isEdit = !!equipment;
@@ -132,7 +138,7 @@ export function EquipmentDialog({
   const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(equipment?.name ?? "");
-  const [type, setType] = useState(initialType(equipment?.type));
+  const [type, setType] = useState(initialType(equipment?.type ?? defaultType));
   // Точка → помещение. Без точек — прежний список цехов.
   const byPoints = buildings.length > 0 && Boolean(places);
   const initialBuilding = equipment
@@ -153,7 +159,7 @@ export function EquipmentDialog({
 
   function resetForm() {
     setName(equipment?.name ?? "");
-    setType(initialType(equipment?.type));
+    setType(initialType(equipment?.type ?? defaultType));
     setBuildingId(initialBuilding);
     setPlaceKey(equipment?.areaId ? `area:${equipment.areaId}` : "");
     setSerialNumber(equipment?.serialNumber ?? "");
@@ -302,7 +308,7 @@ export function EquipmentDialog({
             <Pencil className="size-4" />
           </Button>
         ) : (
-          <Button><Plus className="size-4" />Добавить оборудование</Button>
+          <Button><Plus className="size-4" />{triggerLabel ?? "Добавить оборудование"}</Button>
         )}
       </DialogTrigger>
       <DialogContent>

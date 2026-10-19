@@ -58,9 +58,10 @@ export function CurrentPointSwitcher({
   if (point.kind === "none") return null;
 
   if (point.kind === "add") {
+    // Сразу мастер «+ Добавить точку» (как в меню раздела), а не список точек.
     return (
       <Link
-        href={manageHref ?? "/settings/buildings"}
+        href="/settings/buildings/new"
         title={t("addHint")}
         data-current-point="add"
         className={cn(

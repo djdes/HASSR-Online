@@ -1,0 +1,207 @@
+{
+  "owner-1440-lenina": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Ленина",
+    "rooms": 7,
+    "equipment": 18,
+    "lamps": 1,
+    "stickers": "19",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+  },
+  "owner-1440-mira": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Мира",
+    "rooms": 6,
+    "equipment": 8,
+    "lamps": 0,
+    "stickers": "8",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+  },
+  "owner-1440-new": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Добавить точку"
+  },
+  "owner-1440-overview": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Точки и помещения",
+    "openLinks": 2,
+    "headerAdd": "/settings/buildings/new"
+  },
+  "owner-390-lenina": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Ленина",
+    "rooms": 7,
+    "equipment": 18,
+    "lamps": 1,
+    "stickers": "19",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+  },
+  "owner-390-mira": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Мира",
+    "rooms": 6,
+    "equipment": 8,
+    "lamps": 0,
+    "stickers": "8",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+  },
+  "owner-390-new": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Добавить точку"
+  },
+  "owner-390-overview": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Точки и помещения",
+    "openLinks": 2,
+    "headerAdd": "/settings/buildings/new"
+  },
+  "headchef-1440-lenina": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Ленина",
+    "rooms": 7,
+    "equipment": 18,
+    "lamps": 1,
+    "stickers": "19",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+  },
+  "headchef-1440-mira": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Мира",
+    "rooms": 6,
+    "equipment": 8,
+    "lamps": 0,
+    "stickers": "8",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+  },
+  "headchef-1440-new": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Добавить точку"
+  },
+  "headchef-1440-overview": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Точки и помещения",
+    "openLinks": 2,
+    "headerAdd": "/settings/buildings/new"
+  },
+  "headchef-390-lenina": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Ленина",
+    "rooms": 7,
+    "equipment": 18,
+    "lamps": 1,
+    "stickers": "19",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+  },
+  "headchef-390-mira": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [
+      "head",
+      "rooms",
+      "equipment",
+      "uv",
+      "qr",
+      "delete"
+    ],
+    "h1": "Берёзка на Мира",
+    "rooms": 6,
+    "equipment": 8,
+    "lamps": 0,
+    "stickers": "8",
+    "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+  },
+  "headchef-390-new": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Добавить точку"
+  },
+  "headchef-390-overview": {
+    "status": 200,
+    "overflow": 0,
+    "blocks": [],
+    "h1": "Точки и помещения",
+    "openLinks": 2,
+    "headerAdd": "/settings/buildings/new"
+  },
+  "owner-mini-mira": {
+    "status": 200,
+    "overflow": 0
+  },
+  "problems": []
+}

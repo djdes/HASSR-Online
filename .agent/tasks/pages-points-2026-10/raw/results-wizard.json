@@ -1,0 +1,29 @@
+{
+  "name": "Точка проверки 132702",
+  "emptyError": "Введите название точки",
+  "takenError": "Точка с таким названием уже есть — назовите иначе",
+  "summary": "Что будет создано\nТочка\nТочка проверки 132702 · ул. Проверочная, 1\nПомещения · 7\nГорячий цех\nХолодный цех\nОсновное производство\nСклад\nМойка\nЗал\nКондитерский цех\nОборудование · 5\nХолодильник 1\nХолодный цех\nХолодильник 2\nХолодный цех\nМорозильник 1\nСклад\nФритюрница 1\nГорячий цех\nУФ-лампа 1\nХолодный цех\n\nПосле создания откроется страница точки, а сама точка появится в меню слева.",
+  "pointPath": "/settings/buildings/cmvdv1ecg001lus9mgruoabl7",
+  "menu": [
+    "buildings:fx-building-lenina",
+    "buildings:fx-building-mira",
+    "buildings:cmvdv1ecg001lus9mgruoabl7",
+    "add",
+    "buildings",
+    "areas",
+    "equipment",
+    "qr",
+    "printer",
+    "kiosk",
+    "products",
+    "master"
+  ],
+  "current": [
+    "buildings:cmvdv1ecg001lus9mgruoabl7"
+  ],
+  "rooms": 7,
+  "equipment": 4,
+  "lamps": 1,
+  "h1": "Точка проверки 132702",
+  "problems": []
+}

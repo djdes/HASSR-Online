@@ -1,0 +1,1364 @@
+{
+  "base": "http://localhost:3072",
+  "startedAt": "2026-10-18T13:17:12.541Z",
+  "menu": {
+    "owner-desktop": {
+      "overview": {
+        "href": "/settings/buildings",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": true
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "buildings"
+        ],
+        "h1": "Точки и помещения",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "lenina": {
+        "href": "/settings/buildings/fx-building-lenina",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": true
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "buildings:fx-building-lenina"
+        ],
+        "h1": "Берёзка на Ленина",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "mira": {
+        "href": "/settings/buildings/fx-building-mira",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": true
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "buildings:fx-building-mira"
+        ],
+        "h1": "Берёзка на Мира",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "new": {
+        "href": "/settings/buildings/new",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": true
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "add"
+        ],
+        "h1": "Добавить точку",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "equipment": {
+        "href": "/settings/equipment",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": true
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "equipment"
+        ],
+        "h1": "Оборудование",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "click": {
+        "path": "/settings/buildings/fx-building-mira",
+        "current": [
+          "buildings:fx-building-mira"
+        ]
+      },
+      "palette": "Торговые точки · Берёзка на Мира"
+    },
+    "headchef-desktop": {
+      "overview": {
+        "href": "/settings/buildings",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": true
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "buildings"
+        ],
+        "h1": "Точки и помещения",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "lenina": {
+        "href": "/settings/buildings/fx-building-lenina",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": true
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "buildings:fx-building-lenina"
+        ],
+        "h1": "Берёзка на Ленина",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "mira": {
+        "href": "/settings/buildings/fx-building-mira",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": true
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "buildings:fx-building-mira"
+        ],
+        "h1": "Берёзка на Мира",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "new": {
+        "href": "/settings/buildings/new",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": true
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": false
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "add"
+        ],
+        "h1": "Добавить точку",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "equipment": {
+        "href": "/settings/equipment",
+        "status": 200,
+        "items": [
+          {
+            "id": "buildings:fx-building-lenina",
+            "href": "/settings/buildings/fx-building-lenina",
+            "label": "Берёзка на Ленина",
+            "current": false
+          },
+          {
+            "id": "buildings:fx-building-mira",
+            "href": "/settings/buildings/fx-building-mira",
+            "label": "Берёзка на Мира",
+            "current": false
+          },
+          {
+            "id": "add",
+            "href": "/settings/buildings/new",
+            "label": "Добавить точку",
+            "current": false
+          },
+          {
+            "id": "buildings",
+            "href": "/settings/buildings",
+            "label": "Точки",
+            "current": false
+          },
+          {
+            "id": "areas",
+            "href": "/settings/areas",
+            "label": "Цеха и помещения",
+            "current": false
+          },
+          {
+            "id": "equipment",
+            "href": "/settings/equipment",
+            "label": "Оборудование",
+            "current": true
+          },
+          {
+            "id": "qr",
+            "href": "/settings/qr-posters",
+            "label": "QR-наклейки и плакаты",
+            "current": false
+          },
+          {
+            "id": "printer",
+            "href": "/settings/print-agent",
+            "label": "Онлайн-принтер",
+            "current": false
+          },
+          {
+            "id": "kiosk",
+            "href": "/settings/kiosk",
+            "label": "Общий планшет",
+            "current": false
+          },
+          {
+            "id": "products",
+            "href": "/settings/products",
+            "label": "Справочник продуктов",
+            "current": false
+          },
+          {
+            "id": "master",
+            "href": "/settings/master-cabinet",
+            "label": "Мастер-кабинет",
+            "current": false
+          }
+        ],
+        "current": [
+          "equipment"
+        ],
+        "h1": "Оборудование",
+        "groups": [
+          "Мои точки",
+          "Все точки",
+          "Ещё"
+        ]
+      },
+      "click": {
+        "path": "/settings/buildings/fx-building-mira",
+        "current": [
+          "buildings:fx-building-mira"
+        ]
+      },
+      "palette": "Торговые точки · Берёзка на Мира"
+    },
+    "owner-mobile": {
+      "items": [
+        {
+          "id": "buildings:fx-building-lenina",
+          "current": true,
+          "label": "Берёзка на Ленина"
+        },
+        {
+          "id": "buildings:fx-building-mira",
+          "current": false,
+          "label": "Берёзка на Мира"
+        },
+        {
+          "id": "add",
+          "current": false,
+          "label": "Добавить точку"
+        },
+        {
+          "id": "buildings",
+          "current": false,
+          "label": "Точки"
+        },
+        {
+          "id": "areas",
+          "current": false,
+          "label": "Цеха и помещения"
+        },
+        {
+          "id": "equipment",
+          "current": false,
+          "label": "Оборудование"
+        },
+        {
+          "id": "qr",
+          "current": false,
+          "label": "QR-наклейки и плакаты"
+        },
+        {
+          "id": "printer",
+          "current": false,
+          "label": "Онлайн-принтер"
+        },
+        {
+          "id": "kiosk",
+          "current": false,
+          "label": "Общий планшет"
+        },
+        {
+          "id": "products",
+          "current": false,
+          "label": "Справочник продуктов"
+        },
+        {
+          "id": "master",
+          "current": false,
+          "label": "Мастер-кабинет"
+        }
+      ],
+      "overflow": 0
+    },
+    "headchef-mobile": {
+      "items": [
+        {
+          "id": "buildings:fx-building-lenina",
+          "current": true,
+          "label": "Берёзка на Ленина"
+        },
+        {
+          "id": "buildings:fx-building-mira",
+          "current": false,
+          "label": "Берёзка на Мира"
+        },
+        {
+          "id": "add",
+          "current": false,
+          "label": "Добавить точку"
+        },
+        {
+          "id": "buildings",
+          "current": false,
+          "label": "Точки"
+        },
+        {
+          "id": "areas",
+          "current": false,
+          "label": "Цеха и помещения"
+        },
+        {
+          "id": "equipment",
+          "current": false,
+          "label": "Оборудование"
+        },
+        {
+          "id": "qr",
+          "current": false,
+          "label": "QR-наклейки и плакаты"
+        },
+        {
+          "id": "printer",
+          "current": false,
+          "label": "Онлайн-принтер"
+        },
+        {
+          "id": "kiosk",
+          "current": false,
+          "label": "Общий планшет"
+        },
+        {
+          "id": "products",
+          "current": false,
+          "label": "Справочник продуктов"
+        },
+        {
+          "id": "master",
+          "current": false,
+          "label": "Мастер-кабинет"
+        }
+      ],
+      "overflow": 0
+    },
+    "owner-mini": {
+      "items": [
+        {
+          "id": "buildings:fx-building-lenina",
+          "current": true,
+          "label": "Берёзка на Ленина"
+        },
+        {
+          "id": "buildings:fx-building-mira",
+          "current": false,
+          "label": "Берёзка на Мира"
+        },
+        {
+          "id": "add",
+          "current": false,
+          "label": "Добавить точку"
+        },
+        {
+          "id": "buildings",
+          "current": false,
+          "label": "Точки"
+        },
+        {
+          "id": "areas",
+          "current": false,
+          "label": "Цеха и помещения"
+        },
+        {
+          "id": "equipment",
+          "current": false,
+          "label": "Оборудование"
+        },
+        {
+          "id": "qr",
+          "current": false,
+          "label": "QR-наклейки и плакаты"
+        },
+        {
+          "id": "printer",
+          "current": false,
+          "label": "Онлайн-принтер"
+        },
+        {
+          "id": "kiosk",
+          "current": false,
+          "label": "Общий планшет"
+        },
+        {
+          "id": "products",
+          "current": false,
+          "label": "Справочник продуктов"
+        },
+        {
+          "id": "master",
+          "current": false,
+          "label": "Мастер-кабинет"
+        }
+      ],
+      "overflow": 0
+    },
+    "headchef-mini": {
+      "items": [
+        {
+          "id": "buildings:fx-building-lenina",
+          "current": true,
+          "label": "Берёзка на Ленина"
+        },
+        {
+          "id": "buildings:fx-building-mira",
+          "current": false,
+          "label": "Берёзка на Мира"
+        },
+        {
+          "id": "add",
+          "current": false,
+          "label": "Добавить точку"
+        },
+        {
+          "id": "buildings",
+          "current": false,
+          "label": "Точки"
+        },
+        {
+          "id": "areas",
+          "current": false,
+          "label": "Цеха и помещения"
+        },
+        {
+          "id": "equipment",
+          "current": false,
+          "label": "Оборудование"
+        },
+        {
+          "id": "qr",
+          "current": false,
+          "label": "QR-наклейки и плакаты"
+        },
+        {
+          "id": "printer",
+          "current": false,
+          "label": "Онлайн-принтер"
+        },
+        {
+          "id": "kiosk",
+          "current": false,
+          "label": "Общий планшет"
+        },
+        {
+          "id": "products",
+          "current": false,
+          "label": "Справочник продуктов"
+        },
+        {
+          "id": "master",
+          "current": false,
+          "label": "Мастер-кабинет"
+        }
+      ],
+      "overflow": 0
+    }
+  },
+  "pages": {
+    "owner-1440-lenina": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Ленина",
+      "rooms": 7,
+      "equipment": 18,
+      "lamps": 1,
+      "stickers": "19",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+    },
+    "owner-1440-mira": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Мира",
+      "rooms": 6,
+      "equipment": 8,
+      "lamps": 0,
+      "stickers": "8",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+    },
+    "owner-1440-new": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Добавить точку"
+    },
+    "owner-1440-overview": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Точки и помещения",
+      "openLinks": 2,
+      "headerAdd": "/settings/buildings/new"
+    },
+    "owner-390-lenina": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Ленина",
+      "rooms": 7,
+      "equipment": 18,
+      "lamps": 1,
+      "stickers": "19",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+    },
+    "owner-390-mira": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Мира",
+      "rooms": 6,
+      "equipment": 8,
+      "lamps": 0,
+      "stickers": "8",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+    },
+    "owner-390-new": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Добавить точку"
+    },
+    "owner-390-overview": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Точки и помещения",
+      "openLinks": 2,
+      "headerAdd": "/settings/buildings/new"
+    },
+    "headchef-1440-lenina": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Ленина",
+      "rooms": 7,
+      "equipment": 18,
+      "lamps": 1,
+      "stickers": "19",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+    },
+    "headchef-1440-mira": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Мира",
+      "rooms": 6,
+      "equipment": 8,
+      "lamps": 0,
+      "stickers": "8",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+    },
+    "headchef-1440-new": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Добавить точку"
+    },
+    "headchef-1440-overview": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Точки и помещения",
+      "openLinks": 2,
+      "headerAdd": "/settings/buildings/new"
+    },
+    "headchef-390-lenina": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Ленина",
+      "rooms": 7,
+      "equipment": 18,
+      "lamps": 1,
+      "stickers": "19",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Бар-Бар - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Бар-Холодильный шкаф Бар 1,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Горячий цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Пароконвектомат Rational,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Термогигрометр Testo Hot,cmvbfyemt0000uw9mywdjiurr-Горячий цех-Фритюрница 8л,cmvbfyemt0000uw9mywdjiurr-Зал-Зал - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Мойка кухонная - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Мойка-Посудомоечная машина Winterhalter,cmvbfyemt0000uw9mywdjiurr-Раздача-Раздача - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Раздача-УФ-лампа бактерицидная 1,cmvbfyemt0000uw9mywdjiurr-Склад-Весы напольные 012-В,cmvbfyemt0000uw9mywdjiurr-Склад-Морозильный ларь Frostor,cmvbfyemt0000uw9mywdjiurr-Склад-Склад - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Термогигрометр Testo Cold,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 1,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодильник Polair 2,cmvbfyemt0000uw9mywdjiurr-Холодный цех-Холодный цех - термогигрометр"
+    },
+    "headchef-390-mira": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [
+        "head",
+        "rooms",
+        "equipment",
+        "uv",
+        "qr",
+        "delete"
+      ],
+      "h1": "Берёзка на Мира",
+      "rooms": 6,
+      "equipment": 8,
+      "lamps": 0,
+      "stickers": "8",
+      "stickersHref": "/settings/qr-posters?kind=equipment&layout=sheet&ids=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Кондитерский цех - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Кондитерский цех-Миксер планетарный,cmvcvwo8t0001ow9me85jnx93-Мойка - термогигрометр,cmvcvqady0008eg9m3mkq4s5z-Основное производство - термогигрометр,cmvcvqaj80009eg9m23eh4b6u,cmvbfyemt0000uw9mywdjiurr-Упаковка-Упаковка - термогигрометр,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Морозильный ларь 1,cmvbfyemt0000uw9mywdjiurr-Холодильный цех-Холодильная камера 1"
+    },
+    "headchef-390-new": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Добавить точку"
+    },
+    "headchef-390-overview": {
+      "status": 200,
+      "overflow": 0,
+      "blocks": [],
+      "h1": "Точки и помещения",
+      "openLinks": 2,
+      "headerAdd": "/settings/buildings/new"
+    },
+    "owner-mini-mira": {
+      "status": 200,
+      "overflow": 0
+    }
+  },
+  "wizard": {
+    "name": "Точка проверки 132702",
+    "emptyError": "Введите название точки",
+    "takenError": "Точка с таким названием уже есть — назовите иначе",
+    "summary": "Что будет создано\nТочка\nТочка проверки 132702 · ул. Проверочная, 1\nПомещения · 7\nГорячий цех\nХолодный цех\nОсновное производство\nСклад\nМойка\nЗал\nКондитерский цех\nОборудование · 5\nХолодильник 1\nХолодный цех\nХолодильник 2\nХолодный цех\nМорозильник 1\nСклад\nФритюрница 1\nГорячий цех\nУФ-лампа 1\nХолодный цех\n\nПосле создания откроется страница точки, а сама точка появится в меню слева.",
+    "pointPath": "/settings/buildings/cmvdv1ecg001lus9mgruoabl7",
+    "menu": [
+      "buildings:fx-building-lenina",
+      "buildings:fx-building-mira",
+      "buildings:cmvdv1ecg001lus9mgruoabl7",
+      "add",
+      "buildings",
+      "areas",
+      "equipment",
+      "qr",
+      "printer",
+      "kiosk",
+      "products",
+      "master"
+    ],
+    "current": [
+      "buildings:cmvdv1ecg001lus9mgruoabl7"
+    ],
+    "rooms": 7,
+    "equipment": 4,
+    "lamps": 1,
+    "h1": "Точка проверки 132702"
+  },
+  "edit": {
+    "pointId": "cmvdv1ecg001lus9mgruoabl7",
+    "pointName": "Точка проверки 132702",
+    "rename": {
+      "menuLabel": "Точка проверки 132702 ред",
+      "h1": "Точка проверки 132702 ред",
+      "phoneShown": true,
+      "kppShown": true
+    },
+    "rooms": {
+      "before": 7,
+      "after": 8
+    },
+    "uvDialog": {
+      "type": "УФ-лампа",
+      "building": "Точка проверки 132702 ред",
+      "lampSection": true
+    },
+    "deleteDialog": "Удалить точку «Точка проверки 132702 ред»?\nДействие нельзя отменить. Что произойдёт:\nУдалятся помещения точки: 8\nОборудование (5) останется и окажется «Без точки» в разделе «Оборудование»\nДокументы журналов этой точки станут общими — видимыми на каждой точке\nЧтобы продолжить, введите Точка проверки 132702 ред\nОтмена\nУдалить точку",
+    "confirmDisabledBeforeTyping": true,
+    "afterDelete": {
+      "path": "/settings/buildings",
+      "menu": [
+        "buildings:fx-building-lenina",
+        "buildings:fx-building-mira",
+        "add",
+        "buildings",
+        "areas",
+        "equipment",
+        "qr",
+        "printer",
+        "kiosk",
+        "products",
+        "master"
+      ]
+    }
+  },
+  "cook": {
+    "/settings/buildings/fx-building-lenina": {
+      "status": 200,
+      "finalPath": "/mini/today",
+      "pointsInMenu": false
+    },
+    "/settings/buildings/new": {
+      "status": 200,
+      "finalPath": "/mini/today",
+      "pointsInMenu": false
+    },
+    "/settings/buildings": {
+      "status": 200,
+      "finalPath": "/mini/today",
+      "pointsInMenu": false
+    }
+  },
+  "finishedAt": "2026-10-18T13:30:47.908Z",
+  "problems": []
+}

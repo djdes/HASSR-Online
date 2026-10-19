@@ -5,11 +5,13 @@ import { customSectionNameByHref, type CustomNames } from "@/lib/custom-names";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { listPersonBuildings } from "@/lib/active-building";
 import {
   visibleNav,
   visibleSettingsCards,
   type NavActor,
   type NavFacts,
+  type NavMenuData,
   type NavSectionKey,
 } from "@/lib/app-nav";
 
@@ -61,10 +63,23 @@ export async function loadNavFacts(session: Session): Promise<NavFacts> {
   return { checklists, settingsPermissions };
 }
 
+/**
+ * Записи для пунктов меню из данных: точки, доступные человеку (тот же список,
+ * что у переключателя в шапке, — `listPersonBuildings`). Страница точки —
+ * только руководству, поэтому остальным запроса в БД нет.
+ */
+export async function loadNavMenuData(session: Session): Promise<NavMenuData> {
+  if (!hasFullWorkspaceAccess(session.user)) return {};
+  const buildings = await listPersonBuildings(session).catch(() => []);
+  return { buildings: buildings.map((building) => ({ id: building.id, name: building.name })) };
+}
+
 export async function buildNavModel(input: {
   user: NavUser;
   facts: NavFacts;
   customNames: CustomNames | null;
+  /** Записи для пунктов из данных (`loadNavMenuData`); без них — только статика. */
+  menuData?: NavMenuData;
 }): Promise<NavModel> {
   const t = await getTranslations("navigation.shell");
   const tCards = await getTranslations("settingsManagement.home.cards");
@@ -72,7 +87,7 @@ export async function buildNavModel(input: {
   // собираются из модели (`NAV_SECTIONS`), поэтому их наличие на всех языках
   // сверяет тест (`navigation-localization.test.ts`), а не тип.
   const menuLabel = t as unknown as (key: string) => string;
-  const visible = visibleNav(input.user, input.facts);
+  const visible = visibleNav(input.user, input.facts, input.menuData);
   const sections = visible.map((section) => ({
     key: section.key,
     icon: section.icon,
@@ -93,7 +108,8 @@ export async function buildNavModel(input: {
               id: item.id,
               icon: item.icon,
               href: item.href,
-              label: menuLabel(`menus.${section.key}.items.${item.id}`),
+              // Пункт из данных (точка) подписан своим названием.
+              label: item.label ?? menuLabel(`menus.${section.key}.items.${item.id}`),
               ...(item.tabs
                 ? {
                     tabs: item.tabs.map((tab) => ({

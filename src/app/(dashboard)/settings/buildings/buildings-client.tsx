@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { roomKindOptions } from "@/lib/room-kinds";
 import { useRouter } from "next/navigation";
-import { Building2, Check, Copy, MapPin, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { ArrowRight, Building2, Check, Copy, MapPin, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -52,6 +54,58 @@ type Building = {
   rooms: Room[];
 };
 
+/** Помещение точки со всем, что нужно окну помещения (обзор и страница точки). */
+export type BuildingRoom = Room;
+
+/** Карточка помещения → начальные значения окна помещения (`RoomEditorDialog`). */
+export function roomEditorInitial(room: Room): RoomEditorInitial {
+  return {
+    id: room.id,
+    name: room.name,
+    kind: room.kind,
+    cleanerUserIds: toUserIdList(room.cleanerUserIds),
+    verifierUserIds: toUserIdList(room.verifierUserIds),
+    fillerUserIds: toUserIdList(room.fillerUserIds),
+    detergent: room.detergent ?? "",
+    // Передаём scope как-есть — RoomEditorDialog.parseScopeSteps
+    // нормализует и legacy string[] и новый ScopeStep[] (с per-step
+    // requirePhoto). Раньше фильтровали по typeof === "string" → новые
+    // объект-шаги дропались, и юзер видел пустой pipeline после
+    // первого save (баг сообщён 2026-05-10).
+    currentScope: Array.isArray(room.currentScope)
+      ? (room.currentScope as Array<string | { label: string; requirePhoto?: boolean }>).filter(
+          (s) =>
+            typeof s === "string" ||
+            (s && typeof s === "object" && typeof (s as { label?: unknown }).label === "string"),
+        )
+      : [],
+    generalScope: Array.isArray(room.generalScope)
+      ? (room.generalScope as Array<string | { label: string; requirePhoto?: boolean }>).filter(
+          (s) =>
+            typeof s === "string" ||
+            (s && typeof s === "object" && typeof (s as { label?: unknown }).label === "string"),
+        )
+      : [],
+    currentDays: typeof room.currentDays === "number" ? room.currentDays : 127,
+    generalDays: typeof room.generalDays === "number" ? room.generalDays : 0,
+    currentScheduleType:
+      room.currentScheduleType === "monthly" ? "monthly" : "weekly",
+    generalScheduleType:
+      room.generalScheduleType === "monthly" ? "monthly" : "weekly",
+    currentMonthDays: Array.isArray(room.currentMonthDays)
+      ? (room.currentMonthDays as string[]).filter(
+          (s) => typeof s === "string",
+        )
+      : [],
+    generalMonthDays: Array.isArray(room.generalMonthDays)
+      ? (room.generalMonthDays as string[]).filter(
+          (s) => typeof s === "string",
+        )
+      : [],
+    requirePhoto: room.requirePhoto === true,
+  };
+}
+
 // Виды — общий список (`room-kinds.ts`); экран пока только на русском.
 const KIND_LABELS: Record<string, string> = Object.fromEntries(
   roomKindOptions("ru").map((option) => [option.value, option.label]),
@@ -64,9 +118,12 @@ export function BuildingsClient({
   readOnly = false,
   unnamedCount = 0,
   userBuildingIds = {},
+  openableIds = [],
 }: {
   initial: Building[];
   users: RoomResponsibleUser[];
+  /** Точки, чью страницу человек откроет (`listPersonBuildings`), — у них «Открыть точку». */
+  openableIds?: string[];
   /** Точки: id точек каждого сотрудника (пусто — работает везде). */
   userBuildingIds?: Record<string, string[]>;
   /** Точки (2026-09-05): документы журналов ведутся отдельно по зданиям. */
@@ -77,12 +134,11 @@ export function BuildingsClient({
   unnamedCount?: number;
 }) {
   const router = useRouter();
+  const tPoint = useTranslations("navigation.shell.point");
   const [, startTransition] = useTransition();
-  const [adding, setAdding] = useState(false);
   const [flagPending, setFlagPending] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newAddr, setNewAddr] = useState("");
   const [editorRoom, setEditorRoom] = useState<RoomEditorInitial | null>(null);
+  const openable = new Set(openableIds);
   const userNameById = new Map(users.map((u) => [u.id, u.name]));
 
   // Нагрузка по ДРУГИМ помещениям — подсказка в мультивыборе.
@@ -102,70 +158,7 @@ export function BuildingsClient({
   }
 
   function openEditor(room: Room) {
-    setEditorRoom({
-      id: room.id,
-      name: room.name,
-      kind: room.kind,
-      cleanerUserIds: toUserIdList(room.cleanerUserIds),
-      verifierUserIds: toUserIdList(room.verifierUserIds),
-      fillerUserIds: toUserIdList(room.fillerUserIds),
-      detergent: room.detergent ?? "",
-      // Передаём scope как-есть — RoomEditorDialog.parseScopeSteps
-      // нормализует и legacy string[] и новый ScopeStep[] (с per-step
-      // requirePhoto). Раньше фильтровали по typeof === "string" → новые
-      // объект-шаги дропались, и юзер видел пустой pipeline после
-      // первого save (баг сообщён 2026-05-10).
-      currentScope: Array.isArray(room.currentScope)
-        ? (room.currentScope as Array<string | { label: string; requirePhoto?: boolean }>).filter(
-            (s) =>
-              typeof s === "string" ||
-              (s && typeof s === "object" && typeof (s as { label?: unknown }).label === "string"),
-          )
-        : [],
-      generalScope: Array.isArray(room.generalScope)
-        ? (room.generalScope as Array<string | { label: string; requirePhoto?: boolean }>).filter(
-            (s) =>
-              typeof s === "string" ||
-              (s && typeof s === "object" && typeof (s as { label?: unknown }).label === "string"),
-          )
-        : [],
-      currentDays: typeof room.currentDays === "number" ? room.currentDays : 127,
-      generalDays: typeof room.generalDays === "number" ? room.generalDays : 0,
-      currentScheduleType:
-        room.currentScheduleType === "monthly" ? "monthly" : "weekly",
-      generalScheduleType:
-        room.generalScheduleType === "monthly" ? "monthly" : "weekly",
-      currentMonthDays: Array.isArray(room.currentMonthDays)
-        ? (room.currentMonthDays as string[]).filter(
-            (s) => typeof s === "string",
-          )
-        : [],
-      generalMonthDays: Array.isArray(room.generalMonthDays)
-        ? (room.generalMonthDays as string[]).filter(
-            (s) => typeof s === "string",
-          )
-        : [],
-      requirePhoto: room.requirePhoto === true,
-    });
-  }
-
-  async function addBuilding() {
-    if (!newName.trim()) return;
-    const res = await fetch("/api/settings/buildings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName.trim(), address: newAddr.trim() || null }),
-    });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      toast.error(d?.error ?? "Не удалось создать");
-      return;
-    }
-    setNewName("");
-    setNewAddr("");
-    setAdding(false);
-    toast.success("Здание создано");
-    refresh();
+    setEditorRoom(roomEditorInitial(room));
   }
 
   // Тумблер «Вести журналы отдельно по точкам» — единственный переключатель
@@ -250,7 +243,7 @@ export function BuildingsClient({
 
   return (
     <div className="space-y-5">
-      {initial.length === 0 && !adding ? (
+      {initial.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <Building2 className="mx-auto mb-3 size-8 text-[#9b9fb3]" />
           <div className="text-[15px] font-medium text-[#0b1024]">
@@ -312,6 +305,8 @@ export function BuildingsClient({
           onRefresh={refresh}
           onDelete={() => deleteBuilding(b.id, b.name)}
           onEditRoom={openEditor}
+          openHref={openable.has(b.id) ? `/settings/buildings/${b.id}` : null}
+          openLabel={tPoint("open")}
         />
       ))}
 
@@ -327,49 +322,16 @@ export function BuildingsClient({
         roomsPerVerifier={roomsPerVerifier}
       />
 
-      {readOnly ? null : adding ? (
-        <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-semibold text-[#0b1024]">Новая точка</div>
-            <button
-              type="button"
-              onClick={() => setAdding(false)}
-              className="rounded-full p-1 text-[#9b9fb3] hover:bg-[#fafbff] hover:text-[#0b1024]"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-          <input
-            type="text"
-            placeholder="Название (например, «Основная точка»)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="mb-2 h-11 w-full rounded-2xl border border-[#dcdfed] px-4 text-[14px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          />
-          <input
-            type="text"
-            placeholder="Адрес (необязательно)"
-            value={newAddr}
-            onChange={(e) => setNewAddr(e.target.value)}
-            className="mb-3 h-11 w-full rounded-2xl border border-[#dcdfed] px-4 text-[14px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          />
-          <button
-            type="button"
-            onClick={addBuilding}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
-          >
-            Создать
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#3c4053] hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
+      {/* Новая точка — мастером (название и адрес, помещения, оборудование). */}
+      {readOnly ? null : (
+        <Link
+          href="/settings/buildings/new"
+          data-add-point
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           <Plus className="size-4" />
-          Добавить точку
-        </button>
+          {tPoint("add")}
+        </Link>
       )}
     </div>
   );
@@ -386,7 +348,12 @@ function BuildingCard({
   onRefresh,
   onDelete,
   onEditRoom,
+  openHref = null,
+  openLabel,
 }: {
+  /** Страница точки (блоки 1–5); null — точка человеку недоступна. */
+  openHref?: string | null;
+  openLabel: string;
   building: Building;
   userNameById: Map<string, string>;
   readOnly?: boolean;
@@ -657,6 +624,16 @@ function BuildingCard({
                   .filter(Boolean)
                   .join(" · ")}
               </div>
+            ) : null}
+            {openHref ? (
+              <Link
+                href={openHref}
+                data-open-point={building.id}
+                className="mt-2 inline-flex items-center gap-1 rounded-lg text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              >
+                {openLabel}
+                <ArrowRight className="size-4" />
+              </Link>
             ) : null}
           </div>
         )}

@@ -2429,7 +2429,8 @@
         "untitled": "Nomsiz nuqta",
         "all": "Hammasi: {count}",
         "add": "Nuqta qo‘shish",
-        "addHint": "«Savdo nuqtalari» ochiladi: jurnallar yuritiladigan manzilni qo‘shing"
+        "addHint": "Qadam-baqadam qo‘shish ochiladi: nomi va manzil, xonalar, uskunalar",
+        "open": "Nuqtani ochish"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
@@ -2475,9 +2476,12 @@
         },
         "points": {
           "groups": {
+            "myPoints": "Mening nuqtalarim",
+            "allPoints": "Barcha nuqtalar",
             "more": "Yana"
           },
           "items": {
+            "add": "Nuqta qo‘shish",
             "buildings": "Nuqtalar",
             "areas": "Sexlar va xonalar",
             "equipment": "Uskunalar",
@@ -8215,6 +8219,234 @@
     }
   },
   "settingsManagement": {
+    "points": {
+      "equipmentTypes": {
+        "refrigerator": "Muzlatkich",
+        "fridge": "Muzlatkich",
+        "freezer": "Muzlatish kamerasi",
+        "oven": "Pech",
+        "dishwasher": "Idish yuvish mashinasi",
+        "scale": "Tarozi",
+        "thermometer": "Termometr",
+        "thermohygrometer": "Termogigrometr",
+        "sensor": "Datchik",
+        "fryer": "Frityurnitsa",
+        "uv_lamp": "UB-lampa",
+        "mixer": "Mikser",
+        "other": "Boshqa"
+      },
+      "page": {
+        "noAddress": "Manzil ko‘rsatilmagan",
+        "guideTitle": "Nuqta sahifasi qanday tuzilgan",
+        "guide": {
+          "head": {
+            "title": "Nomi va manzil — hujjatlarga",
+            "body": "Nomi menyuda va kabinet sarlavhasida ko‘rinadi. Jurnallar uchun nomi, manzil, KPP va telefon shu nuqta jurnallari va PDF sarlavhasida chop etiladi."
+          },
+          "rooms": {
+            "title": "Xonalar — tozalash asosi",
+            "body": "Tozalash vazifalari xonalar bo‘yicha beriladi, iqlim jurnali ham xonalardan tuziladi. «Sozlash» — tozalash tarkibi va kim tozalaydi."
+          },
+          "equipment": {
+            "title": "Uskuna xonada turadi",
+            "body": "Harorat me’yori bor muzlatkichlar jurnalga tushadi. UB-lampalar alohida blokda: resursdan qancha qolgani ko‘rinadi."
+          },
+          "qr": {
+            "title": "Stikerlar va plakatlar",
+            "body": "Uskunalar uchun stikerlarni va xonalar uchun plakatlarni chop eting: xodim skanerlaydi va kabinetga kirmasdan yozuv qiladi."
+          }
+        },
+        "qa": {
+          "allPoints": {
+            "q": "Barcha nuqtalar bir joyda qayerda?",
+            "a": "Chap menyuda, «Barcha nuqtalar» guruhida: nuqtalar sharhi, sexlar, uskunalar va barcha nuqtalarning QR-kodlari."
+          },
+          "delete": {
+            "q": "Nuqtani o‘chirsam nima bo‘ladi?",
+            "a": "Nuqtaning xonalari o‘chiriladi. Uskunalar va jurnal hujjatlari tashkilotda qoladi: uskunalar «Nuqtasiz» bo‘lib qoladi, hujjatlar umumiy bo‘ladi."
+          }
+        }
+      },
+      "head": {
+        "title": "Nomi va manzil",
+        "hint": "Shu nuqta hujjatlari ma’lumotlariga — jurnallar va PDF sarlavhasiga tushadi.",
+        "name": "Nomi",
+        "journalName": "Jurnallar uchun nomi",
+        "journalNameHint": "Faoliyat joyi bo‘yicha aniq yuridik nomi. Bo‘sh bo‘lsa — sarlavhada «nomi, manzil».",
+        "address": "Manzil",
+        "kpp": "KPP",
+        "phone": "Telefon",
+        "notSet": "ko‘rsatilmagan",
+        "edit": "O‘zgartirish",
+        "dialogTitle": "Nuqta nomi va manzili",
+        "dialogHint": "Nomi menyuda va kabinet sarlavhasida ko‘rinadi. Qolgani shu nuqta jurnallari va PDF sarlavhasida chop etiladi.",
+        "namePlaceholder": "Masalan, «Mira ko‘chasidagi kafe»",
+        "addressPlaceholder": "Shahar, ko‘cha, uy",
+        "journalNamePlaceholder": "Hujjatlardagidek",
+        "kppPlaceholder": "9 ta raqam",
+        "phonePlaceholder": "+998 …",
+        "save": "Saqlash",
+        "saving": "Saqlanmoqda…",
+        "cancel": "Bekor qilish",
+        "saved": "Nuqta yangilandi",
+        "nameRequired": "Nuqta nomini kiriting",
+        "failed": "Saqlab bo‘lmadi"
+      },
+      "rooms": {
+        "title": "Sexlar va xonalar",
+        "hint": "Tozalash vazifalari xonalar bo‘yicha beriladi, iqlim jurnali ham xonalardan tuziladi.",
+        "count": "{count, plural, other {# ta xona}}",
+        "emptyTitle": "Hozircha xonalar yo‘q",
+        "emptyBody": "Oshxona, ombor, yuvish joyini qo‘shing — ular darhol tozalash jurnalida va uskuna oynasida paydo bo‘ladi.",
+        "copyFrom": "Nuqtadan nusxa olish",
+        "copy": "Nusxa olish",
+        "copying": "Nusxa olinmoqda…",
+        "copied": "Nusxa olingan xonalar: {count}",
+        "copyFailed": "Nusxa olib bo‘lmadi",
+        "name": "Xona nomi",
+        "namePlaceholder": "Masalan, «Sovuq sex»",
+        "kind": "Turi",
+        "add": "Xona qo‘shish",
+        "adding": "Qo‘shilmoqda…",
+        "added": "«{name}» xonasi qo‘shildi",
+        "addFailed": "Xonani qo‘shib bo‘lmadi",
+        "configure": "Sozlash",
+        "configureHint": "Nomi, turi, tozalash tarkibi va mas’ullar",
+        "deleteAria": "«{name}» xonasini o‘chirish",
+        "deleteTitle": "Xona o‘chirilsinmi?",
+        "deleteDescription": "«{name}» xonasi butunlay o‘chiriladi.",
+        "deleteConfirm": "Xonani o‘chirish",
+        "deleted": "Xona o‘chirildi",
+        "deleteFailed": "Xonani o‘chirib bo‘lmadi",
+        "cleaningSet": "Tozalash sozlangan",
+        "cleaningMissing": "Tozalash sozlanmagan",
+        "cleaners": "Tozalaydi: {names}",
+        "noCleaners": "Tozalovchilar tayinlanmagan"
+      },
+      "equipment": {
+        "title": "Uskunalar",
+        "hint": "Muzlatkichlar, muzlatish kameralari, pechlar — har bir birlikning o‘z me’yori va QR-stikeri bor.",
+        "count": "{count, plural, other {# ta birlik}}",
+        "emptyTitle": "Hozircha uskunalar yo‘q",
+        "emptyBody": "Muzlatkich yoki muzlatish kamerasini qo‘shing — uning harorat me’yori jurnalga tushadi.",
+        "noRooms": "Avval xona qo‘shing — uskuna nuqtaning xonasida turadi.",
+        "norm": "me’yor {range}",
+        "noNorm": "me’yorsiz",
+        "rangeBoth": "{min}…{max} °C",
+        "rangeFrom": "{min} °C dan",
+        "rangeTo": "{max} °C gacha"
+      },
+      "uv": {
+        "title": "UB-lampalar va qurilmalar",
+        "hint": "Bakteritsid lampalar va retsirkulyatorlar. Ishlagan vaqt lampa stikeridagi «Yoqdim / O‘chirdim» tugmalari bo‘yicha hisoblanadi.",
+        "add": "UB-lampa qo‘shish",
+        "emptyTitle": "Hozircha UB-lampalar yo‘q",
+        "emptyBody": "Lampani qo‘shing va modelini tanlang — pasport bo‘yicha resurs o‘zi qo‘yiladi.",
+        "model": "Model",
+        "noModel": "model ko‘rsatilmagan",
+        "usage": "Ishlagan: {used} / {total}",
+        "left": "{hours} qoldi ({percent} %)",
+        "hours": "{value} soat",
+        "noResource": "Resurs ko‘rsatilmagan — lampani ochib, pasportdan kiriting",
+        "warn": "Resurs deyarli tugadi — lampa buyurtma qilish vaqti",
+        "over": "Resurs tugadi — lampani almashtiring"
+      },
+      "qr": {
+        "title": "QR-stikerlar va plakatlar",
+        "hint": "Uskunadagi stiker va xonadagi plakat: xodim skanerlaydi va kirmasdan yozuv qiladi.",
+        "stickers": "{count, plural, other {# ta stiker}}",
+        "stickersHint": "nuqtaning har bir uskunasiga bittadan",
+        "posters": "{count, plural, other {# ta plakat}}",
+        "postersHint": "har bir xonaga bittadan — iqlim jurnali uchun",
+        "printStickers": "Stikerlarni chop etish",
+        "printPosters": "Xona plakatlari",
+        "all": "Tashkilotning barcha QR-kodlari",
+        "empty": "Nuqtada uskunalar yoki xonalar paydo bo‘lganda stikerlar ham paydo bo‘ladi."
+      },
+      "danger": {
+        "title": "Nuqtani o‘chirish",
+        "hint": "Nuqtaning xonalari o‘chiriladi. Uskunalar va jurnal hujjatlari tashkilotda qoladi.",
+        "button": "Nuqtani o‘chirish",
+        "confirmTitle": "«{name}» nuqtasi o‘chirilsinmi?",
+        "confirmDescription": "Buni qaytarib bo‘lmaydi. Nima bo‘ladi:",
+        "bulletRooms": "Nuqtaning xonalari o‘chiriladi: {count}",
+        "bulletEquipment": "Uskunalar ({count}) qoladi va «Uskunalar» bo‘limida «Nuqtasiz» bo‘ladi",
+        "bulletDocuments": "Shu nuqtaning jurnal hujjatlari umumiy bo‘ladi — har bir nuqtada ko‘rinadi",
+        "confirm": "Nuqtani o‘chirish",
+        "deleted": "«{name}» nuqtasi o‘chirildi",
+        "failed": "Nuqtani o‘chirib bo‘lmadi"
+      },
+      "wizard": {
+        "description": "To‘rt qadam — va nuqta jurnallarga tayyor. Keyin hammasini nuqta sahifasida tuzatish mumkin.",
+        "progress": "{step}-qadam, jami {total}",
+        "steps": {
+          "head": "Nomi va manzil",
+          "rooms": "Xonalar",
+          "equipment": "Uskunalar",
+          "summary": "Yakun"
+        },
+        "next": "Keyingi",
+        "back": "Orqaga",
+        "create": "Nuqta yaratish",
+        "creating": "Yaratilmoqda… {done} / {total}",
+        "head": {
+          "title": "Nuqta qanday nomlanadi va qayerda joylashgan?",
+          "hint": "Nomi menyuda va kabinet sarlavhasida ko‘rinadi. Manzil jurnallar va PDF sarlavhasida chop etiladi.",
+          "name": "Nomi",
+          "namePlaceholder": "Masalan, «Mira ko‘chasidagi kafe»",
+          "address": "Manzil",
+          "addressPlaceholder": "Shahar, ko‘cha, uy",
+          "nameRequired": "Nuqta nomini kiriting",
+          "nameTaken": "Bunday nomli nuqta allaqachon bor — boshqacha nomlang"
+        },
+        "rooms": {
+          "title": "Nuqtada qanday xonalar bor?",
+          "hint": "Tozalash vazifalari xonalar bo‘yicha beriladi. Bor xonalarni belgilang — ortiqchasini keyin o‘chirish mumkin.",
+          "typical": "Odatiy to‘plam",
+          "typicalHint": "Xonalarni belgilang",
+          "copy": "Boshqa nuqtadagidek",
+          "copyHint": "Xonalar tozalash, jadval va mas’ullar bilan birga ko‘chiriladi",
+          "copyFrom": "Qaysi nuqtadan",
+          "copyCount": "{count, plural, other {# ta xona}} ko‘chiriladi",
+          "custom": "O‘z xonangiz",
+          "customPlaceholder": "Masalan, «Qandolatchilik sexi»",
+          "customAdd": "Qo‘shish",
+          "customExists": "Bunday xona ro‘yxatda allaqachon bor",
+          "none": "Xonalar tanlanmagan — ularni keyin nuqta sahifasida qo‘shish mumkin."
+        },
+        "roomNames": {
+          "hot": "Issiq sex",
+          "cold": "Sovuq sex",
+          "production": "Asosiy ishlab chiqarish",
+          "storage": "Ombor",
+          "wash": "Yuvish joyi",
+          "hall": "Zal",
+          "bar": "Bar"
+        },
+        "equipment": {
+          "title": "Qanday uskunalar bor?",
+          "hint": "Sonini va xonasini ko‘rsating. Nomlarni o‘zimiz raqamlaymiz, odatiy harorat me’yorlarini qo‘yamiz.",
+          "room": "Xona",
+          "decrease": "Kamroq: {name}",
+          "increase": "Ko‘proq: {name}",
+          "noRooms": "Xonalar yo‘q — xonalar paydo bo‘lgach, uskunani nuqta sahifasida qo‘shish mumkin.",
+          "norm": "me’yor {range}",
+          "lamp": "resurs {hours} — nuqta sahifasida tuzatasiz"
+        },
+        "summary": {
+          "title": "Nima yaratiladi",
+          "point": "Nuqta",
+          "rooms": "Xonalar",
+          "copy": "«{name}» nuqtasidan ko‘chiramiz",
+          "equipment": "Uskunalar",
+          "nothing": "Hech narsa — keyin qo‘shasiz",
+          "note": "Yaratilgandan keyin nuqta sahifasi ochiladi, nuqtaning o‘zi esa chap menyuda paydo bo‘ladi."
+        },
+        "done": "«{name}» nuqtasi yaratildi",
+        "partial": "«{name}» nuqtasi yaratildi, lekin qo‘shilmadi: {items}. Qolganini nuqta sahifasida qo‘shing.",
+        "failed": "Nuqtani yaratib bo‘lmadi"
+      }
+    },
     "appearance": {
       "title": "Tashqi ko‘rinish",
       "description": "Kabinet mavzusini tanlang: och rangli, to‘q rangli yoki tizim sozlamasiga muvofiq.",
