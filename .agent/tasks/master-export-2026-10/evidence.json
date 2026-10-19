@@ -1,0 +1,1 @@
+{"task":"master-export-2026-10","branch":"feat/master-export","base":"3dc90b30","verdict":"PASS","acs":{"AC1":"PASS","AC2":"PASS","AC3":"PASS","AC4":"PASS","AC5":"PASS","AC6":"PASS","AC7":"PASS","AC8":"PASS"},"smoke":"raw/smoke.json","db":"wesetup_integ (local)"}

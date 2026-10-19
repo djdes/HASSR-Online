@@ -4543,7 +4543,7 @@
       }
     },
     "timeEntry": {
-      "typingHint": "You can omit the colon: 0830 or 830 → 08:30",
+      "typingHint": "The colon is added for you: type 0830 to get 08:30",
       "pickFor": "Choose time: {field}",
       "pick": "Choose time",
       "hour": "Hour",
@@ -11220,8 +11220,8 @@
       "photoResult": "Added to table",
       "count": "To be added: {count, number}",
       "photoHint": "For a menu on paper or a board, click “From photo” to fill in the rows automatically.",
-      "pasteAll": "Paste three Excel columns at once: name, yield and time. Select the first cell and press Ctrl+V. Time can be entered without a colon: 0830 → 08:30.",
-      "pasteNameTime": "Paste names and times from Excel: select the first cell and press Ctrl+V. Time can be entered without a colon: 0830 → 08:30.",
+      "pasteAll": "Paste three Excel columns at once: name, yield and time. Select the first cell and press Ctrl+V. The colon in the time is added for you: type 0830 to get 08:30.",
+      "pasteNameTime": "Paste names and times from Excel: select the first cell and press Ctrl+V. The colon in the time is added for you: type 0830 to get 08:30.",
       "pasteNameYield": "Paste two Excel columns at once: name and yield. Select the first cell and press Ctrl+V.",
       "pasteNames": "Paste a column of names from Excel or a list: select the first cell and press Ctrl+V.",
       "title": "Add products as a list",

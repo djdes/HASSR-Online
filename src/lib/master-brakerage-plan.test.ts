@@ -8,9 +8,25 @@ import {
   normalizeMasterBrakerageRows,
   planMasterBrakerageRows,
   productionDateTimeFor,
+  selectPoolOrganizationIds,
   type MasterBrakerageCommon,
 } from "@/lib/master-brakerage-plan";
 import { normalizeMasterCabinetName } from "@/lib/master-cabinet";
+
+test("выгрузка: только в отмеченные пищеблоки пула", () => {
+  const pool = ["org-a", "org-b", "org-c"];
+  // Без списка — весь пул (старые клиенты).
+  assert.deepEqual(selectPoolOrganizationIds(pool, undefined), { ids: pool });
+  // Отмеченные — в порядке пула, чужие id не проходят.
+  assert.deepEqual(selectPoolOrganizationIds(pool, ["org-c", "org-a", "org-foreign"]), { ids: ["org-a", "org-c"] });
+  // Ни одного отмеченного — ошибка, а не «выгрузили никуда».
+  assert.deepEqual(selectPoolOrganizationIds(pool, []), { error: "Отметьте хотя бы один пищеблок" });
+  const foreign = selectPoolOrganizationIds(pool, ["org-foreign"]);
+  assert.ok("error" in foreign && foreign.error.includes("не подключены"));
+  // Пул пуст: без списка — пусто, со списком — ошибка.
+  assert.deepEqual(selectPoolOrganizationIds([], undefined), { ids: [] });
+  assert.ok("error" in selectPoolOrganizationIds([], ["org-a"]));
+});
 
 const common: MasterBrakerageCommon = {
   date: "2026-09-28",

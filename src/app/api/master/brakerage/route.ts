@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit-log";
-import { addMasterBrakerageToPool } from "@/lib/master-brakerage";
+import { addMasterBrakerageToPool, MasterBrakerageSelectionError } from "@/lib/master-brakerage";
 import {
   isValidIsoDate,
   MASTER_BRAKERAGE_ROWS_MAX,
@@ -19,10 +19,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * «Добавить в журналы на дату»: строки бракеража готовой продукции — в БЖГП
- * всех пищеблоков пула мастер-кабинета.
- *   POST { date, rows, common, dryRun: true }  — предпросмотр: куда и сколько;
- *   POST { … , dryRun: false }                 — запись (+ AuditLog у мастера и пищеблоков).
+ * «Выгрузить в журналы»: строки бракеража готовой продукции — в БЖГП
+ * отмеченных пищеблоков пула мастер-кабинета (`organizationIds`; без поля —
+ * во все).
+ *   POST { date, rows, common, organizationIds, dryRun: true }  — предпросмотр: куда и сколько;
+ *   POST { … , dryRun: false }                                  — запись (+ AuditLog у мастера и пищеблоков).
  */
 
 const rowSchema = z.object({
@@ -41,6 +42,8 @@ const bodySchema = z.object({
     note: z.string().max(500).default(""),
   }),
   dryRun: z.boolean().default(true),
+  /** Отмеченные галочками пищеблоки; без поля — весь пул. */
+  organizationIds: z.array(z.string().min(1).max(64)).max(500).optional(),
 });
 
 export async function POST(request: Request) {
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
   if (withoutTime.length > 0) {
     return NextResponse.json(
       {
-        error: `Укажите время изготовления: общее «Время для всех строк» или у строк — ${withoutTime.slice(0, 5).join(", ")}${
+        error: `Укажите время изготовления у строк: ${withoutTime.slice(0, 5).join(", ")}${
           withoutTime.length > 5 ? "…" : ""
         }`,
       },
@@ -78,7 +81,21 @@ export async function POST(request: Request) {
   }
 
   if (common.organoleptic.trim() && brakerageCommentRequired(common.organoleptic) && !common.note.trim()) return NextResponse.json({ error: "Добавьте комментарий к оценке блюда" }, { status: 400 });
-  const result = await addMasterBrakerageToPool({ masterOrgId: auth.masterOrgId, rows, common, dryRun });
+  let result: Awaited<ReturnType<typeof addMasterBrakerageToPool>>;
+  try {
+    result = await addMasterBrakerageToPool({
+      masterOrgId: auth.masterOrgId,
+      rows,
+      common,
+      dryRun,
+      organizationIds: parsed.data.organizationIds,
+    });
+  } catch (error) {
+    if (error instanceof MasterBrakerageSelectionError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    throw error;
+  }
   console.info(dryRun ? "[master-brakerage] preview" : "[master-brakerage] added", {
     masterOrgId: auth.masterOrgId,
     date,

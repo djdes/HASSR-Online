@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Copy, Library, Loader2, LogOut, PenLine, Users } from "lucide-react";
+import { Building2, Library, Loader2, LogOut, PenLine, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/logo";
@@ -17,8 +17,6 @@ export type MasterShellProps = {
   /** Владелец аккаунта: кнопка «Доступ» (пригласить, дать и убрать доступ). */
   canManageAccess: boolean;
   organizationName: string;
-  code: string | null;
-  objectsCount: number;
   userName: string;
   userEmail: string;
   /** Обычные организации пользователя — пункт «Моя организация». */
@@ -35,8 +33,6 @@ export function MasterShell({
   cabinetId,
   canManageAccess,
   organizationName,
-  code,
-  objectsCount,
   userName,
   userEmail,
   returnTargets,
@@ -156,36 +152,11 @@ export function MasterShell({
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 px-4 pb-3 md:px-8">
-          {code ? (
-            <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#f5f6ff] py-1 pl-3 pr-1 text-[13px] text-[#3848c7]">
-              <span className="truncate">
-                Код справочника{" "}
-                <span className="font-mono font-semibold tracking-wider" data-testid="master-code">
-                  {code}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  void navigator.clipboard?.writeText(code).then(
-                    () => toast.success("Код скопирован"),
-                    () => toast.error("Не удалось скопировать")
-                  );
-                }}
-                className="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-150 hover:bg-white max-sm:-my-2 max-sm:size-11"
-                aria-label="Скопировать код справочника"
-                title="Скопировать код"
-              >
-                <Copy className="size-3.5" />
-              </button>
-            </span>
-          ) : null}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[13px] tabular-nums text-[#3848c7]">
-            <Building2 className="size-3.5" />
-            Подключено объектов: {objectsCount}
-          </span>
-          {canManageAccess ? (
+        {/* Кода справочника и счётчика объектов здесь нет: пищеблоки
+            подключаются их кодом во вкладке «Подключённые объекты», счётчик —
+            на самой вкладке. */}
+        {canManageAccess ? (
+          <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 px-4 pb-3 md:px-8">
             <button
               type="button"
               onClick={() => setAccessOpen(true)}
@@ -196,8 +167,8 @@ export function MasterShell({
               <Users className="size-3.5 text-[#5566f6]" />
               Доступ
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </header>
 
       {accessOpen ? <MasterAccessDialog cabinetId={cabinetId} onClose={() => setAccessOpen(false)} /> : null}

@@ -4543,7 +4543,7 @@
       }
     },
     "timeEntry": {
-      "typingHint": "Ikki nuqtasiz yozish mumkin: 0830 yoki 830 → 08:30",
+      "typingHint": "Ikki nuqta o‘zi qo‘yiladi: 0830 yozing — 08:30 bo‘ladi",
       "pickFor": "Vaqtni tanlash: {field}",
       "pick": "Vaqtni tanlash",
       "hour": "Soat",
@@ -11220,8 +11220,8 @@
       "photoResult": "Jadvalga qo‘shildi",
       "count": "Qo‘shiladi: {count, number}",
       "photoHint": "Menyu qog‘ozda yoki doskada bo‘lsa, “Rasmdan” tugmasini bosing — qatorlar avtomatik to‘ldiriladi.",
-      "pasteAll": "Excel’dan uchta ustunni birga joylashtirish mumkin: nom, vazn va vaqt. Birinchi katakni tanlab, Ctrl+V ni bosing. Vaqtni ikki nuqtasiz kiritish mumkin: 0830 → 08:30.",
-      "pasteNameTime": "Excel’dan nom va vaqtni joylashtirish mumkin: birinchi katakni tanlab, Ctrl+V ni bosing. Vaqtni ikki nuqtasiz kiritish mumkin: 0830 → 08:30.",
+      "pasteAll": "Excel’dan uchta ustunni birga joylashtirish mumkin: nom, vazn va vaqt. Birinchi katakni tanlab, Ctrl+V ni bosing. Vaqtdagi ikki nuqta o‘zi qo‘yiladi: 0830 yozing — 08:30 bo‘ladi.",
+      "pasteNameTime": "Excel’dan nom va vaqtni joylashtirish mumkin: birinchi katakni tanlab, Ctrl+V ni bosing. Vaqtdagi ikki nuqta o‘zi qo‘yiladi: 0830 yozing — 08:30 bo‘ladi.",
       "pasteNameYield": "Excel’dan ikkita ustunni birga joylashtirish mumkin: nom va vazn. Birinchi katakni tanlab, Ctrl+V ni bosing.",
       "pasteNames": "Excel yoki ro‘yxatdan nomlar ustunini joylashtirish mumkin: birinchi katakni tanlab, Ctrl+V ni bosing.",
       "title": "Mahsulotlarni ro‘yxat bilan qo‘shish",

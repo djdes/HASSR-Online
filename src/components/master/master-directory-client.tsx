@@ -20,13 +20,17 @@ import {
 import { toast } from "sonner";
 
 import { RecognizeFromPhoto, type RecognizeResult } from "@/components/ai/recognize-from-photo";
-import { MasterBrakerageDialog } from "@/components/master/master-brakerage-dialog";
+import type { BulkDishRow } from "@/components/journals/finished-product-bulk-dialog";
+import {
+  itemsToExportRows,
+  MASTER_EXPORT_ROWS_MAX,
+  MasterBrakerageDialog,
+  readMenuFile,
+} from "@/components/master/master-brakerage-dialog";
 import { MasterBrakerageHistory } from "@/components/master/master-brakerage-history";
 import type { MasterBrakerageHistoryBatch } from "@/lib/master-brakerage-history";
 import { MasterObjectsPanel } from "@/components/master/master-objects-panel";
-import { MasterMenuTableDialog } from "@/components/master/master-menu-table-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { MenuRow } from "@/lib/finished-product-bulk";
 import type { SharedItem, SharedKind } from "@/lib/master-directory";
 import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
@@ -90,10 +94,11 @@ function itemsToText(kind: SharedKind, items: SharedItem[]): string {
 }
 
 /**
- * Мастер-кабинет: вкладки «Меню → БЖГП», «Сырьё → Скоропорт», «Объекты».
- * Любое изменение списка идёт одним путём: файл или текст → предпросмотр
- * различий → «Сохранить и разослать» (замена списка + раздача в журналы
- * всех объектов пула).
+ * Мастер-кабинет: вкладки «Мастер-справочник журнала бракеража готовой
+ * продукции» (выгрузка блюд в журналы на дату — таблица не сохраняется),
+ * «…скоропортящейся продукции» (список сырья: файл или текст → предпросмотр
+ * различий → «Сохранить и разослать» в журналы всех объектов пула) и
+ * «Подключённые объекты».
  */
 export function MasterDirectoryClient({
   initialTab,
@@ -119,10 +124,10 @@ export function MasterDirectoryClient({
   const [pasteKind, setPasteKind] = useState<SharedKind | null>(null);
   const [pasteText, setPasteText] = useState("");
   const [uploading, setUploading] = useState<SharedKind | null>(null);
-  /** Меню вводится таблицей «Наименование | Выход | Время», сырьё — текстом. */
-  const [menuTableOpen, setMenuTableOpen] = useState(false);
-  /** «Добавить в журналы на дату» — строки БЖГП во все пищеблоки пула. */
+  /** «Выгрузить в журналы» — строки БЖГП в отмеченные пищеблоки пула. */
   const [brakerageOpen, setBrakerageOpen] = useState(false);
+  /** Строки из файла или с фото, с которыми открыть выгрузку. */
+  const [exportRows, setExportRows] = useState<BulkDishRow[] | null>(null);
   const [editingBrakerageBatch, setEditingBrakerageBatch] = useState<MasterBrakerageHistoryBatch | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const fileKind = useRef<SharedKind>("dish");
@@ -162,11 +167,24 @@ export function MasterDirectoryClient({
     fileInput.current?.click();
   }
 
+  /** Выгрузка в журналы: пустая таблица или строки из файла / с фото. */
+  function openExport(rows: BulkDishRow[] | null = null) {
+    setEditingBrakerageBatch(null);
+    setExportRows(rows);
+    setBrakerageOpen(true);
+  }
+
   async function onFileChosen(file: File | undefined) {
     if (!file) return;
     const kind = fileKind.current;
     setUploading(kind);
     try {
+      if (kind === "dish") {
+        // Блюда из файла не сохраняются — сразу в окно выгрузки.
+        const rows = await readMenuFile(file);
+        if (rows) openExport(rows);
+        return;
+      }
       const form = new FormData();
       form.set("kind", kind);
       form.set("file", file);
@@ -178,36 +196,24 @@ export function MasterDirectoryClient({
   }
 
   function openPaste(kind: SharedKind) {
-    if (kind === "dish") {
-      setMenuTableOpen(true);
-      return;
-    }
     setPasteText(itemsToText(kind, lists[kind]));
     setPasteKind(kind);
-  }
-
-  function submitMenuTable(rows: MenuRow[]) {
-    return requestPreview(
-      "dish",
-      {
-        items: rows.map((row) => ({
-          name: row.name,
-          supplier: null,
-          manufacturer: null,
-          portion: row.yield || null,
-          time: row.time || null,
-        })),
-      },
-      "таблица меню"
-    );
   }
 
   /**
    * «С фото»: распознанные позиции — тем же путём, что файл и текст:
    * текущий список + новые → предпросмотр различий → «Сохранить и
    * разослать». То, что уже есть в списке (по наименованию), не дублируем.
+   * Блюда с фото не сохраняются — открывается выгрузка с ними.
    */
   async function addFromPhoto(kind: SharedKind, items: SharedItem[]) {
+    if (kind === "dish") {
+      openExport(itemsToExportRows(items));
+      return {
+        added: Math.min(items.length, MASTER_EXPORT_ROWS_MAX),
+        skipped: Math.max(0, items.length - MASTER_EXPORT_ROWS_MAX),
+      };
+    }
     const known = new Set(lists[kind].map((item) => item.name.replace(/\s+/g, " ").trim().toLowerCase()));
     const fresh = items.filter((item) => !known.has(item.name.replace(/\s+/g, " ").trim().toLowerCase()));
     if (fresh.length === 0) return { added: 0, skipped: items.length };
@@ -240,7 +246,6 @@ export function MasterDirectoryClient({
     const docs = json.documents ?? 0;
     setLists((prev) => ({ ...prev, [preview.kind]: preview.items }));
     setPreview(null);
-    if (preview.kind === "dish") { toast.success("Справочник сохранён. Для выгрузки в журналы выберите дату."); return; }
     toast.success(
       `Готово: список обновлён в ${orgs} ${pluralRu(orgs, "объекте", "объектах", "объектах")} (${docs} ${pluralRu(
         docs,
@@ -251,9 +256,23 @@ export function MasterDirectoryClient({
     );
   }
 
-  const tabs: Array<{ key: MasterTab; label: string; short: string; icon: typeof Package; count: number }> = [
-    { key: "menu", label: "Справочник блюд", short: "Блюда", icon: UtensilsCrossed, count: lists.dish.length },
-    { key: "raw", label: "Сырьё → Скоропорт", short: "Сырьё", icon: Package, count: lists.product.length },
+  // Подписи вкладок — как у партнёра (правки 19.10): журнал, для которого справочник.
+  // У выгрузки счётчика нет — таблица не хранится.
+  const tabs: Array<{ key: MasterTab; label: string; short: string; icon: typeof Package; count: number | null }> = [
+    {
+      key: "menu",
+      label: "Мастер-справочник журнала бракеража готовой продукции",
+      short: "Готовая продукция",
+      icon: UtensilsCrossed,
+      count: null,
+    },
+    {
+      key: "raw",
+      label: "Мастер-справочник журнала бракеража скоропортящейся продукции",
+      short: "Скоропорт",
+      icon: Package,
+      count: lists.product.length,
+    },
     { key: "objects", label: "Подключённые объекты", short: "Объекты", icon: Building2, count: organizations.length },
   ];
 
@@ -274,7 +293,7 @@ export function MasterDirectoryClient({
       <nav aria-label="Разделы мастер-кабинета" className="-mx-4 px-4 md:mx-0 md:px-0">
         <div
           role="tablist"
-          className="flex flex-nowrap! gap-1 overflow-x-auto rounded-2xl border border-[#ececf4] bg-white p-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:inline-flex [&::-webkit-scrollbar]:hidden"
+          className="no-mobile-shrink grid grid-cols-3 gap-1 rounded-2xl border border-[#ececf4] bg-white p-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
         >
           {tabs.map((item) => {
             const active = tab === item.key;
@@ -287,25 +306,27 @@ export function MasterDirectoryClient({
                 aria-selected={active}
                 onClick={() => switchTab(item.key)}
                 className={cn(
-                  "inline-flex h-10 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 sm:flex-none sm:gap-2 sm:px-3.5 text-[14px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                  "inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-center text-[13.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:min-h-12 sm:justify-start sm:gap-2 sm:px-3.5 sm:py-2 sm:text-left sm:text-[14px] sm:leading-snug",
                   active ? "bg-[#5566f6] text-white" : "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                 )}
                 data-testid={`master-tab-${item.key}`}
               >
-                {/* На телефоне без значка: подписи там крупнее (16px), и
-                    три вкладки со значками и счётчиками в строку не
-                    помещались — третья уезжала за край. */}
+                {/* На телефоне — короткие подписи без значка в три колонки
+                    (все вкладки видны сразу). На компьютере полное название
+                    журнала переносится на вторую строку. */}
                 <Icon className="size-4 shrink-0 max-sm:hidden" />
                 <span className="sm:hidden">{item.short}</span>
-                <span className="hidden sm:inline">{item.label}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[11.5px] font-semibold leading-none tabular-nums",
-                    active ? "bg-white/20 text-white" : "bg-[#eef1ff] text-[#3848c7]"
-                  )}
-                >
-                  {item.count}
-                </span>
+                <span className="hidden min-w-0 [text-wrap:balance] sm:block">{item.label}</span>
+                {item.count !== null ? (
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-1.5 py-0.5 text-[11.5px] font-semibold leading-none tabular-nums",
+                      active ? "bg-white/20 text-white" : "bg-[#eef1ff] text-[#3848c7]"
+                    )}
+                  >
+                    {item.count}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -313,17 +334,25 @@ export function MasterDirectoryClient({
       </nav>
 
 
-      {tab === "menu" || tab === "raw" ? (
+      {tab === "menu" ? (
+        <MenuExportPanel
+          objectsCount={organizations.length}
+          uploading={uploading === "dish"}
+          onExport={() => openExport()}
+          onUpload={() => pickFile("dish")}
+          onPhotoItems={addFromPhoto}
+          onConnect={() => switchTab("objects")}
+        />
+      ) : tab === "raw" ? (
         <ListPanel
           key={tab}
-          kind={tab === "menu" ? "dish" : "product"}
-          items={lists[tab === "menu" ? "dish" : "product"]}
+          kind="product"
+          items={lists.product}
           objectsCount={organizations.length}
-          uploading={uploading === (tab === "menu" ? "dish" : "product")}
+          uploading={uploading === "product"}
           onUpload={pickFile}
           onPaste={openPaste}
           onPhotoItems={addFromPhoto}
-          onExport={tab === "menu" ? () => { setEditingBrakerageBatch(null); setBrakerageOpen(true); } : undefined}
         />
       ) : (
         <MasterObjectsPanel organizations={organizations} onChange={(items) => { setOrganizations(items); router.refresh(); }} />
@@ -332,19 +361,12 @@ export function MasterDirectoryClient({
       <MasterBrakerageDialog
         open={brakerageOpen}
         onOpenChange={setBrakerageOpen}
-        menu={lists.dish}
-        organizationsCount={organizations.length}
+        organizations={organizations}
+        initialRows={exportRows}
         editingBatch={editingBrakerageBatch}
       />
 
       {tab === "menu" ? <MasterBrakerageHistory onEdit={(batch) => { setEditingBrakerageBatch(batch); setBrakerageOpen(true); }} /> : null}
-
-      {menuTableOpen ? <MasterMenuTableDialog
-        open={menuTableOpen}
-        items={lists.dish}
-        onClose={() => setMenuTableOpen(false)}
-        onSubmit={submitMenuTable}
-      /> : null}
 
       {/* Вставка списком (сырьё): текущий список уже в поле — правьте, удаляйте строки, добавляйте новые. */}
       <ConfirmDialog
@@ -389,13 +411,13 @@ export function MasterDirectoryClient({
         icon={Send}
         description={
           preview && previewMeta ? (
-            preview.kind === "dish" ? <>Справочник блюд, {preview.source}. Сохранение не добавляет строки в журналы. Выгрузка выполняется отдельно, с выбором даты.</> : <>
+            <>
               {previewMeta.title}, {preview.source}. После сохранения список получат {previewMeta.journal}{" "}
               {inObjects(organizations.length)}.
             </>
           ) : null
         }
-        confirmLabel={preview?.kind === "dish" ? "Сохранить справочник" : "Сохранить и разослать"}
+        confirmLabel="Сохранить и разослать"
       >
         {preview ? <PreviewBody preview={preview} /> : null}
       </ConfirmDialog>
@@ -488,6 +510,104 @@ function NameList({ title, names, tone }: { title: string; names: string[]; tone
   );
 }
 
+/**
+ * Вкладка «Мастер-справочник журнала бракеража готовой продукции»: блюда
+ * не хранятся — каждая выгрузка начинается с чистой таблицы (правки
+ * партнёра 19.10). Файл и фото сразу открывают выгрузку с этими блюдами.
+ */
+function MenuExportPanel({
+  objectsCount,
+  uploading,
+  onExport,
+  onUpload,
+  onPhotoItems,
+  onConnect,
+}: {
+  objectsCount: number;
+  uploading: boolean;
+  onExport: () => void;
+  onUpload: () => void;
+  onPhotoItems: (kind: SharedKind, items: SharedItem[]) => Promise<RecognizeResult>;
+  onConnect: () => void;
+}) {
+  const noObjects = objectsCount === 0;
+  const steps = [
+    "Впишите блюда, вставьте из Excel, загрузите файл или сфотографируйте меню",
+    "Поставьте дату и время изготовления",
+    "Отметьте пищеблоки — по умолчанию все",
+    "Нажмите «Выгрузить» и проверьте, куда уйдут строки",
+  ];
+  return (
+    <section className={CARD} aria-labelledby="master-export-title" data-testid="master-export-panel">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1 id="master-export-title" className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+            Выгрузка блюд в журналы бракеража готовой продукции
+          </h1>
+          <p className="mt-1.5 max-w-[640px] text-[14px] leading-[1.55] text-[#6f7282]">
+            Блюда появятся строками в журнале бракеража готовой продукции каждого отмеченного пищеблока на выбранную
+            дату. Список не хранится: каждая выгрузка начинается с чистой таблицы.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={onExport} disabled={noObjects} className={PRIMARY} data-testid="master-brakerage-open">
+            <CalendarPlus className="size-4" />
+            Выгрузить в журналы
+          </button>
+          <button type="button" onClick={onUpload} disabled={noObjects || uploading} className={OUTLINE} data-testid="master-upload-dish">
+            {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4 text-[#5566f6]" />}
+            Загрузить Excel/CSV
+          </button>
+          {noObjects ? null : (
+            <RecognizeFromPhoto
+              kind="menu"
+              onItems={(photoItems) =>
+                onPhotoItems(
+                  "dish",
+                  photoItems.map((item) => ({
+                    name: item.name,
+                    supplier: null,
+                    manufacturer: null,
+                    portion: item.yield || null,
+                    time: item.time || null,
+                  }))
+                )
+              }
+              resultLabel="Блюд в выгрузке"
+              className="sm:h-11 sm:rounded-2xl"
+              testId="master-photo-dish"
+            />
+          )}
+        </div>
+      </div>
+
+      {noObjects ? (
+        <div className="mt-5 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-8 text-center sm:px-6">
+          <div className="text-[15px] font-medium text-[#0b1024]">Пищеблоки ещё не подключены</div>
+          <p className="mx-auto mt-1.5 max-w-[460px] text-[13px] leading-[1.55] text-[#6f7282]">
+            Выгружать пока некуда. Подключите пищеблок по коду его журнала — и сюда можно будет выгружать блюда.
+          </p>
+          <button type="button" onClick={onConnect} className={cn(OUTLINE, "mt-4")} data-testid="master-export-connect">
+            <Building2 className="size-4 text-[#5566f6]" />
+            Подключить пищеблок
+          </button>
+        </div>
+      ) : (
+        <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4" aria-label="Как выгрузить">
+          {steps.map((step, index) => (
+            <li key={step} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3.5">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[13px] font-semibold tabular-nums text-[#3848c7]">
+                {index + 1}
+              </span>
+              <span className="text-[13px] leading-[1.5] text-[#3c4053]">{step}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 function ListPanel({
   kind,
   items,
@@ -496,7 +616,6 @@ function ListPanel({
   onUpload,
   onPaste,
   onPhotoItems,
-  onExport,
 }: {
   kind: SharedKind;
   items: SharedItem[];
@@ -506,7 +625,6 @@ function ListPanel({
   onPaste: (kind: SharedKind) => void;
   /** «С фото»: распознанные позиции → предпросмотр различий. */
   onPhotoItems: (kind: SharedKind, items: SharedItem[]) => Promise<RecognizeResult>;
-  onExport?: () => void;
 }) {
   const meta = KIND_META[kind];
   const [query, setQuery] = useState("");
@@ -527,7 +645,6 @@ function ListPanel({
 
   const actions = (
     <div className="flex flex-wrap gap-2">
-      {onExport ? <button type="button" onClick={onExport} disabled={items.length === 0 || objectsCount === 0} className={OUTLINE} data-testid="master-brakerage-open"><CalendarPlus className="size-4 text-[#5566f6]" />Выгрузить в журналы</button> : null}
       <button
         type="button"
         onClick={() => onUpload(kind)}

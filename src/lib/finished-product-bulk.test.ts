@@ -8,6 +8,7 @@ import {
   FINISHED_PRODUCT_BULK_MAX,
   isYieldValue,
   fillTimeBelow,
+  maskTypedTime,
   menuRowsToSave,
   normalizeMenuTime,
   normalizeTypedTime,
@@ -287,6 +288,45 @@ test("время руками: цифры без двоеточия → ЧЧ:М�
   }
   // Разбор файлов и вставки остаётся строгим.
   assert.equal(normalizeMenuTime("1230"), "");
+  // Час с двоеточием от маски поля — это начало часа.
+  assert.equal(normalizeTypedTime("08:"), "08:00");
+  assert.equal(normalizeTypedTime("8:"), "08:00");
+  assert.equal(normalizeTypedTime("15:"), "15:00");
+  assert.equal(normalizeTypedTime("24:"), "");
+});
+
+test("маска времени: двоеточие ставится само при наборе", () => {
+  /** Набор по одной клавише, как в поле. */
+  const type = (keys: string, from = "") => [...keys].reduce((value, key) => maskTypedTime(value, value + key), from);
+  assert.equal(type("8"), "08:");
+  assert.equal(type("830"), "08:30");
+  assert.equal(type("0830"), "08:30");
+  assert.equal(type("1"), "1");
+  assert.equal(type("15"), "15:");
+  assert.equal(type("1530"), "15:30");
+  assert.equal(type("25"), "02:5");
+  assert.equal(type("245"), "02:45");
+  assert.equal(type("083012"), "08:30", "больше четырёх цифр не набирается");
+  assert.equal(type("08:30"), "08:30", "двоеточие руками не задваивается");
+  // Вставка целиком.
+  assert.equal(maskTypedTime("", "0830"), "08:30");
+  assert.equal(maskTypedTime("", "830"), "08:30");
+  assert.equal(maskTypedTime("", "8:30"), "08:30");
+  // Стирание с конца — как есть, иначе двоеточие не стереть.
+  assert.equal(maskTypedTime("08:", "08"), "08");
+  assert.equal(maskTypedTime("08:30", "08:3"), "08:3");
+  assert.equal(maskTypedTime("08", "0"), "0");
+  // Замена значения: выделили и набрали «9».
+  assert.equal(maskTypedTime("08:30", "9"), "09:");
+  // Не цифры — не трогаем, разберёт normalizeTypedTime.
+  assert.equal(maskTypedTime("", "8.30"), "8.30");
+  assert.equal(maskTypedTime("8", "8 "), "8 ");
+  assert.equal(maskTypedTime("", "утро"), "утро");
+  assert.equal(maskTypedTime("08:", ""), "");
+  // Маска никогда не даёт значения, которое нормализатор считает ошибкой.
+  for (const keys of ["8", "15", "830", "1530", "25", "2359"]) {
+    assert.notEqual(normalizeTypedTime(type(keys)), "", keys);
+  }
 });
 
 test("проставить всем ниже: время строки — строкам ниже с наименованием", () => {
