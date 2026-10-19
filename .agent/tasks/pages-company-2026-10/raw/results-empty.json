@@ -1,0 +1,39 @@
+{
+  "base": "http://localhost:3073",
+  "part": "empty",
+  "startedAt": "2026-10-18T13:17:38.317Z",
+  "checks": [
+    {
+      "name": "desktop: без точек — пустое состояние с «Добавить точку»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: без точек — шапка на всю организацию",
+      "ok": true,
+      "detail": "Шапка документов всей организации"
+    },
+    {
+      "name": "desktop: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mobile: без точек — пустое состояние с «Добавить точку»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mobile: без точек — шапка на всю организацию",
+      "ok": true,
+      "detail": "Шапка документов всей организации"
+    },
+    {
+      "name": "mobile: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "finishedAt": "2026-10-18T13:17:54.410Z",
+  "problems": []
+}

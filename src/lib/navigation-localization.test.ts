@@ -12,8 +12,8 @@ import { buildJournalSwitcherMenu, journalSwitcherOptions, filterCrumbMenu, matc
 import { NAV_SECTIONS } from "./app-nav";
 import type { Session } from "next-auth";
 
-test("129 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
-  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 129);
+test("132 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
+  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 132);
   assert.deepEqual(Object.keys(ROUTE_TITLE_KEYS), Object.keys(ROUTE_TITLES));
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);

@@ -1,0 +1,49 @@
+{
+  "base": "http://localhost:3073",
+  "part": "mini",
+  "startedAt": "2026-10-18T13:24:14.706Z",
+  "checks": [
+    {
+      "name": "mini: organization без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mini: documents без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mini: branding без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mini: contacts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mini: кнопка меню раздела",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mini: в меню раздела новые пункты",
+      "ok": true,
+      "detail": [
+        "organization",
+        "documents",
+        "branding",
+        "contacts",
+        "names",
+        "onboarding",
+        "template",
+        "appearance"
+      ]
+    }
+  ],
+  "miniHeader": "WWeSetup ·  Берёзка на ЛенинаКонтакты и уведомления",
+  "finishedAt": "2026-10-18T13:25:02.536Z",
+  "problems": []
+}

@@ -1,0 +1,43 @@
+{
+  "base": "http://localhost:3073",
+  "part": "phone",
+  "startedAt": "2026-10-18T13:22:55.237Z",
+  "checks": [
+    {
+      "name": "mobile: organization без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mobile: documents без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mobile: branding без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "mobile: contacts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "телефон: в листе меню новые пункты",
+      "ok": true,
+      "detail": [
+        "organization",
+        "documents",
+        "branding",
+        "contacts",
+        "names",
+        "onboarding",
+        "template",
+        "appearance"
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-18T13:24:10.467Z",
+  "problems": []
+}

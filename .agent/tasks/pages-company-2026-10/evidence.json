@@ -1,0 +1,94 @@
+{
+  "task": "pages-company-2026-10",
+  "branch": "feat/pages-company",
+  "base": "76c01cc4",
+  "verifiedAt": "2026-10-18",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "Страница «Сведения для документов»: guard admin.full, карточки «Об организации» и «О торговой точке», живой предпросмотр (buildDocumentOrgBlock/journalHeaderOrgText/documentOrgRows), сохранение PATCH /api/settings/organization и /api/settings/buildings/[id], ошибки у поля, секция #documents убрана из формы реквизитов",
+      "evidence": [
+        "src/app/(dashboard)/settings/organization/documents/page.tsx",
+        "src/components/settings/organization-documents-form.tsx",
+        "raw/results-owner.json",
+        "raw/results-empty.json",
+        "raw/desktop-owner-documents.png",
+        "raw/desktop-owner-documents-edited.png",
+        "raw/desktop-owner-documents-ogrn-error.png",
+        "raw/mobile-owner-documents.png",
+        "raw/desktop-nopoints-documents.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "Страница «Логотип и цвета»: загрузка логотипа, цвет с проверкой контраста, миниатюры шапки PDF и QR-плаката, подпись «кабинет не перекрашивается», все ссылки #branding ведут на новую страницу",
+      "evidence": [
+        "src/app/(dashboard)/settings/organization/branding/page.tsx",
+        "src/components/settings/organization-branding-form.tsx",
+        "src/components/theme/theme-tiles.tsx",
+        "src/components/settings/organization-pages.test.ts",
+        "raw/results-owner.json",
+        "raw/desktop-owner-branding.png",
+        "raw/desktop-owner-branding-light.png",
+        "raw/mobile-owner-branding.png"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "Страница «Контакты и уведомления»: телефон, почта бухгалтера, часовой пояс, язык (без новых полей), блок уведомлений со ссылкой на /settings/notifications, сохранение тем же PATCH",
+      "evidence": [
+        "src/app/(dashboard)/settings/organization/contacts/page.tsx",
+        "src/components/settings/organization-contacts-form.tsx",
+        "raw/results-owner.json",
+        "raw/desktop-owner-contacts.png",
+        "raw/desktop-owner-contacts-saved.png",
+        "raw/mini-owner-contacts.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "summary": "«Реквизиты» рабочие, поля не потеряны (таблица в evidence.md), readLegalProfile нормализует неполный снимок",
+      "evidence": [
+        "src/components/settings/organization-info-form.tsx",
+        "src/app/(dashboard)/settings/organization/page.tsx",
+        "src/lib/org-legal-profile.ts",
+        "src/lib/org-legal-profile.test.ts",
+        "raw/desktop-owner-organization.png",
+        "raw/unit-tests.log"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "summary": "menuShape(company) по spec, подписи RU/EN/UZ, иконки; заведующая и повар — раздела нет, прямой заход — редирект",
+      "evidence": [
+        "src/lib/app-nav.ts",
+        "src/lib/app-nav.test.ts",
+        "src/components/layout/nav-icons.ts",
+        "src/lib/route-titles.ts",
+        "raw/results-roles.json",
+        "raw/desktop-headchef-documents-redirect.png",
+        "raw/mini-headchef-branding-redirect.png"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "summary": "tsc 0 ошибок, eslint чисто, тесты 73/73 + 59/59, i18n:check 82/82, Playwright 69 проверок без провалов (1440, 390, Mini App, три роли); «Что нового» предложено в evidence.md",
+      "evidence": [
+        "raw/tsc.log",
+        "raw/unit-tests.log",
+        "raw/i18n-check.log",
+        "raw/results-owner.json",
+        "raw/results-phone.json",
+        "raw/results-mini.json",
+        "raw/results-roles.json",
+        "raw/results-empty.json",
+        "raw/console-mobile.json",
+        "raw/console-mini.json",
+        "pages-check.mjs"
+      ]
+    }
+  },
+  "screenshotsCopy": "C:\\Users\\Two\\wesetup-backup-2026-10-17\\pages-shots\\company\\",
+  "playwright": { "owner": 37, "phone": 5, "mini": 6, "roles": 15, "empty": 6, "failed": 0 }
+}

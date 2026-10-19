@@ -270,7 +270,17 @@ function ppkMenu(): NavMenuGroup[] {
  * не рисуются. Что не нарисовано на эскизе, — в нижней группе «Ещё».
  */
 const COMPANY_MENU: NavMenuGroup[] = [
-  { label: null, items: [{ id: "organization", icon: "Building2", href: "/settings/organization", access: ADMIN }] },
+  {
+    label: null,
+    // Скан 82, лист 2: реквизиты, блок сведений «в любом документе», логотип
+    // и цвета; контакты — бывшие секции формы реквизитов.
+    items: [
+      { id: "organization", icon: "Building2", href: "/settings/organization", access: ADMIN },
+      { id: "documents", icon: "ScrollText", href: "/settings/organization/documents", access: ADMIN },
+      { id: "branding", icon: "SwatchBook", href: "/settings/organization/branding", access: ADMIN },
+      { id: "contacts", icon: "Contact", href: "/settings/organization/contacts", access: ADMIN },
+    ],
+  },
   {
     label: "more",
     items: [

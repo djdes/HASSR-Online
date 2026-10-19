@@ -1,36 +1,28 @@
 "use client";
-import {
-  RU_PHONE_PLACEHOLDER,
-  formatRuPhoneInput,
-  phoneInputProps,
-} from "@/lib/phone-input";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
-  AtSign,
+  ArrowRight,
   Building2,
+  Contact,
   CreditCard,
   FileText,
-  Globe,
   Hash,
-  Image as ImageIcon,
   Loader2,
   Lock,
   MapPin,
-  Palette,
-  Phone,
   RefreshCw,
-  RotateCcw,
   Save,
   ScrollText,
   Search,
   ShieldCheck,
+  SwatchBook,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { OrgLogoUpload } from "@/components/settings/org-logo-upload";
 import {
   ORG_OWNERSHIP,
   ORG_SPHERES,
@@ -38,53 +30,31 @@ import {
   normalizeSphere,
 } from "@/lib/org-profile";
 import type { LegalProfile } from "@/lib/org-legal-profile";
-import {
-  buildDocumentOrgBlock,
-  documentOrgRows,
-  journalHeaderOrgText,
-  registryDefaults,
-  type LegalOverrideKey,
-} from "@/lib/document-org-block";
-import {
-  ORG_JOURNAL_NAME_MAX,
-  resolveOrgJournalName,
-  suggestOrgJournalName,
-} from "@/lib/org-journal-name";
 import { mapOrganizationProfileApiError } from "@/lib/organization-profile-error-adapter";
 
+/**
+ * Поля «Реквизитов». Сведения для документов (правки поверх ЕГРЮЛ и
+ * название для журналов), логотип и цвет, контакты, часовой пояс и язык
+ * переехали на свои страницы раздела «Моя компания» (2026-10-18).
+ */
 type Form = {
   name: string;
-  /// Сокращённое название для шапки журналов; null — из ЕГРЮЛ или полное.
-  journalShortName: string | null;
   /// Сфера заведения (в БД колонка называется `type`).
   type: string;
   ownershipKind: string;
   inn: string | null;
   address: string | null;
-  phone: string | null;
-  accountantEmail: string | null;
-  locale: string;
-  timezone: string;
-  brandColor: string | null;
-  logoUrl: string | null;
   shiftEndHour: number;
   lockPastDayEdits: boolean;
   requireAdminForJournalEdit: boolean;
-} & Record<LegalOverrideKey, string | null>;
+};
 
-/**
- * Правки реквизитов поверх ЕГРЮЛ — порядок полей в форме. Пустое поле =
- * значение из снимка реестра (`document-org-block.ts`).
- */
-const LEGAL_FIELDS: Array<{ key: LegalOverrideKey; multiline?: boolean; maxLength: number; inputMode?: "numeric" }> = [
-  { key: "legalFullName", maxLength: 300 },
-  // КПП — без цифровой клавиатуры: с 2019 г. в причине постановки бывают латинские буквы.
-  { key: "kpp", maxLength: 9 },
-  { key: "ogrn", maxLength: 15, inputMode: "numeric" },
-  { key: "legalAddress", multiline: true, maxLength: 500 },
-  { key: "directorName", maxLength: 200 },
-  { key: "directorPost", maxLength: 200 },
-];
+/** Соседние страницы раздела — куда переехали поля бывшей большой формы. */
+const COMPANY_PAGES = [
+  { key: "docs", href: "/settings/organization/documents", icon: ScrollText },
+  { key: "branding", href: "/settings/organization/branding", icon: SwatchBook },
+  { key: "contacts", href: "/settings/organization/contacts", icon: Contact },
+] as const;
 
 type Legal = {
   /// Снимок ЕГРЮЛ/ЕГРИП по ИНН (см. org-legal-profile.ts); null — ещё не запрашивали.
@@ -104,20 +74,6 @@ type Meta = {
 // Списки живут в src/lib/org-profile.ts — раньше их было четыре штуки
 // в разных файлах, и они успели разъехаться между собой.
 const TYPE_OPTIONS = ORG_SPHERES;
-
-const TIMEZONE_OPTIONS = [
-  "Europe/Kaliningrad",
-  "Europe/Moscow",
-  "Europe/Samara",
-  "Asia/Yekaterinburg",
-  "Asia/Omsk",
-  "Asia/Krasnoyarsk",
-  "Asia/Irkutsk",
-  "Asia/Yakutsk",
-  "Asia/Vladivostok",
-  "Asia/Magadan",
-  "Asia/Kamchatka",
-];
 
 export function OrganizationInfoForm({
   initial,
@@ -145,17 +101,7 @@ export function OrganizationInfoForm({
     return keys ? keys.map((key) => t(`form.apiErrors.${key}`)).join("; ") : fallback;
   }
   const router = useRouter();
-  // Телефон в базе хранится как «+79991234567». В поле он и показывался
-  // сплошной строкой цифр — приводим к читаемому «+7 999 123-45-67».
-  // Сравниваем с этим же видом, иначе форма считалась бы «изменённой»
-  // сразу после открытия.
-  const initialPhoneDisplay = initial.phone
-    ? formatRuPhoneInput(initial.phone)
-    : initial.phone;
-  const [form, setForm] = useState<Form>(() => ({
-    ...initial,
-    phone: initialPhoneDisplay,
-  }));
+  const [form, setForm] = useState<Form>(initial);
   const [saving, setSaving] = useState(false);
   const [innLookup, setInnLookup] = useState(false);
   const [legal, setLegal] = useState<Legal>(legalInitial);
@@ -191,78 +137,37 @@ export function OrganizationInfoForm({
 
   const dirty =
     form.name !== initial.name ||
-    form.journalShortName !== initial.journalShortName ||
     form.type !== initial.type ||
+    form.ownershipKind !== initial.ownershipKind ||
     form.inn !== initial.inn ||
     form.address !== initial.address ||
-    form.phone !== initialPhoneDisplay ||
-    form.accountantEmail !== initial.accountantEmail ||
-    form.locale !== initial.locale ||
-    form.timezone !== initial.timezone ||
-    form.brandColor !== initial.brandColor ||
-    form.logoUrl !== initial.logoUrl ||
     form.shiftEndHour !== initial.shiftEndHour ||
     form.lockPastDayEdits !== initial.lockPastDayEdits ||
-    form.requireAdminForJournalEdit !== initial.requireAdminForJournalEdit ||
-    LEGAL_FIELDS.some(({ key }) => (form[key] ?? "") !== (initial[key] ?? ""));
-
-  // Что увидит шапка журналов при текущем вводе — те же правила, что у
-  // страницы документа и PDF.
-  const legalShortName = suggestOrgJournalName(legal.profile);
-  const journalNamePreview = resolveOrgJournalName({
-    name: form.name,
-    journalShortName: form.journalShortName,
-    legalProfileJson: legal.profile,
-  });
+    form.requireAdminForJournalEdit !== initial.requireAdminForJournalEdit;
 
   function set<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  // Сведения для документов: значения ЕГРЮЛ по умолчанию и живой блок —
-  // те же правила, что у PDF журналов, ППК, приказов и портала проверяющего.
-  const registry = registryDefaults({ inn: form.inn, legalProfileJson: legal.profile });
-  const docBlock = buildDocumentOrgBlock({
-    org: { ...form, legalProfileJson: legal.profile },
-  });
-  const docRows = documentOrgRows(docBlock);
-  const docHeader = journalHeaderOrgText(docBlock);
-
   async function save() {
     if (saving || !dirty) return;
     setSaving(true);
     try {
-      // Шлём только изменённые поля — иначе legacy-значения
-      // (например, brandColor='#aabbccdd' с alpha) каждый раз попадают
-      // в валидатор и блокируют сохранение остальных полей.
+      // Шлём только изменённые поля — иначе legacy-значения каждый раз
+      // попадают в валидатор и блокируют сохранение остальных полей.
       const payload: Record<string, unknown> = {};
       if (form.name !== initial.name) payload.name = form.name;
-      if (form.journalShortName !== initial.journalShortName)
-        payload.journalShortName = form.journalShortName ?? "";
       if (form.type !== initial.type) payload.type = form.type;
+      if (form.ownershipKind !== initial.ownershipKind) payload.ownershipKind = form.ownershipKind;
       if (form.inn !== initial.inn) payload.inn = form.inn ?? "";
       if (form.address !== initial.address)
         payload.address = form.address ?? "";
-      if (form.phone !== initialPhoneDisplay) payload.phone = form.phone ?? "";
-      if (form.accountantEmail !== initial.accountantEmail)
-        payload.accountantEmail = form.accountantEmail ?? "";
-      if (form.locale !== initial.locale) payload.locale = form.locale;
-      if (form.timezone !== initial.timezone) payload.timezone = form.timezone;
-      if (form.brandColor !== initial.brandColor)
-        payload.brandColor = form.brandColor ?? "";
-      if (form.logoUrl !== initial.logoUrl)
-        payload.logoUrl = form.logoUrl ?? "";
       if (form.shiftEndHour !== initial.shiftEndHour)
         payload.shiftEndHour = form.shiftEndHour;
       if (form.lockPastDayEdits !== initial.lockPastDayEdits)
         payload.lockPastDayEdits = form.lockPastDayEdits;
       if (form.requireAdminForJournalEdit !== initial.requireAdminForJournalEdit)
         payload.requireAdminForJournalEdit = form.requireAdminForJournalEdit;
-      // Пустая правка уходит пустой строкой — сервер очистит её, и в
-      // документы снова пойдёт ЕГРЮЛ.
-      for (const { key } of LEGAL_FIELDS) {
-        if ((form[key] ?? "") !== (initial[key] ?? "")) payload[key] = form[key] ?? "";
-      }
 
       const res = await fetch("/api/settings/organization", {
         method: "PATCH",
@@ -378,37 +283,6 @@ export function OrganizationInfoForm({
             maxLength={200}
           />
         </FormRow>
-        <FormRow
-          label={t("form.journalShortName")}
-          hint={t("form.journalShortNameHint")}
-          icon={<FileText className="size-4" />}
-        >
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={form.journalShortName ?? ""}
-              onChange={(e) => set("journalShortName", e.target.value || null)}
-              className="form-input"
-              placeholder={legalShortName ?? (form.name || t("form.journalShortNameExample"))}
-              maxLength={ORG_JOURNAL_NAME_MAX}
-            />
-            <div className="flex flex-wrap items-center gap-2 text-[12px] leading-snug text-[#6f7282]">
-              <span>
-                {t("form.journalHeaderPreview", { name: journalNamePreview })}
-              </span>
-              {legalShortName && legalShortName !== (form.journalShortName ?? "").trim() ? (
-                <button
-                  type="button"
-                  onClick={() => set("journalShortName", legalShortName)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                >
-                  <ShieldCheck className="size-3.5 text-[#5566f6]" />
-                  {t("form.useFromRegistry", { name: legalShortName })}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </FormRow>
         <FormRow label={t("form.sphere")} hint={t("form.sphereHint")}>
           <select
             value={normalizeSphere(form.type)}
@@ -487,100 +361,33 @@ export function OrganizationInfoForm({
             maxLength={500}
           />
         </FormRow>
-        <FormRow
-          label={t("form.phone")}
-          hint={t("form.phoneHint")}
-          icon={<Phone className="size-4" />}
-        >
-          <input
-            type="tel"
-            {...phoneInputProps(form.phone ?? "", (value) => set("phone", value || null))}
-            className="form-input"
-            placeholder={RU_PHONE_PLACEHOLDER}
-          />
-        </FormRow>
       </FormSection>
 
-      {/* === СВЕДЕНИЯ ДЛЯ ДОКУМЕНТОВ === */}
-      {/* id — сюда будет вести пункт «Сведения для документов» раздела «Моя компания». */}
-      <FormSection
-        id="documents"
-        title={t("form.docsTitle")}
-        subtitle={t("form.docsSubtitle")}
-        icon={<ScrollText className="size-4" />}
+      {/* Сведения для документов, логотип и контакты — соседние пункты раздела. */}
+      <nav
+        aria-label={t("form.morePagesTitle")}
+        className="grid gap-3 rounded-3xl border border-[#ececf4] bg-white p-4 md:grid-cols-3 md:p-5"
+        data-company-pages
       >
-        {LEGAL_FIELDS.map(({ key, multiline, maxLength, inputMode }) => {
-          const own = form[key] ?? "";
-          const fromRegistry = registry[key];
-          return (
-            <FormRow key={key} label={t(`form.${key}`)} hint={t(`form.${key}Hint`)}>
-              <div className="space-y-1.5">
-                {multiline ? (
-                  <textarea
-                    value={own}
-                    onChange={(e) => set(key, e.target.value || null)}
-                    className="form-input min-h-[68px]"
-                    placeholder={fromRegistry ?? ""}
-                    maxLength={maxLength}
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={own}
-                    onChange={(e) => set(key, e.target.value || null)}
-                    className="form-input"
-                    placeholder={fromRegistry ?? ""}
-                    maxLength={maxLength}
-                    inputMode={inputMode}
-                  />
-                )}
-                {fromRegistry ? (
-                  own.trim() && own.trim() !== fromRegistry ? (
-                    <div className="flex flex-wrap items-center gap-2 text-[12px] leading-snug text-[#6f7282]">
-                      <span className="min-w-0 break-words">{t("form.fromRegistry", { value: fromRegistry })}</span>
-                      <button
-                        type="button"
-                        onClick={() => set(key, null)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-                      >
-                        <RotateCcw className="size-3.5 text-[#5566f6]" />
-                        {t("form.resetToRegistry")}
-                      </button>
-                    </div>
-                  ) : !own.trim() ? (
-                    <div className="flex items-center gap-1.5 text-[12px] text-[#6f7282]">
-                      <ShieldCheck className="size-3.5 text-[#5566f6]" />
-                      {t("form.registryUsed")}
-                    </div>
-                  ) : null
-                ) : null}
-              </div>
-            </FormRow>
-          );
-        })}
-
-        {/* Живой предпросмотр блока — как его печатают документы. */}
-        <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
-          <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            {t("form.docsPreviewTitle")}
-          </div>
-          <div className="mt-3 rounded-xl border border-[#dcdfed] bg-white p-3">
-            <div className="text-[11px] font-medium text-[#9b9fb3]">{t("form.docsPreviewJournal")}</div>
-            <div className="mt-1 text-[13px] font-semibold leading-snug text-[#0b1024]" data-doc-header-preview>
-              {docHeader}
-            </div>
-          </div>
-          <dl className="mt-3 divide-y divide-[#f0f1f7] rounded-xl border border-[#ececf4] bg-white">
-            {docRows.map((row) => (
-              <div key={row.key} className="grid gap-0.5 px-3 py-2 md:grid-cols-[200px_1fr] md:gap-4">
-                <dt className="text-[12px] font-medium text-[#6f7282]">{row.label}</dt>
-                <dd className="text-[13px] leading-snug text-[#0b1024]">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-2 text-[11.5px] leading-snug text-[#9b9fb3]">{t("form.docsPreviewNote")}</p>
-        </div>
-      </FormSection>
+        {COMPANY_PAGES.map(({ key, href, icon: Icon }) => (
+          <Link
+            key={key}
+            href={href}
+            className="group flex items-start gap-3 rounded-2xl bg-[#fafbff] p-3.5 transition-[background-color,box-shadow] duration-200 hover:bg-[#f5f6ff] hover:shadow-[0_0_0_1px_rgba(85,102,246,0.25)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
+              <Icon className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="flex items-center gap-1 text-[14px] font-semibold text-[#0b1024]">
+                {t(`form.morePages.${key}`)}
+                <ArrowRight className="size-3.5 shrink-0 text-[#9b9fb3] transition-[color,transform] duration-150 group-hover:translate-x-0.5 group-hover:text-[#5566f6]" aria-hidden />
+              </span>
+              <span className="mt-0.5 block text-[12.5px] leading-snug text-[#6f7282]">{t(`form.morePages.${key}Hint`)}</span>
+            </span>
+          </Link>
+        ))}
+      </nav>
 
       <FormSection
         title={t("form.registryTitle")}
@@ -593,138 +400,6 @@ export function OrganizationInfoForm({
           canRefresh={Boolean((form.inn ?? "").replace(/\D/g, ""))}
           onRefresh={() => void refreshLegal((form.inn ?? "").replace(/\D/g, ""))}
         />
-      </FormSection>
-
-      {/* === КОНТАКТЫ === */}
-      <FormSection
-        title={t("form.contactsTitle")}
-        subtitle={t("form.contactsSubtitle")}
-        icon={<AtSign className="size-4" />}
-      >
-        <FormRow
-          label={t("form.accountantEmail")}
-          hint={t("form.accountantEmailHint")}
-        >
-          <input
-            type="email"
-            value={form.accountantEmail ?? ""}
-            onChange={(e) => set("accountantEmail", e.target.value || null)}
-            className="form-input"
-            placeholder="accountant@company.ru"
-          />
-        </FormRow>
-      </FormSection>
-
-      {/* === РЕГИОН === */}
-      <FormSection
-        title={t("form.regionTitle")}
-        subtitle={t("form.regionSubtitle")}
-        icon={<Globe className="size-4" />}
-      >
-        <FormRow label={t("form.timezone")}>
-          <select
-            value={form.timezone}
-            onChange={(e) => set("timezone", e.target.value)}
-            className="form-input"
-          >
-            {/* Fallback option: если текущий timezone из БД не входит
-                в наш короткий список (Asia/Tashkent, Europe/Riga и
-                т.д.) — добавляем его как отдельную опцию, чтобы
-                <select> не «прыгнул» на первый вариант и тихо не
-                перезаписал данные. */}
-            {!TIMEZONE_OPTIONS.includes(form.timezone) && form.timezone ? (
-              <option value={form.timezone}>
-                {t("form.currentTimezone", { timezone: form.timezone.replace("_", " ") })}
-              </option>
-            ) : null}
-            {TIMEZONE_OPTIONS.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz.replace("_", " ")}
-              </option>
-            ))}
-          </select>
-        </FormRow>
-        <FormRow label={t("form.interfaceLanguage")} hint={t("form.interfaceLanguageHint")}>
-          <select
-            value={form.locale}
-            onChange={(e) => set("locale", e.target.value)}
-            className="form-input"
-          >
-            <option value="ru">{t("form.languageRu")}</option>
-            <option value="en">{t("form.languageEn")}</option>
-            <option value="uz">{t("form.languageUz")}</option>
-          </select>
-        </FormRow>
-      </FormSection>
-
-      {/* === БРЕНДИНГ === */}
-      {/* id — сюда ведёт «Логотип и цвета» из меню профиля. */}
-      <FormSection
-        id="branding"
-        title={t("form.brandingTitle")}
-        subtitle={t("form.brandingSubtitle")}
-        icon={<Palette className="size-4" />}
-      >
-        <FormRow
-          label={t("form.brandColor")}
-          hint={t("form.brandColorHint")}
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={form.brandColor ?? "#5566f6"}
-              onChange={(e) => set("brandColor", e.target.value)}
-              className="h-10 w-14 cursor-pointer rounded-xl border border-[#dcdfed] bg-white"
-            />
-            <input
-              type="text"
-              value={form.brandColor ?? ""}
-              onChange={(e) => set("brandColor", e.target.value || null)}
-              className="form-input flex-1"
-              placeholder="#5566f6"
-              maxLength={7}
-            />
-            {form.brandColor ? (
-              <button
-                type="button"
-                onClick={() => set("brandColor", null)}
-                className="text-[12px] text-[#6f7282] hover:text-[#5566f6]"
-              >
-                {t("form.discard")}
-              </button>
-            ) : null}
-          </div>
-        </FormRow>
-        <FormRow
-          label={t("form.logoTitle")}
-          hint={t("form.logoHint")}
-          icon={<ImageIcon className="size-4" />}
-        >
-          {/* Файл сохраняется сразу, без кнопки «Сохранить»: так логотип
-              видно в меню слева, как только он загружен. */}
-          <OrgLogoUpload
-            url={form.logoUrl}
-            onChange={(url) => {
-              set("logoUrl", url);
-              router.refresh();
-            }}
-          />
-          <details className="mt-2 group">
-            <summary className="cursor-pointer list-none text-[12.5px] text-[#6f7282] transition-colors duration-150 hover:text-[#5566f6]">
-              {t("form.logoByUrl")}
-            </summary>
-            <input
-              type="url"
-              value={form.logoUrl ?? ""}
-              onChange={(e) => set("logoUrl", e.target.value || null)}
-              className="form-input mt-2"
-              placeholder="https://example.com/logo.png"
-              aria-label={t("form.logoUrl")}
-            />
-            {/* Внешнюю ссылку сервер в PDF не скачивает (SSRF) — говорим об этом заранее. */}
-            <p className="mt-1.5 text-[12px] leading-snug text-[#6f7282]">{t("form.logoUrlHint")}</p>
-          </details>
-        </FormRow>
       </FormSection>
 
       {/* === СМЕНЫ И КОМПЛАЕНС === */}

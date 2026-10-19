@@ -5,6 +5,7 @@ import {
   buildLegalProfile,
   humanizeName,
   partyPersonName,
+  readLegalProfile,
 } from "./org-legal-profile";
 
 const sber = {
@@ -80,6 +81,37 @@ test("buildLegalProfile: ИП без руководителя — имя из fi
   assert.equal(p.finance, null);
   assert.equal(p.capital, null);
   assert.deepEqual(p.okvedMain, { code: "69.20.2", name: null });
+});
+
+test("readLegalProfile: полный снимок читается без потерь", () => {
+  const full = buildLegalProfile(sber, new Date("2026-09-05T00:00:00Z"));
+  assert.deepEqual(readLegalProfile(JSON.parse(JSON.stringify(full))), full);
+});
+
+test("readLegalProfile: неполный снимок демо-базы нормализуется, а не роняет страницу", () => {
+  // Демо «Столовая «Берёзка»»: в JSON записаны только ИНН, адрес и руководитель.
+  const p = readLegalProfile({ inn: "7701234567", address: "г Москва, ул Ленина, д 5", management: { name: "Иванова Анна" } });
+  assert.ok(p);
+  assert.equal(p.address, "г Москва, ул Ленина, д 5");
+  assert.deepEqual(p.management, { name: "Иванова Анна", post: null });
+  assert.deepEqual(p.okvedsExtra, []);
+  assert.deepEqual(p.founders, []);
+  assert.deepEqual(p.phones, []);
+  assert.deepEqual(p.emails, []);
+  assert.equal(p.okvedMain, null);
+  assert.equal(p.finance, null);
+  assert.equal(p.capital, null);
+  assert.equal(p.type, null);
+  assert.equal(p.fetchedAt, "");
+  // Мусор в полях не пропускается дальше.
+  const messy = readLegalProfile({ inn: "7701234567", okvedsExtra: [null, { code: 5 }, { code: "56.10" }], phones: ["+7 1", 7], capital: { value: "много" } });
+  assert.deepEqual(messy?.okvedsExtra, [{ code: "56.10", name: null }]);
+  assert.deepEqual(messy?.phones, ["+7 1"]);
+  assert.equal(messy?.capital, null);
+  // Без ИНН и не-объект — снимка нет.
+  assert.equal(readLegalProfile({ address: "x" }), null);
+  assert.equal(readLegalProfile([{ inn: "1" }]), null);
+  assert.equal(readLegalProfile(null), null);
 });
 
 test("humanizeName / partyPersonName", () => {
