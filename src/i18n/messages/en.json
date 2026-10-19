@@ -2452,11 +2452,17 @@
         "staff": {
           "groups": {
             "directories": "Directories",
+            "groups": "Groups and committees",
             "more": "More"
           },
           "items": {
+            "positions": "Job titles",
             "users": "Staff",
             "access": "Access and permissions",
+            "commission": "Food inspection committee",
+            "haccpGroup": "HACCP team",
+            "controlGroup": "Control group",
+            "inspectors": "Inspectors and auditors",
             "team": "Team",
             "schedule": "Shift schedule",
             "health": "Medical books and training",
@@ -2465,12 +2471,6 @@
             "visibility": "Colleague visibility",
             "workload": "Staff workload",
             "phone": "Phone connection"
-          },
-          "tabs": {
-            "permissions": "Permissions",
-            "presets": "Role presets",
-            "journals": "Staff journals",
-            "positions": "Job title × journal"
           }
         },
         "points": {
@@ -2793,6 +2793,12 @@
       "settings_kiosk": "Shared tablet",
       "settings_master_cabinet": "Master cabinet",
       "settings_users": "Staff",
+      "settings_positions": "Job titles",
+      "settings_access": "Access and permissions",
+      "settings_brakerage_commission": "Food inspection committee",
+      "settings_haccp_group": "HACCP team",
+      "settings_control_group": "Control group",
+      "settings_inspectors": "Inspectors and auditors",
       "settings_workload_balance": "Staff workload",
       "staff": "Staff",
       "team": "Team",
@@ -16666,5 +16672,392 @@
     "openFile": "Open the document",
     "fileHint": "Open the document, read it and come back to press \"I have read it\".",
     "publicButton": "I am an employee - confirm reading"
+  },
+  "staffPages": {
+    "positions": {
+      "description": "Staffing plan: how many people each job title needs and how many already work there.",
+      "toStaff": "Staff",
+      "add": "Job title",
+      "addInCategory": "Add",
+      "readOnly": "Only a manager can change job titles — this page is read-only for you.",
+      "cancel": "Cancel",
+      "totals": {
+        "planned": "Planned: {count}",
+        "occupied": "Filled: {count}",
+        "vacancies": "Vacancies: {count}",
+        "overstaffed": "Over plan: {count}",
+        "people": "Working: {count}",
+        "noPlan": "Headcount is not set"
+      },
+      "guide": {
+        "title": "How the staffing plan works",
+        "headcountTitle": "Headcount",
+        "headcountBody": "how many people should work in the job title. Leave it empty to show only how many people work there now.",
+        "occupiedTitle": "“N of M filled”",
+        "occupiedBody": "N is the active staff in the job title (archive excluded), M is the headcount. Green means fully staffed, amber means vacancies, red means more people than planned.",
+        "orderTitle": "Order",
+        "orderBody": "use the “up” and “down” arrows inside a group. Job titles appear in the same order on the Staff page and when adding an employee.",
+        "deleteTitle": "Deleting",
+        "deleteBody": "a job title with people in it cannot be deleted — move them to another job title or to the archive first."
+      },
+      "categories": {
+        "management": {
+          "title": "Management",
+          "hint": "Managers, supervisors, technologists — full access to the workspace."
+        },
+        "staff": {
+          "title": "Staff",
+          "hint": "Cooks, waiters, cleaners — they work on shift tasks in the app."
+        },
+        "commission": {
+          "title": "Food inspection committee",
+          "hint": "External committee members: they sign food inspections with a PIN and do not sign in to the workspace."
+        }
+      },
+      "empty": {
+        "title": "No job titles yet",
+        "hint": "Add the first one — then you can add employees to it.",
+        "hintReadOnly": "Job titles are created by a manager."
+      },
+      "row": {
+        "plan": "Planned: {count}",
+        "noPlan": "No headcount",
+        "people": "{count, plural, one {# person} other {# people}}",
+        "moveUp": "Move up: {name}",
+        "moveUpShort": "Up",
+        "moveDown": "Move down: {name}",
+        "moveDownShort": "Down",
+        "edit": "Edit job title: {name}",
+        "editShort": "Edit",
+        "delete": "Delete job title: {name}",
+        "deleteShort": "Delete"
+      },
+      "dialog": {
+        "createTitle": "New job title",
+        "editTitle": "Edit job title",
+        "description": "The group decides which permissions people in this job title get.",
+        "category": "Group",
+        "name": "Job title",
+        "namePlaceholder": "For example, Hot kitchen cook",
+        "nameShort": "The name needs at least 2 characters",
+        "headcountInvalid": "Headcount must be a whole number from 0 to 999",
+        "create": "Create",
+        "save": "Save",
+        "saving": "Saving…"
+      },
+      "toast": {
+        "created": "Job title “{name}” added",
+        "updated": "Job title “{name}” saved",
+        "deleted": "Job title “{name}” deleted"
+      },
+      "errors": {
+        "forbidden": "Only a manager can change job titles",
+        "duplicate": "This job title already exists",
+        "hasPeople": "People work in this job title — move them first",
+        "notFound": "Job title not found — refresh the page",
+        "saveFailed": "Could not save the job title",
+        "deleteFailed": "Could not delete the job title",
+        "orderFailed": "Could not save the order",
+        "network": "No connection to the server — try again"
+      },
+      "delete": {
+        "title": "Delete job title “{name}”?",
+        "description": "The job title will disappear from the staffing plan.",
+        "gone": "It will no longer be offered when adding an employee",
+        "journals": "Journals and permissions set up for this job title will be deleted with it",
+        "irreversible": "A deleted job title cannot be restored — only created again",
+        "confirm": "Delete",
+        "blockedTitle": "People work in “{name}”",
+        "blockedDescription": "A job title can be deleted only when nobody works in it.",
+        "blockedPeople": "Now in this job title: {count, plural, one {# person} other {# people}}",
+        "blockedMove": "Move them to another job title or to the archive on the Staff page",
+        "blockedAfter": "Then come back and delete the job title",
+        "blockedConfirm": "Open staff"
+      }
+    },
+    "access": {
+      "description": "What everyone can do in the workspace and the app: permission sets, who has which, and which sections and journals are open.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "guide": {
+        "title": "How permissions work",
+        "presetTitle": "Permission set",
+        "presetBody": "decides what a person can do: see journals, check completed work, assign tasks, change settings.",
+        "autoTitle": "By job title or manually",
+        "autoBody": "the set comes from the job title: management gets “Administrator”, head chefs get “Head chef / Manager”, staff get “Cook”. Any other set can be given manually.",
+        "sectionsTitle": "Menu sections",
+        "sectionsBody": "open by themselves from the permission set — they are not configured separately.",
+        "journalsTitle": "Journals",
+        "journalsBody": "which journals an employee sees is set by job title or personally — in detail on the “Staff journals” and “Job title × journal” pages."
+      },
+      "presets": {
+        "title": "Permission sets",
+        "description": "What each set gives and who gets it.",
+        "configure": "Configure sets",
+        "people": "{count, plural, one {# person} other {# people}}",
+        "byPosition": "By job title: {positions}.",
+        "byPositionNone": "Nobody gets it by job title — only manually.",
+        "more": "and {count} more",
+        "manual": "Manually: {count}."
+      },
+      "people": {
+        "title": "Employee permission set",
+        "description": "Which set each person has. “Change” picks another one or returns the set from the job title.",
+        "descriptionReadOnly": "Which set each person has. Only an administrator can change it.",
+        "search": "Find an employee or job title",
+        "emptyTitle": "No employees yet",
+        "emptyHint": "Add employees — their permission sets will appear here.",
+        "toStaff": "Go to staff",
+        "notFound": "Nobody found",
+        "self": "(you)",
+        "noPosition": "No job title",
+        "manual": "set manually",
+        "auto": "by job title",
+        "change": "Change",
+        "changeFor": "Change permission set: {name}",
+        "dialogTitle": "Permission set — {name}",
+        "forbidden": "Only an administrator can change the permission set",
+        "saved": "{name}: set “{preset}”",
+        "network": "No connection to the server — try again"
+      },
+      "sections": {
+        "title": "Which sections they see",
+        "description": "Menu sections open from the permission set — there is no separate setting. This is the menu for each set.",
+        "state": {
+          "visible": "sees",
+          "hidden": "does not see",
+          "depends": "depends on personal access"
+        },
+        "group": {
+          "management": "for management",
+          "staff": "for an employee"
+        },
+        "legend": {
+          "visible": "Sees the section",
+          "hidden": "Does not see it",
+          "depends": "Depends on personal access (for example, to the checklist journal)"
+        },
+        "personTitle": "Check an employee",
+        "personPlaceholder": "Choose an employee",
+        "personHint": "Choose a person to see the sections they have now.",
+        "personPreset": "Set: “{preset}”,",
+        "personNone": "No workspace sections — works on tasks in the app.",
+        "personSees": "Sees: {sections}.",
+        "footnote": "Management (job titles in the Management group) opens some sections by job title, so the same set gives a manager and an employee different menus."
+      },
+      "journals": {
+        "title": "Journals",
+        "description": "How many of {total} journals each job title has. Journals can also be chosen for a person.",
+        "emptyTitle": "No job titles yet",
+        "emptyHint": "Create job titles, then open journals for them.",
+        "toPositions": "Go to job titles",
+        "people": "{count, plural, one {# person} other {# people}}",
+        "count": "{count} of {total}",
+        "none": "not set",
+        "personal": "Journals chosen personally: {count, plural, one {# employee} other {# employees}}.",
+        "personalNone": "Nobody has personally chosen journals yet.",
+        "byPerson": "Staff journals",
+        "byPosition": "Job title × journal"
+      },
+      "visibility": {
+        "title": "Colleague visibility",
+        "description": "Whom people in each job title see in the app and in TasksFlow.",
+        "summary": "A list is set for {configured} of {total} job titles.",
+        "position": "{name}: sees {count, plural, one {# employee} other {# employees}}",
+        "rest": "Other job titles have no list — they see only their own tasks.",
+        "open": "Colleague visibility"
+      },
+      "permissions": {
+        "title": "Settings permissions",
+        "description": "Who can change workspace settings: a base package for the group, special rights for a job title and for a specific person.",
+        "open": "Permissions"
+      }
+    },
+    "commission": {
+      "description": "Who signs food inspections: the committee for prepared and for perishable food.",
+      "guide": {
+        "title": "How the committee works",
+        "whoTitle": "Who is on the committee",
+        "whoBody": "the chair and committee members — employees or external people. A new person can be added right in the committee window.",
+        "signTitle": "Signature",
+        "signBody": "a committee member signs journal entries in the workspace or via the journal QR with a PIN.",
+        "copyTitle": "Documents",
+        "copyBody": "the saved committee is copied into active journal documents; new documents get it automatically."
+      },
+      "journals": {
+        "finished_product": {
+          "title": "Prepared food inspection",
+          "hint": "The committee checks and signs dishes before serving."
+        },
+        "perishable_rejection": {
+          "title": "Perishable food inspection",
+          "hint": "The committee signs incoming perishable food."
+        }
+      },
+      "count": "{count, plural, one {# person} other {# people}}",
+      "loading": "Loading the committee…",
+      "loadFailed": "Could not load the committee.",
+      "retry": "Try again",
+      "emptyTitle": "No committee assigned",
+      "emptyHint": "Assign a chair and members — they will sign journal entries.",
+      "emptyHintReadOnly": "The committee is assigned by a manager.",
+      "assign": "Assign the committee",
+      "edit": "Change members",
+      "noPosition": "No job title",
+      "noPin": "no PIN",
+      "noPinHint": "Without a PIN the person cannot sign an entry via the journal QR",
+      "copyHint": "The committee is saved for the whole organization and copied into active journal documents.",
+      "openJournal": "Open journal",
+      "journalOff": "Journal is off",
+      "enableJournal": "Turn the journal on",
+      "readOnly": "The committee is changed by a manager."
+    },
+    "haccpGroup": {
+      "description": "Who is responsible for the HACCP system. The team is kept in the production control program — here it is for reference.",
+      "edit": "Edit in the production control program",
+      "membersTitle": "Team members",
+      "membersHint": "The team leader signs HACCP documents and runs meetings.",
+      "count": "{count, plural, one {# person} other {# people}}",
+      "emptyTitle": "The HACCP team is not set up",
+      "emptyHint": "Set up the team in the production control program: usually the manager, the head chef and the technologist.",
+      "documentsTitle": "Team order",
+      "documentsHint": "The order, the team regulation and meetings are in the production control program.",
+      "order": "Order No. {number} of {date}",
+      "noOrder": "The order creating the team has not been issued yet.",
+      "openPpk": "Open the HACCP team in the program"
+    },
+    "controlGroup": {
+      "description": "People who oversee the work: they see journals and staff, confirm completed work and assign tasks, but do not fill in journals themselves.",
+      "cancel": "Cancel",
+      "guide": {
+        "title": "How the control group works",
+        "whoTitle": "Who is in the group",
+        "whoBody": "any employee with the “Control group” permission set. Add and remove them here or in the employee access window.",
+        "scopeTitle": "Whom they see",
+        "scopeBody": "everyone by default. Narrow it in the management hierarchy: choose job titles or people and the journals they assign tasks for.",
+        "removeTitle": "Removing",
+        "removeBody": "the person gets back the permission set of their job title."
+      },
+      "rights": {
+        "title": "What the control group can do",
+        "hint": "The “Control group” permission set is the same for all members.",
+        "seesTitle": "Sees everything",
+        "seesBody": "journals, staff, reports and statistics.",
+        "verifyTitle": "Confirms",
+        "verifyBody": "checks completed tasks and entries.",
+        "assignTitle": "Assigns tasks",
+        "assignBody": "to staff from their hierarchy and for their journals.",
+        "fillTitle": "Does not fill in",
+        "fillBody": "the control group does not fill in or close journals and documents."
+      },
+      "members": {
+        "title": "Members",
+        "hint": "Whom each member sees and which journals they assign tasks for. Narrow it in the management hierarchy.",
+        "hintNoHierarchy": "Whom each member sees and which journals they assign tasks for.",
+        "count": "{count, plural, one {# person} other {# people}}",
+        "emptyTitle": "The control group is empty",
+        "emptyHint": "Add a person below — they will get the “Control group” permission set right away.",
+        "emptyHintReadOnly": "Members are added by an administrator.",
+        "noPosition": "No job title",
+        "narrow": "Narrow in the hierarchy",
+        "remove": "Remove from group"
+      },
+      "scope": {
+        "seesDefault": "Sees everyone (hierarchy not set)",
+        "seesAll": "Sees everyone",
+        "seesNone": "Sees nobody",
+        "seesNoPositions": "Sees nobody: no job titles chosen",
+        "seesPositions": "Sees job titles: {list}",
+        "seesNoUsers": "Sees nobody: no employees chosen",
+        "seesUsers": "Sees {count, plural, one {# employee} other {# employees}}: {list}",
+        "assignsAll": "Assigns tasks for all journals",
+        "assigns": "Assigns tasks: {list}",
+        "more": "and {count} more"
+      },
+      "add": {
+        "title": "Add to the group",
+        "hint": "Choose an employee — they will get the “Control group” permission set instead of the current one.",
+        "readOnly": "The control group is changed by an administrator.",
+        "noCandidates": "Nobody to add: all employees are already in the group.",
+        "placeholder": "Choose an employee",
+        "preview": "Permission set: “{from}” → “{to}”.",
+        "button": "Add to the control group"
+      },
+      "errors": {
+        "forbidden": "Only an administrator can change the permission set",
+        "notFound": "Employee not found — refresh the page",
+        "saveFailed": "Could not change the permission set",
+        "network": "No connection to the server — try again"
+      },
+      "toast": {
+        "added": "{name} is now in the control group",
+        "removed": "{name}: permission set is back to the job title"
+      },
+      "confirmAdd": {
+        "title": "Add {name} to the control group?",
+        "description": "This person now has the “Administrator” set.",
+        "losesAdmin": "They will lose full access: settings, billing and permission changes",
+        "keeps": "They will see everything, confirm and assign tasks, but not fill in journals",
+        "undo": "To undo — “Remove from group”: the set goes back to the job title",
+        "confirm": "Add"
+      },
+      "confirmRemove": {
+        "title": "Remove {name} from the control group?",
+        "description": "The permission set goes back to the job title.",
+        "preset": "New set: “{preset}”",
+        "rights": "If the job title set does not allow it, they will stop seeing journals, confirming and assigning tasks",
+        "confirm": "Remove"
+      }
+    },
+    "inspectors": {
+      "description": "Who checks your work: external inspectors with access to journals and employees with checking roles.",
+      "external": {
+        "title": "External inspectors",
+        "hint": "Inspector portal QR codes and links: the inspector opens journals without signing in.",
+        "issue": "Issue a QR to an inspector",
+        "emptyTitle": "No inspector access issued yet",
+        "emptyHint": "Issue a QR or a link — the inspector will see journals for the needed period and sign the visit log.",
+        "summary": "{active} of {total} are active.",
+        "kind": {
+          "qr": "Inspector QR",
+          "link": "Inspector link"
+        },
+        "status": {
+          "active": "Active",
+          "expired": "Expired",
+          "revoked": "Revoked"
+        },
+        "period": "Period:",
+        "periodOpen": "any — chosen by the inspector",
+        "expires": "Valid until:",
+        "expired": "Expired:",
+        "issuedBy": "Issued by:",
+        "issuedUnknown": "unknown",
+        "opened": "Opened:",
+        "openedCount": "{count, plural, one {# time} other {# times}}, last — {last}",
+        "openedNever": "never yet",
+        "visits": "Visits: {count}",
+        "visitAnonymous": "no name",
+        "visitJournals": "journals: {count}"
+      },
+      "internal": {
+        "title": "Internal inspectors and auditors",
+        "hint": "Employees who check journals, documents and rooms or run audits.",
+        "emptyTitle": "No internal inspectors assigned",
+        "emptyHint": "A journal inspector and auditors are assigned in “Journal owners”, a room inspector — in the room card.",
+        "openDocument": "Open document",
+        "openRooms": "Rooms",
+        "openResponsibles": "Journal owners",
+        "more": "and {count} more"
+      },
+      "roles": {
+        "journal_verifier": "Journal inspector",
+        "document_verifier": "Document inspector",
+        "room_verifier": "Room inspector",
+        "audit_auditor": "Internal audit auditor",
+        "traceability_auditor": "Traceability auditor"
+      }
+    }
   }
 }

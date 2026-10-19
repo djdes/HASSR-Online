@@ -142,7 +142,7 @@ export type NavMenuItem = {
 };
 
 /** Ключ подписи группы: `menus.<раздел>.groups.<label>`. */
-export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "more";
+export type NavMenuGroupLabel = "haccp" | "documents" | "directories" | "groups" | "more";
 
 /** Группа пунктов меню раздела; `label: null` — группа без подписи. */
 export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[] };
@@ -249,25 +249,35 @@ const COMPANY_MENU: NavMenuGroup[] = [
   },
 ];
 
+/**
+ * Прежние страницы прав — подробные редакторы пункта «Доступ и права»: он
+ * одна страница со сводкой, а они открываются из её блоков (с теми же
+ * правами, что у страниц) и подсвечивают пункт.
+ */
+const ACCESS_EDITORS = [
+  "/settings/permissions",
+  "/settings/role-presets",
+  "/settings/journal-access",
+  "/settings/journals-by-position",
+];
+
 const STAFF_MENU: NavMenuGroup[] = [
   {
     label: "directories",
     items: [
+      { id: "positions", icon: "BriefcaseBusiness", href: "/settings/positions", access: FULL_ACCESS },
       { id: "users", icon: "Users", href: "/settings/users", access: FULL_ACCESS },
-      {
-        // «Доступ и права» — четыре страницы прав вкладками одного пункта
-        // (одна страница вместо четырёх — следующая задача).
-        id: "access",
-        icon: "ShieldCheck",
-        href: "/settings/journal-access",
-        access: FULL_ACCESS,
-        tabs: [
-          { id: "permissions", href: "/settings/permissions", access: PERMISSIONS_FACT },
-          { id: "presets", href: "/settings/role-presets", access: ADMIN },
-          { id: "journals", href: "/settings/journal-access", access: FULL_ACCESS },
-          { id: "positions", href: "/settings/journals-by-position", access: FULL_ACCESS },
-        ],
-      },
+      { id: "access", icon: "ShieldCheck", href: "/settings/access", access: FULL_ACCESS, match: ACCESS_EDITORS },
+    ],
+  },
+  {
+    // «Отдельно» на эскизе (скан 82, лист 4): группы людей с особой ролью.
+    label: "groups",
+    items: [
+      { id: "commission", icon: "UtensilsCrossed", href: "/settings/brakerage-commission", access: FULL_ACCESS },
+      { id: "haccpGroup", icon: "ShieldPlus", href: "/settings/haccp-group", access: FULL_ACCESS },
+      { id: "controlGroup", icon: "Binoculars", href: "/settings/control-group", access: FULL_ACCESS },
+      { id: "inspectors", icon: "UserSearch", href: "/settings/inspectors", access: FULL_ACCESS },
     ],
   },
   {

@@ -2452,11 +2452,17 @@
         "staff": {
           "groups": {
             "directories": "Ma’lumotnomalar",
+            "groups": "Guruhlar va komissiyalar",
             "more": "Yana"
           },
           "items": {
+            "positions": "Lavozimlar",
             "users": "Xodimlar",
             "access": "Kirish va huquqlar",
+            "commission": "Taom sifatini tekshirish komissiyasi",
+            "haccpGroup": "HACCP guruhi",
+            "controlGroup": "Nazorat guruhi",
+            "inspectors": "Tekshiruvchilar va auditorlar",
             "team": "Jamoa",
             "schedule": "Smenalar jadvali",
             "health": "Tibbiy daftarchalar va o‘qitish",
@@ -2465,12 +2471,6 @@
             "visibility": "Hamkasblarni ko‘rish",
             "workload": "Xodimlar yuklamasi",
             "phone": "Telefonni ulash"
-          },
-          "tabs": {
-            "permissions": "Kirish huquqlari",
-            "presets": "Huquq to‘plamlari",
-            "journals": "Xodimlar jurnallari",
-            "positions": "Lavozim × jurnal"
           }
         },
         "points": {
@@ -2793,6 +2793,12 @@
       "settings_kiosk": "Umumiy planshet",
       "settings_master_cabinet": "Master-kabinet",
       "settings_users": "Xodimlar",
+      "settings_positions": "Lavozimlar",
+      "settings_access": "Kirish va huquqlar",
+      "settings_brakerage_commission": "Taom sifatini tekshirish komissiyasi",
+      "settings_haccp_group": "HACCP guruhi",
+      "settings_control_group": "Nazorat guruhi",
+      "settings_inspectors": "Tekshiruvchilar va auditorlar",
       "settings_workload_balance": "Xodimlar yuklamasi",
       "staff": "Xodimlar",
       "team": "Jamoa",
@@ -16666,5 +16672,392 @@
     "openFile": "Hujjatni ochish",
     "fileHint": "Hujjatni oching, o'qing va \"Tanishdim\" tugmasini bosish uchun qaytib keling.",
     "publicButton": "Men xodimman - tanishganimni belgilash"
+  },
+  "staffPages": {
+    "positions": {
+      "description": "Shtat jadvali: har bir lavozimda nechta odam kerak va hozir nechta ishlayapti.",
+      "toStaff": "Xodimlar",
+      "add": "Lavozim",
+      "addInCategory": "Qo‘shish",
+      "readOnly": "Lavozimlarni rahbar o‘zgartiradi — siz uchun faqat ko‘rish.",
+      "cancel": "Bekor qilish",
+      "totals": {
+        "planned": "Shtat bo‘yicha: {count}",
+        "occupied": "Band: {count}",
+        "vacancies": "Bo‘sh o‘rinlar: {count}",
+        "overstaffed": "Shtatdan ortiq: {count}",
+        "people": "Ishlayapti: {count}",
+        "noPlan": "Shtat soni belgilanmagan"
+      },
+      "guide": {
+        "title": "Shtat jadvali qanday ishlaydi",
+        "headcountTitle": "Shtat soni",
+        "headcountBody": "lavozimda nechta odam ishlashi kerak. Bo‘sh qoldirsangiz, faqat hozir nechta odam ishlayotgani ko‘rsatiladi.",
+        "occupiedTitle": "«M tadan N band»",
+        "occupiedBody": "N — lavozimdagi faol xodimlar (arxivsiz), M — shtat soni. Yashil — shtat to‘liq, sariq — bo‘sh o‘rinlar bor, qizil — odam shtatdan ko‘p.",
+        "orderTitle": "Tartib",
+        "orderBody": "guruh ichida «yuqoriga» va «pastga» tugmalari bilan. Lavozimlar «Xodimlar» sahifasida va xodim qo‘shishda ham shu tartibda chiqadi.",
+        "deleteTitle": "O‘chirish",
+        "deleteBody": "odamlar ishlayotgan lavozimni o‘chirib bo‘lmaydi — avval ularni boshqa lavozimga yoki arxivga o‘tkazing."
+      },
+      "categories": {
+        "management": {
+          "title": "Rahbariyat",
+          "hint": "Boshqaruvchilar, mudirlar, texnologlar — kabinetga to‘liq kirishga ega."
+        },
+        "staff": {
+          "title": "Xodimlar",
+          "hint": "Oshpazlar, ofitsiantlar, farroshlar — ilovada smena vazifalari bo‘yicha ishlaydi."
+        },
+        "commission": {
+          "title": "Taom sifatini tekshirish komissiyasi",
+          "hint": "Tashqi komissiya a’zolari: tekshiruvni PIN-kod bilan imzolaydi, kabinetga kirmaydi."
+        }
+      },
+      "empty": {
+        "title": "Hozircha lavozimlar yo‘q",
+        "hint": "Birinchisini qo‘shing — keyin unga xodimlar qo‘shish mumkin.",
+        "hintReadOnly": "Lavozimlarni rahbar yaratadi."
+      },
+      "row": {
+        "plan": "Shtat bo‘yicha: {count}",
+        "noPlan": "Shtat belgilanmagan",
+        "people": "{count, plural, one {# kishi} other {# kishi}}",
+        "moveUp": "Yuqoriga: {name}",
+        "moveUpShort": "Yuqoriga",
+        "moveDown": "Pastga: {name}",
+        "moveDownShort": "Pastga",
+        "edit": "Lavozimni o‘zgartirish: {name}",
+        "editShort": "O‘zgartirish",
+        "delete": "Lavozimni o‘chirish: {name}",
+        "deleteShort": "O‘chirish"
+      },
+      "dialog": {
+        "createTitle": "Yangi lavozim",
+        "editTitle": "Lavozimni o‘zgartirish",
+        "description": "Guruh bu lavozimdagi odamlar qanday huquq olishini belgilaydi.",
+        "category": "Guruh",
+        "name": "Lavozim nomi",
+        "namePlaceholder": "Masalan, issiq sex oshpazi",
+        "nameShort": "Nom kamida 2 belgidan iborat bo‘lsin",
+        "headcountInvalid": "Shtat soni 0 dan 999 gacha butun son bo‘lishi kerak",
+        "create": "Yaratish",
+        "save": "Saqlash",
+        "saving": "Saqlanmoqda…"
+      },
+      "toast": {
+        "created": "«{name}» lavozimi qo‘shildi",
+        "updated": "«{name}» lavozimi saqlandi",
+        "deleted": "«{name}» lavozimi o‘chirildi"
+      },
+      "errors": {
+        "forbidden": "Lavozimlarni rahbar o‘zgartiradi",
+        "duplicate": "Bunday lavozim allaqachon bor",
+        "hasPeople": "Lavozimda odamlar ishlayapti — avval ularni o‘tkazing",
+        "notFound": "Lavozim topilmadi — sahifani yangilang",
+        "saveFailed": "Lavozimni saqlab bo‘lmadi",
+        "deleteFailed": "Lavozimni o‘chirib bo‘lmadi",
+        "orderFailed": "Tartibni saqlab bo‘lmadi",
+        "network": "Server bilan aloqa yo‘q — yana urinib ko‘ring"
+      },
+      "delete": {
+        "title": "«{name}» lavozimi o‘chirilsinmi?",
+        "description": "Lavozim shtat jadvalidan yo‘qoladi.",
+        "gone": "Xodim qo‘shishda u endi tanlovda bo‘lmaydi",
+        "journals": "Lavozim uchun sozlangan jurnallar va huquqlar u bilan birga o‘chiriladi",
+        "irreversible": "O‘chirilgan lavozimni qaytarib bo‘lmaydi — faqat qaytadan yaratish mumkin",
+        "confirm": "O‘chirish",
+        "blockedTitle": "«{name}» lavozimida odamlar ishlayapti",
+        "blockedDescription": "Lavozimni unda hech kim qolmaganda o‘chirish mumkin.",
+        "blockedPeople": "Hozir lavozimda: {count, plural, one {# kishi} other {# kishi}}",
+        "blockedMove": "Ularni «Xodimlar» sahifasida boshqa lavozimga yoki arxivga o‘tkazing",
+        "blockedAfter": "Keyin bu yerga qaytib, lavozimni o‘chiring",
+        "blockedConfirm": "Xodimlarni ochish"
+      }
+    },
+    "access": {
+      "description": "Kabinet va ilovada kim nima qila oladi: huquq to‘plamlari, kimda qaysi biri, qaysi bo‘limlar va jurnallar ochiq.",
+      "cancel": "Bekor qilish",
+      "save": "Saqlash",
+      "saving": "Saqlanmoqda…",
+      "guide": {
+        "title": "Huquqlar qanday tuzilgan",
+        "presetTitle": "Huquqlar to‘plami",
+        "presetBody": "odam nima qila olishini belgilaydi: jurnallarni ko‘rish, bajarilganini tekshirish, vazifa berish, sozlamalarni o‘zgartirish.",
+        "autoTitle": "Lavozim bo‘yicha yoki qo‘lda",
+        "autoBody": "to‘plam lavozim bo‘yicha beriladi: rahbariyatga — «Administrator», mudirlarga — «Mudir / Bosh oshpaz», xodimlarga — «Oshpaz». Qo‘lda istalgan boshqasini berish mumkin.",
+        "sectionsTitle": "Menyu bo‘limlari",
+        "sectionsBody": "huquqlar to‘plamiga qarab o‘zi ochiladi — alohida sozlanmaydi.",
+        "journalsTitle": "Jurnallar",
+        "journalsBody": "xodim qaysi jurnallarni ko‘rishi lavozim bo‘yicha yoki shaxsan belgilanadi — batafsil «Xodimlar jurnallari» va «Lavozim × jurnal» sahifalarida."
+      },
+      "presets": {
+        "title": "Huquq to‘plamlari",
+        "description": "Har bir to‘plam nima beradi va uni kim oladi.",
+        "configure": "To‘plamlarni sozlash",
+        "people": "{count, plural, one {# kishi} other {# kishi}}",
+        "byPosition": "Lavozim bo‘yicha: {positions}.",
+        "byPositionNone": "Lavozim bo‘yicha hech kimga — faqat qo‘lda.",
+        "more": "va yana {count}",
+        "manual": "Qo‘lda: {count}."
+      },
+      "people": {
+        "title": "Xodimning huquqlar to‘plami",
+        "description": "Har kimda qaysi to‘plam amal qiladi. «O‘zgartirish» — boshqasini tanlash yoki lavozim bo‘yicha to‘plamni qaytarish.",
+        "descriptionReadOnly": "Har kimda qaysi to‘plam amal qiladi. To‘plamni administrator o‘zgartiradi.",
+        "search": "Xodim yoki lavozimni topish",
+        "emptyTitle": "Hozircha xodimlar yo‘q",
+        "emptyHint": "Xodimlarni qo‘shing — bu yerda ularning huquq to‘plamlari chiqadi.",
+        "toStaff": "Xodimlarga",
+        "notFound": "Hech kim topilmadi",
+        "self": "(siz)",
+        "noPosition": "Lavozimsiz",
+        "manual": "qo‘lda berilgan",
+        "auto": "lavozim bo‘yicha",
+        "change": "O‘zgartirish",
+        "changeFor": "Huquqlar to‘plamini o‘zgartirish: {name}",
+        "dialogTitle": "Huquqlar to‘plami — {name}",
+        "forbidden": "Huquqlar to‘plamini administrator o‘zgartiradi",
+        "saved": "{name}: «{preset}» to‘plami",
+        "network": "Server bilan aloqa yo‘q — yana urinib ko‘ring"
+      },
+      "sections": {
+        "title": "Qaysi bo‘limlarni ko‘radi",
+        "description": "Menyu bo‘limlari huquqlar to‘plami bilan ochiladi — alohida sozlama yo‘q. Har bir to‘plamda menyu shunday ko‘rinadi.",
+        "state": {
+          "visible": "ko‘radi",
+          "hidden": "ko‘rmaydi",
+          "depends": "shaxsiy kirishga bog‘liq"
+        },
+        "group": {
+          "management": "rahbariyatda",
+          "staff": "xodimda"
+        },
+        "legend": {
+          "visible": "Bo‘limni ko‘radi",
+          "hidden": "Ko‘rmaydi",
+          "depends": "Shaxsiy kirishga bog‘liq (masalan, chek-listlar jurnaliga)"
+        },
+        "personTitle": "Xodimni tekshirish",
+        "personPlaceholder": "Xodimni tanlang",
+        "personHint": "Odamni tanlang — u hozir ko‘radigan bo‘limlarni ko‘rsatamiz.",
+        "personPreset": "To‘plam: «{preset}»,",
+        "personNone": "Kabinet bo‘limlari yo‘q — ilovada vazifalar bo‘yicha ishlaydi.",
+        "personSees": "Ko‘radi: {sections}.",
+        "footnote": "Rahbariyat («Rahbariyat» guruhidagi lavozimlar) ba’zi bo‘limlarni lavozim bo‘yicha ochadi, shuning uchun bir xil to‘plam rahbar va xodimda turli menyu beradi."
+      },
+      "journals": {
+        "title": "Jurnallar",
+        "description": "Har bir lavozimga {total} ta jurnaldan nechtasi ochiq. Xodimga jurnallarni shaxsan ham tanlash mumkin.",
+        "emptyTitle": "Hozircha lavozimlar yo‘q",
+        "emptyHint": "Lavozimlarni yarating — keyin ularga jurnallarni oching.",
+        "toPositions": "Lavozimlarga",
+        "people": "{count, plural, one {# kishi} other {# kishi}}",
+        "count": "{total} tadan {count}",
+        "none": "sozlanmagan",
+        "personal": "Jurnallar shaxsan tanlangan: {count, plural, one {# xodimda} other {# xodimda}}.",
+        "personalNone": "Hozircha hech kimga jurnallar shaxsan tanlanmagan.",
+        "byPerson": "Xodimlar jurnallari",
+        "byPosition": "Lavozim × jurnal"
+      },
+      "visibility": {
+        "title": "Hamkasblarni ko‘rish",
+        "description": "Har bir lavozimdagi xodimlar ilovada va TasksFlow’da kimni ko‘radi.",
+        "summary": "Ro‘yxat {total} ta lavozimdan {configured} tasida berilgan.",
+        "position": "{name}: {count, plural, one {# xodimni} other {# xodimni}} ko‘radi",
+        "rest": "Qolgan lavozimlarda ro‘yxat berilmagan — ular faqat o‘z vazifalarini ko‘radi.",
+        "open": "Hamkasblarni kim ko‘radi"
+      },
+      "permissions": {
+        "title": "Sozlamalarga huquqlar",
+        "description": "Kabinet sozlamalarini kim o‘zgartira oladi: guruh uchun asosiy paket, lavozim va aniq odam uchun alohida huquqlar.",
+        "open": "Kirish huquqlari"
+      }
+    },
+    "commission": {
+      "description": "Taom sifatini tekshirishni kim imzolaydi: tayyor va tez buziladigan mahsulotlar uchun komissiya tarkibi.",
+      "guide": {
+        "title": "Komissiya qanday ishlaydi",
+        "whoTitle": "Komissiyada kim bor",
+        "whoBody": "rais va komissiya a’zolari — xodimlar yoki tashqi odamlar. Yangi odamni tarkib oynasining o‘zida qo‘shish mumkin.",
+        "signTitle": "Imzo",
+        "signBody": "komissiya a’zosi jurnal yozuvlarini kabinetda yoki jurnal QR kodi orqali PIN-kod bilan imzolaydi.",
+        "copyTitle": "Hujjatlar",
+        "copyBody": "saqlangan tarkib jurnalning amaldagi hujjatlariga ko‘chiriladi, yangi hujjatlar uni o‘zi oladi."
+      },
+      "journals": {
+        "finished_product": {
+          "title": "Tayyor mahsulot sifatini tekshirish",
+          "hint": "Komissiya taomlarni tarqatishdan oldin baholaydi va imzolaydi."
+        },
+        "perishable_rejection": {
+          "title": "Tez buziladigan mahsulot sifatini tekshirish",
+          "hint": "Komissiya kelgan tez buziladigan mahsulotlarni imzolaydi."
+        }
+      },
+      "count": "{count, plural, one {# kishi} other {# kishi}}",
+      "loading": "Tarkib yuklanmoqda…",
+      "loadFailed": "Komissiya tarkibini yuklab bo‘lmadi.",
+      "retry": "Qayta urinish",
+      "emptyTitle": "Komissiya tayinlanmagan",
+      "emptyHint": "Rais va komissiya a’zolarini tayinlang — ular jurnal yozuvlarini imzolaydi.",
+      "emptyHintReadOnly": "Komissiya tarkibini rahbar tayinlaydi.",
+      "assign": "Komissiyani tayinlash",
+      "edit": "Tarkibni o‘zgartirish",
+      "noPosition": "Lavozim ko‘rsatilmagan",
+      "noPin": "PIN yo‘q",
+      "noPinHint": "PIN-kodsiz odam yozuvni jurnal QR kodi orqali imzolay olmaydi",
+      "copyHint": "Tarkib butun tashkilot uchun saqlanadi va jurnalning amaldagi hujjatlariga ko‘chiriladi.",
+      "openJournal": "Jurnalni ochish",
+      "journalOff": "Jurnal o‘chirilgan",
+      "enableJournal": "Jurnalni yoqish",
+      "readOnly": "Komissiya tarkibini rahbar o‘zgartiradi."
+    },
+    "haccpGroup": {
+      "description": "HACCP tizimi uchun kim javob beradi. Guruh ishlab chiqarish nazorati dasturida yuritiladi — bu yerda ma’lumot uchun.",
+      "edit": "Ishlab chiqarish nazorati dasturida o‘zgartirish",
+      "membersTitle": "Guruh tarkibi",
+      "membersHint": "Guruh rahbari HACCP hujjatlarini imzolaydi va majlislarni o‘tkazadi.",
+      "count": "{count, plural, one {# kishi} other {# kishi}}",
+      "emptyTitle": "HACCP guruhi tuzilmagan",
+      "emptyHint": "Guruhni ishlab chiqarish nazorati dasturida tuzing: odatda boshqaruvchi, bosh oshpaz va texnolog.",
+      "documentsTitle": "Guruh haqida buyruq",
+      "documentsHint": "Buyruq, guruh nizomi va majlislar — ishlab chiqarish nazorati dasturida.",
+      "order": "{date} dagi {number}-son buyruq",
+      "noOrder": "Guruhni tuzish haqida buyruq hali chiqarilmagan.",
+      "openPpk": "Dasturda HACCP guruhini ochish"
+    },
+    "controlGroup": {
+      "description": "Ishni kuzatadigan odamlar: jurnallar va xodimlarni ko‘radi, bajarilganini tasdiqlaydi va vazifa beradi, lekin jurnallarni o‘zi to‘ldirmaydi.",
+      "cancel": "Bekor qilish",
+      "guide": {
+        "title": "Nazorat guruhi qanday ishlaydi",
+        "whoTitle": "Guruhda kim bor",
+        "whoBody": "«Nazorat guruhi» huquqlar to‘plami berilgan istalgan xodim. Bu yerda yoki xodimning kirish oynasida qo‘shish va chiqarish mumkin.",
+        "scopeTitle": "Kimni ko‘radi",
+        "scopeBody": "odatda — hammani. «Boshqaruv ierarxiyasi»da toraytirish mumkin: lavozimlar yoki odamlarni va vazifa beradigan jurnallarni tanlang.",
+        "removeTitle": "Chiqarish",
+        "removeBody": "odam o‘z lavozimi bo‘yicha huquqlar to‘plamini qaytarib oladi."
+      },
+      "rights": {
+        "title": "Nazorat guruhi nima qila oladi",
+        "hint": "«Nazorat guruhi» huquqlar to‘plami barcha a’zolar uchun bir xil.",
+        "seesTitle": "Hammasini ko‘radi",
+        "seesBody": "jurnallar, xodimlar, hisobotlar va statistika.",
+        "verifyTitle": "Tasdiqlaydi",
+        "verifyBody": "bajarilgan vazifalar va yozuvlarni tekshiradi.",
+        "assignTitle": "Vazifa beradi",
+        "assignBody": "o‘z «Ierarxiya»sidagi xodimlarga va o‘z jurnallari bo‘yicha.",
+        "fillTitle": "O‘zi to‘ldirmaydi",
+        "fillBody": "nazorat guruhi jurnallar va hujjatlarni to‘ldirmaydi va yopmaydi."
+      },
+      "members": {
+        "title": "A’zolar",
+        "hint": "Har kim kimni ko‘radi va qaysi jurnallar bo‘yicha vazifa beradi. Toraytirish — «Boshqaruv ierarxiyasi»da.",
+        "hintNoHierarchy": "Har kim kimni ko‘radi va qaysi jurnallar bo‘yicha vazifa beradi.",
+        "count": "{count, plural, one {# kishi} other {# kishi}}",
+        "emptyTitle": "Nazorat guruhida hozircha hech kim yo‘q",
+        "emptyHint": "Quyida odam qo‘shing — u darhol «Nazorat guruhi» huquqlar to‘plamini oladi.",
+        "emptyHintReadOnly": "A’zolarni administrator qo‘shadi.",
+        "noPosition": "Lavozimsiz",
+        "narrow": "«Ierarxiya»da toraytirish",
+        "remove": "Guruhdan chiqarish"
+      },
+      "scope": {
+        "seesDefault": "Hammani ko‘radi (ierarxiya sozlanmagan)",
+        "seesAll": "Hammani ko‘radi",
+        "seesNone": "Hech kimni ko‘rmaydi",
+        "seesNoPositions": "Hech kimni ko‘rmaydi: lavozimlar tanlanmagan",
+        "seesPositions": "Lavozimlarni ko‘radi: {list}",
+        "seesNoUsers": "Hech kimni ko‘rmaydi: xodimlar tanlanmagan",
+        "seesUsers": "{count, plural, one {# xodimni} other {# xodimni}} ko‘radi: {list}",
+        "assignsAll": "Barcha jurnallar bo‘yicha vazifa beradi",
+        "assigns": "Vazifa beradi: {list}",
+        "more": "va yana {count}"
+      },
+      "add": {
+        "title": "Guruhga qo‘shish",
+        "hint": "Xodimni tanlang — u hozirgi to‘plam o‘rniga «Nazorat guruhi» huquqlar to‘plamini oladi.",
+        "readOnly": "Nazorat guruhi tarkibini administrator o‘zgartiradi.",
+        "noCandidates": "Qo‘shadigan odam yo‘q: barcha xodimlar allaqachon guruhda.",
+        "placeholder": "Xodimni tanlang",
+        "preview": "Huquqlar to‘plami: «{from}» → «{to}».",
+        "button": "Nazorat guruhiga qo‘shish"
+      },
+      "errors": {
+        "forbidden": "Huquqlar to‘plamini administrator o‘zgartiradi",
+        "notFound": "Xodim topilmadi — sahifani yangilang",
+        "saveFailed": "Huquqlar to‘plamini o‘zgartirib bo‘lmadi",
+        "network": "Server bilan aloqa yo‘q — yana urinib ko‘ring"
+      },
+      "toast": {
+        "added": "{name} — nazorat guruhida",
+        "removed": "{name}: huquqlar to‘plami yana lavozim bo‘yicha"
+      },
+      "confirmAdd": {
+        "title": "{name} nazorat guruhiga qo‘shilsinmi?",
+        "description": "Hozir bu odamda «Administrator» to‘plami.",
+        "losesAdmin": "U to‘liq kirishni yo‘qotadi: sozlamalar, to‘lov va huquqlarni o‘zgartirish",
+        "keeps": "Hammasini ko‘radi, tasdiqlaydi va vazifa beradi, lekin jurnallarni to‘ldirmaydi",
+        "undo": "Qaytarish — «Guruhdan chiqarish»: to‘plam yana lavozim bo‘yicha bo‘ladi",
+        "confirm": "Qo‘shish"
+      },
+      "confirmRemove": {
+        "title": "{name} nazorat guruhidan chiqarilsinmi?",
+        "description": "Huquqlar to‘plami lavozim bo‘yicha qaytadi.",
+        "preset": "Yangi to‘plam: «{preset}»",
+        "rights": "Agar lavozim to‘plami buni bermasa — jurnallarni ko‘rish, tasdiqlash va vazifa berishni to‘xtatadi",
+        "confirm": "Chiqarish"
+      }
+    },
+    "inspectors": {
+      "description": "Ishingizni kim tekshiradi: jurnallarga kirishi bor tashqi tekshiruvchilar va tekshirish roli bor xodimlar.",
+      "external": {
+        "title": "Tashqi tekshiruvchilar",
+        "hint": "Tekshiruvchi portalining QR kodlari va havolalari: u jurnallarni kabinetga kirmasdan ochadi.",
+        "issue": "Tekshiruvchiga QR berish",
+        "emptyTitle": "Tekshiruvchilarga hali kirish berilmagan",
+        "emptyHint": "QR yoki havola bering — tekshiruvchi kerakli davr jurnallarini ko‘radi va tashriflar jurnalida imzo qo‘yadi.",
+        "summary": "{total} tadan {active} tasi amal qiladi.",
+        "kind": {
+          "qr": "Tekshiruvchi uchun QR",
+          "link": "Tekshiruvchi uchun havola"
+        },
+        "status": {
+          "active": "Amal qiladi",
+          "expired": "Muddati tugagan",
+          "revoked": "Bekor qilingan"
+        },
+        "period": "Davr:",
+        "periodOpen": "istalgan — tekshiruvchi tanlaydi",
+        "expires": "Amal qilish muddati:",
+        "expired": "Tugagan:",
+        "issuedBy": "Bergan:",
+        "issuedUnknown": "noma’lum",
+        "opened": "Ochilgan:",
+        "openedCount": "{count, plural, one {# marta} other {# marta}}, oxirgisi — {last}",
+        "openedNever": "hali bir marta ham",
+        "visits": "Tashriflar: {count}",
+        "visitAnonymous": "ismsiz",
+        "visitJournals": "jurnallar: {count}"
+      },
+      "internal": {
+        "title": "Ichki tekshiruvchilar va auditorlar",
+        "hint": "Jurnallar, hujjatlar va xonalarni tekshiradigan yoki audit o‘tkazadigan xodimlar.",
+        "emptyTitle": "Ichki tekshiruvchilar tayinlanmagan",
+        "emptyHint": "Jurnal tekshiruvchisi va auditorlar «Jurnal mas’ullari»da, xona tekshiruvchisi — xona kartasida tayinlanadi.",
+        "openDocument": "Hujjatni ochish",
+        "openRooms": "Xonalar",
+        "openResponsibles": "Jurnal mas’ullari",
+        "more": "va yana {count}"
+      },
+      "roles": {
+        "journal_verifier": "Jurnallar tekshiruvchisi",
+        "document_verifier": "Hujjatlar tekshiruvchisi",
+        "room_verifier": "Xonalar tekshiruvchisi",
+        "audit_auditor": "Ichki audit auditori",
+        "traceability_auditor": "Kuzatuvchanlik auditori"
+      }
+    }
   }
 }

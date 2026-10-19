@@ -1,0 +1,11 @@
+== руководитель (admin@haccp.local)
+file:///D:/wt/pages-staff/.agent/tasks/pages-staff-2026-10/e2e/lib.mjs:118
+  if (!res.ok() || body?.requiresCode) throw new Error(`вход ${email}: HTTP ${res.status()} ${JSON.stringify(body)}`);
+                                             ^
+
+Error: вход admin@haccp.local: HTTP 500 {"error":"Внутренняя ошибка сервера"}
+    at signIn (file:///D:/wt/pages-staff/.agent/tasks/pages-staff-2026-10/e2e/lib.mjs:118:46)
+    at async check (file:///D:/wt/pages-staff/.agent/tasks/pages-staff-2026-10/e2e/pages-check.mjs:29:3)
+    at async file:///D:/wt/pages-staff/.agent/tasks/pages-staff-2026-10/e2e/pages-check.mjs:81:38
+
+Node.js v25.8.2

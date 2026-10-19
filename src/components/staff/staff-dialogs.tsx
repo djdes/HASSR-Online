@@ -156,7 +156,7 @@ function FlagCheckbox(props: {
 }
 
 /** Текст поля «Штатная численность» → число 0…999, null (пусто) или ошибка. */
-function parseHeadcountInput(value: string): { ok: true; value: number | null } | { ok: false } {
+export function parseHeadcountInput(value: string): { ok: true; value: number | null } | { ok: false } {
   const trimmed = value.trim();
   if (trimmed === "") return { ok: true, value: null };
   if (!/^\d{1,3}$/.test(trimmed)) return { ok: false };
@@ -166,8 +166,9 @@ function parseHeadcountInput(value: string): { ok: true; value: number | null } 
 /**
  * Поле «Штатная численность» в окнах создания и правки должности.
  * Пусто — «не задано»: пилюля «занято N из M» тогда не показывается.
+ * Её же показывает окно должности на странице «Должности».
  */
-function HeadcountField(props: {
+export function HeadcountField(props: {
   id: string;
   value: string;
   onChange: (value: string) => void;
