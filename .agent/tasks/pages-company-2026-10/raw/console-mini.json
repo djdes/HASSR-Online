@@ -1,0 +1,100 @@
+[
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "error",
+    "text": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>\n      <AppDevOverlayErrorBoundary globalError={[...]}>\n        <ReplaySsrOnlyErrors>\n        <DevRootHTTPAccessFallbackBoundary>\n          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>\n            <HTTPAccessFallbackErrorBoundary pathname=\"/settings/...\" notFound={<NotAllowedRootHTTPFallbackError>} ...>\n              <RedirectBoundary>\n                <RedirectErrorBoundary router={{...}}>\n                  <Head>\n                  <__next_root_layout_boundary__>\n                    <SegmentViewNode type=\"layout\" pagePath=\"layout.tsx\">\n                      <SegmentTrieNode>\n                      <link>\n                      <RootLayout>\n                        <html\n                          lang=\"ru\"\n-                         style={{--tg-viewport-height:\"100vh\",--tg-viewport-stable-height:\"100vh\"}}\n                        >\n                  ...\n"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Header color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Background color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Closing confirmation is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Changing swipes behavior is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Header color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Background color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] BackButton is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/names",
+    "type": "warning",
+    "text": "[Telegram.WebApp] BackButton is not supported in version 6.0"
+  },
+  {
+    "url": "/settings/names",
+    "type": "visited"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "error",
+    "text": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>\n      <AppDevOverlayErrorBoundary globalError={[...]}>\n        <ReplaySsrOnlyErrors>\n        <DevRootHTTPAccessFallbackBoundary>\n          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>\n            <HTTPAccessFallbackErrorBoundary pathname=\"/settings/...\" notFound={<NotAllowedRootHTTPFallbackError>} ...>\n              <RedirectBoundary>\n                <RedirectErrorBoundary router={{...}}>\n                  <Head>\n                  <__next_root_layout_boundary__>\n                    <SegmentViewNode type=\"layout\" pagePath=\"layout.tsx\">\n                      <SegmentTrieNode>\n                      <link>\n                      <RootLayout>\n                        <html\n                          lang=\"ru\"\n-                         style={{--tg-viewport-height:\"100vh\",--tg-viewport-stable-height:\"100vh\"}}\n                        >\n                  ...\n"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Header color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Background color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Closing confirmation is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Changing swipes behavior is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Header color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] Background color is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] BackButton is not supported in version 6.0"
+  },
+  {
+    "url": "http://localhost:3073/settings/organization/documents",
+    "type": "warning",
+    "text": "[Telegram.WebApp] BackButton is not supported in version 6.0"
+  },
+  {
+    "url": "/settings/organization/documents",
+    "type": "visited"
+  }
+]

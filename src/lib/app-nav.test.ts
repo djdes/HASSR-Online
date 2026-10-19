@@ -428,7 +428,7 @@ test("у каждого раздела, кроме «Остального», с�
     else assert.ok(section.menu && section.menu.length > 0, section.key);
   }
   assert.deepEqual(menuShape("company"), [
-    [null, ["organization"]],
+    [null, ["organization", "documents", "branding", "contacts"]],
     ["more", ["names", "onboarding", "template", "appearance"]],
   ]);
   assert.deepEqual(menuShape("staff"), [
@@ -543,6 +543,29 @@ test("руководитель видит все пункты меню кажд�
     );
     assert.deepEqual(visibleItemIds(owner, section.key, full), all, section.key);
   }
+});
+
+test("«Моя компания»: сведения для документов, логотип и контакты — свои пункты, только руководителю", () => {
+  const items = NAV_SECTIONS.find((section) => section.key === "company")?.menu?.[0].items ?? [];
+  const hrefs = Object.fromEntries(items.map((item) => [item.id, item.href]));
+  assert.deepEqual(hrefs, {
+    organization: "/settings/organization",
+    documents: "/settings/organization/documents",
+    branding: "/settings/organization/branding",
+    contacts: "/settings/organization/contacts",
+  });
+  for (const item of items) assert.deepEqual(item.access, { kind: "anyOf", capabilities: ["admin.full"] }, item.id);
+  // Новые адреса — пункты, а не глубина «Реквизитов».
+  for (const id of ["documents", "branding", "contacts"]) {
+    const place = sectionForPath(`/settings/organization/${id}`);
+    assert.equal(place?.section, "company", id);
+    assert.equal(place?.menuItemId, id, id);
+  }
+  assert.equal(sectionForPath("/settings/organization")?.menuItemId, "organization");
+  assert.deepEqual(visibleItemIds(manager, "company"), ["organization", "documents", "branding", "contacts", "names", "onboarding", "template", "appearance"]);
+  // Заведующей раздела нет вовсе; повару — тоже.
+  assert.deepEqual(visibleItemIds(headChef, "company"), []);
+  assert.deepEqual(visibleItemIds(cook, "company"), []);
 });
 
 test("пресет заведующей у линейной роли: в «Сотрудниках» — только команда", () => {

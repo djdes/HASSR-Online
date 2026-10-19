@@ -276,9 +276,80 @@ export async function refreshOrganizationLegalProfile(
   return profile;
 }
 
-/** Достать сохранённый профиль из JSON-колонки (форма — наша, без валидации). */
+type Loose = Record<string, unknown>;
+
+const looseObject = (value: unknown): Loose | null =>
+  value && typeof value === "object" && !Array.isArray(value) ? (value as Loose) : null;
+const looseString = (value: unknown): string | null => (typeof value === "string" ? value : null);
+const looseNumber = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+const looseList = (value: unknown): Loose[] =>
+  Array.isArray(value) ? value.map(looseObject).filter((item): item is Loose => item !== null) : [];
+const looseStrings = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+
+/**
+ * Достать сохранённый профиль из JSON-колонки. Снимок пишет только
+ * `buildLegalProfile`, но в базе бывают и неполные (демо-организация с ИНН,
+ * адресом и руководителем, профиль старой формы): недостающее становится
+ * `null` / `[]`, чтобы страница «Реквизиты» не падала на `okvedsExtra.length`.
+ */
 export function readLegalProfile(json: unknown): LegalProfile | null {
-  if (!json || typeof json !== "object" || Array.isArray(json)) return null;
-  const candidate = json as Partial<LegalProfile>;
-  return typeof candidate.inn === "string" ? (candidate as LegalProfile) : null;
+  const raw = looseObject(json);
+  if (!raw || typeof raw.inn !== "string") return null;
+  const management = looseObject(raw.management);
+  const okvedMain = looseObject(raw.okvedMain);
+  const capital = looseObject(raw.capital);
+  const finance = looseObject(raw.finance);
+  return {
+    inn: raw.inn,
+    type: raw.type === "LEGAL" || raw.type === "INDIVIDUAL" ? raw.type : null,
+    nameShort: looseString(raw.nameShort),
+    nameFull: looseString(raw.nameFull),
+    opfShort: looseString(raw.opfShort),
+    opfFull: looseString(raw.opfFull),
+    kpp: looseString(raw.kpp),
+    ogrn: looseString(raw.ogrn),
+    ogrnDate: looseString(raw.ogrnDate),
+    address: looseString(raw.address),
+    management:
+      management && typeof management.name === "string"
+        ? { name: management.name, post: looseString(management.post) }
+        : null,
+    okvedMain:
+      okvedMain && typeof okvedMain.code === "string"
+        ? { code: okvedMain.code, name: looseString(okvedMain.name) }
+        : null,
+    okvedsExtra: looseList(raw.okvedsExtra).flatMap((item) =>
+      typeof item.code === "string" ? [{ code: item.code, name: looseString(item.name) }] : [],
+    ),
+    status: looseString(raw.status),
+    registrationDate: looseString(raw.registrationDate),
+    liquidationDate: looseString(raw.liquidationDate),
+    employeeCount: looseNumber(raw.employeeCount),
+    capital:
+      capital && looseNumber(capital.value) !== null
+        ? { type: looseString(capital.type), value: capital.value as number }
+        : null,
+    branchCount: looseNumber(raw.branchCount),
+    finance: finance
+      ? {
+          year: looseNumber(finance.year),
+          taxSystem: looseString(finance.taxSystem),
+          income: looseNumber(finance.income),
+          expense: looseNumber(finance.expense),
+          revenue: looseNumber(finance.revenue),
+          debt: looseNumber(finance.debt),
+          penalty: looseNumber(finance.penalty),
+        }
+      : null,
+    founders: looseList(raw.founders).flatMap((item) =>
+      typeof item.name === "string"
+        ? [{ name: item.name, inn: looseString(item.inn), type: looseString(item.type), share: looseNumber(item.share) }]
+        : [],
+    ),
+    phones: looseStrings(raw.phones),
+    emails: looseStrings(raw.emails),
+    fetchedAt: looseString(raw.fetchedAt) ?? "",
+  };
 }

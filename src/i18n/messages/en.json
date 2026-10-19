@@ -2446,7 +2446,10 @@
             "names": "Section names",
             "onboarding": "Quick setup",
             "template": "Venue template",
-            "appearance": "Appearance"
+            "appearance": "Appearance",
+            "documents": "Document details",
+            "branding": "Logo and colors",
+            "contacts": "Contacts and notifications"
           }
         },
         "staff": {
@@ -2845,7 +2848,10 @@
       "production_control_program": "Program assembly",
       "production_control_haccp_plan": "HACCP plan assembly",
       "production_control_haccp_team_meetings": "HACCP team meetings",
-      "acknowledge": "Documents to read"
+      "acknowledge": "Documents to read",
+      "settings_organization_documents": "Document details",
+      "settings_organization_branding": "Logo and colors",
+      "settings_organization_contacts": "Contacts and notifications"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",
@@ -8932,14 +8938,14 @@
     "organizationProfile": {
       "page": {
         "title": "Organization profile",
-        "description": "Legal details, contacts, branding, and workspace settings used in agreements, printed journals, the inspector portal, and Telegram notifications."
+        "description": "Name, tax ID, sector, registry data, shifts and subscription. Document details, logo and contacts are in the neighbouring menu items."
       },
       "guide": {
         "title": "What to add to the organization profile",
         "nameTitle": "Organization name and tax ID are required",
         "nameBody": "They appear in every printed journal header and in supplier agreements. Rospotrebnadzor will not accept a PDF without the tax ID.",
-        "addressTitle": "Address and phone",
-        "addressBody": "Enter the registered address for printed forms and a contact number for inspectors.",
+        "addressTitle": "Address",
+        "addressBody": "The actual production address for printed forms. The contact number for inspectors is in “Contacts and notifications”.",
         "sphereTitle": "Organization sector",
         "sphereBody": "The sector determines suitable journal sets. For example, a restaurant and a bakery get different options. You can change it later.",
         "innQuestion": "Can I leave the tax ID blank?",
@@ -9146,6 +9152,15 @@
           "paid": "Paid",
           "paused": "Paused",
           "cancelled": "Cancelled"
+        },
+        "morePagesTitle": "More about the company",
+        "morePages": {
+          "docs": "Document details",
+          "docsHint": "Full name, KPP, OGRN, director and the journal header",
+          "branding": "Logo and colors",
+          "brandingHint": "How the company looks in documents and on posters",
+          "contacts": "Contacts and notifications",
+          "contactsHint": "Phone, accountant email, time zone and language"
         }
       },
       "specialMode": {
@@ -9293,6 +9308,114 @@
         "demoCannotDelete": "Demo organizations cannot be deleted",
         "confirmNameExactly": "Enter the organization name exactly as shown in settings",
         "alreadyRequested": "Deletion is already scheduled"
+      },
+      "documentsPage": {
+        "description": "One block of details for journal headers, production control documents, orders and the inspector portal. Empty fields come from the registry.",
+        "orgTitle": "About the organization",
+        "orgLead": "Document details on top of the registry extract: fill in only what is outdated or inaccurate in the registry.",
+        "fromRequisites": "From “Company details”",
+        "innValue": "Tax ID {inn}",
+        "editRequisites": "Edit",
+        "journalShortNameHint": "Printed in the header of every journal. Empty — the short registry name or the full name.",
+        "pointTitle": "About the location",
+        "pointLead": "A location's documents print its name, address, KPP and phone. Pick a location and check the header in the preview.",
+        "pointPick": "Location",
+        "pointUntitled": "Untitled location",
+        "pointJournalName": "Name for journals",
+        "pointJournalNameHint": "The exact name at the place of business. Empty — “name, address”.",
+        "pointAddress": "Location address",
+        "pointAddressHint": "Printed next to the location name",
+        "pointKpp": "Location KPP",
+        "pointKppHint": "The branch's own KPP. Empty — the organization's KPP.",
+        "pointPhone": "Location phone",
+        "pointPhoneHint": "Printed in the header of this location's journals",
+        "pointsEmptyTitle": "No locations yet",
+        "pointsEmptyBody": "Documents are printed for the whole organization. If you have several addresses, add locations and each will get its own header.",
+        "pointsAdd": "Add a location",
+        "pointsManage": "All location settings",
+        "previewTitle": "How it looks in a document",
+        "previewLead": "Updates as you type, using the same rules as the PDF.",
+        "previewForPoint": "Document header for “{name}”",
+        "previewNoPoint": "Document header for the whole organization",
+        "saved": "Document details saved",
+        "pointSaveError": "Could not save the location details",
+        "fixFields": "Check the fields marked in red",
+        "guide": {
+          "title": "How document details work",
+          "registryTitle": "Empty field — from the registry",
+          "registryBody": "If a field is empty, the document uses the value from the registry extract. Fill it in only if the registry is outdated or inaccurate.",
+          "pointTitle": "The location joins the header",
+          "pointBody": "A location's documents print its name for journals, address and phone; the location KPP replaces the organization KPP.",
+          "whereTitle": "Where it is printed",
+          "whereBody": "PDF journal headers, the production control programme and HACCP plan, orders and the inspector portal.",
+          "refreshQuestion": "What happens if I press “Refresh from registry” in “Company details”?",
+          "refreshAnswer": "Only the registry snapshot is updated; your edits stay — they take priority over the registry. To restore the registry value, press “Use registry value” next to the field."
+        }
+      },
+      "brandingPage": {
+        "description": "The logo and brand color appear in documents and on posters. The workspace keeps the WeSetup style.",
+        "logoLead": "The file is saved right away: the logo appears in the left menu and in documents.",
+        "colorTitle": "Brand color",
+        "colorLead": "A thin accent in documents and markers on posters. Without a color, journals and orders print in black and white.",
+        "colorHint": "HEX, for example #5566f6",
+        "colorPicker": "Pick a color",
+        "colorReset": "Remove color",
+        "contrastTitle": "Contrast check",
+        "contrastGood": "Clearly visible on a white sheet: contrast {ratio}:1.",
+        "contrastLight": "A light color is barely visible on a white sheet (contrast {ratio}:1) — thin lines in documents will be darkened to {ink}.",
+        "colorNone": "No color set: journals and orders print in black and white, production control documents and posters use WeSetup colors.",
+        "swatchColor": "Brand color",
+        "swatchLines": "Lines in documents",
+        "markerWhite": "Poster markers: white numbers",
+        "markerDark": "Poster markers: dark numbers",
+        "previewTitle": "How it looks",
+        "previewLead": "Roughly like this in a PDF journal header and on a QR poster. Updates right away, before saving.",
+        "previewJournal": "Journal header (PDF)",
+        "previewPoster": "A4 QR poster",
+        "sampleJournal": "Hygiene log",
+        "posterEyebrow": "Fill in from a phone",
+        "logoUrlNotInPdf": "A logo given as a link is not printed in PDFs — upload a file.",
+        "previewNote": "The workspace is not recolored: the color appears only in documents and on posters, the logo there and in the left menu.",
+        "guide": {
+          "title": "Where the logo and color appear",
+          "logoTitle": "Logo",
+          "logoBody": "In the left menu, in PDF headers of journals, production control documents and orders, on QR posters and in the inspector portal. PNG, JPG or SVG up to 500 KB.",
+          "colorTitle": "Brand color",
+          "colorBody": "A thin band in document headers, production control lines and poster markers. Text always stays black.",
+          "cabinetTitle": "The workspace is not recolored",
+          "cabinetBody": "The workspace and Mini App keep the WeSetup colors — the company color appears only in documents and on posters."
+        }
+      },
+      "contactsPage": {
+        "description": "Phone and email for documents and reports, time zone and language — and where notifications go.",
+        "contactsTitle": "Organization contacts",
+        "contactsLead": "The phone is printed in document details; the accountant email receives the 1C export.",
+        "phoneHint": "Contact for inspectors and suppliers — printed in documents",
+        "regionLead": "The time zone sets shift boundaries and scheduled task times; the language applies to the workspace, Mini App and emails.",
+        "timezoneHint": "Used for shifts, tasks and reminders",
+        "notifyTitle": "Notifications",
+        "notifyLead": "Notifications go to each person individually — in Telegram and by email. Everyone chooses what to receive in their own settings.",
+        "telegramTitle": "Telegram",
+        "telegramLinked": "Connected",
+        "telegramNotLinked": "Not connected",
+        "telegramLinkedBody": "Reminders and reports come to you in the WeSetup bot.",
+        "telegramNotLinkedBody": "Connect the bot to get reminders and reports in Telegram.",
+        "emailTitle": "Email",
+        "emailVerified": "Verified",
+        "emailNotVerified": "Not verified",
+        "staffTitle": "Employees",
+        "staffTelegram": "In Telegram: {linked} of {total}",
+        "staffBody": "Only employees with Telegram connected receive notifications there.",
+        "openNotifications": "Set up notifications",
+        "guide": {
+          "title": "What you set up here",
+          "phoneTitle": "Phone and accountant email",
+          "phoneBody": "The phone is a contact for inspectors and suppliers and is printed in documents. The accountant email receives the weekly write-off export for 1C.",
+          "timezoneTitle": "Time zone and language",
+          "timezoneBody": "The time zone sets shift boundaries, task and reminder times. The language applies to the workspace, Mini App and emails.",
+          "notifyTitle": "Notifications",
+          "notifyBody": "Everyone receives notifications individually. Connect Telegram and choose what to receive in “Set up notifications”."
+        }
       }
     },
     "accessMatrices": {

@@ -38,10 +38,10 @@ import {
  */
 
 /**
- * Логотип и цвет организации настраиваются в «Настройки → Организация»,
- * блок «Брендинг» — на странице «Внешний вид» их нет.
+ * Логотип и цвет организации настраиваются в «Моя компания → Логотип и
+ * цвета» — на странице «Внешний вид» их нет.
  */
-export const BRANDING_SETTINGS_HREF = "/settings/organization#branding";
+export const BRANDING_SETTINGS_HREF = "/settings/organization/branding";
 
 /**
  * Размер карточек:

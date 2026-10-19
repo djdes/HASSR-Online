@@ -2446,7 +2446,10 @@
             "names": "Bo‘lim nomlari",
             "onboarding": "Tezkor sozlash",
             "template": "Muassasa shabloni",
-            "appearance": "Ko‘rinish"
+            "appearance": "Ko‘rinish",
+            "documents": "Hujjatlar uchun ma’lumotlar",
+            "branding": "Logotip va ranglar",
+            "contacts": "Kontaktlar va bildirishnomalar"
           }
         },
         "staff": {
@@ -2845,7 +2848,10 @@
       "production_control_program": "Dasturni yig'ish",
       "production_control_haccp_plan": "HACCP rejasini yig'ish",
       "production_control_haccp_team_meetings": "HACCP guruhi yigʻilishlari",
-      "acknowledge": "Tanishish uchun hujjatlar"
+      "acknowledge": "Tanishish uchun hujjatlar",
+      "settings_organization_documents": "Hujjatlar uchun ma’lumotlar",
+      "settings_organization_branding": "Logotip va ranglar",
+      "settings_organization_contacts": "Kontaktlar va bildirishnomalar"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",
@@ -8932,14 +8938,14 @@
     "organizationProfile": {
       "page": {
         "title": "Tashkilot profili",
-        "description": "Shartnomalar, chop etiladigan jurnallar, inspektor portali va Telegram xabarlari uchun yuridik ma’lumotlar, kontaktlar, brend va umumiy sozlamalar."
+        "description": "Nom, STIR, soha, reyestr ma’lumotlari, smenalar va obuna. Hujjatlar uchun ma’lumotlar, logotip va kontaktlar — menyuning qo‘shni bandlarida."
       },
       "guide": {
         "title": "Tashkilot rekvizitlariga nimalarni kiritish kerak",
         "nameTitle": "Tashkilot nomi va STIR majburiy",
         "nameBody": "Ular har bir chop etiladigan jurnal sarlavhasi va yetkazib beruvchilar bilan shartnomalarda ko‘rsatiladi. STIR bo‘lmasa, Rospotrebnadzor PDFni qabul qilmaydi.",
-        "addressTitle": "Manzil va telefon",
-        "addressBody": "Chop etiladigan shakllar uchun ro‘yxatdan o‘tgan manzilni, inspektorlar uchun esa aloqa raqamini kiriting.",
+        "addressTitle": "Manzil",
+        "addressBody": "Chop etiladigan shakllar uchun ishlab chiqarishning haqiqiy manzili. Inspektorlar uchun telefon — «Kontaktlar va bildirishnomalar»da.",
         "sphereTitle": "Tashkilot faoliyat sohasi",
         "sphereBody": "Faoliyat sohasi mos jurnal to‘plamlarini belgilaydi. Masalan, restoran va novvoyxona uchun turli variantlar taklif qilinadi. Keyinroq o‘zgartirish mumkin.",
         "innQuestion": "STIRsiz qoldirsam bo‘ladimi?",
@@ -9146,6 +9152,15 @@
           "paid": "Pullik",
           "paused": "To‘xtatilgan",
           "cancelled": "Bekor qilingan"
+        },
+        "morePagesTitle": "Kompaniya haqida yana",
+        "morePages": {
+          "docs": "Hujjatlar uchun ma’lumotlar",
+          "docsHint": "To‘liq nom, KPP, OGRN, rahbar va jurnal sarlavhasi",
+          "branding": "Logotip va ranglar",
+          "brandingHint": "Kompaniya hujjatlar va plakatlarda qanday ko‘rinadi",
+          "contacts": "Kontaktlar va bildirishnomalar",
+          "contactsHint": "Telefon, buxgalter emaili, vaqt mintaqasi va til"
         }
       },
       "specialMode": {
@@ -9293,6 +9308,114 @@
         "demoCannotDelete": "Namoyish tashkilotini o‘chirib bo‘lmaydi",
         "confirmNameExactly": "Tashkilot nomini sozlamalarda ko‘rsatilganidek aynan kiriting",
         "alreadyRequested": "O‘chirish allaqachon rejalashtirilgan"
+      },
+      "documentsPage": {
+        "description": "Jurnallar sarlavhasi, nazorat hujjatlari, buyruqlar va inspektor portali uchun yagona ma’lumotlar bloki. Bo‘sh maydon reyestrdan olinadi.",
+        "orgTitle": "Tashkilot haqida",
+        "orgLead": "Reyestr ko‘chirmasi ustidan hujjatlar uchun rekvizitlar: faqat reyestrda eskirgan yoki noaniq narsani to‘ldiring.",
+        "fromRequisites": "«Rekvizitlar»dan",
+        "innValue": "STIR {inn}",
+        "editRequisites": "O‘zgartirish",
+        "journalShortNameHint": "Har bir jurnal sarlavhasida chop etiladi. Bo‘sh bo‘lsa — reyestrdagi qisqa nom yoki to‘liq nom.",
+        "pointTitle": "Savdo nuqtasi haqida",
+        "pointLead": "Nuqta hujjatlarida uning nomi, manzili, KPP va telefoni chop etiladi. Nuqtani tanlang va sarlavhani ko‘rinishda tekshiring.",
+        "pointPick": "Savdo nuqtasi",
+        "pointUntitled": "Nomsiz nuqta",
+        "pointJournalName": "Jurnallar uchun nom",
+        "pointJournalNameHint": "Faoliyat joyidagi aniq nom. Bo‘sh bo‘lsa — «nom, manzil».",
+        "pointAddress": "Nuqta manzili",
+        "pointAddressHint": "Nuqta nomi yonida chop etiladi",
+        "pointKpp": "Nuqta KPP",
+        "pointKppHint": "Alohida bo‘linmaning o‘z KPP. Bo‘sh bo‘lsa — tashkilot KPP.",
+        "pointPhone": "Nuqta telefoni",
+        "pointPhoneHint": "Shu nuqta jurnallari sarlavhasida chop etiladi",
+        "pointsEmptyTitle": "Hozircha savdo nuqtalari yo‘q",
+        "pointsEmptyBody": "Hujjatlar butun tashkilot uchun chop etiladi. Manzillar bir nechta bo‘lsa, nuqtalarni qo‘shing — har biriga o‘z sarlavhasi bo‘ladi.",
+        "pointsAdd": "Nuqta qo‘shish",
+        "pointsManage": "Nuqtaning barcha sozlamalari",
+        "previewTitle": "Hujjatda qanday ko‘rinadi",
+        "previewLead": "Yozayotganingizda o‘zgaradi — PDF bilan bir xil qoidalar bo‘yicha.",
+        "previewForPoint": "«{name}» nuqtasi hujjatlari sarlavhasi",
+        "previewNoPoint": "Butun tashkilot hujjatlari sarlavhasi",
+        "saved": "Hujjatlar uchun ma’lumotlar saqlandi",
+        "pointSaveError": "Nuqta ma’lumotlarini saqlab bo‘lmadi",
+        "fixFields": "Qizil bilan belgilangan maydonlarni tekshiring",
+        "guide": {
+          "title": "Hujjatlar uchun ma’lumotlar qanday ishlaydi",
+          "registryTitle": "Bo‘sh maydon — reyestrdan",
+          "registryBody": "Maydon to‘ldirilmagan bo‘lsa, hujjatga reyestr ko‘chirmasidagi qiymat tushadi. Faqat reyestrda eskirgan yoki noaniq bo‘lsa to‘ldiring.",
+          "pointTitle": "Nuqta sarlavhaga qo‘shiladi",
+          "pointBody": "Nuqta hujjatlarida uning jurnallar uchun nomi, manzili va telefoni chop etiladi; nuqta KPP tashkilot KPP o‘rniga yoziladi.",
+          "whereTitle": "Qayerda chop etiladi",
+          "whereBody": "Jurnallar PDF sarlavhasi, ishlab chiqarish nazorati dasturi va HACCP rejasi, buyruqlar va inspektor portali.",
+          "refreshQuestion": "«Rekvizitlar»da «Reyestrdan yangilash» bosilsa nima bo‘ladi?",
+          "refreshAnswer": "Faqat reyestr nusxasi yangilanadi, sizning tuzatishlaringiz qoladi — ular reyestrdan muhimroq. Reyestr qiymatini qaytarish uchun maydon yonidagi «Reyestrdagini qaytarish»ni bosing."
+        }
+      },
+      "brandingPage": {
+        "description": "Logotip va brend rangi — hujjatlar va plakatlarda. Kabinet interfeysi WeSetup uslubida qoladi.",
+        "logoLead": "Fayl darhol saqlanadi: logotip chap menyuda va hujjatlarda paydo bo‘ladi.",
+        "colorTitle": "Brend rangi",
+        "colorLead": "Hujjatlarda ingichka urg‘u va plakatlarda belgilar. Rangsiz jurnallar va buyruqlar oq-qora chop etiladi.",
+        "colorHint": "HEX, masalan #5566f6",
+        "colorPicker": "Rang tanlash",
+        "colorReset": "Rangni olib tashlash",
+        "contrastTitle": "Kontrast tekshiruvi",
+        "contrastGood": "Oq varaqda yaxshi ko‘rinadi: kontrast {ratio}:1.",
+        "contrastLight": "Och rang oq varaqda deyarli ko‘rinmaydi (kontrast {ratio}:1) — hujjatlardagi ingichka chiziqlar {ink} gacha to‘qlashtiriladi.",
+        "colorNone": "Rang berilmagan: jurnallar va buyruqlar oq-qora, nazorat hujjatlari va plakatlar WeSetup ranglarida chop etiladi.",
+        "swatchColor": "Brend rangi",
+        "swatchLines": "Hujjatlardagi chiziqlar",
+        "markerWhite": "Plakat belgilari: oq raqamlar",
+        "markerDark": "Plakat belgilari: to‘q raqamlar",
+        "previewTitle": "Qanday ko‘rinadi",
+        "previewLead": "Taxminan shunday — jurnal PDF sarlavhasida va QR-plakatda. Saqlashdan oldin darhol o‘zgaradi.",
+        "previewJournal": "Jurnal sarlavhasi (PDF)",
+        "previewPoster": "A4 QR-plakat",
+        "sampleJournal": "Gigiyena jurnali",
+        "posterEyebrow": "Telefondan to‘ldirish",
+        "logoUrlNotInPdf": "Havola orqali berilgan logotip PDF’da chop etilmaydi — faylni yuklang.",
+        "previewNote": "Kabinet interfeysi qayta bo‘yalmaydi: rang faqat hujjatlar va plakatlarda, logotip — o‘sha yerda va chap menyuda.",
+        "guide": {
+          "title": "Logotip va rang qayerda ko‘rinadi",
+          "logoTitle": "Logotip",
+          "logoBody": "Chap menyuda, jurnallar, nazorat hujjatlari va buyruqlar PDF sarlavhasida, QR-plakatlarda va inspektor portalida. PNG, JPG yoki SVG, 500 KB gacha.",
+          "colorTitle": "Brend rangi",
+          "colorBody": "Hujjatlar sarlavhasida ingichka chiziq, nazorat hujjatlaridagi chiziqlar va plakat belgilari. Matn doim qora qoladi.",
+          "cabinetTitle": "Kabinet qayta bo‘yalmaydi",
+          "cabinetBody": "Kabinet va Mini App interfeysi WeSetup ranglarida qoladi — kompaniya rangi faqat hujjatlar va plakatlarda ko‘rinadi."
+        }
+      },
+      "contactsPage": {
+        "description": "Hujjatlar va hisobotlar uchun telefon va email, vaqt mintaqasi va til — hamda bildirishnomalar qayerga keladi.",
+        "contactsTitle": "Tashkilot kontaktlari",
+        "contactsLead": "Telefon hujjatlar uchun ma’lumotlarda chop etiladi, buxgalter emailiga 1C uchun eksport yuboriladi.",
+        "phoneHint": "Inspektorlar va yetkazib beruvchilar uchun aloqa — hujjatlarda chop etiladi",
+        "regionLead": "Vaqt mintaqasi smena chegaralari va rejadagi vazifalar vaqtini belgilaydi; til — kabinet, Mini App va xatlar uchun.",
+        "timezoneHint": "Smenalar, vazifalar va eslatmalar shu bo‘yicha hisoblanadi",
+        "notifyTitle": "Bildirishnomalar",
+        "notifyLead": "Bildirishnomalar har kimga shaxsan keladi — Telegramga va emailga. Nimani olishni har kim o‘z sozlamalarida tanlaydi.",
+        "telegramTitle": "Telegram",
+        "telegramLinked": "Ulangan",
+        "telegramNotLinked": "Ulanmagan",
+        "telegramLinkedBody": "Eslatmalar va hisobotlar sizga WeSetup botiga keladi.",
+        "telegramNotLinkedBody": "Eslatmalar va hisobotlarni Telegramda olish uchun botni ulang.",
+        "emailTitle": "Email",
+        "emailVerified": "Tasdiqlangan",
+        "emailNotVerified": "Tasdiqlanmagan",
+        "staffTitle": "Xodimlar",
+        "staffTelegram": "Telegramda: {total} tadan {linked} ta",
+        "staffBody": "Telegramdagi bildirishnomalarni faqat uni ulagan xodimlar oladi.",
+        "openNotifications": "Bildirishnomalarni sozlash",
+        "guide": {
+          "title": "Bu yerda nima sozlanadi",
+          "phoneTitle": "Telefon va buxgalter emaili",
+          "phoneBody": "Telefon — inspektorlar va yetkazib beruvchilar uchun aloqa, hujjatlarda chop etiladi. Buxgalter emailiga 1C uchun haftalik hisobdan chiqarish eksporti yuboriladi.",
+          "timezoneTitle": "Vaqt mintaqasi va til",
+          "timezoneBody": "Vaqt mintaqasi smena chegaralari, vazifalar va eslatmalar vaqtini belgilaydi. Til — kabinet, Mini App va xatlar uchun.",
+          "notifyTitle": "Bildirishnomalar",
+          "notifyBody": "Har kim bildirishnomalarni shaxsan oladi. Telegramni ulash va nimani olishni tanlash — «Bildirishnomalarni sozlash»da."
+        }
       }
     },
     "accessMatrices": {

@@ -1,0 +1,28 @@
+[
+  {
+    "url": "http://localhost:3073/settings/organization",
+    "type": "warning",
+    "text": "The resource http://localhost:3073/_next/static/css/app/(dashboard)/layout.css?v=1792328555974 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "url": "http://localhost:3073/settings/organization",
+    "type": "warning",
+    "text": "The resource http://localhost:3073/_next/static/css/app/layout.css?v=1792328555974 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "url": "/settings/organization",
+    "type": "visited"
+  },
+  {
+    "url": "/settings/organization/documents",
+    "type": "visited"
+  },
+  {
+    "url": "/settings/organization/branding",
+    "type": "visited"
+  },
+  {
+    "url": "/settings/organization/contacts",
+    "type": "visited"
+  }
+]

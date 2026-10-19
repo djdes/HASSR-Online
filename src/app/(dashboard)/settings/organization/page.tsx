@@ -37,26 +37,13 @@ export default async function OrganizationInfoPage() {
     where: { id: organizationId },
     select: {
       name: true,
-      journalShortName: true,
       type: true,
       ownershipKind: true,
       locationsCount: true,
       inn: true,
       address: true,
-      phone: true,
-      accountantEmail: true,
       legalProfileJson: true,
       legalProfileUpdatedAt: true,
-      legalFullName: true,
-      kpp: true,
-      ogrn: true,
-      legalAddress: true,
-      directorName: true,
-      directorPost: true,
-      locale: true,
-      timezone: true,
-      brandColor: true,
-      logoUrl: true,
       shiftEndHour: true,
       lockPastDayEdits: true,
       requireAdminForJournalEdit: true,
@@ -134,10 +121,8 @@ export default async function OrganizationInfoPage() {
           { title: t("guide.addressTitle"), body: t("guide.addressBody") },
           { title: t("guide.sphereTitle"), body: t("guide.sphereBody") },
         ]}
-        qa={[
-          { q: t("guide.innQuestion"), a: t("guide.innAnswer") },
-          { q: t("guide.brandQuestion"), a: t("guide.brandAnswer") },
-        ]}
+        // Вопрос про логотип и цвет — на «Логотипе и цветах».
+        qa={[{ q: t("guide.innQuestion"), a: t("guide.innAnswer") }]}
       />
 
       <OrganizationSpecialModeCard />
@@ -145,26 +130,13 @@ export default async function OrganizationInfoPage() {
       <OrganizationInfoForm
         initial={{
           name: org.name,
-          journalShortName: org.journalShortName,
           type: org.type,
           ownershipKind: org.ownershipKind,
           inn: org.inn,
           address: org.address,
-          phone: org.phone,
-          accountantEmail: org.accountantEmail,
-          locale: org.locale,
-          timezone: org.timezone,
-          brandColor: org.brandColor,
-          logoUrl: org.logoUrl,
           shiftEndHour: org.shiftEndHour,
           lockPastDayEdits: org.lockPastDayEdits,
           requireAdminForJournalEdit: org.requireAdminForJournalEdit,
-          legalFullName: org.legalFullName,
-          kpp: org.kpp,
-          ogrn: org.ogrn,
-          legalAddress: org.legalAddress,
-          directorName: org.directorName,
-          directorPost: org.directorPost,
         }}
         legal={{
           profile: readLegalProfile(org.legalProfileJson),
