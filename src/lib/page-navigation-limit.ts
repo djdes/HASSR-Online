@@ -29,20 +29,26 @@ export function createPageNavigationLimiter(now = Date.now, maxSubjects = MAX_SU
       if (entry.blockedUntil > time) return Math.ceil((entry.blockedUntil - time) / 1000);
       if (entry.blockedUntil) {
         entry.pages = [];
-        entry.prefetches = [];
         entry.blockedUntil = 0;
       }
       entry.pages = entry.pages.filter((at) => at > time - MINUTE);
       entry.prefetches = entry.prefetches.filter((at) => at > time - MINUTE);
-      const exceeded = prefetch
-        ? entry.prefetches.length >= 240
-        : entry.pages.length >= (automated ? 30 : 120) ||
-          entry.pages.filter((at) => at > time - 10_000).length >= (automated ? 6 : 20);
+      // Speculative Next.js traffic must never put actual documents on cooldown.
+      // Reject only background requests until a slot in their rolling window opens.
+      if (prefetch) {
+        if (entry.prefetches.length >= 240) {
+          return Math.ceil((entry.prefetches[0] + MINUTE - time) / 1000);
+        }
+        entry.prefetches.push(time);
+        return 0;
+      }
+      const exceeded = entry.pages.length >= (automated ? 30 : 120) ||
+        entry.pages.filter((at) => at > time - 10_000).length >= (automated ? 6 : 20);
       if (exceeded) {
         entry.blockedUntil = time + COOLDOWN;
         return COOLDOWN / 1000;
       }
-      (prefetch ? entry.prefetches : entry.pages).push(time);
+      entry.pages.push(time);
       return 0;
     },
   };
