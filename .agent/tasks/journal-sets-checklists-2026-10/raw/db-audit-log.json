@@ -1,0 +1,35 @@
+{
+  "journalEnableTotal": 17,
+  "journalEnableViaSet": 17,
+  "viaSetCodes": [
+    "intensive_cooling",
+    "incoming_control",
+    "incoming_raw_materials_control",
+    "traceability_test",
+    "equipment_maintenance",
+    "breakdown_history",
+    "glass_items_list",
+    "training_plan",
+    "audit_plan",
+    "audit_protocol",
+    "audit_report",
+    "accident_journal",
+    "complaint_register",
+    "transport_temperature",
+    "inventory_condition",
+    "batch_release",
+    "ccp_monitoring"
+  ],
+  "viaSetSets": [
+    "haccp"
+  ],
+  "allByManager": true,
+  "typicalCreated": [
+    "sanpin",
+    "haccp",
+    "territorial-manager",
+    "chief-technologist",
+    "rospotrebnadzor-prep",
+    "haccp-audit"
+  ]
+}

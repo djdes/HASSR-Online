@@ -5,6 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { resolveEquipmentArea } from "@/lib/area-building-sync";
+import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
+import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { recordAuditLog } from "@/lib/audit-log";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
@@ -82,20 +85,21 @@ export async function PUT(
     }
 
     const body = await request.json().catch(() => ({}));
-    const { name, type, areaId, serialNumber, tempMin, tempMax, tuyaDeviceId } = body;
+    const { name, type, serialNumber, tempMin, tempMax, tuyaDeviceId } = body;
 
     // Раньше: name.trim() крашил 500'кой если name был числом/null/object.
     if (typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "Название обязательно" }, { status: 400 });
     }
 
-    if (areaId) {
-      const area = await db.area.findFirst({
-        where: { id: areaId, organizationId: getActiveOrgId(session) },
-      });
-      if (!area) {
-        return NextResponse.json({ error: "Цех не найден" }, { status: 400 });
-      }
+    // Помещение: цех организации или помещение точки без цеха (цех
+    // создаётся с точкой помещения). Не передано — остаётся прежнее.
+    const place = await resolveEquipmentArea(getActiveOrgId(session), {
+      areaId: body?.areaId,
+      roomId: body?.roomId,
+    });
+    if (!place.ok) {
+      return NextResponse.json({ error: place.error }, { status: 400 });
     }
 
     // tempMin/tempMax — finite numbers либо null. Раньше Number("abc")
@@ -140,7 +144,7 @@ export async function PUT(
         ...extras.patch,
         name: name.trim().slice(0, 200),
         type: typeof type === "string" && type.trim() ? type.trim().slice(0, 50) : equipment.type,
-        areaId: typeof areaId === "string" && areaId ? areaId : equipment.areaId,
+        areaId: place.areaId ?? equipment.areaId,
         serialNumber:
           typeof serialNumber === "string" && serialNumber.trim()
             ? serialNumber.trim().slice(0, 100)
@@ -191,6 +195,11 @@ export async function PUT(
       max: parsedTempMax,
     });
 
+    // Фритюрница: новое имя, точка или тип доходят до журнала фритюра.
+    if (isFryerEquipmentType(equipment.type) || isFryerEquipmentType(updated.type)) {
+      await syncFryerOilDocumentsSafe(equipment.area.organizationId);
+    }
+
     return NextResponse.json({ equipment: updated });
   } catch (error) {
     console.error("Equipment update error:", error);
@@ -229,6 +238,11 @@ export async function DELETE(
     }
 
     await db.equipment.delete({ where: { id } });
+
+    // Удалённая фритюрница — связь в журнале фритюра снимается, имя остаётся.
+    if (isFryerEquipmentType(equipment.type)) {
+      await syncFryerOilDocumentsSafe(equipment.area.organizationId);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

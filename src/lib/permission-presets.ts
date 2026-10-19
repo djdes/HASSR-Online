@@ -6,16 +6,37 @@
  * Заведующая (head_chef) — особый пресет: видит сотрудников + проверку
  * выполненных задач, но НЕ заходит в /journals и не использует
  * терминологию «журналов».
+ *
+ * Контроль-группа (control_group) — смотрит и подтверждает, назначает
+ * задачи в пределах своей «Иерархии», но сама не заполняет. Выставляется
+ * только явно (из роли не выводится).
  */
 
 export type PermissionPreset =
   | "admin"
   | "head_chef"
+  | "control_group"
   | "cook"
   | "waiter"
   | "seller"
   | "cashier"
   | "cleaner";
+
+/**
+ * Все пресеты в порядке показа. Единственный источник списка: его читают
+ * `/api/settings/role-presets`, `/settings/role-presets`, окно доступа
+ * сотрудника и `POST /api/staff/[id]/preset`.
+ */
+export const ALL_PRESETS = [
+  "admin",
+  "head_chef",
+  "control_group",
+  "cook",
+  "waiter",
+  "seller",
+  "cashier",
+  "cleaner",
+] as const satisfies readonly PermissionPreset[];
 
 /**
  * Capability tokens — что юзер может делать. UI и API проверяют через
@@ -32,6 +53,12 @@ export type Capability =
   | "staff.view"
   /** Видеть verification-страницу (заведующая проверяет задачи) */
   | "tasks.verify"
+  /**
+   * Назначать задачи сотрудникам (`POST /api/journal-task-claims/assign`).
+   * Без `admin.full` — только людям и журналам из своей «Иерархии»
+   * (`ManagerScope`), см. `src/lib/task-assign-rules.ts`.
+   */
+  | "tasks.assign"
   /** Заходить в /reports, генерировать сводки */
   | "reports.view"
   /** Видеть админ-функции: настройки, интеграции, biling */
@@ -47,6 +74,40 @@ export type Capability =
   /** Видеть compliance ring и stats */
   | "stats.view";
 
+/** Все возможности в порядке показа — единственный источник списка. */
+export const ALL_CAPABILITIES = [
+  "journals.view",
+  "journals.manage",
+  "staff.manage",
+  "staff.view",
+  "tasks.verify",
+  "tasks.assign",
+  "reports.view",
+  "admin.full",
+  "mini.tasks",
+  "mini.acceptance",
+  "mini.writeoff",
+  "mini.cashier",
+  "stats.view",
+] as const satisfies readonly Capability[];
+
+/** Подписи возможностей для `/settings/role-presets` (страница на русском). */
+export const CAPABILITY_LABELS: Record<Capability, string> = {
+  "journals.view": "Видит журналы как журналы",
+  "journals.manage": "Редактирует журналы и документы",
+  "staff.manage": "Управление сотрудниками",
+  "staff.view": "Видит сотрудников (read-only)",
+  "tasks.verify": "Проверка выполненных задач",
+  "tasks.assign": "Назначает задачи сотрудникам",
+  "reports.view": "Доступ к отчётам",
+  "admin.full": "Полные права админа",
+  "mini.tasks": "Mini App — задачи смены",
+  "mini.acceptance": "Mini App — приёмка",
+  "mini.writeoff": "Mini App — списания",
+  "mini.cashier": "Mini App — касса",
+  "stats.view": "Видит compliance-статистику",
+};
+
 const PRESET_CAPABILITIES: Record<PermissionPreset, Capability[]> = {
   admin: [
     "journals.view",
@@ -54,6 +115,7 @@ const PRESET_CAPABILITIES: Record<PermissionPreset, Capability[]> = {
     "staff.manage",
     "staff.view",
     "tasks.verify",
+    "tasks.assign",
     "reports.view",
     "admin.full",
     "mini.tasks",
@@ -70,6 +132,18 @@ const PRESET_CAPABILITIES: Record<PermissionPreset, Capability[]> = {
     "stats.view",
     "mini.tasks",
   ],
+  // Контроль-группа: смотрит журналы, сотрудников, отчёты и статистику,
+  // подтверждает выполненное и раздаёт задачи в пределах своей «Иерархии».
+  // Сама не заполняет: нет `mini.tasks` и `journals.manage`, а ACL журналов
+  // запрещает ей запись и закрытие (src/lib/journal-acl.ts).
+  control_group: [
+    "journals.view",
+    "staff.view",
+    "reports.view",
+    "stats.view",
+    "tasks.verify",
+    "tasks.assign",
+  ],
   cook: ["mini.tasks"],
   waiter: ["mini.tasks"],
   seller: ["mini.tasks", "mini.acceptance"],
@@ -80,6 +154,7 @@ const PRESET_CAPABILITIES: Record<PermissionPreset, Capability[]> = {
 const PRESET_LABELS: Record<PermissionPreset, string> = {
   admin: "Администратор",
   head_chef: "Заведующий / Шеф",
+  control_group: "Контроль-группа",
   cook: "Повар",
   waiter: "Официант",
   seller: "Продавец",
@@ -90,6 +165,8 @@ const PRESET_LABELS: Record<PermissionPreset, string> = {
 const PRESET_DESCRIPTIONS: Record<PermissionPreset, string> = {
   admin: "Полный доступ, видит журналы и все настройки",
   head_chef: "Видит сотрудников + проверяет выполненные задачи. Журналы скрыты.",
+  control_group:
+    "Видит журналы, сотрудников, отчёты и статистику, подтверждает выполненное и назначает задачи. Сам журналы не заполняет.",
   cook: "Мини-апп: только задачи смены",
   waiter: "Мини-апп: только задачи смены",
   seller: "Мини-апп: задачи + приём поставок",
@@ -101,7 +178,7 @@ const PRESET_DESCRIPTIONS: Record<PermissionPreset, string> = {
  * Преобразует legacy `User.role` в default permission preset, если у
  * юзера ещё не выставлен `permissionPreset` напрямую.
  */
-function defaultPresetFromRole(role: string | null | undefined): PermissionPreset {
+export function defaultPresetFromRole(role: string | null | undefined): PermissionPreset {
   switch ((role ?? "").toLowerCase()) {
     case "owner":
     case "manager":
@@ -131,15 +208,36 @@ export function effectivePreset(user: {
 }
 
 export function isValidPreset(value: string): value is PermissionPreset {
-  return [
-    "admin",
-    "head_chef",
-    "cook",
-    "waiter",
-    "seller",
-    "cashier",
-    "cleaner",
-  ].includes(value);
+  return (ALL_PRESETS as readonly string[]).includes(value);
+}
+
+export function isCapability(value: string): value is Capability {
+  return (ALL_CAPABILITIES as readonly string[]).includes(value);
+}
+
+/**
+ * Участник контроль-группы: пресет выставлен явно (по роли он не
+ * выводится). ROOT — никогда.
+ */
+export function isControlGroupMember(user: {
+  permissionPreset?: string | null;
+  isRoot?: boolean | null;
+}): boolean {
+  return user.isRoot !== true && user.permissionPreset === "control_group";
+}
+
+/**
+ * Что пресет даёт в этой организации: org-override целиком заменяет
+ * набор (кроме `admin` — он всегда полный). Порядок — как в
+ * `ALL_CAPABILITIES`.
+ */
+export function presetCapabilitiesFor(
+  preset: PermissionPreset,
+  orgPresetOverrides?: Record<string, string[]> | null
+): Capability[] {
+  const override = preset !== "admin" ? orgPresetOverrides?.[preset] : undefined;
+  const source = Array.isArray(override) ? override : PRESET_CAPABILITIES[preset];
+  return ALL_CAPABILITIES.filter((capability) => source.includes(capability));
 }
 
 export function hasCapability(
@@ -202,7 +300,7 @@ export function listAllPresets(): {
   label: string;
   description: string;
 }[] {
-  return (Object.keys(PRESET_LABELS) as PermissionPreset[]).map((p) => ({
+  return ALL_PRESETS.map((p) => ({
     value: p,
     label: PRESET_LABELS[p],
     description: PRESET_DESCRIPTIONS[p],

@@ -774,7 +774,133 @@
     "allChecks": "Barcha tekshiruvlar",
     "allGood": "Kamchiliklar yo‘q",
     "visitsTitle": "Kim ko‘rdi",
-    "noVisits": "Hali hech kim jurnallarni QR orqali ochmagan"
+    "noVisits": "Hali hech kim jurnallarni QR orqali ochmagan",
+    "pageTitle": "Sizga tekshiruv keldi (yoki keladi)",
+    "pageLead": "Qadamma-qadam nima qilish, tekshiruvchiga nimani ko‘rsatish va hujjatlarni qayerdan olish — bitta ekranda.",
+    "guide": {
+      "title": "Hozir nima qilish kerak",
+      "lead": "Tekshiruvchi kelganda beshta qadam — 5–10 daqiqa oladi.",
+      "step1Title": "Tekshiruvchining hujjatlarini tekshiring",
+      "step1Body": "Xizmat guvohnomasi va tekshiruv to‘g‘risidagi qarorni (farmoyishni) so‘rang. F.I.Sh., organ, sanalar va tekshiruv predmetini solishtiring. Tekshiruvni raqami bo‘yicha Nazorat tadbirlari yagona reyestridan topish mumkin — proverki.gov.ru.",
+      "step2Title": "QR kodni ko‘rsating",
+      "step2Body": "Tekshiruvchi QR kodni telefon bilan skanerlaydi va kirmasdan jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi va me’yoriy hujjatlarni ko‘radi. U yerdan yozuvlarni o‘zgartirib bo‘lmaydi.",
+      "step3Title": "Tashrifni qayd eting",
+      "step3Body": "Tekshiruvchi QR orqali tashriflar jurnaliga o‘zi yozuv kiritadi va qaror fotosini biriktiradi. Kiritmagan bo‘lsa — yozuvni quyida qo‘shing va qarorni suratga oling.",
+      "step4Title": "Hujjatlarni topshiring",
+      "step4Body": "Kerakli davr uchun arxivni yuklab oling: jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi, CAPA va tashriflar jurnali — bitta ZIP faylda.",
+      "step5Title": "Maxsus rejimni yoqing (ixtiyoriy)",
+      "step5Body": "Tekshiruv vaqtida jurnallarda avtomatik yozuvlar paydo bo‘lmaydi: hammasini xodimlar o‘zlari kiritadi.",
+      "tipsTitle": "Maslahatlar",
+      "tip1": "Tekshiruvchiga hamroh bo‘ling va tekshiruv predmeti bo‘yicha savollarga xotirjam va aniq javob bering.",
+      "tip2": "Rejadan tashqari tekshiruvda odatda prokuratura bilan kelishilganlik belgisi bo‘ladi — uni qarorda ko‘ring.",
+      "tip3": "Tekshiruv vaqtida kamchilik topilsa — darhol tuzating va qayd eting: foto, jurnaldagi yozuv, CAPA vazifasi.",
+      "tip4": "Imzolashdan oldin dalolatnomani o‘qing. Rozi bo‘lmasangiz — buni dalolatnomada yozing va e’tirozlaringizni ilova qiling."
+    },
+    "visits": {
+      "title": "Tashriflar jurnali",
+      "lead": "Tekshiruvchi QR orqali o‘zi yozuv kiritadi va qaror skanini yoki fotosini biriktiradi. Kiritmagan bo‘lsa — yozuvni shu yerda qo‘shing.",
+      "empty": "Hozircha yozuvlar yo‘q. Tekshiruvchi QR kodni skanerlab yozuv kiritganda, u shu yerda paydo bo‘ladi.",
+      "add": "Yozuv qo‘shish",
+      "addTitle": "Tashrif yozuvi",
+      "addLead": "Tekshiruv to‘g‘risidagi qaror (farmoyish) bo‘yicha to‘ldiring va uning fotosini biriktiring — yozuv tashriflar jurnaliga va tekshiruv arxiviga tushadi.",
+      "name": "Tekshiruvchining familiyasi, ismi, otasining ismi",
+      "namePlaceholder": "Ivanova Anna Petrovna",
+      "position": "Lavozimi",
+      "positionPlaceholder": "Bosh mutaxassis-ekspert",
+      "authority": "Nazorat organi",
+      "authorityPlaceholder": "Moskva viloyati bo‘yicha Rospotrebnadzor boshqarmasi",
+      "kind": "Tekshiruv turi",
+      "kinds": {
+        "planned": "Rejali",
+        "unplanned": "Rejadan tashqari",
+        "complaint": "Shikoyat bo‘yicha",
+        "other": "Boshqa"
+      },
+      "kindNote": "Qanday tekshiruv",
+      "kindNotePlaceholder": "Masalan: profilaktik tashrif",
+      "basisNumber": "Qaror (farmoyish) raqami",
+      "basisDate": "Qaror sanasi",
+      "visitedAt": "Kelgan vaqti",
+      "files": "Qaror skani yoki fotosi",
+      "filesHint": "PDF, JPG yoki PNG, har biri 10 MB gacha, jami 25 MB gacha, {max} tadan ko‘p emas",
+      "pickFiles": "Suratga olish yoki fayl tanlash",
+      "preparing": "Fayl tayyorlanmoqda…",
+      "remove": "Olib tashlash",
+      "cancel": "Bekor qilish",
+      "save": "Yozuvni saqlash",
+      "saving": "Saqlanmoqda…",
+      "saved": "Yozuv tashriflar jurnaliga qo‘shildi",
+      "saveFailed": "Yozuvni saqlab bo‘lmadi",
+      "attach": "Skan biriktirish",
+      "attaching": "Yuklanmoqda…",
+      "attached": "Skan biriktirildi",
+      "attachFailed": "Skanni biriktirib bo‘lmadi",
+      "tooMany": "{max} tadan ko‘p fayl biriktirib bo‘lmaydi",
+      "tooBig": "«{name}» 10 MB dan katta — hujjatni qayta suratga oling",
+      "tooLarge": "Fayllar jami 25 MB dan katta — kamroq varaq biriktiring yoki ularni qayta suratga oling",
+      "hide": "Yashirish",
+      "hideTitle": "Yozuvni xato deb yashirasizmi?",
+      "hideLead": "«{name}» yozuvi bazada qoladi, lekin tashriflar jurnalidan yo‘qoladi.",
+      "hideBullet1": "tekshiruv arxiviga va tekshiruvchi portaliga kirmaydi",
+      "hideBullet2": "harakatlar jurnalida kim va nima uchun yashirgani qoladi",
+      "hideBullet3": "istalgan vaqtda qaytarish mumkin: «Yashirinlarni ko‘rsatish» → «Qaytarish»",
+      "hideReason": "Yozuv nima uchun xato",
+      "hideReasonPlaceholder": "Masalan: sinov yozuvi, takror, begona odam",
+      "hideConfirm": "Yozuvni yashirish",
+      "hiddenDone": "Yozuv yashirildi",
+      "restore": "Qaytarish",
+      "restored": "Yozuv jurnalga qaytarildi",
+      "hideFailed": "Yozuvni o‘zgartirib bo‘lmadi",
+      "hiddenNote": "Xato deb yashirilgan: {reason} — {name}, {date}",
+      "showHidden": "Yashirinlarni ko‘rsatish ({count})",
+      "hideHidden": "Yashirinlarni ko‘rsatmaslik",
+      "allHidden": "Barcha yozuvlar xato deb yashirilgan — ularni ko‘rish uchun «Yashirinlarni ko‘rsatish»ni bosing.",
+      "byInspector": "tekshiruvchi QR orqali kiritgan",
+      "byManager": "kiritgan: {name}",
+      "byCabinet": "kabinetda kiritilgan",
+      "basis": "Asos: {basis}",
+      "noBasis": "ko‘rsatilmagan",
+      "noScan": "Asos skani biriktirilmagan",
+      "scan": "Skan {n}",
+      "count": "{count, plural, other {# ta yozuv}}"
+    },
+    "norms": {
+      "title": "Me’yoriy hujjatlar",
+      "lead": "Tekshiruvchiga nimani ko‘rsatish: ishlab chiqarish nazorati dasturi, HACCP rejasi va me’yoriy hujjatlar. Faqat ko‘rish.",
+      "ppk": "Ishlab chiqarish nazorati dasturi",
+      "haccpPlan": "HACCP rejasi",
+      "openPdf": "PDF ochish",
+      "uploaded": "Imzolangan nusxa",
+      "approved": "{version}-versiya {date} da tasdiqlangan",
+      "assembled": "«Ishlab chiqarish nazorati» bo‘limlaridan yig‘iladi",
+      "listTitle": "Me’yoriy hujjatlar",
+      "listOrg": "«Ishlab chiqarish nazorati»da belgilangan",
+      "listRecommended": "Ro‘yxat hali belgilanmagan — umumiy ovqatlanish uchun asosiy hujjatlar ko‘rsatilgan"
+    },
+    "special": {
+      "title": "Maxsus rejim",
+      "lead": "Jurnallarda avtomatik yozuvlar paydo bo‘lmasligi kerak bo‘lsa, tekshiruv vaqtida yoqing.",
+      "effect1": "jurnal hujjatlarini avtomatik yaratmaydi",
+      "effect2": "yozuvlarni avtomatik to‘ldirmaydi",
+      "effect3": "«Kechagisini nusxalash» tugmasini yashiradi",
+      "keeps": "Kiritilgan ma’lumotlar va o‘zgarishlar tarixi saqlanadi. Istalgan vaqtda o‘chirish mumkin.",
+      "on": "Yoqilgan",
+      "off": "O‘chirilgan",
+      "saved": "Saqlandi",
+      "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
+      "askManager": "Yoqish yoki o‘chirishni rahbar qila oladi"
+    },
+    "experts": {
+      "title": "Ekspert yordami",
+      "lead": "WeSetup pullik xizmatlari: arizani menejer ko‘rib chiqadi va siz bilan bog‘lanadi.",
+      "audit": "Ekspert bilan tayyorgarlik",
+      "auditHint": "Tekshiruvdan oldingi audit: buzilishlarni inspektordan oldin topamiz va yechimlar bilan hisobot beramiz.",
+      "visit": "Mutaxassisning chiqishi",
+      "visitHint": "Mutaxassis keladi, ishlab chiqarishni ko‘radi va kamchiliklarni joyida tahlil qiladi.",
+      "priceFrom": "{price} ₽ dan",
+      "priceExact": "{price} ₽",
+      "priceOnRequest": "narxi so‘rov bo‘yicha"
+    }
   },
   "common": {
     "save": "Saqlash",
@@ -3260,6 +3386,7 @@
       "audit_plan": "Reja — kalendar yil uchun; ichki auditlar — jadval bo‘yicha, kamida yiliga bir marta.",
       "audit_protocol": "Har bir ichki audit yakunida rasmiylashtiriladi.",
       "audit_report": "Har bir ichki audit yakunida; rahbariyat tomonidan ko‘rib chiqish — kamida yiliga bir marta.",
+      "ccp_monitoring": "HACCP rejasi bo‘yicha — har bir kritik nazorat nuqtasi uchun belgilangan monitoring davriyligida.",
       "fallback": "Zaruratga qarab."
     }
   },
@@ -4375,6 +4502,24 @@
             "title": "Dalolatnomalarni tikib qo‘ying",
             "body": "Pudratchi dalolatnomasi ko‘chirmasini sana bilan DDD jurnaliga, aslini «Shartnomalar» papkasiga joylang. Tekshiruvda Rospotrebnadzor asl nusxani so‘raydi."
           }
+        },
+        "ccp_monitoring": {
+          "takePoint": {
+            "title": "HACCP rejasidan nuqtani oling",
+            "body": "«Ishlab chiqarish nazorati» → «KNN» bo‘limini oching. Nuqtaning parametri, kritik chegarasi va qanchalik tez-tez o‘lchashni ko‘ring. Nomni rejadagidek yozing, masalan «KNN-1 Issiqlik ishlovi»."
+          },
+          "measure": {
+            "title": "Parametrni o‘lchang",
+            "body": "Rejada ko‘rsatilganini qiyoslangan asbob bilan o‘lchang: mahsulot ichidagi harorat, vaqt, pH. Xotiradan emas, nazorat paytida o‘lchang."
+          },
+          "record": {
+            "title": "Qiymatni yozing",
+            "body": "Yangi yozuv: KNN nomi, parametr, kritik chegara va birliklari bilan haqiqiy qiymat, masalan «78 °C». Qiymat chegarada ekanini belgilang."
+          },
+          "actOnDeviation": {
+            "title": "Chetlanish — darhol harakat qiling",
+            "body": "Qiymat chegaradan tashqarida: 1) mahsulotni chetga oling, 2) sababini toping, 3) uni bartaraf eting, 4) nazoratni takrorlang. Nima qilganingizni «Tuzatuvchi harakat» maydoniga yozing."
+          }
         }
       },
       "previews": {
@@ -4522,7 +4667,11 @@
       "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring.",
       "invalidPin": "PIN 4 dan 6 tagacha raqamdan iborat bo‘lishi kerak",
       "roleAria": "Komissiyadagi roli: {name}",
-      "loadFailed": "Komissiya tarkibini yuklab bo‘lmadi"
+      "loadFailed": "Komissiya tarkibini yuklab bo‘lmadi",
+      "titlePerishable": "Tez buziladigan mahsulotlarni tekshirish komissiyasi",
+      "descriptionPerishable": "Komissiya a’zolari har bir kelib tushgan mahsulotni imzolaydilar. Kamida bitta a’zoning imzosisiz tekshiruv yozuvi yopilmaydi va jurnalni yakunlab bo‘lmaydi.",
+      "newPersonHintPerishable": "Shaxs xodimlar sahifasining “Komissiya” ustunida mahsulot sifatini tekshirish jurnallariga kirish huquqi bilan ko‘rinadi. Shu PIN bilan jurnal QR-kodi orqali yozuvlarni imzolaydi.",
+      "nextHintPerishable": "Keyin a’zo jurnal QR-kodini skanerlaydi, o‘zini tanlaydi va PINni kiritib, bugungi mahsulotlarni ko‘radi. Baho qo‘yib imzolaydi; imzo hujjatda — yozuv yonida va jadval ostidagi “Nazorat komissiyasi imzolari” blokida ko‘rinadi."
     },
     "orgDirectory": {
       "failed": "Ma’lumotnomani yuklab bo‘lmadi",
@@ -6109,6 +6258,9 @@
     "editLists": "Ro‘yxatlarni tahrirlash",
     "fatTab": "Yog‘ turi",
     "equipmentTab": "Uskuna",
+    "equipmentLinked": "«Uskunalar»dan",
+    "equipmentLinkedHint": "«Uskunalar» bo‘limidagi friturlar bu yerda o‘zi paydo bo‘ladi. Nomini «Uskunalar»da o‘zgartiring — jurnalda ham yangilanadi.",
+    "openEquipment": "«Uskunalar»ni ochish",
     "productTab": "Mahsulot turi",
     "add": "Qo‘shish",
     "fromOrgDirectory": "Tashkilot ma’lumotnomasidan",
@@ -7180,7 +7332,69 @@
       "preparingInvite": "Taklifnoma tayyorlanmoqda",
       "journalAccess": "Jurnallarga kirish",
       "cancel": "Bekor qilish",
-      "save": "Saqlash"
+      "save": "Saqlash",
+      "presetTitle": "Huquqlar to‘plami",
+      "presetHint": "Xodim saytda va Telegramda nimani ko‘radi va nima qila oladi. Odatda to‘plam lavozimdan olinadi.",
+      "presetAuto": "Lavozim bo‘yicha (avtomatik)",
+      "presetAutoHint": "Hozir: {preset}",
+      "presetGives": "«{preset}» nima beradi",
+      "presetCapabilitiesCount": "{count, plural, one {# imkoniyat} other {# imkoniyat}}",
+      "presetCurrent": "hozir",
+      "presetSelfLocked": "O‘zingizdan «Administrator»ni olib tashlab bo‘lmaydi: sozlamalarga kirish yo‘qoladi. Boshqa administratordan so‘rang.",
+      "presetReadOnly": "Huquqlar to‘plamini administrator o‘zgartiradi.",
+      "presetControlGroupNote": "Nazorat guruhi jurnallarni to‘ldirmaydi: ko‘radi, bajarilganini tasdiqlaydi va o‘z «Ierarxiya»sidagi odamlarga vazifa beradi.",
+      "presetSaveFailed": "Huquqlar to‘plamini saqlab bo‘lmadi",
+      "presets": {
+        "admin": {
+          "label": "Administrator",
+          "description": "To‘liq kirish: jurnallar, xodimlar, sozlamalar, hisobotlar va to‘lov."
+        },
+        "head_chef": {
+          "label": "Mudir / Bosh oshpaz",
+          "description": "Xodimlarni ko‘radi va bajarilgan vazifalarni tekshiradi. Jurnallarni jurnal sifatida ko‘rmaydi."
+        },
+        "control_group": {
+          "label": "Nazorat guruhi",
+          "description": "Jurnallar, xodimlar, hisobotlar va statistikani ko‘radi, bajarilganini tasdiqlaydi va vazifa beradi. O‘zi to‘ldirmaydi."
+        },
+        "cook": {
+          "label": "Oshpaz",
+          "description": "Ilovada faqat o‘z smenasi vazifalari."
+        },
+        "waiter": {
+          "label": "Ofitsiant",
+          "description": "Ilovada faqat o‘z smenasi vazifalari."
+        },
+        "seller": {
+          "label": "Sotuvchi",
+          "description": "Smena vazifalari va yetkazib berishlarni qabul qilish."
+        },
+        "cashier": {
+          "label": "Kassir",
+          "description": "Smena vazifalari, qabul qilish, hisobdan chiqarish va kassa."
+        },
+        "cleaner": {
+          "label": "Farrosh",
+          "description": "Ilovada faqat tozalash vazifalari."
+        }
+      },
+      "capabilities": {
+        "journals_view": "Jurnallarni ko‘radi",
+        "journals_manage": "Jurnallarni yaratadi va tahrirlaydi",
+        "staff_manage": "Xodimlarni boshqaradi",
+        "staff_view": "Xodimlarni ko‘radi",
+        "tasks_verify": "Bajarilgan vazifalarni tasdiqlaydi",
+        "tasks_assign": "Xodimlarga vazifa beradi",
+        "reports_view": "Hisobotlarni ochadi",
+        "admin_full": "Barcha sozlamalar va to‘lov",
+        "mini_tasks": "Smena vazifalarini bajaradi",
+        "mini_acceptance": "Yetkazib berishlarni qabul qiladi",
+        "mini_writeoff": "Hisobdan chiqarishni rasmiylashtiradi",
+        "mini_cashier": "Kassa bilan ishlaydi",
+        "stats_view": "Statistikani ko‘radi"
+      },
+      "presetChange": "O‘zgartirish",
+      "presetCollapse": "Yig‘ish"
     },
     "bulkAdd": {
       "pasteNoRows": "Birorta ham qator topilmadi. Har bir qatorda ism-familiya va lavozim bo‘lishi kerak.",
@@ -7327,7 +7541,13 @@
       },
       "notSet": "belgilanmagan",
       "sortReset": "Saralashni bekor qilish",
-      "sortBy": "«{label}» bo‘yicha saralash"
+      "sortBy": "«{label}» bo‘yicha saralash",
+      "staffingPill": "{planned} tadan {occupied} band",
+      "staffingFull": "Shtat to‘liq",
+      "staffingVacancies": "Yetishmaydi: {count, plural, one {# kishi} other {# kishi}}",
+      "staffingOver": "Shtatdan ortiq: {count, plural, one {# kishi} other {# kishi}}",
+      "phoneLabel": "Telefon",
+      "emailLabel": "Pochta"
     },
     "dialogs": {
       "positionNameRequired": "Nomini kiriting",
@@ -7399,7 +7619,10 @@
         "dishesHint": "Jurnal QR sahifasida bugungi taomlarni ko‘rib, nomi va vaqtini tuzatishi mumkin. Odatda bu ishlab chiqarish mudiri bo‘ladi.",
         "manageSettingsHint": "Rahbar darajasidagi kabinetni ochadi: sozlamalar, jurnallar, xodimlar, QR plakatlar va uskunalar. Shaxsiy QR va PIN orqali kiradi. Bu ruxsat o‘zgargach, xodim qayta kirishi kerak.",
         "pinSaveFailed": "PINni saqlab bo‘lmadi",
-        "addAccess": "Ruxsat qo‘shish"
+        "addAccess": "Ruxsat qo‘shish",
+        "emailPlaceholder": "Pochta · ivanova@mail.ru",
+        "emailHint": "Xatlar va hisobotlar uchun shaxsiy pochta. Bu kirish logini emas. O‘chirish uchun maydonni bo‘sh qoldiring.",
+        "emailInvalid": "Pochta formati noto‘g‘ri. Misol: ivanova@mail.ru"
       },
       "archive": {
         "title": "{name} arxivga o‘tkazilsinmi?",
@@ -7467,7 +7690,11 @@
         "rootCannotArchive": "ROOT hisobini arxivlab bo‘lmaydi",
         "cannotArchiveSelf": "O‘zingizni arxivlay olmaysiz",
         "requestFailed": "So‘rov bajarilmadi (xato {status, number})"
-      }
+      },
+      "headcountLabel": "Shtat bo‘yicha soni",
+      "headcountPlaceholder": "Belgilanmagan",
+      "headcountHint": "Shtat jadvali bo‘yicha bu lavozimda nechta odam kerak. Shtat yuritilmasa, bo‘sh qoldiring.",
+      "headcountInvalid": "Shtat soni 0 dan 999 gacha butun son bo‘lishi kerak"
     },
     "positionSuggestions": {
       "position_001": "Boshqaruvchi",
@@ -8717,12 +8944,12 @@
         "sphereBody": "Faoliyat sohasi mos jurnal to‘plamlarini belgilaydi. Masalan, restoran va novvoyxona uchun turli variantlar taklif qilinadi. Keyinroq o‘zgartirish mumkin.",
         "innQuestion": "STIRsiz qoldirsam bo‘ladimi?",
         "innAnswer": "Shaklni STIRsiz saqlash mumkin, ammo u chop etiladigan jurnallar va shartnomalarda ko‘rsatilmaydi. Uni kiritishni tavsiya qilamiz.",
-        "brandQuestion": "brandColor nima?",
-        "brandAnswer": "Bu brendingizning asosiy rangi, masalan, logotip va Mini App tugmalari rangi. Kabinetni o‘z uslubingizda ko‘rsatish uchun korporativ hex-kodni kiriting."
+        "brandQuestion": "Logotip va brend rangi qayerda ko‘rinadi?",
+        "brandAnswer": "Logotip chap menyuda, jurnallar, nazorat hujjatlari va buyruqlar PDF sarlavhasida, QR-plakatlarda va inspektor portalida chiqadi; PDF’da havola emas, faqat yuklangan fayl chop etiladi. Brend rangi hujjatlarda ingichka urg‘u va plakatlardagi belgilar sifatida chiqadi; kabinet interfeysi WeSetup uslubida qoladi. Rangsiz jurnallar va buyruqlar oq-qora chop etiladi."
       },
       "form": {
         "logoTitle": "Logotip",
-        "logoHint": "Chap menyuning tepasida. PNG, JPG yoki SVG, 500 KB gacha.",
+        "logoHint": "Chap menyuda, jurnallar, nazorat hujjatlari va buyruqlar PDF sarlavhasida, QR-plakatlarda va inspektor portalida. PNG, JPG yoki SVG, 500 KB gacha.",
         "logoUpload": "Logotip yuklash",
         "logoReplace": "Almashtirish",
         "logoRemove": "Logotipni o‘chirish",
@@ -8791,7 +9018,27 @@
         "phone": "Telefon",
         "phoneHint": "Inspektorlar va yetkazib beruvchilar uchun aloqa raqami",
         "registryTitle": "Yuridik shaxslar reyestri ma’lumotlari",
-        "registrySubtitle": "Rekvizitlar, rahbar, faoliyat kodlari va STIR bo‘yicha statistika. Ma’lumot uchun; jurnallarda yuqoridagi maydonlar ishlatiladi.",
+        "registrySubtitle": "STIR bo‘yicha reyestrdan ma’lumot. «Hujjatlar uchun ma’lumotlar»dagi bo‘sh maydonlar shu yerdan olinadi.",
+        "docsTitle": "Hujjatlar uchun ma’lumotlar",
+        "docsSubtitle": "Jurnallar sarlavhasi, ishlab chiqarish nazorati hujjatlari, buyruqlar va inspektor portali uchun yagona rekvizitlar bloki. Bo‘sh maydon reyestrdan olinadi.",
+        "legalFullName": "To‘liq nomi",
+        "legalFullNameHint": "Ustavdagidek: «Mas’uliyati cheklangan jamiyat …»",
+        "kpp": "Soliq ro‘yxat kodi (KPP)",
+        "kppHint": "9 belgi. Savdo nuqtasining o‘z kodi «Savdo nuqtalari»da kiritiladi.",
+        "ogrn": "Asosiy davlat ro‘yxat raqami (OGRN)",
+        "ogrnHint": "Yuridik shaxsda 13 raqam, yakka tadbirkorda 15 raqam",
+        "legalAddress": "Yuridik manzil",
+        "legalAddressHint": "Ro‘yxatdan o‘tgan manzil — buyruqlar va nazorat hujjatlari uchun",
+        "directorName": "Rahbar",
+        "directorNameHint": "«Tasdiqlayman» va buyruq imzosi uchun F. I. Sh.",
+        "directorPost": "Rahbar lavozimi",
+        "directorPostHint": "Masalan, «Bosh direktor»",
+        "fromRegistry": "Reyestrda: {value}",
+        "registryUsed": "Reyestrdan olinadi",
+        "resetToRegistry": "Reyestrdagini qaytarish",
+        "docsPreviewTitle": "Hujjatlarda shunday ko‘rinadi",
+        "docsPreviewJournal": "Jurnal sarlavhasi",
+        "docsPreviewNote": "Ko‘rinishda saqlanmagan o‘zgarishlar ham hisobga olinadi. Savdo nuqtasi o‘z hujjatlari sarlavhasiga qo‘shiladi.",
         "contactsTitle": "Kontaktlar",
         "contactsSubtitle": "Haftalik hisobotlar uchun buxgalteriya emaili",
         "accountantEmail": "Buxgalter emaili",
@@ -8806,11 +9053,11 @@
         "languageEn": "English",
         "languageUz": "O‘zbekcha",
         "brandingTitle": "Brend",
-        "brandingSubtitle": "White-label: boshqaruv paneli, chop etiladigan jurnallar va inspektor portalida o‘z rang va logotipingiz",
+        "brandingSubtitle": "Logotip va brend rangi — chop etiladigan jurnallar, nazorat hujjatlari, buyruqlar, QR-plakatlar va inspektor portalida",
         "brandColor": "Brend rangi",
-        "brandColorHint": "HEX, masalan #5566f6; interfeysning asosiy urg‘u rangini almashtiradi",
+        "brandColorHint": "HEX, masalan #5566f6. Hujjatlar va plakatlardagi urg‘u rangi; kabinet WeSetup uslubida qoladi",
         "logoUrl": "Logotip URL manzili",
-        "logoUrlHint": "Ommaga ochiq HTTPS rasm manzili. Sarlavhada ko‘rsatiladi.",
+        "logoUrlHint": "Havoladagi logotip menyuda, plakatlarda va inspektor portalida ko‘rinadi. PDF’da faqat yuklangan fayl chop etiladi.",
         "preview": "Ko‘rish",
         "currentLogoPreview": "Joriy logotip ko‘rinishi",
         "shiftsTitle": "Smenalar va jurnal qoidalari",
@@ -8884,6 +9131,8 @@
           "invalidBrandColor": "Rangni #RRGGBB formatida kiriting",
           "invalidLogoUrl": "Logotip URL manzili http:// yoki https:// bilan boshlanishi kerak",
           "invalidShiftEnd": "Smena tugash vaqti 0 dan 23 gacha bo‘lishi kerak",
+          "invalidKpp": "KPP 9 belgidan iborat bo‘lishi kerak, masalan 770101001",
+          "invalidOgrn": "OGRN 13 raqam, yakka tadbirkorda 15 raqam bo‘lishi kerak",
           "noFields": "Saqlash uchun o‘zgarish yo‘q",
           "rateLimited": "So‘rovlar soni ko‘p. Bir daqiqa kuting.",
           "lookupUnavailable": "STIR bo‘yicha qidiruv vaqtincha ishlamayapti. Ma’lumotlarni qo‘lda kiriting.",
@@ -8902,7 +9151,12 @@
       "specialMode": {
         "title": "Maxsus rejim",
         "description": "Jurnal yozuvlarini avtomatik yaratish, to‘ldirish va nusxalashni yashiradi hamda o‘chiradi. Kiritilgan ma’lumotlar va o‘zgarishlar tarixi saqlanadi.",
-        "saveError": "O‘zgarishlarni saqlab bo‘lmadi"
+        "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
+        "movedTitle": "Maxsus rejim — «Tekshiruv keldi» bo‘limida",
+        "movedBody": "Kalit va izoh endi o‘sha yerda — tekshiruvchi QR kodi va tashriflar jurnali yonida.",
+        "movedLink": "Ochish",
+        "statusOn": "Hozir yoqilgan",
+        "statusOff": "Hozir o‘chirilgan"
       },
       "partnerConversion": {
         "title": "Hamkor kabinetiga o‘tkazish",
@@ -11864,6 +12118,21 @@
         "missingReports": "Dalolatnomalarni saqlamaslik: ularsiz jurnaldagi belgi tasdiqlanmaydi."
       },
       "regulationRef": "SanPiN 3.5.2.3472-17 “Dezinseksiya tadbirlarini tashkil etish va o‘tkazishga sanitariya-epidemiologik talablar”. SanPiN 3.5.3.3223-14 (deratizatsiya). SanPiN 2.3/2.4.4282-26. Rospotrebnadzor qabul qilishi uchun shartnoma va dalolatnomalar majburiy."
+    },
+    "ccp_monitoring": {
+      "summary": "HACCP rejasining kritik nazorat nuqtasidagi (KNN) har bir o‘lchovni yozasiz: nimani o‘lchadingiz, chegara qancha va qanday qiymat chiqdi. Chegaradan chiqsa — darhol tuzatasiz va nima qilganingizni yozasiz.",
+      "materials": {
+        "haccpPlan": "KNN ro‘yxati va kritik chegaralari bor HACCP rejasi",
+        "instrument": "Rejadagi qiyoslangan asbob: termozond, termometr, taymer yoki pH-metr",
+        "journal": "Telefon yoki planshetdagi «KNN monitoringi» jurnali"
+      },
+      "completionCriteria": "Har bir KNN bo‘yicha HACCP rejasidagi davriylikda yozuvlar bor, har bir chetlanish uchun tuzatuvchi harakat yozilgan.",
+      "mistakes": {
+        "wordsInsteadOfNumber": "Raqam o‘rniga «me’yor» deb yozish — qiymatni chegara bilan solishtirib bo‘lmaydi.",
+        "nameMismatch": "KNN nomi rejadagidan farq qilsa, yozuv «KNN» bo‘limi solishtiruviga tushmaydi.",
+        "releasedWithDeviation": "Chetlanishli mahsulotni tuzatuvchi harakatdan oldin chiqarish."
+      },
+      "regulationRef": "TR TS 021/2011, 10-modda — kritik nazorat nuqtalari monitoringi va uning yozuvlari; GOST R 51705.1 — HACCP tamoyillari."
     }
   },
   "taskFill": {
@@ -12376,6 +12645,7 @@
           "duties": "Lavozim vazifalari",
           "kkt": "KKN",
           "sanitation": "Sanitariya va gigiyena",
+          "haccp": "HACCP tamoyillari",
           "fire": "Yong‘in xavfsizligi"
         },
         "attestation": {
@@ -13245,7 +13515,25 @@
       "title": "Yozuvlar bo‘yicha nazorat komissiyasi imzolari (jurnalning oldingi shaklidan saqlangan)",
       "unnamedProduct": "Nomsiz mahsulot",
       "unnamedPerson": "Ism ko‘rsatilmagan",
-      "arrival": "kelib tushgan vaqt: {date}"
+      "arrival": "kelib tushgan vaqt: {date}",
+      "commissionTitle": "Nazorat komissiyasi imzolari"
+    },
+    "commission": {
+      "title": "Komissiya",
+      "members": "Nazorat komissiyasi: {names}",
+      "notSet": "Komissiya tayinlanmagan — yozuvlar uning imzosisiz yopiladi. Tarkibni “Komissiya” tugmasi orqali tayinlang.",
+      "waiting": "Komissiya imzosini kutmoqda",
+      "signedBy": "Imzolangan: {names}",
+      "statusLabel": "Komissiya imzosi",
+      "signedRows": "Imzolangan yozuvlar: {count, number}",
+      "signFailed": "Yozuvlarni imzolab bo‘lmadi",
+      "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring.",
+      "todaySigned": "Bugun: {total, plural, one {# ta yozuv} other {# ta yozuv}}, barchasi komissiya tomonidan imzolangan",
+      "todayWaiting": "Bugun: {total, plural, one {# ta yozuv} other {# ta yozuv}}, {waiting, plural, one {# tasi} other {# tasi}} komissiya imzosini kutmoqda",
+      "todayWaitingCanSign": "Bugun: {total, plural, one {# ta yozuv} other {# ta yozuv}}, {waiting, plural, one {# tasi} other {# tasi}} komissiya imzosini kutmoqda — ularni belgilab, “Imzolash” tugmasini bosing",
+      "blockTitle": "Jurnalni yakunlab bo‘lmaydi: {count, plural, one {# ta yozuv} other {# ta yozuv}} komissiya imzosini kutmoqda",
+      "blockDescription": "Tekshiruv yozuvi kamida bitta komissiya a’zosi imzolaganda yopiladi. A’zo jurnal QR-kodi (PIN) orqali yoki saytda imzolaydi — yozuvlarni belgilab, “Imzolash” tugmasini bosing.",
+      "more": "…va yana {count, number} ta"
     }
   },
   "archiveExport": {
@@ -13822,6 +14110,41 @@
       "hours": "{hours, number} soat",
       "minutes": "{minutes, number} daqiqa",
       "hoursMinutes": "{hours, number} soat {minutes, number} daqiqa"
+    },
+    "fryer": {
+      "title": "Fritur yog‘laridan foydalanish jurnali",
+      "fryer": "Fritur",
+      "operator": "Kim qovuryapti",
+      "startHeading": "Qovurish boshlanishi",
+      "endHeading": "Qovurish tugashi",
+      "startIntro": "Uch qadam: yog‘, mahsulot, yog‘ sifati. Boshlanish vaqti o‘zi yoziladi.",
+      "endIntro": "Smena oxirida yog‘ni baholang va qoldiqni kiriting. Tugash vaqti o‘zi yoziladi.",
+      "started": "{time} da boshlangan: {fat} · {product}",
+      "fat": "1. Friturda qaysi yog‘",
+      "product": "2. Nima qovuryapsiz",
+      "qualityStart": "3. Hozirgi yog‘ sifati",
+      "qualityEnd": "1. Qovurish oxiridagi yog‘ sifati",
+      "qualityHint": "Yog‘ning rangi, ta’mi va hidi. 2 va undan past — yog‘ni almashtirish kerak.",
+      "q5": "A’lo",
+      "q4": "Yaxshi",
+      "q3": "Qoniqarli",
+      "q2": "Qoniqarsiz",
+      "q1": "Qoniqarsiz — almashtirish",
+      "leftover": "2. Yog‘ qoldig‘i, kg",
+      "leftoverHint": "Bo‘sh qoldirish mumkin — 0 bo‘ladi.",
+      "carryover": "O‘tuvchi qoldiq",
+      "disposed": "Utilizatsiya qilindi",
+      "kgInvalid": "Kilogrammni son bilan kiriting, masalan 1,5",
+      "saveStart": "Qovurish boshlanishini yozish",
+      "saveEnd": "Qovurish tugashini yozish",
+      "startTitle": "Qovurish boshlanishi yozildi",
+      "startText": "{time} da — fritur yog‘lari jurnalida qator. Smena oxirida shu stikerni yana skanerlang.",
+      "endTitle": "Qovurish tugashi yozildi",
+      "endText": "{time} da — fritur yog‘lari jurnalidagi kun qatori yopildi.",
+      "noDocument": "Bugun bu fritur birorta faol fritur yog‘lari jurnaliga kirmagan. Boshqaruvchidan jurnal hujjatini yaratishni so‘rang.",
+      "needStart": "Avval qovurish boshlanishini belgilang.",
+      "rowChanged": "Jurnal qatori o‘zgardi — stikerni yana skanerlang.",
+      "saveError": "Yozib bo‘lmadi"
     },
     "errors": {
       "invalidData": "Ma’lumotlar noto‘g‘ri",

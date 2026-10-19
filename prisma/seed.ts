@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import pg from "pg";
 import { ACTIVE_JOURNAL_TEMPLATES as SHARED_ACTIVE_JOURNAL_TEMPLATES } from "../src/lib/journal-catalog";
 import { REGISTER_JOURNALS } from "../src/lib/register-journals";
+import { CCP_MONITORING_FIELDS } from "../src/lib/ccp-monitoring-journal";
+import { applyNewJournalsDefaultOff, firstActivationCodes } from "../src/lib/new-journals-default-off";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -128,14 +130,8 @@ const journalTemplates = [
     sortOrder: 5,
     isMandatorySanpin: false,
     isMandatoryHaccp: true,
-    fields: [
-      { key: "ccpName", label: "Название ККТ", type: "text", required: true },
-      { key: "controlParameter", label: "Параметр контроля", type: "text", required: true },
-      { key: "criticalLimit", label: "Критический предел", type: "text", required: true },
-      { key: "actualValue", label: "Фактическое значение", type: "text", required: true },
-      { key: "withinLimit", label: "В пределах нормы", type: "boolean", required: true },
-      { key: "correctiveAction", label: "Корректирующее действие", type: "text", required: false, showIf: { field: "withinLimit", equals: false } },
-    ],
+    // Поля — из src/lib/ccp-monitoring-journal.ts: их же читает блок ППК «ККТ».
+    fields: CCP_MONITORING_FIELDS.map((field) => ({ ...field })),
   },
   // === Новые обязательные журналы по ХАССП / СанПиН ===
   {
@@ -756,6 +752,38 @@ async function main() {
       };
     });
   const allowedCodes = new Set(enabledTemplates.map((template) => template.code));
+
+  // Журнал, который этот прогон включает впервые (мониторинг ККТ, октябрь
+  // 2026), у существующих организаций остаётся выключенным: хранилище
+  // `disabledJournalCodes` негативное, и без этого шага он появился бы у
+  // всех. Делаем ДО активации шаблона — если запись упадёт, шаблон не
+  // включится и следующий деплой повторит шаг.
+  const firstActivation = firstActivationCodes(
+    [...allowedCodes],
+    await prisma.journalTemplate.findMany({
+      where: { code: { in: [...allowedCodes] } },
+      select: { code: true, isActive: true },
+    }),
+  );
+  if (firstActivation.length > 0) {
+    const orgs = await prisma.organization.findMany({
+      where: { id: { not: PLATFORM_ORG_ID } },
+      select: { id: true, disabledJournalCodes: true },
+    });
+    let switched = 0;
+    for (const org of orgs) {
+      const next = applyNewJournalsDefaultOff(org.disabledJournalCodes, firstActivation);
+      if (!next.changed) continue;
+      await prisma.organization.update({
+        where: { id: org.id },
+        data: { disabledJournalCodes: next.disabledJournalCodes },
+      });
+      switched += 1;
+    }
+    console.log(
+      `  Впервые включаем ${firstActivation.join(", ")}: у существующих организаций выключено — ${switched} из ${orgs.length}`,
+    );
+  }
 
   for (const template of enabledTemplates) {
     await prisma.journalTemplate.upsert({

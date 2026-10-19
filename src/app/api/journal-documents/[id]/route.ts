@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { BrakerageInputError, isBrakerageJournalCode, mergeBrakerageConfig, parseKnownRowIds } from "@/lib/brakerage-row-merge";
 import { readOrgCommission } from "@/lib/brakerage-commission-org";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
-import { isCommissionJournalCode, unsignedRows } from "@/lib/brakerage-commission";
+import { commissionConfigView, isCommissionJournalCode, unsignedRows } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -51,6 +51,7 @@ import { syncDocumentToTasksFlow } from "@/lib/tasksflow-sync";
 import { isJournalSupported } from "@/lib/tasksflow-adapters";
 import { syncTodayMatrixChanges } from "@/lib/cleaning-cell-override-sync";
 import { isManagementRole } from "@/lib/user-roles";
+import { isControlGroupMember } from "@/lib/permission-presets";
 import { canWriteJournal, hasJournalAccess } from "@/lib/journal-acl";
 import {
   ORG_ROSTER_WHERE,
@@ -150,6 +151,11 @@ export async function PATCH(
   const doc = await db.journalDocument.findUnique({ where: { id } });
   if (!doc || doc.organizationId !== getActiveOrgId(session)) {
     return errors.response("DOCUMENT_NOT_FOUND");
+  }
+  // Контроль-группа проверяет, а не заполняет: правка и закрытие документа
+  // ей запрещены даже с ролью руководителя (ACL — src/lib/journal-acl.ts).
+  if (isControlGroupMember(session.user)) {
+    return errors.response("MANAGEMENT_REQUIRED");
   }
 
   // Оборванный или пустой запрос — это ошибка клиента, а не 500 сервера.
@@ -446,15 +452,11 @@ export async function PATCH(
   }
 
   if (body.title !== undefined) data.title = body.title;
-  // Бракераж готовой продукции с комиссией (скоропорт — без комиссии): без подписи хотя бы одного члена комиссии
-  // строку не закрыть, а значит и журнал не закончить (владелец, 2026-09-21).
+  // Бракераж с комиссией (готовая продукция; скоропорт — с меткой сервера
+  // `commissionEnabled`): без подписи хотя бы одного члена комиссии строку не
+  // закрыть, а значит и журнал не закончить (владелец, 2026-09-21).
   if (body.status === "closed" && doc.status !== "closed" && isCommissionJournalCode(template?.code)) {
-    const pending = unsignedRows(
-      (doc.config && typeof doc.config === "object" ? doc.config : {}) as {
-        commissionMembers?: unknown[];
-        rows?: Record<string, unknown>[];
-      }
-    );
+    const pending = unsignedRows(commissionConfigView(template?.code, doc.config));
     if (pending.length > 0) {
       return errors.unsignedRows(pending);
     }
@@ -654,7 +656,7 @@ export async function DELETE(
   const errors = await journalApiErrors(request, session?.user);
   if (!session) return errors.response("UNAUTHORIZED");
 
-  if (!isManagementRole(session.user.role)) {
+  if (!isManagementRole(session.user.role) || isControlGroupMember(session.user)) {
     return errors.response("MANAGEMENT_REQUIRED");
   }
 

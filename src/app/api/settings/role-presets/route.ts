@@ -6,48 +6,27 @@
  *   - Только management-роль может менять (admin.full capability).
  *   - `admin` пресет в overrides игнорируется (нельзя случайно отрубить
  *     себя — hasCapability всё равно вернёт PRESET_CAPABILITIES[admin]).
- *   - Капабилити не из ALLOWED_CAPABILITIES — отклоняются.
- *   - Пресеты не из VALID_PRESETS — отклоняются.
+ *   - Капабилити не из ALL_CAPABILITIES — отклоняются.
+ *   - Пресеты не из ALL_PRESETS — отклоняются.
  */
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
-import { hasCapability } from "@/lib/permission-presets";
+import { ALL_CAPABILITIES, ALL_PRESETS, hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const VALID_PRESETS = [
-  "admin",
-  "head_chef",
-  "cook",
-  "waiter",
-  "seller",
-  "cashier",
-  "cleaner",
-] as const;
-
-const ALLOWED_CAPABILITIES = [
-  "journals.view",
-  "journals.manage",
-  "staff.manage",
-  "staff.view",
-  "tasks.verify",
-  "reports.view",
-  "admin.full",
-  "mini.tasks",
-  "mini.acceptance",
-  "mini.writeoff",
-  "mini.cashier",
-  "stats.view",
-] as const;
-
-const presetEnum = z.enum(VALID_PRESETS);
-const capabilityEnum = z.enum(ALLOWED_CAPABILITIES);
+// Списки пресетов и возможностей — из одного места (permission-presets.ts),
+// их же показывает /settings/role-presets.
+const presetEnum = z.enum(ALL_PRESETS);
+const capabilityEnum = z.enum(ALL_CAPABILITIES);
 
 const overridesSchema = z.object({
-  overrides: z.record(presetEnum, z.array(capabilityEnum)),
+  // partialRecord: клиент шлёт только изменённые пресеты; z.record с
+  // enum-ключами в zod 4 требует все ключи и отклонял любое сохранение.
+  overrides: z.partialRecord(presetEnum, z.array(capabilityEnum)),
 });
 
 export async function GET() {

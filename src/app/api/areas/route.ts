@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { areaSchema } from "@/lib/validators";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { guessRoomKind } from "@/lib/orphan-areas";
+import { resolveBuildingInput, soleBuildingId } from "@/lib/area-building-sync";
 
 export async function GET() {
   try {
@@ -23,6 +24,7 @@ export async function GET() {
       where: { organizationId: getActiveOrgId(session) },
       orderBy: { name: "asc" },
       include: {
+        building: { select: { id: true, name: true } },
         _count: { select: { equipment: true } },
       },
     });
@@ -62,32 +64,37 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const validatedData = areaSchema.parse(body);
+    const orgId = getActiveOrgId(session);
+
+    // Точка цеха (2026-10-17): выбранная в окне; не выбрана — единственная
+    // точка организации. Чужая точка — 400.
+    const buildingInput = await resolveBuildingInput(orgId, validatedData.buildingId);
+    if (!buildingInput.ok) {
+      return NextResponse.json({ error: "Точка не найдена" }, { status: 400 });
+    }
+    const buildingId =
+      buildingInput.buildingId === undefined ? await soleBuildingId(orgId) : buildingInput.buildingId;
 
     const area = await db.area.create({
       data: {
         name: validatedData.name,
         description: validatedData.description || null,
-        organizationId: getActiveOrgId(session),
+        organizationId: orgId,
+        buildingId,
       },
     });
 
     // Обратное зеркало Area → Room (к зеркалу Room → Area в
     // api/settings/rooms/route.ts): новый цех сразу появляется и как
-    // помещение для уборки/климата. Только когда здание одно — иначе
-    // не угадать, куда класть; и только если помещения с таким названием
-    // (без учёта регистра) в организации ещё нет. Best-effort: цех уже
-    // создан, сбой здесь не должен ронять ответ.
+    // помещение для уборки/климата — в точке цеха. Точки нет — не угадать,
+    // куда класть; и только если помещения с таким названием (без учёта
+    // регистра) в этой точке ещё нет. Best-effort: цех уже создан, сбой
+    // здесь не должен ронять ответ.
     try {
-      const orgId = getActiveOrgId(session);
-      const buildings = await db.building.findMany({
-        where: { organizationId: orgId },
-        select: { id: true },
-        take: 2,
-      });
-      if (buildings.length === 1) {
+      if (buildingId) {
         const sameRoom = await db.room.findFirst({
           where: {
-            building: { organizationId: orgId },
+            buildingId,
             name: { equals: area.name, mode: "insensitive" },
           },
           select: { id: true },
@@ -95,7 +102,7 @@ export async function POST(request: Request) {
         if (!sameRoom) {
           await db.room.create({
             data: {
-              buildingId: buildings[0].id,
+              buildingId,
               name: area.name,
               kind: guessRoomKind(area.name),
             },

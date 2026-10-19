@@ -1,0 +1,36 @@
+### 1. dry-run
+[backfill-area-building] mode=dry-run areas_without_building=13 assign=10 (room-name=9, single-building=1) skip_ambiguous=1 skip_no_match=1 skip_no_buildings=1
+  assign area=cmvbfyemt0000uw9mywdjiurr-Бар «Бар» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Горячий цех «Горячий цех» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Зал «Зал» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех «Кондитерский цех» → building=fx-building-mira (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Раздача «Раздача» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Склад «Склад» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Упаковка «Упаковка» → building=fx-building-mira (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Холодный цех «Холодный цех» → building=fx-building-lenina (room-name)
+  assign area=fx-a-single-kitchen «Кухня» → building=fx-building-single (room-name)
+  assign area=fx-a-single-back «Подсобка» → building=fx-building-single (single-building)
+  skip   area=cmvbfyemt0000uw9mywdjiurr-Мойка «Мойка» — помещения с таким названием в нескольких точках
+[backfill-area-building] dry-run: ничего не записано. Запись: --apply
+exit=0
+  "loose": "13",
+### 2. --apply
+[backfill-area-building] mode=apply areas_without_building=13 assign=10 (room-name=9, single-building=1) skip_ambiguous=1 skip_no_match=1 skip_no_buildings=1
+  assign area=cmvbfyemt0000uw9mywdjiurr-Бар «Бар» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Горячий цех «Горячий цех» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Зал «Зал» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Кондитерский цех «Кондитерский цех» → building=fx-building-mira (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Раздача «Раздача» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Склад «Склад» → building=fx-building-lenina (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Упаковка «Упаковка» → building=fx-building-mira (room-name)
+  assign area=cmvbfyemt0000uw9mywdjiurr-Холодный цех «Холодный цех» → building=fx-building-lenina (room-name)
+  assign area=fx-a-single-kitchen «Кухня» → building=fx-building-single (room-name)
+  assign area=fx-a-single-back «Подсобка» → building=fx-building-single (single-building)
+  skip   area=cmvbfyemt0000uw9mywdjiurr-Мойка «Мойка» — помещения с таким названием в нескольких точках
+[backfill-area-building] updated=10
+exit=0
+### 3. --apply again (idempotence)
+[backfill-area-building] mode=apply areas_without_building=3 assign=0 (room-name=0, single-building=0) skip_ambiguous=1 skip_no_match=1 skip_no_buildings=1
+  skip   area=cmvbfyemt0000uw9mywdjiurr-Мойка «Мойка» — помещения с таким названием в нескольких точках
+[backfill-area-building] updated=0
+exit=0

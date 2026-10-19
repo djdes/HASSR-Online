@@ -1,6 +1,7 @@
 /**
  * Бракеражная комиссия и подписи строк — общее для «Бракеража готовой
- * продукции» и «Бракеража скоропортящейся продукции». Чистый модуль:
+ * продукции» и «Бракеража скоропортящейся продукции» (у скоропорта состав
+ * действует с меткой сервера `commissionEnabled`). Чистый модуль:
  * без БД, используется и на сервере, и в браузере.
  *
  * Подпись строки — доказательство, что член комиссии сам оценил блюдо
@@ -215,14 +216,63 @@ export function isRowClosed(
 }
 
 /**
- * Сторонняя бракеражная комиссия — только у бракеража готовой продукции
- * (решение владельца 2026-09-22). Бракераж скоропорта — внутренняя
- * история: без комиссии, её подписей и входа по QR для комиссии.
+ * Журналы с бракеражной комиссией: готовая продукция и скоропортящаяся
+ * продукция. С 2026-09-22 комиссия была только у готовой продукции; по
+ * эскизам руководителя (2026-10, лист «Сотрудники») она вернулась и к
+ * скоропорту — с подписью строк по QR (PIN) и на сайте.
  */
-export const COMMISSION_JOURNAL_CODES: ReadonlySet<string> = new Set(["finished_product"]);
+export const COMMISSION_JOURNAL_CODES: ReadonlySet<string> = new Set(["finished_product", "perishable_rejection"]);
 
 export function isCommissionJournalCode(code: string | null | undefined): boolean {
   return typeof code === "string" && COMMISSION_JOURNAL_CODES.has(code);
+}
+
+/**
+ * Журналы, где состав в документе действует только с меткой
+ * `commissionEnabled`. В документах скоропорта остались копии состава,
+ * сделанные до решения 2026-09-22: без метки они не должны требовать
+ * подписей и мешать закрытию. Метку ставит только сервер — когда копирует
+ * в документ утверждённый состав организации (`brakerage-commission-org`);
+ * клиент подделать её не может (`SERVER_OWNED_CONFIG_KEYS`).
+ */
+export const COMMISSION_FLAG_JOURNAL_CODES: ReadonlySet<string> = new Set(["perishable_rejection"]);
+
+function configRecord(config: unknown): Record<string, unknown> {
+  return config && typeof config === "object" && !Array.isArray(config) ? (config as Record<string, unknown>) : {};
+}
+
+/** Действует ли в документе состав комиссии (код журнала + метка, где она нужна). */
+export function isCommissionActive(code: string | null | undefined, config: unknown): boolean {
+  if (!isCommissionJournalCode(code)) return false;
+  if (COMMISSION_FLAG_JOURNAL_CODES.has(code as string) && configRecord(config).commissionEnabled !== true) return false;
+  return true;
+}
+
+/**
+ * Действующий состав комиссии документа. Пусто — комиссии нет: журнал без
+ * комиссии, скоропорт без метки сервера или состав не задан.
+ */
+export function effectiveCommissionMembers(code: string | null | undefined, config: unknown): BrakerageCommissionMember[] {
+  if (!isCommissionActive(code, config)) return [];
+  return normalizeCommissionMembers(configRecord(config).commissionMembers);
+}
+
+/**
+ * Конфиг документа «как его видит комиссия» — для `hasCommission`,
+ * `unsignedRows`, `todaySignatureSummary`: строки как есть, состав —
+ * действующий. Одно правило для закрытия журнала, автозакрытия и QR.
+ */
+export function commissionConfigView(
+  code: string | null | undefined,
+  config: unknown
+): { commissionMembers: BrakerageCommissionMember[]; rows: Array<Record<string, unknown>> } {
+  const rows = configRecord(config).rows;
+  return {
+    commissionMembers: effectiveCommissionMembers(code, config),
+    rows: Array.isArray(rows)
+      ? rows.filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === "object" && !Array.isArray(row))
+      : [],
+  };
 }
 
 /**

@@ -31,7 +31,15 @@ import { db } from "@/lib/db";
 import { withBuildingLabel } from "@/lib/building-scope";
 import { resolveColumns, type ResolvedJournalColumn } from "@/lib/journal-columns";
 import { readHeaderTitleOverride } from "@/lib/journal-header-title";
-import { resolveOrgJournalName } from "@/lib/org-journal-name";
+import {
+  DOCUMENT_ORG_SELECT,
+  DOCUMENT_POINT_SELECT,
+  buildDocumentOrgBlock,
+  journalHeaderOrgText,
+} from "@/lib/document-org-block";
+import { brandInk, hexToRgb, normalizeBrandColor } from "@/lib/document-brand";
+import { drawPdfLogo, fitPdfLogo, type PdfLogo } from "@/lib/pdf-logo";
+import { loadPdfOrgLogo } from "@/lib/pdf-logo.server";
 import { isAutoSeededEntry } from "@/lib/journal-entry-filters";
 import { isPerpetualDateTo, resolveDisplayDateTo } from "@/lib/journal-period";
 import { presentDocumentTitle } from "@/i18n/journal-document-presentation";
@@ -146,6 +154,7 @@ import {
   isTrackedDocumentTemplate,
   type TrackedDocumentTemplateCode,
 } from "@/lib/tracked-document";
+import { CCP_MONITORING_TEMPLATE_CODE } from "@/lib/ccp-monitoring-journal";
 import {
   TRACEABILITY_DOCUMENT_TEMPLATE_CODE,
   formatTraceabilityQuantity,
@@ -360,6 +369,9 @@ import {
   VACCINATION_REFERENCE_DATA,
   VACCINATION_TYPE_LABELS,
 } from "@/lib/med-book-document";
+
+/** Название бланка мониторинга ККТ — как в каталоге журналов. */
+const CCP_MONITORING_PDF_TITLE = "Журнал мониторинга критических контрольных точек";
 
 /**
  * Шрифт для PDF — «JournalUnicode» из репозитория (Liberation Serif —
@@ -738,6 +750,26 @@ let activeJournalName = "";
  */
 let activeOrganizationShortName = "";
 
+/**
+ * Логотип организации текущего рендера — в ячейке организации полной шапки
+ * ХАССП (первая страница). null — шапка как раньше. Выставляется и
+ * сбрасывается там же, где `activeOrganizationShortName`.
+ */
+let activeOrgLogo: PdfLogo | null = null;
+
+/**
+ * Фирменный цвет организации (`#rrggbb`) текущего рендера — тонкая полоса по
+ * верху полной шапки ХАССП. null — бланк строго ч/б (правило печати
+ * 2026-09-27): цвет появляется, только если организация его задала.
+ */
+let activeBrandColor: string | null = null;
+
+/** Логотип в ячейке организации: не выше 9 мм, отступ до текста 1,5 мм. */
+const HEADER_LOGO_MAX_HEIGHT_MM = 9;
+const HEADER_LOGO_GAP_MM = 1.5;
+/** Фирменная полоса по верху шапки, мм. */
+const HEADER_BRAND_BAND_MM = 1.2;
+
 /** Название бланка в шапке: своё из шапки документа или стандартное. */
 function headerTitleOr(standard: string): string {
   return activeHeaderTitle.trim() || standard;
@@ -1081,7 +1113,11 @@ function drawJournalHeader(doc: jsPDF, params: {
   // («название · ИНН · адрес») должны по-прежнему влезать в 20 мм.
   doc.setFontSize(ORG_FONT_SIZE);
   const orgLines = (doc.splitTextToSize(organizationName, leftWidth - 6) as string[]).length;
-  const orgHeight = rowHeightFor(orgLines, journalLineHeightMm(doc));
+  const orgLineHeight = journalLineHeightMm(doc);
+  // Логотип — над названием в той же ячейке, ячейка растёт на его высоту.
+  const logoSize = activeOrgLogo ? fitPdfLogo(activeOrgLogo, leftWidth - 6, HEADER_LOGO_MAX_HEIGHT_MM) : null;
+  const logoBlock = logoSize ? logoSize.h + HEADER_LOGO_GAP_MM : 0;
+  const orgHeight = rowHeightFor(orgLines, orgLineHeight) + logoBlock;
   doc.setFontSize(10);
   const topHeight = 10;
   // row1+row2 — не ниже ячейки QR (плитка по высоте строк шапки).
@@ -1105,6 +1141,13 @@ function drawJournalHeader(doc: jsPDF, params: {
     : 0;
   const totalHeight = topHeight + secondHeight + periodicityHeight;
 
+  // Фирменная полоса — до рамки: чёрная линия рамки ложится поверх её края.
+  if (activeBrandColor) {
+    doc.setFillColor(...hexToRgb(brandInk(activeBrandColor)));
+    doc.rect(x, y, width, HEADER_BRAND_BAND_MM, "F");
+    doc.setFillColor(255, 255, 255);
+  }
+
   // Одна толщина всех линий шапки — та же, что у рамок таблиц бланка;
   // каждая внутренняя линия рисуется один раз и упирается в рамку.
   doc.setDrawColor(0, 0, 0);
@@ -1127,7 +1170,15 @@ function drawJournalHeader(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(ORG_FONT_SIZE);
-  drawCenteredText(doc, organizationName, x + 3, y, leftWidth - 6, topHeight + secondHeight, leftWidth - 6);
+  if (activeOrgLogo && logoSize) {
+    // Логотип и название — одним блоком по центру ячейки организации.
+    const textHeight = orgLines * orgLineHeight;
+    const contentTop = y + (topHeight + secondHeight - (logoBlock + textHeight)) / 2;
+    drawPdfLogo(doc, activeOrgLogo, { x: x + 3, y: contentTop, maxW: leftWidth - 6, maxH: HEADER_LOGO_MAX_HEIGHT_MM, align: "center" });
+    drawCenteredText(doc, organizationName, x + 3, contentTop + logoBlock, leftWidth - 6, textHeight, leftWidth - 6);
+  } else {
+    drawCenteredText(doc, organizationName, x + 3, y, leftWidth - 6, topHeight + secondHeight, leftWidth - 6);
+  }
   doc.setFontSize(10);
   drawCenteredText(doc, t("system"), x + leftWidth, y, middleWidth, topHeight, middleWidth - 8);
   drawCenteredText(doc, journalTitle, x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 8);
@@ -4246,9 +4297,10 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
     didParseCell: (data) => breakWideHyphenatedWords(doc, data, perishableWidths[data.column.index]?.cellWidth ?? 0),
   });
 
-  // Подписи прежней бракеражной комиссии (у скоропорта её больше нет, графы
-  // в форме приложения № 5 для них нет) — отдельным блоком под таблицей,
-  // чтобы подписанные ранее записи не потеряли подписи в печати.
+  // Подписи бракеражной комиссии (графы в форме приложения № 5 для них нет) —
+  // отдельным блоком под таблицей. Документ с действующей комиссией (метка
+  // сервера `commissionEnabled`) — «Подписи бракеражной комиссии», без неё —
+  // подписи прежней формы журнала.
   const legacySignatures = perishableSignatureLines(params.config.rows, locale, t);
   if (legacySignatures.length > 0) {
     const tableEnd =
@@ -4274,7 +4326,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
         fillColor: [255, 255, 255],
         textColor: [0, 0, 0],
       },
-      head: [[t("signatures.title")]],
+      head: [[params.config.commissionEnabled ? t("signatures.commissionTitle") : t("signatures.title")]],
       body: legacySignatures.map((line) => [line]),
     });
   }
@@ -7038,18 +7090,11 @@ function drawGlassControlPdf(doc: jsPDF, params: {
 export type JournalDocumentForPdf = Prisma.JournalDocumentGetPayload<{
   include: {
     template: true;
-    organization: {
-      select: {
-        name: true;
-        journalShortName: true;
-        legalProfileJson: true;
-        inn: true;
-        address: true;
-        phone: true;
-      };
-    };
-    /// Точка документа — печатается под названием организации.
-    building: { select: { name: true; address: true; journalName: true } };
+    /// Реквизиты, правки и брендинг — блок сведений `document-org-block.ts`.
+    organization: { select: typeof DOCUMENT_ORG_SELECT };
+    /// Точка документа — печатается под названием организации (с КПП и
+    /// телефоном точки, если заданы).
+    building: { select: typeof DOCUMENT_POINT_SELECT };
     entries: true;
   };
 }>;
@@ -7101,6 +7146,12 @@ export type JournalDocumentPdfInput = {
   /// Фирменный QR в шапке ХАССП справа — на каждой странице с шапкой
   /// (`pdf-journal-qr.ts`). Нет поля — бланк печатается без QR, как раньше.
   qr?: JournalPdfQr | null;
+  /// Логотип организации — в ячейке организации шапки первой страницы.
+  /// Нет поля — шапка без логотипа, как раньше.
+  logo?: PdfLogo | null;
+  /// Фирменный цвет организации — тонкая полоса по верху шапки первой
+  /// страницы. Нет поля — бланк строго ч/б.
+  brandColor?: string | null;
   /// Сканы приказов к журналу (гигиена, бракераж готовой продукции) —
   /// страницы после журнала, без QR-штампа. Добавляет
   /// `generateJournalDocumentPdf`; чистый рендер их не трогает.
@@ -7133,17 +7184,8 @@ export async function loadJournalDocumentPdfInput(params: {
     where: { id: documentId },
     include: {
       template: true,
-      organization: {
-        select: {
-          name: true,
-          journalShortName: true,
-          legalProfileJson: true,
-          inn: true,
-          address: true,
-          phone: true,
-        },
-      },
-      building: { select: { name: true, address: true, journalName: true } },
+      organization: { select: DOCUMENT_ORG_SELECT },
+      building: { select: DOCUMENT_POINT_SELECT },
       // ВАЖНО: берём ВСЕ строки, включая `_autoSeeded` плейсхолдеры.
       // Экран документа (page.tsx) рендерит их как структуру таблицы
       // (ростер сотрудников в гигиене/здоровье, дневные строки в
@@ -7276,7 +7318,10 @@ export async function loadJournalDocumentPdfInput(params: {
   });
 
   const brakerageCommissionDeclined = document.template.code === "finished_product" && (await getJournalControls(organizationId)).brakerageSetup.finished_product === "declined";
-  return { document, users, equipment, rooms, branding, signatures, qr, orderScans, brakerageCommissionDeclined };
+  // Логотип и фирменный цвет организации («Моя компания → Логотип и цвета»).
+  const logo = await loadPdfOrgLogo(organizationId, document.organization?.logoUrl);
+  const brandColor = normalizeBrandColor(document.organization?.brandColor);
+  return { document, users, equipment, rooms, branding, signatures, qr, orderScans, brakerageCommissionDeclined, logo, brandColor };
 }
 
 async function loadPdfSignatureLines(params: {
@@ -7418,26 +7463,19 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
 
   const templateCode = document.template.code;
   const dateKeys = buildDateKeys(document.dateFrom, document.dateTo);
-  // В шапку всех PDF'ов сразу подставляем «name · ИНН XXX · адрес»,
-  // если эти поля заполнены в /settings/organization. У инспектора СЭС
-  // должны быть реквизиты прямо на печатной форме без дополнительной
-  // сверки. Если что-то не задано — просто пропускаем разделитель.
-  // Точки: под названием организации печатается точка с адресом.
-  // Название — сокращённое для журналов (своё у документа → общее → ЕГРЮЛ
-  // → полное), как в шапке на экране.
-  const orgName = withBuildingLabel(
-    resolveOrgJournalName(document.organization, document.config),
-    document.building,
-  );
-  const orgInn = document.organization?.inn ?? null;
-  const orgAddress = document.organization?.address ?? null;
-  const organizationName = [
-    orgName,
-    orgInn ? `ИНН ${orgInn}` : null,
-    orgAddress,
-  ]
-    .filter((v): v is string => Boolean(v))
-    .join(" · ");
+  // Шапка — общий блок сведений для документов (`document-org-block.ts`):
+  // «название · точка · ИНН · КПП · адрес · тел. точки». У инспектора СЭС
+  // реквизиты прямо на печатной форме без дополнительной сверки; пустые
+  // части пропускаются вместе с разделителем. Название — сокращённое для
+  // журналов (своё у документа → общее → ЕГРЮЛ → полное), как на экране;
+  // КПП точки (обособленное подразделение) заменяет КПП организации.
+  const orgBlock = buildDocumentOrgBlock({
+    org: document.organization ?? { name: null },
+    point: document.building,
+    documentConfig: document.config,
+  });
+  const orgName = withBuildingLabel(orgBlock.org.journalName, document.building);
+  const organizationName = journalHeaderOrgText(orgBlock);
   const monthLabel = formatMonthLabel(document.dateFrom, document.dateTo);
   // Плейсхолдеры сидера (`{_autoSeeded:true}`) остаются СТРОКАМИ таблицы
   // (иначе PDF теряет ростер/дневную сетку, которую видно на экране), но
@@ -7498,6 +7536,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     activeControlPeriodicity = catalogs[input.locale].journalWidgets.periodicity[periodicityKey];
   }
   activeOrganizationShortName = orgName;
+  activeOrgLogo = input.logo ?? null;
+  activeBrandColor = normalizeBrandColor(input.brandColor);
   activeDocumentStatus = document.status ?? "";
   activeHeaderTitle = readHeaderTitleOverride(document.config) ?? "";
   activeJournalName = document.template.name ?? "";
@@ -8056,6 +8096,22 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
           top: options.top,
         }),
     });
+  } else if (templateCode === CCP_MONITORING_TEMPLATE_CODE) {
+    // Мониторинг ККТ — журнал записей; бланк (образец для каталога) —
+    // та же таблица полей формы, что у отслеживаемых документов.
+    drawTrackedPdf(doc, {
+      organizationName,
+      title: document.title || CCP_MONITORING_PDF_TITLE,
+      dateFrom: document.dateFrom,
+      dateTo: document.dateTo,
+      fields: trackedFields,
+      entries: entries.map((entry) => ({
+        employeeId: entry.employeeId,
+        date: entry.date,
+        data: (entry.data as Record<string, unknown>) || {},
+      })),
+      users,
+    });
   } else if (isTrackedDocumentTemplate(templateCode)) {
     drawTrackedPdf(doc, {
       organizationName,
@@ -8098,6 +8154,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
 
   activeControlPeriodicity = "";
   activeOrganizationShortName = "";
+  activeOrgLogo = null;
+  activeBrandColor = null;
   activeDocumentStatus = "";
   activeHeaderTitle = "";
   activeJournalName = "";
@@ -8179,6 +8237,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
               ? getRegisterDocumentFilePrefix(templateCode)
               : isTrackedDocumentTemplate(templateCode)
                 ? getTrackedFilePrefix(templateCode)
+              : templateCode === CCP_MONITORING_TEMPLATE_CODE
+                ? "ccp-monitoring-journal"
               : (() => {
                   throw new Error(`Не удалось определить префикс PDF для кода: ${templateCode}`);
                 })();

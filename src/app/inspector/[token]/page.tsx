@@ -3,13 +3,24 @@ import { notFound } from "next/navigation";
 
 import { Desk, Sheet, StatusSheet, SERIF } from "@/components/inspector/paper";
 import { PeriodPicker, periodQuery } from "@/components/inspector/period-picker";
-import { ViewerNameForm } from "@/components/inspector/viewer-name-form";
+import {
+  PortalChecklists,
+  PortalMedBooks,
+  PortalNorms,
+  PortalProductionControl,
+  PortalVisitCallout,
+  PortalVisitJournal,
+} from "@/components/inspector/portal-sections";
+import { loadInspectionNorms } from "@/lib/inspection-norms.server";
+import { listInspectionVisits } from "@/lib/inspection-visits.server";
+import { inspectionVisitIdsFromHeaders } from "@/lib/inspection-visit-cookie";
+import { loadInspectorChecklistResults, loadInspectorMedBookCounts } from "@/lib/inspector-portal-extras.server";
 import { logInspectorEvent } from "@/lib/inspector-access";
 import { loadInspectorJournals } from "@/lib/inspector-journals";
 import { loadInspectorPage } from "@/lib/inspector-page";
 import { formatDayKeyRu } from "@/lib/inspector-qr";
-import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
-import { resolveOrgJournalName } from "@/lib/org-journal-name";
+import { brandPalette } from "@/lib/document-brand";
+import { buildDocumentOrgBlock, documentOrgRows } from "@/lib/document-org-block";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +54,20 @@ export default async function InspectorLandingPage({
   }
   const { access, period, viewer } = ctx;
 
-  const groups = await loadInspectorJournals(access, period.from, period.to);
+  const orgId = access.token.organizationId;
+  const [groups, norms, checklists, medBooks, ownVisits] = await Promise.all([
+    loadInspectorJournals(access, period.from, period.to),
+    loadInspectionNorms(orgId),
+    loadInspectorChecklistResults(orgId, period.from, period.to),
+    loadInspectorMedBookCounts(orgId),
+    // Только записи, внесённые этим браузером: QR постоянный, его сканируют разные проверяющие.
+    listInspectionVisits(orgId, {
+      tokenId: access.token.id,
+      ids: inspectionVisitIdsFromHeaders(ctx.headers, access.token.id),
+      take: 20,
+    }),
+  ]);
+  const timeZone = access.org.timezone || "Europe/Moscow";
   await logInspectorEvent({
     access,
     headers: ctx.headers,
@@ -52,14 +76,13 @@ export default async function InspectorLandingPage({
     details: { kind: "summary_page", from: period.from, to: period.to },
   });
 
-  const snapshot = buildOrgSnapshot({
-    name: access.org.name,
-    inn: access.org.inn,
-    address: access.org.address,
-    legalProfileJson: access.org.legalProfileJson,
-  });
-  const orgTitle = resolveOrgJournalName(access.org);
-  const legalName = snapshot.orgName !== orgTitle ? snapshot.orgName : null;
+  // Реквизиты, логотип и цвет — общий блок сведений для документов.
+  const block = buildDocumentOrgBlock({ org: access.org });
+  const orgTitle = block.org.journalName;
+  const legalName = block.org.fullName !== orgTitle ? block.org.fullName : null;
+  // Название — в заголовке; в списке — ИНН, КПП, ОГРН, адреса, руководитель, телефон.
+  const requisites = documentOrgRows(block).filter((row) => row.key !== "fullName" && row.key !== "shortName");
+  const brand = block.brand.color ? brandPalette(block.brand.color) : null;
   const q = periodQuery(period);
   const base = `/inspector/${token}`;
   const totalDocs = groups.reduce((s, g) => s + g.rows.reduce((a, r) => a + r.docCount, 0), 0);
@@ -69,12 +92,29 @@ export default async function InspectorLandingPage({
   return (
     <Desk>
       <Sheet className="px-5 pb-8 pt-6 sm:px-12 sm:pb-12 sm:pt-10">
+        {brand ? (
+          <div
+            aria-hidden
+            className="-mt-1 mb-4 h-1 rounded-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+            style={{ background: brand.ink }}
+            data-brand-band
+          />
+        ) : null}
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[#141821] pb-2 text-[12.5px] text-[#5b6170]">
           <span>Материалы производственного контроля</span>
           <span>Только просмотр</span>
         </div>
 
         <header className="mt-8 text-center sm:mt-10">
+          {block.brand.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={block.brand.logoUrl}
+              alt=""
+              className="mx-auto mb-4 h-14 w-auto max-w-[220px] object-contain"
+              data-org-logo
+            />
+          ) : null}
           <h1 className={`${SERIF} text-[26px] leading-[1.15] sm:text-[34px]`} data-org-title>
             {orgTitle}
           </h1>
@@ -82,18 +122,19 @@ export default async function InspectorLandingPage({
         </header>
 
         <dl className="mx-auto mt-6 max-w-[620px] divide-y divide-[#e3e5ea] border-y border-[#e3e5ea] text-[14px]" data-requisites>
-          <Requisite label="ИНН" value={snapshot.orgInn} />
-          <Requisite label="Адрес" value={snapshot.orgAddress} />
-          <Requisite
-            label={snapshot.directorPost ? capitalize(snapshot.directorPost) : "Руководитель"}
-            value={snapshot.directorName}
-          />
+          {requisites.length ? (
+            requisites.map((row) => <Requisite key={row.key} label={row.label} value={row.value} />)
+          ) : (
+            <Requisite label="ИНН" value={null} />
+          )}
         </dl>
 
         <p className="mx-auto mt-6 max-w-[620px] text-center text-[14px] leading-relaxed text-[#3a3f4c]">
           Журналы ведутся в электронном виде в системе WeSetup. Записи подписываются сотрудниками
           (личный PIN или вход), время фиксируется автоматически.
         </p>
+
+        <PortalVisitCallout last={ownVisits[0] ?? null} timeZone={timeZone} />
 
         <div className="mt-9 grid gap-6 border-t border-[#d5d8de] pt-6 md:grid-cols-[1fr_auto] md:items-start">
           <div>
@@ -162,10 +203,11 @@ export default async function InspectorLandingPage({
           ))}
         </section>
 
-        <section className="mt-10 border-t border-[#d5d8de] pt-6">
-          <h2 className={`${SERIF} mb-3 text-[17px]`}>Отметка о просмотре</h2>
-          <ViewerNameForm token={token} initialName={viewer} />
-        </section>
+        <PortalProductionControl token={token} norms={norms} />
+        <PortalNorms norms={norms} />
+        <PortalChecklists rows={checklists.rows} total={checklists.total} timeZone={timeZone} />
+        <PortalMedBooks counts={medBooks} />
+        <PortalVisitJournal token={token} visits={ownVisits} timeZone={timeZone} />
 
         <footer className="mt-10 flex flex-wrap justify-between gap-2 border-t border-[#141821] pt-2 text-[12px] text-[#8a8f9c]">
           <span>
@@ -191,8 +233,4 @@ function Requisite({ label, value }: { label: string; value: string | null }) {
       <dd className="min-w-0 break-words text-[#141821]">{value || "не указано"}</dd>
     </div>
   );
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }

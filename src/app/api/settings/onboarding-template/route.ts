@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getOrgTemplate } from "@/lib/onboarding-templates";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { positionMatchKey } from "@/lib/sphere-positions";
+import { pickMirrorArea } from "@/lib/area-building";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,18 +132,28 @@ export async function POST(request: NextRequest) {
         },
       });
     }
-    // Area
-    const existingArea = await db.area.findFirst({
-      where: { organizationId, name: a.name },
-    });
+    // Area — цех-зеркало помещения этой точки (2026-10-17), то же правило,
+    // что у POST /api/settings/rooms: цех этой точки, иначе цех без точки
+    // (он получает точку); одноимённый цех другой точки — не наш.
+    const existingArea = pickMirrorArea(
+      await db.area.findMany({
+        where: { organizationId },
+        select: { id: true, name: true, buildingId: true },
+      }),
+      a.name,
+      buildingId,
+    );
     if (!existingArea) {
       await db.area.create({
         data: {
           organizationId,
           name: a.name,
+          buildingId,
         },
       });
       areasCreated += 1;
+    } else if (!existingArea.buildingId) {
+      await db.area.update({ where: { id: existingArea.id }, data: { buildingId } });
     }
   }
 

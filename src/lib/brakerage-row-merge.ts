@@ -82,8 +82,10 @@ export function mergeBrakerageRows(params: {
  * Ключи конфига, которыми владеет сервер. Состав комиссии пишет только окно
  * «Комиссия» (прямо в базу, `saveOrgCommission`); вкладка сайта, открытая до
  * смены состава, возвращала бы старый список при автосохранении.
+ * `commissionEnabled` — метка «состав действует» (скоропорт): её ставит только
+ * сервер; клиент не может ни включить комиссию сам, ни снять её.
  */
-export const SERVER_OWNED_CONFIG_KEYS = ["commissionMembers"] as const;
+export const SERVER_OWNED_CONFIG_KEYS = ["commissionMembers", "commissionEnabled"] as const;
 
 function withServerOwnedKeys(
   incoming: Record<string, unknown>,

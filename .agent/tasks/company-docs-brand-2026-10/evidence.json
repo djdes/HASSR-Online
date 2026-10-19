@@ -1,0 +1,85 @@
+{
+  "task_id": "company-docs-brand-2026-10",
+  "branch": "feat/company-docs",
+  "database": "wesetup_company (local 127.0.0.1:5432)",
+  "checked_at": "2026-10-18",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/document-org-block.ts: buildDocumentOrgBlock, DOCUMENT_ORG_ROW_ORDER, documentOrgRows, journalHeaderOrgText, documentOrgRequisitesLine, toOrderOrgSnapshot",
+        "src/lib/orders/org-snapshot.ts: buildOrgSnapshot = toOrderOrgSnapshot(buildDocumentOrgBlock({ org }))",
+        "src/lib/document-org-block.test.ts (9 tests) in raw/tests-affected.log"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "document-pdf.ts header cell = journalHeaderOrgText(block); point KPP/phone test in document-logo-pdf.test.ts",
+        "ppk/print-org.ts + loadPpkPrintOrg -> loadDocumentOrgBlock (9 consumers), ppk/pdf.ts general info + requisites",
+        "orders page/editor + api/orders/[code]/pdf via loadDocumentOrgBlock/toOrderOrgSnapshot/orderRequisitesLine",
+        "inspector pages, summary PDF route, inspector-sheet via buildDocumentOrgBlock",
+        "raw/samples/journal-p1.png shows point KPP 770102002 and tel. +7 900 111-22-33"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "prisma/schema.prisma: Organization.legalFullName/kpp/ogrn/legalAddress/directorName/directorPost String? (additive)",
+        "organization-profile-patch.ts: ORG_PROFILE_FIELDS + KPP/OGRN validation, empty -> null; test",
+        "organization-info-form.tsx section #documents: registry hint, reset button, live preview",
+        "currentLegalProfile ignores snapshot of another INN; test",
+        "raw/ui/ui-check.json headerPreview/previewAfterEdit/previewAfterReset; raw/ui/form-documents.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "pdf-logo.ts: PNG as is, SVG rasterized with resolveSvgFontFamilies (Cyrillic text fixed); tests",
+        "pdf-logo.server.ts: isOwnUploadedLogo — only own uploaded file, no external fetch (SSRF); test",
+        "raw/samples/{journal,journal-svg,ppk-program,haccp-plan,order,inspector-summary}-p1.png",
+        "raw/ui/* QR posters A4/A5/sticker, order sheet, PPK poster/program, inspector portal and QR sheet",
+        "no logo -> imageCount 0 in journal/PPK/order PDFs (test)",
+        "print fix: PPK sheet/poster org header div (global print hides header) + data-print-keep-bg on brand accents; raw/ui/print-probe.json, raw/ui/probe-*-bg-false.png"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "document-brand.ts normalize/contrast/brandInk/brandPalette; document-brand.test.ts",
+        "print-colors.test.ts: all previous b/w tests green + new accent-only test",
+        "RU/EN/UZ captions: brandingSubtitle, brandColorHint, guide.brandQuestion/brandAnswer, registrySubtitle, logoHint, logoUrlHint"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "raw/tests-affected.log: 104/104 pass",
+        "npm run i18n:check: 82/82 pass",
+        "full suite: pre-commit baseline gate"
+      ]
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": [
+        "npm run typecheck: exit 0",
+        "eslint on 40 changed files: no new errors (8 pre-existing in generated message-contract.d.ts, same count at HEAD)",
+        "prisma validate: valid; prisma db push (wesetup_company): already in sync",
+        "PDF samples generated and viewed: raw/samples/*.pdf + *-p1.png (raw/gen-samples.ts)",
+        "HTML views viewed: raw/ui/* (raw/ui-check.ts)",
+        "raw/ui/ui-check.json: all pages 200, no page errors; logo route 200 direct and via dev server"
+      ]
+    }
+  },
+  "commands": [
+    "npx prisma validate",
+    "DATABASE_URL=...wesetup_company npx prisma db push",
+    "npm run typecheck",
+    "npx eslint <changed files>",
+    "node --import tsx --test <affected tests>",
+    "npm run i18n:check",
+    "npx tsx .agent/tasks/company-docs-brand-2026-10/raw/gen-samples.ts",
+    "npx tsx .agent/tasks/company-docs-brand-2026-10/raw/ui-check.ts"
+  ]
+}

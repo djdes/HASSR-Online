@@ -8,6 +8,14 @@ import { isManagementRole } from "@/lib/user-roles";
 import { JOURNAL_ACCESS_CATALOG } from "@/lib/journal-access-catalog";
 import { escapeTelegramHtml, notifyEmployee } from "@/lib/telegram";
 import { orgLoginPrefix } from "@/lib/login-prefix";
+import {
+  ALL_PRESETS,
+  defaultPresetFromRole,
+  effectivePreset,
+  hasCapability,
+  isValidPreset,
+  presetCapabilitiesFor,
+} from "@/lib/permission-presets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +55,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
       telegramChatId: true,
       passwordHash: true,
       jobPositionId: true,
+      permissionPreset: true,
+      isRoot: true,
     },
   });
   if (!user) {
@@ -101,9 +111,26 @@ export async function GET(_request: Request, { params }: RouteParams) {
     .map((row) => row.template?.code)
     .filter((code): code is string => Boolean(code) && activeCodes.has(code!));
 
+  // «Набор прав»: явный пресет (null — «по должности»), действующий и
+  // что даёт каждый пресет в этой организации (с учётом org-override).
+  const explicitPreset =
+    user.permissionPreset && isValidPreset(user.permissionPreset) ? user.permissionPreset : null;
+  const orgOverrides = session.user.orgPresetOverrides ?? null;
+
   return NextResponse.json({
     loginPrefix: orgLoginPrefix(organization?.orgNo ?? 0),
     positionPresetCodes,
+    permissionPreset: explicitPreset,
+    effectivePreset: effectivePreset({ permissionPreset: explicitPreset, role: user.role, isRoot: user.isRoot }),
+    /** Пресет «по должности (автоматически)» — из роли. */
+    defaultPreset: defaultPresetFromRole(user.role),
+    presets: ALL_PRESETS.map((value) => ({
+      value,
+      capabilities: presetCapabilitiesFor(value, orgOverrides),
+    })),
+    /** Менять набор прав может только администратор (`admin.full`). */
+    canChangePreset: hasCapability(session.user, "admin.full") && !user.isRoot,
+    isSelf: user.id === session.user.id,
     user: {
       id: user.id,
       name: user.name,

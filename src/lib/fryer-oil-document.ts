@@ -165,9 +165,22 @@ export const DEFAULT_FRYER_OIL_SHIFT: FryerOilShift = {
   endTime: "16:00",
 };
 
+/**
+ * Фритюрница справочника «Оборудование», связанная с журналом
+ * (2026-10-17, как `sourceEquipmentId` у холодильников). Имя — то, что
+ * стоит в `lists.equipmentTypes`; переименование в справочнике меняет его
+ * и там. Синхронизация — `fryer-oil-equipment-link.ts`.
+ */
+export type FryerOilEquipmentLink = {
+  sourceEquipmentId: string;
+  name: string;
+};
+
 export type FryerOilDocumentConfig = {
   lists: FryerOilSelectLists;
   shift: FryerOilShift;
+  /** Фритюрницы из «Оборудования» в списке `lists.equipmentTypes`. */
+  equipmentLinks: FryerOilEquipmentLink[];
   /**
    * Когда журнал закончили. В шапке закрытого документа стояла дата
    * НАЧАЛА («Окончен 01-09-2026»), потому что реальной даты закрытия
@@ -233,6 +246,8 @@ export type FryerOilEntryData = {
   carryoverKg: number;              // остаток жира, кг
   disposedKg: number;               // слито/утилизировано, кг
   controllerName: string;
+  /** Фритюрница справочника этой строки (QR-наклейка, переименование). */
+  sourceEquipmentId?: string | null;
 };
 
 // Factory / default helpers
@@ -244,6 +259,7 @@ export function defaultFryerOilDocumentConfig(): FryerOilDocumentConfig {
       equipmentTypes: [...DEFAULT_EQUIPMENT_TYPES],
       productTypes: [...DEFAULT_PRODUCT_TYPES],
     },
+    equipmentLinks: [],
     finishedAt: null,
   };
 }
@@ -267,6 +283,22 @@ export function normalizeFryerOilSelectLists(value: unknown): FryerOilSelectList
   };
 }
 
+export function normalizeFryerOilEquipmentLinks(value: unknown): FryerOilEquipmentLink[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const links: FryerOilEquipmentLink[] = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const item = raw as Record<string, unknown>;
+    const id = typeof item.sourceEquipmentId === "string" ? item.sourceEquipmentId.trim() : "";
+    const name = typeof item.name === "string" ? item.name.trim() : "";
+    if (!id || !name || seen.has(id)) continue;
+    seen.add(id);
+    links.push({ sourceEquipmentId: id, name });
+  }
+  return links;
+}
+
 export function normalizeFryerOilDocumentConfig(value: unknown): FryerOilDocumentConfig {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return defaultFryerOilDocumentConfig();
@@ -275,6 +307,7 @@ export function normalizeFryerOilDocumentConfig(value: unknown): FryerOilDocumen
   return {
     lists: normalizeFryerOilSelectLists(item.lists),
     shift: normalizeFryerOilShift(item.shift),
+    equipmentLinks: normalizeFryerOilEquipmentLinks(item.equipmentLinks),
     finishedAt:
       typeof item.finishedAt === "string" && item.finishedAt.trim()
         ? item.finishedAt.trim()
@@ -352,6 +385,17 @@ export function normalizeFryerOilEntryData(value: unknown): FryerOilEntryData {
     carryoverKg: safeFloat(item.carryoverKg, defaults.carryoverKg),
     disposedKg: safeFloat(item.disposedKg, defaults.disposedKg),
     controllerName: typeof item.controllerName === "string" ? item.controllerName : defaults.controllerName,
+    // Оценка словами терялась при каждом сохранении: нормализация её не
+    // переносила, и в графе оставался только балл.
+    ...(typeof item.qualityStartNote === "string" && item.qualityStartNote.trim()
+      ? { qualityStartNote: item.qualityStartNote.trim() }
+      : {}),
+    ...(typeof item.qualityEndNote === "string" && item.qualityEndNote.trim()
+      ? { qualityEndNote: item.qualityEndNote.trim() }
+      : {}),
+    ...(typeof item.sourceEquipmentId === "string" && item.sourceEquipmentId.trim()
+      ? { sourceEquipmentId: item.sourceEquipmentId.trim() }
+      : {}),
   };
 }
 
@@ -430,7 +474,22 @@ export function buildFryerOilAutoFillEntryData(params: {
     carryoverKg: source?.carryoverKg ?? 0,
     disposedKg: 0,
     controllerName: source?.controllerName || controllerFallback,
+    ...(source?.equipmentType && source.sourceEquipmentId
+      ? { sourceEquipmentId: source.sourceEquipmentId }
+      : {}),
   };
+}
+
+/**
+ * Оценка словами для QR-формы фритюрницы. Здесь балл ставит человек,
+ * поэтому «к утилизации» допустимо (в отличие от автозаполнения).
+ */
+export function fryerOilQualityPhrase(score: number | null): string {
+  if (score === null) return "";
+  if (score >= 5) return DEFAULT_QUALITY_PHRASES[0];
+  if (score === 4) return DEFAULT_QUALITY_PHRASES[2];
+  if (score === 3) return DEFAULT_QUALITY_PHRASES[3];
+  return DEFAULT_QUALITY_PHRASES[4];
 }
 
 // Public accessors

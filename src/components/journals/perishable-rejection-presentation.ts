@@ -1,7 +1,7 @@
 import type { useTranslations } from "next-intl";
 import { formatDate, FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { presentDocumentTitle } from "@/i18n/journal-document-presentation";
-import { normalizeRowSignatures } from "@/lib/brakerage-commission";
+import { formatRowSignatures, normalizeRowSignatures, unsignedRowLabel, unsignedRows } from "@/lib/brakerage-commission";
 import { PERISHABLE_REJECTION_DOCUMENT_TITLE, normalizePerishableTime, perishableCellText, perishablePrintColumns, type PerishableRejectionConfig, type PerishableRejectionRow } from "@/lib/perishable-rejection-document";
 import { resolveColumns, type ResolvedJournalColumn } from "@/lib/journal-columns";
 
@@ -68,4 +68,34 @@ export function perishableSignatureLines(rows: readonly PerishableRejectionRow[]
     }).join("; ");
     return [`${what} — ${who}`];
   });
+}
+
+/**
+ * Бракеражная комиссия скоропорта (с 2026-10): состав действует только с
+ * меткой сервера `commissionEnabled` — нормализатор конфига отдаёт старую
+ * копию без метки пустой, поэтому «есть комиссия» = непустой состав.
+ */
+export function perishableHasCommission(config: Pick<PerishableRejectionConfig, "commissionMembers">) {
+  return config.commissionMembers.length > 0;
+}
+
+/** «Ждёт подписи комиссии» или «Подписано: Иванова А. А. · 11:52» под записью. */
+export function perishableCommissionStatus(row: PerishableRejectionRow, t: PerishableTranslator, timeZone?: string) {
+  const signatures = normalizeRowSignatures(row.signatures);
+  if (signatures.length === 0) return { signed: false, text: t("commission.waiting") };
+  return { signed: true, text: t("commission.signedBy", { names: formatRowSignatures(signatures, timeZone) }) };
+}
+
+/** Почему журнал нельзя закончить: записи ждут подписи комиссии (null — можно). */
+export function perishableCloseBlocker(config: PerishableRejectionConfig, t: PerishableTranslator) {
+  const rows = unsignedRows(config);
+  if (!rows.length) return null;
+  const bullets = rows.slice(0, 8).map(row => unsignedRowLabel({ ...row, productName: typeof row.productName === "string" && row.productName.trim() ? row.productName : t("signatures.unnamedProduct") }));
+  if (rows.length > 8) bullets.push(t("commission.more", { count: rows.length - 8 }));
+  return { title: t("commission.blockTitle", { count: rows.length }), description: t("commission.blockDescription"), bullets };
+}
+
+/** Плашка «Сегодня: N записей, M ждут подписи комиссии». */
+export function perishableTodaySignatures(summary: { total: number; waiting: number }, canSign: boolean, t: PerishableTranslator) {
+  return summary.waiting === 0 ? t("commission.todaySigned", { total: summary.total }) : t(canSign ? "commission.todayWaitingCanSign" : "commission.todayWaiting", summary);
 }

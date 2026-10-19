@@ -1,0 +1,8 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=4127, fail=0 ===
+✓ Все тесты прошли.
+exit=0

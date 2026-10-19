@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { ACTIVE_JOURNAL_CATALOG } from "../lib/journal-catalog";
 import { REGISTER_JOURNALS } from "../lib/register-journals";
+import { CCP_MONITORING_FIELDS, CCP_MONITORING_TEMPLATE_CODE } from "../lib/ccp-monitoring-journal";
 import { loadMessages } from "./messages";
 import { journalTitle, presentJournalField } from "./journal-presentation";
 import { readFileSync } from "node:fs";
@@ -74,6 +75,9 @@ test("field catalogs match seeded keys and option values, preserving the origina
       for (const option of field.options ?? []) labels.set(`${journal.code}.${field.key}.${option.value}`, option.label);
     }
   }
+  // Мониторинг ККТ: в сиде поля берутся из src/lib/ccp-monitoring-journal.ts (без вариантов).
+  seeded.set(CCP_MONITORING_TEMPLATE_CODE, new Map(CCP_MONITORING_FIELDS.map((field) => [field.key, []])));
+  for (const field of CCP_MONITORING_FIELDS) labels.set(`${CCP_MONITORING_TEMPLATE_CODE}.${field.key}`, field.label);
   for (const locale of ["ru", "en", "uz"] as const) {
     const catalogs = (await loadMessages(locale)).journalFields;
     for (const [code, fields] of Object.entries(catalogs)) {

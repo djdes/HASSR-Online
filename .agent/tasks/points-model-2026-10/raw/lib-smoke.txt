@@ -1,0 +1,4 @@
+PASS AC3 ensureDefaultArea: точка одна — цех в ней — {"name":"Основной цех","buildingId":"fx-building-default"}
+PASS AC3 soleBuildingId: одна точка → она, две → null, нет → null — "ok"
+PASS seed-mirror-rooms-to-areas: новый цех-зеркало сразу с точкой помещения — {"out":"[seed-mirror-rooms-to-areas] orgs=4 areas_created=3","mirror":[{"buildingId":"fx-building-single"}]}
+SUMMARY PASS failed=0

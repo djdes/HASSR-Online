@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
+import { computeStaffing, plannedHeadcountSchema } from "@/lib/staffing";
 
 const createSchema = z.object({
   name: z
@@ -13,6 +14,7 @@ const createSchema = z.object({
   categoryKey: z.enum(["management", "staff", "commission"], {
     message: "Недопустимая категория",
   }),
+  plannedHeadcount: plannedHeadcountSchema.optional(),
 });
 
 function forbidden() {
@@ -22,21 +24,34 @@ function forbidden() {
   );
 }
 
+/**
+ * GET /api/positions — должности организации со штатной численностью:
+ * у каждой `plannedHeadcount`, `occupied`, `vacancies`, `overstaffed`,
+ * `staffingLabel` («занято N из M»); итоги — `totals`.
+ */
 export async function GET() {
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
-  const positions = await db.jobPosition.findMany({
-    where: { organizationId: orgId },
-    orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      categoryKey: true,
-      sortOrder: true,
-      _count: { select: { users: { where: { archivedAt: null } } } },
-    },
-  });
-  return NextResponse.json({ positions });
+  const [positions, members] = await Promise.all([
+    db.jobPosition.findMany({
+      where: { organizationId: orgId },
+      orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        categoryKey: true,
+        sortOrder: true,
+        plannedHeadcount: true,
+        _count: { select: { users: { where: { archivedAt: null } } } },
+      },
+    }),
+    db.user.findMany({
+      where: { organizationId: orgId, archivedAt: null, isActive: true, jobPositionId: { not: null } },
+      select: { jobPositionId: true, isActive: true, archivedAt: true },
+    }),
+  ]);
+  const staffing = computeStaffing(positions, members);
+  return NextResponse.json({ positions: staffing.positions, totals: staffing.totals });
 }
 
 export async function POST(request: Request) {
@@ -87,6 +102,7 @@ export async function POST(request: Request) {
       categoryKey: parsed.categoryKey,
       name: parsed.name,
       sortOrder: (last?.sortOrder ?? 0) + 1,
+      ...(parsed.plannedHeadcount !== undefined ? { plannedHeadcount: parsed.plannedHeadcount } : {}),
     },
   });
 

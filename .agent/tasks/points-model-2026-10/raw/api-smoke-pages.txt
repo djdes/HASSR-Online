@@ -1,0 +1,4 @@
+INFO fryerUrl=http://localhost:3042/equipment-fill/cmvbfyemt0000uw9mywdjiurr-%D0%93%D0%BE%D1%80%D1%8F%D1%87%D0%B8%D0%B9%20%D1%86%D0%B5%D1%85-%D0%A4%D1%80%D0%B8%D1%82%D1%8E%D1%80%D0%BD%D0%B8%D1%86%D0%B0%208%D0%BB?token=cmvbfyemt0000uw9mywdjiurr-%D0%93%D0%BE%D1%80%D1%8F%D1%87%D0%B8%D0%B9%20%D1%86%D0%B5%D1%85-%D0%A4%D1%80%D0%B8%D1%82%D1%8E%D1%80%D0%BD%D0%B8%D1%86%D0%B0%208%D0%BB.1792271007749.rqBRPQwIUWbpFVaV2jNKSj45v2MLBGVZZ4HvcHxd-t0
+PASS AC8 GET /equipment-fill/[id] фритюрницы: форма журнала фритюрных жиров, не форма температуры — {"status":200,"h1":"Журнал учёта использования фритюрных жиров","form":true}
+PASS AC8 нет активного документа: жёлтая плашка до ввода, форма записи не показана — {"status":200}
+SUMMARY PASS failed=0

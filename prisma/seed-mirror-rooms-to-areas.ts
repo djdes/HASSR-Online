@@ -23,6 +23,7 @@ async function main() {
       id: true,
       buildings: {
         select: {
+          id: true,
           rooms: { select: { id: true, name: true } },
         },
       },
@@ -33,20 +34,27 @@ async function main() {
   let totalCreated = 0;
   for (const org of orgs) {
     const existingAreaNames = new Set(org.areas.map((a) => a.name));
-    const allRoomNames = new Set<string>();
+    // Название помещения → точки, где оно есть (2026-10-17: цех знает точку).
+    const roomBuildings = new Map<string, Set<string>>();
     for (const b of org.buildings) {
       for (const r of b.rooms) {
-        allRoomNames.add(r.name);
+        const set = roomBuildings.get(r.name) ?? new Set<string>();
+        set.add(b.id);
+        roomBuildings.set(r.name, set);
       }
     }
-    const missingAreas = [...allRoomNames].filter(
+    const missingAreas = [...roomBuildings.keys()].filter(
       (name) => !existingAreaNames.has(name),
     );
     for (const name of missingAreas) {
+      // Помещение в одной точке — цех сразу её; в нескольких — без точки
+      // (то же правило, что scripts/backfill-area-building.ts).
+      const points = [...(roomBuildings.get(name) ?? [])];
       await prisma.area.create({
         data: {
           organizationId: org.id,
           name,
+          buildingId: points.length === 1 ? points[0] : null,
           description: "Авто-создан backfill'ом из Помещения",
         },
       }).catch(() => {

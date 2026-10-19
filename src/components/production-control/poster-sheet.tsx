@@ -1,3 +1,4 @@
+import { brandPalette } from "@/lib/document-brand";
 import type { Poster } from "@/lib/ppk/posters";
 import type { PpkPrintOrg } from "./ppk-print-sheet";
 
@@ -15,6 +16,10 @@ const BOARD_COLOR: Record<string, string> = {
  * Лист плаката A4. `print` — крупный лист для печати и просмотра; `preview` —
  * мини-лист в сетке списка: логотип, заголовок и первые пункты мелко.
  * Без хуков: страница собирает его на сервере.
+ *
+ * Маркеры пунктов и полоса под шапкой — фирменным цветом организации
+ * («Моя компания → Логотип и цвета»); не задан — индиго WeSetup, как раньше.
+ * Текст на маркере — белый или тёмный, что контрастнее.
  */
 export function PosterSheet({
   poster,
@@ -25,6 +30,12 @@ export function PosterSheet({
   org: PpkPrintOrg;
   size?: "print" | "preview";
 }) {
+  const accent = brandPalette(org.block.brand.color);
+  // Заливки маркеров печатаются только с `print-color-adjust: exact`.
+  const exact = "[print-color-adjust:exact] [-webkit-print-color-adjust:exact]";
+  // Ч/б сброс печати кабинета (`app-theme.css`) гасит любую заливку; фирменный
+  // акцент из него выводим (`data-print-keep-bg`), без цвета печать прежняя.
+  const keepBg = org.block.brand.color ? { "data-print-keep-bg": "" } : {};
   if (size === "preview") {
     return (
       <div className="flex h-full flex-col overflow-hidden bg-white p-3 text-[#0b1024]">
@@ -48,13 +59,17 @@ export function PosterSheet({
 
   return (
     <article className="mx-auto flex min-h-[1123px] w-full max-w-[794px] flex-col rounded-3xl border border-[#ececf4] bg-white p-10 text-[#0b1024] shadow-[0_20px_60px_-40px_rgba(11,16,36,0.35)] print:min-h-[277mm] print:max-w-none print:rounded-none print:border-0 print:p-12 print:shadow-none">
-      <header className="flex items-center gap-4">
+      {/* `div`, не `header`: печать прячет все `header` (шапку кабинета). */}
+      <div className="flex items-center gap-4" data-sheet-org>
         {org.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={org.logoUrl} alt="" className="h-14 w-auto max-w-[180px] object-contain" />
         ) : null}
         <div className="min-w-0 text-[15px] font-semibold">{org.orgName}</div>
-      </header>
+      </div>
+      {org.block.brand.color ? (
+        <div aria-hidden {...keepBg} className={`mt-4 h-1 rounded-full ${exact}`} style={{ background: accent.ink }} />
+      ) : null}
 
       <h2 className="mt-8 text-[34px] font-bold leading-[1.15] tracking-[-0.02em]">{poster.title}</h2>
 
@@ -62,7 +77,11 @@ export function PosterSheet({
         <ol className="mt-8 space-y-4">
           {poster.items.map((item, index) => (
             <li key={item} className="flex items-start gap-4 text-[20px] leading-[1.45]">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[16px] font-semibold text-white">
+              <span
+                {...keepBg}
+                className={`flex size-9 shrink-0 items-center justify-center rounded-full text-[16px] font-semibold ${exact}`}
+                style={{ background: accent.fill, color: accent.onFill }}
+              >
                 {index + 1}
               </span>
               <span className="pt-1">{item}</span>
@@ -73,7 +92,7 @@ export function PosterSheet({
         <ul className="mt-8 space-y-4">
           {poster.items.map((item) => (
             <li key={item} className="flex items-start gap-4 text-[20px] leading-[1.45]">
-              <span className="mt-[0.7em] size-2.5 shrink-0 rounded-full bg-[#5566f6]" />
+              <span {...keepBg} className={`mt-[0.7em] size-2.5 shrink-0 rounded-full ${exact}`} style={{ background: accent.ink }} />
               <span>{item}</span>
             </li>
           ))}

@@ -6,6 +6,7 @@ import {
 } from "@/lib/journal-columns";
 import { normalizeCustomCells } from "@/lib/finished-product-document";
 import {
+  effectiveCommissionMembers,
   normalizeRowSignatures,
   type BrakerageCommissionMember,
   type BrakerageRowSignature,
@@ -92,10 +93,18 @@ export type PerishableRejectionConfig = {
    */
   showNote: boolean;
   /**
-   * Оставлено для совместимости типов: у скоропорта сторонней комиссии нет
-   * (решение владельца 2026-09-22), нормализатор всегда отдаёт [].
+   * Бракеражная комиссия документа — копия утверждённого состава
+   * организации (окно «Комиссия»). Действует только с меткой сервера
+   * `commissionEnabled`: старые копии состава, сделанные до решения
+   * 2026-09-22, нормализатор отдаёт пустыми — подписей они не требуют.
    */
   commissionMembers: BrakerageCommissionMember[];
+  /**
+   * Метка «состав действует»: её ставит только сервер, копируя состав
+   * организации в документ (`brakerage-commission-org.ts`). Клиент её не
+   * подделает — ключ серверный (`SERVER_OWNED_CONFIG_KEYS`).
+   */
+  commissionEnabled?: true;
   /** Набор колонок документа, см. `src/lib/journal-columns.ts`. */
   columns?: JournalColumnsConfig;
   /**
@@ -366,9 +375,10 @@ export function normalizePerishableRejectionConfig(
       : typeof record.showNote === "boolean"
         ? record.showNote
         : defaults.showNote,
-    // Скоропорт — внутренний бракераж без комиссии: ранее скопированный
-    // состав игнорируем, чтобы он не требовал подписей и не мешал закрытию.
-    commissionMembers: [],
+    // Состав комиссии — только с меткой сервера: копия, сделанная до
+    // решения 2026-09-22 (без метки), не требует подписей и не мешает закрытию.
+    commissionMembers: effectiveCommissionMembers(PERISHABLE_REJECTION_TEMPLATE_CODE, record),
+    ...(record.commissionEnabled === true ? { commissionEnabled: true as const } : {}),
     ...(columns ? { columns } : {}),
     ...(typeof record.finishedAt === "string" && record.finishedAt.trim() !== ""
       ? { finishedAt: record.finishedAt }

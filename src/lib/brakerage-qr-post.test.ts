@@ -55,3 +55,21 @@ test("viewer cannot modify or sign even with forged form fields", () => {
   assert.equal(result.editsByDoc.size, 0);
   assert.equal(result.signsByDoc.size, 0);
 });
+
+/**
+ * Скоропорт (комиссия с 2026-10): оценки — коды формы; комментарий нужен
+ * только к позиции, не допущенной к реализации.
+ */
+test("perishable commission signs compliant without a comment, a rejection needs one", () => {
+  const perishableRows = [
+    { documentId: "p1", rowId: "s1", name: "Сметана", time: "09:10", grade: "compliant", portionWeight: "", rejectionTime: "", note: "Партия 12" },
+  ];
+  const perishable = { isFinished: false, gradeValues: ["compliant", "good_quality", "non_compliant", "poor_quality"] };
+  const ok = parseBrakerageListPost(form({ "grade:s1": "compliant" }), perishableRows, evaluator, perishable);
+  assert.equal(ok.error, undefined);
+  assert.deepEqual(ok.signsByDoc.get("p1"), [{ rowId: "s1", grade: "compliant", note: "" }]);
+  const rejected = parseBrakerageListPost(form({ "grade:s1": "non_compliant" }), perishableRows, evaluator, perishable);
+  assert.match(rejected.error!, /позиции «Сметана»/);
+  assert.equal(rejected.signsByDoc.size, 0);
+  assert.equal(parseBrakerageListPost(form({ "grade:s1": "poor_quality", "note:s1": "Вздутая упаковка" }), perishableRows, evaluator, perishable).signsByDoc.size, 1);
+});

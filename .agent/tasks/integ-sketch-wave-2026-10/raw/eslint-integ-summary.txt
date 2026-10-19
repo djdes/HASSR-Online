@@ -1,0 +1,21 @@
+files 118 errors 0 warnings 16
+warn | scripts/backfill-area-building.ts:undefined |  | File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings
+warn | src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx:48 | @typescript-eslint/no-unused-vars | 'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u.
+warn | src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx:165 | @typescript-eslint/no-unused-vars | 'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_
+warn | src/app/(dashboard)/more/page.tsx:23 | react-hooks/purity | Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impur
+warn | src/app/(dashboard)/settings/equipment/page.tsx:323 | react-hooks/purity | Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impur
+warn | src/app/api/journal-documents/route.ts:24 | @typescript-eslint/no-unused-vars | 'getDefaultClimateDocumentConfig' is defined but never used. Allowed unused vars must match /^_/u.
+warn | src/app/api/journal-documents/route.ts:67 | @typescript-eslint/no-unused-vars | 'normalizeSanitationDayConfig' is defined but never used. Allowed unused vars must match /^_/u.
+warn | src/app/api/journal-documents/route.ts:121 | @typescript-eslint/no-unused-vars | 'canWriteJournal' is defined but never used. Allowed unused vars must match /^_/u.
+warn | src/components/journals/staff-training-document-client.tsx:78 | @typescript-eslint/no-unused-vars | 'POSITION_OPTIONS' is assigned a value but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:1630 | @typescript-eslint/no-unused-vars | 'formatDateTime' is defined but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:2821 | @typescript-eslint/no-unused-vars | 'roomsModeControllerCellValue' is defined but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:3863 | @typescript-eslint/no-unused-vars | 'monthColWidth' is assigned a value but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:3903 | @typescript-eslint/no-unused-vars | 'dateFromStr' is assigned a value but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:4908 | @typescript-eslint/no-unused-vars | 'marginLeft' is assigned a value but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:5609 | @typescript-eslint/no-unused-vars | 'dateFromStr' is assigned a value but never used. Allowed unused vars must match /^_/u.
+warn | src/lib/document-pdf.ts:6957 | @typescript-eslint/no-unused-vars | 'pageWidth' is assigned a value but never used. Allowed unused vars must match /^_/u.

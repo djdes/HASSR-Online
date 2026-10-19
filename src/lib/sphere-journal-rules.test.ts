@@ -15,10 +15,13 @@ import { REGISTER_DOCUMENT_TEMPLATE_CODES } from "@/lib/register-document";
 import { ALL_JOURNAL_CODES } from "@/lib/onboarding-presets";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { SPHERE_POSITION_SUGGESTIONS } from "@/lib/sphere-positions";
+import { STANDARD_JOURNAL_CODES } from "@/lib/journal-sets";
 import {
+  FOOD_SERVICE_SPHERES,
   PAPER_JOURNALS,
   SPHERE_RULES,
   defaultDisabledCodesFor,
+  defaultEnabledCodesFor,
   paperJournalsFor,
   requiredCodesFor,
 } from "@/lib/sphere-journal-rules";
@@ -72,18 +75,48 @@ test("у каждой сферы есть хотя бы один обязате�
   }
 });
 
-test("выключаем всё, кроме обязательного", () => {
+test("выключаем всё, кроме обязательного (у общепита — и стандартного набора)", () => {
   for (const sphere of spheres) {
-    const required = new Set(requiredCodesFor(sphere));
+    const enabled = new Set(requiredCodesFor(sphere));
+    if (FOOD_SERVICE_SPHERES.has(sphere)) for (const code of STANDARD_JOURNAL_CODES) enabled.add(code);
     const disabled = new Set(defaultDisabledCodesFor(sphere));
     for (const code of ALL_JOURNAL_CODES) {
       assert.equal(
         disabled.has(code),
-        !required.has(code),
+        !enabled.has(code),
         `${sphere}: код ${code} попал не в ту группу`,
       );
     }
+    assert.deepEqual(new Set(defaultEnabledCodesFor(sphere)), enabled, sphere);
   }
+});
+
+test("новая организация общепита получает все 11 журналов стандартного набора", () => {
+  assert.equal(STANDARD_JOURNAL_CODES.length, 11);
+  for (const sphere of FOOD_SERVICE_SPHERES) {
+    const disabled = new Set(defaultDisabledCodesFor(sphere));
+    for (const code of STANDARD_JOURNAL_CODES) {
+      assert.ok(!disabled.has(code), `${sphere}: ${code} выключен`);
+    }
+    // Журнал здоровья — связанный с гигиеническим, по-прежнему выключен.
+    assert.ok(disabled.has("health_check"), `${sphere}: health_check включён`);
+  }
+  // Ресторану раньше включали 4 журнала, теперь — обязательные + 11.
+  const restaurant = new Set(defaultEnabledCodesFor("restaurant"));
+  for (const code of ["hygiene", "cold_equipment_control", "climate_control", "fryer_oil", ...STANDARD_JOURNAL_CODES]) {
+    assert.ok(restaurant.has(code), `restaurant: ${code}`);
+  }
+  assert.equal(restaurant.size, 12);
+});
+
+test("не общепит: стандартный набор сам не включается", () => {
+  for (const sphere of ["production", "retail", "fitness", "beauty", "other"] as const) {
+    assert.ok(!FOOD_SERVICE_SPHERES.has(sphere), sphere);
+    assert.deepEqual(new Set(defaultEnabledCodesFor(sphere)), new Set(requiredCodesFor(sphere)), sphere);
+  }
+  // Сферы общепита — все из словаря, кроме перечисленных выше.
+  for (const sphere of FOOD_SERVICE_SPHERES) assert.ok(spheres.includes(sphere), sphere);
+  assert.equal(FOOD_SERVICE_SPHERES.size + 5, spheres.length);
 });
 
 test("журнал здоровья выключен по умолчанию и не рекомендуется ни одной сфере", () => {

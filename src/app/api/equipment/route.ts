@@ -7,6 +7,9 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { equipmentSchema } from "@/lib/validators";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { resolveEquipmentArea } from "@/lib/area-building-sync";
+import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
+import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 
 export async function GET() {
   try {
@@ -25,7 +28,7 @@ export async function GET() {
       },
       orderBy: { name: "asc" },
       include: {
-        area: { select: { id: true, name: true } },
+        area: { select: { id: true, name: true, buildingId: true } },
       },
     });
 
@@ -78,14 +81,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify areaId belongs to org
-    const area = await db.area.findUnique({
-      where: { id: validatedData.areaId },
+    // Помещение — цех организации или помещение точки без цеха (тогда
+    // цех создаётся с точкой помещения, 2026-10-17).
+    const place = await resolveEquipmentArea(getActiveOrgId(session), {
+      areaId: validatedData.areaId,
+      roomId: validatedData.roomId,
     });
-
-    if (!area || area.organizationId !== getActiveOrgId(session)) {
+    if (!place.ok || !place.areaId) {
       return NextResponse.json(
-        { error: "Цех не найден" },
+        { error: place.ok ? "Выберите помещение" : place.error },
         { status: 404 }
       );
     }
@@ -102,9 +106,14 @@ export async function POST(request: Request) {
         tempMin: validatedData.tempMin ?? null,
         tempMax: validatedData.tempMax ?? null,
         tuyaDeviceId: validatedData.tuyaDeviceId || null,
-        areaId: validatedData.areaId,
+        areaId: place.areaId,
       },
     });
+
+    // Фритюрница сама появляется в журнале фритюра (2026-10-17).
+    if (isFryerEquipmentType(equipment.type)) {
+      await syncFryerOilDocumentsSafe(getActiveOrgId(session));
+    }
 
     return NextResponse.json({ equipment }, { status: 201 });
   } catch (error) {

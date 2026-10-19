@@ -12,6 +12,15 @@ export function brakerageRelease(grade: string): "yes" | "no" {
   return ["неудовлетворительно", "недоброкачественно", "недоброкачественная", "poor_quality", "non_compliant"].includes(gradeKey(grade)) ? "no" : "yes";
 }
 
+/**
+ * Обязателен ли комментарий к оценке члена комиссии: у готовой продукции —
+ * при любой оценке, кроме «Отлично»; у скоропорта (коды «соответствует» /
+ * «не соответствует»…) — только когда позиция не допущена к реализации.
+ */
+export function brakerageCommentRequiredFor(isFinished: boolean, grade: string): boolean {
+  return isFinished ? brakerageCommentRequired(grade) : brakerageRelease(grade) === "no";
+}
+
 /** Each assessor owns their assessment. Another member cannot clear a rejection. */
 export function aggregateBrakerageAssessment(signatures: readonly Pick<BrakerageRowSignature, "grade">[], grade: string) {
   const grades = [...signatures.map(item => item.grade ?? ""), grade].filter(Boolean);

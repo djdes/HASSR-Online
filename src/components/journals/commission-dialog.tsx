@@ -29,7 +29,9 @@ function newDraftPin(): string {
 const GROUP_KEYS = { commission: "commissionDialog.groupCommission", management: "commissionDialog.groupManagement", staff: "commissionDialog.groupStaff" } as const;
 
 /**
- * «Сторонняя бракеражная комиссия» журнала (только готовая продукция).
+ * Бракеражная комиссия журнала: «Сторонняя бракеражная комиссия» готовой
+ * продукции или комиссия скоропорта (`code="perishable_rejection"` — свои
+ * заголовок и подсказки: подписывают поступившие позиции, а не блюда).
  * Состав — сотрудники организации (выбор из групп «Комиссия / Руководство /
  * Сотрудники» с поиском) или «Новый человек»: он попадает на страницу
  * сотрудников в колонку «Комиссия»; ПИН виден в форме ещё до создания. Сохранение —
@@ -49,6 +51,7 @@ export function CommissionDialog({
   const t = useTranslations("journalControls");
   const locale = useLocale();
   const roleLabels = { chair: t("commissionDialog.chair"), member: t("commissionDialog.member") };
+  const perishable = code === "perishable_rejection";
   const [members, setMembers] = useState<Array<{ employeeId: string; role: string; roleKind?: CommissionRoleKind; name: string }>>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [canManage, setCanManage] = useState(false);
@@ -189,9 +192,9 @@ export function CommissionDialog({
         <DialogHeader className="shrink-0 border-b border-[#ececf4] px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
             <Users className="size-5 text-[#5566f6]" />
-            {t("commissionDialog.title")}</DialogTitle>
+            {perishable ? t("commissionDialog.titlePerishable") : t("commissionDialog.title")}</DialogTitle>
           <p className="text-[13px] leading-snug text-[#6f7282]">
-            {t("commissionDialog.description")}</p>
+            {perishable ? t("commissionDialog.descriptionPerishable") : t("commissionDialog.description")}</p>
         </DialogHeader>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {loading ? <p className="text-[13px] text-[#6f7282]">{t("commissionDialog.loading")}</p> : null}
@@ -368,7 +371,7 @@ export function CommissionDialog({
                 </p>
               </div>
               <p className="text-[12px] leading-snug text-[#6f7282]">
-                {t("commissionDialog.newPersonHint")}</p>
+                {perishable ? t("commissionDialog.newPersonHintPerishable") : t("commissionDialog.newPersonHint")}</p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -384,7 +387,7 @@ export function CommissionDialog({
           ) : null}
 
           <p className="rounded-2xl bg-[#f5f6ff] px-4 py-3 text-[12.5px] leading-snug text-[#3848c7]">
-            {t("commissionDialog.nextHint")}</p>
+            {perishable ? t("commissionDialog.nextHintPerishable") : t("commissionDialog.nextHint")}</p>
         </div>
         <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#ececf4] bg-white px-6 py-4 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className="h-10 rounded-xl border border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] hover:bg-[#fafbff]">

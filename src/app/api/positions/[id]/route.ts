@@ -3,10 +3,13 @@ import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
+import { plannedHeadcountSchema } from "@/lib/staffing";
 
 const patchSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   categoryKey: z.enum(["management", "staff", "commission"]).optional(),
+  /** Штатная численность: целое 0…999, null — «не задано». */
+  plannedHeadcount: plannedHeadcountSchema.optional(),
 });
 
 function forbidden() {
@@ -55,6 +58,9 @@ export async function PATCH(
         ...(parsed.name !== undefined ? { name: parsed.name } : {}),
         ...(parsed.categoryKey !== undefined
           ? { categoryKey: parsed.categoryKey }
+          : {}),
+        ...(parsed.plannedHeadcount !== undefined
+          ? { plannedHeadcount: parsed.plannedHeadcount }
           : {}),
       },
     });

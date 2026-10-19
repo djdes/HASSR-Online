@@ -1,0 +1,322 @@
+{
+  "sets": [
+    {
+      "id": "standard",
+      "title": "Стандартный набор журналов",
+      "description": "11 журналов, которые нужны любому общепиту по СанПиН: бракеражи, гигиена сотрудников, температура, УФ-лампы, уборки, дезсредства, дезинсекция, медкнижки и инструктажи.",
+      "bulkEnable": true,
+      "total": 11,
+      "enabledCount": 11,
+      "items": [
+        {
+          "code": "finished_product",
+          "name": "Журнал бракеража готовой пищевой продукции",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "perishable_rejection",
+          "name": "Журнал бракеража скоропортящейся пищевой продукции",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "hygiene",
+          "name": "Гигиенический журнал (сотрудники)",
+          "enabled": true,
+          "related": [
+            {
+              "code": "health_check",
+              "name": "Журнал здоровья",
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "code": "climate_control",
+          "name": "Журнал учёта температуры и влажности на складах",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "cold_equipment_control",
+          "name": "Журнал учёта температурного режима холодильного и морозильного оборудования",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "uv_lamp_runtime",
+          "name": "Журнал учета работы УФ бактерицидной установки",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "general_cleaning",
+          "name": "График и учет генеральных уборок",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "disinfectant_usage",
+          "name": "Журнал учета дезинфицирующих средств",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "pest_control",
+          "name": "Журнал учета дезинфекции, дезинсекции и дератизации",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "med_books",
+          "name": "Медицинские книжки",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "staff_training",
+          "name": "Журнал регистрации инструктажей (обучения) сотрудников",
+          "enabled": true,
+          "related": []
+        }
+      ]
+    },
+    {
+      "id": "haccp",
+      "title": "Набор в соответствии с ХАССП",
+      "description": "Журналы с отметкой ХАССП и мониторинг критических контрольных точек — записи, которых требует ТР ТС 021/2011 (ст. 10) от системы ХАССП.",
+      "bulkEnable": true,
+      "total": 19,
+      "enabledCount": 2,
+      "items": [
+        {
+          "code": "climate_control",
+          "name": "Журнал учёта температуры и влажности на складах",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "cold_equipment_control",
+          "name": "Журнал учёта температурного режима холодильного и морозильного оборудования",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "incoming_control",
+          "name": "Журнал приемки и входного контроля продукции",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "training_plan",
+          "name": "План обучения персонала",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "equipment_maintenance",
+          "name": "График профилактического обслуживания оборудования",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "breakdown_history",
+          "name": "Карточка истории поломок",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "incoming_raw_materials_control",
+          "name": "Журнал входного контроля сырья, ингредиентов, упаковочных материалов",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "accident_journal",
+          "name": "Журнал учета аварий",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "complaint_register",
+          "name": "Журнал регистрации жалоб",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "audit_plan",
+          "name": "План-программа внутренних аудитов",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "audit_protocol",
+          "name": "Протокол внутреннего аудита",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "audit_report",
+          "name": "Отчет о внутреннем аудите",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "traceability_test",
+          "name": "Журнал прослеживаемости продукции",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "intensive_cooling",
+          "name": "Журнал контроля интенсивного охлаждения горячих блюд",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "glass_items_list",
+          "name": "Перечень изделий из стекла и хрупкого пластика",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "transport_temperature",
+          "name": "Журнал контроля температуры при транспортировке",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "inventory_condition",
+          "name": "Журнал оценки состояния металлического и пластикового инвентаря",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "batch_release",
+          "name": "Журнал допуска партии продукции к отгрузке",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "ccp_monitoring",
+          "name": "Журнал мониторинга критических контрольных точек",
+          "enabled": false,
+          "related": []
+        }
+      ]
+    },
+    {
+      "id": "extra",
+      "title": "Дополнительные журналы",
+      "description": "Остальные журналы каталога: включайте те, что нужны вашему заведению.",
+      "bulkEnable": false,
+      "total": 17,
+      "enabledCount": 1,
+      "items": [
+        {
+          "code": "cleaning_ventilation_checklist",
+          "name": "Чек-лист уборки и проветривания помещений",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "cleaning",
+          "name": "Журнал уборки",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "fryer_oil",
+          "name": "Журнал учета использования фритюрных жиров",
+          "enabled": true,
+          "related": []
+        },
+        {
+          "code": "sanitary_day_control",
+          "name": "Чек-лист (памятка) проведения санитарного дня",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "equipment_calibration",
+          "name": "График поверки средств измерений",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "ppe_issuance",
+          "name": "Журнал учета выдачи СИЗ",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "product_writeoff",
+          "name": "Акт забраковки",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "metal_impurity",
+          "name": "Журнал учета металлопримесей в сырье",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "equipment_cleaning",
+          "name": "Журнал мойки и дезинфекции оборудования",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "glass_control",
+          "name": "Журнал контроля изделий из стекла и хрупкого пластика",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "daily_samples",
+          "name": "Журнал отбора и хранения суточных проб",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "vitaminization",
+          "name": "Журнал проведения витаминизации третьих и сладких блюд",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "ration_control",
+          "name": "Ведомость контроля за рационом питания",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "tableware_breakage",
+          "name": "Журнал учёта боя посуды",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "pool_water_control",
+          "name": "Журнал контроля качества воды в бассейне",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "instrument_sterilization",
+          "name": "Журнал контроля стерилизации инструментов",
+          "enabled": false,
+          "related": []
+        },
+        {
+          "code": "medical_waste_b",
+          "name": "Журнал учёта отходов класса Б",
+          "enabled": false,
+          "related": []
+        }
+      ]
+    }
+  ]
+}

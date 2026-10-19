@@ -1,7 +1,9 @@
 import type { Prisma } from "@prisma/client";
 
 import {
+  COMMISSION_FLAG_JOURNAL_CODES,
   COMMISSION_JOURNAL_CODES,
+  effectiveCommissionMembers,
   isCommissionJournalCode,
   normalizeCommissionMembers,
   normalizeCommissionRole,
@@ -19,6 +21,11 @@ import { COMMISSION_CATEGORY_KEY, ORG_SIGNER_WHERE } from "@/lib/journal-roster"
  * `config.commissionMembers` активных документов, а новый документ получает
  * его при создании. Модель «копия»: закрытые документы и их печать не
  * меняются, когда состав потом сменят.
+ *
+ * Каждая серверная копия состава ставит в конфиг метку
+ * `commissionEnabled: true`: у скоропорта состав действует только с ней
+ * (старые копии до решения 2026-09-22 не оживают — см.
+ * `effectiveCommissionMembers`).
  */
 
 export const COMMISSION_POSITION_NAME = "Член бракеражной комиссии";
@@ -78,7 +85,7 @@ export async function saveOrgCommission(
   let updatedDocuments = 0;
   for (const doc of docs) {
     const done = await withDocumentConfigLock(doc.id, async (locked) => ({
-      config: { ...asRecord(locked.config), commissionMembers: members } as Prisma.InputJsonValue,
+      config: { ...asRecord(locked.config), commissionMembers: members, commissionEnabled: true } as Prisma.InputJsonValue,
       result: true,
     }));
     if (done) updatedDocuments += 1;
@@ -92,16 +99,19 @@ export async function withOrgCommission(
   code: string,
   config: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  // Сторонняя комиссия — только у бракеража готовой продукции.
   if (!isCommissionJournalCode(code)) return config;
-  if (Array.isArray(config.commissionMembers) && config.commissionMembers.length > 0) return config;
+  // Свой действующий состав (перенос из прошлого документа) не трогаем.
+  // Старая копия скоропорта без метки — не действующая: её заменяет
+  // утверждённый состав организации.
+  if (effectiveCommissionMembers(code, config).length > 0) return config;
   const members = await readOrgCommission(organizationId, code);
-  return members.length > 0 ? { ...config, commissionMembers: members } : config;
+  return members.length > 0 ? { ...config, commissionMembers: members, commissionEnabled: true } : config;
 }
 
 /**
  * Должность «Член бракеражной комиссии» категории «Комиссия» с доступом к
- * бракеражу готовой продукции (у скоропорта комиссии нет) — находит или создаёт. Новые люди из окна комиссии
+ * бракеражным журналам с комиссией (готовая продукция и скоропорт) —
+ * находит или создаёт. Новые люди из окна комиссии
  * попадают в неё и видят на странице сотрудников колонку «Комиссия».
  */
 export async function ensureCommissionPosition(organizationId: string): Promise<{ id: string }> {
@@ -157,11 +167,16 @@ export async function syncDocCommissionMember(documentId: string, member: Braker
   const done = await withDocumentConfigLock<boolean>(documentId, async (locked) => {
     if (locked.status !== "active" || !isCommissionJournalCode(locked.templateCode)) return { result: false };
     const config = asRecord(locked.config);
-    const members = normalizeCommissionMembers(config.commissionMembers);
-    if (members.some((item) => item.employeeId === member.employeeId)) return { result: true };
+    // Только действующий состав: старая копия скоропорта без метки не
+    // оживает — вместо неё в документ встаёт утверждённый состав организации.
+    const inactiveCopy = COMMISSION_FLAG_JOURNAL_CODES.has(locked.templateCode) && config.commissionEnabled !== true;
+    const members = inactiveCopy
+      ? await readOrgCommission(locked.organizationId, locked.templateCode)
+      : effectiveCommissionMembers(locked.templateCode, config);
+    if (!inactiveCopy && members.some((item) => item.employeeId === member.employeeId)) return { result: true };
     const next = normalizeCommissionMembers([...members, member]);
     if (!next.some((item) => item.employeeId === member.employeeId)) return { result: false };
-    return { config: { ...config, commissionMembers: next } as Prisma.InputJsonValue, result: true };
+    return { config: { ...config, commissionMembers: next, commissionEnabled: true } as Prisma.InputJsonValue, result: true };
   });
   return done === true;
 }

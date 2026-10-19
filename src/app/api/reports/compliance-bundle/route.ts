@@ -11,6 +11,9 @@ import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName } from "@/lib/building-scope";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
 import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { loadInspectionVisitFileContent, loadInspectionVisitsForBundle } from "@/lib/inspection-visits.server";
+import { buildInspectionVisitsPdf } from "@/lib/inspection-visits-pdf";
+import { inspectionVisitFileName, planBundleAttachments } from "@/lib/inspection-visits";
 import {
   buildCapaSummaryPdf,
   buildRegulatorCoverPdf,
@@ -142,7 +145,7 @@ export async function GET(request: Request) {
   const [organization] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true, journalShortName: true, legalProfileJson: true },
+      select: { name: true, journalShortName: true, legalProfileJson: true, timezone: true },
     }),
   ]);
 
@@ -234,6 +237,46 @@ export async function GET(request: Request) {
   } catch (err) {
     manifestLines.push("✗ Производственный контроль — не удалось собрать документы из разделов");
     console.error("[compliance-bundle] assembled production control docs failed", err);
+  }
+  // Журнал посещений проверяющих за период и сканы оснований проверок.
+  try {
+    const visits = await loadInspectionVisitsForBundle(organizationId, from, toEndOfDay);
+    const folder = "Посещения проверяющих";
+    zip.file(
+      `${folder}/Журнал посещений.pdf`,
+      buildInspectionVisitsPdf({
+        organizationName,
+        periodFrom: from,
+        periodTo: to,
+        timeZone: organization?.timezone || "Europe/Moscow",
+        rows: visits.map((visit) => ({ ...visit, fileCount: visit.files.length })),
+      })
+    );
+    // Сканы — по одному файлу из БД и в пределах общего объёма архива.
+    const entries = visits.flatMap((visit, index) => {
+      const sub = sanitizeForZip(`${String(index + 1).padStart(2, "0")} ${ymd(visit.visitedAt)} ${visit.authority}`);
+      return visit.files.map((file, fileIndex) => ({
+        ...file,
+        path: `${folder}/${sub}/${fileIndex + 1} ${inspectionVisitFileName(file.fileName, file.mimeType)}`,
+      }));
+    });
+    const plan = planBundleAttachments(entries);
+    let fileCount = 0;
+    for (const entry of plan.included) {
+      const content = await loadInspectionVisitFileContent(entry.id, organizationId);
+      if (!content) continue;
+      zip.file(entry.path, content);
+      fileCount += 1;
+    }
+    manifestLines.push(`Посещения проверяющих: записей ${visits.length}, сканов оснований ${fileCount}`);
+    if (plan.skipped.count > 0) {
+      manifestLines.push(
+        `! Не вошли в архив по объёму: сканов ${plan.skipped.count} (${(plan.skipped.bytes / 1024 / 1024).toFixed(1)} МБ) — откройте их в кабинете: «Пришла проверка» → «Журнал посещений»`
+      );
+    }
+  } catch (err) {
+    manifestLines.push("✗ Посещения проверяющих — не удалось собрать журнал посещений");
+    console.error("[compliance-bundle] inspection visits failed", err);
   }
   zip.file(`ОТЧЁТ.txt`, manifestLines.join("\r\n"));
 

@@ -117,6 +117,7 @@ import {
   normalizeFryerOilDocumentConfig,
   normalizeFryerOilEntryData,
 } from "@/lib/fryer-oil-document";
+import { syncFryerOilDocuments } from "@/lib/fryer-oil-equipment-sync";
 import {
   INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME,
   INTENSIVE_COOLING_TEMPLATE_CODE,
@@ -1161,7 +1162,21 @@ async function JournalDocumentBody({
     !isRegisterDocumentTemplate(document.template.code)
   ) {
     if (document.template.code === FRYER_OIL_TEMPLATE_CODE) {
-      const fryerConfig = normalizeFryerOilDocumentConfig(document.config);
+      let fryerConfig = normalizeFryerOilDocumentConfig(document.config);
+      // Фритюрницы из «Оборудования» появляются в списке сами (2026-10-17):
+      // документ, созданный кроном или до связи, догоняет справочник при открытии.
+      if (document.status === "active") {
+        const changed = await syncFryerOilDocuments(getActiveOrgId(session), {
+          documentIds: [document.id],
+        }).catch(() => [] as string[]);
+        if (changed.length > 0) {
+          const fresh = await db.journalDocument.findUnique({
+            where: { id: document.id },
+            select: { config: true },
+          });
+          fryerConfig = normalizeFryerOilDocumentConfig(fresh?.config);
+        }
+      }
       return (
         // «Сегодня» — из пояса организации (см. TodayKeyProvider).
         <TodayKeyProvider value={todayKey}>

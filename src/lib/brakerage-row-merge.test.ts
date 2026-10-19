@@ -89,3 +89,23 @@ test("клиент не может дописать состав комисси�
   });
   assert.equal("commissionMembers" in merged, false);
 });
+
+/**
+ * Метка `commissionEnabled` (скоропорт: состав действует) — тоже серверная:
+ * клиент не включит комиссию старой копии состава и не снимет действующую.
+ */
+test("метку commissionEnabled клиент не подделает и не снимет", () => {
+  const forged = mergeBrakerageConfig({
+    incoming: { rows: [], commissionMembers: members, commissionEnabled: true },
+    current: { rows: [], commissionMembers: members },
+    knownRowIds: null,
+  });
+  assert.equal("commissionEnabled" in forged, false);
+  const kept = mergeBrakerageConfig({
+    incoming: { rows: [{ id: "a" }], commissionEnabled: false },
+    current: { rows: [{ id: "a" }], commissionMembers: members, commissionEnabled: true },
+    knownRowIds: new Set(["a"]),
+  });
+  assert.equal(kept.commissionEnabled, true);
+  assert.deepEqual(kept.commissionMembers, members);
+});

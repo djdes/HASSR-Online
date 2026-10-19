@@ -139,6 +139,12 @@ const CATALOG_TAIL_JOURNALS = [
     code: "batch_release",
     name: "Журнал допуска партии продукции к отгрузке",
   },
+  // Октябрь 2026: мониторинг ККТ — его записи сверяет блок ППК «ККТ», и
+  // журнал входит в набор по ХАССП. В конец, чтобы не сдвигать sortOrder.
+  {
+    code: "ccp_monitoring",
+    name: "Журнал мониторинга критических контрольных точек",
+  },
 ] as const satisfies readonly JournalCatalogItem[];
 
 export const ACTIVE_JOURNAL_CATALOG = [...CATALOG_HEAD_JOURNALS, ...CATALOG_TAIL_JOURNALS] as const;

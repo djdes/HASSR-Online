@@ -23,8 +23,18 @@ export async function ensureDefaultArea(organizationId: string): Promise<string>
     select: { id: true },
   });
   if (existing) return existing.id;
+  // Точка одна — цех сразу её (2026-10-17, «точка → помещения → оборудование»).
+  const buildings = await db.building.findMany({
+    where: { organizationId },
+    select: { id: true },
+    take: 2,
+  });
   const created = await db.area.create({
-    data: { organizationId, name: DEFAULT_AREA_NAME },
+    data: {
+      organizationId,
+      name: DEFAULT_AREA_NAME,
+      buildingId: buildings.length === 1 ? buildings[0].id : null,
+    },
     select: { id: true },
   });
   return created.id;

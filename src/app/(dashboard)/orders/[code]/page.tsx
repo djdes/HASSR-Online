@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { findOrderTemplate } from "@/lib/orders/catalog";
+import { toOrderOrgSnapshot } from "@/lib/document-org-block";
+import { loadDocumentOrgBlock } from "@/lib/document-org-block.server";
 import {
-  currentOrgSnapshot,
   getOrder,
   listOrders,
   suggestNextNumber,
@@ -62,15 +63,18 @@ export default async function OrderPage({
       ? "/settings/onboarding#documents"
       : null;
 
-  const [org, existing, orders] = await Promise.all([
-    currentOrgSnapshot(organizationId),
+  const [block, existing, orders] = await Promise.all([
+    loadDocumentOrgBlock(organizationId),
     existingId ? getOrder(organizationId, existingId) : Promise.resolve(null),
     listOrders(organizationId),
   ]);
 
   // Реквизиты берём из снимка приказа, если он уже издан: директор мог
   // смениться, а под старым приказом должна остаться прежняя подпись.
+  // Логотип и фирменный цвет — текущие (это оформление, а не реквизиты).
+  const org = block ? toOrderOrgSnapshot(block) : null;
   const snapshot = existing?.org ?? org;
+  const brand = block?.brand ?? null;
 
   const today = new Date();
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -103,6 +107,7 @@ export default async function OrderPage({
   return (
     <OrderEditor
       template={template}
+      brand={brand}
       org={
         snapshot ?? {
           orgName: "",

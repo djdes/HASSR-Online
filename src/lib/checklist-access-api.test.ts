@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { JOURNAL_ACCESS_CATALOG } from "./journal-access-catalog";
 import { ACTIVE_JOURNAL_CATALOG } from "./journal-catalog";
+import * as permissionPresets from "./permission-presets";
 
 function accessHandler(role = "owner") {
   const writes: {templateCode:string;canFinalize:boolean}[]=[];
@@ -25,6 +26,8 @@ function accessHandler(role = "owner") {
     if(name==="@/lib/journal-access-catalog")return {JOURNAL_ACCESS_CATALOG};
     if(name==="@/lib/telegram")return {escapeTelegramHtml:(value:string)=>value,notifyEmployee:()=>{throw Error("Notifications must be disabled for this fixture");}};
     if(name==="@/lib/login-prefix")return {orgLoginPrefix:()=>"qa"};
+    // Чистый модуль пресетов: «Набор прав» в ответе GET (AC2 staff-data).
+    if(name==="@/lib/permission-presets")return permissionPresets;
     throw Error(`Unexpected access API dependency: ${name}`);
   }});
   return {...fakeModule.exports as {GET:(request:Request,ctx:{params:Promise<{id:string}>})=>Promise<Response>;PUT:(request:Request,ctx:{params:Promise<{id:string}>})=>Promise<Response>},writes};

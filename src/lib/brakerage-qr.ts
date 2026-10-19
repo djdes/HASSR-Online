@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
-import { normalizeRowSignatures, type BrakerageRowSignature } from "@/lib/brakerage-commission";
+import { isCommissionJournalCode, normalizeRowSignatures, type BrakerageRowSignature } from "@/lib/brakerage-commission";
 import { correctedBrakerageTimes, deriveBrakerageTimes, rowRejectionDateTime } from "@/lib/brakerage-times";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
@@ -96,9 +96,8 @@ export async function listBrakerageDayRows(params: {
   const docs = found.filter((doc) => doc.id === params.primaryDocumentId || doc.dateTo < today);
   const primary = docs.find((doc) => doc.id === params.primaryDocumentId) ?? docs[0];
   const rows: BrakerageQrRow[] = [];
-  const orgMembers = params.code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE ? await readOrgCommission(params.organizationId, params.code) : [];
-  const pick = (dayKey: string, signatures: BrakerageRowSignature[]) =>
-    dayKey === params.todayKey || (dayKey === params.yesterdayKey && signatures.length === 0);
+  // Утверждённый состав организации — у обоих бракеражей с комиссией.
+  const orgMembers = isCommissionJournalCode(params.code) ? await readOrgCommission(params.organizationId, params.code) : [];
 
   for (const doc of docs) {
     if (params.code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE) {
@@ -132,11 +131,17 @@ export async function listBrakerageDayRows(params: {
         });
       }
     } else {
+      // Состав документа — только действующий (с меткой сервера, см.
+      // normalizePerishableRejectionConfig) плюс утверждённый состав организации.
       const config = normalizePerishableRejectionConfig(doc.config);
+      const members = [...new Map([...orgMembers, ...config.commissionMembers].map(member => [member.employeeId || member.id, member])).values()];
       for (const row of config.rows) {
         const dayKey = row.arrivalDate.slice(0, 10);
         const signatures = normalizeRowSignatures(row.signatures);
-        if (!row.productName.trim() || !pick(dayKey, signatures)) continue;
+        // С комиссией строка уходит из очереди после оценок всех членов (как у
+        // готовой продукции); без комиссии — после первой подписи, как раньше.
+        const fullyAssessed = members.length > 0 ? allCommissionMembersAssessed({ productName: row.productName, signatures }, members) : signatures.length > 0;
+        if (!row.productName.trim() || !(dayKey === params.todayKey || (dayKey === params.yesterdayKey && !fullyAssessed))) continue;
         rows.push({
           documentId: doc.id,
           rowId: row.id,
@@ -151,6 +156,7 @@ export async function listBrakerageDayRows(params: {
           portionWeight: "",
           note: row.note ?? "",
           signatures,
+          ...(members.length > 0 ? { fullyAssessed } : {}),
         });
       }
     }

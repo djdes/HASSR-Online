@@ -142,6 +142,17 @@ model Organization {
   /// численность, капитал, финансы. Обновляется анкетой и кнопкой в настройках.
   legalProfileJson               Json?
   legalProfileUpdatedAt          DateTime?
+  /// «Моя компания → Реквизиты» (2026-10-17): правки реквизитов поверх
+  /// снимка ЕГРЮЛ. Пусто — в документы идёт значение из `legalProfileJson`;
+  /// снимок не перезаписывается и остаётся значением по умолчанию. Сборка —
+  /// `src/lib/document-org-block.ts`.
+  legalFullName                  String?
+  kpp                            String?
+  /// ОГРН (13 цифр) или ОГРНИП (15 цифр).
+  ogrn                           String?
+  legalAddress                   String?
+  directorName                   String?
+  directorPost                   String?
   address                        String?
   phone                          String?
   /// Аккаунт-владелец. Nullable только на время миграции существующих
@@ -452,6 +463,8 @@ model Organization {
   kioskPhotoRequired             Boolean                        @default(false)
   /// Сканы приказов к журналам (2026-09-24, пожелание РПН).
   journalOrderScans              JournalOrderScan[]
+  /// «Пришла проверка» → журнал посещений (2026-10-17).
+  inspectionVisits               InspectionVisit[]
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -770,6 +783,8 @@ model Building {
   journalObligations JournalObligation[]
   /// Площадки этой точки в ФГИС «Меркурий».
   mercuryEnterprises MercuryEnterprise[]
+  /// Цеха точки (2026-10-17): «точка → помещения → оборудование».
+  areas              Area[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -1081,6 +1096,10 @@ model JobPosition {
   categoryKey     String
   name            String
   sortOrder       Int                        @default(0)
+  /// Штатная численность — сколько человек на должности «по штатному
+  /// расписанию». null = не задана; «занято N из M» считает
+  /// `src/lib/staffing.ts` по активным сотрудникам.
+  plannedHeadcount Int?
   createdAt       DateTime                   @default(now())
   updatedAt       DateTime                   @updatedAt
   users           User[]
@@ -1265,6 +1284,8 @@ model InspectorToken {
   /// инспектора" forensics. Nullable for legacy and ROOT-issued tokens.
   createdById    String?
   visits         InspectorVisit[]
+  /// Записи журнала посещений, внесённые по этому токену.
+  inspectionVisits InspectionVisit[]
 
   @@index([organizationId])
   @@index([expiresAt])
@@ -1289,6 +1310,73 @@ model InspectorVisit {
   templatesViewed Json?
 
   @@index([tokenId])
+}
+
+/// «Пришла проверка» → журнал посещений (2026-10-17, скан 83): документ
+/// «Посещение». Запись вносит проверяющий на портале по QR (`tokenId`) или
+/// руководство в кабинете (`tokenId` = null). Основание проверки (решение,
+/// распоряжение) — сканы и фото в `InspectionVisitFile`. Вложения отдаются
+/// только руководству организации и владельцу токена, пока токен действует.
+/// Записи не удаляются: журнал посещений ведётся как бумажный.
+model InspectionVisit {
+  id                String                @id @default(cuid())
+  organizationId    String
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Токен портала, через который запись внёс проверяющий; null — внесло руководство.
+  tokenId           String?
+  token             InspectorToken?       @relation(fields: [tokenId], references: [id], onDelete: SetNull)
+  /// "inspector" — проверяющий по QR; "manager" — руководство в кабинете.
+  source            String
+  /// Когда проверяющий пришёл (у записи по QR — время записи).
+  visitedAt         DateTime              @default(now())
+  inspectorName     String
+  inspectorPosition String?
+  /// Орган контроля (надзора), например «Управление Роспотребнадзора по …».
+  authority         String
+  /// planned | unplanned | complaint | other (`src/lib/inspection-visits.ts`).
+  kind              String
+  /// Пояснение к виду «иное».
+  kindNote          String?
+  /// Номер решения (распоряжения) о проверке.
+  basisNumber       String?
+  /// Дата решения (распоряжения), полночь UTC.
+  basisDate         DateTime?
+  createdById       String?
+  createdByName     String?
+  ipAddress         String?
+  userAgent         String?
+  /// «Скрыта как ошибочная» (мусор или дубль): руководитель (`admin.full`)
+  /// скрывает запись из журнала, архива и портала. Физически не удаляем.
+  hiddenAt          DateTime?
+  hiddenById        String?
+  hiddenByName      String?
+  hiddenReason      String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  files             InspectionVisitFile[]
+
+  @@index([organizationId, visitedAt])
+  @@index([tokenId])
+}
+
+/// Скан или фото документа-основания к посещению (PDF, JPG, PNG до 10 МБ;
+/// тип проверен по содержимому, как у `JournalOrderScan`).
+model InspectionVisitFile {
+  id             String          @id @default(cuid())
+  visitId        String
+  visit          InspectionVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  /// Копия организации посещения — проверка доступа без лишнего запроса.
+  organizationId String
+  fileName       String
+  /// application/pdf | image/jpeg | image/png
+  mimeType       String
+  sizeBytes      Int
+  content        Bytes
+  uploadedByName String?
+  createdAt      DateTime        @default(now())
+
+  @@index([visitId])
+  @@index([organizationId])
 }
 
 /// Замер времени заполнения формы — «сколько секунд от open до submit».
@@ -1359,8 +1447,16 @@ model Area {
   lng            Float?
   organizationId String
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Точка цеха (2026-10-17, план 4.3): «точка → помещения → оборудование».
+  /// Заполняется зеркалом «помещение ↔ цех по названию» (api/settings/rooms)
+  /// и скриптом scripts/backfill-area-building.ts. Пусто — цех без точки,
+  /// виден на каждой точке. Точку удалили — цех и оборудование остаются.
+  buildingId     String?
+  building       Building?      @relation(fields: [buildingId], references: [id], onDelete: SetNull)
   equipment      Equipment[]
   journalEntries JournalEntry[]
+
+  @@index([organizationId, buildingId])
 }
 
 model Equipment {

@@ -1,0 +1,25 @@
+files=46 errors=8 warnings=7
+scripts\backfill-area-building.ts undefined warn ignored-file
+src\app\(dashboard)\journals\[code]\documents\[docId]\page.tsx 48 warn @typescript-eslint/no-unused-vars
+src\app\(dashboard)\journals\[code]\documents\[docId]\page.tsx 165 warn @typescript-eslint/no-unused-vars
+src\app\(dashboard)\settings\equipment\page.tsx 323 warn react-hooks/purity
+src\app\api\journal-documents\route.ts 24 warn @typescript-eslint/no-unused-vars
+src\app\api\journal-documents\route.ts 67 warn @typescript-eslint/no-unused-vars
+src\app\api\journal-documents\route.ts 121 warn @typescript-eslint/no-unused-vars
+src\i18n\message-contract.d.ts 1019 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1090 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1325 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1326 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1356 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1400 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1401 error @typescript-eslint/no-empty-object-type
+src\i18n\message-contract.d.ts 1556 error @typescript-eslint/no-empty-object-type
+
+# HEAD baseline (git show HEAD:<file> | eslint --stdin): same findings already at HEAD —
+# message-contract.d.ts: 8 errors at lines 1019,1090,1325,1326,1356,1400,1401,1556 (generated file);
+# equipment/page.tsx: react-hooks/purity (Date.now in render, was line 222);
+# journal-documents/route.ts: 3 unused imports; documents/[docId]/page.tsx: 2 unused imports.
+# => no new findings.
+
+# scripts/backfill-area-building.ts with --no-ignore:
+exit=0

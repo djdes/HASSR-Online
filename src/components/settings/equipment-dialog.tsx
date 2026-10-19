@@ -14,10 +14,13 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { PlaceOption } from "@/lib/area-building";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +58,15 @@ type AreaOption = {
   name: string;
 };
 
+/** Помещения по точкам — `buildPlaceOptions` (src/lib/area-building.ts). */
+export type EquipmentPlaces = {
+  byBuilding: Record<string, PlaceOption[]>;
+  loose: PlaceOption[];
+};
+
+/** «Без точки» в выпадающем списке точек (Select не принимает пустую строку). */
+const NO_BUILDING = "__none__";
+
 interface EquipmentData {
   id: string;
   name: string;
@@ -72,7 +84,16 @@ interface EquipmentData {
 }
 
 interface EquipmentDialogProps {
+  /** Цеха организации — когда точек нет (выбор без группировки). */
   areas: AreaOption[];
+  /** Точки организации (2026-10-17): оборудование → помещение → точка. */
+  buildings?: Array<{ id: string; name: string }>;
+  /** Помещения каждой точки и цеха без точки. */
+  places?: EquipmentPlaces;
+  /** Точка нового оборудования: выбранная в шапке или единственная. */
+  defaultBuildingId?: string | null;
+  /** Точка цеха редактируемого оборудования. */
+  equipmentBuildingId?: string | null;
   equipment?: EquipmentData;
   /// Названия уже заведённых единиц — чтобы предупредить о дубле. Два
   /// холодильника с одним именем невозможно различить ни в журнале, ни
@@ -95,6 +116,10 @@ function parseTempInput(value: string): number | null | "invalid" {
 
 export function EquipmentDialog({
   areas,
+  buildings = [],
+  places,
+  defaultBuildingId = null,
+  equipmentBuildingId = null,
   equipment,
   existingNames = [],
   fillerOptions = [],
@@ -108,7 +133,13 @@ export function EquipmentDialog({
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(equipment?.name ?? "");
   const [type, setType] = useState(initialType(equipment?.type));
-  const [areaId, setAreaId] = useState(equipment?.areaId ?? "");
+  // Точка → помещение. Без точек — прежний список цехов.
+  const byPoints = buildings.length > 0 && Boolean(places);
+  const initialBuilding = equipment
+    ? equipmentBuildingId ?? NO_BUILDING
+    : defaultBuildingId ?? buildings[0]?.id ?? NO_BUILDING;
+  const [buildingId, setBuildingId] = useState(initialBuilding);
+  const [placeKey, setPlaceKey] = useState(equipment?.areaId ? `area:${equipment.areaId}` : "");
   const [serialNumber, setSerialNumber] = useState(equipment?.serialNumber ?? "");
   const [tempMin, setTempMin] = useState(equipment?.tempMin?.toString() ?? "");
   const [tempMax, setTempMax] = useState(equipment?.tempMax?.toString() ?? "");
@@ -123,7 +154,8 @@ export function EquipmentDialog({
   function resetForm() {
     setName(equipment?.name ?? "");
     setType(initialType(equipment?.type));
-    setAreaId(equipment?.areaId ?? "");
+    setBuildingId(initialBuilding);
+    setPlaceKey(equipment?.areaId ? `area:${equipment.areaId}` : "");
     setSerialNumber(equipment?.serialNumber ?? "");
     setTempMin(equipment?.tempMin?.toString() ?? "");
     setTempMax(equipment?.tempMax?.toString() ?? "");
@@ -134,6 +166,30 @@ export function EquipmentDialog({
     setLampInstalledAt(equipment?.lampInstalledAt ?? "");
     setLampUsed(equipment?.lampUsedHours != null ? String(Math.round(equipment.lampUsedHours)) : "0");
     setError(null);
+  }
+
+  const pointPlaces: PlaceOption[] =
+    byPoints && places && buildingId !== NO_BUILDING ? places.byBuilding[buildingId] ?? [] : [];
+  const loosePlaces: PlaceOption[] = byPoints && places ? places.loose : [];
+  const flatPlaces: PlaceOption[] = areas.map((area) => ({
+    key: `area:${area.id}`,
+    name: area.name,
+    areaId: area.id,
+    roomId: null,
+  }));
+  const placeCount = byPoints
+    ? Object.values(places?.byBuilding ?? {}).reduce((sum, list) => sum + list.length, 0) + loosePlaces.length
+    : flatPlaces.length;
+  const availablePlaces = byPoints ? [...pointPlaces, ...loosePlaces] : flatPlaces;
+  const selectedPlace = availablePlaces.find((place) => place.key === placeKey) ?? null;
+
+  function changeBuilding(next: string) {
+    setBuildingId(next);
+    // Помещение другой точки не подходит — выбор помещения начинается заново.
+    const stillThere =
+      (next !== NO_BUILDING ? places?.byBuilding[next] ?? [] : []).some((place) => place.key === placeKey) ||
+      loosePlaces.some((place) => place.key === placeKey);
+    if (!stillThere) setPlaceKey("");
   }
 
   const duplicateName =
@@ -170,6 +226,11 @@ export function EquipmentDialog({
       return;
     }
 
+    if (!selectedPlace && !(isEdit && placeKey === `area:${equipment?.areaId}`)) {
+      setError("Выберите помещение, где стоит оборудование");
+      return;
+    }
+
     if (!acquire()) return;
     setError(null);
 
@@ -181,7 +242,10 @@ export function EquipmentDialog({
         body: JSON.stringify({
           name,
           type,
-          areaId,
+          // Помещение точки без цеха — `roomId`: сервер создаст цех этой точки.
+          ...(selectedPlace?.roomId
+            ? { roomId: selectedPlace.roomId }
+            : { areaId: selectedPlace?.areaId ?? equipment?.areaId }),
           serialNumber: serialNumber || undefined,
           tempMin: parsedMin ?? undefined,
           tempMax: parsedMax ?? undefined,
@@ -250,7 +314,7 @@ export function EquipmentDialog({
             цеха, форма НЕ заполнима. Раньше юзер видел пустой select
             «Выберите цех» без вариантов и не понимал что делать. Теперь
             явно показываем empty-state с CTA на /settings/buildings. */}
-        {!isEdit && areas.length === 0 ? (
+        {!isEdit && placeCount === 0 ? (
           <div className="space-y-3 rounded-2xl border border-[#ffe1c1] bg-[#fff8eb] p-4">
             <div className="flex items-start gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#ffd28a] text-[#7a4900]">
@@ -258,21 +322,20 @@ export function EquipmentDialog({
               </span>
               <div className="min-w-0 flex-1">
                 <h3 className="text-[14px] font-semibold text-[#7a4900]">
-                  Сначала нужно создать цех
+                  Сначала нужно помещение
                 </h3>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#7a4900]/80">
-                  Оборудование привязывается к конкретному <strong>цеху</strong> (горячий цех,
-                  склад, бар). Откройте раздел «Цеха и зоны» и заведите хотя бы один цех —
-                  потом возвращайтесь сюда. Раздел «Здания и помещения» — это другое
-                  (помещения для журнала уборки), его сейчас не нужно.
+                  Оборудование стоит в <strong>помещении точки</strong> (горячий цех, склад,
+                  бар). Заведите помещение в «Точках и помещениях» — оно сразу появится здесь
+                  в выборе помещения.
                 </p>
               </div>
             </div>
             <Link
-              href="/settings/areas"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_8px_24px_-10px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
+              href="/settings/buildings"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_8px_24px_-10px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              Открыть «Цеха и зоны»
+              Открыть «Точки и помещения»
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -324,22 +387,76 @@ export function EquipmentDialog({
               </SelectContent>
             </Select>
           </div>
+          {byPoints && (buildings.length >= 2 || loosePlaces.length > 0) ? (
+            <div className="space-y-2">
+              <Label htmlFor="eq-building">
+                Точка <span className="text-destructive">*</span>
+              </Label>
+              <Select value={buildingId} onValueChange={changeBuilding}>
+                <SelectTrigger id="eq-building" className="w-full">
+                  <SelectValue placeholder="Выберите точку" />
+                </SelectTrigger>
+                <SelectContent>
+                  {buildings.map((building) => (
+                    <SelectItem key={building.id} value={building.id}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                  {loosePlaces.length > 0 ? (
+                    <SelectItem value={NO_BUILDING}>Без точки</SelectItem>
+                  ) : null}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="eq-area">
-              Цех / участок <span className="text-destructive">*</span>
+              Помещение <span className="text-destructive">*</span>
             </Label>
-            <Select value={areaId} onValueChange={setAreaId} required>
+            <Select value={placeKey} onValueChange={setPlaceKey} required>
               <SelectTrigger id="eq-area" className="w-full">
-                <SelectValue placeholder="Выберите цех" />
+                <SelectValue placeholder="Выберите помещение" />
               </SelectTrigger>
               <SelectContent>
-                {areas.map((area) => (
-                  <SelectItem key={area.id} value={area.id}>
-                    {area.name}
-                  </SelectItem>
-                ))}
+                {byPoints ? (
+                  <>
+                    {pointPlaces.length > 0 ? (
+                      <SelectGroup>
+                        <SelectLabel>
+                          {buildings.find((building) => building.id === buildingId)?.name ?? "Точка"}
+                        </SelectLabel>
+                        {pointPlaces.map((place) => (
+                          <SelectItem key={place.key} value={place.key}>
+                            {place.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ) : null}
+                    {loosePlaces.length > 0 ? (
+                      <SelectGroup>
+                        <SelectLabel>Без точки</SelectLabel>
+                        {loosePlaces.map((place) => (
+                          <SelectItem key={place.key} value={place.key}>
+                            {place.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ) : null}
+                  </>
+                ) : (
+                  flatPlaces.map((place) => (
+                    <SelectItem key={place.key} value={place.key}>
+                      {place.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            {byPoints && pointPlaces.length === 0 && buildingId !== NO_BUILDING ? (
+              <p className="text-[12.5px] text-[#b45309]">
+                В этой точке пока нет помещений — добавьте их в «Точках и помещениях».
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="eq-serial">Серийный номер</Label>
@@ -483,10 +600,10 @@ export function EquipmentDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || (!isEdit && areas.length === 0)}
+              disabled={isSubmitting || (!isEdit && placeCount === 0)}
               title={
-                !isEdit && areas.length === 0
-                  ? "Сначала создайте хотя бы один цех в разделе «Здания и помещения»"
+                !isEdit && placeCount === 0
+                  ? "Сначала заведите помещение в «Точках и помещениях»"
                   : undefined
               }
             >

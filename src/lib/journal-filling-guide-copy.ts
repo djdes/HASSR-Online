@@ -583,6 +583,17 @@ export const FILLING_GUIDE_COPY_KEYS = {
     "commonMistakes.2": "pest_control.mistakes.poisonBaitsIndoors",
     "commonMistakes.3": "pest_control.mistakes.missingReports",
     "regulationRef": "pest_control.regulationRef"
+  },
+  "ccp_monitoring": {
+    "summary": "ccp_monitoring.summary",
+    "materials.0": "ccp_monitoring.materials.haccpPlan",
+    "materials.1": "ccp_monitoring.materials.instrument",
+    "materials.2": "ccp_monitoring.materials.journal",
+    "completionCriteria": "ccp_monitoring.completionCriteria",
+    "commonMistakes.0": "ccp_monitoring.mistakes.wordsInsteadOfNumber",
+    "commonMistakes.1": "ccp_monitoring.mistakes.nameMismatch",
+    "commonMistakes.2": "ccp_monitoring.mistakes.releasedWithDeviation",
+    "regulationRef": "ccp_monitoring.regulationRef"
   }
 } as const satisfies Record<string, Readonly<Record<string, FillingGuideMessageKey>>>;
 

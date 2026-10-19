@@ -6,7 +6,9 @@ import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import {
   NEW_JOURNAL_CODES_2026_09,
   NEW_JOURNAL_CODES_2026_09B,
+  NEW_JOURNAL_CODES_2026_10,
   applyNewJournalsDefaultOff,
+  firstActivationCodes,
 } from "@/lib/new-journals-default-off";
 
 test("новые коды есть в каталоге", () => {
@@ -68,4 +70,20 @@ test("список, выключенный сидером, остаётся «н
   const seeded = applyNewJournalsDefaultOff(["health_check"]).disabledJournalCodes;
   assert.equal(isUntouchedDisabledCodes(seeded), true);
   assert.equal(isUntouchedDisabledCodes([...seeded, "cleaning"]), false);
+});
+
+test("мониторинг ККТ: выключается у существующих только при первой активации шаблона", () => {
+  const catalog = new Set<string>(ACTIVE_JOURNAL_CATALOG.map((item) => item.code));
+  for (const code of NEW_JOURNAL_CODES_2026_10) assert.ok(catalog.has(code), code);
+  const codes = ["hygiene", "ccp_monitoring"];
+  // Шаблона нет в базе или он выключен — первая активация.
+  assert.deepEqual(firstActivationCodes(codes, []), ["ccp_monitoring"]);
+  assert.deepEqual(firstActivationCodes(codes, [{ code: "ccp_monitoring", isActive: false }]), ["ccp_monitoring"]);
+  // Уже активен — повторный прогон сида ничего не выключает.
+  assert.deepEqual(firstActivationCodes(codes, [{ code: "ccp_monitoring", isActive: true }]), []);
+  // Остальные коды каталога этот механизм не трогает.
+  assert.deepEqual(firstActivationCodes(["hygiene"], []), []);
+  const next = applyNewJournalsDefaultOff(["health_check"], firstActivationCodes(codes, []));
+  assert.deepEqual(next.disabledJournalCodes, ["health_check", "ccp_monitoring"]);
+  assert.equal(isUntouchedDisabledCodes(next.disabledJournalCodes), true);
 });

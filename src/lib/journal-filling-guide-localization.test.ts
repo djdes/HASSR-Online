@@ -21,8 +21,8 @@ function leaves(value: unknown, pointer = ""): Record<string, string> {
 
 const baseline = structuredClone(FILLING_GUIDES);
 
-test("45 complete filling guides use 479 own and 328 shared semantic messages with exact Russian compatibility", async () => {
-  assert.equal(Object.keys(baseline).length, 45);
+test("46 complete filling guides use 488 own and 336 shared semantic messages with exact Russian compatibility", async () => {
+  assert.equal(Object.keys(baseline).length, 46);
   assert.deepEqual(Object.keys(FILLING_GUIDE_COPY_KEYS).sort(), Object.keys(baseline).sort());
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
@@ -56,8 +56,8 @@ test("45 complete filling guides use 479 own and 328 shared semantic messages wi
       ownCount += Object.keys(own).length;
       sharedCount += Object.keys(shared).length;
     }
-    assert.equal(ownCount, 479);
-    assert.equal(sharedCount, 328);
+    assert.equal(ownCount, 488);
+    assert.equal(sharedCount, 336);
     assert.equal(Object.keys(flattenMessages(messages.journalFillingGuides)).length, ownCount);
     assert.deepEqual(FILLING_GUIDES, baseline, "source data was not mutated");
     assert.deepEqual(failures, []);

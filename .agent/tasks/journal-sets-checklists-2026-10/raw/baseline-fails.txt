@@ -1,0 +1,1 @@
+message argument types are generated from the current source catalog

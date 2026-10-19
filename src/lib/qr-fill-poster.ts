@@ -420,6 +420,8 @@ export type QrPostersResult = {
    * печатается, но нужен странице QR-кодов для поиска и порядка.
    */
   locations?: Record<string, string>;
+  /** Тип оборудования (id → `Equipment.type`): подпись наклейки фритюрницы и лампы. */
+  equipmentTypes?: Record<string, string>;
 };
 
 /**
@@ -523,6 +525,7 @@ export async function loadQrPosters(params: {
   const orgName = await loadPosterOrgName(params.organizationId);
   const wanted = (id: string) => allowed(id) && (explicitIds.length === 0 || explicitIds.includes(id));
   const locations: Record<string, string> = {};
+  const equipmentTypes: Record<string, string> = {};
   if (params.kind === "room") {
     const buildings = await loadDirectoryBuildings(params.organizationId);
     for (const building of buildings) {
@@ -536,11 +539,12 @@ export async function loadQrPosters(params: {
     const equipment = await db.equipment.findMany({
       where: { area: { organizationId: params.organizationId } },
       orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
-      select: { id: true, name: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
+      select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
     });
     for (const item of equipment) {
       if (!wanted(item.id)) continue;
       if (item.area?.name) locations[item.id] = item.area.name;
+      equipmentTypes[item.id] = item.type;
       posters.push(await buildEquipmentPoster(item, params.origin, orgName));
     }
   }
@@ -548,7 +552,7 @@ export async function loadQrPosters(params: {
   const missing = explicitIds
     .filter((id) => !found.has(id))
     .map((id) => ({ id, label: id, reason: "Не найдено в справочнике — возможно, удалено" }));
-  return { posters, missing, locations };
+  return { posters, missing, locations, equipmentTypes };
 }
 
 /** Один объект; `null`, если его нет или он не из этой организации. */
