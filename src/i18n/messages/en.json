@@ -5018,7 +5018,7 @@
     "chapter": {
       "fridge": {
         "label": "Fridge",
-        "caption": "The cook scans the sticker on the refrigerator, enters a PIN and the temperature. The reading is recorded in today’s log entry alongside the responsible person’s code.",
+        "caption": "An employee scans the sticker on the refrigerator, enters a PIN and the temperature. The reading is recorded in today’s log entry alongside the responsible person’s code.",
         "short": "PIN and temperature are recorded in today’s log entry.",
         "place": "Sticker on the refrigerator door"
       },
@@ -5210,7 +5210,7 @@
     "chapters": {
       "fridgeChip": "Refrigerator",
       "fridgePlace": "Sticker on the refrigerator door",
-      "fridgeCaption": "The cook scans the refrigerator sticker, enters a PIN and records the temperature. The value appears in today's journal column beside the responsible person's code.",
+      "fridgeCaption": "An employee scans the refrigerator sticker, enters a PIN and records the temperature. The value appears in today's journal column beside the responsible person's code.",
       "fridgeShort": "PIN and temperature are recorded in today's column.",
       "lockerChip": "Changing room",
       "lockerPlace": "QR code by the changing-room thermometer",

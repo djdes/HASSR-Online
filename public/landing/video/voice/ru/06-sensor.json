@@ -3,96 +3,96 @@
   "text": "Вай-фай датчик в холодильной камере сам пишет температуру. Вышла за норму — ответственный получит уведомление.",
   "say": "Вай-фай датчик в холодильной камере сам пишет температуру. Вышла за норму — ответственный получит уведомление.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
   "settings": {
-    "stability": 0.6,
-    "similarity_boost": 0.8,
+    "stability": 0.75,
+    "similarity_boost": 0.85,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
-  "seed": 4242,
-  "fingerprint": "d4e1db4ba9d0f73e",
+  "seed": 9002,
+  "fingerprint": "a7b38f972ea3bab0",
   "characters": 110,
-  "audioSeconds": 9.482,
+  "audioSeconds": 7.21,
   "speechStart": 0,
-  "speechEnd": 9.427,
+  "speechEnd": 7.152,
   "words": [
     {
       "text": "Вай-фай",
       "start": 0,
-      "end": 0.592
+      "end": 0.511
     },
     {
       "text": "датчик",
-      "start": 0.673,
-      "end": 1.149
+      "start": 0.58,
+      "end": 0.964
     },
     {
       "text": "в",
-      "start": 1.196,
-      "end": 1.219
+      "start": 1.022,
+      "end": 1.045
     },
     {
       "text": "холодильной",
-      "start": 1.289,
-      "end": 1.881
+      "start": 1.115,
+      "end": 1.602
     },
     {
       "text": "камере",
-      "start": 1.939,
-      "end": 2.357
+      "start": 1.66,
+      "end": 2.032
     },
     {
       "text": "сам",
-      "start": 2.415,
-      "end": 2.635
+      "start": 2.09,
+      "end": 2.31
     },
     {
       "text": "пишет",
-      "start": 2.705,
-      "end": 3.065
+      "start": 2.368,
+      "end": 2.705
     },
     {
       "text": "температуру.",
-      "start": 3.088,
-      "end": 4.098
+      "start": 2.728,
+      "end": 3.622
     },
     {
       "text": "Вышла",
-      "start": 4.795,
-      "end": 5.259
+      "start": 3.866,
+      "end": 4.226
     },
     {
       "text": "за",
-      "start": 5.317,
-      "end": 5.422
+      "start": 4.284,
+      "end": 4.389
     },
     {
       "text": "норму",
-      "start": 5.48,
-      "end": 5.909
+      "start": 4.447,
+      "end": 4.841
     },
     {
       "text": "—",
-      "start": 6.06,
-      "end": 6.2
+      "start": 4.865,
+      "end": 4.911
     },
     {
       "text": "ответственный",
-      "start": 6.374,
-      "end": 7.14
+      "start": 4.934,
+      "end": 5.55
     },
     {
       "text": "получит",
-      "start": 7.198,
-      "end": 7.697
+      "start": 5.596,
+      "end": 6.026
     },
     {
       "text": "уведомление.",
-      "start": 7.767,
-      "end": 9.427
+      "start": 6.06,
+      "end": 7.152
     }
   ],
-  "voiceName": "Elena (Calm and Confident)"
+  "voiceName": "Maxim (Calm & Neutral)"
 }

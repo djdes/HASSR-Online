@@ -3,81 +3,81 @@
   "text": "Перед сменой — замер температуры и три подписи. Допуск к работе получен.",
   "say": "Перед сменой — замер температуры и три подписи. Допуск к работе получен.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
   "settings": {
-    "stability": 0.6,
-    "similarity_boost": 0.8,
+    "stability": 0.75,
+    "similarity_boost": 0.85,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
-  "seed": 4242,
-  "fingerprint": "0fb8c93ac5813133",
+  "seed": 9002,
+  "fingerprint": "de7abfa996e9900e",
   "characters": 72,
-  "audioSeconds": 6.792,
+  "audioSeconds": 5.59,
   "speechStart": 0,
-  "speechEnd": 6.734,
+  "speechEnd": 5.526,
   "words": [
     {
       "text": "Перед",
       "start": 0,
-      "end": 0.348
+      "end": 0.267
     },
     {
       "text": "сменой",
-      "start": 0.406,
-      "end": 0.859
+      "start": 0.313,
+      "end": 0.697
     },
     {
       "text": "—",
-      "start": 0.882,
-      "end": 0.929
+      "start": 0.72,
+      "end": 0.766
     },
     {
       "text": "замер",
-      "start": 0.952,
-      "end": 1.324
+      "start": 0.882,
+      "end": 1.173
     },
     {
       "text": "температуры",
-      "start": 1.393,
-      "end": 2.241
+      "start": 1.231,
+      "end": 1.939
     },
     {
       "text": "и",
-      "start": 2.31,
-      "end": 2.357
+      "start": 1.997,
+      "end": 2.055
     },
     {
       "text": "три",
-      "start": 2.438,
-      "end": 2.624
+      "start": 2.113,
+      "end": 2.276
     },
     {
       "text": "подписи.",
-      "start": 2.694,
-      "end": 3.495
+      "start": 2.334,
+      "end": 3.053
     },
     {
       "text": "Допуск",
-      "start": 4.098,
-      "end": 4.586
+      "start": 3.297,
+      "end": 3.692
     },
     {
       "text": "к",
-      "start": 4.702,
-      "end": 4.725
+      "start": 3.773,
+      "end": 3.796
     },
     {
       "text": "работе",
-      "start": 4.783,
-      "end": 5.259
+      "start": 3.866,
+      "end": 4.4
     },
     {
       "text": "получен.",
-      "start": 5.317,
-      "end": 6.734
+      "start": 4.493,
+      "end": 5.526
     }
   ],
-  "voiceName": "Elena (Calm and Confident)"
+  "voiceName": "Maxim (Calm & Neutral)"
 }

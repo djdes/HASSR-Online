@@ -3,86 +3,86 @@
   "text": "Сетап — электронные журналы по принципам ХАССП. Смотрите, как это работает на кухне.",
   "say": "СетАп — электронные журналы по принципам Хассп. Смотрите, как это работает на кухне.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
   "settings": {
-    "stability": 0.6,
-    "similarity_boost": 0.8,
+    "stability": 0.75,
+    "similarity_boost": 0.85,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
-  "seed": 4242,
-  "fingerprint": "18c93ea79a02122b",
+  "seed": 9002,
+  "fingerprint": "12695a50b1941456",
   "characters": 84,
-  "audioSeconds": 6.975,
+  "audioSeconds": 5.486,
   "speechStart": 0,
-  "speechEnd": 6.92,
+  "speechEnd": 5.433,
   "words": [
     {
       "text": "Сетап",
       "start": 0,
-      "end": 0.592
+      "end": 0.488
     },
     {
       "text": "—",
-      "start": 0.708,
-      "end": 0.766
+      "start": 0.569,
+      "end": 0.615
     },
     {
       "text": "электронные",
-      "start": 0.836,
-      "end": 1.544
+      "start": 0.639,
+      "end": 1.231
     },
     {
       "text": "журналы",
-      "start": 1.625,
-      "end": 2.159
+      "start": 1.277,
+      "end": 1.765
     },
     {
       "text": "по",
-      "start": 2.229,
-      "end": 2.345
+      "start": 1.811,
+      "end": 1.904
     },
     {
       "text": "принципам",
-      "start": 2.392,
-      "end": 2.995
+      "start": 1.95,
+      "end": 2.403
     },
     {
       "text": "ХАССП.",
-      "start": 3.077,
-      "end": 3.692
+      "start": 2.485,
+      "end": 2.949
     },
     {
       "text": "Смотрите,",
-      "start": 4.203,
-      "end": 4.783
+      "start": 3.019,
+      "end": 3.553
     },
     {
       "text": "как",
-      "start": 4.818,
-      "end": 4.969
+      "start": 3.576,
+      "end": 3.715
     },
     {
       "text": "это",
-      "start": 5.085,
-      "end": 5.201
+      "start": 3.796,
+      "end": 3.878
     },
     {
       "text": "работает",
-      "start": 5.248,
-      "end": 5.747
+      "start": 3.924,
+      "end": 4.377
     },
     {
       "text": "на",
-      "start": 5.817,
-      "end": 5.898
+      "start": 4.435,
+      "end": 4.505
     },
     {
       "text": "кухне.",
-      "start": 5.956,
-      "end": 6.92
+      "start": 4.563,
+      "end": 5.433
     }
   ],
-  "voiceName": "Elena (Calm and Confident)"
+  "voiceName": "Maxim (Calm & Neutral)"
 }

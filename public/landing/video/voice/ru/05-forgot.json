@@ -3,56 +3,56 @@
   "text": "Не заполнили журнал — ответственный получит уведомление.",
   "say": "Не заполнили журнал — ответственный получит уведомление.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
   "settings": {
-    "stability": 0.6,
-    "similarity_boost": 0.8,
+    "stability": 0.75,
+    "similarity_boost": 0.85,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
-  "seed": 4242,
-  "fingerprint": "61d0beca045dd0a0",
+  "seed": 9002,
+  "fingerprint": "7ecfd2f160f685c9",
   "characters": 56,
-  "audioSeconds": 4.807,
+  "audioSeconds": 3.553,
   "speechStart": 0,
-  "speechEnd": 4.737,
+  "speechEnd": 3.483,
   "words": [
     {
       "text": "Не",
       "start": 0,
-      "end": 0.174
+      "end": 0.139
     },
     {
       "text": "заполнили",
-      "start": 0.232,
-      "end": 0.859
+      "start": 0.186,
+      "end": 0.685
     },
     {
       "text": "журнал",
-      "start": 0.929,
-      "end": 1.405
+      "start": 0.743,
+      "end": 1.173
     },
     {
       "text": "—",
-      "start": 1.579,
-      "end": 1.625
+      "start": 1.219,
+      "end": 1.265
     },
     {
       "text": "ответственный",
-      "start": 1.834,
-      "end": 2.554
+      "start": 1.289,
+      "end": 1.904
     },
     {
       "text": "получит",
-      "start": 2.612,
-      "end": 3.1
+      "start": 1.95,
+      "end": 2.368
     },
     {
       "text": "уведомление.",
-      "start": 3.17,
-      "end": 4.737
+      "start": 2.415,
+      "end": 3.483
     }
   ],
-  "voiceName": "Elena (Calm and Confident)"
+  "voiceName": "Maxim (Calm & Neutral)"
 }

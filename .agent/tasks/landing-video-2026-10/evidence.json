@@ -25,18 +25,18 @@
       "file": "public/landing/video/qr-tour-ru.mp4",
       "poster": "public/landing/video/qr-tour-ru.jpg",
       "captions": "public/landing/video/qr-tour-ru.vtt",
-      "durationSeconds": 59.5,
-      "bytes": 8680158,
-      "outroTagline": "separate clip 08-outro-tagline: say «Это сетАп.», speed 0.9, stability 0.8, seed 5002, gainDb 4.5; 1.62 s silence to end",
+      "durationSeconds": 54.8,
+      "bytes": 8230308,
+      "outroTagline": "separate clip 08-outro-tagline: say «Это сетАп.», speed 0.9, stability 0.85, seed 9001, gainDb 5; 1.59 s silence to end",
       "chapters": ["fridge", "locker", "uv", "forgot", "sensor"],
       "outroTagline": "ваш электронный ХАССП",
       "video": "h264 High 1920x1080 30fps yuv420p, color_range=tv, bt709",
       "audio": "aac LC 48kHz stereo",
       "crf": 28,
-      "voice": "Elena (Calm and Confident), eleven_multilingual_v2, stability 0.6",
+      "voice": "Maxim (Calm & Neutral), eleven_multilingual_v2, stability 0.75, similarity 0.85, style 0, speaker boost",
       "stress": "say: СетАп/сетАп (capital A), verified by vowel-duration measure",
       "chapter5": "Не заполнили журнал — ответственный получит уведомление.",
-      "elevenlabsCredits": "470 -> 7324 of 40000"
+      "elevenlabsCredits": "470 -> 8935 of 40000"
     },
     "checks": {
       "tscProject": "exit 0 (tsconfig.typecheck.json)",

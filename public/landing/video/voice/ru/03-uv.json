@@ -1,78 +1,93 @@
 {
   "id": "uv",
-  "text": "У УФ-лампы две кнопки: «Включил» и «Выключил». Время работы считается само.",
-  "say": "У у-эф-лампы две кнопки: «Включил» и «Выключил». Время работы считается само.",
+  "text": "У бактерицидной лампы две кнопки: «Включил» и «Выключил». Время работы и ресурс считает система.",
+  "say": "У бактерицидной лампы две кнопки: «Включил» и «Выключил». Время работы и ресурс считает система.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
   "settings": {
-    "stability": 0.6,
-    "similarity_boost": 0.8,
+    "stability": 0.75,
+    "similarity_boost": 0.85,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
-  "seed": 4242,
-  "fingerprint": "73069ecea1fb8c87",
-  "characters": 77,
-  "audioSeconds": 7.784,
+  "seed": 9002,
+  "fingerprint": "c2e2c0839a735f77",
+  "characters": 96,
+  "audioSeconds": 6.844,
   "speechStart": 0,
-  "speechEnd": 7.709,
+  "speechEnd": 6.78,
   "words": [
     {
       "text": "У",
       "start": 0,
-      "end": 0.197
+      "end": 0.07
     },
     {
-      "text": "УФ-лампы",
-      "start": 0.313,
-      "end": 1.242
+      "text": "бактерицидной",
+      "start": 0.139,
+      "end": 0.813
+    },
+    {
+      "text": "лампы",
+      "start": 0.859,
+      "end": 1.184
     },
     {
       "text": "две",
-      "start": 1.289,
-      "end": 1.498
+      "start": 1.231,
+      "end": 1.44
     },
     {
       "text": "кнопки:",
-      "start": 1.544,
-      "end": 2.241
+      "start": 1.474,
+      "end": 2.032
     },
     {
       "text": "«Включил»",
-      "start": 2.322,
-      "end": 3.332
+      "start": 2.148,
+      "end": 2.798
     },
     {
       "text": "и",
-      "start": 3.506,
-      "end": 3.599
+      "start": 2.833,
+      "end": 2.949
     },
     {
       "text": "«Выключил».",
-      "start": 3.622,
-      "end": 4.586
+      "start": 2.984,
+      "end": 3.704
     },
     {
       "text": "Время",
-      "start": 5.097,
-      "end": 5.468
+      "start": 4.029,
+      "end": 4.342
     },
     {
       "text": "работы",
-      "start": 5.503,
-      "end": 5.921
+      "start": 4.377,
+      "end": 4.807
     },
     {
-      "text": "считается",
-      "start": 5.956,
-      "end": 6.618
+      "text": "и",
+      "start": 4.865,
+      "end": 4.888
     },
     {
-      "text": "само.",
-      "start": 6.676,
-      "end": 7.709
+      "text": "ресурс",
+      "start": 4.946,
+      "end": 5.375
+    },
+    {
+      "text": "считает",
+      "start": 5.399,
+      "end": 5.805
+    },
+    {
+      "text": "система.",
+      "start": 5.851,
+      "end": 6.78
     }
   ],
-  "voiceName": "Elena (Calm and Confident)"
+  "voiceName": "Maxim (Calm & Neutral)"
 }

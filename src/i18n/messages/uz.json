@@ -5018,7 +5018,7 @@
     "chapter": {
       "fridge": {
         "label": "Muzlatkich",
-        "caption": "Oshpaz muzlatkichdagi stikerni skanerlaydi, PIN-kod va haroratni kiritadi. Ko‘rsatkich bugungi jurnal qatoriga yoziladi, yonida mas’ul xodim kodi ko‘rsatiladi.",
+        "caption": "Xodim muzlatkichdagi stikerni skanerlaydi, PIN-kod va haroratni kiritadi. Ko‘rsatkich bugungi jurnal qatoriga yoziladi, yonida mas’ul xodim kodi ko‘rsatiladi.",
         "short": "PIN-kod va harorat bugungi jurnal qatoriga yoziladi.",
         "place": "Muzlatkich eshigidagi stiker"
       },
@@ -5210,7 +5210,7 @@
     "chapters": {
       "fridgeChip": "Sovutkich",
       "fridgePlace": "Sovutkich eshigidagi stiker",
-      "fridgeCaption": "Oshpaz sovutkichdagi stikerni skanerlaydi, PIN-kodni kiritadi va haroratni qayd etadi. Qiymat bugungi kun ustunida, mas’ul shaxs kodi yonida jurnalga tushadi.",
+      "fridgeCaption": "Xodim sovutkichdagi stikerni skanerlaydi, PIN-kodni kiritadi va haroratni qayd etadi. Qiymat bugungi kun ustunida, mas’ul shaxs kodi yonida jurnalga tushadi.",
       "fridgeShort": "PIN va harorat bugungi kun ustuniga yoziladi.",
       "lockerChip": "Kiyinish xonasi",
       "lockerPlace": "Kiyinish xonasidagi termometr yonidagi QR-kod",

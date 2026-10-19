@@ -22,9 +22,8 @@
  *
  * Ударение «сетА́п» — заглавной «А» в `say` («СетАп»): eleven_multilingual_v2
  * знаки ударения U+0301 и SSML-фонемы не гарантирует, заглавную держит
- * (пробы 18.10.2026). Голос с 18.10.2026 — Elena (Calm and Confident) из
- * библиотеки ElevenLabs, `--name` подписывает его в JSON (библиотечный голос
- * не обязан быть в аккаунте).
+ * (пробы 18.10.2026). Голос — Maxim (Calm & Neutral) из библиотеки
+ * ElevenLabs (решение владельца 18.10.2026), `--name` подписывает его в JSON.
  */
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -72,8 +71,12 @@ if (!KEY) {
 }
 const narration = JSON.parse(readFileSync(path.join(ROOT, "remotion/narration.ru.json"), "utf8"));
 const MODEL = narration.model;
-/** Ровная деловая дикция: стабильность выше середины, без «актёрского» стиля. */
-const SETTINGS = { stability: 0.6, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1 };
+/**
+ * Голос Максима: чистый спокойный тон без «воздуха» — stability 0.75,
+ * similarity 0.85, style 0, speaker boost (сравнение 3 вариантов 18.10.2026:
+ * самые тихие паузы и устойчивое ударение «сетАп»).
+ */
+const SETTINGS = { stability: 0.75, similarity_boost: 0.85, style: 0, use_speaker_boost: true, speed: 1 };
 const SEED = 4242;
 
 const forConfig = (value) => String(value).replace(/\\/g, "/").replace(/"/g, '\\"');

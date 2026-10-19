@@ -1,93 +1,103 @@
 {
   "id": "fridge",
-  "text": "На холодильнике — QR-наклейка. Повар вводит PIN и температуру — запись сразу в журнале.",
-  "say": "На холодильнике — кью-ар-наклейка. Повар вводит пин и температуру — запись сразу в журнале.",
+  "text": "На холодильнике — QR-наклейка. Сотрудник вводит PIN-код и показатели температуры — запись сразу появляется в журнале.",
+  "say": "На холодильнике — кью-ар-наклейка. Сотрудник вводит пин-код и показатели температуры — запись сразу появляется в журнале.",
   "model": "eleven_multilingual_v2",
-  "voiceId": "8oyYKsAD3g8uVOXOQB4Z",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
   "settings": {
-    "stability": 0.6,
-    "similarity_boost": 0.8,
+    "stability": 0.75,
+    "similarity_boost": 0.85,
     "style": 0,
     "use_speaker_boost": true,
     "speed": 1
   },
   "seed": 4242,
-  "fingerprint": "c2cac6fd5cec3186",
-  "characters": 91,
-  "audioSeconds": 7.445,
+  "fingerprint": "f5e7273abea0d71e",
+  "characters": 121,
+  "audioSeconds": 8.229,
   "speechStart": 0,
-  "speechEnd": 7.384,
+  "speechEnd": 8.173,
   "words": [
     {
       "text": "На",
       "start": 0,
-      "end": 0.139
+      "end": 0.116
     },
     {
       "text": "холодильнике",
-      "start": 0.197,
-      "end": 0.929
+      "start": 0.174,
+      "end": 0.906
     },
     {
       "text": "—",
-      "start": 0.952,
-      "end": 0.998
+      "start": 0.929,
+      "end": 0.975
     },
     {
       "text": "QR-наклейка.",
-      "start": 1.022,
-      "end": 2.577
+      "start": 1.01,
+      "end": 2.241
     },
     {
-      "text": "Повар",
-      "start": 2.856,
-      "end": 3.193
+      "text": "Сотрудник",
+      "start": 2.485,
+      "end": 3.03
     },
     {
       "text": "вводит",
-      "start": 3.262,
-      "end": 3.646
+      "start": 3.1,
+      "end": 3.39
     },
     {
-      "text": "PIN",
-      "start": 3.704,
+      "text": "PIN-код",
+      "start": 3.437,
       "end": 3.924
     },
     {
       "text": "и",
-      "start": 3.971,
-      "end": 3.994
+      "start": 4.04,
+      "end": 4.122
     },
     {
-      "text": "температуру",
-      "start": 4.04,
-      "end": 4.969
+      "text": "показатели",
+      "start": 4.18,
+      "end": 4.737
+    },
+    {
+      "text": "температуры",
+      "start": 4.783,
+      "end": 5.503
     },
     {
       "text": "—",
-      "start": 5.085,
-      "end": 5.132
+      "start": 5.584,
+      "end": 5.654
     },
     {
       "text": "запись",
-      "start": 5.341,
-      "end": 5.759
-    },
-    {
-      "text": "сразу",
-      "start": 5.782,
+      "start": 5.828,
       "end": 6.2
     },
     {
-      "text": "в",
+      "text": "сразу",
       "start": 6.223,
-      "end": 6.246
+      "end": 6.583
+    },
+    {
+      "text": "появляется",
+      "start": 6.618,
+      "end": 7.152
+    },
+    {
+      "text": "в",
+      "start": 7.175,
+      "end": 7.198
     },
     {
       "text": "журнале.",
-      "start": 6.316,
-      "end": 7.384
+      "start": 7.268,
+      "end": 8.173
     }
   ],
-  "voiceName": "Elena (Calm and Confident)"
+  "voiceName": "Maxim (Calm & Neutral)"
 }

@@ -47,6 +47,10 @@ test("сценарий: вступление, пять глав сцены, фи
     assert.doesNotMatch(segment.text, /₽|руб|тариф|цен[аы]|купи|попроб|бесплатн|оформ/i, segment.id);
     assert.equal(segment.say.split(/\s+/).length, segment.text.split(/\s+/).length, `${segment.id}: say и text — одно число слов`);
   }
+  // Сценарий владельца 18.10: холодильник и УФ-лампа.
+  const textOf = (id: string) => narration.segments.find((segment) => segment.id === id)?.text;
+  assert.equal(textOf("fridge"), "На холодильнике — QR-наклейка. Сотрудник вводит PIN-код и показатели температуры — запись сразу появляется в журнале.");
+  assert.equal(textOf("uv"), "У бактерицидной лампы две кнопки: «Включил» и «Выключил». Время работы и ресурс считает система.");
   // Глава «Забыли?» — коротко, без времени, каналов и «Срочно».
   const forgot = narration.segments.find((segment) => segment.id === "forgot");
   assert.equal(forgot?.text, "Не заполнили журнал — ответственный получит уведомление.");
@@ -75,6 +79,11 @@ test("ударение «сетА́п» записано в say везде од�
 test("голос: весь сценарий озвучен одним голосом дословно, MP3 рядом", () => {
   const voices = new Set(tracks.map((track) => track.voiceId));
   assert.equal(voices.size, 1, "один голос на весь ролик");
+  // Голос — Максим (решение владельца 18.10.2026), записан в метаданных озвучки.
+  for (const track of tracks as Array<VoiceTrack & { voiceId: string; voiceName?: string }>) {
+    assert.equal(track.voiceId, "HcaxAsrhw4ByUo4CBCBN", track.id);
+    assert.equal(track.voiceName, "Maxim (Calm & Neutral)", track.id);
+  }
   narration.segments.forEach((segment, index) => {
     const track = tracks[index];
     assert.equal(track.id, segment.id);
