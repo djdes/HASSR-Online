@@ -124,5 +124,12 @@ test("внешние: вид, статус, кто выпустил, визит�
 test("маршрут списка: только руководителю и без хэшей токенов", () => {
   const route = readFileSync(new URL("../app/api/staff/inspectors-auditors/route.ts", import.meta.url), "utf8");
   assert.match(route, /hasFullWorkspaceAccess\(/);
-  assert.doesNotMatch(route, /tokenHash: true/);
+  assert.doesNotMatch(route, /tokenHash/);
+  // Выборку из базы маршрут и страница «Проверяющие и аудиторы» берут из одной функции.
+  const loader = readFileSync(new URL("./inspectors-auditors.server.ts", import.meta.url), "utf8");
+  assert.match(route, /loadInspectorsAuditors\(/);
+  assert.doesNotMatch(loader, /tokenHash/);
+  const page = readFileSync(new URL("../app/(dashboard)/settings/inspectors/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /loadInspectorsAuditors\(/);
+  assert.match(page, /hasFullWorkspaceAccess\(/);
 });

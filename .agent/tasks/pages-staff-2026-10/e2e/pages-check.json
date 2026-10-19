@@ -1,0 +1,1171 @@
+{
+  "startedAt": "2026-10-18T13:29:28.099Z",
+  "roles": {
+    "owner": {
+      "desktop": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/settings/positions",
+          "h1": "Должности",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": true
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "responsibles",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "workload",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/settings/access",
+          "h1": "Доступ и права",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": true
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "responsibles",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "workload",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/settings/brakerage-commission",
+          "h1": "Бракеражная комиссия",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": true
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "responsibles",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "workload",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/settings/haccp-group",
+          "h1": "Группа ХАССП",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": true
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "responsibles",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "workload",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/settings/control-group",
+          "h1": "Контроль-группа",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": true
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "responsibles",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "workload",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/settings/inspectors",
+          "h1": "Проверяющие и аудиторы",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": true
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "responsibles",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "workload",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        }
+      },
+      "mobile": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/settings/positions",
+          "h1": "Должности",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/settings/access",
+          "h1": "Доступ и права",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/settings/brakerage-commission",
+          "h1": "Бракеражная комиссия",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/settings/haccp-group",
+          "h1": "Группа ХАССП",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/settings/control-group",
+          "h1": "Контроль-группа",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/settings/inspectors",
+          "h1": "Проверяющие и аудиторы",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        }
+      },
+      "mini": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/settings/positions",
+          "h1": "Должности",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nДолжности"
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/settings/access",
+          "h1": "Доступ и права",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nДоступ и права"
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/settings/brakerage-commission",
+          "h1": "Бракеражная комиссия",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nБракеражная комиссия"
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/settings/haccp-group",
+          "h1": "Группа ХАССП",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nГруппа ХАССП"
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/settings/control-group",
+          "h1": "Контроль-группа",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nКонтроль-группа"
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/settings/inspectors",
+          "h1": "Проверяющие и аудиторы",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nПроверяющие и аудиторы"
+        }
+      }
+    },
+    "headchef": {
+      "desktop": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/settings/positions",
+          "h1": "Должности",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": true
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/settings/access",
+          "h1": "Доступ и права",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": true
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/settings/brakerage-commission",
+          "h1": "Бракеражная комиссия",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": true
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/settings/haccp-group",
+          "h1": "Группа ХАССП",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": true
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/settings/control-group",
+          "h1": "Контроль-группа",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": true
+            },
+            {
+              "id": "inspectors",
+              "current": false
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/settings/inspectors",
+          "h1": "Проверяющие и аудиторы",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": [
+            {
+              "id": "positions",
+              "current": false
+            },
+            {
+              "id": "users",
+              "current": false
+            },
+            {
+              "id": "access",
+              "current": false
+            },
+            {
+              "id": "commission",
+              "current": false
+            },
+            {
+              "id": "haccpGroup",
+              "current": false
+            },
+            {
+              "id": "controlGroup",
+              "current": false
+            },
+            {
+              "id": "inspectors",
+              "current": true
+            },
+            {
+              "id": "team",
+              "current": false
+            },
+            {
+              "id": "schedule",
+              "current": false
+            },
+            {
+              "id": "health",
+              "current": false
+            },
+            {
+              "id": "hierarchy",
+              "current": false
+            },
+            {
+              "id": "visibility",
+              "current": false
+            },
+            {
+              "id": "phone",
+              "current": false
+            }
+          ]
+        }
+      },
+      "mobile": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/settings/positions",
+          "h1": "Должности",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/settings/access",
+          "h1": "Доступ и права",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/settings/brakerage-commission",
+          "h1": "Бракеражная комиссия",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/settings/haccp-group",
+          "h1": "Группа ХАССП",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/settings/control-group",
+          "h1": "Контроль-группа",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/settings/inspectors",
+          "h1": "Проверяющие и аудиторы",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          }
+        }
+      },
+      "mini": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/settings/positions",
+          "h1": "Должности",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nДолжности"
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/settings/access",
+          "h1": "Доступ и права",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nДоступ и права"
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/settings/brakerage-commission",
+          "h1": "Бракеражная комиссия",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nБракеражная комиссия"
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/settings/haccp-group",
+          "h1": "Группа ХАССП",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nГруппа ХАССП"
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/settings/control-group",
+          "h1": "Контроль-группа",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nКонтроль-группа"
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/settings/inspectors",
+          "h1": "Проверяющие и аудиторы",
+          "errorBoundary": 0,
+          "overflow": {
+            "width": 390,
+            "doc": 390,
+            "overflow": false,
+            "offenders": []
+          },
+          "miniTitle": "W\nWESETUP ·  БЕРЁЗКА НА ЛЕНИНА\nПроверяющие и аудиторы"
+        }
+      }
+    },
+    "cook": {
+      "desktop": {
+        "positions": {
+          "status": 200,
+          "finalPath": "/journals",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": []
+        },
+        "access": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": []
+        },
+        "commission": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": []
+        },
+        "haccpGroup": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": []
+        },
+        "controlGroup": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": []
+        },
+        "inspectors": {
+          "status": 200,
+          "finalPath": "/mini",
+          "h1": "Сегодня",
+          "errorBoundary": 0,
+          "overflow": null,
+          "menu": []
+        }
+      }
+    }
+  },
+  "problems": [],
+  "notes": [
+    "owner/mini http://localhost:3071/settings/positions: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner/mini http://localhost:3071/settings/access: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner/mini http://localhost:3071/settings/brakerage-commission: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner/mini http://localhost:3071/settings/haccp-group: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner/mini http://localhost:3071/settings/control-group: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner/mini http://localhost:3071/settings/inspectors: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef/mini http://localhost:3071/settings/positions: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef/mini http://localhost:3071/settings/haccp-group: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef/mini http://localhost:3071/settings/control-group: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook/desktop http://localhost:3071/mini/today: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook/desktop http://localhost:3071/mini: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook/desktop http://localhost:3071/mini: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook/desktop http://localhost:3071/mini: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook/desktop http://localhost:3071/mini: console A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran"
+  ],
+  "comment": "Повар на телефоне/в Mini App не переснят: 19.10 локальный PostgreSQL 5432 остановлен (см. evidence.md). notes — предупреждение гидратации оболочки Mini App, есть и на /mini (не от этой задачи)."
+}

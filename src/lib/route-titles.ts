@@ -128,7 +128,13 @@ export const ROUTE_TITLE_KEYS = {
   "/settings/staff-health": "settings_staff_health",
   "/settings/sections/journals": "settings_sections_journals",
   "/settings/sections/staff": "settings_sections_staff",
-  "/settings/sections/points": "settings_sections_points"
+  "/settings/sections/points": "settings_sections_points",
+  "/settings/positions": "settings_positions",
+  "/settings/access": "settings_access",
+  "/settings/brakerage-commission": "settings_brakerage_commission",
+  "/settings/haccp-group": "settings_haccp_group",
+  "/settings/control-group": "settings_control_group",
+  "/settings/inspectors": "settings_inspectors"
 } as const satisfies Record<string, RouteTitleKey>;
 
 /**
@@ -264,6 +270,12 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/settings/sections/journals": "Настройка журналов",
   "/settings/sections/staff": "Настройка сотрудников",
   "/settings/sections/points": "Настройка точек",
+  "/settings/positions": "Должности",
+  "/settings/access": "Доступ и права",
+  "/settings/brakerage-commission": "Бракеражная комиссия",
+  "/settings/haccp-group": "Группа ХАССП",
+  "/settings/control-group": "Контроль-группа",
+  "/settings/inspectors": "Проверяющие и аудиторы",
 };
 
 /**

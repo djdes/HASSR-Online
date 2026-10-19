@@ -1,0 +1,408 @@
+{
+  "finishedAt": "2026-10-18T13:29:07.525Z",
+  "results": {
+    "AC1.2-pills": {
+      "ok": true,
+      "pills": {
+        "Повар горячего цеха": {
+          "text": "занято 1 из 1\n. Штат укомплектован",
+          "tone": "full"
+        },
+        "Официант": {
+          "text": "занято 1 из 3\n. Не хватает: 2 человека",
+          "tone": "vacancy"
+        },
+        "Уборщик": {
+          "text": "занято 1 из 0\n. Сверх штата: 1 человек",
+          "tone": "over"
+        }
+      },
+      "totals": "По штату: 4\nЗанято: 3\nВакансий: 2\nСверх штата: 1"
+    },
+    "AC1.3-totals": {
+      "ok": true,
+      "totals": "По штату: 4\nЗанято: 3\nВакансий: 2\nСверх штата: 1"
+    },
+    "AC1.2-categories": {
+      "ok": true,
+      "cards": [
+        "positions-management",
+        "positions-staff",
+        "positions-commission"
+      ]
+    },
+    "AC1.4-create": {
+      "ok": true,
+      "toast": "Должность «Тест член комиссии» добавлена",
+      "pill": "занято 0 из 2\n. Не хватает: 2 человека",
+      "inCommission": 1
+    },
+    "AC1.4-api-error-toast": {
+      "ok": true,
+      "toast": "Такая должность уже существует"
+    },
+    "AC1.4-edit": {
+      "ok": true,
+      "toast": "Должность «Тест член комиссии» сохранена",
+      "pill": "занято 0 из 1\n. Не хватает: 1 человек"
+    },
+    "AC1.5-order": {
+      "ok": true,
+      "orderStatus": 200,
+      "initial": [
+        "Су-шеф",
+        "Повар горячего цеха",
+        "Повар горячего цеха 2 смена"
+      ],
+      "afterReload": [
+        "Повар горячего цеха",
+        "Су-шеф",
+        "Повар горячего цеха 2 смена"
+      ],
+      "restored": [
+        "Су-шеф",
+        "Повар горячего цеха",
+        "Повар горячего цеха 2 смена"
+      ]
+    },
+    "AC1.4-delete-blocked": {
+      "ok": true,
+      "text": "На должности «Повар горячего цеха» работают люди Удалить должность можно, когда на ней никого нет. Сейчас на должности: 1 человек Переведите их в другую должность или в архив на странице «Сотрудники» Потом вернитесь сюда и удалите должность Отмена Открыть сотрудников"
+    },
+    "AC1.4-delete": {
+      "ok": true,
+      "toast": "Должность «Тест член комиссии» удалена",
+      "left": 0
+    },
+    "AC1.6-guide": {
+      "ok": true,
+      "text": true
+    },
+    "AC2.2-presets": {
+      "ok": true,
+      "presets": [
+        "admin",
+        "head_chef",
+        "control_group",
+        "cook",
+        "waiter",
+        "seller",
+        "cashier",
+        "cleaner"
+      ],
+      "configureLink": true,
+      "blocks": [
+        "presets",
+        "people",
+        "sections",
+        "journals",
+        "visibility",
+        "permissions"
+      ]
+    },
+    "AC2.1-no-tabs": {
+      "ok": true,
+      "tabs": 0
+    },
+    "AC2.3-change-preset": {
+      "ok": true,
+      "toast": "Волкова Анна Дмитриевна: набор «Контроль-группа»",
+      "row": "ВА Волкова Анна Дмитриевна Повар горячего цеха Контроль-группа назначен вручную Изменить"
+    },
+    "AC2.4-sections": {
+      "ok": true,
+      "personSections": [
+        "company:hidden",
+        "staff:visible",
+        "points:hidden",
+        "journals:visible",
+        "checklists:visible",
+        "productionControl:hidden",
+        "billing:hidden",
+        "more:hidden",
+        "inspection:visible"
+      ],
+      "presetRows": [
+        {
+          "preset": "admin",
+          "visible": [
+            "company",
+            "staff",
+            "points",
+            "journals",
+            "checklists",
+            "productionControl",
+            "billing",
+            "more",
+            "inspection"
+          ],
+          "depends": []
+        },
+        {
+          "preset": "head_chef",
+          "visible": [
+            "staff",
+            "points",
+            "journals",
+            "checklists",
+            "productionControl",
+            "billing",
+            "more",
+            "inspection"
+          ],
+          "depends": []
+        },
+        {
+          "preset": "control_group",
+          "visible": [
+            "staff",
+            "journals",
+            "checklists",
+            "inspection"
+          ],
+          "depends": []
+        },
+        {
+          "preset": "cook",
+          "visible": [],
+          "depends": [
+            "checklists"
+          ]
+        },
+        {
+          "preset": "waiter",
+          "visible": [],
+          "depends": [
+            "checklists"
+          ]
+        },
+        {
+          "preset": "seller",
+          "visible": [],
+          "depends": [
+            "checklists"
+          ]
+        },
+        {
+          "preset": "cashier",
+          "visible": [],
+          "depends": [
+            "checklists"
+          ]
+        },
+        {
+          "preset": "cleaner",
+          "visible": [],
+          "depends": [
+            "checklists"
+          ]
+        }
+      ]
+    },
+    "AC2.3-revert": {
+      "ok": true,
+      "row": "ВА Волкова Анна Дмитриевна Повар горячего цеха Повар по должности Изменить"
+    },
+    "AC2.3-self-lockout": {
+      "ok": true,
+      "cookLocked": true,
+      "api": {
+        "status": 400,
+        "body": {
+          "error": "Нельзя снять с себя «Администратора»: вы потеряете доступ к настройкам. Попросите другого администратора",
+          "code": "SELF_LOCKOUT"
+        }
+      }
+    },
+    "AC2.5-6-7-blocks": {
+      "ok": true,
+      "journals": "4 Журналы Сколько журналов из 46 открыто каждой должности. Сотруднику журналы можно выбрать и лично. Управляющий 1 человек не настроено Шеф-повар 1 человек не н",
+      "visibility": "5 Видимость коллег Кого видят сотрудники каждой должности в приложении и в TasksFlow. Список задан у 0 из 23 должностей. У остальных должностей список не задан — они видят только свои задачи. Кто види",
+      "permissions": 1
+    },
+    "AC2.1-editors": {
+      "ok": true,
+      "/settings/journal-access": {
+        "backLink": "Доступ и права",
+        "menuActive": "page"
+      },
+      "/settings/journals-by-position": {
+        "backLink": "Доступ и права",
+        "menuActive": "page"
+      },
+      "/settings/permissions": {
+        "backLink": "Доступ и права",
+        "menuActive": "page"
+      },
+      "/settings/role-presets": {
+        "backLink": "Доступ и права",
+        "menuActive": "page"
+      }
+    },
+    "AC3.2-members": {
+      "ok": true,
+      "finished": [
+        "ЛМЛебедева Марина ОлеговнаТехнологПредседатель",
+        "МИМорозов Илья АндреевичШеф-поварЧлен комиссии",
+        "ЕНЕрмакова Нина СергеевнаСпециалист по санитарной обработкеЧлен комиссии"
+      ]
+    },
+    "AC3.2-dialog-save": {
+      "ok": true,
+      "perishable": [
+        "БЕБелова Елена АндреевнаТовароведПредседательнет PIN"
+      ]
+    },
+    "AC3.3-journal-link": {
+      "ok": true,
+      "off": true,
+      "enableHref": 1,
+      "journalHref": "/journals/perishable_rejection",
+      "finishedOff": 0
+    },
+    "AC3.4-copy-hint": {
+      "ok": true,
+      "hint": true
+    },
+    "AC4-haccp": {
+      "ok": true,
+      "haccpEmpty": 1,
+      "emptyHref": 1,
+      "haccpMembers": [
+        "МИМорозов Илья АндреевичРуководитель группыШеф-поварРуководит группой, подписывает план ХАССП",
+        "ЛМЛебедева Марина ОлеговнаЧлен группыТехнолог"
+      ],
+      "editHref": "/production-control/haccp/team",
+      "editButtons": 2
+    },
+    "AC5.1-api": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "members",
+        "candidates",
+        "canManage"
+      ],
+      "candidate": {
+        "id": "cmvbfyfj5000huw9mxwrgxpay",
+        "name": "Белова Елена Андреевна",
+        "position": "Товаровед",
+        "permissionPreset": null,
+        "effectivePreset": "cook",
+        "isManager": false
+      }
+    },
+    "AC5.2-add": {
+      "ok": true,
+      "preview": "Набор прав: «Повар» → «Контроль-группа».",
+      "memberText": "ВА Волкова Анна Дмитриевна Повар горячего цеха Видит всех (иерархия не настроена) Назначает задачи по всем журналам Сузить в «Иерархии» Убрать из группы"
+    },
+    "AC5.2-admin-confirm": {
+      "ok": true,
+      "adminConfirmShown": true
+    },
+    "AC5.2-remove": {
+      "ok": true,
+      "removeText": "Убрать Волкова Анна Дмитриевна из контроль-группы? Набор прав вернётся по должности. Новый набор: «Повар» Если набор по должности этого не даёт — перестанет видеть журналы, подтверждать и назначать за",
+      "left": 0
+    },
+    "AC5.2-api-error": {
+      "ok": true,
+      "forbidden": {
+        "status": 404,
+        "body": {
+          "error": "Сотрудник не найден"
+        }
+      }
+    },
+    "AC6-inspectors": {
+      "ok": true,
+      "apiStatus": 200,
+      "apiExternal": 1,
+      "apiInternal": 2,
+      "external": 1,
+      "internal": 2,
+      "issueHref": "/settings/inspector-portal",
+      "roleLinks": [
+        "/journals/uv_lamp_runtime/documents/cmvbgyuk10096f89m0o6b8sty",
+        "/journals/fryer_oil/documents/cmvbgz56600c8f89mmi3oy6xm",
+        "/journals/fryer_oil/documents/cmvcvqfyz000aeg9mu242bq95",
+        "/journals/hygiene/documents/cmvbgy9v70003f89mmcxnxvwc",
+        "/journals/health_check/documents/cmvbgyglc004qf89mj0srakvv",
+        "/journals/cleaning/documents/cmvbgyq0a0092f89m297gnsz8"
+      ],
+      "tokenHashInApi": false
+    },
+    "AC7-users-desktop": {
+      "ok": true,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "controls": 6,
+      "outside": []
+    },
+    "AC7-users-laptop": {
+      "ok": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "controls": 6,
+      "outside": []
+    },
+    "AC7-users-mobile": {
+      "ok": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "controls": 6,
+      "outside": []
+    },
+    "AC2.3-headchef-readonly": {
+      "ok": true,
+      "editButtons": 0,
+      "configure": 0,
+      "permissionsBlock": 1,
+      "menu": [
+        "positions",
+        "users",
+        "access",
+        "commission",
+        "haccpGroup",
+        "controlGroup",
+        "inspectors",
+        "team",
+        "schedule",
+        "health",
+        "hierarchy",
+        "visibility",
+        "phone"
+      ],
+      "presetApi": 403
+    },
+    "AC5.2-headchef-readonly": {
+      "ok": true,
+      "add": 0,
+      "remove": 0
+    },
+    "AC1.1-headchef-manage": {
+      "ok": true,
+      "create": 1
+    },
+    "AC8.2-headchef-menu": {
+      "ok": true,
+      "menu": [
+        "positions",
+        "users",
+        "access",
+        "commission",
+        "haccpGroup",
+        "controlGroup",
+        "inspectors",
+        "team",
+        "schedule",
+        "health",
+        "hierarchy",
+        "visibility",
+        "phone"
+      ]
+    }
+  },
+  "problems": []
+}

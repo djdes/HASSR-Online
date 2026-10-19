@@ -286,20 +286,29 @@ test("правило каждой вкладки и карточки повто�
 
 test("права и иерархия зависят от права settings.permissions, а не от роли", () => {
   const staff = NAV_SECTIONS.find((section) => section.key === "staff");
-  const links = (staff?.menu ?? []).flatMap((group) =>
-    group.items.flatMap((item) => [item, ...(item.tabs ?? [])]),
-  );
-  const rights = links.filter((link) =>
-    ["/settings/permissions", "/settings/staff-hierarchy"].includes(link.href),
-  );
-  assert.equal(rights.length, 2);
+  const items = (staff?.menu ?? []).flatMap((group) => group.items);
+  // «Иерархия» — пункт меню по праву из БД.
+  const hierarchy = items.find((item) => item.href === "/settings/staff-hierarchy");
+  assert.ok(hierarchy);
   const without: NavFacts = { checklists: false, settingsPermissions: false };
   const withRight: NavFacts = { checklists: false, settingsPermissions: true };
-  for (const link of rights) {
-    assert.deepEqual(link.access, { kind: "fact", fact: "settingsPermissions" }, link.href);
-    assert.equal(navAllows(manager, link.href, link.access, without), false, link.href);
-    assert.equal(navAllows(manager, link.href, link.access, withRight), true, link.href);
+  assert.deepEqual(hierarchy.access, { kind: "fact", fact: "settingsPermissions" });
+  assert.equal(navAllows(manager, hierarchy.href, hierarchy.access, without), false);
+  assert.equal(navAllows(manager, hierarchy.href, hierarchy.access, withRight), true);
+  // «Права доступа» — не пункт и не вкладка, а подробный редактор пункта
+  // «Доступ и права»: блок со ссылкой на него страница показывает по тому
+  // же праву, что пускает саму страницу прав.
+  assert.ok(!items.some((item) => item.href === "/settings/permissions"));
+  const access = items.find((item) => item.id === "access");
+  assert.ok(access?.match?.includes("/settings/permissions"));
+  const accessPage = readFileSync(pageFileFor("/settings/access") ?? "", "utf8");
+  const permissionsPage = readFileSync(pageFileFor("/settings/permissions") ?? "", "utf8");
+  for (const source of [accessPage, permissionsPage]) {
+    assert.match(source, /sessionHasPermission\(session, "settings\.permissions"\)/);
   }
+  // Ссылка «Настроить наборы» — только с admin.full, как страница наборов.
+  assert.match(accessPage, /hasCapability\(session\.user, "admin\.full"\)/);
+  assert.match(readFileSync(pageFileFor("/settings/role-presets") ?? "", "utf8"), /"admin\.full"/);
 });
 
 test("«Шаблон заведения» — вкладка и пункт меню раздела «Моя компания»", () => {
@@ -438,7 +447,8 @@ test("у каждого раздела, кроме «Остального», с�
     ["more", ["names", "onboarding", "template", "appearance"]],
   ]);
   assert.deepEqual(menuShape("staff"), [
-    ["directories", ["users", "access"]],
+    ["directories", ["positions", "users", "access"]],
+    ["groups", ["commission", "haccpGroup", "controlGroup", "inspectors"]],
     ["more", ["team", "schedule", "health", "responsibles", "hierarchy", "visibility", "workload", "phone"]],
   ]);
   // «Мои точки» — пункты из данных (`source`) и «+ Добавить точку»; статическая часть — без точек.
@@ -452,8 +462,12 @@ test("у каждого раздела, кроме «Остального», с�
   assert.deepEqual(menuShape("checklists"), [[null, ["builder"]]]);
   assert.deepEqual(menuShape("billing"), [[null, ["plan", "balance", "services"]]]);
   assert.deepEqual(menuShape("inspection"), [[null, ["now", "portal", "readiness"]]]);
+  // «Доступ и права» — одна страница без вкладок; прежние четыре страницы —
+  // её подробные редакторы (подсвечивают пункт).
   const access = NAV_SECTIONS.find((item) => item.key === "staff")?.menu?.[0].items.find((item) => item.id === "access");
-  assert.deepEqual(access?.tabs?.map((tab) => tab.href), [
+  assert.equal(access?.href, "/settings/access");
+  assert.equal(access?.tabs, undefined);
+  assert.deepEqual(access?.match, [
     "/settings/permissions",
     "/settings/role-presets",
     "/settings/journal-access",
@@ -493,10 +507,21 @@ test("match пункта: карточки и подстраницы подсв�
   assert.equal(sectionForPath("/settings/journal-pipelines-tree/x")?.menuItemId, "setup");
   assert.equal(sectionForPath("/settings/journals/x/scope")?.menuItemId, "setup");
   assert.equal(sectionForPath("/settings/users/x/access")?.menuItemId, "users");
-  const presets = sectionForPath("/settings/role-presets");
-  assert.equal(presets?.section, "staff");
-  assert.equal(presets?.menuItemId, "access");
-  assert.equal(presets?.menuTabHref, "/settings/role-presets");
+  for (const editor of ["/settings/permissions", "/settings/role-presets", "/settings/journal-access", "/settings/journals-by-position"]) {
+    const place = sectionForPath(editor);
+    assert.equal(place?.section, "staff", editor);
+    assert.equal(place?.menuItemId, "access", editor);
+    assert.equal(place?.menuTabHref, null, editor);
+    assert.equal(place?.ownerHref, "/settings/access", editor);
+  }
+  assert.equal(sectionForPath("/settings/access")?.menuItemId, "access");
+  assert.equal(sectionForPath("/settings/positions")?.menuItemId, "positions");
+  assert.equal(sectionForPath("/settings/brakerage-commission")?.menuItemId, "commission");
+  assert.equal(sectionForPath("/settings/haccp-group")?.menuItemId, "haccpGroup");
+  assert.equal(sectionForPath("/settings/control-group")?.menuItemId, "controlGroup");
+  assert.equal(sectionForPath("/settings/inspectors")?.menuItemId, "inspectors");
+  // «Кто видит коллег» — по-прежнему свой пункт в «Ещё».
+  assert.equal(sectionForPath("/settings/position-staff-visibility")?.menuItemId, "visibility");
   assert.equal(sectionForPath("/settings/print-agent")?.menuItemId, "printer");
   assert.equal(sectionForPath("/settings/equipment/qr-sheet")?.menuItemId, "equipment");
   assert.equal(sectionForPath("/dashboard/catch-up")?.menuItemId, "today");
@@ -526,8 +551,13 @@ test("«Сегодня»: у управляющей — журналы дня, �
 
 test("заведующая: пунктов только для admin.full нет", () => {
   assert.deepEqual(visibleItemIds(headChef, "staff"), [
+    "positions",
     "users",
     "access",
+    "commission",
+    "haccpGroup",
+    "controlGroup",
+    "inspectors",
     "team",
     "schedule",
     "health",
@@ -537,9 +567,9 @@ test("заведующая: пунктов только для admin.full нет
   const access = visibleNav(headChef, withChecklists)
     .find((item) => item.key === "staff")
     ?.menu?.[0].items.find((item) => item.id === "access");
-  // «Права» — по праву из БД, «Наборы прав» — admin.full: заведующей — две вкладки.
-  assert.deepEqual(access?.tabs?.map((tab) => tab.id), ["journals", "positions"]);
-  assert.equal(access?.href, "/settings/journal-access");
+  // Одна страница без вкладок — и для заведующей.
+  assert.equal(access?.tabs, undefined);
+  assert.equal(access?.href, "/settings/access");
   assert.deepEqual(visibleItemIds(headChef, "inspection"), ["now", "portal"]);
   assert.deepEqual(visibleItemIds(headChef, "billing"), ["plan", "balance", "services"]);
 });
@@ -552,6 +582,36 @@ test("руководитель видит все пункты меню кажд�
     );
     assert.deepEqual(visibleItemIds(owner, section.key, full), all, section.key);
   }
+});
+
+test("новые страницы «Сотрудников»: только руководству, повару — ни пункта, ни страницы", () => {
+  const pages = [
+    "/settings/positions",
+    "/settings/access",
+    "/settings/brakerage-commission",
+    "/settings/haccp-group",
+    "/settings/control-group",
+    "/settings/inspectors",
+  ];
+  const staff = NAV_SECTIONS.find((section) => section.key === "staff");
+  const items = (staff?.menu ?? []).flatMap((group) => group.items);
+  for (const href of pages) {
+    const item = items.find((entry) => entry.href === href);
+    assert.ok(item, href);
+    assert.deepEqual(item.access, { kind: "fullAccess" }, href);
+    // Повара не пускают ни proxy.ts, ни правило пункта; заведующую — пускают.
+    assert.equal(navAllows(cook, href, item.access, withChecklists), false, href);
+    assert.equal(navAllows(headChef, href, item.access, withChecklists), true, href);
+    // Guard страницы — явный hasFullWorkspaceAccess( и уход со страницы, а не падение.
+    const source = readFileSync(pageFileFor(href) ?? "", "utf8");
+    assert.match(source, /if \(!hasFullWorkspaceAccess\(session\.user\)\) redirect\(/, href);
+  }
+  assert.deepEqual(visibleItemIds(cook, "staff"), []);
+  // Контроль-группа с линейной ролью новых страниц не видит (их режет proxy.ts).
+  assert.deepEqual(
+    visibleItemIds({ role: "cook", permissionPreset: "control_group" }, "staff", noChecklists),
+    ["team"],
+  );
 });
 
 test("пресет заведующей у линейной роли: в «Сотрудниках» — только команда", () => {

@@ -38,9 +38,11 @@ export function StaffPresetPicker(props: {
   readOnly: boolean;
   /** Окно открыто на себе: варианты без «Администратора» недоступны. */
   isSelf: boolean;
+  /** Сразу показать варианты (окно «Изменить набор» на странице «Доступ и права»). */
+  defaultOpen?: boolean;
 }) {
   const t = useTranslations("staffManagement.access");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(props.defaultOpen === true);
   const capabilitiesOf = (choice: PresetChoice): Capability[] =>
     props.presets.find((option) => option.value === (choice === AUTO_PRESET ? props.defaultPreset : choice))
       ?.capabilities ?? [];

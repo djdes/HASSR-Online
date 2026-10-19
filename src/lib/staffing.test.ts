@@ -4,8 +4,10 @@ import test from "node:test";
 import {
   computeStaffing,
   countOccupiedByPosition,
+  movePositionWithinCategory,
   parsePlannedHeadcount,
   planPositionOrder,
+  positionCategoryOf,
   positionStaffing,
   staffingTotals,
 } from "@/lib/staffing";
@@ -103,4 +105,34 @@ test("порядок должностей: присланные первыми, 
     ["d", 4],
   ]);
   assert.deepEqual([...planPositionOrder(current, ["d", "c", "b", "a"]).values()], [1, 2, 3, 4]);
+});
+
+test("выше/ниже: должность меняется местами с соседом своей категории", () => {
+  const ordered = [
+    { id: "boss", categoryKey: "management" },
+    { id: "chef", categoryKey: "management" },
+    { id: "cook", categoryKey: "staff" },
+    { id: "member", categoryKey: "commission" },
+    { id: "waiter", categoryKey: "staff" },
+  ];
+  assert.deepEqual(movePositionWithinCategory(ordered, "chef", -1), ["chef", "boss", "cook", "member", "waiter"]);
+  // Чужая категория между соседями не мешает.
+  assert.deepEqual(movePositionWithinCategory(ordered, "cook", 1), ["boss", "chef", "waiter", "member", "cook"]);
+  assert.deepEqual(movePositionWithinCategory(ordered, "waiter", -1), ["boss", "chef", "waiter", "member", "cook"]);
+  // Край категории и неизвестный id — двигать некуда.
+  assert.equal(movePositionWithinCategory(ordered, "boss", -1), null);
+  assert.equal(movePositionWithinCategory(ordered, "chef", 1), null);
+  assert.equal(movePositionWithinCategory(ordered, "member", 1), null);
+  assert.equal(movePositionWithinCategory(ordered, "ghost", 1), null);
+  // Порядок после сдвига переживает сохранение: planPositionOrder даёт 1…N.
+  const ids = movePositionWithinCategory(ordered, "chef", -1) ?? [];
+  assert.deepEqual([...planPositionOrder(ordered, ids).keys()], ids);
+});
+
+test("категория должности: неизвестная — «Сотрудники»", () => {
+  assert.equal(positionCategoryOf("management"), "management");
+  assert.equal(positionCategoryOf("commission"), "commission");
+  assert.equal(positionCategoryOf("staff"), "staff");
+  assert.equal(positionCategoryOf("other"), "staff");
+  assert.equal(positionCategoryOf(null), "staff");
 });

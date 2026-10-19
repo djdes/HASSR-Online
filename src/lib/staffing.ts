@@ -147,6 +147,42 @@ export function planPositionOrder(current: readonly { id: string }[], ids: reado
   return order;
 }
 
+/** Категории должностей в порядке показа (`JobPosition.categoryKey`). */
+export const POSITION_CATEGORIES = ["management", "staff", "commission"] as const;
+export type PositionCategoryKey = (typeof POSITION_CATEGORIES)[number];
+
+/** Неизвестная категория из базы — «Сотрудники» (как на странице сотрудников). */
+export function positionCategoryOf(categoryKey: string | null | undefined): PositionCategoryKey {
+  return categoryKey === "management" || categoryKey === "commission" ? categoryKey : "staff";
+}
+
+/**
+ * Сдвиг должности «выше» (-1) или «ниже» (+1) внутри её категории. `ordered` —
+ * все должности организации в порядке показа. Возвращает новый порядок всех
+ * id для `PUT /api/positions/order` или null, если двигать некуда.
+ */
+export function movePositionWithinCategory(
+  ordered: readonly { id: string; categoryKey: string }[],
+  id: string,
+  direction: -1 | 1
+): string[] | null {
+  const index = ordered.findIndex((position) => position.id === id);
+  if (index < 0) return null;
+  const category = positionCategoryOf(ordered[index].categoryKey);
+  let neighbour = index + direction;
+  while (
+    neighbour >= 0 &&
+    neighbour < ordered.length &&
+    positionCategoryOf(ordered[neighbour].categoryKey) !== category
+  ) {
+    neighbour += direction;
+  }
+  if (neighbour < 0 || neighbour >= ordered.length) return null;
+  const ids = ordered.map((position) => position.id);
+  [ids[index], ids[neighbour]] = [ids[neighbour], ids[index]];
+  return ids;
+}
+
 /**
  * Значение из запроса: целое 0…999 или null («не задано»). `undefined` —
  * поле не прислали (не менять). Всё остальное — ошибка.

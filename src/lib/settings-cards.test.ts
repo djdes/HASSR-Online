@@ -9,8 +9,9 @@ import { NAV_SECTIONS } from "./app-nav";
 /**
  * Карточки бывшего хаба `/settings` (до 2026-10-16). Хаб растворился в
  * разделах — ни одна настройка не должна потеряться: каждая теперь либо
- * вкладка раздела, либо пункт (вкладка пункта) меню раздела, либо карточка
- * на «Настройке журналов» / «Остальном».
+ * вкладка раздела, либо пункт (вкладка пункта) меню раздела, либо подробный
+ * редактор пункта (его `match`, ссылка — с самой страницы пункта), либо
+ * карточка на «Настройке журналов» / «Остальном».
  */
 const FORMER_HUB_HREFS = [
   "/settings/onboarding",
@@ -90,12 +91,20 @@ function navMenuHrefs(): string[] {
   ]);
 }
 
-test("все 51 карточка бывшего хаба на месте — вкладкой, пунктом меню раздела или карточкой", () => {
+/** Подробные редакторы пунктов меню: пути из `match` пункта (подсвечивают его). */
+function menuEditorHrefs(): string[] {
+  return NAV_SECTIONS.flatMap((section) =>
+    (section.menu ?? []).flatMap((group) => group.items.flatMap((item) => item.match ?? [])),
+  );
+}
+
+test("все 51 карточка бывшего хаба на месте — вкладкой, пунктом меню, редактором пункта или карточкой", () => {
   assert.equal(FORMER_HUB_HREFS.length, 51);
   const tabHrefs = navMenuHrefs();
+  const editorHrefs = menuEditorHrefs();
   const cardHrefs = SETTINGS_CARDS.map((card) => card.href);
   const missing = FORMER_HUB_HREFS.filter(
-    (href) => !tabHrefs.includes(href) && !cardHrefs.includes(href),
+    (href) => !tabHrefs.includes(href) && !editorHrefs.includes(href) && !cardHrefs.includes(href),
   );
   assert.deepEqual(missing, []);
 });
@@ -143,17 +152,28 @@ test("карточки сотрудников и точек стали пунк�
       group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)]),
     );
   for (const href of [
-    "/settings/permissions",
-    "/settings/role-presets",
     "/settings/staff-hierarchy",
     "/settings/position-staff-visibility",
     "/settings/workload-balance",
     "/settings/phone",
     "/settings/journal-responsibles",
+  ]) {
+    assert.ok(menuOf("staff").includes(href), href);
+  }
+  // «Доступ и права» (2026-10-18) — одна страница: прежние четыре страницы прав —
+  // её подробные редакторы (`match` пункта), ссылки на них стоят в её блоках.
+  const access = (NAV_SECTIONS.find((section) => section.key === "staff")?.menu ?? [])
+    .flatMap((group) => group.items)
+    .find((item) => item.id === "access");
+  const accessPage = readFileSync(join(process.cwd(), "src", "components", "staff", "access-page-client.tsx"), "utf8");
+  for (const href of [
+    "/settings/permissions",
+    "/settings/role-presets",
     "/settings/journal-access",
     "/settings/journals-by-position",
   ]) {
-    assert.ok(menuOf("staff").includes(href), href);
+    assert.ok(access?.match?.includes(href), href);
+    assert.ok(accessPage.includes(`href="${href}"`), `ссылка на ${href} со страницы «Доступ и права»`);
   }
   for (const href of ["/settings/print-agent", "/settings/kiosk", "/settings/products", "/settings/master-cabinet"]) {
     assert.ok(menuOf("points").includes(href), href);
