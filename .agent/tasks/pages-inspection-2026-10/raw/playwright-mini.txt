@@ -1,0 +1,13 @@
+  ✓ owner/mini: now открывается (200) — /inspection
+  ✓ owner/mini: now без горизонтальной прокрутки
+  ✓ owner/mini: visits открывается (200) — /inspection/visits
+  ✓ owner/mini: visits без горизонтальной прокрутки
+  ✓ owner/mini: norms открывается (200) — /inspection/norms
+  ✓ owner/mini: norms без горизонтальной прокрутки
+  ✓ owner/mini: experts открывается (200) — /inspection/experts
+  ✓ owner/mini: experts без горизонтальной прокрутки
+  ✓ owner/mini: special открывается (200) — /inspection/special-mode
+  ✓ owner/mini: special без горизонтальной прокрутки
+  ✓ owner/mini: кнопка меню раздела
+  ✓ owner/mini: в меню раздела 7 пунктов — ["now","visits","norms","portal","readiness","experts","special"]
+OK

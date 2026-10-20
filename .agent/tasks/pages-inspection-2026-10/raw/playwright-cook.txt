@@ -1,0 +1,13 @@
+  ✓ повар/desktop: now закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/desktop: visits закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/desktop: norms закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/desktop: experts закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/desktop: special закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/desktop: раздела «Пришла проверка» в меню нет — []
+  ✓ повар/mobile: now закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/mobile: visits закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/mobile: norms закрыта (редирект на /journals) — /journals
+  ✓ повар/mobile: experts закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/mobile: special закрыта (редирект на /mini/today) — /mini/today
+  ✓ повар/mobile: раздела «Пришла проверка» в меню нет — []
+OK

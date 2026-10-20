@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { AlertTriangle, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, BookOpen, Gauge, Handshake, type LucideIcon } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -9,32 +9,29 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
 import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
-import { listInspectionVisits } from "@/lib/inspection-visits.server";
-import { loadInspectionNorms } from "@/lib/inspection-norms.server";
-import { readActiveServices } from "@/lib/services/catalog";
 import { InspectionQr } from "@/components/inspection/inspection-qr";
 import { InspectionGuide } from "@/components/inspection/inspection-guide";
-import { InspectionVisitsCard } from "@/components/inspection/inspection-visits-card";
-import { InspectionNormsCard } from "@/components/inspection/inspection-norms-card";
-import { InspectionSpecialModeCard } from "@/components/inspection/inspection-special-mode-card";
-import { InspectionExpertsCard } from "@/components/inspection/inspection-experts-card";
+import { InspectionSpecialModeStatus } from "@/components/inspection/inspection-special-mode-card";
 import { ComplianceBundleCard } from "@/components/reports/compliance-bundle-card";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
+import { PageGuide } from "@/components/ui/page-guide";
 
 export const dynamic = "force-dynamic";
 
+const OPEN_LINK =
+  "inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:self-center";
+
 /**
- * «К вам пришла проверка (или придёт)» — один экран на случай, когда
- * проверяющий уже в дверях (решение владельца 2026-10-16, скан 83 от
- * 2026-10-17): «Что делать сейчас» по шагам, и блоки с теми же номерами —
- * ② показать QR, ③ журнал посещений со сканом основания, ④ документы
- * архивом, ⑤ специальный режим; рядом нормативка, готовность и помощь
- * эксперта. Открыт и заведующей: проверка часто
- * приходит, когда она одна на месте. Выпускать QR, смотреть готовность и
- * заказывать услуги — руководству (как на их собственных страницах).
+ * «Что делать сейчас» — первый пункт раздела «К вам пришла проверка (или
+ * придёт)» (решение владельца 2026-10-16, скан 83, S4 2026-10-18): шаги по
+ * порядку и то, что нужно прямо в дверях, — ② QR на экране и ④ архив
+ * документов. Журнал посещений (③) и спецрежим (⑤) стали своими пунктами
+ * меню: здесь от них — коротко, со ссылкой «Открыть». Якорь `#special-mode`
+ * остаётся: на него ведёт ссылка из «Реквизитов».
  *
- * Блоки — отдельные компоненты: когда у раздела появится своё меню, каждый
- * станет страницей пункта без переделки.
+ * Открыт и заведующей: проверка часто приходит, когда она одна на месте.
+ * Выпускать QR, смотреть готовность и заказывать услуги — руководству (как на
+ * их собственных страницах).
  */
 export default async function InspectionPage() {
   const session = await requireAuth();
@@ -43,34 +40,26 @@ export default async function InspectionPage() {
   const organizationId = getActiveOrgId(session);
   const showReadiness = hasCapability(session.user, "admin.full");
 
-  const [inspector, report, org, visits, norms, services, t, locale] = await Promise.all([
+  const [inspector, report, org, visitCount, t, tItems, locale] = await Promise.all([
     loadCabinetInspectorData(organizationId),
-    // Сбой аудита готовности не должен ронять экран — шаг просто не рисуется.
+    // Сбой аудита готовности не должен ронять экран — без балла, только ссылка.
     showReadiness ? runComplianceAudit(organizationId).catch(() => null) : Promise.resolve(null),
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, timezone: true },
     }),
-    // Со скрытыми: показать их можно переключателем в журнале.
-    listInspectionVisits(organizationId, { includeHidden: true }),
-    loadInspectionNorms(organizationId),
-    fullAccess ? readActiveServices().catch(() => []) : Promise.resolve([]),
+    // Как в журнале посещений: скрытые как ошибочные не считаем.
+    db.inspectionVisit.count({ where: { organizationId, hiddenAt: null } }),
     getTranslations("inspectionDay"),
+    getTranslations("navigation.shell.menus.inspection.items"),
     getLocale(),
   ]);
   const timeZone = org?.timezone || "Europe/Moscow";
-  const shownVisits = visits.filter((visit) => !visit.hiddenAt).length;
 
   // Действующий QR — самый долгий: его и показываем, и печатаем.
   const activeQr = inspector.tokens
     .filter((token) => token.isQr && token.qrSvg)
     .sort((a, b) => b.expiresAt.localeCompare(a.expiresAt))[0];
-  const problems = report
-    ? report.checks
-        .filter((check) => check.status !== "ok")
-        .sort((a, b) => (a.status === b.status ? b.weight - a.weight : a.status === "fail" ? -1 : 1))
-        .slice(0, 3)
-    : [];
   const recentViews = inspector.activity.slice(0, 5);
   const dateTime = new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -80,10 +69,42 @@ export default async function InspectionPage() {
     timeZone,
   });
 
+  // Остальные пункты раздела — коротко; каждый со своим правом, как в меню.
+  const more: { id: string; href: string; icon: LucideIcon; title: string; hint: string; aside?: string }[] = [
+    { id: "norms", href: "/inspection/norms", icon: BookOpen, title: tItems("norms"), hint: t("now.normsHint") },
+    ...(showReadiness
+      ? [
+          {
+            id: "readiness",
+            href: "/dashboard/compliance-audit",
+            icon: Gauge,
+            title: tItems("readiness"),
+            hint: t("now.readinessHint"),
+            aside: report
+              ? t("readinessScore", { ok: String(report.summary.ok), total: String(report.checks.length) })
+              : undefined,
+          },
+        ]
+      : []),
+    ...(fullAccess
+      ? [{ id: "experts", href: "/inspection/experts", icon: Handshake, title: tItems("experts"), hint: t("now.expertsHint") }]
+      : []),
+  ];
+
   return (
     <div className="space-y-4">
       {/* Заголовок раздела по эскизу руководителя (скан 83). */}
       <SectionPageHeader title={t("pageTitle")} description={t("pageLead")} />
+
+      <PageGuide
+        storageKey="inspection-now"
+        title={t("now.guideTitle")}
+        bullets={[t("now.guide1"), t("now.guide2"), t("now.guide3")]}
+        qa={[
+          { q: t("now.q1"), a: t("now.a1") },
+          { q: t("now.q2"), a: t("now.a2") },
+        ]}
+      />
 
       <InspectionGuide />
 
@@ -100,76 +121,56 @@ export default async function InspectionPage() {
         number={3}
         title={t("visits.title")}
         aside={
-          shownVisits > 0 ? (
-            <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] font-medium tabular-nums text-[#3848c7]">
-              {t("visits.count", { count: shownVisits })}
+          visitCount > 0 ? (
+            <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] font-medium tabular-nums text-[#3848c7]" data-visit-count={visitCount}>
+              {t("visits.count", { count: visitCount })}
             </span>
           ) : null
         }
       >
-        <InspectionVisitsCard visits={visits} timeZone={timeZone} canHide={hasCapability(session.user, "admin.full")} />
+        <OpenRow lead={t("now.visitsLead")} href="/inspection/visits" label={t("guide.open")} />
       </Step>
 
       <Step id="archive" number={4} title={t("archiveTitle")}>
         <ComplianceBundleCard bare />
       </Step>
 
-      <InspectionSpecialModeCard step={5} canManage={hasCapability(session.user, "admin.full")} />
+      {/* `#special-mode` — адрес из «Реквизитов» (organization-special-mode-card). */}
+      <Step id="special-mode" number={5} title={t("special.title")} aside={<InspectionSpecialModeStatus />}>
+        <OpenRow lead={t("now.specialLead")} href="/inspection/special-mode" label={t("guide.open")} />
+      </Step>
 
-      <InspectionNormsCard norms={norms} />
-
-      {report ? (
-        <Step
-          id="readiness"
-          title={t("readinessTitle")}
-          aside={
-            <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] font-medium tabular-nums text-[#3848c7]">
-              {t("readinessScore", {
-                ok: String(report.summary.ok),
-                total: String(report.checks.length),
-              })}
-            </span>
-          }
-        >
-          {problems.length === 0 ? (
-            <div className="flex items-center gap-2 text-[14px] text-[#116b2a]">
-              <CheckCircle2 className="size-4" />
-              {t("allGood")}
-            </div>
-          ) : (
-            <ul className="divide-y divide-[#ececf4]" data-readiness-problems>
-              {problems.map((check) => (
-                <li key={check.id} className="flex items-center gap-3 py-2.5 text-[14px]">
-                  {check.status === "fail" ? (
-                    <XCircle className="size-4 shrink-0 text-[#a13a32]" />
-                  ) : (
-                    <AlertTriangle className="size-4 shrink-0 text-[#b45309]" />
-                  )}
-                  <span className="min-w-0 flex-1 text-[#0b1024]">{check.title}</span>
-                  {check.fixUrl ? (
-                    <Link
-                      href={check.fixUrl}
-                      className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6]"
-                    >
-                      {t("fix")}
-                      <ArrowRight className="size-3.5" />
-                    </Link>
+      <section
+        className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
+        data-inspection-more
+      >
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("now.moreTitle")}</h2>
+        <ul className="mt-3 grid gap-3 md:grid-cols-3">
+          {more.map(({ id, href, icon: Icon, title, hint, aside }) => (
+            <li key={id}>
+              <Link
+                href={href}
+                className="group flex h-full items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 transition-[border-color,box-shadow,background-color] duration-200 hover:border-[#5566f6]/40 hover:bg-white hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                data-inspection-more-link={id}
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-semibold text-[#0b1024]">{title}</span>
+                  <span className="mt-1 block text-[13.5px] leading-[1.55] text-[#3c4053]">{hint}</span>
+                  {aside ? (
+                    <span className="mt-2 inline-flex rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12.5px] font-medium tabular-nums text-[#3848c7]">
+                      {aside}
+                    </span>
                   ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/dashboard/compliance-audit"
-            className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6]"
-          >
-            {t("allChecks")}
-            <ArrowRight className="size-3.5" />
-          </Link>
-        </Step>
-      ) : null}
-
-      {fullAccess ? <InspectionExpertsCard services={services} /> : null}
+                </span>
+                <ArrowRight className="mt-2.5 size-4 shrink-0 text-[#9b9fb3] transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-[#5566f6]" aria-hidden />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section
         className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
@@ -207,8 +208,8 @@ function Step({
   children,
 }: {
   id: string;
-  /** Номер шага инструкции «Что делать сейчас»; без номера — справочный блок. */
-  number?: number;
+  /** Номер шага инструкции «Что делать сейчас». */
+  number: number;
   title: string;
   aside?: React.ReactNode;
   children: React.ReactNode;
@@ -217,14 +218,12 @@ function Step({
     <section
       id={id}
       className="scroll-mt-24 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
-      data-inspection-step={number ?? id}
+      data-inspection-step={number}
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        {number ? (
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[15px] font-semibold text-white tabular-nums">
-            {number}
-          </span>
-        ) : null}
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[15px] font-semibold text-white tabular-nums">
+          {number}
+        </span>
         <h2 className="min-w-0 flex-1 text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
           {title}
         </h2>
@@ -232,5 +231,18 @@ function Step({
       </div>
       {children}
     </section>
+  );
+}
+
+/** Шаг, ставший пунктом меню: одна строка пояснения и «Открыть →». */
+function OpenRow({ lead, href, label }: { lead: string; href: string; label: string }) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="max-w-[640px] text-[14px] leading-[1.55] text-[#6f7282]">{lead}</p>
+      <Link href={href} className={OPEN_LINK} data-step-open={href}>
+        {label}
+        <ArrowRight className="size-4 text-[#5566f6]" aria-hidden />
+      </Link>
+    </div>
   );
 }

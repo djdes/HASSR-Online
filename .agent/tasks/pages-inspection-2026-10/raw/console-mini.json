@@ -1,0 +1,68 @@
+{
+  "/inspection": [
+    "error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Closing confirmation is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Changing swipes behavior is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0"
+  ],
+  "/inspection/visits": [
+    "error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Closing confirmation is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Changing swipes behavior is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0"
+  ],
+  "/inspection/norms": [
+    "error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Closing confirmation is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Changing swipes behavior is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0"
+  ],
+  "/inspection/experts": [
+    "error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Closing confirmation is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Changing swipes behavior is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0"
+  ],
+  "/inspection/special-mode": [
+    "error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Closing confirmation is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Changing swipes behavior is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0"
+  ],
+  "/settings/names": [
+    "error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Closing confirmation is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Changing swipes behavior is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Header color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] Background color is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0",
+    "warning: [Telegram.WebApp] BackButton is not supported in version 6.0"
+  ]
+}

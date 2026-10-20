@@ -1,0 +1,76 @@
+{
+  "base": "http://localhost:3076",
+  "part": "headchef-mini",
+  "startedAt": "2026-10-19T20:30:38.953Z",
+  "checks": [
+    {
+      "name": "headchef/mini: now открывается (200)",
+      "ok": true,
+      "detail": "/inspection"
+    },
+    {
+      "name": "headchef/mini: now без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: visits открывается (200)",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "headchef/mini: visits без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: norms открывается (200)",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "headchef/mini: norms без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: experts открывается (200)",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "headchef/mini: experts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: special открывается (200)",
+      "ok": true,
+      "detail": "/inspection/special-mode"
+    },
+    {
+      "name": "headchef/mini: special без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: кнопка меню раздела",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: в меню раздела 6 пунктов",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "experts",
+        "special"
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-19T20:31:33.695Z",
+  "problems": []
+}

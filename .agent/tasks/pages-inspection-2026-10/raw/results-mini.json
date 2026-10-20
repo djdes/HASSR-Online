@@ -1,0 +1,77 @@
+{
+  "base": "http://localhost:3076",
+  "part": "mini",
+  "startedAt": "2026-10-19T19:31:14.343Z",
+  "checks": [
+    {
+      "name": "owner/mini: now открывается (200)",
+      "ok": true,
+      "detail": "/inspection"
+    },
+    {
+      "name": "owner/mini: now без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mini: visits открывается (200)",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "owner/mini: visits без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mini: norms открывается (200)",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "owner/mini: norms без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mini: experts открывается (200)",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "owner/mini: experts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mini: special открывается (200)",
+      "ok": true,
+      "detail": "/inspection/special-mode"
+    },
+    {
+      "name": "owner/mini: special без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mini: кнопка меню раздела",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mini: в меню раздела 7 пунктов",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "readiness",
+        "experts",
+        "special"
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-19T19:32:25.553Z",
+  "problems": []
+}

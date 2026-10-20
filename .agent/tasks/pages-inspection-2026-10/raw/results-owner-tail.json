@@ -1,0 +1,68 @@
+{
+  "base": "http://localhost:3076",
+  "part": "owner-tail",
+  "startedAt": "2026-10-20T11:22:40.391Z",
+  "checks": [
+    {
+      "name": "заголовок — «Спецрежим»",
+      "ok": true,
+      "detail": "Спецрежим"
+    },
+    {
+      "name": "пояснение: что выключает (3 пункта) и «Когда включать»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "руководитель может переключать",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "спецрежим включён: тост «Сохранено»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "спецрежим включён",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "статус «Включён» на «Что делать сейчас»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "спецрежим выключен обратно",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "пункт «QR для проверяющего» открывает свою страницу",
+      "ok": true,
+      "detail": "/settings/inspector-portal"
+    },
+    {
+      "name": "пункт «Готовность к проверке» открывает свою страницу",
+      "ok": true,
+      "detail": "/dashboard/compliance-audit"
+    },
+    {
+      "name": "меню раздела остаётся на «Готовности»",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "specialInitial": "on",
+  "buildSettled": true,
+  "menuRetries": [
+    {
+      "id": "portal",
+      "expectPath": "/settings/inspector-portal",
+      "at": "http://localhost:3076/inspection/special-mode"
+    }
+  ],
+  "finishedAt": "2026-10-20T11:26:26.769Z",
+  "problems": []
+}

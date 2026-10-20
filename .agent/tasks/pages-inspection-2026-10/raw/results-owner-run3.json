@@ -1,0 +1,297 @@
+{
+  "base": "http://localhost:3076",
+  "part": "owner",
+  "startedAt": "2026-10-20T10:49:23.157Z",
+  "checks": [
+    {
+      "name": "меню раздела: семь пунктов по spec",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "readiness",
+        "experts",
+        "special"
+      ]
+    },
+    {
+      "name": "заголовок «К вам пришла проверка (или придёт)»",
+      "ok": true,
+      "detail": "К вам пришла проверка (или придёт)"
+    },
+    {
+      "name": "инструкция «Что делать сейчас» на месте",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "шаги 3 и 5 — «Открыть →» на свои пункты",
+      "ok": true,
+      "detail": [
+        [
+          "3",
+          "/inspection/visits",
+          true
+        ],
+        [
+          "5",
+          "/inspection/special-mode",
+          true
+        ]
+      ]
+    },
+    {
+      "name": "быстрое действие: QR на экране (#qr)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "быстрое действие: «Скачать ZIP» (#archive)",
+      "ok": true,
+      "detail": "4Журналы одним архивомПо звонку инспектора (7 дней)Текущий месяцПрошлый месяцТекущий кварталСПоСкачать архивВключаются в"
+    },
+    {
+      "name": "блоки-страницы целиком не повторяются",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "кратко: статус спецрежима (#special-mode)",
+      "ok": true,
+      "detail": "off"
+    },
+    {
+      "name": "«Ещё в разделе»: нормативка, готовность, эксперты",
+      "ok": true,
+      "detail": [
+        [
+          "norms",
+          "/inspection/norms"
+        ],
+        [
+          "readiness",
+          "/dashboard/compliance-audit"
+        ],
+        [
+          "experts",
+          "/inspection/experts"
+        ]
+      ]
+    },
+    {
+      "name": "кратко: балл готовности со ссылкой",
+      "ok": true,
+      "detail": "5 из 16 в порядке"
+    },
+    {
+      "name": "/inspection#special-mode прокручивает к блоку спецрежима",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "«Открыть →» из блока спецрежима ведёт на «Спецрежим»",
+      "ok": true,
+      "detail": "http://localhost:3076/inspection/special-mode"
+    },
+    {
+      "name": "пункт «Журнал посещений» открывает /inspection/visits",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "заголовок — «Журнал посещений»",
+      "ok": true,
+      "detail": "Журнал посещений"
+    },
+    {
+      "name": "пояснение: проверяющий по QR, руководитель вручную",
+      "ok": true,
+      "detail": "Проверяющий вносит запись сам по QR и прикладывает скан или фото решения. Не внёс — добавьте запись здесь."
+    },
+    {
+      "name": "нумерованные шаги «Как запись попадает в журнал»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "добавление посещения со сканом: тост",
+      "ok": true,
+      "detail": "Не удалось прочитать файл — сохраните его заново или сфотографируйте документ"
+    },
+    {
+      "name": "запись в списке со сканом основания",
+      "ok": true,
+      "detail": "cmvgkdmlq00140w9mccgned7v"
+    },
+    {
+      "name": "скан открывается (200, PDF)",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "type": "application/pdf"
+      }
+    },
+    {
+      "name": "«Приложить скан»: тост",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "«Приложить скан»: второй файл у записи",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "name": "«Скрыть как ошибочную»: тост",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "«Показать скрытые»: запись видна как скрытая",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "«Вернуть»: тост",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "кратко: счётчик посещений на «Что делать сейчас»",
+      "ok": true,
+      "detail": "2"
+    },
+    {
+      "name": "пункт «Нормативка» открывает /inspection/norms",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "заголовок — «Нормативка»",
+      "ok": true,
+      "detail": "Нормативка"
+    },
+    {
+      "name": "документы ППК и ХАССП-плана, перечень норм",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "ссылки — прямо на файлы, не на страницы ППК",
+      "ok": true,
+      "detail": [
+        "/api/production-control/program/pdf",
+        "/api/production-control/haccp-plan/pdf"
+      ]
+    },
+    {
+      "name": "«Открыть PDF» отдаёт файл (скачивание), страница на месте",
+      "ok": true,
+      "detail": {
+        "file": "ППК — Столовая «Берёзка».pdf",
+        "url": "http://localhost:3076/inspection/norms"
+      }
+    },
+    {
+      "name": "левое меню не переключилось на ППК",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "readiness",
+        "experts",
+        "special"
+      ]
+    },
+    {
+      "name": "пункт «Подготовка с экспертом и выезд» открывает /inspection/experts",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "карточки «Аудит перед проверкой» и «Выезд специалиста» → ?order=",
+      "ok": true,
+      "detail": [
+        "/settings/services?order=pre-inspection-audit",
+        "/settings/services?order=site-visit"
+      ]
+    },
+    {
+      "name": "подпись «Аудит перед проверкой»",
+      "ok": true,
+      "detail": "Аудит перед проверкойот 15 000 ₽Эксперт найдёт нарушения раньше проверяющего и д"
+    },
+    {
+      "name": "нумерованные шаги «Как заказать»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "переход на заказ услуги",
+      "ok": true,
+      "detail": "http://localhost:3076/settings/services?order=pre-inspection-audit"
+    },
+    {
+      "name": "заголовок — «Спецрежим»",
+      "ok": true,
+      "detail": "Спецрежим"
+    },
+    {
+      "name": "пояснение: что выключает (3 пункта) и «Когда включать»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "руководитель может переключать",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "спецрежим включён: тост «Сохранено»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "спецрежим включён",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "статус «Включён» на «Что делать сейчас»",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner: нет pageerror (http://localhost:3076/inspection/special-mode)",
+      "ok": false,
+      "detail": "Invalid or unexpected token"
+    },
+    {
+      "name": "скрипт дошёл до конца",
+      "ok": false,
+      "detail": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-inspection-special-mode]').getByRole('switch')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled value=\"on\" type=\"button\" role=\"switch\" data-disabled=\"\" data-slot=\"switch\" data-size=\"default\" aria-checked=\"false\" data-state=\"unchecked\" aria-label=\"Специальный режим\" class=\"peer group/switch inline-flex shrink-0 items-center rounded-full border border-transparent outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-6 data-[size=default]:w-11 data-[size=sm]:h-5 data…>…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n"
+    }
+  ],
+  "ownerSidebar": [
+    "now",
+    "visits",
+    "norms",
+    "portal",
+    "readiness",
+    "experts",
+    "special"
+  ],
+  "addVisitError": "Не удалось прочитать файл — сохраните его заново или сфотографируйте документ",
+  "addVisitRetried": true,
+  "visitId": "cmvgkdmlq00140w9mccgned7v",
+  "specialInitial": "off",
+  "finishedAt": "2026-10-20T10:57:30.447Z",
+  "problems": [
+    "owner: нет pageerror (http://localhost:3076/inspection/special-mode)",
+    "скрипт дошёл до конца"
+  ]
+}

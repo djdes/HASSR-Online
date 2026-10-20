@@ -16,8 +16,9 @@ const DOCS = [
  * ППК и план ХАССП — собранный PDF и подписанный экземпляр, — и перечень
  * нормативных документов. Только чтение, без перехода в меню ППК; открыт
  * и заведующей с «проверкой задач» (те же права, что у документов ППК).
+ * `bare` — без своего заголовка: на странице «Нормативка» он уже в шапке.
  */
-export async function InspectionNormsCard({ norms }: { norms: InspectionNorms }) {
+export async function InspectionNormsCard({ norms, bare = false }: { norms: InspectionNorms; bare?: boolean }) {
   const [t, locale] = await Promise.all([getTranslations("inspectionDay.norms"), getLocale()]);
   const date = (ymd: string) =>
     new Date(`${ymd}T00:00:00Z`).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -28,17 +29,19 @@ export async function InspectionNormsCard({ norms }: { norms: InspectionNorms })
       className="scroll-mt-24 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
       data-inspection-norms
     >
-      <div className="flex items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
-          <BookOpenText className="size-5" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("title")}</h2>
-          <p className="mt-1 text-[14px] text-[#6f7282]">{t("lead")}</p>
+      {bare ? null : (
+        <div className="mb-4 flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+            <BookOpenText className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("title")}</h2>
+            <p className="mt-1 text-[14px] text-[#6f7282]">{t("lead")}</p>
+          </div>
         </div>
-      </div>
+      )}
 
-      <ul className="mt-4 grid gap-3 md:grid-cols-2">
+      <ul className="grid gap-3 md:grid-cols-2">
         {DOCS.map((doc) => {
           const approval = norms.approvals[doc.key];
           const uploaded = norms.uploaded[doc.key];

@@ -1,0 +1,69 @@
+{
+  "base": "http://localhost:3076",
+  "part": "cook",
+  "startedAt": "2026-10-19T20:20:44.778Z",
+  "checks": [
+    {
+      "name": "повар/desktop: now закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/desktop: visits закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/desktop: norms закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/desktop: experts закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/desktop: special закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/desktop: раздела «Пришла проверка» в меню нет",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "повар/mobile: now закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/mobile: visits закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/mobile: norms закрыта (редирект на /journals)",
+      "ok": true,
+      "detail": "/journals"
+    },
+    {
+      "name": "повар/mobile: experts закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/mobile: special закрыта (редирект на /mini/today)",
+      "ok": true,
+      "detail": "/mini/today"
+    },
+    {
+      "name": "повар/mobile: раздела «Пришла проверка» в меню нет",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "finishedAt": "2026-10-19T20:28:10.511Z",
+  "problems": []
+}

@@ -1,0 +1,67 @@
+{
+  "owner": {
+    "finishedAt": "2026-10-20T10:57:30.447Z",
+    "pass": 42,
+    "fail": [
+      "owner: нет pageerror (http://localhost:3076/inspection/special-mode) — \"Invalid or unexpected token\"",
+      "скрипт дошёл до конца — \"locator.click: Timeout 30000ms exceeded.\\nCall log:\\n\\u001b[2m  - waiting for locator('[data-inspection-special-mode]').getByRole('switch')\\u001b[22m\\n\\u001b[2m    - locator resolved to <button disabled value=\\\"on\\\" type=\\\"button\\\" role=\\\"switch\\\" data-disabled=\\\"\\\" data-slot=\\\"switch\\\" data-size=\\\"default\\\" aria-checked=\\\"false\\\" data-state=\\\"unchecked\\\" aria-label=\\\"Специальный режим\\\" class=\\\"peer group/switch inline-flex shrink-0 items-center rounded-full border border-transparent outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-6 data-[size=default]:w-11 data-[size=sm]:h-5 data…>…</button>\\u001b[22m\\n\\u001b[2m  - attempting click action\\u001b[22m\\n\\u001b[2m    2 × waiting for element to be visible, enabled and stable\\u001b[22m\\n\""
+    ],
+    "menuRetries": []
+  },
+  "owner-tail": {
+    "finishedAt": "2026-10-20T11:26:26.769Z",
+    "pass": 10,
+    "fail": [],
+    "menuRetries": [
+      {
+        "id": "portal",
+        "expectPath": "/settings/inspector-portal",
+        "at": "http://localhost:3076/inspection/special-mode"
+      }
+    ]
+  },
+  "phone": {
+    "finishedAt": "2026-10-19T20:30:09.517Z",
+    "pass": 11,
+    "fail": [],
+    "menuRetries": []
+  },
+  "mini": {
+    "finishedAt": "2026-10-19T19:32:25.553Z",
+    "pass": 12,
+    "fail": [],
+    "menuRetries": []
+  },
+  "headchef": {
+    "finishedAt": "2026-10-19T20:20:42.478Z",
+    "pass": 35,
+    "fail": [
+      "headchef/mini: нет pageerror (http://localhost:3076/inspection/visits) — \"Invalid or unexpected token\"",
+      "headchef/mini: нет pageerror (http://localhost:3076/inspection/norms) — \"Invalid or unexpected token\""
+    ],
+    "menuRetries": [
+      {
+        "id": "experts",
+        "expectPath": "/inspection/experts",
+        "at": "http://localhost:3076/inspection/norms"
+      },
+      {
+        "id": "special",
+        "expectPath": "/inspection/special-mode",
+        "at": "http://localhost:3076/inspection/experts"
+      }
+    ]
+  },
+  "headchef-mini": {
+    "finishedAt": "2026-10-19T20:31:33.695Z",
+    "pass": 12,
+    "fail": [],
+    "menuRetries": []
+  },
+  "cook": {
+    "finishedAt": "2026-10-19T20:28:10.511Z",
+    "pass": 12,
+    "fail": [],
+    "menuRetries": []
+  }
+}
