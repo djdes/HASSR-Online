@@ -8,8 +8,9 @@ import { normalizeRowSignatures, todaySignatureSummary } from "./brakerage-commi
 test("release and comment rules cover all standard grades and legacy poor quality", () => {
   for (const grade of ["Отлично", "Хорошо", "Удовлетворительно", "Доброкачественно"]) assert.equal(brakerageRelease(grade), "yes");
   for (const grade of ["Неудовлетворительно", "Недоброкачественно", "Не доброкачественная"]) assert.equal(brakerageRelease(grade), "no");
-  assert.equal(brakerageCommentRequired(" Отлично "), false);
-  for (const grade of ["Хорошо", "Удовлетворительно", "Неудовлетворительно", "Доброкачественно", "Недоброкачественно"]) assert.equal(brakerageCommentRequired(grade), true);
+  // «Отлично» и «Доброкачественно» (решение владельца 20.10) — без комментария.
+  for (const grade of [" Отлично ", "Доброкачественно", "доброкачественно ", "Доброкачественная"]) assert.equal(brakerageCommentRequired(grade), false, grade);
+  for (const grade of ["Хорошо", "Удовлетворительно", "Неудовлетворительно", "Недоброкачественно", "Не доброкачественная"]) assert.equal(brakerageCommentRequired(grade), true, grade);
 });
 
 test("another member's rejection survives positive grades; worst assessment is retained", () => {

@@ -88,11 +88,21 @@ test("PNG-бомба 20000×20000 отклоняется по заголовку
   assert.deepEqual(jpeg, { ok: false, error: ORDER_SCAN_ERRORS.dimensions });
 });
 
+/**
+ * Проверки, которые ждут не «не удалось прочитать»: worker грузит pdf-lib с
+ * диска, и под нагрузкой машины 5 с по умолчанию не хватало — тест падал
+ * таймаутом. Сам таймаут проверяется отдельно (`timeoutMs: 1`).
+ */
+const PATIENT = { timeoutMs: 60_000 };
+
 test("обычные PDF, PNG и JPEG по-прежнему проходят", async () => {
   const doc = await PDFDocument.create();
   doc.addPage([200, 200]);
   doc.addPage([200, 200]);
-  const pdf = await validateOrderScanFile({ bytes: await doc.save(), fileName: "a.pdf", declaredMime: "application/pdf" });
+  const pdf = await validateOrderScanFile(
+    { bytes: await doc.save(), fileName: "a.pdf", declaredMime: "application/pdf" },
+    { pdfCheck: PATIENT }
+  );
   assert.deepEqual(pdf, { ok: true, mime: "application/pdf", pages: 2 });
   const png = await validateOrderScanFile({ bytes: realImage(40, 30, "image/png"), fileName: "a.png", declaredMime: "image/png" });
   assert.deepEqual(png, { ok: true, mime: "image/png", pages: 1 });
@@ -110,7 +120,7 @@ test("PDF-бомба: поток объектов сверх предела ра
   );
   assert.deepEqual(result, { ok: false, error: ORDER_SCAN_ERRORS.unreadable });
   // Тот же файл в пределах бюджета доходит до pdf-lib: отказ дал именно предел распаковки.
-  assert.notEqual((await checkPdfIsolated(bomb, { inflateBudgetBytes: 16 * 1024 * 1024 })).status, "unreadable");
+  assert.notEqual((await checkPdfIsolated(bomb, { ...PATIENT, inflateBudgetBytes: 16 * 1024 * 1024 })).status, "unreadable");
   // Настройки по умолчанию (32 МБ): поток на 48 МБ отклоняется.
   assert.deepEqual(await checkPdfIsolated(objStmBomb(48 * 1024 * 1024)), { status: "unreadable" });
 });
@@ -119,7 +129,10 @@ test("PDF: зависание обрывается по таймауту, бит
   const doc = await PDFDocument.create();
   doc.addPage([200, 200]);
   assert.deepEqual(await checkPdfIsolated(await doc.save(), { timeoutMs: 1 }), { status: "unreadable" });
-  const broken = await validateOrderScanFile({ bytes: Buffer.from("%PDF-1.7\nмусор"), fileName: "b.pdf", declaredMime: "" });
+  const broken = await validateOrderScanFile(
+    { bytes: Buffer.from("%PDF-1.7\nмусор"), fileName: "b.pdf", declaredMime: "" },
+    { pdfCheck: PATIENT }
+  );
   assert.deepEqual(broken, { ok: false, error: ORDER_SCAN_ERRORS.pdf });
 });
 
