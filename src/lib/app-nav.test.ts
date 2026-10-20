@@ -133,7 +133,9 @@ test("корень вкладки отличается от глубокой с�
   assert.equal(sectionForPath("/settings/users")?.isTabRoot, true);
   assert.equal(sectionForPath("/settings/users/abc/access")?.isTabRoot, false);
   assert.equal(sectionForPath("/more")?.isTabRoot, true);
-  assert.equal(sectionForPath("/checklists")?.isTabRoot, true);
+  // Корень «Чек-листов» — «Шаблоны»; конструктор — свой пункт, не корень раздела.
+  assert.equal(sectionForPath("/checklists/templates")?.isTabRoot, true);
+  assert.equal(sectionForPath("/checklists")?.isTabRoot, false);
   assert.equal(sectionForPath("/checklists/inspections/1")?.isTabRoot, false);
 });
 
@@ -440,7 +442,7 @@ test("у каждого раздела, кроме «Остального», с�
     ["more", ["printer", "kiosk", "products", "master"]],
   ]);
   assert.deepEqual(menuShape("journals"), [[null, ["today", "control", "all", "verify", "setup"]]]);
-  assert.deepEqual(menuShape("checklists"), [[null, ["builder"]]]);
+  assert.deepEqual(menuShape("checklists"), [[null, ["templates", "builder", "assignments", "results"]]]);
   assert.deepEqual(menuShape("billing"), [[null, ["plan", "balance", "services"]]]);
   assert.deepEqual(menuShape("inspection"), [[null, ["now", "portal", "readiness"]]]);
   const access = NAV_SECTIONS.find((item) => item.key === "staff")?.menu?.[0].items.find((item) => item.id === "access");
@@ -494,7 +496,12 @@ test("match пункта: карточки и подстраницы подсв�
   assert.equal(sectionForPath("/dashboard/compliance-audit")?.menuItemId, "readiness");
   assert.equal(sectionForPath("/control-board")?.menuItemId, "control");
   assert.equal(sectionForPath("/journals/hygiene/documents/x")?.menuItemId, "all");
-  assert.equal(sectionForPath("/checklists/inspections/1")?.menuItemId, "builder");
+  // Проверка — глубина «Результатов»; конструктор и новые страницы — свои пункты.
+  assert.equal(sectionForPath("/checklists/inspections/1")?.menuItemId, "results");
+  assert.equal(sectionForPath("/checklists")?.menuItemId, "builder");
+  assert.equal(sectionForPath("/checklists/templates")?.menuItemId, "templates");
+  assert.equal(sectionForPath("/checklists/assignments")?.menuItemId, "assignments");
+  assert.equal(sectionForPath("/checklists/results")?.menuItemId, "results");
   // Бывшие «Настройки» сотрудников и точек — в своих разделах (редиректы).
   assert.equal(sectionForPath("/settings/sections/staff")?.section, "staff");
   assert.equal(sectionForPath("/settings/sections/points")?.section, "points");
@@ -549,4 +556,19 @@ test("пресет заведующей у линейной роли: в «Со�
   // `/settings/phone` линейной роли закрывает proxy.ts — пункта нет, как не было и карточки.
   assert.deepEqual(visibleItemIds(verifyOnly, "staff", noChecklists), ["team"]);
   assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["now"]);
+});
+
+test("«Чек-листы»: «Назначение» — только руководителю, без доступа к чек-листам раздела нет", () => {
+  assert.deepEqual(visibleItemIds(owner, "checklists"), ["templates", "builder", "assignments", "results"]);
+  assert.deepEqual(visibleItemIds(manager, "checklists"), ["templates", "builder", "assignments", "results"]);
+  // Заведующая и повар с доступом к чек-листам: шаблоны, конструктор, результаты.
+  assert.deepEqual(visibleItemIds(headChef, "checklists"), ["templates", "builder", "results"]);
+  assert.deepEqual(visibleItemIds(cook, "checklists"), ["templates", "builder", "results"]);
+  const cookSection = visibleNav(cook, withChecklists).find((item) => item.key === "checklists");
+  assert.equal(cookSection?.rootHref, "/checklists/templates");
+  assert.ok(!keys(cook, noChecklists).includes("checklists"));
+  assert.ok(!keys(headChef, noChecklists).includes("checklists"));
+  const assignments = NAV_SECTIONS.find((item) => item.key === "checklists")
+    ?.menu?.[0].items.find((item) => item.id === "assignments");
+  assert.deepEqual(assignments?.access, { kind: "anyOf", capabilities: ["admin.full"] });
 });

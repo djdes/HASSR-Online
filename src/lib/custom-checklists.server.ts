@@ -12,3 +12,15 @@ export async function requireChecklistAccess(operation: "read" | "write" | "fina
   if (!allowed) return { ok: false as const, response: NextResponse.json({ error: "Нет доступа к чек-листам" }, { status: 403 }) };
   return { ...auth, organizationId: getActiveOrgId(auth.session), canManage: hasCapability(auth.session.user, "journals.manage") };
 }
+
+/**
+ * Какие проверки человек может открыть (без права изменять): все — с
+ * `journals.manage`, иначе свои и те, где он проверяющий по назначению
+ * («Чек-листы → Результаты», 2026-10-19).
+ */
+export function checklistInspectionReadWhere(input: { organizationId: string; canManage: boolean; userId: string }) {
+  return {
+    organizationId: input.organizationId,
+    ...(input.canManage ? {} : { OR: [{ createdById: input.userId }, { assignment: { verifierUserId: input.userId } }] }),
+  };
+}

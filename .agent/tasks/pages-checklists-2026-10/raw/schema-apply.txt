@@ -1,0 +1,7 @@
+{"schemaStatements":8,"preservedIndexes":["PartnerClient_one_active_per_org"],"sha256":"2965de20306fffc0680c63786ff65f3beb824c50e13169c15c60e7dbc019aefd","dryRun":false}
+Additive schema changes committed
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "wesetup_pages_checklists", schema "public" at "localhost:5432"
+
+Your database is now in sync with your Prisma schema. Done in 2.19s
+

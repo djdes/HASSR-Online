@@ -1,0 +1,32 @@
+{
+  "createStatus": 201,
+  "assignmentId": "cmvgkqy2300011w9m9wig4gwu",
+  "dryRunFirst": {
+    "assignmentId": "cmvgkqy2300011w9m9wig4gwu",
+    "organizationId": "cmvbfyemt0000uw9mywdjiurr",
+    "template": "Соответствие СанПиН 2.3/2.4.4282-26",
+    "periodKey": "daily:2026-10-20",
+    "dueTime": "15:02",
+    "overdue": false,
+    "recipients": [
+      {
+        "userId": "cmvbfyf7t0004uw9ml20urf7g",
+        "name": "Волкова Анна Дмитриевна"
+      }
+    ],
+    "withoutTelegram": 0
+  },
+  "dryRunAfterMark": null,
+  "paused": true,
+  "dryRunPaused": false,
+  "resumed": true,
+  "rowAfterEdit": "Соответствие СанПиН 2.3/2.4.4282-26 Ожидает до 15:02 Сотрудник: Волкова Анна Дмитриевна · 1 человек Каждую неделю: вторник до 15:02 Проверяющий не выбран Напоминание в Telegram за 2 часа до срока Изменить Пауза Удалить",
+  "deleteToast": "Назначение удалено. Проверок по нему в истории: 0",
+  "rowGone": true,
+  "resultsCount": 1,
+  "violationsUrl": "?violations=1",
+  "violationsCount": 0,
+  "violationsEmpty": "Ничего не нашлось\n\nПопробуйте другой шаблон или период.\n\nСбросить фильтры",
+  "periodUrl": "?violations=1",
+  "seconds": 435
+}

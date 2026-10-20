@@ -1,0 +1,15 @@
+{
+  "cookGet": 403,
+  "cookPost": 403,
+  "chefGet": 200,
+  "chefPost": 403,
+  "ownerPostInvalid": 400,
+  "ownerPostWeeklyNoDay": 400,
+  "ownerPostForeignTemplate": 404,
+  "ownerPatchUnknown": 404,
+  "ownerDeleteUnknown": 404,
+  "cookReviewUnknown": 404,
+  "cronNoSecret": 401,
+  "cronWrongSecret": 401,
+  "seconds": 66
+}

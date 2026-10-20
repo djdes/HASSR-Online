@@ -1,7 +1,7 @@
 import { formatChecklistTimestamp } from "./custom-checklist-display";
 import { NextResponse } from "next/server";
 import { db } from "./db";
-import { requireChecklistAccess } from "./custom-checklists.server";
+import { checklistInspectionReadWhere, requireChecklistAccess } from "./custom-checklists.server";
 import { allChecklistQuestions, checklistDefinitionSchema, checklistAnswersSchema } from "./custom-checklists";
 import { checklistEvidenceSchema, checklistInstancesSchema } from "./custom-checklist-rules";
 import { checklistFileUses, expandChecklistDefinition } from "./custom-checklist-runtime";
@@ -10,7 +10,7 @@ import { generateChecklistPdf } from "./custom-checklist-pdf";
 export async function checklistPdfResponse(kind:"template"|"inspection",id:string) {
   const auth=await requireChecklistAccess();if(!auth.ok)return auth.response;
   const template=kind==="template"?await db.checklistTemplate.findFirst({where:{id,organizationId:auth.organizationId,archived:false}}):null;
-  const inspection=kind==="inspection"?await db.checklistInspection.findFirst({where:{id,organizationId:auth.organizationId,...(auth.canManage?{}:{createdById:auth.session.user.id})}}):null;
+  const inspection=kind==="inspection"?await db.checklistInspection.findFirst({where:{id,...checklistInspectionReadWhere({organizationId:auth.organizationId,canManage:auth.canManage,userId:auth.session.user.id})}}):null;
   if(!template&&!inspection)return NextResponse.json({error:"Чек-лист не найден"},{status:404});
   const definition=inspection?expandChecklistDefinition(checklistDefinitionSchema.parse(inspection.snapshot),checklistInstancesSchema.parse(inspection.categoryInstances??{})):checklistDefinitionSchema.parse(template!.definition);
   const answers=inspection?checklistAnswersSchema.parse(inspection.answers):undefined;

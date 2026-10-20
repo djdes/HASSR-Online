@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
 import { checklistByteRange } from "@/lib/custom-checklist-files";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const { id } = await ctx.params;
   const file = await db.checklistAttachment.findFirst({ where: { id, organizationId: auth.organizationId, OR: [
     { purpose: "reference", ...(auth.canManage ? {} : { OR: [{ templateId: { not: null } }, { createdById: auth.session.user.id }] }) },
-    { inspection: { organizationId: auth.organizationId, ...(auth.canManage ? {} : { createdById: auth.session.user.id }) } },
+    { inspection: checklistInspectionReadWhere({ organizationId: auth.organizationId, canManage: auth.canManage, userId: auth.session.user.id }) },
   ] } });
   if (!file) return NextResponse.json({ error: "Файл не найден" }, { status: 404 });
   const range = checklistByteRange(request.headers.get("range"), file.sizeBytes);

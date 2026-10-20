@@ -1,0 +1,13 @@
+Проверки после прогона manage,pages (20.10.2026):
+
+1) Фильтры «Результатов» (руководитель, 1440): после «Только с нарушениями» ?violations=1, строк 0 (пустое состояние);
+   «Всё время» -> ?period=all&violations=1 (aria-checked=true); снять переключатель -> ?period=all, строк 1.
+   Сбой в manage — клик по периоду пришёлся на незавершённый переход router.push (повтор в отдельной проверке прошёл).
+   Скриншот: manage-05-results-period-all.png
+
+2) Hydration-расхождение в Mini App (ws-shell=mini): «attributes of the server rendered HTML didn't match» на уровне
+   <html> корневого layout — так же на чужой странице /settings/buildings. Не от страниц раздела «Чек-листы».
+
+3) «Invalid or unexpected token» (pageerror) — нестабильно в dev (в т.ч. на старом /checklists), в отдельной проверке
+   тех же страниц не повторилось; после перезапуска dev и пересборки .next — реже. Похоже на загрузку чанков dev-сервера
+   под нагрузкой (до этого диск D: был заполнен, ENOSPC).

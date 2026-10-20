@@ -1,0 +1,322 @@
+{
+  "owner-1440 /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": [
+      "templates*",
+      "builder",
+      "assignments",
+      "results"
+    ]
+  },
+  "owner-1440 /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": [
+      "templates",
+      "builder*",
+      "assignments",
+      "results"
+    ]
+  },
+  "owner-1440 /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/assignments",
+    "h1": "Назначение",
+    "overflow": 0,
+    "items": [
+      "templates",
+      "builder",
+      "assignments*",
+      "results"
+    ]
+  },
+  "owner-1440 /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": [
+      "templates",
+      "builder",
+      "assignments",
+      "results*"
+    ]
+  },
+  "owner-1440 header-links": [
+    "/checklists",
+    "/checklists/assignments",
+    "/checklists/results"
+  ],
+  "owner-390 /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-390 /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-390 /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/assignments",
+    "h1": "Назначение",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-390 /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-mini /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-mini /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-mini /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/assignments",
+    "h1": "Назначение",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-mini /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "owner-mini section-menu": [
+    "СБ",
+    "Столовая «Берёзка»",
+    "Добавить логотип",
+    "Чек-листы",
+    "Шаблоны",
+    "Конструктор",
+    "Назначение",
+    "Результаты"
+  ],
+  "headchef-1440 /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": [
+      "templates*",
+      "builder",
+      "results"
+    ]
+  },
+  "headchef-1440 /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": [
+      "templates",
+      "builder*",
+      "results"
+    ]
+  },
+  "headchef-1440 /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": [
+      "templates*",
+      "builder",
+      "results"
+    ]
+  },
+  "headchef-1440 /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": [
+      "templates",
+      "builder",
+      "results*"
+    ]
+  },
+  "headchef-1440 header-links": [
+    "/checklists",
+    "/checklists/results"
+  ],
+  "headchef-390 /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-390 /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-390 /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-390 /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-mini /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-mini /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-mini /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-mini /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "headchef-mini section-menu": [
+    "СБ\nСтоловая «Берёзка»",
+    "Чек-листы",
+    "Шаблоны",
+    "Конструктор",
+    "Результаты"
+  ],
+  "cook-1440 /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-1440 /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-1440 /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-1440 /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-1440 header-links": [
+    "/checklists",
+    "/checklists/results"
+  ],
+  "cook-390 /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-390 /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-390 /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-390 /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-mini /checklists/templates": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-mini /checklists": {
+    "status": 200,
+    "finalPath": "/checklists",
+    "h1": "Конструктор чек-листов",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-mini /checklists/assignments": {
+    "status": 200,
+    "finalPath": "/checklists/templates",
+    "h1": "Шаблоны",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-mini /checklists/results": {
+    "status": 200,
+    "finalPath": "/checklists/results",
+    "h1": "Результаты",
+    "overflow": 0,
+    "items": []
+  },
+  "cook-mini section-menu": "нет кнопки (один раздел)",
+  "seconds": 698
+}
