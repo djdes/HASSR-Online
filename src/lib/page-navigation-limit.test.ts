@@ -51,12 +51,23 @@ test("automation is only a signal, not a ban or allowlist", () => {
   assert.equal(limit.check("a", true, false), 30);
 });
 
-test("bounded prefetch is separate from visits but shares the cooldown", () => {
-  const limit = createPageNavigationLimiter(() => 0);
+test("prefetch has its own budget and never puts real pages on cooldown", () => {
+  let now = 0;
+  const limit = createPageNavigationLimiter(() => now);
   for (let i = 0; i < 240; i++) assert.equal(limit.check("a", true, true), 0);
+  // Over budget: only the prefetch waits until its oldest slot leaves the minute window.
+  assert.equal(limit.check("a", true, true), 60);
   assert.equal(limit.check("a", true, false), 0);
+  assert.equal(limit.check("a", false, false), 0);
+  now = 60_000;
+  assert.equal(limit.check("a", true, true), 0);
+});
+
+test("a page cooldown also holds back prefetch", () => {
+  const limit = createPageNavigationLimiter(() => 0);
+  for (let i = 0; i < 6; i++) assert.equal(limit.check("a", true, false), 0);
+  assert.equal(limit.check("a", true, false), 30);
   assert.equal(limit.check("a", true, true), 30);
-  assert.equal(limit.check("a", false, false), 30);
 });
 
 test("expired budgets are swept and capacity cannot evict a blocked subject", () => {

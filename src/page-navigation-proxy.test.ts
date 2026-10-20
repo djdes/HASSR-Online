@@ -56,7 +56,7 @@ test("document prefetch spoofing and forged sessions cannot reset a blocked IP",
   }
 });
 
-test("marked and markerless RSC fetches share a bounded budget and cooldown", async () => {
+test("marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages", async () => {
   const request = client();
   const headers = { rsc: "1", "next-router-prefetch": "1" };
   for (let i = 0; i < 240; i++) {
@@ -65,7 +65,9 @@ test("marked and markerless RSC fetches share a bounded budget and cooldown", as
   }
   assert.equal((await request()).status, 200);
   assert.equal((await request("/blog", headers)).status, 429);
-  assert.equal((await request()).status, 429);
+  assert.equal((await request("/blog", { "sec-fetch-dest": "empty" })).status, 429);
+  // Background fetches over budget wait on their own; the page itself still opens.
+  assert.equal((await request()).status, 200);
 });
 
 test("subject uses verified accounts or a canonical trusted peer, never client identity hints", () => {

@@ -4,8 +4,15 @@ function gradeKey(value: string) {
   return value.trim().toLocaleLowerCase("ru").replace(/\s+/g, "");
 }
 
+/**
+ * Комментарий к оценке готовой продукции нужен при любой оценке, кроме
+ * «Отлично» и «Доброкачественно» (решение владельца 20.10; старое
+ * «Доброкачественная» — то же самое).
+ */
+const NO_COMMENT_GRADES = new Set(["отлично", "доброкачественно", "доброкачественная"]);
+
 export function brakerageCommentRequired(grade: string): boolean {
-  return gradeKey(grade) !== "отлично";
+  return !NO_COMMENT_GRADES.has(gradeKey(grade));
 }
 
 export function brakerageRelease(grade: string): "yes" | "no" {
@@ -14,7 +21,7 @@ export function brakerageRelease(grade: string): "yes" | "no" {
 
 /**
  * Обязателен ли комментарий к оценке члена комиссии: у готовой продукции —
- * при любой оценке, кроме «Отлично»; у скоропорта (коды «соответствует» /
+ * при любой оценке, кроме «Отлично» и «Доброкачественно»; у скоропорта (коды «соответствует» /
  * «не соответствует»…) — только когда позиция не допущена к реализации.
  */
 export function brakerageCommentRequiredFor(isFinished: boolean, grade: string): boolean {

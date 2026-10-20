@@ -7,6 +7,7 @@ import { ensureActiveDocument } from "@/lib/journal-auto-create";
 import {
   isBlankBrakerageRow,
   planMasterBrakerageRows,
+  selectPoolOrganizationIds,
   type MasterBrakerageCommon,
   type MasterBrakerageRow,
 } from "@/lib/master-brakerage-plan";
@@ -202,17 +203,29 @@ async function processOrganization(params: {
   };
 }
 
-/** Предпросмотр (`dryRun`) или запись строк во все пищеблоки пула мастера. */
+/** Отмеченных пищеблоков нет в пуле (или не отмечен ни один) — 400 в маршруте. */
+export class MasterBrakerageSelectionError extends Error {}
+
+/**
+ * Предпросмотр (`dryRun`) или запись строк в пищеблоки пула мастера:
+ * отмеченные галочками (`organizationIds`) или, без списка, — во все.
+ */
 export async function addMasterBrakerageToPool(params: {
   masterOrgId: string;
   rows: MasterBrakerageRow[];
   common: MasterBrakerageCommon;
   dryRun: boolean;
+  organizationIds?: string[];
 }): Promise<MasterBrakerageResult> {
   const [pool, templateId] = await Promise.all([listPoolOrganizations(params.masterOrgId), findTemplateId()]);
-  const orgs = pool.length
+  const selection = selectPoolOrganizationIds(
+    pool.map((org) => org.id),
+    params.organizationIds
+  );
+  if ("error" in selection) throw new MasterBrakerageSelectionError(selection.error);
+  const orgs = selection.ids.length
     ? await db.organization.findMany({
-        where: { id: { in: pool.map((org) => org.id) } },
+        where: { id: { in: selection.ids } },
         select: { id: true, name: true, disabledJournalCodes: true },
         orderBy: { name: "asc" },
       })

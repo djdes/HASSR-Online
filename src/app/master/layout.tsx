@@ -7,7 +7,7 @@ import { SiteThemeBootstrap, SiteThemeProvider } from "@/components/theme/site-t
 import { Toaster } from "@/components/ui/sonner";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { listPoolOrganizations, MASTER_ORG_KIND } from "@/lib/master-directory";
+import { MASTER_ORG_KIND } from "@/lib/master-directory";
 import { listAccessibleOrganizations } from "@/lib/organization-access";
 import { readInitialTheme } from "@/lib/site-theme.server";
 import "@/app/app-theme.css";
@@ -30,13 +30,12 @@ export default async function MasterLayout({ children }: { children: React.React
   const orgId = getActiveOrgId(session);
   const org = await db.organization.findUnique({
     where: { id: orgId },
-    select: { id: true, name: true, kind: true, serviceCode: true, linkedServiceCode: true, accountId: true },
+    select: { id: true, name: true, kind: true, accountId: true },
   });
   if (!org || org.kind !== MASTER_ORG_KIND) redirect("/dashboard");
 
-  const [profile, poolOrganizations, accessible, account] = await Promise.all([
+  const [profile, accessible, account] = await Promise.all([
     db.user.findUnique({ where: { id: session.user.id }, select: { themePreference: true } }),
-    listPoolOrganizations(org.id),
     listAccessibleOrganizations(session.user.id),
     org.accountId ? db.account.findUnique({ where: { id: org.accountId }, select: { ownerUserId: true } }) : null,
   ]);
@@ -61,8 +60,6 @@ export default async function MasterLayout({ children }: { children: React.React
             cabinetId={org.id}
             canManageAccess={canManageAccess}
             organizationName={org.name}
-            code={org.linkedServiceCode ?? org.serviceCode ?? null}
-            objectsCount={poolOrganizations.length}
             userName={session.user.name || session.user.email || ""}
             userEmail={session.user.email || ""}
             returnTargets={returnTargets}

@@ -150,7 +150,7 @@ export function renderBrakerageList(params: {
             : "";
       const admission = canGrade
         ? params.isFinished
-          ? field("Комментарий (обязателен при любой оценке, кроме «Отлично»)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к блюду ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
+          ? field("Комментарий (обязателен при любой оценке, кроме «Отлично» и «Доброкачественно»)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к блюду ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
           : field("Комментарий (обязателен, если позиция не соответствует)", `<textarea class="in" name="note:${esc(id)}" maxlength="500" rows="2" aria-label="Комментарий к позиции ${esc(row.name)}">${role.evaluator ? "" : esc(row.note)}</textarea>`)
         : "";
       const del = role.editor ? `<a class="bk-del" href="${esc(params.deleteHref(id))}">Удалить строку</a>` : "";
@@ -162,17 +162,18 @@ export function renderBrakerageList(params: {
   const readOnly = !role.evaluator && !role.editor;
   const lead = role.evaluator
     ? params.isFinished
-      ? `<p class="today">Блюд в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать». Разрешение к реализации определяется оценками автоматически. При любой оценке, кроме «Отлично», добавьте комментарий. Оценку и время бракеража можно поправить; в журнале она встанет на минуту позже времени бракеража.</p>`
+      ? `<p class="today">Блюд в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать». Разрешение к реализации определяется оценками автоматически. При любой оценке, кроме «Отлично» и «Доброкачественно», добавьте комментарий. Оценку и время бракеража можно поправить; в журнале она встанет на минуту позже времени бракеража.</p>`
       : `<p class="today">Позиций в очереди: <b>${list.rows.length}</b>. Выберите оценку и нажмите «Подписать» — подпись появится в журнале. Если позиция не соответствует, добавьте комментарий.</p>`
     : readOnly
       ? `${viewerNotice(role)}<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}${params.isFinished ? "Блюда" : "Позиции"} за сегодня — только просмотр.</p>`
       : params.isFinished
         ? `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`
         : `<p class="today">Проверьте наименование, оценку и время поступления — исправьте, если нужно. Подписывает комиссия.</p>`;
-  // Когда комментарий обязателен: готовая продукция — кроме «Отлично»,
-  // скоропорт — только у не допущенной позиции (см. brakerageCommentRequiredFor).
+  // Когда комментарий обязателен: готовая продукция — кроме «Отлично» и
+  // «Доброкачественно» (как brakerageCommentRequired), скоропорт — только у
+  // не допущенной позиции (см. brakerageCommentRequiredFor).
   const noteRule = params.isFinished
-    ? `grade.value.trim().toLocaleLowerCase('ru')!=="отлично"`
+    ? `["отлично","доброкачественно","доброкачественная"].indexOf(grade.value.trim().toLocaleLowerCase('ru').split(" ").join(""))<0`
     : `(grade.value==="non_compliant"||grade.value==="poor_quality")`;
   const buttons = role.evaluator
     ? `<button class="btn" type="submit" name="action" value="save" data-sign-btn>${role.editor ? "Сохранить и подписать" : "Подписать"}</button>`

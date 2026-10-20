@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ArrowDownToLine, Clock3 } from "lucide-react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { normalizeTypedTime } from "@/lib/finished-product-bulk";
+import { maskTypedTime, normalizeTypedTime } from "@/lib/finished-product-bulk";
 import { cn } from "@/lib/utils";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
@@ -17,11 +17,12 @@ export function isBadTypedTime(value: string): boolean {
 }
 
 /**
- * Поле времени «ЧЧ:ММ» для таблиц списком (меню мастер-кабинета, «Добавить
- * списком»): цифры без двоеточия («0800», «830», «8») становятся «08:00» /
- * «08:30» при уходе с поля или Enter; кнопка-часы открывает выбор часа и
- * минут — одинаково на телефоне и компьютере (нативный time-input есть не
- * везде); «Проставить всем ниже» — это время строкам ниже.
+ * Поле времени «ЧЧ:ММ» для таблиц списком (выгрузка мастер-кабинета,
+ * «Добавить списком»): двоеточие ставится само при наборе цифр
+ * («8» → «08:», «0830» → «08:30», maskTypedTime), при уходе с поля или Enter
+ * время дописывается до «ЧЧ:ММ»; кнопка-часы открывает выбор часа и минут —
+ * одинаково на телефоне и компьютере (нативный time-input есть не везде);
+ * «Проставить всем ниже» — это время строкам ниже.
  */
 export function TimeEntryField({
   value,
@@ -86,7 +87,7 @@ export function TimeEntryField({
           aria-label={ariaLabel}
           aria-invalid={bad || undefined}
           title={t("typingHint")}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => onChange(maskTypedTime(value, event.target.value))}
           onPaste={onPaste}
           onBlur={(event) => commit(event.target.value)}
           onKeyDown={(event) => {

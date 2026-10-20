@@ -61,6 +61,24 @@ export function isValidIsoDate(value: string): boolean {
   return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
 }
 
+/**
+ * Куда выгружать: отмеченные галочками пищеблоки — только из пула мастера.
+ * Без списка (`undefined`, старые клиенты и предпросмотр исправлений) — весь
+ * пул; пустой список или только чужие id — понятная ошибка, а не «выгрузили
+ * никуда».
+ */
+export function selectPoolOrganizationIds(
+  poolIds: readonly string[],
+  requested: readonly string[] | undefined
+): { ids: string[] } | { error: string } {
+  if (requested === undefined) return { ids: [...poolIds] };
+  if (requested.length === 0) return { error: "Отметьте хотя бы один пищеблок" };
+  const wanted = new Set(requested);
+  const ids = poolIds.filter((id) => wanted.has(id));
+  if (ids.length === 0) return { error: "Отмеченные пищеблоки не подключены к кабинету. Обновите страницу." };
+  return { ids };
+}
+
 function collapse(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }

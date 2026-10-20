@@ -191,9 +191,14 @@ export function normalizeTypedTime(value: unknown): string {
   let hours: number;
   let minutes: number;
   const spaced = /^(\d{1,2})\s+(\d{2})$/.exec(text);
+  // «08:» — час набран, двоеточие поставила маска поля (maskTypedTime).
+  const hourOnly = /^(\d{1,2}):$/.exec(text);
   if (spaced) {
     hours = Number(spaced[1]);
     minutes = Number(spaced[2]);
+  } else if (hourOnly) {
+    hours = Number(hourOnly[1]);
+    minutes = 0;
   } else if (/^\d{1,2}$/.test(text)) {
     hours = Number(text);
     minutes = 0;
@@ -205,6 +210,31 @@ export function normalizeTypedTime(value: unknown): string {
   }
   if (hours > 23 || minutes > 59) return "";
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+/**
+ * Маска поля времени: двоеточие ставится само, пока человек набирает цифры.
+ * «8» → «08:», «1» → «1», «15» → «15:», «0830» → «08:30», «25» → «02:5»
+ * (часа 25 нет — значит, 2 часа и минуты с 5). Стирание с конца не
+ * трогаем (`next` — начало `prev`), иначе двоеточие нельзя было бы стереть.
+ * Текст не из цифр и двоеточий («8.30», «8 30», «утро») оставляем как есть —
+ * его разберёт normalizeTypedTime при уходе с поля.
+ */
+export function maskTypedTime(prev: string, next: string): string {
+  if (prev.startsWith(next)) return next;
+  if (!/^[\d:]*$/.test(next)) return next;
+  const digits = next.replace(/\D/g, "").slice(0, 4);
+  if (digits === "") return "";
+  // Первая цифра 3–9 — это уже час: «8» → «08:».
+  const padded = Number(digits[0]) >= 3 ? `0${digits}`.slice(0, 4) : digits;
+  if (padded.length === 1) return padded;
+  let hour = padded.slice(0, 2);
+  let rest = padded.slice(2);
+  if (Number(hour) > 23) {
+    hour = `0${padded[0]}`;
+    rest = padded.slice(1, 3);
+  }
+  return `${hour}:${rest.slice(0, 2)}`;
 }
 
 type TimedRow = { time?: string; name?: string };
