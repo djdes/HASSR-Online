@@ -1,0 +1,101 @@
+owner/desktop /settings/positions → 200  «Должности»
+owner/desktop /settings/access → 200  «Доступ и права»
+owner/desktop /settings/brakerage-commission → 200  «Бракеражная комиссия»
+owner/desktop /settings/haccp-group → 200  «Группа ХАССП»
+owner/desktop /settings/control-group → 200  «Контроль-группа»
+owner/desktop /settings/inspectors → 200  «Проверяющие и аудиторы»
+owner/desktop /settings/buildings → 200  «Точки и помещения»
+owner/desktop /settings/buildings/new → 200  «Добавить точку»
+owner/desktop /settings/buildings/fx-building-lenina → 200  «Берёзка на Ленина»
+owner/desktop /settings/organization → 200  «Информация об организации»
+owner/desktop /settings/organization/documents → 200  «Сведения для документов»
+owner/desktop /settings/organization/branding → 200  «Логотип и цвета»
+owner/desktop /settings/organization/contacts → 200  «Контакты и уведомления»
+owner/desktop /journals/sets/standard → 200  «Стандартный набор журналов»
+owner/desktop /journals/sets/haccp → 200  «Набор в соответствии с ХАССП»
+owner/desktop /journals/sets/extra → 200  «Дополнительные журналы»
+owner/desktop /checklists/templates → 200  «Шаблоны»
+owner/desktop /checklists → 200  «Конструктор чек-листов»
+owner/desktop /checklists/assignments → 200  «Назначение»
+owner/desktop /checklists/results → 200  «Результаты»
+owner/desktop /inspection → 200  «К вам пришла проверка (или придёт)»
+owner/desktop /inspection/visits → 200  «Журнал посещений»
+owner/desktop /inspection/norms → 200  «Нормативка»
+owner/desktop /inspection/experts → 200  «Подготовка с экспертом и выезд»
+owner/desktop /inspection/special-mode → 200  «Спецрежим»
+headchef/desktop /settings/positions → 200  «Должности»
+headchef/desktop /settings/access → 200  «Доступ и права»
+headchef/desktop /settings/brakerage-commission → 200  «Бракеражная комиссия»
+headchef/desktop /settings/haccp-group → 200  «Группа ХАССП»
+headchef/desktop /settings/control-group → 200  «Контроль-группа»
+headchef/desktop /settings/inspectors → 200  «Проверяющие и аудиторы»
+headchef/desktop /settings/buildings → 200  «Точки и помещения»
+headchef/desktop /settings/buildings/new → 200  «Добавить точку»
+headchef/desktop /settings/buildings/fx-building-lenina → 200  «Берёзка на Ленина»
+headchef/desktop /settings/organization → 200  «»
+headchef/desktop /settings/organization/documents → 200  «»
+headchef/desktop /settings/organization/branding → 200  «»
+headchef/desktop /settings/organization/contacts → 0 → /control-board «»
+headchef/desktop /journals/sets/standard → 200  «Стандартный набор журналов»
+headchef/desktop /journals/sets/haccp → 200  «Набор в соответствии с ХАССП»
+headchef/desktop /journals/sets/extra → 200  «Дополнительные журналы»
+headchef/desktop /checklists/templates → 200  «Шаблоны»
+headchef/desktop /checklists → 200  «Конструктор чек-листов»
+headchef/desktop /checklists/assignments → 200 → /checklists/templates «Шаблоны»
+headchef/desktop /checklists/results → 200  «Результаты»
+headchef/desktop /inspection → 200  «К вам пришла проверка (или придёт)»
+headchef/desktop /inspection/visits → 200  «Журнал посещений»
+headchef/desktop /inspection/norms → 200  «Нормативка»
+headchef/desktop /inspection/experts → 200  «Подготовка с экспертом и выезд»
+headchef/desktop /inspection/special-mode → 200  «Спецрежим»
+cook/desktop /settings/positions → 200 → /journals «»
+cook/desktop /settings/access → 200 → /mini «»
+cook/desktop /settings/brakerage-commission → 200 → /mini «»
+cook/desktop /settings/haccp-group → 200 → /mini «Сегодня»
+cook/desktop /settings/control-group → 200 → /mini «Сегодня»
+cook/desktop /settings/inspectors → 200 → /mini «Сегодня»
+cook/desktop /settings/buildings → 200 → /mini «Сегодня»
+cook/desktop /settings/buildings/new → 200 → /mini «Сегодня»
+cook/desktop /settings/organization → 200 → /mini «Сегодня»
+cook/desktop /settings/organization/documents → 200 → /mini «Сегодня»
+cook/desktop /settings/organization/branding → 200 → /mini «Сегодня»
+cook/desktop /settings/organization/contacts → 200 → /mini «Сегодня»
+cook/desktop /journals/sets/standard → 200  «»
+cook/desktop /journals/sets/haccp → 200  «»
+cook/desktop /journals/sets/extra → 0 → /journals «»
+cook/desktop /checklists/templates → 200  «Шаблоны»
+cook/desktop /checklists → 200  «Конструктор чек-листов»
+cook/desktop /checklists/assignments → 200 → /checklists/templates «Шаблоны»
+cook/desktop /checklists/results → 200  «Результаты»
+cook/desktop /inspection → 200 → /journals «»
+cook/desktop /inspection/visits → 200 → /journals «»
+cook/desktop /inspection/norms → 0 → /mini/today «»
+cook/desktop /inspection/experts → 200 → /journals «»
+cook/desktop /inspection/special-mode → 200 → /journals «»
+owner/mini /settings/positions → 200  «Должности»
+owner/mini /settings/access → 200  «Доступ и права»
+owner/mini /settings/brakerage-commission → 200  «Бракеражная комиссия»
+owner/mini /settings/haccp-group → 200  «Группа ХАССП»
+owner/mini /settings/control-group → 200  «Контроль-группа»
+owner/mini /settings/inspectors → 200  «Проверяющие и аудиторы»
+owner/mini /settings/buildings → 200  «Точки и помещения»
+owner/mini /settings/buildings/new → 200  «Добавить точку»
+owner/mini /settings/buildings/fx-building-lenina → 200  «Берёзка на Ленина»
+owner/mini /settings/organization → 200  «Информация об организации»
+owner/mini /settings/organization/documents → 200  «Сведения для документов»
+owner/mini /settings/organization/branding → 200  «Логотип и цвета»
+owner/mini /settings/organization/contacts → 200  «Контакты и уведомления»
+owner/mini /journals/sets/standard → 200  «Стандартный набор журналов»
+owner/mini /journals/sets/haccp → 200  «Набор в соответствии с ХАССП»
+owner/mini /journals/sets/extra → 200  «Дополнительные журналы»
+owner/mini /checklists/templates → 200  «Шаблоны»
+owner/mini /checklists → 200  «Конструктор чек-листов»
+owner/mini /checklists/assignments → 200  «Назначение»
+owner/mini /checklists/results → 200  «Результаты»
+owner/mini /inspection → 200  «К вам пришла проверка (или придёт)»
+owner/mini /inspection/visits → 200  «Журнал посещений»
+owner/mini /inspection/norms → 200  «Нормативка»
+owner/mini /inspection/experts → 200  «Подготовка с экспертом и выезд»
+owner/mini /inspection/special-mode → 200  «Спецрежим»
+
+Проблем: 0
