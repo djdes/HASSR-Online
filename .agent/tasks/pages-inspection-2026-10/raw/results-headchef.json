@@ -1,0 +1,233 @@
+{
+  "base": "http://localhost:3076",
+  "part": "headchef",
+  "startedAt": "2026-10-19T19:55:29.012Z",
+  "checks": [
+    {
+      "name": "заведующая: пункты меню без «Готовности»",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "experts",
+        "special"
+      ]
+    },
+    {
+      "name": "заведующая: «Ещё в разделе» без готовности",
+      "ok": true,
+      "detail": [
+        "norms",
+        "experts"
+      ]
+    },
+    {
+      "name": "заведующая: пункт visits открывает /inspection/visits",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "заведующая: «Добавить запись» есть",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "заведующая: «Скрыть» нет (только руководитель)",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "заведующая: пункт norms открывает /inspection/norms",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "заведующая: PDF плана ХАССП открывается (200)",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "заведующая: пункт experts открывает /inspection/experts",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "заведующая: пункт special открывает /inspection/special-mode",
+      "ok": true,
+      "detail": "/inspection/special-mode"
+    },
+    {
+      "name": "заведующая: переключатель спецрежима недоступен",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "заведующая: «попросите руководителя»",
+      "ok": true,
+      "detail": "Включить или выключить может руководитель — попросите его."
+    },
+    {
+      "name": "заведующая: «Готовность» закрыта (редирект)",
+      "ok": true,
+      "detail": "http://localhost:3076/dashboard"
+    },
+    {
+      "name": "headchef/mobile: now открывается (200)",
+      "ok": true,
+      "detail": "/inspection"
+    },
+    {
+      "name": "headchef/mobile: now без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mobile: visits открывается (undefined)",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "headchef/mobile: visits без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mobile: norms открывается (200)",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "headchef/mobile: norms без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mobile: experts открывается (200)",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "headchef/mobile: experts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mobile: special открывается (200)",
+      "ok": true,
+      "detail": "/inspection/special-mode"
+    },
+    {
+      "name": "headchef/mobile: special без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mobile: в листе меню пункты раздела",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "experts",
+        "special"
+      ]
+    },
+    {
+      "name": "headchef/mini: now открывается (200)",
+      "ok": true,
+      "detail": "/inspection"
+    },
+    {
+      "name": "headchef/mini: now без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: нет pageerror (http://localhost:3076/inspection/visits)",
+      "ok": false,
+      "detail": "Invalid or unexpected token"
+    },
+    {
+      "name": "headchef/mini: visits открывается (200)",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "headchef/mini: visits без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: нет pageerror (http://localhost:3076/inspection/norms)",
+      "ok": false,
+      "detail": "Invalid or unexpected token"
+    },
+    {
+      "name": "headchef/mini: norms открывается (200)",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "headchef/mini: norms без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: experts открывается (200)",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "headchef/mini: experts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: special открывается (200)",
+      "ok": true,
+      "detail": "/inspection/special-mode"
+    },
+    {
+      "name": "headchef/mini: special без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: кнопка меню раздела",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "headchef/mini: в меню раздела 6 пунктов",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "experts",
+        "special"
+      ]
+    }
+  ],
+  "menuRetries": [
+    {
+      "id": "experts",
+      "expectPath": "/inspection/experts",
+      "at": "http://localhost:3076/inspection/norms"
+    },
+    {
+      "id": "special",
+      "expectPath": "/inspection/special-mode",
+      "at": "http://localhost:3076/inspection/experts"
+    }
+  ],
+  "finishedAt": "2026-10-19T20:20:42.478Z",
+  "problems": [
+    "headchef/mini: нет pageerror (http://localhost:3076/inspection/visits)",
+    "headchef/mini: нет pageerror (http://localhost:3076/inspection/norms)"
+  ]
+}

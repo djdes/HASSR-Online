@@ -1,0 +1,72 @@
+{
+  "base": "http://localhost:3076",
+  "part": "phone",
+  "startedAt": "2026-10-19T20:28:13.183Z",
+  "checks": [
+    {
+      "name": "owner/mobile: now открывается (200)",
+      "ok": true,
+      "detail": "/inspection"
+    },
+    {
+      "name": "owner/mobile: now без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mobile: visits открывается (200)",
+      "ok": true,
+      "detail": "/inspection/visits"
+    },
+    {
+      "name": "owner/mobile: visits без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mobile: norms открывается (200)",
+      "ok": true,
+      "detail": "/inspection/norms"
+    },
+    {
+      "name": "owner/mobile: norms без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mobile: experts открывается (200)",
+      "ok": true,
+      "detail": "/inspection/experts"
+    },
+    {
+      "name": "owner/mobile: experts без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mobile: special открывается (200)",
+      "ok": true,
+      "detail": "/inspection/special-mode"
+    },
+    {
+      "name": "owner/mobile: special без горизонтальной прокрутки",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "owner/mobile: в листе меню пункты раздела",
+      "ok": true,
+      "detail": [
+        "now",
+        "visits",
+        "norms",
+        "portal",
+        "readiness",
+        "experts",
+        "special"
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-19T20:30:09.517Z",
+  "problems": []
+}

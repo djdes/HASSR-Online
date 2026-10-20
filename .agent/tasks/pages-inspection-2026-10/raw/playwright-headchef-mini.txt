@@ -1,0 +1,13 @@
+  ✓ headchef/mini: now открывается (200) — /inspection
+  ✓ headchef/mini: now без горизонтальной прокрутки
+  ✓ headchef/mini: visits открывается (200) — /inspection/visits
+  ✓ headchef/mini: visits без горизонтальной прокрутки
+  ✓ headchef/mini: norms открывается (200) — /inspection/norms
+  ✓ headchef/mini: norms без горизонтальной прокрутки
+  ✓ headchef/mini: experts открывается (200) — /inspection/experts
+  ✓ headchef/mini: experts без горизонтальной прокрутки
+  ✓ headchef/mini: special открывается (200) — /inspection/special-mode
+  ✓ headchef/mini: special без горизонтальной прокрутки
+  ✓ headchef/mini: кнопка меню раздела
+  ✓ headchef/mini: в меню раздела 6 пунктов — ["now","visits","norms","portal","experts","special"]
+OK

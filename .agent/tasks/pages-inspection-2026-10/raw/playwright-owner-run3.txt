@@ -1,0 +1,51 @@
+  ✓ меню раздела: семь пунктов по spec — ["now","visits","norms","portal","readiness","experts","special"]
+  ✓ заголовок «К вам пришла проверка (или придёт)» — К вам пришла проверка (или придёт)
+  ✓ инструкция «Что делать сейчас» на месте
+  ✓ шаги 3 и 5 — «Открыть →» на свои пункты — [["3","/inspection/visits",true],["5","/inspection/special-mode",true]]
+  ✓ быстрое действие: QR на экране (#qr)
+  ✓ быстрое действие: «Скачать ZIP» (#archive) — 4Журналы одним архивомПо звонку инспектора (7 дней)Текущий месяцПрошлый месяцТекущий кварталСПоСкачать архивВключаются в
+  ✓ блоки-страницы целиком не повторяются
+  ✓ кратко: статус спецрежима (#special-mode) — off
+  ✓ «Ещё в разделе»: нормативка, готовность, эксперты — [["norms","/inspection/norms"],["readiness","/dashboard/compliance-audit"],["experts","/inspection/experts"]]
+  ✓ кратко: балл готовности со ссылкой — 5 из 16 в порядке
+  ✓ /inspection#special-mode прокручивает к блоку спецрежима
+  ✓ «Открыть →» из блока спецрежима ведёт на «Спецрежим» — http://localhost:3076/inspection/special-mode
+  ✓ пункт «Журнал посещений» открывает /inspection/visits — /inspection/visits
+  ✓ заголовок — «Журнал посещений» — Журнал посещений
+  ✓ пояснение: проверяющий по QR, руководитель вручную — Проверяющий вносит запись сам по QR и прикладывает скан или фото решения. Не внёс — добавьте запись здесь.
+  ✓ нумерованные шаги «Как запись попадает в журнал»
+  ✓ добавление посещения со сканом: тост — Не удалось прочитать файл — сохраните его заново или сфотографируйте документ
+  ✓ запись в списке со сканом основания — cmvgkdmlq00140w9mccgned7v
+  ✓ скан открывается (200, PDF) — {"status":200,"type":"application/pdf"}
+  ✓ «Приложить скан»: тост
+  ✓ «Приложить скан»: второй файл у записи — 2
+  ✓ «Скрыть как ошибочную»: тост
+  ✓ «Показать скрытые»: запись видна как скрытая
+  ✓ «Вернуть»: тост
+  ✓ кратко: счётчик посещений на «Что делать сейчас» — 2
+  ✓ пункт «Нормативка» открывает /inspection/norms — /inspection/norms
+  ✓ заголовок — «Нормативка» — Нормативка
+  ✓ документы ППК и ХАССП-плана, перечень норм
+  ✓ ссылки — прямо на файлы, не на страницы ППК — ["/api/production-control/program/pdf","/api/production-control/haccp-plan/pdf"]
+  ✓ «Открыть PDF» отдаёт файл (скачивание), страница на месте — {"file":"ППК — Столовая «Берёзка».pdf","url":"http://localhost:3076/inspection/norms"}
+  ✓ левое меню не переключилось на ППК — ["now","visits","norms","portal","readiness","experts","special"]
+  ✓ пункт «Подготовка с экспертом и выезд» открывает /inspection/experts — /inspection/experts
+  ✓ карточки «Аудит перед проверкой» и «Выезд специалиста» → ?order= — ["/settings/services?order=pre-inspection-audit","/settings/services?order=site-visit"]
+  ✓ подпись «Аудит перед проверкой» — Аудит перед проверкойот 15 000 ₽Эксперт найдёт нарушения раньше проверяющего и д
+  ✓ нумерованные шаги «Как заказать»
+  ✓ переход на заказ услуги — http://localhost:3076/settings/services?order=pre-inspection-audit
+  ✓ заголовок — «Спецрежим» — Спецрежим
+  ✓ пояснение: что выключает (3 пункта) и «Когда включать»
+  ✓ руководитель может переключать
+  ✓ спецрежим включён: тост «Сохранено»
+  ✓ спецрежим включён
+  ✓ статус «Включён» на «Что делать сейчас»
+  ✗ owner: нет pageerror (http://localhost:3076/inspection/special-mode) — Invalid or unexpected token
+  ✗ скрипт дошёл до конца — locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-inspection-special-mode]').getByRole('switch')[22m
+[2m    - locator resolved to <button disabled value="on" type="button" role="switch" data-disabled="" data-slot="switch" data-size="default" aria-checked="false" data-state="unchecked" aria-label="Специальный режим" class="peer group/switch inline-flex shrink-0 items-center rounded-full border border-transparent outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-6 data-[size=default]:w-11 data-[size=sm]:h-5 data…>…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+
+ПРОБЛЕМ: 2

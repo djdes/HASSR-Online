@@ -1,0 +1,12 @@
+  ✓ owner/mobile: now открывается (200) — /inspection
+  ✓ owner/mobile: now без горизонтальной прокрутки
+  ✓ owner/mobile: visits открывается (200) — /inspection/visits
+  ✓ owner/mobile: visits без горизонтальной прокрутки
+  ✓ owner/mobile: norms открывается (200) — /inspection/norms
+  ✓ owner/mobile: norms без горизонтальной прокрутки
+  ✓ owner/mobile: experts открывается (200) — /inspection/experts
+  ✓ owner/mobile: experts без горизонтальной прокрутки
+  ✓ owner/mobile: special открывается (200) — /inspection/special-mode
+  ✓ owner/mobile: special без горизонтальной прокрутки
+  ✓ owner/mobile: в листе меню пункты раздела — ["now","visits","norms","portal","readiness","experts","special"]
+OK

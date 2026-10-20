@@ -431,13 +431,19 @@ const BILLING_MENU: NavMenuGroup[] = [
   },
 ];
 
+// Блоки страницы «Пришла проверка» стали пунктами (S4, 2026-10-18); заведующей
+// открыто всё, что не требует руководства: проверка часто приходит при ней одной.
 const INSPECTION_MENU: NavMenuGroup[] = [
   {
     label: null,
     items: [
       { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
+      { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
+      { id: "norms", icon: "BookOpen", href: "/inspection/norms", access: fullAccessOr("tasks.verify") },
       { id: "portal", icon: "QrCode", href: "/settings/inspector-portal", access: FULL_ACCESS },
       { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
+      { id: "experts", icon: "Handshake", href: "/inspection/experts", access: FULL_ACCESS },
+      { id: "special", icon: "ShieldCheck", href: "/inspection/special-mode", access: fullAccessOr("tasks.verify") },
     ],
   },
 ];

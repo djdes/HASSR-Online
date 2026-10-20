@@ -465,7 +465,7 @@ test("у каждого раздела, кроме «Остального», с�
   ]);
   assert.deepEqual(menuShape("checklists"), [[null, ["builder"]]]);
   assert.deepEqual(menuShape("billing"), [[null, ["plan", "balance", "services"]]]);
-  assert.deepEqual(menuShape("inspection"), [[null, ["now", "portal", "readiness"]]]);
+  assert.deepEqual(menuShape("inspection"), [[null, ["now", "visits", "norms", "portal", "readiness", "experts", "special"]]]);
   // «Доступ и права» — одна страница без вкладок; прежние четыре страницы —
   // её подробные редакторы (подсвечивают пункт).
   const access = NAV_SECTIONS.find((item) => item.key === "staff")?.menu?.[0].items.find((item) => item.id === "access");
@@ -594,7 +594,8 @@ test("заведующая: пунктов только для admin.full нет
   // Одна страница без вкладок — и для заведующей.
   assert.equal(access?.tabs, undefined);
   assert.equal(access?.href, "/settings/access");
-  assert.deepEqual(visibleItemIds(headChef, "inspection"), ["now", "portal"]);
+  // «Пришла проверка»: заведующей — всё, кроме «Готовности» (admin.full).
+  assert.deepEqual(visibleItemIds(headChef, "inspection"), ["now", "visits", "norms", "portal", "experts", "special"]);
   assert.deepEqual(visibleItemIds(headChef, "billing"), ["plan", "balance", "services"]);
 });
 
@@ -664,7 +665,30 @@ test("«Моя компания»: сведения для документов,
 test("пресет заведующей у линейной роли: в «Сотрудниках» — только команда", () => {
   // `/settings/phone` линейной роли закрывает proxy.ts — пункта нет, как не было и карточки.
   assert.deepEqual(visibleItemIds(verifyOnly, "staff", noChecklists), ["team"]);
-  assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["now"]);
+  // Пресет заведующей у линейной роли: без QR-выпуска, готовности и услуг (их guard — руководство).
+  assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["now", "visits", "norms", "special"]);
+});
+
+test("«Пришла проверка»: блоки страницы — свои пункты меню, повару раздел закрыт", () => {
+  for (const [path, id] of [
+    ["/inspection", "now"],
+    ["/inspection/visits", "visits"],
+    ["/inspection/norms", "norms"],
+    ["/settings/inspector-portal", "portal"],
+    ["/dashboard/compliance-audit", "readiness"],
+    ["/inspection/experts", "experts"],
+    ["/inspection/special-mode", "special"],
+  ]) {
+    const place = sectionForPath(path);
+    assert.equal(place?.section, "inspection", path);
+    assert.equal(place?.menuItemId, id, path);
+  }
+  // «Нормативка» раздела — не пункт ППК: левое меню не переключается.
+  assert.notEqual(sectionForPath("/inspection/norms")?.section, "productionControl");
+  assert.ok(!keys(cook, withChecklists).includes("inspection"));
+  assert.ok(!keys(cleaner, withChecklists).includes("inspection"));
+  // Руководитель видит все семь пунктов.
+  assert.deepEqual(visibleItemIds(owner, "inspection"), ["now", "visits", "norms", "portal", "readiness", "experts", "special"]);
 });
 
 // ---- «Торговые точки»: пункты из данных (точки) -------------------------

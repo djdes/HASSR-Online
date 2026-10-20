@@ -776,7 +776,7 @@
     "visitsTitle": "Kim ko‘rdi",
     "noVisits": "Hali hech kim jurnallarni QR orqali ochmagan",
     "pageTitle": "Sizga tekshiruv keldi (yoki keladi)",
-    "pageLead": "Qadamma-qadam nima qilish, tekshiruvchiga nimani ko‘rsatish va hujjatlarni qayerdan olish — bitta ekranda.",
+    "pageLead": "Tekshiruvchi kelganda yoki hozir keladigan bo‘lsa nima qilish kerak: qadamlar tartib bilan, QR va hujjatlar arxivi — shu yerda.",
     "guide": {
       "title": "Hozir nima qilish kerak",
       "lead": "Tekshiruvchi kelganda beshta qadam — 5–10 daqiqa oladi.",
@@ -785,7 +785,7 @@
       "step2Title": "QR kodni ko‘rsating",
       "step2Body": "Tekshiruvchi QR kodni telefon bilan skanerlaydi va kirmasdan jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi va me’yoriy hujjatlarni ko‘radi. U yerdan yozuvlarni o‘zgartirib bo‘lmaydi.",
       "step3Title": "Tashrifni qayd eting",
-      "step3Body": "Tekshiruvchi QR orqali tashriflar jurnaliga o‘zi yozuv kiritadi va qaror fotosini biriktiradi. Kiritmagan bo‘lsa — yozuvni quyida qo‘shing va qarorni suratga oling.",
+      "step3Body": "Tekshiruvchi QR orqali tashriflar jurnaliga o‘zi yozuv kiritadi va qaror fotosini biriktiradi. Kiritmagan bo‘lsa — tashriflar jurnalini oching, yozuv qo‘shing va qarorni suratga oling.",
       "step4Title": "Hujjatlarni topshiring",
       "step4Body": "Kerakli davr uchun arxivni yuklab oling: jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi, CAPA va tashriflar jurnali — bitta ZIP faylda.",
       "step5Title": "Maxsus rejimni yoqing (ixtiyoriy)",
@@ -794,7 +794,8 @@
       "tip1": "Tekshiruvchiga hamroh bo‘ling va tekshiruv predmeti bo‘yicha savollarga xotirjam va aniq javob bering.",
       "tip2": "Rejadan tashqari tekshiruvda odatda prokuratura bilan kelishilganlik belgisi bo‘ladi — uni qarorda ko‘ring.",
       "tip3": "Tekshiruv vaqtida kamchilik topilsa — darhol tuzating va qayd eting: foto, jurnaldagi yozuv, CAPA vazifasi.",
-      "tip4": "Imzolashdan oldin dalolatnomani o‘qing. Rozi bo‘lmasangiz — buni dalolatnomada yozing va e’tirozlaringizni ilova qiling."
+      "tip4": "Imzolashdan oldin dalolatnomani o‘qing. Rozi bo‘lmasangiz — buni dalolatnomada yozing va e’tirozlaringizni ilova qiling.",
+      "open": "Ochish"
     },
     "visits": {
       "title": "Tashriflar jurnali",
@@ -888,18 +889,86 @@
       "off": "O‘chirilgan",
       "saved": "Saqlandi",
       "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
-      "askManager": "Yoqish yoki o‘chirishni rahbar qila oladi"
+      "askManager": "Yoqish yoki o‘chirishni rahbar qila oladi — undan so‘rang."
     },
     "experts": {
       "title": "Ekspert yordami",
       "lead": "WeSetup pullik xizmatlari: arizani menejer ko‘rib chiqadi va siz bilan bog‘lanadi.",
-      "audit": "Ekspert bilan tayyorgarlik",
-      "auditHint": "Tekshiruvdan oldingi audit: buzilishlarni inspektordan oldin topamiz va yechimlar bilan hisobot beramiz.",
+      "audit": "Tekshiruvdan oldingi audit",
+      "auditHint": "Ekspert buzilishlarni tekshiruvchidan oldin topadi va yechimlar bilan hisobot beradi.",
       "visit": "Mutaxassisning chiqishi",
       "visitHint": "Mutaxassis keladi, ishlab chiqarishni ko‘radi va kamchiliklarni joyida tahlil qiladi.",
       "priceFrom": "{price} ₽ dan",
       "priceExact": "{price} ₽",
       "priceOnRequest": "narxi so‘rov bo‘yicha"
+    },
+    "now": {
+      "guideTitle": "«Tekshiruv keldi» bo‘limi qanday tuzilgan",
+      "guide1": "Bu yerda — tekshiruvchi kelgandagi qadamlar, ekrandagi QR va hujjatlar arxivi.",
+      "guide2": "Tashriflar jurnali, me’yoriy hujjatlar va maxsus rejim — bo‘lim menyusining alohida bandlari; bu yerda ular qisqacha, «Ochish» havolasi bilan.",
+      "guide3": "Tekshiruv hali kelmagan bo‘lsa — QR ni oldindan chiqaring va varaqni chop eting: tekshiruvchiga faqat kodni skanerlash qoladi.",
+      "q1": "Tekshiruvchi QR orqali nimani ko‘radi?",
+      "a1": "Jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi va me’yoriy hujjatlarni — kirmasdan va faqat ko‘rish uchun. U yozuvlarni o‘zgartira olmaydi.",
+      "q2": "Bo‘lim kimga ochiq?",
+      "a2": "Rahbariyatga va vazifalarni tekshirish huquqi bor xodimlarga: tekshiruv ko‘pincha joyida faqat mudira bo‘lganda keladi. QR chiqarish, tayyorgarlik va xizmatlar — rahbariyatda.",
+      "visitsLead": "Tekshiruvchi QR orqali o‘zi yozuv kiritadi. Kiritmagan bo‘lsa — jurnalni oching va qaror skani bilan yozuv qo‘shing.",
+      "specialLead": "Tekshiruv vaqtida jurnallardagi avtomatik yozuvlarni o‘chiradi.",
+      "moreTitle": "Bo‘limda yana",
+      "normsHint": "Ishlab chiqarish nazorati dasturi, HACCP rejasi va SanPiN me’yorlari — tekshiruvchiga nimani ko‘rsatish",
+      "readinessHint": "Tekshiruvchi kelguncha nimani tuzatish kerak",
+      "expertsHint": "Tekshiruvdan oldingi audit va mutaxassisning chiqishi"
+    },
+    "pages": {
+      "visits": {
+        "lead": "Qaysi tekshiruvchilar kelgan va qanday asosda — qarorlar skanlari bilan.",
+        "howTitle": "Yozuv jurnalga qanday tushadi",
+        "how1": "Tekshiruvchi QR ni telefon bilan skanerlaydi — kirishsiz va parolsiz.",
+        "how2": "F.I.Sh., lavozim, organ, tekshiruv turi va qaror (farmoyish) fotosini kiritadi.",
+        "how3": "Yozuv shu yerda paydo bo‘ladi va tekshiruv arxiviga tushadi. O‘zi kiritmagan bo‘lsa — «Yozuv qo‘shish» tugmasini bosing.",
+        "guideTitle": "Tashriflar jurnalini qanday yuritish kerak",
+        "guide1": "Yozuvlar o‘chirilmaydi — qog‘oz jurnaldagi kabi.",
+        "guide2": "Xato yozuvni (test, takror) rahbar sababini ko‘rsatib yashiradi; uni istalgan vaqtda qaytarish mumkin.",
+        "guide3": "Qaror skanini keyinroq ham biriktirish mumkin — yozuvdagi «Skan biriktirish» tugmasi bilan.",
+        "q1": "Qaror fotosi nima uchun kerak?",
+        "a1": "Qaror (farmoyish) — tekshiruv asosi. Skan yozuv yonida saqlanadi va tashriflar jurnali bilan birga arxivga tushadi.",
+        "q2": "Yozuvni kim qo‘sha oladi?",
+        "a2": "Rahbariyat va vazifalarni tekshirish huquqi bor xodimlar. Xato yozuvni faqat rahbar yashira oladi."
+      },
+      "norms": {
+        "lead": "Tekshiruvchiga ko‘rsatiladigan narsalar: ishlab chiqarish nazorati dasturi, HACCP rejasi va SanPiN me’yorlari. Faqat ko‘rish.",
+        "guideTitle": "Hujjatlar qayerdan olinadi",
+        "guide1": "Dastur va HACCP rejasining PDF fayli «Ishlab chiqarish nazorati» bo‘limlaridan yig‘iladi — har doim oxirgi versiyada.",
+        "guide2": "Imzolangan nusxa, agar u «Ishlab chiqarish nazorati»ga yuklangan bo‘lsa, alohida tugma bilan ochiladi.",
+        "guide3": "Tekshiruvchi QR orqali xuddi shu hujjatlarni ko‘radi.",
+        "q1": "Hujjatlarni qayerda o‘zgartirish mumkin?",
+        "a1": "«Ishlab chiqarish nazorati» bo‘limida — rahbar o‘zgartiradi. Bu yerda hujjatlar faqat ko‘rsatish uchun."
+      },
+      "experts": {
+        "lead": "Tekshiruvdan oldingi audit va mutaxassisning chiqishi — WeSetup katalogidagi xizmatlar.",
+        "howTitle": "Qanday buyurtma berish",
+        "how1": "Quyida xizmatni tanlang — uning kartasi «Xizmatlar» sahifasida ochiladi.",
+        "how2": "Ariza qoldiring: nimani tekshirish kerak va qachon qulay.",
+        "how3": "Menejer arizani ko‘rib chiqadi va tafsilotlarni kelishish uchun siz bilan bog‘lanadi.",
+        "empty": "Tekshiruvga tayyorlash xizmatlarini hozir buyurtma qilib bo‘lmaydi",
+        "emptyHint": "Boshqa xizmatlar — «Xizmatlar» sahifasida.",
+        "emptyLink": "Xizmatlarni ochish",
+        "guideTitle": "Ekspert qachon kerak",
+        "guide1": "Audit — oldindan, tekshiruvgacha: buzilishlarni topish va o‘z vaqtida tuzatish.",
+        "guide2": "Mutaxassisning chiqishi — kamchiliklarni joyida tahlil qilish kerak bo‘lganda.",
+        "q1": "Kim buyurtma bera oladi?",
+        "a1": "Tashkilot rahbariyati. Arizani WeSetup menejeri ko‘radi."
+      },
+      "special": {
+        "lead": "Tekshiruv vaqtida jurnallardagi avtomatik yozuvlarni o‘chiradi.",
+        "guideTitle": "Bilish muhim",
+        "guide1": "Rejim butun tashkilotga — barcha nuqtalarga birdaniga amal qiladi.",
+        "guide2": "Kiritilgan ma’lumotlar va o‘zgarishlar tarixi saqlanadi.",
+        "guide3": "Rahbar yoqadi va o‘chiradi; boshqalar rejim yoqilganini ko‘radi.",
+        "whenTitle": "Qachon yoqish kerak",
+        "when1": "Tekshiruvchi keldi yoki bugun keladi — rejimni yoqing.",
+        "when2": "Tekshiruv davomida jurnallarda faqat xodimlar o‘zlari kiritgan yozuvlar bo‘ladi.",
+        "when3": "Tekshiruv tugadi — o‘chiring: hujjatlarni avtomatik yaratish, avtomatik to‘ldirish va «Kechagisini nusxalash» qaytadi."
+      }
     }
   },
   "common": {
@@ -2566,8 +2635,12 @@
         "inspection": {
           "items": {
             "now": "Hozir nima qilish kerak",
+            "visits": "Tashriflar jurnali",
+            "norms": "Me’yoriy hujjatlar",
             "portal": "Tekshiruvchi uchun QR",
-            "readiness": "Tekshiruvga tayyorgarlik"
+            "readiness": "Tekshiruvga tayyorgarlik",
+            "experts": "Ekspert bilan tayyorgarlik va chiqish",
+            "special": "Maxsus rejim"
           }
         }
       },
@@ -2737,6 +2810,10 @@
     },
     "routes": {
       "inspection": "Tekshiruv keldi",
+      "inspection_visits": "Tashriflar jurnali",
+      "inspection_norms": "Me’yoriy hujjatlar",
+      "inspection_experts": "Ekspert bilan tayyorgarlik va chiqish",
+      "inspection_special_mode": "Maxsus rejim",
       "production_control": "Ishlab chiqarish nazorati dasturi",
       "more": "Boshqalar",
       "knowledge": "Yo‘riqnomalar",

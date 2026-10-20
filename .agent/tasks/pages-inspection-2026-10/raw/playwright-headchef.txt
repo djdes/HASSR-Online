@@ -1,0 +1,38 @@
+  ✓ заведующая: пункты меню без «Готовности» — ["now","visits","norms","portal","experts","special"]
+  ✓ заведующая: «Ещё в разделе» без готовности — ["norms","experts"]
+  ✓ заведующая: пункт visits открывает /inspection/visits — /inspection/visits
+  ✓ заведующая: «Добавить запись» есть
+  ✓ заведующая: «Скрыть» нет (только руководитель)
+  ✓ заведующая: пункт norms открывает /inspection/norms — /inspection/norms
+  ✓ заведующая: PDF плана ХАССП открывается (200) — 200
+  ✓ заведующая: пункт experts открывает /inspection/experts — /inspection/experts
+  ✓ заведующая: пункт special открывает /inspection/special-mode — /inspection/special-mode
+  ✓ заведующая: переключатель спецрежима недоступен
+  ✓ заведующая: «попросите руководителя» — Включить или выключить может руководитель — попросите его.
+  ✓ заведующая: «Готовность» закрыта (редирект) — http://localhost:3076/dashboard
+  ✓ headchef/mobile: now открывается (200) — /inspection
+  ✓ headchef/mobile: now без горизонтальной прокрутки
+  ✓ headchef/mobile: visits открывается (undefined) — /inspection/visits
+  ✓ headchef/mobile: visits без горизонтальной прокрутки
+  ✓ headchef/mobile: norms открывается (200) — /inspection/norms
+  ✓ headchef/mobile: norms без горизонтальной прокрутки
+  ✓ headchef/mobile: experts открывается (200) — /inspection/experts
+  ✓ headchef/mobile: experts без горизонтальной прокрутки
+  ✓ headchef/mobile: special открывается (200) — /inspection/special-mode
+  ✓ headchef/mobile: special без горизонтальной прокрутки
+  ✓ headchef/mobile: в листе меню пункты раздела — ["now","visits","norms","portal","experts","special"]
+  ✓ headchef/mini: now открывается (200) — /inspection
+  ✓ headchef/mini: now без горизонтальной прокрутки
+  ✗ headchef/mini: нет pageerror (http://localhost:3076/inspection/visits) — Invalid or unexpected token
+  ✓ headchef/mini: visits открывается (200) — /inspection/visits
+  ✓ headchef/mini: visits без горизонтальной прокрутки
+  ✗ headchef/mini: нет pageerror (http://localhost:3076/inspection/norms) — Invalid or unexpected token
+  ✓ headchef/mini: norms открывается (200) — /inspection/norms
+  ✓ headchef/mini: norms без горизонтальной прокрутки
+  ✓ headchef/mini: experts открывается (200) — /inspection/experts
+  ✓ headchef/mini: experts без горизонтальной прокрутки
+  ✓ headchef/mini: special открывается (200) — /inspection/special-mode
+  ✓ headchef/mini: special без горизонтальной прокрутки
+  ✓ headchef/mini: кнопка меню раздела
+  ✓ headchef/mini: в меню раздела 6 пунктов — ["now","visits","norms","portal","experts","special"]
+ПРОБЛЕМ: 2

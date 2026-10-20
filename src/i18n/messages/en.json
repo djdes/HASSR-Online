@@ -776,7 +776,7 @@
     "visitsTitle": "Who viewed",
     "noVisits": "Nobody has opened the journals by QR yet",
     "pageTitle": "An inspection has arrived (or is coming)",
-    "pageLead": "Step-by-step actions, what to show the inspector and where to get the documents — on one screen.",
+    "pageLead": "What to do when an inspector has arrived or is about to: steps in order, the QR code and the document archive — right here.",
     "guide": {
       "title": "What to do now",
       "lead": "Five steps for when the inspector arrives — takes 5–10 minutes.",
@@ -785,7 +785,7 @@
       "step2Title": "Show the QR code",
       "step2Body": "The inspector scans the QR code with a phone and, without signing in, sees the journals, the production control program, the HACCP plan and the regulations. Records cannot be changed from there.",
       "step3Title": "Record the visit",
-      "step3Body": "The inspector adds an entry to the visit log via the QR code and attaches a photo of the decision. If not — add the entry below and photograph the decision.",
+      "step3Body": "The inspector adds an entry to the visit log via the QR code and attaches a photo of the decision. If not — open the visit log, add the entry and photograph the decision.",
       "step4Title": "Hand over the documents",
       "step4Body": "Download the archive for the required period: journals, production control program, HACCP plan, CAPA and the visit log — in one ZIP file.",
       "step5Title": "Turn on special mode (optional)",
@@ -794,7 +794,8 @@
       "tip1": "Accompany the inspector and answer questions within the scope of the inspection — calmly and to the point.",
       "tip2": "An unscheduled inspection usually carries a note of approval by the prosecutor's office — look for it in the decision.",
       "tip3": "If an issue is found during the inspection, fix it right away and record it: a photo, a journal entry, a CAPA task.",
-      "tip4": "Read the report before signing. If you disagree, say so in the report and attach your objections."
+      "tip4": "Read the report before signing. If you disagree, say so in the report and attach your objections.",
+      "open": "Open"
     },
     "visits": {
       "title": "Visit log",
@@ -888,18 +889,86 @@
       "off": "Off",
       "saved": "Saved",
       "saveError": "Could not save changes",
-      "askManager": "Only a manager can turn it on or off"
+      "askManager": "Only a manager can turn it on or off — ask them."
     },
     "experts": {
       "title": "Expert help",
       "lead": "Paid WeSetup services: a manager reviews the request and contacts you.",
-      "audit": "Preparation with an expert",
-      "auditHint": "Pre-inspection audit: we find violations before the inspector does and give a report with solutions.",
+      "audit": "Pre-inspection audit",
+      "auditHint": "An expert finds violations before the inspector does and gives a report with solutions.",
       "visit": "Specialist visit",
       "visitHint": "A specialist comes on site, looks at production and goes through the issues with you.",
       "priceFrom": "from {price} ₽",
       "priceExact": "{price} ₽",
       "priceOnRequest": "price on request"
+    },
+    "now": {
+      "guideTitle": "How the Inspection visit section works",
+      "guide1": "Here: steps for when the inspector arrives, the QR code on screen and the document archive.",
+      "guide2": "The visit log, regulations and special mode are separate items of the section menu; here they are shown briefly, with an “Open” link.",
+      "guide3": "Inspection not here yet? Issue the QR code in advance and print the sheet — the inspector will only need to scan it.",
+      "q1": "What will the inspector see via the QR code?",
+      "a1": "Journals, the production control program, the HACCP plan and the regulations — without signing in, view only. Records cannot be changed.",
+      "q2": "Who can open this section?",
+      "a2": "Management and employees allowed to verify tasks: an inspection often arrives when only the head chef is on site. Issuing the QR code, readiness and services are for management.",
+      "visitsLead": "The inspector adds the entry via the QR code. If not — open the log and add the entry with a scan of the decision.",
+      "specialLead": "Turns off automatic entries in the journals for the time of the inspection.",
+      "moreTitle": "More in this section",
+      "normsHint": "Production control program, HACCP plan and SanPiN rules — what to show the inspector",
+      "readinessHint": "What to fix before the inspector arrives",
+      "expertsHint": "Pre-inspection audit and specialist visit"
+    },
+    "pages": {
+      "visits": {
+        "lead": "Which inspectors came and on what grounds — with scans of the decisions.",
+        "howTitle": "How an entry gets into the log",
+        "how1": "The inspector scans the QR code with a phone — no sign-in or password.",
+        "how2": "Enters the full name, position, authority, inspection type and a photo of the decision (order).",
+        "how3": "The entry appears here and goes into the inspection archive. If the inspector did not add it — press “Add entry”.",
+        "guideTitle": "How to keep the visit log",
+        "guide1": "Entries are never deleted — just like in a paper log.",
+        "guide2": "A manager hides an erroneous entry (test, duplicate) with a reason; it can be restored at any time.",
+        "guide3": "A scan of the decision can be attached later with the “Attach scan” button of the entry.",
+        "q1": "Why a photo of the decision?",
+        "a1": "The decision (order) is the basis of the inspection. The scan is kept next to the entry and goes into the archive together with the visit log.",
+        "q2": "Who can add an entry?",
+        "a2": "Management and employees allowed to verify tasks. Only a manager can hide an erroneous entry."
+      },
+      "norms": {
+        "lead": "What is shown to the inspector: the production control program, the HACCP plan and SanPiN rules. View only.",
+        "guideTitle": "Where the documents come from",
+        "guide1": "The PDFs of the production control program and the HACCP plan are assembled from the Production control sections — always the latest version.",
+        "guide2": "The signed copy opens with a separate button if it was uploaded to Production control.",
+        "guide3": "Via the QR code the inspector sees the same documents.",
+        "q1": "Where can I change the documents?",
+        "a1": "In the Production control section — a manager can. Here the documents are for showing only."
+      },
+      "experts": {
+        "lead": "Pre-inspection audit and specialist visit — services from the WeSetup catalog.",
+        "howTitle": "How to order",
+        "how1": "Choose a service below — its card opens on the Services page.",
+        "how2": "Leave a request: what needs to be checked and when it suits you.",
+        "how3": "A manager reviews the request and contacts you to agree on the details.",
+        "empty": "Inspection preparation services cannot be ordered right now",
+        "emptyHint": "Other services are on the Services page.",
+        "emptyLink": "Open services",
+        "guideTitle": "When an expert helps",
+        "guide1": "Audit — in advance, before the inspection: find violations and fix them in time.",
+        "guide2": "Specialist visit — when the issues need to be sorted out on site.",
+        "q1": "Who can order?",
+        "a1": "The organization's management. The request is seen by a WeSetup manager."
+      },
+      "special": {
+        "lead": "Turns off automatic entries in the journals for the time of the inspection.",
+        "guideTitle": "Good to know",
+        "guide1": "The mode applies to the whole organization — all locations at once.",
+        "guide2": "Entered data and change history are preserved.",
+        "guide3": "A manager turns it on and off; others can see whether it is on.",
+        "whenTitle": "When to turn it on",
+        "when1": "The inspector has arrived or is coming today — turn the mode on.",
+        "when2": "While the inspection is going on, the journals contain only entries that employees make themselves.",
+        "when3": "The inspection is over — turn it off: automatic document creation, autofill and “Copy yesterday” come back."
+      }
     }
   },
   "common": {
@@ -2566,8 +2635,12 @@
         "inspection": {
           "items": {
             "now": "What to do now",
+            "visits": "Visit log",
+            "norms": "Regulations",
             "portal": "QR for the inspector",
-            "readiness": "Inspection readiness"
+            "readiness": "Inspection readiness",
+            "experts": "Expert preparation and visit",
+            "special": "Special mode"
           }
         }
       },
@@ -2737,6 +2810,10 @@
     },
     "routes": {
       "inspection": "Inspection visit",
+      "inspection_visits": "Visit log",
+      "inspection_norms": "Regulations",
+      "inspection_experts": "Expert preparation and visit",
+      "inspection_special_mode": "Special mode",
       "production_control": "Production control program",
       "more": "More",
       "knowledge": "Instructions",

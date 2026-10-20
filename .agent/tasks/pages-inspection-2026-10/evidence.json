@@ -1,0 +1,91 @@
+{
+  "task_id": "pages-inspection-2026-10",
+  "branch": "feat/pages-inspection",
+  "base": "76c01cc4",
+  "overall": "PASS",
+  "criteria": {
+    "AC1": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/inspection/page.tsx",
+        "src/components/inspection/inspection-guide.tsx",
+        "src/components/inspection/inspection-pages.test.ts",
+        "raw/results-owner.json",
+        "raw/desktop-owner-now.png",
+        "raw/mobile-owner-now.png",
+        "raw/mini-owner-now.png"
+      ]
+    },
+    "AC2": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/inspection/visits/page.tsx",
+        "raw/results-owner.json (add with scan, attach, hide/show hidden/restore)",
+        "raw/results-headchef.json (add yes, hide no)",
+        "raw/desktop-owner-visits.png",
+        "raw/desktop-owner-visits-add-dialog.png",
+        "raw/desktop-owner-visits-hide-dialog.png"
+      ]
+    },
+    "AC3": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/inspection/norms/page.tsx",
+        "src/components/inspection/inspection-norms-card.tsx",
+        "raw/results-owner.json (PDF download, URL and sidebar unchanged)",
+        "raw/results-headchef.json (HACCP plan PDF 200)",
+        "raw/desktop-owner-norms.png"
+      ]
+    },
+    "AC4": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/inspection/experts/page.tsx",
+        "raw/results-owner.json (?order= links, order page)",
+        "raw/desktop-owner-experts.png",
+        "raw/desktop-owner-services-order.png"
+      ]
+    },
+    "AC5": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/inspection/special-mode/page.tsx",
+        "src/components/inspection/inspection-special-mode-card.tsx",
+        "raw/results-owner-tail.json (toggle on/off, status on 'now', #special-mode)",
+        "raw/results-owner.json (#special-mode anchor scroll)",
+        "raw/results-headchef.json (switch disabled, ask manager)",
+        "raw/desktop-owner-special-on.png",
+        "raw/desktop-owner-now-special-on.png",
+        "raw/desktop-headchef-special.png"
+      ]
+    },
+    "AC6": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/lib/app-nav.ts",
+        "src/lib/app-nav.test.ts",
+        "raw/tests-nav.txt (51/51)",
+        "raw/results-headchef.json",
+        "raw/results-cook.json",
+        "raw/results-mini.json",
+        "raw/results-headchef-mini.json"
+      ]
+    },
+    "AC7": {
+      "verdict": "PASS",
+      "evidence": [
+        "raw/tsc.txt (empty = 0 errors)",
+        "raw/eslint.txt (empty = 0 problems)",
+        "raw/i18n-check.txt (82/82)",
+        "raw/tests-nav.txt (51/51)",
+        "raw/playwright-summary.json",
+        "raw/console-mini.json",
+        "evidence.md (Что нового)"
+      ]
+    }
+  },
+  "notes": [
+    "Playwright failures in raw logs are dev-server transients under machine load (half-written chunks during rebuild, PDF worker 5s timeout); each affected part was rerun green — see evidence.md decisions 10-11.",
+    "Screenshots are git-ignored (.agent/**/*.png); copy in C:\\Users\\Two\\wesetup-backup-2026-10-17\\pages-shots\\inspection\\."
+  ]
+}

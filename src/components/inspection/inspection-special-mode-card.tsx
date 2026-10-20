@@ -87,3 +87,22 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
     </section>
   );
 }
+
+/**
+ * Состояние спецрежима одной пилюлей — для короткого блока на «Что делать
+ * сейчас» (переключатель и пояснения — на странице «Спецрежим»).
+ */
+export function InspectionSpecialModeStatus() {
+  const t = useTranslations("inspectionDay.special");
+  const { controls, loaded } = useJournalControls();
+  if (!loaded) return null;
+  const on = controls.specialMode;
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-[13px] font-medium ${on ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#f5f6ff] text-[#3848c7]"}`}
+      data-special-mode-status={on ? "on" : "off"}
+    >
+      {on ? t("on") : t("off")}
+    </span>
+  );
+}
