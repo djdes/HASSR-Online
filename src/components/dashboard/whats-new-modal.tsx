@@ -104,6 +104,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Производственный контроль": FileCheck2,
   "Производственный контроль — раздел": ClipboardCheck,
   "Новое меню кабинета": PanelLeft,
+  "Новые страницы разделов": PanelLeft,
   "Тема, названия и фото замеров": Camera,
   "Свои названия разделов и журналов": SquarePen,
   "Распознавание с фото": Camera,
