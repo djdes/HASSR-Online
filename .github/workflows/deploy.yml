@@ -268,6 +268,16 @@ jobs:
             # работающей сборки. Стоит немного места и одну операцию —
             # против минут неработающего сайта.
             rm -rf .next.cache-backup 2>/dev/null || true
+            # Тексты (src/i18n/messages) поменялись — кеш не берём: 20.10
+            # сборка 2dfcc33a взяла из него старую копию ru.json для одного
+            # из слоёв, и на страницах вместо текстов показались ключи.
+            I18N_STAMP=".i18n-messages-hash"
+            I18N_HASH=$(find src/i18n/messages -type f -name '*.json' | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
+            if [ -f "$I18N_STAMP" ] && [ "$(cat "$I18N_STAMP")" != "$I18N_HASH" ]; then
+              echo "[cache] тексты изменились — сборка холодная"
+              rm -rf .next/cache 2>/dev/null || true
+            fi
+            echo "$I18N_HASH" > "$I18N_STAMP"
             if [ -d .next/cache ]; then
               cp -r .next/cache .next.cache-backup
               echo "[cache] скопирован ($(du -sh .next.cache-backup | cut -f1))"
