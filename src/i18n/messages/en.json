@@ -2582,7 +2582,10 @@
         },
         "checklists": {
           "items": {
-            "builder": "Checklist builder"
+            "templates": "Templates",
+            "builder": "Builder",
+            "assignments": "Assignments",
+            "results": "Results"
           }
         },
         "productionControl": {
@@ -2818,6 +2821,9 @@
       "more": "More",
       "knowledge": "Instructions",
       "checklists": "Checklists",
+      "checklists_templates": "Checklist templates",
+      "checklists_assignments": "Checklist assignments",
+      "checklists_results": "Inspection results",
       "settings_staff_health": "Medical books and training",
       "settings_sections_journals": "Journal settings",
       "settings_sections_staff": "Staff settings",
@@ -17577,6 +17583,287 @@
         "q": "Why was the related journal not enabled with the set?",
         "a": "The health journal duplicates the hygiene journal and is off by default. If inspectors require it specifically, enable it with the “Enable” button next to it."
       }
+    }
+  },
+  "checklistPages": {
+    "common": {
+      "people": "{count, plural, one {# person} other {# people}}",
+      "status": {
+        "done": "Done",
+        "overdue": "Overdue",
+        "pending": "Pending",
+        "pendingUntil": "Due by {time}",
+        "paused": "Paused",
+        "off": "Not today",
+        "offNext": "Not today · next {date}"
+      },
+      "dueToday": "Today by {time}",
+      "dueOn": "Due: {date} by {time}",
+      "schedule": {
+        "once": "Once: {date} by {time}",
+        "daily": "Every day by {time}",
+        "weekly": "Every week: {weekday} by {time}",
+        "monthly": "Every month: day {day} by {time}"
+      },
+      "frequency": {
+        "once": "once",
+        "daily": "daily",
+        "weekly": "weekly",
+        "monthly": "monthly"
+      }
+    },
+    "templates": {
+      "description": "Ready-made inspection checklists: start an inspection, add a standard one or assign it to staff.",
+      "openBuilder": "Builder",
+      "openAssignments": "Assignments",
+      "openResults": "Results",
+      "guide": {
+        "title": "How checklists work",
+        "typicalTitle": "1. Add a standard checklist",
+        "typicalBody": "Six ready-made inspections: SanPiN, HACCP, territorial manager, chief technologist, inspection readiness and HACCP team audit. “Add to organization” makes your own copy that you can edit in the builder.",
+        "runTitle": "2. Run an inspection",
+        "runBody": "“Start inspection” opens the questions section by section. Answer them, attach photos where asked and press “Complete inspection”.",
+        "assignTitle": "3. Assign",
+        "assignBody": "In “Assignments” a manager chooses who runs the inspection, how often, by what time and who accepts the result. A reminder arrives in Telegram.",
+        "resultsTitle": "4. Review results",
+        "resultsBody": "“Results” holds the inspection history: scores, violations, PDF and “Accept result”.",
+        "q1": "Will the standard checklist change if I edit my copy?",
+        "a1": "No. Your organization has its own copy: builder edits change only that copy.",
+        "q2": "Why don’t I see the “Add” button?",
+        "a2": "Managers add and edit templates. Anyone with write access to checklists can run inspections."
+      },
+      "startFailed": "Could not start the inspection",
+      "addFailed": "Could not add the template",
+      "added": "“{title}” added to the organization",
+      "alreadyAdded": "“{title}” is already in the organization",
+      "start": "Start inspection",
+      "continue": "Continue inspection",
+      "noRunRight": "You can’t run inspections — ask your manager",
+      "adding": "Adding…",
+      "openInBuilder": "Open in builder",
+      "editInBuilder": "Edit in builder",
+      "assign": "Assign",
+      "allResults": "All inspection results",
+      "assigned": {
+        "title": "Assigned to you",
+        "description": "Checklists to run today. Press “Start inspection” and answer the questions.",
+        "results": "Results"
+      },
+      "typical": {
+        "title": "Standard checklists",
+        "description": "Six ready-made inspections. Add the ones you need to your organization, then edit them in the builder.",
+        "added": "Already added",
+        "counts": "Sections: {sections} · questions: {questions} · critical: {critical}",
+        "add": "Add to organization",
+        "managerAdds": "A manager adds it"
+      },
+      "organization": {
+        "title": "Organization templates",
+        "description": "Your checklists: run inspections, edit them in the builder, assign them to staff.",
+        "create": "Create your own",
+        "emptyTitle": "No templates yet",
+        "emptyHintManager": "Add a standard checklist above or create your own in the builder.",
+        "emptyHint": "Once a manager adds templates, you can start an inspection here.",
+        "meta": "Version {version} · sections: {sections} · questions: {questions}"
+      }
+    },
+    "builder": {
+      "allResults": "All results",
+      "allResultsHint": "Inspection history, scores, violations, PDF and “Accept result”"
+    },
+    "assignments": {
+      "description": "Who runs the inspection, how often and by what time, and who accepts the result. Reminders go to Telegram.",
+      "new": "Assign checklist",
+      "guide": {
+        "title": "How assignments work",
+        "whoTitle": "Who",
+        "whoBody": "A location means everyone working there; a position means all staff in that position; or a single person. Dismissed and deactivated staff are skipped.",
+        "whenTitle": "How often and by what time",
+        "whenBody": "Once, every day, weekly or monthly — by the set time in the organization’s time zone. One completed inspection per period is enough.",
+        "remindTitle": "Reminder",
+        "remindBody": "On the due day, 2 hours before the deadline, each recipient with a linked Telegram gets one message with an “Open checklist” button. Nothing is sent once the inspection is done.",
+        "verifyTitle": "Who checks",
+        "verifyBody": "When the inspection is completed, the reviewer gets a message and presses “Accept result” in “Results”.",
+        "q1": "What happens when I pause an assignment?",
+        "a1": "No reminders are sent and the checklist doesn’t appear in “Assigned to you”. Resume it and it continues from the next deadline.",
+        "q2": "Are these TasksFlow tasks?",
+        "a2": "No. Checklist assignments live in WeSetup: reminders come from the WeSetup bot and no TasksFlow tasks are created."
+      },
+      "actionFailed": "Could not complete the action",
+      "paused": "Assignment paused",
+      "resumed": "Assignment resumed",
+      "deleted": "Assignment deleted. Inspections kept in history: {count}",
+      "target": {
+        "building": "Location “{name}”",
+        "position": "Position “{name}”",
+        "user": "Employee: {name}"
+      },
+      "targetMissing": "deleted",
+      "verifier": "Reviewer: {name}",
+      "noVerifier": "No reviewer selected",
+      "remindOn": "Telegram reminder 2 hours before the deadline",
+      "remindOff": "No reminders",
+      "warnNoAccess": "{count, plural, one {# person} other {# people}} can’t run inspections",
+      "warnNoTelegram": "{count, plural, one {# person} other {# people}} without Telegram",
+      "templateArchived": "Template archived",
+      "edit": "Edit",
+      "pause": "Pause",
+      "resume": "Resume",
+      "delete": "Delete",
+      "deleteAria": "Delete assignment “{title}”",
+      "openTemplates": "Open templates",
+      "list": {
+        "title": "Assignments",
+        "description": "{count, plural, =0 {No assignments yet} one {# assignment} other {# assignments}}",
+        "emptyTitle": "No assignments yet",
+        "emptyHint": "Press “Assign checklist”: choose a template, who, how often and by what time — we’ll guide you through the rest.",
+        "emptyNoTemplates": "First add a template in “Templates” — a standard one or your own."
+      },
+      "confirmDelete": {
+        "title": "Delete assignment?",
+        "description": "“{title}” will no longer be assigned.",
+        "noReminders": "No more Telegram reminders",
+        "historyKept": "Completed inspections stay in “Results”",
+        "confirm": "Delete"
+      },
+      "dialog": {
+        "title": "Assign checklist",
+        "editTitle": "Edit assignment",
+        "subtitle": "Five steps. The bottom line shows who gets the checklist and when the reminder arrives.",
+        "steps": {
+          "template": "Template",
+          "templateHint": "Which checklist to run.",
+          "target": "Who",
+          "targetHint": "A location means everyone working there; a position means everyone in it; or a single employee.",
+          "schedule": "How often and by what time",
+          "scheduleHint": "Time is in the organization’s time zone.",
+          "verifier": "Who checks",
+          "verifierHint": "Gets a message when the inspection is completed and accepts the result. We recommend a manager or head chef.",
+          "remind": "Remind in Telegram",
+          "remindHint": "One message on the due day to each recipient with a linked Telegram."
+        },
+        "noTemplates": "The organization has no templates yet.",
+        "openTemplates": "Open “Templates”",
+        "templatePlaceholder": "Choose a template",
+        "target": {
+          "buildings": "Locations",
+          "positions": "Positions",
+          "people": "Employees",
+          "buildingSub": "Everyone working at the location",
+          "positionSub": "All staff in the position",
+          "placeholder": "Choose a location, position or employee",
+          "search": "Find a location, position or name"
+        },
+        "noPosition": "No position",
+        "noTelegramShort": "no Telegram",
+        "nothingFound": "Nothing found",
+        "frequency": {
+          "once": "Once",
+          "daily": "Every day",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        },
+        "onceDate": "Date",
+        "weekday": "Day of the week",
+        "monthDay": "Day of the month",
+        "monthDayShort": "In shorter months — the last day.",
+        "dueTime": "By what time",
+        "verifier": {
+          "recommended": "Recommended: management",
+          "others": "Also possible",
+          "placeholder": "Choose a reviewer",
+          "search": "Find by name or position",
+          "none": "No reviewer"
+        },
+        "remindLabel": "Remind recipients in Telegram",
+        "remindExplain": "On the due day at about {time} (2 hours before the deadline) one message with an “Open checklist” button arrives. Nothing is sent once the inspection is done.",
+        "live": {
+          "recipients": "Recipients: {count, plural, one {# person} other {# people}}",
+          "first": "First deadline — {date} by {time}.",
+          "remind": "The Telegram reminder arrives on {date} at about {time}.",
+          "noRemind": "No Telegram reminders.",
+          "chooseTarget": "Choose who to assign — you’ll see how many people get the checklist and when the reminder arrives."
+        },
+        "andMore": "and {count} more",
+        "warn": {
+          "noAccess": "{count, plural, one {# person} other {# people}} can’t run checklist inspections: {names}.",
+          "fixAccess": "Open journal access",
+          "noTelegram": "{count, plural, one {# person} other {# people}} without a linked Telegram won’t get the reminder: {names}.",
+          "fixTelegram": "Employees"
+        },
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "save": "Save",
+        "assign": "Assign",
+        "saveFailed": "Could not save the assignment",
+        "updated": "Assignment saved",
+        "created": "Checklist assigned. Recipients: {count, plural, one {# person} other {# people}}"
+      }
+    },
+    "results": {
+      "description": "Inspection history: scores, violations, PDF. The reviewer accepts the result.",
+      "toTemplates": "To templates",
+      "guide": {
+        "title": "How to read results",
+        "listTitle": "History",
+        "listBody": "Each inspection shows the date, who ran it, the score and violations. A draft is an inspection that was started but not completed.",
+        "reviewTitle": "Accept result",
+        "reviewBody": "The assignment reviewer (or a manager) checks the answers and presses “Accept result” — the list then shows who accepted it and when.",
+        "pdfTitle": "PDF",
+        "pdfBody": "“PDF” downloads the inspection with answers and photos — for inspectors and the archive."
+      },
+      "filters": {
+        "title": "Filters",
+        "description": "Template, period and only inspections with violations.",
+        "template": "Template",
+        "allTemplates": "All templates",
+        "archived": "archived",
+        "period": "Period",
+        "periods": {
+          "7": "7 days",
+          "30": "30 days",
+          "90": "90 days",
+          "all": "All time"
+        },
+        "violationsOnly": "Only with violations"
+      },
+      "history": {
+        "title": "Inspection history",
+        "description": "{count, plural, =0 {No inspections} one {# inspection} other {# inspections}}",
+        "waiting": "Awaiting acceptance: {count}",
+        "emptyTitle": "No inspections yet",
+        "emptyHint": "Open “Templates” and press “Start inspection” — the result will appear here.",
+        "emptyFilteredTitle": "Nothing found",
+        "emptyFilteredHint": "Try another template or period.",
+        "reset": "Reset filters"
+      },
+      "status": {
+        "completed": "Completed",
+        "draft": "Draft"
+      },
+      "version": "version {version}",
+      "score": "{earned} of {possible} points · {percent}%",
+      "scoreNone": "No score",
+      "violations": "{count, plural, =0 {No violations} one {# violation} other {# violations}}",
+      "stopped": "Critical stop",
+      "byAssignment": "By assignment: {target}, {frequency}",
+      "youVerify": "you review",
+      "reviewedBy": "Accepted: {name} · {date}",
+      "review": "Accept result",
+      "reviewing": "Accepting…",
+      "reviewed": "Result accepted",
+      "reviewFailed": "Could not accept the result",
+      "open": "Open",
+      "pdfAria": "Download PDF of inspection “{title}”"
+    },
+    "review": {
+      "title": "Assigned inspection — accept the result",
+      "hint": "Check the answers below and press “Accept result”.",
+      "action": "Accept result",
+      "saving": "Accepting…",
+      "done": "Result accepted",
+      "failed": "Could not accept the result",
+      "reviewed": "Result accepted: {name} · {date}"
     }
   }
 }

@@ -1,0 +1,22 @@
+{
+  "problems": [
+    "manage: фильтры ?violations=1 / ?violations=1",
+    "owner-1440 http://localhost:3075/checklists/templates: pageerror Invalid or unexpected token",
+    "owner-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner-mini http://localhost:3075/checklists/assignments: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner-mini http://localhost:3075/checklists/results: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "owner-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef-390 http://localhost:3075/checklists: pageerror Invalid or unexpected token",
+    "headchef-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef-mini http://localhost:3075/checklists: pageerror Invalid or unexpected token",
+    "headchef-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef-mini http://localhost:3075/checklists/results: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "headchef-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+    "cook-mini http://localhost:3075/checklists/results: pageerror Invalid or unexpected token",
+    "cook-mini http://localhost:3075/checklists/templates: pageerror Invalid or unexpected token"
+  ],
+  "startedAt": "2026-10-20T11:02:34.421Z",
+  "finishedAt": "2026-10-20T11:21:28.664Z"
+}

@@ -2582,7 +2582,10 @@
         },
         "checklists": {
           "items": {
-            "builder": "Chek-list konstruktori"
+            "templates": "Shablonlar",
+            "builder": "Konstruktor",
+            "assignments": "Biriktirish",
+            "results": "Natijalar"
           }
         },
         "productionControl": {
@@ -2818,6 +2821,9 @@
       "more": "Boshqalar",
       "knowledge": "Yo‘riqnomalar",
       "checklists": "Chek-listlar",
+      "checklists_templates": "Chek-list shablonlari",
+      "checklists_assignments": "Chek-listlarni biriktirish",
+      "checklists_results": "Tekshiruv natijalari",
       "settings_staff_health": "Tibbiy daftarchalar va o‘qitish",
       "settings_sections_journals": "Jurnallar sozlamalari",
       "settings_sections_staff": "Xodimlar sozlamalari",
@@ -17577,6 +17583,287 @@
         "q": "Nega bog‘liq jurnal to‘plam bilan birga yoqilmadi?",
         "a": "Salomatlik jurnali gigiyena jurnalini takrorlaydi va sukut bo‘yicha o‘chirilgan. Agar tekshiruvchilar aynan uni talab qilsa, yonidagi «Yoqish» tugmasi bilan yoqing."
       }
+    }
+  },
+  "checklistPages": {
+    "common": {
+      "people": "{count, plural, one {# kishi} other {# kishi}}",
+      "status": {
+        "done": "Bajarildi",
+        "overdue": "Muddati o‘tgan",
+        "pending": "Kutilmoqda",
+        "pendingUntil": "Soat {time} gacha kutilmoqda",
+        "paused": "To‘xtatilgan",
+        "off": "Bugun yo‘q",
+        "offNext": "Bugun yo‘q · keyingisi {date}"
+      },
+      "dueToday": "Bugun soat {time} gacha",
+      "dueOn": "Muddat: {date}, soat {time} gacha",
+      "schedule": {
+        "once": "Bir marta: {date}, soat {time} gacha",
+        "daily": "Har kuni soat {time} gacha",
+        "weekly": "Har hafta: {weekday}, soat {time} gacha",
+        "monthly": "Har oy: {day}-sanada, soat {time} gacha"
+      },
+      "frequency": {
+        "once": "bir marta",
+        "daily": "har kuni",
+        "weekly": "har hafta",
+        "monthly": "har oy"
+      }
+    },
+    "templates": {
+      "description": "Tayyor tekshiruv chek-listlari: tekshiruvni boshlang, namunaviysini qo‘shing yoki xodimlarga biriktiring.",
+      "openBuilder": "Konstruktor",
+      "openAssignments": "Biriktirish",
+      "openResults": "Natijalar",
+      "guide": {
+        "title": "Chek-listlar bilan qanday ishlash",
+        "typicalTitle": "1. Namunaviysini qo‘shing",
+        "typicalBody": "Oltita tayyor tekshiruv: SanPiN, HACCP, hududiy boshqaruvchi, bosh texnolog, tekshiruvga tayyorgarlik va HACCP guruhi auditi. «Tashkilotga qo‘shish» sizning nusxangizni yaratadi — uni konstruktorda tahrirlash mumkin.",
+        "runTitle": "2. Tekshiruv o‘tkazing",
+        "runBody": "«Tekshiruvni boshlash» savollarni bo‘limlar bo‘yicha ochadi. Javob bering, so‘ralgan joyda surat biriktiring va «Tekshiruvni yakunlash» tugmasini bosing.",
+        "assignTitle": "3. Biriktiring",
+        "assignBody": "Rahbar «Biriktirish» bo‘limida tekshiruvni kim, qanchalik tez-tez, soat nechagacha o‘tkazishini va natijani kim qabul qilishini tanlaydi. Eslatma Telegramga keladi.",
+        "resultsTitle": "4. Natijalarni ko‘ring",
+        "resultsBody": "«Natijalar» bo‘limida tekshiruvlar tarixi: ballar, qoidabuzarliklar, PDF va «Natijani qabul qilish».",
+        "q1": "Nusxamni tahrirlasam, namunaviy chek-list o‘zgaradimi?",
+        "a1": "Yo‘q. Tashkilotda o‘z nusxasi bor: konstruktordagi tahrirlar faqat uni o‘zgartiradi.",
+        "q2": "Nega menda «Qo‘shish» tugmasi yo‘q?",
+        "a2": "Shablonlarni rahbar qo‘shadi va tahrirlaydi. Chek-listlarga yozish huquqi bor har kim tekshiruv o‘tkaza oladi."
+      },
+      "startFailed": "Tekshiruvni boshlab bo‘lmadi",
+      "addFailed": "Shablonni qo‘shib bo‘lmadi",
+      "added": "«{title}» tashkilotga qo‘shildi",
+      "alreadyAdded": "«{title}» tashkilotda allaqachon bor",
+      "start": "Tekshiruvni boshlash",
+      "continue": "Tekshiruvni davom ettirish",
+      "noRunRight": "Tekshiruv o‘tkazish huquqi yo‘q — rahbarga murojaat qiling",
+      "adding": "Qo‘shilmoqda…",
+      "openInBuilder": "Konstruktorda ochish",
+      "editInBuilder": "Konstruktorda tahrirlash",
+      "assign": "Biriktirish",
+      "allResults": "Barcha tekshiruv natijalari",
+      "assigned": {
+        "title": "Sizga biriktirilgan",
+        "description": "Bugun o‘tkazilishi kerak bo‘lgan chek-listlar. «Tekshiruvni boshlash» tugmasini bosing va savollarga javob bering.",
+        "results": "Natijalar"
+      },
+      "typical": {
+        "title": "Namunaviy chek-listlar",
+        "description": "Oltita tayyor tekshiruv. Keraklilarini tashkilotga qo‘shing — keyin ularni konstruktorda tahrirlash mumkin.",
+        "added": "Qo‘shilgan",
+        "counts": "Bo‘limlar: {sections} · savollar: {questions} · kritik: {critical}",
+        "add": "Tashkilotga qo‘shish",
+        "managerAdds": "Rahbar qo‘shadi"
+      },
+      "organization": {
+        "title": "Tashkilot shablonlari",
+        "description": "Sizning chek-listlaringiz: tekshiruv o‘tkazing, konstruktorda tahrirlang, xodimlarga biriktiring.",
+        "create": "O‘zingiznikini yaratish",
+        "emptyTitle": "Hozircha shablonlar yo‘q",
+        "emptyHintManager": "Yuqoridan namunaviy chek-list qo‘shing yoki konstruktorda o‘zingiznikini yarating.",
+        "emptyHint": "Rahbar shablonlarni qo‘shgach, bu yerda tekshiruvni boshlash mumkin bo‘ladi.",
+        "meta": "Versiya {version} · bo‘limlar: {sections} · savollar: {questions}"
+      }
+    },
+    "builder": {
+      "allResults": "Barcha natijalar",
+      "allResultsHint": "Tekshiruvlar tarixi, ballar, qoidabuzarliklar, PDF va «Natijani qabul qilish»"
+    },
+    "assignments": {
+      "description": "Tekshiruvni kim, qanchalik tez-tez va soat nechagacha o‘tkazadi, natijani kim qabul qiladi. Eslatmalar Telegramga keladi.",
+      "new": "Chek-listni biriktirish",
+      "guide": {
+        "title": "Biriktirish qanday ishlaydi",
+        "whoTitle": "Kimga",
+        "whoBody": "Nuqta — unda ishlaydigan hamma; lavozim — shu lavozimdagi barcha xodimlar; yoki bitta kishi. Ishdan bo‘shatilgan va o‘chirilgan xodimlar olmaydi.",
+        "whenTitle": "Qanchalik tez-tez va soat nechagacha",
+        "whenBody": "Bir marta, har kuni, haftada yoki oyda bir marta — tashkilot vaqt mintaqasi bo‘yicha belgilangan soatgacha. Davr uchun bitta yakunlangan tekshiruv yetarli.",
+        "remindTitle": "Eslatma",
+        "remindBody": "Muddat kuni, muddatdan 2 soat oldin, Telegram ulangan har bir oluvchiga «Chek-listni ochish» tugmali bitta xabar keladi. Tekshiruv o‘tkazilgan bo‘lsa — kelmaydi.",
+        "verifyTitle": "Kim tekshiradi",
+        "verifyBody": "Tekshiruv yakunlangach, tekshiruvchi xabar oladi va «Natijalar» bo‘limida «Natijani qabul qilish» tugmasini bosadi.",
+        "q1": "To‘xtatib qo‘ysam nima bo‘ladi?",
+        "a1": "Eslatmalar kelmaydi, chek-list «Sizga biriktirilgan» ro‘yxatida chiqmaydi. Qayta yoqsangiz — eng yaqin muddatdan davom etadi.",
+        "q2": "Bular TasksFlow vazifalarimi?",
+        "a2": "Yo‘q. Chek-list biriktirishlari WeSetup ichida: eslatmalar WeSetup botidan keladi, TasksFlow’da vazifa yaratilmaydi."
+      },
+      "actionFailed": "Amalni bajarib bo‘lmadi",
+      "paused": "Biriktirish to‘xtatildi",
+      "resumed": "Biriktirish qayta ishlamoqda",
+      "deleted": "Biriktirish o‘chirildi. Tarixda qolgan tekshiruvlar: {count}",
+      "target": {
+        "building": "Nuqta «{name}»",
+        "position": "Lavozim «{name}»",
+        "user": "Xodim: {name}"
+      },
+      "targetMissing": "o‘chirilgan",
+      "verifier": "Tekshiradi: {name}",
+      "noVerifier": "Tekshiruvchi tanlanmagan",
+      "remindOn": "Telegramda muddatdan 2 soat oldin eslatma",
+      "remindOff": "Eslatmalarsiz",
+      "warnNoAccess": "{count, plural, one {# kishi} other {# kishi}} tekshiruv o‘tkaza olmaydi",
+      "warnNoTelegram": "{count, plural, one {# kishi} other {# kishi}} Telegramsiz",
+      "templateArchived": "Shablon arxivda",
+      "edit": "Tahrirlash",
+      "pause": "To‘xtatish",
+      "resume": "Yoqish",
+      "delete": "O‘chirish",
+      "deleteAria": "«{title}» biriktirishini o‘chirish",
+      "openTemplates": "Shablonlarni ochish",
+      "list": {
+        "title": "Biriktirishlar",
+        "description": "{count, plural, =0 {Hozircha biriktirishlar yo‘q} one {# ta biriktirish} other {# ta biriktirish}}",
+        "emptyTitle": "Hozircha biriktirishlar yo‘q",
+        "emptyHint": "«Chek-listni biriktirish» tugmasini bosing: shablon, kimga, qanchalik tez-tez va soat nechagacha — qolganini aytib beramiz.",
+        "emptyNoTemplates": "Avval «Shablonlar» bo‘limida shablon qo‘shing — namunaviy yoki o‘zingizniki."
+      },
+      "confirmDelete": {
+        "title": "Biriktirish o‘chirilsinmi?",
+        "description": "«{title}» endi biriktirilmaydi.",
+        "noReminders": "Telegramdagi eslatmalar boshqa kelmaydi",
+        "historyKept": "O‘tkazilgan tekshiruvlar «Natijalar»da qoladi",
+        "confirm": "O‘chirish"
+      },
+      "dialog": {
+        "title": "Chek-listni biriktirish",
+        "editTitle": "Biriktirishni tahrirlash",
+        "subtitle": "Besh qadam. Pastda chek-listni kim olishi va eslatma qachon kelishi ko‘rinadi.",
+        "steps": {
+          "template": "Shablon",
+          "templateHint": "Qaysi chek-list o‘tkaziladi.",
+          "target": "Kimga",
+          "targetHint": "Nuqta — unda ishlaydigan hamma; lavozim — shu lavozimdagi hamma; yoki bitta xodim.",
+          "schedule": "Qanchalik tez-tez va soat nechagacha",
+          "scheduleHint": "Vaqt tashkilot vaqt mintaqasi bo‘yicha.",
+          "verifier": "Kim tekshiradi",
+          "verifierHint": "Tekshiruv yakunlanganda xabar oladi va natijani qabul qiladi. Rahbar yoki mudirani tavsiya qilamiz.",
+          "remind": "Telegramda eslatish",
+          "remindHint": "Muddat kuni Telegram ulangan har bir oluvchiga bitta xabar."
+        },
+        "noTemplates": "Tashkilotda hozircha shablonlar yo‘q.",
+        "openTemplates": "«Shablonlar»ni ochish",
+        "templatePlaceholder": "Shablonni tanlang",
+        "target": {
+          "buildings": "Nuqtalar",
+          "positions": "Lavozimlar",
+          "people": "Xodimlar",
+          "buildingSub": "Nuqtada ishlaydigan hamma",
+          "positionSub": "Lavozimdagi barcha xodimlar",
+          "placeholder": "Nuqta, lavozim yoki xodimni tanlang",
+          "search": "Nuqta, lavozim yoki ismni topish"
+        },
+        "noPosition": "Lavozimsiz",
+        "noTelegramShort": "Telegram yo‘q",
+        "nothingFound": "Hech narsa topilmadi",
+        "frequency": {
+          "once": "Bir marta",
+          "daily": "Har kuni",
+          "weekly": "Haftada bir",
+          "monthly": "Oyda bir"
+        },
+        "onceDate": "Sana",
+        "weekday": "Hafta kuni",
+        "monthDay": "Oyning sanasi",
+        "monthDayShort": "Qisqa oyda — oxirgi kun.",
+        "dueTime": "Soat nechagacha",
+        "verifier": {
+          "recommended": "Tavsiya: rahbariyat",
+          "others": "Mumkin",
+          "placeholder": "Tekshiruvchini tanlang",
+          "search": "Ism yoki lavozim bo‘yicha topish",
+          "none": "Tekshiruvchisiz"
+        },
+        "remindLabel": "Oluvchilarga Telegramda eslatish",
+        "remindExplain": "Muddat kuni taxminan soat {time} da (muddatdan 2 soat oldin) «Chek-listni ochish» tugmali bitta xabar keladi. Tekshiruv o‘tkazilgan bo‘lsa — kelmaydi.",
+        "live": {
+          "recipients": "Oluvchilar: {count, plural, one {# kishi} other {# kishi}}",
+          "first": "Birinchi muddat — {date}, soat {time} gacha.",
+          "remind": "Telegramdagi eslatma {date} kuni taxminan soat {time} da keladi.",
+          "noRemind": "Telegramda eslatmalarsiz.",
+          "chooseTarget": "Kimga biriktirishni tanlang — bu yerda chek-listni necha kishi olishi va eslatma qachon kelishi ko‘rinadi."
+        },
+        "andMore": "va yana {count}",
+        "warn": {
+          "noAccess": "{count, plural, one {# kishi} other {# kishi}} chek-list tekshiruvini o‘tkaza olmaydi: {names}.",
+          "fixAccess": "Jurnallarga kirishni ochish",
+          "noTelegram": "{count, plural, one {# kishi} other {# kishi}} Telegram ulanmagan — eslatma olmaydi: {names}.",
+          "fixTelegram": "Xodimlar"
+        },
+        "cancel": "Bekor qilish",
+        "saving": "Saqlanmoqda…",
+        "save": "Saqlash",
+        "assign": "Biriktirish",
+        "saveFailed": "Biriktirishni saqlab bo‘lmadi",
+        "updated": "Biriktirish saqlandi",
+        "created": "Chek-list biriktirildi. Oluvchilar: {count, plural, one {# kishi} other {# kishi}}"
+      }
+    },
+    "results": {
+      "description": "Tekshiruvlar tarixi: ballar, qoidabuzarliklar, PDF. Tekshiruvchi natijani qabul qiladi.",
+      "toTemplates": "Shablonlarga",
+      "guide": {
+        "title": "Natijalarni qanday o‘qish",
+        "listTitle": "Tarix",
+        "listBody": "Har bir tekshiruv — sana, kim o‘tkazgani, ballar va qoidabuzarliklar. Qoralama — boshlangan, lekin yakunlanmagan tekshiruv.",
+        "reviewTitle": "Natijani qabul qilish",
+        "reviewBody": "Biriktirish bo‘yicha tekshiruvchi (yoki rahbar) javoblarni ko‘rib, «Natijani qabul qilish» tugmasini bosadi — ro‘yxatda kim va qachon qabul qilgani ko‘rinadi.",
+        "pdfTitle": "PDF",
+        "pdfBody": "«PDF» tekshiruvni javoblar va suratlar bilan yuklab oladi — nazorat organlari va arxiv uchun."
+      },
+      "filters": {
+        "title": "Filtrlar",
+        "description": "Shablon, davr va faqat qoidabuzarlikli tekshiruvlar.",
+        "template": "Shablon",
+        "allTemplates": "Barcha shablonlar",
+        "archived": "arxivda",
+        "period": "Davr",
+        "periods": {
+          "7": "7 kun",
+          "30": "30 kun",
+          "90": "90 kun",
+          "all": "Butun davr"
+        },
+        "violationsOnly": "Faqat qoidabuzarliklar bilan"
+      },
+      "history": {
+        "title": "Tekshiruvlar tarixi",
+        "description": "{count, plural, =0 {Tekshiruvlar yo‘q} one {# ta tekshiruv} other {# ta tekshiruv}}",
+        "waiting": "Qabulni kutmoqda: {count}",
+        "emptyTitle": "Hozircha tekshiruvlar yo‘q",
+        "emptyHint": "«Shablonlar»ni oching va «Tekshiruvni boshlash» tugmasini bosing — natija shu yerda paydo bo‘ladi.",
+        "emptyFilteredTitle": "Hech narsa topilmadi",
+        "emptyFilteredHint": "Boshqa shablon yoki davrni tanlang.",
+        "reset": "Filtrlarni tozalash"
+      },
+      "status": {
+        "completed": "Yakunlangan",
+        "draft": "Qoralama"
+      },
+      "version": "versiya {version}",
+      "score": "{possible} balldan {earned} · {percent}%",
+      "scoreNone": "Ballsiz",
+      "violations": "{count, plural, =0 {Qoidabuzarliksiz} one {# ta qoidabuzarlik} other {# ta qoidabuzarlik}}",
+      "stopped": "Kritik to‘xtatish",
+      "byAssignment": "Biriktirish bo‘yicha: {target}, {frequency}",
+      "youVerify": "siz tekshirasiz",
+      "reviewedBy": "Qabul qildi: {name} · {date}",
+      "review": "Natijani qabul qilish",
+      "reviewing": "Qabul qilinmoqda…",
+      "reviewed": "Natija qabul qilindi",
+      "reviewFailed": "Natijani qabul qilib bo‘lmadi",
+      "open": "Ochish",
+      "pdfAria": "«{title}» tekshiruvining PDF faylini yuklab olish"
+    },
+    "review": {
+      "title": "Biriktirish bo‘yicha tekshiruv — natijani qabul qiling",
+      "hint": "Quyidagi javoblarni ko‘ring va «Natijani qabul qilish» tugmasini bosing.",
+      "action": "Natijani qabul qilish",
+      "saving": "Qabul qilinmoqda…",
+      "done": "Natija qabul qilindi",
+      "failed": "Natijani qabul qilib bo‘lmadi",
+      "reviewed": "Natija qabul qilindi: {name} · {date}"
     }
   }
 }

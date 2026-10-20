@@ -1,0 +1,7 @@
+{
+  "problems": [
+    "flow: page.waitForURL: Timeout 120000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/checklists/inspections/**\" until \"load\"\n============================================================"
+  ],
+  "startedAt": "2026-10-19T19:25:27.158Z",
+  "finishedAt": "2026-10-19T19:29:43.611Z"
+}

@@ -1,0 +1,6 @@
+[{"email":"waiter2@haccp.local","journalAccessMigrated":false}]
+[{"email":"hotcook1@haccp.local","telegramChatId":null}]
+[{"id":"cmvfq4fip00066g9meqxeqbtl"}]
+[{"id":"cmvfq2e2600036g9mc6sy7z2z"}]
+[{"id":"cmvfn57fm0004189mbb0u3gxu","title":"Соответствие СанПиН 2.3/2.4.4282-26"}]
+[{"count":"0"}]

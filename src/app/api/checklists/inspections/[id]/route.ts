@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { notifyChecklistVerifier } from "@/lib/checklist-assignments.server";
 import { checklistAnswersSchema, checklistDefinitionSchema } from "@/lib/custom-checklists";
 import { checklistEvidenceSchema, checklistInstancesSchema } from "@/lib/custom-checklist-rules";
 import { ChecklistRunError, evaluateChecklistRun, expandChecklistDefinition, pruneChecklistRun, resolveChecklistResult, validateChecklistRun } from "@/lib/custom-checklist-runtime";
@@ -15,7 +16,7 @@ const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.Inp
 export async function GET(_request: Request, ctx: Ctx) {
   const auth = await requireChecklistAccess(); if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
-  const inspection = await db.checklistInspection.findFirst({ where: { id, organizationId: auth.organizationId, ...(auth.canManage ? {} : { createdById: auth.session.user.id }) } });
+  const inspection = await db.checklistInspection.findFirst({ where: { id, ...checklistInspectionReadWhere({ organizationId: auth.organizationId, canManage: auth.canManage, userId: auth.session.user.id }) } });
   if (!inspection) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
   const definition = expandChecklistDefinition(checklistDefinitionSchema.parse(inspection.snapshot), checklistInstancesSchema.parse(inspection.categoryInstances ?? {}));
   const result = resolveChecklistResult(definition,checklistAnswersSchema.parse(inspection.answers),inspection.status === "completed"?inspection.result:undefined);
@@ -55,5 +56,15 @@ export async function PATCH(request: Request, ctx: Ctx) {
   });
   if ("error" in outcome) return NextResponse.json({ error: outcome.error }, { status: outcome.status });
   await recordAuditLog({ request, session: auth.session, organizationId: auth.organizationId, action: completing ? evaluated.stopped ? "checklist.inspection_critical_complete" : "checklist.inspection_complete" : "checklist.inspection_save", entity: "ChecklistInspection", entityId: id, details: { score: outcome.score, critical: outcome.result.critical.map(item => item.questionId), violations: outcome.result.violations.length, completedById: completing ? auth.session.user.id : null } });
+  // Проверка по назначению завершена — проверяющему в Telegram, после ответа.
+  if (completing && outcome.inspection.assignmentId) {
+    after(async () => {
+      try {
+        const outcome = await notifyChecklistVerifier(id);
+        console.info(`[checklists] verifier notify ${id}: ${outcome.sent ? "sent" : outcome.reason ?? "not-sent"}`);
+      }
+      catch (error) { console.error("[checklists] verifier notify failed", error); }
+    });
+  }
   return NextResponse.json(outcome);
 }

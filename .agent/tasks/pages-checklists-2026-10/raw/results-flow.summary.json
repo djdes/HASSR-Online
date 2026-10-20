@@ -1,0 +1,7 @@
+{
+  "problems": [
+    "cook http://localhost:3075/checklists/templates: pageerror Invalid or unexpected token"
+  ],
+  "startedAt": "2026-10-19T20:39:46.766Z",
+  "finishedAt": "2026-10-19T20:48:49.985Z"
+}

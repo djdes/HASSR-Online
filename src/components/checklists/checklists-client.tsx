@@ -1,10 +1,10 @@
 "use client";
 
-import { formatChecklistTimestamp } from "@/lib/custom-checklist-display";
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Copy, Play, Plus, Pencil, Archive, Eye } from "lucide-react";
+import { Copy, Play, Plus, Pencil, Archive, Eye, ClipboardCheck, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,11 +13,11 @@ import { ChecklistBuilder, type ChecklistTemplateItem } from "@/components/check
 import { ChecklistQuestionForm } from "@/components/checklists/checklist-question-form";
 import type { ChecklistAnswers } from "@/lib/custom-checklists";
 
-type Inspection = { id: string; title: string; status: string; templateVersion: number; createdAt: string; createdByName: string; completedByName: string | null };
 export function ChecklistsClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const t = useTranslations("checklistPages.builder");
   const [templates, setTemplates] = useState<ChecklistTemplateItem[]>([]);
-  const [inspections, setInspections] = useState<Inspection[]>([]);
   const [canManage, setCanManage] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -29,14 +29,24 @@ export function ChecklistsClient() {
   const load = useCallback(async () => {
     setError("");
     try {
-      const responses = await Promise.all([fetch("/api/checklists/templates", { cache: "no-store" }), fetch("/api/checklists/inspections", { cache: "no-store" })]);
-      const bodies = await Promise.all(responses.map((response) => response.json()));
-      if (!responses.every((response) => response.ok)) throw new Error(bodies.find((body) => body.error)?.error || "Не удалось загрузить чек-листы");
-      setTemplates(bodies[0].templates); setCanManage(bodies[0].canManage); setInspections(bodies[1].inspections);
+      // История проверок — на странице «Результаты» (`/checklists/results`).
+      const response = await fetch("/api/checklists/templates", { cache: "no-store" });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Не удалось загрузить чек-листы");
+      setTemplates(body.templates); setCanManage(body.canManage);
     } catch (err) { setError(err instanceof Error ? err.message : "Не удалось загрузить чек-листы"); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  // «Изменить в конструкторе» со страницы «Шаблоны»: `?edit=<id>` или `?edit=new`.
+  const editParam = searchParams.get("edit");
+  useEffect(() => {
+    if (!editParam || loading || !canManage) return;
+    const target = editParam === "new" ? null : templates.find((template) => template.id === editParam);
+    if (target === undefined) return;
+    setEditing(target);
+    router.replace("/checklists", { scroll: false });
+  }, [editParam, loading, canManage, templates, router]);
   async function action(template: ChecklistTemplateItem, operation: "start" | "copy" | "archive") {
     setBusy(true);
     try {
@@ -55,7 +65,7 @@ export function ChecklistsClient() {
     <div className="grid gap-4 md:grid-cols-2">{templates.map((template) => <article key={template.id} className="space-y-4 rounded-3xl border border-[#ececf4] bg-white p-5"><div><h3 className="text-[16px] font-semibold text-[#0b1024]">{template.title}</h3><p className="mt-1 text-[13px] text-[#6f7282]">Версия {template.version} · {template.definition.sections.length} разделов</p></div>
       <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => void action(template, "start")}><Play className="size-4" />Начать проверку</Button><Button variant="outline" onClick={() => { setPreviewing(template); setPreviewAnswers({}); }}><Eye className="size-4" />Превью</Button>{canManage ? <><Button variant="outline" aria-label={`Редактировать ${template.title}`} onClick={() => setEditing(template)}><Pencil className="size-4" /></Button><Button variant="outline" aria-label={`Скопировать ${template.title}`} disabled={busy} onClick={() => void action(template, "copy")}><Copy className="size-4" /></Button><Button variant="outline" aria-label={`Архивировать ${template.title}`} disabled={busy} onClick={() => setArchiving(template)}><Archive className="size-4" /></Button></> : null}</div>
     </article>)}</div>
-    <section className="space-y-3"><h2 className="text-[18px] font-semibold text-[#0b1024]">История проверок</h2>{inspections.map((inspection) => <Link key={inspection.id} href={`/checklists/inspections/${inspection.id}`} className="flex flex-wrap justify-between gap-2 rounded-2xl border border-[#ececf4] bg-white p-4 text-[14px] transition-colors hover:bg-[#f5f6ff]"><span>{inspection.title} · версия {inspection.templateVersion}<span className="mt-1 block text-[12px] text-[#6f7282]">{formatChecklistTimestamp(inspection.createdAt)} · {inspection.createdByName}{inspection.completedByName ? ` · Завершил: ${inspection.completedByName}` : ""}</span></span><span className="text-[#3848c7]">{inspection.status === "completed" ? "Завершена" : "Черновик"}</span></Link>)}{!inspections.length && !loading ? <p className="text-[14px] text-[#6f7282]">Проверок пока нет.</p> : null}</section>
+    <Link href="/checklists/results" data-all-results className="group flex flex-wrap items-center gap-3 rounded-3xl border border-[#ececf4] bg-white p-5 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"><span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]"><ClipboardCheck className="size-5" /></span><span className="min-w-0 flex-1"><span className="block text-[16px] font-semibold text-[#0b1024]">{t("allResults")}</span><span className="block text-[13px] text-[#6f7282]">{t("allResultsHint")}</span></span><ArrowRight className="size-5 text-[#5566f6] transition-transform duration-150 group-hover:translate-x-0.5" /></Link>
     {editing !== undefined ? <ChecklistBuilder template={editing} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); void load(); }} /> : null}
     <Dialog open={!!previewing} onOpenChange={(open) => { if (!open) setPreviewing(null); }}><DialogContent className="flex max-h-[90dvh] flex-col overflow-hidden rounded-3xl sm:max-w-[800px]"><DialogHeader><DialogTitle>Предпросмотр: {previewing?.title}</DialogTitle></DialogHeader><div className="overflow-y-auto">{previewing ? <ChecklistQuestionForm definition={previewing.definition} answers={previewAnswers} onChange={setPreviewAnswers} /> : null}</div></DialogContent></Dialog>
     <ConfirmDialog open={!!archiving} onClose={() => setArchiving(null)} onConfirm={async () => { if (archiving) await action(archiving, "archive"); }} title="Архивировать шаблон?" description="Созданные по нему проверки останутся в истории." confirmLabel="Архивировать" />

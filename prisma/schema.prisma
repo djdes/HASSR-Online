@@ -59,6 +59,7 @@ model Organization {
   checklistTemplates            ChecklistTemplate[]
   checklistInspections          ChecklistInspection[]
   checklistAttachments          ChecklistAttachment[]
+  checklistAssignments          ChecklistAssignment[]
   id                             String                         @id @default(cuid())
   /// Автопродление подписки включено.
   ///
@@ -575,8 +576,50 @@ model ChecklistTemplate {
   updatedAt      DateTime              @updatedAt
   inspections    ChecklistInspection[]
   attachments    ChecklistAttachment[]
+  assignments    ChecklistAssignment[]
 
   @@index([organizationId, archived])
+}
+
+/// Назначение чек-листа («Чек-листы → Назначение», 2026-10-19): шаблон → кому
+/// (точка / должность / человек) → как часто и до скольки → кто проверяет →
+/// напоминание в Telegram. Без TasksFlow: напоминания шлёт крон
+/// `/api/cron/checklist-reminders`, выполнение — проверка с `assignmentId`.
+/// Периоды и статусы считает `src/lib/checklist-assignments.ts`.
+model ChecklistAssignment {
+  id                    String                @id @default(cuid())
+  organizationId        String
+  organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateId            String
+  template              ChecklistTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  /// Кому: "building" (люди точки) | "position" (должность) | "user" (человек).
+  targetKind            String
+  targetId              String
+  /// "once" | "daily" | "weekly" | "monthly".
+  frequency             String
+  /// once: день `YYYY-MM-DD` по часовому поясу организации.
+  onceDate              String?
+  /// weekly: 1 = пн … 7 = вс.
+  weekday               Int?
+  /// monthly: 1…31; в коротком месяце — последний день.
+  monthDay              Int?
+  /// Срок «ЧЧ:ММ» в день периода по часовому поясу организации.
+  dueTime               String
+  /// Кто проверяет результат (принимает проверку); null — никто отдельно.
+  verifierUserId        String?
+  remindTelegram        Boolean               @default(true)
+  active                Boolean               @default(true)
+  createdById           String
+  createdByName         String
+  /// Ключ периода, за который напоминание уже ушло: повтор крона не дублирует.
+  lastReminderPeriodKey String?
+  lastRemindedAt        DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  inspections           ChecklistInspection[]
+
+  @@index([organizationId, active])
+  @@index([templateId])
 }
 
 model ChecklistInspection {
@@ -601,8 +644,16 @@ model ChecklistInspection {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   attachments    ChecklistAttachment[]
+  /// Проверка по назначению (2026-10-19); удаление назначения историю не трогает.
+  assignmentId   String?
+  assignment     ChecklistAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  /// «Принять результат»: проверяющий по назначению или руководитель.
+  reviewedAt     DateTime?
+  reviewedById   String?
+  reviewedByName String?
 
   @@index([organizationId, createdAt])
+  @@index([assignmentId])
 }
 
 model ChecklistAttachment {

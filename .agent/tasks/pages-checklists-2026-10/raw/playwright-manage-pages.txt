@@ -1,0 +1,98 @@
+  ✓ manage: период daily:2026-10-20 отмечен — повторного напоминания нет
+  ✓ manage: «Пауза» → «На паузе» (dryRun молчит) → «Включить»
+  ✓ manage: правка сохранена: Соответствие СанПиН 2.3/2.4.4282-26 Ожидает до 15:02 Сотрудник: Волкова Анна Дмитриевна · 1 человек Каждую неделю: вторник до 15:02 Проверяю
+  ✓ manage: удалено через ConfirmDialog, тост «Назначение удалено. Проверок по нему в истории: 0»
+  ✗ manage: фильтры ?violations=1 / ?violations=1
+== pages owner-1440
+  ✓ owner-1440 /checklists/templates → /checklists/templates «Шаблоны» overflow 0 меню templates*,builder,assignments,results
+  ✓ owner-1440 /checklists → /checklists «Конструктор чек-листов» overflow 0 меню templates,builder*,assignments,results
+  ✓ owner-1440 /checklists/assignments → /checklists/assignments «Назначение» overflow 0 меню templates,builder,assignments*,results
+  ✓ owner-1440 /checklists/results → /checklists/results «Результаты» overflow 0 меню templates,builder,assignments,results*
+  ✓ owner-1440: меню раздела templates,builder,assignments,results
+  ✗ owner-1440 http://localhost:3075/checklists/templates: pageerror Invalid or unexpected token
+  ✓ owner-1440: ссылки по разделу на «Шаблонах»: /checklists, /checklists/assignments, /checklists/results
+== pages owner-390
+  ✓ owner-390 /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✓ owner-390 /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✓ owner-390 /checklists/assignments → /checklists/assignments «Назначение» overflow 0
+  ✓ owner-390 /checklists/results → /checklists/results «Результаты» overflow 0
+== pages owner-mini
+  ✗ owner-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ owner-mini /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✓ owner-mini /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✗ owner-mini http://localhost:3075/checklists/assignments: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ owner-mini /checklists/assignments → /checklists/assignments «Назначение» overflow 0
+  ✗ owner-mini http://localhost:3075/checklists/results: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ owner-mini /checklists/results → /checklists/results «Результаты» overflow 0
+  ✗ owner-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ owner-mini: меню раздела в Mini App: СБ / Столовая «Берёзка» / Добавить логотип / Чек-листы / Шаблоны / Конструктор / Назначение / Результаты
+== pages headchef-1440
+  ✓ headchef-1440 /checklists/templates → /checklists/templates «Шаблоны» overflow 0 меню templates*,builder,results
+  ✓ headchef-1440 /checklists → /checklists «Конструктор чек-листов» overflow 0 меню templates,builder*,results
+  ✓ headchef-1440 /checklists/assignments → /checklists/templates «Шаблоны» overflow 0 меню templates*,builder,results
+  ✓ headchef-1440 /checklists/results → /checklists/results «Результаты» overflow 0 меню templates,builder,results*
+  ✓ headchef-1440: меню раздела templates,builder,results
+  ✓ headchef-1440: ссылки по разделу на «Шаблонах»: /checklists, /checklists/results
+== pages headchef-390
+  ✓ headchef-390 /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✗ headchef-390 http://localhost:3075/checklists: pageerror Invalid or unexpected token
+  ✓ headchef-390 /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✓ headchef-390 /checklists/assignments → /checklists/templates «Шаблоны» overflow 0
+  ✓ headchef-390 /checklists/results → /checklists/results «Результаты» overflow 0
+== pages headchef-mini
+  ✗ headchef-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ headchef-mini /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✗ headchef-mini http://localhost:3075/checklists: pageerror Invalid or unexpected token
+  ✓ headchef-mini /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✗ headchef-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ headchef-mini /checklists/assignments → /checklists/templates «Шаблоны» overflow 0
+  ✗ headchef-mini http://localhost:3075/checklists/results: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ headchef-mini /checklists/results → /checklists/results «Результаты» overflow 0
+  ✗ headchef-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ headchef-mini: меню раздела в Mini App: СБ
+Столовая «Берёзка» / Чек-листы / Шаблоны / Конструктор / Результаты
+== pages cook-1440
+  ✓ cook-1440 /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✓ cook-1440 /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✓ cook-1440 /checklists/assignments → /checklists/templates «Шаблоны» overflow 0
+  ✓ cook-1440 /checklists/results → /checklists/results «Результаты» overflow 0
+  ✓ cook-1440: меню раздела (сайдбара нет — один раздел)
+  ✓ cook-1440: ссылки по разделу на «Шаблонах»: /checklists, /checklists/results
+== pages cook-390
+  ✓ cook-390 /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✓ cook-390 /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✓ cook-390 /checklists/assignments → /checklists/templates «Шаблоны» overflow 0
+  ✓ cook-390 /checklists/results → /checklists/results «Результаты» overflow 0
+== pages cook-mini
+  ✗ cook-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ cook-mini /checklists/templates → /checklists/templates «Шаблоны» overflow 0
+  ✓ cook-mini /checklists → /checklists «Конструктор чек-листов» overflow 0
+  ✗ cook-mini http://localhost:3075/checklists/templates: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client bran
+  ✓ cook-mini /checklists/assignments → /checklists/templates «Шаблоны» overflow 0
+  ✗ cook-mini http://localhost:3075/checklists/results: pageerror Invalid or unexpected token
+  ✓ cook-mini /checklists/results → /checklists/results «Результаты» overflow 0
+  ✗ cook-mini http://localhost:3075/checklists/templates: pageerror Invalid or unexpected token
+  ✓ cook-mini: нет кнопки (один раздел)
+
+ПРОБЛЕМ: 16
+exit 1

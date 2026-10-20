@@ -416,8 +416,28 @@ const JOURNALS_MENU: NavMenuGroup[] = [
   },
 ];
 
+/**
+ * «Чек-листы» (скан 82, лист 3; решения раздела 7, 2026-10-19): готовые
+ * шаблоны → конструктор → назначение (только руководителю) → результаты.
+ * Корень раздела — «Шаблоны»: новичок сначала видит готовые чек-листы.
+ * Страница проверки (`/checklists/inspections/<id>`) — глубина «Результатов».
+ */
 const CHECKLISTS_MENU: NavMenuGroup[] = [
-  { label: null, items: [{ id: "builder", icon: "ListChecks", href: "/checklists", access: CHECKLISTS_FACT }] },
+  {
+    label: null,
+    items: [
+      { id: "templates", icon: "LayoutTemplate", href: "/checklists/templates", access: CHECKLISTS_FACT },
+      { id: "builder", icon: "ListChecks", href: "/checklists", access: CHECKLISTS_FACT },
+      { id: "assignments", icon: "CalendarRange", href: "/checklists/assignments", access: ADMIN },
+      {
+        id: "results",
+        icon: "ClipboardCheck",
+        href: "/checklists/results",
+        access: CHECKLISTS_FACT,
+        match: ["/checklists/inspections"],
+      },
+    ],
+  },
 ];
 
 const BILLING_MENU: NavMenuGroup[] = [
@@ -541,7 +561,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     key: "checklists",
     icon: "ListChecks",
-    tabs: [{ id: "main", label: "main", href: "/checklists", access: CHECKLISTS_FACT }],
+    tabs: [{ id: "main", label: "main", href: "/checklists/templates", access: CHECKLISTS_FACT }],
     menu: CHECKLISTS_MENU,
   },
   {

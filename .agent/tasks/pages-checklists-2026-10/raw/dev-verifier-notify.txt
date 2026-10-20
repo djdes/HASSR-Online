@@ -1,0 +1,4 @@
+ PATCH /api/checklists/inspections/cmvfq4fip00066g9meqxeqbtl 200 in 811ms (compile: 96ms, proxy.ts: 38ms, render: 678ms)
+ PATCH /api/checklists/inspections/cmvfq4fip00066g9meqxeqbtl 200 in 625ms (compile: 85ms, proxy.ts: 160ms, render: 379ms)
+[checklists] verifier notify cmvfq4fip00066g9meqxeqbtl: no-telegram
+ POST /api/checklists/inspections/cmvfq4fip00066g9meqxeqbtl/review 200 in 22.2s (compile: 20.0s, proxy.ts: 1558ms, render: 568ms)

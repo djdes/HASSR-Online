@@ -1,0 +1,37 @@
+{
+  "task": "pages-checklists-2026-10",
+  "branch": "feat/pages-checklists",
+  "base": "76c01cc4",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1.1": { "status": "PASS", "evidence": ["src/app/(dashboard)/checklists/templates/page.tsx", "raw/tests-nav.txt"] },
+    "AC1.2": { "status": "PASS", "evidence": ["raw/results-flow.json#sanpinAdded,sanpinButtons", "raw/flow-01-owner-templates-before.png", "raw/flow-02-owner-templates-added.png"] },
+    "AC1.3": { "status": "PASS", "evidence": ["raw/results-flow.json#dialogTemplate", "raw/flow-03-dialog-warnings.png"] },
+    "AC1.4": { "status": "PASS", "evidence": ["raw/results-flow.json#cookAssignedBefore,inspectionAssignmentId", "raw/flow-06-cook-assigned.png"] },
+    "AC2.1": { "status": "PASS", "evidence": ["prisma/schema.prisma", "raw/schema-review.sql", "raw/schema-apply.txt"] },
+    "AC2.2": { "status": "PASS", "evidence": ["src/lib/checklist-assignments.test.ts", "src/lib/checklist-results.test.ts", "raw/tests-nav.txt"] },
+    "AC2.3": { "status": "PASS", "evidence": ["raw/results-api.json", "src/app/api/checklists/assignments/route.ts", "src/app/api/checklists/assignments/[id]/route.ts"] },
+    "AC2.4": { "status": "PASS", "evidence": ["no TasksFlow imports in new modules"] },
+    "AC3.1": { "status": "PASS", "evidence": ["src/app/(dashboard)/checklists/assignments/page.tsx", "src/lib/app-nav.test.ts", "raw/results-pages.json"] },
+    "AC3.2": { "status": "PASS", "evidence": ["raw/results-flow.json#rowText,rowAfter", "raw/results-manage.json", "raw/manage-01-paused.png", "raw/manage-03-confirm-delete.png"] },
+    "AC3.3": { "status": "PASS", "evidence": ["raw/flow-04-dialog-cook.png", "raw/results-flow.json#liveHint"] },
+    "AC3.4": { "status": "PASS", "evidence": ["raw/flow-03-dialog-warnings.png", "raw/results-flow.json#warningTargetHint,warnLinks"] },
+    "AC4.1": { "status": "PASS", "evidence": ["src/app/api/cron/checklist-reminders/route.ts", "src/app/api/cron/checklist-reminders/route.test.ts", "raw/results-api.json#cronNoSecret,cronWrongSecret"] },
+    "AC4.2": { "status": "PASS", "evidence": ["raw/results-flow.json#cronDryRunBefore,cronDryRunAfter", "raw/results-manage.json#dryRunAfterMark,dryRunPaused", "src/lib/checklist-assignments.test.ts"] },
+    "AC4.3": { "status": "PASS", "evidence": ["src/lib/checklist-assignments.server.test.ts", "raw/dev-verifier-notify.txt"] },
+    "AC4.4": { "status": "PASS", "evidence": ["src/lib/checklist-assignments.test.ts", "src/app/api/cron/checklist-reminders/route.test.ts"] },
+    "AC5.1": { "status": "PASS", "evidence": ["src/app/(dashboard)/checklists/results/page.tsx", "raw/flow-09-chef-results.png"] },
+    "AC5.2": { "status": "PASS", "evidence": ["raw/results-manage.json#violationsUrl,periodUrl", "raw/manage-04-results-violations.png"] },
+    "AC5.3": { "status": "PASS", "evidence": ["raw/results-flow.json#chefRowAfter,chefInspectionBar", "raw/flow-10-chef-reviewed.png", "raw/flow-11-chef-inspection.png"] },
+    "AC6.1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "raw/i18n-check.txt"] },
+    "AC6.2": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "raw/results-pages.json"], "note": "у повара один раздел — сайдбара нет по правилу showSidebar; переходы ссылками на страницах" },
+    "AC6.3": { "status": "PASS", "evidence": ["raw/tests-nav.txt"] },
+    "AC7.1": { "status": "PASS", "evidence": ["raw/playwright-flow.txt", "raw/playwright-manage-pages.txt", "raw/results-pages.json", "C:\\Users\\Two\\wesetup-backup-2026-10-17\\pages-shots\\checklists\\"] },
+    "AC7.2": { "status": "PASS", "evidence": ["evidence.md#Предложение «Что нового»"] }
+  },
+  "waitingForPeople": [
+    "crontab: 0 * * * * curl -s -m 120 -H \"Authorization: Bearer <CRON_SECRET>\" http://127.0.0.1:3002/api/cron/checklist-reminders",
+    "вычитка вопросов 6 типовых шаблонов технологом",
+    "решение: меню раздела для людей с одним разделом"
+  ]
+}
