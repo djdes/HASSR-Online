@@ -669,6 +669,10 @@ export default async function LandingPage() {
               </>
             )}
           </div>
+
+          <p className="hero-consultation-note mt-6 max-w-[72ch] text-[13px] leading-[1.6] text-[#6f7282] sm:mx-auto">
+            {copy("landing.hero.consultationNote")}
+          </p>
         </div>
       </section>
 

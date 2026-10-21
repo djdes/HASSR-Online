@@ -5224,7 +5224,8 @@
       "scanCaption": "Meni skanerlang"
     },
     "hero": {
-      "title": "<highlight>SanPiN va HACCP</highlight> uchun elektron jurnallar"
+      "title": "<highlight>SanPiN va HACCP</highlight> uchun elektron jurnallar",
+      "consultationNote": "Rospotrebnadzor mutaxassislari va yetakchi HACCP auditorlari maslahatlari asosida ishlab chiqilgan"
     },
     "openGraph": {
       "title": "Elektron HACCP va SanPiN jurnallari",

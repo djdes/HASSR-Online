@@ -5225,7 +5225,8 @@ export type MessageContract = {
       "scanCaption": "Сканируйте меня"
     },
     "hero": {
-      "title": "Электронные журналы <highlight>СанПиН и ХАССП</highlight>"
+      "title": "Электронные журналы <highlight>СанПиН и ХАССП</highlight>",
+      "consultationNote": "Разработан при консультации специалистов Роспотребнадзора и ведущих аудиторов ХАССП"
     },
     "openGraph": {
       "title": "Электронные журналы ХАССП и СанПиН",

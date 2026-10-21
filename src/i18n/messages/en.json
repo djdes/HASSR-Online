@@ -5224,7 +5224,8 @@
       "scanCaption": "Scan me"
     },
     "hero": {
-      "title": "Digital logs for <highlight>SanPiN and HACCP</highlight>"
+      "title": "Digital logs for <highlight>SanPiN and HACCP</highlight>",
+      "consultationNote": "Developed in consultation with Rospotrebnadzor specialists and leading HACCP auditors"
     },
     "openGraph": {
       "title": "Digital HACCP & SanPiN logs",
