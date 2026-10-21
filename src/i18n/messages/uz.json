@@ -15019,7 +15019,8 @@
     "telegramLogs": "Telegram loglari",
     "audit": "Audit",
     "impersonation": "Mijoz akkauntiga kirishlar",
-    "timings": "Bajarilish vaqtlari"
+    "timings": "Bajarilish vaqtlari",
+    "yandexDirect": "Yandex Direct"
   },
   "telegramShortcuts": {
     "journals": {
@@ -17865,6 +17866,84 @@
       "done": "Natija qabul qilindi",
       "failed": "Natijani qabul qilib bo‘lmadi",
       "reviewed": "Natija qabul qilindi: {name} · {date}"
+    }
+  },
+  "rootDirect": {
+    "title": "Yandex Direct",
+    "description": "WeSetup reklama kampaniyalari natijalari: ko‘rsatishlar, xarajatlar va ro‘yxatdan o‘tishlar.",
+    "refresh": "Yangilash",
+    "refreshing": "Yangilanmoqda…",
+    "openDirect": "Direct’ni ochish",
+    "apply": "Ko‘rsatish",
+    "retry": "Qayta urinish",
+    "period": "Davr",
+    "from": "Boshlanish",
+    "to": "Tugash",
+    "today": "Bugun",
+    "yesterday": "Kecha",
+    "sevenDays": "7 kun",
+    "thirtyDays": "30 kun",
+    "ninetyDays": "90 kun",
+    "rangeLabel": "{from} — {to}",
+    "updated": "Yangilangan vaqt: {time}",
+    "timezone": "Sana va vaqt Moskva vaqti bo‘yicha. Xarajatlar QQS bilan rublda.",
+    "attribution": "Ro‘yxatdan o‘tishlar “Yangi WeSetup akkauntini ro‘yxatdan o‘tkazish” maqsadi va Direct’ning avtomatik atributsiyasi asosida hisoblanadi. Oxirgi kunlar konversiyalari aniqlashtirilishi mumkin.",
+    "notAvailable": "—",
+    "unavailableValue": "Ma’lumot yo‘q",
+    "totals": "Davr bo‘yicha jami",
+    "campaignTitle": "Kampaniyalar",
+    "campaignName": "Kampaniya",
+    "dynamicTitle": "Kunlik natijalar",
+    "chartMetric": "Grafik ko‘rsatkichi",
+    "chartLabel": "{from} dan {to} gacha kunlik {metric}",
+    "noActivity": "Bu davrda hali faollik yo‘q",
+    "noActivityHint": "Boshqa davrni tanlang yoki kampaniyalar ko‘rsatila boshlanganini tekshiring.",
+    "noCampaigns": "WeSetup kampaniyalari topilmadi",
+    "noCampaignsHint": "Reklama akkauntidagi ikkita WeSetup kampaniyasiga kirishni tekshiring.",
+    "loading": "Direct statistikasi yuklanmoqda",
+    "processing": "Direct hisobotni tayyorlamoqda",
+    "processingHint": "Hisobot tayyor bo‘lgach, natijalar avtomatik ko‘rinadi.",
+    "waiting": "Direct’ga ko‘proq vaqt kerak",
+    "waitingHint": "Hisobot hali tayyorlanmoqda. Statistikani biroz keyin yangilang.",
+    "stale": "Hozircha oldingi hisobot ko‘rsatilmoqda. Uning olingan vaqti yuqorida berilgan.",
+    "errorTitle": "Statistikani yuklab bo‘lmadi",
+    "tableScroll": "Kampaniya natijalari; jadvalni gorizontal aylantirish mumkin",
+    "placement": {
+      "search": "Qidiruv",
+      "network": "Yandex reklama tarmog‘i"
+    },
+    "metrics": {
+      "impressions": "Ko‘rsatishlar",
+      "clicks": "Bosishlar",
+      "cost": "Xarajat",
+      "conversions": "Ro‘yxatdan o‘tishlar",
+      "ctr": "CTR",
+      "cpc": "Bosish narxi",
+      "conversionRate": "Ro‘yxatdan o‘tish ulushi",
+      "cpa": "Ro‘yxatdan o‘tish narxi"
+    },
+    "states": {
+      "ON": "Faol",
+      "OFF": "O‘chirilgan",
+      "SUSPENDED": "To‘xtatilgan",
+      "ARCHIVED": "Arxivda",
+      "ENDED": "Tugagan",
+      "CONVERTED": "O‘zgartirilgan",
+      "UNKNOWN": "Holati noma’lum"
+    },
+    "statuses": {
+      "ACCEPTED": "Tasdiqlangan",
+      "DRAFT": "Qoralama",
+      "MODERATION": "Tekshiruvda",
+      "REJECTED": "Rad etilgan",
+      "UNKNOWN": "Holati noma’lum"
+    },
+    "errors": {
+      "invalid_range": "Haqiqiy sanalarni kiriting: boshlanish tugashdan keyin bo‘lmasin, davr 366 kundan oshmasin va kelajak sanalari bo‘lmasin.",
+      "not_configured": "Serverning reklama akkauntiga kirishi hali sozlanmagan.",
+      "provider_auth": "Direct akkauntga kirishni rad etdi. Reklama akkaunti ulanishini tekshirish kerak.",
+      "provider_unavailable": "Direct’dan javob olib bo‘lmadi. Biroz keyin qayta urinib ko‘ring.",
+      "rate_limited": "Direct so‘rovlarni vaqtincha chekladi. Biroz kuting va qayta urinib ko‘ring."
     }
   }
 }

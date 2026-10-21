@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   Lightbulb,
   Mail,
+  Megaphone,
   type LucideIcon,
   Menu,
   MessageSquareText,
@@ -111,6 +112,7 @@ const NAV: NavEntry[] = [
     items: [
       { href: "/root/blog", label: "blog", icon: NotebookText },
       { href: "/root/seo", label: "seo", icon: SearchCheck },
+      { href: "/root/yandex-direct", label: "yandexDirect", icon: Megaphone },
     ],
   },
   {

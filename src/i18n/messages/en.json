@@ -15019,7 +15019,8 @@
     "telegramLogs": "Telegram logs",
     "audit": "Audit",
     "impersonation": "Customer account access",
-    "timings": "Timings"
+    "timings": "Timings",
+    "yandexDirect": "Yandex Direct"
   },
   "telegramShortcuts": {
     "journals": {
@@ -17865,6 +17866,84 @@
       "done": "Result accepted",
       "failed": "Could not accept the result",
       "reviewed": "Result accepted: {name} · {date}"
+    }
+  },
+  "rootDirect": {
+    "title": "Yandex Direct",
+    "description": "WeSetup campaign results: impressions, spend and registrations.",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "openDirect": "Open Direct",
+    "apply": "Apply",
+    "retry": "Try again",
+    "period": "Date range",
+    "from": "From",
+    "to": "To",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "sevenDays": "7 days",
+    "thirtyDays": "30 days",
+    "ninetyDays": "90 days",
+    "rangeLabel": "{from} to {to}",
+    "updated": "Updated {time}",
+    "timezone": "Dates and times use Moscow time. Spend is in RUB, including VAT.",
+    "attribution": "Registrations use the “New WeSetup account registration” goal and Direct's automatic attribution. Recent conversion data may be revised.",
+    "notAvailable": "—",
+    "unavailableValue": "No data",
+    "totals": "Period totals",
+    "campaignTitle": "Campaigns",
+    "campaignName": "Campaign",
+    "dynamicTitle": "Daily results",
+    "chartMetric": "Chart metric",
+    "chartLabel": "Daily {metric} from {from} to {to}",
+    "noActivity": "No activity for this period yet",
+    "noActivityHint": "Choose another date range or check whether the campaigns have started serving.",
+    "noCampaigns": "No WeSetup campaigns found",
+    "noCampaignsHint": "Check access to the two WeSetup campaigns in the advertising account.",
+    "loading": "Loading Direct statistics",
+    "processing": "Direct is preparing the report",
+    "processingHint": "Results will appear automatically when the report is ready.",
+    "waiting": "Direct needs more time",
+    "waitingHint": "The report is still being prepared. Refresh the statistics a little later.",
+    "stale": "The previous report is shown for now. Its retrieval time is displayed above.",
+    "errorTitle": "Could not load statistics",
+    "tableScroll": "Campaign results; the table can be scrolled horizontally",
+    "placement": {
+      "search": "Search",
+      "network": "Yandex Ad Network"
+    },
+    "metrics": {
+      "impressions": "Impressions",
+      "clicks": "Clicks",
+      "cost": "Spend",
+      "conversions": "Registrations",
+      "ctr": "CTR",
+      "cpc": "Cost per click",
+      "conversionRate": "Registration rate",
+      "cpa": "Cost per registration"
+    },
+    "states": {
+      "ON": "Active",
+      "OFF": "Off",
+      "SUSPENDED": "Suspended",
+      "ARCHIVED": "Archived",
+      "ENDED": "Ended",
+      "CONVERTED": "Converted",
+      "UNKNOWN": "Unknown state"
+    },
+    "statuses": {
+      "ACCEPTED": "Approved",
+      "DRAFT": "Draft",
+      "MODERATION": "In review",
+      "REJECTED": "Rejected",
+      "UNKNOWN": "Unknown status"
+    },
+    "errors": {
+      "invalid_range": "Enter valid dates: start on or before the end, no future dates, and at most 366 days.",
+      "not_configured": "Server access to the advertising account has not been configured yet.",
+      "provider_auth": "Direct denied access. The advertising account connection needs to be checked.",
+      "provider_unavailable": "Could not get a response from Direct. Try again a little later.",
+      "rate_limited": "Direct has temporarily limited requests. Wait a little and try again."
     }
   }
 }
