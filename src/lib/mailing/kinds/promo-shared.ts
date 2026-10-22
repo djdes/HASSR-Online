@@ -174,7 +174,7 @@ export function defaultPromoPayload(design: PromoDesign = "aurora"): PromoMailPa
   return {
     design,
     ...designDefaults(design),
-    tariffLabel: "Подписка",
+    tariffLabel: "PRO",
     priceRub: PROMO_DEFAULT_PRICE_RUB,
     discountPercent: PROMO_DEFAULT_PERCENT,
     durationDays: PROMO_DEFAULT_DAYS,

@@ -231,12 +231,12 @@ describe("«Акция»: каналы и пометки", () => {
   it("колокольчик и push — коротко, ссылка на /promo/КОД; Telegram — с кодом и трекинговой ссылкой", async () => {
     const { ctx } = ctxFor();
     const r = await promo.render(payload(), ctx);
-    assert.equal(r.inApp?.title, "Подписка на 15 % дешевле");
+    assert.equal(r.inApp?.title, "PRO на 15 % дешевле");
     assert.equal(r.inApp?.url, "/promo/ROMASHKA15");
     assert.equal(r.push?.url, "/promo/ROMASHKA15");
     assert.ok((r.push?.body ?? "").length <= 180);
     assert.match(r.inApp?.body ?? "", /Промокод ROMASHKA15\.$/);
-    assert.match(r.telegram?.text ?? "", /^<b>Подписка на 15\u00a0% дешевле<\/b>/);
+    assert.match(r.telegram?.text ?? "", /^<b>PRO на 15\u00a0% дешевле<\/b>/);
     assert.match(r.telegram?.text ?? "", /Промокод: <code>ROMASHKA15<\/code> — применится сам по ссылке/);
     assert.match(r.telegram?.text ?? "", /<a href="https:\/\/wesetup\.ru\/r\/mr1\.sig\/0">Забрать скидку 15\u00a0%<\/a>$/);
     assert.equal(r.telegram?.url, "https://wesetup.ru/r/mr1.sig/0");

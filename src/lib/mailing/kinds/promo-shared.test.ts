@@ -33,7 +33,7 @@ describe("«Акция»: данные", () => {
     assert.equal(p.discountPercent, 15);
     assert.equal(p.durationDays, 30);
     assert.equal(p.priceRub, 1990);
-    assert.equal(p.tariffLabel, "Подписка");
+    assert.equal(p.tariffLabel, "PRO");
     assert.equal(p.benefits.length, 4);
     assert.deepEqual(p.promo, { mode: "personal", code: null, lifetime: false });
     assert.equal(checkPromoPayload(p).ok, true);
