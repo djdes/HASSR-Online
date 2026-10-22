@@ -8,13 +8,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { localizedHref, publicLocalesForPath, SITE_LOCALE_COOKIE, type SiteLocale } from "@/i18n/site-locale";
+import { localizedHref, publicLocalesForPath, SITE_LOCALE_COOKIE, PENDING_LOCALE_COOKIE, type SiteLocale } from "@/i18n/site-locale";
 import { LOCALE_NAMES } from "@/i18n/locales";
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "./site-locale-provider";
 
 function refreshLanguageHref(anchor: HTMLAnchorElement, locale: SiteLocale) {
   anchor.href = localizedHref(window.location.pathname + window.location.search + window.location.hash, locale);
+}
+
+function rememberLanguageChoice(locale: SiteLocale) {
+  const attributes = `Path=/; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`;
+  document.cookie = `${SITE_LOCALE_COOKIE}=${locale}; Max-Age=31536000; ${attributes}`;
+  // A separate cookie distinguishes a deliberate choice from proxy/default locale cookies.
+  document.cookie = `${PENDING_LOCALE_COOKIE}=${locale}; Max-Age=86400; ${attributes}`;
 }
 
 export function LanguageSwitch() {
@@ -47,11 +54,14 @@ export function LanguageSwitch() {
               aria-current={locale === nextLocale ? "page" : undefined}
               onPointerDown={(event) => refreshLanguageHref(event.currentTarget, nextLocale)}
               onContextMenu={(event) => refreshLanguageHref(event.currentTarget, nextLocale)}
-              onAuxClick={(event) => refreshLanguageHref(event.currentTarget, nextLocale)}
+              onAuxClick={(event) => {
+                refreshLanguageHref(event.currentTarget, nextLocale);
+                if (event.button === 1) rememberLanguageChoice(nextLocale);
+              }}
               onClick={(event) => {
                 // Keep the real href usable for opening another tab.
                 refreshLanguageHref(event.currentTarget, nextLocale);
-                document.cookie = `${SITE_LOCALE_COOKIE}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`;
+                rememberLanguageChoice(nextLocale);
               }}
             >
               <span className="flex-1">{LOCALE_NAMES[nextLocale]}</span>

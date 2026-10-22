@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { isLocale } from "@/i18n/locales";
+import { PENDING_LOCALE_COOKIE } from "@/i18n/site-locale";
 import { encode } from "next-auth/jwt";
 import { getSessionVersion } from "@/lib/session-version";
 import { expireLegacyAuxCookies, setSessionCookie } from "@/lib/auth-cookies";
@@ -44,6 +47,16 @@ export async function issueSession(
   // пускал в настройки. При смене галки сессии сотрудника сбрасываются
   // (bumpSessionVersion в /api/users/[id]), и новый вход берёт свежее.
   const { db } = await import("@/lib/db");
+  // Callers reach this ordinary-session issuer only after verifying credentials,
+  // a second factor, or a one-time sign-in token. Never apply this to kiosk sessions.
+  const pendingLocale = (await cookies()).get(PENDING_LOCALE_COOKIE)?.value;
+  if (isLocale(pendingLocale)) {
+    await db.user.update({
+      where: { id: user.id, organizationId: user.organizationId },
+      data: { locale: pendingLocale },
+      select: { id: true },
+    });
+  }
   const flags = await db.user.findUnique({ where: { id: user.id }, select: { canManageSettings: true } }).catch(() => null);
   // Мастер-кабинет справочников: proxy пускает такую сессию только в /master.
   const { readOrgKind } = await import("@/lib/master-directory");
@@ -73,6 +86,9 @@ export async function issueSession(
   // оставшуюся в браузере (например, «Войти как» ROOT'а).
   setSessionCookie(response.cookies, token, MAX_AGE);
   expireLegacyAuxCookies(response.cookies);
+  response.cookies.set(PENDING_LOCALE_COOKIE, "", {
+    path: "/", maxAge: 0, sameSite: "lax",
+  });
   return response;
 }
 

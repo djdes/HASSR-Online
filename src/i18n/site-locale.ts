@@ -3,6 +3,8 @@ import { isLocale, resolveLocale, type Locale } from "./locales";
 export type SiteLocale = Locale;
 export const SITE_LOCALE_HEADER = "x-wesetup-site-locale";
 export const SITE_LOCALE_COOKIE = "wesetup.site-locale";
+// Set only by an explicit public language selection, consumed after verified sign-in.
+export const PENDING_LOCALE_COOKIE = "wesetup.pending-locale";
 
 /** Resolve a public API request from its own URL and locale cookie, without Next server-only APIs. */
 export function resolveRequestLocale(

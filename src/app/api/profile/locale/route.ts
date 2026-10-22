@@ -3,7 +3,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isLocale, resolveLocale } from "@/i18n/locales";
-import { SITE_LOCALE_COOKIE } from "@/i18n/site-locale";
+import { SITE_LOCALE_COOKIE, PENDING_LOCALE_COOKIE } from "@/i18n/site-locale";
 import { translatorFor } from "@/i18n/translator";
 
 export const runtime = "nodejs";
@@ -36,6 +36,10 @@ export async function PATCH(request: Request) {
   response.headers.set("Cache-Control", "private, no-store");
   response.cookies.set(SITE_LOCALE_COOKIE, requested, {
     path: "/", maxAge: 31536000, sameSite: "lax", secure: new URL(request.url).protocol === "https:",
+  });
+  // A newer in-account choice supersedes an unconsumed public selection.
+  response.cookies.set(PENDING_LOCALE_COOKIE, "", {
+    path: "/", maxAge: 0, sameSite: "lax",
   });
   return response;
 }
