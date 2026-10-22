@@ -72,8 +72,8 @@ describe("клики: редирект только по сохранённым 
 });
 
 describe("ограничение скорости и суточный лимит", () => {
-  it("по умолчанию 20 в минуту и 300 в сутки, битое — по умолчанию", () => {
-    assert.deepEqual(DEFAULT_MAILING_SETTINGS, { perMinute: 20, perDay: 300 });
+  it("по умолчанию — без ограничения (максимум), битое — по умолчанию", () => {
+    assert.deepEqual(DEFAULT_MAILING_SETTINGS, { perMinute: 600, perDay: 100_000 });
     assert.deepEqual(normalizeMailingSettings(null), DEFAULT_MAILING_SETTINGS);
     assert.deepEqual(normalizeMailingSettings({ perMinute: "5", perDay: -3 }), { perMinute: 5, perDay: 1 });
   });

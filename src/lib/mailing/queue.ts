@@ -722,7 +722,8 @@ export async function runQueuePass(deps: QueueDeps): Promise<QueueReport> {
   report.limitedBy = budget.limitedBy;
   const emailBudgetRef = { remaining: budget.budget };
 
-  const due = await store.listDueRecipients(now, deps.batchSize ?? 200, budget.budget > 0);
+  // Проход берёт не меньше, чем разрешено писем в минуту, — иначе лимит упирался бы в размер пачки.
+  const due = await store.listDueRecipients(now, deps.batchSize ?? Math.max(200, deps.settings.perMinute), budget.budget > 0);
   if (due.length === 0) {
     for (const id of touched) await finishIfDone(id, deps, report, now, log);
     return report;

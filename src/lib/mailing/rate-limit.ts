@@ -19,10 +19,15 @@ export type MailingSettings = {
   perDay: number;
 };
 
-export const DEFAULT_MAILING_SETTINGS: MailingSettings = { perMinute: 20, perDay: 300 };
-
 export const PER_MINUTE_MAX = 600;
 export const PER_DAY_MAX = 100_000;
+
+/**
+ * По умолчанию — без ограничения: максимум, который выдерживает проход
+ * очереди (решение 22.10.2026, команда просила снять лимит 20/300). Сбавить
+ * скорость можно в ROOT → Рассылка → История → «Скорость».
+ */
+export const DEFAULT_MAILING_SETTINGS: MailingSettings = { perMinute: PER_MINUTE_MAX, perDay: PER_DAY_MAX };
 
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
   const n = typeof value === "number" ? value : Number(value);

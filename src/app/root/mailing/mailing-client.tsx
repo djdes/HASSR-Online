@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, History, Mail, PenSquare, Users } from "lucide-react";
+import { Ban, History, Mail, PenSquare, Send, SlidersHorizontal, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -15,14 +15,16 @@ import {
 } from "@/lib/mailing/audience";
 import type { CampaignListRow, DraftDto } from "@/lib/mailing/campaigns.server";
 import { NO_CHANNELS, type MailingChannels } from "@/lib/mailing/labels";
+import type { MailingPreset } from "@/lib/mailing/presets";
 import type { MailingSettings } from "@/lib/mailing/rate-limit";
 import { cn } from "@/lib/utils";
 
 import { ComposeTab } from "./compose-tab";
 import { ContactsTab } from "./contacts-tab";
 import { HistoryTab } from "./history-tab";
+import { QuickTab } from "./quick-tab";
 import { StopListTab } from "./stoplist-tab";
-import type { MailingPageData, MailingTab } from "./types";
+import { ADVANCED_TABS, type MailingPageData, type MailingTab } from "./types";
 import { api } from "./ui";
 import { UsersTab } from "./users-tab";
 
@@ -62,6 +64,8 @@ function nowTime(): string {
 export function MailingClient({ data }: { data: MailingPageData }) {
   const router = useRouter();
   const [tab, setTab] = useState<MailingTab>(data.initialTab);
+  // Расширенный режим — конструктор и ручной выбор; команда работает в простом.
+  const [advanced, setAdvanced] = useState(() => ADVANCED_TABS.has(data.initialTab));
   const [compose, setCompose] = useState<ComposeState>(() => composeFrom(data, data.draft));
   const [userIds, setUserIds] = useState<Set<string>>(() => new Set(data.draft?.audience.userIds ?? []));
   const [contactIds, setContactIds] = useState<Set<string>>(() => new Set(data.draft?.audience.contactIds ?? []));
@@ -172,10 +176,31 @@ export function MailingClient({ data }: { data: MailingPageData }) {
       if (f?.users) setUserFilters(normalizeUserFilters(f.users));
       if (f?.contacts) setContactFilters(normalizeContactFilters(f.contacts));
       setSavedAt(null);
+      setAdvanced(true);
       setTab("compose");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Не удалось открыть черновик");
     }
+  }
+
+  /** Готовое письмо → в конструктор (поправить разово или проверить разметку). */
+  function openPresetInConstructor(preset: MailingPreset) {
+    const defaults = Object.fromEntries(data.kinds.map((k) => [k.kind, k.defaultPayload]));
+    setCompose({
+      draftId: null,
+      title: preset.title,
+      kind: preset.kind,
+      channels: { ...preset.channels },
+      payloads: { ...defaults, [preset.kind]: structuredClone(preset.payload) },
+    });
+    setSavedAt(null);
+    setAdvanced(true);
+    setTab("compose");
+  }
+
+  function toggleAdvanced() {
+    if (advanced && ADVANCED_TABS.has(tab)) setTab("quick");
+    setAdvanced(!advanced);
   }
 
   function onLaunched(id: string) {
@@ -184,13 +209,15 @@ export function MailingClient({ data }: { data: MailingPageData }) {
     router.push(`/root/mailing/${id}`);
   }
 
-  const tabs: Array<{ key: MailingTab; label: string; icon: typeof Mail; count?: number }> = [
-    { key: "compose", label: "Составление", icon: PenSquare },
+  const allTabs: Array<{ key: MailingTab; label: string; icon: typeof Mail; count?: number }> = [
+    { key: "quick", label: "Отправить", icon: Send },
+    { key: "history", label: "История", icon: History },
+    { key: "compose", label: "Конструктор", icon: PenSquare },
     { key: "users", label: "Пользователи", icon: Users, count: userIds.size },
     { key: "contacts", label: "Контакты", icon: Mail, count: contactIds.size },
-    { key: "history", label: "История", icon: History },
     { key: "stoplist", label: "Стоп-лист", icon: Ban },
   ];
+  const tabs = allTabs.filter((t) => advanced || !ADVANCED_TABS.has(t.key));
 
   return (
     <div className="space-y-5">
@@ -227,9 +254,33 @@ export function MailingClient({ data }: { data: MailingPageData }) {
             ) : null}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={toggleAdvanced}
+          aria-pressed={advanced}
+          data-testid="mailing-advanced-toggle"
+          title="Конструктор писем, ручной выбор пользователей и контактов, стоп-лист"
+          className={cn(
+            "inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl px-3.5 text-[13px] font-medium transition-colors duration-150 sm:ml-auto",
+            advanced
+              ? "bg-[#eef1ff] text-[#3848c7] hover:bg-[#e2e7ff]"
+              : "text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
+          )}
+        >
+          <SlidersHorizontal className="size-4" />
+          {advanced ? "Скрыть расширенный режим" : "Расширенный режим"}
+        </button>
       </nav>
 
       {/* Вкладки не размонтируются: выбор и набранный текст живут, пока открыта страница. */}
+      <div hidden={tab !== "quick"}>
+        <QuickTab
+          data={{ ...data, settings, sentToday }}
+          advanced={advanced}
+          onLaunched={onLaunched}
+          onOpenInConstructor={openPresetInConstructor}
+        />
+      </div>
       <div hidden={tab !== "compose"}>
         <ComposeTab
           data={{ ...data, settings, sentToday }}

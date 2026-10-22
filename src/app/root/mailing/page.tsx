@@ -2,6 +2,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { getDraft, listCampaigns } from "@/lib/mailing/campaigns.server";
 import { pushAvailability, telegramBotConfigured } from "@/lib/mailing/channels.server";
 import { mailingKindOptionsWithData } from "@/lib/mailing/kinds";
+import { listMailingBases } from "@/lib/mailing/quick.server";
 import { emailSendStats, readMailingSettings } from "@/lib/mailing/settings.server";
 import { marketingSenderInfo } from "@/lib/mailing/transport.server";
 
@@ -16,10 +17,11 @@ export const metadata = {
 };
 
 /**
- * ROOT → «Рассылка»: пользователи платформы (фильтры) и загруженные
- * контакты → сообщение в почту / колокольчик / push / Telegram по
- * галочкам, тест себе, отправка сейчас или по расписанию. Очередь с
- * лимитом писем разбирает cron `/api/cron/mailing`.
+ * ROOT → «Рассылка». По умолчанию — простой режим: база адресов + готовое
+ * письмо (`src/lib/mailing/presets.ts`, пишет Claude) → тест себе, отправка
+ * сейчас или по расписанию. Расширенный режим — конструктор и ручной выбор
+ * пользователей и контактов. Очередь с лимитом писем разбирает cron
+ * `/api/cron/mailing`.
  */
 export default async function RootMailingPage({
   searchParams,
@@ -28,18 +30,24 @@ export default async function RootMailingPage({
 }) {
   await requireRoot();
   const params = await searchParams;
-  const [campaigns, settings, stats, draftRaw, kinds] = await Promise.all([
+  const [campaigns, settings, stats, draftRaw, kinds, bases] = await Promise.all([
     listCampaigns(),
     readMailingSettings(),
     emailSendStats(),
     params.draft ? getDraft(params.draft) : Promise.resolve(null),
     mailingKindOptionsWithData(),
+    listMailingBases().catch((error) => {
+      console.error("[mailing] bases failed", error);
+      return [];
+    }),
   ]);
   const draft = draftRaw && draftRaw.status === "draft" ? draftRaw : null;
   const sender = marketingSenderInfo();
   const initialTab: MailingTab = MAILING_TABS.includes(params.tab as MailingTab)
     ? (params.tab as MailingTab)
-    : "compose";
+    : draft
+      ? "compose"
+      : "quick";
 
   const data: MailingPageData = {
     kinds,
@@ -55,6 +63,7 @@ export default async function RootMailingPage({
     settings,
     sentToday: stats.today,
     campaigns,
+    bases,
     draft,
     initialTab,
   };
@@ -64,9 +73,8 @@ export default async function RootMailingPage({
       <div>
         <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Рассылка</h1>
         <p className="mt-1 max-w-[820px] text-[14px] leading-relaxed text-[#6f7282]">
-          Сообщение выбранным пользователям платформы и загруженным контактам: письмо, колокольчик в кабинете, push и
-          Telegram — по галочкам. Письма уходят очередью с ограничением скорости, в каждом — ссылка «Отписаться»;
-          отписавшиеся попадают в стоп-лист и больше рекламу не получают. Служебные письма это не затрагивает.
+          Выберите базу адресов и готовое письмо — и отправьте. В каждом письме есть ссылка «Отписаться»;
+          отписавшиеся больше рекламу не получают.
         </p>
       </div>
       <MailingClient data={data} />

@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { CARD, CHANNEL_ICONS, CHECKBOX, INPUT, Notice, OUTLINE, PRIMARY, SECTION_LABEL, api } from "./ui";
 import type { MailingPageData, MailingTab } from "./types";
 
-type PreviewState = { label: string; rendered: RenderedMailing } | { error: string } | null;
+export type PreviewState = { label: string; rendered: RenderedMailing } | { error: string } | null;
 
 export function ComposeTab({
   data,
@@ -571,7 +571,7 @@ function ChannelRow({
   );
 }
 
-function PreviewPane({ preview, channel }: { preview: PreviewState; channel: MailingChannel }) {
+export function PreviewPane({ preview, channel }: { preview: PreviewState; channel: MailingChannel }) {
   if (!preview) {
     return <p className="py-6 text-center text-[13px] text-[#9b9fb3]">Готовим предпросмотр…</p>;
   }

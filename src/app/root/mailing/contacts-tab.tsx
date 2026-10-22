@@ -463,7 +463,19 @@ export function ContactsTab({
 
 // ------------------------------------------------------------------ import
 
-function ImportCard({ onImported }: { onImported: () => void }) {
+/**
+ * Загрузка контактов. `variant="base"` — простой режим «Рассылки»: та же
+ * загрузка, но «Источник» называется «Название базы», без тегов и без рамки
+ * карточки (живёт в окне).
+ */
+export function ImportCard({
+  onImported,
+  variant = "full",
+}: {
+  onImported: (result: { source: string; created: number; exists: number }) => void;
+  variant?: "full" | "base";
+}) {
+  const asBase = variant === "base";
   const [mode, setMode] = useState<"text" | "file">("text");
   const [text, setText] = useState("");
   const [file, setFile] = useState<{ name: string; base64: string } | null>(null);
@@ -504,22 +516,29 @@ function ImportCard({ onImported }: { onImported: () => void }) {
   async function commit() {
     if (!preview) return;
     if (!source.trim() || !basis.trim()) {
-      toast.error("Заполните «Источник» и «Основание» — без них загрузить нельзя");
+      toast.error(
+        asBase
+          ? "Заполните название базы и основание — без них загрузить нельзя"
+          : "Заполните «Источник» и «Основание» — без них загрузить нельзя"
+      );
       return;
     }
     setBusy("commit");
     try {
-      const r = await api<{ created: number }>("/api/root/mailing/contacts", {
-        method: "POST",
-        json: { ...input(), mapping, source, basis, tags },
-      });
+      const r = await api<{ created: number; source?: string; counts?: { exists?: number } }>(
+        "/api/root/mailing/contacts",
+        {
+          method: "POST",
+          json: { ...input(), mapping, source, basis, tags: asBase ? "" : tags },
+        }
+      );
       toast.success(`Загружено новых контактов: ${r.created}`);
       setPreview(null);
       setMapping(null);
       setText("");
       setFile(null);
       if (fileRef.current) fileRef.current.value = "";
-      onImported();
+      onImported({ source: r.source ?? source.trim(), created: r.created, exists: r.counts?.exists ?? 0 });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Не удалось загрузить");
     } finally {
@@ -542,8 +561,8 @@ function ImportCard({ onImported }: { onImported: () => void }) {
   const canCommit = Boolean(preview && counts && counts.new > 0 && source.trim() && basis.trim());
 
   return (
-    <section className={CARD} data-testid="contacts-import">
-      <div className={cn(SECTION_LABEL, "mb-3")}>Загрузить контакты</div>
+    <section className={asBase ? undefined : CARD} data-testid="contacts-import">
+      {asBase ? null : <div className={cn(SECTION_LABEL, "mb-3")}>Загрузить контакты</div>}
       <div className="mb-3 inline-flex rounded-2xl border border-[#ececf4] bg-[#fafbff] p-1">
         {(
           [
@@ -597,15 +616,15 @@ function ImportCard({ onImported }: { onImported: () => void }) {
         </div>
       )}
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className={cn("mt-4 grid gap-3", asBase ? "md:grid-cols-2" : "md:grid-cols-3")}>
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-            Источник <span className="text-[#a13a32]">*</span>
+            {asBase ? "Название базы" : "Источник"} <span className="text-[#a13a32]">*</span>
           </span>
           <input
             value={source}
             onChange={(e) => setSource(e.target.value)}
-            placeholder="Выгрузка 2ГИС 29.09"
+            placeholder={asBase ? "Кафе Москвы, октябрь" : "Выгрузка 2ГИС 29.09"}
             maxLength={200}
             className={INPUT}
             data-testid="contacts-source"
@@ -630,16 +649,18 @@ function ImportCard({ onImported }: { onImported: () => void }) {
             ))}
           </datalist>
         </label>
-        <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Теги для всей партии</span>
-          <input
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="выставка, москва"
-            maxLength={300}
-            className={INPUT}
-          />
-        </label>
+        {asBase ? null : (
+          <label className="block">
+            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Теги для всей партии</span>
+            <input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="выставка, москва"
+              maxLength={300}
+              className={INPUT}
+            />
+          </label>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -786,7 +807,7 @@ function ImportCard({ onImported }: { onImported: () => void }) {
             {!source.trim() || !basis.trim() ? (
               <span className="inline-flex items-center gap-1.5 text-[13px] text-[#a16d32]">
                 <AlertTriangle className="size-4" />
-                Нужны «Источник» и «Основание»
+                {asBase ? "Нужны название базы и основание" : "Нужны «Источник» и «Основание»"}
               </span>
             ) : null}
           </div>
