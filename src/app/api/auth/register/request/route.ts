@@ -9,6 +9,7 @@ import { sendVerificationEmail } from "@/lib/email";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 import { resolveRequestLocale } from "@/i18n/site-locale";
+import { isLocale } from "@/i18n/locales";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
+  const locale = isLocale(body?.locale) ? body.locale : resolveRequestLocale(request);
   const email =
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!email || !email.includes("@")) {
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await sendVerificationEmail(email, code, resolveRequestLocale(request)).catch((err) => {
+  await sendVerificationEmail(email, code, locale).catch((err) => {
     console.error("sendVerificationEmail failed", err);
   });
 

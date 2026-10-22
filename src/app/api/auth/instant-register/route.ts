@@ -25,6 +25,7 @@ import {
 import { REFERRAL_COOKIE, readCookie } from "@/lib/balance/constants";
 import { attachReferral, resolveReferrerByCode } from "@/lib/balance/referral";
 import { resolveRequestLocale } from "@/i18n/site-locale";
+import { isLocale } from "@/i18n/locales";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
   const ipForLog = ip === "unknown" ? null : ip;
 
   const body = await request.json().catch(() => null);
+  const locale = isLocale(body?.locale) ? body.locale : resolveRequestLocale(request);
   const email =
     typeof (body as { email?: unknown } | null)?.email === "string"
       ? (body as { email: string }).email.trim().toLowerCase()
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
     created = await db.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: {
+          locale,
           // Нейтральная заглушка: почта в названии протекала
           // в шапку кабинета, PDF-выгрузки и селектор организаций.
           // Настоящее название человек задаёт в анкете после входа.
@@ -177,7 +180,7 @@ export async function POST(request: Request) {
           passwordHash,
           role: "manager",
           organizationId: organization.id,
-          locale: resolveRequestLocale(request),
+          locale,
           journalAccessMigrated: true,
           // Регистрация с лендинга сразу же и логинит человека, поэтому
           // адрес пишем в оба поля: первый вход — он же и есть.
@@ -255,7 +258,7 @@ export async function POST(request: Request) {
     to: email,
     password,
     organizationId: created.organization.id,
-    locale: resolveRequestLocale(request),
+    locale,
   }).catch((err) =>
     console.error("sendAccountPasswordEmail failed", err),
   );

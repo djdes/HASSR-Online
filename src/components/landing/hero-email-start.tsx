@@ -96,6 +96,7 @@ export function HeroEmailStart({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: value,
+          locale,
           source: readSignupSource(place),
           consent: true,
           consentPlace: "landing",

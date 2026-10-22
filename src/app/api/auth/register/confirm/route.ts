@@ -7,6 +7,7 @@ import {
 } from "@/lib/registration";
 import { sendWelcomeEmail } from "@/lib/email";
 import { resolveRequestLocale } from "@/i18n/site-locale";
+import { isLocale } from "@/i18n/locales";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
 import { normalizePhone } from "@/lib/phone";
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
+  const locale = isLocale(body?.locale) ? body.locale : resolveRequestLocale(request);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
   }
@@ -159,6 +161,7 @@ export async function POST(request: Request) {
   const result = await db.$transaction(async (tx) => {
     const organization = await tx.organization.create({
       data: {
+        locale,
         name: organizationName,
         type: organizationType,
         inn,
@@ -183,7 +186,7 @@ export async function POST(request: Request) {
         passwordHash,
         role: "manager",
         organizationId: organization.id,
-        locale: resolveRequestLocale(request),
+        locale,
         // jobPositionId — null на старте. positionTitle тоже пустой,
         // пусть менеджер впишет что ему удобно.
         journalAccessMigrated: true,
@@ -221,7 +224,7 @@ export async function POST(request: Request) {
     name: result.user.name,
     organizationName: result.organization.name,
     organizationId: result.organization.id,
-    locale: resolveRequestLocale(request),
+    locale,
   }).catch((err) => console.error("sendWelcomeEmail failed", err));
 
   // Регистрации через /register раньше не уведомляли никого: новые

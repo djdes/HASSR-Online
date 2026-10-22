@@ -131,6 +131,7 @@ function RegisterScreen({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: value,
+          locale,
           source: readSignupSource(signupPlace),
           consent: true,
           consentPlace: "register",
