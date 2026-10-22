@@ -1,3 +1,5 @@
+import { withMailingDiagnostic } from "@/lib/mailing/diagnostic-presentation";
+
 import { isSafeLinkUrl } from "../text-format";
 
 /**
@@ -66,22 +68,22 @@ export function validateMessagePayload(
       sphere: c.fallbacks.sphere.trim(),
     },
   };
-  if (!payload.subject) return { ok: false, error: "Напишите тему письма — она же заголовок уведомления" };
+  if (!payload.subject) return withMailingDiagnostic({ ok: false, error: "Напишите тему письма — она же заголовок уведомления" }, { version: 1, code: "message.subjectRequired", params: {  } });
   if (payload.subject.length > MESSAGE_SUBJECT_MAX) {
-    return { ok: false, error: `Тема — не длиннее ${MESSAGE_SUBJECT_MAX} знаков` };
+    return withMailingDiagnostic({ ok: false, error: `Тема — не длиннее ${MESSAGE_SUBJECT_MAX} знаков` }, { version: 1, code: "message.subjectMax", params: { max: MESSAGE_SUBJECT_MAX } });
   }
-  if (!payload.body) return { ok: false, error: "Напишите текст сообщения" };
+  if (!payload.body) return withMailingDiagnostic({ ok: false, error: "Напишите текст сообщения" }, { version: 1, code: "message.bodyRequired", params: {  } });
   if (payload.body.length > MESSAGE_BODY_MAX) {
-    return { ok: false, error: `Текст — не длиннее ${MESSAGE_BODY_MAX} знаков` };
+    return withMailingDiagnostic({ ok: false, error: `Текст — не длиннее ${MESSAGE_BODY_MAX} знаков` }, { version: 1, code: "message.bodyMax", params: { max: MESSAGE_BODY_MAX } });
   }
   if (payload.buttonText || payload.buttonUrl) {
-    if (!payload.buttonText) return { ok: false, error: "У кнопки нет текста — напишите его или уберите ссылку" };
+    if (!payload.buttonText) return withMailingDiagnostic({ ok: false, error: "У кнопки нет текста — напишите его или уберите ссылку" }, { version: 1, code: "message.buttonTextRequired", params: {  } });
     if (payload.buttonText.length > MESSAGE_BUTTON_TEXT_MAX) {
-      return { ok: false, error: `Текст кнопки — не длиннее ${MESSAGE_BUTTON_TEXT_MAX} знаков` };
+      return withMailingDiagnostic({ ok: false, error: `Текст кнопки — не длиннее ${MESSAGE_BUTTON_TEXT_MAX} знаков` }, { version: 1, code: "message.buttonTextMax", params: { max: MESSAGE_BUTTON_TEXT_MAX } });
     }
-    if (!payload.buttonUrl) return { ok: false, error: "У кнопки нет ссылки — вставьте её или уберите текст" };
+    if (!payload.buttonUrl) return withMailingDiagnostic({ ok: false, error: "У кнопки нет ссылки — вставьте её или уберите текст" }, { version: 1, code: "message.buttonUrlRequired", params: {  } });
     if (!isSafeLinkUrl(payload.buttonUrl)) {
-      return { ok: false, error: "Ссылка кнопки — адрес https://… или путь сайта вида /pricing" };
+      return withMailingDiagnostic({ ok: false, error: "Ссылка кнопки — адрес https://… или путь сайта вида /pricing" }, { version: 1, code: "message.buttonUrlInvalid", params: {  } });
     }
   }
   return { ok: true, payload };

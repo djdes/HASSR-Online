@@ -51,23 +51,50 @@ test("automation is only a signal, not a ban or allowlist", () => {
   assert.equal(limit.check("a", true, false), 30);
 });
 
-test("prefetch has its own budget and never puts real pages on cooldown", () => {
+test("excess background requests never block documents or extend their own window", () => {
   let now = 0;
   const limit = createPageNavigationLimiter(() => now);
   for (let i = 0; i < 240; i++) assert.equal(limit.check("a", true, true), 0);
   // Over budget: only the prefetch waits until its oldest slot leaves the minute window.
   assert.equal(limit.check("a", true, true), 60);
   assert.equal(limit.check("a", true, false), 0);
+  assert.equal(limit.check("a", true, true), 60);
   assert.equal(limit.check("a", false, false), 0);
+  now = 15_000;
+  assert.equal(limit.check("a", false, true), 45);
+  assert.equal(limit.check("a", false, false), 0);
+  now = 59_999;
+  assert.equal(limit.check("a", false, true), 1);
   now = 60_000;
-  assert.equal(limit.check("a", true, true), 0);
+  assert.equal(limit.check("a", false, true), 0);
 });
 
-test("a page cooldown also holds back prefetch", () => {
-  const limit = createPageNavigationLimiter(() => 0);
-  for (let i = 0; i < 6; i++) assert.equal(limit.check("a", true, false), 0);
-  assert.equal(limit.check("a", true, false), 30);
-  assert.equal(limit.check("a", true, true), 30);
+test("slow browsing with many speculative requests does not trigger a document cooldown", () => {
+  let now = 0;
+  const limit = createPageNavigationLimiter(() => now);
+  let rejectedBackground = 0;
+  for (let page = 0; page < 12; page++) {
+    now = page * 5_000;
+    for (let link = 0; link < 30; link++) {
+      if (limit.check("browser", false, true)) rejectedBackground++;
+    }
+    assert.equal(limit.check("browser", false, false), 0);
+  }
+  assert.equal(rejectedBackground, 120);
+});
+
+test("background retries cannot extend or clear an actual document cooldown", () => {
+  let now = 0;
+  const limit = createPageNavigationLimiter(() => now);
+  for (let i = 0; i < 240; i++) assert.equal(limit.check("a", false, true), 0);
+  for (let i = 0; i < 20; i++) assert.equal(limit.check("a", false, false), 0);
+  assert.equal(limit.check("a", false, false), 30);
+  now = 15_000;
+  assert.equal(limit.check("a", false, true), 15);
+  now = 30_000;
+  assert.equal(limit.check("a", false, false), 0);
+  assert.equal(limit.check("a", false, true), 30, "the background minute budget survives a document cooldown");
+  assert.equal(limit.check("a", false, false), 0);
 });
 
 test("expired budgets are swept and capacity cannot evict a blocked subject", () => {
@@ -81,4 +108,11 @@ test("expired budgets are swept and capacity cannot evict a blocked subject", ()
   now = 60_000;
   assert.equal(limit.check("c", false, false), 0);
   assert.equal(limit.size, 1);
+});
+
+test("a page cooldown also holds back prefetch", () => {
+  const limit = createPageNavigationLimiter(() => 0);
+  for (let i = 0; i < 6; i++) assert.equal(limit.check("a", true, false), 0);
+  assert.equal(limit.check("a", true, false), 30);
+  assert.equal(limit.check("a", true, true), 30);
 });

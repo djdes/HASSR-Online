@@ -1,3 +1,5 @@
+import { withMailingDiagnostic } from "@/lib/mailing/diagnostic-presentation";
+
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { isValidPromoCodeFormat, normalizePromoCode } from "@/lib/promo/rules";
 import { PROMO_VALID_DAYS_MAX, PROMO_VALID_DAYS_MIN, isValidPromoValidDays } from "@/lib/promo/valid-days";
@@ -113,22 +115,22 @@ export function checkKpPayload(raw: unknown): { ok: true; payload: KpPayload } |
   const promo = payload.promo;
   if (promo.mode === "existing") {
     const code = promo.code ? normalizePromoCode(promo.code) : "";
-    if (!code) return { ok: false, error: "Выберите промокод из списка или другой вариант промокода" };
-    if (!isValidPromoCodeFormat(code)) return { ok: false, error: `Промокод «${promo.code}»: латиница, цифры, «-» и «_»` };
+    if (!code) return withMailingDiagnostic({ ok: false, error: "Выберите промокод из списка или другой вариант промокода" }, { version: 1, code: "kp.existingRequired", params: {  } });
+    if (!isValidPromoCodeFormat(code)) return withMailingDiagnostic({ ok: false, error: `Промокод «${promo.code}»: латиница, цифры, «-» и «_»` }, { version: 1, code: "kp.codeFormat", params: { code: promo.code } });
     return { ok: true, payload: { ...payload, promo: { ...promo, code } } };
   }
   if (promo.mode === "personal") {
     if (!Number.isInteger(promo.value) || promo.value < 1) {
-      return { ok: false, error: "Размер скидки — целое число больше нуля" };
+      return withMailingDiagnostic({ ok: false, error: "Размер скидки — целое число больше нуля" }, { version: 1, code: "kp.discountPositive", params: {  } });
     }
     if (promo.kind === "percent" && promo.value > KP_PERCENT_MAX) {
-      return { ok: false, error: `Скидка в процентах — от 1 до ${KP_PERCENT_MAX}` };
+      return withMailingDiagnostic({ ok: false, error: `Скидка в процентах — от 1 до ${KP_PERCENT_MAX}` }, { version: 1, code: "kp.percentLimit", params: { max: KP_PERCENT_MAX } });
     }
     if (promo.kind === "fixed" && promo.value > KP_FIXED_MAX) {
-      return { ok: false, error: `Скидка в рублях — не больше ${KP_FIXED_MAX.toLocaleString("ru-RU")} ₽` };
+      return withMailingDiagnostic({ ok: false, error: `Скидка в рублях — не больше ${KP_FIXED_MAX.toLocaleString("ru-RU")} ₽` }, { version: 1, code: "kp.fixedLimit", params: { max: KP_FIXED_MAX } });
     }
     if (!isValidPromoValidDays(promo.validDays)) {
-      return { ok: false, error: `Срок кода — целое число дней от ${PROMO_VALID_DAYS_MIN} до ${PROMO_VALID_DAYS_MAX}` };
+      return withMailingDiagnostic({ ok: false, error: `Срок кода — целое число дней от ${PROMO_VALID_DAYS_MIN} до ${PROMO_VALID_DAYS_MAX}` }, { version: 1, code: "kp.daysRange", params: { min: PROMO_VALID_DAYS_MIN, max: PROMO_VALID_DAYS_MAX } });
     }
   }
   // Код нужен только «Выбрать код» — в остальных режимах не храним.

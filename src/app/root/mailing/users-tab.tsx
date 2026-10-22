@@ -1,29 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Loader2, Mail, Search, Send, Smartphone, UserCheck, UserMinus, Users } from "lucide-react";
-import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { useMailingFeedback } from "./mailing-feedback";
+import { billingDisplayKey, sphereDisplayKey, literalMailingCounter } from "./mailing-presentation";
 
 import type { AudienceUserRow, UserAudienceFilters } from "@/lib/mailing/audience";
-import { BILLING_KIND_LABELS } from "@/lib/mailing/labels";
 import { ORG_SPHERES } from "@/lib/org-profile";
 import { cn } from "@/lib/utils";
 
 import { CARD, CHECKBOX, FilterSelect, INPUT, OUTLINE_SM, api, formatDate } from "./ui";
 
 const PAGE = 100;
-
-const SPHERE_OPTIONS = [{ value: "any", label: "Все сферы" }, ...ORG_SPHERES.map((s) => ({ value: s.value, label: s.label }))];
-const SPHERE_LABEL = new Map<string, string>(ORG_SPHERES.map((s) => [s.value, s.label]));
-const BILLING_OPTIONS = [
-  { value: "any", label: "Любой тариф" },
-  { value: "free", label: BILLING_KIND_LABELS.free },
-  { value: "free_period", label: BILLING_KIND_LABELS.free_period },
-  { value: "paid", label: BILLING_KIND_LABELS.paid },
-  { value: "needs_decision", label: BILLING_KIND_LABELS.needs_decision },
-  { value: "legacy", label: BILLING_KIND_LABELS.legacy },
-  { value: "exempt", label: BILLING_KIND_LABELS.exempt },
-];
 
 function toQuery(f: UserAudienceFilters): URLSearchParams {
   const q = new URLSearchParams();
@@ -52,6 +41,13 @@ export function UsersTab({
   onSelect: (ids: string[], on: boolean) => void;
   rememberLabels: (entries: Array<[string, string]>) => void;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("rootMailingShellAudience");
+  const feedbackRef = useRef(useMailingFeedback());
+  const sphereLabel = (value: string) => { const key = sphereDisplayKey(value); return key ? t(key) : value; };
+  const billingLabel = (value: string) => { const key = billingDisplayKey(value); return key ? t(key) : value; };
+  const sphereOptions = [{ value: "any", label: t("filters.anySphere") }, ...ORG_SPHERES.map((sphere) => ({ value: sphere.value, label: sphereLabel(sphere.value) }))];
+  const billingOptions = [{ value: "any", label: t("filters.anyBilling") }, ...["free", "free_period", "paid", "needs_decision", "legacy", "exempt"].map((value) => ({ value, label: billingLabel(value) }))];
   const [rows, setRows] = useState<AudienceUserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -88,7 +84,7 @@ export function UsersTab({
         setRows(data.rows);
         setTotal(data.total);
       })
-      .catch((error) => toast.error(error instanceof Error ? error.message : "Не удалось загрузить"))
+      .catch(() => feedbackRef.current.error("loadFailed"))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -101,8 +97,8 @@ export function UsersTab({
       const data = await load(rows.length);
       setRows((prev) => [...prev, ...data.rows]);
       setTotal(data.total);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось загрузить");
+    } catch {
+      feedbackRef.current.error("loadFailed");
     } finally {
       setMore(false);
     }
@@ -115,9 +111,9 @@ export function UsersTab({
       q.set("idsOnly", "1");
       const data = await api<{ total: number; ids: string[] }>(`/api/root/mailing/audience/users?${q}`);
       onSelect(data.ids, on);
-      toast.success(on ? `Выбрано найденных: ${data.ids.length}` : `Снят выбор: ${data.ids.length}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      feedbackRef.current.selected(on, String(data.ids.length));
+    } catch {
+      feedbackRef.current.error("selectFailed");
     } finally {
       setBulkBusy(false);
     }
@@ -132,37 +128,37 @@ export function UsersTab({
       <section className={CARD}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <FilterSelect
-            label="Кому"
+            label={t("filters.role")}
             value={filters.role}
             onChange={(v) => set({ role: v === "all" ? "all" : "managers" })}
             options={[
-              { value: "managers", label: "Руководители (тариф и настройки)" },
-              { value: "all", label: "Все пользователи" },
+              { value: "managers", label: t("filters.managers") },
+              { value: "all", label: t("filters.allUsers") },
             ]}
             testId="users-filter-role"
           />
           <FilterSelect
-            label="Сфера организации"
+            label={t("filters.sphere")}
             value={filters.sphere}
             onChange={(v) => set({ sphere: v as UserAudienceFilters["sphere"] })}
-            options={SPHERE_OPTIONS}
+            options={sphereOptions}
             testId="users-filter-sphere"
           />
           <FilterSelect
-            label="Состояние тарифа"
+            label={t("filters.billing")}
             value={filters.billing}
             onChange={(v) => set({ billing: v as UserAudienceFilters["billing"] })}
-            options={BILLING_OPTIONS}
+            options={billingOptions}
             testId="users-filter-billing"
           />
           <label className="block min-w-0">
-            <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">Поиск</span>
+            <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">{t("filters.search")}</span>
             <span className="relative block">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Организация, имя или почта"
+                placeholder={t("filters.searchPlaceholder")}
                 className={cn(INPUT, "pl-10")}
                 data-testid="users-filter-search"
               />
@@ -172,9 +168,9 @@ export function UsersTab({
         <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-3">
           {(
             [
-              ["hasEmail", "Есть почта", Mail],
-              ["hasTelegram", "Есть Telegram", Send],
-              ["hasPush", "Есть устройство для push", Smartphone],
+              ["hasEmail", t("filters.hasEmail"), Mail],
+              ["hasTelegram", t("filters.hasTelegram"), Send],
+              ["hasPush", t("filters.hasPush"), Smartphone],
             ] as const
           ).map(([key, label, Icon]) => (
             <label key={key} className="inline-flex cursor-pointer items-center gap-2 text-[14px] text-[#3c4053]">
@@ -191,7 +187,7 @@ export function UsersTab({
           ))}
           <div className="flex flex-wrap items-end gap-2">
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-[#6f7282]">Регистрация с</span>
+              <span className="mb-1 block text-[12px] font-medium text-[#6f7282]">{t("filters.registeredFrom")}</span>
               <input
                 type="date"
                 value={filters.registeredFrom ?? ""}
@@ -200,7 +196,7 @@ export function UsersTab({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-[#6f7282]">по</span>
+              <span className="mb-1 block text-[12px] font-medium text-[#6f7282]">{t("filters.registeredTo")}</span>
               <input
                 type="date"
                 value={filters.registeredTo ?? ""}
@@ -215,11 +211,12 @@ export function UsersTab({
       <section className={CARD}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[14px] text-[#3c4053]" data-testid="users-found">
-            Найдено: <span className="font-semibold tabular-nums text-[#0b1024]">{total}</span>
-            <span className="text-[#9b9fb3]"> · выбрано всего: </span>
-            <span className="font-semibold tabular-nums text-[#3848c7]" data-testid="users-selected-count">
-              {selected.size}
-            </span>
+            {t.rich("users.summary", {
+              found: literalMailingCounter(total), selected: literalMailingCounter(selected.size),
+              foundValue: (chunks) => <span className="font-semibold tabular-nums text-[#0b1024]">{chunks}</span>,
+              separator: (chunks) => <span className="text-[#9b9fb3]">{chunks}</span>,
+              selectedValue: (chunks) => <span className="font-semibold tabular-nums text-[#3848c7]" data-testid="users-selected-count">{chunks}</span>,
+            })}
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -230,7 +227,7 @@ export function UsersTab({
               data-testid="users-select-all-found"
             >
               {bulkBusy ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4 text-[#5566f6]" />}
-              Выбрать всех найденных ({total})
+              {t("users.selectAllFound", { total: literalMailingCounter(total) })}
             </button>
             <button
               type="button"
@@ -239,21 +236,21 @@ export function UsersTab({
               onClick={() => void selectAllFound(false)}
             >
               <UserMinus className="size-4 text-[#5566f6]" />
-              Снять с найденных
+              {t("users.clearFound")}
             </button>
           </div>
         </div>
 
         {loading ? (
           <div className="flex items-center gap-2 py-10 text-[14px] text-[#6f7282]">
-            <Loader2 className="size-4 animate-spin" /> Загружаем пользователей…
+            <Loader2 className="size-4 animate-spin" /> {t("users.loading")}
           </div>
         ) : rows.length === 0 ? (
           <div className="mt-4 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-12 text-center">
             <Users className="mx-auto size-6 text-[#9b9fb3]" />
-            <div className="mt-2 text-[15px] font-medium text-[#0b1024]">Под фильтры никто не подходит</div>
+            <div className="mt-2 text-[15px] font-medium text-[#0b1024]">{t("users.emptyTitle")}</div>
             <p className="mx-auto mt-1.5 max-w-[380px] text-[13px] text-[#6f7282]">
-              Ослабьте фильтры — например, выберите «Все пользователи» или любую сферу.
+              {t("users.emptyHint")}
             </p>
           </div>
         ) : (
@@ -266,17 +263,17 @@ export function UsersTab({
                     <th className="w-10 py-2.5 pr-2">
                       <input
                         type="checkbox"
-                        aria-label="Выбрать показанных"
+                        aria-label={t("users.selectShownAria")}
                         checked={allShownSelected}
                         onChange={(e) => onSelect(rows.map((r) => r.id), e.target.checked)}
                         className={CHECKBOX}
                       />
                     </th>
-                    <th className="py-2.5 pr-3 font-medium">Пользователь</th>
-                    <th className="py-2.5 pr-3 font-medium">Организация</th>
-                    <th className="py-2.5 pr-3 font-medium">Тариф</th>
-                    <th className="py-2.5 pr-3 font-medium">Каналы</th>
-                    <th className="py-2.5 font-medium">Регистрация</th>
+                    <th className="py-2.5 pr-3 font-medium">{t("columns.user")}</th>
+                    <th className="py-2.5 pr-3 font-medium">{t("columns.organization")}</th>
+                    <th className="py-2.5 pr-3 font-medium">{t("columns.billing")}</th>
+                    <th className="py-2.5 pr-3 font-medium">{t("columns.channels")}</th>
+                    <th className="py-2.5 font-medium">{t("columns.registration")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -289,7 +286,7 @@ export function UsersTab({
                       <td className="py-3 pr-2">
                         <input
                           type="checkbox"
-                          aria-label={`Выбрать ${r.name}`}
+                          aria-label={t("users.selectUserAria", { name: r.name })}
                           checked={selected.has(r.id)}
                           onChange={(e) => onSelect([r.id], e.target.checked)}
                           className={CHECKBOX}
@@ -298,21 +295,25 @@ export function UsersTab({
                       <td className="py-3 pr-3">
                         <div className="font-medium text-[#0b1024]">{r.name}</div>
                         <div className="text-[13px] text-[#6f7282] [overflow-wrap:anywhere]">
-                          {r.email ?? <span className="text-[#9b9fb3]">нет почты</span>}
-                          {r.marketingOptOut ? <span className="text-[#a16d32]"> · отписался</span> : null}
-                          {r.suppressed ? <span className="text-[#a16d32]"> · в стоп-листе</span> : null}
+                          {t.rich("users.emailLine", {
+                            state: r.marketingOptOut ? (r.suppressed ? "both" : "optedOut") : (r.suppressed ? "suppressed" : "normal"),
+                            email: r.email ?? t("users.noEmail"),
+                            address: (chunks) => r.email == null ? <span className="text-[#9b9fb3]">{chunks}</span> : chunks,
+                            optOut: (chunks) => <span className="text-[#a16d32]">{chunks}</span>,
+                            suppressed: (chunks) => <span className="text-[#a16d32]">{chunks}</span>,
+                          })}
                         </div>
-                        {!r.isManagement ? <div className="text-[12px] text-[#9b9fb3]">сотрудник</div> : null}
+                        {!r.isManagement ? <div className="text-[12px] text-[#9b9fb3]">{t("users.employee")}</div> : null}
                       </td>
                       <td className="py-3 pr-3">
                         <div className="text-[#0b1024]">{r.organizationName}</div>
-                        <div className="text-[12px] text-[#6f7282]">{SPHERE_LABEL.get(r.sphere) ?? r.sphere}</div>
+                        <div className="text-[12px] text-[#6f7282]">{sphereLabel(r.sphere)}</div>
                       </td>
-                      <td className="py-3 pr-3 text-[13px] text-[#3c4053]">{BILLING_KIND_LABELS[r.billing] ?? r.billing}</td>
+                      <td className="py-3 pr-3 text-[13px] text-[#3c4053]">{billingLabel(r.billing)}</td>
                       <td className="py-3 pr-3">
                         <ChannelDots row={r} />
                       </td>
-                      <td className="py-3 text-[13px] tabular-nums text-[#6f7282]">{formatDate(r.createdAt)}</td>
+                      <td className="py-3 text-[13px] tabular-nums text-[#6f7282]">{formatDate(r.createdAt, locale)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -339,13 +340,13 @@ export function UsersTab({
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium text-[#0b1024]">{r.name}</span>
                       <span className="block text-[13px] text-[#6f7282] [overflow-wrap:anywhere]">
-                        {r.email ?? "нет почты"}
+                        {r.email ?? t("users.noEmail")}
                       </span>
                       <span className="mt-1 block text-[13px] text-[#3c4053]">
-                        {r.organizationName} · {SPHERE_LABEL.get(r.sphere) ?? r.sphere}
+                        {t("users.organizationAndSphere", { organization: r.organizationName, sphere: sphereLabel(r.sphere) })}
                       </span>
                       <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] text-[#6f7282]">
-                        {BILLING_KIND_LABELS[r.billing] ?? r.billing} · {formatDate(r.createdAt)}
+                        {t("users.billingAndDate", { billing: billingLabel(r.billing), date: formatDate(r.createdAt, locale) })}
                         <ChannelDots row={r} />
                       </span>
                     </span>
@@ -358,7 +359,7 @@ export function UsersTab({
               <div className="mt-4 flex justify-center">
                 <button type="button" className={OUTLINE_SM} disabled={more} onClick={() => void showMore()}>
                   {more ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Показать ещё ({total - rows.length})
+                  {t("users.showMore", { remaining: String(total - rows.length) })}
                 </button>
               </div>
             ) : null}
@@ -370,18 +371,19 @@ export function UsersTab({
 }
 
 function ChannelDots({ row }: { row: AudienceUserRow }) {
+  const t = useTranslations("rootMailingShellAudience");
   const items = [
-    { on: Boolean(row.email) && !row.suppressed && !row.marketingOptOut, Icon: Mail, title: "Почта" },
-    { on: true, Icon: Bell, title: "Колокольчик" },
-    { on: row.webPushCount + row.appDeviceCount > 0, Icon: Smartphone, title: "Push" },
-    { on: row.hasTelegram, Icon: Send, title: "Telegram" },
+    { on: Boolean(row.email) && !row.suppressed && !row.marketingOptOut, Icon: Mail, channel: "email" as const },
+    { on: true, Icon: Bell, channel: "inApp" as const },
+    { on: row.webPushCount + row.appDeviceCount > 0, Icon: Smartphone, channel: "push" as const },
+    { on: row.hasTelegram, Icon: Send, channel: "telegram" as const },
   ];
   return (
     <span className="inline-flex items-center gap-1">
-      {items.map(({ on, Icon, title }) => (
+      {items.map(({ on, Icon, channel }) => (
         <span
-          key={title}
-          title={`${title}: ${on ? "есть" : "нет"}`}
+          key={channel}
+          title={t(`channelAvailability.${channel}.${on ? "available" : "missing"}`)}
           className={cn(
             "inline-flex size-6 items-center justify-center rounded-lg",
             on ? "bg-[#eef1ff] text-[#3848c7]" : "bg-[#f5f6fa] text-[#c3c6d4]"

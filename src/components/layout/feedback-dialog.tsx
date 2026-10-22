@@ -1,7 +1,9 @@
 "use client";
 import { phoneInputProps } from "@/lib/phone-input";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { feedbackFailure } from "@/lib/feedback-copy";
 import { MessageCircleMore } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,6 +39,10 @@ export function FeedbackDialog({
   triggerClassName,
   trigger,
 }: FeedbackDialogProps) {
+  const t = useTranslations("feedbackDialog");
+  const common = useTranslations("common");
+  const latestT = useRef(t);
+  useEffect(() => { latestT.current = t; }, [t]);
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<FeedbackType | "">("");
   const [message, setMessage] = useState("");
@@ -50,11 +56,11 @@ export function FeedbackDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!type) {
-      toast.error("Выберите тип обращения");
+      toast.error(t("typeRequired"));
       return;
     }
     if (message.trim().length < 3) {
-      toast.error("Введите сообщение");
+      toast.error(t("messageRequired"));
       return;
     }
     setSubmitting(true);
@@ -66,16 +72,20 @@ export function FeedbackDialog({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        toast.error(data?.error ?? "Не удалось отправить обращение");
+        const copy = feedbackFailure(data);
+        const currentT = latestT.current;
+        if (copy.key === "messageTooShort") toast.error(currentT(copy.key, { min: copy.min }));
+        else if (copy.key === "messageTooLong" || copy.key === "phoneTooLong") toast.error(currentT(copy.key, { max: copy.max }));
+        else toast.error(currentT(copy.key));
         return;
       }
-      toast.success("Спасибо! Мы ответим в течение 5 рабочих дней.");
+      toast.success(latestT.current("success", { days: 5 }));
       setOpen(false);
       setType("");
       setMessage("");
       setPhone("");
     } catch {
-      toast.error("Ошибка соединения с сервером");
+      toast.error(latestT.current("networkError"));
     } finally {
       setSubmitting(false);
     }
@@ -87,6 +97,7 @@ export function FeedbackDialog({
         {trigger ?? (
           <Button
             type="button"
+            aria-label={t("trigger")}
             className={cn(
               // Единственный primary-контрол в правом кластере шапки:
               // та же геометрия (h-10 / rounded-lg / size-5 иконка), что и у
@@ -99,18 +110,17 @@ export function FeedbackDialog({
             )}
           >
             <MessageCircleMore className="size-5" />
-            <span className="hidden sm:inline">Обратная связь</span>
+            <span className="hidden sm:inline">{t("trigger")}</span>
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[520px]">
+      <DialogContent closeLabel={common("close")} className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[520px]">
         <DialogHeader className="shrink-0 border-b py-5 pl-6 pr-14">
           <DialogTitle className="text-[18px] font-semibold text-[#0b1024]">
-            Оставить обратную связь
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Форма обратной связи: описание проблемы или предложения, контактный
-            телефон.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -118,18 +128,13 @@ export function FeedbackDialog({
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-6">
           <div className="space-y-4 text-[14px] leading-[1.55] text-[#3c4053]">
             <p>
-              В данной форме вы можете оставить обратную связь по использованию
-              сервиса. Вы можете описать о какой-то ошибке или ваши предложения
-              по улучшению удобства сервиса.
+              {t("intro")}
             </p>
             <p className="italic">
-              Обращаем ваше внимание, что{" "}
-              <b className="font-semibold not-italic">
-                обращения по данной форме обрабатываются в течении 5 рабочих
-                дней
-              </b>{" "}
-              и если вам нужна какая-то оперативная помощь по сервису, обратитесь
-              в службу поддержки в Telegram.{" "}
+              {t.rich("responseTime", {
+                days: 5,
+                b: (chunks) => <b className="font-semibold not-italic">{chunks}</b>,
+              })}{" "}
               {botUrl ? (
                 <a
                   href={botUrl}
@@ -145,20 +150,20 @@ export function FeedbackDialog({
 
           <div className="space-y-3">
             <div className="text-[15px] font-semibold text-[#0b1024]">
-              Выберите тип обращения
+              {t("chooseType")}
             </div>
             <div className="flex flex-wrap gap-6">
               <RadioOption
                 name="feedback-type"
                 value="bug"
-                label="Ошибка"
+                label={t("bug")}
                 checked={type === "bug"}
                 onChange={() => setType("bug")}
               />
               <RadioOption
                 name="feedback-type"
                 value="suggestion"
-                label="Предложение"
+                label={t("suggestion")}
                 checked={type === "suggestion"}
                 onChange={() => setType("suggestion")}
               />
@@ -168,7 +173,8 @@ export function FeedbackDialog({
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ваше обращение"
+            placeholder={t("messagePlaceholder")}
+            aria-label={t("messagePlaceholder")}
             required
             rows={5}
             // На мобиле 16px: iOS Safari зумит страницу при фокусе в поле
@@ -178,7 +184,8 @@ export function FeedbackDialog({
 
           <Input
             {...phoneInputProps(phone, setPhone)}
-            placeholder="Введите номер телефона для ответа"
+            placeholder={t("phonePlaceholder")}
+            aria-label={t("phonePlaceholder")}
             type="tel"
             inputMode="tel"
             // Те же 16px на мобиле, что и у поля выше — иначе телефон
@@ -194,7 +201,7 @@ export function FeedbackDialog({
               disabled={submitting}
               className="h-11 min-w-[140px] rounded-xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_26px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Отправляем..." : "Отправить"}
+              {submitting ? t("submitting") : t("submit")}
             </Button>
           </DialogFooter>
         </form>

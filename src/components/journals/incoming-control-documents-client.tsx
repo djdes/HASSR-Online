@@ -1,7 +1,12 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import {
+  acceptanceCalendarCopy, captureAcceptanceDiagnostic, formatAcceptanceDiagnostic, tagAcceptanceError,
+  type AcceptanceDiagnostic, type AcceptanceTranslate,
+} from "@/lib/acceptance-document-presentation";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ellipsis, Plus, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +22,6 @@ import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
   ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
   getAcceptanceDocumentTitle,
-  getAcceptancePageTitle,
   buildAcceptanceDocumentConfigFromData,
   normalizeAcceptanceDocumentConfig,
   type AcceptanceDocumentConfig,
@@ -44,6 +48,7 @@ import {
   JOURNAL_DIALOG_BODY_CLASS,
   JOURNAL_DIALOG_CONTENT_CLASS,
   JOURNAL_DIALOG_FIELDS_CLASS,
+  JOURNAL_DIALOG_ERROR_CLASS,
   JOURNAL_DIALOG_FOOTER_CLASS,
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_SUBMIT_CLASS,
@@ -61,17 +66,22 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
-import {
-  DocumentDialogFeedback,
-  readCreatedDocument,
-  useDocumentDialogSubmit,
-} from "@/components/journals/use-document-dialog-submit";
+
 
 type User = { id: string; name: string; role: string };
+
+function useAcceptanceListCopy() {
+  const t = useTranslations() as unknown as AcceptanceTranslate;
+  const committed = useRef(t);
+  useLayoutEffect(() => { committed.current = t; }, [t]);
+  const say: AcceptanceTranslate = (key, values) => committed.current(key, values);
+  return { t, say };
+}
 
 type DocumentItem = {
   id: string;
   title: string;
+  displayTitleMissing?: boolean;
   /** Точки: документ без точки рядом с документами точек. */
   shared?: boolean;
   status: "active" | "closed";
@@ -160,6 +170,7 @@ function SettingsDialog({
   requireTitle,
   templateCode,
   journalName,
+  documentKey,
   onSubmit,
 }: {
   open: boolean;
@@ -170,6 +181,7 @@ function SettingsDialog({
   users: User[];
   templateCode: string;
   journalName: string;
+  documentKey: string;
   /**
    * Выбор подписи колонки срока имеет смысл только для журнала входного
    * контроля СЫРЬЯ. В журнале приёмки продукции колонка называется
@@ -185,12 +197,11 @@ function SettingsDialog({
   requireTitle?: boolean;
   onSubmit: (value: DialogState) => Promise<void>;
 }) {
+  const t = useTranslations() as unknown as AcceptanceTranslate;
   const [state, setState] = useState(initial);
-  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
-  const submit = useDocumentDialogSubmit({ onOpenChange });
-  const submitting = submit.submitting;
-  const { reset: resetSubmit } = submit;
-  const [titleError, setTitleError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<AcceptanceDiagnostic | null>(null);
+  const [titleError, setTitleError] = useState(false);
   const auto = useAutoDocumentTitle({
     templateCode,
     journalName,
@@ -202,36 +213,41 @@ function SettingsDialog({
   // deps идут именно они, иначе эффект сбрасывал бы форму на каждый ввод.
   const { reset: resetAutoTitle, seedTitle } = auto;
 
+  const incomingDialog = JSON.stringify([documentKey, open, initial]);
+  const lastIncomingDialog = useRef<string | null>(null);
   useEffect(() => {
+    if (lastIncomingDialog.current === incomingDialog) return;
+    lastIncomingDialog.current = incomingDialog;
     if (!open) return;
     resetAutoTitle();
     setState({ ...initial, title: initial.title || seedTitle() });
     // Открыли заново — старая ошибка сервера не должна висеть.
-    resetSubmit();
-    setTitleError("");
-  }, [initial, open, resetAutoTitle, resetSubmit, seedTitle]);
+    setSubmitError(null);
+    setTitleError(false);
+  }, [incomingDialog, initial, open, resetAutoTitle, seedTitle]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{title}</DialogTitle>
         </DialogHeader>
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
-          <DocumentDialogFeedback state={submit} onOpenChange={onOpenChange} />
+          {submitError ? <p role="alert" className={JOURNAL_DIALOG_ERROR_CLASS}>{formatAcceptanceDiagnostic(submitError, t)}</p> : null}
           <FloatingInputField
-            label="Название документа"
-            placeholder="Введите название документа"
+            label={t("journalWidgets.staff.documentName")} 
+            placeholder={t("journalWidgets.staff.documentNamePlaceholder")} 
             value={state.title}
             onChange={(value) => {
               auto.markTouched();
               setState({ ...state, title: value });
-              if (titleError) setTitleError("");
+              if (titleError) setTitleError(false);
             }}
-            error={titleError || undefined}
+            error={titleError ? t("journalAcceptance.list.required") : undefined}
           />
           <DateField
-            label="Дата начала"
+            calendarCopy={acceptanceCalendarCopy(t)}
+            label={t("journalAcceptance.settings.dateFrom")} 
             value={state.startDate}
             onChange={(value) => {
               const next = auto.titleForPeriod({ dateFrom: value });
@@ -243,7 +259,7 @@ function SettingsDialog({
             }}
           />
           {showExpiryLabelChoice ? (
-            <FloatingLabelField label="Колонка срока">
+            <FloatingLabelField label={t("journalAcceptance.list.expiryColumn")} >
               <div className="flex flex-col gap-2 pt-1 text-[14px] text-[#0b1024]">
                 <label className="flex items-center gap-2.5">
                   <input
@@ -253,7 +269,7 @@ function SettingsDialog({
                     onChange={() => setState({ ...state, expiryFieldLabel: "expiry_deadline" })}
                     className="size-4 accent-[#5566f6]"
                   />
-                  Предельный срок реализации
+                  {t("journalAcceptance.settings.expiryDeadlineChoice")}
                 </label>
                 <label className="flex items-center gap-2.5">
                   <input
@@ -263,17 +279,17 @@ function SettingsDialog({
                     onChange={() => setState({ ...state, expiryFieldLabel: "shelf_life" })}
                     className="size-4 accent-[#5566f6]"
                   />
-                  Срок годности
+                  {t("journalAcceptance.settings.shelfLifeChoice")}
                 </label>
               </div>
             </FloatingLabelField>
           ) : null}
           {/* «Добавить поля» — тумблер опциональной 12-й колонки таблицы
               (I1 аудита); по умолчанию выключен, как на эталоне. */}
-          <FloatingLabelField label="Добавить поля">
+          <FloatingLabelField label={t("journalAcceptance.list.addFields")} >
             <div className="flex items-start justify-between gap-4 pt-2">
               <div className="min-w-0 text-[14px] leading-[1.35] text-[#0b1024]">
-                «Соответствие внешнего вида упаковки, маркировки требованиям НД»
+                {t("journalAcceptance.list.packagingQuote")}
               </div>
               <Switch
                 checked={state.showPackagingCompliance}
@@ -284,7 +300,7 @@ function SettingsDialog({
                   }))
                 }
                 className="mt-0.5 shrink-0"
-                aria-label="Соответствие внешнего вида упаковки, маркировки требованиям НД"
+                aria-label={t("foodControlPdf.incomingControl.columns.packagingCompliance")} 
               />
             </div>
           </FloatingLabelField>
@@ -301,11 +317,13 @@ function SettingsDialog({
                 responsibleUserId: next.userId,
               }))
             }
-            positionLabel="Должность ответственного"
-            employeeLabel="Ответственный"
+            positionLabel={t("journalWidgets.staff.responsiblePosition")} 
+            employeeLabel={t("foodControlPdf.incomingControl.columns.responsible")} 
             variant="floating"
           />
           <ControlPeriodicityField
+            label={t("journalAcceptance.list.periodicity")}
+            placeholder={t("journalAcceptance.list.periodicityExample")}
             value={state.controlPeriodicity}
             onChange={(value) =>
               setState((current) => ({ ...current, controlPeriodicity: value }))
@@ -319,15 +337,24 @@ function SettingsDialog({
               disabled={submitting}
               onClick={async () => {
                 if (requireTitle && !state.title.trim()) {
-                  setTitleError("Поле не заполнено");
+                  setTitleError(true);
                   return;
                 }
-                setTitleError("");
-                await submit.run(() => onSubmit(state));
+                setTitleError(false);
+                setSubmitting(true);
+                setSubmitError(null);
+                try {
+                  await onSubmit(state);
+                  onOpenChange(false);
+                } catch (error) {
+                  setSubmitError(captureAcceptanceDiagnostic(error, "Не удалось создать документ", "journalAcceptance.list.createError"));
+                } finally {
+                  setSubmitting(false);
+                }
               }}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {submitting ? "Сохранение..." : submitLabel}
+              {submitting ? t("common.saving") : submitLabel}
             </Button>
           </div>
         </div>
@@ -346,16 +373,24 @@ export function IncomingControlDocumentsClient({
   availableManufacturers,
   availableSuppliers,
 }: Props) {
+  const { t, say } = useAcceptanceListCopy();
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
   const restoreMenu = useRestoreMenuItems();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
+  useEffect(() => {
+    setSettingsDocument((current) => {
+      if (!current) return current;
+      const incoming = documents.find((document) => document.id === current.id) ?? null;
+      return JSON.stringify(incoming) === JSON.stringify(current) ? current : incoming;
+    });
+  }, [documents]);
   // Единый источник delete / pdf для журнальных документов.
   const { deleteDocument, openPdf } = useJournalDocumentActions();
   const defaultDocumentTitle = getAcceptanceDocumentTitle(templateCode);
-  const pageTitle = getAcceptancePageTitle(templateCode);
+  const pageTitle = t(templateCode === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE ? "journals.names.incoming_control" : "journals.names.incoming_raw_materials_control");
   const isProductAcceptance = templateCode === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE;
   const createDefaults = useJournalCreateDefaults();
   const createState = useMemo(
@@ -422,7 +457,10 @@ export function IncomingControlDocumentsClient({
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || "Не удалось создать документ");
+      const rawError = result?.error;
+      const error = new Error(rawError || "Не удалось создать документ");
+      if (!rawError) tagAcceptanceError(error, [{ key: "journalAcceptance.list.createError" }]);
+      throw error;
     }
     router.push(`/journals/${routeCode}/documents/${result.document.id}`);
     router.refresh();
@@ -449,33 +487,33 @@ export function IncomingControlDocumentsClient({
       }),
     });
     if (!response.ok) {
-      throw new Error("Не удалось сохранить документ");
+      throw tagAcceptanceError(new Error("Не удалось сохранить документ"), [{ key: "journalAcceptance.errors.saveDocument" }]);
     }
     router.refresh();
   }
 
   async function handleDelete(document: DocumentItem) {
     const config = normalizeAcceptanceDocumentConfig(document.config, users);
-    const docTitle = document.title || defaultDocumentTitle;
+    const current = say;
+    const docTitle = document.displayTitleMissing === true || !document.title ? current(templateCode === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE ? "journals.names.incoming_control" : "foodControlPdf.acceptance.title.rawMaterials") : document.title;
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${docTitle}» будет удалён безвозвратно.`,
+      description: current("journalAcceptance.list.deleteDescription", { title: docTitle }),
       bullets: [
-        { label: `Записей о приёмке: ${config.rows.length}`, tone: "warn" },
+        { label: current("journalAcceptance.list.rowCount", { count: config.rows.length }), tone: "warn" },
         {
-          label: `Позиций в справочниках документа: ${config.products.length + config.manufacturers.length + config.suppliers.length}`,
+          label: current("journalAcceptance.list.directoryCount", { count: config.products.length + config.manufacturers.length + config.suppliers.length }),
           tone: "info",
         },
-        { label: `Журнал начат: ${formatRuDate(document.dateFrom)}`, tone: "info" },
+        { label: current("journalAcceptance.list.started", { date: formatRuDate(document.dateFrom) }), tone: "info" },
       ],
-      successMessage: `Документ «${docTitle}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+
     });
   }
 
   const heading =
     activeTab === "closed" && routeCode === "incoming_control"
-      ? `${pageTitle} (закрытые)`
+      ? t("journalAcceptance.list.closedHeading", { title: pageTitle })
       : pageTitle;
 
   return (
@@ -496,7 +534,7 @@ export function IncomingControlDocumentsClient({
               className="h-10 w-full rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white transition-colors hover:bg-[#4a5bf0] sm:w-auto"
             >
               <Plus className="size-4" />
-              Создать документ
+              {t("journalControls.list.create")}
             </Button>
           }
         />
@@ -512,7 +550,7 @@ export function IncomingControlDocumentsClient({
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Создать документ
+              {t("journalControls.list.create")}
             </Button>}
             />
           )}
@@ -530,16 +568,16 @@ export function IncomingControlDocumentsClient({
                   href={`/journals/${routeCode}/documents/${document.id}`}
                   className={JOURNAL_CARD_TITLE_CLASS}
                 >
-                  {document.title || defaultDocumentTitle}
-              <SharedDocumentBadge shared={document.shared} />
+                  {document.displayTitleMissing === true || !document.title ? t(isProductAcceptance ? "journals.names.incoming_control" : "foodControlPdf.acceptance.title.rawMaterials") : document.title}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: t("journalAcceptance.list.shared"), title: t("journalAcceptance.list.sharedHint") }} />
                 </Link>
                 <Link
                   href={`/journals/${routeCode}/documents/${document.id}`}
                   className={JOURNAL_CARD_SECTION_CLASS}
                 >
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("foodControlPdf.incomingControl.columns.responsible")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
-                    {(config.defaultResponsibleTitle || "Управляющий") +
+                    {(config.defaultResponsibleTitle || t("journalAcceptance.list.manager")) +
                       (responsibleUser?.name ? `: ${responsibleUser.name}` : "")}
                   </div>
                 </Link>
@@ -547,28 +585,28 @@ export function IncomingControlDocumentsClient({
                   href={`/journals/${routeCode}/documents/${document.id}`}
                   className={JOURNAL_CARD_SECTION_CLASS}
                 >
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("journalAcceptance.settings.dateFrom")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {formatRuDate(document.dateFrom)}
                   </div>
                 </Link>
                 <div className="justify-self-end">
                   <ResponsiveMenu
-                    title="Действия с документом"
+                    title={t("journalControls.list.actionsTitle")} 
                     contentClassName="w-[280px] rounded-[24px] border-0 p-4 shadow-xl"
                     items={filterManageMenuItems([
                       ...(document.status === "active"
                         ? [
                             {
                               key: "settings",
-                              label: "Настройки",
+                              label: t("journalControls.list.settings"),
                               onSelect: () => setSettingsDocument(document),
                             },
                           ]
                         : []),
                       {
                         key: "print",
-                        label: "Печать",
+                        label: t("journalControls.list.print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () => openPdf({ documentId: document.id }),
                       },
@@ -579,7 +617,7 @@ export function IncomingControlDocumentsClient({
                         ? [
                             {
                               key: "delete",
-                              label: "Удалить",
+                              label: t("common.delete"),
                               icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                               onSelect: () => void handleDelete(document),
                               tone: "danger" as const,
@@ -590,6 +628,7 @@ export function IncomingControlDocumentsClient({
                     trigger={
                       <button
                         type="button"
+                        aria-label={t("journalControls.list.actionsTitle")}
                         className="flex size-9 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                       >
                         <Ellipsis className="size-6" />
@@ -604,10 +643,11 @@ export function IncomingControlDocumentsClient({
       </div>
 
       <SettingsDialog
+        documentKey="create"
         open={createOpen}
         onOpenChange={setCreateOpen}
-        title="Создание документа"
-        submitLabel="Создать"
+        title={t("journalAcceptance.list.createTitle")} 
+        submitLabel={t("journalAcceptance.list.create")} 
         initial={createState}
         users={users}
         showExpiryLabelChoice={!isProductAcceptance}
@@ -618,12 +658,13 @@ export function IncomingControlDocumentsClient({
       />
 
       <SettingsDialog
+        documentKey={settingsDocument?.id ?? "settings"}
         open={!!settingsDocument}
         onOpenChange={(open) => {
           if (!open) setSettingsDocument(null);
         }}
-        title="Настройки документа"
-        submitLabel="Сохранить"
+        title={t("journalAcceptance.settings.title")} 
+        submitLabel={t("common.save")} 
         initial={
           settingsDocument
             ? {

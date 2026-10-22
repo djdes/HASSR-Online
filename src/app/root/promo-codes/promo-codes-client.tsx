@@ -1,7 +1,8 @@
 "use client";
 
 import { Infinity as InfinityIcon, Loader2, Pencil, Plus, Search, Ticket, UserRound } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -9,7 +10,10 @@ import type { LifetimeDiscountAdminRow } from "@/lib/promo/lifetime";
 import type { PromoCodeAdminRow } from "@/lib/promo/promo-codes-admin";
 import { formatMskDateTime, mskInputToDate } from "@/lib/promo/promotions";
 import { describeDiscount } from "@/lib/promo/rules";
+import type { Locale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
+
+import { formatPromoDisplayDate, promoApiErrorKey } from "./promo-code-presentation";
 
 export type PromoRow = PromoCodeAdminRow;
 
@@ -37,6 +41,26 @@ function mskDayEnd(date: string): string | null {
   const end = date ? mskInputToDate(`${date}T23:59`) : null;
   return end ? new Date(end.getTime() + 59_999).toISOString() : null;
 }
+
+type PromoErrorKey = "invalidData" | "invalidCode" | "percentTooHigh" | "organizationMissing" | "duplicateCode" | "promoMissing" | "lifetimeMissing" | "alreadyRevoked";
+type Translator = ReturnType<typeof useTranslations<"rootPromoCodes">>;
+
+function apiErrorMessage(t: Translator, value: unknown, fallback: "createError" | "changeError" | "revokeError") {
+  const key = promoApiErrorKey(value);
+  if (!key) return t(`feedback.${fallback}`);
+  switch (key satisfies PromoErrorKey) {
+    case "invalidData": return t("errors.invalidData");
+    case "invalidCode": return t("errors.invalidCode");
+    case "percentTooHigh": return t("errors.percentTooHigh");
+    case "organizationMissing": return t("errors.organizationMissing");
+    case "duplicateCode": return t("errors.duplicateCode");
+    case "promoMissing": return t("errors.promoMissing");
+    case "lifetimeMissing": return t("errors.lifetimeMissing");
+    case "alreadyRevoked": return t("errors.alreadyRevoked");
+  }
+}
+
+type LifetimeRowView = LifetimeDiscountAdminRow & { revokedByCurrentUser?: true };
 
 const EMPTY_FORM = {
   code: "",
@@ -104,8 +128,12 @@ export function PromoCodesClient({
   initial: PromoRow[];
   lifetime: LifetimeDiscountAdminRow[];
 }) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("rootPromoCodes");
+  const translatorRef = useRef(t);
+  useLayoutEffect(() => { translatorRef.current = t; }, [t]);
   const [rows, setRows] = useState(initial);
-  const [lifetimeRows, setLifetimeRows] = useState(initialLifetime);
+  const [lifetimeRows, setLifetimeRows] = useState<LifetimeRowView[]>(initialLifetime);
   const [form, setForm] = useState(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<"all" | "personal">("all");
@@ -149,35 +177,43 @@ export function PromoCodesClient({
         }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string; code?: PromoRow } | null;
-      if (!response.ok || !data?.code) throw new Error(data?.error ?? "Не удалось создать");
+      if (!response.ok || !data?.code) {
+        toast.error(apiErrorMessage(translatorRef.current, data?.error, "createError"));
+        return;
+      }
       setRows((prev) => [data.code!, ...prev]);
       setForm(EMPTY_FORM);
-      toast.success(`Промокод ${data.code.code} создан`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.success(translatorRef.current("feedback.createSuccess", { code: data.code.code }));
+    } catch {
+      toast.error(translatorRef.current("feedback.createError"));
     } finally {
       setBusy(false);
     }
   }
 
   async function patch(row: PromoRow, body: Record<string, unknown>): Promise<PromoRow | null> {
-    const response = await fetch(`/api/root/promo-codes/${row.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = (await response.json().catch(() => null)) as { error?: string; code?: PromoRow } | null;
-    if (!response.ok || !data?.code) {
-      toast.error(data?.error ?? "Не удалось изменить");
+    try {
+      const response = await fetch(`/api/root/promo-codes/${row.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string; code?: PromoRow } | null;
+      if (!response.ok || !data?.code) {
+        toast.error(apiErrorMessage(translatorRef.current, data?.error, "changeError"));
+        return null;
+      }
+      setRows((prev) => prev.map((r) => (r.id === row.id ? data.code! : r)));
+      return data.code;
+    } catch {
+      toast.error(translatorRef.current("feedback.changeError"));
       return null;
     }
-    setRows((prev) => prev.map((r) => (r.id === row.id ? data.code! : r)));
-    return data.code;
   }
 
   async function toggle(row: PromoRow) {
     const updated = await patch(row, { active: !row.active });
-    if (updated) toast.success(row.active ? `${row.code} отключён` : `${row.code} включён`);
+    if (updated) toast.success(translatorRef.current(row.active ? "feedback.disabled" : "feedback.enabled", { code: row.code }));
   }
 
   function startEdit(row: PromoRow) {
@@ -201,43 +237,49 @@ export function PromoCodesClient({
         campaignId: editForm.campaignId.trim() || null,
       });
       if (updated) {
-        toast.success(`Промокод ${updated.code} сохранён`);
+        toast.success(translatorRef.current("feedback.saveSuccess", { code: updated.code }));
         setEditing(null);
         setEditForm(null);
       }
+    } catch {
+      toast.error(translatorRef.current("feedback.changeError"));
     } finally {
       setBusy(false);
     }
   }
 
   async function revoke(row: LifetimeDiscountAdminRow) {
-    const response = await fetch(`/api/root/lifetime-discounts/${row.id}/revoke`, { method: "POST" });
-    const data = (await response.json().catch(() => null)) as { error?: string; revokedAt?: string | null } | null;
-    if (!response.ok) {
-      toast.error(data?.error ?? "Не удалось отменить");
-      return;
+    try {
+      const response = await fetch(`/api/root/lifetime-discounts/${row.id}/revoke`, { method: "POST" });
+      const data = (await response.json().catch(() => null)) as { error?: string; revokedAt?: string | null } | null;
+      if (!response.ok) {
+        toast.error(apiErrorMessage(translatorRef.current, data?.error, "revokeError"));
+        return;
+      }
+      setLifetimeRows((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, revokedAt: data?.revokedAt ?? new Date().toISOString(), revokedByName: null, revokedByCurrentUser: true } : r))
+      );
+      setRevoking(null);
+      toast.success(translatorRef.current("feedback.revokeSuccess", { code: row.code }));
+    } catch {
+      toast.error(translatorRef.current("feedback.revokeError"));
     }
-    setLifetimeRows((prev) =>
-      prev.map((r) => (r.id === row.id ? { ...r, revokedAt: data?.revokedAt ?? new Date().toISOString(), revokedByName: "вы" } : r))
-    );
-    setRevoking(null);
-    toast.success(`Скидка навсегда ${row.code} отменена`);
   }
 
   // Срок по Москве: «с 01.10.2026 по 31.10.2026», «до …», «без срока».
   const period = (row: PromoRow) =>
     row.startsAt && row.endsAt
-      ? `с ${mskDate(row.startsAt)} по ${mskDate(row.endsAt)}`
+      ? t("period.between", { start: formatPromoDisplayDate(row.startsAt, locale), end: formatPromoDisplayDate(row.endsAt, locale) })
       : row.endsAt
-        ? `до ${mskDate(row.endsAt)}`
+        ? t("period.until", { end: formatPromoDisplayDate(row.endsAt, locale) })
         : row.startsAt
-          ? `с ${mskDate(row.startsAt)}`
-          : "без срока";
+          ? t("period.from", { start: formatPromoDisplayDate(row.startsAt, locale) })
+          : t("period.unlimited");
 
   const whom = (row: PromoRow) => {
     const personal = [row.personalEmail, row.organizationName ?? row.organizationId].filter(Boolean).join(" · ");
     if (personal) return personal;
-    return row.newClientsOnly ? "только новым" : "всем";
+    return t(row.newClientsOnly ? "audience.newOnly" : "audience.everyone");
   };
 
   const personalFields = (
@@ -254,15 +296,15 @@ export function PromoCodesClient({
           className="mt-0.5 size-4 rounded border-[#dcdfed]"
         />
         <span>
-          Скидка навсегда
+          {t("personal.lifetime")}
           <span className="block text-[12px] text-[#9b9fb3]">
-            Первая оплата закрепит скидку за аккаунтом — дальше она применяется сама
+            {t("personal.lifetimeHelp")}
           </span>
         </span>
       </label>
       {values.lifetime ? (
         <label className="block">
-          <span className={LABEL}>Срок скидки, месяцев</span>
+          <span className={LABEL}>{t("personal.durationMonths")}</span>
           <input
             name="durationMonths"
             type="number"
@@ -271,16 +313,16 @@ export function PromoCodesClient({
             inputMode="numeric"
             value={values.durationMonths}
             onChange={(e) => onChange({ durationMonths: e.target.value })}
-            placeholder="пусто — навсегда"
+            placeholder={t("personal.durationUnlimited")}
             className={INPUT}
           />
           <span className="mt-1 block text-[12px] text-[#9b9fb3]">
-            Например, 12 — скидка действует год от первой оплаты и снимается сама. На сайте: «на 12 месяцев».
+            {t("personal.durationHelp")}
           </span>
         </label>
       ) : null}
       <label className="block">
-        <span className={LABEL}>Персональный: почта</span>
+        <span className={LABEL}>{t("personal.email")}</span>
         <input
           name="personalEmail"
           value={values.personalEmail}
@@ -291,30 +333,29 @@ export function PromoCodesClient({
         />
       </label>
       <label className="block">
-        <span className={LABEL}>Персональный: организация (id)</span>
+        <span className={LABEL}>{t("personal.organization")}</span>
         <input
           name="organizationId"
           value={values.organizationId}
           onChange={(e) => onChange({ organizationId: e.target.value })}
-          placeholder="id из адреса /root/organizations/…"
+          placeholder={t("personal.organizationPlaceholder")}
           className={cn(INPUT, "font-mono text-[13px]")}
           maxLength={64}
         />
       </label>
       <label className="block">
-        <span className={LABEL}>Метка рассылки</span>
+        <span className={LABEL}>{t("personal.campaign")}</span>
         <input
           name="campaignId"
           value={values.campaignId}
           onChange={(e) => onChange({ campaignId: e.target.value })}
-          placeholder="например, kp-2026-10"
+          placeholder={t("personal.campaignPlaceholder")}
           className={INPUT}
           maxLength={100}
         />
       </label>
       <p className="text-[12px] leading-relaxed text-[#9b9fb3]">
-        Почта и/или организация — код сработает только у них. Чужому покажем «Этот промокод
-        персональный — он выдан другой организации».
+        {t("personal.help")}
       </p>
     </>
   );
@@ -325,14 +366,14 @@ export function PromoCodesClient({
         <section className={CARD} data-testid="promo-codes-list">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Коды · {rows.length}
+              {t("list.heading", { count: rows.length })}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex rounded-xl border border-[#dcdfed] bg-[#fafbff] p-0.5 text-[12.5px] font-medium">
                 {(
                   [
-                    ["all", `Все`],
-                    ["personal", `Персональные · ${personalCount}`],
+                    ["all", t("list.all")],
+                    ["personal", t("list.personalFilter", { count: personalCount })],
                   ] as const
                 ).map(([value, label]) => (
                   <button
@@ -354,8 +395,8 @@ export function PromoCodesClient({
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Код, почта, рассылка"
-                  aria-label="Поиск по кодам"
+                  placeholder={t("list.searchPlaceholder")}
+                  aria-label={t("list.searchLabel")}
                   className="h-8 w-[180px] rounded-xl border border-[#dcdfed] bg-white pl-8 pr-2.5 text-[12.5px] focus:border-[#5566f6] focus:outline-none"
                 />
               </label>
@@ -363,18 +404,18 @@ export function PromoCodesClient({
           </div>
           {shown.length === 0 ? (
             <p className="text-[13.5px] text-[#9b9fb3]">
-              {rows.length === 0 ? "Промокодов пока нет — создайте первый справа." : "Ничего не найдено."}
+              {rows.length === 0 ? t("list.empty") : t("list.noResults")}
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-[13.5px]">
                 <thead>
                   <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[#9b9fb3]">
-                    <th className="pb-2 pr-4 font-medium">Код</th>
-                    <th className="pb-2 pr-4 font-medium">Скидка</th>
-                    <th className="pb-2 pr-4 font-medium">Срок (МСК)</th>
-                    <th className="pb-2 pr-4 font-medium">Оплат</th>
-                    <th className="pb-2 pr-4 font-medium">Кому</th>
+                    <th className="pb-2 pr-4 font-medium">{t("list.code")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("list.discount")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("list.period")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("list.payments")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("list.forWhom")}</th>
                     <th className="pb-2 font-medium" />
                   </tr>
                 </thead>
@@ -393,16 +434,16 @@ export function PromoCodesClient({
                             {row.lifetime ? (
                               <Chip tone="lifetime">
                                 <InfinityIcon className="size-3" />
-                                {row.durationMonths ? `на ${row.durationMonths} мес.` : "навсегда"}
+                                {row.durationMonths ? t("list.durationTag", { months: row.durationMonths }) : t("list.lifetimeTag")}
                               </Chip>
                             ) : null}
                             {isPersonal(row) ? (
                               <Chip tone="personal">
                                 <UserRound className="size-3" />
-                                персональный
+                                {t("list.personalTag")}
                               </Chip>
                             ) : null}
-                            {row.campaignId ? <Chip tone="campaign">рассылка {row.campaignId}</Chip> : null}
+                            {row.campaignId ? <Chip tone="campaign">{t("list.campaignTag", { campaignId: row.campaignId })}</Chip> : null}
                           </div>
                         ) : null}
                         {row.note ? <div className="mt-1 text-[12px] text-[#6f7282]">{row.note}</div> : null}
@@ -418,10 +459,10 @@ export function PromoCodesClient({
                         <div className="inline-flex gap-1.5">
                           <button type="button" onClick={() => startEdit(row)} className={SMALL_BUTTON}>
                             <Pencil className="size-3.5" />
-                            Изменить
+                            {t("list.edit")}
                           </button>
                           <button type="button" onClick={() => void toggle(row)} className={SMALL_BUTTON}>
-                            {row.active ? "Отключить" : "Включить"}
+                            {t(row.active ? "list.disable" : "list.enable")}
                           </button>
                         </div>
                       </td>
@@ -437,16 +478,15 @@ export function PromoCodesClient({
           <section className={cn(CARD, "lg:sticky lg:top-6 lg:self-start")} data-testid="promo-edit-form">
             <div className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
               <Pencil className="size-4 text-[#5566f6]" />
-              Изменить {editing.code}
+              {t("edit.title", { code: editing.code })}
             </div>
             <div className="space-y-3">
               <p className="text-[12.5px] leading-relaxed text-[#6f7282]">
-                Код и размер скидки ({describeDiscount(editing)}) не меняются — на них уже могли сослаться.
-                Уже закреплённые скидки навсегда правка не меняет.
+                {t("edit.immutable", { discount: describeDiscount(editing) })}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className={LABEL}>Действует по</span>
+                  <span className={LABEL}>{t("edit.validUntil")}</span>
                   <input
                     type="date"
                     value={editForm.endsAt}
@@ -455,12 +495,12 @@ export function PromoCodesClient({
                   />
                 </label>
                 <label className="block">
-                  <span className={LABEL}>Лимит оплат</span>
+                  <span className={LABEL}>{t("edit.paymentLimit")}</span>
                   <input
                     value={editForm.maxUses}
                     onChange={(e) => setEditForm({ ...editForm, maxUses: e.target.value.replace(/\D/g, "") })}
                     inputMode="numeric"
-                    placeholder="без лимита"
+                    placeholder={t("edit.noLimit")}
                     className={INPUT}
                   />
                 </label>
@@ -472,11 +512,11 @@ export function PromoCodesClient({
                   onChange={(e) => setEditForm({ ...editForm, newClientsOnly: e.target.checked })}
                   className="size-4 rounded border-[#dcdfed]"
                 />
-                Только новым клиентам
+                {t("edit.newOnly")}
               </label>
               {personalFields(editForm, (next) => setEditForm({ ...editForm, ...next }))}
               <label className="block">
-                <span className={LABEL}>Заметка</span>
+                <span className={LABEL}>{t("edit.note")}</span>
                 <input
                   value={editForm.note}
                   onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
@@ -492,7 +532,7 @@ export function PromoCodesClient({
                   className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Сохранить
+                  {t("edit.save")}
                 </button>
                 <button
                   type="button"
@@ -502,7 +542,7 @@ export function PromoCodesClient({
                   }}
                   className="inline-flex h-11 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] hover:bg-[#f5f6ff]"
                 >
-                  Отмена
+                  {t("edit.cancel")}
                 </button>
               </div>
             </div>
@@ -511,11 +551,11 @@ export function PromoCodesClient({
           <section className={cn(CARD, "lg:sticky lg:top-6 lg:self-start")} data-testid="promo-create-form">
             <div className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
               <Ticket className="size-4 text-[#5566f6]" />
-              Новый промокод
+              {t("create.title")}
             </div>
             <div className="space-y-3">
               <label className="block">
-                <span className={LABEL}>Код</span>
+                <span className={LABEL}>{t("create.code")}</span>
                 <input
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
@@ -526,18 +566,18 @@ export function PromoCodesClient({
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className={LABEL}>Тип</span>
+                  <span className={LABEL}>{t("create.kind")}</span>
                   <select
                     value={form.kind}
                     onChange={(e) => setForm({ ...form, kind: e.target.value as "percent" | "fixed" })}
                     className={INPUT}
                   >
-                    <option value="percent">Процент</option>
-                    <option value="fixed">Рубли</option>
+                    <option value="percent">{t("create.percent")}</option>
+                    <option value="fixed">{t("create.rubles")}</option>
                   </select>
                 </label>
                 <label className="block">
-                  <span className={LABEL}>{form.kind === "percent" ? "Процент" : "Сумма, ₽"}</span>
+                  <span className={LABEL}>{form.kind === "percent" ? t("create.percent") : t("create.amountRubles")}</span>
                   <input
                     value={form.value}
                     onChange={(e) => setForm({ ...form, value: e.target.value.replace(/\D/g, "") })}
@@ -548,7 +588,7 @@ export function PromoCodesClient({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className={LABEL}>Действует с</span>
+                  <span className={LABEL}>{t("create.validFrom")}</span>
                   <input
                     type="date"
                     value={form.startsAt}
@@ -557,7 +597,7 @@ export function PromoCodesClient({
                   />
                 </label>
                 <label className="block">
-                  <span className={LABEL}>по (включительно)</span>
+                  <span className={LABEL}>{t("create.validThrough")}</span>
                   <input
                     type="date"
                     value={form.endsAt}
@@ -567,12 +607,12 @@ export function PromoCodesClient({
                 </label>
               </div>
               <label className="block">
-                <span className={LABEL}>Лимит оплат</span>
+                <span className={LABEL}>{t("create.paymentLimit")}</span>
                 <input
                   value={form.maxUses}
                   onChange={(e) => setForm({ ...form, maxUses: e.target.value.replace(/\D/g, "") })}
                   inputMode="numeric"
-                  placeholder="без лимита"
+                  placeholder={t("edit.noLimit")}
                   className={INPUT}
                 />
               </label>
@@ -583,15 +623,15 @@ export function PromoCodesClient({
                   onChange={(e) => setForm({ ...form, newClientsOnly: e.target.checked })}
                   className="size-4 rounded border-[#dcdfed]"
                 />
-                Только новым клиентам (без оплаченных заказов)
+                {t("create.newOnly")}
               </label>
               {personalFields(form, (next) => setForm({ ...form, ...next }))}
               <label className="block">
-                <span className={LABEL}>Заметка</span>
+                <span className={LABEL}>{t("create.note")}</span>
                 <input
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  placeholder="Для рассылки в сентябре"
+                  placeholder={t("create.notePlaceholder")}
                   className={INPUT}
                   maxLength={200}
                 />
@@ -603,11 +643,10 @@ export function PromoCodesClient({
                 className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-                Создать
+                {t("create.submit")}
               </button>
               <p className="text-[12px] leading-relaxed text-[#9b9fb3]">
-                Клиент вводит код на странице оформления или открывает ссылку /promo/КОД; скидка
-                считается на сервере и попадает в сумму заказа, чек и УПД.
+                {t("create.help")}
               </p>
             </div>
           </section>
@@ -617,25 +656,23 @@ export function PromoCodesClient({
       <section className={CARD} data-testid="lifetime-discounts">
         <div className="mb-1 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
           <InfinityIcon className="size-4 text-[#5566f6]" />
-          Скидки навсегда · {lifetimeRows.filter((r) => !r.revokedAt).length}
+          {t("lifetime.heading", { count: lifetimeRows.filter((r) => !r.revokedAt).length })}
         </div>
         <p className="mb-4 max-w-[760px] text-[13px] leading-relaxed text-[#6f7282]">
-          Аккаунты, за которыми первая оплата с кодом «навсегда» закрепила скидку. Она применяется к
-          каждой следующей оплате сама — картой и по счёту. «Отменить» — следующие оплаты пойдут без
-          неё; уже оплаченное не меняется.
+          {t("lifetime.explanation")}
         </p>
         {lifetimeRows.length === 0 ? (
-          <p className="text-[13.5px] text-[#9b9fb3]">Пока ни одной — появятся после первой оплаты с таким кодом.</p>
+          <p className="text-[13.5px] text-[#9b9fb3]">{t("lifetime.empty")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-[13.5px]">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  <th className="pb-2 pr-4 font-medium">Аккаунт</th>
-                  <th className="pb-2 pr-4 font-medium">Скидка</th>
-                  <th className="pb-2 pr-4 font-medium">С заказа</th>
-                  <th className="pb-2 pr-4 font-medium">Оплат со скидкой</th>
-                  <th className="pb-2 pr-4 font-medium">Статус</th>
+                  <th className="pb-2 pr-4 font-medium">{t("lifetime.account")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("lifetime.discount")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("lifetime.order")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("lifetime.paidWithDiscount")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("lifetime.status")}</th>
                   <th className="pb-2 font-medium" />
                 </tr>
               </thead>
@@ -660,20 +697,20 @@ export function PromoCodesClient({
                       <span className="font-mono text-[12px] text-[#6f7282]">{row.code}</span>
                     </td>
                     <td className="whitespace-nowrap py-2.5 pr-4 text-[#6f7282]">
-                      №{row.orderId} · {mskDate(row.boundAt)}
+                      №{row.orderId} · {formatPromoDisplayDate(row.boundAt, locale)}
                     </td>
                     <td className="py-2.5 pr-4 tabular-nums text-[#6f7282]">{row.autoPaidOrders}</td>
                     <td className="py-2.5 pr-4">
                       {row.revokedAt ? (
                         <span className="text-[12.5px] text-[#a13a32]">
-                          отменена {mskDate(row.revokedAt)}
-                          {row.revokedByName ? ` · ${row.revokedByName}` : ""}
+                          {t("lifetime.revoked", { date: formatPromoDisplayDate(row.revokedAt, locale) })}
+                          {row.revokedByCurrentUser ? ` · ${t("lifetime.revokedByYou")}` : row.revokedByName ? ` · ${row.revokedByName}` : ""}
                         </span>
                       ) : row.expired && row.expiresAt ? (
-                        <span className="text-[12.5px] text-[#6f7282]">срок вышел {mskDate(row.expiresAt)}</span>
+                        <span className="text-[12.5px] text-[#6f7282]">{t("lifetime.expired", { date: formatPromoDisplayDate(row.expiresAt, locale) })}</span>
                       ) : (
                         <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">
-                          {row.expiresAt ? `действует до ${mskDate(row.expiresAt)}` : "действует"}
+                          {row.expiresAt ? t("lifetime.activeUntil", { date: formatPromoDisplayDate(row.expiresAt, locale) }) : t("lifetime.active")}
                         </span>
                       )}
                     </td>
@@ -684,7 +721,7 @@ export function PromoCodesClient({
                           onClick={() => setRevoking(row)}
                           className={cn(SMALL_BUTTON, "text-[#a13a32]")}
                         >
-                          Отменить
+                          {t("lifetime.revoke")}
                         </button>
                       )}
                     </td>
@@ -701,18 +738,18 @@ export function PromoCodesClient({
         onClose={() => setRevoking(null)}
         onConfirm={() => (revoking ? revoke(revoking) : undefined)}
         variant="danger"
-        title={revoking ? `Отменить скидку ${describeDiscount(revoking)} навсегда?` : "Отменить скидку навсегда?"}
+        title={revoking ? t("lifetime.dialogTitleWithDiscount", { discount: describeDiscount(revoking) }) : t("lifetime.dialogTitle")}
         description={
           revoking
-            ? `Аккаунт ${revoking.ownerEmail ?? revoking.accountId}, код ${revoking.code}. Следующие оплаты пойдут по обычной цене.`
+            ? t("lifetime.dialogDescription", { account: revoking.ownerEmail ?? revoking.accountId, code: revoking.code })
             : undefined
         }
         bullets={[
-          { label: "Уже оплаченные заказы не меняются" },
-          { label: "Отмена попадёт в журнал аудита", tone: "info" },
-          { label: "Вернуть скидку можно только новым кодом «навсегда»", tone: "warn" },
+          { label: t("lifetime.paidOrdersUnchanged") },
+          { label: t("lifetime.auditNote"), tone: "info" },
+          { label: t("lifetime.cannotRestore"), tone: "warn" },
         ]}
-        confirmLabel="Отменить скидку"
+        confirmLabel={t("lifetime.confirm")}
       />
     </div>
   );

@@ -180,6 +180,7 @@ export function PublicSupportWidget() {
 
 function SupportWidgetBody() {
   const t = useTranslations("publicSupport");
+  const commonForm = useTranslations("common.form");
   const locale = useSiteLocale();
   const apiErrorText = (code: string | null, fallback: string) => {
     const errorKeys = {
@@ -652,8 +653,8 @@ function SupportWidgetBody() {
                 setEmail(event.target.value);
                 setContactError(null);
               }}
-              placeholder="E-mail"
-              aria-label="E-mail"
+              placeholder={commonForm("emailLabel")}
+              aria-label={commonForm("emailLabel")}
               aria-invalid={emailInvalid || undefined}
               autoComplete="email"
               inputMode="email"

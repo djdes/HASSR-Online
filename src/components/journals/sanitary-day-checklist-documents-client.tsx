@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -36,6 +38,7 @@ import { getSanitaryDayChecklistTitle } from "@/lib/sanitary-day-checklist-docum
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
@@ -211,6 +214,9 @@ export function SanitaryDayChecklistDocumentsClient({
   activeTab,
   documents,
 }: Props) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
   // Создание / настройки / удаление документов API отдаёт только
@@ -273,10 +279,10 @@ export function SanitaryDayChecklistDocumentsClient({
   }
 
   async function handleDelete(documentId: string, title: string) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${title}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: t("documentActions.deleteTitle"), description: t("documentLifecycle.deleteDescriptionWithTitle", { title }), variant: "danger", confirmLabel: common("delete"), locale: lifecycleFeedback.current.locale }))) return;
     const response = await fetch(`/api/journal-documents/${documentId}`, { method: "DELETE" });
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(lifecycleFeedback.current.translate("documentActions.deleteError"));
       return;
     }
     router.refresh();
@@ -289,7 +295,7 @@ export function SanitaryDayChecklistDocumentsClient({
       body: JSON.stringify({ status: "closed" }),
     });
     if (!response.ok) {
-      toast.error("Не удалось закрыть документ");
+      toast.error(lifecycleFeedback.current.translate("documentActions.closeError"));
       return;
     }
     setArchiveTarget(null);
@@ -303,7 +309,7 @@ export function SanitaryDayChecklistDocumentsClient({
       body: JSON.stringify({ status: "active" }),
     });
     if (!response.ok) {
-      toast.error("Не удалось отправить в активные");
+      toast.error(lifecycleFeedback.current.translate("documentLifecycle.moveToActiveFailed"));
       return;
     }
     router.refresh();
@@ -446,7 +452,7 @@ export function SanitaryDayChecklistDocumentsClient({
                       ? [
                           {
                             key: "activate",
-                            label: "Отправить в активные",
+                            label: t("documentLifecycle.sendToActive"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => moveToActive(document.id),
                           },
@@ -456,13 +462,13 @@ export function SanitaryDayChecklistDocumentsClient({
                       ? [
                           {
                             key: "archive",
-                            label: "Отправить в закрытые",
+                            label: t("documentLifecycle.sendToClosed"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => setArchiveTarget(document),
                           },
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: common("delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             onSelect: () => handleDelete(document.id, document.title),
                             tone: "danger" as const,
@@ -491,10 +497,11 @@ export function SanitaryDayChecklistDocumentsClient({
           <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-                Перенести в архив
+                {t("documentLifecycle.archiveHeading")}
               </DialogTitle>
               <button
                 type="button"
+                aria-label={common("close")}
                 className="rounded-xl p-2 text-[#0b1024]"
                 onClick={() => setArchiveTarget(null)}
               >
@@ -505,7 +512,7 @@ export function SanitaryDayChecklistDocumentsClient({
           {archiveTarget && (
             <div className="px-10 py-8 space-y-6">
               <p className="text-[15px] text-[#3a3d52]">
-                Перенести в архив документ &quot;{archiveTarget.title || checklistTitle}&quot;?
+                {t("documentLifecycle.archiveQuestion", { title: archiveTarget.title || checklistTitle })}
               </p>
               <div className="flex flex-wrap justify-end gap-3">
                 <Button
@@ -513,13 +520,13 @@ export function SanitaryDayChecklistDocumentsClient({
                   className="h-9 rounded-xl px-8 text-[13.5px]"
                   onClick={() => setArchiveTarget(null)}
                 >
-                  Отмена
+                  {common("cancel")}
                 </Button>
                 <Button
                   className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
                   onClick={() => moveToClosed(archiveTarget.id)}
                 >
-                  В архив
+                  {t("documentLifecycle.archiveAction")}
                 </Button>
               </div>
             </div>

@@ -46,7 +46,9 @@
     ".next-vfdev/types/**/*.ts",
     ".next-vfdev/dev/types/**/*.ts",
     ".next-i18n-verification/types/**/*.ts",
-    ".next-i18n-verification/dev/types/**/*.ts"
+    ".next-i18n-verification/dev/types/**/*.ts",
+    ".next-build/types/**/*.ts",
+    ".next-build/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

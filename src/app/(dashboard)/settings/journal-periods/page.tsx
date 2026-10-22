@@ -1,3 +1,6 @@
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -16,6 +19,8 @@ export default async function JournalPeriodsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const orgId = getActiveOrgId(session);
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "settingsJournalPeriods" });
 
   const [templates, org] = await Promise.all([
     db.journalTemplate.findMany({
@@ -46,22 +51,18 @@ export default async function JournalPeriodsPage() {
   });
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsJournalPeriods"]}>
     <div className="space-y-5">
       <div>
         <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-          Периоды журналов
+          {t("page.title")}
         </h1>
         <p className="mt-1.5 max-w-[680px] text-[14px] leading-[1.6] text-[#6f7282]">
-          Для каждого журнала можно выбрать на какой срок создаётся
-          документ. <b>«По N дней»</b> режет окна от 1-го числа месяца:
-          например, N=10 → 1–10 / 11–20 / 21–конец. Существующие документы
-          не пересоздаются — изменение применится при следующем
-          автосоздании или ручном создании. Если не выбрано —
-          используется значение по умолчанию (см. подсказки в правом
-          столбце).
+          {t.rich("page.description", { strong: (chunks) => <b>{chunks}</b> })}
         </p>
       </div>
       <JournalPeriodsClient initial={initial} />
     </div>
+    </DomainMessagesBoundary>
   );
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { buildNavModel, loadNavFacts, loadNavMenuData } from "@/lib/app-nav.server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 import { MiniSectionsClient, type MiniSectionGroupView } from "./sections-client";
 
@@ -56,5 +57,9 @@ export default async function MiniSectionsPage() {
     });
   }
 
-  return <MiniSectionsClient groups={groups} authed={Boolean(user)} />;
+  return (
+    <DomainMessagesBoundary namespaces={["miniSections"]}>
+      <MiniSectionsClient groups={groups} authed={Boolean(user)} />
+    </DomainMessagesBoundary>
+  );
 }

@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useLocale, useMessages, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import type { Messages } from "@/i18n/messages";
+import { journalPeriodsDisplayName, journalPeriodsSaveError, PERIOD_KIND_KEYS } from "@/lib/settings-journal-periods-presentation";
+import { useJournalPeriodsFeedback } from "@/components/settings/journal-periods-feedback";
 import type { JournalPeriodKind } from "@/lib/journal-period";
 
 type Item = {
@@ -13,17 +17,14 @@ type Item = {
   days: number | null;
 };
 
-const KIND_LABEL: Record<JournalPeriodKind, string> = {
-  monthly: "По месяцу",
-  yearly: "По году",
-  "half-monthly": "Полумесячный (1–15 / 16–конец месяца)",
-  "single-day": "Один день",
-  perpetual: "Бессрочный",
-  days: "По N дней",
-};
-
 export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
   const router = useRouter();
+  const locale = useLocale() as Locale;
+  const messages = useMessages() as Messages;
+  const t = useTranslations("settingsJournalPeriods");
+  const feedback = useJournalPeriodsFeedback();
+  const displayName = (item: Item) => journalPeriodsDisplayName(locale, messages.journals.names, item);
+  const kindLabel = (kind: JournalPeriodKind) => Object.hasOwn(PERIOD_KIND_KEYS, kind) ? t(PERIOD_KIND_KEYS[kind]) : undefined;
   const [rows, setRows] = useState(initial);
   const [saving, setSaving] = useState(false);
 
@@ -42,9 +43,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
         if (!r.kind) continue;
         if (r.kind === "days") {
           if (!r.days || r.days < 1 || r.days > 31) {
-            toast.error(
-              `«${r.name}»: для «По N дней» введите число дней 1–31`
-            );
+            feedback.invalidDays(r);
             return;
           }
           periods[r.code] = { kind: "days", days: r.days };
@@ -59,7 +58,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        toast.error(d?.error ?? "Не удалось сохранить");
+        feedback.error(journalPeriodsSaveError(d, res.status));
         return;
       }
       const data = (await res.json().catch(() => ({}))) as {
@@ -71,14 +70,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
       const skipped = (data.applied ?? []).filter(
         (a) => a.action === "skipped_has_entries"
       ).length;
-      let msg = "Сохранено";
-      if (updatedEmpty > 0) {
-        msg += ` · переcreate без потерь: ${updatedEmpty}`;
-      }
-      if (skipped > 0) {
-        msg += ` · с записями (применится со следующего цикла): ${skipped}`;
-      }
-      toast.success(msg);
+      feedback.saved(updatedEmpty, skipped);
       router.refresh();
     } finally {
       setSaving(false);
@@ -90,8 +82,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
       {/* Sticky save bar — всегда виден сверху, не нужно скроллить через 35 строк. */}
       <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-white/90 px-4 py-2.5 shadow-[0_8px_24px_-12px_rgba(11,16,36,0.18)] backdrop-blur">
         <div className="text-[13px] text-[#6f7282]">
-          Изменения применятся к пустым активным документам сразу,
-          к заполненным — со следующего цикла.
+          {t("notice")}
         </div>
         <button
           type="button"
@@ -99,7 +90,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
           disabled={saving}
           className="inline-flex h-10 shrink-0 items-center rounded-2xl bg-[#5566f6] px-5 text-[13.5px] font-medium text-white shadow-[0_10px_26px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c8cbe0]"
         >
-          {saving ? "Сохраняем…" : "Сохранить"}
+          {saving ? t("actions.saving") : t("actions.save")}
         </button>
       </div>
     <div className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
@@ -110,11 +101,11 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
               {/* Закреплена: на телефоне таблицу крутят вбок, и без
                   названия непонятно, чей это период. */}
               <th className="sticky left-0 z-10 bg-[#fafbff] px-5 py-3 text-left">
-                Журнал
+                {t("table.journal")}
               </th>
-              <th className="px-3 py-3 text-left">Период</th>
-              <th className="px-3 py-3 text-left w-24">Дней</th>
-              <th className="px-3 py-3 text-left">По умолчанию</th>
+              <th className="px-3 py-3 text-left">{t("table.period")}</th>
+              <th className="px-3 py-3 text-left w-24">{t("table.days")}</th>
+              <th className="px-3 py-3 text-left">{t("table.default")}</th>
             </tr>
           </thead>
           <tbody>
@@ -124,10 +115,11 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
               return (
                 <tr key={r.code} className="border-t border-[#eef0f6]">
                   <td className="sticky left-0 z-10 bg-white px-5 py-2.5 font-medium text-[#0b1024]">
-                    {r.name}
+                    {displayName(r)}
                   </td>
                   <td className="px-3 py-2.5">
                     <select
+                      aria-label={t("periodForJournal", { journal: displayName(r) })}
                       value={r.kind ?? ""}
                       onChange={(e) =>
                         update(r.code, {
@@ -136,22 +128,23 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
                       }
                       className="h-9 rounded-xl border border-[#dcdfed] bg-white px-2 text-[13px] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
                     >
-                      <option value="">— по умолчанию —</option>
-                      <option value="monthly">{KIND_LABEL.monthly}</option>
+                      <option value="">{t("defaultOption")}</option>
+                      <option value="monthly">{kindLabel("monthly")}</option>
                       <option value="half-monthly">
-                        {KIND_LABEL["half-monthly"]}
+                        {kindLabel("half-monthly")}
                       </option>
-                      <option value="days">{KIND_LABEL.days}</option>
-                      <option value="yearly">{KIND_LABEL.yearly}</option>
+                      <option value="days">{kindLabel("days")}</option>
+                      <option value="yearly">{kindLabel("yearly")}</option>
                       <option value="single-day">
-                        {KIND_LABEL["single-day"]}
+                        {kindLabel("single-day")}
                       </option>
-                      <option value="perpetual">{KIND_LABEL.perpetual}</option>
+                      <option value="perpetual">{kindLabel("perpetual")}</option>
                     </select>
                   </td>
                   <td className="px-3 py-2.5">
                     {isDays ? (
                       <input
+                        aria-label={t("daysForJournal", { journal: displayName(r) })}
                         type="number"
                         min={1}
                         max={31}
@@ -172,10 +165,10 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
                   <td className="px-3 py-2.5 text-[12px] text-[#6f7282]">
                     {r.kind ? (
                       <span>
-                        Активно: <b>{KIND_LABEL[effectiveKind]}</b>
+                        {t.rich("activeKind", { kind: kindLabel(effectiveKind) ?? "", strong: (chunks) => <b>{chunks}</b> })}
                       </span>
                     ) : (
-                      <span>{KIND_LABEL[r.defaultKind]}</span>
+                      <span>{kindLabel(r.defaultKind)}</span>
                     )}
                   </td>
                 </tr>
@@ -191,7 +184,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
           disabled={saving}
           className="inline-flex h-10 items-center rounded-2xl bg-[#5566f6] px-5 text-[13.5px] font-medium text-white shadow-[0_10px_26px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c8cbe0]"
         >
-          {saving ? "Сохраняем…" : "Сохранить"}
+          {saving ? t("actions.saving") : t("actions.save")}
         </button>
       </div>
     </div>

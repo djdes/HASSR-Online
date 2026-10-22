@@ -1,5 +1,7 @@
 "use client";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import { formatNumber } from "@/i18n/locales";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Player, type PlayerRef } from "@remotion/player";
 import { ChevronDown, Maximize2, Pause, Play, SlidersHorizontal, Thermometer, Refrigerator } from "lucide-react";
@@ -46,8 +48,8 @@ const SEEK_STEP_SECONDS = 2;
 export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: SceneDay; video?: NarratedVideo | null }) {
   const t = useTranslations("qrPlayer");
   const sceneT = useTranslations("qrScene");
-  const format = useFormatter();
-  const temperatureLabel = (value: number) => `${format.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace("-", "−")} °C`;
+  const locale = useSiteLocale();
+  const temperatureLabel = (value: number) => `${formatNumber(locale, value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace("-", "−")} °C`;
   const journalName = useTranslations("journals.names");
   const chapterText: Record<ChapterId, { label: string; place: string; caption: string; short: string }> = {
     fridge: { label: sceneT("chapters.fridgeChip"), place: sceneT("chapters.fridgePlace"), caption: sceneT("chapters.fridgeCaption"), short: sceneT("chapters.fridgeShort") },

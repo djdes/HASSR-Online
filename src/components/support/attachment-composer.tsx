@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -32,10 +32,12 @@ export type UploadItem = {
   attachment?: SignedAttachment;
 };
 
-export function useAttachmentUploads(options?: { guestId?: string | null }) {
+export function useAttachmentUploads(options?: { guestId?: string | null; getUploadFailureContent?: () => ReactNode }) {
   const t = useTranslations("publicSupport");
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const guestId = options?.guestId ?? null;
+  const failureContent = useRef(options?.getUploadFailureContent);
+  useEffect(() => { failureContent.current = options?.getUploadFailureContent; }, [options?.getUploadFailureContent]);
 
   const addFiles = useCallback(
     (files: Iterable<File>) => {
@@ -87,7 +89,7 @@ export function useAttachmentUploads(options?: { guestId?: string | null }) {
               );
             } catch (error) {
               toast.error(
-                error instanceof Error ? error.message : t("attachment.uploadFailed")
+                failureContent.current ? failureContent.current() : error instanceof Error ? error.message : t("attachment.uploadFailed")
               );
               setUploads((cur) => cur.filter((u) => u.key !== key));
             }
@@ -178,7 +180,9 @@ export function AttachButton({
 export function AttachmentChips({
   uploads,
   onRemove,
+  formatSizeBytes,
 }: {
+  formatSizeBytes?: (sizeBytes: number, locale: "ru" | "en" | "uz") => string;
   uploads: UploadItem[];
   onRemove: (key: string) => void;
 }) {
@@ -201,7 +205,7 @@ export function AttachmentChips({
           )}
           <span className="max-w-[160px] truncate">{u.filename}</span>
           <span className="shrink-0 text-[#9b9fb3]">
-            {formatBytes(u.sizeBytes, locale)}
+            {formatSizeBytes ? formatSizeBytes(u.sizeBytes, locale) : formatBytes(u.sizeBytes, locale)}
           </span>
           <button
             type="button"

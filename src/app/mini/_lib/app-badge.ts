@@ -36,7 +36,10 @@ export function updateAppBadge(count: number): void {
  * второе сообщение было бы шумом. Уведомление нужно ровно для случая
  * «поймал сеть в метро, приложение свёрнуто».
  */
-export async function notifyQueueSent(sent: number): Promise<void> {
+export async function notifyQueueSent(
+  sent: number,
+  message: { title: string; body: string },
+): Promise<void> {
   if (sent <= 0) return;
   if (typeof document === "undefined") return;
   if (document.visibilityState === "visible") return;
@@ -46,11 +49,8 @@ export async function notifyQueueSent(sent: number): Promise<void> {
   try {
     const registration = await navigator.serviceWorker?.ready;
     if (!registration) return;
-    await registration.showNotification("Записи отправлены", {
-      body:
-        sent === 1
-          ? "Запись, сделанная без связи, ушла на сервер."
-          : `Записей отправлено: ${sent}. Всё, что делалось без связи, ушло.`,
+    await registration.showNotification(message.title, {
+      body: message.body,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       tag: "wesetup-queue-sent",

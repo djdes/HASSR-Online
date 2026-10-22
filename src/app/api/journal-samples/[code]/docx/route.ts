@@ -4,15 +4,16 @@ import {
   renderJournalDocumentDocx,
 } from "@/lib/document-docx";
 import {
-  buildJournalSampleInput,
   isSampleJournalCode,
 } from "@/lib/journal-sample-fixtures";
 import { clientIp } from "@/lib/client-ip";
 import { journalSampleRateLimiter } from "@/lib/rate-limit";
 import { journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
 import type { BlankTarget } from "@/lib/blank-download";
-import { blankDownloadDenied, verifyBlankDownloadToken } from "@/lib/blank-download-token";
-import { BLANK_QR_LINES, blankQrUrl } from "@/lib/blank-qr-token";
+import { verifyBlankDownloadToken } from "@/lib/blank-download-token";
+import { blankQrUrl } from "@/lib/blank-qr-token";
+
+import { localizedJournalSampleInput, sampleDownloadDenied, sampleDownloadError, sampleLocaleFromUrl, sampleFooterLines } from "@/lib/public-sample-download-presentation";
 
 export const runtime = "nodejs";
 
@@ -30,12 +31,12 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
+  const language = sampleLocaleFromUrl(request.url);
+  if (!language.ok) return sampleDownloadError("ru", "invalidLocale", 400);
+  const { locale } = language;
 
   if (!isSampleJournalCode(code) || !isDocxSampleCode(code)) {
-    return NextResponse.json(
-      { error: "Для этого журнала образец есть только в PDF" },
-      { status: 404 }
-    );
+    return sampleDownloadError(locale, "pdfOnly", 404);
   }
 
   const target: BlankTarget = { kind: "code", code };
@@ -43,27 +44,25 @@ export async function GET(
     target,
     format: "docx",
   });
-  if (!check.ok) return blankDownloadDenied(request, target, "docx", check.reason);
+  if (!check.ok) return sampleDownloadDenied(request, target, "docx", check.reason, locale);
 
   const ip = clientIp(request) ?? "unknown";
   if (!journalSampleRateLimiter.consume(`sample:${ip}`)) {
-    return NextResponse.json(
-      { error: "Слишком много запросов. Попробуйте через минуту" },
-      { status: 429 }
-    );
+    return sampleDownloadError(locale, "tooMany", 429);
   }
 
   try {
-    const { buffer, fileName } = await renderJournalDocumentDocx(buildJournalSampleInput(code), code, {
+    const { buffer, fileName } = await renderJournalDocumentDocx(await localizedJournalSampleInput(code, locale), code, {
       footer: {
         qrUrl: blankQrUrl(journalPdfQrOrigin(), { target, email: check.email }).url,
-        lines: BLANK_QR_LINES,
+        lines: await sampleFooterLines(locale),
       },
     });
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
+        "Content-Language": locale,
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(
@@ -75,9 +74,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("journal sample docx failed", code, error);
-    return NextResponse.json(
-      { error: "Не получилось собрать образец" },
-      { status: 500 }
-    );
+    return sampleDownloadError(locale, "buildFailed", 500);
   }
 }

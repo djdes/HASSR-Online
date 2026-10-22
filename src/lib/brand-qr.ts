@@ -3,8 +3,9 @@ import path from "node:path";
 
 import type { jsPDF } from "jspdf";
 import QRCode from "qrcode";
+import { journalPdfCopy } from "@/i18n/journal-pdf-copy";
 
-import { BRAND_QR_CAPTION_ASPECT, BRAND_QR_FRAME, BRAND_QR_STRIP } from "@/lib/brand-qr-shared";
+import { BRAND_QR_CAPTION_ASPECT, BRAND_QR_FRAME } from "@/lib/brand-qr-shared";
 
 /**
  * Фирменный QR WeSetup — ОДИН помощник для всех мест, где сайт выдаёт QR:
@@ -186,7 +187,7 @@ export function brandQrLayout(url: string, options: BrandQrOptions = {}): BrandQ
     // Кегль — по ширине (поля `TITLE_SIDE`); строка «заглавная — хвост „р“» по центру полосы.
     const titleSize = Math.min((width * (1 - 2 * TITLE_SIDE)) / TITLE_EM, strip.h / (CAPS_ASCENT + DESCENT + 0.5));
     const baseline = stripY + (strip.h - (CAPS_ASCENT + DESCENT) * titleSize) / 2 + CAPS_ASCENT * titleSize;
-    title = { text: options.locale === "en" ? "Scan me" : BRAND_QR_CAPTION_TITLE, x: width / 2, y: baseline, size: titleSize };
+    title = { text: journalPdfCopy(options.locale ?? "ru")("qrScanCaption"), x: width / 2, y: baseline, size: titleSize };
   }
 
   return {

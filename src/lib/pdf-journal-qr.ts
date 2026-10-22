@@ -1,4 +1,5 @@
 import type { jsPDF } from "jspdf";
+import type { Locale } from "@/i18n/locales";
 import QRCodeLib, { type QRCode } from "qrcode";
 
 import {
@@ -112,6 +113,8 @@ export const JOURNAL_QR_MAX_MODULES = (() => {
 })();
 
 export type JournalPdfQr = {
+  /** Locale of the built-in caption; the payload is unchanged. */
+  locale?: Locale;
   /** Адрес, который кодирует QR. */
   url: string;
   /**
@@ -202,8 +205,8 @@ export type JournalQrPlacement = {
  * не уже базовой ячейки (шапка не растёт) и не шире самой широкой (у самого
  * плотного адреса модуль тогда 0,353 мм — не меньше 0,35).
  */
-export function journalQrTile(url: string): JournalQrTile {
-  const layout = brandQrLayout(url);
+export function journalQrTile(url: string, locale: Locale = "ru"): JournalQrTile {
+  const layout = brandQrLayout(url, { locale });
   const side = layout.window.w;
   if (side * JOURNAL_QR_MIN_MODULE_MM > WINDOW_MAX_MM + 1e-9) {
     throw new Error(
@@ -248,7 +251,7 @@ export function journalQrMatrix(url: string): QRCode {
 // ---------------------------------------------------------------------------
 
 type DocQrSlot = { box: PdfBox; variant: JournalQrVariant };
-type DocQr = { tile: JournalQrTile; slots: Map<number, DocQrSlot> };
+type DocQr = { locale: Locale; tile: JournalQrTile; slots: Map<number, DocQrSlot> };
 const docQr = new WeakMap<jsPDF, DocQr>();
 
 function pageNumberOf(doc: jsPDF): number {
@@ -259,9 +262,9 @@ function pageNumberOf(doc: jsPDF): number {
  * QR этого документа: плитка под адрес. Вызывать до отрисовки бланка —
  * шапка по ней оставит ячейку. Без вызова шапка печатается без QR.
  */
-export function prepareJournalQr(doc: jsPDF, url: string): JournalQrTile {
-  const tile = journalQrTile(url);
-  docQr.set(doc, { tile, slots: new Map() });
+export function prepareJournalQr(doc: jsPDF, url: string, locale: Locale = "ru"): JournalQrTile {
+  const tile = journalQrTile(url, locale);
+  docQr.set(doc, { locale, tile, slots: new Map() });
   return tile;
 }
 
@@ -591,7 +594,7 @@ export function stampJournalQr(
 ): JournalQrPlacement[] {
   params.tracker?.stop();
   const state = docQr.get(doc);
-  const tile = state && state.tile.layout.url === params.url ? state.tile : journalQrTile(params.url);
+  const tile = state && state.tile.layout.url === params.url && (params.locale === undefined || state.locale === params.locale) ? state.tile : journalQrTile(params.url, params.locale);
   const slots = state?.slots ?? new Map<number, DocQrSlot>();
   const placements: JournalQrPlacement[] = [];
   const total = doc.getNumberOfPages();

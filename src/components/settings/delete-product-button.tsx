@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { productErrorKey, productUsageMessages, type ProductUsageMessage } from "@/lib/settings-products-presentation";
+import { useSettingsProductsFeedback } from "./settings-products-feedback";
 import { Button } from "@/components/ui/button";
 import { confirmAsync } from "@/components/ui/confirm-async";
 
@@ -15,6 +17,8 @@ export function DeleteProductButton({
   productName?: string;
 }) {
   const router = useRouter();
+  const common = useTranslations("common");
+  const feedback = useSettingsProductsFeedback();
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
@@ -22,29 +26,33 @@ export function DeleteProductButton({
     // Раньше: window.confirm без единой цифры — менеджер не знал, потеряет
     // ли он заполненные журналы. Сначала спрашиваем сервер, где продукт
     // используется, и показываем это в диалоге.
-    let bullets: Array<{ label: string; tone?: "default" | "warn" | "info" }> = [];
+    let warnings: ProductUsageMessage[] = [];
     try {
       const usageResponse = await fetch(`/api/products/usage?id=${productId}`);
       if (usageResponse.ok) {
         const usage = await usageResponse.json();
-        if (Array.isArray(usage?.bullets)) {
-          bullets = usage.bullets
-            .filter((line: unknown) => typeof line === "string")
-            .map((label: string) => ({ label, tone: "warn" as const }));
-        }
+        warnings = productUsageMessages(usage);
       }
     } catch {
       /* последствия не показали — подтверждение всё равно спросим */
     }
 
+    const copy = feedback.current();
+    const bullets = warnings.map((warning) => ({
+      label: warning.key === "usage.existingDocuments"
+        ? copy.t(warning.key, { name: warning.params.name, count: String(warning.params.count) })
+        : copy.t(warning.key),
+      tone: "warn" as const,
+    }));
     const ok = await confirmAsync({
-      title: "Удалить продукт из справочника?",
+      locale: copy.locale,
+      title: copy.t("delete.title"),
       description: productName
-        ? `Продукт «${productName}» пропадёт из справочника. Действие нельзя отменить.`
-        : "Продукт пропадёт из справочника. Действие нельзя отменить.",
+        ? copy.t("delete.descriptionNamed", { name: productName })
+        : copy.t("delete.description"),
       bullets,
       variant: "danger",
-      confirmLabel: "Да, удалить",
+      confirmLabel: copy.t("delete.confirm"),
     });
     if (!ok) {
       setIsDeleting(false);
@@ -57,21 +65,14 @@ export function DeleteProductButton({
       });
 
       if (res.ok) {
-        toast.success("Продукт удалён.");
+        feedback.success("delete.success");
         router.refresh();
         return;
       }
-      // Раньше при не-ok ответе кнопка молча гасла — юзер тапал ещё раз
-      // и снова молчание. Теперь показываем ошибку из тела (например
-      // «Продукт используется в N записях, удалить нельзя»).
       const body = await res.json().catch(() => null);
-      const message =
-        (body && typeof body === "object" && body !== null && "error" in body
-          ? String((body as Record<string, unknown>).error)
-          : null) ?? "Не удалось удалить продукт.";
-      toast.error(message);
+      feedback.error(productErrorKey(body, "DELETE", res.status) ?? "delete.failed");
     } catch {
-      toast.error("Сеть недоступна. Попробуйте ещё раз.");
+      feedback.error("delete.network");
     } finally {
       setIsDeleting(false);
     }
@@ -81,6 +82,7 @@ export function DeleteProductButton({
     <Button
       variant="ghost"
       size="icon"
+      aria-label={common("delete")}
       onClick={handleDelete}
       disabled={isDeleting}
       className="size-8 text-muted-foreground hover:text-destructive"

@@ -276,7 +276,8 @@ export async function getMyReview(userId: string): Promise<ReviewView | null> {
 
 export async function listReviewsForModeration(
   status: ReviewStatus,
-): Promise<ReviewView[]> {
+  options?: { includePresentationOrigin?: boolean },
+): Promise<(ReviewView & { organizationTypeOrigin?: string | null })[]> {
   const rows = await db.customerReview.findMany({
     where: { status },
     orderBy: { createdAt: "desc" },
@@ -284,7 +285,13 @@ export async function listReviewsForModeration(
   });
   if (rows.length === 0) return [];
   const labels = await organizationLabels(rows.map((r) => r.organizationId));
-  return rows.map((row) => toView(row, labels.get(row.organizationId) ?? UNKNOWN_ORGANIZATION));
+  return rows.map((row) => {
+    const organization = labels.get(row.organizationId) ?? UNKNOWN_ORGANIZATION;
+    const view = toView(row, organization);
+    return options?.includePresentationOrigin === true
+      ? { ...view, organizationTypeOrigin: organization.type }
+      : view;
+  });
 }
 
 /**

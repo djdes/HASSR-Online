@@ -12,10 +12,12 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
 import { toast } from "sonner";
 
-import { PromoBadge, PromoPrice, formatPriceRub } from "@/components/pricing/promo-price";
+import { PromoBadge, PromoPrice } from "@/components/pricing/promo-price";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   applyPromotion,
@@ -28,9 +30,10 @@ import {
   validatePromotionInput,
   type AppliedPromotion,
   type PromotionAdminRow,
-  type PromotionAuditEntry,
 } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
+import type { PresentedPromotionAuditEntry } from "@/lib/promo/promotion-audit-presentation";
+import { formatPromotionAmount, promotionActionLabel, promotionError, promotionHistorySummary } from "./promotion-presentation";
 
 const INPUT =
   "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
@@ -70,14 +73,6 @@ function emptyForm(nowMsk: string): FormState {
   };
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  "promotion.create": "Создана",
-  "promotion.update": "Изменена",
-  "promotion.enable": "Включена",
-  "promotion.disable": "Выключена",
-  "promotion.delete": "Удалена",
-};
-
 export function PromotionsClient({
   promotions,
   history,
@@ -86,13 +81,17 @@ export function PromotionsClient({
   baseRub,
 }: {
   promotions: PromotionAdminRow[];
-  history: PromotionAuditEntry[];
+  history: PresentedPromotionAuditEntry[];
   /** «Сейчас» сервера — по нему делим акции на идущие, будущие и прошедшие. */
   nowIso: string;
   nowMsk: string;
   /** Цена подписки по тарифу — для превью «как увидят клиенты». */
   baseRub: number;
 }) {
+  const t = useTranslations("rootPromotions");
+  const locale = useLocale() as Locale;
+  const currentT = useRef(t);
+  useEffect(() => { currentT.current = t; }, [t]);
   const router = useRouter();
   const formRef = useRef<HTMLElement | null>(null);
   const [form, setForm] = useState<FormState>(() => emptyForm(nowMsk));
@@ -153,7 +152,7 @@ export function PromotionsClient({
 
   async function submit() {
     if (draft.error) {
-      toast.error(draft.error);
+      toast.error(promotionError(draft.error, currentT.current));
       return;
     }
     setBusy(true);
@@ -175,12 +174,12 @@ export function PromotionsClient({
         }
       );
       const data = (await response.json().catch(() => null)) as { error?: string; promotion?: PromotionAdminRow } | null;
-      if (!response.ok || !data?.promotion) throw new Error(data?.error ?? "Не удалось сохранить");
-      toast.success(form.editingId ? `Акция «${data.promotion.title}» сохранена` : `Акция «${data.promotion.title}» создана`);
+      if (!response.ok || !data?.promotion) throw new Error(data?.error ?? "");
+      toast.success(currentT.current(form.editingId ? "saved" : "created", { title: data.promotion.title }));
       setForm(emptyForm(dateToMskInput(new Date())));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(promotionError(error instanceof Error ? error.message : undefined, currentT.current, "saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -195,27 +194,31 @@ export function PromotionsClient({
         body: JSON.stringify({ active: !row.active }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось изменить");
-      toast.success(row.active ? `«${row.title}» выключена` : `«${row.title}» включена`);
+      if (!response.ok) throw new Error(data?.error ?? "");
+      toast.success(currentT.current(row.active ? "disabled" : "enabledToast", { title: row.title }));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(promotionError(error instanceof Error ? error.message : undefined, currentT.current, "changeFailed"));
     } finally {
       setRowBusy(null);
     }
   }
 
   async function remove(row: PromotionAdminRow) {
+    try {
     const response = await fetch(`/api/root/promotions/${row.id}`, { method: "DELETE" });
     const data = (await response.json().catch(() => null)) as { error?: string } | null;
     if (!response.ok) {
-      toast.error(data?.error ?? "Не удалось удалить");
+      toast.error(promotionError(data?.error, currentT.current, "deleteFailed"));
       return;
     }
-    toast.success(`Акция «${row.title}» удалена`);
+    toast.success(currentT.current("deleted", { title: row.title }));
     setDeleting(null);
     if (form.editingId === row.id) setForm(emptyForm(dateToMskInput(new Date())));
     router.refresh();
+    } catch {
+      toast.error(currentT.current("deleteFailed"));
+    }
   }
 
   function edit(row: PromotionAdminRow) {
@@ -238,19 +241,20 @@ export function PromotionsClient({
       <div className="min-w-0 space-y-5">
         {/* Что видят клиенты прямо сейчас. */}
         <section className={CARD} data-testid="promotions-now">
-          <div className={SECTION_LABEL}>Сейчас на сайте</div>
+          <div className={SECTION_LABEL}>{t("now")}</div>
           {effectiveRow ? (
             <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-[16px] font-semibold text-[#0b1024]">«{effectiveRow.title}»</div>
                 <p className="mt-1 text-[13px] text-[#6f7282]">
-                  {promotionEndHint(effectiveRow)}
                   {groups.running.filter((w) => w.active).length > 1
-                    ? " · идёт несколько акций — действует наибольший процент"
-                    : ""}
+                    ? t("overlapHint", { end: promotionEndHint(effectiveRow, locale) })
+                    : promotionEndHint(effectiveRow, locale)}
                 </p>
               </div>
               <PromoPrice
+                locale={locale}
+                formatAmount={formatPromotionAmount}
                 price={applyPromotion(baseRub, {
                   id: effectiveRow.id,
                   title: effectiveRow.title,
@@ -260,20 +264,19 @@ export function PromotionsClient({
                 })}
                 size="lg"
                 layout="stacked"
-                suffix={<span className="ml-1 text-[13px] text-[#6f7282]">/мес</span>}
+                suffix={<span className="ml-1 text-[13px] text-[#6f7282]">{t("perMonth")}</span>}
               />
             </div>
           ) : (
             <p className="mt-3 text-[14px] text-[#3c4053]">
-              Акций нет — на сайте обычная цена{" "}
-              <span className="font-semibold tabular-nums text-[#0b1024]">{formatPriceRub(baseRub)}</span>/мес.
+              {t.rich("noPromotion", { amount: formatPromotionAmount(baseRub, locale), money: chunks => <span className="font-semibold tabular-nums text-[#0b1024]">{chunks}</span> })}
             </p>
           )}
         </section>
 
         <PromotionGroup
-          title="Идут сейчас"
-          empty="Сейчас ни одна акция не идёт."
+          title={t("running")}
+          empty={t("runningEmpty")}
           items={groups.running.map((w) => w.row)}
           effectiveId={effectiveRow?.id ?? null}
           now={now}
@@ -284,8 +287,8 @@ export function PromotionsClient({
           testId="promotions-running"
         />
         <PromotionGroup
-          title="Будущие"
-          empty="Запланированных акций нет."
+          title={t("scheduled")}
+          empty={t("scheduledEmpty")}
           items={groups.scheduled.map((w) => w.row)}
           effectiveId={null}
           now={now}
@@ -296,8 +299,8 @@ export function PromotionsClient({
           testId="promotions-scheduled"
         />
         <PromotionGroup
-          title="Прошедшие"
-          empty="Завершённых акций пока нет."
+          title={t("finished")}
+          empty={t("finishedEmpty")}
           items={groups.finished.map((w) => w.row)}
           effectiveId={null}
           now={now}
@@ -311,20 +314,19 @@ export function PromotionsClient({
         <section className={CARD}>
           <div className={cn(SECTION_LABEL, "flex items-center gap-2")}>
             <History className="size-4 text-[#5566f6]" />
-            История изменений
+            {t("history")}
           </div>
           {history.length === 0 ? (
-            <p className="mt-3 text-[13.5px] text-[#9b9fb3]">Изменений пока не было.</p>
+            <p className="mt-3 text-[13.5px] text-[#9b9fb3]">{t("historyEmpty")}</p>
           ) : (
             <ul className="mt-3 divide-y divide-[#f2f3f8]" data-testid="promotions-history">
               {history.map((entry) => (
                 <li key={entry.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5 text-[13px]">
                   <span className="tabular-nums text-[#9b9fb3]">{formatMskDateTime(new Date(entry.at))}</span>
                   <span className="font-medium text-[#0b1024]">
-                    {ACTION_LABELS[entry.action] ?? entry.action}
-                    {entry.title ? ` «${entry.title}»` : ""}
+                    {entry.title ? t("historyActionTitle", { action: promotionActionLabel(entry.action, t), title: entry.title }) : promotionActionLabel(entry.action, t)}
                   </span>
-                  {entry.summary ? <span className="text-[#6f7282]">{entry.summary}</span> : null}
+                  {entry.summary ? <span className="text-[#6f7282]">{promotionHistorySummary(entry, t)}</span> : null}
                   {entry.userName ? <span className="text-[#9b9fb3]">· {entry.userName}</span> : null}
                 </li>
               ))}
@@ -341,7 +343,7 @@ export function PromotionsClient({
         <div className={cn(SECTION_LABEL, "mb-4 flex items-center justify-between gap-2")}>
           <span className="flex items-center gap-2">
             <BadgePercent className="size-4 text-[#5566f6]" />
-            {form.editingId ? "Изменить акцию" : "Новая акция"}
+            {t(form.editingId ? "editHeading" : "newHeading")}
           </span>
           {form.editingId ? (
             <button
@@ -350,24 +352,24 @@ export function PromotionsClient({
               className="inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[12px] font-medium normal-case tracking-normal text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
             >
               <X className="size-3.5" />
-              Отменить
+              {t("cancel")}
             </button>
           ) : null}
         </div>
         <div className="space-y-3">
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Название</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("name")}</span>
             <input
               name="title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Осенняя скидка"
+              placeholder={t("namePlaceholder")}
               maxLength={120}
               className={INPUT}
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Скидка, % (1–90)</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("percent")}</span>
             <input
               name="percent"
               value={form.percent}
@@ -379,13 +381,13 @@ export function PromotionsClient({
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-[#3c4053]">
-                Начало, МСК
+                {t("start")}
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, startsAt: dateToMskInput(new Date()) })}
                   className="text-[12px] font-medium text-[#3848c7] hover:text-[#5566f6]"
                 >
-                  сейчас
+                  {t("nowButton")}
                 </button>
               </span>
               <input
@@ -397,7 +399,7 @@ export function PromotionsClient({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Конец, МСК</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("end")}</span>
               <input
                 name="endsAt"
                 type="datetime-local"
@@ -409,7 +411,7 @@ export function PromotionsClient({
           </div>
           <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-[#6f7282]">
             <CalendarClock className="size-3.5 text-[#9b9fb3]" />
-            Длительность:
+            {t("duration")}
             {[7, 14, 30].map((days) => (
               <button
                 key={days}
@@ -417,12 +419,12 @@ export function PromotionsClient({
                 onClick={() => setForm({ ...form, endsAt: endAfterDays(form.startsAt, days) })}
                 className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7] transition-colors hover:bg-[#eef1ff]"
               >
-                {days} дн.
+                {t("days", { days })}
               </button>
             ))}
           </div>
           <p className="text-[12px] leading-relaxed text-[#9b9fb3]">
-            Конец — не включительно: при конце «11.10, 00:00» акция действует весь день 10 октября.
+            {t("exclusiveEnd")}
           </p>
           <label className="flex items-center gap-2 text-[13.5px] text-[#3c4053]">
             <input
@@ -432,15 +434,15 @@ export function PromotionsClient({
               onChange={(e) => setForm({ ...form, active: e.target.checked })}
               className="size-4 rounded border-[#dcdfed] accent-[#5566f6]"
             />
-            Включена (выключенная не действует, даже если даты идут)
+            {t("enabled")}
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Заметка для себя</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("note")}</span>
             <input
               name="note"
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
-              placeholder="Рассылка по базе 1 октября"
+              placeholder={t("notePlaceholder")}
               maxLength={500}
               className={INPUT}
             />
@@ -448,23 +450,25 @@ export function PromotionsClient({
 
           <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-              Так увидят клиенты
+              {t("preview")}
             </div>
             {draft.promotion ? (
               <PromoPrice
+                locale={locale}
+                formatAmount={formatPromotionAmount}
                 price={applyPromotion(baseRub, draft.promotion)}
                 size="lg"
                 layout="stacked"
-                suffix={<span className="ml-1 text-[13px] text-[#6f7282]">/мес</span>}
+                suffix={<span className="ml-1 text-[13px] text-[#6f7282]">{t("perMonth")}</span>}
               />
             ) : !form.title.trim() ? (
               // Пустая форма — не ошибка: подсказываем, с чего начать.
               <p className="text-[13px] text-[#6f7282]">
-                Введите название — здесь появится цена по акции.
+                {t("previewEmpty")}
               </p>
             ) : (
               <p className="text-[13px] text-[#a13a32]" data-testid="promotion-form-error">
-                {draft.error}
+                {promotionError(draft.error, t)}
               </p>
             )}
           </div>
@@ -473,14 +477,15 @@ export function PromotionsClient({
             type="button"
             onClick={() => void submit()}
             disabled={busy || Boolean(draft.error)}
+            aria-busy={busy}
+            aria-label={t(busy ? "saving" : form.editingId ? "save" : "create")}
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-60"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : form.editingId ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {form.editingId ? "Сохранить акцию" : "Создать акцию"}
+            {t(form.editingId ? "save" : "create")}
           </button>
           <p className="text-[12px] leading-relaxed text-[#9b9fb3]">
-            Цена меняется на сайте сразу после сохранения. Уже созданные счета и заказы
-            сохраняют свою сумму.
+            {t("saveHint")}
           </p>
         </div>
       </section>
@@ -490,14 +495,14 @@ export function PromotionsClient({
         onClose={() => setDeleting(null)}
         onConfirm={() => (deleting ? remove(deleting) : undefined)}
         variant="danger"
-        title={deleting ? `Удалить акцию «${deleting.title}»?` : "Удалить акцию?"}
-        description="Если она сейчас идёт — на сайте сразу вернётся обычная цена (или цена другой идущей акции)."
+        title={deleting ? t("deleteTitle", { title: deleting.title }) : t("deleteTitleEmpty")}
+        description={t("deleteDescription")}
         bullets={[
-          { label: "Оплаченные по акции заказы сохранят скидку и процент в отчётах" },
-          { label: "Удаление попадёт в историю изменений", tone: "info" },
-          { label: "Чтобы просто остановить акцию, достаточно «Выключить»", tone: "warn" },
+          { label: t("deleteOrders") },
+          { label: t("deleteHistory"), tone: "info" },
+          { label: t("deleteDisable"), tone: "warn" },
         ]}
-        confirmLabel="Удалить"
+        confirmLabel={t("delete")}
       />
     </div>
   );
@@ -526,10 +531,11 @@ function PromotionGroup({
   onDelete: (row: PromotionAdminRow) => void;
   testId: string;
 }) {
+  const t = useTranslations("rootPromotions");
   return (
     <section className={CARD} data-testid={testId}>
       <div className={SECTION_LABEL}>
-        {title} · {items.length}
+        {t("groupTitle", { title, count: items.length })}
       </div>
       {items.length === 0 ? (
         <p className="mt-3 text-[13.5px] text-[#9b9fb3]">{empty}</p>
@@ -570,16 +576,18 @@ function PromotionItem({
   onToggle: (row: PromotionAdminRow) => void;
   onDelete: (row: PromotionAdminRow) => void;
 }) {
+  const t = useTranslations("rootPromotions");
+  const locale = useLocale() as Locale;
   const phase = promotionPhase({ startsAt: new Date(row.startsAt), endsAt: new Date(row.endsAt) }, now);
   const status = !row.active
-    ? { label: "Выключена", className: "bg-[#f5f6ff] text-[#6f7282]" }
+    ? { label: t("statusDisabled"), className: "bg-[#f5f6ff] text-[#6f7282]" }
     : phase === "finished"
-      ? { label: "Завершена", className: "bg-[#f5f6ff] text-[#6f7282]" }
+      ? { label: t("statusFinished"), className: "bg-[#f5f6ff] text-[#6f7282]" }
       : phase === "scheduled"
-        ? { label: "Запланирована", className: "bg-[#eef1ff] text-[#3848c7]" }
+        ? { label: t("statusScheduled"), className: "bg-[#eef1ff] text-[#3848c7]" }
         : effective
-          ? { label: "Действует", className: "bg-[#ecfdf5] text-[#116b2a]" }
-          : { label: "Перекрыта большей скидкой", className: "bg-[#fff8eb] text-[#b25f00]" };
+          ? { label: t("statusEffective"), className: "bg-[#ecfdf5] text-[#116b2a]" }
+          : { label: t("statusOverridden"), className: "bg-[#fff8eb] text-[#b25f00]" };
 
   return (
     <li
@@ -595,40 +603,35 @@ function PromotionItem({
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[15px] font-semibold text-[#0b1024]">{row.title}</span>
             <span className="rounded-full bg-[#eef1ff] px-2 py-0.5 text-[12px] font-semibold tabular-nums text-[#3848c7]">
-              −{row.percent} %
+              {t("percentBadge", { percent: row.percent })}
             </span>
             <span className={cn("rounded-full px-2.5 py-0.5 text-[12px] font-medium", status.className)}>
               {status.label}
             </span>
           </div>
           <div className="mt-1 text-[13px] tabular-nums text-[#6f7282]">
-            {formatMskDateTime(new Date(row.startsAt))} — {formatMskDateTime(new Date(row.endsAt))} МСК
+            {t("dateRange", { start: formatMskDateTime(new Date(row.startsAt)), end: formatMskDateTime(new Date(row.endsAt)) })}
           </div>
           {phase === "running" && row.active ? (
             <div className="mt-2">
-              <PromoBadge promotion={row} />
+              <PromoBadge locale={locale} promotion={row} />
             </div>
           ) : null}
           {row.note ? <div className="mt-1.5 text-[12.5px] text-[#6f7282]">{row.note}</div> : null}
           <div className="mt-1.5 text-[12.5px] text-[#9b9fb3]">
-            Оплат по акции: <span className="tabular-nums text-[#3c4053]">{row.paidOrders}</span>
-            {row.discountTotalRub > 0 ? (
-              <>
-                {" "}
-                · скидка клиентам{" "}
-                <span className="tabular-nums text-[#3c4053]">{formatPriceRub(row.discountTotalRub)}</span>
-              </>
-            ) : null}
+            {row.discountTotalRub > 0
+              ? t.rich("paidOrdersDiscount", { count: row.paidOrders, amount: formatPromotionAmount(row.discountTotalRub, locale), total: chunks => <span className="tabular-nums text-[#3c4053]">{chunks}</span>, money: chunks => <span className="tabular-nums text-[#3c4053]">{chunks}</span> })
+              : t.rich("paidOrders", { count: row.paidOrders, total: chunks => <span className="tabular-nums text-[#3c4053]">{chunks}</span> })}
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5 sm:shrink-0">
           <button type="button" onClick={() => onEdit(row)} className={OUTLINE_BUTTON}>
             <Pencil className="size-3.5 text-[#5566f6]" />
-            Изменить
+            {t("edit")}
           </button>
-          <button type="button" onClick={() => onToggle(row)} disabled={busy} className={OUTLINE_BUTTON}>
+          <button type="button" onClick={() => onToggle(row)} disabled={busy} aria-busy={busy} aria-label={t(busy ? "changing" : row.active ? "disable" : "enable")} className={OUTLINE_BUTTON}>
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Power className="size-3.5 text-[#5566f6]" />}
-            {row.active ? "Выключить" : "Включить"}
+            {t(row.active ? "disable" : "enable")}
           </button>
           <button
             type="button"
@@ -636,7 +639,7 @@ function PromotionItem({
             className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#ffd2cc] bg-[#fff4f2] px-2.5 text-[12.5px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#ffe9e5]"
           >
             <Trash2 className="size-3.5" />
-            Удалить
+            {t("delete")}
           </button>
         </div>
       </div>

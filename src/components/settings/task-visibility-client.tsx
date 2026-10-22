@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Eye, Loader2, Save } from "lucide-react";
-import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { useTaskVisibilityFeedback } from "./task-visibility-feedback";
+import { taskVisibilitySaveError } from "@/lib/task-visibility-presentation";
 
 type Position = {
   id: string;
@@ -19,6 +21,8 @@ type Props = {
 
 export function TaskVisibilityClient({ positions }: Props) {
   const router = useRouter();
+  const t = useTranslations("settingsTaskVisibility");
+  const feedback = useTaskVisibilityFeedback();
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(positions.filter((p) => p.seesAllTasks).map((p) => p.id)),
   );
@@ -54,17 +58,13 @@ export function TaskVisibilityClient({ positions }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось сохранить");
+        feedback.error(taskVisibilitySaveError(data, res.status));
         return;
       }
-      toast.success(
-        selected.size === 0
-          ? "Никто не видит чужие задачи. Сохранено."
-          : `${selected.size} должность(и) видят чужие задачи. Сохранено.`,
-      );
+      feedback.saved(String(selected.size));
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+    } catch {
+      feedback.error("errors.network");
     } finally {
       setSaving(false);
     }
@@ -91,27 +91,17 @@ export function TaskVisibilityClient({ positions }: Props) {
           </span>
           <div className="min-w-0 flex-1">
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]">
-              Кто видит ЧУЖИЕ задачи в TasksFlow
+              {t("intro.title")}
             </h3>
             <p className="mt-1 text-[12.5px] leading-snug text-[#3c4053]">
-              По умолчанию каждый сотрудник видит только свои задачи (так
-              положено). Если на какой-то должности нужно видеть и
-              проверять задачи других — отметь её здесь. На стороне
-              TasksFlow юзеры этой должности получат флаг admin =
-              «видит всё в компании».
+              {t("intro.description")}
             </p>
             <p className="mt-2 text-[12px] text-[#6f7282]">
-              <strong className="text-[#0b1024]">Рекомендация:</strong>{" "}
-              отметь только одну должность — обычно «Админ» или «Владелец».
-              Заведующий производством и другие управляющие должны проверять только
-              своих подчинённых через иерархию (
-              <a
-                href="/settings/staff-hierarchy"
-                className="text-[#5566f6] hover:underline"
-              >
-                /settings/staff-hierarchy
-              </a>
-              ), а не видеть весь состав.
+              {t.rich("intro.recommendation", {
+                recommendation: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
+                hierarchy: (chunks) => <a href="/settings/staff-hierarchy" className="text-[#5566f6] hover:underline">{chunks}</a>,
+                hierarchyPath: "/settings/staff-hierarchy",
+              })}
             </p>
           </div>
         </div>
@@ -120,7 +110,7 @@ export function TaskVisibilityClient({ positions }: Props) {
       {management.length > 0 ? (
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5">
           <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#3848c7]">
-            Руководство
+            {t("groups.management")}
           </div>
           <div className="space-y-2">
             {management.map((p) => (
@@ -138,12 +128,10 @@ export function TaskVisibilityClient({ positions }: Props) {
       {staff.length > 0 ? (
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5">
           <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-            Сотрудники
+            {t("groups.staff")}
           </div>
           <p className="mb-3 text-[12px] text-[#9b9fb3]">
-            Сотрудники не должны видеть чужие задачи — только свои. Если
-            кто-то проверяет других, переведи его в «Руководство» через
-            настройку должностей.
+            {t("staffHint")}
           </p>
           <div className="space-y-2">
             {staff.map((p) => (
@@ -163,15 +151,16 @@ export function TaskVisibilityClient({ positions }: Props) {
         <div className="text-[12.5px] text-[#3c4053]">
           {isDirty ? (
             <span className="text-[#a13a32]">
-              Несохранённые изменения. Сохрани чтобы применить при следующей
-              синхронизации с TasksFlow.
+              {t("footer.dirty")}
             </span>
           ) : selected.size === 0 ? (
-            <span>Никто не видит чужие задачи. По умолчанию — твой выбор.</span>
+            <span>{t("footer.none")}</span>
           ) : (
             <span>
-              <strong className="text-[#3848c7]">{selected.size}</strong>{" "}
-              должность(и) видят чужие задачи в TasksFlow.
+              {t.rich("footer.selected", {
+                count: String(selected.size),
+                countValue: (chunks) => <strong className="text-[#3848c7]">{chunks}</strong>,
+              })}
             </span>
           )}
         </div>
@@ -186,7 +175,7 @@ export function TaskVisibilityClient({ positions }: Props) {
           ) : (
             <Save className="size-4" />
           )}
-          Сохранить
+          {t("save")}
         </button>
       </div>
     </div>
@@ -204,6 +193,7 @@ function PositionRow({
   onToggle: () => void;
   muted?: boolean;
 }) {
+  const t = useTranslations("settingsTaskVisibility");
   return (
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-3 py-2.5 transition-colors ${
@@ -226,17 +216,12 @@ function PositionRow({
           {checked ? (
             <Crown
               className="size-3.5 text-[#a16d32]"
-              aria-label="видит чужие"
+              aria-label={t("allTasksAria")}
             />
           ) : null}
         </div>
         <div className="text-[11px] text-[#9b9fb3]">
-          {p.activeUsers}{" "}
-          {p.activeUsers === 1
-            ? "сотрудник"
-            : p.activeUsers < 5
-              ? "сотрудника"
-              : "сотрудников"}
+          {t.rich("activeUsers", { usersValue: () => p.activeUsers })}
         </div>
       </div>
     </label>

@@ -9,7 +9,9 @@ import {
 } from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { auditReportText, presentAuditReportTitle } from "@/lib/audit-report-presentation";
 import { useRouter } from "next/navigation";
 import { BookOpenText, Ellipsis, Plus, Printer, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +25,7 @@ import {
   getDefaultAuditReportConfig,
   normalizeAuditReportConfig,
 } from "@/lib/audit-report-document";
-import { openDocumentPdf } from "@/lib/open-document-pdf";
+import { openDocumentPdf, getOpenDocumentPdfFailure } from "@/lib/open-document-pdf";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 
 import { toast } from "sonner";
@@ -46,9 +48,18 @@ import {
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { formatJournalDate } from "@/lib/journal-card-date";
+function useAuditReportCopy() {
+  const text = useTranslations();
+  const locale = useLocale();
+  const committed = useRef({ text, locale });
+  useLayoutEffect(() => { committed.current = { text, locale }; });
+  return { text, locale, committed };
+}
+
 type DocumentItem = {
   id: string;
   title: string;
+  displayTitleMissing?: boolean;
   /** Точки: документ без точки рядом с документами точек. */
   shared?: boolean;
   status: "active" | "closed";
@@ -87,6 +98,7 @@ function SettingsDialog({
   mode: "create" | "edit";
   onSubmit: (value: SettingsState) => Promise<void>;
 }) {
+  const { text } = useAuditReportCopy();
   const [state, setState] = useState(initial);
   const [submitting, setSubmitting] = useState(false);
   const auto = useAutoDocumentTitle({
@@ -110,15 +122,15 @@ function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+      <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-12 py-10">
           <DialogTitle className="text-[22px] font-medium text-black">{dialogTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-12 py-10">
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{text("journalWidgets.staff.documentName")}</Label>
             <Input
-              value={state.title}
+              value={state.title} aria-label={text("journalWidgets.staff.documentName")}
               onChange={(e) => {
                 auto.markTouched();
                 setState({ ...state, title: e.target.value });
@@ -127,10 +139,10 @@ function SettingsDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата аудита</Label>
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditReport.auditDate")}</Label>
             <Input
               type="date"
-              value={state.documentDate}
+              value={state.documentDate} aria-label={text("journalAuditReport.auditDate")}
               onChange={(e) => {
                 const value = e.target.value;
                 const next = auto.titleForPeriod({ dateFrom: value });
@@ -144,16 +156,16 @@ function SettingsDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Основание проверки</Label>
-            <Input value={state.basisTitle} onChange={(e) => setState({ ...state, basisTitle: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditReport.auditBasis")}</Label>
+            <Input value={state.basisTitle} aria-label={text("journalAuditReport.auditBasis")} onChange={(e) => setState({ ...state, basisTitle: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Подразделение / объект аудита</Label>
-            <Input value={state.auditedObject} onChange={(e) => setState({ ...state, auditedObject: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditReport.subdivisionAuditObject")}</Label>
+            <Input value={state.auditedObject} aria-label={text("journalAuditReport.subdivisionAuditObject")} onChange={(e) => setState({ ...state, auditedObject: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
           </div>
           <div className="flex justify-end">
             <Button type="button" disabled={submitting} onClick={async () => { setSubmitting(true); try { await onSubmit(state); onOpenChange(false); } finally { setSubmitting(false); } }} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]">
-              {submitting ? "Сохранение..." : submitLabel}
+              {submitting ? text("journalAuditReport.saving") : submitLabel}
             </Button>
           </div>
         </div>
@@ -163,6 +175,7 @@ function SettingsDialog({
 }
 
 export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: Props) {
+  const { text, committed } = useAuditReportCopy();
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -194,6 +207,14 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
       auditedObject: config.auditedObject,
     };
   }, [createState, settingsDocument]);
+
+  function presentPdfError(error: unknown) {
+    const current = committed.current;
+    const displayed = humanizeFetchError(error, current.text("journalAuditReport.openPdfFailed"), current.text("journalWidgets.headerEdit.networkError"));
+    const owned = getOpenDocumentPdfFailure(error);
+    return owned === "apiFallback" ? current.text("journalAuditReport.openPdfFailed")
+      : owned === "popupBlocked" ? current.text("journalAuditReport.pdfPopupBlocked") : displayed;
+  }
 
   async function createDocument(payload: SettingsState) {
     const config = {
@@ -256,8 +277,8 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
           <h1 className={JOURNAL_LIST_TITLE_CLASS}>
             <JournalHeadingName
-              fallback={activeTab === "closed" ? `${AUDIT_REPORT_DOCUMENT_TITLE} (закрытые)` : AUDIT_REPORT_DOCUMENT_TITLE}
-              suffix={activeTab === "closed" ? " (закрытые)" : null}
+              fallback={activeTab === "closed" ? text("journalAuditReport.closedReportTitle", { title: text("auditTraceabilityPdf.reportTitle") }) : text("auditTraceabilityPdf.reportTitle")}
+              suffix={activeTab === "closed" ? ` (${text("journalControls.list.closedSuffix")})` : null}
             />
           </h1>
           <JournalListActions
@@ -266,7 +287,7 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
             create={
               canManageDocuments && activeTab === "active" ? (
                 <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
-                  <Plus className="size-4" />Создать документ
+                  <Plus className="size-4" />{text("journalControls.list.create")}
                 </Button>
               ) : null
             }
@@ -281,27 +302,27 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
             const config = normalizeAuditReportConfig(document.config);
             return (
               <div key={document.id} className={JOURNAL_LIST_CARD_CLASS}>
-                <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_TITLE_CLASS}>{document.title || AUDIT_REPORT_DOCUMENT_TITLE}
-              <SharedDocumentBadge shared={document.shared} /></Link>
+                <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_TITLE_CLASS}>{presentAuditReportTitle(document.title, document.displayTitleMissing, text("auditTraceabilityPdf.reportTitle"))}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: text("journalScan.shared.label"), title: text("journalScan.shared.title") }} /></Link>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Объект аудита</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalAuditReport.auditedObject")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>{config.auditedObject}</div>
                 </Link>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Дата аудита</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalAuditReport.auditDate")}</div>
                   {/* Было сырое «2026-09-18» из config — на экране дата везде «дд.мм.гггг». */}
                   <div className={JOURNAL_CARD_VALUE_CLASS}>{formatJournalDate(config.documentDate)}</div>
                 </Link>
                 <div className="justify-self-end">
                   <ResponsiveMenu
-                    title="Действия с документом"
+                    title={text("journalControls.list.actionsTitle")}
                     contentClassName="w-[280px] rounded-[24px] border-0 p-4 shadow-xl"
                     items={filterManageMenuItems([
                       ...(document.status === "active"
                         ? [
                             {
                               key: "settings",
-                              label: "Настройки",
+                              label: text("journalControls.list.settings"),
                               icon: <Settings2 className="size-4 text-[#6f7282]" />,
                               onSelect: () => setSettingsDocument(document),
                             },
@@ -309,11 +330,11 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
                         : []),
                       {
                         key: "print",
-                        label: "Печать",
+                        label: text("journalControls.list.print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
-                          void openDocumentPdf(document.id).catch((error) =>
-                            toast.error(humanizeFetchError(error, "Не удалось открыть PDF"))
+                          void openDocumentPdf(document.id, committed.current.locale).catch((error) =>
+                            toast.error(presentPdfError(error))
                           ),
                       },
                       // Закрытый документ раньше уходил навсегда: вернуть
@@ -323,7 +344,7 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
                         ? [
                             {
                               key: "delete",
-                              label: "Удалить",
+                              label: text("common.delete"),
                               icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                               onSelect: () => setDeleteDocument(document),
                               tone: "danger" as const,
@@ -332,7 +353,7 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
                         : []),
                     ], canManageDocuments)}
                     trigger={
-                      <button type="button" className="flex size-9 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]">
+                      <button type="button" aria-label={text("journalControls.list.actionsTitle")} className="flex size-9 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]">
                         <Ellipsis className="size-6" />
                       </button>
                     }
@@ -344,24 +365,24 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
         </div>
       </div>
 
-      <SettingsDialog open={createOpen} onOpenChange={setCreateOpen} initial={createState} dialogTitle="Создание документа" submitLabel="Создать" mode="create" onSubmit={createDocument} />
+      <SettingsDialog open={createOpen} onOpenChange={setCreateOpen} initial={createState} dialogTitle={text("journalAuditReport.createDocumentTitle")} submitLabel={text("journalAuditReport.create")} mode="create" onSubmit={createDocument} />
       <SettingsDialog
         open={!!settingsDocument}
         onOpenChange={(open) => { if (!open) setSettingsDocument(null); }}
         initial={settingsState}
-        dialogTitle="Настройки документа"
-        submitLabel="Сохранить"
+        dialogTitle={text("journalWidgets.staff.settings")}
+        submitLabel={text("common.save")}
         mode="edit"
         onSubmit={async (value) => { if (!settingsDocument) return; await saveDocument(settingsDocument, value); }}
       />
       <Dialog open={!!deleteDocument} onOpenChange={(open) => !open && setDeleteDocument(null)}>
-        <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[680px]">
+        <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[680px]">
           <DialogHeader className="border-b px-12 py-10">
-            <DialogTitle className="pr-10 text-[22px] font-medium text-black">{`Удалить документ "${deleteDocument?.title || AUDIT_REPORT_DOCUMENT_TITLE}"`}</DialogTitle>
+            <DialogTitle className="pr-10 text-[22px] font-medium text-black">{text("journalAuditReport.deleteNamedDocument", { title: auditReportText(presentAuditReportTitle(deleteDocument?.title, deleteDocument?.displayTitleMissing, text("auditTraceabilityPdf.reportTitle"))) })}</DialogTitle>
           </DialogHeader>
           <div className="flex justify-end px-12 py-10">
             <Button type="button" onClick={async () => { if (!deleteDocument) return; await deleteById(deleteDocument.id); setDeleteDocument(null); }} className="h-9 rounded-xl bg-[#ff5e57] px-10 text-[18px] text-white hover:bg-[#ef4b44]">
-              Удалить
+              {text("common.delete")}
             </Button>
           </div>
         </DialogContent>

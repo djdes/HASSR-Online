@@ -8,21 +8,15 @@ import {
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ProductImportDialog } from "@/components/settings/product-import-dialog";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { isManagementRole } from "@/lib/user-roles";
 import { ProductDialog } from "@/components/settings/product-dialog";
 import { DeleteProductButton } from "@/components/settings/delete-product-button";
 import { PageGuide } from "@/components/ui/page-guide";
+import { getTranslations } from "next-intl/server";
+import { productPageUnit } from "@/lib/settings-products-presentation";
 
 export const dynamic = "force-dynamic";
-
-const UNIT: Record<string, string> = {
-  kg: "кг",
-  l: "л",
-  pcs: "шт",
-  g: "г",
-  ml: "мл",
-  pack: "уп",
-};
 
 export default async function ProductsSettingsPage() {
   const session = await requireAuth();
@@ -34,15 +28,18 @@ export default async function ProductsSettingsPage() {
     orderBy: { name: "asc" },
   });
 
+  const t = await getTranslations("settingsProducts");
+
   return (
+    <DomainMessagesBoundary namespaces={["settingsProducts"]}>
     <div className="space-y-5">
       <PageGuide
-        title="Когда нужен каталог продуктов"
+        title={t("guide.title")}
         storageKey="settings-products-v1"
         bullets={[
-          { title: "Для журналов брака и входного контроля", body: "Те журналы где надо указать конкретное наименование продукта (молоко, мясо, овощи) — берут варианты из этого каталога." },
-          { title: "Опционально для большинства орг", body: "Если ведёте только уборку и температуру — каталог не нужен. Добавляйте по мере того как заведёте журналы которым он понадобится." },
-          { title: "Загрузить из 1С/Excel", body: "Кнопка «Импорт» вверху — XLSX-файл с колонками «Название», «Ед. изм.», «Срок годности (дней)». Дубликаты не создаются." },
+          { title: t("guide.step1.title"), body: t("guide.step1.body") },
+          { title: t("guide.step2.title"), body: t("guide.step2.body") },
+          { title: t("guide.step3.title", { oneC: "1С", excel: "Excel" }), body: t("guide.step3.body", { format: "XLSX", nameHeader: "Название", unitHeader: "Ед. изм.", shelfHeader: "Срок годности" }) },
         ]}
       />
       {/* Header */}
@@ -55,10 +52,10 @@ export default async function ProductsSettingsPage() {
             </div>
             <div>
               <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-                Справочник продуктов
+                {t("page.title")}
               </h1>
               <p className="mt-0.5 text-[14px] text-[#6f7282]">
-                Импорт из Excel, iiko, 1С — или вручную
+                {t("page.description", { excel: "Excel", iiko: "iiko", oneC: "1С" })}
               </p>
             </div>
           </div>
@@ -66,7 +63,7 @@ export default async function ProductsSettingsPage() {
         {canManage && (
           <div className="flex flex-wrap gap-2">
             <ProductDialog />
-            <ProductImportDialog />
+            <DomainMessagesBoundary namespaces={["settingsProductImport"]}><ProductImportDialog /></DomainMessagesBoundary>
           </div>
         )}
       </div>
@@ -78,12 +75,12 @@ export default async function ProductsSettingsPage() {
             <Package className="size-7 text-[#f59e0b]" />
           </div>
           <h3 className="mt-5 text-[17px] font-semibold text-[#0b1024]">
-            Продуктов пока нет
+            {t("empty.title")}
           </h3>
           <p className="mx-auto mt-2 max-w-md text-[14px] text-[#6f7282]">
             {canManage
-              ? "Импортируйте справочник из Excel / iiko / 1С или добавьте продукты вручную."
-              : "Администратор ещё не загрузил справочник продуктов."}
+              ? t("empty.management", { excel: "Excel", iiko: "iiko", oneC: "1С" })
+              : t("empty.employee")}
           </p>
         </div>
       ) : (
@@ -92,18 +89,18 @@ export default async function ProductsSettingsPage() {
             <thead className="bg-[#f8f9fc] text-[13px] text-[#6f7282]">
               <tr>
                 <th className="px-6 py-3 text-left font-medium">
-                  Наименование
+                  {t("table.name")}
                 </th>
-                <th className="px-6 py-3 text-left font-medium">Поставщик</th>
-                <th className="px-6 py-3 text-left font-medium">Штрих-код</th>
-                <th className="px-6 py-3 text-center font-medium">Ед.</th>
-                <th className="px-6 py-3 text-left font-medium">Хранение</th>
+                <th className="px-6 py-3 text-left font-medium">{t("table.supplier")}</th>
+                <th className="px-6 py-3 text-left font-medium">{t("table.barcode")}</th>
+                <th className="px-6 py-3 text-center font-medium">{t("table.unit")}</th>
+                <th className="px-6 py-3 text-left font-medium">{t("table.storage")}</th>
                 <th className="px-6 py-3 text-center font-medium">
-                  Срок (дн.)
+                  {t("table.shelfLife")}
                 </th>
                 {canManage && (
                   <th className="w-[100px] px-6 py-3 text-right font-medium">
-                    Действия
+                    {t("table.actions")}
                   </th>
                 )}
               </tr>
@@ -145,7 +142,7 @@ export default async function ProductsSettingsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-center text-[14px] text-[#6f7282]">
-                    {UNIT[product.unit] || product.unit}
+                    {productPageUnit(product.unit, t)}
                   </td>
                   <td className="px-6 py-4">
                     {product.storageTemp ? (
@@ -202,27 +199,24 @@ export default async function ProductsSettingsPage() {
       <section className="rounded-2xl border border-[#f0f1f8] bg-[#fafbff] p-6">
         <div className="flex items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
           <FileSpreadsheet className="size-4 text-[#10b981]" />
-          Поддерживаемые форматы импорта
+          {t("formats.title")}
         </div>
         <ul className="mt-3 grid gap-2 text-[13px] text-[#6f7282] sm:grid-cols-2">
           <li>
-            <strong className="text-[#0b1024]">Excel</strong> (.xlsx, .xls) —
-            Наименование, Поставщик, Штрих-код, Ед., Категория
+{t.rich("formats.excel", { brandValue: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>, brand: "Excel", extensions: "(.xlsx, .xls)", headers: "Наименование, Поставщик, Штрих-код, Ед., Категория" })}
           </li>
           <li>
-            <strong className="text-[#0b1024]">iiko</strong> — экспорт
-            номенклатуры (Товар, Контрагент, Ед.изм., Штрихкод)
+            {t.rich("formats.iiko", { brandValue: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>, brand: "iiko", headers: "Товар, Контрагент, Ед.изм., Штрихкод" })}
           </li>
           <li>
-            <strong className="text-[#0b1024]">1С</strong> — выгрузка
-            справочника Номенклатура
+            {t.rich("formats.oneC", { brandValue: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>, brand: "1С", directory: "Номенклатура" })}
           </li>
           <li>
-            <strong className="text-[#0b1024]">CSV</strong> — разделитель ; или
-            , (первая строка — заголовки)
+            {t.rich("formats.csv", { brandValue: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>, brand: "CSV", semicolon: ";", comma: "," })}
           </li>
         </ul>
       </section>
     </div>
+    </DomainMessagesBoundary>
   );
 }

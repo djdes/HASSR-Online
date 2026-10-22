@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,6 @@ import {
   AUDIT_PLAN_DOCUMENT_TITLE,
   createAuditPlanRow,
   createAuditPlanSection,
-  getAuditPlanPrintDateLabel,
   normalizeAuditPlanConfig,
   type AuditPlanConfig,
   type AuditPlanRow,
@@ -55,6 +55,11 @@ import {
 } from "@/components/shared/position-select";
 import { localDayKey } from "@/lib/entry-defaults";
 import { resolveApprover } from "@/lib/approver-display";
+import {
+  buildAuditPlanRoleDisplay, captureAuditPlanProvenance, completeAuditPlanProvenance,
+  presentAuditPlanRoleLabel, presentAuditPlanItem, presentAuditPlanApproverTitle,
+  presentAuditPlanApprovalDate, type AuditPlanDisplayProvenance,
+} from "@/lib/audit-plan-presentation";
 type UserItem = { id: string; name: string; role: string };
 
 type Props = {
@@ -64,6 +69,7 @@ type Props = {
   status: string;
   users: UserItem[];
   config: unknown;
+  displayProvenance?: AuditPlanDisplayProvenance;
   /** Design v2 toggle. */
   useV2?: boolean;
 };
@@ -100,9 +106,16 @@ function DocumentSettingsDialog(props: {
   onSubmit: (value: SettingsState) => Promise<void>;
   useV2?: boolean;
 }) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const scan = useTranslations("journalScan");
+  const pdf = useTranslations("auditTraceabilityPdf");
   const [state, setState] = useState<SettingsState>(props.initial);
   const [submitting, setSubmitting] = useState(false);
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
+  const roleDisplay = buildAuditPlanRoleDisplay(props.users);
+  const displayRole = (raw: string) => presentAuditPlanRoleLabel(raw, roleDisplay, pdf);
 
   const approveCascade = usePositionEmployeeCascade({
     users: props.users,
@@ -144,8 +157,8 @@ function DocumentSettingsDialog(props: {
           if (v) setState(props.initial);
           props.onOpenChange(v);
         }}
-        title="Настройки документа"
-        description="Название документа, дата, год и должность утверждающего."
+        title={controls("actions.settings")}
+        description={ap("settings.description")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -153,7 +166,7 @@ function DocumentSettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {ap("fields.documentName")}
           </Label>
           <Input
             value={state.title}
@@ -164,7 +177,7 @@ function DocumentSettingsDialog(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Дата документа
+              {scan("metadata.documentDate")}
             </Label>
             <Input
               type="date"
@@ -175,7 +188,7 @@ function DocumentSettingsDialog(props: {
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Год
+              {ap("fields.year")}
             </Label>
             <Select value={state.year} onValueChange={(value) => setState({ ...state, year: value })}>
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
@@ -196,23 +209,23 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность «Утверждаю»
+            {ap("fields.approvalRoleGuillemets")}
           </Label>
           <Select
             value={state.approveRole}
             onValueChange={approveCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={ap("select.choose")} />
             </SelectTrigger>
             <SelectContent>
-              <PositionSelectItems users={props.users} />
+              <PositionSelectItems users={props.users} displayLabel={displayRole} />
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
+            {controls("positionSelect.employeeLabel")}
           </Label>
           <Select
             value={state.approveEmployeeId || "__empty__"}
@@ -221,10 +234,10 @@ function DocumentSettingsDialog(props: {
             onOpenChange={approveCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={ap("select.choose")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">— не выбран —</SelectItem>
+              <SelectItem value="__empty__">{ap("select.notSelected")}</SelectItem>
               {approveCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -249,16 +262,16 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Настройки документа
+              {controls("actions.settings")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-8" />
             </button>
           </div>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{ap("fields.documentName")}</Label>
             <Input
               value={state.title}
               onChange={(e) => setState({ ...state, title: e.target.value })}
@@ -266,7 +279,7 @@ function DocumentSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{scan("metadata.documentDate")}</Label>
             <Input
               type="date"
               value={state.documentDate}
@@ -275,7 +288,7 @@ function DocumentSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Год</Label>
+            <Label className="text-[14px] text-[#73738a]">{ap("fields.year")}</Label>
             <Select value={state.year} onValueChange={(value) => setState({ ...state, year: value })}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                 <SelectValue />
@@ -293,21 +306,21 @@ function DocumentSettingsDialog(props: {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Должность &quot;Утверждаю&quot;</Label>
+            <Label className="text-[14px] text-[#73738a]">{scan("metadata.approverPosition")}</Label>
             <Select
               value={state.approveRole}
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={controls("positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={props.users} />
+                <PositionSelectItems users={props.users} displayLabel={displayRole} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{controls("positionSelect.employeeLabel")}</Label>
             <Select
               value={state.approveEmployeeId || "__empty__"}
               onValueChange={approveCascade.handleEmployeeChange}
@@ -315,10 +328,10 @@ function DocumentSettingsDialog(props: {
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={controls("positionSelect.chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                <SelectItem value="__empty__">{controls("positionSelect.chooseEmployee")}</SelectItem>
                 {approveCascade.candidates.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {buildStaffOptionLabel(user)}
@@ -334,7 +347,7 @@ function DocumentSettingsDialog(props: {
               onClick={handleSave}
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? ap("actions.saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -347,8 +360,11 @@ function ManageSectionsDialog(props: {
   open: boolean;
   onOpenChange: (value: boolean) => void;
   sections: AuditPlanSection[];
+  displaySection: (section: AuditPlanSection) => string;
   onRename: (id: string, title: string) => Promise<void>;
 }) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [value, setValue] = useState("");
 
@@ -367,9 +383,9 @@ function ManageSectionsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Список &quot;Разделы&quot;
+              {ap("sections.manageTitle")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
@@ -385,7 +401,7 @@ function ManageSectionsDialog(props: {
                   className="h-12 flex-1 rounded-2xl border-[#d8dae6] px-4 text-[18px]"
                 />
               ) : (
-                <div className="flex-1 text-[15px] text-black">{section.title}</div>
+                <div className="flex-1 text-[15px] text-black">{props.displaySection(section)}</div>
               )}
               {editingId === section.id ? (
                 <Button
@@ -398,7 +414,7 @@ function ManageSectionsDialog(props: {
                     setValue("");
                   }}
                 >
-                  Сохранить
+                  {common("save")}
                 </Button>
               ) : (
                 <Button
@@ -410,14 +426,14 @@ function ManageSectionsDialog(props: {
                     setValue(section.title);
                   }}
                 >
-                  Изменить
+                  {ap("actions.change")}
                 </Button>
               )}
             </div>
           ))}
           <div className="flex justify-end pt-2">
             <Button type="button" className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]" onClick={() => props.onOpenChange(false)}>
-              Закрыть
+              {common("close")}
             </Button>
           </div>
         </div>
@@ -433,6 +449,8 @@ function AddSectionDialog(props: {
   title: string;
   placeholder: string;
 }) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
   const [value, setValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -451,7 +469,7 @@ function AddSectionDialog(props: {
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
               {props.title}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
@@ -478,7 +496,7 @@ function AddSectionDialog(props: {
                 }
               }}
             >
-              {submitting ? "Добавление..." : "Добавить"}
+              {submitting ? ap("actions.adding") : common("add")}
             </Button>
           </div>
         </div>
@@ -491,6 +509,7 @@ function AddRowDialog(props: {
   open: boolean;
   onOpenChange: (value: boolean) => void;
   sections: AuditPlanSection[];
+  displaySection: (section: AuditPlanSection) => string;
   /** Правка существующей строки; null — добавление новой. */
   editRow?: AuditPlanRow | null;
   /** «(k из N)» при правке по очереди. */
@@ -499,17 +518,26 @@ function AddRowDialog(props: {
   onOpenAddSection: () => void;
   onOpenManageSections: () => void;
 }) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
   const [sectionId, setSectionId] = useState(props.sections[0]?.id || "");
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const editRow = props.editRow ?? null;
 
+  const previousIncomingSeed = useRef<string | null>(null);
   useEffect(() => {
-    if (props.open) {
-      setSectionId(props.editRow?.sectionId || props.sections[0]?.id || "");
-      setText(props.editRow?.text || "");
-      setSubmitting(false);
+    if (!props.open) {
+      previousIncomingSeed.current = null;
+      return;
     }
+    // Normalization recreates equal arrays on language refresh; retain the open draft.
+    const serialized = JSON.stringify({ editRow: props.editRow ?? null, sections: props.sections });
+    if (previousIncomingSeed.current === serialized) return;
+    previousIncomingSeed.current = serialized;
+    setSectionId(props.editRow?.sectionId || props.sections[0]?.id || "");
+    setText(props.editRow?.text || "");
+    setSubmitting(false);
   }, [props.editRow, props.open, props.sections]);
 
   return (
@@ -518,31 +546,31 @@ function AddRowDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              {editRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+              {editRow ? ap("rows.editTitle", { suffix: props.titleSuffix ? ` ${props.titleSuffix}` : "" }) : ap("rows.addTitle")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Раздел</Label>
+            <Label className="text-[14px] text-[#73738a]">{ap("rows.section")}</Label>
             <Select value={sectionId} onValueChange={setSectionId}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите из списка" />
+                <SelectValue placeholder={ap("rows.chooseSection")} />
               </SelectTrigger>
               <SelectContent>
                 {props.sections.map((section) => (
                   <SelectItem key={section.id} value={section.id}>
-                    {section.title}
+                    {props.displaySection(section)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Текст</Label>
+            <Label className="text-[14px] text-[#73738a]">{ap("rows.text")}</Label>
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -551,10 +579,10 @@ function AddRowDialog(props: {
           </div>
           <div className="space-y-1 text-[16px]">
             <button type="button" className="block text-[#5563ff] hover:underline" onClick={props.onOpenAddSection}>
-              Добавить новый раздел
+              {ap("sections.addTitle")}
             </button>
             <button type="button" className="block text-[#5563ff] hover:underline" onClick={props.onOpenManageSections}>
-              Редактировать список &quot;разделов&quot;
+              {ap("sections.editList")}
             </button>
           </div>
           <div className="flex justify-end">
@@ -572,7 +600,7 @@ function AddRowDialog(props: {
                 }
               }}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? ap("actions.saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -588,6 +616,8 @@ function CellValueDialog(props: {
   title: string;
   onSave: (value: string) => Promise<void>;
 }) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
   const [value, setValue] = useState(props.initialValue);
   const [submitting, setSubmitting] = useState(false);
 
@@ -604,7 +634,7 @@ function CellValueDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[24px] font-semibold text-black">{props.title}</DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
@@ -613,7 +643,7 @@ function CellValueDialog(props: {
           <Input
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder="Например: 29-05-2023 или X"
+            placeholder={ap("cell.example")}
             className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
           />
           <div className="flex flex-wrap justify-end gap-3">
@@ -631,7 +661,7 @@ function CellValueDialog(props: {
                 }
               }}
             >
-              Очистить
+              {ap("cell.clear")}
             </Button>
             <Button
               type="button"
@@ -647,12 +677,23 @@ function CellValueDialog(props: {
                 }
               }}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? ap("actions.saving") : common("save")}
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function useRowsBySection(rows: AuditPlanRow[], sections: AuditPlanSection[]) {
+  return useMemo(
+    () =>
+      sections.map((section) => ({
+        section,
+        rows: rows.filter((row) => row.sectionId === section.id),
+      })),
+    [rows, sections]
   );
 }
 
@@ -663,10 +704,23 @@ export function AuditPlanDocumentClient({
   status,
   users,
   config,
+  displayProvenance,
   useV2 = false,
 }: Props) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
+  const scan = useTranslations("journalScan");
+  const pdf = useTranslations("auditTraceabilityPdf");
+  const locale = useLocale();
+  const feedback = useRef({ ap, locale });
+  useLayoutEffect(() => { feedback.current = { ap, locale }; }, [ap, locale]);
   const router = useRouter();
+  const capturedDisplay = displayProvenance ?? captureAuditPlanProvenance(config, !organizationName);
   const normalized = normalizeAuditPlanConfig(config, { organizationName, users });
+  const origin = completeAuditPlanProvenance(capturedDisplay, normalized);
+  const displayRow = (row: AuditPlanRow) => presentAuditPlanItem("rows", row, origin, pdf);
+  const displaySection = (section: AuditPlanSection) => presentAuditPlanItem("sections", section, origin, pdf);
+  const displayColumn = (column: AuditPlanConfig["columns"][number]) => presentAuditPlanItem("columns", column, origin, pdf);
   // «УТВЕРЖДАЮ»: должность и ФИО одного человека — из его карточки.
   const approver = resolveApprover(normalized, users);
   const readOnly = status === "closed";
@@ -688,14 +742,7 @@ export function AuditPlanDocumentClient({
     value: string;
   } | null>(null);
 
-  const rowsBySection = useMemo(
-    () =>
-      normalized.sections.map((section) => ({
-        section,
-        rows: normalized.rows.filter((row) => row.sectionId === section.id),
-      })),
-    [normalized.rows, normalized.sections]
-  );
+  const rowsBySection = useRowsBySection(normalized.rows, normalized.sections);
 
   const settingsState: SettingsState = {
     title,
@@ -718,7 +765,7 @@ export function AuditPlanDocumentClient({
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось сохранить документ");
+      toast.error(feedback.current.ap("errors.save"));
       return;
     }
     router.refresh();
@@ -833,10 +880,11 @@ export function AuditPlanDocumentClient({
     const section = normalized.sections.find((s) => s.id === row.sectionId);
     return {
       id: row.id,
-      title: `№${index + 1} · ${row.text || "—"}`,
-      subtitle: section?.title || undefined,
+      title: ap("cards.rowTitle", { number: String(index + 1), text: displayRow(row) || "—" }),
+      subtitle: section ? displaySection(section) || undefined : undefined,
       leading: !readOnly ? (
         <Checkbox
+          aria-label={ap("accessibility.selectRow", { number: String(index + 1) })}
           checked={selectedRowIds.includes(row.id)}
           onCheckedChange={(checked) =>
             setSelectedRowIds((current) =>
@@ -855,7 +903,7 @@ export function AuditPlanDocumentClient({
           }
         : undefined,
       fields: normalized.columns.map((column) => ({
-        label: `${column.title}${column.auditorName ? ` — ${column.auditorName}` : ""}`,
+        label: column.auditorName ? ap("cards.columnAuditor", { title: displayColumn(column), auditor: column.auditorName }) : displayColumn(column),
         value: row.values[column.id] || "",
         hideIfEmpty: false,
         onClick: !readOnly
@@ -878,53 +926,53 @@ export function AuditPlanDocumentClient({
           count={selectedRowIds.length}
           onClear={() => setSelectedRowIds([])}
           onDelete={() => void deleteSelectedRows()}
-          hint="Строки плана будут удалены без возможности отмены"
+          hint={ap("selection.deleteHint")}
         >
           <SelectionEditButton count={selectedRowIds.length} disabled={readOnly} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
       )}
 
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller copy={{ noCreateBody: scan("focus.noCreateBody"), later: scan("focus.later"), close: common("close") }} selector="[data-focus-today]" emptyTitle={scan("focus.emptyTitle")} emptyBody={scan("focus.emptyBody")} />
 
       <JournalDocumentShell
-        title={title}
+        title={<>{title}</>}
         documentId={documentId}
         backHref="/journals/audit_plan"
         onSettings={!readOnly ? () => setSettingsOpen(true) : undefined}
         closed={readOnly}
-        closedHint="Откройте журнал заново, чтобы менять план-программу аудитов."
+        closedHint={ap("document.closedHint")}
         mobileView={mobileView}
         onMobileView={switchMobileView}
         cards={
-          <RecordCardsView items={cardItems} emptyLabel="Требований пока не добавлено." />
+          <RecordCardsView items={cardItems} emptyLabel={ap("rows.empty")} />
         }
         paperHeader={
           <>
             <JournalDocumentHeader
               orgName={organizationName}
-              title="ПЛАН-ПРОГРАММА ВНУТРЕННИХ АУДИТОВ"
+              title={ap("print.heading")}
               startedAt={normalized.documentDate}
               finishedAt={null}
             />
             <div className="ml-auto w-full max-w-[420px] text-right text-[14px] leading-tight">
-              <div className="font-semibold">УТВЕРЖДАЮ</div>
-              <div>{approver.title}</div>
+              <div className="font-semibold">{pdf("approved")}</div>
+              <div>{presentAuditPlanApproverTitle(approver.title, normalized, users, origin, pdf)}</div>
               <div>{approver.name}</div>
-              <div>{getAuditPlanPrintDateLabel(normalized.documentDate)}</div>
+              <div>{presentAuditPlanApprovalDate(normalized.documentDate, locale === "en" || locale === "uz" ? locale : "ru", pdf)}</div>
             </div>
           </>
         }
-        sheetTitle={`План-программа внутренних аудитов на ${normalized.year} г.`}
+        sheetTitle={ap("print.sheetTitle", { year: String(normalized.year) })}
         toolbar={
           !readOnly ? (
             // Свой flex-wrap: в карточном виде на телефоне оболочка
             // отдаёт тулбар без ряда-обёртки, и кнопки слипались.
             <div className="flex flex-wrap items-center gap-2">
               <Button className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]" onClick={() => setAddRowOpen(true)}>
-                <Plus className="size-5" /> Добавить
+                <Plus className="size-5" /> {common("add")}
               </Button>
               <Button className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]" onClick={() => setAddColumnOpen(true)}>
-                <Plus className="size-5" /> Добавить подразделение
+                <Plus className="size-5" /> {ap("columns.add")}
               </Button>
             </div>
           ) : undefined
@@ -934,15 +982,15 @@ export function AuditPlanDocumentClient({
           <thead>
             <tr>
               <th rowSpan={3} className={`w-14 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                {!readOnly && <Checkbox checked={allSelected} onCheckedChange={(checked) => setSelectedRowIds(checked === true ? normalized.rows.map((row) => row.id) : [])} />}
+                {!readOnly && <Checkbox aria-label={ap("accessibility.selectAll")} checked={allSelected} onCheckedChange={(checked) => setSelectedRowIds(checked === true ? normalized.rows.map((row) => row.id) : [])} />}
               </th>
-              <th rowSpan={3} className={`w-[60px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>№ п/п</th>
-              <th rowSpan={3} className={`min-w-[620px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>Требования</th>
-              <th colSpan={normalized.columns.length} className={`${GRID_HEAD_CELL_CLASS} px-3 py-1.5 text-center font-semibold leading-tight`}>Дата аудита в подразделениях / назначенный(е) аудитор(ы):</th>
+              <th rowSpan={3} className={`w-[60px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{ap("table.serial")}</th>
+              <th rowSpan={3} className={`min-w-[620px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>{ap("table.requirements")}</th>
+              <th colSpan={normalized.columns.length} className={`${GRID_HEAD_CELL_CLASS} px-3 py-1.5 text-center font-semibold leading-tight`}>{ap("table.auditorDates")}</th>
             </tr>
             <tr>
               {normalized.columns.map((column) => (
-                <th key={column.id} className={`min-w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center italic font-semibold leading-tight`}>{column.title}</th>
+                <th key={column.id} className={`min-w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center italic font-semibold leading-tight`}>{displayColumn(column)}</th>
               ))}
             </tr>
             <tr>
@@ -952,7 +1000,7 @@ export function AuditPlanDocumentClient({
                     column.auditorName || "—"
                   ) : (
                     <select className="w-full bg-transparent text-center text-[16px] outline-none" value={users.find((user) => user.name === column.auditorName)?.id || (column.auditorName ? "__saved" : "")} onChange={(e) => void updateColumnAuditor(column.id, e.target.value === "__saved" ? column.auditorName : users.find((user) => user.id === e.target.value)?.name || "")}>
-                      <option value="">Добавить ФИО</option>
+                      <option value="">{ap("table.addAuditor")}</option>
                       {/* Сохранённое имя: аудитор мог уволиться, и тогда
                           в шапке рисовалось «Добавить ФИО» вместо него. */}
                       {column.auditorName && !users.some((user) => user.name === column.auditorName) ? (
@@ -971,7 +1019,7 @@ export function AuditPlanDocumentClient({
             {rowsBySection.map(({ section, rows }) => (
               <Fragment key={section.id}>
                 <tr key={`${section.id}-title`}>
-                  <td colSpan={3 + normalized.columns.length} className={`${GRID_CELL_CLASS} px-3 py-1 text-center font-semibold leading-tight`}>{section.title}</td>
+                  <td colSpan={3 + normalized.columns.length} className={`${GRID_CELL_CLASS} px-3 py-1 text-center font-semibold leading-tight`}>{displaySection(section)}</td>
                 </tr>
                 {rows.map((row) => {
                   const rowNumber = normalized.rows.findIndex((item) => item.id === row.id) + 1;
@@ -979,15 +1027,15 @@ export function AuditPlanDocumentClient({
                     <tr key={row.id}>
                       <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
                         {!readOnly && (
-                          <Checkbox checked={selectedRowIds.includes(row.id)} onCheckedChange={(checked) => setSelectedRowIds((current) => checked === true ? [...new Set([...current, row.id])] : current.filter((id) => id !== row.id))} />
+                          <Checkbox aria-label={ap("accessibility.selectRow", { number: String(rowNumber) })} checked={selectedRowIds.includes(row.id)} onCheckedChange={(checked) => setSelectedRowIds((current) => checked === true ? [...new Set([...current, row.id])] : current.filter((id) => id !== row.id))} />
                         )}
                       </td>
                       <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{rowNumber}</td>
                       <td className={`${GRID_CELL_CLASS} px-3 py-1 leading-tight`}>
                         <div className="flex items-start gap-3">
-                          {!readOnly && <Checkbox checked={row.checked} onCheckedChange={(checked) => void updateRowChecked(row.id, checked === true)} />}
+                          {!readOnly && <Checkbox aria-label={ap("accessibility.markRequirement", { number: String(rowNumber) })} checked={row.checked} onCheckedChange={(checked) => void updateRowChecked(row.id, checked === true)} />}
                           {readOnly ? (
-                            <span>{row.text}</span>
+                            <span>{displayRow(row)}</span>
                           ) : (
                             <button
                               type="button"
@@ -997,7 +1045,7 @@ export function AuditPlanDocumentClient({
                                 setAddRowOpen(true);
                               }}
                             >
-                              {row.text}
+                              {displayRow(row)}
                             </button>
                           )}
                         </div>
@@ -1025,7 +1073,7 @@ export function AuditPlanDocumentClient({
                 leading={2}
                 labelSpan={1}
                 trailing={normalized.columns.length}
-                label="Добавить"
+                label={common("add")}
                 onClick={() => setAddRowOpen(true)}
               />
             ) : null}
@@ -1038,11 +1086,15 @@ export function AuditPlanDocumentClient({
         await patchConfig(nextConfig, value.title.trim() || title);
       }} />
 
-      <ManageSectionsDialog open={manageSectionsOpen} onOpenChange={setManageSectionsOpen} sections={normalized.sections} onRename={renameSection} />
-      <AddSectionDialog open={addSectionOpen} onOpenChange={setAddSectionOpen} onCreate={addSection} title="Добавить новый раздел" placeholder="Введите название раздела" />
-      <AddSectionDialog open={addColumnOpen} onOpenChange={setAddColumnOpen} onCreate={addColumn} title="Добавление нового подразделения" placeholder="Введите название подразделения" />
-      <AddRowDialog open={addRowOpen} onOpenChange={(open) => { if (open) { setAddRowOpen(true); return; } if (rowSavedRef.current) { rowSavedRef.current = false; return; } seq.cancelled(); }} sections={normalized.sections} editRow={editingRow} titleSuffix={seq.progress ?? undefined} onCreate={addRow} onOpenAddSection={() => setAddSectionOpen(true)} onOpenManageSections={() => setManageSectionsOpen(true)} />
-      <CellValueDialog open={!!cellEditor} onOpenChange={(open) => { if (!open) setCellEditor(null); }} initialValue={cellEditor?.value || ""} title={cellEditor?.title || "Редактирование ячейки"} onSave={async (value) => {
+      <ManageSectionsDialog open={manageSectionsOpen} onOpenChange={setManageSectionsOpen} sections={normalized.sections} displaySection={displaySection} onRename={renameSection} />
+      <AddSectionDialog open={addSectionOpen} onOpenChange={setAddSectionOpen} onCreate={addSection} title={ap("sections.addTitle")} placeholder={ap("sections.namePlaceholder")} />
+      <AddSectionDialog open={addColumnOpen} onOpenChange={setAddColumnOpen} onCreate={addColumn} title={ap("columns.addTitle")} placeholder={ap("columns.namePlaceholder")} />
+      <AddRowDialog open={addRowOpen} onOpenChange={(open) => { if (open) { setAddRowOpen(true); return; } if (rowSavedRef.current) { rowSavedRef.current = false; return; } seq.cancelled(); }} sections={normalized.sections} displaySection={displaySection} editRow={editingRow} titleSuffix={seq.progress ?? undefined} onCreate={addRow} onOpenAddSection={() => setAddSectionOpen(true)} onOpenManageSections={() => setManageSectionsOpen(true)} />
+      <CellValueDialog open={!!cellEditor} onOpenChange={(open) => { if (!open) setCellEditor(null); }} initialValue={cellEditor?.value || ""} title={cellEditor ? (() => {
+        const row = normalized.rows.find(item => item.id === cellEditor.rowId);
+        const column = normalized.columns.find(item => item.id === cellEditor.columnId);
+        return row && column ? ap("cell.namedTitle", { text: displayRow(row), column: displayColumn(column) }) : cellEditor.title || ap("cell.editTitle");
+      })() : ap("cell.editTitle")} onSave={async (value) => {
         if (!cellEditor) return;
         await updateCellValue(cellEditor.rowId, cellEditor.columnId, value);
       }} />

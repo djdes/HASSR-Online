@@ -9,8 +9,10 @@ import {
 } from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { auditProtocolText, presentAuditProtocolTitle } from "@/lib/audit-protocol-presentation";
 import { BookOpenText, Copy, Ellipsis, Plus, Printer, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,7 +25,7 @@ import {
   getDefaultAuditProtocolConfig,
   normalizeAuditProtocolConfig,
 } from "@/lib/audit-protocol-document";
-import { openDocumentPdf } from "@/lib/open-document-pdf";
+import { openDocumentPdf, getOpenDocumentPdfFailure } from "@/lib/open-document-pdf";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { localDayKey } from "@/lib/entry-defaults";
@@ -52,9 +54,18 @@ import {
   readCreatedDocument,
   useDocumentDialogSubmit,
 } from "@/components/journals/use-document-dialog-submit";
+function useAuditProtocolCopy() {
+  const text = useTranslations();
+  const locale = useLocale();
+  const committed = useRef({ text, locale });
+  useLayoutEffect(() => { committed.current = { text, locale }; });
+  return { text, locale, committed };
+}
+
 type DocumentItem = {
   id: string;
   title: string;
+  displayTitleMissing?: boolean;
   /** Точки: документ без точки рядом с документами точек. */
   shared?: boolean;
   status: "active" | "closed";
@@ -93,6 +104,7 @@ function DocumentDialog({
   mode: "create" | "edit";
   onSubmit: (value: SettingsState) => Promise<void>;
 }) {
+  const text = useTranslations();
   const [state, setState] = useState(initial);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange });
@@ -120,15 +132,15 @@ function DocumentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+      <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-12 py-10">
           <DialogTitle className="text-[22px] font-medium text-black">{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-12 py-10">
           <DocumentDialogFeedback state={submit} onOpenChange={onOpenChange} />
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
-            <Input
+            <Label className="text-[14px] text-[#73738a]">{text("journalWidgets.staff.documentName")}</Label>
+            <Input aria-label={text("journalWidgets.staff.documentName")}
               value={state.title}
               onChange={(event) => {
                 auto.markTouched();
@@ -138,8 +150,8 @@ function DocumentDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
-            <Input
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.documentDate")}</Label>
+            <Input aria-label={text("journalAuditProtocol.documentDate")}
               type="date"
               value={state.documentDate}
               onChange={(event) => {
@@ -155,16 +167,16 @@ function DocumentDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Основание проверки</Label>
-            <Input
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.basis")}</Label>
+            <Input aria-label={text("journalAuditProtocol.basis")}
               value={state.basisTitle}
               onChange={(event) => setState({ ...state, basisTitle: event.target.value })}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Проверяемый объект</Label>
-            <Input
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.auditedObject")}</Label>
+            <Input aria-label={text("journalAuditProtocol.auditedObject")}
               value={state.auditedObject}
               onChange={(event) => setState({ ...state, auditedObject: event.target.value })}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
@@ -179,7 +191,7 @@ function DocumentDialog({
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : submitLabel}
+              {submitting ? text("journalAuditProtocol.saving") : submitLabel}
             </Button>
           </div>
         </div>
@@ -193,6 +205,7 @@ export function AuditProtocolDocumentsClient({
   routeCode,
   documents,
 }: Props) {
+  const { text, committed } = useAuditProtocolCopy();
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -224,6 +237,14 @@ export function AuditProtocolDocumentsClient({
       auditedObject: config.auditedObject,
     };
   }, [createState, settingsDocument]);
+
+  function presentPdfError(error: unknown) {
+    const current = committed.current;
+    const displayed = humanizeFetchError(error, current.text("journalAuditProtocol.openPdfFailed"), current.text("journalWidgets.headerEdit.networkError"));
+    const owned = getOpenDocumentPdfFailure(error);
+    return owned === "apiFallback" ? current.text("journalAuditProtocol.openPdfFailed")
+      : owned === "popupBlocked" ? current.text("journalAuditProtocol.popupBlocked") : displayed;
+  }
 
   async function createDocument(payload: SettingsState) {
     const config = {
@@ -302,7 +323,8 @@ export function AuditProtocolDocumentsClient({
       // Текст сервера (например «За этот период уже есть документ «…»»)
       // показываем как есть: пункт меню промис не ловил, и копия просто
       // молча не появлялась.
-      toast.error(result?.error || "Не удалось сделать копию");
+      const rawError = result?.error;
+      toast.error(rawError || committed.current.text("journalAuditProtocol.copyFailed"));
       return;
     }
     router.push(`/journals/${routeCode}/documents/${result.document.id}`);
@@ -325,10 +347,10 @@ export function AuditProtocolDocumentsClient({
             <JournalHeadingName
               fallback={
                 activeTab === "closed"
-                  ? `${AUDIT_PROTOCOL_DOCUMENT_TITLE} (закрытые)`
-                  : AUDIT_PROTOCOL_DOCUMENT_TITLE
+                  ? text("journalAuditProtocol.closedHeading", { title: text("auditTraceabilityPdf.protocolTitle") })
+                  : text("auditTraceabilityPdf.protocolTitle")
               }
-              suffix={activeTab === "closed" ? " (закрытые)" : null}
+              suffix={activeTab === "closed" ? text("journalAuditProtocol.closedSuffix") : null}
             />
           </h1>
           <JournalListActions
@@ -338,7 +360,7 @@ export function AuditProtocolDocumentsClient({
               canManageDocuments && activeTab === "active" ? (
                 <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
                   <Plus className="size-4" />
-                  Создать документ
+                  {text("journalControls.list.create")}
                 </Button>
               ) : null
             }
@@ -357,28 +379,28 @@ export function AuditProtocolDocumentsClient({
             return (
               <div key={document.id} className={JOURNAL_LIST_CARD_CLASS}>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_TITLE_CLASS}>
-                  {document.title || AUDIT_PROTOCOL_DOCUMENT_TITLE}
-              <SharedDocumentBadge shared={document.shared} />
+                  {presentAuditProtocolTitle(document.title, document.displayTitleMissing, text("auditTraceabilityPdf.protocolTitle"))}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: text("journalScan.shared.label"), title: text("journalScan.shared.title") }} />
                 </Link>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Основание проверки</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalAuditProtocol.basis")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>{config.basisTitle}</div>
                 </Link>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalAuditProtocol.documentDate")}</div>
                   {/* Было сырое «2026-09-18» из config — на экране дата везде «дд.мм.гггг». */}
                   <div className={JOURNAL_CARD_VALUE_CLASS}>{formatJournalDate(config.documentDate)}</div>
                 </Link>
                 <div className="justify-self-start sm:justify-self-end">
                   <ResponsiveMenu
-                    title="Действия с документом"
+                    title={text("journalControls.list.actionsTitle")}
                     contentClassName="w-[290px] rounded-[24px] border-0 p-4 shadow-xl"
                     items={filterManageMenuItems([
                       ...(document.status === "active"
                         ? [
                             {
                               key: "settings",
-                              label: "Настройки",
+                              label: text("journalControls.list.settings"),
                               icon: <Settings2 className="size-4 text-[#6f7282]" />,
                               onSelect: () => setSettingsDocument(document),
                             },
@@ -388,7 +410,7 @@ export function AuditProtocolDocumentsClient({
                         ? [
                             {
                               key: "copy",
-                              label: "Сделать копию",
+                              label: text("journalAuditProtocol.copy"),
                               icon: <Copy className="size-4 text-[#6f7282]" />,
                               onSelect: () => copyDocument(document),
                             },
@@ -396,11 +418,11 @@ export function AuditProtocolDocumentsClient({
                         : []),
                       {
                         key: "print",
-                        label: "Печать",
+                        label: text("journalControls.list.print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
-                          void openDocumentPdf(document.id).catch((error) =>
-                            toast.error(humanizeFetchError(error, "Не удалось открыть PDF"))
+                          void openDocumentPdf(document.id, committed.current.locale).catch((error) =>
+                            toast.error(presentPdfError(error))
                           ),
                       },
                       // Закрытый документ раньше уходил навсегда: вернуть
@@ -410,7 +432,7 @@ export function AuditProtocolDocumentsClient({
                         ? [
                             {
                               key: "delete",
-                              label: "Удалить",
+                              label: text("common.delete"),
                               icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                               onSelect: () => setDeleteDocument(document),
                               tone: "danger" as const,
@@ -419,7 +441,7 @@ export function AuditProtocolDocumentsClient({
                         : []),
                     ], canManageDocuments)}
                     trigger={
-                      <button type="button" className="flex size-9 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]">
+                      <button aria-label={text("journalControls.list.actionsTitle")} type="button" className="flex size-9 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]">
                         <Ellipsis className="size-6" />
                       </button>
                     }
@@ -431,16 +453,16 @@ export function AuditProtocolDocumentsClient({
         </div>
       </div>
 
-      <DocumentDialog open={createOpen} onOpenChange={setCreateOpen} title="Создание документа" initial={createState} submitLabel="Создать" mode="create" onSubmit={createDocument} />
+      <DocumentDialog open={createOpen} onOpenChange={setCreateOpen} title={text("journalAuditProtocol.createTitle")} initial={createState} submitLabel={text("journalAuditProtocol.create")} mode="create" onSubmit={createDocument} />
 
       <DocumentDialog
         open={!!settingsDocument}
         onOpenChange={(open) => {
           if (!open) setSettingsDocument(null);
         }}
-        title="Настройки документа"
+        title={text("journalControls.actions.settings")}
         initial={settingsState}
-        submitLabel="Сохранить"
+        submitLabel={text("common.save")}
         mode="edit"
         onSubmit={async (value) => {
           if (!settingsDocument) return;
@@ -449,10 +471,10 @@ export function AuditProtocolDocumentsClient({
       />
 
       <Dialog open={!!deleteDocument} onOpenChange={(open) => !open && setDeleteDocument(null)}>
-        <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[680px]">
+        <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[680px]">
           <DialogHeader className="border-b px-12 py-10">
             <DialogTitle className="pr-10 text-[22px] font-medium text-black">
-              {`Удалить документ "${deleteDocument?.title || AUDIT_PROTOCOL_DOCUMENT_TITLE}"`}
+              {text("journalAuditProtocol.deleteNamedDocument", { title: auditProtocolText(presentAuditProtocolTitle(deleteDocument?.title, deleteDocument?.displayTitleMissing, text("auditTraceabilityPdf.protocolTitle"))) })}
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-end px-12 py-10">
@@ -465,7 +487,7 @@ export function AuditProtocolDocumentsClient({
               }}
               className="h-9 rounded-xl bg-[#ff5e57] px-10 text-[18px] text-white hover:bg-[#ef4b44]"
             >
-              Удалить
+              {text("common.delete")}
             </Button>
           </div>
         </DialogContent>

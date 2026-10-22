@@ -24,6 +24,7 @@ export function ControlPeriodicityField({
   onChange,
   disabled = false,
   label = "Периодичность контроля",
+  placeholder = "Например: ежесменно перед началом работы",
   className,
   textareaClassName,
 }: {
@@ -31,6 +32,7 @@ export function ControlPeriodicityField({
   onChange: (value: string) => void;
   disabled?: boolean;
   label?: string;
+  placeholder?: string;
   className?: string;
   textareaClassName?: string;
 }) {
@@ -44,7 +46,7 @@ export function ControlPeriodicityField({
       onChange={onChange}
       disabled={disabled}
       maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
-      placeholder="Например: ежесменно перед началом работы"
+      placeholder={placeholder}
       className={className}
       textareaClassName={textareaClassName}
     />

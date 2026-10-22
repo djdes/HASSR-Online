@@ -1,4 +1,7 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
@@ -12,6 +15,8 @@ export default async function TaskVisibilityPage() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "settingsTaskVisibility" });
 
   const positions = await db.jobPosition.findMany({
     where: { organizationId },
@@ -32,43 +37,44 @@ export default async function TaskVisibilityPage() {
   });
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsTaskVisibility"]}>
     <div className="space-y-5">
       {/* Тёмный hero снят: ниже уже идут PageGuide с подробностями и сам
           список должностей — баннер только отодвигал их вниз. */}
       <PageHeader
-        title="Кто видит все задачи в TasksFlow"
-        description="Кто из руководства видит ВСЕ задачи в TasksFlow (admin-режим). По умолчанию — никто. Включай только для должностей которые реально проверяют работу других. Каждый сотрудник у которого функция выключена — видит только свои задачи."
+        title={t("title")}
+        description={t("description")}
       />
 
       <PageGuide
         storageKey="task-visibility"
-        title="Как это работает"
+        title={t("guide.title")}
         bullets={[
           {
-            title: "По умолчанию — никто",
-            body: "При создании организации ни одна должность не видит чужие задачи. Это правильно по принципу least-privilege.",
+            title: t("guide.default.title"),
+            body: t("guide.default.body"),
           },
           {
-            title: "Включи одну должность",
-            body: "Обычно достаточно одной — «Админ» или «Владелец». Они получат admin-флаг в TasksFlow и увидят весь состав задач.",
+            title: t("guide.choose.title"),
+            body: t("guide.choose.body"),
           },
           {
-            title: "Заведующий производством и менеджеры — НЕ нужно",
-            body: "Они проверяют только своих подчинённых через иерархию (/settings/staff-hierarchy). Видеть ВСЕ задачи им не нужно — это нарушает приватность сотрудников.",
+            title: t("guide.managers.title"),
+            body: t("guide.managers.body", { hierarchyPath: "/settings/staff-hierarchy" }),
           },
           {
-            title: "Применяется при синхронизации",
-            body: "После сохранения настройки запусти синхронизацию TasksFlow в /settings/integrations/tasksflow или нажми «Отправить задачи на заполнение» — sync поставит isAdmin=true в TF для нужных юзеров.",
+            title: t("guide.sync.title"),
+            body: t("guide.sync.body", { integrationPath: "/settings/integrations/tasksflow" }),
           },
         ]}
         qa={[
           {
-            q: "Что произойдёт если я отметил должность но потом снял?",
-            a: "При следующей синхронизации isAdmin=true перепишется на false (точнее, юзеры этой должности перестанут получать promote). TF сразу сузит им видимость до собственных задач.",
+            q: t("guide.removed.question"),
+            a: t("guide.removed.answer"),
           },
           {
-            q: "Если ни одна должность не отмечена — вообще никто не видит?",
-            a: "Для back-compat (старые орги) если ничего не настроено, fallback на legacy: первый зарегистрированный management-юзер автоматом становится admin TF. Как только ты отметишь хотя бы одну должность здесь — fallback отключается, действует только твой выбор.",
+            q: t("guide.empty.question"),
+            a: t("guide.empty.answer"),
           },
         ]}
       />
@@ -83,5 +89,6 @@ export default async function TaskVisibilityPage() {
         }))}
       />
     </div>
+    </DomainMessagesBoundary>
   );
 }

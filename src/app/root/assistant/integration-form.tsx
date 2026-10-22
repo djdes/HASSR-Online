@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { assistantSaveErrorKey } from "./assistant-presentation";
 import { useRouter } from "next/navigation";
 import { Loader2, Plug } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +26,9 @@ export function AssistantIntegrationForm({
   };
 }) {
   const router = useRouter();
+  const t = useTranslations("rootAssistant");
+  const currentT = useRef(t);
+  useEffect(() => { currentT.current = t; }, [t]);
   const [token, setToken] = useState("");
   const [projectId, setProjectId] = useState(initial.projectId);
   const [apiUrl, setApiUrl] = useState(initial.apiUrl);
@@ -40,12 +45,15 @@ export function AssistantIntegrationForm({
         body: JSON.stringify({ token, projectId, apiUrl, baseUrl, enabled }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
-      toast.success("Настройки сохранены");
+      if (!response.ok) {
+        toast.error(currentT.current(assistantSaveErrorKey(data?.error)));
+        return;
+      }
+      toast.success(currentT.current("saved"));
       setToken("");
       router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+    } catch {
+      toast.error(currentT.current("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -62,13 +70,10 @@ export function AssistantIntegrationForm({
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[16px] font-semibold text-[#0b1024]">
-            Связь с ProjectsFlow
+            {t("integrationTitle")}
           </div>
           <p className="mt-1 max-w-[640px] text-[13.5px] leading-[1.55] text-[#6f7282]">
-            Сайт не обращается к языковой модели сам — он кладёт вопрос в
-            очередь заданий ProjectsFlow, а отвечает сессия-исполнитель.
-            Карточки задач в проекте не создаются: история запросов живёт
-            здесь, ниже.
+            {t("integrationHelp")}
           </p>
         </div>
       </div>
@@ -76,10 +81,10 @@ export function AssistantIntegrationForm({
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-1.5 block text-[12.5px] font-medium text-[#3c4053]">
-            Токен агента
+            {t("token")}
             {initial.hasToken ? (
               <span className="ml-2 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-medium text-[#116b2a]">
-                задан
+                {t("tokenSet")}
               </span>
             ) : null}
           </span>
@@ -87,7 +92,7 @@ export function AssistantIntegrationForm({
             type="password"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            placeholder={initial.hasToken ? "оставьте пустым — не менять" : "pfat_…"}
+            placeholder={initial.hasToken ? t("keepToken") : "pfat_…"}
             autoComplete="off"
             className={field}
           />
@@ -95,19 +100,19 @@ export function AssistantIntegrationForm({
 
         <label className="block">
           <span className="mb-1.5 block text-[12.5px] font-medium text-[#3c4053]">
-            Идентификатор проекта
+            {t("project")}
           </span>
           <input
             value={projectId}
             onChange={(event) => setProjectId(event.target.value)}
-            placeholder="uuid проекта в ProjectsFlow"
+            placeholder={t("projectPlaceholder")}
             className={field}
           />
         </label>
 
         <label className="block">
           <span className="mb-1.5 block text-[12.5px] font-medium text-[#3c4053]">
-            Адрес API
+            {t("apiUrl")}
           </span>
           <input
             value={apiUrl}
@@ -119,7 +124,7 @@ export function AssistantIntegrationForm({
 
         <label className="block">
           <span className="mb-1.5 block text-[12.5px] font-medium text-[#3c4053]">
-            Публичный адрес сайта
+            {t("baseUrl")}
           </span>
           <input
             value={baseUrl}
@@ -138,17 +143,19 @@ export function AssistantIntegrationForm({
             onChange={(event) => setEnabled(event.target.checked)}
             className="size-4 accent-[#5566f6]"
           />
-          Ассистент включён
+          {t("enabled")}
         </label>
 
         <button
           type="button"
           onClick={() => void save()}
           disabled={busy}
+          aria-busy={busy}
+          aria-label={busy ? t("saving") : t("save")}
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-          Сохранить
+          {t("save")}
         </button>
       </div>
     </section>

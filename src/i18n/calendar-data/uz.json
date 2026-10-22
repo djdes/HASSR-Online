@@ -1,0 +1,308 @@
+{
+  "months": {
+    "standalone": {
+      "long": [
+        "Yanvar",
+        "Fevral",
+        "Mart",
+        "Aprel",
+        "May",
+        "Iyun",
+        "Iyul",
+        "Avgust",
+        "Sentabr",
+        "Oktabr",
+        "Noyabr",
+        "Dekabr"
+      ],
+      "short": [
+        "Yan",
+        "Fev",
+        "Mar",
+        "Apr",
+        "May",
+        "Iyn",
+        "Iyl",
+        "Avg",
+        "Sen",
+        "Okt",
+        "Noy",
+        "Dek"
+      ],
+      "narrow": [
+        "Y",
+        "F",
+        "M",
+        "A",
+        "M",
+        "I",
+        "I",
+        "A",
+        "S",
+        "O",
+        "N",
+        "D"
+      ]
+    },
+    "format": {
+      "long": [
+        "yanvar",
+        "fevral",
+        "mart",
+        "aprel",
+        "may",
+        "iyun",
+        "iyul",
+        "avgust",
+        "sentabr",
+        "oktabr",
+        "noyabr",
+        "dekabr"
+      ],
+      "short": [
+        "yan",
+        "fev",
+        "mar",
+        "apr",
+        "may",
+        "iyn",
+        "iyl",
+        "avg",
+        "sen",
+        "okt",
+        "noy",
+        "dek"
+      ],
+      "narrow": [
+        "Y",
+        "F",
+        "M",
+        "A",
+        "M",
+        "I",
+        "I",
+        "A",
+        "S",
+        "O",
+        "N",
+        "D"
+      ]
+    }
+  },
+  "weekdays": {
+    "long": [
+      "yakshanba",
+      "dushanba",
+      "seshanba",
+      "chorshanba",
+      "payshanba",
+      "juma",
+      "shanba"
+    ],
+    "short": [
+      "Yak",
+      "Dush",
+      "Sesh",
+      "Chor",
+      "Pay",
+      "Jum",
+      "Shan"
+    ],
+    "narrow": [
+      "Y",
+      "D",
+      "S",
+      "C",
+      "P",
+      "J",
+      "S"
+    ]
+  },
+  "patterns": {
+    "": {
+      "pattern": "{day}/{month}/{year}",
+      "fields": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:numeric": {
+      "pattern": "{day}/{month}",
+      "fields": {
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:numeric|year:numeric": {
+      "pattern": "{day}/{month}/{year}",
+      "fields": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:2-digit": {
+      "pattern": "{day}/{month}",
+      "fields": {
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:2-digit|year:numeric": {
+      "pattern": "{day}/{month}/{year}",
+      "fields": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:2-digit|month:numeric": {
+      "pattern": "{day}/{month}",
+      "fields": {
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:2-digit|month:numeric|year:numeric": {
+      "pattern": "{day}/{month}/{year}",
+      "fields": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:2-digit|month:2-digit": {
+      "pattern": "{day}/{month}",
+      "fields": {
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:2-digit|month:2-digit|year:numeric": {
+      "pattern": "{day}/{month}/{year}",
+      "fields": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:long|year:numeric": {
+      "pattern": "{day}-{month}, {year}",
+      "fields": {
+        "year": "numeric",
+        "month": "long",
+        "day": "numeric"
+      },
+      "monthContext": "format"
+    },
+    "day:2-digit|month:long|year:numeric": {
+      "pattern": "{day}-{month}, {year}",
+      "fields": {
+        "year": "numeric",
+        "month": "long",
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:long": {
+      "pattern": "{day}-{month}",
+      "fields": {
+        "month": "long",
+        "day": "numeric"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:long|weekday:long": {
+      "pattern": "{weekday}, {day}-{month}",
+      "fields": {
+        "month": "long",
+        "day": "numeric",
+        "weekday": "long"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric|month:short|year:numeric": {
+      "pattern": "{day}-{month}, {year}",
+      "fields": {
+        "year": "numeric",
+        "month": "short",
+        "day": "numeric"
+      },
+      "monthContext": "format"
+    },
+    "month:long|year:numeric": {
+      "pattern": "{month}, {year}",
+      "fields": {
+        "year": "numeric",
+        "month": "long"
+      },
+      "monthContext": "format"
+    },
+    "month:long": {
+      "pattern": "{month}",
+      "fields": {
+        "month": "long"
+      },
+      "monthContext": "standalone"
+    },
+    "weekday:long": {
+      "pattern": "{weekday}",
+      "fields": {
+        "weekday": "long"
+      },
+      "monthContext": "format"
+    },
+    "month:short": {
+      "pattern": "{month}",
+      "fields": {
+        "month": "short"
+      },
+      "monthContext": "standalone"
+    },
+    "weekday:short": {
+      "pattern": "{weekday}",
+      "fields": {
+        "weekday": "short"
+      },
+      "monthContext": "format"
+    },
+    "month:narrow": {
+      "pattern": "{month}",
+      "fields": {
+        "month": "narrow"
+      },
+      "monthContext": "standalone"
+    },
+    "weekday:narrow": {
+      "pattern": "{weekday}",
+      "fields": {
+        "weekday": "narrow"
+      },
+      "monthContext": "format"
+    },
+    "day:numeric": {
+      "pattern": "{day}",
+      "fields": {
+        "day": "numeric"
+      },
+      "monthContext": "format"
+    },
+    "day:2-digit": {
+      "pattern": "{day}",
+      "fields": {
+        "day": "2-digit"
+      },
+      "monthContext": "format"
+    }
+  }
+}

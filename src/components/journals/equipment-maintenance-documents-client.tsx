@@ -1,8 +1,10 @@
 ﻿"use client";
 
+import { useExportLanguageChoice } from "@/components/journals/export-language-choice";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   EmptyDocumentsState,
   JournalTabs,
@@ -14,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel } from "@/lib/user-roles";
+import { getUserRoleLabel } from "@/lib/user-roles";
 import { openDocumentPdf } from "@/lib/open-document-pdf";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
@@ -34,6 +36,9 @@ import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { localDayKey } from "@/lib/entry-defaults";
 
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { presentMaintenanceValue, maintenanceText, maintenanceRoleUsesFactory } from "@/lib/equipment-maintenance-presentation";
+import type { Locale } from "@/i18n/locales";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -50,11 +55,11 @@ import {
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { resolveApprover, resolveResponsible } from "@/lib/approver-display";
 import { formatPositionWithName } from "@/lib/position-name-label";
-const POSITION_OPTIONS = USER_ROLE_LABEL_VALUES;
 
 type JournalListDocument = {
   id: string;
   title: string;
+  displayTitleMissing?: boolean;
   /** Точки: документ без точки рядом с документами точек. */
   shared?: boolean;
   status: "active" | "closed";
@@ -77,11 +82,19 @@ export function EquipmentMaintenanceDocumentsClient({
   users,
   documents,
 }: Props) {
+  const t = useTranslations("journalEquipmentMaintenance");
+  const text = useTranslations();
+  const locale = useLocale() as Locale;
+  const chooseExportLanguage = useExportLanguageChoice();
+  const committed = useRef({ t, text, locale });
+  useLayoutEffect(() => { committed.current = { t, text, locale }; });
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
+  const documentTitle = (doc: JournalListDocument) => presentMaintenanceValue(doc.title, doc.displayTitleMissing, t("title"));
   const [editingDoc, setEditingDoc] = useState<JournalListDocument | null>(null);
   const [title, setTitle] = useState("");
+  const [titleMissing, setTitleMissing] = useState(false);
   const [docDate, setDocDate] = useState("");
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [approveRole, setApproveRole] = useState("");
@@ -116,10 +129,22 @@ export function EquipmentMaintenanceDocumentsClient({
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  const previousEditingServer = useRef<{ id: string; serialized: string } | null>(null);
+  useEffect(() => {
+    if (!editingDoc) { previousEditingServer.current = null; return; }
+    const serverDocument = documents.find((doc) => doc.id === editingDoc.id);
+    if (!serverDocument) return;
+    const serialized = JSON.stringify(serverDocument);
+    const previous = previousEditingServer.current;
+    previousEditingServer.current = { id: serverDocument.id, serialized };
+    if (previous?.id === serverDocument.id && previous.serialized !== serialized) setEditingDoc(serverDocument);
+  }, [documents, editingDoc]);
+
   useEffect(() => {
     if (!editingDoc) return;
     const cfg = normalizeEquipmentMaintenanceConfig(editingDoc.config);
     setTitle(editingDoc.title);
+    setTitleMissing(editingDoc.displayTitleMissing ?? !editingDoc.title);
     setDocDate(cfg.documentDate);
     setYear(String(cfg.year));
     setApproveRole(cfg.approveRole);
@@ -131,7 +156,7 @@ export function EquipmentMaintenanceDocumentsClient({
   }, [editingDoc]);
 
   async function handleDelete(docId: string, docTitle: string) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${docTitle}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ locale: committed.current.locale, title: committed.current.t("deleteTitle"), description: committed.current.t("deleteDescription", { title: maintenanceText(docTitle) }), variant: "danger", confirmLabel: committed.current.text("common.delete"), cancelLabel: committed.current.text("common.cancel") }))) return;
     const response = await fetch(`/api/journal-documents/${docId}`, { method: "DELETE" });
     if (!response.ok) throw new Error("Не удалось удалить документ");
     router.refresh();
@@ -140,19 +165,21 @@ export function EquipmentMaintenanceDocumentsClient({
   async function handleStatusChange(docId: string, newStatus: "active" | "closed", docTitle: string) {
     const toClosed = newStatus === "closed";
     const ok = await confirmAsync({
+      locale: committed.current.locale,
+      cancelLabel: committed.current.text("common.cancel"),
       title: toClosed
-        ? `Отправить документ «${docTitle}» в закрытые?`
-        : `Вернуть документ «${docTitle}» в активные?`,
+        ? committed.current.t("closeTitle", { title: maintenanceText(docTitle) })
+        : committed.current.t("restoreTitle", { title: maintenanceText(docTitle) }),
       description: toClosed
-        ? "Документ уйдёт из рабочего списка в раздел закрытых. Записи сохранятся, отчёты и PDF по ним останутся."
-        : "Документ снова появится в рабочем списке, и его можно будет заполнять.",
+        ? committed.current.t("closeDescription")
+        : committed.current.t("restoreDescription"),
       bullets: toClosed
         ? [
-            { label: "Заполнять закрытый документ нельзя", tone: "warn" as const },
-            { label: "Вернуть в активные можно в любой момент", tone: "info" as const },
+            { label: t("closedNoEdits"), tone: "warn" as const },
+            { label: t("restoreAnytime"), tone: "info" as const },
           ]
         : undefined,
-      confirmLabel: toClosed ? "В закрытые" : "В активные",
+      confirmLabel: toClosed ? committed.current.t("toClosed") : committed.current.t("toActive"),
       variant: toClosed ? "warn" : "info",
     });
     if (!ok) return;
@@ -192,7 +219,7 @@ export function EquipmentMaintenanceDocumentsClient({
       // Ошибку показываем человеку: пункт меню промис не ловил, и копия
       // молча не появлялась.
       const data = await response.json().catch(() => null);
-      toast.error(data?.error || "Не удалось скопировать документ");
+      toast.error(data?.error || committed.current.t("copyFailed"));
       return;
     }
     router.refresh();
@@ -226,7 +253,7 @@ export function EquipmentMaintenanceDocumentsClient({
       setEditingDoc(null);
       router.refresh();
     } catch {
-      toast.error("Не удалось сохранить");
+      toast.error(committed.current.t("saveSettingsFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -235,7 +262,7 @@ export function EquipmentMaintenanceDocumentsClient({
   return (
     <div className="space-y-5">
       <JournalTopBar
-        heading="График профилактического обслуживания оборудования"
+        heading={t("title")}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={templateName}
@@ -252,49 +279,51 @@ export function EquipmentMaintenanceDocumentsClient({
               className={JOURNAL_LIST_CARD_CLASS}
             >
               <Link href={`/journals/${templateCode}/documents/${doc.id}`} className="min-w-0">
-                <div className={JOURNAL_CARD_TITLE_CLASS}>{doc.title}
-              <SharedDocumentBadge shared={doc.shared} /></div>
+                <div className={JOURNAL_CARD_TITLE_CLASS}>{documentTitle(doc)}
+              <SharedDocumentBadge shared={doc.shared} copy={{ label: text("journalScan.shared.label"), title: text("journalScan.shared.title") }} /></div>
               </Link>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Год</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("year")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>{cfg.year}</div>
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalScan.metadata.approverPosition")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatPositionWithName(
-                    resolveApprover(cfg, users).title,
+                    maintenanceRoleUsesFactory(doc.config, "approveRole") && !cfg.approveEmployeeId
+                      ? text("personnelMaintenancePdf.manager") : resolveApprover(cfg, users).title,
                     resolveApprover(cfg, users).name
                   )}
                 </div>
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalScan.metadata.responsible")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatPositionWithName(
-                    resolveResponsible(cfg, users).title,
+                    maintenanceRoleUsesFactory(doc.config, "responsibleRole") && !cfg.responsibleEmployeeId
+                      ? text("personnelMaintenancePdf.head_chef") : resolveResponsible(cfg, users).title,
                     resolveResponsible(cfg, users).name
                   )}
                 </div>
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{text("journalScan.metadata.documentDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>{formatMaintenanceDate(cfg.documentDate)}</div>
               </div>
               <ResponsiveMenu
-                title="Действия"
+                title={text("journalControls.list.actions")}
                 items={filterManageMenuItems([
                   ...(doc.status === "active"
                     ? [
                         {
                           key: "settings",
-                          label: "Настройки",
+                          label: text("journalControls.list.settings"),
                           icon: <Pencil className="size-4 text-[#6f7282]" />,
                           onSelect: () => setEditingDoc(doc),
                         },
                         {
                           key: "copy",
-                          label: "Сделать копию",
+                          label: t("copy"),
                           icon: <Copy className="size-4 text-[#6f7282]" />,
                           onSelect: () => handleCopy(doc),
                         },
@@ -302,41 +331,41 @@ export function EquipmentMaintenanceDocumentsClient({
                     : []),
                   {
                     key: "print",
-                    label: "Печать",
+                    label: text("common.print"),
                     icon: <Printer className="size-4 text-[#6f7282]" />,
-                    onSelect: () => openDocumentPdf(doc.id),
+                    onSelect: () => chooseExportLanguage((language) => openDocumentPdf(doc.id, language), text("common.print")),
                   },
                   ...(doc.status === "active"
                     ? [
                         {
                           key: "archive",
-                          label: "Отправить в закрытые",
+                          label: t("archive"),
                           icon: <Archive className="size-4 text-[#6f7282]" />,
-                          onSelect: () => handleStatusChange(doc.id, "closed", doc.title),
+                          onSelect: () => handleStatusChange(doc.id, "closed", documentTitle(doc)),
                         },
                       ]
                     : [
                         {
                           key: "restore",
-                          label: "Отправить в активные",
+                          label: t("restore"),
                           icon: <ArchiveRestore className="size-4 text-[#6f7282]" />,
-                          onSelect: () => handleStatusChange(doc.id, "active", doc.title),
+                          onSelect: () => handleStatusChange(doc.id, "active", documentTitle(doc)),
                         },
                       ]),
                   ...(doc.status === "active"
                     ? [
                         {
                           key: "delete",
-                          label: "Удалить",
+                          label: text("common.delete"),
                           icon: <Trash2 className="size-4 text-[#6f7282]" />,
                           tone: "danger" as const,
-                          onSelect: () => handleDelete(doc.id, doc.title),
+                          onSelect: () => handleDelete(doc.id, documentTitle(doc)),
                         },
                       ]
                     : []),
                 ], canManageDocuments)}
                 trigger={
-                  <button className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100">
+                  <button aria-label={text("journalControls.list.actions")} className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100">
                     <Ellipsis className="size-5" />
                   </button>
                 }
@@ -347,21 +376,21 @@ export function EquipmentMaintenanceDocumentsClient({
       </div>
 
       <Dialog open={!!editingDoc} onOpenChange={(open) => !open && setEditingDoc(null)}>
-        <DialogContent className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
+        <DialogContent closeLabel={text("common.close")} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="border-b px-6 py-5">
-            <DialogTitle className="text-[22px] font-medium text-black">Настройки документа</DialogTitle>
+            <DialogTitle className="text-[22px] font-medium text-black">{text("journalWidgets.staff.settings")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
             <div className="space-y-2">
-              <Label>Название документа</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+              <Label>{text("journalWidgets.staff.documentName")}</Label>
+              <Input value={presentMaintenanceValue(title, titleMissing, t("title"))} onChange={(e) => { setTitle(e.target.value); setTitleMissing(false); }} />
             </div>
             <div className="space-y-2">
-              <Label>Дата документа</Label>
+              <Label>{text("journalScan.metadata.documentDate")}</Label>
               <Input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Год</Label>
+              <Label>{t("year")}</Label>
               <Select value={year} onValueChange={setYear}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -372,23 +401,23 @@ export function EquipmentMaintenanceDocumentsClient({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Должность &quot;Утверждаю&quot;</Label>
+              <Label>{text("journalScan.metadata.approverPosition")}</Label>
               <Select value={approveRole} onValueChange={approveCascade.handlePositionChange}>
-                <SelectTrigger><SelectValue placeholder="Выберите должность" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={text("journalWidgets.staff.choosePosition")}  /></SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Сотрудник</Label>
+              <Label>{text("journalWidgets.staff.employee")}</Label>
               <Select value={approveEmployeeId} onValueChange={(value) => {
                 const user = users.find((item) => item.id === value);
                 setApproveEmployeeId(value);
                 setApproveEmployee(user?.name || approveEmployee);
                 if (user) setApproveRole(getUserRoleLabel(user.role));
               }} open={approveCascade.employeeOpen} onOpenChange={approveCascade.setEmployeeOpen}>
-                <SelectTrigger><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={text("journalWidgets.staff.chooseEmployee")}  /></SelectTrigger>
                 <SelectContent>
                   {(approveRole ? approveCascade.candidates : users).map((u) => (
                     <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>
@@ -397,23 +426,23 @@ export function EquipmentMaintenanceDocumentsClient({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Должность ответственного</Label>
+              <Label>{text("journalWidgets.staff.responsiblePosition")}</Label>
               <Select value={responsibleRole} onValueChange={responsibleCascade.handlePositionChange}>
-                <SelectTrigger><SelectValue placeholder="Выберите должность" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={text("journalWidgets.staff.choosePosition")}  /></SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Сотрудник</Label>
+              <Label>{text("journalWidgets.staff.employee")}</Label>
               <Select value={responsibleEmployeeId} onValueChange={(value) => {
                 const user = users.find((item) => item.id === value);
                 setResponsibleEmployeeId(value);
                 setResponsibleEmployee(user?.name || responsibleEmployee);
                 if (user) setResponsibleRole(getUserRoleLabel(user.role));
               }} open={responsibleCascade.employeeOpen} onOpenChange={responsibleCascade.setEmployeeOpen}>
-                <SelectTrigger><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={text("journalWidgets.staff.chooseEmployee")}  /></SelectTrigger>
                 <SelectContent>
                   {(responsibleRole ? responsibleCascade.candidates : users).map((u) => (
                     <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>
@@ -423,7 +452,7 @@ export function EquipmentMaintenanceDocumentsClient({
             </div>
             <div className="flex justify-end">
               <Button onClick={saveSettings} disabled={isSaving}>
-                {isSaving ? "Сохранение..." : "Сохранить"}
+                {isSaving ? text("common.saving") : text("common.save")}
               </Button>
             </div>
           </div>

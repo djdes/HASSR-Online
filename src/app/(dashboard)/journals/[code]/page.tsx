@@ -1,3 +1,9 @@
+import { capturePpeTitle } from "@/lib/ppe-issuance-presentation";
+import { captureAuditProtocolTitle } from "@/lib/audit-protocol-presentation";
+import { auditPlanConfigWithDisplay, auditPlanOrganizationFallback, captureAuditPlanTitle } from "@/lib/audit-plan-presentation";
+import { captureAuditReportTitle } from "@/lib/audit-report-presentation";
+import { scanHeadingKey, scanDateLabelKey, scanResponsibleLabelKey } from "@/lib/scan-journal-presentation";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import type React from "react";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { hasSeenNotice } from "@/lib/seen-notices";
@@ -1674,32 +1680,45 @@ export default async function JournalDocumentsPage({
       orderBy: { createdAt: "desc" },
     });
 
+    let configuredTemplateName: unknown;
     return withBanner(
+      <DomainMessagesBoundary namespaces={["journalScan"]}>
       <ScanJournalDocumentsClient
         activeTab={activeTab}
         templateCode={resolvedCode}
-        templateName={scanConfig?.title || template.name}
+        templateName={(configuredTemplateName = scanConfig?.title) || template.name}
         defaultResponsibleTitle={scanConfig?.defaultResponsibleTitle || null}
         defaultResponsibleUserId={pickPrimaryManager(orgUsers)?.id || null}
-        documents={documents.map((document) => ({
+        documents={documents.map((document) => {
+          let storedTitle: unknown, configuredTitle: unknown, configuredDateLabel: unknown;
+          let storedResponsibleTitle: unknown, configuredResponsibleTitle: unknown;
+          const row = {
           id: document.id,
           shared: sharedDocumentFlag(document, documents),
-          title: document.title || (scanConfig?.title || template.name),
+          title: (storedTitle = document.title) || ((configuredTitle = scanConfig?.title) || template.name),
           status: document.status as "active" | "closed",
-          dateLabel: scanConfig?.dateLabel || "Период",
+          dateLabel: (configuredDateLabel = scanConfig?.dateLabel) || "Период",
           dateValue:
             document.dateFrom.toISOString().slice(0, 10) ===
             document.dateTo.toISOString().slice(0, 10)
               ? document.dateFrom.toISOString().slice(0, 10)
               : `${document.dateFrom.toISOString().slice(0, 10)} — ${document.dateTo.toISOString().slice(0, 10)}`,
           responsibleLabel:
-            document.responsibleTitle ||
-            (scanConfig?.showResponsible ? scanConfig.defaultResponsibleTitle || null : null),
+            (storedResponsibleTitle = document.responsibleTitle) ||
+            (scanConfig?.showResponsible ? (configuredResponsibleTitle = scanConfig.defaultResponsibleTitle) || null : null),
           responsibleValue: document.responsibleUserId
             ? orgUsers.find((user) => user.id === document.responsibleUserId)?.name || null
             : null,
-        }))}
+          };
+          return { ...row,
+            titleDisplayKey: !storedTitle && configuredTitle ? scanHeadingKey(resolvedCode) : undefined,
+            dateLabelDisplayKey: scanDateLabelKey(resolvedCode, !!configuredDateLabel),
+            responsibleLabelDisplayKey: !storedResponsibleTitle && configuredResponsibleTitle ? scanResponsibleLabelKey(resolvedCode) : undefined,
+          };
+        })}
+        templateDisplayKey={configuredTemplateName ? scanHeadingKey(resolvedCode) : undefined}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -2211,6 +2230,7 @@ export default async function JournalDocumentsPage({
     });
 
     return withBanner(
+      <DomainMessagesBoundary namespaces={["journalStaffTraining", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
       <StaffTrainingDocumentsClient
         activeTab={activeTab}
         templateCode={resolvedCode}
@@ -2220,12 +2240,14 @@ export default async function JournalDocumentsPage({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
           title: doc.title || STAFF_TRAINING_DOCUMENT_TITLE,
+          titleFallback: !doc.title,
           status: doc.status as "active" | "closed",
           startedAtLabel: doc.dateFrom.toLocaleDateString("ru-RU").replaceAll(".", "-"),
           dateFrom: doc.dateFrom.toISOString().slice(0, 10),
           config: doc.config,
         }))}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -2376,6 +2398,7 @@ export default async function JournalDocumentsPage({
     });
 
     return withBanner(
+      <DomainMessagesBoundary namespaces={["journalEquipmentMaintenance", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
       <EquipmentMaintenanceDocumentsClient
         activeTab={activeTab}
         templateCode={resolvedCode}
@@ -2385,11 +2408,13 @@ export default async function JournalDocumentsPage({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
           title: doc.title || EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE,
+          displayTitleMissing: !doc.title,
           status: doc.status as "active" | "closed",
           dateFrom: doc.dateFrom.toISOString().slice(0, 10),
           config: doc.config,
         }))}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -3040,6 +3065,7 @@ export default async function JournalDocumentsPage({
       });
 
       return withBanner(
+        <DomainMessagesBoundary namespaces={["journalDisinfectant", "sanitationPestPdf", "journalScan"]}>
         <DisinfectantDocumentsClient
           routeCode={code === DISINFECTANT_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
@@ -3048,11 +3074,12 @@ export default async function JournalDocumentsPage({
           documents={disDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, disDocuments),
-            title: document.title || DISINFECTANT_DOCUMENT_TITLE,
+            title: document.title,
             status: document.status as "active" | "closed",
             config: document.config,
           }))}
         />
+        </DomainMessagesBoundary>
       );
     }
 
@@ -3120,6 +3147,7 @@ export default async function JournalDocumentsPage({
       });
 
       return withBanner(
+        <DomainMessagesBoundary namespaces={["journalTrainingPlan", "personnelMaintenancePdf", "journalScan"]}>
         <TrainingPlanDocumentsClient
           routeCode={code === TRAINING_PLAN_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
@@ -3129,12 +3157,14 @@ export default async function JournalDocumentsPage({
             id: document.id,
             shared: sharedDocumentFlag(document, tpDocuments),
             title: document.title || TRAINING_PLAN_DOCUMENT_TITLE,
+            displayTitleMissing: !document.title,
             status: document.status as "active" | "closed",
             dateFrom: document.dateFrom.toISOString().slice(0, 10),
             dateTo: document.dateTo.toISOString().slice(0, 10),
             config: document.config,
           }))}
         />
+        </DomainMessagesBoundary>
       );
     }
 
@@ -3196,6 +3226,7 @@ export default async function JournalDocumentsPage({
       });
 
       return withBanner(
+        <DomainMessagesBoundary namespaces={["journalAuditPlan", "auditTraceabilityPdf", "journalScan"]}>
         <AuditPlanDocumentsClient
           routeCode={code === AUDIT_PLAN_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
@@ -3204,16 +3235,17 @@ export default async function JournalDocumentsPage({
           documents={auditPlanDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, auditPlanDocuments),
-            title: document.title || AUDIT_PLAN_DOCUMENT_TITLE,
+            ...captureAuditPlanTitle(document.title, () => AUDIT_PLAN_DOCUMENT_TITLE),
             status: document.status as "active" | "closed",
             dateFrom: document.dateFrom.toISOString().slice(0, 10),
             dateTo: document.dateTo.toISOString().slice(0, 10),
-            config: normalizeAuditPlanConfig(document.config, {
+            ...auditPlanConfigWithDisplay(document.config, (raw) => normalizeAuditPlanConfig(raw, {
               organizationName: organizationDisplayName,
               users: orgUsers,
-            }),
+            }), auditPlanOrganizationFallback(orgSettings)),
           }))}
         />
+        </DomainMessagesBoundary>
       );
     }
 
@@ -3540,6 +3572,7 @@ export default async function JournalDocumentsPage({
             });
 
       return withBanner(
+        <DomainMessagesBoundary namespaces={["journalAcceptance", "foodControlPdf", "common", "journalControls", "journalWidgets", "journals"]}>
         <IncomingControlDocumentsClient
           templateCode={resolvedCode}
           routeCode={code === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE ? code : resolvedCode}
@@ -3552,11 +3585,13 @@ export default async function JournalDocumentsPage({
             id: document.id,
             shared: sharedDocumentFlag(document, acceptanceDocuments),
             title: document.title || getAcceptanceDocumentTitle(resolvedCode),
+            displayTitleMissing: !document.title,
             status: document.status as "active" | "closed",
             dateFrom: document.dateFrom.toISOString().slice(0, 10),
             config: normalizeAcceptanceDocumentConfig(document.config ?? {}, acceptanceUsers),
           }))}
         />
+        </DomainMessagesBoundary>
       );
     }
 
@@ -3731,6 +3766,7 @@ export default async function JournalDocumentsPage({
       });
 
       return withBanner(
+        <DomainMessagesBoundary namespaces={["journalPpe", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
         <PpeIssuanceDocumentsClient
           routeCode={code === PPE_ISSUANCE_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
@@ -3739,12 +3775,13 @@ export default async function JournalDocumentsPage({
           documents={ppeDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, ppeDocuments),
-            title: document.title || PPE_ISSUANCE_DOCUMENT_TITLE,
+            ...capturePpeTitle(document.title, PPE_ISSUANCE_DOCUMENT_TITLE),
             status: document.status as "active" | "closed",
             dateFrom: document.dateFrom.toISOString().slice(0, 10),
             config: document.config,
           }))}
         />
+        </DomainMessagesBoundary>
       );
     }
 
@@ -4161,18 +4198,20 @@ export default async function JournalDocumentsPage({
     });
 
     return withBanner(
+      <DomainMessagesBoundary namespaces={["journalAuditProtocol", "journalScan", "auditTraceabilityPdf", "common", "journalControls", "journalWidgets", "journals"]}>
       <AuditProtocolDocumentsClient
         activeTab={activeTab}
         routeCode={code}
         documents={documents.map((document) => ({
           id: document.id,
           shared: sharedDocumentFlag(document, documents),
-          title: document.title || AUDIT_PROTOCOL_DOCUMENT_TITLE,
+          ...captureAuditProtocolTitle(document.title, () => AUDIT_PROTOCOL_DOCUMENT_TITLE),
           status: document.status as "active" | "closed",
           dateFrom: document.dateFrom.toISOString().slice(0, 10),
           config: document.config,
         }))}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -4188,18 +4227,20 @@ export default async function JournalDocumentsPage({
     });
 
     return withBanner(
+      <DomainMessagesBoundary namespaces={["journalAuditReport", "journalScan", "auditTraceabilityPdf", "common", "journalControls", "journalWidgets", "journals"]}>
       <AuditReportDocumentsClient
         activeTab={activeTab}
         routeCode={code}
         documents={documents.map((document) => ({
           id: document.id,
           shared: sharedDocumentFlag(document, documents),
-          title: document.title || AUDIT_REPORT_DOCUMENT_TITLE,
+          ...captureAuditReportTitle(document.title, () => AUDIT_REPORT_DOCUMENT_TITLE),
           status: document.status as "active" | "closed",
           dateFrom: document.dateFrom.toISOString().slice(0, 10),
           config: document.config,
         }))}
       />
+      </DomainMessagesBoundary>
     );
   }
 

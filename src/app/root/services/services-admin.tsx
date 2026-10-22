@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
 
 import {
-  formatServicePrice,
-  SERVICE_CATEGORY_LABEL,
   SERVICE_CATEGORY_ORDER,
   type PlatformServiceItem,
 } from "@/lib/services/constants";
+import { serviceCategoryLabel, servicePriceLabel, serviceSaveError, type ServiceCopy } from "./service-presentation";
 
 /**
  * Правка каталога построчно, как у тарифов: одна опечатка не блокирует
@@ -19,6 +19,10 @@ const INPUT_CLASS =
   "h-10 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
 
 export function ServicesAdmin({ initial }: { initial: PlatformServiceItem[] }) {
+  const t = useTranslations("rootServices");
+  const currentT = useRef(t);
+  useEffect(() => { currentT.current = t; }, [t]);
+  const getCurrentCopy = () => currentT.current;
   const [rows, setRows] = useState(initial);
 
   const patch = (key: string, changes: Partial<PlatformServiceItem>) =>
@@ -32,6 +36,7 @@ export function ServicesAdmin({ initial }: { initial: PlatformServiceItem[] }) {
         <ServiceRow
           key={service.key}
           service={service}
+          getCurrentCopy={getCurrentCopy}
           onChange={(changes) => patch(service.key, changes)}
         />
       ))}
@@ -42,10 +47,13 @@ export function ServicesAdmin({ initial }: { initial: PlatformServiceItem[] }) {
 function ServiceRow({
   service,
   onChange,
+  getCurrentCopy,
 }: {
   service: PlatformServiceItem;
+  getCurrentCopy: () => ServiceCopy;
   onChange: (changes: Partial<PlatformServiceItem>) => void;
 }) {
+  const t = useTranslations("rootServices");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -70,11 +78,14 @@ function ServiceRow({
         }),
       });
       const data = (await response.json().catch(() => ({}))) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? "Не удалось сохранить");
+      if (!response.ok) {
+        toast.error(serviceSaveError(data?.error, getCurrentCopy()));
+        return;
+      }
       setSaved(true);
-      toast.success("Услуга сохранена");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.success(getCurrentCopy()("savedToast"));
+    } catch {
+      toast.error(getCurrentCopy()("networkError"));
     } finally {
       setSaving(false);
     }
@@ -88,7 +99,7 @@ function ServiceRow({
         </code>
         <div className="flex items-center gap-3">
           <span className="text-[13px] tabular-nums text-[#6f7282]">
-            {formatServicePrice(service)}
+            {servicePriceLabel(service, t)}
           </span>
           <label className="inline-flex items-center gap-2 text-[13px] text-[#3c4053]">
             <input
@@ -97,7 +108,7 @@ function ServiceRow({
               onChange={(event) => onChange({ active: event.target.checked })}
               className="size-4 accent-[#5566f6]"
             />
-            Продаётся
+            {t("selling")}
           </label>
         </div>
       </div>
@@ -105,7 +116,7 @@ function ServiceRow({
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block sm:col-span-2">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Название
+            {t("titleLabel")}
           </span>
           <input
             value={service.title}
@@ -116,7 +127,7 @@ function ServiceRow({
 
         <label className="block sm:col-span-2">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Короткое описание для карточки
+            {t("summary")}
           </span>
           <input
             value={service.summary}
@@ -127,7 +138,7 @@ function ServiceRow({
 
         <label className="block sm:col-span-2">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Подробности
+            {t("details")}
           </span>
           <textarea
             value={service.description}
@@ -139,7 +150,7 @@ function ServiceRow({
 
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Цена, ₽ (пусто = по запросу)
+            {t("priceLabel")}
           </span>
           <input
             type="number"
@@ -157,21 +168,21 @@ function ServiceRow({
 
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Приписка к цене
+            {t("unitLabel")}
           </span>
           <input
             value={service.unit ?? ""}
             onChange={(event) =>
               onChange({ unit: event.target.value || null })
             }
-            placeholder="за услугу, в месяц, за час"
+            placeholder={t("unitPlaceholder")}
             className={INPUT_CLASS}
           />
         </label>
 
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Категория
+            {t("category")}
           </span>
           <select
             value={service.category}
@@ -184,7 +195,7 @@ function ServiceRow({
           >
             {SERVICE_CATEGORY_ORDER.map((category) => (
               <option key={category} value={category}>
-                {SERVICE_CATEGORY_LABEL[category]}
+                {serviceCategoryLabel(category, t)}
               </option>
             ))}
           </select>
@@ -192,7 +203,7 @@ function ServiceRow({
 
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-medium text-[#6f7282]">
-            Порядок вывода
+            {t("sort")}
           </span>
           <input
             type="number"
@@ -214,13 +225,15 @@ function ServiceRow({
             onChange={(event) => onChange({ priceFrom: event.target.checked })}
             className="size-4 accent-[#5566f6]"
           />
-          Цена «от» — оплату баллами не предлагаем
+          {t("priceFromLabel")}
         </label>
 
         <button
           type="button"
           onClick={save}
           disabled={saving}
+          aria-busy={saving}
+          aria-label={t(saving ? "saving" : saved ? "saved" : "save")}
           className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-60"
         >
           {saving ? (
@@ -228,7 +241,7 @@ function ServiceRow({
           ) : saved ? (
             <Check className="size-4" />
           ) : null}
-          Сохранить
+          {t("save")}
         </button>
       </div>
     </div>

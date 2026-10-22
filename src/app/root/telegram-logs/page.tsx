@@ -1,3 +1,7 @@
+import { FORMAT_LOCALES } from "@/i18n/locales";
+import { rootTelegramStatus } from "@/lib/root-operations-logs-presentation";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 
@@ -15,13 +19,10 @@ const STATUS_STYLES: Record<string, string> = {
   deferred: "bg-[#f5f3ff] text-[#6d5bd0]",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  push_only: "только push",
-  deferred: "отложено",
-};
-
 export default async function RootTelegramLogsPage() {
   await requireRoot();
+  const locale = await getSiteLocale();
+  const copy = await getTranslations({ locale, namespace: "rootOperationsLogs" });
 
   const logs = await db.telegramLog.findMany({
     orderBy: { createdAt: "desc" },
@@ -52,10 +53,10 @@ export default async function RootTelegramLogsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-black">
-          Telegram · журнал отправок
+          {copy("telegram.title")}
         </h1>
         <p className="mt-2 text-[15px] text-[#6f7282]">
-          Последние 200 сообщений. Автоочистка старше 30 дней.
+          {copy("telegram.description")}
         </p>
       </div>
 
@@ -63,30 +64,30 @@ export default async function RootTelegramLogsPage() {
         <table className="w-full min-w-[900px] text-[14px]">
           <thead className="bg-[#f6f7fb] text-[13px] text-[#6f7282]">
             <tr>
-              <th className="px-6 py-3 text-left font-medium">Время</th>
-              <th className="px-6 py-3 text-left font-medium">Получатель</th>
-              <th className="px-6 py-3 text-left font-medium">Чат</th>
-              <th className="px-6 py-3 text-left font-medium">Сообщение</th>
-              <th className="px-6 py-3 text-center font-medium">Статус</th>
-              <th className="px-6 py-3 text-center font-medium">Попыток</th>
+              <th className="px-6 py-3 text-left font-medium">{copy("telegram.time")}</th>
+              <th className="px-6 py-3 text-left font-medium">{copy("telegram.recipient")}</th>
+              <th className="px-6 py-3 text-left font-medium">{copy("telegram.chat")}</th>
+              <th className="px-6 py-3 text-left font-medium">{copy("telegram.message")}</th>
+              <th className="px-6 py-3 text-center font-medium">{copy("telegram.status")}</th>
+              <th className="px-6 py-3 text-center font-medium">{copy("telegram.attempts")}</th>
             </tr>
           </thead>
           <tbody>
             {logs.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-6 py-10 text-center text-[#6f7282]">
-                  Пока нет отправленных сообщений.
+                  {copy("telegram.empty")}
                 </td>
               </tr>
             )}
             {logs.map((log) => {
               const user = log.userId ? userById.get(log.userId) : null;
               const statusClass =
-                STATUS_STYLES[log.status] ?? "bg-[#eef0fb] text-[#6f7282]";
+                Object.hasOwn(STATUS_STYLES, log.status) ? STATUS_STYLES[log.status] : "bg-[#eef0fb] text-[#6f7282]";
               return (
                 <tr key={log.id} className="border-t border-[#eef0f6] align-top">
                   <td className="px-6 py-3 text-[#6f7282] whitespace-nowrap">
-                    {new Date(log.createdAt).toLocaleString("ru-RU")}
+                    {new Date(log.createdAt).toLocaleString(FORMAT_LOCALES[locale])}
                   </td>
                   <td className="px-6 py-3">
                     {user ? (
@@ -101,7 +102,7 @@ export default async function RootTelegramLogsPage() {
                     )}
                   </td>
                   <td className="px-6 py-3 font-mono text-[12px] text-[#6f7282]">
-                    {log.chatId || "приложение"}
+                    {log.chatId || copy("telegram.app")}
                   </td>
                   <td className="px-6 py-3 max-w-[420px]">
                     <div className="truncate" title={log.body}>
@@ -117,7 +118,7 @@ export default async function RootTelegramLogsPage() {
                     <span
                       className={`inline-flex rounded-full px-3 py-1 text-[12px] font-medium ${statusClass}`}
                     >
-                      {STATUS_LABELS[log.status] ?? log.status}
+                      {rootTelegramStatus(log.status, locale)}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-center text-[#6f7282]">

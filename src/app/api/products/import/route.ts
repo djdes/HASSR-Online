@@ -93,7 +93,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+      return NextResponse.json({ error: "Не авторизован", errorCode: "PRODUCT_IMPORT_UNAUTHORIZED" }, { status: 401 });
     }
 
     // Раньше: только legacy "operator" блокировался — после миграции
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     // (overwrite product DB всей организации). Теперь проверяем
     // management role (manager + head_chef + legacy owner/technologist).
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "PRODUCT_IMPORT_MANAGEMENT_REQUIRED" }, { status: 403 });
     }
 
     const formData = await request.formData();
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
 
     if (!file) {
       return NextResponse.json(
-        { error: "Файл не загружен" },
+        { error: "Файл не загружен", errorCode: "PRODUCT_IMPORT_FILE_REQUIRED" },
         { status: 400 }
       );
     }
@@ -118,6 +118,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: `Файл слишком большой (максимум ${MAX_IMPORT_BYTES / 1024 / 1024} MB). Разбейте выгрузку на несколько файлов.`,
+          errorCode: "PRODUCT_IMPORT_TOO_LARGE",
+          params: { limitMB: MAX_IMPORT_BYTES / 1024 / 1024 },
         },
         { status: 413 }
       );
@@ -132,7 +134,7 @@ export async function POST(request: Request) {
 
     if (rawRows.length === 0) {
       return NextResponse.json(
-        { error: "Файл пустой или не содержит данных" },
+        { error: "Файл пустой или не содержит данных", errorCode: "PRODUCT_IMPORT_EMPTY" },
         { status: 400 }
       );
     }
@@ -141,6 +143,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: `Слишком много строк (${rawRows.length}). Максимум за один импорт — ${MAX_IMPORT_ROWS}.`,
+          errorCode: "PRODUCT_IMPORT_TOO_MANY_ROWS",
+          params: { count: rawRows.length, limit: MAX_IMPORT_ROWS },
         },
         { status: 413 }
       );
@@ -161,6 +165,7 @@ export async function POST(request: Request) {
         {
           error:
             'Не найден столбец с названием продукта. Ожидается: "Наименование", "Название", "Товар", "Номенклатура" или "Продукт"',
+          errorCode: "PRODUCT_IMPORT_NAME_COLUMN_REQUIRED",
         },
         { status: 400 }
       );
@@ -216,7 +221,7 @@ export async function POST(request: Request) {
 
     if (products.length === 0) {
       return NextResponse.json(
-        { error: "Не найдено ни одного продукта с названием" },
+        { error: "Не найдено ни одного продукта с названием", errorCode: "PRODUCT_IMPORT_NO_PRODUCTS" },
         { status: 400 }
       );
     }
@@ -256,7 +261,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Product import error:", error);
     return NextResponse.json(
-      { error: "Ошибка импорта. Проверьте формат файла." },
+      { error: "Ошибка импорта. Проверьте формат файла.", errorCode: "PRODUCT_IMPORT_FAILED" },
       { status: 500 }
     );
   }

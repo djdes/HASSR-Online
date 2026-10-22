@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BellRing, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Switch } from "@/components/ui/switch";
 import {
@@ -56,6 +57,11 @@ async function writePreference(token: string, pushEnabled: boolean): Promise<boo
  * случилось, и кнопку в настройки.
  */
 export function AppPushSettings() {
+  const t = useTranslations("notificationSettings.nativePush");
+  const currentTranslation = useRef(t);
+  useEffect(() => {
+    currentTranslation.current = t;
+  }, [t]);
   const [state, setState] = useState<State>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
 
@@ -117,14 +123,14 @@ export function AppPushSettings() {
         if (permission !== "granted") return;
         token = await registerPushDevice(bridge);
         if (!token) {
-          toast.error("Не удалось включить уведомления. Попробуйте позже");
+          toast.error(currentTranslation.current("registrationError"));
           return;
         }
       }
       setState({ kind: "ready", enabled: next, token });
       if (!(await writePreference(token, next))) {
         setState({ kind: "ready", enabled: !next, token });
-        toast.error("Не удалось сохранить. Проверьте интернет и попробуйте ещё раз");
+        toast.error(currentTranslation.current("saveError"));
       }
     } finally {
       setBusy(false);
@@ -141,10 +147,10 @@ export function AppPushSettings() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[17px] font-semibold" style={{ color: "var(--mini-text)" }}>
-            Уведомления на этом телефоне
+            {t("title")}
           </div>
           <div className="mt-0.5 text-[14.5px]" style={{ color: "var(--mini-text-muted)" }}>
-            Задачи смены, напоминания и ответы руководителя
+            {t("description")}
           </div>
         </div>
         {state.kind === "ready" ? (
@@ -152,7 +158,7 @@ export function AppPushSettings() {
             checked={state.enabled}
             disabled={busy}
             onCheckedChange={(next) => void toggle(next)}
-            aria-label="Уведомления на этом телефоне"
+            aria-label={t("title")}
             data-testid="app-push-toggle"
             className="mt-1"
           />
@@ -161,7 +167,7 @@ export function AppPushSettings() {
       {state.kind === "denied" ? (
         <div className="mt-3 space-y-3" data-testid="app-push-denied">
           <p className="text-[15px] leading-[1.5]" style={{ color: "var(--mini-danger)" }}>
-            Уведомления запрещены в настройках телефона
+            {t("denied")}
           </p>
           <button
             type="button"
@@ -170,13 +176,13 @@ export function AppPushSettings() {
             data-testid="app-push-open-settings"
           >
             <Settings2 className="size-5" />
-            Открыть настройки
+            {t("openSettings")}
           </button>
         </div>
       ) : null}
       {state.kind === "unavailable" ? (
         <p className="mt-3 text-[15px] leading-[1.5]" style={{ color: "var(--mini-text-muted)" }}>
-          Уведомления пока не подключились. Проверьте интернет и откройте профиль ещё раз.
+          {t("unavailable")}
         </p>
       ) : null}
     </section>

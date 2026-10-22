@@ -8,6 +8,8 @@
  * безопасно импортировать в клиентский компонент.
  */
 
+import type { Locale } from "@/i18n/locales";
+
 export type BlankFormat = "pdf" | "docx";
 
 /** Что скачивают: образец журнала каталога или бумажный бланк. */
@@ -71,6 +73,9 @@ export function blankConsentRows(params: {
   marketing: boolean;
   ipAddress: string | null;
   userAgent: string | null;
+  /** Optional localized display snapshots; omission preserves the historic Russian contract. */
+  statementText?: string;
+  marketingStatementText?: string;
 }): BlankConsentRow[] {
   const base = {
     email: params.email,
@@ -78,9 +83,17 @@ export function blankConsentRows(params: {
     ipAddress: params.ipAddress,
     userAgent: params.userAgent,
   };
-  const rows: BlankConsentRow[] = [{ ...base, statementText: BLANK_CONSENT_TEXT, source: BLANK_CONSENT_SOURCE }];
+  const rows: BlankConsentRow[] = [{
+    ...base,
+    statementText: params.statementText ?? BLANK_CONSENT_TEXT,
+    source: BLANK_CONSENT_SOURCE,
+  }];
   if (params.marketing) {
-    rows.push({ ...base, statementText: BLANK_MARKETING_CONSENT_TEXT, source: BLANK_MARKETING_CONSENT_SOURCE });
+    rows.push({
+      ...base,
+      statementText: params.marketingStatementText ?? BLANK_MARKETING_CONSENT_TEXT,
+      source: BLANK_MARKETING_CONSENT_SOURCE,
+    });
   }
   return rows;
 }
@@ -124,11 +137,11 @@ export function parseBlankTargetKey(key: unknown): BlankTarget | null {
 }
 
 /** Адрес файла без токена — таким он стоит в `href` кнопок и в старых ссылках. */
-export function blankFilePath(target: BlankTarget, format: BlankFormat): string {
+export function blankFilePath(target: BlankTarget, format: BlankFormat, locale?: Locale): string {
   if (target.kind === "paper") {
     return `/api/journal-samples/paper/${encodeURIComponent(target.paperId)}/pdf`;
   }
-  return `/api/journal-samples/${encodeURIComponent(target.code)}/${format}`;
+  return `/api/journal-samples/${encodeURIComponent(target.code)}/${format}${locale === "en" || locale === "uz" ? `?locale=${locale}` : ""}`;
 }
 
 /**

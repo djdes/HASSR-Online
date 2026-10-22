@@ -1,3 +1,4 @@
+import { omitPoolSublabel } from "@/lib/journal-task-pool-copy";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
@@ -137,6 +138,8 @@ export async function GET() {
   type EnrichedScope = TaskScope & {
     journalCode: string;
     journalLabel: string;
+    journalLabelOrigin: "builtin" | "literal";
+    sublabelOrigin?: "builtin" | "literal";
     /** Имя иконки lucide — подбирается по виду журнала, см. journal-label.ts. */
     iconName: string;
     availability: "available" | "mine" | "taken" | "completed";
@@ -144,7 +147,7 @@ export async function GET() {
     claimId?: string;
   };
 
-  const groups: { code: string; label: string; scopes: EnrichedScope[] }[] = [];
+  const groups: { code: string; label: string; labelOrigin: "builtin" | "literal"; scopes: EnrichedScope[] }[] = [];
 
   // Раньше: показывали task pool ЛЮБОГО pool-журнала всем сотрудникам.
   // Уборщица видела scope'ы health_check (медосмотр) с именами коллег,
@@ -200,7 +203,7 @@ export async function GET() {
     const [pools, allClaimsRaw] = await Promise.all([
       Promise.all(
         allowedCodes.map((code) =>
-          generatePoolForDay({ organizationId, journalCode: code, date: today })
+          generatePoolForDay({ organizationId, journalCode: code, date: today, includeDisplayCopy: true })
         )
       ),
       db.journalTaskClaim.findMany({
@@ -254,6 +257,8 @@ export async function GET() {
         claimByScope.set(c.scopeKey, b);
       }
       const label = journalName(code);
+      const labelOrigin = !customJournalName(customNames, code) && Object.hasOwn(JOURNAL_LABELS, code)
+        ? "builtin" as const : "literal" as const;
       const enriched: EnrichedScope[] = pool.scopes.map((s) => {
         const b = claimByScope.get(s.scopeKey) ?? {};
         let availability: EnrichedScope["availability"] = "available";
@@ -270,6 +275,7 @@ export async function GET() {
         }
         return {
           ...s,
+          ...(s.displayCopy ? { displayCopy: s.sublabel && looksLikeJournalCode(s.sublabel) ? omitPoolSublabel(s.displayCopy) : s.displayCopy } : {}),
           // Название документа бывает служебным («Проверка health_check»),
           // и оно уезжало в подпись задачи как есть.
           sublabel: s.sublabel
@@ -279,13 +285,15 @@ export async function GET() {
             : undefined,
           journalCode: code,
           journalLabel: label,
+          journalLabelOrigin: labelOrigin,
+          sublabelOrigin: s.sublabel && looksLikeJournalCode(s.sublabel) ? labelOrigin : undefined,
           iconName: journalIconName(code),
           availability,
           claimUserName,
           claimId,
         };
       });
-      groups.push({ code, label, scopes: enriched });
+      groups.push({ code, label, labelOrigin, scopes: enriched });
     }
   }
 
@@ -307,7 +315,7 @@ export async function GET() {
   const scheduleStatus =
     shift && shift.status !== "scheduled" ? shift.status : null;
   const scheduleNote = absence
-    ? { kind: absence.status, text: formatStaffAbsenceNote(absence) }
+    ? { kind: absence.status, text: formatStaffAbsenceNote(absence), untilKey: absence.untilKey }
     : null;
 
   // Режим «Только руководитель назначает»: сотрудник сам не берёт —

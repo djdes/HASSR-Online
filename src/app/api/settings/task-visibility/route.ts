@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "TASK_VISIBILITY_FORBIDDEN" }, { status: 403 });
   }
 
   const organizationId = getActiveOrgId(session);
@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
   const positionIdsRaw = (body as { positionIds?: unknown } | null)?.positionIds;
   if (!Array.isArray(positionIdsRaw)) {
     return NextResponse.json(
-      { error: "Body должен содержать positionIds: string[]" },
+      { error: "Body должен содержать positionIds: string[]", errorCode: "TASK_VISIBILITY_INVALID_BODY" },
       { status: 400 },
     );
   }
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
     });
     if (owned.length !== new Set(positionIds).size) {
       return NextResponse.json(
-        { error: "Некоторые должности не принадлежат организации" },
+        { error: "Некоторые должности не принадлежат организации", errorCode: "TASK_VISIBILITY_FOREIGN_POSITIONS" },
         { status: 400 },
       );
     }

@@ -67,6 +67,7 @@ export function CardEditSheet({
   onSubmit,
   saving = false,
   submitLabel = "Сохранить",
+  copy,
 }: {
   open: boolean;
   title: string;
@@ -78,6 +79,7 @@ export function CardEditSheet({
   onSubmit: (next: CardEditValues) => void | Promise<void>;
   saving?: boolean;
   submitLabel?: string;
+  copy?: { cancel: string; saving: string; missingPhoto: string };
 }) {
   const [draft, setDraft] = useState<CardEditValues>(values);
   const keyboardInset = useKeyboardInset();
@@ -128,7 +130,7 @@ export function CardEditSheet({
               onClick={onClose}
               className="h-12 flex-1 rounded-2xl border border-[#dcdfed] bg-white text-[15px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff]"
             >
-              Отмена
+              {copy?.cancel ?? "Отмена"}
             </button>
             <button
               type="button"
@@ -139,9 +141,9 @@ export function CardEditSheet({
               className="h-12 flex-[1.4] rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-60"
             >
               {saving
-                ? "Сохранение…"
+                ? (copy?.saving ?? "Сохранение…")
                 : missingPhoto
-                  ? "Нужно фото"
+                  ? (copy?.missingPhoto ?? "Нужно фото")
                   : submitLabel}
             </button>
           </div>

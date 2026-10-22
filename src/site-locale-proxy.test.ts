@@ -49,3 +49,25 @@ test("English pages retain the navigation budget and show an English cooldown", 
   assert.match(html, /Too many page requests/);
   assert.doesNotMatch(html, /[А-Яа-яЁё]/);
 });
+
+test("partners and privacy trust their six explicit URLs without rewriting navigation", async () => {
+  for (const page of ["/partners", "/privacy"]) {
+    for (const locale of ["ru", "en", "uz"] as const) {
+      const path = `${locale === "ru" ? "" : `/${locale}`}${page}`;
+      const response = await request(`${path}?next=%2Fsettings%2Fpartner`, {
+        "x-wesetup-site-locale": locale === "ru" ? "en" : "ru",
+        cookie: "wesetup.site-locale=en",
+      });
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("x-middleware-next"), "1");
+      assert.equal(response.headers.get("x-middleware-rewrite"), null);
+      assert.equal(response.headers.get("location"), null);
+      assert.equal(response.headers.get("x-middleware-request-x-wesetup-site-locale"), locale);
+      assert.match(response.headers.get("set-cookie") ?? "", new RegExp(`wesetup.site-locale=${locale}`));
+      assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+      const prefetched = await request(path, { "sec-fetch-dest": "empty" });
+      assert.equal(prefetched.headers.get("set-cookie"), null);
+      assert.equal(prefetched.headers.get("x-middleware-request-x-wesetup-site-locale"), locale);
+    }
+  }
+});

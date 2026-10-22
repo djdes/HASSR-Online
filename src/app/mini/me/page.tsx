@@ -52,7 +52,7 @@ export default async function MiniMePage() {
   const billingStaffNotice = billing?.staffNotice === true;
 
   return (
-    <DomainMessagesBoundary namespaces={["notificationSettings"]}>
+    <DomainMessagesBoundary namespaces={["notificationSettings", "miniProfile", "passkeySettings", "masterCabinetUi", "feedbackDialog", "accountDeletion"]}>
     <MiniMeClient
       billingAnnouncement={billingAnnouncement}
       billingStaffNotice={billingStaffNotice}

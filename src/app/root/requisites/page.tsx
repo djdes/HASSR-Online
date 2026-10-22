@@ -1,10 +1,18 @@
+import { getTranslations } from "next-intl/server";
+
 import { requireRoot } from "@/lib/auth-helpers";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { requisitesChecklist } from "@/lib/closing-documents/types";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 import { RequisitesClient } from "./requisites-client";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const t = await getTranslations("rootRequisites");
+  return { title: t("metadata.title"), description: t("metadata.description") };
+}
 
 /**
  * Реквизиты нашей организации и факсимиле — источник для закрывающих
@@ -13,19 +21,20 @@ export const dynamic = "force-dynamic";
 export default async function RootRequisitesPage() {
   await requireRoot();
   const requisites = await readPlatformRequisites();
+  const t = await getTranslations("rootRequisites");
   return (
+    <DomainMessagesBoundary namespaces={["rootRequisites"]}>
     <div className="space-y-5">
       <div>
         <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-          Реквизиты и подпись
+          {t("page.title")}
         </h1>
         <p className="mt-1 max-w-[720px] text-[14px] leading-relaxed text-[#6f7282]">
-          Из этих данных собираются закрывающие документы (УПД) для клиентов: они
-          скачивают их в «Настройки → Подписка», а после оплаты PDF уходит письмом.
-          Пока чек-лист справа не закрыт, документы не выпускаются и в письмах их нет.
+          {t("page.description")}
         </p>
       </div>
       <RequisitesClient initial={requisites} initialChecklist={requisitesChecklist(requisites)} />
     </div>
+    </DomainMessagesBoundary>
   );
 }

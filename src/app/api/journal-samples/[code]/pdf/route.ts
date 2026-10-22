@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import {
-  buildJournalSampleInput,
   isSampleJournalCode,
 } from "@/lib/journal-sample-fixtures";
 import { clientIp } from "@/lib/client-ip";
 import { journalSampleRateLimiter } from "@/lib/rate-limit";
 import { journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
 import type { BlankTarget } from "@/lib/blank-download";
-import { blankDownloadDenied, verifyBlankDownloadToken } from "@/lib/blank-download-token";
+import { verifyBlankDownloadToken } from "@/lib/blank-download-token";
 import { blankPdfQr } from "@/lib/blank-qr-token";
+
+import { localizedJournalSampleInput, sampleDownloadDenied, sampleDownloadError, sampleLocaleFromUrl, sampleFooterLines } from "@/lib/public-sample-download-presentation";
 
 export const runtime = "nodejs";
 
@@ -34,11 +35,14 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
+  const language = sampleLocaleFromUrl(request.url);
+  if (!language.ok) return sampleDownloadError("ru", "invalidLocale", 400);
+  const { locale } = language;
 
   // Белый список: без него в generateJournalDocumentPdf прилетал бы
   // произвольный код из URL.
   if (!isSampleJournalCode(code)) {
-    return NextResponse.json({ error: "Журнал не найден" }, { status: 404 });
+    return sampleDownloadError(locale, "notFound", 404);
   }
 
   const target: BlankTarget = { kind: "code", code };
@@ -49,28 +53,26 @@ export async function GET(
   let email: string | null = null;
   if (!inline) {
     const check = verifyBlankDownloadToken(search.get("t"), { target, format: "pdf" });
-    if (!check.ok) return blankDownloadDenied(request, target, "pdf", check.reason);
+    if (!check.ok) return sampleDownloadDenied(request, target, "pdf", check.reason, locale);
     email = check.email;
   }
 
   const ip = clientIp(request) ?? "unknown";
   if (!journalSampleRateLimiter.consume(`sample:${ip}`)) {
-    return NextResponse.json(
-      { error: "Слишком много запросов. Попробуйте через минуту" },
-      { status: 429 }
-    );
+    return sampleDownloadError(locale, "tooMany", 429);
   }
 
   try {
     // QR на /qb — в шапке каждой страницы, строка копирайта — внизу.
     const { buffer, fileName } = renderJournalDocumentPdf({
-      ...buildJournalSampleInput(code),
-      qr: blankPdfQr(journalPdfQrOrigin(), { target, email }),
+      ...await localizedJournalSampleInput(code, locale),
+      qr: { ...blankPdfQr(journalPdfQrOrigin(), { target, email }), locale, footer: (await sampleFooterLines(locale)).join(" · ") },
     });
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
+        "Content-Language": locale,
         "Content-Type": "application/pdf",
         // filename* — иначе кириллица в имени файла превращается в
         // «_______.pdf» у половины браузеров.
@@ -85,9 +87,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("journal sample pdf failed", code, error);
-    return NextResponse.json(
-      { error: "Не получилось собрать образец" },
-      { status: 500 }
-    );
+    return sampleDownloadError(locale, "buildFailed", 500);
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Bold, Link2, MousePointerClick } from "lucide-react";
 
 import type { MailingKindFieldsProps } from "@/components/mailing/kind-fields";
@@ -25,6 +26,8 @@ const CHIP =
   "inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60";
 
 export default function MessageFields({ payload, onChange, disabled }: MailingKindFieldsProps<MessagePayload>) {
+  const t = useTranslations("rootMailingKindFields");
+  const bodyLabelId = useId();
   const value = coerceMessagePayload(payload);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const set = (patch: Partial<MessagePayload>) => onChange({ ...value, ...patch });
@@ -51,7 +54,7 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
     <div className="space-y-4" data-testid="mailing-fields-message">
       <label className="block">
         <span className={LABEL}>
-          Тема письма и заголовок уведомления
+          {t("message.subjectLabel")}
           <span className="tabular-nums text-[12px] font-normal text-[#9b9fb3]">
             {value.subject.length}/{MESSAGE_SUBJECT_MAX}
           </span>
@@ -62,14 +65,14 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
           disabled={disabled}
           maxLength={MESSAGE_SUBJECT_MAX}
           onChange={(e) => set({ subject: e.target.value })}
-          placeholder="Например: {имя}, в WeSetup появилась рассылка по журналам"
+          placeholder={t("message.subjectExample", { nameToken: "{имя}" })}
           className={INPUT}
         />
       </label>
 
       <div>
         <div className={LABEL}>
-          <span>Текст</span>
+          <span id={bodyLabelId}>{t("message.bodyLabel")}</span>
           <span className="tabular-nums text-[12px] font-normal text-[#9b9fb3]">
             {value.body.length}/{MESSAGE_BODY_MAX}
           </span>
@@ -83,7 +86,7 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
               edit((sel) => ({ text: `**${sel || "жирный текст"}**`, cursor: (sel || "жирный текст").length + 4 }))
             }
           >
-            <Bold className="size-3.5 text-[#5566f6]" /> Жирный
+            <Bold className="size-3.5 text-[#5566f6]" /> {t("message.bold")}
           </button>
           <button
             type="button"
@@ -97,7 +100,7 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
               })
             }
           >
-            <Link2 className="size-3.5 text-[#5566f6]" /> Ссылка
+            <Link2 className="size-3.5 text-[#5566f6]" /> {t("message.link")}
           </button>
           {MAILING_VARIABLES.map((v) => (
             <button
@@ -106,7 +109,7 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
               disabled={disabled}
               className={CHIP}
               onClick={() => edit(() => ({ text: `{${v.token}}`, cursor: v.token.length + 2 }))}
-              title={`Подставится ${v.label.toLowerCase()} получателя`}
+              title={t(`message.variable.${v.key}`)}
             >
               {`{${v.token}}`}
             </button>
@@ -115,67 +118,71 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
         <textarea
           ref={bodyRef}
           name="body"
+          aria-labelledby={bodyLabelId}
           value={value.body}
           disabled={disabled}
           maxLength={MESSAGE_BODY_MAX}
           onChange={(e) => set({ body: e.target.value })}
           rows={9}
-          placeholder={"Здравствуйте, {имя}!\n\nРасскажите, чем WeSetup может помочь {компания}…"}
+          placeholder={t("message.bodyExample", { nameToken: "{имя}", companyToken: "{компания}" })}
           className="w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 py-3 text-[15px] leading-[1.6] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 disabled:opacity-60"
         />
         <p className="mt-1.5 text-[12px] leading-[1.55] text-[#6f7282]">
-          Пустая строка — новый абзац. <code className="rounded bg-[#f5f6ff] px-1">**так**</code> — жирный.{" "}
-          <code className="rounded bg-[#f5f6ff] px-1">[текст](https://…)</code> или просто адрес — ссылка, клики
-          считаются. <code className="rounded bg-[#f5f6ff] px-1">{"{имя|друзья}"}</code> — своё запасное слово.
+          {t.rich("message.formatHelp", {
+            boldExample: "**так**", linkExample: "[текст](https://…)", fallbackExample: "{имя|друзья}",
+            bold: (chunks) => <code className="rounded bg-[#f5f6ff] px-1">{chunks}</code>,
+            link: (chunks) => <code className="rounded bg-[#f5f6ff] px-1">{chunks}</code>,
+            fallback: (chunks) => <code className="rounded bg-[#f5f6ff] px-1">{chunks}</code>,
+          })}
         </p>
       </div>
 
       <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
         <div className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-[#0b1024]">
           <MousePointerClick className="size-4 text-[#5566f6]" />
-          Кнопка в письме (необязательно)
+          {t("message.buttonOptional")}
         </div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <label className="block">
-            <span className={LABEL}>Текст кнопки</span>
+            <span className={LABEL}>{t("message.buttonText")}</span>
             <input
               name="buttonText"
               value={value.buttonText}
               disabled={disabled}
               maxLength={MESSAGE_BUTTON_TEXT_MAX}
               onChange={(e) => set({ buttonText: e.target.value })}
-              placeholder="Открыть кабинет"
+              placeholder={t("message.buttonExample")}
               className={INPUT}
             />
           </label>
           <label className="block">
-            <span className={LABEL}>Ссылка</span>
+            <span className={LABEL}>{t("message.link")}</span>
             <input
               name="buttonUrl"
               value={value.buttonUrl}
               disabled={disabled}
               onChange={(e) => set({ buttonUrl: e.target.value })}
-              placeholder="https://wesetup.ru/pricing или /dashboard"
+              placeholder={t("message.linkExample")}
               inputMode="url"
               className={INPUT}
             />
           </label>
         </div>
         {buttonUrlBad ? (
-          <p className="mt-2 text-[12px] text-[#a13a32]">Ссылка — адрес https://… или путь сайта вида /pricing.</p>
+          <p className="mt-2 text-[12px] text-[#a13a32]">{t("message.badUrl")}</p>
         ) : (
           <p className="mt-2 text-[12px] text-[#9b9fb3]">
-            В колокольчике — ссылка «Открыть», в Telegram — строкой под текстом.
+            {t("message.buttonHint")}
           </p>
         )}
       </div>
 
       <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
-        <div className="text-[13px] font-semibold text-[#0b1024]">Если у получателя пусто</div>
+        <div className="text-[13px] font-semibold text-[#0b1024]">{t("message.fallbackTitle")}</div>
         <p className="mt-0.5 text-[12px] text-[#6f7282]">
           {used.length
-            ? "Подставим это слово вместо переменной."
-            : "Переменные в тексте пока не используются."}
+            ? t("message.fallbackUsed")
+            : t("message.fallbackUnused")}
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {MAILING_VARIABLES.map((v) => (

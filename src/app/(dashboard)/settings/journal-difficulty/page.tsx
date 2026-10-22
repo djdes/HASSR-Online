@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -15,6 +18,8 @@ export default async function JournalDifficultyPage() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "settingsJournalDifficulty" });
 
   const org = await db.organization.findUnique({
     where: { id: organizationId },
@@ -34,61 +39,54 @@ export default async function JournalDifficultyPage() {
   }));
 
   return (
+    <DomainMessagesBoundary namespaces={["settingsJournalDifficulty"]}>
     <div className="space-y-5">
       {/* Тёмный hero снят: под заголовком уже стоит PageGuide, который
           подробно разбирает шкалу 1–5 — бейдж «дефолты из практики
           общепита» был его дублем и удалён. Ссылка на «Распределение
           задач» стала кнопкой-действием справа. */}
       <PageHeader
-        title="Сложность журналов"
-        description={
-          <>
-            Нужно только если в команде <strong>нет шеф-повара</strong> и
-            журналы распределяются между поварами с одинаковой зарплатой.
-            Сложность × частота × строк/запись = вес, по которому страница
-            «Распределение задач» покажет перекос между сотрудниками. Если
-            шеф-повар есть — этим блоком можно не пользоваться.
-          </>
-        }
+        title={t("title")}
+        description={t.rich("description", { strong: (chunks) => <strong>{chunks}</strong> })}
         actions={
           <Link
             href="/settings/workload-balance"
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            Распределение задач
+            {t("balanceLink")}
           </Link>
         }
       />
 
       <PageGuide
         storageKey="journal-difficulty"
-        title="Как пользоваться сложностью"
+        title={t("guide.title")}
         bullets={[
           {
-            title: "1 — Очень просто",
-            body: "галочка-отметка, ~10 секунд (хороший пример: гигиенический журнал, климат).",
+            title: t("guide.one.title"),
+            body: t("guide.one.body"),
           },
           {
-            title: "2-3 — Стандартно",
-            body: "одно-два поля + цифра, до 1 минуты (температура холодильника, бракераж).",
+            title: t("guide.twoThree.title"),
+            body: t("guide.twoThree.body"),
           },
           {
-            title: "4 — Сложно",
-            body: "обоснование, комиссия, акт (списание продукции, ЧП, генеральная уборка).",
+            title: t("guide.four.title"),
+            body: t("guide.four.body"),
           },
           {
-            title: "5 — Очень сложно",
-            body: "аналитический документ или план — занимает 15+ минут (аудиты, обучение, поверка).",
+            title: t("guide.five.title"),
+            body: t("guide.five.body"),
           },
         ]}
         qa={[
           {
-            q: "Зачем сложность если есть частота",
-            a: "Частота показывает «сколько раз», сложность — «сколько усилий за раз». Ежедневный журнал на отметку (вес 30) сильно легче ежемесячного с обоснованием (вес 4-5×4=16-20). Без сложности невозможно сравнить.",
+            q: t("guide.why.question"),
+            a: t("guide.why.answer"),
           },
           {
-            q: "А если у нас все журналы одинаково простые",
-            a: "Поставьте всем 1 — частота останется единственным фактором, и нагрузка сравняется в зависимости только от количества заполнений. Это и есть «равномерное» распределение по умолчанию.",
+            q: t("guide.equal.question"),
+            a: t("guide.equal.answer"),
           },
         ]}
       />
@@ -98,5 +96,6 @@ export default async function JournalDifficultyPage() {
         initialDifficulty={initial}
       />
     </div>
+    </DomainMessagesBoundary>
   );
 }

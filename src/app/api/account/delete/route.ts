@@ -11,6 +11,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { getVerifierSlotId } from "@/lib/journal-responsible-schemas";
+import { ACCOUNT_DELETION_ERROR } from "@/lib/account-deletion-localization";
 import { notifyManagement } from "@/lib/notifications";
 import { getServerSession } from "@/lib/server-session";
 import { bumpSessionVersion } from "@/lib/session-version";
@@ -42,21 +43,21 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Войдите, чтобы удалить аккаунт" }, { status: 401 });
+    return NextResponse.json({ error: "Войдите, чтобы удалить аккаунт", errorCode: ACCOUNT_DELETION_ERROR.sessionRequired }, { status: 401 });
   }
   const body = await request.json().catch(() => null);
   if (!isAccountDeleteConfirmed(body)) {
-    return NextResponse.json({ error: "Введите УДАЛИТЬ" }, { status: 400 });
+    return NextResponse.json({ error: "Введите УДАЛИТЬ", errorCode: ACCOUNT_DELETION_ERROR.confirmationRequired }, { status: 400 });
   }
   if (session.user.kioskDeviceId) {
     return NextResponse.json(
-      { error: "На общем планшете аккаунт удалить нельзя — откройте профиль на своём телефоне." },
+      { error: "На общем планшете аккаунт удалить нельзя — откройте профиль на своём телефоне.", errorCode: ACCOUNT_DELETION_ERROR.sharedDevice },
       { status: 403 },
     );
   }
   if (session.user.partnerAccess) {
     return NextResponse.json(
-      { error: "Сейчас вы работаете в кабинете клиента. Вернитесь в свой кабинет, чтобы удалить аккаунт." },
+      { error: "Сейчас вы работаете в кабинете клиента. Вернитесь в свой кабинет, чтобы удалить аккаунт.", errorCode: ACCOUNT_DELETION_ERROR.partnerContext },
       { status: 403 },
     );
   }
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     },
   });
   if (!user) {
-    return NextResponse.json({ error: "Аккаунт не найден" }, { status: 404 });
+    return NextResponse.json({ error: "Аккаунт не найден", errorCode: ACCOUNT_DELETION_ERROR.accountNotFound }, { status: 404 });
   }
   // «Домашняя» организация: там его должность, слоты и журналы.
   const orgId = user.organizationId;
@@ -97,24 +98,31 @@ export async function POST(request: Request) {
     }),
   ]);
 
+  const isOwnerOfOrganization = isOrganizationOwner({
+    role: user.role,
+    ownsAccount: Boolean(user.ownedAccount),
+    hasOwnerMembership: Boolean(ownerMembership),
+  });
   const plan = planAccountDeletion({
     isRoot: user.isRoot,
-    isOwnerOfOrganization: isOrganizationOwner({
-      role: user.role,
-      ownsAccount: Boolean(user.ownedAccount),
-      hasOwnerMembership: Boolean(ownerMembership),
-    }),
+    isOwnerOfOrganization,
     isManagement: isManagementRole(user.role),
     otherManagersCount,
     isDemoOrganization: user.organization.isDemo,
   });
   if (plan.kind === "forbidden") {
-    return NextResponse.json({ error: plan.reason }, { status: 403 });
+    const errorCode = user.isRoot
+      ? ACCOUNT_DELETION_ERROR.platformAdmin
+      : isOwnerOfOrganization && user.organization.isDemo
+        ? ACCOUNT_DELETION_ERROR.demoOrganization
+        : ACCOUNT_DELETION_ERROR.lastManager;
+    return NextResponse.json({ error: plan.reason, errorCode }, { status: 403 });
   }
   if (plan.kind === "organization") {
     return NextResponse.json(
       {
         error: "Вы владелец компании: удалите компанию — аккаунт удалится вместе с ней",
+        errorCode: ACCOUNT_DELETION_ERROR.ownerMustDeleteOrganization,
         redirect: plan.href,
       },
       { status: 409 },

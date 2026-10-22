@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { BuildingOption } from "@/lib/building-scope";
 
@@ -19,6 +20,11 @@ export type MiniLocationPayload = {
  * переключатель организации в этом же профиле.
  */
 export function MiniLocationSwitcher() {
+  const t = useTranslations("notificationSettings.miniSwitchers");
+  const currentT = useRef(t);
+  useEffect(() => {
+    currentT.current = t;
+  }, [t]);
   const router = useRouter();
   const [location, setLocation] = useState<MiniLocationPayload | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -52,12 +58,12 @@ export function MiniLocationSwitcher() {
       });
       if (!response.ok) throw new Error();
       setLocation({ ...location, activeBuildingId: building.id });
-      toast.success(`Точка: ${building.name}`);
+      toast.success(currentT.current("locationSwitched", { name: building.name }));
       router.refresh();
     } catch {
       // Как и у организации: сбой должен быть виден, иначе человек решит,
       // что точка переключилась, а данные показываются от прежней.
-      toast.error("Не удалось переключить точку. Попробуйте ещё раз.");
+      toast.error(currentT.current("locationSwitchFailed"));
     } finally {
       setBusyId(null);
     }
@@ -65,7 +71,7 @@ export function MiniLocationSwitcher() {
 
   return (
     <section className="mini-card p-4">
-      <div className="mini-label mb-2.5">Точка</div>
+      <div className="mini-label mb-2.5">{t("locationHeading")}</div>
       <div className="space-y-2">
         {location.buildings.map((building) => {
           const active = building.id === location.activeBuildingId;

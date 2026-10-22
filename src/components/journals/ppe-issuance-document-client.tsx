@@ -1,8 +1,11 @@
 "use client";
 
+import { ppePositionOption, ppeSourceIdentity, ppeDocumentSourceIdentity, ppeRecipient, tagPpeError, presentPpeError, type PpeErrorKey } from "@/lib/ppe-issuance-presentation";
+import { usePpeCommittedRef } from "@/components/journals/use-ppe-committed-ref";
+import { useTranslations } from "next-intl";
+
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Archive, ChevronDown, Plus, X } from "lucide-react";
-import Link from "next/link";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { SelectionEditButton } from "@/components/journals/selection-edit-button";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
@@ -42,7 +45,6 @@ import {
   PPE_ISSUANCE_DOCUMENT_TITLE,
   formatPpeIssuanceDate,
   getPpeIssuanceIssuerLabel,
-  getPpeIssuanceRecipientLabel,
   normalizePpeIssuanceConfig,
   createPpeIssuanceRow,
   type PpeIssuanceConfig,
@@ -51,14 +53,11 @@ import {
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
   RecordCardsView,
-  type RecordCardItem,
 } from "@/components/journals/record-cards-view";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type UserItem = {
   id: string;
@@ -72,10 +71,12 @@ type UserItem = {
 type Props = {
   documentId: string;
   title: string;
+  titleIsFallback?: boolean;
   organizationName: string;
   dateFrom: string;
   status: string;
   config: unknown;
+  sourceIdentity?: string;
   users: UserItem[];
   /** Design v2 toggle. */
   useV2?: boolean;
@@ -93,6 +94,14 @@ type RowDialogState = {
   issuerUserId: string;
   issuerTitle: string;
 };
+
+function usePpeErrorFeedback() {
+  const p = useTranslations("journalPpe");
+  const controls = useTranslations("journalControls");
+  return usePpeCommittedRef((key: PpeErrorKey) =>
+    key === "closeDocument.failed" ? controls("closeDocument.failed") : p(key)
+  );
+}
 
 // Те же метки, по которым `getUsersForRoleLabel` фильтрует сотрудников:
 // с лейблами ролей список людей для своей должности («Кладовщик») был пуст.
@@ -170,6 +179,8 @@ function FieldToggle({
     <button
       type="button"
       onClick={() => onCheckedChange(!checked)}
+      aria-pressed={checked}
+      aria-label={label}
       className="flex items-center gap-4 text-left"
     >
       <span
@@ -202,18 +213,25 @@ function SettingsDialog(props: {
   }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const p = useTranslations("journalPpe");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const feedback = usePpeErrorFeedback();
   const [documentTitle, setDocumentTitle] = useState(props.title);
   const [documentDate, setDocumentDate] = useState(props.dateFrom);
   const [submitting, setSubmitting] = useState(false);
   const [state, setState] = useState(() => props.config);
   const titles = useMemo(() => roleOptions(props.users), [props.users]);
 
+  const settingsIdentity = ppeSourceIdentity([props.title, props.dateFrom, props.config]);
+  const settingsSeen = useRef<string | null>(null);
   useEffect(() => {
-    if (!props.open) return;
+    if (!props.open) { settingsSeen.current = null; return; }
+    if (settingsSeen.current === settingsIdentity) return;
+    settingsSeen.current = settingsIdentity;
     setDocumentTitle(props.title);
     setDocumentDate(props.dateFrom);
     setState(props.config);
-  }, [props.config, props.dateFrom, props.open, props.title]);
+  }, [props.config, props.dateFrom, props.open, props.title, settingsIdentity]);
 
   async function handleSave() {
     setSubmitting(true);
@@ -227,7 +245,7 @@ function SettingsDialog(props: {
     } catch (error) {
       // Без catch ошибка сохранения уходила в никуда (см. RowDialog).
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки")
+        presentPpeError(error, "saveSettingsFailed", feedback.current)
       );
     } finally {
       setSubmitting(false);
@@ -239,8 +257,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Колонки выдачи СИЗ, дата начала и ответственный по умолчанию."
+        title={p("documentSettings")}
+        description={p("settingsDescriptionActual")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -248,9 +266,10 @@ function SettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {p("documentName") }
           </Label>
           <Input
+            aria-label={p("documentName")}
             value={documentTitle}
             onChange={(e) => setDocumentTitle(e.target.value)}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
@@ -258,10 +277,11 @@ function SettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
+            {p("startDate") }
           </Label>
           <Input
             type="date"
+            aria-label={p("startDate")}
             value={documentDate}
             onChange={(e) => setDocumentDate(e.target.value)}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
@@ -269,32 +289,32 @@ function SettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Колонки выдачи
+            {p("issuanceColumns") }
           </div>
           <FieldToggle
             checked={state.showGloves}
             onCheckedChange={(checked) => setState({ ...state, showGloves: checked })}
-            label="Выдача перчаток"
+            label={p("showGloves")}
           />
           <FieldToggle
             checked={state.showShoes}
             onCheckedChange={(checked) => setState({ ...state, showShoes: checked })}
-            label="Выдача обуви"
+            label={p("showShoes")}
           />
           <FieldToggle
             checked={state.showClothing}
             onCheckedChange={(checked) => setState({ ...state, showClothing: checked })}
-            label="Выдача спец. одежды"
+            label={p("showClothing")}
           />
           <FieldToggle
             checked={state.showCaps}
             onCheckedChange={(checked) => setState({ ...state, showCaps: checked })}
-            label="Выдача шапочек"
+            label={p("showCaps")}
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность лица, выдавшего СИЗ
+            {p("issuerPosition") }
           </Label>
           <Select
             value={state.defaultIssuerTitle || ""}
@@ -310,12 +330,12 @@ function SettingsDialog(props: {
             }}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={p("chooseActual")} />
             </SelectTrigger>
             <SelectContent>
               {titles.map((title) => (
                 <SelectItem key={title} value={title}>
-                  {title}
+                  {ppePositionOption(title, props.users, key => pdf(key))}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -323,7 +343,7 @@ function SettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник по умолчанию
+            {p("defaultEmployee") }
           </Label>
           <Select
             value={state.defaultIssuerUserId || ""}
@@ -339,7 +359,7 @@ function SettingsDialog(props: {
             }}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={p("chooseActual")} />
             </SelectTrigger>
             <SelectContent>
               {(state.defaultIssuerTitle
@@ -363,31 +383,31 @@ function SettingsDialog(props: {
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Настройки документа
+              {p("documentSettings") }
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2 text-[#0b1024]" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={p("close")} className="rounded-xl p-2 text-[#0b1024]" onClick={() => props.onOpenChange(false)}>
               <X className="size-8" />
             </button>
           </div>
         </DialogHeader>
         <div className="space-y-6 px-5 py-6 sm:px-10 sm:py-8">
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
-            <Input value={documentTitle} onChange={(e) => setDocumentTitle(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+            <Label className="text-[14px] text-[#7a7c8e]">{p("documentName") }</Label>
+            <Input aria-label={p("documentName")} value={documentTitle} onChange={(e) => setDocumentTitle(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#7a7c8e]">Дата начала</Label>
-            <Input type="date" value={documentDate} onChange={(e) => setDocumentDate(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+            <Label className="text-[14px] text-[#7a7c8e]">{p("startDate") }</Label>
+            <Input type="date" aria-label={p("startDate")} value={documentDate} onChange={(e) => setDocumentDate(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
           </div>
           <fieldset className="space-y-4 rounded-[28px] border border-[#d8dae6] px-6 py-5">
-            <legend className="px-2 text-[20px] font-semibold text-black">Добавить поля</legend>
-            <FieldToggle checked={state.showGloves} onCheckedChange={(checked) => setState({ ...state, showGloves: checked })} label="Выдача перчаток" />
-            <FieldToggle checked={state.showShoes} onCheckedChange={(checked) => setState({ ...state, showShoes: checked })} label="Выдача обуви" />
-            <FieldToggle checked={state.showClothing} onCheckedChange={(checked) => setState({ ...state, showClothing: checked })} label="Выдача спец. одежды" />
-            <FieldToggle checked={state.showCaps} onCheckedChange={(checked) => setState({ ...state, showCaps: checked })} label="Выдача шапочек" />
+            <legend className="px-2 text-[20px] font-semibold text-black">{p("addFields") }</legend>
+            <FieldToggle checked={state.showGloves} onCheckedChange={(checked) => setState({ ...state, showGloves: checked })} label={p("showGloves")} />
+            <FieldToggle checked={state.showShoes} onCheckedChange={(checked) => setState({ ...state, showShoes: checked })} label={p("showShoes")} />
+            <FieldToggle checked={state.showClothing} onCheckedChange={(checked) => setState({ ...state, showClothing: checked })} label={p("showClothing")} />
+            <FieldToggle checked={state.showCaps} onCheckedChange={(checked) => setState({ ...state, showCaps: checked })} label={p("showCaps")} />
           </fieldset>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#7a7c8e]">Сотрудник по умолчанию, выдавший СИЗ</Label>
+            <Label className="text-[14px] text-[#7a7c8e]">{p("defaultIssuer") }</Label>
             <Select value={state.defaultIssuerUserId || ""} onValueChange={(value) => {
               const user = props.users.find((item) => item.id === value);
               setState({
@@ -397,7 +417,7 @@ function SettingsDialog(props: {
               });
             }}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={p("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {(state.defaultIssuerTitle
@@ -410,7 +430,7 @@ function SettingsDialog(props: {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#7a7c8e]">Должность лица, выдавшего СИЗ</Label>
+            <Label className="text-[14px] text-[#7a7c8e]">{p("issuerPosition") }</Label>
             <Select
               value={state.defaultIssuerTitle || ""}
               onValueChange={(value) => {
@@ -427,18 +447,18 @@ function SettingsDialog(props: {
               }}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={p("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {titles.map((title) => (
-                  <SelectItem key={title} value={title}>{title}</SelectItem>
+                  <SelectItem key={title} value={title}>{ppePositionOption(title, props.users, key => pdf(key))}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex justify-end pt-2">
             <Button type="button" onClick={handleSave} disabled={submitting} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]">
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? p("saving") : p("save")}
             </Button>
           </div>
         </div>
@@ -457,12 +477,19 @@ function RowDialog(props: {
   /** «(k из N)» при правке выделенных строк по очереди. */
   titleSuffix?: string;
 }) {
+  const p = useTranslations("journalPpe");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const feedback = usePpeErrorFeedback();
   const [state, setState] = useState<RowDialogState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const titles = useMemo(() => roleOptions(props.users), [props.users]);
 
+  const rowIdentity = ppeSourceIdentity([props.initialRow, props.users, props.config.defaultIssuerTitle, props.config.defaultIssuerUserId]);
+  const rowSeen = useRef<string | null>(null);
   useEffect(() => {
-    if (!props.open) return;
+    if (!props.open) { rowSeen.current = null; return; }
+    if (rowSeen.current === rowIdentity) return;
+    rowSeen.current = rowIdentity;
     setState(
       rowToState(
         props.initialRow ||
@@ -475,6 +502,7 @@ function RowDialog(props: {
       )
     );
   }, [
+    rowIdentity,
     props.config.defaultIssuerTitle,
     props.config.defaultIssuerUserId,
     props.initialRow,
@@ -492,7 +520,7 @@ function RowDialog(props: {
       // Ошибку сохранения раньше глотал `finally` без `catch`: окно
       // закрывалось молча, введённая строка терялась.
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить строку")
+        presentPpeError(error, "saveRowFailed", feedback.current)
       );
     } finally {
       setSubmitting(false);
@@ -505,23 +533,23 @@ function RowDialog(props: {
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+              {props.initialRow ? p("editRow", { suffix: props.titleSuffix ? ` ${props.titleSuffix}` : "" }) : p("addRow")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2 text-[#0b1024]" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={p("close")} className="rounded-xl p-2 text-[#0b1024]" onClick={() => props.onOpenChange(false)}>
               <X className="size-8" />
             </button>
           </div>
         </DialogHeader>
         {state && (
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
-            <Input type="date" value={state.issueDate} onChange={(e) => setState({ ...state, issueDate: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
-            <Input value={state.maskCount} onChange={(e) => setState({ ...state, maskCount: e.target.value })} placeholder="Введите количество масок" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
-            {props.config.showGloves && <Input value={state.gloveCount} onChange={(e) => setState({ ...state, gloveCount: e.target.value })} placeholder="Введите количество перчаток" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
-            {props.config.showShoes && <Input value={state.shoePairsCount} onChange={(e) => setState({ ...state, shoePairsCount: e.target.value })} placeholder="Введите количество пар обуви" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
-            {props.config.showClothing && <Input value={state.clothingSetsCount} onChange={(e) => setState({ ...state, clothingSetsCount: e.target.value })} placeholder="Введите количество комплектов одежды" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
-            {props.config.showCaps && <Input value={state.capCount} onChange={(e) => setState({ ...state, capCount: e.target.value })} placeholder="Введите количество шапочек" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
+            <Input type="date" aria-label={pdf("issueDate")} value={state.issueDate} onChange={(e) => setState({ ...state, issueDate: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+            <Input aria-label={p("maskPlaceholder")} value={state.maskCount} onChange={(e) => setState({ ...state, maskCount: e.target.value })} placeholder={p("maskPlaceholder")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+            {props.config.showGloves && <Input aria-label={p("glovePlaceholder")} value={state.gloveCount} onChange={(e) => setState({ ...state, gloveCount: e.target.value })} placeholder={p("glovePlaceholder")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
+            {props.config.showShoes && <Input aria-label={p("shoePlaceholder")} value={state.shoePairsCount} onChange={(e) => setState({ ...state, shoePairsCount: e.target.value })} placeholder={p("shoePlaceholder")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
+            {props.config.showClothing && <Input aria-label={p("clothingPlaceholder")} value={state.clothingSetsCount} onChange={(e) => setState({ ...state, clothingSetsCount: e.target.value })} placeholder={p("clothingPlaceholder")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
+            {props.config.showCaps && <Input aria-label={p("capPlaceholder")} value={state.capCount} onChange={(e) => setState({ ...state, capCount: e.target.value })} placeholder={p("capPlaceholder")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Должность лица, получившего СИЗ</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("recipientPosition") }</Label>
               <Select
                 value={state.recipientTitle}
                 onValueChange={(value) => {
@@ -538,19 +566,19 @@ function RowDialog(props: {
                   });
                 }}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder={p("chooseEmployee")} /></SelectTrigger>
                 <SelectContent>
-                  {titles.map((title) => <SelectItem key={title} value={title}>{title}</SelectItem>)}
+                  {titles.map((title) => <SelectItem key={title} value={title}>{ppePositionOption(title, props.users, key => pdf(key))}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("employee") }</Label>
               <Select value={state.recipientUserId} onValueChange={(value) => {
                 const user = props.users.find((item) => item.id === value);
                 setState({ ...state, recipientUserId: value, recipientTitle: user ? getUserDisplayTitle(user) : state.recipientTitle });
               }}>
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder={p("chooseEmployee")} /></SelectTrigger>
                 <SelectContent>
                   {(state.recipientTitle
                     ? getUsersForRoleLabel(props.users, state.recipientTitle)
@@ -560,7 +588,7 @@ function RowDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Должность лица, выдавшего СИЗ</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("issuerPosition") }</Label>
               <Select
                 value={state.issuerTitle}
                 onValueChange={(value) => {
@@ -577,19 +605,19 @@ function RowDialog(props: {
                   });
                 }}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder={p("chooseEmployee")} /></SelectTrigger>
                 <SelectContent>
-                  {titles.map((title) => <SelectItem key={title} value={title}>{title}</SelectItem>)}
+                  {titles.map((title) => <SelectItem key={title} value={title}>{ppePositionOption(title, props.users, key => pdf(key))}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("employee") }</Label>
               <Select value={state.issuerUserId} onValueChange={(value) => {
                 const user = props.users.find((item) => item.id === value);
                 setState({ ...state, issuerUserId: value, issuerTitle: user ? getUserDisplayTitle(user) : state.issuerTitle });
               }}>
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder={p("chooseEmployee")} /></SelectTrigger>
                 <SelectContent>
                   {(state.issuerTitle
                     ? getUsersForRoleLabel(props.users, state.issuerTitle)
@@ -600,7 +628,7 @@ function RowDialog(props: {
             </div>
             <div className="flex justify-end pt-2">
               <Button type="button" onClick={handleSave} disabled={submitting} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]">
-                {submitting ? "Сохранение..." : props.initialRow ? "Сохранить" : "Добавить"}
+                {submitting ? p("saving") : props.initialRow ? p("save") : p("add")}
               </Button>
             </div>
           </div>
@@ -616,6 +644,9 @@ function CloseDialog(props: {
   title: string;
   onConfirm: () => Promise<void>;
 }) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const feedback = usePpeErrorFeedback();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleConfirm() {
@@ -623,6 +654,8 @@ function CloseDialog(props: {
     try {
       await props.onConfirm();
       props.onOpenChange(false);
+    } catch (error) {
+      toast.error(presentPpeError(error, "error", feedback.current));
     } finally {
       setSubmitting(false);
     }
@@ -634,16 +667,16 @@ function CloseDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[24px] font-semibold text-black">
-              Закончить журнал &quot;{props.title}&quot;
+              {t("documentLifecycle.finishTitle", { title: props.title })}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
         </DialogHeader>
         <div className="flex justify-end px-8 py-6">
           <Button type="button" onClick={handleConfirm} disabled={submitting} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]">
-            {submitting ? "Завершение..." : "Закончить"}
+            {submitting ? t("documentLifecycle.finishing") : t("documentLifecycle.finishAction")}
           </Button>
         </div>
       </DialogContent>
@@ -652,6 +685,11 @@ function CloseDialog(props: {
 }
 
 export function PpeIssuanceDocumentClient(props: Props) {
+  const p = useTranslations("journalPpe");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const feedback = usePpeErrorFeedback();
+  const deletedRowsFeedback = usePpeCommittedRef((count: number) => p("deletedRows", { count: `${count}` }));
+  const t = useTranslations("journalControls");
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [config, setConfig] = useState(() =>
@@ -659,11 +697,33 @@ export function PpeIssuanceDocumentClient(props: Props) {
   );
   const [title, setTitle] = useState(props.title || PPE_ISSUANCE_DOCUMENT_TITLE);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
+  const [titleFallback, setTitleFallback] = useState(props.titleIsFallback ?? !props.title);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [rowDialogOpen, setRowDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<PpeIssuanceRow | null>(null);
+
+  const incomingIdentity = ppeDocumentSourceIdentity(props);
+  const incomingSeen = useRef(incomingIdentity);
+  const documentSeen = useRef(props.documentId);
+  useEffect(() => {
+    if (incomingSeen.current === incomingIdentity) return;
+    incomingSeen.current = incomingIdentity;
+    const next = normalizePpeIssuanceConfig(props.config, props.users);
+    setConfig(next);
+    setTitle(props.title || PPE_ISSUANCE_DOCUMENT_TITLE);
+    setTitleFallback(props.titleIsFallback ?? !props.title);
+    setDateFrom(props.dateFrom);
+    const ids = new Set(next.rows.map(row => row.id));
+    const changedDocument = documentSeen.current !== props.documentId;
+    documentSeen.current = props.documentId;
+    setSelectedRowIds(current => changedDocument ? [] : current.filter(id => ids.has(id)));
+    setEditingRow(current => current ? next.rows.find(row => row.id === current.id) ?? null : null);
+    setRowDialogOpen(false);
+    setSettingsOpen(false);
+    setCloseDialogOpen(false);
+  }, [incomingIdentity, props.documentId, props.config, props.users, props.title, props.titleIsFallback, props.dateFrom]);
 
   const rows = config.rows;
   const isClosed = props.status === "closed";
@@ -675,31 +735,31 @@ export function PpeIssuanceDocumentClient(props: Props) {
       [
         {
           key: "maskCount",
-          label: "Количество масок, выданных на 1 рабочую неделю",
+          label: pdf("masks"),
           visible: true,
         },
         {
           key: "gloveCount",
-          label: "Количество пар перчаток, выданных на 1 рабочую неделю",
+          label: pdf("gloves"),
           visible: config.showGloves,
         },
         {
           key: "shoePairsCount",
-          label: "Количество пар обуви, выданных на 1 рабочую неделю",
+          label: pdf("shoes"),
           visible: config.showShoes,
         },
         {
           key: "clothingSetsCount",
-          label: "Количество комплектов одежды, выданных на 1 рабочую неделю",
+          label: pdf("clothing"),
           visible: config.showClothing,
         },
         {
           key: "capCount",
-          label: "Количество шапочек, выданных на 1 рабочую неделю",
+          label: pdf("caps"),
           visible: config.showCaps,
         },
       ].filter((item) => item.visible),
-    [config.showCaps, config.showClothing, config.showGloves, config.showShoes]
+    [config.showCaps, config.showClothing, config.showGloves, config.showShoes, pdf]
   );
 
   async function persist(
@@ -718,9 +778,10 @@ export function PpeIssuanceDocumentClient(props: Props) {
       }),
     });
     if (!response.ok) {
-      throw new Error("Не удалось сохранить документ");
+      throw tagPpeError(new Error("Не удалось сохранить документ"), "saveDocumentFailed");
     }
     setTitle(nextTitle);
+    setTitleFallback(false);
     setDateFrom(nextDateFrom);
     setConfig(nextConfig);
     startTransition(() => router.refresh());
@@ -764,7 +825,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
   async function handleDeleteSelected() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: p("deleteRowsTitle"), description: p("deleteRowsDescription", { count: `${count}` }), variant: "danger", confirmLabel: p("delete") }))) return;
     try {
       const nextConfig = {
         ...config,
@@ -772,9 +833,9 @@ export function PpeIssuanceDocumentClient(props: Props) {
       };
       await persist(title, dateFrom, nextConfig);
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(deletedRowsFeedback.current(count));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(presentPpeError(error, "deleteRowsFailed", feedback.current));
     }
   }
 
@@ -785,7 +846,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
       body: JSON.stringify({ status: "closed" }),
     });
     if (!response.ok) {
-      throw new Error("Не удалось закрыть журнал");
+      throw tagPpeError(new Error(t("closeDocument.failed")), "closeDocument.failed");
     }
     router.refresh();
   }
@@ -798,29 +859,29 @@ export function PpeIssuanceDocumentClient(props: Props) {
           onClear={() => setSelectedRowIds([])}
           onDelete={() =>
             handleDeleteSelected().catch((error) =>
-              toast.error(humanizeFetchError(error, "Ошибка"))
+              toast.error(presentPpeError(error, "error", feedback.current))
             )
           }
-          hint="Строки выдачи СИЗ будут удалены без возможности отмены"
+          hint={p("deleteRowsHint")}
         >
           <SelectionEditButton count={selectedRowIds.length} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
       )}
 
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={p("emptyTitle")} emptyBody={p("emptyBody")} />
       <JournalDocumentShell
-        title={title}
+        title={titleFallback ? pdf("ppeTitle") : title}
         documentId={props.documentId}
         backHref="/journals/ppe_issuance"
         onSettings={!isClosed ? () => setSettingsOpen(true) : undefined}
         closed={isClosed}
-        closedHint="Откройте журнал заново, чтобы регистрировать выдачу СИЗ."
+        closedHint={p("closedHint")}
         menuItems={
           !isClosed
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => setCloseDialogOpen(true),
                 },
@@ -834,10 +895,11 @@ export function PpeIssuanceDocumentClient(props: Props) {
             items={rows.map((row, index) => ({
               id: row.id,
               title: `№${index + 1} · ${formatPpeIssuanceDate(row.issueDate) || "—"}`,
-              subtitle: getPpeIssuanceRecipientLabel(row, props.users) || undefined,
+              subtitle: ppeRecipient(row, props.users, key => pdf(key)) || undefined,
               leading: !isClosed ? (
                 <Checkbox
-                  checked={selectedRowIds.includes(row.id)}
+                  aria-label={p("selectRow", { date: formatPpeIssuanceDate(row.issueDate) })}
+                    checked={selectedRowIds.includes(row.id)}
                   onCheckedChange={(value) =>
                     setSelectedRowIds((current) =>
                       value === true
@@ -857,7 +919,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
                     hideIfEmpty: true,
                   })),
                 {
-                  label: "Выдал СИЗ",
+                  label: p("issuedBy"),
                   value: getPpeIssuanceIssuerLabel(row, props.users),
                   hideIfEmpty: true,
                 },
@@ -877,33 +939,33 @@ export function PpeIssuanceDocumentClient(props: Props) {
                   }}
                   className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5863f8] px-4 text-[14px] font-medium text-white hover:bg-[#4752e6]"
                 >
-                  Редактировать
+                  {p("edit") }
                 </button>
               ) : null,
             }))}
-            emptyLabel="Выдач СИЗ пока не зарегистрировано."
+            emptyLabel={p("emptyIssuances")}
           />
         }
         paperHeader={
           <JournalDocumentHeader
-            orgName={props.organizationName || ORG_NAME_FALLBACK}
-            title="ЖУРНАЛ УЧЕТА ВЫДАЧИ СИЗ"
+            orgName={props.organizationName || p("organizationFallback")}
+            title={pdf("ppeHeader")}
             startedAt={dateFrom}
             finishedAt={null}
           />
         }
-        sheetTitle="ЖУРНАЛ УЧЕТА ВЫДАЧИ СИЗ"
+        sheetTitle={pdf("ppeHeader")}
         sheetMinWidth={1450}
         toolbar={
           !isClosed ? (
             <ResponsiveMenu
-              title="Добавить"
+              title={p("add")}
               align="start"
               contentClassName="w-[220px] rounded-2xl border-0 p-2 shadow-xl"
               items={[
                 {
                   key: "add-row",
-                  label: "Добавить",
+                  label: p("add"),
                   icon: <Plus className="size-4 text-[#5566f6]" />,
                   onSelect: () => {
                     setEditingRow(null);
@@ -914,7 +976,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
               trigger={
                 <Button type="button" className={DOC_PRIMARY_BUTTON_CLASS}>
                   <Plus className="mr-2 size-5" />
-                  Добавить
+                  {p("add") }
                   <ChevronDown className="ml-2 size-4" />
                 </Button>
               }
@@ -927,6 +989,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
             <tr>
               <th className={`w-[44px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
                 <Checkbox
+                  aria-label={p("selectAll")}
                   checked={allSelected}
                   onCheckedChange={(value) =>
                     setSelectedRowIds(value === true ? rows.map((row) => row.id) : [])
@@ -934,17 +997,17 @@ export function PpeIssuanceDocumentClient(props: Props) {
                   disabled={rows.length === 0 || isClosed}
                 />
               </th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Дата выдачи СИЗ</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{pdf("issueDate") }</th>
               {columns.map((column) => (
                 <th key={column.key} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
                   {column.label}
                 </th>
               ))}
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Должность и ФИО лица, получившего СИЗ
+                {pdf("recipient") }
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                ФИО лица, выдавшего СИЗ
+                {pdf("issuer") }
               </th>
             </tr>
           </thead>
@@ -964,6 +1027,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Checkbox
+                    aria-label={p("selectRow", { date: formatPpeIssuanceDate(row.issueDate) })}
                     checked={selectedRowIds.includes(row.id)}
                     onCheckedChange={(value) =>
                       setSelectedRowIds((current) =>
@@ -998,7 +1062,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
                   </td>
                 ))}
                 <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
-                  {getPpeIssuanceRecipientLabel(row, props.users)}
+                  {ppeRecipient(row, props.users, key => pdf(key))}
                 </td>
                 <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
                   {getPpeIssuanceIssuerLabel(row, props.users)}
@@ -1013,7 +1077,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
                 leading={1}
                 labelSpan={1}
                 trailing={columns.length + 2}
-                label="Добавить"
+                label={p("add")}
                 onClick={() => {
                   setEditingRow(null);
                   setRowDialogOpen(true);
@@ -1070,7 +1134,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
       <CloseDialog
         open={closeDialogOpen}
         onOpenChange={setCloseDialogOpen}
-        title={title}
+        title={titleFallback ? pdf("ppeTitle") : title}
         onConfirm={handleCloseJournal}
       />
     </div>

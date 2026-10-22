@@ -6,6 +6,7 @@ import { MiniOrgSwitcher } from "@/app/mini/_components/mini-org-switcher";
 import { MiniLocationSwitcher } from "@/app/mini/_components/mini-location-switcher";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { parseMobileAppUserAgent, type MobileAppPlatform } from "@/lib/mobile-app";
 import { unregisterPushDevice } from "@/lib/native-bridge";
 import { AppPushSettings } from "@/app/mini/_components/app-push-settings";
@@ -14,7 +15,7 @@ import { MarketingEmailToggle } from "@/components/settings/marketing-email-togg
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
-import { getUserPositionLabel, getUserRoleLabel } from "@/lib/user-roles";
+import { getUserRoleLabel } from "@/lib/user-roles";
 import {
   ArrowLeft,
   ChevronRight,
@@ -96,9 +97,10 @@ export function MiniMeClient({
    *  выкидывала из аккаунта. */
   telegramLinked?: boolean;
 }) {
+  const t = useTranslations("miniProfile");
   const { data: session, status } = useSession();
   const [busy, setBusy] = useState<"none" | "signout" | "unlink">("none");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<"unlinkFailed" | "signOutFailed" | "unauthorized" | null>(null);
   // Confirm-state для двух destructive actions. Project rule (CLAUDE.md
   // §6): native window.confirm не используем — только ConfirmDialog с
   // bullet-описанием последствий.
@@ -122,7 +124,7 @@ export function MiniMeClient({
         className="flex flex-1 items-center justify-center text-[16px]"
         style={{ color: "var(--mini-text-muted)" }}
       >
-        Загружаем…
+          {t("loading")}
       </div>
     );
   }
@@ -132,16 +134,16 @@ export function MiniMeClient({
       <div className="flex flex-1 items-center justify-center">
         <div className="mini-card flex w-full flex-col items-center gap-3 px-5 py-6 text-center">
           <div className="text-[19px] font-semibold" style={{ color: "var(--mini-text)" }}>
-            Вы не вошли
+            {t("guest.title")}
           </div>
           <p className="text-[16px] leading-relaxed" style={{ color: "var(--mini-text-muted)" }}>
-            Профиль виден только после входа. В Telegram вход произойдёт сам.
+            {t("guest.description")}
           </p>
           <Link
             href={miniShellSignInHref("/mini/me")}
             className="mini-btn-primary mini-press mt-1 w-full"
           >
-            Войти
+            {t("guest.signIn")}
           </Link>
         </div>
       </div>
@@ -156,15 +158,9 @@ export function MiniMeClient({
     try {
       const resp = await fetch("/api/mini/unlink-tg", { method: "POST" });
       if (!resp.ok) {
-        const body = (await resp.json().catch(() => ({ error: "" }))) as {
-          error?: string;
-        };
         // Раньше при сбое на экране появлялось «HTTP 500» — человеку
         // непонятно ни что случилось, ни что теперь делать.
-        throw new Error(
-          body.error ||
-            "Не удалось отвязать Telegram. Проверьте связь и попробуйте ещё раз."
-        );
+        throw new Error(resp.status === 401 ? "unauthorized" : "unlinkFailed");
       }
       // Push на этот телефон больше не нужны — отвязываем, пока сессия жива.
       await unregisterPushDevice();
@@ -176,11 +172,7 @@ export function MiniMeClient({
       }).catch(() => undefined);
       window.location.replace("/mini/login");
     } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? err.message
-          : "Не удалось отвязать Telegram."
-      );
+      setError(err instanceof Error && err.message === "unauthorized" ? "unauthorized" : "unlinkFailed");
       setBusy("none");
     }
   }
@@ -198,7 +190,7 @@ export function MiniMeClient({
       // аккаунт.
       await signOutAndOpen("/mini/login");
     } catch {
-      setError("Не удалось выйти. Проверьте связь и попробуйте ещё раз.");
+      setError("signOutFailed");
       setBusy("none");
     }
   }
@@ -213,12 +205,24 @@ export function MiniMeClient({
   const homeHref = miniHomeHref(u);
   // Та же приоритетность, что в «Сотрудниках»/«Команде»:
   // справочная должность → свободная строка → подпись роли.
-  const positionLabel = getUserPositionLabel({
-    name: u.name ?? "",
-    role: u.role,
-    positionTitle,
-  });
-  const roleLabel = u.role ? getUserRoleLabel(u.role) : null;
+  const roleLabels: Record<string, string> = {
+    manager: t("roles.manager"), owner: t("roles.manager"),
+    head_chef: t("roles.headChef"), technologist: t("roles.headChef"),
+    cook: t("roles.cook"), operator: t("roles.cook"),
+    waiter: t("roles.waiter"),
+  };
+  const roleLabel = u.role ? roleLabels[u.role] ?? getUserRoleLabel(u.role) : null;
+  // The server prop contains only a stored job-position/free-form title or
+  // null. Translate the role fallback from its stable role code; preserve any
+  // non-empty stored title verbatim, even when it matches Russian UI copy.
+  const positionLabel = positionTitle?.trim() || roleLabel || t("roles.employee");
+  const errorMessage = error === "unauthorized"
+    ? t("errors.unauthorized")
+    : error === "signOutFailed"
+      ? t("errors.signOutFailed")
+      : error === "unlinkFailed"
+        ? t("errors.unlinkFailed")
+        : null;
 
   return (
     <div className="flex flex-1 flex-col gap-4 pb-24">
@@ -227,11 +231,11 @@ export function MiniMeClient({
         className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
       >
         <ArrowLeft className="size-5" />
-        На главную
+        {t("home")}
       </Link>
 
       <header className="px-1">
-        <h1 className="mini-h1">Профиль</h1>
+        <h1 className="mini-h1">{t("title")}</h1>
       </header>
 
       {billingAnnouncement ? (
@@ -254,7 +258,7 @@ export function MiniMeClient({
       <section className="mini-card p-4">
         <dl className="space-y-3 text-[16px]">
           <div className="flex items-center justify-between gap-3">
-            <dt style={{ color: "var(--mini-text-muted)" }}>Имя</dt>
+            <dt style={{ color: "var(--mini-text-muted)" }}>{t("fields.name")}</dt>
             <dd
               className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
@@ -263,7 +267,7 @@ export function MiniMeClient({
             </dd>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <dt style={{ color: "var(--mini-text-muted)" }}>Организация</dt>
+            <dt style={{ color: "var(--mini-text-muted)" }}>{t("fields.organization")}</dt>
             <dd
               className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
@@ -280,7 +284,7 @@ export function MiniMeClient({
               что-то новое: дважды одно и то же — лишний шум. */}
           {roleLabel && roleLabel !== positionLabel ? (
             <div className="flex items-center justify-between gap-3">
-              <dt style={{ color: "var(--mini-text-muted)" }}>Роль</dt>
+              <dt style={{ color: "var(--mini-text-muted)" }}>{t("fields.role")}</dt>
               <dd
                 className="min-w-0 truncate text-right font-semibold"
                 style={{ color: "var(--mini-text)" }}
@@ -290,7 +294,7 @@ export function MiniMeClient({
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-3">
-            <dt style={{ color: "var(--mini-text-muted)" }}>Должность</dt>
+            <dt style={{ color: "var(--mini-text-muted)" }}>{t("fields.position")}</dt>
             <dd
               className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
@@ -301,17 +305,17 @@ export function MiniMeClient({
           {/* Телефон — ключ, по которому аккаунт связывается с задачами
               (П-8): если его нет, человек должен это видеть. */}
           <div className="flex items-center justify-between gap-3">
-            <dt style={{ color: "var(--mini-text-muted)" }}>Телефон</dt>
+            <dt style={{ color: "var(--mini-text-muted)" }}>{t("fields.phone")}</dt>
             <dd
               className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
-              {phone || "не указан"}
+              {phone || t("fields.phoneMissing")}
             </dd>
           </div>
           {u.email && !u.email.endsWith("@invite.local") ? (
             <div className="flex items-center justify-between gap-3">
-              <dt style={{ color: "var(--mini-text-muted)" }}>Почта</dt>
+              <dt style={{ color: "var(--mini-text-muted)" }}>{t("fields.email")}</dt>
               <dd
                 className="min-w-0 truncate text-right font-semibold"
                 style={{ color: "var(--mini-text)" }}
@@ -347,7 +351,7 @@ export function MiniMeClient({
           className="mb-3 text-[17px] font-semibold"
           style={{ color: "var(--mini-text)" }}
         >
-          Тема оформления
+          {t("theme.title")}
         </h2>
         <MiniThemeTiles />
         {canEditBranding ? (
@@ -358,7 +362,7 @@ export function MiniMeClient({
             style={{ color: "var(--mini-accent-ink)" }}
           >
             <Palette className="size-5 shrink-0" aria-hidden />
-            Логотип и цвета
+            {t("theme.branding")}
           </Link>
         ) : null}
       </section>
@@ -378,7 +382,7 @@ export function MiniMeClient({
         </Link>
         {/* Баланс и бонусы — тот же пункт, что в меню профиля на сайте. */}
         <Link href="/settings/balance" className="mini-item mini-press">
-          <ProfileRow icon={Coins} label="Баланс и бонусы" hint="отзыв и приглашения" />
+          <ProfileRow icon={Coins} label={t("rows.balance")} hint={t("rows.balanceHint")} />
         </Link>
         {fullAccess ? (
           <>
@@ -388,8 +392,8 @@ export function MiniMeClient({
               <Link href="/settings/subscription" className="mini-item mini-press">
                 <ProfileRow
                   icon={CreditCard}
-                  label="Тарифы и оплата"
-                  hint="счета и автопродление"
+                  label={t("rows.subscription")}
+                  hint={t("rows.subscriptionHint")}
                 />
               </Link>
             )}
@@ -404,7 +408,7 @@ export function MiniMeClient({
         ) : null}
         {u.isRoot ? (
           <Link href="/root" className="mini-item mini-press">
-            <ProfileRow icon={ShieldCheck} label="Панель платформы" />
+          <ProfileRow icon={ShieldCheck} label={t("rows.platform")} />
           </Link>
         ) : null}
         {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка
@@ -413,8 +417,8 @@ export function MiniMeClient({
         <Link href="/mini/sections" className="mini-item mini-press">
           <ProfileRow
             icon={LayoutGrid}
-            label="Все разделы"
-            hint="журналы, отчёты, настройки"
+            label={t("rows.sections")}
+            hint={t("rows.sectionsHint")}
           />
         </Link>
         {/* Обратная связь — паритет с сайтом (П-3): на сайте форма живёт
@@ -426,8 +430,8 @@ export function MiniMeClient({
             <button type="button" className="mini-item mini-press">
               <ProfileRow
                 icon={MessageCircleMore}
-                label="Обратная связь"
-                hint="ошибка или идея"
+                label={t("rows.feedback")}
+                hint={t("rows.feedbackHint")}
               />
             </button>
           }
@@ -457,14 +461,14 @@ export function MiniMeClient({
           >
             <ProfileRow
               icon={MonitorSmartphone}
-              label="Открыть полную версию сайта"
-              hint="шапка и широкие таблицы"
+              label={t("rows.fullSite")}
+              hint={t("rows.fullSiteHint")}
             />
           </button>
         )}
       </section>
 
-      {error ? <div className="mini-err">{error}</div> : null}
+      {errorMessage ? <div className="mini-err">{errorMessage}</div> : null}
 
       <section className="space-y-2">
         <button
@@ -473,7 +477,7 @@ export function MiniMeClient({
           disabled={busy !== "none"}
           className="mini-item mini-press disabled:opacity-50"
         >
-          <ProfileRow icon={LogOut} label="Выйти" hint="сессия сбросится" chevron={false} />
+          <ProfileRow icon={LogOut} label={t("rows.signOut")} hint={t("rows.signOutHint")} chevron={false} />
         </button>
         {telegramLinked ? (
         <button
@@ -489,8 +493,8 @@ export function MiniMeClient({
         >
           <ProfileRow
             icon={Unlink}
-            label="Отвязать Telegram"
-            hint={busy === "unlink" ? "…" : "понадобится новое приглашение"}
+            label={t("rows.unlink")}
+            hint={busy === "unlink" ? t("rows.unlinkBusy") : t("rows.unlinkHint")}
             tone="danger"
             chevron={false}
           />
@@ -510,8 +514,8 @@ export function MiniMeClient({
             >
               <ProfileRow
                 icon={Trash2}
-                label="Удалить аккаунт"
-                hint={deleting ? "…" : "телефон и вход удалятся, журналы останутся у компании"}
+                label={t("rows.deleteAccount")}
+                hint={deleting ? t("rows.deleteAccountBusy") : t("rows.deleteAccountHint")}
                 tone="danger"
                 chevron={false}
               />
@@ -527,10 +531,10 @@ export function MiniMeClient({
           setConfirmSignOutOpen(false);
           await handleSignOut();
         }}
-        title="Выйти из аккаунта?"
-        description="Приложение забудет вас на этом телефоне и само входить больше не будет. Откроется экран входа: там можно вернуться в свой аккаунт или войти в другой."
-        confirmLabel="Выйти"
-        cancelLabel="Отмена"
+        title={t("confirm.signOutTitle")}
+        description={t("confirm.signOutDescription")}
+        confirmLabel={t("confirm.signOutAction")}
+        cancelLabel={t("confirm.cancel")}
         variant="info"
       />
 
@@ -541,20 +545,20 @@ export function MiniMeClient({
           setConfirmUnlinkOpen(false);
           await handleUnlink();
         }}
-        title="Точно отвязать Telegram?"
-        description="После отвязки приложение перестанет открываться — даже из этого же чата с ботом. Чтобы вернуться, понадобится новая ссылка-приглашение от руководителя."
+        title={t("confirm.unlinkTitle")}
+        description={t("confirm.unlinkDescription")}
         bullets={[
-          { label: "Приложение забудет вас на этом телефоне", tone: "default" },
-          { label: "Связь аккаунта с вашим Telegram удалится", tone: "warn" },
+          { label: t("confirm.unlinkForgetDevice"), tone: "default" },
+          { label: t("confirm.unlinkRemoveConnection"), tone: "warn" },
           {
-            label: "Понадобится новая ссылка-приглашение от руководителя",
+            label: t("confirm.unlinkNewInvite"),
             tone: "warn",
           },
         ]}
-        confirmLabel="Отвязать"
-        cancelLabel="Отмена"
+        confirmLabel={t("confirm.unlinkAction")}
+        cancelLabel={t("confirm.cancel")}
         variant="danger"
-        typeToConfirm="ОТВЯЗАТЬ"
+        typeToConfirm={t("confirm.unlinkPhrase")}
       />
     </div>
   );

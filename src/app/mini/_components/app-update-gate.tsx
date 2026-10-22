@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
 import { ArrowUpRight, Smartphone } from "lucide-react";
 
 import type { MobileAppPlatform } from "@/lib/mobile-app";
@@ -12,7 +14,7 @@ import type { MobileAppPlatform } from "@/lib/mobile-app";
  * же окне, без `target="_blank"`: переход на чужой домен приложение
  * (Capacitor) отдаёт системе, и открывается Google Play / App Store.
  */
-export function AppUpdateGate({
+export async function AppUpdateGate({
   platform,
   version,
   storeUrl,
@@ -22,6 +24,8 @@ export function AppUpdateGate({
   version: string;
   storeUrl: string;
 }) {
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "miniAppUpdates.gate" });
   const storeName = platform === "ios" ? "App Store" : "Google Play";
   return (
     <div
@@ -37,25 +41,25 @@ export function AppUpdateGate({
           <Smartphone className="size-7" aria-hidden />
         </div>
         <h1 className="mt-5 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-          Обновите приложение
+          {t("title")}
         </h1>
         <p className="mt-2 text-[15px] leading-[1.55] text-[#3c4053]">
-          Эта версия устарела. Обновите WeSetup в {storeName} — это займёт минуту.
+          {t("description", { store: storeName })}
         </p>
         <ol className="mt-5 space-y-2 rounded-2xl bg-[#fafbff] p-4 text-left text-[14px] leading-[1.5] text-[#3c4053]">
-          <li>1. Нажмите кнопку ниже — откроется {storeName}.</li>
-          <li>2. Нажмите «Обновить».</li>
-          <li>3. Откройте WeSetup снова — все данные на месте.</li>
+          <li>{t("step1", { store: storeName })}</li>
+          <li>{t("step2")}</li>
+          <li>{t("step3")}</li>
         </ol>
         <a
           href={storeUrl}
           rel="noopener noreferrer"
           className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
-          Обновить в {storeName}
+          {t("update", { store: storeName })}
           <ArrowUpRight className="size-4" aria-hidden />
         </a>
-        <p className="mt-4 text-[12px] text-[#9b9fb3]">У вас версия {version}</p>
+        <p className="mt-4 text-[12px] text-[#9b9fb3]">{t("version", { version })}</p>
       </div>
     </div>
   );

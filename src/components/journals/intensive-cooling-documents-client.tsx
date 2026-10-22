@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -39,6 +41,7 @@ import {
 } from "@/lib/intensive-cooling-document";
 
 import { toast } from "sonner";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
@@ -200,6 +203,8 @@ function DeleteDialog(props: {
   title: string;
   onConfirm: () => Promise<void>;
 }) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleDelete() {
@@ -218,10 +223,11 @@ function DeleteDialog(props: {
         <DialogHeader className="border-b px-8 py-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <DialogTitle className="text-[22px] font-medium text-black">
-              Удаление документа &quot;{props.title}&quot;
+              {t("documentLifecycle.namedDeleteTitle", { title: props.title })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={common("close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -236,7 +242,7 @@ function DeleteDialog(props: {
             disabled={submitting}
             className="h-9 rounded-xl bg-[#5563ff] px-10 text-[13.5px] text-white hover:bg-[#4452ee]"
           >
-            {submitting ? "Удаление..." : "Удалить"}
+            {submitting ? t("documentLifecycle.deleting") : common("delete")}
           </Button>
         </div>
       </DialogContent>
@@ -251,6 +257,9 @@ export function IntensiveCoolingDocumentsClient({
   users,
   dishSuggestions,
 }: Props) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -318,7 +327,7 @@ export function IntensiveCoolingDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(lifecycleFeedback.current.translate("documentActions.deleteError"));
       return;
     }
 
@@ -398,7 +407,7 @@ export function IntensiveCoolingDocumentsClient({
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: common("delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             onSelect: () => setDeleteTarget(document),
                             tone: "danger" as const,

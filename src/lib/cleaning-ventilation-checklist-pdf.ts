@@ -1,3 +1,5 @@
+import { sanitationPdfCopy, sanitationTitle, sanitationRole, sanitationUnboundResponsible, sanitationDescriptions, sanitationFrequencies, sanitationProcedure } from "@/lib/sanitation-pest-pdf-presentation";
+import type { Locale } from "@/i18n/locales";
 import type { jsPDF } from "jspdf";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 import {
@@ -10,8 +12,6 @@ import { journalAutoTable as autoTable } from "@/lib/pdf-journal-table";
 import { getRowEmployeeTitle } from "@/lib/user-roles";
 import {
   buildChecklistDateKeys,
-  getCleaningVentilationDescriptionLines,
-  getCleaningVentilationPeriodicityLines,
   normalizeCleaningVentilationConfig,
   normalizeCleaningVentilationEntryData,
   type CleaningVentilationChecklistConfig,
@@ -33,6 +33,7 @@ type EntryItem = {
 export function drawCleaningVentilationChecklistPdf(
   doc: jsPDF,
   params: {
+    locale?: Locale;
     organizationName: string;
     title: string;
     dateFrom: Date;
@@ -54,6 +55,8 @@ export function drawCleaningVentilationChecklistPdf(
     continuationGap: number;
   }
 ) {
+  const locale = params.locale ?? "ru";
+  const t = sanitationPdfCopy(locale);
   const config = normalizeCleaningVentilationConfig(params.config, params.users);
   const dateFromIso = params.dateFrom.toISOString().slice(0, 10);
   const existingDates = params.entries.map((entry) => entry.date.toISOString().slice(0, 10));
@@ -100,7 +103,7 @@ export function drawCleaningVentilationChecklistPdf(
   doc.setFontSize(13);
   // Верх заголовка — на верхнем поле листа, шапка — сразу под ним.
   const titleY = journalSheetTopBaseline(doc);
-  doc.text(params.title, margin, titleY);
+  doc.text(sanitationTitle(params.title, "ventilationTitle", locale), margin, titleY);
   const headerTop = titleY + journalDescentMm(doc) + JOURNAL_TITLE_HEADER_GAP_MM;
   doc.setFont(fontName, "normal");
 
@@ -110,10 +113,7 @@ export function drawCleaningVentilationChecklistPdf(
   const continuationHeaderTop = JOURNAL_SHEET_MARGIN_MM;
   const continuationHeaderHeight = params.continuationHeaderHeight(doc, { marginX: margin });
 
-  const descriptionText = getCleaningVentilationDescriptionLines()
-    .filter((item) => item.label !== "Рабочие помещения при проветривании" || config.ventilationEnabled)
-    .map((item) => `${item.label}: ${item.text}`)
-    .join("\n\n");
+  const descriptionText = sanitationDescriptions(config.ventilationEnabled, locale);
 
   // «Должность - ФИО»: должность самого человека из справочника — как на
   // экране (он тоже выводит её от человека). Сохранённая в документе копия —
@@ -123,8 +123,9 @@ export function drawCleaningVentilationChecklistPdf(
     config.responsibles
       .map((item) => {
         const user = params.users.find((candidate) => candidate.id === item.userId);
-        const title = getRowEmployeeTitle(user, item.title);
-        return `${title} - ${user?.name || "Не выбран"}`;
+        const originalTitle = getRowEmployeeTitle(user, item.title);
+        const title = user ? sanitationRole(originalTitle, user, locale) : sanitationUnboundResponsible(originalTitle, item, params.config, locale);
+        return `${title} - ${user?.name || t("notSelected")}`;
       })
       .filter(Boolean)
       .join("\n") || "—";
@@ -145,20 +146,20 @@ export function drawCleaningVentilationChecklistPdf(
       [
         // Как на экране: «Процедура» и её описание объединены по
         // вертикали на обе строки — раньше во второй строке зияли две пустые ячейки.
-        { content: "Процедура", rowSpan: 2, styles: { fontStyle: "bold" } },
+        { content: t("procedure"), rowSpan: 2, styles: { fontStyle: "bold" } },
         { content: descriptionText, rowSpan: 2 },
-        { content: "Периодичность", styles: { fontStyle: "bold" } },
+        { content: t("periodicity"), styles: { fontStyle: "bold" } },
         {
           // Добавленные вручную строки периодичности есть на экране —
           // печать без них расходилась с бланком.
           content: [
-            ...getCleaningVentilationPeriodicityLines(config.ventilationEnabled),
+            ...sanitationFrequencies(config.ventilationEnabled, locale),
             ...(config.extraPeriodicityLines ?? []),
           ].join("\n"),
         },
       ],
       [
-        { content: "Ответственные лица", styles: { fontStyle: "bold" } },
+        { content: t("responsibles"), styles: { fontStyle: "bold" } },
         { content: responsiblesText },
       ],
     ],
@@ -186,7 +187,7 @@ export function drawCleaningVentilationChecklistPdf(
       groupDateByRowIndex[rowBody.length] = dateKey.split("-").reverse().join("-");
       rowBody.push([
         index === 0 ? dateKey.split("-").reverse().join("-") : "",
-        procedure.label,
+        sanitationProcedure(procedure, params.config, locale),
         times[0] || "",
         times[1] || "",
         times[2] || "",
@@ -208,12 +209,12 @@ export function drawCleaningVentilationChecklistPdf(
     theme: "grid",
     styles: { font: fontName, fontSize: 9, lineColor: [0, 0, 0], lineWidth: 0.2, cellPadding: 1.8 },
     head: [[
-      "Дата",
-      "Процедура",
-      "Время 1",
-      "Время 2",
-      "Время 3",
-      "ФИО ответственного лица",
+      t("date"),
+      t("procedure"),
+      t("time1"),
+      t("time2"),
+      t("time3"),
+      t("responsibleName"),
     ]],
     body: rowBody,
     // Группа строк одной даты не должна оставаться без даты: если разрыв

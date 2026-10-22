@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { ChevronRight, LayoutGrid, Search } from "lucide-react";
 import { NavIcon } from "@/components/layout/nav-icons";
@@ -32,6 +33,7 @@ export function MiniSectionsClient({
   groups: MiniSectionGroupView[];
   authed: boolean;
 }) {
+  const t = useTranslations("miniSections");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -59,17 +61,16 @@ export function MiniSectionsClient({
             <LayoutGrid className="size-6" />
           </div>
           <h1 className="mini-h1 mt-4" style={{ fontSize: 21 }}>
-            Сначала войдите
+            {t("login.title")}
           </h1>
           <p
             className="mt-2 text-[16px] leading-relaxed"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            Разделы зависят от ваших прав, поэтому список появится после
-            входа. Откройте экран входа — в Telegram он сработает сам.
+            {t("login.description")}
           </p>
           <Link href="/mini" className="mini-btn-primary mini-press mt-5 w-full">
-            Войти
+            {t("login.action")}
           </Link>
         </section>
       </div>
@@ -79,14 +80,13 @@ export function MiniSectionsClient({
   return (
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <header className="mini-card px-5 py-5">
-        <p className="mini-eyebrow">Кабинет</p>
-        <h1 className="mini-h1 mt-1">Все разделы</h1>
+        <p className="mini-eyebrow">{t("home.eyebrow")}</p>
+        <h1 className="mini-h1 mt-1">{t("home.title")}</h1>
         <p
           className="mt-2 text-[15px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Те же страницы, что и на сайте, — здесь они открываются прямо в
-          приложении. Показаны только разделы, доступные вам.
+          {t("home.description")}
         </p>
       </header>
 
@@ -100,8 +100,8 @@ export function MiniSectionsClient({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Поиск раздела"
-            aria-label="Поиск раздела"
+            placeholder={t("search.label")}
+            aria-label={t("search.label")}
             // Поле QR-страниц: 56px, шрифт 17px (меньше 16px iOS зумит).
             className="mini-input"
             style={{ paddingLeft: 46 }}
@@ -114,8 +114,7 @@ export function MiniSectionsClient({
           className="px-1 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Ничего не нашлось. Попробуйте другое слово — например «журнал»,
-          «отчёт» или «сотрудник».
+          {t("emptySearch")}
         </p>
       ) : null}
 

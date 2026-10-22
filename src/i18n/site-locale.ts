@@ -21,7 +21,7 @@ export function resolveRequestLocale(
 }
 
 // Explicit aliases only. Broader public content is still being migrated.
-export const TRANSLATED_PUBLIC_ROUTES = ["/", "/login", "/register", "/features", "/journals-info"] as const;
+export const TRANSLATED_PUBLIC_ROUTES = ["/", "/login", "/register", "/features", "/journals-info", "/delete-account", "/partners", "/privacy"] as const;
 const PUBLIC_ROUTES_BY_LOCALE: Record<SiteLocale, readonly string[]> = {
   ru: TRANSLATED_PUBLIC_ROUTES,
   en: TRANSLATED_PUBLIC_ROUTES,

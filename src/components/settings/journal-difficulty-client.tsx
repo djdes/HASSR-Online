@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RotateCcw, Save, Search, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { useLocale, useMessages, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import type { Messages } from "@/i18n/messages";
+import { useJournalDifficultyFeedback } from "./journal-difficulty-feedback";
+import { difficultyCopyKeys, journalDifficultyDisplayName, journalDifficultyFrequencyCount, journalDifficultyFrequencyKey, journalDifficultySaveError } from "@/lib/settings-journal-difficulty-presentation";
 import {
   DEFAULT_DIFFICULTY,
-  DIFFICULTY_DESCRIPTIONS,
-  DIFFICULTY_LABELS,
   FREQUENCY_PER_MONTH,
   LINES_PER_ENTRY,
   type Difficulty,
@@ -34,18 +36,30 @@ const LEVEL_TONE: Record<Difficulty, string> = {
   5: "bg-rose-50 text-rose-700 ring-rose-200",
 };
 
-function frequencyLabel(perMonth: number): string {
-  if (perMonth >= 28) return "ежедневно";
-  if (perMonth >= 18) return "по будням";
-  if (perMonth >= 6) return `${Math.round(perMonth)} раз/мес`;
-  if (perMonth >= 3) return "еженедельно";
-  if (perMonth >= 0.9) return "ежемесячно";
-  if (perMonth >= 0.3) return "ежеквартально";
-  return "редко";
-}
 
 export function JournalDifficultyClient({ journals, initialDifficulty }: Props) {
   const router = useRouter();
+  const locale = useLocale() as Locale;
+  const messages = useMessages() as Messages;
+  const t = useTranslations("settingsJournalDifficulty");
+  const feedback = useJournalDifficultyFeedback();
+
+  function frequencyLabel(perMonth: number): string {
+    const key = journalDifficultyFrequencyKey(perMonth);
+    return key === "frequency.timesPerMonth"
+      ? t(key, { count: journalDifficultyFrequencyCount(locale, perMonth) })
+      : t(key);
+  }
+
+  function levelLabel(level: Difficulty) {
+    const copy = difficultyCopyKeys(level);
+    return copy ? t(copy.label) : undefined;
+  }
+
+  function levelDescription(level: Difficulty) {
+    const copy = difficultyCopyKeys(level);
+    return copy ? t(copy.description) : undefined;
+  }
   const [base, setBase] = useState<Record<string, number>>(
     () => ({ ...initialDifficulty }),
   );
@@ -113,16 +127,16 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось сохранить");
+        feedback.error(journalDifficultySaveError(data, res.status));
         return;
       }
       const saved = (data?.difficulty as Record<string, number>) ?? {};
       setBase({ ...saved });
       setCurr({ ...saved });
-      toast.success(`Сохранено: ${Object.keys(saved).length} переопределений`);
+      feedback.saved(String(Object.keys(saved).length));
       router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+    } catch {
+      feedback.error("errors.network");
     } finally {
       setSaving(false);
     }
@@ -133,9 +147,10 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
     if (!q) return journals;
     return journals.filter(
       (j) =>
-        j.name.toLowerCase().includes(q) || j.code.toLowerCase().includes(q),
+        j.name.toLowerCase().includes(q) || j.code.toLowerCase().includes(q) ||
+        journalDifficultyDisplayName(locale, messages.journals.names, j).toLowerCase().includes(q),
     );
-  }, [journals, query]);
+  }, [journals, query, locale, messages.journals.names]);
 
   return (
     <div className="space-y-5">
@@ -146,7 +161,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск журнала…"
+            placeholder={t("searchPlaceholder")}
             className="h-11 w-[280px] rounded-2xl border border-[#dcdfed] bg-[#fafbff] pl-9 pr-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
@@ -156,16 +171,16 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
           onClick={requestResetAll}
           disabled={saving}
           className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
-          title="Удалить все переопределения и вернуться к дефолтам"
+          title={t("resetHint")}
         >
           <RotateCcw className="size-4 text-[#5566f6]" />
-          Сбросить к значениям по умолчанию
+          {t("resetAll")}
         </button>
 
         {dirty.size > 0 ? (
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <span className="text-[12px] text-[#a13a32]">
-              Несохранённых: {dirty.size}
+              {t("unsaved", { count: String(dirty.size) })}
             </span>
             <button
               type="button"
@@ -173,7 +188,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
               disabled={saving}
               className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#3c4053] hover:bg-[#fafbff] disabled:opacity-60"
             >
-              Отменить
+              {t("discard")}
             </button>
             <button
               type="button"
@@ -186,7 +201,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
               ) : (
                 <Save className="size-3.5" />
               )}
-              Сохранить
+              {t("save")}
             </button>
           </div>
         ) : null}
@@ -210,25 +225,25 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
                   : "border-[#ececf4]"
               }`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
+              <div className="flex flex-col flex-wrap items-start justify-between gap-3 sm:flex-row">
+                <div className="w-full min-w-0 flex-1 sm:w-auto">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="text-[15px] font-semibold leading-tight text-[#0b1024]">
-                      {j.name}
+                      {journalDifficultyDisplayName(locale, messages.journals.names, j)}
                     </div>
                     {isOverridden ? (
                       <span className="rounded-full bg-[#eef1ff] px-2 py-0.5 text-[10px] font-medium text-[#3848c7]">
-                        переопределено
+                        {t("overridden")}
                       </span>
                     ) : null}
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] text-[#6f7282]">
                     <span>{frequencyLabel(freq)}</span>
                     <span className="text-[#dcdfed]">·</span>
-                    <span>~{lines} стр./раз</span>
+                    <span>{t("linesPerEntry", { count: String(lines) })}</span>
                     <span className="text-[#dcdfed]">·</span>
-                    <span title="Эмпирическая нагрузка в месяц = сложность × частота × строк">
-                      Нагрузка ≈ <strong>{Math.round(monthlyWeight)}</strong>
+                    <span title={t("weightHint")}>
+                      {t.rich("weight", { value: String(Math.round(monthlyWeight)), weight: (chunks) => <strong>{chunks}</strong> })}
                     </span>
                   </div>
                 </div>
@@ -241,7 +256,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
                         key={lvl}
                         type="button"
                         onClick={() => setLevel(j.code, lvl)}
-                        title={`${DIFFICULTY_LABELS[lvl]} — ${DIFFICULTY_DESCRIPTIONS[lvl]}`}
+                        title={t("levelTooltip", { label: String(levelLabel(lvl)), description: String(levelDescription(lvl)) })}
                         className={`flex size-9 items-center justify-center rounded-xl text-[13px] font-semibold ring-1 transition-all ${
                           active
                             ? `${LEVEL_TONE[lvl]} scale-105 shadow-[0_4px_12px_-4px_rgba(11,16,36,0.15)]`
@@ -256,18 +271,20 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
               </div>
 
               <div className="mt-2 text-[11px] text-[#9b9fb3]">
-                <span className="text-[#3c4053]">{DIFFICULTY_LABELS[level]}</span>
-                {" — "}
-                {DIFFICULTY_DESCRIPTIONS[level]}
-                {" · по умолчанию: "}
-                <span className="text-[#3c4053]">{def}</span>
+                {t.rich("levelSummary", {
+                  labelText: levelLabel(level) ?? "",
+                  description: levelDescription(level) ?? "",
+                  default: typeof def === "number" ? String(def) : "",
+                  label: (chunks) => <span className="text-[#3c4053]">{chunks}</span>,
+                  defaultValue: (chunks) => <span className="text-[#3c4053]">{chunks}</span>,
+                })}
               </div>
             </div>
           );
         })}
         {filtered.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[14px] text-[#6f7282]">
-            Не найдено журналов под «{query}».
+            {t("empty", { query })}
           </div>
         ) : null}
       </div>
@@ -276,7 +293,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
         <div className="sticky bottom-3 z-20 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#0b1024] px-4 py-2 text-[12px] text-white shadow-lg">
             <Sparkles className="size-3.5 text-[#7a5cff]" />
-            Не забудь сохранить — {dirty.size} измен.
+            {t("stickyUnsaved", { count: String(dirty.size) })}
             <button
               type="button"
               onClick={save}
@@ -288,7 +305,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
               ) : (
                 <Save className="size-3" />
               )}
-              Сохранить
+              {t("save")}
             </button>
           </div>
         </div>
@@ -301,17 +318,17 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
           resetAll();
           setResetOpen(false);
         }}
-        title="Сбросить сложность всех журналов?"
-        description="Все ваши переопределения будут удалены, журналы вернутся к дефолтам по семантике (1 — отметка, 5 — аналитический документ)."
+        title={t("reset.title")}
+        description={t("reset.description")}
         bullets={[
           {
             label:
-              "Сами заполненные журналы и записи не трогаются — это только настройки расчёта нагрузки.",
+              t("reset.bullet"),
             tone: "info",
           },
         ]}
-        confirmLabel="Сбросить"
-        cancelLabel="Не сбрасывать"
+        confirmLabel={t("reset.confirm")}
+        cancelLabel={t("reset.cancel")}
         variant="warn"
         icon={RotateCcw}
       />

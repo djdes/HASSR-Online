@@ -8,6 +8,7 @@ import {
 import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
+import { normalizeBlankDownloadLocale, type BlankDownloadErrorCode, type BlankDownloadLocale } from "@/lib/blank-download-presentation";
 
 /**
  * Что можно скачать через POST /api/public/blank-download и в каких
@@ -44,6 +45,9 @@ const bodySchema = z.object({
   consentVersion: z.string().max(32).optional(),
   /// Необязательная галка «Присылать полезные материалы и новости».
   marketing: z.boolean().optional(),
+  // Locale is a presentation hint. Ignore malformed/unknown values and keep
+  // the historical Russian default instead of rejecting an otherwise valid request.
+  locale: z.unknown().optional(),
 });
 
 export type BlankDownloadRequest = {
@@ -52,11 +56,12 @@ export type BlankDownloadRequest = {
   format: BlankFormat;
   /** Отмечена галка согласия на письма — записать отдельное согласие. */
   marketing: boolean;
+  locale: BlankDownloadLocale;
 };
 
 export type BlankDownloadParse =
   | { ok: true; value: BlankDownloadRequest }
-  | { ok: false; status: 400 | 404 | 409; error: string; needConsent?: true };
+  | { ok: false; status: 400 | 404 | 409; error: string; errorCode: BlankDownloadErrorCode; needConsent?: true };
 
 /**
  * Разбор тела запроса. Чистая функция — без БД и сети: почта, цель,
@@ -70,26 +75,27 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       ok: false,
       status: 400,
       error: "Отметьте согласие на обработку персональных данных",
+      errorCode: "consent_required",
       needConsent: true,
     };
   }
   const parsed = bodySchema.safeParse(raw);
-  if (!parsed.success) return { ok: false, status: 400, error: "Некорректный запрос" };
+  if (!parsed.success) return { ok: false, status: 400, error: "Некорректный запрос", errorCode: "invalid_request" };
   const data = parsed.data;
 
   const email = normalizeBlankEmail(data.email);
-  if (!email) return { ok: false, status: 400, error: "Укажите корректный адрес электронной почты" };
+  if (!email) return { ok: false, status: 400, error: "Укажите корректный адрес электронной почты", errorCode: "invalid_email" };
 
   if (Boolean(data.code) === Boolean(data.paperId)) {
-    return { ok: false, status: 400, error: "Не указан шаблон" };
+    return { ok: false, status: 400, error: "Не указан шаблон", errorCode: "target_required" };
   }
   const target: BlankTarget = data.code
     ? { kind: "code", code: data.code }
     : { kind: "paper", paperId: data.paperId as string };
   const info = describeBlankTarget(target);
-  if (!info) return { ok: false, status: 404, error: "Такого шаблона нет" };
+  if (!info) return { ok: false, status: 404, error: "Такого шаблона нет", errorCode: "target_not_found" };
   if (!info.formats.includes(data.format)) {
-    return { ok: false, status: 400, error: "Этот шаблон есть только в PDF" };
+    return { ok: false, status: 400, error: "Этот шаблон есть только в PDF", errorCode: "format_unsupported" };
   }
 
   if (data.remembered && data.consentVersion !== legalVersion) {
@@ -97,8 +103,18 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       ok: false,
       status: 409,
       error: "Документы обновились — подтвердите согласие ещё раз",
+      errorCode: "consent_version",
       needConsent: true,
     };
   }
-  return { ok: true, value: { email, info, format: data.format, marketing: data.marketing === true } };
+  return {
+    ok: true,
+    value: {
+      email,
+      info,
+      format: data.format,
+      marketing: data.marketing === true,
+      locale: normalizeBlankDownloadLocale(data.locale),
+    },
+  };
 }

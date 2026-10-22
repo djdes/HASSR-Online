@@ -2,35 +2,51 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 
 import { signOutOnThisDevice } from "@/app/mini/_lib/signed-out-mark";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { accountDeletionErrorKey, type AccountDeletionErrorKey } from "@/lib/account-deletion-localization";
 
-/**
- * Удаление аккаунта — одна логика для профиля мини-приложения
- * (`mini/me/me-client.tsx`) и публичной страницы `/delete-account`
- * (её требует Google Play). Кнопку рисует вызывающий (`renderTrigger`),
- * здесь — оба диалога, запрос и то, что происходит после ответа:
- *   • 200 — выход на этом устройстве и экран входа;
- *   • 409 — владелец компании: диалог «Сначала удалите компанию» с
- *     переходом к удалению компании;
- *   • иначе — текст ошибки под кнопкой.
- */
+const SUPPORT_EMAIL = "support@wesetup.ru";
+
 export function DeleteAccountFlow({
   renderTrigger,
 }: {
   renderTrigger: (open: () => void, busy: boolean) => ReactNode;
 }) {
+  const t = useTranslations("accountDeletion");
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [ownerRedirect, setOwnerRedirect] = useState<{ href: string; text: string } | null>(null);
+  const [confirmationWord, setConfirmationWord] = useState("");
+  const [ownerRedirect, setOwnerRedirect] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<AccountDeletionErrorKey | "network" | null>(null);
+
+  const errorMessage = (key: AccountDeletionErrorKey | "network"): ReactNode => {
+    switch (key) {
+      case "network": return t("errors.network");
+      case "sessionRequired": return t("errors.sessionRequired");
+      case "confirmationRequired": return t("errors.confirmationRequired");
+      case "sharedDevice": return t("errors.sharedDevice");
+      case "partnerContext": return t("errors.partnerContext");
+      case "accountNotFound": return t("errors.accountNotFound");
+      case "platformAdmin": return t("errors.platformAdmin");
+      case "demoOrganization": return t("errors.demoOrganization");
+      case "lastManager":
+        return t.rich("errors.lastManager", {
+          email: SUPPORT_EMAIL,
+          supportAddress: chunks => <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold underline">{chunks}</a>,
+        });
+      case "ownerMustDeleteOrganization": return t("errors.ownerMustDeleteOrganization");
+      case "unknown": return t("errors.unknown");
+    }
+  };
 
   async function handleDelete() {
-    setError(null);
+    setErrorKey(null);
     setBusy(true);
-    type Reply = { ok?: boolean; error?: string; redirect?: string } | null;
+    type Reply = { ok?: boolean; error?: string; errorCode?: string; redirect?: string } | null;
     let data: Reply;
     let status: number;
     try {
@@ -44,14 +60,12 @@ export function DeleteAccountFlow({
     } catch {
       setBusy(false);
       setConfirmOpen(false);
-      setError("Не удалось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.");
+      setErrorKey("network");
       return;
     }
     setConfirmOpen(false);
 
     if (status === 200 && data?.ok) {
-      // Сессии на сервере уже отозваны — снимаем куки и здесь, чтобы
-      // экран входа открылся сразу, а не после ошибки на следующем клике.
       await signOutOnThisDevice({
         fetch: (input, init) => fetch(input, init),
         signOut: () => signOut({ redirect: false }),
@@ -61,24 +75,24 @@ export function DeleteAccountFlow({
     }
     setBusy(false);
     if (status === 409 && data?.redirect) {
-      setOwnerRedirect({
-        href: data.redirect,
-        text: data.error ?? "Вы владелец компании: удалите компанию — аккаунт удалится вместе с ней",
-      });
+      setOwnerRedirect(data.redirect);
       return;
     }
-    setError(data?.error ?? "Не удалось удалить аккаунт. Попробуйте ещё раз.");
+    setErrorKey(accountDeletionErrorKey(data?.errorCode));
   }
+
+  const openConfirm = () => {
+    setErrorKey(null);
+    setConfirmationWord(t("flow.confirmationWord"));
+    setConfirmOpen(true);
+  };
 
   return (
     <>
-      {renderTrigger(() => {
-        setError(null);
-        setConfirmOpen(true);
-      }, busy)}
-      {error ? (
+      {renderTrigger(openConfirm, busy)}
+      {errorKey ? (
         <div className="mini-err" role="alert" data-testid="delete-account-error">
-          {error}
+          {errorMessage(errorKey)}
         </div>
       ) : null}
 
@@ -86,46 +100,45 @@ export function DeleteAccountFlow({
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
-        title="Удалить аккаунт навсегда?"
-        description="Вернуть аккаунт будет нельзя. Чтобы снова работать в WeSetup, руководитель должен будет пригласить вас заново."
+        title={t("flow.confirmTitle")}
+        description={t.rich("flow.confirmDescription", {
+          confirmationWord,
+          word: chunks => <strong>{chunks}</strong>,
+        })}
         bullets={[
-          { label: "Вы не сможете войти в WeSetup", tone: "warn" },
-          { label: "Телефон, почта, Telegram и вход будут удалены", tone: "warn" },
-          {
-            label:
-              "Записи журналов, которые вы заполняли, останутся у компании вместе с вашим именем — это требование СанПиН и ХАССП",
-            tone: "info",
-          },
+          { label: t("flow.confirmAccess"), tone: "warn" },
+          { label: t("flow.confirmData"), tone: "warn" },
+          { label: t("flow.confirmRecords"), tone: "info" },
         ]}
-        confirmLabel="Удалить аккаунт"
-        cancelLabel="Отмена"
+        confirmLabel={t("flow.confirmAction")}
+        cancelLabel={t("flow.cancel")}
         variant="danger"
-        typeToConfirm="УДАЛИТЬ"
+        typeToConfirm={confirmationWord}
       />
 
       <ConfirmDialog
         open={ownerRedirect !== null}
         onClose={() => setOwnerRedirect(null)}
         onConfirm={() => {
-          if (ownerRedirect) window.location.assign(ownerRedirect.href);
+          if (ownerRedirect) window.location.assign(ownerRedirect);
         }}
-        title="Сначала удалите компанию"
-        description={ownerRedirect?.text}
+        title={t("flow.ownerTitle")}
+        description={t("flow.ownerDescription")}
         bullets={[
-          { label: "Компания удаляется через 30 дней — до этого удаление можно отменить", tone: "info" },
-          { label: "Вместе с компанией удалятся журналы, сотрудники и ваш аккаунт", tone: "warn" },
-          { label: "Перед удалением скачайте архив журналов в «Настройки → Бэкап»", tone: "default" },
+          { label: t("flow.ownerDelay"), tone: "info" },
+          { label: t("flow.ownerCascade"), tone: "warn" },
+          { label: t("flow.ownerBackup"), tone: "default" },
         ]}
-        confirmLabel="Перейти к удалению компании"
-        cancelLabel="Не сейчас"
+        confirmLabel={t("flow.ownerAction")}
+        cancelLabel={t("flow.ownerCancel")}
         variant="warn"
       />
     </>
   );
 }
 
-/** Большая красная кнопка страницы `/delete-account`. */
 export function DeleteAccountButton() {
+  const t = useTranslations("accountDeletion");
   return (
     <DeleteAccountFlow
       renderTrigger={(open, busy) => (
@@ -135,19 +148,16 @@ export function DeleteAccountButton() {
           disabled={busy}
           className="mini-btn-danger mini-press w-full disabled:opacity-50"
           data-testid="delete-account-button"
+          aria-label={t("flow.button")}
         >
-          <Trash2 className="size-5" />
-          {busy ? "Удаляем…" : "Удалить аккаунт"}
+          <Trash2 className="size-5" aria-hidden />
+          {busy ? t("flow.buttonBusy") : t("flow.button")}
         </button>
       )}
     />
   );
 }
 
-/**
- * Корень страницы `/delete-account` в палитре мини-приложения. Тема —
- * из профиля, если человек вошёл; иначе — тема телефона.
- */
 export function DeleteAccountThemeRoot({
   theme,
   children,
@@ -166,9 +176,5 @@ export function DeleteAccountThemeRoot({
     return () => media.removeEventListener?.("change", apply);
   }, [theme]);
 
-  return (
-    <div className="mini-root min-h-dvh" data-theme={resolved}>
-      {children}
-    </div>
-  );
+  return <div className="mini-root min-h-dvh" data-theme={resolved}>{children}</div>;
 }

@@ -10,7 +10,9 @@ import {
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { scanDisplayText, scanResponsibleLabel, type ScanDisplayKey, type ScanTranslate } from "@/lib/scan-journal-presentation";
 import { BookOpenText, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +42,9 @@ type JournalDocumentRow = {
   dateValue: string;
   responsibleLabel?: string | null;
   responsibleValue?: string | null;
+  titleDisplayKey?: ScanDisplayKey;
+  dateLabelDisplayKey?: ScanDisplayKey;
+  responsibleLabelDisplayKey?: ScanDisplayKey;
 };
 
 type Props = {
@@ -49,6 +54,7 @@ type Props = {
   documents: JournalDocumentRow[];
   defaultResponsibleTitle?: string | null;
   defaultResponsibleUserId?: string | null;
+  templateDisplayKey?: ScanDisplayKey;
 };
 
 export function ScanJournalDocumentsClient({
@@ -58,7 +64,12 @@ export function ScanJournalDocumentsClient({
   documents,
   defaultResponsibleTitle,
   defaultResponsibleUserId,
+  templateDisplayKey,
 }: Props) {
+  const t = useTranslations() as unknown as ScanTranslate;
+  const committed = useRef(t);
+  useLayoutEffect(() => { committed.current = t; }, [t]);
+  const say = useCallback<ScanTranslate>((key, values) => committed.current(key, values), []);
   const router = useRouter();
   // Создание и удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
@@ -84,7 +95,7 @@ export function ScanJournalDocumentsClient({
       });
 
       if (!response.ok) {
-        throw new Error("Не удалось создать документ");
+        throw new Error(say("journalControls.documentDialog.createError"));
       }
 
       const data = await response.json();
@@ -96,14 +107,14 @@ export function ScanJournalDocumentsClient({
   }
 
   async function handleDelete(document: JournalDocumentRow) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${document.title}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: say("journalControls.documentActions.deleteTitle"), description: say("journalControls.documentLifecycle.deleteDescriptionWithTitle", { title: document.title }), variant: "danger", confirmLabel: say("common.delete") }))) return;
 
     const response = await fetch(`/api/journal-documents/${document.id}`, {
       method: "DELETE",
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(say("journalControls.documentActions.deleteError"));
       return;
     }
 
@@ -114,17 +125,17 @@ export function ScanJournalDocumentsClient({
     <div className="space-y-10">
       <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
         <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-          <JournalHeadingName fallback={templateName} />
+          <JournalHeadingName fallback={scanDisplayText(templateName, templateDisplayKey, t)} />
         </h1>
         <JournalListActions
           templateCode={templateCode}
-          journalName={templateName}
+          journalName={scanDisplayText(templateName, templateDisplayKey, t)}
           canManage={canManageDocuments}
           create={
             canManageDocuments && activeTab === "active" ? (
               <Button onClick={handleCreate} disabled={isCreating} className={JOURNAL_ACTION_CREATE_CLASS}>
                 <Plus className="size-4" />
-                {isCreating ? "Создание..." : "Создать документ"}
+                {isCreating ? t("journalScan.list.creating") : t("journalControls.list.create")}
               </Button>
             ) : null
           }
@@ -145,13 +156,13 @@ export function ScanJournalDocumentsClient({
                 className={JOURNAL_LIST_CARD_CLASS}
               >
                 <Link href={href} className={JOURNAL_CARD_TITLE_CLASS}>
-                  {document.title}
-              <SharedDocumentBadge shared={document.shared} />
+                  {scanDisplayText(document.title, document.titleDisplayKey, t)}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: t("journalScan.shared.label"), title: t("journalScan.shared.title") }} />
                 </Link>
                 {document.responsibleValue ? (
                   <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
                     <div className={JOURNAL_CARD_LABEL_CLASS}>
-                      {document.responsibleLabel || "Ответственный"}
+                      {scanResponsibleLabel(document.responsibleLabel, document.responsibleLabelDisplayKey, t)}
                     </div>
                     <div className={JOURNAL_CARD_VALUE_CLASS}>
                       {document.responsibleValue}
@@ -161,7 +172,7 @@ export function ScanJournalDocumentsClient({
                   <div className="hidden md:block md:border-l md:border-[#e6e6f0]" />
                 )}
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>{document.dateLabel}</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{scanDisplayText(document.dateLabel, document.dateLabelDisplayKey, t)}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>{document.dateValue}</div>
                 </Link>
                 <div className="flex justify-center">
@@ -169,6 +180,7 @@ export function ScanJournalDocumentsClient({
                     <button
                       type="button"
                       onClick={() => handleDelete(document)}
+                      aria-label={t("common.delete")}
                       className="flex size-8 items-center justify-center rounded-full text-[#ff3b30] hover:bg-[#fff0ef]"
                     >
                       <Trash2 className="size-6" />

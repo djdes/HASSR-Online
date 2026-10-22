@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -50,6 +52,7 @@ import {
 } from "@/lib/glass-control-document";
 
 import { toast } from "sonner";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
 import { NO_ROW_EMPLOYEE_MESSAGE, useRosterViewerId } from "@/components/journals/use-roster-viewer";
@@ -693,6 +696,9 @@ function RowDialog(props: {
 }
 
 export function GlassControlDocumentClient(props: Props) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const config = useMemo(() => normalizeGlassControlConfig(props.config), [props.config]);
   // Строки без автора записываются на ответственного, иначе на вошедшего —
@@ -969,7 +975,7 @@ export function GlassControlDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось закончить журнал");
+      toast.error(lifecycleFeedback.current.translate("documentLifecycle.finishFailed"));
       return;
     }
 
@@ -1004,7 +1010,7 @@ export function GlassControlDocumentClient(props: Props) {
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => setCloseOpen(true),
                 },
@@ -1206,10 +1212,11 @@ export function GlassControlDocumentClient(props: Props) {
         <DialogContent showCloseButton={false} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
             <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-              Закончить журнал &quot;{documentTitle}&quot;
+              {t("documentLifecycle.finishTitle", { title: documentTitle })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={common("close")}
               className="rounded-md p-1 text-black/80 hover:bg-black/5"
               onClick={() => setCloseOpen(false)}
             >
@@ -1222,7 +1229,7 @@ export function GlassControlDocumentClient(props: Props) {
               onClick={() => void closeJournal()}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              Закончить
+              {t("documentLifecycle.finishAction")}
             </Button>
           </div>
         </DialogContent>

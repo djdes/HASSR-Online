@@ -1,7 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { type Locale } from "@/i18n/locales";
+import { formatQueueError, formatQueueWhen } from "../_lib/offline-presentation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Clock, RotateCcw, TriangleAlert, UserCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +35,11 @@ import {
  * отклонит сервер с внятной причиной.
  */
 export default function OutboxPage() {
+  const t = useTranslations("miniOffline");
+  const navigation = useTranslations("navigation.routes");
+  const locale = useLocale() as Locale;
+  const latestText = useRef(t);
+  useEffect(() => { latestText.current = t; }, [t]);
   const { data: session } = useSession();
   const userId = session?.user?.id ?? null;
 
@@ -51,6 +59,8 @@ export default function OutboxPage() {
   }, [userId]);
 
   useEffect(() => {
+    // The initial queue load awaits IndexedDB; keep its existing timing and dependencies.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
@@ -61,9 +71,9 @@ export default function OutboxPage() {
     await load();
     if (result.sent > 0) {
       haptic("success");
-      toast.success("Запись отправлена");
+      toast.success(latestText.current("outbox.retrySent"));
     } else {
-      toast.message("Пока не ушла — попробуем ещё раз автоматически");
+      toast.message(latestText.current("outbox.retryPending"));
     }
   }
 
@@ -85,18 +95,17 @@ export default function OutboxPage() {
         className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
       >
         <ArrowLeft className="size-5" />
-        Главная
+        {navigation("dashboard")}
       </Link>
 
       <div className="px-1">
-        <div className="mini-eyebrow">Отправка</div>
-        <h1 className="mini-h1 mt-1">Что не ушло</h1>
+        <div className="mini-eyebrow">{t("outbox.eyebrow")}</div>
+        <h1 className="mini-h1 mt-1">{t("outbox.title")}</h1>
         <p
           className="mt-1.5 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Записи хранятся на телефоне и уходят сами, как появится связь.
-          Закрывать приложение можно — не потеряются.
+          {t("outbox.description")}
         </p>
       </div>
 
@@ -108,17 +117,17 @@ export default function OutboxPage() {
           role="status"
         >
           <span className="text-[18px] font-semibold" style={{ color: "var(--mini-text)" }}>
-            Всё отправлено
+            {t("outbox.emptyTitle")}
           </span>
           <span className="text-[16px]" style={{ color: "var(--mini-text-muted)" }}>
-            Ни одной записи в очереди.
+            {t("outbox.emptyDescription")}
           </span>
         </div>
       ) : null}
 
       {own.length > 0 ? (
         <section className="flex flex-col gap-2">
-          <div className="mini-eyebrow">Ваши записи · {own.length}</div>
+          <div className="mini-eyebrow">{t("outbox.ownCount", { count: String(own.length) })}</div>
           {own.map((entry) => (
             <EntryRow key={entry.id} entry={entry} onRetry={() => void retry(entry)} />
           ))}
@@ -127,14 +136,12 @@ export default function OutboxPage() {
 
       {orphans.length > 0 ? (
         <section className="flex flex-col gap-2">
-          <div className="mini-eyebrow">Без автора · {orphans.length}</div>
+          <div className="mini-eyebrow">{t("outbox.orphanCount", { count: String(orphans.length) })}</div>
           <p
             className="text-[15px] leading-relaxed"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            Эти записи заполнены до обновления приложения, и кто их делал,
-            телефон не сохранил. Отправить их можно только от своего имени —
-            подтвердите, что они ваши.
+            {t("outbox.orphanDescription")}
           </p>
           {orphans.map((entry) => (
             <EntryRow
@@ -155,18 +162,18 @@ export default function OutboxPage() {
         onClose={() => setClaiming(null)}
         onConfirm={confirmClaim}
         variant="warn"
-        title="Отправить от вашего имени?"
+        title={t("outbox.claimTitle")}
         description={
           claiming
-            ? `«${claiming.journalName}», заполнено ${formatWhen(claiming.createdAt)}.`
+            ? t("outbox.claimDescription", { journal: claiming.journalName, time: formatQueueWhen(claiming.createdAt, locale, t) })
             : undefined
         }
         bullets={[
-          { label: "В журнале появится ваша подпись", tone: "warn" },
-          { label: "Подтверждайте, только если запись делали вы", tone: "warn" },
-          { label: "Переставить подпись потом нельзя" },
+          { label: t("outbox.claimSignature"), tone: "warn" },
+          { label: t("outbox.claimOnlyMine"), tone: "warn" },
+          { label: t("outbox.claimCannotChange") },
         ]}
-        confirmLabel="Это моя запись"
+        confirmLabel={t("outbox.claimConfirm")}
       />
     </div>
   );
@@ -183,6 +190,8 @@ function EntryRow({
   onRetry?: () => void;
   onClaim?: () => void;
 }) {
+  const t = useTranslations("miniOffline");
+  const locale = useLocale() as Locale;
   return (
     <div className="mini-card flex items-center gap-3 p-3.5">
       <span className="min-w-0 flex-1">
@@ -197,11 +206,11 @@ function EntryRow({
           style={{ color: "var(--mini-text-muted)" }}
         >
           <Clock className="size-3.5" />
-          {formatWhen(entry.createdAt)}
+          {formatQueueWhen(entry.createdAt, locale, t)}
           {entry.lastError ? (
             <>
               <TriangleAlert className="size-3.5" style={{ color: "var(--mini-amber)" }} />
-              <span className="truncate">{entry.lastError}</span>
+              <span className="truncate">{formatQueueError(entry.lastError, t)}</span>
             </>
           ) : null}
         </span>
@@ -214,13 +223,13 @@ function EntryRow({
           className="mini-btn-primary mini-btn-sm mini-press shrink-0"
         >
           <UserCheck className="size-5" />
-          Моя
+          {t("outbox.mine")}
         </button>
       ) : (
         <button
           type="button"
           onClick={onRetry}
-          aria-label="Повторить отправку"
+          aria-label={t("outbox.retryAria")}
           className="mini-btn-secondary mini-btn-sm mini-press size-12 shrink-0"
           style={{ padding: 0 }}
         >
@@ -229,19 +238,4 @@ function EntryRow({
       )}
     </div>
   );
-}
-
-function formatWhen(ts: number): string {
-  const d = new Date(ts);
-  const today = new Date();
-  const sameDay =
-    d.getDate() === today.getDate() &&
-    d.getMonth() === today.getMonth() &&
-    d.getFullYear() === today.getFullYear();
-  const time = `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes()
-  ).padStart(2, "0")}`;
-  return sameDay
-    ? `сегодня в ${time}`
-    : `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")} в ${time}`;
 }

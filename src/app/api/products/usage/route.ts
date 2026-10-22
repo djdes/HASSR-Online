@@ -86,7 +86,16 @@ export async function GET(request: Request) {
       bullets.push("Продукт пока нигде не используется в журналах");
     }
 
-    return NextResponse.json({ name: product.name, documentCount, bullets });
+    const usagePresentation = {
+      version: 1,
+      warnings: documentCount > 0
+        ? [
+          { code: "PRODUCT_USAGE_EXISTING_DOCUMENTS", params: { name: product.name, count: documentCount } },
+          { code: "PRODUCT_USAGE_REMOVED_FROM_CHOICES" },
+        ]
+        : [{ code: "PRODUCT_USAGE_UNUSED" }],
+    };
+    return NextResponse.json({ name: product.name, documentCount, bullets, usagePresentation });
   } catch (error) {
     console.error("Product usage error:", error);
     return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });

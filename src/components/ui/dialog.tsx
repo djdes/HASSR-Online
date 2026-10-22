@@ -58,6 +58,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  closeLabel = "Закрыть",
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -66,6 +67,7 @@ function DialogContent({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  closeLabel?: string
 }) {
   // Свайп вниз за верхнюю зону закрывает шторку — как системные шторки
   // телефона. Только на узких экранах и только от верхних 72px (ручка и
@@ -145,7 +147,7 @@ function DialogContent({
               className="absolute top-4 right-4 rounded-full bg-white/80 p-1 text-[#6f7282] opacity-90 backdrop-blur-sm ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 touch:top-2 touch:right-2 touch:flex touch:size-12 touch:items-center touch:justify-center touch:[&_svg:not([class*='size-'])]:size-5"
             >
               <XIcon />
-              <span className="sr-only">Закрыть</span>
+              <span className="sr-only">{closeLabel}</span>
             </DialogPrimitive.Close>
           </div>
         )}

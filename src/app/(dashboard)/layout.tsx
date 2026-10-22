@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/lib/auth-helpers";
@@ -7,6 +8,7 @@ import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-bui
 import { resolveHeaderPoint } from "@/lib/header-point";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { ImpersonationBanner } from "@/components/dashboard/impersonation-banner";
 import { CompleteProfileNudge } from "@/components/dashboard/complete-profile-nudge";
 import { WelcomeOrgBanner } from "@/components/organizations/welcome-org-banner";
@@ -78,7 +80,6 @@ import { PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
 import { MiniAppShell } from "@/app/mini/_components/mini-app-shell";
 import { loadMiniShellData } from "@/app/mini/_components/mini-shell-data";
 import { CustomNamesProvider } from "@/components/shared/custom-names-provider";
-import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import "@/app/app-theme.css";
 // Оболочка мини-приложения показывает эти же страницы в телефоне, и её
@@ -113,6 +114,7 @@ export default async function DashboardLayout({
   }
 
   const session = await requireAuth();
+  const tAnnouncement = await getTranslations("common.announcementBanner");
 
   const activeOrgId =
     isImpersonating(session) && session.user.actingAsOrganizationId
@@ -480,6 +482,7 @@ export default async function DashboardLayout({
               рендерятся наверху, а их состояние живёт в клиенте открытого
               документа — иначе они друг друга не видят. */}
           <JournalUndoProvider>
+          <DomainMessagesBoundary namespaces={["masterCabinetUi"]}>
           <Header
             userName={session.user.name ?? "Пользователь"}
             userEmail={session.user.email ?? ""}
@@ -507,6 +510,7 @@ export default async function DashboardLayout({
             whiteLabel={Boolean(consultant)}
             canEditBranding={hasCapability(session.user, "admin.full")}
           />
+          </DomainMessagesBoundary>
           {/* Быстрый старт только что созданной точки. Живёт в layout'е,
               а не на странице дашборда: баннер сам решает показываться
               по `?welcome-org=1`, и дашборд о нём знать не обязан. */}
@@ -556,7 +560,11 @@ export default async function DashboardLayout({
                 />
                 {/* Объявление ROOT (плановые работы, инцидент) — над контентом,
                     закрывается и запоминается по id. */}
-                <AnnouncementBanner announcement={announcement} />
+                <AnnouncementBanner
+                  announcement={announcement}
+                  moreLabel={tAnnouncement("more")}
+                  dismissLabel={tAnnouncement("dismiss")}
+                />
                 {/* Анонс бесплатного периода — наверху главной у всех
                     ролей (дашборд руководителя, журналы сотрудника),
                     закрывается на день. */}

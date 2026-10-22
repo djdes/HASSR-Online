@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { pwaManifestHref } from "@/lib/pwa-manifest-localization";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -27,7 +30,7 @@ import "@/app/app-theme.css";
  * карточки, индиго #5566f6, крупные кнопки. См. `mini-theme.css`.
  */
 
-export const metadata: Metadata = {
+const BASE_METADATA: Metadata = {
   // title.absolute обходит root layout's template "%s — WeSetup". Без
   // absolute получали бы "WeSetup — Mini App — WeSetup" (бренд дублируется).
   title: { absolute: "WeSetup — Mini App" },
@@ -43,6 +46,16 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getSiteLocale();
+  const t = await getTranslations({ locale, namespace: "pwaManifest" });
+  return {
+    ...BASE_METADATA,
+    title: { absolute: t("metadataTitle") },
+    manifest: pwaManifestHref(locale),
+  };
+}
 
 const BASE_VIEWPORT: Viewport = {
   width: "device-width",

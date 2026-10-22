@@ -1,58 +1,49 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { MiniLoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: "Вход — WeSetup",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("miniLogin.metadata");
+  return { title: t("title"), robots: { index: false, follow: false } };
+}
 
-/**
- * Вход в рабочий кабинет по телефону и паролю.
- *
- * Серверный компонент с клиентской формой внутри: экран обязан
- * рисоваться до гидратации. Сотрудник открывает приложение в подвале
- * кухни на плохом интернете, и «белый экран, пока грузится JS» здесь
- * означает «приложение не работает».
- */
 export default async function MiniLoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; phone?: string; deleted?: string }>;
 }) {
   const { next, phone, deleted } = await searchParams;
+  const t = await getTranslations("miniLogin.page");
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-[420px] flex-col justify-center">
-      {/* После «Удалить аккаунт» в профиле: короткое подтверждение. */}
-      {deleted === "1" ? (
-        <div
-          className="mini-card mb-3 px-5 py-3 text-[16px] font-semibold"
-          style={{ color: "var(--mini-text)" }}
-          role="status"
-          data-testid="mini-login-account-deleted"
-        >
-          Аккаунт удалён
+    <DomainMessagesBoundary namespaces={["miniLogin"]}>
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-[420px] flex-col justify-center">
+        {deleted === "1" ? (
+          <div
+            className="mini-card mb-3 px-5 py-3 text-[16px] font-semibold"
+            style={{ color: "var(--mini-text)" }}
+            role="status"
+            data-testid="mini-login-account-deleted"
+          >
+            {t("deleted")}
+          </div>
+        ) : null}
+        <div className="mini-card p-5">
+          <h1 className="mini-h1">{t("title")}</h1>
+          <p
+            className="mt-2 text-[16px] leading-[1.5]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            {t("intro")}
+          </p>
+          <MiniLoginForm next={next} initialPhone={phone} />
         </div>
-      ) : null}
-      <div className="mini-card p-5">
-        <h1 className="mini-h1">Вход в кабинет</h1>
-        <p
-          className="mt-2 text-[16px] leading-[1.5]"
-          style={{ color: "var(--mini-text-muted)" }}
-        >
-          Телефон и пароль выдаёт руководитель. Если у вас есть Telegram —
-          можно войти и через него, по персональной ссылке-приглашению.
-        </p>
-
-        {/* `?phone=` подставляет номер: после регистрации по QR-коду
-            сотрудник приходит сюда прямо с экрана «Готово», и заново
-            набирать номер ему незачем. */}
-        <MiniLoginForm next={next} initialPhone={phone} />
       </div>
-    </div>
+    </DomainMessagesBoundary>
   );
 }

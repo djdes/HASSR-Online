@@ -259,6 +259,12 @@ function buildMonthGrid(year: number, month: number) {
  * (`WheelDatePicker`): удобнее пальцем и для дат далеко от сегодняшней.
  * Ввод ДД.ММ.ГГГГ с клавиатуры работает в обоих вариантах.
  */
+export type AcceptanceCalendarCopy = {
+  placeholder: string; open: string; previousMonth: string; nextMonth: string;
+  months: readonly string[]; weekdays: readonly string[];
+  heading: (month: string, year: number) => string;
+};
+
 export function DateField({
   label,
   value,
@@ -268,6 +274,7 @@ export function DateField({
   className,
   error,
   picker = "calendar",
+  calendarCopy,
 }: {
   label: string;
   value: string;
@@ -277,6 +284,7 @@ export function DateField({
   className?: string;
   error?: ReactNode;
   picker?: "calendar" | "wheel";
+  calendarCopy?: AcceptanceCalendarCopy;
 }) {
   const generatedId = useId();
   const fieldId = id || generatedId;
@@ -331,7 +339,7 @@ export function DateField({
           value={text}
           onChange={(event) => commitText(event.target.value)}
           onBlur={() => setText(formatRuDateValue(value))}
-          placeholder="ДД.ММ.ГГГГ"
+          placeholder={calendarCopy?.placeholder ?? "ДД.ММ.ГГГГ"}
           inputMode="numeric"
           disabled={disabled}
           className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
@@ -347,7 +355,7 @@ export function DateField({
             <button
               type="button"
               disabled={disabled}
-              aria-label={picker === "wheel" ? "Выбрать дату" : "Открыть календарь"}
+              aria-label={picker === "wheel" ? "Выбрать дату" : calendarCopy?.open ?? "Открыть календарь"}
               className="shrink-0 rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-50"
             >
               <CalendarDays className="size-5" />
@@ -377,7 +385,7 @@ export function DateField({
             <div className="mb-2 flex items-center justify-between">
               <button
                 type="button"
-                aria-label="Предыдущий месяц"
+                aria-label={calendarCopy?.previousMonth ?? "Предыдущий месяц"}
                 onClick={() =>
                   setViewDate(
                     new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)
@@ -388,11 +396,11 @@ export function DateField({
                 <ChevronLeft className="size-4" />
               </button>
               <div className="text-[14px] font-semibold text-[#0b1024]">
-                {MONTHS_RU[viewDate.getMonth()]} {viewDate.getFullYear()}
+                {calendarCopy ? calendarCopy.heading(calendarCopy.months[viewDate.getMonth()], viewDate.getFullYear()) : <>{MONTHS_RU[viewDate.getMonth()]} {viewDate.getFullYear()}</>}
               </div>
               <button
                 type="button"
-                aria-label="Следующий месяц"
+                aria-label={calendarCopy?.nextMonth ?? "Следующий месяц"}
                 onClick={() =>
                   setViewDate(
                     new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1)
@@ -408,7 +416,7 @@ export function DateField({
                 до 48px (`data-touch-compact`), иначе в 7 колонок по 38px круги
                 наезжали друг на друга. Стрелки месяца выше — 48×48. */}
             <div className="grid grid-cols-7 gap-y-1" data-touch-compact="">
-              {WEEKDAYS_RU.map((day) => (
+              {(calendarCopy?.weekdays ?? WEEKDAYS_RU).map((day) => (
                 <div
                   key={day}
                   className="py-1 text-center text-[12px] font-semibold text-[#0b1024]"

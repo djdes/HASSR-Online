@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import {
+  acceptanceServerRevision, acceptanceCalendarCopy, acceptanceEnumLabel, acceptanceImportHeaders, acceptanceProductColumns, acceptanceSummaryDisplay,
+  bindAcceptanceSummaryRows, captureAcceptanceDiagnostic, formatAcceptanceDiagnostic,
+  isGeneratedAcceptanceImportHeader, tagAcceptanceError,
+  type AcceptanceDiagnostic, type AcceptanceMessage, type AcceptanceMessageKey,
+  type AcceptanceSummarySidecar, type AcceptanceTranslate,
+} from "@/lib/acceptance-document-presentation";
 import {
   Archive,
   CalendarDays,
@@ -57,7 +65,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ACCEPTANCE_DECISION_FULL_LABELS,
   ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
   acceptanceRowToBatchDraft,
   canCreateBatchFromAcceptanceRow,
@@ -65,14 +72,6 @@ import {
   getIncomingControlRowValues,
   normalizeAcceptanceDocumentConfig,
   formatAcceptanceDateDash,
-  getAcceptanceDocumentTitle,
-  getAcceptancePageTitle,
-  getExpiryFieldDisplayLabel,
-  TRANSPORT_LABELS,
-  COMPLIANCE_LABELS,
-  INCOMING_CONTROL_PACKAGING_COLUMN,
-  getIncomingControlColumns,
-  ORGANOLEPTIC_LABELS,
   type AcceptanceDocumentConfig,
   type AcceptanceRow,
 } from "@/lib/acceptance-document";
@@ -109,8 +108,6 @@ import {
 import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { JournalPaperHeaderRows } from "@/components/journals/journal-document-header";
 import { localDayKey } from "@/lib/entry-defaults";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
 import { RecognizeFromPhoto, type RecognizeResult } from "@/components/ai/recognize-from-photo";
@@ -123,6 +120,7 @@ type Props = {
   routeCode: string;
   title: string;
   organizationName: string;
+  organizationFallbackSuffix?: string | null;
   /**
    * «Периодичность контроля» — вторая строка бумажной шапки документа
    * (`config.controlPeriodicity`, дефолт — из реестра шаблонов).
@@ -133,6 +131,9 @@ type Props = {
   dateTo: string;
   status: string;
   config: unknown;
+  generatedSummaries?: readonly AcceptanceSummarySidecar[];
+  /** Optional witness of persisted source and normalization dependencies, never generated row IDs. */
+  sourceIdentity?: string;
   users: User[];
   /** Design v2 toggle. */
   useV2?: boolean;
@@ -166,10 +167,20 @@ function getResponsibleLabel(row: AcceptanceRow, users: User[]) {
   return user?.name || row.responsibleName || "";
 }
 
-function getErrorMessage(error: unknown, fallback = "Ошибка") {
-  // Сообщения браузера о пропаже связи («Failed to fetch») подменяем
-  // русской фразой — см. lib/humanize-fetch-error.ts.
-  return humanizeFetchError(error, fallback);
+function getErrorMessage(error: unknown, fallback = "Ошибка", key: AcceptanceMessageKey = "journalControls.quickAdd.genericError") {
+  return captureAcceptanceDiagnostic(error, fallback, key);
+}
+
+/** Event continuations read only this instance's latest committed presentation. */
+function useAcceptanceCopy() {
+  const t = useTranslations() as unknown as AcceptanceTranslate;
+  const locale = useLocale();
+  const committed = useRef({ t, locale });
+  useLayoutEffect(() => { committed.current = { t, locale }; }, [t, locale]);
+  const say: AcceptanceTranslate = (key, values) => committed.current.t(key, values);
+  const feedback = (error: unknown, fallback: string, key: AcceptanceMessageKey) =>
+    formatAcceptanceDiagnostic(getErrorMessage(error, fallback, key), say);
+  return { t, say, feedback, committed };
 }
 
 function normalizeImportText(value: unknown) {
@@ -238,7 +249,7 @@ export const PRODUCT_ACCEPTANCE_IMPORT_COLUMNS = [
   "Ответственный",
 ] as const;
 
-const RAW_MATERIALS_IMPORT_COLUMNS = [
+export const RAW_MATERIALS_IMPORT_COLUMNS = [
   "Дата поступления",
   "Время поступления",
   "Наименование",
@@ -261,12 +272,8 @@ export function parseAcceptanceDecision(value: string): "" | "accept" | "reject"
   return "";
 }
 
-function downloadAcceptanceImportTemplate(isProductAcceptance: boolean) {
-  const header = (
-    isProductAcceptance
-      ? PRODUCT_ACCEPTANCE_IMPORT_COLUMNS
-      : RAW_MATERIALS_IMPORT_COLUMNS
-  ).join(";");
+function downloadAcceptanceImportTemplate(isProductAcceptance: boolean, t: AcceptanceTranslate) {
+  const header = acceptanceImportHeaders(isProductAcceptance, t).join(";");
   const sample = isProductAcceptance
     ? '11.04.2026;Гастрономия;20.04.2026;ООО "Агро-Юг" / ООО "Метро";ТТН №123 от 11.04.2026;20 кг, партия 45, 09.04.2026;+4;Соответствует;П;;Заведующий производством'
     : '11.04.2026;11:00;Гастрономия;ООО "Агро-Юг";ООО "Метро";1;1;1;11.04.2026;18:00;';
@@ -292,6 +299,7 @@ function RowBatchFooterAction(props: {
   busy: boolean;
   onCreate: () => void;
 }) {
+  const { t } = useAcceptanceCopy();
   if (props.row.batchId) {
     return (
       <a
@@ -301,7 +309,7 @@ function RowBatchFooterAction(props: {
         className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] px-4 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] sm:mr-auto sm:w-auto"
       >
         <Package className="size-4" />
-        Партия {props.row.batchCode || "№ —"}
+        {t("journalAcceptance.batch.existing", { code: props.row.batchCode || t("journalAcceptance.batch.missingCode") })}
       </a>
     );
   }
@@ -312,18 +320,17 @@ function RowBatchFooterAction(props: {
       variant="outline"
       disabled={props.busy}
       onClick={props.onCreate}
-      title="Заведёт партию на складе по данным этой строки: продукт, поставщик, количество, дата поступления и срок годности"
+      title={t("journalAcceptance.batch.createHint")}
       className="h-9 w-full gap-1.5 rounded-xl border-[#5566f6]/30 bg-[#f5f6ff] px-4 text-[13.5px] font-medium text-[#5566f6] shadow-none transition-colors duration-150 hover:bg-[#eef1ff] sm:mr-auto sm:w-auto"
     >
-      <Package className="size-4" />
-      Создать партию
-    </Button>
+      <Package className="size-4" />{t("journalAcceptance.batch.create")}</Button>
   );
 }
 
 /* ─── Row Dialog ─── */
 
 function RowDialog(props: {
+  documentKey: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   users: User[];
@@ -337,6 +344,7 @@ function RowDialog(props: {
   /** Приёмка → партия. Отсутствует, если журнал закрыт. */
   onCreateBatch?: (row: AcceptanceRow) => Promise<AcceptanceRow | null>;
 }) {
+  const { t, feedback } = useAcceptanceCopy();
   const [row, setRow] = useState<AcceptanceRow>(() => createAcceptanceRow());
   const [newProduct, setNewProduct] = useState("");
   const [newManufacturer, setNewManufacturer] = useState("");
@@ -349,7 +357,11 @@ function RowDialog(props: {
   const [addedSuppliers, setAddedSuppliers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const incomingRow = JSON.stringify([props.documentKey, props.open, props.initialRow, props.config.defaultResponsibleUserId, props.config.defaultResponsibleTitle, props.config.products, props.config.manufacturers, props.config.suppliers]);
+  const lastIncomingRow = useRef<string | null>(null);
   useEffect(() => {
+    if (lastIncomingRow.current === incomingRow) return;
+    lastIncomingRow.current = incomingRow;
     if (!props.open) return;
     setRow(
       props.initialRow ||
@@ -369,12 +381,14 @@ function RowDialog(props: {
     setAddedManufacturers([]);
     setAddedSuppliers([]);
   }, [
+    incomingRow,
     props.config.defaultResponsibleUserId,
     props.config.defaultResponsibleTitle,
     props.config.manufacturers,
     props.config.products,
     props.config.suppliers,
     props.initialRow,
+    props.recentProducts,
     props.open,
   ]);
 
@@ -451,7 +465,7 @@ function RowDialog(props: {
       if (!isEdit) props.onOpenChange(false);
     } catch (error) {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
-      toast.error(getErrorMessage(error, "Не удалось сохранить строку"));
+      toast.error(feedback(error, "Не удалось сохранить строку", "journalAcceptance.errors.saveRow"));
     } finally {
       setIsSubmitting(false);
     }
@@ -470,7 +484,7 @@ function RowDialog(props: {
       const nextRow = await props.onCreateBatch(row);
       if (nextRow) setRow(nextRow);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Не удалось создать партию"));
+      toast.error(feedback(error, "Не удалось создать партию", "journalAcceptance.errors.createBatch"));
     } finally {
       setIsSubmitting(false);
     }
@@ -478,31 +492,31 @@ function RowDialog(props: {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            {isEdit ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+            {isEdit ? props.titleSuffix ? t("journalAcceptance.row.editProgressTitle", { progress: `${props.titleSuffix}` }) : t("journalAcceptance.row.editTitle") : t("journalAcceptance.row.addTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
           {/* Дата и время поставки */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время поставки</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.deliveryDateTime")}</Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.4fr_1fr_1fr]">
-              <Input type="date" value={row.deliveryDate} onChange={(e) => setValue("deliveryDate", e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
+              <Input aria-label={t("journalAcceptance.row.deliveryDateTime")} type="date" value={row.deliveryDate} onChange={(e) => setValue("deliveryDate", e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
               <Select value={row.deliveryHour || "--"} onValueChange={(value) => setValue("deliveryHour", value === "--" ? "" : value)}>
-                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder="-- ч" /></SelectTrigger>
+                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder={t("journalAcceptance.row.hourPlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="--">-- ч</SelectItem>
-                  {HOURS.map((h) => <SelectItem key={h} value={h}>{h} ч</SelectItem>)}
+                  <SelectItem value="--">{t("journalAcceptance.row.hourPlaceholder")}</SelectItem>
+                  {HOURS.map((h) => <SelectItem key={h} value={h}>{t("journalAcceptance.row.hourOption", { hour: h })}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={row.deliveryMinute || "--"} onValueChange={(value) => setValue("deliveryMinute", value === "--" ? "" : value)}>
-                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder="-- мин" /></SelectTrigger>
+                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder={t("journalAcceptance.row.minutePlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="--">-- мин</SelectItem>
-                  {MINUTES.map((m) => <SelectItem key={m} value={m}>{m} мин</SelectItem>)}
+                  <SelectItem value="--">{t("journalAcceptance.row.minutePlaceholder")}</SelectItem>
+                  {MINUTES.map((m) => <SelectItem key={m} value={m}>{t("journalAcceptance.row.minuteOption", { minute: m })}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -510,7 +524,7 @@ function RowDialog(props: {
 
           {/* Наименование продукции — radio cards */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Наименование продукции</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.productName")}</Label>
             <div className="flex flex-col gap-2">
               {Array.from(new Set(productOptions)).map((item) => {
                 const active = row.productName === item;
@@ -534,8 +548,8 @@ function RowDialog(props: {
               })}
             </div>
             <div className="flex gap-2">
-              <Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Добавить название новой продукции" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
-              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" onClick={() => addInlineOption("product")}>
+              <Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder={t("journalAcceptance.row.newProduct")} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
+              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" aria-label={t("journalAcceptance.row.newProduct")} onClick={() => addInlineOption("product")}>
                 <Plus className="size-5" />
               </Button>
             </div>
@@ -543,22 +557,22 @@ function RowDialog(props: {
 
           {/* Производитель */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Производитель</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.manufacturer")}</Label>
             <Select
               value={toNone(row.manufacturer)}
               onValueChange={(value) => setValue("manufacturer", fromNone(value))}
             >
               <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                <SelectValue placeholder="Выберите из списка или добавьте нового" />
+                <SelectValue placeholder={t("journalAcceptance.row.chooseOrAdd")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_VALUE}>Выберите из списка или добавьте нового</SelectItem>
+                <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.chooseOrAdd")}</SelectItem>
                 {Array.from(new Set(manufacturerOptions)).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
               </SelectContent>
             </Select>
             <div className="flex gap-2">
-              <Input value={newManufacturer} onChange={(e) => setNewManufacturer(e.target.value)} placeholder="Добавить название нового производителя" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
-              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" onClick={() => addInlineOption("manufacturer")}>
+              <Input value={newManufacturer} onChange={(e) => setNewManufacturer(e.target.value)} placeholder={t("journalAcceptance.row.newManufacturer")} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
+              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" aria-label={t("journalAcceptance.row.newManufacturer")} onClick={() => addInlineOption("manufacturer")}>
                 <Plus className="size-5" />
               </Button>
             </div>
@@ -566,22 +580,22 @@ function RowDialog(props: {
 
           {/* Поставщик */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Поставщик</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.supplier")}</Label>
             <Select
               value={toNone(row.supplier)}
               onValueChange={(value) => setValue("supplier", fromNone(value))}
             >
               <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                <SelectValue placeholder="Выберите из списка или добавьте нового" />
+                <SelectValue placeholder={t("journalAcceptance.row.chooseOrAdd")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_VALUE}>Выберите из списка или добавьте нового</SelectItem>
+                <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.chooseOrAdd")}</SelectItem>
                 {Array.from(new Set(supplierOptions)).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
               </SelectContent>
             </Select>
             <div className="flex gap-2">
-              <Input value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} placeholder="Добавить название нового поставщика" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
-              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" onClick={() => addInlineOption("supplier")}>
+              <Input value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} placeholder={t("journalAcceptance.row.newSupplier")} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
+              <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" aria-label={t("journalAcceptance.row.newSupplier")} onClick={() => addInlineOption("supplier")}>
                 <Plus className="size-5" />
               </Button>
             </div>
@@ -589,12 +603,12 @@ function RowDialog(props: {
 
           {/* Условия транспортировки — pill segmented */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Условия транспортировки</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.transport")}</Label>
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  ["satisfactory", "Удовл.", "#136b2a", "#ecfdf5"],
-                  ["unsatisfactory", "Не удовл.", "#d2453d", "#fff4f2"],
+                  ["satisfactory", t("foodControlPdf.acceptance.status.satisfactory"), "#136b2a", "#ecfdf5"],
+                  ["unsatisfactory", t("foodControlPdf.acceptance.status.unsatisfactory"), "#d2453d", "#fff4f2"],
                 ] as const
               ).map(([value, label, fg, bg]) => {
                 const active = row.transportCondition === value;
@@ -617,12 +631,12 @@ function RowDialog(props: {
 
           {/* Соответствие упаковки — pill segmented */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Соответствие упаковки</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.packaging")}</Label>
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  ["compliant", "Соотв.", "#136b2a", "#ecfdf5"],
-                  ["non_compliant", "Не соотв.", "#d2453d", "#fff4f2"],
+                  ["compliant", t("journalAcceptance.row.compliantShort"), "#136b2a", "#ecfdf5"],
+                  ["non_compliant", t("foodControlPdf.acceptance.status.nonCompliant"), "#d2453d", "#fff4f2"],
                 ] as const
               ).map(([value, label, fg, bg]) => {
                 const active = row.packagingCompliance === value;
@@ -645,12 +659,12 @@ function RowDialog(props: {
 
           {/* Результаты орг. оценки — pill segmented */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Результаты орг. оценки</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.organoleptic")}</Label>
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  ["satisfactory", "Удовл.", "#136b2a", "#ecfdf5"],
-                  ["unsatisfactory", "Не удовл.", "#d2453d", "#fff4f2"],
+                  ["satisfactory", t("foodControlPdf.acceptance.status.satisfactory"), "#136b2a", "#ecfdf5"],
+                  ["unsatisfactory", t("foodControlPdf.acceptance.status.unsatisfactory"), "#d2453d", "#fff4f2"],
                 ] as const
               ).map(([value, label, fg, bg]) => {
                 const active = row.organolepticResult === value;
@@ -674,22 +688,22 @@ function RowDialog(props: {
           {/* Предельный срок реализации */}
           <div className="space-y-2">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              {getExpiryFieldDisplayLabel(props.config.expiryFieldLabel)}
+              {t(props.config.expiryFieldLabel === "shelf_life" ? "journalAcceptance.row.shelfLifeLabel" : "journalAcceptance.row.expiryDeadline")}
             </Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.4fr_1fr_1fr]">
-              <Input type="date" value={row.expiryDate} onChange={(e) => setValue("expiryDate", e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
+              <Input aria-label={t("journalAcceptance.row.expiryDeadline")} type="date" value={row.expiryDate} onChange={(e) => setValue("expiryDate", e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
               <Select value={row.expiryHour || "--"} onValueChange={(value) => setValue("expiryHour", value === "--" ? "" : value)}>
-                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder="-- ч" /></SelectTrigger>
+                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder={t("journalAcceptance.row.hourPlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="--">-- ч</SelectItem>
-                  {HOURS.map((h) => <SelectItem key={h} value={h}>{h} ч</SelectItem>)}
+                  <SelectItem value="--">{t("journalAcceptance.row.hourPlaceholder")}</SelectItem>
+                  {HOURS.map((h) => <SelectItem key={h} value={h}>{t("journalAcceptance.row.hourOption", { hour: h })}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={row.expiryMinute || "--"} onValueChange={(value) => setValue("expiryMinute", value === "--" ? "" : value)}>
-                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder="-- мин" /></SelectTrigger>
+                <SelectTrigger className={SELECT_TRIGGER_CLASS}><SelectValue placeholder={t("journalAcceptance.row.minutePlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="--">-- мин</SelectItem>
-                  {MINUTES.map((m) => <SelectItem key={m} value={m}>{m} мин</SelectItem>)}
+                  <SelectItem value="--">{t("journalAcceptance.row.minutePlaceholder")}</SelectItem>
+                  {MINUTES.map((m) => <SelectItem key={m} value={m}>{t("journalAcceptance.row.minuteOption", { minute: m })}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -697,29 +711,29 @@ function RowDialog(props: {
 
           {/* Примечание */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Примечание</Label>
-            <Textarea value={row.note} onChange={(e) => setValue("note", e.target.value)} placeholder="Примечание" rows={3} className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]" />
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.notes")}</Label>
+            <Textarea value={row.note} onChange={(e) => setValue("note", e.target.value)} placeholder={t("journalAcceptance.row.notes")} rows={3} className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]" />
           </div>
 
           {/* Должность ответственного + сотрудник */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.responsiblePosition")}</Label>
               <Select
                 value={toNone(row.responsibleTitle)}
                 onValueChange={(value) => responsibleCascade.handlePositionChange(fromNone(value))}
               >
                 <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                  <SelectValue placeholder="— выберите —" />
+                  <SelectValue placeholder={t("journalAcceptance.row.choose")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>— выберите —</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.choose")}</SelectItem>
                   <PositionSelectItems users={props.users} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalControls.positionSelect.employeeLabel")}</Label>
               <Select
                 value={toNone(row.responsibleUserId)}
                 onValueChange={(value) => {
@@ -734,10 +748,10 @@ function RowDialog(props: {
                 onOpenChange={responsibleCascade.setEmployeeOpen}
               >
                 <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                  <SelectValue placeholder="— выберите —" />
+                  <SelectValue placeholder={t("journalAcceptance.row.choose")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>— выберите —</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.choose")}</SelectItem>
                   {(row.responsibleTitle ? responsibleCascade.candidates : props.users).map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -757,16 +771,14 @@ function RowDialog(props: {
             variant="outline"
             className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
             onClick={() => props.onOpenChange(false)}
-          >
-            Отмена
-          </Button>
+          >{t("common.cancel")}</Button>
           <Button
             type="button"
             onClick={handleSave}
             disabled={isSubmitting}
             className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
           >
-            {isSubmitting ? "Сохранение..." : isEdit ? "Сохранить" : "Добавить"}
+            {isSubmitting ? t("common.saving") : isEdit ? t("common.save") : t("common.add")}
           </Button>
         </div>
       </DialogContent>
@@ -785,6 +797,7 @@ function RowDialog(props: {
  * не «переписывались» при редактировании.
  */
 function IncomingControlRowDialog(props: {
+  documentKey: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   users: User[];
@@ -801,6 +814,7 @@ function IncomingControlRowDialog(props: {
   /** Приёмка → партия. Отсутствует, если журнал закрыт. */
   onCreateBatch?: (row: AcceptanceRow) => Promise<AcceptanceRow | null>;
 }) {
+  const { t, feedback } = useAcceptanceCopy();
   const [row, setRow] = useState<AcceptanceRow>(() => createAcceptanceRow());
   const [newProduct, setNewProduct] = useState("");
   const [newPartner, setNewPartner] = useState("");
@@ -810,7 +824,11 @@ function IncomingControlRowDialog(props: {
   const [addedPartners, setAddedPartners] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const incomingRow = JSON.stringify([props.documentKey, props.open, props.initialRow, props.config.defaultResponsibleUserId, props.config.defaultResponsibleTitle, props.config.products, props.config.manufacturers, props.config.suppliers]);
+  const lastIncomingRow = useRef<string | null>(null);
   useEffect(() => {
+    if (lastIncomingRow.current === incomingRow) return;
+    lastIncomingRow.current = incomingRow;
     if (!props.open) return;
     setRow(
       props.initialRow ||
@@ -837,12 +855,14 @@ function IncomingControlRowDialog(props: {
     setAddedProducts([]);
     setAddedPartners([]);
   }, [
+    incomingRow,
     props.config.defaultResponsibleUserId,
     props.config.defaultResponsibleTitle,
     props.config.manufacturers,
     props.config.products,
     props.config.suppliers,
     props.initialRow,
+    props.recentProducts,
     props.open,
   ]);
 
@@ -897,7 +917,7 @@ function IncomingControlRowDialog(props: {
       // См. RowDialog: при правке закрывает родитель (очередь правок).
       if (!isEdit) props.onOpenChange(false);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Не удалось сохранить строку"));
+      toast.error(feedback(error, "Не удалось сохранить строку", "journalAcceptance.errors.saveRow"));
     } finally {
       setIsSubmitting(false);
     }
@@ -915,7 +935,7 @@ function IncomingControlRowDialog(props: {
       const nextRow = await props.onCreateBatch(row);
       if (nextRow) setRow(nextRow);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Не удалось создать партию"));
+      toast.error(feedback(error, "Не удалось создать партию", "journalAcceptance.errors.createBatch"));
     } finally {
       setIsSubmitting(false);
     }
@@ -923,17 +943,18 @@ function IncomingControlRowDialog(props: {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            {isEdit ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+            {isEdit ? props.titleSuffix ? t("journalAcceptance.row.editProgressTitle", { progress: `${props.titleSuffix}` }) : t("journalAcceptance.row.editTitle") : t("journalAcceptance.row.addTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <DateField
-              label="Дата поставки"
+              calendarCopy={acceptanceCalendarCopy(t)}
+              label={t("foodControlPdf.incomingControl.columns.deliveryDate")}
               value={row.deliveryDate}
               onChange={(value) => setValue("deliveryDate", value)}
             />
@@ -941,7 +962,7 @@ function IncomingControlRowDialog(props: {
                 но раньше в этом окне его негде было задать или поправить —
                 оно приходило только из импорта, Меркурия и TasksFlow. */}
             <TimeField
-              label="Время поставки"
+              label={t("journalAcceptance.row.deliveryTime")}
               value={joinTimeValue(row.deliveryHour, row.deliveryMinute)}
               onChange={(value) => {
                 const { hour, minute } = splitTimeValue(value);
@@ -949,7 +970,8 @@ function IncomingControlRowDialog(props: {
               }}
             />
             <DateField
-              label="Годен до"
+              calendarCopy={acceptanceCalendarCopy(t)}
+              label={t("foodControlPdf.incomingControl.columns.shelfLifeDate")}
               value={row.shelfLifeDate}
               onChange={(value) => setValue("shelfLifeDate", value)}
             />
@@ -957,7 +979,7 @@ function IncomingControlRowDialog(props: {
 
           {/* Наименование продукции */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Наименование продукции</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.productName")}</Label>
             <div className="flex flex-col gap-2">
               {Array.from(new Set(productOptions)).map((item) => {
                 const active = row.productName === item;
@@ -986,7 +1008,7 @@ function IncomingControlRowDialog(props: {
               <Input
                 value={newProduct}
                 onChange={(e) => setNewProduct(e.target.value)}
-                placeholder="Добавить название новой продукции"
+                placeholder={t("journalAcceptance.row.newProduct")}
                 className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
               />
               <Button
@@ -1008,16 +1030,16 @@ function IncomingControlRowDialog(props: {
 
           {/* Производитель/поставщик — ОДНА колонка */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Производитель/поставщик</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.manufacturerSupplier")}</Label>
             <Select
               value={toNone(row.manufacturerSupplier)}
               onValueChange={(value) => setValue("manufacturerSupplier", fromNone(value))}
             >
               <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                <SelectValue placeholder="Выберите из списка или добавьте нового" />
+                <SelectValue placeholder={t("journalAcceptance.row.chooseOrAdd")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_VALUE}>Выберите из списка или добавьте нового</SelectItem>
+                <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.chooseOrAdd")}</SelectItem>
                 {Array.from(new Set(partnerOptions)).map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
@@ -1029,7 +1051,7 @@ function IncomingControlRowDialog(props: {
               <Input
                 value={newPartner}
                 onChange={(e) => setNewPartner(e.target.value)}
-                placeholder="Добавить производителя/поставщика"
+                placeholder={t("journalAcceptance.row.newManufacturerSupplier")}
                 className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
               />
               <Button
@@ -1050,55 +1072,47 @@ function IncomingControlRowDialog(props: {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">
-              ТТН, документы соответствия
-            </Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.accompanyingDocs")}</Label>
             <Textarea
               value={row.accompanyingDocs}
               onChange={(e) => setValue("accompanyingDocs", e.target.value)}
-              placeholder="Например: ТТН №1245 от 10.08.2026, декларация о соответствии"
+              placeholder={t("journalAcceptance.row.docsExample")}
               rows={2}
               className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">
-              Объем, номер партии, дата пр-ва
-            </Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.batchInfo")}</Label>
             <Textarea
               value={row.batchInfo}
               onChange={(e) => setValue("batchInfo", e.target.value)}
-              placeholder="Например: 20 кг, партия 45-А, дата пр-ва 08.08.2026"
+              placeholder={t("journalAcceptance.row.batchExample")}
               rows={2}
               className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">
-              Внутр-яя темп-ра продукта (для скоропортящихся и замороженных)
-            </Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.temperature")}</Label>
             <Input
               value={row.productTemperature}
               onChange={(e) => setValue("productTemperature", e.target.value)}
-              placeholder="Например: +2 °C"
+              placeholder={t("journalAcceptance.row.temperatureExample")}
               className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
             />
           </div>
 
           {/* Соответствие товара сопроводительной документации */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">
-              Соответствие товара сопроводительной документации
-            </Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.documentCompliance")}</Label>
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  ["Соответствует", "#136b2a", "#ecfdf5"],
-                  ["Не соответствует", "#d2453d", "#fff4f2"],
+                  ["Соответствует", "journalAcceptance.row.documentCompliantOption", "#136b2a", "#ecfdf5"],
+                  ["Не соответствует", "journalAcceptance.row.documentNonCompliantOption", "#d2453d", "#fff4f2"],
                 ] as const
-              ).map(([label, fg, bg]) => {
+              ).map(([label, labelKey, fg, bg]) => {
                 const active = row.documentCompliance === label;
                 return (
                   <button
@@ -1116,7 +1130,7 @@ function IncomingControlRowDialog(props: {
                         : { backgroundColor: bg, color: fg, borderColor: bg }
                     }
                   >
-                    {label}
+                    {t(labelKey)}
                   </button>
                 );
               })}
@@ -1124,7 +1138,7 @@ function IncomingControlRowDialog(props: {
             <Textarea
               value={row.documentCompliance}
               onChange={(e) => setValue("documentCompliance", e.target.value)}
-              placeholder="Соответствует / расхождения по документам"
+              placeholder={t("journalAcceptance.row.documentationPlaceholder")}
               rows={2}
               className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
             />
@@ -1135,13 +1149,13 @@ function IncomingControlRowDialog(props: {
           {props.config.showPackagingCompliance ? (
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                {INCOMING_CONTROL_PACKAGING_COLUMN}
+                {t("foodControlPdf.incomingControl.columns.packagingCompliance")}
               </Label>
               <div className="grid grid-cols-2 gap-2">
                 {(
                   [
-                    ["compliant", "Соответствует", "#136b2a", "#ecfdf5"],
-                    ["non_compliant", "Не соответствует", "#d2453d", "#fff4f2"],
+                    ["compliant", t("foodControlPdf.incomingControl.packaging.compliant"), "#136b2a", "#ecfdf5"],
+                    ["non_compliant", t("journalAcceptance.row.nonCompliantFull"), "#d2453d", "#fff4f2"],
                   ] as const
                 ).map(([value, label, fg, bg]) => {
                   const active = row.packagingCompliance === value;
@@ -1171,9 +1185,7 @@ function IncomingControlRowDialog(props: {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">
-                Принять/Отклонить, П/О
-              </Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.decision")}</Label>
               <Select
                 value={toNone(row.acceptanceDecision)}
                 onValueChange={(value) =>
@@ -1184,25 +1196,23 @@ function IncomingControlRowDialog(props: {
                 }
               >
                 <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                  <SelectValue placeholder="— выберите —" />
+                  <SelectValue placeholder={t("journalAcceptance.row.choose")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>— выберите —</SelectItem>
-                  <SelectItem value="accept">{ACCEPTANCE_DECISION_FULL_LABELS.accept}</SelectItem>
-                  <SelectItem value="reject">{ACCEPTANCE_DECISION_FULL_LABELS.reject}</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.choose")}</SelectItem>
+                  <SelectItem value="accept">{t("journalAcceptance.row.acceptFull")}</SelectItem>
+                  <SelectItem value="reject">{t("journalAcceptance.row.rejectFull")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">
-              Корректирующие действия для забракованного товара
-            </Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.correctiveActions")}</Label>
             <Textarea
               value={row.correctiveActions}
               onChange={(e) => setValue("correctiveActions", e.target.value)}
-              placeholder="Например: возврат поставщику по акту №12"
+              placeholder={t("journalAcceptance.row.correctiveExample")}
               rows={3}
               className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
             />
@@ -1211,22 +1221,22 @@ function IncomingControlRowDialog(props: {
           {/* Ответственный — должность + сотрудник, как в остальных журналах */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.responsiblePosition")}</Label>
               <Select
                 value={toNone(row.responsibleTitle)}
                 onValueChange={(value) => responsibleCascade.handlePositionChange(fromNone(value))}
               >
                 <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                  <SelectValue placeholder="— выберите —" />
+                  <SelectValue placeholder={t("journalAcceptance.row.choose")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>— выберите —</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.choose")}</SelectItem>
                   <PositionSelectItems users={props.users} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Ответственный</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("foodControlPdf.incomingControl.columns.responsible")}</Label>
               <Select
                 value={toNone(row.responsibleUserId)}
                 onValueChange={(value) => {
@@ -1241,10 +1251,10 @@ function IncomingControlRowDialog(props: {
                 onOpenChange={responsibleCascade.setEmployeeOpen}
               >
                 <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                  <SelectValue placeholder="— выберите —" />
+                  <SelectValue placeholder={t("journalAcceptance.row.choose")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>— выберите —</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("journalAcceptance.row.choose")}</SelectItem>
                   {(row.responsibleTitle
                     ? responsibleCascade.candidates
                     : props.users
@@ -1271,16 +1281,14 @@ function IncomingControlRowDialog(props: {
             variant="outline"
             className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
             onClick={() => props.onOpenChange(false)}
-          >
-            Отмена
-          </Button>
+          >{t("common.cancel")}</Button>
           <Button
             type="button"
             onClick={handleSave}
             disabled={isSubmitting}
             className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] sm:w-auto"
           >
-            {isSubmitting ? "Сохранение..." : isEdit ? "Сохранить" : "Добавить"}
+            {isSubmitting ? t("common.saving") : isEdit ? t("common.save") : t("common.add")}
           </Button>
         </div>
       </DialogContent>
@@ -1300,12 +1308,13 @@ function EditableListSection(props: {
   /** Вид общего справочника организации, откуда можно добрать позиции. */
   directoryKind?: OrgDirectoryKind;
 }) {
+  const { t, say, committed } = useAcceptanceCopy();
   const [draft, setDraft] = useState("");
   const [directoryOpen, setDirectoryOpen] = useState(false);
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<AcceptanceDiagnostic | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   function upsertValue(nextValue: string) {
@@ -1328,14 +1337,15 @@ function EditableListSection(props: {
   async function removeValue(item: string) {
     const used = props.isUsed?.(item) === true;
     const confirmed = await confirmAsync({
-      title: `Удалить «${item}» из списка?`,
-      description: "Позиция исчезнет из подсказок этого журнала.",
+      locale: committed.current.locale,
+      title: say("journalAcceptance.lists.removeTitle", { item: `${item}` }),
+      description: say("journalAcceptance.lists.removeDescription"),
       variant: used ? "warn" : "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: say("common.delete"),
       bullets: used
         ? [
             {
-              label: "Позиция уже стоит в записях журнала — там название останется как есть",
+              label: say("journalAcceptance.lists.usedWarning"),
               tone: "warn" as const,
             },
           ]
@@ -1347,18 +1357,18 @@ function EditableListSection(props: {
       setEditingValue(null);
       setDraft("");
     }
-    toast.success(`Удалено из списка: ${item}`);
+    toast.success(say("journalAcceptance.lists.removed", { item: `${item}` }));
   }
 
   async function handleImport(file: File) {
     const XLSX = await import("xlsx");
     const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    if (!sheet) throw new Error("Файл не содержит листов");
+    if (!sheet) throw tagAcceptanceError(new Error("Файл не содержит листов"), [{ key: "journalAcceptance.errors.fileNoSheets" }]);
     const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
     const importedItems = parseListImportItems(rawRows);
     if (importedItems.length === 0) {
-      throw new Error("Не удалось найти значения в первом столбце первого листа");
+      throw tagAcceptanceError(new Error("Не удалось найти значения в первом столбце первого листа"), [{ key: "journalAcceptance.errors.fileNoValues" }]);
     }
     props.onChange(
       [...props.items, ...importedItems].filter(
@@ -1383,7 +1393,7 @@ function EditableListSection(props: {
             <button
               type="button"
               className="rounded-lg p-2 text-[#5566f6] transition-colors duration-150 hover:bg-[#eef1ff] hover:text-[#4a5bf0]"
-              title="Переименовать"
+              title={t("journalAcceptance.lists.rename")}
               onClick={() => {
                 setDraft(item);
                 setEditingValue(item);
@@ -1394,7 +1404,7 @@ function EditableListSection(props: {
             <button
               type="button"
               className="rounded-lg p-2 text-[#9a9db0] transition-colors duration-150 hover:bg-[#fff2f1] hover:text-[#ff3b30]"
-              title="Удалить из списка"
+              title={t("journalAcceptance.lists.remove")}
               onClick={() => void removeValue(item)}
             >
               <Trash2 className="size-4" />
@@ -1424,19 +1434,15 @@ function EditableListSection(props: {
           setImportOpen((current) => !current);
           setImportError(null);
         }}
-      >
-        Добавить из файла
-      </button>
+      >{t("journalAcceptance.lists.addFromFile")}</button>
       {props.directoryKind ? (
         <>
           <button
             type="button"
             className="ml-4 text-left text-[15px] text-[#3848c7] underline underline-offset-4"
             onClick={() => setDirectoryOpen(true)}
-            title="Добавить позиции из общего справочника организации"
-          >
-            Из справочника организации
-          </button>
+            title={t("journalAcceptance.lists.directoryTitle")}
+          >{t("journalAcceptance.lists.directoryAction")}</button>
           <OrgDirectoryDialog
             open={directoryOpen}
             onClose={() => setDirectoryOpen(false)}
@@ -1449,8 +1455,7 @@ function EditableListSection(props: {
       {importOpen && (
         <div className="space-y-3 rounded-2xl border border-[#e3e5ef] bg-white p-4">
           <div className="text-[14px] leading-6 text-[#3d4152]">
-            Список должен быть в файле Excel, на первом листе в первом столбце и
-            начинаться с первой строки.
+            {t("journalAcceptance.lists.fileHelp")}
           </div>
           <input
             ref={inputRef}
@@ -1461,7 +1466,7 @@ function EditableListSection(props: {
               const file = event.target.files?.[0];
               if (!file) return;
               void handleImport(file).catch((error) =>
-                setImportError(getErrorMessage(error, "Ошибка импорта"))
+                setImportError(getErrorMessage(error, "Ошибка импорта", "journalAcceptance.errors.import"))
               );
               event.currentTarget.value = "";
             }}
@@ -1480,7 +1485,7 @@ function EditableListSection(props: {
               const file = event.dataTransfer.files?.[0];
               if (file) {
                 void handleImport(file).catch((error) =>
-                  setImportError(getErrorMessage(error, "Ошибка импорта"))
+                  setImportError(getErrorMessage(error, "Ошибка импорта", "journalAcceptance.errors.import"))
                 );
               }
             }}
@@ -1489,12 +1494,12 @@ function EditableListSection(props: {
             }`}
           >
             <Paperclip className="size-8 text-[#6f7282]" />
-            <span className="text-[18px] text-[#5566f6]">Выберите файл</span>
-            <span className="text-[16px] text-[#3d4152]">или перетащите его сюда</span>
+            <span className="text-[18px] text-[#5566f6]">{t("journalAcceptance.import.chooseFile")}</span>
+            <span className="text-[16px] text-[#3d4152]">{t("journalAcceptance.import.dropFile")}</span>
           </button>
           {importError ? (
             <div className="rounded-xl bg-[#fff2f1] px-4 py-3 text-[14px] text-[#d43a2f]">
-              {importError}
+              {formatAcceptanceDiagnostic(importError, t)}
             </div>
           ) : null}
         </div>
@@ -1509,6 +1514,7 @@ function IncomingControlEditListsDialog(props: {
   config: AcceptanceDocumentConfig;
   setConfig: (config: AcceptanceDocumentConfig) => void;
 }) {
+  const { t } = useAcceptanceCopy();
   const [products, setProducts] = useState<string[]>(() => [...props.config.products]);
   const [manufacturers, setManufacturers] = useState<string[]>(() => [...props.config.manufacturers]);
   const [suppliers, setSuppliers] = useState<string[]>(() => [...props.config.suppliers]);
@@ -1520,23 +1526,23 @@ function IncomingControlEditListsDialog(props: {
 
   return (
     <Dialog open={props.open} onOpenChange={(open) => { if (!open) handleClose(); else props.onOpenChange(true); }}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Редактировать список изделий</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("journalAcceptance.lists.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-6 py-5">
           <EditableListSection
-            title="Продукция"
+            title={t("journalAcceptance.lists.products")}
             items={products}
-            placeholder="Введите название новой продукции"
+            placeholder={t("journalAcceptance.lists.newProduct")}
             onChange={setProducts}
             directoryKind="product"
             isUsed={(item) => props.config.rows.some((row) => row.productName === item)}
           />
           <EditableListSection
-            title="Производители"
+            title={t("journalAcceptance.lists.manufacturers")}
             items={manufacturers}
-            placeholder="Введите название нового производителя"
+            placeholder={t("journalAcceptance.lists.newManufacturer")}
             onChange={setManufacturers}
             directoryKind="manufacturer"
             isUsed={(item) =>
@@ -1547,9 +1553,9 @@ function IncomingControlEditListsDialog(props: {
             }
           />
           <EditableListSection
-            title="Поставщики"
+            title={t("journalAcceptance.lists.suppliers")}
             items={suppliers}
-            placeholder="Введите название нового поставщика"
+            placeholder={t("journalAcceptance.lists.newSupplier")}
             onChange={setSuppliers}
             directoryKind="supplier"
             isUsed={(item) =>
@@ -1559,9 +1565,7 @@ function IncomingControlEditListsDialog(props: {
             }
           />
           <div className="flex justify-end">
-            <Button type="button" onClick={handleClose} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]">
-              Закрыть
-            </Button>
+            <Button type="button" onClick={handleClose} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]">{t("common.close")}</Button>
           </div>
         </div>
       </DialogContent>
@@ -1570,6 +1574,7 @@ function IncomingControlEditListsDialog(props: {
 }
 
 function SettingsDialog(props: {
+  documentKey: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -1585,6 +1590,7 @@ function SettingsDialog(props: {
    */
   showExpiryLabelChoice?: boolean;
 }) {
+  const { t } = useAcceptanceCopy();
   const [title, setTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   const [expiryLabel, setExpiryLabel] = useState(props.config.expiryFieldLabel);
@@ -1603,14 +1609,18 @@ function SettingsDialog(props: {
     autoPick: "none",
   });
 
+  const incomingSettings = JSON.stringify([props.documentKey, props.open, props.title, props.dateFrom, props.config]);
+  const lastIncomingSettings = useRef<string | null>(null);
   useEffect(() => {
+    if (lastIncomingSettings.current === incomingSettings) return;
+    lastIncomingSettings.current = incomingSettings;
     if (!props.open) return;
     setTitle(props.title);
     setDateFrom(props.dateFrom);
     setExpiryLabel(props.config.expiryFieldLabel);
     setResponsibleTitle(props.config.defaultResponsibleTitle || "");
     setResponsibleUserId(props.config.defaultResponsibleUserId || "");
-  }, [props.open, props.title, props.dateFrom, props.config]);
+  }, [incomingSettings, props.open, props.title, props.dateFrom, props.config]);
 
   async function handleSave() {
     setIsSubmitting(true);
@@ -1634,9 +1644,7 @@ function SettingsDialog(props: {
   const fields = (
     <>
       <div className="space-y-2">
-        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Название документа
-        </Label>
+        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("journalAcceptance.settings.documentTitle")}</Label>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -1644,9 +1652,7 @@ function SettingsDialog(props: {
         />
       </div>
       <div className="space-y-2">
-        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Дата начала
-        </Label>
+        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("journalAcceptance.settings.dateFrom")}</Label>
         <Input
           type="date"
           value={dateFrom}
@@ -1656,9 +1662,7 @@ function SettingsDialog(props: {
       </div>
       {props.showExpiryLabelChoice === false ? null : (
       <div className="space-y-2">
-        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Название поля для срока
-        </div>
+        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("journalAcceptance.settings.fieldNameV2")}</div>
         <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors hover:bg-[#f5f6ff]">
           <input
             type="radio"
@@ -1668,7 +1672,7 @@ function SettingsDialog(props: {
             className="size-4 accent-[#5566f6]"
           />
           <span className="text-[14px] text-[#0b1024]">
-            «Предельный срок реализации»
+            «{t("journalAcceptance.settings.expiryDeadlineChoice")}»
           </span>
         </label>
         <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors hover:bg-[#f5f6ff]">
@@ -1679,14 +1683,12 @@ function SettingsDialog(props: {
             onChange={() => setExpiryLabel("shelf_life")}
             className="size-4 accent-[#5566f6]"
           />
-          <span className="text-[14px] text-[#0b1024]">«Срок годности»</span>
+          <span className="text-[14px] text-[#0b1024]">«{t("journalAcceptance.settings.shelfLifeChoice")}»</span>
         </label>
       </div>
       )}
       <div className="space-y-2">
-        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Должность ответственного
-        </Label>
+        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("journalAcceptance.row.responsiblePosition")}</Label>
         <Select
           value={
             // Если title не задан, но employee есть — деривируем title
@@ -1700,7 +1702,7 @@ function SettingsDialog(props: {
           onValueChange={settingsCascade.handlePositionChange}
         >
           <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-            <SelectValue placeholder="— Выберите —" />
+            <SelectValue placeholder={t("journalAcceptance.row.choose")} />
           </SelectTrigger>
           <SelectContent>
             <PositionSelectItems users={props.users} />
@@ -1708,9 +1710,7 @@ function SettingsDialog(props: {
         </Select>
       </div>
       <div className="space-y-2">
-        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Сотрудник
-        </Label>
+        <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("journalControls.positionSelect.employeeLabel")}</Label>
         <Select
           value={responsibleUserId}
           onValueChange={(v) => {
@@ -1724,7 +1724,7 @@ function SettingsDialog(props: {
           onOpenChange={settingsCascade.setEmployeeOpen}
         >
           <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-            <SelectValue placeholder="— Выберите —" />
+            <SelectValue placeholder={t("journalAcceptance.row.choose")} />
           </SelectTrigger>
           <SelectContent>
             {(responsibleTitle
@@ -1746,8 +1746,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа, дата начала, формат поля срока и ответственный по умолчанию."
+        title={t("journalAcceptance.settings.title")}
+        description={t("journalAcceptance.settings.description")}
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -1760,34 +1760,34 @@ function SettingsDialog(props: {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки документа</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("journalAcceptance.settings.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-6 py-5">
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Название документа</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-5 text-[16px]" />
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.settings.documentTitle")}</Label>
+            <Input aria-label={t("journalAcceptance.settings.documentTitle")} value={title} onChange={(e) => setTitle(e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-5 text-[16px]" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Дата начала</Label>
-            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-5 text-[16px]" />
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.settings.dateFrom")}</Label>
+            <Input aria-label={t("journalAcceptance.settings.dateFrom")} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-10 rounded-xl border-[#dcdfed] px-5 text-[16px]" />
           </div>
           {props.showExpiryLabelChoice === false ? null : (
           <div className="space-y-2">
-            <div className="text-[14px] font-semibold">Название поля</div>
+            <div className="text-[14px] font-semibold">{t("journalAcceptance.settings.fieldName")}</div>
             <label className="flex items-center gap-2 text-[15px]">
               <input type="radio" name="expiryLabel" checked={expiryLabel === "expiry_deadline"} onChange={() => setExpiryLabel("expiry_deadline")} className="size-4 accent-[#5566f6]" />
-              &quot;Предельный срок реализации&quot;
+              &quot;{t("journalAcceptance.settings.expiryDeadlineChoice")}&quot;
             </label>
             <label className="flex items-center gap-2 text-[15px]">
               <input type="radio" name="expiryLabel" checked={expiryLabel === "shelf_life"} onChange={() => setExpiryLabel("shelf_life")} className="size-4 accent-[#5566f6]" />
-              &quot;Срок годности&quot;
+              &quot;{t("journalAcceptance.settings.shelfLifeChoice")}&quot;
             </label>
           </div>
           )}
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.responsiblePosition")}</Label>
             <Select
               value={
                 responsibleTitle ||
@@ -1798,20 +1798,20 @@ function SettingsDialog(props: {
               }
               onValueChange={settingsCascade.handlePositionChange}
             >
-              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder={t("journalControls.positionSelect.chooseEmployee")} /></SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalControls.positionSelect.employeeLabel")}</Label>
             <Select value={responsibleUserId} onValueChange={(v) => {
               setResponsibleUserId(v);
               const user = props.users.find((u) => u.id === v);
               if (user) setResponsibleTitle(getUserRoleLabel(user.role));
             }} open={settingsCascade.employeeOpen} onOpenChange={settingsCascade.setEmployeeOpen}>
-              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
+              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder={t("journalControls.positionSelect.chooseEmployee")} /></SelectTrigger>
               <SelectContent>
                 {(responsibleTitle ? settingsCascade.candidates : props.users).map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
               </SelectContent>
@@ -1819,7 +1819,7 @@ function SettingsDialog(props: {
           </div>
           <div className="flex justify-end pt-2">
             <Button type="button" onClick={handleSave} disabled={isSubmitting} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]">
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </div>
@@ -1838,9 +1838,10 @@ function ImportRowsDialog(props: {
   isProductAcceptance: boolean;
   onFileSelect: (file: File) => Promise<void>;
 }) {
+  const { t, say } = useAcceptanceCopy();
   const [dragActive, setDragActive] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<AcceptanceDiagnostic | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -1857,7 +1858,7 @@ function ImportRowsDialog(props: {
       await props.onFileSelect(file);
       props.onOpenChange(false);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Ошибка импорта"));
+      setErrorMessage(getErrorMessage(error, "Ошибка импорта", "journalAcceptance.errors.import"));
     } finally {
       setSubmitting(false);
     }
@@ -1865,54 +1866,50 @@ function ImportRowsDialog(props: {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Добавление списка изделий из файла в формате Excel
-          </DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("journalAcceptance.import.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5 text-[16px] text-black">
           <div className="space-y-3 leading-7 text-[#333]">
-            <p>Список должен быть в файле Excel, на первом листе и начинаться с первой строки.</p>
-            <p>Столбцы должны быть в следующем формате:</p>
+            <p>{t("journalAcceptance.import.help")}</p>
+            <p>{t("journalAcceptance.import.columnsHelp")}</p>
             {props.isProductAcceptance ? (
               <div className="space-y-1">
-                <div>1-й столбец - дата поставки (не может быть пустым или строкой)</div>
-                <div>2-й столбец - наименование продукции (не может быть пустым)</div>
-                <div>3-й столбец - годен до</div>
-                <div>4-й столбец - производитель/поставщик</div>
-                <div>5-й столбец - ТТН, документы соответствия</div>
-                <div>6-й столбец - объем, номер партии, дата пр-ва</div>
-                <div>7-й столбец - внутр. темп-ра продукта</div>
-                <div>8-й столбец - соответствие товара сопроводительной документации</div>
-                <div>9-й столбец - принять/отклонить (П - принять, О - отклонить)</div>
-                <div>10-й столбец - корректирующие действия</div>
-                <div>11-й столбец - ответственный (должность)</div>
+                <div>{t("journalAcceptance.import.productColumn1")}</div>
+                <div>{t("journalAcceptance.import.productColumn2")}</div>
+                <div>{t("journalAcceptance.import.productColumn3")}</div>
+                <div>{t("journalAcceptance.import.productColumn4")}</div>
+                <div>{t("journalAcceptance.import.productColumn5")}</div>
+                <div>{t("journalAcceptance.import.productColumn6")}</div>
+                <div>{t("journalAcceptance.import.productColumn7")}</div>
+                <div>{t("journalAcceptance.import.productColumn8")}</div>
+                <div>{t("journalAcceptance.import.productColumn9")}</div>
+                <div>{t("journalAcceptance.import.productColumn10")}</div>
+                <div>{t("journalAcceptance.import.productColumn11")}</div>
               </div>
             ) : (
               <div className="space-y-1">
-                <div>1-й столбец - дата поступления (не может быть пустым или строкой)</div>
-                <div>2-й столбец - время поступления</div>
-                <div>3-й столбец - наименование (не может быть пустым)</div>
-                <div>4-й столбец - производитель</div>
-                <div>5-й столбец - поставщик (не может быть пустым)</div>
-                <div>6-й столбец - условия транспортировки (0 - Не удовл., 1 - Удовл.)</div>
-                <div>7-й столбец - соответствие упаковки (0 - Не соотв., 1 - Соотв.)</div>
-                <div>8-й столбец - результаты орг. оценки (0 - Не удовл., 1 - Удовл.)</div>
-                <div>9-й столбец - предельный срок реализации, дата</div>
-                <div>10-й столбец - предельный срок реализации, время</div>
-                <div>11-й столбец - примечания</div>
+                <div>{t("journalAcceptance.import.rawColumn1")}</div>
+                <div>{t("journalAcceptance.import.rawColumn2")}</div>
+                <div>{t("journalAcceptance.import.rawColumn3")}</div>
+                <div>{t("journalAcceptance.import.rawColumn4")}</div>
+                <div>{t("journalAcceptance.import.rawColumn5")}</div>
+                <div>{t("journalAcceptance.import.rawColumn6")}</div>
+                <div>{t("journalAcceptance.import.rawColumn7")}</div>
+                <div>{t("journalAcceptance.import.rawColumn8")}</div>
+                <div>{t("journalAcceptance.import.rawColumn9")}</div>
+                <div>{t("journalAcceptance.import.rawColumn10")}</div>
+                <div>{t("journalAcceptance.import.rawColumn11")}</div>
               </div>
             )}
           </div>
 
           <button
             type="button"
-            onClick={() => downloadAcceptanceImportTemplate(props.isProductAcceptance)}
+            onClick={() => downloadAcceptanceImportTemplate(props.isProductAcceptance, say)}
             className="text-[16px] text-[#5566f6] underline underline-offset-4"
-          >
-            Скачать пример файла
-          </button>
+          >{t("journalAcceptance.import.downloadExample")}</button>
 
           <input
             ref={inputRef}
@@ -1945,23 +1942,23 @@ function ImportRowsDialog(props: {
             }`}
           >
             <Paperclip className="size-10 text-[#6f7282]" />
-            <span className="text-[15px] text-[#5566f6]">Выберите файл</span>
-            <span className="text-[18px] text-[#3d4152]">или перетащите его сюда</span>
+            <span className="text-[15px] text-[#5566f6]">{t("journalAcceptance.import.chooseFile")}</span>
+            <span className="text-[18px] text-[#3d4152]">{t("journalAcceptance.import.dropFile")}</span>
           </button>
           {errorMessage ? (
             <div className="whitespace-pre-line rounded-xl bg-[#fff2f1] px-4 py-3 text-[14px] text-[#d43a2f]">
-              {errorMessage}
+              {formatAcceptanceDiagnostic(errorMessage, t)}
             </div>
           ) : null}
 
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.row.responsiblePosition")}</Label>
             <div className="flex h-14 items-center rounded-2xl border border-[#dcdfed] bg-[#f3f4fb] px-5 text-[16px]">
               {props.responsibleTitle || "—"}
             </div>
           </div>
           <div className="space-y-3">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalControls.positionSelect.employeeLabel")}</Label>
             <div className="flex h-14 items-center rounded-2xl border border-[#dcdfed] bg-[#f3f4fb] px-5 text-[16px]">
               {props.users.find((user) => user.id === props.responsibleUserId)?.name || "—"}
             </div>
@@ -1974,7 +1971,7 @@ function ImportRowsDialog(props: {
               onClick={() => inputRef.current?.click()}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Добавление..." : "Добавить"}
+              {submitting ? t("journalAcceptance.actions.adding") : t("common.add")}
             </Button>
           </div>
         </div>
@@ -1992,9 +1989,10 @@ function AddMultipleRowsDialog(props: {
   /** «С фото накладной»: распознанные позиции — сразу строками журнала. */
   onPhotoItems: (items: VisionRawItem[]) => Promise<RecognizeResult>;
 }) {
+  const { t } = useAcceptanceCopy();
   const [count, setCount] = useState("5");
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<AcceptanceDiagnostic | null>(null);
 
   useEffect(() => {
     if (!props.open) return;
@@ -2006,7 +2004,7 @@ function AddMultipleRowsDialog(props: {
   async function handleSubmit() {
     const parsed = Number(count);
     if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 100) {
-      setErrorMessage("Укажите количество строк от 1 до 100.");
+      setErrorMessage({ raw: "Укажите количество строк от 1 до 100.", messages: [{ key: "journalAcceptance.bulk.countRange" }] });
       return;
     }
 
@@ -2015,7 +2013,7 @@ function AddMultipleRowsDialog(props: {
       await props.onSubmit(parsed);
       props.onOpenChange(false);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Ошибка добавления строк"));
+      setErrorMessage(getErrorMessage(error, "Ошибка добавления строк", "journalAcceptance.errors.addRows"));
     } finally {
       setSubmitting(false);
     }
@@ -2023,18 +2021,13 @@ function AddMultipleRowsDialog(props: {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Добавить несколько строк
-          </DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("journalAcceptance.bulk.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
           <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
-            <p className="text-[13px] leading-[1.5] text-[#3c4053]">
-              Накладная на бумаге — сфотографируйте её: строки добавятся сразу, с наименованием, изготовителем,
-              поставщиком и сроком годности.
-            </p>
+            <p className="text-[13px] leading-[1.5] text-[#3c4053]">{t("journalAcceptance.bulk.photoHelp")}</p>
             <RecognizeFromPhoto
               kind="raw"
               onItems={async (items) => {
@@ -2042,14 +2035,14 @@ function AddMultipleRowsDialog(props: {
                 props.onOpenChange(false);
                 return result;
               }}
-              label="С фото накладной"
-              resultLabel="В журнал добавлено"
+              label={t("journalAcceptance.bulk.photoLabel")}
+              resultLabel={t("journalAcceptance.bulk.photoResult")}
               className="w-full sm:w-auto"
               testId="acceptance-photo"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Количество пустых строк</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("journalAcceptance.bulk.emptyCount")}</Label>
             <Input
               type="number"
               inputMode="decimal"
@@ -2062,7 +2055,7 @@ function AddMultipleRowsDialog(props: {
           </div>
           {errorMessage ? (
             <div className="rounded-xl bg-[#fff2f1] px-4 py-3 text-[14px] text-[#d43a2f]">
-              {errorMessage}
+              {formatAcceptanceDiagnostic(errorMessage, t)}
             </div>
           ) : null}
           <div className="flex justify-end">
@@ -2072,7 +2065,7 @@ function AddMultipleRowsDialog(props: {
               disabled={submitting}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Добавление..." : "Добавить"}
+              {submitting ? t("journalAcceptance.actions.adding") : t("common.add")}
             </Button>
           </div>
         </div>
@@ -2082,15 +2075,14 @@ function AddMultipleRowsDialog(props: {
 }
 
 function IikoDialog(props: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { t } = useAcceptanceCopy();
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
+      <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Добавление списка из Iiko (Приходные накладные)</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("journalAcceptance.iiko.title")}</DialogTitle>
         </DialogHeader>
-        <div className="px-6 py-5 text-[15px] text-[#555]">
-          Для настройки синхронизации с Iiko обратитесь к разработчикам сервиса WeSetup.
-        </div>
+        <div className="px-6 py-5 text-[15px] text-[#555]">{t("journalAcceptance.iiko.description")}</div>
       </DialogContent>
     </Dialog>
   );
@@ -2099,9 +2091,22 @@ function IikoDialog(props: { open: boolean; onOpenChange: (open: boolean) => voi
 /* ─── Main Component ─── */
 
 export function AcceptanceDocumentClient(props: Props) {
+  return <AcceptanceDocumentEditor key={props.documentId} {...props} />;
+}
+
+function AcceptanceDocumentEditor(props: Props) {
+  const { t, say, feedback, committed } = useAcceptanceCopy();
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [config, setConfig] = useState(() => normalizeAcceptanceDocumentConfig(props.config, props.users));
+  const [documentState, setDocumentState] = useState(() => {
+    const config = normalizeAcceptanceDocumentConfig(props.config, props.users);
+    return { config, summaryBindings: bindAcceptanceSummaryRows(config, props.generatedSummaries ?? []) };
+  });
+  const { config, summaryBindings } = documentState;
+  function setConfig(next: AcceptanceDocumentConfig) {
+    setDocumentState((current) => current.config === next ? current : { ...current, config: next });
+  }
+
   // Единый источник status/pdf-действий над журнальным документом.
   const { setStatus } = useJournalDocumentActions(props.documentId);
   const [title, setTitle] = useState(props.title);
@@ -2133,10 +2138,11 @@ export function AcceptanceDocumentClient(props: Props) {
   const [iikoOpen, setIikoOpen] = useState(false);
   const [rowsImportOpen, setRowsImportOpen] = useState(false);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<AcceptanceDiagnostic | null>(null);
 
-  useEffect(() => { setConfig(normalizeAcceptanceDocumentConfig(props.config, props.users)); }, [props.config, props.users]);
-  useEffect(() => { setTitle(props.title); setDateFrom(props.dateFrom); }, [props.dateFrom, props.title]);
+  const incomingConfig = acceptanceServerRevision(props.documentId, props.config, props.users, props.generatedSummaries, props.sourceIdentity);
+  const lastIncomingConfig = useRef(incomingConfig);
+  useEffect(() => { setTitle(props.title); setDateFrom(props.dateFrom); }, [props.documentId, props.dateFrom, props.title]);
 
   const rows = config.rows;
   const routeCode = props.routeCode;
@@ -2146,14 +2152,14 @@ export function AcceptanceDocumentClient(props: Props) {
     resolveJournalCodeAlias(routeCode) === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE;
   /** Заголовки v2-таблицы с учётом опциональной 12-й колонки (I1). */
   const incomingControlColumns = useMemo(
-    () => getIncomingControlColumns(config.showPackagingCompliance),
-    [config.showPackagingCompliance]
+    () => acceptanceProductColumns(config.showPackagingCompliance, t),
+    [config.showPackagingCompliance, t]
   );
   const allSelected = rows.length > 0 && selectedRowIds.length === rows.length;
   const isClosed = props.status === "closed";
   const responsibleTitle = config.defaultResponsibleTitle || "";
   const responsibleUserId = config.defaultResponsibleUserId || "";
-  // Сортировка — по колонке «Годен до» (v2) / «Предельный срок реализации»
+  // Сортировка — по колонке «Годен до» (v2) / «{t("journalAcceptance.settings.expiryDeadlineChoice")}»
   // (legacy). `shelfLifeDate` зеркалит `expiryDate`, поэтому одна формула.
   const displayedRows = useMemo(() => {
     if (!sortByExpiry) return rows;
@@ -2196,43 +2202,43 @@ export function AcceptanceDocumentClient(props: Props) {
       ? (() => {
           const values = getIncomingControlRowValues(row);
           return [
-            { label: "Годен до", value: values.shelfLifeDate, hideIfEmpty: true },
-            { label: "Производитель/поставщик", value: values.manufacturerSupplier, hideIfEmpty: true },
-            { label: "ТТН, документы соответствия", value: values.accompanyingDocs, hideIfEmpty: true },
-            { label: "Объем, номер партии, дата пр-ва", value: values.batchInfo, hideIfEmpty: true },
-            { label: "Внутр-яя темп-ра продукта", value: values.productTemperature, hideIfEmpty: true },
-            { label: "Соответствие сопр. документации", value: values.documentCompliance, hideIfEmpty: true },
-            { label: "Принять/Отклонить", value: values.acceptanceDecision, hideIfEmpty: true },
-            { label: "Корректирующие действия", value: values.correctiveActions, hideIfEmpty: true },
-            { label: "Ответственный", value: getResponsibleLabel(row, props.users), hideIfEmpty: true },
+            { label: t("foodControlPdf.incomingControl.columns.shelfLifeDate"), value: values.shelfLifeDate, hideIfEmpty: true },
+            { label: t("foodControlPdf.incomingControl.columns.manufacturerSupplier"), value: values.manufacturerSupplier, hideIfEmpty: true },
+            { label: t("foodControlPdf.incomingControl.columns.accompanyingDocs"), value: values.accompanyingDocs, hideIfEmpty: true },
+            { label: t("foodControlPdf.incomingControl.columns.batchInfo"), value: values.batchInfo, hideIfEmpty: true },
+            { label: t("journalAcceptance.row.cardTemperature"), value: values.productTemperature, hideIfEmpty: true },
+            { label: t("journalAcceptance.row.cardDocumentation"), value: acceptanceSummaryDisplay(row, summaryBindings, t), hideIfEmpty: true },
+            { label: t("journalAcceptance.row.cardDecision"), value: acceptanceEnumLabel("decision", row.acceptanceDecision, t), hideIfEmpty: true },
+            { label: t("journalAcceptance.csv.productColumn10"), value: values.correctiveActions, hideIfEmpty: true },
+            { label: t("foodControlPdf.incomingControl.columns.responsible"), value: getResponsibleLabel(row, props.users), hideIfEmpty: true },
           ];
         })()
       : [
-      { label: "Производитель", value: row.manufacturer, hideIfEmpty: true },
-      { label: "Поставщик", value: row.supplier, hideIfEmpty: true },
+      { label: t("journalAcceptance.row.manufacturer"), value: row.manufacturer, hideIfEmpty: true },
+      { label: t("journalAcceptance.row.supplier"), value: row.supplier, hideIfEmpty: true },
       {
-        label: "Транспортировка",
-        value: TRANSPORT_LABELS[row.transportCondition],
+        label: t("journalAcceptance.cards.transportLabel"),
+        value: acceptanceEnumLabel("transport", row.transportCondition, t),
         hideIfEmpty: true,
       },
       {
-        label: "Упаковка/маркировка",
-        value: COMPLIANCE_LABELS[row.packagingCompliance],
+        label: t("journalAcceptance.cards.packagingLabel"),
+        value: acceptanceEnumLabel("packaging", row.packagingCompliance, t),
         hideIfEmpty: true,
       },
       {
-        label: "Органолептика",
-        value: ORGANOLEPTIC_LABELS[row.organolepticResult],
+        label: t("journalAcceptance.cards.organolepticLabel"),
+        value: acceptanceEnumLabel("organoleptic", row.organolepticResult, t),
         hideIfEmpty: true,
       },
       {
-        label: getExpiryFieldDisplayLabel(config.expiryFieldLabel),
+        label: t(config.expiryFieldLabel === "shelf_life" ? "journalAcceptance.row.shelfLifeLabel" : "journalAcceptance.row.expiryDeadline"),
         value: `${formatAcceptanceDateDash(row.expiryDate)}${row.expiryHour ? ` ${row.expiryHour}:${row.expiryMinute || "00"}` : ""}`,
         hideIfEmpty: true,
       },
-      { label: "Примечания", value: row.note, hideIfEmpty: true },
+      { label: t("foodControlPdf.acceptance.columns.notes"), value: row.note, hideIfEmpty: true },
       {
-        label: "Ответственный",
+        label: t("foodControlPdf.incomingControl.columns.responsible"),
         value: getResponsibleLabel(row, props.users),
         hideIfEmpty: true,
       },
@@ -2260,13 +2266,27 @@ export function AcceptanceDocumentClient(props: Props) {
     },
   });
 
+  const cancelSequentialEdit = seq.cancelled;
+  useEffect(() => {
+    if (lastIncomingConfig.current === incomingConfig) return;
+    lastIncomingConfig.current = incomingConfig;
+    const config = normalizeAcceptanceDocumentConfig(props.config, props.users);
+    setDocumentState({ config, summaryBindings: bindAcceptanceSummaryRows(config, props.generatedSummaries ?? []) });
+    setSelectedRowIds((current) => current.filter((id) => config.rows.some((row) => row.id === id)));
+    if (editingRow) {
+      const incomingRow = config.rows.find((row) => row.id === editingRow.id) ?? null;
+      setEditingRow(incomingRow);
+      if (!incomingRow) cancelSequentialEdit();
+    }
+  }, [incomingConfig, props.config, props.users, props.generatedSummaries, editingRow, cancelSequentialEdit]);
+
   async function persist(nextTitle: string, nextDateFrom: string, nextConfig: AcceptanceDocumentConfig) {
     const response = await fetch(`/api/journal-documents/${props.documentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: nextTitle, dateFrom: nextDateFrom, config: nextConfig }),
     });
-    if (!response.ok) throw new Error("Не удалось сохранить документ");
+    if (!response.ok) throw tagAcceptanceError(new Error("Не удалось сохранить документ"), [{ key: "journalAcceptance.errors.saveDocument" }]);
     setErrorMessage(null);
     setTitle(nextTitle);
     setDateFrom(nextDateFrom);
@@ -2309,7 +2329,7 @@ export function AcceptanceDocumentClient(props: Props) {
     });
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      toast.error(payload?.error || "Не удалось создать партию");
+      toast.error(payload?.error || say("journalAcceptance.errors.createBatch"));
       return null;
     }
     const batch = (await response.json()) as { id: string; code: string };
@@ -2318,8 +2338,8 @@ export function AcceptanceDocumentClient(props: Props) {
       ...config,
       rows: config.rows.map((item) => (item.id === row.id ? nextRow : item)),
     });
-    toast.success(`Партия ${batch.code} создана`, {
-      action: { label: "Открыть", onClick: () => router.push(`/batches/${batch.id}`) },
+    toast.success(say("journalAcceptance.batch.created", { code: `${batch.code}` }), {
+      action: { label: say("journalAcceptance.actions.openBatch"), onClick: () => router.push(`/batches/${batch.id}`) },
     });
     return nextRow;
   }
@@ -2331,20 +2351,21 @@ export function AcceptanceDocumentClient(props: Props) {
       .map((r) => r.productName)
       .filter(Boolean);
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные строки?",
-      description: "Записи о приёмке исчезнут из журнала безвозвратно.",
+      locale: committed.current.locale,
+      title: say("journalAcceptance.confirm.deleteTitle"),
+      description: say("journalAcceptance.confirm.deleteDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: say("common.delete"),
       bullets: [
-        { label: `Строк будет удалено: ${selectedRowIds.length}`, tone: "warn" },
+        { label: say("journalAcceptance.confirm.deleteCount", { count: selectedRowIds.length }), tone: "warn" },
         names.length > 0
           ? {
-              label: `Продукция: ${names.slice(0, 4).join(", ")}${names.length > 4 ? " и др." : ""}`,
+              label: ((namesText: string) => say(names.length > 4 ? "journalAcceptance.confirm.productsMore" : "journalAcceptance.confirm.products", { names: namesText }))(names.slice(0, 4).join(", ")),
               tone: "info" as const,
             }
-          : { label: "У выбранных строк не заполнено наименование", tone: "info" as const },
+          : { label: say("journalAcceptance.confirm.productsMissing"), tone: "info" as const },
         {
-          label: `Останется строк: ${config.rows.length - selectedRowIds.length}`,
+          label: say("journalAcceptance.confirm.remainingCount", { count: config.rows.length - selectedRowIds.length }),
           tone: "default",
         },
       ],
@@ -2353,19 +2374,20 @@ export function AcceptanceDocumentClient(props: Props) {
     const count = selectedRowIds.length;
     await persist(title, dateFrom, { ...config, rows: config.rows.filter((r) => !selectedRowIds.includes(r.id)) });
     setSelectedRowIds([]);
-    toast.success(`Удалено строк: ${count}`);
+    toast.success(say("journalAcceptance.feedback.rowsDeleted", { count }));
   }
 
   async function handleCloseJournal() {
     const confirmed = await confirmAsync({
-      title: "Закончить журнал?",
-      description: `Документ «${title}» перейдёт в закладку «Закрытые» и станет доступен только для просмотра.`,
+      locale: committed.current.locale,
+      title: say("journalAcceptance.confirm.closeTitle"),
+      description: say("journalAcceptance.confirm.closeDescription", { title: `${title}` }),
       variant: "warn",
-      confirmLabel: "Закончить журнал",
+      confirmLabel: say("journalControls.closeDocument.close"),
       bullets: [
-        { label: `Строк в журнале: ${config.rows.length}`, tone: "info" },
-        { label: "Добавлять и редактировать поставки будет нельзя", tone: "warn" },
-        { label: "Журнал можно вернуть в активные из списка документов", tone: "default" },
+        { label: say("journalAcceptance.confirm.closeCount", { count: config.rows.length }), tone: "info" },
+        { label: say("journalAcceptance.confirm.closeLocked"), tone: "warn" },
+        { label: say("journalAcceptance.confirm.closeReopen"), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -2423,13 +2445,14 @@ export function AcceptanceDocumentClient(props: Props) {
     const hasHeader = (normalizedRows[0] ?? []).some((cell) => {
       const value = cell.toLowerCase();
       return value.includes("дата") || value.includes("наименование") || value.includes("поставщик");
-    });
+    }) || isGeneratedAcceptanceImportHeader(normalizedRows[0] ?? [], isProductAcceptance);
     const dataRows = (hasHeader ? normalizedRows.slice(1) : normalizedRows).filter((row) =>
       row.some((cell) => normalizeImportText(cell))
     );
     if (dataRows.length === 0) return;
 
     const errors: string[] = [];
+    const errorDetails: AcceptanceMessage[] = [];
     const productsToAdd: string[] = [];
     const manufacturersToAdd: string[] = [];
     const suppliersToAdd: string[] = [];
@@ -2446,11 +2469,11 @@ export function AcceptanceDocumentClient(props: Props) {
           const manufacturerSupplier = normalizeImportText(cols[3]);
 
           if (!deliveryDate)
-            errors.push(`Строка ${rowNumber}: заполните корректную дату поставки`);
+            { errors.push(`Строка ${rowNumber}: заполните корректную дату поставки`); errorDetails.push({ key: "journalAcceptance.errors.productDeliveryDate", values: { rowNumber } }); }
           if (!productName)
-            errors.push(`Строка ${rowNumber}: заполните наименование продукции`);
+            { errors.push(`Строка ${rowNumber}: заполните наименование продукции`); errorDetails.push({ key: "journalAcceptance.errors.productName", values: { rowNumber } }); }
           if (shelfLifeRaw && !shelfLifeDate)
-            errors.push(`Строка ${rowNumber}: заполните корректную дату «Годен до»`);
+            { errors.push(`Строка ${rowNumber}: заполните корректную дату «Годен до»`); errorDetails.push({ key: "journalAcceptance.errors.shelfLifeDate", values: { rowNumber } }); }
           if (!deliveryDate || !productName || (shelfLifeRaw && !shelfLifeDate)) return [];
 
           if (productName) productsToAdd.push(productName);
@@ -2488,13 +2511,13 @@ export function AcceptanceDocumentClient(props: Props) {
       const packagingCompliance = parseImportBoolean(cols[6] || "");
       const organolepticResult = parseImportBoolean(cols[7] || "");
 
-      if (!deliveryDate) errors.push(`Строка ${rowNumber}: заполните корректную дату поступления`);
-      if (!productName) errors.push(`Строка ${rowNumber}: заполните наименование продукции`);
-      if (!supplier) errors.push(`Строка ${rowNumber}: заполните поставщика`);
-      if (transportCondition === null) errors.push(`Строка ${rowNumber}: заполните условия транспортировки`);
-      if (packagingCompliance === null) errors.push(`Строка ${rowNumber}: заполните соответствие упаковки`);
-      if (organolepticResult === null) errors.push(`Строка ${rowNumber}: заполните результаты орг. оценки`);
-      if (expiryDateRaw && !expiryDate) errors.push(`Строка ${rowNumber}: заполните корректную дату срока реализации`);
+      if (!deliveryDate) { errors.push(`Строка ${rowNumber}: заполните корректную дату поступления`); errorDetails.push({ key: "journalAcceptance.errors.rawDeliveryDate", values: { rowNumber } }); }
+      if (!productName) { errors.push(`Строка ${rowNumber}: заполните наименование продукции`); errorDetails.push({ key: "journalAcceptance.errors.productName", values: { rowNumber } }); }
+      if (!supplier) { errors.push(`Строка ${rowNumber}: заполните поставщика`); errorDetails.push({ key: "journalAcceptance.errors.supplier", values: { rowNumber } }); }
+      if (transportCondition === null) { errors.push(`Строка ${rowNumber}: заполните условия транспортировки`); errorDetails.push({ key: "journalAcceptance.errors.transport", values: { rowNumber } }); }
+      if (packagingCompliance === null) { errors.push(`Строка ${rowNumber}: заполните соответствие упаковки`); errorDetails.push({ key: "journalAcceptance.errors.packaging", values: { rowNumber } }); }
+      if (organolepticResult === null) { errors.push(`Строка ${rowNumber}: заполните результаты орг. оценки`); errorDetails.push({ key: "journalAcceptance.errors.organoleptic", values: { rowNumber } }); }
+      if (expiryDateRaw && !expiryDate) { errors.push(`Строка ${rowNumber}: заполните корректную дату срока реализации`); errorDetails.push({ key: "journalAcceptance.errors.expiryDate", values: { rowNumber } }); }
       if (
         !deliveryDate ||
         !productName ||
@@ -2531,7 +2554,7 @@ export function AcceptanceDocumentClient(props: Props) {
       ];
     });
     const imported = isProductAcceptance ? importedProduct : importedLegacy;
-    if (errors.length > 0) throw new Error(errors.slice(0, 8).join("\n"));
+    if (errors.length > 0) throw tagAcceptanceError(new Error(errors.slice(0, 8).join("\n")), errorDetails.slice(0, 8));
     if (imported.length === 0) return;
     await persist(title, dateFrom, {
       ...config,
@@ -2543,12 +2566,14 @@ export function AcceptanceDocumentClient(props: Props) {
     setRowsImportOpen(false);
   }
 
-  const organizationLabel = props.organizationName || ORG_NAME_FALLBACK;
-  const pageTitle = getAcceptancePageTitle(routeCode);
-  const documentTitle = title || getAcceptanceDocumentTitle(routeCode);
+  const organizationLabel = props.organizationFallbackSuffix != null
+    ? t("journalControls.guidePage.organizationFallback") + props.organizationFallbackSuffix
+    : props.organizationName || t("journalControls.guidePage.organizationFallback");
+  const pageTitle = t(isProductAcceptance ? "journals.names.incoming_control" : "journals.names.incoming_raw_materials_control");
+  const documentTitle = title || t(isProductAcceptance ? "journals.names.incoming_control" : "foodControlPdf.acceptance.title.rawMaterials");
   const journalHeaderTitle = isProductAcceptance
-    ? "ЖУРНАЛ ПРИЕМКИ И ВХОДНОГО КОНТРОЛЯ ПРОДУКЦИИ"
-    : "ЖУРНАЛ ВХОДНОГО КОНТРОЛЯ СЫРЬЯ, ИНГРЕДИЕНТОВ, УПАКОВОЧНЫХ МАТЕРИАЛОВ";
+    ? t("journals.names.incoming_control").toUpperCase()
+    : t("journals.names.incoming_raw_materials_control").toUpperCase();
 
   return (
     <div className="bg-white text-black">
@@ -2560,10 +2585,10 @@ export function AcceptanceDocumentClient(props: Props) {
             onClear={() => setSelectedRowIds([])}
             onDelete={() =>
               void handleDeleteSelected().catch((error) =>
-                toast.error(getErrorMessage(error, "Не удалось удалить строки"))
+                toast.error(feedback(error, "Не удалось удалить строки", "journalAcceptance.errors.deleteRows"))
               )
             }
-            hint="Записи приёмки будут удалены без возможности отмены"
+            hint={t("journalAcceptance.screen.selectionHint")}
           >
             <SelectionEditButton count={selectedRowIds.length} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
@@ -2571,11 +2596,11 @@ export function AcceptanceDocumentClient(props: Props) {
 
         {errorMessage ? (
           <div className="whitespace-pre-line rounded-2xl bg-[#fff2f1] px-5 py-4 text-[14px] text-[#d43a2f]">
-            {errorMessage}
+            {formatAcceptanceDiagnostic(errorMessage, t)}
           </div>
         ) : null}
 
-        <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+        <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("journalAcceptance.screen.emptyTitle")} emptyBody={t("journalAcceptance.screen.emptyBody")} copy={{ noCreateBody: t("journalAcceptance.focus.noCreateBody"), later: t("journalAcceptance.focus.later"), close: t("common.close") }} />
         <DocumentActionsBar
           backHref={`/journals/${routeCode}`}
           documentId={props.documentId}
@@ -2586,7 +2611,7 @@ export function AcceptanceDocumentClient(props: Props) {
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: t("journalControls.closeDocument.close"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => void handleCloseJournal(),
                   },
@@ -2613,14 +2638,12 @@ export function AcceptanceDocumentClient(props: Props) {
             <label
               htmlFor="acceptance-sort-by-expiry"
               className={`cursor-pointer select-none ${DOC_AUTOFILL_LABEL_CLASS}`}
-            >
-              Сортировать по сроку годности
-            </label>
+            >{t("journalAcceptance.screen.sortByExpiry")}</label>
           </div>
         ) : (
           <label className={`${DOC_AUTOFILL_STRIP_CLASS} cursor-pointer`}>
             <Checkbox checked={sortByExpiry} onCheckedChange={(checked) => setSortByExpiry(checked === true)} />
-            <span className={DOC_AUTOFILL_LABEL_CLASS}>Сортировать по сроку годности</span>
+            <span className={DOC_AUTOFILL_LABEL_CLASS}>{t("journalAcceptance.screen.sortByExpiry")}</span>
           </label>
         )}
 
@@ -2658,7 +2681,7 @@ export function AcceptanceDocumentClient(props: Props) {
 
         {isClosed ? (
           <div className="mb-5">
-            <JournalClosedBanner hint="Верните журнал в активные, чтобы снова регистрировать поставки и входной контроль." documentId={props.documentId} />
+            <JournalClosedBanner hint={t("journalAcceptance.screen.closedHint")} documentId={props.documentId} />
           </div>
         ) : null}
 
@@ -2666,12 +2689,12 @@ export function AcceptanceDocumentClient(props: Props) {
         {!isClosed && (
           <div className={DOC_ADD_ROW_CLASS}>
             <ResponsiveMenu
-              title="Добавить"
+              title={t("common.add")}
               align="start"
               items={[
                 {
                   key: "add-row",
-                  label: "Добавить",
+                  label: t("common.add"),
                   icon: <Plus className="size-4 text-[#6f7282]" />,
                   onSelect: () => {
                     setEditingRow(null);
@@ -2680,26 +2703,26 @@ export function AcceptanceDocumentClient(props: Props) {
                 },
                 {
                   key: "add-bulk",
-                  label: "Добавить несколько строк",
+                  label: t("journalAcceptance.bulk.title"),
                   icon: <Plus className="size-4 text-[#6f7282]" />,
                   onSelect: () => setBulkAddOpen(true),
                 },
                 {
                   key: "add-file",
-                  label: "Добавить из файла",
+                  label: t("journalAcceptance.lists.addFromFile"),
                   icon: <Upload className="size-4 text-[#6f7282]" />,
                   onSelect: () => setRowsImportOpen(true),
                 },
                 {
                   key: "add-iiko",
-                  label: "Добавить из Айко",
+                  label: t("journalAcceptance.screen.addIiko"),
                   icon: <span aria-hidden>📋</span>,
                   onSelect: () => setIikoOpen(true),
                 },
               ]}
               trigger={
                 <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]">
-                  <Plus className="size-5" strokeWidth={2.5} /> Добавить <ChevronDown className="size-4" />
+                  <Plus className="size-5" strokeWidth={2.5} />{t("common.add")}<ChevronDown className="size-4" />
                 </Button>
               }
             />
@@ -2719,19 +2742,17 @@ export function AcceptanceDocumentClient(props: Props) {
                   На телефоне, где меню не раскрыто, различить их было
                   нельзя — уточняем, что здесь добавляется. */}
               <Plus className="size-5" strokeWidth={2.5} />
-              <span>Добавить<span className="sm:hidden">&nbsp;поставку</span></span>
+              <span className="hidden sm:inline">{t("journalAcceptance.screen.addDeliveryDesktop")}</span><span className="sm:hidden">{t("journalAcceptance.screen.addDeliveryMobile")}</span>
             </Button>
 
-            <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setEditListsOpen(true)}>
-              Редактировать списки
-            </Button>
+            <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setEditListsOpen(true)}>{t("journalAcceptance.screen.editLists")}</Button>
 
           </div>
         )}
 
 
         {mobileView === "cards" ? (
-          <RecordCardsView items={cardItems} emptyLabel="Поставок пока не зарегистрировано." />
+          <RecordCardsView items={cardItems} emptyLabel={t("journalAcceptance.screen.cardsEmpty")} />
         ) : null}
 
         {/* Data table — v2 (11 колонок эталона) для приёмки продукции */}
@@ -2833,13 +2854,13 @@ export function AcceptanceDocumentClient(props: Props) {
                       <td className={`${GRID_CELL_CLASS} px-1.5 py-1.5 leading-tight break-words`}>{values.accompanyingDocs}</td>
                       <td className={`${GRID_CELL_CLASS} px-1.5 py-1.5 leading-tight break-words`}>{values.batchInfo}</td>
                       <td className={`${GRID_CELL_CLASS} px-1.5 py-1 text-center leading-tight break-words`}>{values.productTemperature}</td>
-                      <td className={`${GRID_CELL_CLASS} px-1.5 py-1.5 leading-tight break-words`}>{values.documentCompliance}</td>
+                      <td className={`${GRID_CELL_CLASS} px-1.5 py-1.5 leading-tight break-words`}>{acceptanceSummaryDisplay(row, summaryBindings, t)}</td>
                       {config.showPackagingCompliance ? (
                         <td className={`${GRID_CELL_CLASS} px-1.5 py-1 text-center leading-tight break-words`}>
-                          {COMPLIANCE_LABELS[row.packagingCompliance]}
+                          {acceptanceEnumLabel("packaging", row.packagingCompliance, t)}
                         </td>
                       ) : null}
-                      <td className={`${GRID_CELL_CLASS} px-1.5 py-1 text-center font-semibold leading-tight break-words`}>{values.acceptanceDecision}</td>
+                      <td className={`${GRID_CELL_CLASS} px-1.5 py-1 text-center font-semibold leading-tight break-words`}>{acceptanceEnumLabel("decision", row.acceptanceDecision, t)}</td>
                       <td className={`${GRID_CELL_CLASS} px-1.5 py-1.5 leading-tight break-words`}>{values.correctiveActions}</td>
                       <td className={`${GRID_CELL_CLASS} px-1.5 py-1.5 leading-tight break-words`}>{getResponsibleLabel(row, props.users)}</td>
                     </tr>
@@ -2850,9 +2871,7 @@ export function AcceptanceDocumentClient(props: Props) {
                     <td
                       colSpan={incomingControlColumns.length + 1}
                       className={`${GRID_CELL_CLASS} p-8 text-center leading-tight text-[#80849a]`}
-                    >
-                      Строк пока нет
-                    </td>
+                    >{t("journalAcceptance.screen.tableEmpty")}</td>
                   </tr>
                 )}
                 {/* R5-13: пустая строка-хвост с ОТКЛЮЧЁННЫМ чекбоксом была
@@ -2874,7 +2893,7 @@ export function AcceptanceDocumentClient(props: Props) {
                     leading={1}
                     labelSpan={2}
                     trailing={incomingControlColumns.length - 2}
-                    label="Добавить"
+                    label={t("common.add")}
                     onClick={() => {
                       setEditingRow(null);
                       setRowDialogOpen(true);
@@ -2895,23 +2914,23 @@ export function AcceptanceDocumentClient(props: Props) {
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>
                   {isProductAcceptance
                     ? "Дата, время поступления продукции, товара"
-                    : "Дата, время поступления"}
+                    : t("journalAcceptance.rawTable.deliveryDateTime")}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>
-                  {isProductAcceptance ? "Наименование продукции" : "Наименование"}
+                  {isProductAcceptance ? t("foodControlPdf.incomingControl.columns.productName") : t("journalAcceptance.csv.rawColumn3")}
                 </th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>Производитель</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>Поставщик</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>Условия транспортировки</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("journalAcceptance.row.manufacturer")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("journalAcceptance.row.supplier")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("journalAcceptance.row.transport")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>
                   {isProductAcceptance
                     ? "Соответствие упаковки, маркировки, гигиенические требования, наличие и правильность оформления товаросопроводительной документации"
-                    : "Соответствие упаковки, маркировки и товаросопроводительной документации"}
+                    : t("journalAcceptance.rawTable.packagingCompliance")}
                 </th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>Результаты органолептической оценки доброкачественности</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{getExpiryFieldDisplayLabel(config.expiryFieldLabel)}</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>Примечания</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>Ответственный</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("journalAcceptance.rawTable.organoleptic")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t(config.expiryFieldLabel === "shelf_life" ? "journalAcceptance.row.shelfLifeLabel" : "journalAcceptance.row.expiryDeadline")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("foodControlPdf.acceptance.columns.notes")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("foodControlPdf.incomingControl.columns.responsible")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2939,9 +2958,9 @@ export function AcceptanceDocumentClient(props: Props) {
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.manufacturer || "—"}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.supplier || "—"}</td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{TRANSPORT_LABELS[row.transportCondition]}</td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{COMPLIANCE_LABELS[row.packagingCompliance]}</td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{ORGANOLEPTIC_LABELS[row.organolepticResult]}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{acceptanceEnumLabel("transport", row.transportCondition, t)}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{acceptanceEnumLabel("packaging", row.packagingCompliance, t)}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{acceptanceEnumLabel("organoleptic", row.organolepticResult, t)}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center whitespace-pre-line leading-tight`}>
                     {formatAcceptanceDateDash(row.expiryDate)}
                     {row.expiryHour ? `\n${row.expiryHour}:${row.expiryMinute || "00"}` : ""}
@@ -2951,7 +2970,7 @@ export function AcceptanceDocumentClient(props: Props) {
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={11} className={`${GRID_CELL_CLASS} p-8 text-center text-[#80849a] leading-tight`}>Строк пока нет</td></tr>
+                <tr><td colSpan={11} className={`${GRID_CELL_CLASS} p-8 text-center text-[#80849a] leading-tight`}>{t("journalAcceptance.screen.tableEmpty")}</td></tr>
               )}
               {/* leading=1 (чекбокс), labelSpan=2 — подпись растянута на
                   «Дата, время поступления» + «Наименование продукции»:
@@ -2966,7 +2985,7 @@ export function AcceptanceDocumentClient(props: Props) {
                   leading={1}
                   labelSpan={2}
                   trailing={8}
-                  label="Добавить"
+                  label={t("common.add")}
                   onClick={() => {
                     setEditingRow(null);
                     setRowDialogOpen(true);
@@ -2986,22 +3005,23 @@ export function AcceptanceDocumentClient(props: Props) {
         </div>
       </div>
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} title={title} dateFrom={dateFrom} users={props.users} config={config} onSave={async (params) => { await persist(params.title, params.dateFrom, params.config); }} useV2={props.useV2} showExpiryLabelChoice={!isProductAcceptance} />
+      <SettingsDialog documentKey={props.documentId} open={settingsOpen} onOpenChange={setSettingsOpen} title={title} dateFrom={dateFrom} users={props.users} config={config} onSave={async (params) => { await persist(params.title, params.dateFrom, params.config); }} useV2={props.useV2} showExpiryLabelChoice={!isProductAcceptance} />
       {editListsOpen && (
         <IncomingControlEditListsDialog
-          key={`${config.products.join("|")}::${config.manufacturers.join("|")}::${config.suppliers.join("|")}`}
+          key={JSON.stringify([props.documentId, config.products, config.manufacturers, config.suppliers])}
           open={editListsOpen}
           onOpenChange={setEditListsOpen}
           config={config}
           setConfig={(nextConfig) => {
             void persist(title, dateFrom, nextConfig).catch((error) =>
-              setErrorMessage(getErrorMessage(error, "Ошибка сохранения списков"))
+              setErrorMessage(getErrorMessage(error, "Ошибка сохранения списков", "journalAcceptance.errors.saveLists"))
             );
           }}
         />
       )}
       {isProductAcceptance ? (
         <IncomingControlRowDialog
+          documentKey={props.documentId}
           open={rowDialogOpen}
           onOpenChange={(open) => { if (open) setRowDialogOpen(true); else seq.cancelled(); }}
           users={props.users}
@@ -3013,7 +3033,7 @@ export function AcceptanceDocumentClient(props: Props) {
           onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow}
         />
       ) : (
-        <RowDialog open={rowDialogOpen} onOpenChange={(open) => { if (open) setRowDialogOpen(true); else seq.cancelled(); }} users={props.users} config={config} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} recentProducts={productSuggestions.recent} onSave={handleSaveRow} onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow} />
+        <RowDialog documentKey={props.documentId} open={rowDialogOpen} onOpenChange={(open) => { if (open) setRowDialogOpen(true); else seq.cancelled(); }} users={props.users} config={config} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} recentProducts={productSuggestions.recent} onSave={handleSaveRow} onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow} />
       )}
       <ImportRowsDialog open={rowsImportOpen} onOpenChange={setRowsImportOpen} users={props.users} responsibleTitle={responsibleTitle} responsibleUserId={responsibleUserId} isProductAcceptance={isProductAcceptance} onFileSelect={handleImportFile} />
       <AddMultipleRowsDialog

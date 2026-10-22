@@ -1,6 +1,7 @@
 "use client";
 
 import { lazy, Suspense, type ComponentType } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, PuzzleIcon } from "lucide-react";
 
 /**
@@ -26,12 +27,15 @@ type AnyFields = ComponentType<MailingKindFieldsProps<any>>;
 
 function missingFields(kind: string): AnyFields {
   function MissingFields() {
+    const t = useTranslations("rootMailingKindFields");
     return (
       <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-4 text-[13px] leading-[1.55] text-[#6f7282]">
         <PuzzleIcon className="mt-0.5 size-4 shrink-0 text-[#9b9fb3]" />
         <span>
-          Для типа «{kind}» нет формы. Её файл —{" "}
-          <code className="rounded bg-white px-1 text-[12px]">src/components/mailing/fields/{kind}.tsx</code>.
+          {t.rich("loader.missing", {
+            kind, file: `src/components/mailing/fields/${kind}.tsx`,
+            path: (chunks) => <code className="rounded bg-white px-1 text-[12px]">{chunks}</code>,
+          })}
         </span>
       </div>
     );
@@ -58,12 +62,13 @@ function fieldsFor(kind: string): AnyFields {
 }
 
 export function MailingKindFields({ kind, ...props }: MailingKindFieldsProps<any> & { kind: string }) {
+  const t = useTranslations("rootMailingKindFields");
   const Fields = fieldsFor(kind);
   return (
     <Suspense
       fallback={
         <div className="flex items-center gap-2 py-6 text-[13px] text-[#6f7282]">
-          <Loader2 className="size-4 animate-spin" /> Загружаем поля…
+          <Loader2 className="size-4 animate-spin" /> {t("loader.loading")}
         </div>
       }
     >

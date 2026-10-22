@@ -1,3 +1,6 @@
+import { formatRootTimingDuration } from "@/lib/root-operations-logs-presentation";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
 import Link from "next/link";
 import { ArrowLeft, Clock, TrendingDown, TrendingUp } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
@@ -15,15 +18,6 @@ export const runtime = "nodejs";
  *   Climate — за 90 сек → есть что упростить.
  *   Intensive_cooling — за 180 сек → плохо, в таблице top-1 в красном.
  */
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms} мс`;
-  const sec = Math.round(ms / 1000);
-  if (sec < 60) return `${sec} сек`;
-  const min = Math.floor(sec / 60);
-  const remSec = sec % 60;
-  return remSec === 0 ? `${min} мин` : `${min} мин ${remSec} сек`;
-}
 
 function median(values: number[]): number {
   if (values.length === 0) return 0;
@@ -45,6 +39,9 @@ export default async function RootTimingsPage() {
   await requireRoot();
 
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const locale = await getSiteLocale();
+  const copy = await getTranslations({ locale, namespace: "rootOperationsLogs" });
 
   const [timings, templates] = await Promise.all([
     db.formFillTiming.findMany({
@@ -88,10 +85,10 @@ export default async function RootTimingsPage() {
   //   >90s: 🔴 slow → в первую очередь упрощать
   function tone(medianMs: number) {
     if (medianMs > 90_000)
-      return { bg: "#fff4f2", fg: "#a13a32", label: "медленно" };
+      return { bg: "#fff4f2", fg: "#a13a32", label: copy("timings.slow") };
     if (medianMs > 30_000)
-      return { bg: "#fff8eb", fg: "#7a4a00", label: "нормально" };
-    return { bg: "#ecfdf5", fg: "#116b2a", label: "быстро" };
+      return { bg: "#fff8eb", fg: "#7a4a00", label: copy("timings.normal") };
+    return { bg: "#ecfdf5", fg: "#116b2a", label: copy("timings.fast") };
   }
 
   return (
@@ -102,7 +99,7 @@ export default async function RootTimingsPage() {
           className="inline-flex items-center gap-1 text-[13px] text-[#6f7282] hover:text-[#0b1024]"
         >
           <ArrowLeft className="size-4" />
-          К списку организаций
+          {copy("timings.back")}
         </Link>
         <div className="mt-4 flex items-start gap-4">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]">
@@ -110,13 +107,10 @@ export default async function RootTimingsPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.625rem,1.5vw+1.2rem,2rem)] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Время заполнения форм
+              {copy("timings.title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Медиана и p90 длительности заполнения форм task-fill за
-              последние 30 дней. Топ медленных журналов — кандидаты на
-              UX-упрощение. Sample &lt; 5 не показываем — статистика
-              недостоверна.
+              {copy("timings.description")}
             </p>
           </div>
         </div>
@@ -125,11 +119,10 @@ export default async function RootTimingsPage() {
       {rows.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Пока нет данных
+            {copy("timings.emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Метрика начинает накапливаться когда сотрудники открывают и
-            закрывают формы task-fill. Подождите 1-2 дня после деплоя.
+            {copy("timings.emptyDescription")}
           </p>
         </div>
       ) : (
@@ -137,12 +130,12 @@ export default async function RootTimingsPage() {
           <table className="w-full min-w-[680px] text-[14px]">
             <thead className="bg-[#fafbff] text-[12px] uppercase tracking-[0.06em] text-[#6f7282]">
               <tr>
-                <th className="px-4 py-3 text-left">Журнал</th>
-                <th className="px-4 py-3 text-right">Sample</th>
-                <th className="px-4 py-3 text-right">Медиана</th>
-                <th className="px-4 py-3 text-right">P90</th>
-                <th className="px-4 py-3 text-right">Среднее</th>
-                <th className="px-4 py-3 text-left">Скорость</th>
+                <th className="px-4 py-3 text-left">{copy("timings.journal")}</th>
+                <th className="px-4 py-3 text-right">{copy("timings.sample")}</th>
+                <th className="px-4 py-3 text-right">{copy("timings.median")}</th>
+                <th className="px-4 py-3 text-right">{copy("timings.p90")}</th>
+                <th className="px-4 py-3 text-right">{copy("timings.average")}</th>
+                <th className="px-4 py-3 text-left">{copy("timings.speed")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ececf4]">
@@ -153,7 +146,7 @@ export default async function RootTimingsPage() {
                   return (
                     <tr key={r.templateId}>
                       <td className="px-4 py-3 text-[#0b1024]">
-                        <div className="font-medium">{r.name}</div>
+                        <div className="font-medium">{tplById.has(r.templateId) ? r.name : copy("timings.unknown")}</div>
                         <div className="text-[11px] text-[#9b9fb3]">
                           {r.code}
                         </div>
@@ -162,13 +155,13 @@ export default async function RootTimingsPage() {
                         {r.count}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums font-semibold text-[#0b1024]">
-                        {formatDuration(r.median)}
+                        {formatRootTimingDuration(r.median, locale)}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-[#3c4053]">
-                        {formatDuration(r.p90)}
+                        {formatRootTimingDuration(r.p90, locale)}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-[#3c4053]">
-                        {formatDuration(r.avg)}
+                        {formatRootTimingDuration(r.avg, locale)}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -193,8 +186,7 @@ export default async function RootTimingsPage() {
 
       {rows.filter((r) => r.count < 5).length > 0 ? (
         <p className="text-[12px] text-[#9b9fb3]">
-          Скрыто {rows.filter((r) => r.count < 5).length} журналов с
-          sample &lt; 5 — недостоверная статистика.
+          {copy("timings.hidden", { count: rows.filter((r) => r.count < 5).length })}
         </p>
       ) : null}
     </div>

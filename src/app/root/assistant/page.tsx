@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { formatAssistantDate } from "./assistant-presentation";
 import {
   Bot,
   Building2,
@@ -16,6 +20,11 @@ import { AssistantIntegrationForm } from "./integration-form";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata() {
+  const t = await getTranslations("rootAssistant");
+  return { title: t("title") };
+}
+
 /**
  * Панель управления запросами к ассистенту.
  *
@@ -29,16 +38,18 @@ const PAGE_SIZE = 60;
 
 function statusMeta(status: string) {
   if (status === "done") {
-    return { label: "Отвечено", icon: CircleCheck, color: "#116b2a", bg: "#ecfdf5" };
+    return { label: "statusAnswered" as const, icon: CircleCheck, color: "#116b2a", bg: "#ecfdf5" };
   }
   if (status === "error") {
-    return { label: "Ошибка", icon: CircleAlert, color: "#a13a32", bg: "#fff4f2" };
+    return { label: "statusError" as const, icon: CircleAlert, color: "#a13a32", bg: "#fff4f2" };
   }
-  return { label: "В работе", icon: Clock, color: "#3848c7", bg: "#eef1ff" };
+  return { label: "statusPending" as const, icon: Clock, color: "#3848c7", bg: "#eef1ff" };
 }
 
 export default async function RootAssistantPage() {
   await requireRoot();
+  const t = await getTranslations("rootAssistant");
+  const locale = await getSiteLocale();
 
   const [turns, settings, counts] = await Promise.all([
     db.assistantMessage.findMany({
@@ -102,14 +113,15 @@ export default async function RootAssistantPage() {
   const configured = Boolean(settings.token && settings.projectId);
 
   return (
+    <DomainMessagesBoundary namespaces={["rootAssistant"]}>
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Ассистент
+            {t("title")}
           </h1>
           <p className="mt-1 text-[14px] text-[#6f7282]">
-            Запросы пользователей и настройка связи с ProjectsFlow.
+            {t("description")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -121,7 +133,7 @@ export default async function RootAssistantPage() {
                 className="rounded-full px-3 py-1 text-[12.5px] font-medium tabular-nums"
                 style={{ background: meta.bg, color: meta.color }}
               >
-                {meta.label}: {countBy.get(status) ?? 0}
+                {t(status === "done" ? "countAnswered" : status === "error" ? "countError" : "countPending", { count: countBy.get(status) ?? 0 })}
               </span>
             );
           })}
@@ -140,9 +152,7 @@ export default async function RootAssistantPage() {
 
       {!configured ? (
         <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] px-5 py-4 text-[13.5px] leading-[1.55] text-[#a13a32]">
-          Интеграция не настроена — ассистент выключен, пользователям
-          показывается только живая поддержка. Заполните токен агента и
-          идентификатор проекта выше.
+          {t("warning")}
         </div>
       ) : null}
 
@@ -151,11 +161,10 @@ export default async function RootAssistantPage() {
           <div className="px-6 py-16 text-center">
             <Bot className="mx-auto size-8 text-[#dcdfed]" />
             <p className="mt-3 text-[15px] font-medium text-[#0b1024]">
-              Запросов пока нет
+              {t("emptyTitle")}
             </p>
             <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-              Здесь появятся вопросы, которые сотрудники задают ассистенту в
-              окне помощи.
+              {t("emptyHelp")}
             </p>
           </div>
         ) : (
@@ -183,10 +192,10 @@ export default async function RootAssistantPage() {
                       style={{ background: meta.bg, color: meta.color }}
                     >
                       <Icon className="size-3.5" />
-                      {meta.label}
+                      {t(meta.label)}
                     </span>
                     <span className="tabular-nums">
-                      {turn.createdAt.toLocaleString("ru-RU")}
+                      {formatAssistantDate(turn.createdAt, locale)}
                     </span>
                     {organization ? (
                       <Link
@@ -206,13 +215,13 @@ export default async function RootAssistantPage() {
                     {waitedMs !== null ? (
                       <span
                         className="inline-flex items-center gap-1 tabular-nums"
-                        title="Сколько задание пролежало в очереди до того, как его взяли"
+                        title={t("waitTooltip")}
                       >
                         <Timer className="size-3.5" />
-                        взято через {Math.round(waitedMs / 1000)} с
+                        {t("waited", { seconds: String(Math.round(waitedMs / 1000)) })}
                       </span>
                     ) : turn.status === "pending" ? (
-                      <span className="text-[#a13a32]">ещё не подхвачено</span>
+                      <span className="text-[#a13a32]">{t("notPickedUp")}</span>
                     ) : null}
                   </div>
 
@@ -231,7 +240,7 @@ export default async function RootAssistantPage() {
                     )}
                   >
                     {turn.status === "error"
-                      ? turn.error || "Ошибка без описания"
+                      ? turn.error || t("errorMissing")
                       : turn.content || "…"}
                   </div>
                 </li>
@@ -241,5 +250,6 @@ export default async function RootAssistantPage() {
         )}
       </div>
     </div>
+    </DomainMessagesBoundary>
   );
 }

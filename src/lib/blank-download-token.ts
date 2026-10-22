@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { Locale } from "@/i18n/locales";
 import { NextResponse } from "next/server";
 
 import {
@@ -101,8 +102,8 @@ export function verifyBlankDownloadToken(
 }
 
 /** Относительная ссылка на файл с токеном. */
-export function blankDownloadHref(target: BlankTarget, format: BlankFormat, token: string): string {
-  return `${blankFilePath(target, format)}?t=${encodeURIComponent(token)}`;
+export function blankDownloadHref(target: BlankTarget, format: BlankFormat, token: string, locale?: Locale): string {
+  return `${blankFilePath(target, format)}?t=${encodeURIComponent(token)}${target.kind === "code" && (locale === "en" || locale === "uz") ? `&locale=${locale}` : ""}`;
 }
 
 /**

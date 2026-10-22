@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
 import type { Tariff } from "@/lib/tariffs";
@@ -39,6 +40,9 @@ function TariffRow({
   tariff: Tariff;
   onChange: (changes: Partial<Tariff>) => void;
 }) {
+  const t = useTranslations("rootTariffs");
+  const currentT = useRef(t);
+  useEffect(() => { currentT.current = t; }, [t]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -57,16 +61,16 @@ function TariffRow({
           active: tariff.active,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.error ?? "Не удалось сохранить");
+        toast.error(currentT.current("saveFailed"));
         return;
       }
       setSaved(true);
-      toast.success(`Тариф «${tariff.title}» обновлён`);
+      toast.success(currentT.current("tariffSaved", { title: tariff.title }));
       window.setTimeout(() => setSaved(false), 2000);
     } catch {
-      toast.error("Сеть недоступна");
+      toast.error(currentT.current("networkError"));
     } finally {
       setSaving(false);
     }
@@ -85,19 +89,19 @@ function TariffRow({
             onChange={(e) => onChange({ active: e.target.checked })}
             className="size-4 accent-[#5566f6]"
           />
-          {tariff.active ? "В продаже" : "Снят с продажи"}
+          {tariff.active ? t("active") : t("inactive")}
         </label>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_140px_140px]">
-        <Field label="Название">
+        <Field label={t("name")}>
           <input
             value={tariff.title}
             onChange={(e) => onChange({ title: e.target.value })}
             className={inputClass}
           />
         </Field>
-        <Field label="Цена, ₽">
+        <Field label={t("price")}>
           <input
             type="number"
             min={1}
@@ -107,7 +111,7 @@ function TariffRow({
             className={inputClass + " tabular-nums"}
           />
         </Field>
-        <Field label="Период, дней">
+        <Field label={t("periodDays")}>
           <input
             type="number"
             min={1}
@@ -121,8 +125,7 @@ function TariffRow({
 
       {tariff.key === "bundle" ? (
         <p className="mt-3 text-[12px] leading-[1.6] text-[#9b9fb3]">
-          Для этого тарифа цена — только подписка. Стоимость оборудования
-          прибавляется отдельно по прайсу из кода (src/lib/hardware-pricing.ts).
+          {t("equipmentNote")}
         </p>
       ) : null}
 
@@ -136,15 +139,15 @@ function TariffRow({
           {saving ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Сохраняем…
+              {t("saving")}
             </>
           ) : saved ? (
             <>
               <Check className="size-4" />
-              Сохранено
+              {t("saved")}
             </>
           ) : (
-            "Сохранить"
+            t("save")
           )}
         </button>
       </div>

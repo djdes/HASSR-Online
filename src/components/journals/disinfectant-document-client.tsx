@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { disinfectantQuantity, disinfectantQuantityTotal } from "@/lib/disinfectant-document-presentation";
 import { CalendarDays, Plus, X } from "lucide-react";
 import {
   DOC_PRIMARY_BUTTON_CLASS,
@@ -41,20 +43,15 @@ import {
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 import { usePositionEmployeeCascade } from "@/components/shared/position-select";
 import {
-  DISINFECTANT_HEADING,
-  DISINFECTANT_DOCUMENT_TITLE,
-  MEASURE_UNIT_LABELS,
   normalizeDisinfectantConfig,
   computeNeedPerTreatment,
   computeNeedPerMonth,
   computeNeedPerYear,
   resolveSolutionPerTreatment,
   formatNumber,
-  formatQuantityWithUnit,
   createEmptySubdivision,
   createEmptyReceipt,
   createEmptyConsumption,
-  sumDisinfectantQuantities,
   type DisinfectantDocumentConfig,
   type SubdivisionRow,
   type ReceiptRow,
@@ -131,14 +128,12 @@ function formatDateRu(iso: string) {
  * когда поле пустое, а площадь и расход на кв.м заданы.
  */
 function SolutionPerTreatmentHint({ row }: { row: SubdivisionRow }) {
+  const t = useTranslations();
   const derived = resolveSolutionPerTreatment(row);
   if (row.solutionPerTreatment > 0 || derived <= 0) return null;
   return (
     <p className="text-[12px] leading-[1.45] text-[#6f7282]">
-      Не заполнено — считаем по площади: {row.area} кв.м ×{" "}
-      {row.solutionConsumptionPerSqm} л = {formatNumber(derived)} л.
-      Своё значение здесь главнее расчёта.
-    </p>
+      {t("journalDisinfectant.areaCalculationHint", { area: `${row.area}`, rate: `${row.solutionConsumptionPerSqm}`, derived: formatNumber(derived) })}</p>
   );
 }
 
@@ -147,6 +142,7 @@ function AddSubdivisionDialog(props: {
   onOpenChange: (v: boolean) => void;
   onSubmit: (row: SubdivisionRow) => Promise<void>;
 }) {
+  const t = useTranslations();
   const [row, setRow] = useState(createEmptySubdivision);
   const [submitting, setSubmitting] = useState(false);
 
@@ -166,10 +162,10 @@ function AddSubdivisionDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Добавление новой строки
-            </DialogTitle>
+              {t("journalDisinfectant.addRow")}</DialogTitle>
             <button
               type="button"
+              aria-label={t("common.close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -180,20 +176,18 @@ function AddSubdivisionDialog(props: {
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
             <Label className="text-[16px] text-[#73738a]">
-              Наименование подразделения / объекта
-            </Label>
+              {t("journalDisinfectant.subdivisionName")}</Label>
             <textarea
               value={row.name}
               onChange={(e) => setRow({ ...row, name: e.target.value })}
-              placeholder="Наименование подразделения / объекта"
+              placeholder={t("journalDisinfectant.subdivisionName")}
               className="min-h-[100px] w-full rounded-2xl border border-[#d8dae6] px-4 py-3 text-[18px] outline-none focus:border-[#5566f6]"
             />
           </div>
           <div className="space-y-2">
             <Label className="text-[16px] text-[#73738a]">
-              Площадь объекта (кв.м)
-            </Label>
-            <Input
+              {t("journalDisinfectant.areaSqm")}</Label>
+            <Input aria-label={t("journalDisinfectant.areaSqm")}
               type="number"
               inputMode="decimal"
               value={row.byCapacity ? "" : row.area ?? ""}
@@ -204,21 +198,21 @@ function AddSubdivisionDialog(props: {
                 })
               }
               disabled={row.byCapacity}
-              placeholder="Введите площадь объекта (кв.м)"
+              placeholder={t("journalDisinfectant.areaPlaceholder")}
               className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="flex items-center gap-3">
-            <Switch
+            <Switch aria-label={t("journalDisinfectant.byCapacity")}
               checked={row.byCapacity}
               onCheckedChange={(c) =>
                 setRow({ ...row, byCapacity: c, area: c ? null : row.area })
               }
             />
-            <span className="text-[16px]">На ёмкость</span>
+            <span className="text-[16px]">{t("journalDisinfectant.byCapacity")}</span>
           </div>
           <div className="space-y-2">
-            <Label className="text-[16px] text-[#73738a]">Вид обработки</Label>
+            <Label className="text-[16px] text-[#73738a]">{t("sanitationPestPdf.treatmentType")}</Label>
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-2 text-[16px]">
                 <input
@@ -230,8 +224,7 @@ function AddSubdivisionDialog(props: {
                   }
                   className="size-5 accent-[#5566f6]"
                 />
-                Текущая
-              </label>
+                {t("sanitationPestPdf.current")}</label>
               <label className="flex items-center gap-2 text-[16px]">
                 <input
                   type="radio"
@@ -242,15 +235,13 @@ function AddSubdivisionDialog(props: {
                   }
                   className="size-5 accent-[#5566f6]"
                 />
-                Генеральная
-              </label>
+                {t("sanitationPestPdf.general")}</label>
             </div>
           </div>
           <div className="space-y-2">
             <Label className="text-[16px] text-[#73738a]">
-              Кратность обработок в месяц
-            </Label>
-            <Input
+              {t("journalDisinfectant.frequencyMonth")}</Label>
+            <Input aria-label={t("journalDisinfectant.frequencyMonth")}
               type="number"
               inputMode="decimal"
               value={row.frequencyPerMonth || ""}
@@ -260,7 +251,7 @@ function AddSubdivisionDialog(props: {
                   frequencyPerMonth: Number(e.target.value) || 0,
                 })
               }
-              placeholder="Введите кратность обработок в месяц"
+              placeholder={t("journalDisinfectant.frequencyPlaceholder")}
               className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
             />
           </div>
@@ -268,24 +259,22 @@ function AddSubdivisionDialog(props: {
               добавленной строки потребность всегда была 0, пока её не
               откроют на правку. Поля те же, что в окне редактирования. */}
           <h3 className="pt-2 text-[18px] font-semibold">
-            Дезинфицирующее средство
-          </h3>
+            {t("journalDisinfectant.disinfectant")}</h3>
           <div className="space-y-2">
-            <Label className="text-[16px] text-[#73738a]">Наименование</Label>
-            <Input
+            <Label className="text-[16px] text-[#73738a]">{t("sanitationPestPdf.name")}</Label>
+            <Input aria-label={t("sanitationPestPdf.name")}
               value={row.disinfectantName}
               onChange={(e) =>
                 setRow({ ...row, disinfectantName: e.target.value })
               }
-              placeholder="Введите наименование дез. средства"
+              placeholder={t("journalDisinfectant.disinfectantPlaceholder")}
               className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-2">
             <Label className="text-[16px] text-[#73738a]">
-              Концентрация (%)
-            </Label>
-            <Input
+              {t("journalDisinfectant.concentrationPercent")}</Label>
+            <Input aria-label={t("journalDisinfectant.concentrationPercent")}
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -293,15 +282,14 @@ function AddSubdivisionDialog(props: {
               onChange={(e) =>
                 setRow({ ...row, concentration: Number(e.target.value) || 0 })
               }
-              placeholder="Введите концентрацию, %"
+              placeholder={t("journalDisinfectant.concentrationPlaceholder")}
               className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
             />
           </div>
           <div className="space-y-2">
             <Label className="text-[16px] text-[#73738a]">
-              Расход рабочего раствора на один кв. м. (л)
-            </Label>
-            <Input
+              {t("journalDisinfectant.solutionSqm")}</Label>
+            <Input aria-label={t("journalDisinfectant.solutionSqm")}
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -317,9 +305,8 @@ function AddSubdivisionDialog(props: {
           </div>
           <div className="space-y-2">
             <Label className="text-[16px] text-[#73738a]">
-              Кол-во раб. р-ра для одн.обр. объекта (л)
-            </Label>
-            <Input
+              {t("journalDisinfectant.solutionTreatmentShort")}</Label>
+            <Input aria-label={t("journalDisinfectant.solutionTreatmentShort")}
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -336,8 +323,7 @@ function AddSubdivisionDialog(props: {
           </div>
           <div className="space-y-1">
             <Label className="text-[14px] text-[#73738a]">
-              Потребность на одну обработку (кг, л)
-            </Label>
+              {t("journalDisinfectant.needTreatmentKgL")}</Label>
             <div className="h-9 rounded-xl border border-[#d8dae6] bg-[#f1f2f8] px-3.5 py-2 text-[13.5px]">
               {formatNumber(computeNeedPerTreatment(row)) || "—"}
             </div>
@@ -357,7 +343,7 @@ function AddSubdivisionDialog(props: {
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Создание..." : "Создать"}
+              {submitting ? t("journalDisinfectant.creating") : t("journalDisinfectant.create")}
             </Button>
           </div>
         </div>
@@ -375,6 +361,7 @@ function EditSubdivisionDialog(props: {
   /** «(k из N)» при правке выделенных строк по очереди. */
   titleSuffix?: string;
 }) {
+  const t = useTranslations();
   const [row, setRow] = useState<SubdivisionRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const active = row || props.initial;
@@ -391,10 +378,11 @@ function EditSubdivisionDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              {`Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}`}
+              {t("journalDisinfectant.editRow", { suffix: `${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("common.close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -406,8 +394,7 @@ function EditSubdivisionDialog(props: {
           <div className="space-y-4 px-8 py-6">
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Наименование подразделения / объекта
-              </Label>
+                {t("journalDisinfectant.subdivisionName")}</Label>
               <textarea
                 value={active.name}
                 onChange={(e) =>
@@ -418,9 +405,8 @@ function EditSubdivisionDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Площадь объекта (кв.м)
-              </Label>
-              <Input
+                {t("journalDisinfectant.areaSqm")}</Label>
+              <Input aria-label={t("journalDisinfectant.areaSqm")}
                 type="number"
                 inputMode="decimal"
                 value={active.byCapacity ? "" : active.area ?? ""}
@@ -435,7 +421,7 @@ function EditSubdivisionDialog(props: {
               />
             </div>
             <div className="flex items-center gap-3">
-              <Switch
+              <Switch aria-label={t("journalDisinfectant.byCapacity")}
                 checked={active.byCapacity}
                 onCheckedChange={(c) =>
                   setRow({
@@ -445,12 +431,11 @@ function EditSubdivisionDialog(props: {
                   })
                 }
               />
-              <span className="text-[16px]">На ёмкость</span>
+              <span className="text-[16px]">{t("journalDisinfectant.byCapacity")}</span>
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Вид обработки
-              </Label>
+                {t("sanitationPestPdf.treatmentType")}</Label>
               <div className="flex flex-wrap gap-6">
                 <label className="flex items-center gap-2 text-[16px]">
                   <input
@@ -462,8 +447,7 @@ function EditSubdivisionDialog(props: {
                     }
                     className="size-5 accent-[#5566f6]"
                   />
-                  Текущая
-                </label>
+                  {t("sanitationPestPdf.current")}</label>
                 <label className="flex items-center gap-2 text-[16px]">
                   <input
                     type="radio"
@@ -474,15 +458,13 @@ function EditSubdivisionDialog(props: {
                     }
                     className="size-5 accent-[#5566f6]"
                   />
-                  Генеральная
-                </label>
+                  {t("sanitationPestPdf.general")}</label>
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Кратность обработок в месяц
-              </Label>
-              <Input
+                {t("journalDisinfectant.frequencyMonth")}</Label>
+              <Input aria-label={t("journalDisinfectant.frequencyMonth")}
                 type="number"
                 inputMode="decimal"
                 value={active.frequencyPerMonth || ""}
@@ -496,13 +478,11 @@ function EditSubdivisionDialog(props: {
               />
             </div>
             <h3 className="pt-2 text-[18px] font-semibold">
-              Дезинфицирующее средство
-            </h3>
+              {t("journalDisinfectant.disinfectant")}</h3>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Наименование
-              </Label>
-              <Input
+                {t("sanitationPestPdf.name")}</Label>
+              <Input aria-label={t("sanitationPestPdf.name")}
                 value={active.disinfectantName}
                 onChange={(e) =>
                   setRow({ ...active, disinfectantName: e.target.value })
@@ -512,9 +492,8 @@ function EditSubdivisionDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Концентрация (%)
-              </Label>
-              <Input
+                {t("journalDisinfectant.concentrationPercent")}</Label>
+              <Input aria-label={t("journalDisinfectant.concentrationPercent")}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -530,9 +509,8 @@ function EditSubdivisionDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Расход рабочего раствора на один кв. м. (л)
-              </Label>
-              <Input
+                {t("journalDisinfectant.solutionSqm")}</Label>
+              <Input aria-label={t("journalDisinfectant.solutionSqm")}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -548,9 +526,8 @@ function EditSubdivisionDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Кол-во раб. р-ра для одн.обр. объекта (л)
-              </Label>
-              <Input
+                {t("journalDisinfectant.solutionTreatmentShort")}</Label>
+              <Input aria-label={t("journalDisinfectant.solutionTreatmentShort")}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -566,29 +543,25 @@ function EditSubdivisionDialog(props: {
               <SolutionPerTreatmentHint row={active} />
             </div>
             <h3 className="pt-2 text-[18px] font-semibold">
-              Потребность в дезинфицирующем средстве
-            </h3>
+              {t("journalDisinfectant.needDisinfectant")}</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
                 <Label className="text-[14px] text-[#73738a]">
-                  На одну обработку (кг, л)
-                </Label>
+                  {t("journalDisinfectant.perTreatmentKgL")}</Label>
                 <div className="h-9 rounded-xl border border-[#d8dae6] bg-[#f1f2f8] px-3.5 py-4 text-[13.5px]">
                   {formatNumber(computeNeedPerTreatment(active))}
                 </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-[14px] text-[#73738a]">
-                  На один месяц (кг, л)
-                </Label>
+                  {t("journalDisinfectant.perMonthKgL")}</Label>
                 <div className="h-9 rounded-xl border border-[#d8dae6] bg-[#f1f2f8] px-3.5 py-4 text-[13.5px]">
                   {formatNumber(computeNeedPerMonth(active))}
                 </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-[14px] text-[#73738a]">
-                  На один год (кг, л)
-                </Label>
+                  {t("journalDisinfectant.perYearKgL")}</Label>
                 <div className="h-9 rounded-xl border border-[#d8dae6] bg-[#f1f2f8] px-3.5 py-4 text-[13.5px]">
                   {formatNumber(computeNeedPerYear(active))}
                 </div>
@@ -610,7 +583,7 @@ function EditSubdivisionDialog(props: {
                 }}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
               >
-                {submitting ? "Сохранение..." : "Сохранить"}
+                {submitting ? t("journalDisinfectant.saving") : t("common.save")}
               </Button>
             </div>
           </div>
@@ -629,6 +602,7 @@ function ReceiptDialog(props: {
   onSubmit: (row: ReceiptRow) => Promise<void>;
   dialogTitle: string;
 }) {
+  const t = useTranslations();
   const [row, setRow] = useState<ReceiptRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
@@ -671,6 +645,7 @@ function ReceiptDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("common.close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -682,10 +657,9 @@ function ReceiptDialog(props: {
           <div className="space-y-4 px-8 py-6">
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Дата получения
-              </Label>
+                {t("sanitationPestPdf.receiptDate")}</Label>
               <div className="relative">
-                <Input
+                <Input aria-label={t("sanitationPestPdf.receiptDate")}
                   type="date"
                   value={active.date}
                   onChange={(e) =>
@@ -698,22 +672,20 @@ function ReceiptDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Наименование дез. средства
-              </Label>
-              <Input
+                {t("sanitationPestPdf.disinfectantName")}</Label>
+              <Input aria-label={t("sanitationPestPdf.disinfectantName")}
                 value={active.disinfectantName}
                 onChange={(e) =>
                   setRow({ ...active, disinfectantName: e.target.value })
                 }
-                placeholder="Введите наименование дез. средства"
+                placeholder={t("journalDisinfectant.disinfectantPlaceholder")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Количество полученного дез. средства
-              </Label>
-              <Input
+                {t("journalDisinfectant.receiptQuantity")}</Label>
+              <Input aria-label={t("journalDisinfectant.receiptQuantity")}
                 type="number"
                 inputMode="decimal"
                 value={active.quantity || ""}
@@ -723,10 +695,10 @@ function ReceiptDialog(props: {
                     quantity: Number(e.target.value) || 0,
                   })
                 }
-                placeholder="Введите количество"
+                placeholder={t("journalDisinfectant.quantityPlaceholder")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
               />
-              <div className="flex gap-6 pt-1">
+              <div role="radiogroup" aria-label={t("journalDisinfectant.unit")} className="flex gap-6 pt-1">
                 {(["kg", "l", "bottle"] as MeasureUnit[]).map((u) => (
                   <label
                     key={u}
@@ -738,17 +710,16 @@ function ReceiptDialog(props: {
                       onChange={() => setRow({ ...active, unit: u })}
                       className="size-5 accent-[#5566f6]"
                     />
-                    {MEASURE_UNIT_LABELS[u]}
+                    {t(`sanitationPestPdf.${u}`)}
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Срок годности до
-              </Label>
+                {t("journalDisinfectant.expiryUntil")}</Label>
               <div className="relative">
-                <Input
+                <Input aria-label={t("journalDisinfectant.expiryUntil")}
                   type="date"
                   value={active.expiryDate}
                   onChange={(e) =>
@@ -764,13 +735,12 @@ function ReceiptDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Должность ответственного
-              </Label>
+                {t("journalDisinfectant.responsiblePosition")}</Label>
               <Select
                 value={active.responsibleRole}
                 onValueChange={cascade.handlePositionChange}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+                <SelectTrigger aria-label={t("journalDisinfectant.responsiblePosition")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -783,18 +753,18 @@ function ReceiptDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[16px] text-[#73738a]">Сотрудник</Label>
+              <Label className="text-[16px] text-[#73738a]">{t("journalControls.positionSelect.employeeLabel")}</Label>
               <Select
                 value={active.responsibleEmployeeId || "__empty__"}
                 onValueChange={cascade.handleEmployeeChange}
                 open={cascade.employeeOpen}
                 onOpenChange={cascade.setEmployeeOpen}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+                <SelectTrigger aria-label={t("journalControls.positionSelect.employeeLabel")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                  <SelectItem value="__empty__">{t("journalControls.positionSelect.chooseEmployee")}</SelectItem>
                   {cascade.candidates.map(
                     (u) => (
                       <SelectItem key={u.id} value={u.id}>
@@ -829,7 +799,7 @@ function ReceiptDialog(props: {
                 }}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
               >
-                {submitting ? "Сохранение..." : "Сохранить"}
+                {submitting ? t("journalDisinfectant.saving") : t("common.save")}
               </Button>
             </div>
           </div>
@@ -848,6 +818,7 @@ function ConsumptionDialog(props: {
   onSubmit: (row: ConsumptionRow) => Promise<void>;
   dialogTitle: string;
 }) {
+  const t = useTranslations();
   const [row, setRow] = useState<ConsumptionRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
@@ -890,6 +861,7 @@ function ConsumptionDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("common.close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -903,9 +875,9 @@ function ConsumptionDialog(props: {
                 были в данных и в таблице, но вводить их было негде. */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[16px] text-[#73738a]">За период с</Label>
+                <Label className="text-[16px] text-[#73738a]">{t("journalDisinfectant.periodFrom")}</Label>
                 <div className="relative">
-                  <Input
+                  <Input aria-label={t("journalDisinfectant.periodFrom")}
                     type="date"
                     value={active.periodFrom}
                     onChange={(e) =>
@@ -922,9 +894,9 @@ function ConsumptionDialog(props: {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[16px] text-[#73738a]">по</Label>
+                <Label className="text-[16px] text-[#73738a]">{t("journalDisinfectant.periodTo")}</Label>
                 <div className="relative">
-                  <Input
+                  <Input aria-label={t("journalDisinfectant.periodTo")}
                     type="date"
                     value={active.periodTo}
                     min={active.periodFrom || undefined}
@@ -942,22 +914,20 @@ function ConsumptionDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Наименование дез. средства
-              </Label>
-              <Input
+                {t("sanitationPestPdf.disinfectantName")}</Label>
+              <Input aria-label={t("sanitationPestPdf.disinfectantName")}
                 value={active.disinfectantName}
                 onChange={(e) =>
                   setRow({ ...active, disinfectantName: e.target.value })
                 }
-                placeholder="Введите наименование дез. средства"
+                placeholder={t("journalDisinfectant.disinfectantPlaceholder")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Общее количество полученного дез. средства
-              </Label>
-              <Input
+                {t("journalDisinfectant.totalReceived")}</Label>
+              <Input aria-label={t("journalDisinfectant.totalReceived")}
                 type="number"
                 inputMode="decimal"
                 value={active.totalReceived || ""}
@@ -967,10 +937,10 @@ function ConsumptionDialog(props: {
                     totalReceived: Number(e.target.value) || 0,
                   })
                 }
-                placeholder="Количество"
+                placeholder={t("sanitationPestPdf.quantity")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
               />
-              <div className="flex gap-6 pt-1">
+              <div role="radiogroup" aria-label={t("journalDisinfectant.unit")} className="flex gap-6 pt-1">
                 {(["kg", "l", "bottle"] as MeasureUnit[]).map((u) => (
                   <label
                     key={u}
@@ -984,16 +954,15 @@ function ConsumptionDialog(props: {
                       }
                       className="size-5 accent-[#5566f6]"
                     />
-                    {MEASURE_UNIT_LABELS[u]}
+                    {t(`sanitationPestPdf.${u}`)}
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Общее количество израсход. дез. средства
-              </Label>
-              <Input
+                {t("journalDisinfectant.totalConsumedShort")}</Label>
+              <Input aria-label={t("journalDisinfectant.totalConsumedShort")}
                 type="number"
                 inputMode="decimal"
                 value={active.totalConsumed || ""}
@@ -1003,10 +972,10 @@ function ConsumptionDialog(props: {
                     totalConsumed: Number(e.target.value) || 0,
                   })
                 }
-                placeholder="Количество"
+                placeholder={t("sanitationPestPdf.quantity")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
               />
-              <div className="flex gap-6 pt-1">
+              <div role="radiogroup" aria-label={t("journalDisinfectant.unit")} className="flex gap-6 pt-1">
                 {(["kg", "l", "bottle"] as MeasureUnit[]).map((u) => (
                   <label
                     key={u}
@@ -1020,16 +989,15 @@ function ConsumptionDialog(props: {
                       }
                       className="size-5 accent-[#5566f6]"
                     />
-                    {MEASURE_UNIT_LABELS[u]}
+                    {t(`sanitationPestPdf.${u}`)}
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Остаток на конец периода дез. средства
-              </Label>
-              <Input
+                {t("journalDisinfectant.endRemainder")}</Label>
+              <Input aria-label={t("journalDisinfectant.endRemainder")}
                 type="number"
                 inputMode="decimal"
                 value={active.remainder || ""}
@@ -1039,10 +1007,10 @@ function ConsumptionDialog(props: {
                     remainder: Number(e.target.value) || 0,
                   })
                 }
-                placeholder="Количество"
+                placeholder={t("sanitationPestPdf.quantity")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
               />
-              <div className="flex gap-6 pt-1">
+              <div role="radiogroup" aria-label={t("journalDisinfectant.unit")} className="flex gap-6 pt-1">
                 {(["kg", "l", "bottle"] as MeasureUnit[]).map((u) => (
                   <label
                     key={u}
@@ -1056,20 +1024,19 @@ function ConsumptionDialog(props: {
                       }
                       className="size-5 accent-[#5566f6]"
                     />
-                    {MEASURE_UNIT_LABELS[u]}
+                    {t(`sanitationPestPdf.${u}`)}
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-[16px] text-[#73738a]">
-                Должность ответственного
-              </Label>
+                {t("journalDisinfectant.responsiblePosition")}</Label>
               <Select
                 value={active.responsibleRole}
                 onValueChange={cascade.handlePositionChange}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+                <SelectTrigger aria-label={t("journalDisinfectant.responsiblePosition")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1082,18 +1049,18 @@ function ConsumptionDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[16px] text-[#73738a]">Сотрудник</Label>
+              <Label className="text-[16px] text-[#73738a]">{t("journalControls.positionSelect.employeeLabel")}</Label>
               <Select
                 value={active.responsibleEmployeeId || "__empty__"}
                 onValueChange={cascade.handleEmployeeChange}
                 open={cascade.employeeOpen}
                 onOpenChange={cascade.setEmployeeOpen}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+                <SelectTrigger aria-label={t("journalControls.positionSelect.employeeLabel")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                  <SelectItem value="__empty__">{t("journalControls.positionSelect.chooseEmployee")}</SelectItem>
                   {cascade.candidates.map(
                     (u) => (
                       <SelectItem key={u.id} value={u.id}>
@@ -1128,7 +1095,7 @@ function ConsumptionDialog(props: {
                 }}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
               >
-                {submitting ? "Сохранение..." : "Сохранить"}
+                {submitting ? t("journalDisinfectant.saving") : t("common.save")}
               </Button>
             </div>
           </div>
@@ -1157,6 +1124,7 @@ function DocumentSettingsDialog(props: {
   }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations();
   const [state, setState] = useState(props.initial);
   const [submitting, setSubmitting] = useState(false);
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
@@ -1200,8 +1168,8 @@ function DocumentSettingsDialog(props: {
           if (v) setState(props.initial);
           props.onOpenChange(v);
         }}
-        title="Настройки документа"
-        description="Название документа и ответственный сотрудник."
+        title={t("journalDisinfectant.settingsTitle")}
+        description={t("journalDisinfectant.settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -1209,9 +1177,8 @@ function DocumentSettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
-          </Label>
-          <Input
+            {t("journalDisinfectant.documentTitle")}</Label>
+          <Input aria-label={t("journalDisinfectant.documentTitle")}
             value={state.title}
             onChange={(e) => setState({ ...state, title: e.target.value })}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
@@ -1219,14 +1186,13 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного
-          </Label>
+            {t("journalDisinfectant.responsiblePosition")}</Label>
           <Select
             value={state.responsibleRole}
             onValueChange={cascade.handlePositionChange}
           >
-            <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+            <SelectTrigger aria-label={t("journalDisinfectant.responsiblePosition")} className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
+              <SelectValue placeholder={t("journalDisinfectant.chooseDashed")} />
             </SelectTrigger>
             <SelectContent>
               {roles.map((r) => (
@@ -1239,19 +1205,18 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
-          </Label>
+            {t("journalControls.positionSelect.employeeLabel")}</Label>
           <Select
             value={state.responsibleEmployeeId || "__empty__"}
             onValueChange={cascade.handleEmployeeChange}
             open={cascade.employeeOpen}
             onOpenChange={cascade.setEmployeeOpen}
           >
-            <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+            <SelectTrigger aria-label={t("journalControls.positionSelect.employeeLabel")} className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
+              <SelectValue placeholder={t("journalDisinfectant.chooseDashed")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">— не выбран —</SelectItem>
+              <SelectItem value="__empty__">{t("journalDisinfectant.notSelectedDashed")}</SelectItem>
               {cascade.candidates.map((u) => (
                 <SelectItem key={u.id} value={u.id}>
                   {buildStaffOptionLabel(u)}
@@ -1276,10 +1241,10 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Настройки документа
-            </DialogTitle>
+              {t("journalDisinfectant.settingsTitle")}</DialogTitle>
             <button
               type="button"
+              aria-label={t("common.close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -1290,9 +1255,8 @@ function DocumentSettingsDialog(props: {
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
             <Label className="text-[14px] text-[#73738a]">
-              Название документа
-            </Label>
-            <Input
+              {t("journalDisinfectant.documentTitle")}</Label>
+            <Input aria-label={t("journalDisinfectant.documentTitle")}
               value={state.title}
               onChange={(e) =>
                 setState({ ...state, title: e.target.value })
@@ -1302,13 +1266,12 @@ function DocumentSettingsDialog(props: {
           </div>
           <div className="space-y-2">
             <Label className="text-[14px] text-[#73738a]">
-              Должность ответственного
-            </Label>
+              {t("journalDisinfectant.responsiblePosition")}</Label>
             <Select
               value={state.responsibleRole}
               onValueChange={cascade.handlePositionChange}
             >
-              <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+              <SelectTrigger aria-label={t("journalDisinfectant.responsiblePosition")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1321,18 +1284,18 @@ function DocumentSettingsDialog(props: {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("journalControls.positionSelect.employeeLabel")}</Label>
             <Select
               value={state.responsibleEmployeeId || "__empty__"}
               onValueChange={cascade.handleEmployeeChange}
               open={cascade.employeeOpen}
               onOpenChange={cascade.setEmployeeOpen}
             >
-              <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+              <SelectTrigger aria-label={t("journalControls.positionSelect.employeeLabel")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                <SelectItem value="__empty__">{t("journalControls.positionSelect.chooseEmployee")}</SelectItem>
                 {cascade.candidates.map(
                   (u) => (
                     <SelectItem key={u.id} value={u.id}>
@@ -1350,7 +1313,7 @@ function DocumentSettingsDialog(props: {
               onClick={handleSave}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("journalDisinfectant.saving") : t("common.save")}
             </Button>
           </div>
         </div>
@@ -1369,6 +1332,15 @@ export function DisinfectantDocumentClient({
   config,
   useV2 = false,
 }: Props) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const quantityUnitLabels = useMemo(() => ({
+    kg: t("sanitationPestPdf.kg"),
+    l: t("sanitationPestPdf.l"),
+    bottle: t("sanitationPestPdf.bottle"),
+  }), [t]);
+  const committedCopy = useRef({ t, locale });
+  useEffect(() => { committedCopy.current = { t, locale }; }, [t, locale]);
   const router = useRouter();
   const normalized = normalizeDisinfectantConfig(config);
   // Новая строка засеивается ответственным документа — с его должностью из
@@ -1459,7 +1431,7 @@ export function DisinfectantDocumentClient({
         const body = await response.json().catch(() => null);
         toast.error(
           (body && typeof body.error === "string" && body.error) ||
-            "Не удалось сохранить документ"
+            committedCopy.current.t("journalDisinfectant.saveDocumentFailed")
         );
         return;
       }
@@ -1491,14 +1463,15 @@ export function DisinfectantDocumentClient({
     if (selectedSubIds.length === 0) return;
     if (
       !(await confirmAsync({
-        title: `Удалить выбранные строки (${selectedSubIds.length})?`,
+        locale: committedCopy.current.locale,
+        title: committedCopy.current.t("journalDisinfectant.deleteRowsTitle", { count: `${selectedSubIds.length}` }),
         description:
-          "Строки будут удалены из расчёта потребности в дезсредствах. Отменить это действие нельзя.",
+          committedCopy.current.t("journalDisinfectant.deleteNeedDescription"),
         variant: "danger",
-        confirmLabel: "Удалить",
+        confirmLabel: committedCopy.current.t("common.delete"),
         bullets: [
-          { label: `Будет удалено строк: ${selectedSubIds.length}`, tone: "warn" },
-          { label: "Расчёты потребности пересчитаются автоматически" },
+          { label: committedCopy.current.t("journalDisinfectant.deleteRowsCount", { count: `${selectedSubIds.length}` }), tone: "warn" },
+          { label: committedCopy.current.t("journalDisinfectant.needRecalculated") },
         ],
       }))
     )
@@ -1530,14 +1503,15 @@ export function DisinfectantDocumentClient({
     if (selectedRecIds.length === 0) return;
     if (
       !(await confirmAsync({
-        title: `Удалить выбранные строки (${selectedRecIds.length})?`,
+        locale: committedCopy.current.locale,
+        title: committedCopy.current.t("journalDisinfectant.deleteRowsTitle", { count: `${selectedRecIds.length}` }),
         description:
-          "Строки будут удалены из таблицы получения дезсредств. Отменить это действие нельзя.",
+          committedCopy.current.t("journalDisinfectant.deleteReceiptDescription"),
         variant: "danger",
-        confirmLabel: "Удалить",
+        confirmLabel: committedCopy.current.t("common.delete"),
         bullets: [
-          { label: `Будет удалено строк: ${selectedRecIds.length}`, tone: "warn" },
-          { label: "Итог по полученному количеству пересчитается" },
+          { label: committedCopy.current.t("journalDisinfectant.deleteRowsCount", { count: `${selectedRecIds.length}` }), tone: "warn" },
+          { label: committedCopy.current.t("journalDisinfectant.receiptRecalculated") },
         ],
       }))
     )
@@ -1571,14 +1545,15 @@ export function DisinfectantDocumentClient({
     if (selectedConIds.length === 0) return;
     if (
       !(await confirmAsync({
-        title: `Удалить выбранные строки (${selectedConIds.length})?`,
+        locale: committedCopy.current.locale,
+        title: committedCopy.current.t("journalDisinfectant.deleteRowsTitle", { count: `${selectedConIds.length}` }),
         description:
-          "Строки будут удалены из таблицы расхода дезсредств. Отменить это действие нельзя.",
+          committedCopy.current.t("journalDisinfectant.deleteConsumptionDescription"),
         variant: "danger",
-        confirmLabel: "Удалить",
+        confirmLabel: committedCopy.current.t("common.delete"),
         bullets: [
-          { label: `Будет удалено строк: ${selectedConIds.length}`, tone: "warn" },
-          { label: "История дезинфекционных работ по этим строкам будет потеряна" },
+          { label: committedCopy.current.t("journalDisinfectant.deleteRowsCount", { count: `${selectedConIds.length}` }), tone: "warn" },
+          { label: committedCopy.current.t("journalDisinfectant.workHistoryLost") },
         ],
       }))
     )
@@ -1639,7 +1614,7 @@ export function DisinfectantDocumentClient({
       { ids: selectedConIds, seq: seqCon },
     ].filter((group) => group.ids.length > 0);
     if (groups.length > 1) {
-      toast.error("Править по очереди можно строки одной таблицы — снимите выделение в остальных");
+      toast.error(committedCopy.current.t("journalDisinfectant.oneTableSelection"));
       return;
     }
     groups[0]?.seq.start(groups[0].ids);
@@ -1661,8 +1636,8 @@ export function DisinfectantDocumentClient({
   // Итог считаем ПО ЕДИНИЦАМ: раньше кг, л и флаконы складывались в одно
   // бессмысленное число. Тот же helper использует печать.
   const totalReceiptQuantity = useMemo(
-    () => sumDisinfectantQuantities(normalized.receipts),
-    [normalized.receipts]
+    () => disinfectantQuantityTotal(normalized.receipts, quantityUnitLabels),
+    [normalized.receipts, quantityUnitLabels]
   );
 
   const allSubsSelected =
@@ -1682,7 +1657,7 @@ export function DisinfectantDocumentClient({
 
   return (
     <div className="space-y-5">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("journalDisinfectant.noRecords")} emptyBody={t("journalDisinfectant.noRecordsHint")} copy={{ noCreateBody: t("journalScan.focus.noCreateBody"), later: t("journalScan.focus.later"), close: t("common.close") }} />
 
       {/* Selection bar */}
       {anySelected && !readOnly && (
@@ -1702,7 +1677,7 @@ export function DisinfectantDocumentClient({
               if (selectedConIds.length > 0) await deleteSelectedConsumptions();
             })();
           }}
-          hint="Строки будут удалены без возможности отмены"
+          hint={t("journalDisinfectant.deleteSelectionHint")}
         >
           <SelectionEditButton
             count={selectedSubIds.length + selectedRecIds.length + selectedConIds.length}
@@ -1713,12 +1688,12 @@ export function DisinfectantDocumentClient({
       )}
 
       <JournalDocumentShell
-        title={title}
+        title={<>{title}</>}
         documentId={documentId}
         backHref="/journals/disinfectant_usage"
         onSettings={!readOnly ? () => setSettingsOpen(true) : undefined}
         closed={readOnly}
-        closedHint="Откройте журнал заново, чтобы добавлять получение, расход и подразделения."
+        closedHint={t("journalDisinfectant.closedHint")}
         tablesInOwnFrames
         mobileView={mobileView}
         onMobileView={switchMobileView}
@@ -1729,21 +1704,21 @@ export function DisinfectantDocumentClient({
                 className={DOC_PRIMARY_BUTTON_CLASS}
                 onClick={() => setAddSubOpen(true)}
               >
-                <Plus className="size-5" /> Добавить подразделение
-              </Button>
+                <Plus className="size-5" /> {t("journalDisinfectant.addSubdivision")}</Button>
             )}
             {/* Строки расчёта потребности — такие же карточки, как приход и
                 расход: раньше здесь стояла заглушка «переключитесь на
                 Таблица», а кнопка «Добавить подразделение» над ней работала. */}
             <RecordCardsView
-              emptyLabel="Нет подразделений в расчёте"
+              emptyLabel={t("journalDisinfectant.noSubdivisions")}
               items={normalized.subdivisions.map<RecordCardItem>((sub) => ({
                 id: sub.id,
-                title: sub.name || "Без наименования",
+                title: sub.name || t("journalDisinfectant.unnamed"),
                 subtitle: sub.disinfectantName || undefined,
                 onClick: readOnly ? undefined : () => setEditSubTarget(sub),
                 leading: readOnly ? null : (
                   <Checkbox
+                    aria-label={t("journalDisinfectant.selectRow")}
                     checked={selectedSubIds.includes(sub.id)}
                     onCheckedChange={(c) =>
                       setSelectedSubIds((cur) =>
@@ -1757,35 +1732,35 @@ export function DisinfectantDocumentClient({
                 ),
                 fields: [
                   {
-                    label: "Площадь объекта",
+                    label: t("journalDisinfectant.area"),
                     value: sub.byCapacity
-                      ? "На ёмкость"
+                      ? t("journalDisinfectant.byCapacity")
                       : sub.area
-                        ? `${sub.area} кв.м`
+                        ? t("journalDisinfectant.areaValue", { area: `${sub.area}` })
                         : "—",
                   },
                   {
-                    label: "Вид обработки",
-                    value: sub.treatmentType === "current" ? "Текущая (Т)" : "Генеральная (Г)",
+                    label: t("sanitationPestPdf.treatmentType"),
+                    value: sub.treatmentType === "current" ? t("journalDisinfectant.currentLong") : t("journalDisinfectant.generalLong"),
                   },
                   {
-                    label: "Кратность обработок в месяц",
+                    label: t("journalDisinfectant.frequencyMonth"),
                     value: sub.frequencyPerMonth || "—",
                   },
                   {
-                    label: "Концентрация",
+                    label: t("journalDisinfectant.concentration"),
                     value: sub.concentration ? `${sub.concentration} %` : "—",
                   },
                   {
-                    label: "Потребность на одну обработку",
+                    label: t("journalDisinfectant.needTreatment"),
                     value: formatNumber(computeNeedPerTreatment(sub)) || "—",
                   },
                   {
-                    label: "Потребность на месяц",
+                    label: t("journalDisinfectant.needMonth"),
                     value: formatNumber(computeNeedPerMonth(sub)) || "—",
                   },
                   {
-                    label: "Потребность на год",
+                    label: t("journalDisinfectant.needYear"),
                     value: formatNumber(computeNeedPerYear(sub)) || "—",
                   },
                 ],
@@ -1797,17 +1772,16 @@ export function DisinfectantDocumentClient({
                 className={DOC_PRIMARY_BUTTON_CLASS}
                 onClick={() => setAddRecOpen(true)}
               >
-                <Plus className="size-5" /> Добавить поступление
-              </Button>
+                <Plus className="size-5" /> {t("journalDisinfectant.addReceipt")}</Button>
             )}
             <RecordCardsView
-              emptyLabel="Нет записей о поступлении"
+              emptyLabel={t("journalDisinfectant.noReceipts")}
               items={normalized.receipts.map<RecordCardItem>((rec) => ({
                 id: rec.id,
                 // Якорь «Перейти к сегодня» для карточек (телефон).
                 title: (
                   <span data-focus-today={rec.date === todayKey ? "" : undefined}>
-                    {formatDateRu(rec.date) || "Без даты"}
+                    {formatDateRu(rec.date) || t("journalDisinfectant.noDate")}
                   </span>
                 ),
                 subtitle: rec.disinfectantName || undefined,
@@ -1815,6 +1789,7 @@ export function DisinfectantDocumentClient({
                 // Без чекбокса запись нельзя было удалить с телефона.
                 leading: readOnly ? null : (
                   <Checkbox
+                    aria-label={t("journalDisinfectant.selectRow")}
                     checked={selectedRecIds.includes(rec.id)}
                     onCheckedChange={(c) =>
                       setSelectedRecIds((cur) =>
@@ -1828,15 +1803,15 @@ export function DisinfectantDocumentClient({
                 ),
                 fields: [
                   {
-                    label: "Количество",
-                    value: formatQuantityWithUnit(rec.quantity, rec.unit) || "—",
+                    label: t("sanitationPestPdf.quantity"),
+                    value: disinfectantQuantity(rec.quantity, rec.unit, quantityUnitLabels) || "—",
                   },
                   {
-                    label: "Срок годности",
+                    label: t("sanitationPestPdf.expiry"),
                     value: formatDateRu(rec.expiryDate) || "—",
                   },
                   {
-                    label: "Ответственный",
+                    label: t("sanitationPestPdf.responsible"),
                     value: rec.responsibleEmployee || "—",
                   },
                 ],
@@ -1848,11 +1823,10 @@ export function DisinfectantDocumentClient({
                 className={DOC_PRIMARY_BUTTON_CLASS}
                 onClick={() => setAddConOpen(true)}
               >
-                <Plus className="size-5" /> Добавить расход
-              </Button>
+                <Plus className="size-5" /> {t("journalDisinfectant.addConsumption")}</Button>
             )}
             <RecordCardsView
-              emptyLabel="Нет записей о расходовании"
+              emptyLabel={t("journalDisinfectant.noConsumption")}
               items={normalized.consumptions.map<RecordCardItem>((con) => ({
                 id: con.id,
                 title: `${formatDateRu(con.periodFrom) || "—"} — ${formatDateRu(con.periodTo) || "—"}`,
@@ -1860,6 +1834,7 @@ export function DisinfectantDocumentClient({
                 onClick: readOnly ? undefined : () => setEditConTarget(con),
                 leading: readOnly ? null : (
                   <Checkbox
+                    aria-label={t("journalDisinfectant.selectRow")}
                     checked={selectedConIds.includes(con.id)}
                     onCheckedChange={(c) =>
                       setSelectedConIds((cur) =>
@@ -1873,29 +1848,23 @@ export function DisinfectantDocumentClient({
                 ),
                 fields: [
                   {
-                    label: "Получено",
+                    label: t("sanitationPestPdf.received"),
                     value:
-                      formatQuantityWithUnit(
-                        con.totalReceived,
-                        con.totalReceivedUnit
-                      ) || "—",
+                      disinfectantQuantity(con.totalReceived, con.totalReceivedUnit, quantityUnitLabels) || "—",
                   },
                   {
-                    label: "Израсходовано",
+                    label: t("sanitationPestPdf.consumed"),
                     value:
-                      formatQuantityWithUnit(
-                        con.totalConsumed,
-                        con.totalConsumedUnit
-                      ) || "—",
+                      disinfectantQuantity(con.totalConsumed, con.totalConsumedUnit, quantityUnitLabels) || "—",
                   },
                   {
-                    label: "Остаток",
+                    label: t("sanitationPestPdf.remainder"),
                     value:
-                      formatQuantityWithUnit(con.remainder, con.remainderUnit) ||
+                      disinfectantQuantity(con.remainder, con.remainderUnit, quantityUnitLabels) ||
                       "—",
                   },
                   {
-                    label: "Ответственный",
+                    label: t("sanitationPestPdf.responsible"),
                     value: con.responsibleEmployee || "—",
                   },
                 ],
@@ -1906,7 +1875,7 @@ export function DisinfectantDocumentClient({
         paperHeader={
           <JournalDocumentHeader
             orgName={organizationName}
-            title="ЖУРНАЛ УЧЕТА ПОЛУЧЕНИЯ, РАСХОДА ДЕЗИНФИЦИРУЮЩИХ СРЕДСТВ И ПРОВЕДЕНИЯ ДЕЗИНФЕКЦИОННЫХ РАБОТ НА ОБЪЕКТЕ"
+            title={t("journalDisinfectant.paperHeading")}
             startedAt={null}
             finishedAt={null}
           />
@@ -1914,16 +1883,14 @@ export function DisinfectantDocumentClient({
       >
         {/* === Section 1: Needs Calculation === */}
         <h2 className="pt-4 text-center text-[18px] font-semibold uppercase leading-tight sm:text-[20px]">
-          РАСЧЕТ ПОТРЕБНОСТИ В ДЕЗИНФИЦИРУЮЩИХ СРЕДСТВАХ
-        </h2>
+          {t("journalDisinfectant.needHeading")}</h2>
 
         {!readOnly && (
           <Button
             className={DOC_PRIMARY_BUTTON_CLASS}
             onClick={() => setAddSubOpen(true)}
           >
-            <Plus className="size-5" /> Добавить подразделение
-          </Button>
+            <Plus className="size-5" /> {t("journalDisinfectant.addSubdivision")}</Button>
         )}
 
         {/* Каждая из трёх таблиц ездит вбок в своей рамке: подзаголовки и
@@ -1938,6 +1905,7 @@ export function DisinfectantDocumentClient({
                 >
                   {!readOnly && (
                     <Checkbox
+                    aria-label={t("journalDisinfectant.selectAllRows")}
                       checked={allSubsSelected}
                       onCheckedChange={(c) =>
                         setSelectedSubIds(
@@ -1953,68 +1921,54 @@ export function DisinfectantDocumentClient({
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} min-w-[200px] px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Наименование подразделения / объекта подлежащего дезинфекции
-                </th>
+                  {t("journalDisinfectant.subdivisionFull")}</th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Площадь объекта (кв.м)
-                </th>
+                  {t("journalDisinfectant.areaSqm")}</th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[60px] px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Вид обработки (Т, Г)
-                </th>
+                  {t("journalDisinfectant.treatmentCodes")}</th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Кратность обработок в месяц
-                </th>
+                  {t("journalDisinfectant.frequencyMonth")}</th>
                 <th
                   colSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Дезинфицирующее средство
-                </th>
+                  {t("journalDisinfectant.disinfectant")}</th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Расход рабочего раствора на один кв. м. (л)
-                </th>
+                  {t("journalDisinfectant.solutionSqm")}</th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} w-[100px] px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Количество рабочего раствора для однократной обработки объекта
-                  (л)
-                </th>
+                  {t("journalDisinfectant.solutionTreatmentFull")}</th>
                 <th
                   colSpan={3}
                   className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}
                 >
-                  Потребность в дезинфицирующем средстве
-                </th>
+                  {t("journalDisinfectant.needDisinfectant")}</th>
               </tr>
               <tr>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[120px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Наименование
-                </th>
+                  {t("sanitationPestPdf.name")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Концентрация (%)
-                </th>
+                  {t("journalDisinfectant.concentrationPercent")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}>
-                  На одну обработку (кг, л)
-                </th>
+                  {t("journalDisinfectant.perTreatmentKgL")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}>
-                  На один месяц (кг, л)
-                </th>
+                  {t("journalDisinfectant.perMonthKgL")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[80px] px-2 py-1.5 font-semibold leading-tight`}>
-                  На один год (кг, л)
-                </th>
+                  {t("journalDisinfectant.perYearKgL")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2032,6 +1986,7 @@ export function DisinfectantDocumentClient({
                   >
                     {!readOnly && (
                       <Checkbox
+                    aria-label={t("journalDisinfectant.selectRow")}
                         checked={selectedSubIds.includes(sub.id)}
                         onCheckedChange={(c) =>
                           setSelectedSubIds((cur) =>
@@ -2047,10 +2002,10 @@ export function DisinfectantDocumentClient({
                     {sub.name}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
-                    {sub.byCapacity ? "На ёмк." : sub.area}
+                    {sub.byCapacity ? t("journalDisinfectant.byCapacityShort") : sub.area}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
-                    {sub.treatmentType === "current" ? "Т" : "Г"}
+                    {sub.treatmentType === "current" ? t("journalDisinfectant.currentCode") : t("journalDisinfectant.generalCode")}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
                     {sub.frequencyPerMonth}
@@ -2093,7 +2048,7 @@ export function DisinfectantDocumentClient({
                   leading={1}
                   labelSpan={2}
                   trailing={9}
-                  label="Добавить подразделение"
+                  label={t("journalDisinfectant.addSubdivision")}
                   onClick={() => setAddSubOpen(true)}
                 />
               ) : null}
@@ -2102,8 +2057,7 @@ export function DisinfectantDocumentClient({
                   colSpan={9}
                   className={`${GRID_CELL_CLASS} text-right px-2 py-1 leading-tight`}
                 >
-                  Общая потребность дез. средства
-                </td>
+                  {t("sanitationPestPdf.totalNeed")}</td>
                 <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
                   {formatNumber(totalNeedPerTreatment)}
                 </td>
@@ -2120,16 +2074,14 @@ export function DisinfectantDocumentClient({
 
         {/* === Section 2: Receipts === */}
         <h2 className="pt-8 text-center text-[20px] font-semibold uppercase">
-          СВЕДЕНИЯ О ПОСТУПЛЕНИИ ДЕЗИНФИЦИРУЮЩИХ СРЕДСТВ
-        </h2>
+          {t("journalDisinfectant.receiptHeading")}</h2>
 
         {!readOnly && (
           <Button
             className={DOC_PRIMARY_BUTTON_CLASS}
             onClick={() => setAddRecOpen(true)}
           >
-            <Plus className="size-5" /> Добавить поступление
-          </Button>
+            <Plus className="size-5" /> {t("journalDisinfectant.addReceipt")}</Button>
         )}
 
         <div className={JOURNAL_TABLE_SCROLL_CLASS}>
@@ -2139,6 +2091,7 @@ export function DisinfectantDocumentClient({
                 <th className={`${GRID_HEAD_CELL_CLASS} w-12 px-2 py-1.5 font-semibold leading-tight`}>
                   {!readOnly && (
                     <Checkbox
+                    aria-label={t("journalDisinfectant.selectAllRows")}
                       checked={allRecsSelected}
                       onCheckedChange={(c) =>
                         setSelectedRecIds(
@@ -2151,20 +2104,15 @@ export function DisinfectantDocumentClient({
                   )}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[120px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Дата получения
-                </th>
+                  {t("sanitationPestPdf.receiptDate")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} min-w-[200px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Наименование дез. средства
-                </th>
+                  {t("sanitationPestPdf.disinfectantName")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[160px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Количество полученного дез. средства (кг, литр, флакон)
-                </th>
+                  {t("journalDisinfectant.receiptQuantityUnits")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[120px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Срок годности до
-                </th>
+                  {t("journalDisinfectant.expiryUntil")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[160px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Ответственный за получение
-                </th>
+                  {t("journalDisinfectant.receiptResponsible")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2185,6 +2133,7 @@ export function DisinfectantDocumentClient({
                   >
                     {!readOnly && (
                       <Checkbox
+                    aria-label={t("journalDisinfectant.selectRow")}
                         checked={selectedRecIds.includes(rec.id)}
                         onCheckedChange={(c) =>
                           setSelectedRecIds((cur) =>
@@ -2203,7 +2152,7 @@ export function DisinfectantDocumentClient({
                     {rec.disinfectantName}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
-                    {formatQuantityWithUnit(rec.quantity, rec.unit)}
+                    {disinfectantQuantity(rec.quantity, rec.unit, quantityUnitLabels)}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
                     {formatDateRu(rec.expiryDate)}
@@ -2225,7 +2174,7 @@ export function DisinfectantDocumentClient({
                   leading={1}
                   labelSpan={2}
                   trailing={3}
-                  label="Добавить поступление"
+                  label={t("journalDisinfectant.addReceipt")}
                   onClick={() => setAddRecOpen(true)}
                 />
               ) : null}
@@ -2234,8 +2183,7 @@ export function DisinfectantDocumentClient({
                   colSpan={3}
                   className={`${GRID_CELL_CLASS} text-right px-2 py-1 leading-tight`}
                 >
-                  Итого:
-                </td>
+                  {t("sanitationPestPdf.total")}</td>
                 <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
                   {totalReceiptQuantity}
                 </td>
@@ -2250,16 +2198,14 @@ export function DisinfectantDocumentClient({
 
         {/* === Section 3: Consumption === */}
         <h2 className="pt-8 text-center text-[20px] font-semibold uppercase">
-          СВЕДЕНИЯ О РАСХОДОВАНИИ ДЕЗИНФИЦИРУЮЩИХ СРЕДСТВ
-        </h2>
+          {t("journalDisinfectant.consumptionHeading")}</h2>
 
         {!readOnly && (
           <Button
             className={DOC_PRIMARY_BUTTON_CLASS}
             onClick={() => setAddConOpen(true)}
           >
-            <Plus className="size-5" /> Добавить расход
-          </Button>
+            <Plus className="size-5" /> {t("journalDisinfectant.addConsumption")}</Button>
         )}
 
         <div className={JOURNAL_TABLE_SCROLL_CLASS}>
@@ -2269,6 +2215,7 @@ export function DisinfectantDocumentClient({
                 <th className={`${GRID_HEAD_CELL_CLASS} w-12 px-2 py-1.5 font-semibold leading-tight`}>
                   {!readOnly && (
                     <Checkbox
+                    aria-label={t("journalDisinfectant.selectAllRows")}
                       checked={allConsSelected}
                       onCheckedChange={(c) =>
                         setSelectedConIds(
@@ -2281,25 +2228,17 @@ export function DisinfectantDocumentClient({
                   )}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[130px] px-2 py-1.5 font-semibold leading-tight`}>
-                  За период с_____ по_____
-                </th>
+                  {t("journalDisinfectant.periodBlank")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} min-w-[180px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Наименование дез. средства
-                </th>
+                  {t("sanitationPestPdf.disinfectantName")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[160px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Общее количество полученного дез. средства (кг, литр, флакон),
-                  в том числе остаток с прошлого периода
-                </th>
+                  {t("journalDisinfectant.totalReceivedWithRemainder")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[160px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Общее количество израсходованного за период дез. средства (кг,
-                  литр, флакон)
-                </th>
+                  {t("journalDisinfectant.totalConsumedUnits")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[140px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Остаток на конец периода дез. средства (кг, литр, флакон)
-                </th>
+                  {t("journalDisinfectant.endRemainderUnits")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} w-[140px] px-2 py-1.5 font-semibold leading-tight`}>
-                  Ответственный за получение
-                </th>
+                  {t("journalDisinfectant.receiptResponsible")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2317,6 +2256,7 @@ export function DisinfectantDocumentClient({
                   >
                     {!readOnly && (
                       <Checkbox
+                    aria-label={t("journalDisinfectant.selectRow")}
                         checked={selectedConIds.includes(con.id)}
                         onCheckedChange={(c) =>
                           setSelectedConIds((cur) =>
@@ -2337,19 +2277,13 @@ export function DisinfectantDocumentClient({
                     {con.disinfectantName}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
-                    {formatQuantityWithUnit(
-                      con.totalReceived,
-                      con.totalReceivedUnit
-                    )}
+                    {disinfectantQuantity(con.totalReceived, con.totalReceivedUnit, quantityUnitLabels)}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
-                    {formatQuantityWithUnit(
-                      con.totalConsumed,
-                      con.totalConsumedUnit
-                    )}
+                    {disinfectantQuantity(con.totalConsumed, con.totalConsumedUnit, quantityUnitLabels)}
                   </td>
                   <td className={`${GRID_CELL_CLASS} text-center px-2 py-1 leading-tight`}>
-                    {formatQuantityWithUnit(con.remainder, con.remainderUnit)}
+                    {disinfectantQuantity(con.remainder, con.remainderUnit, quantityUnitLabels)}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
                     {con.responsibleEmployee}
@@ -2367,7 +2301,7 @@ export function DisinfectantDocumentClient({
                   leading={1}
                   labelSpan={2}
                   trailing={4}
-                  label="Добавить расход"
+                  label={t("journalDisinfectant.addConsumption")}
                   onClick={() => setAddConOpen(true)}
                 />
               ) : null}
@@ -2402,7 +2336,7 @@ export function DisinfectantDocumentClient({
         users={users}
         initial={emptyReceipt}
         onSubmit={addReceipt}
-        dialogTitle="Добавление новой строки"
+        dialogTitle={t("journalDisinfectant.addRow")}
       />
       <ReceiptDialog
         key={`edit-rec-${editRecTarget?.id ?? "none"}`}
@@ -2413,7 +2347,7 @@ export function DisinfectantDocumentClient({
         users={users}
         initial={editRecTarget}
         onSubmit={updateReceipt}
-        dialogTitle={`Редактирование строки${seqRec.progress ? ` ${seqRec.progress}` : ""}`}
+        dialogTitle={t("journalDisinfectant.editRow", { suffix: `${seqRec.progress ? ` ${seqRec.progress}` : ""}` })}
       />
       <ConsumptionDialog
         key={`add-con-${addConOpen}`}
@@ -2422,7 +2356,7 @@ export function DisinfectantDocumentClient({
         users={users}
         initial={emptyConsumption}
         onSubmit={addConsumption}
-        dialogTitle="Добавление новой строки"
+        dialogTitle={t("journalDisinfectant.addRow")}
       />
       <ConsumptionDialog
         key={`edit-con-${editConTarget?.id ?? "none"}`}
@@ -2433,7 +2367,7 @@ export function DisinfectantDocumentClient({
         users={users}
         initial={editConTarget}
         onSubmit={updateConsumption}
-        dialogTitle={`Редактирование строки${seqCon.progress ? ` ${seqCon.progress}` : ""}`}
+        dialogTitle={t("journalDisinfectant.editRow", { suffix: `${seqCon.progress ? ` ${seqCon.progress}` : ""}` })}
       />
       <DocumentSettingsDialog
         open={settingsOpen}

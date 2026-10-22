@@ -91,10 +91,12 @@ export function PositionSelectItems({
   users,
   groups,
   labelClassName,
+  displayLabel,
 }: {
   users: UserLike[];
   groups?: PositionGroups;
   labelClassName?: string;
+  displayLabel?: (rawLabel: string) => string;
 }) {
   const t = useTranslations("journalControls.positionSelect");
   const computed = useMemo(() => getPositionLabelsGrouped(users), [users]);
@@ -110,7 +112,7 @@ export function PositionSelectItems({
           </SelectLabel>
           {resolved.management.map((label) => (
             <SelectItem key={`m:${label}`} value={label}>
-              {label}
+              {displayLabel ? displayLabel(label) : label}
             </SelectItem>
           ))}
         </SelectGroup>
@@ -124,7 +126,7 @@ export function PositionSelectItems({
           </SelectLabel>
           {resolved.staff.map((label) => (
             <SelectItem key={`s:${label}`} value={label}>
-              {label}
+              {displayLabel ? displayLabel(label) : label}
             </SelectItem>
           ))}
         </SelectGroup>

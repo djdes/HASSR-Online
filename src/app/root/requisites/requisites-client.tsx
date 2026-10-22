@@ -1,11 +1,13 @@
 "use client";
 
 import { CheckCircle2, Circle, FileText, Loader2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import type { ChecklistItem, PlatformRequisites } from "@/lib/closing-documents/types";
 import { cn } from "@/lib/utils";
+import { checklistMessageKey, legacyUploadErrorKey } from "./requisites-presentation";
 
 const INPUT =
   "h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
@@ -67,6 +69,11 @@ export function RequisitesClient({
   initial: PlatformRequisites;
   initialChecklist: ChecklistItem[];
 }) {
+  const t = useTranslations("rootRequisites");
+  const translator = useRef(t);
+  useLayoutEffect(() => {
+    translator.current = t;
+  }, [t]);
   const [form, setForm] = useState<Form>({
     nameFull: initial.nameFull,
     nameShort: initial.nameShort,
@@ -111,14 +118,19 @@ export function RequisitesClient({
       });
       const data = (await response.json().catch(() => null)) as ApiState | { error?: string } | null;
       if (!response.ok || !data || !("requisites" in data)) {
-        throw new Error((data as { error?: string } | null)?.error ?? "Не удалось сохранить");
+        const serverError = (data as { error?: string } | null)?.error;
+        const knownError = serverError ? legacyUploadErrorKey(serverError) : null;
+        if (knownError) {
+          toast.error(translator.current(knownError));
+          return;
+        }
+        toast.error(translator.current(serverError ? "errors.validation" : "errors.save"));
+        return;
       }
       applyState(data);
-      toast.success(
-        data.complete ? "Реквизиты сохранены — документы выпускаются" : "Реквизиты сохранены"
-      );
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.success(data.complete ? translator.current("success.complete") : translator.current("success.saved"));
+    } catch {
+      toast.error(translator.current("errors.save"));
     } finally {
       setSaving(false);
     }
@@ -134,13 +146,20 @@ export function RequisitesClient({
       const response = await fetch("/api/root/legal-requisites/upload", { method: "POST", body });
       const data = (await response.json().catch(() => null)) as ApiState | { error?: string } | null;
       if (!response.ok || !data || !("requisites" in data)) {
-        throw new Error((data as { error?: string } | null)?.error ?? "Не удалось загрузить");
+        const serverError = (data as { error?: string } | null)?.error;
+        const knownError = serverError ? legacyUploadErrorKey(serverError) : null;
+        if (knownError) {
+          toast.error(translator.current(knownError));
+          return;
+        }
+        toast.error(translator.current("errors.upload"));
+        return;
       }
       applyState(data);
       setVersion(Date.now());
-      toast.success(kind === "facsimile" ? "Подпись загружена" : "Печать загружена");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.success(kind === "facsimile" ? translator.current("success.facsimile") : translator.current("success.stamp"));
+    } catch {
+      toast.error(translator.current("errors.upload"));
     } finally {
       setUploading(null);
     }
@@ -152,75 +171,75 @@ export function RequisitesClient({
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-5">
         <section className={CARD}>
-          <div className={EYEBROW}>Организация</div>
+            <div className={EYEBROW}>{t("sections.organization")}</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Полное наименование"
+              label={t("fields.nameFull")}
               value={form.nameFull}
               onChange={(v) => set("nameFull", v)}
-              placeholder="Общество с ограниченной ответственностью «…»"
+              placeholder={t("placeholders.nameFull")}
               className="sm:col-span-2"
             />
             <Field
-              label="Краткое наименование"
+              label={t("fields.nameShort")}
               value={form.nameShort}
               onChange={(v) => set("nameShort", v)}
-              placeholder="ООО «…»"
+              placeholder={t("placeholders.nameShort")}
             />
-            <Field label="ИНН" value={form.inn} onChange={(v) => set("inn", v)} inputMode="numeric" maxLength={12} />
+            <Field label={t("fields.inn")} value={form.inn} onChange={(v) => set("inn", v)} inputMode="numeric" maxLength={12} />
             <Field
-              label="КПП"
+              label={t("fields.kpp")}
               value={form.kpp}
               onChange={(v) => set("kpp", v)}
               inputMode="numeric"
               maxLength={9}
-              hint="У ИП нет — оставьте пустым"
+              hint={t("hints.kpp")}
             />
             <Field
-              label="ОГРН / ОГРНИП"
+              label={t("fields.ogrn")}
               value={form.ogrn}
               onChange={(v) => set("ogrn", v)}
               inputMode="numeric"
               maxLength={15}
             />
             <Field
-              label="Юридический адрес"
+              label={t("fields.address")}
               value={form.address}
               onChange={(v) => set("address", v)}
-              placeholder="141065, Московская область, …"
+              placeholder={t("placeholders.address")}
               className="sm:col-span-2"
             />
-            <Field label="E-mail для документов" value={form.email} onChange={(v) => set("email", v)} inputMode="email" />
-            <Field label="Телефон" value={form.phone} onChange={(v) => set("phone", v)} inputMode="tel" />
+            <Field label={t("fields.email")} value={form.email} onChange={(v) => set("email", v)} inputMode="email" />
+            <Field label={t("fields.phone")} value={form.phone} onChange={(v) => set("phone", v)} inputMode="tel" />
           </div>
         </section>
 
         <section className={CARD}>
-          <div className={EYEBROW}>Банк</div>
+          <div className={EYEBROW}>{t("sections.bank")}</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Банк"
+              label={t("fields.bankName")}
               value={form.bank.name}
               onChange={(v) => set("bank", { ...form.bank, name: v })}
-              placeholder="АО «…»"
+              placeholder={t("placeholders.bankName")}
               className="sm:col-span-2"
             />
             <Field
-              label="БИК"
+              label={t("fields.bik")}
               value={form.bank.bik}
               onChange={(v) => set("bank", { ...form.bank, bik: v })}
               inputMode="numeric"
               maxLength={9}
             />
             <Field
-              label="Расчётный счёт"
+              label={t("fields.account")}
               value={form.bank.account}
               onChange={(v) => set("bank", { ...form.bank, account: v })}
               inputMode="numeric"
               maxLength={20}
             />
             <Field
-              label="Корреспондентский счёт"
+              label={t("fields.corrAccount")}
               value={form.bank.corrAccount}
               onChange={(v) => set("bank", { ...form.bank, corrAccount: v })}
               inputMode="numeric"
@@ -231,57 +250,60 @@ export function RequisitesClient({
         </section>
 
         <section className={CARD}>
-          <div className={EYEBROW}>Руководитель</div>
+          <div className={EYEBROW}>{t("sections.head")}</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Должность"
+              label={t("fields.headPost")}
               value={form.head.post}
               onChange={(v) => set("head", { ...form.head, post: v })}
-              placeholder="Генеральный директор"
+              placeholder={t("placeholders.headPost")}
             />
             <Field
-              label="ФИО в подписи"
+              label={t("fields.headName")}
               value={form.head.name}
               onChange={(v) => set("head", { ...form.head, name: v })}
-              placeholder="Иванов И. И."
+              placeholder={t("placeholders.headName")}
             />
           </div>
           <p className="mt-3 text-[13px] leading-relaxed text-[#6f7282]">
-            Режим НДС: <strong className="text-[#0b1024]">без НДС (УСН)</strong> — УПД
-            выпускается со статусом 2, счёт-фактура не составляется. Если режим изменится,
-            понадобится правка формы документа.
+            {t.rich("vatNotice", { mode: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong> })}
           </p>
         </section>
 
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={() => void save()} disabled={saving} className={BTN_PRIMARY}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            Сохранить
+            {saving ? t("actions.saving") : t("actions.save")}
           </button>
           <a href="/api/root/legal-requisites/sample" target="_blank" rel="noreferrer" className={BTN_OUTLINE}>
             <FileText className="size-4 text-[#5566f6]" />
-            Скачать образец УПД
+            {t("actions.sample")}
           </a>
           <span className="text-[13px] text-[#6f7282]">
-            Образец — с условным покупателем; там видно, где встанут подпись и печать.
+            {t("actions.sampleHint")}
           </span>
         </div>
       </div>
 
       <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
         <section className={CARD}>
-          <div className={EYEBROW}>Готовность · {done}/{checklist.length}</div>
+          <div className={EYEBROW}>{t("readiness.title", { done, total: checklist.length })}</div>
           <ul className="space-y-2">
-            {checklist.map((item) => (
-              <li key={item.key} className="flex items-center gap-2 text-[13.5px]">
-                {item.ok ? (
-                  <CheckCircle2 className="size-4 shrink-0 text-[#116b2a]" />
-                ) : (
-                  <Circle className="size-4 shrink-0 text-[#c9ccdb]" />
-                )}
-                <span className={item.ok ? "text-[#0b1024]" : "text-[#6f7282]"}>{item.label}</span>
-              </li>
-            ))}
+            {checklist.map((item) => {
+              const messageKey = checklistMessageKey(item.key);
+              return (
+                <li key={item.key} className="flex items-center gap-2 text-[13.5px]">
+                  {item.ok ? (
+                    <CheckCircle2 className="size-4 shrink-0 text-[#116b2a]" />
+                  ) : (
+                    <Circle className="size-4 shrink-0 text-[#c9ccdb]" />
+                  )}
+                  <span className={item.ok ? "text-[#0b1024]" : "text-[#6f7282]"}>
+                    {messageKey ? t(messageKey) : item.label}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           <p
             className={cn(
@@ -290,19 +312,19 @@ export function RequisitesClient({
             )}
           >
             {done === checklist.length
-              ? "Всё заполнено: клиенты видят «УПД (PDF)» в истории оплат, после оплаты документ уходит письмом."
-              : "Пока не всё заполнено — документы не выпускаются и в письмах их нет."}
+              ? t("readiness.complete")
+              : t("readiness.incomplete")}
           </p>
         </section>
 
         {(
           [
-            { kind: "facsimile", title: "Факсимиле подписи", hint: "PNG с прозрачным фоном, до 1 МБ. Впишется в рамку 34 × 11 мм.", ref: facsimileInput, box: "h-16" },
-            { kind: "stamp", title: "Печать", hint: "PNG с прозрачным фоном, до 1 МБ. Круглая, 32 × 32 мм на документе.", ref: stampInput, box: "h-36" },
+            { kind: "facsimile", titleKey: "images.facsimileTitle", hintKey: "images.facsimileHint", ref: facsimileInput, box: "h-16" },
+            { kind: "stamp", titleKey: "images.stampTitle", hintKey: "images.stampHint", ref: stampInput, box: "h-36" },
           ] as const
         ).map((slot) => (
           <section key={slot.kind} className={CARD}>
-            <div className={EYEBROW}>{slot.title}</div>
+            <div className={EYEBROW}>{t(slot.titleKey)}</div>
             <div
               className={cn(
                 "flex items-center justify-center rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-3",
@@ -313,14 +335,14 @@ export function RequisitesClient({
                 // eslint-disable-next-line @next/next/no-img-element -- приватная картинка с no-store, next/image тут не нужен
                 <img
                   src={`/api/root/legal-requisites/image/${slot.kind}?v=${version}`}
-                  alt={slot.title}
+                  alt={t(slot.titleKey)}
                   className="max-h-full max-w-full object-contain"
                 />
               ) : (
-                <span className="text-[13px] text-[#9b9fb3]">Не загружено</span>
+                <span className="text-[13px] text-[#9b9fb3]">{t("images.notUploaded")}</span>
               )}
             </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-[#9b9fb3]">{slot.hint}</p>
+            <p className="mt-2 text-[12px] leading-relaxed text-[#9b9fb3]">{t(slot.hintKey)}</p>
             <input
               ref={slot.ref}
               type="file"
@@ -342,7 +364,7 @@ export function RequisitesClient({
               ) : (
                 <Upload className="size-4 text-[#5566f6]" />
               )}
-              {images[slot.kind] ? "Заменить PNG" : "Загрузить PNG"}
+              {images[slot.kind] ? t("images.replacePng") : t("images.uploadPng")}
             </button>
           </section>
         ))}

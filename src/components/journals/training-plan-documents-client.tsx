@@ -1,5 +1,10 @@
 "use client";
 
+import { useExportLanguageChoice } from "@/components/journals/export-language-choice";
+
+import { useLocale, useTranslations } from "next-intl";
+import { buildTrainingRoleDisplay, captureTrainingProvenance, completeTrainingProvenance, presentTrainingApprover, presentTrainingRole, presentTrainingStaffOption } from "@/lib/training-plan-presentation";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -41,7 +46,6 @@ import {
 import { getDistinctRoleLabels } from "@/lib/user-roles";
 import {
   TRAINING_PLAN_DOCUMENT_TITLE,
-  TRAINING_PLAN_HEADING,
   TRAINING_PLAN_TEMPLATE_CODE,
   getTrainingPlanApproveLabel,
   getTrainingPlanDefaultConfig,
@@ -54,6 +58,7 @@ import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
@@ -87,6 +92,7 @@ type UserItem = { id: string; name: string; role: string };
 type TrainingPlanDocumentItem = {
   id: string;
   title: string;
+  displayTitleMissing?: boolean;
   /** Точки: документ без точки рядом с документами точек. */
   shared?: boolean;
   status: "active" | "closed";
@@ -140,14 +146,21 @@ function SettingsDialog(props: {
   onOpenChange: (value: boolean) => void;
   users: UserItem[];
   initial: SettingsState | null;
+  sourceKey: string;
   onSubmit: (value: SettingsState) => Promise<void>;
   submitText: string;
   title: string;
   mode: "create" | "edit";
 }) {
+  const tp = useTranslations("journalTrainingPlan");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const roleDisplay = useMemo(() => buildTrainingRoleDisplay(props.users), [props.users]);
+  const displayRole = (raw: string) => presentTrainingRole(raw, roleDisplay, pdf);
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
-  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange, fallbackError: props.mode === "edit" ? tp("settingsFailed") : tp("createFailed") });
   const submitting = submit.submitting;
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
   const activeState = state || props.initial;
@@ -165,6 +178,7 @@ function SettingsDialog(props: {
    * `setCreateOpen(true)`. `initial` читаем через ref, чтобы нестабильный
    * объект из родителя не сбрасывал форму на каждом рендере.
    */
+  const initialKey = JSON.stringify(props.initial);
   const initialRef = useRef(props.initial);
   useEffect(() => {
     initialRef.current = props.initial;
@@ -178,7 +192,7 @@ function SettingsDialog(props: {
     const initial = initialRef.current;
     resetAuto();
     setState(initial ? { ...initial, title: initial.title || seedTitle() } : initial);
-  }, [props.open, resetAuto, seedTitle]);
+  }, [props.open, initialKey, props.sourceKey, resetAuto, seedTitle]);
 
   const cascade = usePositionEmployeeCascade({
     users: props.users,
@@ -215,6 +229,7 @@ function SettingsDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={common("close")}
               className="rounded-xl p-2 text-[#0b1024]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -226,7 +241,7 @@ function SettingsDialog(props: {
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
             <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{tp("documentName")}</Label>
               <Input
                 value={activeState.title}
                 onChange={(event) => {
@@ -237,7 +252,7 @@ function SettingsDialog(props: {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Дата документа</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{tp("documentDate")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -266,7 +281,7 @@ function SettingsDialog(props: {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Год</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{tp("year")}</Label>
               <Select
                 value={activeState.year}
                 onValueChange={(value) => {
@@ -297,21 +312,21 @@ function SettingsDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Должность &quot;Утверждаю&quot;</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{tp("approverPosition")}</Label>
               <Select
                 value={activeState.approveRole}
                 onValueChange={cascade.handlePositionChange}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={controls("positionSelect.choosePosition")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <PositionSelectItems users={props.users} />
+                  <PositionSelectItems users={props.users} displayLabel={displayRole} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{controls("positionSelect.employeeLabel")}</Label>
               <Select
                 value={activeState.approveEmployeeId}
                 onValueChange={cascade.handleEmployeeChange}
@@ -319,12 +334,12 @@ function SettingsDialog(props: {
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={controls("positionSelect.chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {cascade.candidates.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {buildStaffOptionLabel(user)}
+                      {presentTrainingStaffOption(buildStaffOptionLabel(user), user, roleDisplay, pdf, tp("unnamed"))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -337,7 +352,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? tp("saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -354,6 +369,14 @@ export function TrainingPlanDocumentsClient({
   users,
   documents,
 }: Props) {
+  const tp = useTranslations("journalTrainingPlan");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const scan = useTranslations("journalScan");
+  const locale = useLocale();
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(locale, (key) => t(key));
+  const chooseExportLanguage = useExportLanguageChoice();
   const router = useRouter();
   const [settingsTarget, setSettingsTarget] = useState<TrainingPlanDocumentItem | null>(null);
   // Создание / настройки / удаление документов API отдаёт только
@@ -429,10 +452,10 @@ export function TrainingPlanDocumentsClient({
   }
 
   async function handleDelete(documentId: string, documentTitle: string) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${documentTitle}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: t("documentActions.deleteTitle"), description: t("documentLifecycle.deleteDescriptionWithTitle", { title: documentTitle }), variant: "danger", confirmLabel: common("delete"), locale: lifecycleFeedback.current.locale }))) return;
     const response = await fetch(`/api/journal-documents/${documentId}`, { method: "DELETE" });
     if (!response.ok) {
-      toast.error("Не удалось удалить");
+      toast.error(lifecycleFeedback.current.translate("documentLifecycle.deleteFailedShort"));
       return;
     }
     router.refresh();
@@ -445,7 +468,7 @@ export function TrainingPlanDocumentsClient({
       body: JSON.stringify({ status: newStatus }),
     });
     if (!response.ok) {
-      toast.error("Ошибка");
+      toast.error(lifecycleFeedback.current.translate("documentLifecycle.genericStatusFailed"));
       return;
     }
     router.refresh();
@@ -472,11 +495,11 @@ export function TrainingPlanDocumentsClient({
           <JournalHeadingName
             fallback={
               <>
-                {TRAINING_PLAN_HEADING}
-                {activeTab === "closed" && " (Закрытые!!!)"}
+                {pdf("planTitle")}
+                {activeTab === "closed" && tp("closedSuffix")}
               </>
             }
-            suffix={activeTab === "closed" ? " (Закрытые!!!)" : null}
+            suffix={activeTab === "closed" ? tp("closedSuffix") : null}
           />
         </h1>
         <JournalListActions
@@ -485,7 +508,7 @@ export function TrainingPlanDocumentsClient({
           create={
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
-                <Plus className="size-4" /> Создать документ
+                <Plus className="size-4" /> {tp("createDocument")}
               </Button>
             ) : null
           }
@@ -499,7 +522,9 @@ export function TrainingPlanDocumentsClient({
           <EmptyDocumentsState />
         )}
         {documents.map((document) => {
+          const captured = captureTrainingProvenance(document.config);
           const config = normalizeTrainingPlanConfig(document.config);
+          const origin = completeTrainingProvenance(captured, config);
           const href = `/journals/${routeCode}/documents/${document.id}`;
           return (
             <div
@@ -507,39 +532,39 @@ export function TrainingPlanDocumentsClient({
               className={JOURNAL_LIST_CARD_CLASS}
             >
               <Link href={href} className={JOURNAL_CARD_TITLE_CLASS}>
-                {document.title || TRAINING_PLAN_DOCUMENT_TITLE}
-              <SharedDocumentBadge shared={document.shared} />
+                {!document.title || document.displayTitleMissing ? tp("documentTitle") : document.title}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: scan("shared.label"), title: scan("shared.title") }} />
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Год</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{tp("year")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getTrainingPlanYearLabel(config.year)}
                 </div>
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{tp("approverPosition")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getTrainingPlanApproveLabel(
-                    resolveApprover(config, users).title,
+                    presentTrainingApprover(resolveApprover(config, users).title, config, users, origin, pdf),
                     resolveApprover(config, users).name
                   )}
                 </div>
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{tp("documentDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getTrainingPlanDocumentDateLabel(config.documentDate)}
                 </div>
               </Link>
               <div className="flex justify-start sm:justify-center">
                 <ResponsiveMenu
-                  title="Действия"
+                  title={tp("actions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: tp("settingsAction"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -547,26 +572,27 @@ export function TrainingPlanDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: common("print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
-                      onSelect: () =>
+                      onSelect: () => chooseExportLanguage((language) => {
                         window.open(
-                          `/api/journal-documents/${document.id}/pdf`,
+                          `/api/journal-documents/${document.id}/pdf?locale=${language}`,
                           "_blank",
                           "noopener,noreferrer"
-                        ),
+                        );
+                      }, common("print")),
                     },
                     ...(document.status === "active"
                       ? [
                           {
                             key: "archive",
-                            label: "Отправить в закрытые",
+                            label: t("documentLifecycle.sendToClosed"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => setArchiveTarget(document),
                           },
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: common("delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             tone: "danger" as const,
                             onSelect: () => handleDelete(document.id, document.title),
@@ -577,7 +603,7 @@ export function TrainingPlanDocumentsClient({
                       ? [
                           {
                             key: "restore",
-                            label: "Отправить в активные",
+                            label: t("documentLifecycle.sendToActive"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => moveToStatus(document.id, "active"),
                           },
@@ -587,6 +613,7 @@ export function TrainingPlanDocumentsClient({
                   trigger={
                     <button
                       type="button"
+                      aria-label={tp("actions")}
                       className="flex size-10 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                     >
                       <Ellipsis className="size-8" />
@@ -603,10 +630,11 @@ export function TrainingPlanDocumentsClient({
         open={createOpen}
         onOpenChange={setCreateOpen}
         users={users}
+        sourceKey={templateCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
-        submitText="Создать"
-        title="Создание документа"
+        submitText={tp("create")}
+        title={tp("createDocumentTitle")}
         mode="create"
       />
       <SettingsDialog
@@ -615,12 +643,13 @@ export function TrainingPlanDocumentsClient({
           if (!value) setSettingsTarget(null);
         }}
         users={users}
-        initial={settingsTarget ? toUiState(settingsTarget) : null}
+        sourceKey={settingsTarget?.id ?? ""}
+        initial={settingsTarget ? toUiState(documents.find((document) => document.id === settingsTarget.id) ?? settingsTarget) : null}
         onSubmit={async (value) => {
           if (settingsTarget) await saveSettings(settingsTarget.id, value);
         }}
-        submitText="Сохранить"
-        title="Настройки документа"
+        submitText={common("save")}
+        title={tp("settings")}
         mode="edit"
       />
 
@@ -634,9 +663,9 @@ export function TrainingPlanDocumentsClient({
           <DialogHeader className="border-b px-8 py-6">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-[22px] font-semibold text-black">
-                Перенести в архив документ &quot;{archiveTarget?.title}&quot;
+                {t("documentLifecycle.archiveTitle", { title: archiveTarget?.title ?? "" })}
               </DialogTitle>
-              <button type="button" className="rounded-xl p-2" onClick={() => setArchiveTarget(null)}>
+              <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => setArchiveTarget(null)}>
                 <X className="size-7" />
               </button>
             </div>
@@ -650,7 +679,7 @@ export function TrainingPlanDocumentsClient({
                 setArchiveTarget(null);
               }}
             >
-              В архив
+              {t("documentLifecycle.archiveAction")}
             </Button>
           </div>
         </DialogContent>

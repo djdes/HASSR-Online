@@ -127,6 +127,7 @@ export function PersonalDiscountBadge({
 
 export function PromoPrice({
   locale = "ru",
+  formatAmount = formatPriceRub,
   price,
   personal = null,
   size = "sm",
@@ -137,6 +138,7 @@ export function PromoPrice({
   className,
 }: {
   price: Pick<PriceWithPromotion, "baseRub" | "priceRub" | "promotion">;
+  formatAmount?: (value: number, locale: SiteLocale) => string;
   locale?: SiteLocale;
   /** Персональная скидка поверх акции — от price.priceRub. */
   personal?: PersonalDiscount | null;
@@ -165,7 +167,7 @@ export function PromoPrice({
     return (
       <span data-testid="promo-price" data-promo-active="false" className={cn("tabular-nums", className)}>
         <span data-promo-new className={cn(NEW_SIZE[size], newTone)}>
-          {formatPriceRub(price.priceRub, locale)}
+          {formatAmount(price.priceRub, locale)}
         </span>
         {suffix}
       </span>
@@ -175,14 +177,14 @@ export function PromoPrice({
   const oldPrice = (
     <s data-promo-old className={cn("tabular-nums decoration-[1.5px]", OLD_SIZE[size], oldTone)}>
       <span className="sr-only">{promotion ? t("price.regularBeforePromotion") : t("price.regularBeforeDiscount")}</span>
-      {formatPriceRub(price.baseRub, locale)}
+      {formatAmount(price.baseRub, locale)}
     </s>
   );
   const newPrice = (
     <span className="whitespace-nowrap">
       <span data-promo-new className={cn("tabular-nums", NEW_SIZE[size], newTone)}>
         <span className="sr-only">{t("price.discountedPrice")}</span>
-        {formatPriceRub(finalRub, locale)}
+        {formatAmount(finalRub, locale)}
       </span>
       {suffix}
     </span>

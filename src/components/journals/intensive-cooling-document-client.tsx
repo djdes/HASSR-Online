@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
+
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
@@ -72,6 +74,7 @@ import {
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { attachLifecycleErrorMetadata, presentLifecycleError, useLifecycleFeedbackRef, type LifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 
 type UserItem = {
   id: string;
@@ -593,7 +596,10 @@ function FinishDialog(props: {
   onOpenChange: (value: boolean) => void;
   title: string;
   onConfirm: () => Promise<void>;
+  feedbackRef: LifecycleFeedbackRef;
 }) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleConfirm() {
@@ -602,9 +608,8 @@ function FinishDialog(props: {
       await props.onConfirm();
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(
-        humanizeFetchError(error, "Не удалось закончить журнал")
-      );
+      const feedback = props.feedbackRef.current;
+      toast.error(presentLifecycleError(error, feedback.locale, (key) => props.feedbackRef.current.translate(key)));
     } finally {
       setSubmitting(false);
     }
@@ -616,10 +621,11 @@ function FinishDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              Закончить журнал &quot;{props.title}&quot;
+              {t("documentLifecycle.finishTitle", { title: props.title })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={common("close")}
               className="rounded-xl p-2 text-[#101425]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -634,7 +640,7 @@ function FinishDialog(props: {
             disabled={submitting}
             className="h-9 rounded-xl bg-[#5563ff] px-8 text-[13.5px] text-white hover:bg-[#4452ee]"
           >
-            {submitting ? "Завершение..." : "Закончить"}
+            {submitting ? t("documentLifecycle.finishing") : t("documentLifecycle.finishAction")}
           </Button>
         </div>
       </DialogContent>
@@ -643,6 +649,9 @@ function FinishDialog(props: {
 }
 
 export function IntensiveCoolingDocumentClient(props: Props) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [config, setConfig] = useState(() =>
@@ -682,7 +691,8 @@ export function IntensiveCoolingDocumentClient(props: Props) {
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
+      const error = new Error(result?.error || "Не удалось сохранить журнал");
+      throw attachLifecycleErrorMetadata(error, result?.code, response.headers.get("Content-Language"));
     }
     setTitle(nextTitle);
     setDateFrom(nextDateFrom);
@@ -845,7 +855,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => setFinishOpen(true),
                 },
@@ -1093,6 +1103,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
         onOpenChange={setFinishOpen}
         title={title || INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME}
         onConfirm={handleFinish}
+        feedbackRef={lifecycleFeedback}
       />
     </div>
   );

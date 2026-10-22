@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -30,6 +31,9 @@ const BELOW_TOP_BAR =
  * единственное место, где видно, что запись ещё не у сервера.
  */
 export function OfflineIndicator() {
+  const t = useTranslations("miniOffline");
+  const latestText = useRef(t);
+  useEffect(() => { latestText.current = t; }, [t]);
   const isOnline = useNetwork();
   // Записи отправляются только своим автором — см. `journal-queue.ts`.
   const { data: session } = useSession();
@@ -72,7 +76,10 @@ export function OfflineIndicator() {
         setTimeout(() => setJustSent(0), 4000);
         // Пока приложение открыто, об этом говорит полоса выше;
         // уведомление — для случая «поймал сеть, приложение свёрнуто».
-        void notifyQueueSent(result.sent);
+        void notifyQueueSent(result.sent, {
+          title: latestText.current("notification.title"),
+          body: latestText.current("notification.body", { count: result.sent }),
+        });
       }
     } finally {
       flushing.current = false;
@@ -129,13 +136,13 @@ export function OfflineIndicator() {
 
   const text = !isOnline
     ? pending > 0
-      ? `Нет связи. Записей ждёт отправки: ${pending}`
+      ? t("banner.offlinePending", { count: String(pending) })
       : onQueuelessScreen
-        ? "Нет связи. Завершить задачу получится, когда связь вернётся"
-        : "Нет связи. Заполнять можно — отправится, когда связь вернётся"
+        ? t("banner.offlineTask")
+        : t("banner.offlineReady")
     : pending > 0
-      ? `Отправляем записи: ${pending}`
-      : `Отправлено: ${justSent}`;
+      ? t("banner.sending", { count: String(pending) })
+      : t("banner.sent", { count: String(justSent) });
 
   // В body, а не в .mini-root: правило `.mini-root > *` в mini-theme.css
   // делает прямых детей position: relative, и «fixed» полоса уезжала в

@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
@@ -63,6 +65,7 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { attachLifecycleErrorMetadata, presentLifecycleError, useLifecycleFeedbackRef, type LifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 
 // Должность из карточки (как в UserLike) — её пишем в строку и показываем.
@@ -856,7 +859,9 @@ function ImportDialog(props: {
   );
 }
 
-function FinishDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; title: string; onFinish: () => Promise<void> }) {
+function FinishDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; title: string; onFinish: () => Promise<void>; feedbackRef: LifecycleFeedbackRef }) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [loading, setLoading] = useState(false);
   async function finish() {
     setLoading(true);
@@ -864,7 +869,8 @@ function FinishDialog(props: { open: boolean; onOpenChange: (open: boolean) => v
       await props.onFinish();
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось закончить журнал"));
+      const feedback = props.feedbackRef.current;
+      toast.error(presentLifecycleError(error, feedback.locale, (key) => props.feedbackRef.current.translate(key)));
     } finally {
       setLoading(false);
     }
@@ -872,14 +878,16 @@ function FinishDialog(props: { open: boolean; onOpenChange: (open: boolean) => v
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent showCloseButton={false} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[640px]">
-        <DialogHeader className="border-b px-8 py-6"><div className="flex items-center justify-between gap-4"><DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">Закончить журнал &quot;{props.title}&quot;</DialogTitle><button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button></div></DialogHeader>
-        <div className="space-y-4 px-8 py-8"><div className="text-[17px] leading-7 text-[#505469]">Документ станет доступен только для чтения.</div><div className="flex justify-end"><Button type="button" onClick={finish} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? "Сохранение..." : "Закончить"}</Button></div></div>
+        <DialogHeader className="border-b px-8 py-6"><div className="flex items-center justify-between gap-4"><DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{t("documentLifecycle.finishTitle", { title: props.title })}</DialogTitle><button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button></div></DialogHeader>
+        <div className="space-y-4 px-8 py-8"><div className="text-[17px] leading-7 text-[#505469]">{t("documentLifecycle.finishReadOnlyDescription")}</div><div className="flex justify-end"><Button type="button" onClick={finish} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? t("documentLifecycle.finishSaving") : t("documentLifecycle.finishAction")}</Button></div></div>
       </DialogContent>
     </Dialog>
   );
 }
 
 export function TraceabilityDocumentClient(props: Props) {
+  const t = useTranslations("journalControls");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [config, setConfig] = useState<TraceabilityDocumentConfig>(() =>
@@ -999,7 +1007,10 @@ export function TraceabilityDocumentClient(props: Props) {
       body: JSON.stringify(payload),
     });
     const result = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(result?.error || "Не удалось сохранить документ");
+    if (!response.ok) {
+      const error = new Error(result?.error || "Не удалось сохранить документ");
+      throw attachLifecycleErrorMetadata(error, result?.code, response.headers.get("Content-Language"));
+    }
     return result;
   }
 
@@ -1139,7 +1150,7 @@ export function TraceabilityDocumentClient(props: Props) {
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => setFinishOpen(true),
                 },
@@ -1282,8 +1293,7 @@ export function TraceabilityDocumentClient(props: Props) {
       {/* Закрытие без сохранения прерывает очередь («Изменено k из N»). */}
       <RowDialog open={rowOpen} onOpenChange={(open) => { if (open) { setRowOpen(true); return; } seq.cancelled(); }} config={config} employees={employees} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} dateFrom={dateFrom} onSave={saveRow} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={importFile} />
-      <FinishDialog open={finishOpen} onOpenChange={setFinishOpen} title={title || DEFAULT_TITLE} onFinish={finishJournal} />
+      <FinishDialog open={finishOpen} onOpenChange={setFinishOpen} title={title || DEFAULT_TITLE} onFinish={finishJournal} feedbackRef={lifecycleFeedback} />
     </div>
   );
 }
-

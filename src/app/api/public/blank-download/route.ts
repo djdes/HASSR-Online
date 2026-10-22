@@ -8,6 +8,7 @@ import {
   blankPagePath,
   blankRegisterHref,
   type BlankFormat,
+  type BlankTarget,
 } from "@/lib/blank-download";
 import { blankDownloadLimiter } from "@/lib/blank-download-limits";
 import { parseBlankDownloadRequest } from "@/lib/blank-download-targets";
@@ -21,6 +22,13 @@ import { db } from "@/lib/db";
 import { sendBlankDownloadEmail } from "@/lib/email";
 import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { domainAcceptsMail } from "@/lib/mail-domain";
+import { translatorFor } from "@/i18n/translator";
+import { loadMessages } from "@/i18n/messages";
+import { localizedHref } from "@/i18n/site-locale";
+import {
+  blankConsentSnapshot,
+  blankMarketingConsentSnapshot,
+} from "@/lib/blank-download-presentation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,11 +68,15 @@ export async function POST(request: Request) {
   const parsed = parseBlankDownloadRequest(body, LEGAL_VERSION);
   if (!parsed.ok) {
     return NextResponse.json(
-      { error: parsed.error, ...(parsed.needConsent ? { needConsent: true } : {}) },
+      {
+        error: parsed.error,
+        errorCode: parsed.errorCode,
+        ...(parsed.needConsent ? { needConsent: true } : {}),
+      },
       { status: parsed.status },
     );
   }
-  const { email, info, format, marketing } = parsed.value;
+  const { email, info, format, marketing, locale } = parsed.value;
 
   const ip = clientIp(request) ?? "unknown";
   const limited = blankDownloadLimiter.consume(ip, email);
@@ -75,6 +87,7 @@ export async function POST(request: Request) {
           limited.scope === "ip"
             ? "Слишком много скачиваний с этого адреса. Попробуйте через час"
             : "На эту почту сегодня скачали слишком много шаблонов. Попробуйте завтра",
+        errorCode: limited.scope === "ip" ? "rate_limit_ip" : "rate_limit_email",
       },
       { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
     );
@@ -82,20 +95,32 @@ export async function POST(request: Request) {
 
   if (!(await domainOk(email.split("@")[1] ?? ""))) {
     return NextResponse.json(
-      { error: "Такого почтового домена не существует — проверьте адрес. Письмо на него не дойдёт" },
+      {
+        error: "Такого почтового домена не существует — проверьте адрес. Письмо на него не дойдёт",
+        errorCode: "email_domain",
+      },
       { status: 400 },
     );
   }
 
   let consentId: string;
   let marketingConsentId: string | null = null;
+  let t: Awaited<ReturnType<typeof translatorFor>>;
   try {
+    t = await translatorFor(locale);
+    const consentRichMessage = t.raw("publicBlankDownload.consent.statement");
+    const marketingRichMessage = t.raw("publicBlankDownload.marketing.statement");
+    if (typeof consentRichMessage !== "string" || typeof marketingRichMessage !== "string") {
+      throw new Error("Blank download consent catalog is unavailable");
+    }
     const rows = blankConsentRows({
       email,
       version: LEGAL_VERSION,
       marketing,
       ipAddress: ip === "unknown" ? null : ip,
       userAgent: request.headers.get("user-agent")?.slice(0, 400) ?? null,
+      statementText: blankConsentSnapshot(consentRichMessage),
+      marketingStatementText: blankMarketingConsentSnapshot(marketingRichMessage),
     });
     const created = await db.$transaction(
       rows.map((data) => db.legalConsent.create({ data, select: { id: true } })),
@@ -104,7 +129,7 @@ export async function POST(request: Request) {
     marketingConsentId = created[1]?.id ?? null;
   } catch (error) {
     console.error("[blank-download] consent record failed", error);
-    return NextResponse.json({ error: "Не получилось подготовить шаблон. Попробуйте ещё раз" }, { status: 500 });
+    return NextResponse.json({ error: "Не получилось подготовить шаблон. Попробуйте ещё раз", errorCode: "server_failure" }, { status: 500 });
   }
 
   const target = info.target;
@@ -126,7 +151,7 @@ export async function POST(request: Request) {
 
   const now = Date.now();
   const hrefFor = (fileFormat: BlankFormat) =>
-    blankDownloadHref(target, fileFormat, signBlankDownloadToken({ email, target, format: fileFormat }, now));
+    blankDownloadHref(target, fileFormat, signBlankDownloadToken({ email, target, format: fileFormat }, now), locale);
   const url = hrefFor(format);
 
   // Лимит писем проверяем до ответа — окно честно скажет, ушла ли копия.
@@ -136,17 +161,18 @@ export async function POST(request: Request) {
   after(async () => {
     if (!emailed) return;
     const files = [format, ...info.formats.filter((other) => other !== format)].map((fileFormat) => ({
-      label: `Скачать ${BLANK_FORMAT_LABEL[fileFormat]}`,
+      label: t("publicBlankDownload.email.fileLabel", { format: BLANK_FORMAT_LABEL[fileFormat] }),
       url: `${APP_URL}${fileFormat === format ? url : hrefFor(fileFormat)}`,
     }));
     try {
       await sendBlankDownloadEmail({
         to: email,
-        journalTitle: info.title,
+        journalTitle: localizedProductTitle((await loadMessages(locale)).journals.names, target, info.title),
         files,
-        pageUrl: target.kind === "code" ? `${APP_URL}/journals-info/${encodeURIComponent(target.code)}` : null,
-        registerUrl: `${APP_URL}${blankRegisterHref({ email, target })}`,
+        pageUrl: target.kind === "code" ? `${APP_URL}${localizedHref(`/journals-info/${encodeURIComponent(target.code)}`, locale)}` : null,
+        registerUrl: `${APP_URL}${localizedHref(blankRegisterHref({ email, target }), locale)}`,
         expiresDays: Math.round(BLANK_DOWNLOAD_TTL_MS / (24 * 60 * 60 * 1000)),
+        locale,
       });
     } catch (error) {
       console.error("[blank-download] email failed", error);
@@ -157,4 +183,10 @@ export async function POST(request: Request) {
     { ok: true, url, emailed, consentVersion: LEGAL_VERSION, page: blankPagePath(target, format) },
     { headers: { "Cache-Control": "no-store" } },
   );
+}
+
+function localizedProductTitle(names: unknown, target: BlankTarget, fallback: string): string {
+  if (target.kind !== "code" || !names || typeof names !== "object" || Array.isArray(names)) return fallback;
+  const value = Object.entries(names).find(([code]) => code === target.code)?.[1];
+  return typeof value === "string" ? value : fallback;
 }

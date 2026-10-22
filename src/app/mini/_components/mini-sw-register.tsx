@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { isInsideMobileApp } from "@/lib/mobile-app";
 import { MINI_SW_SCOPE_PATH } from "@/lib/service-worker-scope";
@@ -63,6 +64,14 @@ const SILENT_RELOAD_GUARD = "wesetup.mini.sw-applied";
  */
 export function MiniServiceWorkerRegister() {
   const promptedRef = useRef(false);
+  const t = useTranslations("miniAppUpdates.toast");
+  const copyRef = useRef(t);
+  const refreshToastRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    copyRef.current = t;
+    refreshToastRef.current?.();
+  }, [t]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -116,12 +125,17 @@ export function MiniServiceWorkerRegister() {
     function offerUpdate(worker: ServiceWorker) {
       if (promptedRef.current || cancelled) return;
       promptedRef.current = true;
-      toast("Доступно обновление", {
-        description: "Приложение обновится и страница перезагрузится.",
+      let toastId: ReturnType<typeof toast> | undefined;
+      const showToast = () => {
+        if (cancelled) return;
+        toastId = toast(copyRef.current("title"), {
+        id: toastId,
+        description: copyRef.current("description"),
         duration: Infinity,
         action: {
-          label: "Обновить",
+          label: copyRef.current("action"),
           onClick: () => {
+            refreshToastRef.current = null;
             // Перезагружаем не сразу, а когда новый воркер реально взял
             // управление, иначе перезагрузка попадёт на старый и тост
             // вернётся при следующем заходе.
@@ -129,7 +143,12 @@ export function MiniServiceWorkerRegister() {
             worker.postMessage({ type: "SKIP_WAITING" });
           },
         },
+        onDismiss: () => { refreshToastRef.current = null; },
+        onAutoClose: () => { refreshToastRef.current = null; },
       });
+      };
+      refreshToastRef.current = showToast;
+      showToast();
     }
 
     void (async () => {
@@ -172,6 +191,7 @@ export function MiniServiceWorkerRegister() {
 
     return () => {
       cancelled = true;
+      refreshToastRef.current = null;
     };
   }, []);
 

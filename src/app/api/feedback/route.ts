@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { sendFeedbackAdminEmail } from "@/lib/email";
 import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeHtml } from "@/lib/html-escape";
+import { feedbackValidationDescriptor } from "@/lib/feedback-copy";
 import {
   emailAttachmentPayload,
   sendAttachmentsToPlatformAdmins,
@@ -91,12 +92,12 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Некорректные данные" },
+        { error: error.issues[0]?.message ?? "Некорректные данные", ...feedbackValidationDescriptor(error.issues[0]) },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { error: "Не удалось прочитать запрос" },
+      { error: "Не удалось прочитать запрос", errorCode: "FEEDBACK_UNREADABLE_REQUEST" },
       { status: 400 }
     );
   }
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
   );
   if (attachments === null) {
     return NextResponse.json(
-      { error: "Вложения не прошли проверку — прикрепите файлы заново" },
+      { error: "Вложения не прошли проверку — прикрепите файлы заново", errorCode: "FEEDBACK_INVALID_ATTACHMENTS" },
       { status: 400 }
     );
   }

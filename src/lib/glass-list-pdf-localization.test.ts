@@ -13,7 +13,10 @@ test("glass list PDF uses localized headings while preserving row and responsibl
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = workerFileUrl();
 
-  for (const locale of ["ru", "en", "uz"] as const) {
+  const scenarios = (["ru", "en", "uz"] as const).flatMap(locale =>
+    [true, false].map(explicit => ({ locale, explicit }))
+  );
+  for (const { locale, explicit } of scenarios) {
     const sample = buildJournalSampleInput(GLASS_LIST_TEMPLATE_CODE);
     const config = {
       ...getDefaultGlassListConfig(new Date("2026-10-01T00:00:00Z")),
@@ -25,11 +28,11 @@ test("glass list PDF uses localized headings while preserving row and responsibl
       ...sample,
       document: {
         ...sample.document,
-        title: buildDocumentAutoTitle({ templateCode: GLASS_LIST_TEMPLATE_CODE, journalName: GLASS_LIST_PAGE_TITLE, dateFrom: "2026-10-01", dateTo: "2026-10-31" }),
+        title: explicit ? buildDocumentAutoTitle({ templateCode: GLASS_LIST_TEMPLATE_CODE, journalName: GLASS_LIST_PAGE_TITLE, dateFrom: "2026-10-01", dateTo: "2026-10-31" }) : "",
         dateFrom: new Date("2026-10-01T00:00:00Z"),
         dateTo: new Date("2026-10-31T00:00:00Z"),
         template: { ...sample.document.template, code: GLASS_LIST_TEMPLATE_CODE },
-        config: config as unknown as typeof sample.document.config,
+        config: (explicit ? config : { documentDate: config.documentDate, rows: config.rows }) as unknown as typeof sample.document.config,
       },
       users: sample.users.map((user, index) => index === 0 ? { ...user, name: "O‘tkir" } : user),
       locale,
@@ -49,17 +52,19 @@ test("glass list PDF uses localized headings while preserving row and responsibl
       const content = await page.getTextContent();
       const text = content.items.flatMap((item) => "str" in item ? [item.str] : []).join(" ");
       const messages = await loadMessages(locale);
-      assert.ok(text.includes(messages.glassInventory.documentHeading), `${locale} heading`);
-      assert.ok(text.includes(messages.journals.names.glass_items_list), `${locale} generated default title is localized`);
-      assert.ok(text.includes(messages.glassInventory.tableLocationHeader), `${locale} location heading`);
+      const copy = messages.specializedHygieneGlassPdf;
+      assert.ok(text.includes(copy.glassHeading), `${locale} heading`);
+      assert.ok(text.includes(explicit ? input.document.title : copy.glassTitle), `${locale} explicit title preserved or absent default localized`);
+      assert.ok(text.includes(copy.glassLocation), `${locale} location heading`);
       assert.ok(text.includes("O‘tkir"), `${locale} responsible name`);
       assert.ok(text.includes("Glass item"), `${locale} row data`);
-      assert.ok(text.includes(messages.glassInventory.defaultResponsibleTitle), `${locale} default title display`);
+      assert.ok(text.includes(explicit ? config.responsibleTitle : copy.manager), `${locale} explicit responsible title preserved or absent default localized`);
       assert.ok(text.includes(messages.journalWidgets.periodicity.glass_items_list), `${locale} default periodicity`);
       if (locale !== "ru") {
-        for (const russianLabel of ["СИСТЕМА ХАССП", "Начат", "Окончен", GLASS_LIST_DOCUMENT_TITLE, "Периодичность контроля", "не реже раза в год"]) {
+        for (const russianLabel of ["СИСТЕМА ХАССП", "Начат", "Окончен", "Периодичность контроля", "не реже раза в год"]) {
           assert.ok(!text.includes(russianLabel), `${locale} header must not contain ${russianLabel}`);
         }
+        if (!explicit) assert.ok(!text.includes(GLASS_LIST_DOCUMENT_TITLE), `${locale} absent default title must not remain Russian`);
         assert.ok(text.includes(locale === "en" ? "PAGE" : "SAHIFADAN"), `${locale} localized page label`);
       }
     } finally {

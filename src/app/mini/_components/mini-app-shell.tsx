@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
 import Script from "next/script";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { Suspense, type ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { DeletionBanner } from "@/components/layout/deletion-banner";
@@ -99,8 +101,9 @@ export async function MiniAppShell({
       />
     );
   }
+  const tAnnouncement = await getTranslations("common.announcementBanner");
   return (
-    <>
+    <DomainMessagesBoundary namespaces={["miniOffline", "miniAppUpdates"]}>
       {/* В приложении WeSetup Telegram нет: скрипт с telegram.org только
           задерживал бы запуск (до него страница не оживает). */}
       {needsTelegramSdk(userAgent) ? (
@@ -156,7 +159,12 @@ export async function MiniAppShell({
                 paddingBottom: "max(7rem, calc(var(--mini-safe-b) + 6rem))",
               }}
             >
-              <AnnouncementBanner announcement={announcement} variant="mini" />
+              <AnnouncementBanner
+                announcement={announcement}
+                variant="mini"
+                moreLabel={tAnnouncement("more")}
+                dismissLabel={tAnnouncement("dismiss")}
+              />
               {deletionDue ? (
                 <DeletionBanner
                   dueAt={deletionDue}
@@ -199,6 +207,6 @@ export async function MiniAppShell({
           </FabDockProvider>
         </div>
       </MiniThemeProvider>
-    </>
+    </DomainMessagesBoundary>
   );
 }

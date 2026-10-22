@@ -59,7 +59,7 @@ import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
 import {
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
-import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
+import { formatDate, type Locale } from "@/i18n/locales";
 import { useJournalUndo } from "@/lib/journal-undo";
 import { useCellPaint } from "@/lib/journal-cell-paint";
 import {
@@ -306,16 +306,16 @@ function formatHygieneMonthLabel(from: string, to: string, locale: Locale) {
   const start = parseDateOnly(from);
   const end = parseDateOnly(to);
   if (!start || !end) return "";
-  const monthFormatter = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
-    month: "long", year: "numeric", timeZone: "UTC",
+  const monthFormatter = (value: Date) => formatDate(locale, value, "UTC", {
+    month: "long", year: "numeric",
   });
   if (start.getUTCFullYear() === end.getUTCFullYear() && start.getUTCMonth() === end.getUTCMonth()) {
-    return monthFormatter.format(start);
+    return monthFormatter(start);
   }
-  const dateFormatter = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
-    day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC",
+  const dateFormatter = (value: Date) => formatDate(locale, value, "UTC", {
+    day: "2-digit", month: "2-digit", year: "numeric",
   });
-  return `${dateFormatter.format(start)} — ${dateFormatter.format(end)}`;
+  return `${dateFormatter(start)} — ${dateFormatter(end)}`;
 }
 
 function getNextStatus(current?: HygieneStatus | null) {

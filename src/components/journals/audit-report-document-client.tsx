@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { auditReportText, presentAuditReportTitle, createAuditReportFailureRegistry } from "@/lib/audit-report-presentation";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Archive, ExternalLink, FileCheck2, Plus } from "lucide-react";
@@ -38,6 +40,16 @@ import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-
 
 import { toast } from "sonner";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+function useAuditReportCopy() {
+  const text = useTranslations();
+  const locale = useLocale();
+  const committed = useRef({ text, locale });
+  useLayoutEffect(() => { committed.current = { text, locale }; });
+  return { text, locale, committed };
+}
+
+type PresentedProtocolSource = AuditReportProtocolSource & { displayTitleMissing?: boolean };
+
 type Props = {
   documentId: string;
   title: string;
@@ -48,7 +60,7 @@ type Props = {
    * Протоколы аудита организации — источник для «Перенести
    * несоответствия». Пусто ⇒ кнопка не показывается.
    */
-  protocolSources?: AuditReportProtocolSource[];
+  protocolSources?: PresentedProtocolSource[];
   /** Design v2 toggle. */
   useV2?: boolean;
 };
@@ -61,18 +73,19 @@ function ImportFromProtocolButton({
   protocols,
   onPick,
 }: {
-  protocols: AuditReportProtocolSource[];
-  onPick: (protocol: AuditReportProtocolSource) => void;
+  protocols: PresentedProtocolSource[];
+  onPick: (protocol: PresentedProtocolSource) => void;
 }) {
+  const { text } = useAuditReportCopy();
   const withFindings = protocols.filter((item) => item.rows.length > 0);
   if (withFindings.length === 0) return null;
   return (
     <ResponsiveMenu
-      title="Из какого протокола перенести"
+      title={text("journalAuditReport.chooseProtocol")}
       contentClassName="w-[360px] rounded-[22px] border-0 p-3 shadow-xl"
       items={withFindings.map((protocol) => ({
         key: protocol.documentId,
-        label: `${protocol.title} · несоответствий: ${protocol.rows.length}`,
+        label: text("journalAuditReport.protocolItem", { title: auditReportText(presentAuditReportTitle(protocol.title, protocol.displayTitleMissing, text("auditTraceabilityPdf.protocolTitle"))), count: auditReportText(protocol.rows.length) }),
         icon: <FileCheck2 className="size-4 text-[#6f7282]" />,
         onSelect: () => onPick(protocol),
       }))}
@@ -83,7 +96,7 @@ function ImportFromProtocolButton({
           className="h-11 rounded-xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <FileCheck2 className="size-4 text-[#5566f6]" />
-          Перенести несоответствия из протокола
+          {text("journalAuditReport.importProtocol")}
         </Button>
       }
     />
@@ -101,31 +114,32 @@ function FindingDialog({
   finding: AuditReportFinding | null;
   onSave: (finding: AuditReportFinding) => Promise<void>;
 }) {
+  const { text } = useAuditReportCopy();
   const [draft, setDraft] = useState<AuditReportFinding>(
     finding || createAuditReportFinding()
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[32px] border-0 p-0 sm:max-w-[920px]">
+      <DialogContent closeLabel={text("common.close")} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[32px] border-0 p-0 sm:max-w-[920px]">
         <DialogHeader className="border-b px-12 py-10">
           <DialogTitle className="text-[22px] font-medium text-black">
-            {finding ? "Редактирование несоответствия" : "Добавить несоответствие"}
+            {finding ? text("journalAuditReport.editFinding") : text("journalAuditReport.addFinding")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-12 py-10">
-          <Textarea value={draft.nonConformity} onChange={(e) => setDraft({ ...draft, nonConformity: e.target.value })} placeholder="Описание несоответствия" className="min-h-[120px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
-          <Textarea value={draft.correctionActions} onChange={(e) => setDraft({ ...draft, correctionActions: e.target.value })} placeholder="Коррекция, описание действий" className="min-h-[120px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
-          <Textarea value={draft.correctiveActions} onChange={(e) => setDraft({ ...draft, correctiveActions: e.target.value })} placeholder="Корректирующие действия" className="min-h-[120px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
+          <Textarea value={draft.nonConformity} onChange={(e) => setDraft({ ...draft, nonConformity: e.target.value })} placeholder={text("journalAuditReport.findingDescription")} className="min-h-[120px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
+          <Textarea value={draft.correctionActions} onChange={(e) => setDraft({ ...draft, correctionActions: e.target.value })} placeholder={text("journalAuditReport.correctionDescription")} className="min-h-[120px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
+          <Textarea value={draft.correctiveActions} onChange={(e) => setDraft({ ...draft, correctiveActions: e.target.value })} placeholder={text("auditTraceabilityPdf.corrective")} className="min-h-[120px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-            <Input value={draft.responsibleName} onChange={(e) => setDraft({ ...draft, responsibleName: e.target.value })} placeholder="ФИО ответственного" className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
-            <Input value={draft.responsiblePosition} onChange={(e) => setDraft({ ...draft, responsiblePosition: e.target.value })} placeholder="Должность ответственного" className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
-            <Input type="date" value={draft.dueDatePlan} onChange={(e) => setDraft({ ...draft, dueDatePlan: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
-            <Input type="date" value={draft.dueDateFact} onChange={(e) => setDraft({ ...draft, dueDateFact: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+            <Input value={draft.responsibleName} onChange={(e) => setDraft({ ...draft, responsibleName: e.target.value })} placeholder={text("auditTraceabilityPdf.responsibleName")} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+            <Input value={draft.responsiblePosition} onChange={(e) => setDraft({ ...draft, responsiblePosition: e.target.value })} placeholder={text("journalWidgets.staff.responsiblePosition")} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+            <Input type="date" value={draft.dueDatePlan} aria-label={text("journalAuditReport.plannedCompletionDate")} onChange={(e) => setDraft({ ...draft, dueDatePlan: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+            <Input type="date" value={draft.dueDateFact} aria-label={text("journalAuditReport.actualCompletionDate")} onChange={(e) => setDraft({ ...draft, dueDateFact: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
           </div>
           <div className="flex justify-end">
             <Button type="button" onClick={async () => { await onSave(draft); onOpenChange(false); }} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]">
-              Сохранить
+              {text("common.save")}
             </Button>
           </div>
         </div>
@@ -143,21 +157,34 @@ export function AuditReportDocumentClient({
   protocolSources = [],
   useV2 = false,
 }: Props) {
+  const { text, committed } = useAuditReportCopy();
+  const closeCopy = useTranslations("journalControls.closeDocument");
+  const [failureRegistry] = useState(createAuditReportFailureRegistry);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [documentTitle, setDocumentTitle] = useState(title || AUDIT_REPORT_DOCUMENT_TITLE);
+  const [titleIsFallback, setTitleIsFallback] = useState(!title);
+  const displayTitle = titleIsFallback ? text("auditTraceabilityPdf.reportTitle") : documentTitle;
+  function editDocumentTitle(value: string) { setDocumentTitle(value); setTitleIsFallback(false); }
   const [config, setConfig] = useState(() => normalizeAuditReportConfig(initialConfig));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [findingOpen, setFindingOpen] = useState(false);
   const [editingFinding, setEditingFinding] = useState<AuditReportFinding | null>(null);
-  const closeAction = useDocumentCloseAction({ documentId, title: documentTitle });
+  const closeAction = useDocumentCloseAction({ documentId, title: documentTitle, confirmMessage: closeCopy("confirmTitle", { title: displayTitle }) });
 
+  const previousServerConfig = useRef<{ documentId: string; serialized: string | undefined } | null>(null);
   useEffect(() => {
+    // A language refresh reserializes the same server JSON; retain unsaved local edits.
+    const serialized = JSON.stringify(initialConfig);
+    const previous = previousServerConfig.current;
+    if (previous?.documentId === documentId && previous.serialized === serialized) return;
+    previousServerConfig.current = { documentId, serialized };
     setConfig(normalizeAuditReportConfig(initialConfig));
-  }, [initialConfig]);
+  }, [documentId, initialConfig]);
 
   useEffect(() => {
     setDocumentTitle(title || AUDIT_REPORT_DOCUMENT_TITLE);
+    setTitleIsFallback(!title);
   }, [title]);
 
   async function persist(nextTitle: string, nextConfig: AuditReportConfig, patch?: Record<string, unknown>) {
@@ -173,10 +200,22 @@ export function AuditReportDocumentClient({
       }),
     });
     const result = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(result?.error || "Не удалось сохранить документ");
+    if (!response.ok) {
+      const failure = result?.error;
+      const error = new Error(failure || "Не удалось сохранить документ");
+      if (!failure) failureRegistry.mark(error);
+      throw error;
+    }
     setDocumentTitle(nextTitle);
+    setTitleIsFallback(false);
     setConfig(nextConfig);
     startTransition(() => router.refresh());
+  }
+
+  function presentSaveError(error: unknown, fallback: "journalAuditReport.saveOperationFailed" | "journalAuditReport.deleteOperationFailed") {
+    const current = committed.current;
+    const displayed = humanizeFetchError(error, current.text(fallback), current.text("journalWidgets.headerEdit.networkError"));
+    return failureRegistry.has(error) ? current.text("journalAuditReport.saveDocumentFailed") : displayed;
   }
 
   async function saveFinding(finding: AuditReportFinding) {
@@ -191,34 +230,35 @@ export function AuditReportDocumentClient({
    * Перенос несоответствий из протокола. Копия: текст живёт в отчёте
    * дальше сам по себе, повторный перенос дублей не создаёт.
    */
-  async function importFromProtocol(protocol: AuditReportProtocolSource) {
+  async function importFromProtocol(protocol: PresentedProtocolSource) {
     const preview = importAuditReportFindingsFromProtocol(config, protocol);
     if (preview.added === 0) {
-      toast.info("Все несоответствия этого протокола уже перенесены");
+      toast.info(committed.current.text("journalAuditReport.allImported"));
       return;
     }
 
     const ok = await confirmAsync({
-      title: "Перенести несоответствия?",
-      description: `Протокол: «${protocol.title}».`,
+      locale: committed.current.locale,
+      title: committed.current.text("journalAuditReport.confirmImport"),
+      description: committed.current.text("journalAuditReport.protocolDescription", { title: auditReportText(presentAuditReportTitle(protocol.title, protocol.displayTitleMissing, committed.current.text("auditTraceabilityPdf.protocolTitle"))) }),
       variant: "info",
-      confirmLabel: "Перенести",
+      confirmLabel: committed.current.text("journalAuditReport.importAction"),
       bullets: [
-        { label: `Добавится несоответствий: ${preview.added}`, tone: "info" },
+        { label: committed.current.text("journalAuditReport.willImport", { count: auditReportText(preview.added) }), tone: "info" },
         ...(preview.skipped > 0
-          ? [{ label: `Уже перенесено ранее: ${preview.skipped}`, tone: "info" as const }]
+          ? [{ label: committed.current.text("journalAuditReport.alreadyImportedCount", { count: auditReportText(preview.skipped) }), tone: "info" as const }]
           : []),
-        { label: "Переносятся только строки с результатом «Нет»" },
-        { label: "Это копия: правка протокола задним числом отчёт не изменит" },
+        { label: committed.current.text("journalAuditReport.onlyNoRows") },
+        { label: committed.current.text("journalAuditReport.copyIndependent") },
       ],
     });
     if (!ok) return;
 
     try {
       await persist(documentTitle, preview.config);
-      toast.success(`Перенесено несоответствий: ${preview.added}`);
+      toast.success(committed.current.text("journalAuditReport.importedCount", { count: auditReportText(preview.added) }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed"));
     }
   }
 
@@ -235,20 +275,20 @@ export function AuditReportDocumentClient({
 
   return (
     <>
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller copy={{ noCreateBody: text("journalScan.focus.noCreateBody"), later: text("journalScan.focus.later"), close: text("common.close") }} selector="[data-focus-today]" emptyTitle={text("journalScan.focus.emptyTitle")} emptyBody={text("journalScan.focus.emptyBody")} />
       <JournalDocumentShell
-        title={documentTitle}
+        title={<>{displayTitle}</>}
         documentId={documentId}
         backHref="/journals/audit_report"
         onSettings={status === "active" ? () => setSettingsOpen(true) : undefined}
         closed={status !== "active"}
-        closedHint="Откройте журнал заново, чтобы редактировать отчёт."
+        closedHint={text("journalAuditReport.closedHint")}
         menuItems={
           status === "active"
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: text("journalControls.closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => void closeAction.closeDocument(),
                 },
@@ -261,7 +301,7 @@ export function AuditReportDocumentClient({
           <div className="max-sm:hidden print:block">
             <JournalDocumentHeader
               orgName={organizationName}
-              title="ОТЧЕТ О ВНУТРЕННЕМ АУДИТЕ"
+              title={text("journalAuditReport.paperHeading")}
               startedAt={config.documentDate}
               finishedAt={null}
             />
@@ -273,20 +313,20 @@ export function AuditReportDocumentClient({
             ввода отчёта должны стоять по обычным полям страницы. */}
         <section className="space-y-6 max-sm:px-4 print:p-0">
           <div className="grid gap-3 text-[18px]">
-            <div><span className="font-semibold">Дата аудита:</span> {config.documentDate}</div>
-            <div><span className="font-semibold">Основание:</span> {config.basisTitle}</div>
-            <div><span className="font-semibold">Объект аудита:</span> {config.auditedObject}</div>
-            <div><span className="font-semibold">Тип проверки:</span> {config.auditType === "planned" ? "Плановая" : "Внеплановая"}</div>
-            <div><span className="font-semibold">Аудиторы:</span> {config.auditors.join(", ")}</div>
+            <div><span className="font-semibold">{text("journalAuditReport.auditDateLabel")}</span> {config.documentDate}</div>
+            <div><span className="font-semibold">{text("journalAuditReport.basisLabel")}</span> {config.basisTitle}</div>
+            <div><span className="font-semibold">{text("journalAuditReport.auditedObjectLabel")}</span> {config.auditedObject}</div>
+            <div><span className="font-semibold">{text("journalAuditReport.auditTypeLabel")}</span> {config.auditType === "planned" ? text("journalAuditReport.planned") : text("journalAuditReport.unplanned")}</div>
+            <div><span className="font-semibold">{text("journalAuditReport.auditorsLabel")}</span> {config.auditors.join(", ")}</div>
             {/* Откуда взяты несоответствия — ссылка в сам протокол. */}
             {config.sourceProtocolDocumentId ? (
               <div>
-                <span className="font-semibold">По протоколу:</span>{" "}
+                <span className="font-semibold">{text("journalAuditReport.sourceProtocolLabel")}</span>{" "}
                 <Link
                   href={`/journals/${AUDIT_PROTOCOL_TEMPLATE_CODE}/documents/${config.sourceProtocolDocumentId}`}
                   className="inline-flex items-center gap-1 text-[#5566f6] underline-offset-2 transition-colors duration-150 hover:text-[#4a5bf0] hover:underline print:text-black print:no-underline"
                 >
-                  {config.sourceProtocolTitle || "протокол аудита"}
+                  {config.sourceProtocolTitle || text("journalAuditReport.protocolFallback")}
                   <ExternalLink className="size-4 print:hidden" />
                 </Link>
               </div>
@@ -294,9 +334,9 @@ export function AuditReportDocumentClient({
           </div>
 
           <div className="space-y-2">
-            <div className="text-[24px] font-semibold">Результаты аудита</div>
+            <div className="text-[24px] font-semibold">{text("journalAuditReport.auditResults")}</div>
             {status === "active" ? (
-              <Textarea value={config.summary} onChange={(e) => setConfig({ ...config, summary: e.target.value })} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="min-h-[140px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
+              <Textarea value={config.summary} aria-label={text("journalAuditReport.auditResults")} onChange={(e) => setConfig({ ...config, summary: e.target.value })} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))} className="min-h-[140px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
             ) : (
               <div className="whitespace-pre-wrap text-[18px]">{config.summary}</div>
             )}
@@ -306,7 +346,7 @@ export function AuditReportDocumentClient({
             <div className="flex flex-wrap gap-3 print:hidden">
               <Button type="button" onClick={() => { setEditingFinding(null); setFindingOpen(true); }} className={DOC_PRIMARY_BUTTON_CLASS}>
                 <Plus className="size-5" />
-                Добавить несоответствие
+                {text("journalAuditReport.addFinding")}
               </Button>
               <ImportFromProtocolButton
                 protocols={protocolSources}
@@ -319,7 +359,7 @@ export function AuditReportDocumentClient({
             {config.findings.map((finding, index) => (
               <div key={finding.id} className="rounded-[18px] border border-black/70">
                 <div className="border-b border-black/70 px-5 py-4 text-[20px] font-semibold">
-                  Несоответствие #{index + 1}
+                  {text("journalAuditReport.findingNumber", { number: auditReportText(index + 1) })}
                 </div>
                 {status === "active" ? (
                   <div className="border-b border-black/70 px-5 py-3">
@@ -329,21 +369,21 @@ export function AuditReportDocumentClient({
                       className="h-10 rounded-xl border-[#ffd7d3] px-4 text-[14px] text-[#ff3b30] hover:bg-[#fff3f2]"
                       onClick={() =>
                         deleteFinding(finding.id).catch((error) =>
-                          toast.error(humanizeFetchError(error, "Ошибка удаления"))
+                          toast.error(presentSaveError(error, "journalAuditReport.deleteOperationFailed"))
                         )
                       }
                     >
-                      Удалить
+                      {text("common.delete")}
                     </Button>
                   </div>
                 ) : null}
                 <div className="grid gap-0 text-[16px]">
                   {[
-                    ["Описание несоответствия", finding.nonConformity],
-                    ["Коррекция, описание действий", finding.correctionActions],
-                    ["Корректирующие действия", finding.correctiveActions],
-                    ["Ответственный", `${finding.responsibleName}${finding.responsiblePosition ? `, ${finding.responsiblePosition}` : ""}`],
-                    ["Дата завершения КД: план / факт", `${finding.dueDatePlan || "—"} / ${finding.dueDateFact || "—"}`],
+                    [text("journalAuditReport.findingDescription"), finding.nonConformity],
+                    [text("journalAuditReport.correctionDescription"), finding.correctionActions],
+                    [text("auditTraceabilityPdf.corrective"), finding.correctiveActions],
+                    [text("auditTraceabilityPdf.responsible"), `${finding.responsibleName}${finding.responsiblePosition ? `, ${finding.responsiblePosition}` : ""}`],
+                    [text("journalAuditReport.completionPlanActual"), `${finding.dueDatePlan || "—"} / ${finding.dueDateFact || "—"}`],
                   ].map(([label, value], rowIndex) => (
                     <div key={`${finding.id}-${rowIndex}`} className="grid grid-cols-1 gap-2 sm:grid-cols-[280px_1fr] border-t border-black/70 first:border-t-0">
                       <div className="border-r border-black/70 px-5 py-4 font-medium">{label}</div>
@@ -367,27 +407,27 @@ export function AuditReportDocumentClient({
           </div>
 
           <div className="space-y-2">
-            <div className="text-[24px] font-semibold">Рекомендации и наблюдения</div>
+            <div className="text-[24px] font-semibold">{text("journalAuditReport.recommendations")}</div>
             {status === "active" ? (
-              <Textarea value={config.recommendations} onChange={(e) => setConfig({ ...config, recommendations: e.target.value })} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="min-h-[140px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
+              <Textarea value={config.recommendations} aria-label={text("journalAuditReport.recommendations")} onChange={(e) => setConfig({ ...config, recommendations: e.target.value })} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))} className="min-h-[140px] rounded-[18px] border-[#dfe1ec] px-5 py-4 text-[18px]" />
             ) : (
               <div className="whitespace-pre-wrap text-[18px]">{config.recommendations}</div>
             )}
           </div>
 
           <div className="space-y-3">
-            <div className="text-[24px] font-semibold">Подписи</div>
+            <div className="text-[24px] font-semibold">{text("journalAuditReport.signatures")}</div>
             {config.signatures.map((signature, index) => (
               <div key={signature.id} className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_1fr_220px_180px]">
-                <Input value={signature.role} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, role: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                <Input value={signature.name} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, name: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                <Input value={signature.position} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, position: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                <Input type="date" value={signature.signedAt} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, signedAt: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                <Input value={signature.role} aria-label={text("journalAuditReport.signatureRole")} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, role: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                <Input value={signature.name} aria-label={text("journalAuditReport.signatureName")} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, name: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                <Input value={signature.position} aria-label={text("journalAuditReport.signaturePosition")} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, position: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                <Input type="date" value={signature.signedAt} aria-label={text("journalAuditReport.signatureDate")} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, signedAt: e.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
               </div>
             ))}
             {status === "active" && (
-              <Button type="button" variant="outline" disabled={isPending} onClick={() => persist(documentTitle, { ...config, signatures: [...config.signatures, createAuditReportSignature()] }).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))}>
-                Добавить подпись
+              <Button type="button" variant="outline" disabled={isPending} onClick={() => persist(documentTitle, { ...config, signatures: [...config.signatures, createAuditReportSignature()] }).catch((error) => toast.error(presentSaveError(error, "journalAuditReport.saveOperationFailed")))}>
+                {text("journalAuditReport.addSignature")}
               </Button>
             )}
           </div>
@@ -398,8 +438,8 @@ export function AuditReportDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Параметры отчёта о внутреннем аудите"
+          title={text("journalWidgets.staff.settings")}
+          description={text("journalAuditReport.settingsDescription")}
           size="md"
           onSave={async () => {
             await persist(documentTitle.trim() || AUDIT_REPORT_DOCUMENT_TITLE, config);
@@ -409,56 +449,56 @@ export function AuditReportDocumentClient({
         >
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Название документа</Label>
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalWidgets.staff.documentName")}</Label>
               <Input
-                value={documentTitle}
-                onChange={(e) => setDocumentTitle(e.target.value)}
+                value={documentTitle} aria-label={text("journalWidgets.staff.documentName")}
+                onChange={(e) => editDocumentTitle(e.target.value)}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Дата документа</Label>
+                <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditReport.documentDate")}</Label>
                 <Input
                   type="date"
-                  value={config.documentDate}
+                  value={config.documentDate} aria-label={text("journalAuditReport.documentDate")}
                   onChange={(e) => setConfig({ ...config, documentDate: e.target.value })}
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Тип проверки</Label>
+                <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditReport.auditType")}</Label>
                 <Select value={config.auditType} onValueChange={(value: "planned" | "unplanned") => setConfig({ ...config, auditType: value })}>
-                  <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
+                  <SelectTrigger aria-label={text("journalAuditReport.auditType")} className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="planned">Плановая</SelectItem>
-                    <SelectItem value="unplanned">Внеплановая</SelectItem>
+                    <SelectItem value="planned">{text("journalAuditReport.planned")}</SelectItem>
+                    <SelectItem value="unplanned">{text("journalAuditReport.unplanned")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Основание проверки</Label>
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditReport.auditBasis")}</Label>
               <Input
-                value={config.basisTitle}
+                value={config.basisTitle} aria-label={text("journalAuditReport.auditBasis")}
                 onChange={(e) => setConfig({ ...config, basisTitle: e.target.value })}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Объект аудита</Label>
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditReport.auditedObject")}</Label>
               <Input
-                value={config.auditedObject}
+                value={config.auditedObject} aria-label={text("journalAuditReport.auditedObject")}
                 onChange={(e) => setConfig({ ...config, auditedObject: e.target.value })}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Аудиторы (через запятую)</Label>
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditReport.auditorsComma")}</Label>
               <Input
-                value={config.auditors.join(", ")}
+                value={config.auditors.join(", ")} aria-label={text("journalAuditReport.auditorsComma")}
                 onChange={(e) => setConfig({ ...config, auditors: e.target.value.split(",").map((item) => item.trim()).filter(Boolean) })}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
@@ -467,31 +507,31 @@ export function AuditReportDocumentClient({
         </JournalSettingsModal>
       ) : (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
+          <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
             <DialogHeader className="border-b px-12 py-10">
-              <DialogTitle className="text-[22px] font-medium text-black">Настройки документа</DialogTitle>
+              <DialogTitle className="text-[22px] font-medium text-black">{text("journalWidgets.staff.settings")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-5 px-12 py-10">
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Название документа</Label>
-                <Input value={documentTitle} onChange={(e) => setDocumentTitle(e.target.value)} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+                <Label className="text-[14px] text-[#73738a]">{text("journalWidgets.staff.documentName")}</Label>
+                <Input value={documentTitle} aria-label={text("journalWidgets.staff.documentName")} onChange={(e) => editDocumentTitle(e.target.value)} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-                <Input type="date" value={config.documentDate} onChange={(e) => setConfig({ ...config, documentDate: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+                <Input type="date" value={config.documentDate} aria-label={text("journalAuditReport.documentDate")} onChange={(e) => setConfig({ ...config, documentDate: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
                 <Select value={config.auditType} onValueChange={(value: "planned" | "unplanned") => setConfig({ ...config, auditType: value })}>
-                  <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f5f6fb] px-3.5 text-[13.5px]"><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label={text("journalAuditReport.auditType")} className="h-10 rounded-xl border-[#dfe1ec] bg-[#f5f6fb] px-3.5 text-[13.5px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="planned">Плановая</SelectItem>
-                    <SelectItem value="unplanned">Внеплановая</SelectItem>
+                    <SelectItem value="planned">{text("journalAuditReport.planned")}</SelectItem>
+                    <SelectItem value="unplanned">{text("journalAuditReport.unplanned")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Input value={config.basisTitle} onChange={(e) => setConfig({ ...config, basisTitle: e.target.value })} placeholder="Основание проверки" className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
-              <Input value={config.auditedObject} onChange={(e) => setConfig({ ...config, auditedObject: e.target.value })} placeholder="Объект аудита" className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
-              <Input value={config.auditors.join(", ")} onChange={(e) => setConfig({ ...config, auditors: e.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} placeholder="Аудиторы через запятую" className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+              <Input value={config.basisTitle} aria-label={text("journalAuditReport.auditBasis")} onChange={(e) => setConfig({ ...config, basisTitle: e.target.value })} placeholder={text("journalAuditReport.auditBasis")} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+              <Input value={config.auditedObject} aria-label={text("journalAuditReport.auditedObject")} onChange={(e) => setConfig({ ...config, auditedObject: e.target.value })} placeholder={text("journalAuditReport.auditedObject")} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+              <Input value={config.auditors.join(", ")} aria-label={text("journalAuditReport.auditorsComma")} onChange={(e) => setConfig({ ...config, auditors: e.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} placeholder={text("journalAuditReport.auditorsPlaceholder")} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
               <div className="flex justify-end">
                 <Button type="button" onClick={async () => { await persist(documentTitle.trim() || AUDIT_REPORT_DOCUMENT_TITLE, config); setSettingsOpen(false); }} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]">
-                  Сохранить
+                  {text("common.save")}
                 </Button>
               </div>
             </div>

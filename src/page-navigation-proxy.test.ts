@@ -56,18 +56,52 @@ test("document prefetch spoofing and forged sessions cannot reset a blocked IP",
   }
 });
 
-test("marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages", async () => {
-  const request = client();
+test("marked and markerless RSC fetches stay bounded without blocking browser documents", async () => {
+  const request = client({ "user-agent": "Mozilla/5.0 Chrome/130" });
   const headers = { rsc: "1", "next-router-prefetch": "1" };
   for (let i = 0; i < 240; i++) {
     const variant: Record<string, string> = i % 3 === 0 ? headers : i % 3 === 1 ? { rsc: "1" } : { "sec-fetch-dest": "empty" };
     assert.equal((await request("/blog", variant)).status, 200);
   }
   assert.equal((await request()).status, 200);
-  assert.equal((await request("/blog", headers)).status, 429);
-  assert.equal((await request("/blog", { "sec-fetch-dest": "empty" })).status, 429);
-  // Background fetches over budget wait on their own; the page itself still opens.
-  assert.equal((await request()).status, 200);
+  for (let i = 0; i < 5; i++) {
+    const limited = await request("/blog", headers);
+    assert.equal(limited.status, 429);
+    assert.ok(Number(limited.headers.get("retry-after")) > 0);
+    assert.equal((await request("/journals", { "sec-fetch-dest": "document" })).status, 200);
+  }
+});
+
+test("ordinary employee navigation survives excess Next.js background requests", async () => {
+  const saved = process.env.NEXTAUTH_SECRET;
+  const secret = "employee-navigation-test-fixture-not-a-credential";
+  process.env.NEXTAUTH_SECRET = secret;
+  try {
+    const token = await encode({ secret, token: {
+      id: "prefetch-employee", role: "cook", orgKind: "regular",
+      organizationId: "prefetch-organization", organizationName: "Navigation test",
+      isRoot: false, actingAsOrganizationId: null, permissionPreset: null,
+    } });
+    const request = client({
+      "user-agent": "Mozilla/5.0 Chrome/130",
+      cookie: `__Secure-haccp-online.session-token=${token}`,
+    });
+    for (let i = 0; i < 240; i++) {
+      assert.equal((await request(`/journals?prefetch=${i}`, { "sec-fetch-dest": "empty" })).status, 200);
+    }
+    for (let i = 0; i < 5; i++) {
+      assert.equal((await request("/journals", { rsc: "1" })).status, 429);
+      const document = await request("/journals", { "sec-fetch-dest": "document" });
+      assert.equal(document.status, 200);
+      assert.equal(document.headers.get("x-middleware-next"), "1");
+      assert.equal(document.headers.get("retry-after"), null);
+    }
+    assert.equal((await request("/root")).status, 404);
+    assert.equal(new URL((await request("/settings")).headers.get("location")!).pathname, "/journals");
+  } finally {
+    if (saved === undefined) delete process.env.NEXTAUTH_SECRET;
+    else process.env.NEXTAUTH_SECRET = saved;
+  }
 });
 
 test("subject uses verified accounts or a canonical trusted peer, never client identity hints", () => {
@@ -113,4 +147,18 @@ test("JWT subjects isolate shared IPs; root, directory, partner and staff checks
     if (saved === undefined) delete process.env.NEXTAUTH_SECRET;
     else process.env.NEXTAUTH_SECRET = saved;
   }
+});
+
+test("marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages", async () => {
+  const request = client();
+  const headers = { rsc: "1", "next-router-prefetch": "1" };
+  for (let i = 0; i < 240; i++) {
+    const variant: Record<string, string> = i % 3 === 0 ? headers : i % 3 === 1 ? { rsc: "1" } : { "sec-fetch-dest": "empty" };
+    assert.equal((await request("/blog", variant)).status, 200);
+  }
+  assert.equal((await request()).status, 200);
+  assert.equal((await request("/blog", headers)).status, 429);
+  assert.equal((await request("/blog", { "sec-fetch-dest": "empty" })).status, 429);
+  // Background fetches over budget wait on their own; the page itself still opens.
+  assert.equal((await request()).status, 200);
 });

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 
 import { PAID_ORDER_STATUSES } from "./service";
-import { dateToMskInput, type PromotionAdminRow, type PromotionAuditEntry } from "./promotions";
+import { inferPromotionAuditPresentation, type PresentedPromotionAuditEntry } from "./promotion-audit-presentation";
+import { dateToMskInput, type PromotionAdminRow } from "./promotions";
 
 /**
  * ROOT → «Акции»: список со статистикой оплат и история изменений.
@@ -83,7 +84,7 @@ export async function listPromotionsForRoot(): Promise<PromotionAdminRow[]> {
 }
 
 /** Последние изменения акций из AuditLog (пишут /api/root/promotions*). */
-export async function listPromotionAudit(limit = 20): Promise<PromotionAuditEntry[]> {
+export async function listPromotionAudit(limit = 20, options?: { includePresentationOrigin?: boolean }): Promise<PresentedPromotionAuditEntry[]> {
   const logs = await db.auditLog.findMany({
     where: { entity: PROMOTION_AUDIT_ENTITY },
     orderBy: { createdAt: "desc" },
@@ -92,6 +93,8 @@ export async function listPromotionAudit(limit = 20): Promise<PromotionAuditEntr
   });
   return logs.map((log) => {
     const details = (log.details ?? {}) as Record<string, unknown>;
+    const presentation = options?.includePresentationOrigin === true
+      ? inferPromotionAuditPresentation(log.action, log.details) : undefined;
     return {
       id: log.id,
       action: log.action,
@@ -100,6 +103,7 @@ export async function listPromotionAudit(limit = 20): Promise<PromotionAuditEntr
       at: log.createdAt.toISOString(),
       title: typeof details.title === "string" ? details.title : null,
       summary: typeof details.summary === "string" ? details.summary : null,
+      ...(presentation ? { presentation } : {}),
     };
   });
 }

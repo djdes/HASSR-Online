@@ -1,3 +1,5 @@
+import { formatCalendarDate } from "./calendar-date";
+
 export const LOCALES = ["ru", "en", "uz"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "ru";
@@ -31,9 +33,14 @@ export const FORMAT_LOCALES: Record<Locale, string> = {
 };
 
 export function formatNumber(locale: Locale, value: number, options?: Intl.NumberFormatOptions) {
-  return new Intl.NumberFormat(FORMAT_LOCALES[locale], options).format(value);
+  const formatter = new Intl.NumberFormat(FORMAT_LOCALES[locale], options);
+  if (locale !== "uz" || !Number.isFinite(value)) return formatter.format(value);
+  // Keep Uzbek words and options while using consistent decimal separators.
+  return formatter.formatToParts(value).map((part) =>
+    part.type === "group" ? "\u00a0" : part.type === "decimal" ? "," : part.value
+  ).join("");
 }
 
 export function formatDate(locale: Locale, value: Date | number, timeZone: string, options?: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat(FORMAT_LOCALES[locale], { ...options, timeZone }).format(value);
+  return formatCalendarDate(FORMAT_LOCALES[locale], value, timeZone, options);
 }

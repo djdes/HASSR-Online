@@ -25,7 +25,7 @@ export async function PUT(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "JOURNAL_DIFFICULTY_FORBIDDEN" }, { status: 403 });
   }
 
   const organizationId = getActiveOrgId(session);
@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest) {
   const raw = (body as { difficulty?: unknown } | null)?.difficulty;
   if (!raw || typeof raw !== "object") {
     return NextResponse.json(
-      { error: "Body должен содержать поле difficulty: object" },
+      { error: "Body должен содержать поле difficulty: object", errorCode: "JOURNAL_DIFFICULTY_INVALID_BODY" },
       { status: 400 },
     );
   }

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { buildStaffTrainingRoleDisplay, presentStaffTrainingRole, presentStaffTrainingStaffOption, staffTrainingIncomingRevision } from "@/lib/staff-training-presentation";
 import { useRouter } from "next/navigation";
 import { Archive, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
@@ -17,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserDisplayTitle } from "@/lib/user-roles";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +65,8 @@ type Props = {
   dateFrom: string;
   status: string;
   initialConfig: StaffTrainingConfig;
+  /** Compact persisted-config and display-directory witness from the server. */
+  sourceIdentity?: string;
   // Должность из карточки (как в UserLike) — «Должность» обучаемого.
   users: {
     id: string;
@@ -75,28 +79,45 @@ type Props = {
   useV2?: boolean;
 };
 
-const POSITION_OPTIONS = USER_ROLE_LABEL_VALUES;
-
 function nowDate() {
   return localDayKey();
 }
 
-export function StaffTrainingDocumentClient({
+export function StaffTrainingDocumentClient(props: Props) {
+  return <StaffTrainingDocumentEditor key={props.documentId} {...props} />;
+}
+
+function StaffTrainingDocumentEditor({
   documentId,
   title,
   organizationName,
   dateFrom,
   status,
   initialConfig,
+  sourceIdentity,
   users,
   useV2 = false,
 }: Props) {
+  const locale = useLocale();
+  const st = useTranslations("journalStaffTraining");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const feedback = useRef(st);
+  useLayoutEffect(() => { feedback.current = st; }, [st]);
+  const roleDisplay = useMemo(() => buildStaffTrainingRoleDisplay(users), [users]);
+  const displayRole = (raw: string) => presentStaffTrainingRole(raw, roleDisplay, (key) => pdf(key));
+  const staffOption = (user: Props["users"][number]) => presentStaffTrainingStaffOption(buildStaffOptionLabel(user), user, roleDisplay, (key) => pdf(key), st("unnamed"));
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [, setIsSaving] = useState(false);
   const [config, setConfig] = useState(() =>
     normalizeStaffTrainingConfig(initialConfig)
   );
+  const incomingRevision = staffTrainingIncomingRevision(initialConfig, sourceIdentity, users);
+  const [serverRevision, setServerRevision] = useState(incomingRevision);
+  const [serverTitle, setServerTitle] = useState(title);
+  const [draftTopicKey, setDraftTopicKey] = useState<(typeof TRAINING_TOPICS)[number]["value"] | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const { mobileView, switchMobileView } = useMobileView("staff_training");
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -122,6 +143,34 @@ export function StaffTrainingDocumentClient({
       employeePosition: "",
     })
   );
+  // Object identity changes during a locale/RSC refresh do not erase drafts.
+  // Actual changed server data still wins and removes stale row edit targets.
+  if (incomingRevision !== undefined && incomingRevision !== serverRevision) {
+    setServerRevision(incomingRevision);
+    const incoming = normalizeStaffTrainingConfig(initialConfig);
+    setConfig(incoming);
+    setSelectedRows((previous) => previous.filter((id) => incoming.rows.some((row) => row.id === id)));
+    if (editingCell) {
+      const incomingRow = incoming.rows.find((row) => row.id === editingCell.rowId);
+      const previousRow = config.rows.find((row) => row.id === editingCell.rowId);
+      if (!incomingRow) {
+        setEditingCell(null);
+        setCellEditValue("");
+        setCellEditUserId("");
+      } else {
+        const field = editingCell.field as keyof StaffTrainingRow;
+        if (incomingRow[field] !== previousRow?.[field] ||
+            (field === "employeeName" && incomingRow.employeeId !== previousRow?.employeeId)) {
+          setCellEditValue((incomingRow as Record<string, unknown>)[field] as string || "");
+          setCellEditUserId(field === "employeeName" ? incomingRow.employeeId || "" : "");
+        }
+      }
+    }
+  }
+  if (title !== serverTitle) {
+    setServerTitle(title);
+    setSettingsTitle(title);
+  }
   const draftCascade = usePositionEmployeeCascade({
     users,
     positionTitle: draftRow.employeePosition,
@@ -145,17 +194,16 @@ export function StaffTrainingDocumentClient({
 
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => {
     const trainingLabel =
-      TRAINING_TYPES.find((t) => t.value === row.trainingType)?.label ||
-      row.trainingType;
+      TRAINING_TYPES.find((t) => t.value === row.trainingType) ? pdf(row.trainingType as (typeof TRAINING_TYPES)[number]["value"]) : row.trainingType;
     const attestLabel =
-      ATTESTATION_RESULTS.find((a) => a.value === row.attestationResult)?.label ||
-      row.attestationResult;
+      ATTESTATION_RESULTS.find((a) => a.value === row.attestationResult) ? pdf(row.attestationResult as (typeof ATTESTATION_RESULTS)[number]["value"]) : row.attestationResult;
     return {
       id: row.id,
       title: `№${index + 1} · ${row.employeeName || "—"}`,
       subtitle: `${row.date || "—"} · ${row.employeePosition || "—"}`,
       leading: !isClosed ? (
         <Checkbox
+          aria-label={st("selectRecord", { number: `${config.rows.findIndex((item) => item.id === row.id) + 1}` })}
           checked={selectedRows.includes(row.id)}
           onCheckedChange={(checked) => toggleRow(row.id, checked === true)}
           className="size-5"
@@ -163,48 +211,48 @@ export function StaffTrainingDocumentClient({
       ) : null,
       fields: [
         {
-          label: "Дата",
+          label: pdf("date"),
           value: row.date,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "date") : undefined,
         },
         {
-          label: "Ф.И.О. сотрудника",
+          label: st("employeeName"),
           value: row.employeeName,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "employeeName") : undefined,
         },
         {
-          label: "Должность",
+          label: st("position"),
           value: row.employeePosition,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "employeePosition") : undefined,
         },
         {
-          label: "Тема обучения",
+          label: st("learningTopic"),
           value: row.topic,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "topic") : undefined,
         },
         {
-          label: "Вид инструктажа",
+          label: st("trainingType"),
           value: trainingLabel,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "trainingType") : undefined,
         },
         {
-          label: "Причина (внеплановый)",
+          label: st("unscheduledReasonShort"),
           value: row.unscheduledReason,
           onClick: !isClosed ? () => openCellEdit(row.id, "unscheduledReason") : undefined,
         },
         {
-          label: "Инструктирующий",
+          label: st("instructorShort"),
           value: row.instructorName,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "instructorName") : undefined,
         },
         {
-          label: "Результат аттестации",
+          label: st("attestationShort"),
           value: attestLabel,
           warnIfEmpty: true,
           onClick: !isClosed ? () => openCellEdit(row.id, "attestationResult") : undefined,
@@ -235,7 +283,7 @@ export function StaffTrainingDocumentClient({
       startTransition(() => router.refresh());
     } catch (error) {
       if (options?.silent) throw error;
-      toast.error("Не удалось сохранить журнал");
+      toast.error(feedback.current("saveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -266,7 +314,7 @@ export function StaffTrainingDocumentClient({
       })
       .catch(() => {
         setConfig(previous);
-        toast.error("Не удалось сохранить журнал");
+        toast.error(feedback.current("saveFailed"));
       });
   }
 
@@ -304,6 +352,7 @@ export function StaffTrainingDocumentClient({
         employeePosition: "",
       })
     );
+    setDraftTopicKey(null);
     setAddModalOpen(false);
   }
 
@@ -356,23 +405,23 @@ export function StaffTrainingDocumentClient({
     if (!editingCell) return "";
     switch (editingCell.field) {
       case "date":
-        return "Дата инструктажа";
+        return st("date");
       case "employeeName":
-        return "Ф.И.О. инструктируемого";
+        return st("employee");
       case "employeePosition":
-        return "Должность инструктируемого";
+        return st("employeePosition");
       case "topic":
-        return "Тема инструктажа / обучения";
+        return st("briefingTopic");
       case "attestationResult":
-        return "Результат аттестации";
+        return st("attestationShort");
       case "trainingType":
-        return "Вид инструктажа";
+        return st("trainingType");
       case "unscheduledReason":
-        return "Причина проведения внепланового инструктажа";
+        return pdf("unscheduledReason");
       case "instructorName":
-        return "Должность инструктирующего";
+        return st("instructorPosition");
       default:
-        return "Редактирование";
+        return st("editing");
     }
   }
 
@@ -380,15 +429,16 @@ export function StaffTrainingDocumentClient({
 
   async function handleCloseJournal() {
     const ok = await confirmAsync({
-      title: `Закончить журнал «${title}»?`,
+      title: controls("closeDocument.confirmTitle", { title }),
       description:
-        "Журнал уйдёт из рабочего списка в раздел закрытых. Все записи сохранятся — отчёты и PDF по ним останутся.",
+        st("closeDescription"),
       bullets: [
-        { label: "Добавлять и править записи после этого нельзя", tone: "warn" },
-        { label: "Вернуть журнал в активные можно в любой момент", tone: "info" },
+        { label: st("closeWarning"), tone: "warn" },
+        { label: st("closeRestore"), tone: "info" },
       ],
-      confirmLabel: "Закончить журнал",
+      confirmLabel: controls("closeDocument.close"),
       variant: "warn",
+      locale,
     });
     if (!ok) return;
     const response = await fetch(`/api/journal-documents/${documentId}`, {
@@ -397,7 +447,7 @@ export function StaffTrainingDocumentClient({
       body: JSON.stringify({ status: "closed" }),
     });
     if (!response.ok) {
-      toast.error("Не удалось закончить журнал");
+      toast.error(feedback.current("closeFailed"));
       return;
     }
     router.refresh();
@@ -413,20 +463,20 @@ export function StaffTrainingDocumentClient({
 
   return (
     <div className="space-y-6 text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={st("emptyTitle")} emptyBody={st("emptyBody")} />
       <JournalDocumentShell
         title={title}
         documentId={documentId}
         backHref="/journals/staff_training"
         closed={isClosed}
-        closedHint="Верните журнал в активные, чтобы добавлять и править записи инструктажей."
+        closedHint={st("closedHint")}
         onSettings={!isClosed ? () => setSettingsOpen(true) : undefined}
         menuItems={
           !isClosed
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: controls("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: handleCloseJournal,
                 },
@@ -446,28 +496,28 @@ export function StaffTrainingDocumentClient({
         }
         mobileView={mobileView}
         onMobileView={switchMobileView}
-        cards={<RecordCardsView items={cardItems} emptyLabel="Нет записей обучения." />}
+        cards={<RecordCardsView items={cardItems} emptyLabel={st("emptyCards")} />}
         paperHeader={
           <JournalDocumentHeader
             orgName={organizationName}
-            title="ЖУРНАЛ РЕГИСТРАЦИИ ИНСТРУКТАЖЕЙ (ОБУЧЕНИЯ) СОТРУДНИКОВ"
-            pageInfo={`СТР. 1 ИЗ ${pageCount}`}
+            title={st("paperTitle")}
+            pageInfo={st("pageInfo", { count: `${pageCount}` })}
             startedAt={dateFrom}
             finishedAt={null}
           />
         }
-        sheetTitle="ЖУРНАЛ регистрации инструктажей (обучения) сотрудников"
+        sheetTitle={st("sheetTitle")}
         sheetMinWidth={1600}
         toolbar={
           !isClosed ? (
             <>
               <ResponsiveMenu
-              title="Добавить"
+              title={common("add")}
               contentClassName="w-[280px] rounded-2xl border-0 p-2 shadow-xl"
               items={[
                 {
                   key: "add-employee",
-                  label: "Добавить сотрудника",
+                  label: st("addEmployee"),
                   icon: <Plus className="size-4 text-[#6f7282]" />,
                   onSelect: () => setAddModalOpen(true),
                 },
@@ -475,7 +525,7 @@ export function StaffTrainingDocumentClient({
               trigger={
                 <Button type="button" className="bg-[#5566f6] hover:bg-[#4d58f5]">
                   <Plus className="size-4" />
-                  Добавить
+                  {common("add")}
                   <ChevronDown className="ml-1 size-4" />
                 </Button>
               }
@@ -484,7 +534,7 @@ export function StaffTrainingDocumentClient({
               {selectedRows.length > 0 && (
                 <>
                   <span className="text-sm text-[#7a7f93]">
-                    Выбрано: {selectedRows.length}
+                    {controls("selection.count", { count: selectedRows.length })}
                   </span>
                   <Button
                     type="button"
@@ -492,7 +542,7 @@ export function StaffTrainingDocumentClient({
                     onClick={removeSelectedRows}
                   >
                     <Trash2 className="size-4" />
-                    Удалить
+                    {common("delete")}
                   </Button>
                 </>
               )}
@@ -504,46 +554,44 @@ export function StaffTrainingDocumentClient({
           <thead>
             <tr>
               <th className={`w-10 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`} />
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Дата</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{pdf("date")}</th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Ф.И.О. инструктируемого
+                {st("employee")}
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Профессия / должность инструктируемого
+                {pdf("traineePosition")}
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Тема инструктажа (обучения)
+                {pdf("trainingTopic")}
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Вид инструктажа (первичный / повторный / внеплановый)
+                {pdf("trainingType")}
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Причина проведения внепланового инструктажа
+                {pdf("unscheduledReason")}
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Ф.И.О. / должность инструктирующего
+                {pdf("instructor")}
               </th>
               <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Результат аттестации после обучения (удовл. / не удовл.)
+                {pdf("attestation")}
               </th>
             </tr>
           </thead>
           <tbody>
             {config.rows.map((row) => {
               const trainingLabel =
-                TRAINING_TYPES.find((t) => t.value === row.trainingType)
-                  ?.label || row.trainingType;
+                TRAINING_TYPES.find((t) => t.value === row.trainingType) ? pdf(row.trainingType as (typeof TRAINING_TYPES)[number]["value"]) : row.trainingType;
               const attestLabel =
-                ATTESTATION_RESULTS.find(
-                  (a) => a.value === row.attestationResult
-                )?.label || row.attestationResult;
+                ATTESTATION_RESULTS.find((a) => a.value === row.attestationResult) ? pdf(row.attestationResult as (typeof ATTESTATION_RESULTS)[number]["value"]) : row.attestationResult;
 
               return (
                 <tr key={row.id}>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight`}>
                     {!isClosed && (
                       <Checkbox
-                        checked={selectedRows.includes(row.id)}
+                        aria-label={st("selectRecord", { number: `${config.rows.findIndex((item) => item.id === row.id) + 1}` })}
+          checked={selectedRows.includes(row.id)}
                         onCheckedChange={(checked) =>
                           toggleRow(row.id, checked === true)
                         }
@@ -616,7 +664,7 @@ export function StaffTrainingDocumentClient({
             {config.rows.length === 0 && (
               <tr>
                 <td colSpan={9} className={`${GRID_CELL_CLASS} px-2 py-4 text-center leading-tight text-gray-400`}>
-                  Нет записей. Нажмите &laquo;Добавить&raquo; чтобы добавить сотрудника.
+                  {st("emptyTable")}
                 </td>
               </tr>
             )}
@@ -628,10 +676,10 @@ export function StaffTrainingDocumentClient({
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
         <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-y-auto sm:max-w-[620px]">
           <DialogHeader>
-            <DialogTitle>Добавление записи</DialogTitle>
+            <DialogTitle>{st("addRecord")}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3">
-            <Label>Дата</Label>
+            <Label>{pdf("date")}</Label>
             <Input
               type="date"
               value={draftRow.date}
@@ -640,20 +688,20 @@ export function StaffTrainingDocumentClient({
               }
             />
 
-            <Label>Должность инструктируемого</Label>
+            <Label>{st("employeePosition")}</Label>
             <Select
               value={draftRow.employeePosition}
               onValueChange={draftCascade.handlePositionChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={controls("positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={users} />
+                <PositionSelectItems users={users} displayLabel={displayRole} />
               </SelectContent>
             </Select>
 
-            <Label>Ф.И.О. инструктируемого</Label>
+            <Label>{st("employee")}</Label>
             <Select
               value={draftRow.employeeId || "__empty__"}
               onValueChange={(val) => {
@@ -671,19 +719,19 @@ export function StaffTrainingDocumentClient({
               onOpenChange={draftCascade.setEmployeeOpen}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={controls("positionSelect.chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                <SelectItem value="__empty__">{controls("positionSelect.chooseEmployee")}</SelectItem>
                 {(draftRow.employeePosition ? draftCascade.candidates : users).map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {buildStaffOptionLabel(user)}
+                    {staffOption(user)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Label>Вид инструктажа</Label>
+            <Label>{st("trainingType")}</Label>
             <Select
               value={draftRow.trainingType}
               onValueChange={(val) =>
@@ -691,45 +739,46 @@ export function StaffTrainingDocumentClient({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Выберите из списка" />
+                <SelectValue placeholder={st("chooseList")} />
               </SelectTrigger>
               <SelectContent>
                 {TRAINING_TYPES.map((t) => (
                   <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                    {pdf(t.value)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Label>Тема обучения</Label>
+            <Label>{st("learningTopic")}</Label>
             <Select
               value={draftRow.topic}
-              onValueChange={(val) =>
-                setDraftRow((prev) => ({ ...prev, topic: val }))
-              }
+              onValueChange={(val) => {
+                setDraftTopicKey(TRAINING_TOPICS.find((topic) => topic.label === val)?.value ?? null);
+                setDraftRow((prev) => ({ ...prev, topic: val }));
+              }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Выберите из списка" />
+                <SelectValue placeholder={st("chooseList")} />
               </SelectTrigger>
               <SelectContent>
                 {TRAINING_TOPICS.map((t) => (
                   <SelectItem key={t.value} value={t.label}>
-                    {t.label}
+                    {t.value === "haccp" ? st("haccp") : pdf(t.value)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {/* Подсказка «о чём рассказать» — чтобы инструктаж по теме
                 (например, «Принципы ХАССП») провели по существу. */}
-            {trainingTopicDescription(draftRow.topic) && (
+            {trainingTopicDescription(draftRow.topic) && draftTopicKey && (
               <p className="-mt-1 rounded-2xl bg-[#f5f6ff] px-3.5 py-2.5 text-[13px] leading-[1.55] text-[#3c4053]">
-                <span className="font-medium text-[#3848c7]">О чём рассказать: </span>
-                {trainingTopicDescription(draftRow.topic)}
+                <span className="font-medium text-[#3848c7]">{st("whatToCover")}</span>
+                {st(`topicDescriptions.${draftTopicKey}`)}
               </p>
             )}
 
-            <Label>Причина проведения внепланового инструктажа</Label>
+            <Label>{pdf("unscheduledReason")}</Label>
             <Textarea
               value={draftRow.unscheduledReason}
               onChange={(e) =>
@@ -738,10 +787,10 @@ export function StaffTrainingDocumentClient({
                   unscheduledReason: e.target.value,
                 }))
               }
-              placeholder="Причина"
+              placeholder={st("reason")}
             />
 
-            <Label>Должность инструктирующего</Label>
+            <Label>{st("instructorPosition")}</Label>
             <Select
               value={draftRow.instructorName}
               onValueChange={(val) =>
@@ -749,16 +798,16 @@ export function StaffTrainingDocumentClient({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={controls("positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={users} />
+                <PositionSelectItems users={users} displayLabel={displayRole} />
               </SelectContent>
             </Select>
 
             <div className="flex justify-end pt-2">
               <Button onClick={saveDraftRow} disabled={!draftRow.employeeId}>
-                Добавить
+                {common("add")}
               </Button>
             </div>
           </div>
@@ -777,7 +826,7 @@ export function StaffTrainingDocumentClient({
       >
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>Редактирование ячейки</DialogTitle>
+            <DialogTitle>{st("editCell")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Label>{getCellEditLabel()}</Label>
@@ -806,17 +855,17 @@ export function StaffTrainingDocumentClient({
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="- Выберите сотрудника -" />
+                    <SelectValue placeholder={st("chooseEmployeeDashed")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__custom__">
-                      Без привязки (ввести вручную ниже)
+                      {st("unlinked")}
                     </SelectItem>
                     {/* Ключ выбора — id, а не ФИО: двух однофамильцев
                         Radix склеивал в один вариант. */}
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {buildStaffOptionLabel(u)}
+                        {staffOption(u)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -825,7 +874,7 @@ export function StaffTrainingDocumentClient({
                   <Input
                     value={cellEditValue}
                     onChange={(e) => setCellEditValue(e.target.value)}
-                    placeholder="Ф.И.О. вручную"
+                    placeholder={st("manualName")}
                   />
                 ) : null}
               </>
@@ -834,11 +883,11 @@ export function StaffTrainingDocumentClient({
             {editingCell?.field === "employeePosition" && (
               <Select value={cellEditValue || "__empty__"} onValueChange={(value) => setCellEditValue(value === "__empty__" ? "" : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите должность -" />
+                  <SelectValue placeholder={st("choosePositionDashed")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__empty__">— не указана —</SelectItem>
-                  <PositionSelectItems users={users} />
+                  <SelectItem value="__empty__">{st("unspecified")}</SelectItem>
+                  <PositionSelectItems users={users} displayLabel={displayRole} />
                 </SelectContent>
               </Select>
             )}
@@ -847,7 +896,7 @@ export function StaffTrainingDocumentClient({
               <Input
                 value={cellEditValue}
                 onChange={(e) => setCellEditValue(e.target.value)}
-                placeholder="Например: Санитария и гигиена"
+                placeholder={st("exampleTopic")}
               />
             )}
 
@@ -860,7 +909,7 @@ export function StaffTrainingDocumentClient({
                       checked={cellEditValue === opt.value}
                       onChange={() => setCellEditValue(opt.value)}
                     />
-                    {opt.label}
+                    {pdf(opt.value)}
                   </label>
                 ))}
               </div>
@@ -869,12 +918,12 @@ export function StaffTrainingDocumentClient({
             {editingCell?.field === "trainingType" && (
               <Select value={cellEditValue} onValueChange={setCellEditValue}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите из списка" />
+                  <SelectValue placeholder={st("chooseList")} />
                 </SelectTrigger>
                 <SelectContent>
                   {TRAINING_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                      {pdf(t.value)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -885,7 +934,7 @@ export function StaffTrainingDocumentClient({
               <Textarea
                 value={cellEditValue}
                 onChange={(e) => setCellEditValue(e.target.value)}
-                placeholder="Причина"
+                placeholder={st("reason")}
                 rows={3}
               />
             )}
@@ -893,10 +942,10 @@ export function StaffTrainingDocumentClient({
             {editingCell?.field === "instructorName" && (
               <Select value={cellEditValue} onValueChange={setCellEditValue}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите из списка" />
+                  <SelectValue placeholder={st("chooseList")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <PositionSelectItems users={users} />
+                  <PositionSelectItems users={users} displayLabel={displayRole} />
                 </SelectContent>
               </Select>
             )}
@@ -909,9 +958,9 @@ export function StaffTrainingDocumentClient({
                   setCellEditValue("");
                 }}
               >
-                Отмена
+                {common("cancel")}
               </Button>
-              <Button onClick={saveCellEdit}>Сохранить</Button>
+              <Button onClick={saveCellEdit}>{common("save")}</Button>
             </div>
           </div>
         </DialogContent>
@@ -922,8 +971,8 @@ export function StaffTrainingDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Параметры журнала обучения и аттестации персонала"
+          title={st("settingsTitle")}
+          description={st("settingsDescription")}
           size="md"
           onSave={async () => {
             try {
@@ -938,13 +987,13 @@ export function StaffTrainingDocumentClient({
               setSettingsOpen(false);
               router.refresh();
             } catch {
-              toast.error("Не удалось сохранить настройки");
+              toast.error(feedback.current("settingsFailed"));
             }
           }}
           onCancel={() => setSettingsOpen(false)}
         >
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Название документа</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{st("documentTitle")}</Label>
             <Input
               value={settingsTitle}
               onChange={(e) => setSettingsTitle(e.target.value)}
@@ -956,10 +1005,10 @@ export function StaffTrainingDocumentClient({
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>Настройки документа</DialogTitle>
+              <DialogTitle>{st("settingsTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Label>Название документа</Label>
+              <Label>{st("documentTitle")}</Label>
               <Input
                 value={settingsTitle}
                 onChange={(e) => setSettingsTitle(e.target.value)}
@@ -979,11 +1028,11 @@ export function StaffTrainingDocumentClient({
                       setSettingsOpen(false);
                       router.refresh();
                     } catch {
-                      toast.error("Не удалось сохранить настройки");
+                      toast.error(feedback.current("settingsFailed"));
                     }
                   }}
                 >
-                  Сохранить
+                  {common("save")}
                 </Button>
               </div>
             </div>

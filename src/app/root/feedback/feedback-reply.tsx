@@ -15,22 +15,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslations } from "next-intl";
+import { useFeedbackCopy } from "./feedback-copy-provider";
+import { deliveredReplyCombination, feedbackReplyErrorKey, replyChannelCombination } from "./feedback-report-presentation";
 
 /** Куда ответ уйдёт — говорим до отправки, а не «куда-то в базу». */
-function describeChannels(args: {
-  hasRecipient: boolean;
-  hasTelegram: boolean;
-  hasEmail: boolean;
-}): string {
-  const channels: string[] = [];
-  if (args.hasRecipient) channels.push("уведомления в приложении");
-  if (args.hasTelegram) channels.push("Telegram");
-  if (args.hasEmail) channels.push("почта");
-  return channels.length > 0
-    ? `Ответ придёт: ${channels.join(" · ")}.`
-    : "У автора нет ни аккаунта, ни Telegram, ни почты: ответ сохранится, но доставить его некуда.";
-}
-
 export function FeedbackReply({
   reportId,
   hasRecipient,
@@ -46,6 +35,8 @@ export function FeedbackReply({
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const t = useTranslations("rootFeedbackReports");
+  const copy = useFeedbackCopy();
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,25 +49,23 @@ export function FeedbackReply({
         body: JSON.stringify({ message }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось отправить ответ");
+      if (!response.ok) throw new Error(typeof data?.error === "string" ? data.error : "");
 
       // Показываем только реально сработавшие каналы: иначе «отправлено»
       // означало бы всего лишь «записано в базу», как было раньше.
-      const delivered: string[] = [];
-      if (data?.channels?.inApp) delivered.push("в приложении");
-      if (data?.channels?.telegram) delivered.push("Telegram");
-      if (data?.channels?.email) delivered.push("почта");
-
-      if (delivered.length > 0) {
-        toast.success(`Ответ отправлен: ${delivered.join(" · ")}`);
+      const delivery = deliveredReplyCombination(
+        Boolean(data?.channels?.inApp), Boolean(data?.channels?.telegram), Boolean(data?.channels?.email),
+      );
+      if (delivery) {
+        toast.success(copy.getReplyDeliveryCopy(delivery));
       } else {
-        toast.warning("Ответ сохранён, но доставить его не удалось ни по одному каналу");
+        toast.warning(copy.getReplyDeliveryCopy(null));
       }
       setOpen(false);
       setMessage("");
       router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось отправить ответ");
+    } catch (_error) {
+      toast.error(copy.getReplyErrorCopy(feedbackReplyErrorKey(_error instanceof Error ? _error.message : null)));
     } finally {
       setSubmitting(false);
     }
@@ -87,20 +76,20 @@ export function FeedbackReply({
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg text-[12px]">
           <MessageSquareReply className="size-3.5" />
-          Ответить
+          {t("reply.button")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[520px]" closeLabel={t("reply.close")}>
         <DialogHeader>
-          <DialogTitle>Ответ на обращение</DialogTitle>
+          <DialogTitle>{t("reply.title")}</DialogTitle>
           <DialogDescription>
-            {describeChannels({ hasRecipient, hasTelegram, hasEmail })}
+            {t(`reply.channels_${replyChannelCombination(hasRecipient, hasTelegram, hasEmail)}`)}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          <Textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Текст ответа" rows={6} maxLength={5000} required />
+          <Textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={t("reply.textarea")} rows={6} maxLength={5000} required />
           <DialogFooter>
-            <Button type="submit" disabled={submitting}>{submitting ? "Отправляем…" : "Отправить ответ"}</Button>
+            <Button type="submit" disabled={submitting}>{submitting ? t("reply.sending") : t("reply.send")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

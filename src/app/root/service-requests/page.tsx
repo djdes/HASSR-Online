@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ServiceRequestsClient } from "./service-requests-client";
@@ -5,9 +7,10 @@ import { ServiceRequestsClient } from "./service-requests-client";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-  title: "Заявки на услуги",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("rootServiceRequests");
+  return { title: t("metadata.title") };
+}
 
 /**
  * Заявки на платные услуги — из кабинета и с публичной страницы.
@@ -23,36 +26,37 @@ export default async function RootServiceRequestsPage() {
     orderBy: { createdAt: "desc" },
     take: 200,
   });
+  const t = await getTranslations("rootServiceRequests");
 
   return (
-    <div className="mx-auto max-w-[1000px]">
-      <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-        Заявки на услуги
-      </h1>
-      <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
-        Последние 200 заявок. «Оплачено» означает, что клиент закрыл
-        фиксированную цену баллами при оформлении — деньги уже списаны с его
-        баланса.
-      </p>
-      <div className="mt-6">
-        <ServiceRequestsClient
-          initial={requests.map((request) => ({
-            id: request.id,
-            serviceTitle: request.serviceTitle,
-            organizationName: request.organizationName,
-            contactName: request.contactName,
-            contactPhone: request.contactPhone,
-            contactEmail: request.contactEmail,
-            comment: request.comment,
-            status: request.status,
-            paidRub: request.paidRub,
-            source: request.source,
-            notifiedTg: request.adminTgNotifiedAt !== null,
-            notifiedEmail: request.adminEmailedAt !== null,
-            createdAt: request.createdAt.toISOString(),
-          }))}
-        />
+    <DomainMessagesBoundary namespaces={["rootServiceRequests"]}>
+      <div className="mx-auto max-w-[1000px]">
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">
+          {t("page.title")}
+        </h1>
+        <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
+          {t("page.description")}
+        </p>
+        <div className="mt-6">
+          <ServiceRequestsClient
+            initial={requests.map((request) => ({
+              id: request.id,
+              serviceTitle: request.serviceTitle,
+              organizationName: request.organizationName,
+              contactName: request.contactName,
+              contactPhone: request.contactPhone,
+              contactEmail: request.contactEmail,
+              comment: request.comment,
+              status: request.status,
+              paidRub: request.paidRub,
+              source: request.source,
+              notifiedTg: request.adminTgNotifiedAt !== null,
+              notifiedEmail: request.adminEmailedAt !== null,
+              createdAt: request.createdAt.toISOString(),
+            }))}
+          />
+        </div>
       </div>
-    </div>
+    </DomainMessagesBoundary>
   );
 }

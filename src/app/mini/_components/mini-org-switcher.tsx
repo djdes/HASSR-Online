@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Library, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CreateMasterCabinetDialog } from "@/components/master/create-master-cabinet-dialog";
@@ -26,6 +27,11 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
  * аккаунта под кабинетами — «Создать мастер-кабинет» (сколько угодно).
  */
 export function MiniOrgSwitcher() {
+  const t = useTranslations("notificationSettings.miniSwitchers");
+  const currentT = useRef(t);
+  useEffect(() => {
+    currentT.current = t;
+  }, [t]);
   const router = useRouter();
   const [organizations, setOrganizations] = useState<AccessibleOrganization[]>(
     [],
@@ -87,12 +93,12 @@ export function MiniOrgSwitcher() {
       });
       if (!response.ok) throw new Error();
       setActiveId(organization.id);
-      toast.success(`Вы работаете в «${organization.name}»`);
+      toast.success(currentT.current("organizationSwitched", { name: organization.name }));
       router.refresh();
     } catch {
       // Раньше сбой проходил молча, и человек не понимал, почему данные
       // остались от прежней организации. Тосты в Mini App уже есть.
-      toast.error("Не удалось переключить организацию. Попробуйте ещё раз.");
+      toast.error(currentT.current("organizationSwitchFailed"));
     } finally {
       setBusyId(null);
     }
@@ -102,7 +108,7 @@ export function MiniOrgSwitcher() {
     <>
       {showOrganizations ? (
         <section className="mini-card p-4">
-          <div className="mini-label mb-2.5">Организация</div>
+          <div className="mini-label mb-2.5">{t("organizationHeading")}</div>
           <div className="space-y-2">
             {regular.map((organization) => {
               const active = organization.id === activeId;
@@ -133,7 +139,7 @@ export function MiniOrgSwitcher() {
       ) : null}
       {showCabinets ? (
         <section className="mini-card p-4">
-          <div className="mini-label mb-2.5">Кабинет</div>
+          <div className="mini-label mb-2.5">{t("cabinetHeading")}</div>
           <div className="space-y-2">
             {masterCabinets.map((cabinet) => (
               <button
@@ -168,7 +174,7 @@ export function MiniOrgSwitcher() {
                 }}
               >
                 <Plus className="size-5 shrink-0" />
-                <span className="min-w-0 flex-1">Создать мастер-кабинет</span>
+                <span className="min-w-0 flex-1">{t("createMasterCabinet")}</span>
               </button>
             ) : null}
           </div>

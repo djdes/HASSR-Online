@@ -6,6 +6,7 @@ import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import { buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
 import { normalizeUvRuntimeDocumentConfig, UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
+import { loadMessages } from "@/i18n/messages";
 
 test("UV runtime PDF localizes print labels and keeps entered names and data", async () => {
   const rawDir = join(process.cwd(), ".agent/tasks/english-version-1375e736/raw");
@@ -13,12 +14,10 @@ test("UV runtime PDF localizes print labels and keeps entered names and data", a
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = workerFileUrl();
 
-  const expectedTitles = {
-    ru: "Журнал учета работы УФ бактерицидной установки",
-    en: "UV germicidal unit operating hours journal",
-    uz: "Bakteritsid UV qurilmasining ishlash vaqtini qayd etish jurnali",
-  } as const;
-  for (const locale of ["ru", "en", "uz"] as const) {
+  const scenarios = (["ru", "en", "uz"] as const).flatMap(locale =>
+    [true, false].map(explicit => ({ locale, explicit }))
+  );
+  for (const { locale, explicit } of scenarios) {
     const sample = buildJournalSampleInput(UV_LAMP_RUNTIME_TEMPLATE_CODE);
     const config = normalizeUvRuntimeDocumentConfig({
       lampNumber: "4",
@@ -37,13 +36,18 @@ test("UV runtime PDF localizes print labels and keeps entered names and data", a
         autoFillDurationMinutes: 30,
       },
     });
+    const sourceConfig = { ...config, spec: { ...config.spec } };
+    if (!explicit) {
+      Reflect.deleteProperty(sourceConfig.spec, "microorganismType");
+      Reflect.deleteProperty(sourceConfig.spec, "controlFrequency");
+    }
     const rendered = renderJournalDocumentPdf({
       ...sample,
       document: {
         ...sample.document,
         title: "",
         template: { ...sample.document.template, code: UV_LAMP_RUNTIME_TEMPLATE_CODE },
-        config: config as unknown as typeof sample.document.config,
+        config: sourceConfig as unknown as typeof sample.document.config,
         entries: [{
           id: "uv-test-entry",
           documentId: sample.document.id,
@@ -61,7 +65,7 @@ test("UV runtime PDF localizes print labels and keeps entered names and data", a
       users: sample.users.map((user, index) => index === 0 ? { ...user, name: "O‘tkir" } : user),
       locale,
     });
-    writeFileSync(join(rawDir, `uv-lamp-runtime-${locale}.pdf`), rendered.buffer);
+    writeFileSync(join(rawDir, `uv-lamp-runtime-${locale}-${explicit ? "explicit" : "absent"}.pdf`), rendered.buffer);
     const task = pdfjs.getDocument({
       data: new Uint8Array(rendered.buffer),
       disableWorker: true,
@@ -77,11 +81,13 @@ test("UV runtime PDF localizes print labels and keeps entered names and data", a
         const content = await page.getTextContent();
         return content.items.flatMap((item) => "str" in item ? [item.str] : []).join(" ");
       }))).join(" ");
-      assert.ok(text.includes(expectedTitles[locale]), `${locale} title`);
+      const copy = (await loadMessages(locale)).trackedUvPdf;
+      assert.ok(text.includes(copy.uv_title), `${locale} title`);
       assert.ok(text.includes("Kitchen A"), `${locale} entered area`);
-      assert.ok(text.includes("Test indicator"), `${locale} configured microorganism value`);
+      assert.ok(text.includes(explicit ? "Test indicator" : copy.defaultMicroorganism), `${locale} configured microorganism preserved or absent default localized`);
+      assert.ok(text.includes(explicit ? "1 раз в смену" : copy.defaultFrequency), `${locale} explicit frequency preserved or absent default localized`);
       assert.ok(text.includes("O‘tkir"), `${locale} responsible name`);
-      assert.ok(text.includes(locale === "ru" ? "Время ВКЛ" : locale === "en" ? "ON time" : "Yoqish vaqti"), `${locale} table header`);
+      assert.ok(text.includes(copy.uv_on), `${locale} table header`);
       if (locale !== "ru") {
         for (const russianLabel of ["СИСТЕМА ХАССП", "Начат", "Окончен"]) {
           assert.ok(!text.includes(russianLabel), `${locale} PDF must not contain ${russianLabel}`);

@@ -13,28 +13,28 @@ import {
   ShieldAlert,
   Users,
 } from "lucide-react";
-import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import { composeCount, composeDiagnosticText, composeError, composeKindKey, composePreviewRecipient, composeStatusKey, type ComposeErrorEvent } from "@/lib/mailing/compose-presentation";
+import { useComposeFeedback } from "./compose-feedback";
 
 import { MailingKindFields } from "@/components/mailing/kind-fields";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { PlanStats } from "@/lib/mailing/audience.server";
 import type { TestSendResult } from "@/lib/mailing/campaigns.server";
 import {
-  CHANNEL_LABELS,
-  CHANNEL_STATUS_LABELS,
   MAILING_CHANNELS,
   anyChannel,
   type MailingChannel,
   type MailingChannels,
 } from "@/lib/mailing/labels";
 import type { RenderedMailing } from "@/lib/mailing/templates";
-import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 import { CARD, CHANNEL_ICONS, CHECKBOX, INPUT, Notice, OUTLINE, PRIMARY, SECTION_LABEL, api } from "./ui";
 import type { MailingPageData, MailingTab } from "./types";
 
-export type PreviewState = { label: string; rendered: RenderedMailing } | { error: string } | null;
+export type PreviewState = { label: string; rendered: RenderedMailing; recipientPresentation?: unknown } | { failure: ComposeErrorEvent } | { error: string } | null;
 
 export function ComposeTab({
   data,
@@ -75,6 +75,10 @@ export function ComposeTab({
   onLaunched: (campaignId: string) => void;
   goTo: (tab: MailingTab) => void;
 }) {
+  const t = useTranslations("rootMailingCompose");
+  const shell = useTranslations("rootMailingShellAudience");
+  const locale = useSiteLocale();
+  const feedback = useComposeFeedback();
   const [reach, setReach] = useState<PlanStats | null>(null);
   const [reachBusy, setReachBusy] = useState(false);
   const [preview, setPreview] = useState<PreviewState>(null);
@@ -103,7 +107,7 @@ export function ComposeTab({
         json: { userIds: [...userIds], contactIds: [...contactIds] },
       })
         .then((r) => alive && setReach(r.stats))
-        .catch((error) => toast.error(error instanceof Error ? error.message : "Не удалось посчитать охват"))
+        .catch((error) => feedback.error(composeError("reachFailed", error)))
         .finally(() => alive && setReachBusy(false));
     }, 400);
     return () => {
@@ -114,7 +118,7 @@ export function ComposeTab({
   }, [selectionKey]);
 
   const recipientOptions = useMemo(() => {
-    const opts: Array<{ value: string; label: string }> = [{ value: "sample", label: "Пример: Иван Петров, Кафе «Ромашка»" }];
+    const opts: Array<{ value: string; label: string }> = [{ value: "sample", label: t("preview.sampleOption", { name: "Иван Петров", companyName: "Кафе «Ромашка»" }) }];
     for (const id of [...userIds].slice(0, 30)) {
       const label = labels.get(`user:${id}`);
       if (label) opts.push({ value: `user:${id}`, label });
@@ -124,7 +128,7 @@ export function ComposeTab({
       if (label) opts.push({ value: `contact:${id}`, label });
     }
     return opts;
-  }, [userIds, contactIds, labels]);
+  }, [userIds, contactIds, labels, t]);
 
   // Предпросмотр — с паузой после ввода.
   const payloadKey = JSON.stringify(payload);
@@ -133,12 +137,12 @@ export function ComposeTab({
     const t = setTimeout(() => {
       setPreviewBusy(true);
       const [type, id] = previewFor === "sample" ? [null, null] : previewFor.split(":");
-      api<{ label: string; rendered: RenderedMailing }>("/api/root/mailing/preview", {
+      api<{ label: string; rendered: RenderedMailing; recipientPresentation?: unknown }>("/api/root/mailing/preview", {
         method: "POST",
         json: { kind, payload, recipient: type && id ? { type, id } : null },
       })
         .then((r) => alive && setPreview(r))
-        .catch((error) => alive && setPreview({ error: error instanceof Error ? error.message : "Нет предпросмотра" }))
+        .catch((error) => alive && setPreview({ failure: composeError("previewFailed", error) }))
         .finally(() => alive && setPreviewBusy(false));
     }, 600);
     return () => {
@@ -160,9 +164,9 @@ export function ComposeTab({
       if (!id) return;
       const r = await api<TestSendResult>(`/api/root/mailing/campaigns/${id}/test`, { method: "POST" });
       setTestResult(r);
-      toast.success("Тестовая отправка выполнена — результат ниже");
+      feedback.success({ key: "testSucceeded" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Тест не удался");
+      feedback.error(composeError("testFailed", error));
     } finally {
       setTestBusy(false);
     }
@@ -176,15 +180,15 @@ export function ComposeTab({
         method: "POST",
         json: { mode, scheduledAt: mode === "schedule" ? scheduledAt : null },
       });
-      toast.success(
+      feedback.success(
         mode === "now"
-          ? `Рассылка запущена: ${r.stats.recipients} ${pluralRu(r.stats.recipients, "получатель", "получателя", "получателей")}`
-          : `Рассылка запланирована на ${scheduledAt.replace("T", " ")} МСК`
+          ? { key: "launched", count: r.stats.recipients }
+          : { key: "scheduled", at: scheduledAt.replace("T", " ") }
       );
       setConfirm(null);
       onLaunched(id);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось запустить");
+      feedback.error(composeError("launchFailed", error));
       throw error;
     }
   }
@@ -192,7 +196,8 @@ export function ComposeTab({
   const noRecipients = selectedTotal === 0;
   // Охват считается сразу по всем каналам; контактам нужен канал «Почта».
   const recipientsCount = reach ? reach.users + (channels.email ? reach.contacts : 0) : null;
-  const kindLabel = data.kinds.find((k) => k.kind === kind)?.label ?? kind;
+  const kindKey = composeKindKey(kind);
+  const kindLabel = kindKey ? t(kindKey) : data.kinds.find((k) => k.kind === kind)?.label ?? kind;
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_440px]" data-testid="mailing-compose-tab">
@@ -205,47 +210,40 @@ export function ComposeTab({
               </span>
               <div>
                 <div className="text-[16px] font-semibold text-[#0b1024]" data-testid="compose-recipients">
-                  {noRecipients
-                    ? "Получатели не выбраны"
-                    : recipientsCount !== null
-                      ? `Получателей: ${recipientsCount}`
-                      : `Выбрано: ${selectedTotal}`}
+                  {t("recipients.title", { state: noRecipients ? "empty" : recipientsCount !== null ? "reach" : "selected", count: String(recipientsCount !== null ? recipientsCount : selectedTotal) })}
                 </div>
                 <div className="text-[13px] text-[#6f7282]">
-                  выбрано пользователей {userIds.size} · контактов {contactIds.size}
-                  {reach && reach.duplicates > 0 ? ` · совпали по почте и считаются один раз: ${reach.duplicates}` : ""}
-                  {reach && reach.missing > 0 ? ` · не найдены (удалены или отключены): ${reach.missing}` : ""}
-                  {reach && reach.contacts > 0 && !channels.email ? " · контактам письмо не уйдёт: не отмечена «Почта»" : ""}
+                  {t("recipients.summary", { users: String(userIds.size), contacts: String(contactIds.size), duplicates: reach && reach.duplicates > 0 ? "yes" : "no", duplicateCount: String(reach?.duplicates), missing: reach && reach.missing > 0 ? "yes" : "no", missingCount: String(reach?.missing), excluded: reach && reach.contacts > 0 && !channels.email ? "yes" : "no" })}
                 </div>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={OUTLINE} onClick={() => goTo("users")}>
-                Пользователи
+                {shell("tabs.users")}
               </button>
               <button type="button" className={OUTLINE} onClick={() => goTo("contacts")}>
-                Контакты
+                {shell("tabs.contacts")}
               </button>
             </div>
           </div>
         </section>
 
         <section className={CARD}>
-          <div className={cn(SECTION_LABEL, "mb-4")}>Сообщение</div>
+          <div className={cn(SECTION_LABEL, "mb-4")}>{t("message.heading")}</div>
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Название для себя</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("message.titleLabel")}</span>
               <input
                 value={title}
                 onChange={(e) => onTitle(e.target.value)}
-                placeholder="Например: новости сентября для кафе"
+                placeholder={t("message.titleExample")}
                 maxLength={120}
                 className={INPUT}
                 data-testid="compose-title"
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Тип</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("message.kindLabel")}</span>
               <select
                 value={kind}
                 onChange={(e) => onKind(e.target.value)}
@@ -254,7 +252,7 @@ export function ComposeTab({
               >
                 {data.kinds.map((k) => (
                   <option key={k.kind} value={k.kind}>
-                    {k.label}
+                    {composeKindKey(k.kind) ? t(composeKindKey(k.kind)!) : k.label}
                   </option>
                 ))}
               </select>
@@ -272,10 +270,9 @@ export function ComposeTab({
         </section>
 
         <section className={CARD} data-testid="compose-channels">
-          <div className={cn(SECTION_LABEL, "mb-1")}>Каналы</div>
+          <div className={cn(SECTION_LABEL, "mb-1")}>{t("channels.heading")}</div>
           <p className="mb-4 text-[13px] text-[#6f7282]">
-            Отметьте, куда отправить. Рядом — сколько выбранных реально получат.
-            {reachBusy ? " Считаем…" : ""}
+            {t("channels.hint", { busy: reachBusy ? "yes" : "no" })}
           </p>
           <div className="space-y-2">
             {MAILING_CHANNELS.map((c) => (
@@ -296,31 +293,20 @@ export function ComposeTab({
 
       <div className="min-w-0 space-y-5 xl:sticky xl:top-6 xl:self-start">
         <section className={CARD} data-testid="compose-actions">
-          <div className={cn(SECTION_LABEL, "mb-3")}>Отправка</div>
+          <div className={cn(SECTION_LABEL, "mb-3")}>{t("send.heading")}</div>
           <div className="space-y-3">
             {!data.sender.separateSender ? (
               <Notice tone="warn" icon={<ShieldAlert />} testId="sender-warning">
-                Рекламные письма уходят с {data.sender.fromAddress} — если их пометят спамом, служебные письма (коды
-                входа, счета) тоже начнут попадать в спам. Лучше отдельный адрес/домен.
+                {t.rich("send.senderWarning", { address: () => <>{data.sender.fromAddress}</> })}
               </Notice>
             ) : null}
             {data.sender.mode === "dry-run-dir" || data.sender.mode === "log-only" ? (
               <Notice tone="info" icon={<Info />} testId="dry-run-notice">
-                Сухая отправка:{" "}
-                {data.sender.mode === "dry-run-dir"
-                  ? `письма, push и Telegram пишутся файлами в ${data.sender.dryRunDir}`
-                  : "SMTP не настроен — письма только в логе сервера"}
-                . Наружу ничего не уходит.
+                {t("send.dryRunNotice", { mode: data.sender.mode === "dry-run-dir" ? "files" : "log", directory: String(data.sender.dryRunDir) })}
               </Notice>
             ) : null}
             <p className="text-[13px] leading-[1.55] text-[#6f7282]" data-testid="rate-limit-line">
-              Скорость: до {data.settings.perMinute} писем в минуту и {data.settings.perDay} в сутки. Сегодня уже ушло{" "}
-              {data.sentToday}.
-              {channels.email && emailQueued > 0
-                ? ` Этой рассылке — ${emailQueued} ${pluralRu(emailQueued, "письмо", "письма", "писем")}: около ${minutes} мин.${
-                    emailQueued > leftToday ? " Часть уйдёт завтра — сработает суточный лимит." : ""
-                  }`
-                : ""}
+              {t.rich("send.rateLine", { perMinute: () => <>{data.settings.perMinute}</>, perDay: () => <>{data.settings.perDay}</>, sentToday: () => <>{data.sentToday}</>, queued: channels.email && emailQueued > 0 ? "yes" : "no", ...composeCount(emailQueued, locale), minutes: String(minutes), overflow: emailQueued > leftToday ? "yes" : "no" })}
             </p>
 
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
@@ -331,7 +317,7 @@ export function ComposeTab({
                 onClick={() => setConfirm("now")}
                 data-testid="compose-send-now"
               >
-                <Send className="size-4" /> Отправить сейчас
+                <Send className="size-4" /> {t("send.now")}
               </button>
               <button
                 type="button"
@@ -341,14 +327,14 @@ export function ComposeTab({
                 data-testid="compose-test"
               >
                 {testBusy ? <Loader2 className="size-4 animate-spin" /> : <FlaskConical className="size-4 text-[#5566f6]" />}
-                Тестовая отправка мне
+                {t("send.test")}
               </button>
             </div>
 
             <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
               <label className="block">
                 <span className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#3c4053]">
-                  <CalendarClock className="size-4 text-[#5566f6]" /> Запланировать, время московское
+                  <CalendarClock className="size-4 text-[#5566f6]" /> {t("send.scheduleTime")}
                 </span>
                 <input
                   type="datetime-local"
@@ -365,7 +351,7 @@ export function ComposeTab({
                 onClick={() => setConfirm("schedule")}
                 data-testid="compose-schedule"
               >
-                <CalendarClock className="size-4 text-[#5566f6]" /> Запланировать
+                <CalendarClock className="size-4 text-[#5566f6]" /> {t("send.schedule")}
               </button>
             </div>
 
@@ -378,29 +364,29 @@ export function ComposeTab({
                 data-testid="compose-save"
               >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4 text-[#5566f6]" />}
-                Сохранить черновик
+                {t("send.save")}
               </button>
               <span className="text-[12px] text-[#9b9fb3]" data-testid="compose-saved">
-                {savedAt ? `Черновик сохранён в ${savedAt}` : draftId ? "Черновик" : "Ещё не сохранён"}
+                {t("send.saveState", { state: savedAt ? "saved" : draftId ? "draft" : "new", at: String(savedAt) })}
               </span>
             </div>
 
             {testResult ? (
               <div className="rounded-2xl border border-[#ececf4] bg-white p-3" data-testid="compose-test-result">
                 <div className="mb-2 text-[13px] font-semibold text-[#0b1024]">
-                  Тест {testResult.email ? `на ${testResult.email}` : "(почты нет)"}
+                  {t("test.heading", { email: testResult.email ? "present" : "none", address: String(testResult.email) })}
                 </div>
                 <ul className="space-y-1.5">
                   {MAILING_CHANNELS.filter((c) => testResult.channels[c]).map((c) => {
                     const r = testResult.channels[c]!;
                     const Icon = CHANNEL_ICONS[c];
+                    const statusKey = composeStatusKey(r.status);
                     return (
                       <li key={c} className="flex items-start gap-2 text-[13px]">
                         <Icon className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
                         <span>
-                          <b>{CHANNEL_LABELS[c]}:</b> {CHANNEL_STATUS_LABELS[r.status]}
-                          {r.dryRun ? " (сухая отправка)" : ""}
-                          {r.error ? ` — ${r.error}` : ""}
+                          <b>{t(`channels.label.${c}`)}:</b> {t.rich("test.channelResult", { status: () => <>{statusKey ? t(statusKey) : r.status}</>, dryRun: r.dryRun ? "yes" : "no" })}
+                          {r.error ? <> — {t("diagnostics.originalTechnical", { detail: String(r.error) })}</> : ""}
                         </span>
                       </li>
                     );
@@ -408,7 +394,7 @@ export function ComposeTab({
                 </ul>
                 {testResult.notes && testResult.notes.length > 0 ? (
                   <p className="mt-2 text-[12.5px] leading-[1.5] text-[#7a4a00]" data-testid="compose-test-notes">
-                    {testResult.notes.join(" ")} Эта пометка есть и в самом тестовом письме.
+                    {t("diagnostics.originalTemplate", { notes: testResult.notes.join(" ") })}{t("test.notesFooter")}
                   </p>
                 ) : null}
               </div>
@@ -419,7 +405,7 @@ export function ComposeTab({
         <section className={CARD} data-testid="compose-preview">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className={cn(SECTION_LABEL, "flex items-center gap-2")}>
-              <Eye className="size-4 text-[#5566f6]" /> Предпросмотр
+              <Eye className="size-4 text-[#5566f6]" /> {t("preview.title")}
             </div>
             {previewBusy ? <Loader2 className="size-4 animate-spin text-[#9b9fb3]" /> : null}
           </div>
@@ -427,7 +413,7 @@ export function ComposeTab({
             value={previewFor}
             onChange={(e) => setPreviewFor(e.target.value)}
             className="mb-3 h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-2 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
-            aria-label="Для кого предпросмотр"
+            aria-label={t("preview.forAria")}
             data-testid="compose-preview-for"
           >
             {recipientOptions.map((o) => (
@@ -447,7 +433,7 @@ export function ComposeTab({
                   previewTab === c ? "bg-[#eef1ff] text-[#3848c7]" : "text-[#6f7282] hover:bg-[#f5f6ff]"
                 )}
               >
-                {CHANNEL_LABELS[c]}
+                {t(`channels.label.${c}`)}
               </button>
             ))}
           </div>
@@ -460,29 +446,29 @@ export function ComposeTab({
         onClose={() => setConfirm(null)}
         onConfirm={() => (confirm ? launch(confirm) : undefined)}
         variant="info"
-        title={confirm === "schedule" ? "Запланировать рассылку?" : "Отправить рассылку сейчас?"}
-        description={`«${title || "Без названия"}» · ${kindLabel}. После запуска текст менять нельзя — только отменить.`}
+        title={confirm === "schedule" ? t("confirm.scheduleTitle") : t("confirm.nowTitle")}
+        description={t("confirm.description", { title: title || t("confirm.untitled"), kind: kindLabel })}
         bullets={[
           {
-            label: `Получателей: ${recipientsCount ?? selectedTotal}${reach && reach.duplicates ? ` (совпали по почте: ${reach.duplicates})` : ""}`,
+            label: t("confirm.recipients", { count: String(recipientsCount ?? selectedTotal), duplicates: reach && reach.duplicates ? "yes" : "no", duplicateCount: String(reach?.duplicates) }),
           },
           {
-            label: `Каналы: ${MAILING_CHANNELS.filter((c) => channels[c]).map((c) => CHANNEL_LABELS[c]).join(", ")}`,
+            label: t("confirm.channels", { channels: MAILING_CHANNELS.filter((c) => channels[c]).map((c) => t(`channels.label.${c}`)).join(", ") }),
           },
           ...(channels.email
             ? [
                 {
-                  label: `Письма уходят по ${data.settings.perMinute} в минуту, не больше ${data.settings.perDay} в сутки — адреса из стоп-листа пропускаются`,
+                  label: t("confirm.rate", { perMinute: String(data.settings.perMinute), perDay: String(data.settings.perDay) }),
                   tone: "info" as const,
                 },
               ]
             : []),
-          ...(confirm === "schedule" ? [{ label: `Старт: ${scheduledAt.replace("T", " ")} МСК`, tone: "info" as const }] : []),
+          ...(confirm === "schedule" ? [{ label: t("confirm.start", { at: scheduledAt.replace("T", " ") }), tone: "info" as const }] : []),
           ...(!data.sender.separateSender && channels.email
-            ? [{ label: "Письма идут с основного адреса сервиса", tone: "warn" as const }]
+            ? [{ label: t("confirm.mainSender"), tone: "warn" as const }]
             : []),
         ]}
-        confirmLabel={confirm === "schedule" ? "Запланировать" : "Отправить"}
+        confirmLabel={confirm === "schedule" ? t("send.schedule") : t("confirm.send")}
       />
     </div>
   );
@@ -505,36 +491,26 @@ function ChannelRow({
   selectedUsers: number;
   selectedContacts: number;
 }) {
+  const t = useTranslations("rootMailingCompose");
   const Icon = CHANNEL_ICONS[channel];
   let line: string;
   let warn: string | null = null;
   if (!reach) {
-    line = selectedUsers + selectedContacts === 0 ? "Сначала выберите получателей" : "Считаем…";
+    line = selectedUsers + selectedContacts === 0 ? t("channels.reachNone") : t("channels.reachCounting");
   } else if (channel === "email") {
     const e = reach.channels.email;
     const total = reach.users + reach.contacts;
-    line = `Дойдёт до ${e.queued} из ${total}`;
-    const parts = [
-      e.noEmail ? `без почты ${e.noEmail}` : null,
-      e.suppressed ? `в стоп-листе ${e.suppressed}` : null,
-      e.optedOut ? `отписались ${e.optedOut}` : null,
-      e.inactiveContact ? `контакт не активен ${e.inactiveContact}` : null,
-    ].filter(Boolean);
-    if (parts.length) line += ` · ${parts.join(", ")}`;
+    line = t("channels.reachEmail", { queued: String(e.queued), total: String(total), noEmail: e.noEmail ? "yes" : "no", noEmailCount: String(e.noEmail), suppressed: e.suppressed ? "yes" : "no", suppressedCount: String(e.suppressed), optedOut: e.optedOut ? "yes" : "no", optedOutCount: String(e.optedOut), priorOptedOut: e.noEmail || e.suppressed ? "yes" : "no", inactive: e.inactiveContact ? "yes" : "no", inactiveCount: String(e.inactiveContact), priorInactive: e.noEmail || e.suppressed || e.optedOut ? "yes" : "no" });
   } else if (channel === "inApp") {
-    line = `Дойдёт до ${reach.channels.inApp.queued} — только пользователи${selectedContacts ? `, контакты (${reach.contacts}) не получат` : ""}`;
-    if (reach.channels.inApp.optedOut) line += ` · отписались ${reach.channels.inApp.optedOut}`;
+    line = t("channels.reachInApp", { queued: String(reach.channels.inApp.queued), contacts: selectedContacts ? "yes" : "no", contactCount: String(reach.contacts), optedOut: reach.channels.inApp.optedOut ? "yes" : "no", optedOutCount: String(reach.channels.inApp.optedOut) });
   } else if (channel === "push") {
     const p = reach.channels.push;
-    line = `Дойдёт до ${p.queued} из ${reach.users} · веб-push подключён у ${p.webSubs}, приложение у ${p.appDevices}`;
-    if (p.optedOut) line += ` · отписались ${p.optedOut}`;
-    if (!p.appConfigured) warn = "Firebase не настроен — в приложение push не уходит";
-    if (!p.webConfigured) warn = [warn, "веб-push на сервере не настроен"].filter(Boolean).join("; ");
+    line = t("channels.reachPush", { queued: String(p.queued), users: String(reach.users), webSubs: String(p.webSubs), appDevices: String(p.appDevices), optedOut: p.optedOut ? "yes" : "no", optedOutCount: String(p.optedOut) });
+    if (!p.appConfigured || !p.webConfigured) warn = t("channels.pushWarning", { app: p.appConfigured ? "ready" : "missing", web: p.webConfigured ? "ready" : "missing" });
   } else {
-    const t = reach.channels.telegram;
-    line = `Дойдёт до ${t.queued} из ${reach.users} — у кого привязан бот`;
-    if (t.optedOut) line += ` · отписались ${t.optedOut}`;
-    if (!t.botConfigured) warn = "Бот Telegram не настроен на сервере";
+    const telegram = reach.channels.telegram;
+    line = t("channels.reachTelegram", { queued: String(telegram.queued), users: String(reach.users), optedOut: telegram.optedOut ? "yes" : "no", optedOutCount: String(telegram.optedOut) });
+    if (!telegram.botConfigured) warn = t("channels.telegramWarning");
   }
   const ok = !reach || (channel === "email" ? reach.channels.email.queued : channel === "inApp" ? reach.channels.inApp.queued : channel === "push" ? reach.channels.push.queued : reach.channels.telegram.queued) > 0;
   return (
@@ -553,7 +529,7 @@ function ChannelRow({
       />
       <Icon className="mt-0.5 size-5 shrink-0 text-[#5566f6]" />
       <span className="min-w-0">
-        <span className="block text-[15px] font-medium text-[#0b1024]">{CHANNEL_LABELS[channel]}</span>
+        <span className="block text-[15px] font-medium text-[#0b1024]">{t(`channels.label.${channel}`)}</span>
         <span className={cn("block text-[13px]", ok ? "text-[#6f7282]" : "text-[#a16d32]")} data-testid={`channel-${channel}-reach`}>
           {line}
         </span>
@@ -564,7 +540,7 @@ function ChannelRow({
           </span>
         ) : null}
         {channel === "email" && data.sender.mode !== "marketing-smtp" && data.sender.mode !== "main-smtp" ? (
-          <span className="mt-1 block text-[12px] text-[#3848c7]">Сухая отправка — наружу не уйдёт</span>
+          <span className="mt-1 block text-[12px] text-[#3848c7]">{t("channels.dryRun")}</span>
         ) : null}
       </span>
     </label>
@@ -572,8 +548,19 @@ function ChannelRow({
 }
 
 export function PreviewPane({ preview, channel }: { preview: PreviewState; channel: MailingChannel }) {
+  const t = useTranslations("rootMailingCompose");
+  const diagnostics = useTranslations("rootMailingDiagnostics");
+  const locale = useSiteLocale();
   if (!preview) {
-    return <p className="py-6 text-center text-[13px] text-[#9b9fb3]">Готовим предпросмотр…</p>;
+    return <p className="py-6 text-center text-[13px] text-[#9b9fb3]">{t("preview.loading")}</p>;
+  }
+  if ("failure" in preview) {
+    return (
+      <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-8 text-center text-[13px] text-[#6f7282]">
+        {t(`feedback.${preview.failure.key}`)}
+        {preview.failure.detail !== undefined ? <span className="block">{composeDiagnosticText(preview.failure.presentation, locale, diagnostics) ?? t("diagnostics.originalTechnical", { detail: preview.failure.detail })}</span> : null}
+      </div>
+    );
   }
   if ("error" in preview) {
     return (
@@ -583,16 +570,17 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
     );
   }
   const r = preview.rendered;
+  const recipient = composePreviewRecipient(preview.recipientPresentation);
   return (
     <div data-testid={`preview-${channel}`}>
-      <div className="mb-2 text-[12px] text-[#9b9fb3]">Для: {preview.label}</div>
+      <div className="mb-2 text-[12px] text-[#9b9fb3]">{recipient?.kind === "sample" ? t("preview.forSample", { name: recipient.name, companyName: recipient.companyName }) : t.rich("preview.forRecipient", { recipient: () => <>{preview.label}</> })}</div>
       {r.notes && r.notes.length > 0 ? (
         <div
           className="mb-2 flex items-start gap-2 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12.5px] leading-[1.5] text-[#7a4a00]"
           data-testid="preview-notes"
         >
           <Info className="mt-0.5 size-3.5 shrink-0" />
-          <span>{r.notes.join(" ")}</span>
+          <span>{t("diagnostics.originalTemplate", { notes: r.notes.join(" ") })}</span>
         </div>
       ) : null}
       {channel === "email" ? (
@@ -603,14 +591,14 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
               {r.email.preheader ? <div className="truncate text-[#9b9fb3]">{r.email.preheader}</div> : null}
             </div>
             <iframe
-              title="Письмо"
+              title={t("preview.iframeTitle")}
               srcDoc={r.email.html}
               sandbox=""
               className="h-[480px] w-full bg-white"
             />
           </div>
         ) : (
-          <p className="text-[13px] text-[#9b9fb3]">Этот тип не отправляет письма.</p>
+          <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyEmail")}</p>
         )
       ) : channel === "inApp" ? (
         r.inApp ? (
@@ -619,20 +607,20 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
             <div className="mt-2 rounded-xl border border-[#ececf4] bg-white px-3 py-2 text-[14px] text-[#3c4053]">
               {r.inApp.body}
             </div>
-            {r.inApp.url ? <div className="mt-2 text-[13px] text-[#3848c7]">Открыть → {r.inApp.url}</div> : null}
+            {r.inApp.url ? <div className="mt-2 text-[13px] text-[#3848c7]">{t.rich("preview.openLink", { url: () => <>{r.inApp?.url}</> })}</div> : null}
           </div>
         ) : (
-          <p className="text-[13px] text-[#9b9fb3]">Этот тип не пишет в колокольчик.</p>
+          <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyInApp")}</p>
         )
       ) : channel === "push" ? (
         r.push ? (
           <div className="rounded-2xl bg-[#0b1024] p-3 text-white">
-            <div className="text-[12px] text-white/60">WeSetup · сейчас</div>
+            <div className="text-[12px] text-white/60">{t("preview.pushNow")}</div>
             <div className="mt-1 text-[14px] font-semibold">{r.push.title}</div>
             <div className="mt-0.5 text-[13px] text-white/80">{r.push.body}</div>
           </div>
         ) : (
-          <p className="text-[13px] text-[#9b9fb3]">Этот тип не отправляет push.</p>
+          <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyPush")}</p>
         )
       ) : r.telegram ? (
         <div className="rounded-2xl bg-[#e7ebf0] p-3">
@@ -643,7 +631,7 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
           />
         </div>
       ) : (
-        <p className="text-[13px] text-[#9b9fb3]">Этот тип не отправляет в Telegram.</p>
+        <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyTelegram")}</p>
       )}
     </div>
   );

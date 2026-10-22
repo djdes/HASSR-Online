@@ -1,4 +1,7 @@
+import { withMailingDiagnostic, mailingDiagnostic, captureMailingDisplay } from "@/lib/mailing/diagnostic-presentation";
+
 import type { MailingCampaign, Prisma } from "@prisma/client";
+import type { ComposePreviewRecipient } from "./compose-presentation";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import { db } from "@/lib/db";
@@ -107,7 +110,10 @@ function normalizeAudience(raw: unknown): CampaignAudience {
 
 function draftData(input: DraftInput) {
   const template = getMailingTemplate(input.kind);
-  if (!template) throw new MailingError(`Тип рассылки «${input.kind}» не найден`);
+  if (!template) {
+    let diagnosticKind: string | undefined;
+    throw withMailingDiagnostic(new MailingError(`Тип рассылки «${captureMailingDisplay(input.kind, (display) => { diagnosticKind = display; })}» не найден`), { version: 1, code: "request.kindUnknown", params: { kind: diagnosticKind } });
+  }
   const title = (input.title ?? "").trim().slice(0, 120) || defaultTitle();
   return {
     title,
@@ -134,7 +140,7 @@ export async function createDraft(input: DraftInput, actor: MailingActor) {
 
 export async function updateDraft(id: string, input: DraftInput, actor: MailingActor) {
   const r = await db.mailingCampaign.updateMany({ where: { id, status: "draft" }, data: draftData(input) });
-  if (r.count !== 1) throw new MailingError("Менять можно только черновик", 409);
+  if (r.count !== 1) throw withMailingDiagnostic(new MailingError("Менять можно только черновик", 409), { version: 1, code: "request.draftOnly", params: {  } });
   console.debug(`[mailing] campaign=${id} draft saved by ${who(actor)}`);
   return db.mailingCampaign.findUniqueOrThrow({ where: { id } });
 }
@@ -256,10 +262,13 @@ export async function listCampaigns(limit = 100): Promise<CampaignListRow[]> {
 
 async function validated(kind: string, payload: unknown): Promise<unknown> {
   const template = getMailingTemplate(kind);
-  if (!template) throw new MailingError(`Тип рассылки «${kind}» не найден`);
+  if (!template) {
+    let diagnosticKind: string | undefined;
+    throw withMailingDiagnostic(new MailingError(`Тип рассылки «${captureMailingDisplay(kind, (display) => { diagnosticKind = display; })}» не найден`), { version: 1, code: "request.kindUnknown", params: { kind: diagnosticKind } });
+  }
   if (!template.validate) return payload;
   const v = await template.validate(payload);
-  if (!v.ok) throw new MailingError(v.error);
+  if (!v.ok) throw withMailingDiagnostic(new MailingError(v.error), mailingDiagnostic(v));
   return v.payload;
 }
 
@@ -271,34 +280,37 @@ export async function launchCampaign(
   actor: MailingActor
 ): Promise<{ campaign: CampaignListRow; stats: PlanStats }> {
   const campaign = await db.mailingCampaign.findUnique({ where: { id } });
-  if (!campaign) throw new MailingError("Рассылка не найдена", 404);
-  if (campaign.status !== "draft") throw new MailingError("Эта рассылка уже запущена", 409);
+  if (!campaign) throw withMailingDiagnostic(new MailingError("Рассылка не найдена", 404), { version: 1, code: "request.campaignMissing", params: {  } });
+  if (campaign.status !== "draft") throw withMailingDiagnostic(new MailingError("Эта рассылка уже запущена", 409), { version: 1, code: "request.alreadyLaunched", params: {  } });
   const template = getMailingTemplate(campaign.kind);
-  if (!template) throw new MailingError(`Тип рассылки «${campaign.kind}» не найден`);
+  if (!template) {
+    let diagnosticKind: string | undefined;
+    throw withMailingDiagnostic(new MailingError(`Тип рассылки «${captureMailingDisplay(campaign.kind, (display) => { diagnosticKind = display; })}» не найден`), { version: 1, code: "request.kindUnknown", params: { kind: diagnosticKind } });
+  }
   const payload = await validated(campaign.kind, campaign.payload);
   const channels = normalizeChannels(campaign.channels);
-  if (!anyChannel(channels)) throw new MailingError("Отметьте хотя бы один канал");
+  if (!anyChannel(channels)) throw withMailingDiagnostic(new MailingError("Отметьте хотя бы один канал"), { version: 1, code: "request.noChannels", params: {  } });
   const audience = normalizeAudience(campaign.audience);
   if (audience.userIds.length + audience.contactIds.length === 0) {
-    throw new MailingError("Выберите получателей на вкладках «Пользователи» или «Контакты»");
+    throw withMailingDiagnostic(new MailingError("Выберите получателей на вкладках «Пользователи» или «Контакты»"), { version: 1, code: "request.noRecipients", params: {  } });
   }
 
   const now = new Date();
   let scheduledAt: Date | null = null;
   if (options.mode === "schedule") {
     scheduledAt = options.scheduledAtMsk ? mskInputToDate(options.scheduledAtMsk) : null;
-    if (!scheduledAt) throw new MailingError("Укажите дату и время по Москве");
+    if (!scheduledAt) throw withMailingDiagnostic(new MailingError("Укажите дату и время по Москве"), { version: 1, code: "request.scheduleMissing", params: {  } });
     if (scheduledAt.getTime() < now.getTime() + 60_000) {
-      throw new MailingError("Время отправки — хотя бы через минуту от текущего");
+      throw withMailingDiagnostic(new MailingError("Время отправки — хотя бы через минуту от текущего"), { version: 1, code: "request.scheduleTooSoon", params: {  } });
     }
     if (scheduledAt.getTime() > now.getTime() + SCHEDULE_MAX_DAYS * 86_400_000) {
-      throw new MailingError(`Запланировать можно не дальше чем на ${SCHEDULE_MAX_DAYS} дней`);
+      throw withMailingDiagnostic(new MailingError(`Запланировать можно не дальше чем на ${SCHEDULE_MAX_DAYS} дней`), { version: 1, code: "request.scheduleTooFar", params: { days: SCHEDULE_MAX_DAYS } });
     }
   }
 
   const plan = await planRecipients(audience, channels);
   if (plan.drafts.length === 0) {
-    throw new MailingError("Некому отправлять: выбранные получатели не подходят ни под один отмеченный канал");
+    throw withMailingDiagnostic(new MailingError("Некому отправлять: выбранные получатели не подходят ни под один отмеченный канал"), { version: 1, code: "request.noEligibleRecipients", params: {  } });
   }
   const status: CampaignStatus = options.mode === "schedule" ? "scheduled" : "sending";
   await db.$transaction(
@@ -316,7 +328,7 @@ export async function launchCampaign(
           audience: { ...audience, stats: plan.stats } as unknown as Prisma.InputJsonValue,
         },
       });
-      if (r.count !== 1) throw new MailingError("Эта рассылка уже запущена", 409);
+      if (r.count !== 1) throw withMailingDiagnostic(new MailingError("Эта рассылка уже запущена", 409), { version: 1, code: "request.alreadyLaunched", params: {  } });
       for (let i = 0; i < plan.drafts.length; i += 1000) {
         await tx.mailingRecipient.createMany({
           data: plan.drafts.slice(i, i + 1000).map((d) => ({ ...d, campaignId: id })),
@@ -562,9 +574,12 @@ export async function previewMailing(input: {
   kind: string;
   payload: unknown;
   recipient: PreviewRecipient;
-}): Promise<{ label: string; rendered: RenderedMailing }> {
+}): Promise<{ label: string; rendered: RenderedMailing; recipientPresentation: ComposePreviewRecipient }> {
   const template = getMailingTemplate(input.kind);
-  if (!template) throw new MailingError(`Тип рассылки «${input.kind}» не найден`);
+  if (!template) {
+    let diagnosticKind: string | undefined;
+    throw withMailingDiagnostic(new MailingError(`Тип рассылки «${captureMailingDisplay(input.kind, (display) => { diagnosticKind = display; })}» не найден`), { version: 1, code: "request.kindUnknown", params: { kind: diagnosticKind } });
+  }
   const payload = await validated(input.kind, input.payload);
   let person: { name: string | null; companyName: string | null; sphere: string | null; email: string | null; userId: string | null; contactId: string | null; organizationId: string | null } = {
     ...SAMPLE,
@@ -573,6 +588,7 @@ export async function previewMailing(input: {
     organizationId: null,
   };
   let label = "Пример: Иван Петров, Кафе «Ромашка»";
+  let recipientPresentation: ComposePreviewRecipient = { version: 1, kind: "sample", name: SAMPLE.name, companyName: SAMPLE.companyName };
   if (input.recipient?.type === "user") {
     const u = await db.user.findUnique({
       where: { id: input.recipient.id },
@@ -589,12 +605,14 @@ export async function previewMailing(input: {
         organizationId: u.organizationId,
       };
       label = `${u.name} · ${u.organization.name}`;
+      recipientPresentation = { version: 1, kind: "actual" };
     }
   } else if (input.recipient?.type === "contact") {
     const c = await db.marketingContact.findUnique({ where: { id: input.recipient.id } });
     if (c) {
       person = { name: c.name, companyName: c.company, sphere: c.sphere, email: c.email, userId: null, contactId: c.id, organizationId: null };
       label = [c.name, c.company, c.email].filter(Boolean).join(" · ");
+      recipientPresentation = { version: 1, kind: "actual" };
     }
   }
   const { ctx } = buildRecipientContext(
@@ -604,7 +622,7 @@ export async function previewMailing(input: {
   );
   const rendered = await template.render(payload, ctx);
   if (rendered.email) rendered.email = ensureUnsubscribe(rendered.email, ctx.unsubscribeUrl);
-  return { label, rendered };
+  return { label, rendered, recipientPresentation };
 }
 
 export type TestSendResult = {
@@ -618,15 +636,15 @@ export type TestSendResult = {
 /** «Тестовая отправка мне» — во все отмеченные каналы текущему ROOT, сразу. */
 export async function sendTestToMe(campaignId: string, actor: MailingActor): Promise<TestSendResult> {
   const campaign = await db.mailingCampaign.findUnique({ where: { id: campaignId } });
-  if (!campaign) throw new MailingError("Сначала сохраните черновик", 404);
+  if (!campaign) throw withMailingDiagnostic(new MailingError("Сначала сохраните черновик", 404), { version: 1, code: "request.saveDraftFirst", params: {  } });
   const payload = await validated(campaign.kind, campaign.payload);
   const channels = normalizeChannels(campaign.channels);
-  if (!anyChannel(channels)) throw new MailingError("Отметьте хотя бы один канал");
+  if (!anyChannel(channels)) throw withMailingDiagnostic(new MailingError("Отметьте хотя бы один канал"), { version: 1, code: "request.noChannels", params: {  } });
   const me = await db.user.findUnique({
     where: { id: actor.session.user.id },
     select: { id: true, name: true, email: true, contactEmail: true, organizationId: true, organization: { select: { name: true, type: true } } },
   });
-  if (!me) throw new MailingError("Пользователь не найден", 404);
+  if (!me) throw withMailingDiagnostic(new MailingError("Пользователь не найден", 404), { version: 1, code: "request.userMissing", params: {  } });
   const email = userMarketingEmail(me);
   const id = newRecipientId();
   const status = (on: boolean): ChannelStatus | null => (on ? "queued" : null);
@@ -649,7 +667,7 @@ export async function sendTestToMe(campaignId: string, actor: MailingActor): Pro
     },
   });
   const recipient = await loadQueueRecipient(id);
-  if (!recipient) throw new MailingError("Не удалось создать тестового получателя", 500);
+  if (!recipient) throw withMailingDiagnostic(new MailingError("Не удалось создать тестового получателя", 500), { version: 1, code: "request.testRecipientCreateFailed", params: {  } });
   const queueCampaign: QueueCampaign = {
     id: campaign.id,
     title: campaign.title,

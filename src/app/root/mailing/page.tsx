@@ -1,3 +1,6 @@
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { MailingFeedbackProvider } from "./mailing-feedback";
 import { requireRoot } from "@/lib/auth-helpers";
 import { getDraft, listCampaigns } from "@/lib/mailing/campaigns.server";
 import { pushAvailability, telegramBotConfigured } from "@/lib/mailing/channels.server";
@@ -12,9 +15,10 @@ import { MAILING_TABS, type MailingPageData, type MailingTab } from "./types";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-  title: "Рассылка",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("rootMailingShellAudience");
+  return { title: t("page.title") };
+}
 
 /**
  * ROOT → «Рассылка». По умолчанию — простой режим: база адресов + готовое
@@ -68,16 +72,21 @@ export default async function RootMailingPage({
     initialTab,
   };
 
+  const t = await getTranslations("rootMailingShellAudience");
+
   return (
+    <DomainMessagesBoundary namespaces={["rootMailingShellAudience", "rootMailingKindFields", "rootMailingCompose", "rootMailingDiagnostics"]}>
+    <MailingFeedbackProvider>
     <div className="space-y-5">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Рассылка</h1>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("page.title")}</h1>
         <p className="mt-1 max-w-[820px] text-[14px] leading-relaxed text-[#6f7282]">
-          Выберите базу адресов и готовое письмо — и отправьте. В каждом письме есть ссылка «Отписаться»;
-          отписавшиеся больше рекламу не получают.
+          {t("page.description")}
         </p>
       </div>
       <MailingClient data={data} />
     </div>
+    </MailingFeedbackProvider>
+    </DomainMessagesBoundary>
   );
 }

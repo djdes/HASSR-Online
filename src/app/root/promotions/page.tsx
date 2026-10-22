@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { requireRoot } from "@/lib/auth-helpers";
 import { dateToMskInput } from "@/lib/promo/promotions";
 import { listPromotionAudit, listPromotionsForRoot } from "@/lib/promo/promotions-admin";
@@ -8,9 +10,10 @@ import { PromotionsClient } from "./promotions-client";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-  title: "Акции",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("rootPromotions");
+  return { title: t("title") };
+}
 
 /**
  * ROOT → «Акции»: процентная скидка на подписку в окне дат. Пока акция
@@ -22,20 +25,19 @@ export default async function RootPromotionsPage() {
   const now = new Date();
   const [promotions, history, tariffs] = await Promise.all([
     listPromotionsForRoot(),
-    listPromotionAudit(20),
+    listPromotionAudit(20, { includePresentationOrigin: true }),
     readTariffs().catch(() => fallbackTariffs()),
   ]);
   const monthly = tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
 
+  const t = await getTranslations("rootPromotions");
   return (
+    <DomainMessagesBoundary namespaces={["rootPromotions", "journalControls"]}>
     <div className="space-y-5">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Акции</h1>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("title")}</h1>
         <p className="mt-1 max-w-[760px] text-[14px] leading-relaxed text-[#6f7282]">
-          Скидка в процентах на подписку с датой и временем начала и конца. Пока акция идёт,
-          на лендинге, в тарифах, в кабинете и на оплате старая цена зачёркнута, рядом — новая
-          и плашка «−N % до …»; к оплате — цена со скидкой. Акции пересекаются — действует
-          наибольший процент. Промокод считается уже от цены по акции. Время — московское.
+          {t("description")}
         </p>
       </div>
       <PromotionsClient
@@ -46,5 +48,6 @@ export default async function RootPromotionsPage() {
         baseRub={monthly.priceRub}
       />
     </div>
+    </DomainMessagesBoundary>
   );
 }

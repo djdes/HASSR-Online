@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { MailingError } from "./campaigns.server";
+import { mailingDiagnostic } from "@/lib/mailing/diagnostic-presentation";
 
 /** Понятная ошибка ROOT — её текст; остальное — 500 и запись в лог. */
 export function mailingErrorResponse(error: unknown, scope: string): NextResponse {
   if (error instanceof MailingError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json({ error: error.message, ...(mailingDiagnostic(error) ? { presentation: mailingDiagnostic(error) } : {}) }, { status: error.status });
   }
   console.error(`[mailing] ${scope} failed`, error);
-  return NextResponse.json({ error: "Не получилось — ошибка на сервере, подробности в логе" }, { status: 500 });
+  return NextResponse.json({ error: "Не получилось — ошибка на сервере, подробности в логе", presentation: { version: 1, code: "server.failure", params: {} } }, { status: 500 });
 }
 
 export async function readJson(request: Request): Promise<Record<string, unknown>> {

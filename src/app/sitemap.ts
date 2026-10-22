@@ -39,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/`, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
     { url: `${SITE}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE}/journals-info`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE}/delete-account`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     // Хаб бланков: закрывает запросы «журнал X бланк скачать». Сами
     // файлы лежат под /api/ и закрыты в robots.ts — это намеренно,
     // иначе в выдачу попадал бы PDF вместо страницы.

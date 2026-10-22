@@ -57,3 +57,32 @@ test("Uzbek auth aliases round-trip and only advertise existing translated route
   assert.equal(localizedHref("/api/reports/pdf", "uz"), "/api/reports/pdf");
   assert.equal(siteLanguageAlternates("/register").uz, "https://wesetup.ru/uz/register");
 });
+
+test("partners and privacy expose only explicit reciprocal public aliases", () => {
+  for (const page of ["/partners", "/privacy"]) {
+    for (const locale of ["ru", "en", "uz"] as const) {
+      const expected = `${locale === "ru" ? "" : `/${locale}`}${page}`;
+      assert.deepEqual(publicLocaleRoute(expected), { locale, pathname: page });
+      assert.deepEqual(publicLocalesForPath(expected), ["ru", "en", "uz"]);
+      assert.equal(localizedHref(`${page}?source=original#agreement`, locale), `${expected}?source=original#agreement`);
+      for (const from of [page, `/en${page}`, `/uz${page}`]) {
+        assert.equal(localizedHref(`${from}?source=original#agreement`, locale), `${expected}?source=original#agreement`);
+      }
+      assert.equal(resolveRequestLocale(new Request(`https://wesetup.ru${expected}`, {
+        headers: { cookie: "wesetup.site-locale=uz" },
+      }), { authenticated: true, userLocale: "en", organizationLocale: "uz" }), locale);
+    }
+    assert.deepEqual(siteLanguageAlternates(page), {
+      ru: `https://wesetup.ru${page}`,
+      en: `https://wesetup.ru/en${page}`,
+      uz: `https://wesetup.ru/uz${page}`,
+      "x-default": `https://wesetup.ru${page}`,
+    });
+    assert.equal(publicLocaleRoute(`/en${page}/unknown`), null);
+  }
+  assert.equal(localizedHref("/register?next=%2Fsettings%2Fpartner#profile", "uz"), "/uz/register?next=%2Fsettings%2Fpartner#profile");
+  for (const href of ["/settings/partner", "/partner-agreement", "#agreement", "/api/partners", "/p/raw-slug", "/equipment-fill/raw?token=original"]) {
+    assert.equal(localizedHref(href, "en"), href);
+    assert.equal(localizedHref(href, "uz"), href);
+  }
+});

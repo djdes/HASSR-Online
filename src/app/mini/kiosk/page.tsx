@@ -1,4 +1,5 @@
 import { KioskScreen } from "./kiosk-screen";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -8,5 +9,9 @@ export const dynamic = "force-dynamic";
  * данные отдаёт /api/kiosk/roster только валидному киоску).
  */
 export default function MiniKioskPage() {
-  return <KioskScreen />;
+  return (
+    <DomainMessagesBoundary namespaces={["miniKiosk"]}>
+      <KioskScreen />
+    </DomainMessagesBoundary>
+  );
 }

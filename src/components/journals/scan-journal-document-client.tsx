@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import type { ScanTranslate } from "@/lib/scan-journal-presentation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
@@ -21,6 +23,7 @@ export function ScanJournalDocumentClient({
   pageCount,
   currentPage,
 }: Props) {
+  const t = useTranslations() as unknown as ScanTranslate;
   const totalPages = pageCount;
   const canPrev = currentPage > 1;
   const canNext = currentPage < totalPages;
@@ -28,17 +31,17 @@ export function ScanJournalDocumentClient({
 
   return (
     <div className="space-y-5">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("journalScan.focus.emptyTitle")} emptyBody={t("journalScan.focus.emptyBody")} copy={{ noCreateBody: t("journalScan.focus.noCreateBody"), later: t("journalScan.focus.later"), close: t("common.close") }} />
       <JournalDocumentShell
-        title={templateName}
-        subtitle={`Страница ${currentPage} из ${totalPages}`}
+        title={<>{templateName}</>}
+        subtitle={t("journalScan.document.pageSubtitle", { currentPage, totalPages })}
         documentId={documentId}
         backHref={`/journals/${templateCode}`}
       >
         <div className="overflow-hidden rounded-[16px] border border-[#dbe0f1] bg-white p-2">
           <img
             src={imageUrl}
-            alt={`${templateCode} page ${currentPage}`}
+            alt={t("journalScan.document.imageAlt", { code: templateCode, currentPage })}
             className="h-auto w-full rounded-[12px] bg-white"
           />
         </div>
@@ -49,7 +52,7 @@ export function ScanJournalDocumentClient({
           <Button asChild>
             <Link href={`/journals/${templateCode}/documents/${documentId}?page=${currentPage - 1}`}>
               <ChevronLeft className="size-4" />
-              Предыдущая
+              {t("journalScan.document.previous")}
             </Link>
           </Button>
         ) : (
@@ -63,7 +66,7 @@ export function ScanJournalDocumentClient({
         {canNext ? (
           <Button asChild>
             <Link href={`/journals/${templateCode}/documents/${documentId}?page=${currentPage + 1}`}>
-              Следующая
+              {t("journalScan.document.next")}
               <ChevronRight className="size-4" />
             </Link>
           </Button>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useSiteLocale } from "@/components/i18n/site-locale-provider";
+import { formatNumber } from "@/i18n/locales";
 
 import { useState } from "react";
 import { ChevronDown, Wrench } from "lucide-react";
@@ -35,6 +37,7 @@ export function EquipmentPricing({
   hardwareFromRub: number;
 }) {
   const t = useTranslations("landingComponents.equipment");
+  const locale = useSiteLocale();
   const [open, setOpen] = useState(false);
 
   return (
@@ -53,7 +56,7 @@ export function EquipmentPricing({
 
           <div className="mt-6 flex items-baseline gap-2">
             <span className="text-[34px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {t("bundlePrice", { price: hardwareFromRub })}
+              {t("bundlePrice", { price: formatNumber(locale, hardwareFromRub) })}
             </span>
             <span className="text-[16px] text-[#9b9fb3] sm:text-[13px]">{t("oneTime")}</span>
           </div>

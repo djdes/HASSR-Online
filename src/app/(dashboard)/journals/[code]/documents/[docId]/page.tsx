@@ -1,3 +1,13 @@
+import { captureAcceptanceSource } from "@/lib/acceptance-source.server";
+import { captureStaffTrainingSource } from "@/lib/staff-training-source.server";
+import { captureMaintenanceSource } from "@/lib/equipment-maintenance-presentation";
+import { capturePpeSource, capturePpeTitle } from "@/lib/ppe-issuance-presentation";
+import { captureAcceptanceSummarySource, bindAcceptanceSummarySource, captureAcceptanceOrganizationFallbackSuffix } from "@/lib/acceptance-document-presentation";
+import { captureAuditProtocolTitle, captureAuditProtocolConfig } from "@/lib/audit-protocol-presentation";
+import { auditProtocolConfigSourceIdentity } from "@/lib/audit-protocol-source.server";
+import { auditPlanConfigWithDisplay, auditPlanOrganizationFallback } from "@/lib/audit-plan-presentation";
+import { captureAuditReportTitle } from "@/lib/audit-report-presentation";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -616,6 +626,7 @@ async function JournalDocumentBody({
     const safePage = Math.min(currentPage, pageCount);
 
     return (
+      <DomainMessagesBoundary namespaces={["journalScan"]}>
       <ScanJournalDocumentClient
         templateCode={resolvedCode}
         templateName={document.title || document.template.name}
@@ -623,6 +634,7 @@ async function JournalDocumentBody({
         pageCount={pageCount}
         currentPage={safePage}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -776,6 +788,7 @@ async function JournalDocumentBody({
 
   if (document.template.code === STAFF_TRAINING_TEMPLATE_CODE) {
     return (
+      <DomainMessagesBoundary namespaces={["journalStaffTraining", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
       <StaffTrainingDocumentClient
         documentId={document.id}
         title={document.title}
@@ -783,32 +796,39 @@ async function JournalDocumentBody({
         dateFrom={toDateKey(document.dateFrom)}
         status={document.status}
         // Должности обучаемых — из карточек, как печатает PDF.
-        initialConfig={normalizeStaffTrainingConfig(
-          normalizeJournalStaffBoundConfig(
-            STAFF_TRAINING_TEMPLATE_CODE,
-            document.config,
-            displayEmployees
-          )
+        {...captureStaffTrainingSource(
+          document.config,
+          (source) => normalizeStaffTrainingConfig(
+            normalizeJournalStaffBoundConfig(
+              STAFF_TRAINING_TEMPLATE_CODE,
+              source,
+              displayEmployees
+            )
+          ),
+          (source) => auditProtocolConfigSourceIdentity([source, displayEmployees])
         )}
         users={enrichedEmployees}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
   if (document.template.code === EQUIPMENT_MAINTENANCE_TEMPLATE_CODE) {
     return (
+      <DomainMessagesBoundary namespaces={["journalEquipmentMaintenance", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
       <EquipmentMaintenanceDocumentClient
         documentId={document.id}
         title={document.title}
         organizationName={organizationName}
         dateFrom={toDateKey(document.dateFrom)}
         status={document.status}
-        initialConfig={normalizeEquipmentMaintenanceConfig(document.config)}
+        {...captureMaintenanceSource(document.config, normalizeEquipmentMaintenanceConfig)}
         users={enrichedEmployees}
         equipmentDirectory={equipment}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -937,6 +957,7 @@ async function JournalDocumentBody({
 
   if (document.template.code === DISINFECTANT_TEMPLATE_CODE) {
     return (
+      <DomainMessagesBoundary namespaces={["journalDisinfectant", "sanitationPestPdf", "journalScan"]}>
       <DisinfectantDocumentClient
         documentId={document.id}
         title={document.title}
@@ -946,11 +967,13 @@ async function JournalDocumentBody({
         config={document.config}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
   if (document.template.code === TRAINING_PLAN_TEMPLATE_CODE) {
     return (
+      <DomainMessagesBoundary namespaces={["journalTrainingPlan", "personnelMaintenancePdf", "journalScan"]}>
       <TrainingPlanDocumentClient
         documentId={document.id}
         title={document.title}
@@ -960,23 +983,26 @@ async function JournalDocumentBody({
         config={document.config}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
   if (document.template.code === AUDIT_PLAN_TEMPLATE_CODE) {
     return (
+      <DomainMessagesBoundary namespaces={["journalAuditPlan", "auditTraceabilityPdf", "journalScan"]}>
       <AuditPlanDocumentClient
         documentId={document.id}
         title={document.title}
         organizationName={organizationName}
         status={document.status}
         users={enrichedEmployees}
-        config={normalizeAuditPlanConfig(document.config, {
+        {...auditPlanConfigWithDisplay(document.config, (raw) => normalizeAuditPlanConfig(raw, {
           organizationName: organization?.name || ORG_NAME_FALLBACK,
           users: enrichedEmployees,
-        })}
+        }), auditPlanOrganizationFallback(organization))}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -1000,7 +1026,7 @@ async function JournalDocumentBody({
       });
       return {
         documentId: plan.id,
-        title: plan.title || AUDIT_PLAN_DOCUMENT_TITLE,
+        ...captureAuditProtocolTitle(plan.title, () => AUDIT_PLAN_DOCUMENT_TITLE),
         sections: planConfig.sections.map((section) => ({
           id: section.id,
           title: section.title,
@@ -1014,15 +1040,17 @@ async function JournalDocumentBody({
     });
 
     return (
+      <DomainMessagesBoundary namespaces={["journalAuditProtocol", "journalScan", "auditTraceabilityPdf", "common", "journalControls", "journalWidgets", "journals"]}>
       <AuditProtocolDocumentClient
         documentId={document.id}
         title={document.title}
         organizationName={organizationName}
         status={document.status}
-        config={normalizeAuditProtocolConfig(document.config)}
+        {...captureAuditProtocolConfig(document.config, normalizeAuditProtocolConfig, auditProtocolConfigSourceIdentity)}
         planSources={planSources}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -1043,7 +1071,7 @@ async function JournalDocumentBody({
         const protocolConfig = normalizeAuditProtocolConfig(protocol.config);
         return {
           documentId: protocol.id,
-          title: protocol.title || AUDIT_PROTOCOL_DOCUMENT_TITLE,
+          ...captureAuditReportTitle(protocol.title, () => AUDIT_PROTOCOL_DOCUMENT_TITLE),
           rows: protocolConfig.rows
             .filter((row) => row.result === "no")
             .map((row) => ({ id: row.id, text: row.text, note: row.note })),
@@ -1052,6 +1080,7 @@ async function JournalDocumentBody({
     );
 
     return (
+      <DomainMessagesBoundary namespaces={["journalAuditReport", "journalScan", "auditTraceabilityPdf", "common", "journalControls", "journalWidgets", "journals"]}>
       <AuditReportDocumentClient
         documentId={document.id}
         title={document.title}
@@ -1061,6 +1090,7 @@ async function JournalDocumentBody({
         protocolSources={protocolSources}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
@@ -1125,35 +1155,49 @@ async function JournalDocumentBody({
   }
 
   if (isAcceptanceDocumentTemplate(document.template.code)) {
+    const summarySource = captureAcceptanceSummarySource(document.config);
+    const { config: acceptanceConfig, sourceIdentity: acceptanceSourceIdentity } = captureAcceptanceSource(
+      document.config,
+      (source) => normalizeAcceptanceDocumentConfig(source, enrichedEmployees),
+      (source) => auditProtocolConfigSourceIdentity([source, enrichedEmployees, summarySource])
+    );
+    const generatedSummaries = bindAcceptanceSummarySource(summarySource, acceptanceConfig);
     return (
+      <DomainMessagesBoundary namespaces={["journalAcceptance", "foodControlPdf", "common", "journalControls", "journalWidgets", "journals"]}>
       <AcceptanceDocumentClient
         documentId={document.id}
         controlPeriodicity={controlPeriodicity}
         routeCode={code}
         title={document.title}
         organizationName={organizationName}
+        organizationFallbackSuffix={captureAcceptanceOrganizationFallbackSuffix(organizationName, organization, document.config)}
         dateFrom={toDateKey(document.dateFrom)}
         dateTo={toDateKey(document.dateTo)}
         status={document.status}
         users={enrichedEmployees}
-        config={normalizeAcceptanceDocumentConfig(document.config, enrichedEmployees)}
+        config={acceptanceConfig}
+        sourceIdentity={acceptanceSourceIdentity}
+        generatedSummaries={generatedSummaries}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 
   if (document.template.code === PPE_ISSUANCE_TEMPLATE_CODE) {
     return (
+      <DomainMessagesBoundary namespaces={["journalPpe", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
       <PpeIssuanceDocumentClient
         documentId={document.id}
-        title={document.title || "Журнал учета выдачи СИЗ"}
+        {...capturePpeTitle(document.title, "Журнал учета выдачи СИЗ")}
         organizationName={organizationName}
         dateFrom={toDateKey(document.dateFrom)}
         status={document.status}
         users={enrichedEmployees}
-        config={normalizePpeIssuanceConfig(document.config, enrichedEmployees)}
+        {...capturePpeSource(document.config, value => normalizePpeIssuanceConfig(value, enrichedEmployees), auditProtocolConfigSourceIdentity)}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </DomainMessagesBoundary>
     );
   }
 

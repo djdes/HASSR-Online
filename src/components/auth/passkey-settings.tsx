@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Fingerprint, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatPasskeyDate } from "./passkey-date-presentation";
 
 type Cred = { id: string; deviceLabel: string | null; createdAt: string; lastUsedAt: string | null };
 
@@ -17,6 +19,12 @@ type Cred = { id: string; deviceLabel: string | null; createdAt: string; lastUse
  * Библиотеку подгружаем лениво: на страницу профиля она нужна не всем.
  */
 export function PasskeySettings({ dark = false }: { dark?: boolean }) {
+  const locale = useLocale();
+  const t = useTranslations("passkeySettings");
+  const currentT = useRef(t);
+  useEffect(() => {
+    currentT.current = t;
+  }, [locale, t]);
   const [creds, setCreds] = useState<Cred[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [supported, setSupported] = useState<boolean | null>(null);
@@ -41,7 +49,7 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
       const { startRegistration } = await import("@simplewebauthn/browser");
       const opt = await fetch("/api/webauthn/register/options", { method: "POST" });
       const optJson = (await opt.json()) as { challengeId: string; options: Parameters<typeof startRegistration>[0]["optionsJSON"]; error?: string };
-      if (!opt.ok) throw new Error(optJson.error ?? "Не удалось начать");
+      if (!opt.ok) throw new Error(optJson.error ?? "passkey_registration_options_failed");
       const response = await startRegistration({ optionsJSON: optJson.options });
       const ver = await fetch("/api/webauthn/register/verify", {
         method: "POST",
@@ -49,12 +57,16 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
         body: JSON.stringify({ challengeId: optJson.challengeId, response }),
       });
       const verJson = (await ver.json()) as { error?: string };
-      if (!ver.ok) throw new Error(verJson.error ?? "Не удалось сохранить ключ");
-      toast.success("Face ID / отпечаток подключён");
+      if (!ver.ok) throw new Error(verJson.error ?? "passkey_registration_verification_failed");
+      toast.success(currentT.current("registrationSuccess"));
       await load();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Ошибка";
-      toast.error(/NotAllowed|cancel|abort/i.test(msg) ? "Отменено" : msg);
+      const message = e instanceof Error ? e.message : "";
+      toast.error(
+        /NotAllowed|cancel|abort/i.test(message)
+          ? currentT.current("registrationCancelled")
+          : currentT.current("operationFailed"),
+      );
     } finally {
       setBusy(false);
     }
@@ -68,7 +80,7 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
       body: JSON.stringify({ id: remove.id }),
     });
     setRemove(null);
-    toast.success("Ключ удалён");
+    toast.success(currentT.current("deleteSuccess"));
     await load();
   }
 
@@ -80,10 +92,10 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <div className="text-[14px] font-semibold" style={{ color: text }}>
-            Face ID / отпечаток
+            {t("title")}
           </div>
           <div className="mt-0.5 text-[12px] leading-relaxed" style={{ color: muted }}>
-            Подпись вашим телефоном: вход на сайт и на общий планшет без ПИН. Ключ хранится только в вашем устройстве.
+            {t("description")}
           </div>
         </div>
         <button
@@ -91,12 +103,12 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
           disabled={busy || supported === false}
           className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white disabled:opacity-50"
         >
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Добавить
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} {t("add")}
         </button>
       </div>
       {supported === false ? (
         <p className="text-[12px]" style={{ color: muted }}>
-          На этом устройстве нет биометрии или браузер её не поддерживает. Откройте профиль на своём телефоне.
+          {t("unsupported")}
         </p>
       ) : null}
       {creds && creds.length > 0 ? (
@@ -105,29 +117,32 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
             <li key={c.id} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: dark ? "var(--mini-surface-2)" : "#f5f6ff" }}>
               <Fingerprint className="size-4 text-[#5566f6]" />
               <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-medium" style={{ color: text }}>{c.deviceLabel ?? "Устройство"}</div>
+                <div className="text-[13px] font-medium" style={{ color: text }}>{c.deviceLabel === null ? t("deviceFallback") : c.deviceLabel}</div>
                 <div className="text-[11px]" style={{ color: muted }}>
-                  добавлен {new Date(c.createdAt).toLocaleDateString("ru-RU")}
-                  {c.lastUsedAt ? ` · вход ${new Date(c.lastUsedAt).toLocaleDateString("ru-RU")}` : ""}
+                  {t("credentialDates", {
+                    createdDate: formatPasskeyDate(c.createdAt, locale),
+                    hasLastUsed: c.lastUsedAt ? "yes" : "no",
+                    lastUsedDate: c.lastUsedAt ? formatPasskeyDate(c.lastUsedAt, locale) : "",
+                  })}
                 </div>
               </div>
-              <button onClick={() => setRemove(c)} className="rounded-lg p-1.5 text-[#a13a32]" aria-label="Удалить">
+              <button onClick={() => setRemove(c)} className="rounded-lg p-1.5 text-[#a13a32]" aria-label={t("deleteLabel")}>
                 <Trash2 className="size-4" />
               </button>
             </li>
           ))}
         </ul>
       ) : creds ? (
-        <p className="text-[12px]" style={{ color: muted }}>Ключей пока нет.</p>
+        <p className="text-[12px]" style={{ color: muted }}>{t("empty")}</p>
       ) : null}
       {remove ? (
         <ConfirmDialog
           open
           onClose={() => setRemove(null)}
           onConfirm={doRemove}
-          title="Удалить ключ?"
-          description={`Устройство «${remove.deviceLabel ?? "Устройство"}» больше не сможет входить по Face ID. Записи, подписанные им ранее, останутся.`}
-          confirmLabel="Удалить"
+          title={t("deleteTitle")}
+          description={t("deleteDescription", { deviceName: remove.deviceLabel === null ? t("deviceFallback") : remove.deviceLabel })}
+          confirmLabel={t("deleteConfirm")}
           variant="danger"
         />
       ) : null}

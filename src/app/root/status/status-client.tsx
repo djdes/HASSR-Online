@@ -1,10 +1,12 @@
 "use client";
 
 import { CheckCircle2, Loader2, Plus } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
+import { presentStatusTimestamp } from "./status-presentation";
 import type { Announcement, Incident, PlatformStatusSettings } from "@/lib/platform-status";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +24,14 @@ const fromLocal = (local: string) => (local ? new Date(local).toISOString() : nu
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 export function StatusClient({ initial }: { initial: PlatformStatusSettings }) {
+  const locale = useLocale();
+  const t = useTranslations("rootStatus");
+  const tCommon = useTranslations("common.announcementBanner");
+  const translatorRef = useRef(t);
+  useLayoutEffect(() => {
+    translatorRef.current = t;
+  }, [t]);
+
   const [announcement, setAnnouncement] = useState<Announcement>(
     initial.announcement ?? {
       id: newId(),
@@ -37,6 +47,7 @@ export function StatusClient({ initial }: { initial: PlatformStatusSettings }) {
   const [incidents, setIncidents] = useState<Incident[]>(initial.incidents);
   const [draft, setDraft] = useState({ title: "", kind: "incident" as Incident["kind"], note: "" });
   const [busy, setBusy] = useState(false);
+  const [previewSeed] = useState(() => newId());
 
   async function save(next: { announcement: Announcement; incidents: Incident[] }) {
     setBusy(true);
@@ -47,12 +58,14 @@ export function StatusClient({ initial }: { initial: PlatformStatusSettings }) {
         body: JSON.stringify(next),
       });
       const data = (await response.json().catch(() => null)) as PlatformStatusSettings | { error?: string } | null;
-      if (!response.ok || !data || !("incidents" in data)) throw new Error((data as { error?: string } | null)?.error ?? "Не удалось сохранить");
+      if (!response.ok || !data || !("incidents" in data)) throw new Error("save-failed");
       if (data.announcement) setAnnouncement(data.announcement);
       setIncidents(data.incidents);
-      toast.success("Сохранено");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.success(translatorRef.current("feedback.saved"));
+    } catch {
+      // API diagnostics are not trusted user-facing copy. Read the translator
+      // only after the response body has settled, in the committed locale.
+      toast.error(translatorRef.current("feedback.saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -61,7 +74,7 @@ export function StatusClient({ initial }: { initial: PlatformStatusSettings }) {
   const set = <K extends keyof Announcement>(key: K, value: Announcement[K]) =>
     setAnnouncement((prev) => ({ ...prev, [key]: value }));
 
-  // Новый текст — новый id: тот, кто закрыл старый баннер, увидит новый.
+  // New text creates a new persisted announcement ID, as before.
   const saveAnnouncement = () =>
     save({
       announcement: {
@@ -91,105 +104,126 @@ export function StatusClient({ initial }: { initial: PlatformStatusSettings }) {
       incidents: incidents.map((i) => (i.id === id ? { ...i, resolvedAt: new Date().toISOString() } : i)),
     });
 
+  const previewId = useMemo(
+    () => `preview:${previewSeed}:${JSON.stringify([announcement.kind, announcement.text])}`,
+    [previewSeed, announcement.kind, announcement.text]
+  );
+
+  const displayTimestamp = (value: string) => {
+    const result = presentStatusTimestamp(value, locale);
+    if (result.kind === "native") return result.text;
+    if (result.kind === "invalid") return t("incidents.invalidTimestamp");
+    return t("incidents.timestamp", { date: result.date, time: result.time });
+  };
+
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <section className={CARD}>
-        <div className={EYEBROW}>Баннер</div>
+        <div className={EYEBROW}>{t("announcement.section")}</div>
         <div className="space-y-3">
           <div className="grid grid-cols-[140px_1fr] gap-3">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Тип</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("announcement.kind")}</span>
               <select value={announcement.kind} onChange={(e) => set("kind", e.target.value as Announcement["kind"])} className={INPUT}>
-                <option value="maintenance">Плановые работы</option>
-                <option value="incident">Инцидент</option>
-                <option value="info">Новость</option>
+                <option value="maintenance">{t("announcement.kindMaintenance")}</option>
+                <option value="incident">{t("announcement.kindIncident")}</option>
+                <option value="info">{t("announcement.kindInfo")}</option>
               </select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Ссылка «Подробнее» (пусто — /status)</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("announcement.linkLabel", { moreLabel: tCommon("more") })}</span>
               <input value={announcement.link ?? ""} onChange={(e) => set("link", e.target.value || null)} placeholder="/status" className={INPUT} />
             </label>
           </div>
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Текст</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("announcement.text")}</span>
             <textarea
               value={announcement.text}
               onChange={(e) => set("text", e.target.value)}
               rows={2}
               maxLength={300}
-              placeholder="Сегодня с 03:00 до 03:20 по Москве сервис будет недоступен: обновляем сервер."
+              placeholder={t("announcement.textPlaceholder")}
               className={cn(INPUT, "h-auto resize-none py-2.5 leading-relaxed")}
             />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Показывать с</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("announcement.startsAt")}</span>
               <input type="datetime-local" value={toLocal(announcement.startsAt)} onChange={(e) => set("startsAt", fromLocal(e.target.value))} className={INPUT} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">до</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("announcement.endsAt")}</span>
               <input type="datetime-local" value={toLocal(announcement.endsAt)} onChange={(e) => set("endsAt", fromLocal(e.target.value))} className={INPUT} />
             </label>
           </div>
           <label className="flex items-center gap-2 text-[13.5px] text-[#3c4053]">
             <input type="checkbox" checked={announcement.active} onChange={(e) => set("active", e.target.checked)} className="size-4 rounded border-[#dcdfed]" />
-            Показывать баннер
+            {t("announcement.active")}
           </label>
           <div className="rounded-2xl bg-[#fafbff] p-3">
-            <div className="mb-2 text-[11px] uppercase tracking-[0.14em] text-[#9b9fb3]">Так увидят клиенты</div>
+            <div className="mb-2 text-[11px] uppercase tracking-[0.14em] text-[#9b9fb3]">{t("announcement.previewHeading")}</div>
             {announcement.text.trim() ? (
-              <AnnouncementBanner key={announcement.kind + announcement.text} announcement={{ ...announcement, id: `preview-${Date.now()}`, active: true }} />
+              <AnnouncementBanner
+                key={announcement.kind + announcement.text}
+                announcement={{ ...announcement, id: previewId, active: true }}
+                moreLabel={tCommon("more")}
+                dismissLabel={tCommon("dismiss")}
+              />
             ) : (
-              <p className="text-[13px] text-[#9b9fb3]">Введите текст</p>
+              <p className="text-[13px] text-[#9b9fb3]">{t("announcement.previewEmpty")}</p>
             )}
           </div>
           <button type="button" onClick={saveAnnouncement} disabled={busy} className={BTN_PRIMARY}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Сохранить баннер
+            {t("announcement.save")}
           </button>
         </div>
       </section>
 
       <section className={CARD}>
-        <div className={EYEBROW}>Инциденты и работы</div>
+        <div className={EYEBROW}>{t("incidents.section")}</div>
         <div className="space-y-3">
           <div className="grid grid-cols-[140px_1fr] gap-3">
             <select value={draft.kind} onChange={(e) => setDraft({ ...draft, kind: e.target.value as Incident["kind"] })} className={INPUT}>
-              <option value="incident">Инцидент</option>
-              <option value="maintenance">Работы</option>
+              <option value="incident">{t("incidents.kindIncident")}</option>
+              <option value="maintenance">{t("incidents.kindMaintenance")}</option>
             </select>
-            <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Что случилось" className={INPUT} maxLength={200} />
+            <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder={t("incidents.titlePlaceholder")} className={INPUT} maxLength={200} />
           </div>
-          <input value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder="Что делаем (необязательно)" className={INPUT} maxLength={1000} />
+          <input value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder={t("incidents.notePlaceholder")} className={INPUT} maxLength={1000} />
           <button type="button" onClick={addIncident} disabled={busy || !draft.title.trim()} className={BTN_OUTLINE}>
             <Plus className="size-4 text-[#5566f6]" />
-            Открыть
+            {t("incidents.open")}
           </button>
         </div>
         <ul className="mt-5 space-y-2">
-          {incidents.length === 0 ? <li className="text-[13.5px] text-[#9b9fb3]">Пока пусто — и хорошо.</li> : null}
-          {incidents.map((incident) => (
-            <li key={incident.id} className="flex items-start justify-between gap-3 rounded-2xl border border-[#ececf4] px-4 py-3">
-              <div className="min-w-0">
-                <div className="text-[14px] font-medium text-[#0b1024]">
-                  {incident.title}
-                  <span className={cn("ml-2 rounded-full px-2 py-0.5 text-[11px] font-medium", incident.resolvedAt ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#fff4f2] text-[#a13a32]")}>
-                    {incident.resolvedAt ? "решено" : incident.kind === "maintenance" ? "работы" : "открыт"}
-                  </span>
+          {incidents.length === 0 ? <li className="text-[13.5px] text-[#9b9fb3]">{t("incidents.empty")}</li> : null}
+          {incidents.map((incident) => {
+            const start = displayTimestamp(incident.startedAt);
+            const timestamp = incident.resolvedAt
+              ? t("incidents.timestampRange", { start, end: displayTimestamp(incident.resolvedAt) })
+              : start;
+            return (
+              <li key={incident.id} className="flex items-start justify-between gap-3 rounded-2xl border border-[#ececf4] px-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-[14px] font-medium text-[#0b1024]">
+                    {incident.title}
+                    <span className={cn("ml-2 rounded-full px-2 py-0.5 text-[11px] font-medium", incident.resolvedAt ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#fff4f2] text-[#a13a32]")}
+                    >
+                      {incident.resolvedAt ? t("incidents.resolved") : incident.kind === "maintenance" ? t("incidents.maintenance") : t("incidents.openStatus")}
+                    </span>
+                  </div>
+                  <div className="text-[12px] text-[#6f7282]">{timestamp}</div>
                 </div>
-                <div className="text-[12px] text-[#6f7282]">
-                  {new Date(incident.startedAt).toLocaleString("ru-RU")}
-                  {incident.resolvedAt ? ` — ${new Date(incident.resolvedAt).toLocaleString("ru-RU")}` : ""}
-                </div>
-              </div>
-              {!incident.resolvedAt ? (
-                <button type="button" onClick={() => resolve(incident.id)} disabled={busy} className={cn(BTN_OUTLINE, "h-9 shrink-0")}>
-                  <CheckCircle2 className="size-4 text-[#116b2a]" />
-                  Решено
-                </button>
-              ) : null}
-            </li>
-          ))}
+                {!incident.resolvedAt ? (
+                  <button type="button" onClick={() => resolve(incident.id)} disabled={busy} className={cn(BTN_OUTLINE, "h-9 shrink-0")}>
+                    <CheckCircle2 className="size-4 text-[#116b2a]" />
+                    {t("incidents.resolve")}
+                  </button>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       </section>
     </div>

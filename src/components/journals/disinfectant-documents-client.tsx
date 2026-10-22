@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { captureDisinfectantTitle, type DisinfectantDisplayTitle } from "@/lib/disinfectant-document-presentation";
 import { useRouter } from "next/navigation";
 import {
   BookOpenText,
@@ -38,7 +41,6 @@ import {
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 import {
-  DISINFECTANT_HEADING,
   DISINFECTANT_DOCUMENT_TITLE,
   getDisinfectantDefaultConfig,
   normalizeDisinfectantConfig,
@@ -104,14 +106,15 @@ function SettingsDialog(props: {
   /** Создание — название подставляется автоматически (просьба владельца 2026-09-04). */
   mode: "create" | "edit";
 }) {
+  const t = useTranslations();
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({
     onOpenChange: props.onOpenChange,
     fallbackError:
       props.mode === "create"
-        ? "Не удалось создать документ"
-        : "Не удалось сохранить",
+        ? t("journalControls.documentDialog.createError")
+        : t("journalDisinfectant.saveFailed"),
   });
   const submitting = submit.submitting;
   const auto = useAutoDocumentTitle({
@@ -168,6 +171,7 @@ function SettingsDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={t("common.close")}
               className="rounded-xl p-2 text-[#0b1024]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -185,28 +189,26 @@ function SettingsDialog(props: {
             />
             <div className="space-y-2">
               <Label className="text-[14px] text-[#6f7282]">
-                Название документа
-              </Label>
-              <Input
+                {t("journalDisinfectant.documentTitle")}</Label>
+              <Input aria-label={t("journalDisinfectant.documentTitle")}
                 value={activeState.title}
                 onChange={(e) => {
                   auto.markTouched();
                   setState({ ...activeState, title: e.target.value });
                 }}
-                placeholder="Введите название документа"
+                placeholder={t("journalDisinfectant.documentTitlePlaceholder")}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-[14px] text-[#6f7282]">
-                Должность ответственного
-              </Label>
+                {t("journalDisinfectant.responsiblePosition")}</Label>
               <Select
                 value={activeState.responsibleRole}
                 onValueChange={cascade.handlePositionChange}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите должность" />
+                <SelectTrigger aria-label={t("journalDisinfectant.responsiblePosition")} className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
+                  <SelectValue placeholder={t("journalControls.positionSelect.choosePosition")} />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={props.users} />
@@ -214,15 +216,15 @@ function SettingsDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#6f7282]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#6f7282]">{t("journalControls.positionSelect.employeeLabel")}</Label>
               <Select
                 value={activeState.responsibleEmployeeId}
                 onValueChange={cascade.handleEmployeeChange}
                 open={cascade.employeeOpen}
                 onOpenChange={cascade.setEmployeeOpen}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                <SelectTrigger aria-label={t("journalControls.positionSelect.employeeLabel")} className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
+                  <SelectValue placeholder={t("journalControls.positionSelect.chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {cascade.candidates.map((u) => (
@@ -240,7 +242,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? t("journalDisinfectant.saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -250,6 +252,15 @@ function SettingsDialog(props: {
   );
 }
 
+function useCommittedDisinfectantCopy() {
+  const t = useTranslations();
+  const locale = useLocale();
+  const committedCopy = useRef({ t, locale });
+  useEffect(() => { committedCopy.current = { t, locale }; }, [t, locale]);
+  const readCommittedCopy = useCallback(() => committedCopy.current, []);
+  return { t, readCommittedCopy };
+}
+
 export function DisinfectantDocumentsClient({
   routeCode,
   templateCode,
@@ -257,6 +268,7 @@ export function DisinfectantDocumentsClient({
   users,
   documents,
 }: Props) {
+  const { t, readCommittedCopy } = useCommittedDisinfectantCopy();
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
@@ -323,41 +335,53 @@ export function DisinfectantDocumentsClient({
     router.refresh();
   }
 
+  const namedDeleteSuccess = useCallback((copy: DisinfectantDisplayTitle) => {
+    return () => {
+      const { t } = readCommittedCopy();
+      toast.success(t("journalDisinfectant.documentDeleted", {
+        title: copy.standardFallback ? t("sanitationPestPdf.disinfectantTitle") : copy.raw,
+      }));
+    };
+  }, [readCommittedCopy]);
+
   async function handleDelete(document: DisinfectantDocumentItem) {
     const cfg = normalizeDisinfectantConfig(document.config);
-    const docTitle = document.title || DISINFECTANT_DOCUMENT_TITLE;
+    let titleUsesFallback = false;
+    const docTitle = document.title || (titleUsesFallback = true, DISINFECTANT_DOCUMENT_TITLE);
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${docTitle}» будет удалён безвозвратно.`,
+      description: t("journalDisinfectant.deleteDocumentDescription", { title: titleUsesFallback ? t("sanitationPestPdf.disinfectantTitle") : `${docTitle}` }),
       bullets: [
         {
-          label: `Подразделений в расчёте потребности: ${cfg.subdivisions.length}`,
+          label: t("journalDisinfectant.subdivisionCount", { count: `${cfg.subdivisions.length}` }),
           tone: "info",
         },
-        { label: `Записей о получении: ${cfg.receipts.length}`, tone: "warn" },
-        { label: `Записей о расходе: ${cfg.consumptions.length}`, tone: "warn" },
+        { label: t("journalDisinfectant.receiptCount", { count: `${cfg.receipts.length}` }), tone: "warn" },
+        { label: t("journalDisinfectant.consumptionCount", { count: `${cfg.consumptions.length}` }), tone: "warn" },
       ],
-      successMessage: `Документ «${docTitle}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: null,
+      onSuccess: namedDeleteSuccess(captureDisinfectantTitle(docTitle, titleUsesFallback)),
     });
   }
 
-  async function handleArchive(document: DisinfectantDocumentItem) {
-    const docTitle = document.title || DISINFECTANT_DOCUMENT_TITLE;
+  const handleArchive = useCallback(async (document: DisinfectantDocumentItem) => {
+    let titleUsesFallback = false;
+    const docTitle = document.title || (titleUsesFallback = true, DISINFECTANT_DOCUMENT_TITLE);
     const confirmed = await confirmAsync({
-      title: "Перенести документ в закрытые?",
-      description: `Документ «${docTitle}» станет доступен только для просмотра.`,
+      locale: readCommittedCopy().locale,
+      title: t("journalDisinfectant.archiveTitle"),
+      description: t("journalDisinfectant.archiveDescription", { title: titleUsesFallback ? t("sanitationPestPdf.disinfectantTitle") : `${docTitle}` }),
       variant: "warn",
-      confirmLabel: "В архив",
+      confirmLabel: t("journalControls.documentLifecycle.archiveAction"),
       bullets: [
-        { label: "Данные сохраняются — печать и просмотр остаются" },
-        { label: "Добавлять и править записи будет нельзя", tone: "warn" },
-        { label: "Документ можно вернуть в активные из вкладки «Закрытые»", tone: "info" },
+        { label: t("journalDisinfectant.archiveDataKept") },
+        { label: t("journalDisinfectant.archiveNoEditing"), tone: "warn" },
+        { label: t("journalDisinfectant.archiveCanReopen"), tone: "info" },
       ],
     });
     if (!confirmed) return;
     await setStatus("closed", { documentId: document.id });
-  }
+  }, [readCommittedCopy, setStatus, t]);
 
   const defaultCreateState = useMemo<SettingsState>(
     () => ({
@@ -373,18 +397,17 @@ export function DisinfectantDocumentsClient({
     <div className="space-y-5">
       <JournalTopBar
         routeCode={routeCode}
-        heading={DISINFECTANT_HEADING}
+        heading={t("journalDisinfectant.heading")}
         activeTab={activeTab}
         templateCode={templateCode}
-        templateName={DISINFECTANT_DOCUMENT_TITLE}
+        templateName={t("sanitationPestPdf.disinfectantTitle")}
         users={users}
         createSlot={
           <Button
             className="h-10 w-full rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white transition-colors hover:bg-[#4a5bf0] sm:w-auto"
             onClick={() => setCreateOpen(true)}
           >
-            <Plus className="size-4" /> Создать документ
-          </Button>
+            <Plus className="size-4" /> {t("journalControls.list.create")}</Button>
         }
       />
 
@@ -406,14 +429,13 @@ export function DisinfectantDocumentsClient({
                 href={href}
                 className={JOURNAL_CARD_TITLE_CLASS}
               >
-                {document.title || DISINFECTANT_DOCUMENT_TITLE}
-              <SharedDocumentBadge shared={document.shared} />
+                {document.title || t("sanitationPestPdf.disinfectantTitle")}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: t("journalScan.shared.label"), title: t("journalScan.shared.title") }} />
               </Link>
               <div className="flex items-center gap-6">
                 <div className={JOURNAL_CARD_SECTION_CLASS}>
                   <div className={JOURNAL_CARD_LABEL_CLASS}>
-                    Ответственный за получение
-                  </div>
+                    {t("journalDisinfectant.receiptResponsible")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {cfg.responsibleRole}
                     {cfg.responsibleEmployee
@@ -422,13 +444,13 @@ export function DisinfectantDocumentsClient({
                   </div>
                 </div>
                 <ResponsiveMenu
-                  title="Действия"
+                  title={t("journalControls.list.actions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: t("journalControls.list.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -436,7 +458,7 @@ export function DisinfectantDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: t("journalControls.list.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () => openPdf({ documentId: document.id }),
                     },
@@ -444,13 +466,13 @@ export function DisinfectantDocumentsClient({
                       ? [
                           {
                             key: "archive",
-                            label: "Отправить в закрытые",
+                            label: t("journalControls.documentLifecycle.sendToClosed"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () => void handleArchive(document),
                           },
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: t("common.delete"),
                             icon: <Trash2 className="size-4 text-[#6f7282]" />,
                             tone: "danger" as const,
                             onSelect: () => void handleDelete(document),
@@ -461,7 +483,7 @@ export function DisinfectantDocumentsClient({
                       ? [
                           {
                             key: "restore",
-                            label: "Отправить в активные",
+                            label: t("journalControls.documentLifecycle.sendToActive"),
                             icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                             onSelect: () =>
                               void setStatus("active", { documentId: document.id }),
@@ -472,9 +494,10 @@ export function DisinfectantDocumentsClient({
                   trigger={
                     <button
                       type="button"
+                      aria-label={t("journalControls.list.actions")}
                       className="flex size-10 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                     >
-                      <Ellipsis className="size-8" />
+                      <Ellipsis aria-hidden="true" className="size-8" />
                     </button>
                   }
                 />
@@ -492,8 +515,8 @@ export function DisinfectantDocumentsClient({
         routeCode={routeCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
-        submitText="Создать"
-        dialogTitle="Создание документа"
+        submitText={t("journalDisinfectant.create")}
+        dialogTitle={t("journalDisinfectant.createDocumentTitle")}
         mode="create"
       />
       <SettingsDialog
@@ -524,8 +547,8 @@ export function DisinfectantDocumentsClient({
         onSubmit={async (v) => {
           if (settingsTarget) await saveSettings(settingsTarget.id, v);
         }}
-        submitText="Сохранить"
-        dialogTitle="Настройки документа"
+        submitText={t("common.save")}
+        dialogTitle={t("journalDisinfectant.settingsTitle")}
         mode="edit"
       />
 

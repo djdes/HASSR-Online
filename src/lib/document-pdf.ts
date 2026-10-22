@@ -1,3 +1,5 @@
+import { personnelPdfCopy, personnelPdfTitle, personnelMedColumn, personnelMedComparisons, personnelExamReferences, personnelVaccineReferences, personnelMonth, personnelApprovalDate, personnelRole, personnelInjectedRole, personnelPlanTopic, personnelPlanPosition, personnelPpeRecipient } from "@/lib/personnel-maintenance-pdf-presentation";
+import { hygieneHealthPdfCopy, hygieneHealthPdfTitle, hygieneHealthPdfMonth, hygieneHealthPdfWeekday, hygieneHealthPdfStatus, hygieneHealthPdfPosition } from "@/lib/hygiene-health-pdf-presentation";
 import { complaintDate, complaintTitle, complaintFieldLabel, complaintFieldOptions } from "@/components/journals/complaint-presentation";
 import { presentRegisterField, registerDate, registerName, registerTitle } from "@/components/journals/generic-register-presentation";
 import { breakdownDate, breakdownTitle } from "@/components/journals/breakdown-history-presentation";
@@ -103,15 +105,12 @@ import {
 import {
   PRODUCT_WRITEOFF_DOCUMENT_TITLE,
   PRODUCT_WRITEOFF_TEMPLATE_CODE,
-  formatProductWriteoffDateLong,
   getProductWriteoffFilePrefix,
   normalizeProductWriteoffConfig,
 } from "@/lib/product-writeoff-document";
 import { normalizeJournalStaffBoundConfig } from "@/lib/journal-staff-binding";
 import {
   GLASS_LIST_TEMPLATE_CODE,
-  GLASS_LIST_DOCUMENT_TITLE,
-  GLASS_LIST_PAGE_TITLE,
   getGlassListFilePrefix,
   normalizeGlassListConfig,
 } from "@/lib/glass-list-document";
@@ -120,18 +119,15 @@ import {
   buildGlassControlPdfRows,
   formatRuDateDash as formatGlassRuDateDash,
   getGlassControlFilePrefix,
-  GLASS_CONTROL_PAGE_TITLE,
   normalizeGlassControlConfig,
 } from "@/lib/glass-control-document";
 import {
   formatPestControlRowDate,
   normalizePestControlEntryData,
-  PEST_CONTROL_DOCUMENT_TITLE,
   PEST_CONTROL_TEMPLATE_CODE,
 } from "@/lib/pest-control-document";
 import {
   CLEANING_VENTILATION_CHECKLIST_TEMPLATE_CODE,
-  CLEANING_VENTILATION_CHECKLIST_TITLE,
   getCleaningVentilationFilePrefix,
 } from "@/lib/cleaning-ventilation-checklist-document";
 import { drawCleaningVentilationChecklistPdf } from "@/lib/cleaning-ventilation-checklist-pdf";
@@ -145,14 +141,11 @@ import uzMessages from "@/i18n/messages/uz.json";
 import type { MessageContract } from "@/i18n/message-contract";
 import {
   SANITARY_DAY_CHECKLIST_TEMPLATE_CODE,
-  SANITARY_DAY_CHECKLIST_TITLE,
   getSdcFilePrefix,
 } from "@/lib/sanitary-day-checklist-document";
 import { drawSanitaryDayChecklistPdf } from "@/lib/sanitary-day-checklist-pdf";
 import {
-  getTrackedDocumentTitle,
   isTrackedDocumentTemplate,
-  type TrackedDocumentTemplateCode,
 } from "@/lib/tracked-document";
 import { CCP_MONITORING_TEMPLATE_CODE } from "@/lib/ccp-monitoring-journal";
 import {
@@ -162,11 +155,7 @@ import {
 } from "@/lib/traceability-document";
 import {
   UV_LAMP_RUNTIME_TEMPLATE_CODE,
-  formatControlFrequencyLabel,
   formatRuDateDash,
-  getDisinfectionConditionLabel,
-  getDisinfectionObjectLabel,
-  getRadiationModeLabel,
   calculateMonthlyHours,
   calculateEntryDurationMinutes as calculateUvEntryDurationMinutes,
   listUvRuntimeSessions,
@@ -203,38 +192,30 @@ import {
   ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
   ACCEPTANCE_DOCUMENT_TEMPLATE_CODES,
   COMPLIANCE_LABELS,
-  getIncomingControlColumns,
   PRODUCT_ACCEPTANCE_DOCUMENT_TITLE,
   getAcceptanceDocumentTitle,
   getIncomingControlRowValues,
   normalizeAcceptanceDocumentConfig,
 } from "@/lib/acceptance-document";
 import {
-  PPE_ISSUANCE_DOCUMENT_TITLE,
   PPE_ISSUANCE_TEMPLATE_CODE,
   formatPpeIssuanceDate,
   getPpeIssuanceIssuerLabel,
-  getPpeIssuanceRecipientLabel,
   normalizePpeIssuanceConfig,
 } from "@/lib/ppe-issuance-document";
 import {
   TRAINING_PLAN_TEMPLATE_CODE,
-  TRAINING_PLAN_HEADING,
   normalizeTrainingPlanConfig,
 } from "@/lib/training-plan-document";
 import {
-  AUDIT_PLAN_DOCUMENT_TITLE,
   AUDIT_PLAN_TEMPLATE_CODE,
-  getAuditPlanPrintDateLabel,
   normalizeAuditPlanConfig,
 } from "@/lib/audit-plan-document";
 import {
-  AUDIT_PROTOCOL_DOCUMENT_TITLE,
   AUDIT_PROTOCOL_TEMPLATE_CODE,
   normalizeAuditProtocolConfig,
 } from "@/lib/audit-protocol-document";
 import {
-  AUDIT_REPORT_DOCUMENT_TITLE,
   AUDIT_REPORT_TEMPLATE_CODE,
   normalizeAuditReportConfig,
 } from "@/lib/audit-report-document";
@@ -271,15 +252,12 @@ import {
   normalizeEquipmentCalibrationConfig,
 } from "@/lib/equipment-calibration-document";
 import {
-  EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE,
   EQUIPMENT_MAINTENANCE_TEMPLATE_CODE,
   MONTH_KEYS as EQUIPMENT_MAINTENANCE_MONTH_KEYS,
-  MONTH_LABELS as EQUIPMENT_MAINTENANCE_MONTH_LABELS,
   normalizeEquipmentMaintenanceConfig,
 } from "@/lib/equipment-maintenance-document";
 import { withResolvedEquipmentNames } from "@/lib/equipment-directory-link";
 import {
-  STAFF_TRAINING_FULL_TITLE,
   STAFF_TRAINING_TEMPLATE_CODE,
   normalizeStaffTrainingConfig,
 } from "@/lib/staff-training-document";
@@ -288,25 +266,14 @@ import {
   buildDateKeys,
   formatMonthLabel,
   getDayNumber,
-  getHealthDocumentTitle,
-  getHygieneDocumentTitle,
-  getHygieneUserPositionLabel,
-  getStatusMeta,
-  getWeekdayShort,
-  HYGIENE_REGISTER_LEGEND,
-  HYGIENE_REGISTER_NOTES,
   HYGIENE_REGISTER_PERIODICITY,
-  HEALTH_REGISTER_NOTES,
-  HEALTH_REGISTER_REMINDER,
   normalizeHealthEntryData,
   normalizeHygieneEntryData,
   toDateKey,
 } from "@/lib/hygiene-document";
 import {
   HYGIENE_V2_COLUMNS,
-  HYGIENE_V2_FORM_CAPTION,
   buildHygieneV2Rows,
-  hygieneV2PdfMark,
   readHygieneFormVersion,
 } from "@/lib/hygiene-v2";
 import { readControlPeriodicity } from "@/lib/control-periodicity";
@@ -338,37 +305,30 @@ import {
   type JournalQrPlacement,
 } from "@/lib/pdf-journal-qr";
 import {
-  EQUIPMENT_CLEANING_DOCUMENT_TITLE,
   EQUIPMENT_CLEANING_TEMPLATE_CODE,
-  getEquipmentCleaningResultLabel,
   normalizeEquipmentCleaningConfig,
   normalizeEquipmentCleaningRowData,
   resolveEquipmentCleaningRowName,
 } from "@/lib/equipment-cleaning-document";
 import {
-  DISINFECTANT_DOCUMENT_TITLE,
   DISINFECTANT_TEMPLATE_CODE,
   computeNeedPerMonth,
   computeNeedPerTreatment,
   computeNeedPerYear,
   formatNumber as formatDisinfectantNumber,
-  formatQuantityWithUnit,
   normalizeDisinfectantConfig,
   resolveSolutionPerTreatment,
-  sumDisinfectantQuantities,
 } from "@/lib/disinfectant-document";
 import {
-  EXAMINATION_REFERENCE_DATA,
   formatMedBookDate,
-  MED_BOOK_DOCUMENT_TITLE,
-  MED_BOOK_PRELIMINARY_PERIODIC_ROWS,
   MED_BOOK_TEMPLATE_CODE,
-  MED_BOOK_VACCINATION_RULES,
   normalizeMedBookConfig,
   normalizeMedBookEntryData,
-  VACCINATION_REFERENCE_DATA,
-  VACCINATION_TYPE_LABELS,
 } from "@/lib/med-book-document";
+import { sanitationPdfCopy, sanitationTitle, sanitationRole, sanitationDefault, sanitationQuantity, sanitationQuantityTotal } from "@/lib/sanitation-pest-pdf-presentation";
+import { auditPdfCopy, auditPdfTitle, auditTraceTitle, auditDefault, auditPlanValue, auditProtocolSection, auditSignatureValue, auditApproverRole, auditApprovalDate } from "@/lib/audit-traceability-pdf-presentation";
+import { specializedPdfCopy, specializedPdfTitle, specializedDefault, specializedHygienePosition, specializedHygieneMark, type SpecializedPdfKey } from "@/lib/specialized-hygiene-glass-pdf-presentation";
+import { trackedUvPdfCopy, trackedPdfTitle, trackedPdfBoolean, uvPdfFreeText, uvPdfObject } from "@/lib/tracked-uv-pdf-presentation";
 
 /** Название бланка мониторинга ККТ — как в каталоге журналов. */
 const CCP_MONITORING_PDF_TITLE = "Журнал мониторинга критических контрольных точек";
@@ -403,6 +363,8 @@ function drawCenteredText(
 const MED_BOOK_PAPER_TITLE = "ЖУРНАЛ УЧЁТА МЕДИЦИНСКИХ КНИЖЕК СОТРУДНИКОВ";
 
 function drawMedBookPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
@@ -411,6 +373,9 @@ function drawMedBookPdf(doc: jsPDF, params: {
   entries: Array<{ employeeId: string; date: Date; data: unknown }>;
   users: Array<{ id: string; name: string; role: string; email: string | null }>;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = personnelPdfCopy(locale);
+  const title = personnelPdfTitle(params.title, "medTitle", locale);
   const pageWidth = doc.internal.pageSize.getWidth();
   const groupedEntries = new Map<string, { employeeId: string; data: ReturnType<typeof normalizeMedBookEntryData> }>();
 
@@ -425,7 +390,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
     const user = params.users.find((item) => item.id === entry.employeeId);
     return {
       index: index + 1,
-      name: user?.name || "Сотрудник",
+      name: user?.name || t("employeeFallback"),
       data: entry.data,
     };
   });
@@ -434,12 +399,13 @@ function drawMedBookPdf(doc: jsPDF, params: {
   // без шапки ХАССП, «Периодичность контроля» и «Начат/Окончен», а
   // заголовок брался из document.title («Мед. книжки»). Печатаем общую
   // шапку и каноничное «Медицинские книжки».
-  drawTitle(doc, MED_BOOK_DOCUMENT_TITLE);
+  drawTitle(doc, title);
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
     // В штампе — экранное название бланка, а не короткое «Медицинские
     // книжки» (см. med_books-2-doc.png).
-    journalLabel: MED_BOOK_PAPER_TITLE,
+    journalLabel: locale === "ru" ? MED_BOOK_PAPER_TITLE : t("medHeader"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -449,28 +415,28 @@ function drawMedBookPdf(doc: jsPDF, params: {
   const medTitleY = afterHeader(headerBottom, 58);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(MED_BOOK_DOCUMENT_TITLE.toUpperCase(), pageWidth / 2, medTitleY, { align: "center" });
+  doc.text(title.toUpperCase(), pageWidth / 2, medTitleY, { align: "center" });
 
   autoTable(doc, {
     startY: medTitleY + 6,
     // Групповая шапка над колонками специалистов — как на экране.
     head: [
       [
-        { content: "№ п/п", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
-        { content: "Ф.И.О. сотрудника", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
-        { content: "Должность", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("number"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("employee"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("position"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
         // Номер медкнижки вводится в журнале, но в печать не попадал —
         // инспектор проверяет именно его.
-        { content: "№ мед. книжки", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("bookNumber"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
         {
-          content: "Наименование специалиста / исследования:",
+          content: t("examinationGroup"),
           colSpan: Math.max(params.config.examinations.length, 1),
           styles: { halign: "center" as const, valign: "middle" as const },
         },
       ],
       params.config.examinations.length > 0
         ? params.config.examinations.map((column) => ({
-            content: column,
+            content: personnelMedColumn("examinations", column, params.sourceConfig, locale),
             styles: { halign: "center" as const, valign: "middle" as const },
           }))
         : [{ content: "", styles: { halign: "center" as const } }],
@@ -485,7 +451,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
             const exam = row.data.examinations[column];
             if (!exam?.date) return "";
             return exam.expiryDate
-              ? `${formatMedBookDate(exam.date)} / до ${formatMedBookDate(exam.expiryDate)}`
+              ? t("examDateRange", { date: formatMedBookDate(exam.date), expiry: formatMedBookDate(exam.expiryDate) })
               : formatMedBookDate(exam.date);
           }),
         ])
@@ -507,16 +473,16 @@ function drawMedBookPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
   });
 
   autoTable(doc, {
     startY: (((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY) || medTitleY + 6) + 8,
     head: [[
-      "Предварительные осмотры",
-      "Периодические осмотры",
+      t("preliminary"),
+      t("periodic"),
     ]],
-    body: MED_BOOK_PRELIMINARY_PERIODIC_ROWS.map((row) => [row.preliminary, row.periodic]),
+    body: personnelMedComparisons(locale),
     theme: "grid",
     styles: {
       font: "JournalUnicode",
@@ -545,11 +511,11 @@ function drawMedBookPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: (((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY) || 80) + 8,
     head: [[
-      "Наименование специалиста / исследования",
-      "Периодичность",
-      "Примечание",
+      t("examinationName"),
+      t("periodicity"),
+      t("note"),
     ]],
-    body: EXAMINATION_REFERENCE_DATA.map((item) => [item.name, item.periodicity, item.note || "—"]),
+    body: personnelExamReferences(locale),
     theme: "grid",
     styles: {
       font: "JournalUnicode",
@@ -577,7 +543,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
 
   /**
    * Раздел «Прививки» — опция документа (M2 аудита): тумблер «включить
-   * "Прививки"» в диалоге создания пишет `config.includeVaccinations`.
+   * t("vaccinationHeading")» в диалоге создания пишет `config.includeVaccinations`.
    * PDF читает флаг тем же правилом, что и веб (`!== false`): у старых
    * документов ключа в config нет, и страница прививок у них остаётся.
    */
@@ -587,8 +553,9 @@ function drawMedBookPdf(doc: jsPDF, params: {
   // Страница «Прививки» — продолжение журнала: компактная шапка, как у
   // всех страниц 2..N (полная, с периодичностью, — только на титульной).
   const vaccinationsHeaderBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: MED_BOOK_PAPER_TITLE,
+    journalLabel: locale === "ru" ? MED_BOOK_PAPER_TITLE : t("medHeader"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -598,26 +565,26 @@ function drawMedBookPdf(doc: jsPDF, params: {
   // Название раздела — под шапкой с тем же зазором, что у таблиц продолжения
   // (+1 мм: крупный кегль).
   const vaccinationsTitleY = continuationBaselineBelow(doc, vaccinationsHeaderBottom) + 1;
-  doc.text("Прививки", pageWidth / 2, vaccinationsTitleY, { align: "center" });
+  doc.text(t("vaccinationHeading"), pageWidth / 2, vaccinationsTitleY, { align: "center" });
 
   autoTable(doc, {
     startY: vaccinationsTitleY + 8,
     // Групповая шапка над колонками прививок — как на экране.
     head: [
       [
-        { content: "№ п/п", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
-        { content: "Ф.И.О. сотрудника", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
-        { content: "Должность", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("number"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("employee"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("position"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
         {
-          content: "Наименование прививки:",
+          content: t("vaccinationGroup"),
           colSpan: Math.max(params.config.vaccinations.length, 1),
           styles: { halign: "center" as const, valign: "middle" as const },
         },
-        { content: "Примечание", rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
+        { content: t("note"), rowSpan: 2, styles: { halign: "center" as const, valign: "middle" as const } },
       ],
       params.config.vaccinations.length > 0
         ? params.config.vaccinations.map((column) => ({
-            content: column,
+            content: personnelMedColumn("vaccinations", column, params.sourceConfig, locale),
             styles: { halign: "center" as const, valign: "middle" as const },
           }))
         : [{ content: "", styles: { halign: "center" as const } }],
@@ -631,12 +598,12 @@ function drawMedBookPdf(doc: jsPDF, params: {
             const vaccination = row.data.vaccinations[column];
             if (!vaccination) return "";
             if (vaccination.type !== "done") {
-              return VACCINATION_TYPE_LABELS[vaccination.type];
+              return t(vaccination.type === "refusal" ? "vaccinationRefusal" : "vaccinationExemption");
             }
             const parts = [
               vaccination.dose ? `${vaccination.dose}:` : null,
               vaccination.date ? formatMedBookDate(vaccination.date) : null,
-              vaccination.expiryDate ? `до ${formatMedBookDate(vaccination.expiryDate)}` : null,
+              vaccination.expiryDate ? t("expiry", { date: formatMedBookDate(vaccination.expiryDate) }) : null,
             ].filter(Boolean);
             return parts.join(" ");
           }),
@@ -659,16 +626,16 @@ function drawMedBookPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
   });
 
   autoTable(doc, {
     startY: (((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY) || 24) + 8,
     head: [[
-      "Наименование прививки",
-      "Периодичность",
+      t("vaccinationName"),
+      t("periodicity"),
     ]],
-    body: VACCINATION_REFERENCE_DATA.map((item) => [item.name, item.periodicity]),
+    body: personnelVaccineReferences(locale),
     theme: "grid",
     styles: {
       font: "JournalUnicode",
@@ -697,7 +664,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
   let noteY = (((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY) || 40) + 8;
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
-  for (const rule of MED_BOOK_VACCINATION_RULES) {
+  for (const rule of [t("vaccineRule0"), t("vaccineRule1")]) {
     const lines = doc.splitTextToSize(rule, pageWidth - PDF_SHEET_MARGIN * 2) as string[];
     // Правило целиком над нижним полем; не влезает — на новую страницу
     // (под повтор штампа ХАССП: раньше текст начинался на 16 мм и ложился
@@ -1702,14 +1669,15 @@ function formatPdfDate(value: Date | string | null | undefined) {
   return formatHeaderDate(value);
 }
 
-function buildHygieneHead(dateKeys: string[], monthLabel: string): RowInput[] {
+function buildHygieneHead(dateKeys: string[], monthLabel: string, locale: Locale = "ru"): RowInput[] {
+  const t = hygieneHealthPdfCopy(locale);
   return [
     [
-      { content: "№ п/п", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
-      { content: "Ф.И.О. работника", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
-      { content: "Должность", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("number"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("employee"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("position"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
       {
-        content: `Месяц ${monthLabel}`,
+        content: t("month", { month: monthLabel }),
         colSpan: dateKeys.length,
         styles: { halign: "center", valign: "middle" },
       },
@@ -1721,22 +1689,23 @@ function buildHygieneHead(dateKeys: string[], monthLabel: string): RowInput[] {
   ];
 }
 
-function buildHealthHead(dateKeys: string[], monthLabel: string): RowInput[] {
+function buildHealthHead(dateKeys: string[], monthLabel: string, locale: Locale = "ru"): RowInput[] {
+  const t = hygieneHealthPdfCopy(locale);
   return [
     [
       // Экранная колонка чекбоксов в печать не идёт.
-      { content: "№\nп/п", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
-      { content: "Ф.И.О. работника", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
-      { content: "Должность", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("healthNumber"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("employee"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("position"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
       {
-        content: `Месяц ${monthLabel}`,
+        content: t("month", { month: monthLabel }),
         colSpan: dateKeys.length,
         styles: { halign: "center", valign: "middle" },
       },
-      { content: "Принятые меры", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("measures"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
     ],
     dateKeys.map((dateKey) => ({
-      content: `${getDayNumber(dateKey)}\n${getWeekdayShort(dateKey)}.`,
+      content: `${getDayNumber(dateKey)}\n${hygieneHealthPdfWeekday(dateKey, locale)}.`,
       styles: { halign: "center" },
     })),
   ];
@@ -1745,7 +1714,8 @@ function buildHealthHead(dateKeys: string[], monthLabel: string): RowInput[] {
 function getHealthMeasuresText(
   employeeId: string,
   dateKeys: string[],
-  entryMap: Record<string, Record<string, unknown>>
+  entryMap: Record<string, Record<string, unknown>>,
+  locale: Locale = "ru"
 ) {
   return dateKeys
     .flatMap((dateKey) => {
@@ -1755,12 +1725,13 @@ function getHealthMeasuresText(
 
       if (!measures) return [];
 
-      return [`${getDayNumber(dateKey)} ${getWeekdayShort(dateKey)}. - ${measures}`];
+      return [hygieneHealthPdfCopy(locale)("measureLine", { day: String(getDayNumber(dateKey)), weekday: hygieneHealthPdfWeekday(dateKey, locale), measures })];
     })
     .join("\n");
 }
 
 function buildHygieneBody(params: {
+  locale?: Locale;
   users: { id: string; name: string; role: string; positionTitle?: string | null }[];
   employeeIds: string[];
   dateKeys: string[];
@@ -1768,6 +1739,8 @@ function buildHygieneBody(params: {
   entryMap: Record<string, Record<string, unknown>>;
   printEmptyRows?: number;
 }): RowInput[] {
+  const locale = params.locale ?? "ru";
+  const t = hygieneHealthPdfCopy(locale);
   const printableUsers = getPrintableUsers(
     params.users,
     params.employeeIds,
@@ -1779,24 +1752,24 @@ function buildHygieneBody(params: {
     rows.push([
       { content: String(employee.number), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
       { content: employee.name, styles: { halign: "center" } },
-      { content: employee.position, styles: { halign: "center" } },
+      { content: hygieneHealthPdfPosition(params.users.find(user => user.id === employee.id), employee.position, locale), styles: { halign: "center" } },
       ...params.dateKeys.map((dateKey) => {
         const entry = normalizeHygieneEntryData(params.entryMap[makeCellKey(employee.id, dateKey)]);
-        return centerCell(getStatusMeta(entry.status)?.code || "");
+        return centerCell(hygieneHealthPdfStatus(entry.status, locale));
       }),
     ]);
 
     rows.push([
       {
-        content: "Температура сотрудника более 37°C?",
+        content: t("temperature"),
         colSpan: 2,
         styles: { halign: "center", valign: "middle" },
       },
       ...params.dateKeys.map((dateKey) => {
         const entry = normalizeHygieneEntryData(params.entryMap[makeCellKey(employee.id, dateKey)]);
         let value = "";
-        if (entry.temperatureAbove37 === true) value = "да";
-        if (entry.temperatureAbove37 === false) value = "нет";
+        if (entry.temperatureAbove37 === true) value = t("yes");
+        if (entry.temperatureAbove37 === false) value = t("no");
         if (entry.temperatureAbove37 === null && entry.status === "day_off") value = "-";
         return centerCell(value);
       }),
@@ -1805,7 +1778,7 @@ function buildHygieneBody(params: {
 
   rows.push([
     {
-      content: "Должность ответственного за контроль",
+      content: t("responsiblePosition"),
       colSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -1817,12 +1790,15 @@ function buildHygieneBody(params: {
 }
 
 function buildHealthBody(params: {
+  locale?: Locale;
   users: { id: string; name: string; role: string; positionTitle?: string | null }[];
   employeeIds: string[];
   dateKeys: string[];
   entryMap: Record<string, Record<string, unknown>>;
   printEmptyRows?: number;
 }): RowInput[] {
+  const locale = params.locale ?? "ru";
+
   const uniqueIds = [...new Set(params.employeeIds)];
   const rosterUsers = params.users.filter((user) => uniqueIds.includes(user.id));
   // Ровно как на экране (health-document-client): сотрудники + пустые
@@ -1836,13 +1812,13 @@ function buildHealthBody(params: {
   const rows: RowInput[] = printableUsers.map((employee) => [
     centerCell(employee.name ? String(employee.number) : ""),
     centerCell(employee.name || ""),
-    centerCell(employee.position || ""),
+    centerCell(hygieneHealthPdfPosition(params.users.find(user => user.id === employee.id), employee.position || "", locale)),
     ...params.dateKeys.map((dateKey) => {
       const entry = normalizeHealthEntryData(params.entryMap[makeCellKey(employee.id, dateKey)]);
       return centerCell(entry.signed ? "+" : "");
     }),
     {
-      content: getHealthMeasuresText(employee.id, params.dateKeys, params.entryMap),
+      content: getHealthMeasuresText(employee.id, params.dateKeys, params.entryMap, locale),
       styles: { halign: "left" as const, valign: "middle" as const },
     },
   ]);
@@ -1860,6 +1836,7 @@ function buildHealthBody(params: {
 }
 
 function drawHygienePdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   dateFrom: Date | string | null;
   dateTo: Date | string | null;
@@ -1872,13 +1849,18 @@ function drawHygienePdf(doc: jsPDF, params: {
   entryMap: Record<string, Record<string, unknown>>;
   printEmptyRows?: number;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = hygieneHealthPdfCopy(locale);
+  const title = hygieneHealthPdfTitle(params.title, "hygiene", locale);
+  const month = params.dateFrom && params.dateTo ? hygieneHealthPdfMonth(params.dateFrom, params.dateTo, locale) : params.monthLabel;
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Экранный серый H1 над рамкой шапки в печать не идёт — название
   // журнала уже есть в шапке ХАССП и отдельным заголовком ниже.
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: "Гигиенический журнал (сотрудники)",
+    journalLabel: t("hygieneTitle"),
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -1888,11 +1870,11 @@ function drawHygienePdf(doc: jsPDF, params: {
   const hygieneTitleY = afterHeader(headerBottom, 74);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(params.title.toUpperCase(), pageWidth / 2, hygieneTitleY, { align: "center" });
+  doc.text(title.toUpperCase(), pageWidth / 2, hygieneTitleY, { align: "center" });
 
   autoTable(doc, {
     startY: hygieneTitleY + 6,
-    head: buildHygieneHead(params.dateKeys, params.monthLabel),
+    head: buildHygieneHead(params.dateKeys, month, locale),
     body: buildHygieneBody(params),
     // Колонки выходных/праздников — серые, как на экране и в печати.
     didParseCell: makeDayColumnTintHook(params.dateKeys, 3),
@@ -1925,8 +1907,9 @@ function drawHygienePdf(doc: jsPDF, params: {
 
   doc.addPage("a4", "landscape");
   const page2HeaderBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: "Гигиенический журнал (сотрудники)",
+    journalLabel: t("hygieneTitle"),
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -1939,11 +1922,11 @@ function drawHygienePdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
   let cursorY = continuationBaselineBelow(doc, page2HeaderBottom);
-  doc.text("В журнал регистрируются результаты:", PDF_SHEET_MARGIN, cursorY);
+  doc.text(t("results"), PDF_SHEET_MARGIN, cursorY);
   doc.setFont("JournalUnicode", "normal");
   cursorY = renderWrappedTextBlock(
     doc,
-    HYGIENE_REGISTER_NOTES.map((note) => `- ${note}`),
+    [t("note0"), t("note1"), t("note2"), t("note3")].map((note) => `- ${note}`),
     PDF_SHEET_MARGIN,
     cursorY + 6,
     pageWidth - PDF_SHEET_MARGIN * 2,
@@ -1951,17 +1934,19 @@ function drawHygienePdf(doc: jsPDF, params: {
   );
   cursorY += 8;
   doc.setFont("JournalUnicode", "bold");
-  doc.text(
-    "Список работников, отмеченных в журнале на день осмотра, должен соответствовать числу работников на этот день в смену",
-    PDF_SHEET_MARGIN,
-    cursorY
-  );
+  if (locale === "ru") {
+    doc.text(t("rosterReminder"), PDF_SHEET_MARGIN, cursorY);
+  } else {
+    const lines = doc.splitTextToSize(t("rosterReminder"), pageWidth - PDF_SHEET_MARGIN * 2) as string[];
+    doc.text(lines, PDF_SHEET_MARGIN, cursorY);
+    cursorY += (lines.length - 1) * 5;
+  }
 
   cursorY += 12;
   doc.setFont("JournalUnicode", "italic");
-  doc.text("Условные обозначения:", PDF_SHEET_MARGIN, cursorY);
+  doc.text(t("legend"), PDF_SHEET_MARGIN, cursorY);
   cursorY += 5;
-  renderWrappedTextBlock(doc, HYGIENE_REGISTER_LEGEND, PDF_SHEET_MARGIN, cursorY, pageWidth - PDF_SHEET_MARGIN * 2, 5);
+  renderWrappedTextBlock(doc, [t("legend0"), t("legend1"), t("legend2"), t("legend3"), t("legend4")], PDF_SHEET_MARGIN, cursorY, pageWidth - PDF_SHEET_MARGIN * 2, 5);
 }
 
 /** Минимум строк в бланке новой формы: пустые строки — под ручное заполнение. */
@@ -1973,6 +1958,8 @@ const HYGIENE_V2_MIN_PDF_ROWS = 20;
  * подписи сотрудника, результат осмотра и подпись ответственного.
  */
 function drawHygieneV2Pdf(doc: jsPDF, params: {
+  locale?: Locale;
+  title: string;
   organizationName: string;
   dateFrom: Date | string | null;
   dateTo: Date | string | null;
@@ -1980,11 +1967,14 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
   users: { id: string; name: string; role: string; email?: string | null; positionTitle?: string | null }[];
   entries: Array<{ employeeId: string; date: Date; data: unknown }>;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = specializedPdfCopy(locale);
   const pageWidth = doc.internal.pageSize.getWidth();
 
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: "Гигиенический журнал (сотрудники)",
+    journalLabel: t("hygieneTitle"),
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -1997,18 +1987,19 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
   const captionY = afterHeader(headerBottom, 66);
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  doc.text(HYGIENE_V2_FORM_CAPTION, pageWidth - PDF_SHEET_MARGIN, captionY, { align: "right" });
+  doc.text(t("caption"), pageWidth - PDF_SHEET_MARGIN, captionY, { align: "right" });
 
   const titleY = Math.max(legacyY(74), captionY + 8);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text("ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)", pageWidth / 2, titleY, { align: "center" });
+  const titleLines = doc.splitTextToSize(params.title ? params.title.toUpperCase() : t("hygieneHeading"), pageWidth - PDF_SHEET_MARGIN * 2);
+  doc.text(titleLines, pageWidth / 2, titleY, { align: "center" });
 
   const rows = buildHygieneV2Rows({
     employees: params.users.map((user) => ({
       id: user.id,
       name: user.name,
-      position: getHygieneUserPositionLabel(user),
+      position: specializedHygienePosition(user, locale),
     })),
     entries: params.entries.map((entry) => ({
       employeeId: entry.employeeId,
@@ -2018,17 +2009,17 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
     dateKeys: params.dateKeys,
   });
 
-  // Графы подписи — «да»/«нет» (см. hygieneV2PdfMark: запасные шрифты не
+  // Графы подписи — «да»/«нет» (см. specializedHygieneMark: запасные шрифты не
   // знают ✓/✗).
   const body: RowInput[] = rows.map((row) => [
     centerCell(String(row.n)),
     centerCell(row.date),
     { content: row.name, styles: { halign: "left", valign: "middle" } },
     { content: row.position, styles: { halign: "left", valign: "middle" } },
-    centerCell(hygieneV2PdfMark(row.temperature)),
-    centerCell(hygieneV2PdfMark(row.infection)),
-    centerCell(hygieneV2PdfMark(row.respiratorySkin)),
-    centerCell(row.result),
+    centerCell(specializedHygieneMark(row.temperature, locale)),
+    centerCell(specializedHygieneMark(row.infection, locale)),
+    centerCell(specializedHygieneMark(row.respiratorySkin, locale)),
+    centerCell(row.resultKind ? t(row.resultKind) : row.result),
     centerCell(row.verifier),
   ]);
   // Пустые строки под ручное заполнение — бланк должен быть пригоден и
@@ -2038,8 +2029,8 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
   }
 
   autoTable(doc, {
-    startY: titleY + 6,
-    head: [HYGIENE_V2_COLUMNS.map((column) => centerCell(column.label))],
+    startY: titleY + 6 + Math.max(0, titleLines.length - 1) * 14 * 1.15 / doc.internal.scaleFactor,
+    head: [HYGIENE_V2_COLUMNS.map((column) => centerCell(t(("column_" + column.key) as SpecializedPdfKey)))],
     body,
     theme: "grid",
     styles: {
@@ -2077,6 +2068,7 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
 }
 
 function drawHealthPdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   dateFrom: Date | string | null;
   dateTo: Date | string | null;
@@ -2088,13 +2080,18 @@ function drawHealthPdf(doc: jsPDF, params: {
   entryMap: Record<string, Record<string, unknown>>;
   printEmptyRows?: number;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = hygieneHealthPdfCopy(locale);
+  const title = hygieneHealthPdfTitle(params.title, "health_check", locale);
+  const month = params.dateFrom && params.dateTo ? hygieneHealthPdfMonth(params.dateFrom, params.dateTo, locale) : params.monthLabel;
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Экранный серый H1 над рамкой шапки в печать не идёт — название
   // журнала уже есть в шапке ХАССП и отдельным заголовком ниже.
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: "Журнал здоровья",
+    journalLabel: t("healthTitle"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -2104,11 +2101,11 @@ function drawHealthPdf(doc: jsPDF, params: {
   const healthTitleY = afterHeader(headerBottom, 70);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(params.title.toUpperCase(), pageWidth / 2, healthTitleY, { align: "center" });
+  doc.text(title.toUpperCase(), pageWidth / 2, healthTitleY, { align: "center" });
 
   autoTable(doc, {
     startY: healthTitleY + 6,
-    head: buildHealthHead(params.dateKeys, params.monthLabel),
+    head: buildHealthHead(params.dateKeys, month, locale),
     // Колонки выходных/праздников — серые, как на экране и в печати.
     didParseCell: makeDayColumnTintHook(params.dateKeys, 3),
     body: buildHealthBody(params),
@@ -2146,16 +2143,16 @@ function drawHealthPdf(doc: jsPDF, params: {
   // Начертание — как было (после таблицы — жирное заголовка), кегль 9.
   doc.setFontSize(9);
   const notesWidth = pageWidth - PDF_SHEET_MARGIN * 2;
-  const notesLines = HEALTH_REGISTER_NOTES.reduce(
+  const notesLines = [t("healthNote0"), t("healthNote1")].reduce(
     (count, note) => count + (doc.splitTextToSize(note, notesWidth) as string[]).length,
     0
   );
   // От первой строки примечаний до строки напоминания: строки по 5 мм + 8.
-  const notesY = placeTextBlock(doc, finalY + 10, notesLines * 5 + 8);
-  let cursorY = renderWrappedTextBlock(doc, HEALTH_REGISTER_NOTES, PDF_SHEET_MARGIN, notesY, notesWidth, 5);
+  const notesY = placeTextBlock(doc, finalY + 10, notesLines * 5 + 8 + (locale === "ru" ? 0 : (doc.splitTextToSize(t("healthReminder"), notesWidth) as string[]).length * 5));
+  let cursorY = renderWrappedTextBlock(doc, [t("healthNote0"), t("healthNote1")], PDF_SHEET_MARGIN, notesY, notesWidth, 5);
   cursorY += 8;
   doc.setFont("JournalUnicode", "bold");
-  doc.text(HEALTH_REGISTER_REMINDER, PDF_SHEET_MARGIN, cursorY);
+  doc.text(locale === "ru" ? t("healthReminder") : doc.splitTextToSize(t("healthReminder"), notesWidth), PDF_SHEET_MARGIN, cursorY);
 }
 
 /**
@@ -3424,18 +3421,27 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
 }
 
 function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeEquipmentMaintenanceConfig>;
+  users?: readonly PersonDisplayUser[];
 }) {
-  drawTitle(doc, params.title || EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE);
+  const locale = params.locale ?? "ru";
+  const t = personnelPdfCopy(locale);
+  const title = personnelPdfTitle(params.title, "maintenanceTitle", locale);
+  drawTitle(doc, title);
   // Штамп ХАССП, как на экране: раньше здесь была своя строка
   // «Организация — Начат — Окончен» без названия журнала и без «СТР.».
   const maintenanceHeaderBottom = drawClimateMetaTable(doc, {
+    locale,
+    journalLabel: journalNameOr(title),
+    repeatOnPages: locale !== "ru",
     organizationName: params.organizationName,
-    title: params.title || EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE,
+    title: title,
     dateFrom: params.dateFrom,
     dateTo: resolveFinishedDate(params.dateTo),
     marginX: PDF_SHEET_MARGIN,
@@ -3447,19 +3453,19 @@ function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
   doc.text(
-    "Тип профилактического обслуживания:  A = Ежемесячно   B = Ежегодно",
+    t("maintenanceLegend"),
     PDF_SHEET_MARGIN,
     maintenanceLegendY
   );
 
   autoTable(doc, {
     startY: maintenanceLegendY + 4,
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
     head: [[
-      "№",
-      "Оборудование / вид работ",
-      "Тип",
-      ...EQUIPMENT_MAINTENANCE_MONTH_KEYS.map((key) => EQUIPMENT_MAINTENANCE_MONTH_LABELS[key]),
+      t("maintenanceNumber"),
+      t("equipmentWork"),
+      t("type"),
+      ...EQUIPMENT_MAINTENANCE_MONTH_KEYS.map((key) => personnelMonth(key, locale)),
     ]],
     body:
       params.config.rows.flatMap((row, index) => [
@@ -3471,7 +3477,7 @@ function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
         ],
         [
           "",
-          "Факт",
+          t("actual"),
           "",
           ...EQUIPMENT_MAINTENANCE_MONTH_KEYS.map((key) => row.fact[key] || ""),
         ],
@@ -3508,25 +3514,33 @@ function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
     0
   );
   doc.text(
-    `Ответственный: ${[params.config.responsibleRole, params.config.responsibleEmployee].filter(Boolean).join(", ")}`,
+    t("responsible", { person: [personnelRole(personnelInjectedRole(params.config.responsibleRole, "responsibleRole", params.sourceConfig, params.config.responsibleEmployeeId, "head_chef", locale), params.users?.find(user => user.id === params.config.responsibleEmployeeId), locale), params.config.responsibleEmployee].filter(Boolean).join(", ") }),
     PDF_SHEET_MARGIN,
     finalY
   );
 }
 
 function drawStaffTrainingPdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeStaffTrainingConfig>;
+  users?: readonly PersonDisplayUser[];
 }) {
-  drawTitle(doc, params.title || STAFF_TRAINING_FULL_TITLE);
+  const locale = params.locale ?? "ru";
+  const t = personnelPdfCopy(locale);
+  const title = personnelPdfTitle(params.title, "staffTitle", locale);
+  drawTitle(doc, title);
   // Штамп ХАССП, как на экране: раньше здесь была своя строка
   // «Организация — Начат — Окончен» без названия журнала и без «СТР.».
   const trainingHeaderBottom = drawClimateMetaTable(doc, {
+    locale,
+    journalLabel: journalNameOr(title),
+    repeatOnPages: locale !== "ru",
     organizationName: params.organizationName,
-    title: params.title || STAFF_TRAINING_FULL_TITLE,
+    title: title,
     dateFrom: params.dateFrom,
     dateTo: resolveFinishedDate(params.dateTo),
     marginX: PDF_SHEET_MARGIN,
@@ -3534,49 +3548,49 @@ function drawStaffTrainingPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: afterHeader(trainingHeaderBottom, 30),
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
     // Полные экранные формулировки граф: «Сотрудник» / «Вид» / «Причина»
     // не говорили инспектору, что именно в колонке.
     head: [[
-      "Дата",
-      "Ф.И.О. инструктируемого",
-      "Профессия / должность инструктируемого",
-      "Тема инструктажа (обучения)",
-      "Вид инструктажа (первичный / повторный / внеплановый)",
-      "Причина проведения внепланового инструктажа",
-      "Ф.И.О. / должность инструктирующего",
-      "Результат аттестации после обучения (удовл. / не удовл.)",
+      t("date"),
+      t("trainee"),
+      t("traineePosition"),
+      t("trainingTopic"),
+      t("trainingType"),
+      t("unscheduledReason"),
+      t("instructor"),
+      t("attestation"),
     ]],
     body: (params.config.rows.length > 0
       ? params.config.rows
       : [{ date: "", employeeName: "", employeePosition: "", topic: "", trainingType: "", unscheduledReason: "", instructorName: "", attestationResult: "" }]
     ).map((row) => {
       const trainingTypeMap: Record<string, string> = {
-        primary: "Первичный",
-        repeated: "Повторный",
-        repeat: "Повторный",
-        unscheduled: "Внеплановый",
+        primary: t("primary"),
+        repeated: t("repeated"),
+        repeat: t("repeated"),
+        unscheduled: t("unscheduled"),
       };
       const topicMap: Record<string, string> = {
-        safety: "Охрана труда",
-        duties: "Должностные обязанности",
-        kkt: "ККТ",
-        sanitation: "Санитария и гигиена",
-        fire: "Пожарная безопасность",
+        safety: t("safety"),
+        duties: t("duties"),
+        kkt: t("kkt"),
+        sanitation: t("sanitation"),
+        fire: t("fire"),
       };
       const trainingType = row.trainingType
-        ? (trainingTypeMap[row.trainingType] || row.trainingType)
+        ? (Object.hasOwn(trainingTypeMap, row.trainingType) ? trainingTypeMap[row.trainingType] : row.trainingType)
         : "";
-      const topic = row.topic ? (topicMap[row.topic] || row.topic) : "";
+      const topic = row.topic ? (Object.hasOwn(topicMap, row.topic) ? topicMap[row.topic] : row.topic) : "";
       return [
         row.date || "",
         row.employeeName || "",
-        row.employeePosition || "",
+        personnelRole(row.employeePosition || "", params.users?.find(user => user.id === ("employeeId" in row ? row.employeeId : null)), locale),
         topic,
         trainingType,
         row.unscheduledReason || "",
         row.instructorName || "",
-        row.attestationResult === "passed" ? "удовл." : row.attestationResult === "failed" ? "не удовл." : "",
+        row.attestationResult === "passed" ? t("passed") : row.attestationResult === "failed" ? t("failed") : "",
       ];
     }),
     theme: "grid",
@@ -3733,23 +3747,60 @@ function formatTraceabilityDateRu(dateKey: string) {
  * 11 колонок эталона, тот же состав, что на экране.
  */
 function drawIncomingControlPdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   title: string;
+  titleIsDefault: boolean;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizeAcceptanceDocumentConfig>;
+  sourceConfig?: unknown;
   users: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const cfg = params.config;
+  const sourceRows =
+    params.sourceConfig && typeof params.sourceConfig === "object" && !Array.isArray(params.sourceConfig)
+      ? (params.sourceConfig as { rows?: unknown }).rows
+      : undefined;
+  const legacyGeneratedSummaryRows = new Set<number>();
+  if (Array.isArray(sourceRows)) {
+    const validSourceRows = sourceRows.filter(
+      (row): row is Record<string, unknown> => Boolean(row) && typeof row === "object" && !Array.isArray(row)
+    );
+    // The acceptance normalizer preserves the order of valid object rows.
+    // If the row count differs, positional provenance is not established.
+    if (validSourceRows.length === cfg.rows.length) {
+      const legacyIndicatorKeys = [
+        "transportCondition",
+        "packagingCompliance",
+        "organolepticResult",
+        "decision",
+        "acceptanceDecision",
+      ] as const;
+      validSourceRows.forEach((sourceRow, index) => {
+        const hasExplicitSummary = Object.prototype.hasOwnProperty.call(sourceRow, "documentCompliance");
+        const hasLegacyIndicator = legacyIndicatorKeys.some((key) =>
+          Object.prototype.hasOwnProperty.call(sourceRow, key)
+        );
+        if (!hasExplicitSummary && hasLegacyIndicator) {
+          legacyGeneratedSummaryRows.add(index);
+        }
+      });
+    }
+  }
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
+  const title = params.titleIsDefault ? t("incomingControl.title") : params.title;
   // В шапке — название журнала, как на экране: раньше сюда попадало
   // название документа («ПРОВЕРКА INCOMING_CONTROL»).
   const journalLabel = journalNameOr(
-    params.title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE
+    title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE
   ).toUpperCase();
 
-  drawTitle(doc, params.title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE);
+  drawTitle(doc, title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE);
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
     journalLabel,
     withPeriodicity: false,
@@ -3767,9 +3818,20 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
   // Опциональная 12-я колонка «Соответствие внешнего вида упаковки…»
   // (config.showPackagingCompliance, I1 аудита) — та же функция колонок,
   // что и на экране, поэтому печать и таблица не расходятся.
-  const incomingControlColumns = getIncomingControlColumns(
-    cfg.showPackagingCompliance
-  );
+  const incomingControlColumns = [
+    t("incomingControl.columns.deliveryDate"),
+    t("incomingControl.columns.productName"),
+    t("incomingControl.columns.shelfLifeDate"),
+    t("incomingControl.columns.manufacturerSupplier"),
+    t("incomingControl.columns.accompanyingDocs"),
+    t("incomingControl.columns.batchInfo"),
+    t("incomingControl.columns.productTemperature"),
+    t("incomingControl.columns.documentCompliance"),
+    ...(cfg.showPackagingCompliance ? [t("incomingControl.columns.packagingCompliance")] : []),
+    t("incomingControl.columns.acceptanceDecision"),
+    t("incomingControl.columns.correctiveActions"),
+    t("incomingControl.columns.responsible"),
+  ];
   // G-аудит: «Принять/Отклонить» в узкой колонке ломалось внутри слова
   // («От-клонить»). Ставим пробелы вокруг «/» — splitTextToSize рвёт по
   // пробелу, слова остаются целыми. Сам общий лейбл не трогаем (его
@@ -3779,8 +3841,31 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
   ];
 
   const userMap = new Map(params.users.map((u) => [u.id, u.name]));
-  const body: RowInput[] = cfg.rows.map((row) => {
+  const body: RowInput[] = cfg.rows.map((row, rowIndex) => {
     const values = getIncomingControlRowValues(row);
+    const legacySummary = legacyGeneratedSummaryRows.has(rowIndex)
+      ? t("incomingControl.legacyComplianceSummary", {
+          packaging: row.packagingCompliance === "non_compliant"
+            ? t("acceptance.status.nonCompliant")
+            : t("acceptance.status.compliant"),
+          transport: row.transportCondition === "unsatisfactory"
+            ? t("acceptance.status.unsatisfactory")
+            : t("acceptance.status.satisfactory"),
+          organoleptic: row.organolepticResult === "unsatisfactory"
+            ? t("acceptance.status.unsatisfactory")
+            : t("acceptance.status.satisfactory"),
+        })
+      : values.documentCompliance;
+    const decision = row.acceptanceDecision === "accept"
+      ? t("incomingControl.decision.accept")
+      : row.acceptanceDecision === "reject"
+        ? t("incomingControl.decision.reject")
+        : values.acceptanceDecision;
+    const packaging = row.packagingCompliance === "compliant"
+      ? t("incomingControl.packaging.compliant")
+      : row.packagingCompliance === "non_compliant"
+        ? t("incomingControl.packaging.nonCompliant")
+        : COMPLIANCE_LABELS[row.packagingCompliance];
     return [
       centerCell(values.deliveryDate),
       centerCell(values.productName),
@@ -3789,11 +3874,11 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
       centerCell(values.accompanyingDocs),
       centerCell(values.batchInfo),
       centerCell(values.productTemperature),
-      centerCell(values.documentCompliance),
+      centerCell(legacySummary),
       ...(cfg.showPackagingCompliance
-        ? [centerCell(COMPLIANCE_LABELS[row.packagingCompliance])]
+        ? [centerCell(packaging)]
         : []),
-      centerCell(values.acceptanceDecision),
+      centerCell(decision),
       centerCell(values.correctiveActions),
       centerCell(userMap.get(row.responsibleUserId) || ""),
     ] as CellDef[];
@@ -3831,21 +3916,31 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
 }
 
 function drawAcceptancePdf(doc: jsPDF, params: {
+  locale?: Locale;
+  templateCode: typeof ACCEPTANCE_DOCUMENT_TEMPLATE_CODES[number];
   organizationName: string;
   title: string;
+  titleIsDefault: boolean;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizeAcceptanceDocumentConfig>;
   users: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
+  const defaultTitle = params.templateCode === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE
+    ? t("acceptance.title.incomingProducts")
+    : t("acceptance.title.rawMaterials");
+  const title = params.titleIsDefault ? defaultTitle : params.title;
 
-  drawTitle(doc, params.title || getAcceptanceDocumentTitle(ACCEPTANCE_DOCUMENT_TEMPLATE_CODE));
+  drawTitle(doc, title || defaultTitle);
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
     journalLabel: journalNameOr(
-      params.title || "Журнал приемки и входного контроля продукции"
+      title || defaultTitle
     ).toUpperCase(),
     withPeriodicity: false,
     startedDate: params.dateFrom,
@@ -3855,18 +3950,18 @@ function drawAcceptancePdf(doc: jsPDF, params: {
   const acceptanceTitleY = afterHeader(headerBottom, 62);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
-  doc.text((params.title || "Журнал приемки и входного контроля продукции").toUpperCase(), centerX, acceptanceTitleY, { align: "center" });
+  doc.text(title.toUpperCase(), centerX, acceptanceTitleY, { align: "center" });
 
   const headRow1: CellDef[] = [
-    { content: "Дата, время\nпоступления\nпродукции,\nтовара", styles: { halign: "center", valign: "middle" } },
-    { content: "Наименование\nпродукции", styles: { halign: "center", valign: "middle" } },
-    { content: "Производитель/\nпоставщик", styles: { halign: "center", valign: "middle" } },
-    { content: "Условия\nтранспорти\nровки", styles: { halign: "center", valign: "middle" } },
-    { content: "Соответствие\nупаковки,\nмаркировки,\nтоваросопроводи\nтельной\nдокументации", styles: { halign: "center", valign: "middle" } },
-    { content: "Результаты\nорганолепти\nческой\nоценки\nдоброка\nчественности", styles: { halign: "center", valign: "middle" } },
-    { content: "Предельный\nсрок\nреализации\n(дата, час)", styles: { halign: "center", valign: "middle" } },
-    { content: "Примечания", styles: { halign: "center", valign: "middle" } },
-    { content: "Ответственный", styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.deliveryDate"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.productName"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.manufacturerSupplier"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.transport"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.packagingCompliance"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.organoleptic"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.expiry"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.notes"), styles: { halign: "center", valign: "middle" } },
+    { content: t("acceptance.columns.responsible"), styles: { halign: "center", valign: "middle" } },
   ];
 
   const head: RowInput[] = [headRow1];
@@ -3881,9 +3976,15 @@ function drawAcceptancePdf(doc: jsPDF, params: {
     const expiryDateStr = formatAcceptanceDateRu(row.expiryDate || "");
     const expiryTime = (row as Record<string, string>).expiryHour ? `\n${(row as Record<string, string>).expiryHour}:${(row as Record<string, string>).expiryMinute || "00"}` : "";
 
-    const transport = (row as Record<string, string>).transportCondition === "unsatisfactory" ? "Не удовл." : "Удовл.";
-    const packaging = ((row as Record<string, string>).packagingCompliance === "non_compliant" || (row as Record<string, string>).packagingCompliance === "no") ? "Не соотв." : "Соответствует";
-    const organoleptic = ((row as Record<string, string>).organolepticResult === "unsatisfactory" || (row as Record<string, string>).decision === "reject") ? "Не удовл." : "Удовл.";
+    const transport = (row as Record<string, string>).transportCondition === "unsatisfactory"
+      ? t("acceptance.status.unsatisfactory")
+      : t("acceptance.status.satisfactory");
+    const packaging = ((row as Record<string, string>).packagingCompliance === "non_compliant" || (row as Record<string, string>).packagingCompliance === "no")
+      ? t("acceptance.status.nonCompliant")
+      : t("acceptance.status.compliant");
+    const organoleptic = ((row as Record<string, string>).organolepticResult === "unsatisfactory" || (row as Record<string, string>).decision === "reject")
+      ? t("acceptance.status.unsatisfactory")
+      : t("acceptance.status.satisfactory");
 
     const cells: CellDef[] = [
       centerCell(deliveryDateStr + deliveryTime),
@@ -3938,12 +4039,16 @@ function drawAcceptancePdf(doc: jsPDF, params: {
 }
 
 function drawPpeIssuancePdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizePpeIssuanceConfig>;
   users: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = personnelPdfCopy(locale);
+  const title = personnelPdfTitle(params.title, "ppeTitle", locale);
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -3952,10 +4057,12 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
       ? formatPpeIssuanceDate(params.dateFrom.toISOString().slice(0, 10))
       : formatPpeIssuanceDate(String(params.dateFrom).slice(0, 10));
 
-  drawTitle(doc, params.title || PPE_ISSUANCE_DOCUMENT_TITLE);
+  drawTitle(doc, title);
   const headerBottom = drawJournalHeader(doc, {
+    locale,
+    repeatOnPages: locale !== "ru",
     organizationName: params.organizationName,
-    journalLabel: "ЖУРНАЛ УЧЕТА ВЫДАЧИ СИЗ",
+    journalLabel: t("ppeHeader"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -3964,17 +4071,17 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
   const ppeTitleY = afterHeader(headerBottom, 62);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
-  doc.text("ЖУРНАЛ УЧЕТА ВЫДАЧИ СИЗ", centerX, ppeTitleY, { align: "center" });
+  doc.text(t("ppeHeader"), centerX, ppeTitleY, { align: "center" });
 
   const head: RowInput[] = [[
-    { content: "Дата выдачи СИЗ", styles: { halign: "center" as const, valign: "middle" as const } },
-    { content: "Количество масок, выданных на 1 рабочую неделю", styles: { halign: "center" as const, valign: "middle" as const } },
-    ...(cfg.showGloves ? [{ content: "Количество пар перчаток, выданных на 1 рабочую неделю", styles: { halign: "center" as const, valign: "middle" as const } }] : []),
-    ...(cfg.showShoes ? [{ content: "Количество пар обуви, выданных на 1 рабочую неделю", styles: { halign: "center" as const, valign: "middle" as const } }] : []),
-    ...(cfg.showClothing ? [{ content: "Количество комплектов одежды, выданных на 1 рабочую неделю", styles: { halign: "center" as const, valign: "middle" as const } }] : []),
-    ...(cfg.showCaps ? [{ content: "Количество шапочек, выданных на 1 рабочую неделю", styles: { halign: "center" as const, valign: "middle" as const } }] : []),
-    { content: "Должность и ФИО лица, получившего СИЗ", styles: { halign: "center" as const, valign: "middle" as const } },
-    { content: "ФИО лица, выдавшего СИЗ", styles: { halign: "center" as const, valign: "middle" as const } },
+    { content: t("issueDate"), styles: { halign: "center" as const, valign: "middle" as const } },
+    { content: t("masks"), styles: { halign: "center" as const, valign: "middle" as const } },
+    ...(cfg.showGloves ? [{ content: t("gloves"), styles: { halign: "center" as const, valign: "middle" as const } }] : []),
+    ...(cfg.showShoes ? [{ content: t("shoes"), styles: { halign: "center" as const, valign: "middle" as const } }] : []),
+    ...(cfg.showClothing ? [{ content: t("clothing"), styles: { halign: "center" as const, valign: "middle" as const } }] : []),
+    ...(cfg.showCaps ? [{ content: t("caps"), styles: { halign: "center" as const, valign: "middle" as const } }] : []),
+    { content: t("recipient"), styles: { halign: "center" as const, valign: "middle" as const } },
+    { content: t("issuer"), styles: { halign: "center" as const, valign: "middle" as const } },
   ]];
 
   const body: RowInput[] = cfg.rows.map((row) => [
@@ -3984,7 +4091,7 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
     ...(cfg.showShoes ? [centerCell(String(row.shoePairsCount || ""))] : []),
     ...(cfg.showClothing ? [centerCell(String(row.clothingSetsCount || ""))] : []),
     ...(cfg.showCaps ? [centerCell(String(row.capCount || ""))] : []),
-    centerCell(getPpeIssuanceRecipientLabel(row, params.users)),
+    centerCell(personnelPpeRecipient(row, params.users, locale)),
     centerCell(getPpeIssuanceIssuerLabel(row, params.users)),
   ]);
 
@@ -3996,7 +4103,7 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: ppeTitleY + 8,
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
     head,
     body,
     theme: "grid",
@@ -4023,26 +4130,40 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
 }
 
 function drawProductWriteoffPdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   title: string;
+  titleIsDefault: boolean;
+  documentNameIsDefault: boolean;
   dateFrom: Date;
   config: ReturnType<typeof normalizeProductWriteoffConfig>;
 }) {
-  drawTitle(doc, params.title);
+  const locale = params.locale ?? "ru";
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const title = params.titleIsDefault ? t("productWriteoff.title") : params.title;
+  const documentName = params.documentNameIsDefault ? t("productWriteoff.title") : params.config.documentName || title;
+  drawTitle(doc, title);
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
     // В шапке — название ЖУРНАЛА, а не документа: раньше сюда уезжало
     // «АКТ ЗАБРАКОВКИ №5» / имя документа заглавными.
-    journalLabel: journalNameOr(
-      params.config.documentName || params.title || PRODUCT_WRITEOFF_DOCUMENT_TITLE
-    ),
+    journalLabel: journalNameOr(documentName || title || PRODUCT_WRITEOFF_DOCUMENT_TITLE),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
   });
 
   const writeoffTitleY = afterHeader(headerBottom, 72);
-  const dateLabel = formatProductWriteoffDateLong(params.config.documentDate || params.dateFrom);
+  const documentDate = params.config.documentDate || params.dateFrom;
+  const date = typeof documentDate === "string" ? new Date(documentDate) : documentDate;
+  const dateLabel = Number.isNaN(date.getTime())
+    ? ""
+    : new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : locale === "uz" ? "uz-Latn-UZ" : "en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(date);
   const pageWidth = doc.internal.pageSize.getWidth();
   // Текст акта — между полями листа, как шапка и таблица; «АКТ» — по центру
   // листа (раньше x = 105 — середина КНИЖНОГО листа, а бланк альбомный,
@@ -4051,13 +4172,13 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
   const textWidth = pageWidth - PDF_SHEET_MARGIN * 2;
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(16);
-  doc.text("АКТ", pageWidth / 2, writeoffTitleY, { align: "center" });
-  doc.text(`№ ${params.config.actNumber || "1"} от ${dateLabel}`, pageWidth / 2, writeoffTitleY + 8, { align: "center" });
+  doc.text(t("productWriteoff.actHeading"), pageWidth / 2, writeoffTitleY, { align: "center" });
+  doc.text(t("productWriteoff.actNumberDate", { actNumber: params.config.actNumber || "1", dateLabel }), pageWidth / 2, writeoffTitleY + 8, { align: "center" });
 
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(11);
   let cursorY = writeoffTitleY + 20;
-  doc.text("Комиссия в составе:", textLeft, cursorY);
+  doc.text(t("productWriteoff.commissionHeader"), textLeft, cursorY);
   cursorY += 7;
   if (params.config.commissionMembers.length === 0) {
     doc.text("________________", textLeft + 6, cursorY);
@@ -4070,7 +4191,7 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
   }
 
   const introLines = doc.splitTextToSize(
-    `Составила настоящий АКТ о том, что ${dateLabel} на предприятии выявлены ТМЦ с несоответствиями по качеству и (или) безопасности согласно списку ниже.`,
+    t("productWriteoff.intro", { dateLabel }),
     textWidth
   ) as string[];
   cursorY += 4;
@@ -4080,7 +4201,7 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
   });
 
   const supplierLines = doc.splitTextToSize(
-    `Указанные ТМЦ были выработаны ${params.config.supplierName || "________________"} и поставлены...`,
+    t("productWriteoff.supplierStatement", { supplier: params.config.supplierName || "________________" }),
     textWidth
   ) as string[];
   supplierLines.forEach((line) => {
@@ -4089,7 +4210,7 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
   });
 
   cursorY += 3;
-  doc.text("Комиссия постановила выполнить в отношении выявленных ТМЦ следующие действия:", textLeft, cursorY);
+  doc.text(t("productWriteoff.decisionIntro"), textLeft, cursorY);
 
   autoTable(doc, {
     startY: cursorY + 5,
@@ -4111,12 +4232,12 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
       halign: "center",
     },
     head: [[
-      "№ п/п",
-      "Наименование ТМЦ",
-      "№ партии, дата выработки",
-      "Количество (кг, шт)",
-      "Описание несоответствия",
-      "Действия с ТМЦ",
+      t("productWriteoff.columns.number"),
+      t("productWriteoff.columns.productName"),
+      t("productWriteoff.columns.batch"),
+      t("productWriteoff.columns.quantity"),
+      t("productWriteoff.columns.discrepancy"),
+      t("productWriteoff.columns.action"),
     ]],
     body: (
       params.config.rows.length > 0
@@ -4156,7 +4277,7 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
     8 + (signers.length - 1) * 8 + 1,
     8 + 1
   );
-  doc.text("Подписи членов комиссии:", textLeft, finalY);
+  doc.text(t("productWriteoff.signatures"), textLeft, finalY);
   let signY = finalY + 8;
   signers.forEach((member) => {
     signY = placeTextBlock(doc, signY, 1);
@@ -4393,60 +4514,57 @@ function drawGlassListPdf(doc: jsPDF, params: {
   dateFrom: Date;
   config: ReturnType<typeof normalizeGlassListConfig>;
   responsibleName: string;
-  locale: Locale;
+  locale?: Locale;
+  sourceConfig?: unknown;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = specializedPdfCopy(locale);
   const pageWidth = doc.internal.pageSize.getWidth();
   const config = params.config;
   const documentDate = config.documentDate || params.dateFrom.toISOString().slice(0, 10);
-  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[params.locale];
-  const glass = messages.glassInventory;
-  const date = new Intl.DateTimeFormat(FORMAT_LOCALES[params.locale], {
+  const date = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
     day: "2-digit",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(`${documentDate}T00:00:00Z`));
-  const responsibleTitle = !config.responsibleTitle || config.responsibleTitle === "Управляющий"
-    ? glass.defaultResponsibleTitle
-    : config.responsibleTitle;
-  const documentTitle = params.title === GLASS_LIST_DOCUMENT_TITLE
-    ? messages.journals.names.glass_items_list
-    : params.title;
+  const responsibleTitle = specializedDefault(config.responsibleTitle, params.sourceConfig, "responsibleTitle", "manager", locale);
+  const documentTitle = specializedPdfTitle(params.title, "glass", locale);
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(22);
-  drawSheetTitleLine(doc, documentTitle || messages.journals.names.glass_items_list);
+  drawSheetTitleLine(doc, documentTitle);
 
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: glass.documentHeading,
+    journalLabel: t("glassHeading"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
-    locale: params.locale,
+    locale: locale,
   });
   const approveY = Math.max(legacyY(72), headerBottom + 16);
   const approveRight = pageWidth - PDF_SHEET_MARGIN;
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  doc.text(glass.approvalHeading, approveRight, approveY, { align: "right" });
+  doc.text(t("approved"), approveRight, approveY, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(11);
   doc.text(responsibleTitle, approveRight, approveY + 8, { align: "right" });
-  doc.text(`____________________ ${params.responsibleName}`, approveRight, approveY + 16, { align: "right" });
-  doc.text(params.locale === "ru" ? `«${date}» г.` : date, approveRight, approveY + 24, { align: "right" });
+  doc.text(t("signature", { name: params.responsibleName }), approveRight, approveY + 16, { align: "right" });
+  doc.text(t("approvalDate", { date }), approveRight, approveY + 24, { align: "right" });
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(glass.documentHeading, pageWidth / 2, approveY + 34, { align: "center" });
+  doc.text(t("glassHeading"), pageWidth / 2, approveY + 34, { align: "center" });
 
   autoTable(doc, {
     startY: approveY + 42,
     margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
-    head: [["", glass.tableLocationHeader, glass.tableItemHeader, glass.tableQuantityHeader]],
+    head: [["", t("glassLocation"), t("glassItem"), t("glassQuantity")]],
     body: (config.rows.length > 0 ? config.rows : Array.from({ length: 3 }, (_, index) => ({ id: `empty-${index}`, location: "", itemName: "", quantity: "" }))).map(
-      (row) => ["", row.location || config.location || "", row.itemName || "", row.quantity || ""]
+      (row) => ["", row.location || specializedDefault(config.location, params.sourceConfig, "location", "production", locale) || "", row.itemName || "", row.quantity || ""]
     ),
     theme: "grid",
     styles: {
@@ -4814,6 +4932,8 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
 }
 
 function drawTrainingPlanPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string | null;
@@ -4822,6 +4942,9 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   /** Ростер организации: должность и ФИО в «УТВЕРЖДАЮ» — из карточки человека. */
   users?: readonly PersonDisplayUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = personnelPdfCopy(locale);
+  const title = personnelPdfTitle(params.title, "planTitle", locale);
   const cfg = params.config;
   // «УТВЕРЖДАЮ»: должность и ФИО одного человека, как на экране.
   // Сохранённые строки — только если человека нет в ростере.
@@ -4830,10 +4953,12 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   const centerX = pageWidth / 2;
   const headerRight = pageWidth - PDF_SHEET_MARGIN;
 
-  drawTitle(doc, params.title || "План обучения");
+  drawTitle(doc, title);
   const headerBottom = drawJournalHeader(doc, {
+    locale,
+    repeatOnPages: locale !== "ru",
     organizationName: params.organizationName,
-    journalLabel: "ПЛАН ОБУЧЕНИЯ ПЕРСОНАЛА",
+    journalLabel: t("planHeader"),
     withPeriodicity: false,
     startedDate: params.dateFrom ?? null,
     finishedDate: params.dateTo ?? null,
@@ -4842,13 +4967,13 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   const approvalY = afterHeader(headerBottom, 60);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
-  doc.text("УТВЕРЖДАЮ", headerRight, approvalY, { align: "right" });
+  doc.text(t("approve"), headerRight, approvalY, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
+  doc.text(personnelRole(personnelInjectedRole(approver.title, "approveRole", params.sourceConfig, cfg.approveEmployeeId, "manager", locale), params.users?.find(user => user.id === cfg.approveEmployeeId), locale), headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
   doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
-  const approvalDateLabel = formatApprovalDateLong(cfg.documentDate, cfg.year);
+  const approvalDateLabel = personnelApprovalDate(cfg.documentDate, cfg.year, formatApprovalDateLong(cfg.documentDate, cfg.year), locale);
   doc.text(
     approvalDateLabel,
     approvalDateCenterX(doc, approvalDateLabel, headerRight),
@@ -4859,29 +4984,29 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
   const trainingPlanTitleY = Math.max(legacyY(90), approvalY + 30);
-  doc.text(`ПЛАН ОБУЧЕНИЯ ПЕРСОНАЛА НА ${cfg.year} Г.`, centerX, trainingPlanTitleY, { align: "center" });
+  doc.text(t("planYear", { year: String(cfg.year) }), centerX, trainingPlanTitleY, { align: "center" });
 
   const topics = cfg.topics;
   const head: RowInput[] = [
     [
-      { content: "№ п/п", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("number"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
       {
-        content: "Должностная единица,\nподлежащая обучению",
+        content: t("trainingPosition"),
         rowSpan: 2,
         styles: { halign: "center", valign: "middle" },
       },
       {
-        content: "Требуется обучение по теме:",
+        content: t("requiredTopic"),
         colSpan: topics.length,
         styles: { halign: "center", valign: "middle" },
       },
     ],
-    topics.map((topic) => ({ content: topic.name, styles: { halign: "center", valign: "middle" } })),
+    topics.map((topic) => ({ content: personnelPlanTopic(topic, params.sourceConfig, locale), styles: { halign: "center", valign: "middle" } })),
   ];
 
   const body: RowInput[] = cfg.rows.map((row, index) => [
     centerCell(String(index + 1)),
-    centerCell(row.positionName),
+    centerCell(personnelPlanPosition(row, params.sourceConfig, locale)),
     ...topics.map((topic) => {
       const cell = row.cells[topic.id];
       if (!cell || !cell.required) return centerCell("");
@@ -4897,7 +5022,7 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: trainingPlanTitleY + 6,
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
     head,
     body,
     theme: "grid",
@@ -5109,6 +5234,8 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
 }
 
 function drawTrackedPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  templateCode: string;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
@@ -5117,10 +5244,14 @@ function drawTrackedPdf(doc: jsPDF, params: {
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
   users: PdfPositionUser[];
 }) {
-  drawTitle(doc, params.title);
+  const locale = params.locale ?? "ru";
+  const t = trackedUvPdfCopy(locale);
+  const title = trackedPdfTitle(params.title, params.templateCode, locale);
+  drawTitle(doc, title);
   const metaBottom = drawClimateMetaTable(doc, {
+    locale,
     organizationName: params.organizationName,
-    title: params.title,
+    title,
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
   });
@@ -5129,17 +5260,19 @@ function drawTrackedPdf(doc: jsPDF, params: {
   const userMap = Object.fromEntries(params.users.map((user) => [user.id, user.name]));
 
   const head: RowInput[] = [[
-    centerCell("Дата"),
-    centerCell("Ответственный"),
+    centerCell(t("date")),
+    centerCell(t("responsible")),
     ...params.fields.map((field) => centerCell(field.label)),
   ]];
 
   const body: RowInput[] = params.entries.map((entry) => [
     centerCell(formatPdfDate(entry.date)),
-    centerCell(userMap[entry.employeeId] || ""),
-    ...params.fields.map((field) =>
-      centerCell(getTrackedFieldValue(field, entry.data[field.key], { users: params.users }))
-    ),
+    centerCell(Object.hasOwn(userMap, entry.employeeId) ? userMap[entry.employeeId] : ""),
+    ...params.fields.map((field) => {
+      const value = entry.data[field.key];
+      const original = getTrackedFieldValue(field, value, { users: params.users });
+      return centerCell(field.type === "boolean" ? trackedPdfBoolean(value, original, locale) : original);
+    }),
   ]);
 
   autoTable(doc, {
@@ -5166,6 +5299,7 @@ function drawTrackedPdf(doc: jsPDF, params: {
 }
 
 function drawPestControlPdf(doc: jsPDF, params: {
+    locale?: Locale;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
@@ -5173,6 +5307,8 @@ function drawPestControlPdf(doc: jsPDF, params: {
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
   users: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = sanitationPdfCopy(locale);
   const pageWidth = doc.internal.pageSize.getWidth();
   const startDate =
     params.dateFrom instanceof Date
@@ -5186,16 +5322,19 @@ function drawPestControlPdf(doc: jsPDF, params: {
         : "";
   const pestUserById = new Map(params.users.map((user) => [user.id, user]));
 
-  drawTitle(doc, params.title || PEST_CONTROL_DOCUMENT_TITLE);
+  const title = sanitationTitle(params.title, "pestTitle", locale);
+  drawTitle(doc, title);
 
   // В шапке — официальное название ЖУРНАЛА, как у остальных бланков.
   // Раньше сюда уезжало название документа, и инспектор видел
   // «ZZ5 PEST_CONTROL» вместо «Журнал учёта дезинсекции и дератизации».
-  const pestJournalLabel = journalNameOr(PEST_CONTROL_DOCUMENT_TITLE);
+  const pestJournalLabel = journalNameOr(t("pestTitle"));
   // Общая шапка ХАССП — той же ширины, что таблица (между полями листа;
   // раньше поля были 24 мм). Даты — ДД-ММ-ГГГГ; дата окончания печатается
   // ВМЕСТО прочерка.
   const headerBottom = drawJournalHeader(doc, {
+    locale,
+    repeatOnPages: locale !== "ru",
     organizationName: params.organizationName,
     journalLabel: pestJournalLabel,
     withPeriodicity: false,
@@ -5211,7 +5350,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
   // Название документа — отдельной строкой и только если оно отличается
   // от названия журнала (у бланка «ZZ5 pest_control» это заголовок
   // документа, а не журнала).
-  const pestDocumentName = (params.title || "").trim();
+  const pestDocumentName = title.trim();
   if (pestDocumentName && pestDocumentName !== pestJournalLabel) {
     doc.setFont("JournalUnicode", "normal");
     doc.setFontSize(10);
@@ -5246,7 +5385,8 @@ function drawPestControlPdf(doc: jsPDF, params: {
         pestUserById.get(entry.employeeId);
       const acceptedEmployeeName = acceptedUser?.name || "";
       // Должность принявшего — из его карточки, не копия из записи.
-      const acceptedTitle = getRowEmployeeTitle(acceptedUser, normalized.acceptedRole);
+      const originalTitle = getRowEmployeeTitle(acceptedUser, normalized.acceptedRole);
+      const acceptedTitle = originalTitle === acceptedEmployeeName ? originalTitle : sanitationRole(originalTitle, acceptedUser, locale);
 
       return [
         "",
@@ -5275,16 +5415,16 @@ function drawPestControlPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: pestTitleY + 8,
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
     head: [[
       "",
-      "Дата и время\nпроведения",
-      "Мероприятие\n(вид, место)",
-      "Площадь и\n(или) объем",
-      "Средство обработки",
-      "Примечание",
-      "Кем проведено",
-      "ФИО принявшего\nработы",
+      t("dateTime"),
+      t("event"),
+      t("areaVolume"),
+      t("treatmentProduct"),
+      t("note"),
+      t("performedBy"),
+      t("acceptedBy"),
     ]],
     body: bodyRows,
     theme: "grid",
@@ -5317,6 +5457,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
 }
 
 function drawEquipmentCleaningPdf(doc: jsPDF, params: {
+    locale?: Locale;
   organizationName: string;
   title: string;
   dateFrom: Date;
@@ -5331,16 +5472,20 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
   /** Для должности контролёра из его карточки (не копии из строки). */
   users?: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = sanitationPdfCopy(locale);
   const marginX = PDF_SHEET_MARGIN;
   const currentFont = doc.getFont().fontName || "helvetica";
 
-  drawTitle(doc, params.title || EQUIPMENT_CLEANING_DOCUMENT_TITLE);
+  drawTitle(doc, sanitationTitle(params.title, "equipmentTitle", locale));
 
   // Общая шапка ХАССП (раньше — своя таблица-штамп без строки
   // периодичности) той же ширины, что таблица журнала.
   const headerBottom = drawJournalHeader(doc, {
+    locale,
+    repeatOnPages: locale !== "ru",
     organizationName: params.organizationName,
-    journalLabel: "ЖУРНАЛ МОЙКИ И ДЕЗИНФЕКЦИИ ОБОРУДОВАНИЯ",
+    journalLabel: t("equipmentHeader"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -5350,7 +5495,7 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
   // По центру листа (раньше x = 105 — середина КНИЖНОГО листа, а бланк альбомный).
-  doc.text("ЖУРНАЛ МОЙКИ И ДЕЗИНФЕКЦИИ ОБОРУДОВАНИЯ", doc.internal.pageSize.getWidth() / 2, titleY, {
+  doc.text(t("equipmentHeader"), doc.internal.pageSize.getWidth() / 2, titleY, {
     align: "center",
   });
   doc.setFont(currentFont, "normal");
@@ -5380,13 +5525,10 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
         : data.disinfectantConcentration,
       params.fieldVariant === "rinse_temperature"
         ? formatNumberShort(data.rinseTemperature) || "—"
-        : getEquipmentCleaningResultLabel(data.rinseResult),
+        : data.rinseResult === "compliant" ? t("compliant") : data.rinseResult === "non_compliant" ? t("nonCompliant") : "",
       data.washerName,
       [
-        getRowEmployeeTitle(
-          params.users?.find((user) => user.id === data.controllerUserId),
-          data.controllerPosition
-        ),
+        sanitationRole(getRowEmployeeTitle(params.users?.find((user) => user.id === data.controllerUserId), data.controllerPosition), params.users?.find((user) => user.id === data.controllerUserId), locale),
         data.controllerName,
       ]
         .filter(Boolean)
@@ -5396,7 +5538,7 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: titleY + 6,
-    margin: { left: marginX, right: marginX },
+    margin: { left: marginX, right: marginX, ...(locale !== "ru" ? { top: continuationContentTop() } : {}) },
     theme: "grid",
     tableLineColor: [0, 0, 0],
     tableLineWidth: 0.2,
@@ -5411,29 +5553,33 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
       fontSize: 9,
     },
     head: [[
-      "Дата и время мойки",
-      "Наименование оборудования",
-      "Наименование моющего раствора",
-      "Концентрация моющего раствора, %",
-      "Наименование дезинфицирующего раствора",
-      "Концентрация дезинфицирующего раствора, %",
+      t("washDate"),
+      t("equipmentName"),
+      t("detergentName"),
+      t("detergentConcentration"),
+      t("disinfectantSolution"),
+      t("solutionConcentration"),
       params.fieldVariant === "rinse_temperature"
-        ? "Ополаскивание, °C"
-        : "Полнота смываемости дез. ср-ва с оборудования и инвентаря",
-      "Мойщик (ФИО)",
-      "Контролирующее лицо (должность, ФИО)",
+        ? t("rinseTemperature")
+        : t("rinseCompleteness"),
+      t("washer"),
+      t("controller"),
     ]],
     body: body.length > 0 ? body : ensurePlainRows(9),
   });
 }
 
 function drawDisinfectantPdf(doc: jsPDF, params: {
+    locale?: Locale;
+    users?: PdfPositionUser[];
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeDisinfectantConfig>;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = sanitationPdfCopy(locale);
   const cfg = params.config;
   const currentFont = doc.getFont().fontName || "helvetica";
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -5447,14 +5593,14 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
   const orgY = journalSheetTopBaseline(doc);
   doc.text(params.organizationName, pageWidth / 2, orgY, { align: "center" });
   doc.setFontSize(12);
-  doc.text(params.title || DISINFECTANT_DOCUMENT_TITLE, pageWidth / 2, orgY + 8, {
+  doc.text(sanitationTitle(params.title, "disinfectantTitle", locale), pageWidth / 2, orgY + 8, {
     align: "center",
   });
   doc.setFont(currentFont, "normal");
   doc.setFontSize(9);
-  doc.text(`Период: ${dateFromLabel} - ${dateToLabel}`, PDF_SHEET_MARGIN, orgY + 16);
+  doc.text(t("periodSentence", { from: dateFromLabel, to: dateToLabel }), PDF_SHEET_MARGIN, orgY + 16);
   doc.text(
-    `Ответственный: ${cfg.responsibleRole}${cfg.responsibleEmployee ? `, ${cfg.responsibleEmployee}` : ""}`,
+    t("responsibleSentence", { person: `${sanitationRole(cfg.responsibleRole, params.users?.find(user => user.id === cfg.responsibleEmployeeId), locale)}${cfg.responsibleEmployee ? `, ${cfg.responsibleEmployee}` : ""}` }),
     PDF_SHEET_MARGIN,
     orgY + 22
   );
@@ -5480,25 +5626,25 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
     },
     // Колонка «Расход на кв.м» есть на экране — в печати её не было.
     head: [[
-      "Подразделение / объект",
-      "Площадь / емкость",
-      "Вид обработки",
-      "Кратность в месяц",
-      "Дез. средство",
-      "Концентрация, %",
-      "Расход раствора на кв.м, л",
-      "Раствор на обработку",
-      "Потребность на обработку",
-      "Потребность в месяц",
-      "Потребность в год",
+      t("subdivision"),
+      t("areaCapacity"),
+      t("treatmentType"),
+      t("frequencyMonth"),
+      t("disinfectantShort"),
+      t("concentration"),
+      t("solutionSqm"),
+      t("solutionTreatment"),
+      t("needTreatment"),
+      t("needMonth"),
+      t("needYear"),
     ]],
     body:
       cfg.subdivisions.length > 0
         ? [
             ...cfg.subdivisions.map((row) => [
               row.name || "—",
-              row.byCapacity ? "На емкость" : row.area ? formatDisinfectantNumber(row.area, 2) : "—",
-              row.treatmentType === "general" ? "Генеральная" : "Текущая",
+              row.byCapacity ? t("byCapacity") : row.area ? formatDisinfectantNumber(row.area, 2) : "—",
+              row.treatmentType === "general" ? t("general") : t("current"),
               String(row.frequencyPerMonth || 0),
               row.disinfectantName || "—",
               formatDisinfectantNumber(row.concentration, 3) || "—",
@@ -5511,7 +5657,7 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
             // Строка итогов — как на экране («Общая потребность дез. средства»).
             [
               {
-                content: "Общая потребность дез. средства",
+                content: t("totalNeed"),
                 colSpan: 8,
                 styles: { halign: "right" as const, fontStyle: "bold" as const },
               },
@@ -5562,11 +5708,11 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     head: [[
-      "Дата получения",
-      "Наименование дез. средства",
-      "Количество",
-      "Срок годности",
-      "Ответственный",
+      t("receiptDate"),
+      t("disinfectantName"),
+      t("quantity"),
+      t("expiry"),
+      t("responsible"),
     ]],
     body:
       cfg.receipts.length > 0
@@ -5576,21 +5722,19 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
               row.date ? formatRuDateDash(row.date) : "—",
               row.disinfectantName || "—",
               // Ноль на экране пуст — в печати был «0 кг».
-              formatQuantityWithUnit(row.quantity, row.unit),
+              sanitationQuantity(row.quantity, row.unit, locale),
               row.expiryDate ? formatRuDateDash(row.expiryDate) : "—",
-              [row.responsibleRole, row.responsibleEmployee].filter(Boolean).join(", ") || "—",
+              [sanitationRole(row.responsibleRole, params.users?.find(user => user.id === row.responsibleEmployeeId), locale), row.responsibleEmployee].filter(Boolean).join(", ") || "—",
             ]),
             // «Итого» по единицам — как на экране.
             [
               {
-                content: "Итого:",
+                content: t("total"),
                 colSpan: 2,
                 styles: { halign: "right" as const, fontStyle: "bold" as const },
               },
               {
-                content: sumDisinfectantQuantities(
-                  cfg.receipts.map((row) => ({ quantity: row.quantity, unit: row.unit }))
-                ),
+                content: sanitationQuantityTotal(cfg.receipts.map((row) => ({ quantity: row.quantity, unit: row.unit })), locale),
                 styles: { fontStyle: "bold" as const },
               },
               { content: "", colSpan: 2 },
@@ -5620,12 +5764,12 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     head: [[
-      "Период",
-      "Наименование дез. средства",
-      "Получено",
-      "Израсходовано",
-      "Остаток",
-      "Ответственный",
+      t("period"),
+      t("disinfectantName"),
+      t("received"),
+      t("consumed"),
+      t("remainder"),
+      t("responsible"),
     ]],
     body:
       cfg.consumptions.length > 0
@@ -5637,21 +5781,25 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
               .join(" - ") || "—",
             row.disinfectantName || "—",
             // Ноль на экране пуст — в печати был «0 кг».
-            formatQuantityWithUnit(row.totalReceived, row.totalReceivedUnit),
-            formatQuantityWithUnit(row.totalConsumed, row.totalConsumedUnit),
-            formatQuantityWithUnit(row.remainder, row.remainderUnit),
-            [row.responsibleRole, row.responsibleEmployee].filter(Boolean).join(", ") || "—",
+            sanitationQuantity(row.totalReceived, row.totalReceivedUnit, locale),
+            sanitationQuantity(row.totalConsumed, row.totalConsumedUnit, locale),
+            sanitationQuantity(row.remainder, row.remainderUnit, locale),
+            [sanitationRole(row.responsibleRole, params.users?.find(user => user.id === row.responsibleEmployeeId), locale), row.responsibleEmployee].filter(Boolean).join(", ") || "—",
           ])
         : [["—", "—", "—", "—", "—", "—"]],
   });
 }
 
 function drawTraceabilityPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizeTraceabilityDocumentConfig>;
 }) {
+  const locale = params.locale ?? "ru";
+  const t = auditPdfCopy(locale);
   const cfg = params.config;
   const showShock = cfg.showShockTempField;
   const dateFromStr =
@@ -5659,10 +5807,11 @@ function drawTraceabilityPdf(doc: jsPDF, params: {
       ? formatTraceabilityDateRu(params.dateFrom.toISOString().slice(0, 10))
       : formatTraceabilityDateRu(String(params.dateFrom).slice(0, 10));
 
-  drawTitle(doc, cfg.documentTitle || params.title);
+  drawTitle(doc, auditTraceTitle(cfg.documentTitle, params.title, params.sourceConfig, locale));
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: "ЖУРНАЛ ПРОСЛЕЖИВАЕМОСТИ ПРОДУКЦИИ",
+    journalLabel: t("traceHeader"),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -5672,22 +5821,22 @@ function drawTraceabilityPdf(doc: jsPDF, params: {
   const traceTitleY = afterHeader(headerBottom, 62);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  doc.text("ЖУРНАЛ ПРОСЛЕЖИВАЕМОСТИ ПРОДУКЦИИ", pageWidth / 2, traceTitleY, { align: "center" });
+  doc.text(t("traceHeader"), pageWidth / 2, traceTitleY, { align: "center" });
 
   const head: RowInput[] = [
     [
-      { content: "Дата", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
-      { content: "Поступило в цех сырья", colSpan: 3, styles: { halign: "center", valign: "middle" } },
-      { content: "Выпущено цехом", colSpan: showShock ? 3 : 2, styles: { halign: "center", valign: "middle" } },
-      { content: "ФИО ответственного", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("date"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("incoming"), colSpan: 3, styles: { halign: "center", valign: "middle" } },
+      { content: t("outgoing"), colSpan: showShock ? 3 : 2, styles: { halign: "center", valign: "middle" } },
+      { content: t("responsibleName"), rowSpan: 2, styles: { halign: "center", valign: "middle" } },
     ],
     [
-      centerCell("Наименование сырья"),
-      centerCell("Номер партии ПФ\nДата фасовки"),
-      centerCell("Кол-во\nшт./кг."),
-      centerCell("Наименование ПФ"),
-      centerCell("Кол-во фасовок\nшт./кг."),
-      ...(showShock ? [centerCell("T °C продукта\nпосле шоковой\nзаморозки")] : []),
+      centerCell(t("rawMaterial")),
+      centerCell(t("batchPacking")),
+      centerCell(t("quantity")),
+      centerCell(t("product")),
+      centerCell(t("packQuantity")),
+      ...(showShock ? [centerCell(t("shock"))] : []),
     ],
   ];
 
@@ -5751,87 +5900,26 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   config: ReturnType<typeof normalizeUvRuntimeDocumentConfig>;
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
   users: PdfPositionUser[];
-  locale: Locale;
+  locale?: Locale;
+  sourceConfig?: unknown;
 }) {
-  const copy = {
-    ru: {
-      title: "Журнал учета работы УФ бактерицидной установки",
-      fullTitle: "Журнал учета работы ультрафиолетовой бактерицидной установки",
-      heading: "БАКТЕРИЦИДНАЯ УСТАНОВКА №",
-      area: "(наименование цеха / участка применения)",
-      spec: "Спецификация ультрафиолетовой бактерицидной установки",
-      object: "Объект обеззараживания (воздух или поверхность, или то и другое)",
-      lampHours: "Ресурс рабочего времени (срок замены отработавших ламп), часов",
-      microorganism: "Вид микроорганизма (санитарно-показательный или иной)",
-      commissioning: "Дата ввода установки в эксплуатацию",
-      radiation: "Режим облучения (непрерывный или повторно-кратковременный)",
-      interval: "Минимальный интервал между сеансами (для повторно-кратковременной)",
-      condition: "Условия обеззараживания (в присутствии или отсутствии людей)",
-      frequency: "Частота контроля работы установки (частота включений)",
-      monthly: "Суммарное количество отработанных часов бактерицидной установкой по месяцам",
-      monthYear: "Месяц, год", hours: "Количество часов", remaining: "Остаточное количество часов",
-      number: "№", date: "Дата", on: "Время ВКЛ", off: "Время ВЫКЛ", total: "Итого продолжительность работы, минут", responsible: "ФИО ответственного лица",
-    },
-    en: {
-      title: "UV germicidal unit operating hours journal", fullTitle: "UV germicidal unit operating hours journal",
-      heading: "BACTERICIDAL UNIT NO. ", area: "(name of production area or section where it is used)",
-      spec: "Ultraviolet bactericidal unit specification", object: "Disinfection target (air, surface, or both)",
-      lampHours: "Lamp operating life (replace after this many hours)", microorganism: "Microorganism type (sanitary indicator or other)",
-      commissioning: "Installation commissioning date", radiation: "Irradiation mode (continuous or intermittent)",
-      interval: "Minimum interval between sessions (for intermittent mode)", condition: "Disinfection conditions (with or without people present)",
-      frequency: "Unit operating check frequency (switch-on frequency)", monthly: "Total operating hours of the bactericidal unit by month",
-      monthYear: "Month, year", hours: "Hours worked", remaining: "Operating hours remaining", number: "No.", date: "Date",
-      on: "ON time", off: "OFF time", total: "Total operating time, minutes", responsible: "Responsible person's full name",
-    },
-    uz: {
-      title: "Bakteritsid UV qurilmasining ishlash vaqtini qayd etish jurnali", fullTitle: "Bakteritsid UV qurilmasining ishlash vaqtini qayd etish jurnali",
-      heading: "BAKTERITSID QURILMA № ", area: "(ishlatiladigan sex yoki bo‘lim nomi)",
-      spec: "Ultrabinafsha bakteritsid qurilma texnik tavsifi", object: "Zararsizlantirish obyekti (havo, sirt yoki ikkalasi)",
-      lampHours: "Lampa ishlash muddati (shu soatdan keyin almashtiriladi)", microorganism: "Mikroorganizm turi (sanitariya ko‘rsatkichi yoki boshqa)",
-      commissioning: "Qurilmani foydalanishga topshirish sanasi", radiation: "Nurlantirish rejimi (uzluksiz yoki uzlukli)",
-      interval: "Seanslar orasidagi minimal interval (uzlukli rejim uchun)", condition: "Zararsizlantirish sharoiti (odamlar bor yoki yo‘qligida)",
-      frequency: "Qurilma ishini nazorat qilish davriyligi (yoqishlar soni)", monthly: "Bakteritsid qurilmaning oylar bo‘yicha jami ishlagan soatlari",
-      monthYear: "Oy, yil", hours: "Ishlangan soatlar", remaining: "Qolgan ishlash soatlari", number: "№", date: "Sana",
-      on: "Yoqish vaqti", off: "O‘chirish vaqti", total: "Jami ishlash vaqti, daqiqa", responsible: "Mas’ul xodimning F.I.Sh.",
-    },
-  }[params.locale];
-  const dateText = (value: Date | string) => new Intl.DateTimeFormat(FORMAT_LOCALES[params.locale], {
+  const locale = params.locale ?? "ru";
+  const t = trackedUvPdfCopy(locale);
+  const dateText = (value: Date | string) => new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
     year: "numeric", month: "2-digit", day: "2-digit", timeZone: "UTC",
   }).format(value instanceof Date ? value : new Date(`${String(value).slice(0, 10)}T00:00:00Z`));
-  const monthText = (value: string) => new Intl.DateTimeFormat(FORMAT_LOCALES[params.locale], {
+  const monthText = (value: string) => new Intl.DateTimeFormat(FORMAT_LOCALES[locale], {
     month: "long", year: "numeric", timeZone: "UTC",
   }).format(new Date(`${value}-01T00:00:00Z`));
-  const valueText = (value: string, map: Record<string, string>) => map[value] ?? value;
-  const objectLabel = (value: string) => valueText(value, {
-    "воздух": params.locale === "en" ? "Air" : params.locale === "uz" ? "Havo" : "воздух",
-    "поверхность": params.locale === "en" ? "Surface" : params.locale === "uz" ? "Sirt" : "поверхность",
-    "воздух и поверхность": params.locale === "en" ? "Air and surface" : params.locale === "uz" ? "Havo va sirt" : "воздух и поверхность",
-  });
-  const radiationLabel = (value: string) => valueText(value, {
-    "непрерывный": params.locale === "en" ? "Continuous" : params.locale === "uz" ? "Uzluksiz" : "непрерывный",
-    "повторно-кратковременный": params.locale === "en" ? "Intermittent" : params.locale === "uz" ? "Uzlukli" : "повторно-кратковременный",
-  });
-  const conditionLabel = (value: string) => valueText(value, {
-    "в присутствии людей": params.locale === "en" ? "With people present" : params.locale === "uz" ? "Odamlar borligida" : "в присутствии людей",
-    "в отсутствии людей": params.locale === "en" ? "With no people present" : params.locale === "uz" ? "Odamlar yo‘qligida" : "в отсутствии людей",
-  });
-  const frequencyLabel = (value: string) => {
-    const match = /^(\d+)\s*раз\(а\) в (смену|день)$/.exec(spec.controlFrequency);
-    if (!match) return value;
-    const n = Number(match[1]);
-    if (params.locale === "ru") return value;
-    if (params.locale === "en") return `${n} time${n === 1 ? "" : "s"} per ${match[2] === "смену" ? "shift" : "day"}`;
-    return `${n} marta / ${match[2] === "смену" ? "smena" : "kun"}`;
-  };
-  drawTitle(doc, copy.title);
+  drawTitle(doc, params.title || t("uv_title"));
   const metaBottom = drawClimateMetaTable(doc, {
-    locale: params.locale,
+    locale: locale,
     organizationName: params.organizationName,
     // В шапке ХАССП — НАЗВАНИЕ ЖУРНАЛА, как на экране. Раньше
     // туда шёл document.title («Бактерицидная установка №1 | Журнал
     // учета работы») — номер установки живёт отдельной строкой ниже.
-    title: copy.fullTitle,
-    journalLabel: copy.fullTitle,
+    title: t("uv_fullTitle"),
+    journalLabel: t("uv_fullTitle"),
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
     marginX: PDF_SHEET_MARGIN,
@@ -5847,13 +5935,13 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
   doc.text(
-    `${copy.heading}${params.config.lampNumber}`,
+    t("uv_heading", { number: params.config.lampNumber }),
     uvPageWidth / 2,
     uvSubtitleY,
     { align: "center" }
   );
   doc.setFontSize(10);
-  doc.text(copy.title, uvPageWidth / 2, uvSubtitleY + 6, {
+  doc.text(t("uv_title"), uvPageWidth / 2, uvSubtitleY + 6, {
     align: "center",
   });
   doc.setFont("JournalUnicode", "normal");
@@ -5874,7 +5962,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   );
   doc.setFontSize(7.5);
   doc.text(
-    copy.area,
+    t("uv_area"),
     uvPageWidth / 2,
     uvSubtitleY + 17,
     { align: "center" }
@@ -5883,34 +5971,34 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   // Specification table
   const spec = params.config.spec;
   const specHead: RowInput[] = [[{
-    content: copy.spec,
+    content: t("uv_spec"),
     colSpan: 4,
     styles: { halign: "center", fontStyle: "bold" },
   }]];
   const specBody: RowInput[] = [
     [
-      { content: copy.object, styles: { fontStyle: "bold" } },
-      centerCell(objectLabel(getDisinfectionObjectLabel(spec))),
-      { content: copy.lampHours, styles: { fontStyle: "bold" } },
+      { content: t("uv_object"), styles: { fontStyle: "bold" } },
+      centerCell(uvPdfObject(spec, locale)),
+      { content: t("uv_lampHours"), styles: { fontStyle: "bold" } },
       centerCell(String(spec.lampLifetimeHours)),
     ],
     [
-      { content: copy.microorganism, styles: { fontStyle: "bold" } },
-      centerCell(spec.microorganismType),
-      { content: copy.commissioning, styles: { fontStyle: "bold" } },
+      { content: t("uv_microorganism"), styles: { fontStyle: "bold" } },
+      centerCell(uvPdfFreeText(spec.microorganismType, params.sourceConfig, "microorganismType", locale)),
+      { content: t("uv_commissioning"), styles: { fontStyle: "bold" } },
       centerCell(spec.commissioningDate ? dateText(spec.commissioningDate) : "—"),
     ],
     [
-      { content: copy.radiation, styles: { fontStyle: "bold" } },
-      centerCell(radiationLabel(getRadiationModeLabel(spec.radiationMode))),
-      { content: copy.interval, styles: { fontStyle: "bold" } },
+      { content: t("uv_radiation"), styles: { fontStyle: "bold" } },
+      centerCell(t(spec.radiationMode === "continuous" ? "radiationContinuous" : "radiationIntermittent")),
+      { content: t("uv_interval"), styles: { fontStyle: "bold" } },
       centerCell(spec.minIntervalBetweenSessions || "—"),
     ],
     [
-      { content: copy.condition, styles: { fontStyle: "bold" } },
-      centerCell(conditionLabel(getDisinfectionConditionLabel(spec.disinfectionCondition))),
-      { content: copy.frequency, styles: { fontStyle: "bold" } },
-      centerCell(frequencyLabel(formatControlFrequencyLabel(spec.controlFrequency))),
+      { content: t("uv_condition"), styles: { fontStyle: "bold" } },
+      centerCell(t(spec.disinfectionCondition === "with_people" ? "conditionWith" : "conditionWithout")),
+      { content: t("uv_frequency"), styles: { fontStyle: "bold" } },
+      centerCell(uvPdfFreeText(spec.controlFrequency, params.sourceConfig, "controlFrequency", locale)),
     ],
   ];
 
@@ -5959,7 +6047,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   const uvHalf = Math.max(uvMonthlyMinRows, Math.ceil(monthly.length / 2));
   const uvLeft = monthly.slice(0, uvHalf);
   const uvRight = monthly.slice(uvHalf);
-  const formatUvHours = (value: number) => new Intl.NumberFormat(FORMAT_LOCALES[params.locale], { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  const formatUvHours = (value: number) => new Intl.NumberFormat(FORMAT_LOCALES[locale], { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
   const monthlyBody: RowInput[] = Array.from({ length: uvHalf }, (_, index) => {
     const left = uvLeft[index];
     const right = uvRight[index];
@@ -5977,17 +6065,17 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
     startY: specEndY,
     head: [
       [{
-        content: copy.monthly,
+        content: t("uv_monthly"),
         colSpan: 6,
         styles: { halign: "center" as const, fontStyle: "bold" as const },
       }],
       [
-        { content: copy.monthYear, styles: { halign: "left" as const } },
-        centerCell(copy.hours),
-        centerCell(copy.remaining),
-        { content: copy.monthYear, styles: { halign: "left" as const } },
-        centerCell(copy.hours),
-        centerCell(copy.remaining),
+        { content: t("uv_monthYear"), styles: { halign: "left" as const } },
+        centerCell(t("uv_hours")),
+        centerCell(t("uv_remaining")),
+        { content: t("uv_monthYear"), styles: { halign: "left" as const } },
+        centerCell(t("uv_hours")),
+        centerCell(t("uv_remaining")),
       ],
     ],
     body: monthlyBody,
@@ -6020,12 +6108,12 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
 
 
   const head: RowInput[] = [[
-    centerCell(copy.number),
-    centerCell(copy.date),
-    centerCell(copy.on),
-    centerCell(copy.off),
-    centerCell(copy.total),
-    centerCell(copy.responsible),
+    centerCell(t("uv_number")),
+    centerCell(t("uv_date")),
+    centerCell(t("uv_on")),
+    centerCell(t("uv_off")),
+    centerCell(t("uv_total")),
+    centerCell(t("uv_responsible")),
   ]];
 
   const body: RowInput[] = rows.map((entry, index) => {
@@ -6040,7 +6128,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
       centerCell(sessions.map((session) => session.startTime || "—").join("\n")),
       centerCell(sessions.map((session) => session.endTime || "—").join("\n")),
       centerCell(duration !== null ? String(duration) : ""),
-      centerCell(userMap[entry.employeeId] || ""),
+      centerCell(Object.hasOwn(userMap, entry.employeeId) ? userMap[entry.employeeId] : ""),
     ];
   });
 
@@ -6250,6 +6338,8 @@ function drawRegisterPdf(doc: jsPDF, params: {
 }
 
 function drawAuditPlanPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
@@ -6258,13 +6348,17 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
   /** Ростер организации: должность и ФИО в «УТВЕРЖДАЮ» — из карточки человека. */
   users?: readonly PersonDisplayUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = auditPdfCopy(locale);
   // «УТВЕРЖДАЮ»: должность и ФИО одного человека, как на экране.
   // Сохранённые строки — только если человека нет в ростере.
   const approver = resolveApprover(params.config, params.users);
-  drawTitle(doc, params.title);
+  const title = auditPdfTitle(params.title, "planTitle", locale);
+  drawTitle(doc, title);
   const metaBottom = drawClimateMetaTable(doc, {
+    locale,
     organizationName: params.organizationName,
-    title: params.title,
+    title,
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
   });
@@ -6274,10 +6368,10 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
   let approveBottom = metaBottom;
   {
     const lines = [
-      "УТВЕРЖДАЮ",
-      approver.title,
+      t("approved"),
+      auditApproverRole(approver.title, params.config, params.sourceConfig, params.users, locale),
       approver.name,
-      getAuditPlanPrintDateLabel(params.config.documentDate),
+      auditApprovalDate(params.config.documentDate, locale),
     ].filter((line) => Boolean(line && line.trim()));
     const right = doc.internal.pageSize.getWidth() - PDF_SHEET_MARGIN;
     let y = afterHeader(metaBottom, 66) - 4;
@@ -6293,17 +6387,17 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
   }
 
   const head: RowInput[] = [[
-    centerCell("№"),
-    centerCell("Требование"),
-    centerCell("Контроль"),
-    ...params.config.columns.map((column) => centerCell(`${column.title}\n${column.auditorName}`)),
+    centerCell(t("number")),
+    centerCell(t("requirement")),
+    centerCell(t("control")),
+    ...params.config.columns.map((column) => centerCell(`${auditPlanValue("columns", column, params.sourceConfig, locale)}\n${column.auditorName}`)),
   ]];
 
   const body: RowInput[] = [];
   params.config.sections.forEach((section) => {
     body.push([
       {
-        content: section.title,
+        content: auditPlanValue("sections", section, params.sourceConfig, locale),
         colSpan: 3 + Math.max(params.config.columns.length, 1),
         styles: { fontStyle: "bold", halign: "left", fillColor: [245, 245, 245] },
       },
@@ -6318,8 +6412,8 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
           params.config.rows.findIndex((item) => item.id === row.id) + 1;
         body.push([
           centerCell(String(rowNumber)),
-          centerCell(row.text),
-          centerCell(row.checked ? "Да" : ""),
+          centerCell(auditPlanValue("rows", row, params.sourceConfig, locale)),
+          centerCell(row.checked ? t("yes") : ""),
           ...params.config.columns.map((column) => centerCell(row.values[column.id] || "")),
         ]);
       });
@@ -6350,24 +6444,30 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
 }
 
 function drawAuditProtocolPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeAuditProtocolConfig>;
 }) {
-  drawTitle(doc, params.title);
+  const locale = params.locale ?? "ru";
+  const t = auditPdfCopy(locale);
+  const title = auditPdfTitle(params.title, "protocolTitle", locale);
+  drawTitle(doc, title);
   const metaBottom = drawClimateMetaTable(doc, {
+    locale,
     organizationName: params.organizationName,
-    title: params.title,
+    title,
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
   });
 
   const body: RowInput[] = [];
-  params.config.sections.forEach((section) => {
+  params.config.sections.forEach((section, sectionIndex) => {
     body.push([
-      { content: section.title, colSpan: 5, styles: { fontStyle: "bold", halign: "left", fillColor: [245, 245, 245] } },
+      { content: auditProtocolSection(section.title, sectionIndex, params.sourceConfig, locale), colSpan: 5, styles: { fontStyle: "bold", halign: "left", fillColor: [245, 245, 245] } },
     ]);
     params.config.rows
       .filter((row) => row.sectionId === section.id)
@@ -6375,8 +6475,8 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
         body.push([
           centerCell(String(index + 1)),
           centerCell(row.text),
-          centerCell(row.result === "yes" ? "Да" : ""),
-          centerCell(row.result === "no" ? "Нет" : ""),
+          centerCell(row.result === "yes" ? t("yes") : ""),
+          centerCell(row.result === "no" ? t("no") : ""),
           centerCell(row.note || ""),
         ]);
       });
@@ -6389,10 +6489,10 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
   const protocolMetaBottom = renderWrappedTextBlock(
     doc,
     [
-      `Основание проверки: ${params.config.basisTitle || "—"}`,
-      `Проверяемый объект: ${params.config.auditedObject || "—"}`,
+      t("protocolBasis", { value: auditDefault(params.config.basisTitle, params.sourceConfig, "basisTitle", "basisDefault", locale) || "—" }),
+      t("protocolObject", { value: auditDefault(params.config.auditedObject, params.sourceConfig, "auditedObject", "objectDefault", locale) || "—" }),
       ...(params.config.sourcePlanTitle
-        ? [`Составлен по плану: ${params.config.sourcePlanTitle}`]
+        ? [t("sourcePlan", { value: params.config.sourcePlanTitle })]
         : []),
     ],
     PDF_SHEET_MARGIN,
@@ -6403,7 +6503,7 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: protocolMetaBottom + 4,
-    head: [[centerCell("№"), centerCell("Требование"), centerCell("Да"), centerCell("Нет"), centerCell("Примечание")]],
+    head: [[centerCell(t("number")), centerCell(t("requirement")), centerCell(t("yes")), centerCell(t("no")), centerCell(t("note"))]],
     body: body.length > 0 ? body : [[{ content: "", colSpan: 5 }]],
     theme: "grid",
     styles: {
@@ -6433,8 +6533,10 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
   drawTextLinesInFrame(
     doc,
     params.config.signatures.map(
-      (signature) =>
-        `${signature.role || "Подпись"}: ${signature.name}${signature.signedAt ? `, ${formatRuDateDash(signature.signedAt)}` : ""}`
+      (signature, index) => {
+        const role = auditSignatureValue(signature.role, index, "leadAuditor", params.sourceConfig, locale) || t("signature");
+        return signature.signedAt ? t("datedSignatureLine", { role, name: signature.name, date: formatRuDateDash(signature.signedAt) }) : t("signatureLine", { role, name: signature.name });
+      }
     ),
     PDF_SHEET_MARGIN,
     ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 66) + 10,
@@ -6443,16 +6545,22 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
 }
 
 function drawAuditReportPdf(doc: jsPDF, params: {
+  locale?: Locale;
+  sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeAuditReportConfig>;
 }) {
-  drawTitle(doc, params.title);
+  const locale = params.locale ?? "ru";
+  const t = auditPdfCopy(locale);
+  const title = auditPdfTitle(params.title, "reportTitle", locale);
+  drawTitle(doc, title);
   const metaBottom = drawClimateMetaTable(doc, {
+    locale,
     organizationName: params.organizationName,
-    title: params.title,
+    title,
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
   });
@@ -6462,14 +6570,14 @@ function drawAuditReportPdf(doc: jsPDF, params: {
   cursorY = renderWrappedTextBlock(
     doc,
     [
-      `Основание: ${params.config.basisTitle || "—"}`,
-      `Объект аудита: ${params.config.auditedObject || "—"}`,
-      `Аудиторы: ${(params.config.auditors || []).join(", ") || "—"}`,
+      t("reportBasis", { value: auditDefault(params.config.basisTitle, params.sourceConfig, "basisTitle", "basisDefault", locale) || "—" }),
+      t("reportObject", { value: auditDefault(params.config.auditedObject, params.sourceConfig, "auditedObject", "objectDefault", locale) || "—" }),
+      t("auditors", { value: (params.config.auditors || []).join(", ") || "—" }),
       ...(params.config.sourceProtocolTitle
-        ? [`По протоколу: ${params.config.sourceProtocolTitle}`]
+        ? [t("sourceProtocol", { value: params.config.sourceProtocolTitle })]
         : []),
-      `Итог: ${params.config.summary || "—"}`,
-      `Рекомендации: ${params.config.recommendations || "—"}`,
+      t("summary", { value: params.config.summary || "—" }),
+      t("recommendations", { value: params.config.recommendations || "—" }),
     ],
     PDF_SHEET_MARGIN,
     cursorY,
@@ -6480,13 +6588,13 @@ function drawAuditReportPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: cursorY,
     head: [[
-      centerCell("№"),
-      centerCell("Несоответствие"),
-      centerCell("Исправление"),
-      centerCell("Корректирующие действия"),
-      centerCell("Ответственный"),
-      centerCell("Срок план"),
-      centerCell("Срок факт"),
+      centerCell(t("number")),
+      centerCell(t("nonConformity")),
+      centerCell(t("correction")),
+      centerCell(t("corrective")),
+      centerCell(t("responsible")),
+      centerCell(t("duePlan")),
+      centerCell(t("dueActual")),
     ]],
     body: ensurePdfBodyRows(
       params.config.findings.map((finding, index) => [
@@ -6523,8 +6631,11 @@ function drawAuditReportPdf(doc: jsPDF, params: {
   drawTextLinesInFrame(
     doc,
     params.config.signatures.map(
-      (signature) =>
-        `${signature.role || "Подпись"}: ${[signature.position, signature.name].filter(Boolean).join(", ")}${signature.signedAt ? `, ${formatRuDateDash(signature.signedAt)}` : ""}`
+      (signature, index) => {
+        const role = auditSignatureValue(signature.role, index, "auditor", params.sourceConfig, locale) || t("signature");
+        const name = [auditSignatureValue(signature.position, index, "leadAuditor", params.sourceConfig, locale), signature.name].filter(Boolean).join(", ");
+        return signature.signedAt ? t("datedSignatureLine", { role, name, date: formatRuDateDash(signature.signedAt) }) : t("signatureLine", { role, name });
+      }
     ),
     PDF_SHEET_MARGIN,
     ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || cursorY) + 10,
@@ -6533,16 +6644,22 @@ function drawAuditReportPdf(doc: jsPDF, params: {
 }
 
 function drawMetalImpurityPdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   title: string;
+  titleIsDefault: boolean;
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeMetalImpurityConfig>;
 }) {
-  drawTitle(doc, params.title);
+  const locale = params.locale ?? "ru";
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const title = params.titleIsDefault ? t("metalImpurity.title") : params.title;
+  drawTitle(doc, title);
   const metaBottom = drawClimateMetaTable(doc, {
+    locale,
     organizationName: params.organizationName,
-    title: params.title,
+    title,
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
   });
@@ -6550,7 +6667,7 @@ function drawMetalImpurityPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: afterHeader(metaBottom, 66),
     body: [[
-      { content: "Ответственный", styles: { fontStyle: "bold" } },
+      { content: t("metalImpurity.responsible"), styles: { fontStyle: "bold" } },
       { content: `${params.config.responsiblePosition}: ${params.config.responsibleEmployee}`, colSpan: 8 },
     ]],
     theme: "grid",
@@ -6561,15 +6678,15 @@ function drawMetalImpurityPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: (((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY) || 66) + 4,
     head: [[
-      centerCell("№"),
-      centerCell("Дата"),
-      centerCell("Материал"),
-      centerCell("Поставщик"),
-      centerCell("Количество, кг"),
-      centerCell("Металлопримеси, г"),
-      centerCell("г/т"),
-      centerCell("Характеристика"),
-      centerCell("Ответственный"),
+      centerCell(t("metalImpurity.columns.number")),
+      centerCell(t("metalImpurity.columns.date")),
+      centerCell(t("metalImpurity.columns.material")),
+      centerCell(t("metalImpurity.columns.supplier")),
+      centerCell(t("metalImpurity.columns.quantityKg")),
+      centerCell(t("metalImpurity.columns.impurityGrams")),
+      centerCell(t("metalImpurity.columns.perTonne")),
+      centerCell(t("metalImpurity.columns.characteristic")),
+      centerCell(t("metalImpurity.responsible")),
     ]],
     body: ensurePdfBodyRows(
       params.config.rows.map((row, index) => [
@@ -6628,21 +6745,27 @@ function renderWrappedTextBlock(
 }
 
 function drawIntensiveCoolingPdf(doc: jsPDF, params: {
+  locale?: Locale;
   organizationName: string;
   title: string;
+  titleIsDefault: boolean;
   dateFrom: Date | string;
   config: IntensiveCoolingConfig;
   users: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const pageWidth = doc.internal.pageSize.getWidth();
+  const title = params.titleIsDefault ? t("intensiveCooling.title") : params.title;
 
-  drawTitle(doc, params.title);
+  drawTitle(doc, title);
 
   // Общая шапка ХАССП той же ширины, что таблица (поля 10 мм): раньше
   // своя шапка была уже таблицы, а «СТР. 1 ИЗ 1» наезжала на рамку.
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: INTENSIVE_COOLING_DOCUMENT_TITLE,
+    journalLabel: title,
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -6652,19 +6775,19 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(13);
-  doc.text(INTENSIVE_COOLING_DOCUMENT_TITLE.toUpperCase(), pageWidth / 2, coolingTitleY, {
+  doc.text(title.toUpperCase(), pageWidth / 2, coolingTitleY, {
     align: "center",
   });
 
   const head: RowInput[] = [[
     centerCell(""),
-    centerCell("Дата и время изготовления блюда"),
-    centerCell("Наименование блюда"),
-    centerCell("Температура в начале процесса охлаждения"),
-    centerCell("Температура через 1 час"),
-    centerCell("Корректирующие действия"),
-    centerCell("Комментарий"),
-    centerCell("Лицо, проводившее контроль интенсивного охлаждения (должность, ФИО)"),
+    centerCell(t("intensiveCooling.columns.productionDate")),
+    centerCell(t("intensiveCooling.columns.dishName")),
+    centerCell(t("intensiveCooling.columns.startTemperature")),
+    centerCell(t("intensiveCooling.columns.endTemperature")),
+    centerCell(t("intensiveCooling.columns.correctiveActions")),
+    centerCell(t("intensiveCooling.columns.comment")),
+    centerCell(t("intensiveCooling.columns.responsible")),
   ]];
 
   const body: RowInput[] =
@@ -6992,6 +7115,8 @@ function drawFryerOilPdf(doc: jsPDF, params: {
 }
 
 function drawGlassControlPdf(doc: jsPDF, params: {
+    locale?: Locale;
+    sourceConfig?: unknown;
   organizationName: string;
   title: string;
   dateFrom: Date;
@@ -7002,16 +7127,19 @@ function drawGlassControlPdf(doc: jsPDF, params: {
   entries: Array<{ date: Date; employeeId: string; data: Record<string, unknown> }>;
   users: PdfPositionUser[];
 }) {
+  const locale = params.locale ?? "ru";
+  const t = sanitationPdfCopy(locale);
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  drawTitle(doc, params.title);
+  drawTitle(doc, sanitationTitle(params.title, "glassTitle", locale));
   const headerBottom = drawJournalHeader(doc, {
+    locale,
     organizationName: params.organizationName,
-    journalLabel: GLASS_CONTROL_PAGE_TITLE,
+    journalLabel: t("glassTitle"),
     withPeriodicity: false,
     // Экран печатает в шапке «Частоту контроля» документа, а не общий
     // текст периодичности шаблона — печать обязана совпадать.
-    periodicityText: params.config.controlFrequency,
+    periodicityText: sanitationDefault(params.config.controlFrequency, params.sourceConfig, "controlFrequency", "glassFrequency", locale),
     // Раньше «Начат/Окончен» печатались абсолютными координатами прямо
     // поверх правой ячейки шапки — теперь это её штатная часть.
     startedDate: params.dateFrom,
@@ -7041,13 +7169,13 @@ function drawGlassControlPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: afterHeader(headerBottom, 50),
     head: [[
-      "Дата",
-      "Да",
-      "Нет",
-      "Наименование",
-      "Кол-во",
-      "Информация о повреждениях / замены",
-      "Фамилия ответственного лица",
+      t("date"),
+      t("yes"),
+      t("no"),
+      t("name"),
+      t("count"),
+      t("damage"),
+      t("responsibleSurname"),
     ]],
     body: bodyRows,
     theme: "grid",
@@ -7452,7 +7580,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   // неё ячейку); учёт нарисованного — для страниц без шапки (QR встаёт в
   // правый верхний угол, только если там пусто).
   const qr = input.qr?.url ? input.qr : null;
-  if (qr) prepareJournalQr(doc, qr.url);
+  if (qr) prepareJournalQr(doc, qr.url, qr.locale ?? input.locale ?? "ru");
   const inkTracker = qr ? trackPdfInk(doc) : null;
   // Нижнее поле таблиц и текста бланка: поле листа + полоса под «СТР. X
   // ИЗ N» (или под подвал партнёра в две строки — она выше).
@@ -7550,6 +7678,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
 
   if (templateCode === "hygiene" && readHygieneFormVersion(document.config) === 2) {
     drawHygieneV2Pdf(doc, {
+      locale: input.locale ?? "ru",
+      title: document.title,
       organizationName,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
@@ -7559,10 +7689,11 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === "hygiene") {
     drawHygienePdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
-      title: document.title || getHygieneDocumentTitle(),
+      title: document.title,
       monthLabel,
       dateKeys,
       users,
@@ -7573,10 +7704,11 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === "health_check") {
     drawHealthPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
-      title: document.title || getHealthDocumentTitle(),
+      title: document.title,
       monthLabel,
       dateKeys,
       users,
@@ -7691,8 +7823,10 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === MED_BOOK_TEMPLATE_CODE) {
     drawMedBookPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
-      title: MED_BOOK_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: medBookConfig,
@@ -7715,8 +7849,11 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === EQUIPMENT_MAINTENANCE_TEMPLATE_CODE) {
     drawEquipmentMaintenancePdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
+      users,
       organizationName,
-      title: document.title || EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       // Имена связанных со справочником строк — как на экране, иначе
@@ -7728,8 +7865,10 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === STAFF_TRAINING_TEMPLATE_CODE) {
     drawStaffTrainingPdf(doc, {
+      locale: input.locale ?? "ru",
+      users,
       organizationName,
-      title: document.title || STAFF_TRAINING_FULL_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: normalizeStaffTrainingConfig(reconciledConfig),
@@ -7743,26 +7882,26 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
       config: perishableRejectionConfig,
     });
   } else if (templateCode === PRODUCT_WRITEOFF_TEMPLATE_CODE) {
+    const sourceConfig = document.config && typeof document.config === "object" && !Array.isArray(document.config)
+      ? document.config as Record<string, unknown>
+      : {};
     drawProductWriteoffPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
       title: document.title || "Акт забраковки",
+      titleIsDefault: !document.title,
+      documentNameIsDefault: !Object.prototype.hasOwnProperty.call(sourceConfig, "documentName"),
       dateFrom: document.dateFrom,
       config: normalizeProductWriteoffConfig(reconciledConfig),
     });
   } else if (templateCode === GLASS_LIST_TEMPLATE_CODE) {
     const glassListConfig = normalizeGlassListConfig(reconciledConfig);
     const locale = input.locale ?? "ru";
-    const t = journalPdfCopy(locale);
     drawGlassListPdf(doc, {
       locale,
       organizationName,
-      title: presentDocumentTitle({
-        title: document.title || "", templateCode,
-        sourceNames: [GLASS_LIST_DOCUMENT_TITLE, GLASS_LIST_PAGE_TITLE],
-        localizedName: ({ ru: ruMessages, en: enMessages, uz: uzMessages }[locale]).journals.names.glass_items_list,
-        dateFrom: toDateKey(document.dateFrom), dateTo: toDateKey(document.dateTo), locale,
-        formatTitle: (name, period) => t("documentTitle", { name, period }),
-      }),
+      title: document.title,
+      sourceConfig: document.config,
       dateFrom: document.dateFrom,
       config: glassListConfig,
       responsibleName:
@@ -7771,8 +7910,10 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === GLASS_CONTROL_TEMPLATE_CODE) {
     drawGlassControlPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
-      title: document.title || GLASS_CONTROL_PAGE_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       status: document.status,
@@ -7822,17 +7963,21 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === TRAINING_PLAN_TEMPLATE_CODE) {
     drawTrainingPlanPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
-      title: document.title || TRAINING_PLAN_HEADING,
+      title: document.title,
       config: normalizeTrainingPlanConfig(reconciledConfig),
       users,
     });
   } else if (templateCode === AUDIT_PLAN_TEMPLATE_CODE) {
     drawAuditPlanPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
-      title: document.title || AUDIT_PLAN_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: auditPlanConfig,
@@ -7840,24 +7985,30 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === AUDIT_PROTOCOL_TEMPLATE_CODE) {
     drawAuditProtocolPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
-      title: document.title || AUDIT_PROTOCOL_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: auditProtocolConfig,
     });
   } else if (templateCode === AUDIT_REPORT_TEMPLATE_CODE) {
     drawAuditReportPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
-      title: document.title || AUDIT_REPORT_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: auditReportConfig,
     });
   } else if (templateCode === METAL_IMPURITY_TEMPLATE_CODE) {
     drawMetalImpurityPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
       title: document.title || METAL_IMPURITY_DOCUMENT_TITLE,
+      titleIsDefault: !document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: metalImpurityConfig,
@@ -7893,39 +8044,49 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE) {
     drawIncomingControlPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
       title: document.title || getAcceptanceDocumentTitle(templateCode),
+      titleIsDefault: !document.title,
       dateFrom: document.dateFrom,
       config: normalizeAcceptanceDocumentConfig(reconciledConfig, users),
+      sourceConfig: document.config,
       users,
     });
   } else if ((ACCEPTANCE_DOCUMENT_TEMPLATE_CODES as readonly string[]).includes(templateCode)) {
     drawAcceptancePdf(doc, {
+      locale: input.locale ?? "ru",
+      templateCode: templateCode as typeof ACCEPTANCE_DOCUMENT_TEMPLATE_CODES[number],
       organizationName,
       title: document.title || getAcceptanceDocumentTitle(templateCode),
+      titleIsDefault: !document.title,
       dateFrom: document.dateFrom,
       config: normalizeAcceptanceDocumentConfig(reconciledConfig, users),
       users,
     });
   } else if (templateCode === PPE_ISSUANCE_TEMPLATE_CODE) {
     drawPpeIssuancePdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
-      title: document.title || PPE_ISSUANCE_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       config: normalizePpeIssuanceConfig(reconciledConfig, users),
       users,
     });
   } else if (templateCode === TRACEABILITY_DOCUMENT_TEMPLATE_CODE) {
     drawTraceabilityPdf(doc, {
+      locale: input.locale ?? "ru",
+      sourceConfig: document.config,
       organizationName,
-      title: document.title || "Журнал прослеживаемости продукции",
+      title: document.title,
       dateFrom: document.dateFrom,
       config: traceabilityConfig,
     });
   } else if (templateCode === EQUIPMENT_CLEANING_TEMPLATE_CODE) {
     drawEquipmentCleaningPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
-      title: document.title || "Журнал мойки и дезинфекции оборудования",
+      title: document.title,
       dateFrom: document.dateFrom,
       fieldVariant: equipmentCleaningConfig.fieldVariant,
       equipmentDirectory: equipment,
@@ -7938,16 +8099,20 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === DISINFECTANT_TEMPLATE_CODE) {
     drawDisinfectantPdf(doc, {
+      locale: input.locale ?? "ru",
+      users,
       organizationName,
-      title: document.title || DISINFECTANT_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: disinfectantConfig,
     });
   } else if (templateCode === INTENSIVE_COOLING_TEMPLATE_CODE) {
     drawIntensiveCoolingPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
       title: document.title || INTENSIVE_COOLING_DOCUMENT_TITLE,
+      titleIsDefault: !document.title,
       dateFrom: document.dateFrom,
       config: intensiveCoolingConfig,
       users,
@@ -8014,8 +8179,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     );
 
     drawUvRuntimePdf(doc, {
+      sourceConfig: document.config,
       organizationName,
-      title: document.title || getTrackedDocumentTitle(templateCode),
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: uvEffectiveTo,
       config: uvRuntimeConfig,
@@ -8025,8 +8191,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === PEST_CONTROL_TEMPLATE_CODE) {
     drawPestControlPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
-      title: document.title || PEST_CONTROL_DOCUMENT_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       entries: entries.map((entry) => ({
@@ -8038,8 +8205,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === CLEANING_VENTILATION_CHECKLIST_TEMPLATE_CODE) {
     drawCleaningVentilationChecklistPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
-      title: document.title || CLEANING_VENTILATION_CHECKLIST_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       config: document.config,
       entries: entries.map((entry) => ({
@@ -8051,8 +8219,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
       // компактная); высота компактной — резерв таблицы на продолжениях.
       drawHeader: (target, options) =>
         drawJournalHeader(target, {
+          locale: input.locale ?? "ru",
           organizationName,
-          journalLabel: "ЧЕК-ЛИСТ УБОРКИ И ПРОВЕТРИВАНИЯ ПОМЕЩЕНИЙ",
+          journalLabel: sanitationPdfCopy(input.locale ?? "ru")("ventilationHeader"),
           withPeriodicity: false,
           startedDate: document.dateFrom,
           finishedDate: document.dateTo,
@@ -8061,8 +8230,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
         }),
       continuationHeaderHeight: (target, options) =>
         journalContinuationHeaderHeight(target, {
+          locale: input.locale ?? "ru",
           organizationName,
-          journalLabel: "ЧЕК-ЛИСТ УБОРКИ И ПРОВЕТРИВАНИЯ ПОМЕЩЕНИЙ",
+          journalLabel: sanitationPdfCopy(input.locale ?? "ru")("ventilationHeader"),
           withPeriodicity: false,
           startedDate: document.dateFrom,
           finishedDate: document.dateTo,
@@ -8072,8 +8242,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === SANITARY_DAY_CHECKLIST_TEMPLATE_CODE) {
     drawSanitaryDayChecklistPdf(doc, {
+      locale: input.locale ?? "ru",
       organizationName,
-      title: document.title || SANITARY_DAY_CHECKLIST_TITLE,
+      title: document.title,
       dateFrom: document.dateFrom,
       config: document.config,
       entries: entries.map((entry) => ({
@@ -8087,8 +8258,9 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
       // Общая шапка ХАССП — как у остальных журналов.
       drawHeader: (target, options) =>
         drawJournalHeader(target, {
+          locale: input.locale ?? "ru",
           organizationName,
-          journalLabel: "ЧЕК-ЛИСТ (ПАМЯТКА) ПРОВЕДЕНИЯ САНИТАРНОГО ДНЯ",
+          journalLabel: sanitationPdfCopy(input.locale ?? "ru")("sanitaryHeader"),
           withPeriodicity: false,
           startedDate: document.dateFrom,
           finishedDate: document.dateTo,
@@ -8100,6 +8272,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     // Мониторинг ККТ — журнал записей; бланк (образец для каталога) —
     // та же таблица полей формы, что у отслеживаемых документов.
     drawTrackedPdf(doc, {
+      locale: input.locale ?? "ru",
+      templateCode,
       organizationName,
       title: document.title || CCP_MONITORING_PDF_TITLE,
       dateFrom: document.dateFrom,
@@ -8114,10 +8288,10 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (isTrackedDocumentTemplate(templateCode)) {
     drawTrackedPdf(doc, {
+      locale: input.locale ?? "ru",
+      templateCode,
       organizationName,
-      title:
-        document.title ||
-        getTrackedDocumentTitle(templateCode as TrackedDocumentTemplateCode),
+      title: document.title,
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       fields: trackedFields,
@@ -8150,7 +8324,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   stampPartnerPdfFooter(doc, branding, fontName, input.locale ?? "ru");
   // QR — последним: в ячейки шапки, которые она зарегистрировала на каждой
   // своей странице; на странице без шапки — в свободный правый верхний угол.
-  const qrPlacements = qr ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker }) : undefined;
+  const qrPlacements = qr ? stampJournalQr(doc, { ...qr, locale: qr.locale ?? input.locale ?? "ru", fontName, tracker: inkTracker }) : undefined;
 
   activeControlPeriodicity = "";
   activeOrganizationShortName = "";

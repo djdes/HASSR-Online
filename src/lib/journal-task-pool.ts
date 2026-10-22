@@ -1,3 +1,4 @@
+import { poolDisplayCopy, poolEventCopy, type PoolDisplayCopy } from "@/lib/journal-task-pool-copy";
 import { db } from "@/lib/db";
 import { buildingWhere } from "@/lib/building-scope";
 
@@ -20,6 +21,7 @@ import { buildingWhere } from "@/lib/building-scope";
  */
 
 export type TaskScope = {
+  displayCopy?: PoolDisplayCopy;
   scopeKey: string;
   scopeLabel: string;
   /** Опциональный sublabel — например, имя зоны/сотрудника. */
@@ -73,6 +75,7 @@ export async function generatePoolForDay(args: {
   date: Date;
   /** Точка: документ и ключи задач ограничиваются ею; null — без точек. */
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
 }): Promise<PoolForDayResult> {
   const today = utcMidnight(args.date);
   const todayKey = dayKey(today);
@@ -81,21 +84,21 @@ export async function generatePoolForDay(args: {
   switch (journalCode) {
     case "hygiene":
     case "health_check":
-      return poolHygieneShift({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey, journalCode });
+      return poolHygieneShift({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey, journalCode });
     case "cold_equipment_control":
-      return poolColdEquipment({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolColdEquipment({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "climate_control":
-      return poolClimate({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolClimate({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "incoming_control":
-      return poolIncoming({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolIncoming({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "finished_product":
-      return poolFinishedProduct({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolFinishedProduct({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "disinfectant_usage":
-      return poolDisinfectant({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolDisinfectant({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "fryer_oil":
-      return poolFryerOil({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolFryerOil({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "cleaning":
-      return poolCleaning({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolCleaning({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "accident_journal":
     case "complaint_register":
     case "breakdown_history":
@@ -109,6 +112,7 @@ export async function generatePoolForDay(args: {
       return poolGenericEvent({
         organizationId: args.organizationId,
         buildingId: args.buildingId ?? null,
+        includeDisplayCopy: args.includeDisplayCopy,
         today,
         todayKey,
         journalCode,
@@ -121,6 +125,7 @@ export async function generatePoolForDay(args: {
       return poolGenericEvent({
         organizationId: args.organizationId,
         buildingId: args.buildingId ?? null,
+        includeDisplayCopy: args.includeDisplayCopy,
         today,
         todayKey,
         journalCode,
@@ -132,19 +137,21 @@ export async function generatePoolForDay(args: {
       return poolGenericEvent({
         organizationId: args.organizationId,
         buildingId: args.buildingId ?? null,
+        includeDisplayCopy: args.includeDisplayCopy,
         today,
         todayKey,
         journalCode,
         label: GENERIC_EVENT_LABELS[journalCode] ?? journalCode,
       });
     case "uv_lamp_runtime":
-      return poolUvLamp({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, today, todayKey });
+      return poolUvLamp({ organizationId: args.organizationId, buildingId: args.buildingId ?? null, includeDisplayCopy: args.includeDisplayCopy, today, todayKey });
     case "equipment_maintenance":
     case "equipment_calibration":
     case "equipment_cleaning":
       return poolEquipmentEvent({
         organizationId: args.organizationId,
         buildingId: args.buildingId ?? null,
+        includeDisplayCopy: args.includeDisplayCopy,
         today,
         todayKey,
         journalCode,
@@ -155,6 +162,7 @@ export async function generatePoolForDay(args: {
       return poolGenericEvent({
         organizationId: args.organizationId,
         buildingId: args.buildingId ?? null,
+        includeDisplayCopy: args.includeDisplayCopy,
         today,
         todayKey,
         journalCode,
@@ -164,6 +172,7 @@ export async function generatePoolForDay(args: {
       return poolGenericEvent({
         organizationId: args.organizationId,
         buildingId: args.buildingId ?? null,
+        includeDisplayCopy: args.includeDisplayCopy,
         today,
         todayKey,
         journalCode,
@@ -220,6 +229,7 @@ const COLD_EQUIPMENT_MARKERS = [
 async function poolHygieneShift(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
   journalCode: string;
@@ -234,6 +244,7 @@ async function poolHygieneShift(args: {
       ? [
           {
             scopeKey: `hygiene-shift:${doc.id}:${args.todayKey}`,
+            ...poolDisplayCopy(args.includeDisplayCopy, { key: args.journalCode === "health_check" ? "healthShift" : "hygieneShift" }),
             scopeLabel:
               args.journalCode === "health_check"
                 ? "Проверка здоровья смены"
@@ -249,6 +260,7 @@ async function poolHygieneShift(args: {
 async function poolColdEquipment(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -284,6 +296,7 @@ async function poolColdEquipment(args: {
     for (const s of shifts) {
       scopes.push({
         scopeKey: `fridge:${f.id}:${s.code}:${args.todayKey}`,
+        ...poolDisplayCopy(args.includeDisplayCopy, { key: "coldShift", params: { name: f.name, shift: s.code } }),
         scopeLabel: `${f.name} — ${s.label}`,
         sublabel: f.area?.name,
         journalDocumentId: doc?.id,
@@ -296,6 +309,7 @@ async function poolColdEquipment(args: {
 async function poolClimate(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -318,6 +332,7 @@ async function poolClimate(args: {
     for (const s of shifts) {
       scopes.push({
         scopeKey: `room:${a.id}:${s}:${args.todayKey}`,
+        ...poolDisplayCopy(args.includeDisplayCopy, { key: "climateShift", params: { name: a.name, shift: s } }, { key: "climateHint" }),
         scopeLabel: `${a.name} — ${s === "morning" ? "Утро" : "Вечер"}`,
         sublabel: "Климат-контроль",
         journalDocumentId: doc?.id,
@@ -330,6 +345,7 @@ async function poolClimate(args: {
 async function poolIncoming(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -341,6 +357,7 @@ async function poolIncoming(args: {
     scopes: [
       {
         scopeKey: `incoming:${args.organizationId}:${args.todayKey}${buildingSeg(args.buildingId)}`,
+        ...poolDisplayCopy(args.includeDisplayCopy, { key: "incoming" }, doc ? undefined : { key: "incomingHint" }),
         scopeLabel: "Приёмка сырья сегодня",
         sublabel: doc ? doc.title : "Один сотрудник проводит приёмки за день",
         journalDocumentId: doc?.id,
@@ -352,6 +369,7 @@ async function poolIncoming(args: {
 async function poolFinishedProduct(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -363,6 +381,7 @@ async function poolFinishedProduct(args: {
   ];
   const scopes = meals.map((m) => ({
     scopeKey: `meal:${m.code}:${args.todayKey}${buildingSeg(args.buildingId)}`,
+    ...poolDisplayCopy(args.includeDisplayCopy, { key: "meal", params: { meal: m.code as "breakfast" | "lunch" | "dinner" } }),
     scopeLabel: `Бракераж · ${m.label}`,
     sublabel: doc?.title,
     journalDocumentId: doc?.id,
@@ -373,6 +392,7 @@ async function poolFinishedProduct(args: {
 async function poolDisinfectant(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -384,6 +404,7 @@ async function poolDisinfectant(args: {
     scopes: [
       {
         scopeKey: `disinf:${args.organizationId}:${args.todayKey}${buildingSeg(args.buildingId)}`,
+        ...poolDisplayCopy(args.includeDisplayCopy, { key: "disinfectant" }, doc ? undefined : { key: "disinfectantHint" }),
         scopeLabel: "Учёт дезсредств за день",
         sublabel: doc ? doc.title : "Кто разводит — тот и записывает",
         journalDocumentId: doc?.id,
@@ -395,6 +416,7 @@ async function poolDisinfectant(args: {
 async function poolFryerOil(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -413,6 +435,7 @@ async function poolFryerOil(args: {
   const doc = await activeDocFor(args.organizationId, "fryer_oil", args.today, args.buildingId);
   const scopes: TaskScope[] = fryers.map((f) => ({
     scopeKey: `fryer:${f.id}:${args.todayKey}`,
+    ...poolDisplayCopy(args.includeDisplayCopy, { key: "fryer", params: { name: f.name } }),
     scopeLabel: `Фритюр · ${f.name}`,
     sublabel: f.area?.name,
     journalDocumentId: doc?.id,
@@ -421,6 +444,7 @@ async function poolFryerOil(args: {
   if (scopes.length === 0) {
     scopes.push({
       scopeKey: `fryer:default:${args.todayKey}${buildingSeg(args.buildingId)}`,
+      ...poolDisplayCopy(args.includeDisplayCopy, { key: "fryerDefault" }),
       scopeLabel: "Фритюрный жир — контроль",
       sublabel: doc?.title ?? undefined,
       journalDocumentId: doc?.id,
@@ -432,6 +456,7 @@ async function poolFryerOil(args: {
 async function poolCleaning(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -463,6 +488,7 @@ async function poolCleaning(args: {
     pool: true,
     scopes: rooms.map((r) => ({
       scopeKey: `room:${r.id}:${args.todayKey}`,
+      ...poolDisplayCopy(args.includeDisplayCopy, { key: "cleaning", params: { name: r.name } }),
       scopeLabel: `Уборка · ${r.name}`,
       sublabel: r.building.name,
       journalDocumentId: doc.id,
@@ -473,6 +499,7 @@ async function poolCleaning(args: {
 async function poolUvLamp(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
@@ -496,6 +523,7 @@ async function poolUvLamp(args: {
     lamps.length > 0
       ? lamps.map((l) => ({
           scopeKey: `uv:${l.id}:${args.todayKey}`,
+          ...poolDisplayCopy(args.includeDisplayCopy, { key: "uv", params: { name: l.name } }),
           scopeLabel: `УФ-лампа · ${l.name}`,
           sublabel: l.area?.name,
           journalDocumentId: doc?.id,
@@ -503,6 +531,7 @@ async function poolUvLamp(args: {
       : [
           {
             scopeKey: `uv:default:${args.todayKey}${buildingSeg(args.buildingId)}`,
+            ...poolDisplayCopy(args.includeDisplayCopy, { key: "uvDefault" }),
             scopeLabel: "УФ-лампа — отметить наработку",
             sublabel: doc?.title,
             journalDocumentId: doc?.id,
@@ -514,6 +543,7 @@ async function poolUvLamp(args: {
 async function poolEquipmentEvent(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
   journalCode: string;
@@ -533,6 +563,7 @@ async function poolEquipmentEvent(args: {
     scopes: [
       {
         scopeKey: `${args.journalCode}:${args.organizationId}:${args.todayKey}${buildingSeg(args.buildingId)}`,
+        ...poolDisplayCopy(args.includeDisplayCopy, { key: args.journalCode === "equipment_maintenance" ? "maintenance" : args.journalCode === "equipment_calibration" ? "calibration" : "equipmentCleaning" }, equipment.length > 0 ? { key: "equipmentCount", params: { count: equipment.length } } : undefined),
         scopeLabel:
           args.journalCode === "equipment_maintenance"
             ? "Тех. обслуживание оборудования"
@@ -549,6 +580,7 @@ async function poolEquipmentEvent(args: {
 async function poolGenericEvent(args: {
   organizationId: string;
   buildingId?: string | null;
+  includeDisplayCopy?: boolean;
   today: Date;
   todayKey: string;
   journalCode: string;
@@ -562,6 +594,7 @@ async function poolGenericEvent(args: {
     scopes: [
       {
         scopeKey: `${args.journalCode}:${args.organizationId}:${args.todayKey}${buildingSeg(args.buildingId)}`,
+        ...poolDisplayCopy(args.includeDisplayCopy, poolEventCopy(args.journalCode)),
         scopeLabel: `${args.label} — записать сегодня`,
         sublabel: doc?.title,
         journalDocumentId: doc?.id,

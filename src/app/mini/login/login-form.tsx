@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Eye, EyeOff, Loader2, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { formatRuPhoneInput } from "@/lib/phone-input";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
@@ -9,6 +10,7 @@ import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
 import { getTelegramWebApp } from "../_components/telegram-web-app";
 import { isInsideMobileApp } from "@/lib/mobile-app";
 import { clearSignedOutMark, telegramSignInHref } from "../_lib/signed-out-mark";
+import { miniLoginErrorKey, type LoginErrorKey } from "./login-error-presentation";
 
 /**
  * Чем входит человек. Сотрудник знает свой телефон (почта у него
@@ -16,7 +18,6 @@ import { clearSignedOutMark, telegramSignInHref } from "../_lib/signed-out-mark"
  * Telegram ему нужно попасть именно в свой аккаунт.
  */
 type LoginMode = "phone" | "email";
-
 /** Проверка пары у обоих входов — на сервере, общая с сайтом. */
 const LOGIN_ENDPOINT: Record<LoginMode, string> = {
   phone: "/api/mini/login",
@@ -62,6 +63,8 @@ export function MiniLoginForm({
   /** Номер из строки запроса — приходит с экрана «Готово» после QR-регистрации. */
   initialPhone?: string;
 }) {
+  const t = useTranslations("miniLogin");
+  const tError = useTranslations("miniLogin.errors");
   const inTelegram = useTelegramInitData();
   const [mode, setMode] = useState<LoginMode>("phone");
   const [phone, setPhone] = useState(() =>
@@ -70,7 +73,7 @@ export function MiniLoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoginErrorKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [leavingToTelegram, setLeavingToTelegram] = useState(false);
   // Второй шаг: код из Telegram, если включено в «Безопасности».
@@ -149,7 +152,7 @@ export function MiniLoginForm({
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.error || "Не удалось войти");
+        setError(miniLoginErrorKey(body.error));
         return;
       }
       if (body.requiresCode && body.challengeId) {
@@ -159,7 +162,7 @@ export function MiniLoginForm({
       }
       finishLogin();
     } catch {
-      setError("Нет связи. Проверьте интернет и попробуйте ещё раз.");
+      setError("connectionFailed");
     } finally {
       setBusy(false);
     }
@@ -178,12 +181,12 @@ export function MiniLoginForm({
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.error || "Неверный код");
+        setError(miniLoginErrorKey(body.error, true));
         return;
       }
       finishLogin();
     } catch {
-      setError("Нет связи. Проверьте интернет и попробуйте ещё раз.");
+      setError("connectionFailed");
     } finally {
       setBusy(false);
     }
@@ -193,7 +196,7 @@ export function MiniLoginForm({
     return (
       <form onSubmit={submitCode} className="mt-5 space-y-3">
         <p className="text-[16px] leading-[1.5]" style={{ color: "var(--mini-text-secondary)" }}>
-          Пароль верный. Код отправлен в ваш Telegram, действует 5 минут.
+          {t("challenge.instructions")}
         </p>
         <input
           value={code}
@@ -201,24 +204,26 @@ export function MiniLoginForm({
           inputMode="numeric"
           autoComplete="one-time-code"
           autoFocus
-          placeholder="000000"
-          aria-label="Код из Telegram"
+          placeholder={t("challenge.codePlaceholder")}
+          aria-label={t("challenge.codeLabel")}
           // Крупно, как поле PIN QR-страниц.
           className="mini-input text-center tracking-[0.4em]"
           style={{ minHeight: 64, fontSize: 26, fontWeight: 700, fontFamily: "var(--mini-font-mono)" }}
         />
         {error ? (
           <p role="alert" className="mini-err">
-            {error}
+            {tError(error)}
           </p>
         ) : null}
         <button
           type="submit"
           disabled={busy || code.length !== 6}
+          aria-busy={busy}
+          aria-label={busy ? t("actions.confirmingCode") : t("actions.confirmCode")}
           className="mini-btn-primary mini-press w-full"
         >
           {busy ? <Loader2 className="size-5 animate-spin" /> : null}
-          Подтвердить
+          {t("actions.confirmCode")}
         </button>
         <button
           type="button"
@@ -228,7 +233,7 @@ export function MiniLoginForm({
           }}
           className="mini-btn-ghost mini-press w-full underline underline-offset-2"
         >
-          Назад — отправить код ещё раз
+          {t("actions.retryCode")}
         </button>
       </form>
     );
@@ -249,17 +254,17 @@ export function MiniLoginForm({
             ) : (
               <Send className="size-5" />
             )}
-            Войти через Telegram
+            {leavingToTelegram ? t("actions.switchingToTelegram") : t("telegram.login")}
           </button>
           <p
             className="mt-2 text-[15px] leading-[1.5]"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            В аккаунт, к которому привязан этот Telegram.
+            {t("telegram.accountInfo")}
           </p>
           <div className="mt-5 flex items-center gap-3" aria-hidden>
             <span className="h-px flex-1" style={{ background: "var(--mini-divider-strong)" }} />
-            <span className="mini-label">или другой аккаунт</span>
+            <span className="mini-label">{t("telegram.otherAccount")}</span>
             <span className="h-px flex-1" style={{ background: "var(--mini-divider-strong)" }} />
           </div>
         </div>
@@ -268,7 +273,7 @@ export function MiniLoginForm({
       {/* noValidate: подсказки браузера к полю почты — по-английски
           («Please include an '@'…»); проверяет сервер и отвечает по-русски. */}
       <form onSubmit={submit} onFocus={keepSubmitVisible} noValidate className="mt-5 space-y-3">
-        <div role="radiogroup" aria-label="Чем входить" className="mini-seg">
+        <div role="radiogroup" aria-label={t("mode.label")} className="mini-seg">
           <button
             type="button"
             role="radio"
@@ -276,7 +281,7 @@ export function MiniLoginForm({
             onClick={() => switchMode("phone")}
             className="mini-press"
           >
-            Телефон
+            {t("mode.phone")}
           </button>
           <button
             type="button"
@@ -285,14 +290,14 @@ export function MiniLoginForm({
             onClick={() => switchMode("email")}
             className="mini-press"
           >
-            Почта
+            {t("mode.email")}
           </button>
         </div>
 
         {mode === "phone" ? (
           <div>
             <label htmlFor="phone" className="mini-label mb-1.5 block">
-              Телефон
+              {t("fields.phone")}
             </label>
             <input
               ref={phoneRef}
@@ -305,14 +310,14 @@ export function MiniLoginForm({
               autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(formatRuPhoneInput(e.target.value))}
-              placeholder="+7 999 123-45-67"
+              placeholder={t("fields.phonePlaceholder")}
               className="mini-input"
             />
           </div>
         ) : (
           <div>
             <label htmlFor="email" className="mini-label mb-1.5 block">
-              Почта
+              {t("fields.email")}
             </label>
             <input
               id="email"
@@ -327,7 +332,7 @@ export function MiniLoginForm({
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.ru"
+              placeholder={t("fields.emailPlaceholder")}
               className="mini-input"
             />
           </div>
@@ -335,7 +340,7 @@ export function MiniLoginForm({
 
         <div>
           <label htmlFor="password" className="mini-label mb-1.5 block">
-            Пароль
+            {t("fields.password")}
           </label>
           <div className="relative">
             <input
@@ -353,7 +358,7 @@ export function MiniLoginForm({
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+              aria-label={showPassword ? t("fields.hidePassword") : t("fields.showPassword")}
               className="absolute right-1 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-xl"
               style={{ color: "var(--mini-text-muted)" }}
             >
@@ -365,7 +370,7 @@ export function MiniLoginForm({
         {/* Светлая тема: #ff6b6b на белом почти не читался. */}
         {error ? (
           <p role="alert" className="mini-err">
-            {error}
+            {tError(error)}
           </p>
         ) : null}
 
@@ -373,10 +378,12 @@ export function MiniLoginForm({
           ref={submitRef}
           type="submit"
           disabled={busy || !password || (mode === "phone" ? !phone : !email.trim())}
+          aria-busy={busy}
+          aria-label={busy ? t("actions.loggingIn") : t("actions.login")}
           className="mini-btn-primary mini-press w-full"
         >
           {busy ? <Loader2 className="size-5 animate-spin" /> : null}
-          Войти
+          {busy ? <span className="sr-only">{t("actions.loggingIn")}</span> : t("actions.login")}
         </button>
 
         {/* Подсказка — для сотрудника: пароль ему выдаёт руководитель.
@@ -386,8 +393,7 @@ export function MiniLoginForm({
             className="pt-1 text-[15px] leading-[1.5]"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            Забыли пароль? Руководитель выдаст новый — попросите его открыть
-            вашу карточку в разделе «Сотрудники».
+            {t("help.forgotPassword")}
           </p>
         ) : null}
       </form>

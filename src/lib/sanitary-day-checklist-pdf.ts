@@ -1,3 +1,5 @@
+import { sanitationPdfCopy, sanitationSdcValue } from "@/lib/sanitation-pest-pdf-presentation";
+import type { Locale } from "@/i18n/locales";
 import type { jsPDF } from "jspdf";
 import type { RowInput } from "jspdf-autotable";
 import { JOURNAL_SHEET_MARGIN_MM, journalCapHeightMm } from "@/lib/pdf-journal-sheet";
@@ -30,6 +32,7 @@ function formatRuDate(date: Date): string {
 export function drawSanitaryDayChecklistPdf(
   doc: jsPDF,
   params: {
+    locale?: Locale;
     organizationName: string;
     title: string;
     dateFrom: Date;
@@ -49,6 +52,8 @@ export function drawSanitaryDayChecklistPdf(
     contentBottom?: number;
   }
 ) {
+  const locale = params.locale ?? "ru";
+  const t = sanitationPdfCopy(locale);
   const config = normalizeSdcConfig(params.config);
 
   // Отметки всех записей документа — тот же helper, что и на экране.
@@ -63,7 +68,7 @@ export function drawSanitaryDayChecklistPdf(
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
-  doc.text("ДАТА ПРОВЕДЕНИЯ", margin, lastY + 7);
+  doc.text(t("performedDate"), margin, lastY + 7);
   doc.setFont("JournalUnicode", "normal");
   doc.text(formatRuDate(params.dateFrom), pageWidth - margin, lastY + 7, {
     align: "right",
@@ -85,12 +90,12 @@ export function drawSanitaryDayChecklistPdf(
       body: [
         [
           {
-            content: "ОБЩИЕ ПРИНЦИПЫ",
+            content: t("principles"),
             styles: { fontStyle: "bold", halign: "left" },
           },
         ],
         ...config.generalPrinciples.map(
-          (p) => [{ content: `• ${p}` }] as RowInput
+          (p, index) => [{ content: `• ${sanitationSdcValue("generalPrinciples", p, undefined, index, params.config, locale)}` }] as RowInput
         ),
       ],
       margin: { left: margin, right: margin },
@@ -105,7 +110,7 @@ export function drawSanitaryDayChecklistPdf(
   config.zones.forEach((zone, zoneIndex) => {
     body.push([
       {
-        content: `${zoneIndex + 1}. ${zone.name.toUpperCase()}`,
+        content: `${zoneIndex + 1}. ${sanitationSdcValue("zones", zone.name, zone.id, zoneIndex, params.config, locale).toUpperCase()}`,
         colSpan: 3,
         styles: {
           fontStyle: "bold",
@@ -118,7 +123,7 @@ export function drawSanitaryDayChecklistPdf(
     for (const item of zoneItems) {
       body.push([
         { content: getItemNumber(config, item), styles: { halign: "center" } },
-        { content: item.text },
+        { content: sanitationSdcValue("items", item.text, item.id, config.items.indexOf(item), params.config, locale) },
         {
           content: mergedMarks[item.id] || "",
           styles: { halign: "center" },
@@ -140,9 +145,9 @@ export function drawSanitaryDayChecklistPdf(
     },
     head: [
       [
-        { content: "№ п/п", styles: { halign: "center" } },
-        { content: "Действия", styles: { halign: "center" } },
-        { content: "Отметка времени", styles: { halign: "center" } },
+        { content: t("number"), styles: { halign: "center" } },
+        { content: t("actions"), styles: { halign: "center" } },
+        { content: t("timeMark"), styles: { halign: "center" } },
       ],
     ],
     body,
@@ -180,7 +185,7 @@ export function drawSanitaryDayChecklistPdf(
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
-  doc.text("ВЫПОЛНИЛ:", margin, sigY);
+  doc.text(t("completedBy"), margin, sigY);
   doc.setFont("JournalUnicode", "normal");
   // Имя — по id, чтобы переименование сотрудника не оставляло бланк пустым.
   doc.text(
@@ -195,7 +200,7 @@ export function drawSanitaryDayChecklistPdf(
   doc.line(margin + 36, sigY + 1, margin + 120, sigY + 1);
 
   doc.setFont("JournalUnicode", "bold");
-  doc.text("ПРОВЕРИЛ:", margin, sigY + 8);
+  doc.text(t("checkedBy"), margin, sigY + 8);
   doc.setFont("JournalUnicode", "normal");
   doc.text(
     resolveSdcSignerName(config.checkerUserId, config.checkerName, params.users) ||

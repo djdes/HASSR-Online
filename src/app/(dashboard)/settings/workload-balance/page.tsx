@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { loadMessages } from "@/i18n/messages";
+import { journalTitle } from "@/i18n/journal-presentation";
 import { redirect } from "next/navigation";
 import {
   AlertTriangle,
@@ -30,6 +34,11 @@ export default async function WorkloadBalancePage() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
+  const locale = await getSiteLocale();
+  const [t, messages] = await Promise.all([
+    getTranslations({ locale, namespace: "settingsWorkloadBalance" }),
+    loadMessages(locale),
+  ]);
 
   const [users, positions, org] = await Promise.all([
     db.user.findMany({
@@ -121,21 +130,21 @@ export default async function WorkloadBalancePage() {
           цифры и таблицы. Две ссылки-«куда идти править» стали кнопками
           справа — так очевиднее, что это действия, а не текст. */}
       <PageHeader
-        title="Нагрузка сотрудников"
-        description="Кто сколько журналов ведёт в месяц по факту назначений. Если у поваров одинаковая зарплата, нагрузка должна быть близкой — иначе появятся обиды и текучка. Меняйте ответственных и сложность журналов — таблица обновится."
+        title={t("title")}
+        description={t("description")}
         actions={
           <>
             <Link
               href="/settings/journal-responsibles"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Ответственные
+              {t("responsibles")}
             </Link>
             <Link
               href="/settings/journal-difficulty"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Сложность журналов
+              {t("difficulty")}
             </Link>
           </>
         }
@@ -143,23 +152,23 @@ export default async function WorkloadBalancePage() {
 
       <PageGuide
         storageKey="workload-balance"
-        title="Как читать эту страницу"
+        title={t("guideTitle")}
         bullets={[
           {
-            title: "Нагрузка",
-            body: "сумма по всем журналам, где сотрудник назначен. Считается как сложность (1-5) × частота заполнения в месяц × среднее число строк за раз. Не часы, а относительная единица.",
+            title: t("guideWorkloadTitle"),
+            body: t("guideWorkloadBody"),
           },
           {
-            title: "Перекос между сотрудниками",
-            body: "ищите большой разрыв max-min внутри одной должности — там и есть проблема.",
+            title: t("guideImbalanceTitle"),
+            body: t("guideImbalanceBody"),
           },
           {
-            title: "Зелёный/жёлтый/красный",
-            body: "коэффициент неравномерности (max-min)/avg. До 0.3 — норма, 0.3-0.5 — перекос, 0.5+ — критично, нужно перебалансировать.",
+            title: t("guideColorsTitle"),
+            body: t("guideColorsBody"),
           },
           {
-            title: "Не назначен",
-            body: "журналы где никто не выбран в слотах — нагрузка теряется. Зайдите в Ответственные и проставьте.",
+            title: t("guideUnassignedTitle"),
+            body: t("guideUnassignedBody"),
           },
         ]}
       />
@@ -168,45 +177,44 @@ export default async function WorkloadBalancePage() {
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
           <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-            Сотрудников
+            {t("employees")}
           </div>
           <div className="mt-2 flex items-end gap-2">
             <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] text-[#0b1024]">
               {users.length}
             </span>
             <span className="pb-1 text-[12px] text-[#9b9fb3]">
-              на {positions.length} должностях
+              {t("positions", { count: positions.length })}
             </span>
           </div>
         </div>
 
         <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
           <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-            Журналов с ответственными
+            {t("assignedJournals")}
           </div>
           <div className="mt-2 flex items-end gap-2">
             <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] text-[#0b1024]">
               {ACTIVE_JOURNAL_CATALOG.length - unassignedJournalsCount}
             </span>
             <span className="pb-1 text-[12px] text-[#9b9fb3]">
-              из {ACTIVE_JOURNAL_CATALOG.length}
               {unassignedJournalsCount > 0
-                ? ` · ${unassignedJournalsCount} без слотов`
-                : ""}
+                ? t("journalTotalUnassigned", { total: String(ACTIVE_JOURNAL_CATALOG.length), unassigned: String(unassignedJournalsCount) })
+                : t("journalTotal", { total: String(ACTIVE_JOURNAL_CATALOG.length) })}
             </span>
           </div>
         </div>
 
         <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
           <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-            Назначений
+            {t("assignments")}
           </div>
           <div className="mt-2 flex items-end gap-2">
             <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] text-[#0b1024]">
               {totalAssigned}
             </span>
             <span className="pb-1 text-[12px] text-[#9b9fb3]">
-              слот-сотрудник пар
+              {t("slotPairs")}
             </span>
           </div>
         </div>
@@ -219,16 +227,19 @@ export default async function WorkloadBalancePage() {
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[#a13a32]" />
             <div className="flex-1">
               <div className="text-[14px] font-semibold text-[#a13a32]">
-                Перекос на {problemPositions.length}{" "}
-                {problemPositions.length === 1 ? "должности" : "должностях"}
+                {t("problemsCount", { count: problemPositions.length })}
               </div>
               <ul className="mt-2 space-y-1 text-[13px] text-[#3c4053]">
                 {problemPositions.map((p) => (
                   <li key={p.positionId}>
-                    <strong>{p.positionName}</strong>: разрыв{" "}
-                    {Math.round(p.maxPerUser)} ↔ {Math.round(p.minPerUser)} (
-                    {p.maxUserName} перегружен,{" "}
-                    {p.minUserName ?? "кто-то"} недогружен).
+                    {t.rich("problemLine", {
+                      position: (chunks) => <strong>{chunks}</strong>,
+                      positionName: p.positionName,
+                      max: String(Math.round(p.maxPerUser)),
+                      min: String(Math.round(p.minPerUser)),
+                      overloaded: p.maxUserName ?? "",
+                      underloaded: p.minUserName ?? t("unknownEmployee"),
+                    })}
                   </li>
                 ))}
               </ul>
@@ -243,18 +254,19 @@ export default async function WorkloadBalancePage() {
           <div className="flex items-center gap-2 border-b border-[#ececf4] px-4 py-3">
             <Users className="size-4 text-[#5566f6]" />
             <h2 className="text-[14px] font-semibold uppercase tracking-[0.12em] text-[#0b1024]">
-              По должностям
+              {t("byPosition")}
             </h2>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead className="bg-[#fafbff] text-[11px] uppercase tracking-[0.1em] text-[#6f7282]">
               <tr>
-                <th className="px-4 py-2.5 text-left font-medium">Должность</th>
-                <th className="px-4 py-2.5 text-right font-medium">Сотр.</th>
-                <th className="px-4 py-2.5 text-right font-medium">Сумма</th>
-                <th className="px-4 py-2.5 text-right font-medium">Среднее</th>
-                <th className="px-4 py-2.5 text-right font-medium">Min ↔ Max</th>
-                <th className="px-4 py-2.5 text-right font-medium">Перекос</th>
+                <th className="px-4 py-2.5 text-left font-medium">{t("position")}</th>
+                <th className="px-4 py-2.5 text-right font-medium">{t("employeeCount")}</th>
+                <th className="px-4 py-2.5 text-right font-medium">{t("total")}</th>
+                <th className="px-4 py-2.5 text-right font-medium">{t("average")}</th>
+                <th className="px-4 py-2.5 text-right font-medium">{t("range")}</th>
+                <th className="px-4 py-2.5 text-right font-medium">{t("imbalance")}</th>
               </tr>
             </thead>
             <tbody>
@@ -302,15 +314,11 @@ export default async function WorkloadBalancePage() {
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${bg} ${tone}`}
                       >
                         {p.userCount <= 1
-                          ? "один сотрудник"
-                          : p.imbalance >= 0.5
-                            ? "критично"
-                            : p.imbalance >= 0.3
-                              ? "перекос"
-                              : "норма"}
-                        {p.userCount > 1
-                          ? ` · ${(p.imbalance * 100).toFixed(0)}%`
-                          : ""}
+                          ? t("singleEmployee")
+                          : t("statusRate", {
+                              label: p.imbalance >= 0.5 ? t("critical") : p.imbalance >= 0.3 ? t("uneven") : t("balanced"),
+                              rate: (p.imbalance * 100).toFixed(0),
+                            })}
                       </span>
                     </td>
                   </tr>
@@ -318,6 +326,7 @@ export default async function WorkloadBalancePage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       ) : null}
 
@@ -326,10 +335,10 @@ export default async function WorkloadBalancePage() {
         <div className="flex items-center gap-2 border-b border-[#ececf4] px-4 py-3">
           <Scale className="size-4 text-[#5566f6]" />
           <h2 className="text-[14px] font-semibold uppercase tracking-[0.12em] text-[#0b1024]">
-            По сотрудникам
+            {t("byEmployee")}
           </h2>
           <span className="ml-auto text-[11px] text-[#9b9fb3]">
-            отсортировано по нагрузке
+            {t("sortHint")}
           </span>
         </div>
         <div className="divide-y divide-[#ececf4]">
@@ -367,23 +376,23 @@ export default async function WorkloadBalancePage() {
                   <div className="flex w-[80px] items-center justify-end gap-1.5 text-[11px] text-[#6f7282]">
                     {journals.length > 0 ? (
                       <>
-                        {journals.length} жур.
+                        {t("journalCount", { count: journals.length })}
                         <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" />
                       </>
                     ) : (
-                      <span className="text-[#9b9fb3]">не назначен</span>
+                      <span className="text-[#9b9fb3]">{t("unassigned")}</span>
                     )}
                   </div>
                 </summary>
                 {journals.length > 0 ? (
-                  <div className="mt-3 space-y-1 pl-[180px] text-[12px]">
+                  <div className="mt-3 space-y-1 sm:pl-[180px] text-[12px]">
                     {journals.map((j) => (
                       <div
                         key={j.code}
                         className="flex items-center justify-between gap-3 rounded-lg bg-[#fafbff] px-2.5 py-1"
                       >
                         <span className="truncate text-[#3c4053]">
-                          {j.name}
+                          {journalTitle(locale, messages.journals.names, j.code, j.name)}
                         </span>
                         <div className="flex items-center gap-2 text-[11px]">
                           <span
@@ -396,10 +405,10 @@ export default async function WorkloadBalancePage() {
                             }
                           >
                             {j.role === "verifier"
-                              ? "проверяет"
+                              ? t("verify")
                               : j.role === "both"
-                                ? "и тот и тот"
-                                : "заполняет"}
+                                ? t("both")
+                                : t("fill")}
                           </span>
                           <span className="tabular-nums font-medium text-[#0b1024]">
                             {Math.round(j.weight)}
@@ -416,7 +425,7 @@ export default async function WorkloadBalancePage() {
           {sortedUsers.length === 0 ? (
             <div className="flex items-center gap-3 px-4 py-8 text-[14px] text-[#6f7282]">
               <CheckCircle2 className="size-5 text-[#9b9fb3]" />
-              В организации нет активных сотрудников.
+              {t("empty")}
             </div>
           ) : null}
         </div>

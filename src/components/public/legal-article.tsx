@@ -73,21 +73,25 @@ export function LegalArticle({
  * Карточка реквизитов оператора — общая для оферты и политики,
  * чтобы данные ООО «БФС» жили в одном месте.
  */
-export function LegalRequisites() {
+export function LegalRequisites({ copy }: { copy?: {
+  heading: string;
+  taxIds: string;
+  registrationId: string;
+  address: string;
+  telephone: ReactNode;
+  email: ReactNode;
+  website: ReactNode;
+} } = {}) {
   return (
     <div className="mt-8 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5 text-[14px] leading-[1.7] text-[#3c4053] md:p-6">
-      <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-        Реквизиты
-      </div>
+      <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">{copy?.heading ?? "Реквизиты"}</div>
       <div className="text-[15px] font-semibold text-[#0b1024]">
         Общество с ограниченной ответственностью «БФС»
       </div>
-      <div className="mt-2">ИНН 5018215599 · КПП 501801001</div>
-      <div>ОГРН 1235000105306</div>
-      <div>
-        Адрес: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6
-      </div>
-      <div className="mt-2">
+      <div className="mt-2">{copy?.taxIds ?? "ИНН 5018215599 · КПП 501801001"}</div>
+      <div>{copy?.registrationId ?? "ОГРН 1235000105306"}</div>
+      <div>{copy?.address ?? "Адрес: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6"}</div>
+      <div className="mt-2">{copy ? copy.telephone : <>
         Телефон:{" "}
         <a
           href="tel:+79996341612"
@@ -95,8 +99,8 @@ export function LegalRequisites() {
         >
           +7 (999) 634-16-12
         </a>
-      </div>
-      <div>
+      </>}</div>
+      <div>{copy ? copy.email : <>
         Электронная почта:{" "}
         <a
           href="mailto:support@wesetup.ru"
@@ -104,8 +108,8 @@ export function LegalRequisites() {
         >
           support@wesetup.ru
         </a>
-      </div>
-      <div>
+      </>}</div>
+      <div>{copy ? copy.website : <>
         Сайт:{" "}
         <a
           href="https://wesetup.ru"
@@ -113,7 +117,7 @@ export function LegalRequisites() {
         >
           wesetup.ru
         </a>
-      </div>
+      </>}</div>
     </div>
   );
 }

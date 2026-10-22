@@ -1,5 +1,9 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
+import { ppeLegacyPositionOption, ppeSourceIdentity } from "@/lib/ppe-issuance-presentation";
+import { useExportLanguageChoice } from "@/components/journals/export-language-choice";
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -12,7 +16,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookOpenText,
   Ellipsis,
   Pencil,
   Plus,
@@ -47,6 +50,7 @@ import {
 import { getHygienePositionLabel } from "@/lib/hygiene-document";
 
 import { toast } from "sonner";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
@@ -72,11 +76,12 @@ import {
   useDocumentDialogSubmit,
 } from "@/components/journals/use-document-dialog-submit";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
-type UserItem = { id: string; name: string; role: string };
+type UserItem = { id: string; name: string; role: string; positionTitle?: string | null; jobPosition?: { name: string; categoryKey: string } | null };
 
 type DocumentItem = {
   id: string;
   title: string;
+  titleIsFallback?: boolean;
   /** Точки: документ без точки рядом с документами точек. */
   shared?: boolean;
   status: "active" | "closed";
@@ -157,6 +162,8 @@ function FieldToggle({
     <button
       type="button"
       onClick={() => onCheckedChange(!checked)}
+      aria-pressed={checked}
+      aria-label={label}
       className="flex items-center gap-4 text-left"
     >
       <span
@@ -183,9 +190,12 @@ function SettingsDialog(props: {
   users: UserItem[];
   routeCode: string;
   initial: SettingsState | null;
+  sourceIdentity?: string;
   onSubmit: (value: SettingsState, force: boolean) => Promise<void>;
   mode: "create" | "edit";
 }) {
+  const p = useTranslations("journalPpe");
+  const pdf = useTranslations("personnelMaintenancePdf");
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({
@@ -225,7 +235,7 @@ function SettingsDialog(props: {
     const initial = initialRef.current;
     resetAuto();
     setState(initial ? { ...initial, title: initial.title || seedTitle() } : initial);
-  }, [props.open, resetAuto, seedTitle]);
+  }, [props.open, props.sourceIdentity, resetAuto, seedTitle]);
 
   function handleSubmit(force = false) {
     if (!active) return;
@@ -245,6 +255,7 @@ function SettingsDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={p("close")}
               className="rounded-xl p-2 text-[#0b1024]"
               onClick={() => props.onOpenChange(false)}
             >
@@ -261,10 +272,10 @@ function SettingsDialog(props: {
               onForce={() => handleSubmit(true)}
             />
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("documentName") }</Label>
               <Input
                 value={active.title}
-                placeholder="Введите название документа"
+                placeholder={p("documentNamePlaceholder")}
                 onChange={(e) => {
                   auto.markTouched();
                   setState({ ...active, title: e.target.value });
@@ -273,7 +284,7 @@ function SettingsDialog(props: {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Дата начала</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("startDate") }</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -294,14 +305,14 @@ function SettingsDialog(props: {
               </div>
             </div>
             <fieldset className="space-y-4 rounded-[28px] border border-[#d8dae6] px-6 py-5">
-              <legend className="px-2 text-[20px] font-semibold text-black">Добавить поля</legend>
-              <FieldToggle checked={active.showGloves} onCheckedChange={(checked) => setState({ ...active, showGloves: checked })} label="Выдача перчаток" />
-              <FieldToggle checked={active.showShoes} onCheckedChange={(checked) => setState({ ...active, showShoes: checked })} label="Выдача обуви" />
-              <FieldToggle checked={active.showClothing} onCheckedChange={(checked) => setState({ ...active, showClothing: checked })} label="Выдача спец. одежды" />
-              <FieldToggle checked={active.showCaps} onCheckedChange={(checked) => setState({ ...active, showCaps: checked })} label="Выдача шапочек" />
+              <legend className="px-2 text-[20px] font-semibold text-black">{p("addFields") }</legend>
+              <FieldToggle checked={active.showGloves} onCheckedChange={(checked) => setState({ ...active, showGloves: checked })} label={p("showGloves")} />
+              <FieldToggle checked={active.showShoes} onCheckedChange={(checked) => setState({ ...active, showShoes: checked })} label={p("showShoes")} />
+              <FieldToggle checked={active.showClothing} onCheckedChange={(checked) => setState({ ...active, showClothing: checked })} label={p("showClothing")} />
+              <FieldToggle checked={active.showCaps} onCheckedChange={(checked) => setState({ ...active, showCaps: checked })} label={p("showCaps")} />
             </fieldset>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Сотрудник по умолчанию, выдавший СИЗ</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("defaultIssuer") }</Label>
               <Select
                 value={active.defaultIssuerUserId}
                 onValueChange={(value) => {
@@ -316,7 +327,7 @@ function SettingsDialog(props: {
                 }}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={p("chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {props.users.map((user) => (
@@ -328,18 +339,18 @@ function SettingsDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Должность лица, выдавшего СИЗ</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{p("issuerPosition") }</Label>
               <Select
                 value={active.defaultIssuerTitle}
                 onValueChange={(value) => setState({ ...active, defaultIssuerTitle: value })}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={p("choosePosition")} />
                 </SelectTrigger>
                 <SelectContent>
                   {titles.map((title) => (
                     <SelectItem key={title} value={title}>
-                      {title}
+                      {ppeLegacyPositionOption(title, props.users, key => pdf(key))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -352,7 +363,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? p("saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -368,6 +379,8 @@ function DeleteDialog(props: {
   title: string;
   onDelete: () => Promise<void>;
 }) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleDelete() {
@@ -386,10 +399,11 @@ function DeleteDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold text-black">
-              Удаление документа &quot;{props.title}&quot;
+              {t("documentLifecycle.namedDeleteTitle", { title: props.title })}
             </DialogTitle>
             <button
               type="button"
+              aria-label={common("close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -404,7 +418,7 @@ function DeleteDialog(props: {
             disabled={submitting}
             className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
           >
-            {submitting ? "Удаление..." : "Удалить"}
+            {submitting ? t("documentLifecycle.deleting") : common("delete")}
           </Button>
         </div>
       </DialogContent>
@@ -419,6 +433,12 @@ export function PpeIssuanceDocumentsClient({
   users,
   documents,
 }: Props) {
+  const p = useTranslations("journalPpe");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
+  const chooseExportLanguage = useExportLanguageChoice();
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -428,6 +448,11 @@ export function PpeIssuanceDocumentsClient({
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
   const createInitial = useMemo(() => defaultCreateState(users), [users]);
+  const documentsIdentity = ppeSourceIdentity(documents);
+  useEffect(() => {
+    setSettingsTarget(current => current ? documents.find(item => item.id === current.id) ?? null : null);
+    setDeleteTarget(current => current ? documents.find(item => item.id === current.id) ?? null : null);
+  }, [documents, documentsIdentity]);
 
   async function createDocument(value: SettingsState, force: boolean) {
     const config: PpeIssuanceConfig = {
@@ -498,7 +523,7 @@ export function PpeIssuanceDocumentsClient({
       method: "DELETE",
     });
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(lifecycleFeedback.current.translate("documentActions.deleteError"));
       return;
     }
     router.refresh();
@@ -508,7 +533,7 @@ export function PpeIssuanceDocumentsClient({
     <div className="space-y-5">
       <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
         <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-          <JournalHeadingName fallback={PPE_ISSUANCE_DOCUMENT_TITLE} />
+          <JournalHeadingName fallback={pdf("ppeTitle")} />
         </h1>
         <JournalListActions
           templateCode={templateCode}
@@ -516,7 +541,7 @@ export function PpeIssuanceDocumentsClient({
           create={
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
-                <Plus className="size-4" /> Создать документ
+                <Plus className="size-4" /> {p("createDocument") }
               </Button>
             ) : null
           }
@@ -540,24 +565,24 @@ export function PpeIssuanceDocumentsClient({
                 href={href}
                 className={JOURNAL_CARD_TITLE_CLASS}
               >
-                {document.title || PPE_ISSUANCE_DOCUMENT_TITLE}
+                {document.titleIsFallback ? pdf("ppeTitle") : document.title || pdf("ppeTitle")}
               <SharedDocumentBadge shared={document.shared} />
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{p("startDate") }</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatDateLabel(document.dateFrom)}
                 </div>
               </Link>
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия"
+                  title={p("actions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: p("settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -565,10 +590,10 @@ export function PpeIssuanceDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: p("print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
-                        window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
+                        chooseExportLanguage(language => { window.open(`/api/journal-documents/${document.id}/pdf?locale=${language}`, "_blank"); }, p("print")),
                     },
                     // Закрытый документ раньше уходил навсегда: вернуть
                     // его в активные было нечем.
@@ -577,7 +602,7 @@ export function PpeIssuanceDocumentsClient({
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: common("delete"),
                             icon: <Trash2 className="size-4 text-[#6f7282]" />,
                             tone: "danger" as const,
                             onSelect: () => setDeleteTarget(document),
@@ -588,6 +613,7 @@ export function PpeIssuanceDocumentsClient({
                   trigger={
                     <button
                       type="button"
+                      aria-label={p("actions")}
                       className="flex size-10 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                     >
                       <Ellipsis className="size-8" />
@@ -603,11 +629,12 @@ export function PpeIssuanceDocumentsClient({
       <SettingsDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        title="Создание документа"
-        submitText="Создать"
+        title={p("creatingDocument")}
+        submitText={p("create")}
         users={users}
         routeCode={routeCode}
         initial={createInitial}
+        sourceIdentity={ppeSourceIdentity(users)}
         onSubmit={createDocument}
         mode="create"
       />
@@ -617,11 +644,12 @@ export function PpeIssuanceDocumentsClient({
         onOpenChange={(value) => {
           if (!value) setSettingsTarget(null);
         }}
-        title="Настройки документа"
-        submitText="Сохранить"
+        title={p("documentSettings")}
+        submitText={p("save")}
         users={users}
         routeCode={routeCode}
         initial={settingsTarget ? toSettingsState(settingsTarget, users) : null}
+        sourceIdentity={ppeSourceIdentity([settingsTarget, users])}
         onSubmit={async (value) => {
           if (settingsTarget) await saveSettings(settingsTarget.id, value);
         }}
@@ -633,7 +661,7 @@ export function PpeIssuanceDocumentsClient({
         onOpenChange={(value) => {
           if (!value) setDeleteTarget(null);
         }}
-        title={deleteTarget?.title || PPE_ISSUANCE_DOCUMENT_TITLE}
+        title={deleteTarget?.titleIsFallback ? pdf("ppeTitle") : deleteTarget?.title || pdf("ppeTitle")}
         onDelete={async () => {
           if (deleteTarget) {
             await handleDelete(deleteTarget.id);

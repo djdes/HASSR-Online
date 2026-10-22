@@ -16,6 +16,8 @@ import {
   VerticalAlignTable,
   WidthType,
 } from "docx";
+import { formatDate as formatLocaleDate, type Locale } from "@/i18n/locales";
+import { journalDocxCopy } from "@/i18n/journal-docx-copy";
 import { brandQrPng } from "@/lib/brand-qr";
 import { HYGIENE_STATUS_OPTIONS } from "@/lib/hygiene-document";
 import type { JournalDocumentPdfInput } from "@/lib/document-pdf";
@@ -48,9 +50,12 @@ export function isDocxSampleCode(code: string): code is DocxSampleCode {
 }
 
 /** Шапка бланка ХАССП — та же структура, что в PDF и на экране. */
-function headerTable(input: JournalDocumentPdfInput): Table {
+type DocxText = Awaited<ReturnType<typeof journalDocxCopy>>["t"];
+type StatusText = Awaited<ReturnType<typeof journalDocxCopy>>["status"];
+
+function headerTable(input: JournalDocumentPdfInput, locale: Locale, t: DocxText): Table {
   const org = input.document.organization;
-  const orgLine = [org.name, org.inn ? `ИНН ${org.inn}` : null, org.address]
+  const orgLine = [org.name, org.inn ? t("taxId", { number: org.inn }) : null, org.address]
     .filter(Boolean)
     .join(" · ");
 
@@ -66,7 +71,7 @@ function headerTable(input: JournalDocumentPdfInput): Table {
           new TableCell({
             children: [
               new Paragraph({
-                text: "СИСТЕМА ХАССП",
+                text: t("system"),
                 alignment: AlignmentType.CENTER,
               }),
             ],
@@ -75,10 +80,10 @@ function headerTable(input: JournalDocumentPdfInput): Table {
           new TableCell({
             children: [
               new Paragraph({
-                text: `Начат: ${formatDate(input.document.dateFrom)}`,
+                text: t("started", { date: formatDate(input.document.dateFrom, locale) }),
               }),
-              new Paragraph({ text: "Окончен: ______________" }),
-              new Paragraph({ text: "СТР. 1 ИЗ 1" }),
+              new Paragraph({ text: t("finished") }),
+              new Paragraph({ text: t("pages", { current: "1", total: "1" }) }),
             ],
             width: { size: 25, type: WidthType.PERCENTAGE },
           }),
@@ -88,8 +93,9 @@ function headerTable(input: JournalDocumentPdfInput): Table {
   });
 }
 
-function formatDate(value: Date): string {
-  return value.toLocaleDateString("ru-RU");
+function formatDate(value: Date, locale: Locale): string {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return formatLocaleDate(locale, value, timeZone, { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 function dateKeys(from: Date, to: Date): string[] {
@@ -116,7 +122,7 @@ function cell(text: string, bold = false): TableCell {
  * Сетка «сотрудник × день». Так устроены гигиена, журнал здоровья и
  * уборка: строки — люди, столбцы — даты, в клетке одна отметка.
  */
-function employeeGrid(input: JournalDocumentPdfInput): Table {
+function employeeGrid(input: JournalDocumentPdfInput, t: DocxText, status: StatusText): Table {
   const keys = dateKeys(input.document.dateFrom, input.document.dateTo);
   const byKey = new Map<string, Record<string, unknown>>();
   for (const entry of input.document.entries) {
@@ -126,8 +132,8 @@ function employeeGrid(input: JournalDocumentPdfInput): Table {
 
   const header = new TableRow({
     children: [
-      cell("Ф.И.О. работника", true),
-      cell("Должность", true),
+      cell(t("employeeName"), true),
+      cell(t("position"), true),
       ...keys.map((k) => cell(k.slice(8), true)),
     ],
   });
@@ -140,7 +146,7 @@ function employeeGrid(input: JournalDocumentPdfInput): Table {
           cell(user.positionTitle),
           ...keys.map((k) => {
             const data = byKey.get(`${user.id}:${k}`);
-            return cell(data ? markFor(data) : "");
+            return cell(data ? markFor(data, t, status) : "");
           }),
         ],
       })
@@ -153,12 +159,18 @@ function employeeGrid(input: JournalDocumentPdfInput): Table {
 }
 
 /** Отметка в клетке. Ключи разные у разных журналов — берём первый знакомый. */
-function markFor(data: Record<string, unknown>): string {
+const STATUS_CODE_KEYS = {
+  healthy: "healthyCode", day_off: "dayOffCode", sick_leave: "sickLeaveCode",
+  suspended: "suspendedCode", vacation: "vacationCode",
+} as const;
+
+function markFor(data: Record<string, unknown>, t: DocxText, status: StatusText): string {
   if (typeof data.status === "string") {
     // Код как в PDF и на экране («Зд.», «В», «Б/л»…), а не значение из базы (`day_off`).
-    return HYGIENE_STATUS_OPTIONS.find((option) => option.value === data.status)?.code ?? String(data.status);
+    const option = HYGIENE_STATUS_OPTIONS.find((item) => item.value === data.status);
+    return option ? status(STATUS_CODE_KEYS[option.value]) : String(data.status);
   }
-  if (data.signed === true) return "подпись";
+  if (data.signed === true) return t("signatureMark");
   return "✓";
 }
 
@@ -166,7 +178,7 @@ function markFor(data: Record<string, unknown>): string {
  * Сетка «оборудование × день» — журнал температур холодильников.
  * Значение лежит не в клетке сотрудника, а в словаре temperatures.
  */
-function equipmentGrid(input: JournalDocumentPdfInput): Table {
+function equipmentGrid(input: JournalDocumentPdfInput, t: DocxText): Table {
   const keys = dateKeys(input.document.dateFrom, input.document.dateTo);
   const byDate = new Map<string, Record<string, number | null>>();
   for (const entry of input.document.entries) {
@@ -177,7 +189,7 @@ function equipmentGrid(input: JournalDocumentPdfInput): Table {
 
   const header = new TableRow({
     children: [
-      cell("Оборудование", true),
+      cell(t("equipment"), true),
       ...keys.map((k) => cell(k.slice(8), true)),
     ],
   });
@@ -216,35 +228,18 @@ function blankRegister(columns: string[], rowCount = 12): Table {
   });
 }
 
-const REGISTER_COLUMNS: Record<string, string[]> = {
-  finished_product: [
-    "Дата и время",
-    "Наименование блюда",
-    "Органолептическая оценка",
-    "Разрешение к реализации",
-    "Ф.И.О. бракеражной комиссии",
-    "Подпись",
-  ],
-  incoming_control: [
-    "Дата",
-    "Поставщик",
-    "Продукт",
-    "Партия",
-    "Срок годности",
-    "Температура",
-    "Документы",
-    "Решение",
-    "Ф.И.О.",
-  ],
-  cleaning: [
-    "Дата",
-    "Помещение",
-    "Вид уборки",
-    "Средство",
-    "Ф.И.О. исполнителя",
-    "Подпись",
-  ],
-};
+const REGISTER_COLUMN_KEYS = {
+  finished_product: ["dateTime", "dish", "organoleptic", "permission", "commission", "signature"],
+  incoming_control: ["date", "supplier", "product", "batch", "expiry", "temperature", "documents", "decision", "fullName"],
+  cleaning: ["date", "room", "cleaningType", "agent", "performer", "signature"],
+} as const;
+
+function registerColumns(code: DocxSampleCode, t: DocxText): string[] {
+  if (code === "cleaning" || code === "finished_product" || code === "incoming_control") {
+    return REGISTER_COLUMN_KEYS[code].map((key) => t(`columns.${key}`));
+  }
+  return [t("columns.date"), t("columns.event")];
+}
 
 /**
  * Подвал скачанного шаблона: строки подписи (первая — жирная) и QR справа.
@@ -279,8 +274,8 @@ function pngSize(png: Buffer): { width: number; height: number } {
  */
 const FOOTER_COLUMNS = [7426, 1600];
 
-async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
-  const png = await brandQrPng(footer.qrUrl, { width: FOOTER_QR_PNG_WIDTH });
+async function blankFooter(footer: DocxBlankFooter, locale: Locale, t: DocxText): Promise<Footer> {
+  const png = await brandQrPng(footer.qrUrl, { width: FOOTER_QR_PNG_WIDTH, locale });
   const size = pngSize(png);
   const [caption = "", ...rest] = footer.lines;
   const text = new TableCell({
@@ -311,7 +306,7 @@ async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
             type: "png",
             data: png,
             transformation: { width: FOOTER_QR_PX, height: Math.round((FOOTER_QR_PX * size.height) / size.width) },
-            altText: { name: "QR", description: caption, title: "QR-код" },
+            altText: { name: "QR", description: caption, title: t("qrAlt") },
           }),
         ],
       }),
@@ -367,10 +362,12 @@ export async function renderJournalDocumentDocx(
   code: DocxSampleCode,
   options: { footer?: DocxBlankFooter | null } = {}
 ): Promise<{ buffer: Buffer; fileName: string }> {
+  const locale = input.locale ?? "ru";
+  const { t, status } = await journalDocxCopy(locale);
   const title = input.document.title;
 
   const body: (Paragraph | Table)[] = [
-    headerTable(input),
+    headerTable(input, locale, t),
     new Paragraph({ text: "" }),
     new Paragraph({
       text: title.toUpperCase(),
@@ -381,11 +378,11 @@ export async function renderJournalDocumentDocx(
   ];
 
   if (code === "hygiene" || code === "health_check") {
-    body.push(employeeGrid(input));
+    body.push(employeeGrid(input, t, status));
   } else if (code === "cold_equipment_control") {
-    body.push(equipmentGrid(input));
+    body.push(equipmentGrid(input, t));
   } else {
-    body.push(blankRegister(REGISTER_COLUMNS[code] ?? ["Дата", "Событие"]));
+    body.push(blankRegister(registerColumns(code, t)));
   }
 
   body.push(
@@ -393,7 +390,7 @@ export async function renderJournalDocumentDocx(
     new Paragraph({
       children: [
         new TextRun({
-          text: "Образец. Данные вымышленные — заполните своими или ведите журнал в WeSetup: wesetup.ru",
+          text: t("sampleNotice"),
           italics: true,
           size: 16,
         }),
@@ -401,7 +398,7 @@ export async function renderJournalDocumentDocx(
     })
   );
 
-  const footer = options.footer ? await blankFooter(options.footer) : null;
+  const footer = options.footer ? await blankFooter(options.footer, locale, t) : null;
   const doc = new Document({
     styles: { default: BLACK_DEFAULT_STYLES },
     sections: [{ children: body, ...(footer ? { footers: { default: footer } } : {}) }],

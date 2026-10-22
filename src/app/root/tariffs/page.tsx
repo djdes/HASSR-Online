@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { requireRoot } from "@/lib/auth-helpers";
 import { readTariffs } from "@/lib/tariffs";
 import { collectBillingOverview, readFreePeriodSettings } from "@/lib/billing.server";
@@ -7,9 +9,10 @@ import { BillingPeriodCard } from "./billing-period-card";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-  title: "Тарифы платформы",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("rootTariffs");
+  return { title: t("pageTitle") };
+}
 
 /**
  * ROOT-админка цен. Лендинг, /pricing и создание платежа читают ту же
@@ -24,15 +27,16 @@ export default async function RootTariffsPage() {
     collectBillingOverview(),
   ]);
 
+  const t = await getTranslations("rootTariffs");
+
   return (
+    <DomainMessagesBoundary namespaces={["rootTariffs"]}>
     <div className="mx-auto max-w-[880px]">
       <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-        Тарифы платформы
+        {t("pageTitle")}
       </h1>
       <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
-        Цены применяются мгновенно: лендинг, страница тарифов и кнопки
-        оплаты читают эти значения при каждом запросе. Ключ тарифа менять
-        нельзя — на него ссылаются кнопки оплаты и уже созданные заказы.
+        {t("pageDescription")}
       </p>
       <div className="mt-6">
         <TariffsClient initial={tariffs} />
@@ -50,5 +54,6 @@ export default async function RootTariffsPage() {
         />
       </div>
     </div>
+    </DomainMessagesBoundary>
   );
 }

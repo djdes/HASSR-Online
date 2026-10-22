@@ -1,23 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useMainButton } from "@/app/mini/_components/use-main-button";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Camera, Check, Loader2 } from "lucide-react";
-import {
-  checkPhotoBeforeUpload,
-  PHOTO_RULES_HINT,
-} from "@/components/journals/photo-field";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useMainButton } from "@/app/mini/_components/use-main-button";
+import { checkPhotoBeforeUpload } from "@/components/journals/photo-field";
+import { FORMAT_LOCALES, isLocale } from "@/i18n/locales";
+import { bonusErrorKey, type BonusErrorKey } from "./bonus-error-presentation";
 
-/**
- * Photo-mandatory submit-форма для премиального obligation
- * (Phase 3, шаг 3.4). Минимальный набор полей — фото обязательно,
- * заметка опциональна. На submit идёт `POST /api/journals/[id]/submit-bonus`,
- * который создаёт JournalEntry + JournalEntryAttachment + обновляет
- * BonusEntry.photoUrl. Статус остаётся "pending" — переход в
- * "approved"/"rejected" живёт в шагах 3.5/3.7.
- */
 export function BonusSubmitForm({
   obligationId,
   amountKopecks,
@@ -31,37 +22,34 @@ export function BonusSubmitForm({
 }) {
   void templateName;
   const router = useRouter();
+  const localeValue = useLocale();
+  const locale = isLocale(localeValue) ? localeValue : "ru";
+  const t = useTranslations("miniBonus");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(existingPhotoUrl);
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<BonusErrorKey | null>(null);
 
-  const amountRubles = (amountKopecks / 100).toLocaleString("ru-RU", {
+  const amountRubles = (amountKopecks / 100).toLocaleString(FORMAT_LOCALES[locale], {
     minimumFractionDigits: amountKopecks % 100 === 0 ? 0 : 2,
   });
 
   const mainButtonTaken = useMainButton({
-    text: submitting ? "Отправляем…" : "Готово, забрать премию",
+    text: submitting ? t("submit.loading") : t("submit.action"),
     enabled: Boolean(photoUrl) && !uploading,
     loading: submitting,
-    onClick: () => {
-      void handleSubmit();
-    },
+    onClick: () => void handleSubmit(),
   });
 
-  async function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Тип и размер проверяем ДО отправки — теми же правилами, что и на
-    // сервере. Иначе человек ждёт загрузку ради отказа.
     const problem = checkPhotoBeforeUpload(file);
     if (problem) {
-      setError(problem);
+      setError(bonusErrorKey(problem));
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -80,12 +68,12 @@ export function BonusSubmitForm({
         error?: string;
       };
       if (!resp.ok || !data.url) {
-        setError(data.error ?? "Не удалось загрузить фото");
+        setError(bonusErrorKey(data.error));
         return;
       }
       setPhotoUrl(data.url);
-    } catch (err) {
-      setError(humanizeFetchError(err));
+    } catch {
+      setError("errors.network");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -94,8 +82,9 @@ export function BonusSubmitForm({
 
   async function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault();
+    if (submitting || uploading) return;
     if (!photoUrl) {
-      setError("Снимите фото результата — без него премия не начислится");
+      setError("errors.photoRequired");
       return;
     }
     setSubmitting(true);
@@ -112,17 +101,15 @@ export function BonusSubmitForm({
           }),
         }
       );
-      const data = (await resp.json().catch(() => ({}))) as {
-        error?: string;
-      };
+      const data = (await resp.json().catch(() => ({}))) as { error?: string };
       if (!resp.ok) {
-        setError(data.error ?? "Не получилось отправить. Попробуйте ещё раз");
+        setError(bonusErrorKey(data.error));
         return;
       }
       router.push("/journals");
       router.refresh();
-    } catch (err) {
-      setError(humanizeFetchError(err));
+    } catch {
+      setError("errors.network");
     } finally {
       setSubmitting(false);
     }
@@ -131,34 +118,30 @@ export function BonusSubmitForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="mini-ok-note" style={{ color: "var(--mini-text)" }}>
-        Премия зафиксирована:{" "}
-        <strong style={{ color: "var(--mini-ok)" }}>+{amountRubles} ₽</strong>
+        {t.rich("amount", {
+          amount: amountRubles,
+          value: (chunks) => <strong style={{ color: "var(--mini-ok)" }}>{chunks}</strong>,
+        })}
       </div>
 
       <section className="space-y-2">
-        {/* Бейдж «обязательно» вместо звёздочки — как в остальных формах:
-            звёздочку на телефоне не замечают. */}
         <div className="flex flex-wrap items-center gap-2">
           <label
+            htmlFor="bonus-result-photo"
             className="text-[16px] font-semibold"
             style={{ color: "var(--mini-text)" }}
           >
-            Фото результата
+            {t("photo.label")}
           </label>
           <span className="mini-pill" data-tone="danger" style={{ minHeight: 26, fontSize: 12.5 }}>
-            обязательно
+            {t("photo.required")}
           </span>
         </div>
-        {/* Правило — ЗАРАНЕЕ, а не после отказа сервера: из галереи
-            фото не подойдёт, проверяется время съёмки. */}
         <div
           className="text-[14.5px] leading-snug"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Снимите прямо сейчас, на месте: система смотрит время съёмки и
-          принимает фото не старше 5 минут. Снимок из галереи не подойдёт.
-          {" "}
-          {PHOTO_RULES_HINT}.
+          {t("photo.rules", { minutes: 5, megabytes: 5 })}
         </div>
 
         {photoUrl ? (
@@ -170,7 +153,7 @@ export function BonusSubmitForm({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photoUrl}
-                alt="Доказательство выполнения"
+                alt={t("photo.alt")}
                 className="block h-48 w-full object-cover"
               />
             </div>
@@ -183,12 +166,12 @@ export function BonusSubmitForm({
               {uploading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Загрузка…
+                  {t("photo.uploading")}
                 </>
               ) : (
                 <>
                   <Camera className="size-4" />
-                  Сменить фото
+                  {t("photo.change")}
                 </>
               )}
             </button>
@@ -208,22 +191,24 @@ export function BonusSubmitForm({
             {uploading ? (
               <>
                 <Loader2 className="size-5 animate-spin" />
-                Загружаем фото…
+                {t("photo.uploading")}
               </>
             ) : (
               <>
                 <Camera className="size-6" strokeWidth={1.6} />
-                Сделать фото
+                {t("photo.take")}
               </>
             )}
           </button>
         )}
 
         <input
+          id="bonus-result-photo"
           ref={fileInputRef}
           type="file"
           accept="image/*"
           capture="environment"
+          aria-label={t("photo.inputLabel")}
           onChange={handleFileChange}
           className="hidden"
         />
@@ -231,30 +216,30 @@ export function BonusSubmitForm({
 
       <section className="space-y-2">
         <label
+          htmlFor="bonus-note"
           className="block text-[16px] font-semibold"
           style={{ color: "var(--mini-text)" }}
         >
-          Заметка (необязательно)
+          {t("note.label")}
         </label>
         <textarea
+          id="bonus-note"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={3}
           maxLength={500}
-          placeholder="Что сделано, замечания, нюансы…"
+          placeholder={t("note.placeholder")}
           className="mini-input"
           style={{ minHeight: 96, resize: "vertical" }}
         />
       </section>
 
       {error ? (
-        <div className="mini-err">{error}</div>
+        <div className="mini-err" role="alert">
+          {error === "errors.photoTooOld" ? t(error, { minutes: 5 }) : t(error)}
+        </div>
       ) : null}
 
-      {/* Внутри Telegram отправка живёт в родной кнопке клиента — она
-          ниже нашего полотна и не уезжает под клавиатуру. Две кнопки
-          «Готово» на одном экране хуже любой одной, поэтому свою прячем.
-          В браузере и на старых клиентах остаётся эта. */}
       <button
         type="submit"
         hidden={mainButtonTaken}
@@ -264,12 +249,12 @@ export function BonusSubmitForm({
         {submitting ? (
           <>
             <Loader2 className="size-5 animate-spin" />
-            Отправляем…
+            {t("submit.loading")}
           </>
         ) : (
           <>
             <Check className="size-5" strokeWidth={2.4} />
-            Готово, забрать премию
+            {t("submit.action")}
           </>
         )}
       </button>

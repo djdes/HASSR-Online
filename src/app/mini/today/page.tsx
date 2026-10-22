@@ -2,9 +2,12 @@
 
 
 import Link from "next/link";
+import { presentPoolCopy, type PoolDisplayCopy } from "@/lib/journal-task-pool-copy";
 
 import { useRegisterRefresh } from "../_components/refresh-provider";
-import { claimReasonRu } from "../_lib/claim-errors";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { presentTodayError, readTodayError, todayCaughtError, todayDayLabel, todayJournalLabel, todaySchedule, type TodayError } from "./today-presentation";
 import { miniShellSignInHref } from "@/lib/mini-shell-cookie";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -26,14 +29,17 @@ import {
   UserCheck,
 } from "lucide-react";
 import { JournalIcon } from "../_components/journal-icon";
-import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+
 
 type Scope = {
+  displayCopy?: PoolDisplayCopy;
   scopeKey: string;
   scopeLabel: string;
   sublabel?: string;
   journalCode: string;
   journalLabel: string;
+  journalLabelOrigin?: string;
+  sublabelOrigin?: string;
   /** Имя иконки lucide, подобранное по виду журнала (см. journal-label.ts). */
   iconName?: string;
   journalDocumentId?: string;
@@ -45,6 +51,7 @@ type Scope = {
 type Group = {
   code: string;
   label: string;
+  labelOrigin?: string;
   scopes: Scope[];
 };
 
@@ -65,7 +72,7 @@ type Payload = {
    * «Сотрудниках». Текст приходит готовым: «Сегодня у вас по графику:
    * отпуск до 25.09».
    */
-  scheduleNote?: { kind: string; text: string } | null;
+  scheduleNote?: { kind: string; text: string; untilKey?: string | null } | null;
   myActive: {
     id: string;
     journalCode: string;
@@ -83,56 +90,22 @@ type Payload = {
 };
 
 /** Плашка «сегодня у вас по графику». Спокойная, задачи не прячет. */
-const SCHEDULE_NOTES: Record<
-  string,
-  { label: string; icon: typeof Bed }
-> = {
-  sick: { label: "больничный", icon: Bed },
-  sick_leave: { label: "больничный", icon: Bed },
-  vacation: { label: "отпуск", icon: Palmtree },
-  off: { label: "выходной", icon: CalendarOff },
-  day_off: { label: "выходной", icon: CalendarOff },
+const SCHEDULE_NOTES = {
+  sick: { icon: Bed }, sick_leave: { icon: Bed }, vacation: { icon: Palmtree },
+  off: { icon: CalendarOff }, day_off: { icon: CalendarOff },
 };
-
-/** «2026-09-20» → «20 сентября». Без часовых поясов: день уже посчитан. */
-function humanDay(dateKey: string): string {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  if (!year || !month || !day) return dateKey;
-  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("ru-RU", {
-    timeZone: "UTC",
-    day: "numeric",
-    month: "long",
-  });
-}
-
-/** Полная подпись даты для шапки: «понедельник, 20 сентября». */
-function humanWeekday(dateKey: string): string {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  if (!year || !month || !day) return dateKey;
-  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("ru-RU", {
-    timeZone: "UTC",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
-
-/** Текст ошибки от API, иначе — понятная замена вместо кода статуса. */
-async function readError(res: Response): Promise<string> {
-  const body = (await res.json().catch(() => ({}))) as { error?: string };
-  if (body.error) return body.error;
-  if (res.status === 401) return "Сессия истекла — войдите заново";
-  if (res.status === 403) return "Нет доступа к задачам на сегодня";
-  return `Не удалось загрузить задачи (HTTP ${res.status})`;
-}
 
 export default function MiniTodayPage() {
   const router = useRouter();
+  const t = useTranslations("miniToday");
+  const locale = useLocale() as Locale;
+  const copyRef = useRef(t);
+  useEffect(() => { copyRef.current = t; }, [t]);
   const [data, setData] = useState<Payload | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   // Без этого любой сбой запроса оставлял экран с вечным «крутилкой»:
   // data/gate так и не появлялись, а причина нигде не показывалась.
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<TodayError | null>(null);
   // 401 — это не «ошибка загрузки», а «вы не вошли»: вместо кнопки
   // «Попробовать ещё раз» человеку нужна дорога на вход.
   const [needsSignIn, setNeedsSignIn] = useState(false);
@@ -147,11 +120,7 @@ export default function MiniTodayPage() {
       if (!res.ok) {
         if (mountedRef.current) {
           setNeedsSignIn(res.status === 401);
-          setLoadError(
-            res.status === 401
-              ? "Чтобы увидеть задачи на сегодня, нужно войти. Внутри Telegram вход произойдёт сам."
-              : await readError(res)
-          );
+          setLoadError(await readTodayError(res, "load"));
         }
         return;
       }
@@ -163,9 +132,7 @@ export default function MiniTodayPage() {
       }
     } catch {
       if (mountedRef.current) {
-        setLoadError(
-          "Нет связи с сервером. Проверьте интернет и потяните вниз, чтобы обновить"
-        );
+        setLoadError(todayCaughtError(null, "load"));
       }
     }
   }
@@ -215,27 +182,15 @@ export default function MiniTodayPage() {
       // взяли», 400 «нужна активная смена», 403 ACL.
       // Сервер кладёт пояснение в `message`, а не в `error` — раньше оно
       // терялось и человек видел общую фразу вместо «сначала завершите X».
-      const raw = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        message?: string;
-      };
-      const body = { error: raw.error ?? raw.message };
-      const msg =
-        res.status === 409
-          ? body.error || "Эту задачу уже забрал кто-то другой"
-          : res.status === 403
-            ? body.error || "Нет доступа к этой задаче"
-            : res.status === 401
-              ? "Вход закончился — войдите заново"
-              : body.error || "Не удалось взять задачу. Попробуйте ещё раз.";
-      toast.error(msg);
+      const error = await readTodayError(res, "claim");
+      toast.error(presentTodayError(copyRef.current, error));
       // Список перерисовываем сами: «обновите страницу» на телефоне —
       // это просьба, которую никто не выполняет.
       if (res.status === 409 || res.status === 403) await load();
     } catch (err) {
       toast.error(
         // Раньше сюда улетало «Failed to fetch» от браузера.
-        humanizeFetchError(err, "Не удалось взять задачу")
+        presentTodayError(copyRef.current, todayCaughtError(err, "claim"))
       );
     } finally {
       setBusy(null);
@@ -258,17 +213,14 @@ export default function MiniTodayPage() {
         body: JSON.stringify({ action: "release" }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          reason?: string;
-        };
-        toast.error(body.error || claimReasonRu(body.reason, res.status));
+        const error = await readTodayError(res, "release");
+        toast.error(presentTodayError(copyRef.current, error));
       } else {
-        toast.success("Задача снова в общем списке");
+        toast.success(copyRef.current("released"));
       }
       await load();
     } catch (err) {
-      toast.error(humanizeFetchError(err));
+      toast.error(presentTodayError(copyRef.current, todayCaughtError(err, "release")));
     } finally {
       setBusy(null);
     }
@@ -284,18 +236,13 @@ export default function MiniTodayPage() {
         body: JSON.stringify({ action: "complete" }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          reason?: string;
-        };
-        toast.error(
-          body.error || claimReasonRu(body.reason, res.status)
-        );
+        const error = await readTodayError(res, "complete");
+        toast.error(presentTodayError(copyRef.current, error));
       }
       await load();
     } catch (err) {
       toast.error(
-        humanizeFetchError(err, "Не удалось завершить задачу")
+        presentTodayError(copyRef.current, todayCaughtError(err, "complete"))
       );
     } finally {
       setBusy(null);
@@ -309,13 +256,13 @@ export default function MiniTodayPage() {
           {/* Столбиком: раньше кнопка подпирала текст сбоку и наезжала
               на него на узком экране. */}
           <div className="mini-card flex flex-col items-center gap-4 px-4 py-5 text-center text-[16px] leading-relaxed">
-            <span>{loadError}</span>
+            <span>{presentTodayError(t, loadError)}</span>
             {needsSignIn ? (
               <Link
                 href={miniShellSignInHref("/mini/today")}
                 className="mini-btn-primary mini-press w-full"
               >
-                Войти
+                {t("signIn")}
               </Link>
             ) : (
               <button
@@ -326,7 +273,7 @@ export default function MiniTodayPage() {
                 }}
                 className="mini-btn-primary mini-press w-full"
               >
-                Попробовать ещё раз
+                {t("retry")}
               </button>
             )}
           </div>
@@ -340,7 +287,7 @@ export default function MiniTodayPage() {
           style={{ color: "var(--mini-text-muted)" }}
         >
           <Loader2 className="size-5 animate-spin" />
-          Загружаем задачи…
+          {t("loading")}
         </div>
       </div>
     );
@@ -350,14 +297,10 @@ export default function MiniTodayPage() {
   // в «Сотрудниках» (текст с датой окончания — точнее) и «Графика смен».
   // Первый — приоритетнее.
   const scheduleKind = data.scheduleNote?.kind ?? data.scheduleStatus ?? null;
-  const ScheduleIcon = scheduleKind
-    ? SCHEDULE_NOTES[scheduleKind]?.icon ?? null
+  const ScheduleIcon = scheduleKind && Object.hasOwn(SCHEDULE_NOTES, scheduleKind)
+    ? SCHEDULE_NOTES[scheduleKind as keyof typeof SCHEDULE_NOTES].icon
     : null;
-  const scheduleText =
-    data.scheduleNote?.text ??
-    (scheduleKind && SCHEDULE_NOTES[scheduleKind]
-      ? `Сегодня у вас по графику: ${SCHEDULE_NOTES[scheduleKind].label}`
-      : null);
+  const scheduleText = todaySchedule(t, locale, data.scheduleStatus, data.scheduleNote);
 
   const totalAvailable = data.groups.flatMap((g) =>
     g.scopes.filter((s) => s.availability === "available")
@@ -379,18 +322,18 @@ export default function MiniTodayPage() {
           {/* Дата приходит уже посчитанной по поясу организации.
               `new Date(dateKey)` разбирал её как UTC и в часть суток
               показывал соседний день — форматируем в UTC. */}
-          {humanWeekday(data.dateKey)}
+          {todayDayLabel(data.dateKey, locale, true)}
         </div>
-        <h1 className="mini-h1 mt-1.5">Сегодня</h1>
+        <h1 className="mini-h1 mt-1.5">{t("title")}</h1>
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="mini-pill">Свободно: {totalAvailable}</span>
+          <span className="mini-pill">{t("availableCount", { count: totalAvailable })}</span>
           {totalMine > 0 ? (
             <span className="mini-pill" data-tone="accent">
-              У меня: {totalMine}
+              {t("mineCount", { count: totalMine })}
             </span>
           ) : null}
           <span className="mini-pill" data-tone="ok">
-            Готово: {totalDone}
+            {t("doneCount", { count: totalDone })}
           </span>
         </div>
       </header>
@@ -407,8 +350,7 @@ export default function MiniTodayPage() {
             />
           ) : null}
           <span>
-            {scheduleText}. Если вышли на подмену — задачи ниже доступны как
-            обычно.
+            {t("schedule.notice", { note: scheduleText })}
           </span>
         </div>
       ) : null}
@@ -439,15 +381,14 @@ export default function MiniTodayPage() {
             />
             <div className="min-w-0 flex-1">
               <div>
-                Незавершённая задача за {humanDay(stuck.dateKey)}:{" "}
-                <span className="font-semibold">{stuck.scopeLabel}</span>
+                {t.rich("stuck", { date: todayDayLabel(stuck.dateKey, locale), name: stuck.scopeLabel, task: (chunks) => <span className="font-semibold">{chunks}</span> })}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={`/mini/claim/${stuck.id}`}
                   className="mini-btn-primary mini-btn-sm mini-press"
                 >
-                  Открыть
+                  {t("open")}
                 </Link>
                 <button
                   type="button"
@@ -460,7 +401,7 @@ export default function MiniTodayPage() {
                   ) : (
                     <Undo2 className="size-4" />
                   )}
-                  Вернуть
+                  {t("release")}
                 </button>
               </div>
             </div>
@@ -474,9 +415,7 @@ export default function MiniTodayPage() {
             className="mr-1.5 inline size-4 align-text-bottom"
             style={{ color: "var(--mini-accent-ink)" }}
           />
-          Сейчас вы делаете:&nbsp;
-          <span className="font-semibold">{data.myActive.scopeLabel}</span>
-          &nbsp;— закончите её, тогда сможете взять следующую.
+          {t.rich("active", { name: data.myActive.scopeLabel, task: (chunks) => <span className="font-semibold">{chunks}</span> })}
           {/* Отказ заведующей доходил только до Telegram: на экране была
               обычная активная задача без единого слова о переделке. */}
           {data.myActive.verificationStatus === "rejected" ? (
@@ -485,10 +424,10 @@ export default function MiniTodayPage() {
                 className="font-semibold"
                 style={{ color: "var(--mini-warn)" }}
               >
-                Вернули на переделку:
+                {t("rejected")}
               </span>{" "}
               {data.myActive.verifierComment?.trim() ||
-                "комментария нет — уточните у заведующего производством."}
+                t("noComment")}
             </div>
           ) : null}
         </div>
@@ -503,16 +442,16 @@ export default function MiniTodayPage() {
             color: "var(--mini-text-muted)",
           }}
         >
-          На сегодня задач пока нет.
+          {t("empty")}
           <br />
-          Подойдите к руководителю — спросите, что нужно сделать.
+          {t("emptyHint")}
         </div>
       ) : null}
 
       {data.groups.map((g) => (
         <section key={g.code} className="space-y-2">
           <div className="mini-label px-1">
-            {g.label} ({g.scopes.length})
+            {t("groupCount", { name: todayJournalLabel(t, g.code, g.label, g.labelOrigin), count: g.scopes.length })}
           </div>
           {/* Сортируем scopes так, чтобы «можно взять» и «у меня» были
               сверху — сотрудник без опыта видит ровно то, что от него
@@ -541,8 +480,8 @@ export default function MiniTodayPage() {
               }
               lockedHint={
                 (data.stuckClaims ?? []).length > 0
-                  ? "Сначала завершите или верните незакрытую задачу прошлого дня"
-                  : "Сначала завершите текущую задачу"
+                  ? t("lockedStuck")
+                  : t("lockedActive")
               }
               canSelfClaim={data.canSelfClaim !== false}
               onClaim={() => claim(s)}
@@ -578,6 +517,8 @@ function ScopeRow({
   onClaim: () => void;
   onComplete: () => void;
 }) {
+  const t = useTranslations("miniToday");
+  const poolT = useTranslations("miniTaskPool");
   const av = scope.availability;
   // Строка — карточка QR-страниц. Цвета из темы: экран открывается и в
   // тёмном оформлении. «Занято коллегой» не гасим прозрачностью (текст
@@ -625,14 +566,14 @@ function ScopeRow({
           className="text-[17px] font-semibold leading-snug"
           style={{ color: "var(--mini-text)" }}
         >
-          {scope.scopeLabel}
+          {presentPoolCopy(poolT, scope.displayCopy, scope.journalCode, "scopeLabel", scope.scopeLabel)}
         </div>
         {scope.sublabel ? (
           <div
             className="mt-0.5 text-[14.5px] leading-snug"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            {scope.sublabel}
+            {presentPoolCopy(poolT, scope.displayCopy, scope.journalCode, "sublabel", todayJournalLabel(t, scope.journalCode, scope.sublabel, scope.sublabelOrigin))}
           </div>
         ) : null}
         {scope.claimUserName ? (
@@ -641,8 +582,7 @@ function ScopeRow({
             style={{ color: "var(--mini-text-muted)" }}
           >
             <Clock className="size-3.5" />
-            {av === "completed" ? "Готово · " : av === "mine" ? "Я · " : "Занято · "}
-            <span>{scope.claimUserName}</span>
+            {t.rich(av === "completed" ? "personDone" : av === "mine" ? "personMine" : "personTaken", { name: scope.claimUserName, person: (chunks) => <span>{chunks}</span> })}
           </div>
         ) : null}
       </div>
@@ -652,7 +592,7 @@ function ScopeRow({
             className="inline-flex max-w-[7.5rem] items-center text-right text-[14px] leading-snug"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            Назначает руководитель
+            {t("assignedByManager")}
           </span>
         ) : null}
         {av === "available" && canSelfClaim ? (
@@ -690,7 +630,7 @@ function ScopeRow({
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
             {locked ? <Lock className="size-4" /> : null}
-            Взять
+            {t("claim")}
           </button>
         ) : null}
         {av === "mine" ? (
@@ -704,7 +644,7 @@ function ScopeRow({
             ].join(" ")}
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Завершить
+            {t("complete")}
           </button>
         ) : null}
       </div>

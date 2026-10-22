@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -9,7 +11,7 @@ import {
 } from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpenText,
@@ -51,10 +53,12 @@ import {
   normalizeAuditPlanConfig,
   type AuditPlanConfig,
 } from "@/lib/audit-plan-document";
-import { openDocumentPdf } from "@/lib/open-document-pdf";
+import { getOpenDocumentPdfFailure, openDocumentPdf } from "@/lib/open-document-pdf";
+import { useExportLanguageChoice } from "@/components/journals/export-language-choice";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 
 import { toast } from "sonner";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
@@ -84,6 +88,11 @@ import {
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { resolveApprover } from "@/lib/approver-display";
+import {
+  buildAuditPlanRoleDisplay, presentAuditPlanRoleLabel, presentAuditPlanTitle,
+  captureAuditPlanProvenance, completeAuditPlanProvenance, presentAuditPlanApproverTitle,
+  type AuditPlanDisplayProvenance,
+} from "@/lib/audit-plan-presentation";
 type UserItem = { id: string; name: string; role: string };
 
 type AuditPlanDocumentItem = {
@@ -95,6 +104,8 @@ type AuditPlanDocumentItem = {
   dateFrom: string;
   dateTo: string;
   config: unknown;
+  displayTitleMissing?: boolean;
+  displayProvenance?: AuditPlanDisplayProvenance;
 };
 
 type Props = {
@@ -148,17 +159,24 @@ function SettingsDialog(props: {
   title: string;
   mode: "create" | "edit";
 }) {
+  const ap = useTranslations("journalAuditPlan");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const scan = useTranslations("journalScan");
+  const pdf = useTranslations("auditTraceabilityPdf");
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({
     onOpenChange: props.onOpenChange,
     fallbackError:
       props.mode === "create"
-        ? "Не удалось создать документ"
-        : "Не удалось сохранить документ",
+        ? controls("documentDialog.createError")
+        : ap("errors.save"),
   });
   const submitting = submit.submitting;
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
+  const roleDisplay = buildAuditPlanRoleDisplay(props.users);
+  const displayRole = (raw: string) => presentAuditPlanRoleLabel(raw, roleDisplay, pdf);
   const activeState = state || props.initial;
 
   const auto = useAutoDocumentTitle({
@@ -224,6 +242,7 @@ function SettingsDialog(props: {
             </DialogTitle>
             <button
               type="button"
+              aria-label={common("close")}
               className="rounded-xl p-2"
               onClick={() => props.onOpenChange(false)}
             >
@@ -240,7 +259,7 @@ function SettingsDialog(props: {
               onForce={() => handleSubmit(true)}
             />
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+              <Label className="text-[14px] text-[#73738a]">{ap("fields.documentName")}</Label>
               <Input
                 value={activeState.title}
                 onChange={(e) => {
@@ -251,7 +270,7 @@ function SettingsDialog(props: {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
+              <Label className="text-[14px] text-[#73738a]">{scan("metadata.documentDate")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -274,7 +293,7 @@ function SettingsDialog(props: {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#73738a]">Год</Label>
+              <Label className="text-[14px] text-[#73738a]">{ap("fields.year")}</Label>
               <Select
                 value={activeState.year}
                 onValueChange={(v) => {
@@ -305,21 +324,21 @@ function SettingsDialog(props: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#73738a]">Должность &quot;Утверждаю&quot;</Label>
+              <Label className="text-[14px] text-[#73738a]">{scan("metadata.approverPosition")}</Label>
               <Select
                 value={activeState.approveRole}
                 onValueChange={cascade.handlePositionChange}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={controls("positionSelect.choosePosition")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <PositionSelectItems users={props.users} />
+                  <PositionSelectItems users={props.users} displayLabel={displayRole} />
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#73738a]">{controls("positionSelect.employeeLabel")}</Label>
               <Select
                 value={activeState.approveEmployeeId}
                 onValueChange={cascade.handleEmployeeChange}
@@ -327,7 +346,7 @@ function SettingsDialog(props: {
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={controls("positionSelect.chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {cascade.candidates.map((u) => (
@@ -345,7 +364,7 @@ function SettingsDialog(props: {
                 onClick={() => handleSubmit(false)}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? ap("actions.saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -355,6 +374,12 @@ function SettingsDialog(props: {
   );
 }
 
+function useCommittedAuditPlanCopy(ap: ReturnType<typeof useTranslations<"journalAuditPlan">>) {
+  const feedback = useRef({ ap });
+  useLayoutEffect(() => { feedback.current = { ap }; }, [ap]);
+  return useCallback(() => feedback.current, []);
+}
+
 export function AuditPlanDocumentsClient({
   routeCode,
   templateCode,
@@ -362,6 +387,15 @@ export function AuditPlanDocumentsClient({
   users,
   documents,
 }: Props) {
+  const ap = useTranslations("journalAuditPlan");
+  const controls = useTranslations("journalControls");
+  const scan = useTranslations("journalScan");
+  const pdf = useTranslations("auditTraceabilityPdf");
+  const chooseExportLanguage = useExportLanguageChoice();
+  const readCommittedCopy = useCommittedAuditPlanCopy(ap);
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const [settingsTarget, setSettingsTarget] = useState<AuditPlanDocumentItem | null>(null);
   // Создание / настройки / удаление документов API отдаёт только
@@ -440,7 +474,7 @@ export function AuditPlanDocumentsClient({
       method: "DELETE",
     });
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(lifecycleFeedback.current.translate("documentActions.deleteError"));
       return;
     }
     setDeleteTarget(null);
@@ -454,7 +488,7 @@ export function AuditPlanDocumentsClient({
       body: JSON.stringify({ status: newStatus }),
     });
     if (!response.ok) {
-      toast.error("Не удалось изменить статус документа");
+      toast.error(lifecycleFeedback.current.translate("documentLifecycle.statusFailed"));
       return;
     }
     setArchiveTarget(null);
@@ -487,7 +521,7 @@ export function AuditPlanDocumentsClient({
     });
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось сделать копию документа");
+      toast.error(failure?.error || readCommittedCopy().ap("errors.copy"));
       return;
     }
     const data = (await response.json()) as { document: { id: string } };
@@ -521,7 +555,7 @@ export function AuditPlanDocumentsClient({
           create={
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
-                <Plus className="size-4" /> Создать документ
+                <Plus className="size-4" /> {controls("list.create")}
               </Button>
             ) : null
           }
@@ -536,7 +570,9 @@ export function AuditPlanDocumentsClient({
         )}
 
         {documents.map((document) => {
+          const capturedDisplay = document.displayProvenance ?? captureAuditPlanProvenance(document.config, true);
           const cfg = normalizeAuditPlanConfig(document.config, { users });
+          const origin = completeAuditPlanProvenance(capturedDisplay, cfg);
           const href = `/journals/${routeCode}/documents/${document.id}`;
           return (
             <div
@@ -547,38 +583,38 @@ export function AuditPlanDocumentsClient({
                 href={href}
                 className={JOURNAL_CARD_TITLE_CLASS}
               >
-                {document.title || AUDIT_PLAN_DOCUMENT_TITLE}
-              <SharedDocumentBadge shared={document.shared} />
+                {presentAuditPlanTitle(document.title, document.displayTitleMissing, pdf("planTitle"))}
+              <SharedDocumentBadge shared={document.shared} copy={{ label: scan("shared.label"), title: scan("shared.title") }} />
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Год</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{ap("fields.year")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>{cfg.year}</div>
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{scan("metadata.approverPosition")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getAuditPlanApproveLabel(
-                    resolveApprover(cfg, users).title,
+                    presentAuditPlanApproverTitle(resolveApprover(cfg, users).title, cfg, users, origin, pdf),
                     resolveApprover(cfg, users).name
                   )}
                 </div>
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{scan("metadata.documentDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getAuditPlanDocumentDateLabel(cfg.documentDate)}
                 </div>
               </Link>
               <div className="flex justify-start sm:justify-center">
                 <ResponsiveMenu
-                  title="Действия с документом"
+                  title={controls("list.actionsTitle")}
                   contentClassName="w-[320px] rounded-[28px] border-0 p-5 shadow-xl"
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: controls("list.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -588,7 +624,7 @@ export function AuditPlanDocumentsClient({
                       ? [
                           {
                             key: "copy",
-                            label: "Сделать копию",
+                            label: ap("list.copy"),
                             icon: <Copy className="size-4 text-[#6f7282]" />,
                             onSelect: () => copyDocument(document),
                           },
@@ -596,21 +632,23 @@ export function AuditPlanDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: common("print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
-                      onSelect: () =>
-                        void openDocumentPdf(document.id).catch((error) =>
-                          toast.error(
-                            humanizeFetchError(error, "Не удалось открыть PDF")
-                          )
-                        ),
+                      onSelect: () => chooseExportLanguage((exportLocale) => {
+                        void openDocumentPdf(document.id, exportLocale).catch((error) => {
+                          const ownedFailure = getOpenDocumentPdfFailure(error);
+                          toast.error(ownedFailure
+                            ? readCommittedCopy().ap(ownedFailure === "apiFallback" ? "errors.openPdf" : "errors.popupBlocked")
+                            : humanizeFetchError(error, readCommittedCopy().ap("errors.openPdf"), readCommittedCopy().ap("errors.network")));
+                        });
+                      }, common("print")),
                     },
                     {
                       key: document.status === "active" ? "archive" : "unarchive",
                       label:
                         document.status === "active"
-                          ? "Отправить в закрытые"
-                          : "Вернуть в активные",
+                          ? t("documentLifecycle.sendToClosed")
+                          : t("list.restoreMenu"),
                       icon: <BookOpenText className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
                         document.status === "active"
@@ -621,7 +659,7 @@ export function AuditPlanDocumentsClient({
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: common("delete"),
                             icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                             onSelect: () => setDeleteTarget(document),
                             tone: "danger" as const,
@@ -632,6 +670,7 @@ export function AuditPlanDocumentsClient({
                   trigger={
                     <button
                       type="button"
+                      aria-label={controls("list.actionsTitle")}
                       className="flex size-10 items-center justify-center rounded-full text-[#5566f6] hover:bg-[#f5f6ff]"
                     >
                       <Ellipsis className="size-8" />
@@ -651,8 +690,8 @@ export function AuditPlanDocumentsClient({
         routeCode={routeCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
-        submitText="Создать"
-        title="Создание документа"
+        submitText={ap("actions.create")}
+        title={ap("create.title")}
         mode="create"
       />
 
@@ -667,8 +706,8 @@ export function AuditPlanDocumentsClient({
         onSubmit={async (value) => {
           if (settingsTarget) await saveSettings(settingsTarget.id, value);
         }}
-        submitText="Сохранить"
-        title="Настройки документа"
+        submitText={common("save")}
+        title={controls("actions.settings")}
         mode="edit"
       />
 
@@ -682,9 +721,9 @@ export function AuditPlanDocumentsClient({
           <DialogHeader className="border-b px-8 py-6">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-[22px] font-semibold text-black">
-                Перенести в архив документ &quot;{archiveTarget?.title}&quot;
+                {t("documentLifecycle.archiveTitle", { title: archiveTarget?.title ?? "" })}
               </DialogTitle>
-              <button type="button" className="rounded-xl p-2" onClick={() => setArchiveTarget(null)}>
+              <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => setArchiveTarget(null)}>
                 <X className="size-7" />
               </button>
             </div>
@@ -694,7 +733,7 @@ export function AuditPlanDocumentsClient({
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               onClick={() => archiveTarget && moveToStatus(archiveTarget.id, "closed")}
             >
-              В архив
+              {t("documentLifecycle.archiveAction")}
             </Button>
           </div>
         </DialogContent>
@@ -710,9 +749,9 @@ export function AuditPlanDocumentsClient({
           <DialogHeader className="border-b px-8 py-6">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-[22px] font-semibold text-black">
-                Удаление документа &quot;{deleteTarget?.title}&quot;
+                {t("documentLifecycle.namedDeleteTitle", { title: deleteTarget?.title ?? "" })}
               </DialogTitle>
-              <button type="button" className="rounded-xl p-2" onClick={() => setDeleteTarget(null)}>
+              <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => setDeleteTarget(null)}>
                 <X className="size-7" />
               </button>
             </div>
@@ -722,7 +761,7 @@ export function AuditPlanDocumentsClient({
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               onClick={() => deleteTarget && handleDelete(deleteTarget.id)}
             >
-              Удалить
+              {common("delete")}
             </Button>
           </div>
         </DialogContent>

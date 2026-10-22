@@ -237,7 +237,7 @@ export default async function JournalInfoDetailPage({
 
             {/* Журналы печатаются альбомной A4 — 297×210, отсюда 1.414/1 */}
             <object
-              data={`/api/journal-samples/${code}/pdf?inline=1#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              data={`/api/journal-samples/${code}/pdf?inline=1${locale === "ru" ? "" : `&locale=${locale}`}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
               type="application/pdf"
               aria-label={t("sampleAria")}
               className="mt-5 hidden aspect-[1.414/1] w-full rounded-2xl border border-[#dcdfed] bg-white sm:block"

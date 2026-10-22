@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { BonusSubmitForm } from "./bonus-submit-form";
+import { BonusPageCopy } from "./bonus-page-copy";
 
 /**
  * Premium-fill экран (Phase 3, шаг 3.4).
@@ -61,54 +61,23 @@ export default async function MiniBonusFillPage({
     // и человек уходил ни с чем, хотя мог её взять.
     const nobodyTookIt = obligation.claimedById === null;
     return (
-      <div className="space-y-4 px-1">
-        <Link
-          href="/journals"
-          className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
-        >
-          <ArrowLeft className="size-5" />К журналам
-        </Link>
-        <div className="mini-warn" style={{ color: "var(--mini-warn)" }}>
-          {nobodyTookIt
-            ? "Эту задачу ещё никто не взял. Сначала возьмите её в списке «Сегодня» — и премия закрепится за вами."
-            : "Эту премию уже забрал другой сотрудник."}
-        </div>
-        {nobodyTookIt ? (
-          <Link href="/mini/today" className="mini-btn-primary mini-press w-full">
-            К задачам на сегодня
-          </Link>
-        ) : null}
-      </div>
+      <DomainMessagesBoundary namespaces={["miniBonus"]}>
+        <BonusPageCopy kind={nobodyTookIt ? "unclaimed" : "claimedByOther"} />
+      </DomainMessagesBoundary>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-24 px-1">
-      <Link
-        href="/journals"
-        className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
-      >
-        <ArrowLeft className="size-5" />К журналам
-      </Link>
-      <header>
-        <h1 className="mini-h1">
-          Премия за {obligation.template.name.toLowerCase()}
-        </h1>
-        <p
-          className="mt-1.5 text-[16px] leading-relaxed"
-          style={{ color: "var(--mini-text-muted)" }}
-        >
-          Премия зафиксирована. Осталось снять фото результата — без него
-          выплата не пройдёт.
-        </p>
-      </header>
-
-      <BonusSubmitForm
-        obligationId={obligation.id}
-        amountKopecks={obligation.template.bonusAmountKopecks}
-        templateName={obligation.template.name}
-        existingPhotoUrl={obligation.bonusEntry?.photoUrl ?? null}
-      />
-    </div>
+    <DomainMessagesBoundary namespaces={["miniBonus"]}>
+      <div className="flex flex-1 flex-col gap-4 pb-24 px-1">
+        <BonusPageCopy kind="header" templateName={obligation.template.name.toLowerCase()} />
+        <BonusSubmitForm
+          obligationId={obligation.id}
+          amountKopecks={obligation.template.bonusAmountKopecks}
+          templateName={obligation.template.name}
+          existingPhotoUrl={obligation.bonusEntry?.photoUrl ?? null}
+        />
+      </div>
+    </DomainMessagesBoundary>
   );
 }

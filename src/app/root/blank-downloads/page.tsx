@@ -1,8 +1,10 @@
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { formatBlankDownloadDate, blankFormatLabel } from "./blank-download-presentation";
 import { requireRoot } from "@/lib/auth-helpers";
 import {
   BLANK_CONSENT_SOURCE,
   BLANK_DOWNLOAD_AUDIT_ACTION,
-  BLANK_FORMAT_LABEL,
   BLANK_MARKETING_CONSENT_SOURCE,
   type BlankFormat,
 } from "@/lib/blank-download";
@@ -11,9 +13,10 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-  title: "Скачивания шаблонов",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("rootBlankDownloads");
+  return { title: t("title") };
+}
 
 const LIMIT = 300;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -29,16 +32,6 @@ function thirtyDaysAgo(): Date {
   return new Date(Date.now() - 30 * DAY_MS);
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleString("ru-RU", {
-    timeZone: "Europe/Moscow",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * Скачивания шаблонов журналов с публичных страниц — список для продаж.
@@ -53,6 +46,8 @@ function formatDate(date: Date): string {
  */
 export default async function RootBlankDownloadsPage() {
   await requireRoot();
+  const t = await getTranslations("rootBlankDownloads");
+  const locale = await getSiteLocale();
 
   const since = thirtyDaysAgo();
   const [consents, total30, unique30] = await Promise.all([
@@ -92,27 +87,25 @@ export default async function RootBlankDownloadsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px]">
-      <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Скачивания шаблонов</h1>
+      <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("title")}</h1>
       <p className="mt-2 max-w-[720px] text-[14px] leading-[1.6] text-[#6f7282]">
-        Кто скачал шаблон журнала с сайта: почта, журнал, формат и дата. Перед скачиванием человек отмечает
-        согласие на обработку персональных данных — оно хранится дословно. «Рассылка: да» — почта отметила
-        необязательную галку «Присылать полезные материалы и новости». Последние {LIMIT} скачиваний.
+        {t("description", { limit: LIMIT })}
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">
         <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] tabular-nums text-[#3848c7]">
-          За 30 дней: {total30}
+          {t("total", { count: total30 })}
         </span>
         <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] tabular-nums text-[#3848c7]">
-          Уникальных почт: {unique30.length}
+          {t("unique", { count: unique30.length })}
         </span>
       </div>
 
       {consents.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
-          <div className="text-[15px] font-medium text-[#0b1024]">Скачиваний пока нет</div>
+          <div className="text-[15px] font-medium text-[#0b1024]">{t("emptyTitle")}</div>
           <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-            Они появятся, когда посетители начнут скачивать шаблоны на /blanki, страницах журналов и главной.
+            {t("emptyHelp")}
           </p>
         </div>
       ) : (
@@ -132,10 +125,10 @@ export default async function RootBlankDownloadsPage() {
                 <div className="mt-1.5 text-[14px] text-[#3c4053]">{detail.title ?? "—"}</div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] tabular-nums text-[#6f7282]">
                   <span>
-                    {detail.format ? BLANK_FORMAT_LABEL[detail.format] ?? detail.format : "—"} · {formatDate(consent.createdAt)}
+                    {detail.format ? blankFormatLabel(detail.format) : "—"} · {formatBlankDownloadDate(consent.createdAt, locale)}
                   </span>
                   {withAccount.has(consent.email) ? (
-                    <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">аккаунт есть</span>
+                    <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">{t("accountExistsMobile")}</span>
                   ) : null}
                   <span
                     className={
@@ -144,7 +137,7 @@ export default async function RootBlankDownloadsPage() {
                         : "text-[12px] text-[#9b9fb3]"
                     }
                   >
-                    Рассылка: {withMarketing.has(consent.email) ? "да" : "нет"}
+                    {withMarketing.has(consent.email) ? t("marketingYesMobile") : t("marketingNoMobile")}
                   </span>
                 </div>
               </li>
@@ -155,22 +148,22 @@ export default async function RootBlankDownloadsPage() {
           <table className="w-full min-w-[820px] text-[14px]" data-testid="blank-downloads-table">
             <thead className="bg-[#fafbff] text-[13px] text-[#6f7282]">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Дата, МСК</th>
-                <th className="px-4 py-3 text-left font-medium">Почта</th>
-                <th className="px-4 py-3 text-left font-medium">Журнал</th>
-                <th className="px-4 py-3 text-left font-medium">Формат</th>
-                <th className="px-4 py-3 text-left font-medium">Аккаунт</th>
-                <th className="px-4 py-3 text-left font-medium">Рассылка</th>
+                <th className="px-4 py-3 text-left font-medium">{t("date")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("email")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("journal")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("format")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("account")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("marketing")}</th>
               </tr>
             </thead>
             <tbody>
               {consents.map((consent) => {
                 const detail = detailsById.get(consent.id) ?? {};
-                const code = detail.code ?? (detail.paperId ? `бумажный ${detail.paperId}` : null);
+                const code = detail.code ?? (detail.paperId ? t("paper", { paperId: detail.paperId }) : null);
                 return (
                   <tr key={consent.id} className="border-t border-[#ececf4] align-top">
                     <td className="whitespace-nowrap px-4 py-3 tabular-nums text-[#3c4053]">
-                      {formatDate(consent.createdAt)}
+                      {formatBlankDownloadDate(consent.createdAt, locale)}
                     </td>
                     <td className="px-4 py-3">
                       <a
@@ -185,20 +178,20 @@ export default async function RootBlankDownloadsPage() {
                       {code ? <div className="mt-0.5 font-mono text-[12px] text-[#9b9fb3]">{code}</div> : null}
                     </td>
                     <td className="px-4 py-3 text-[#3c4053]">
-                      {detail.format ? BLANK_FORMAT_LABEL[detail.format] ?? detail.format : "—"}
+                      {detail.format ? blankFormatLabel(detail.format) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       {withAccount.has(consent.email) ? (
-                        <span className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] text-[#116b2a]">есть</span>
+                        <span className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] text-[#116b2a]">{t("exists")}</span>
                       ) : (
-                        <span className="text-[13px] text-[#9b9fb3]">нет</span>
+                        <span className="text-[13px] text-[#9b9fb3]">{t("no")}</span>
                       )}
                     </td>
                     <td className="px-4 py-3" data-testid="blank-download-marketing-cell">
                       {withMarketing.has(consent.email) ? (
-                        <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] text-[#3848c7]">да</span>
+                        <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] text-[#3848c7]">{t("yes")}</span>
                       ) : (
-                        <span className="text-[13px] text-[#9b9fb3]">нет</span>
+                        <span className="text-[13px] text-[#9b9fb3]">{t("no")}</span>
                       )}
                     </td>
                   </tr>

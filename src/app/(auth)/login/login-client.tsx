@@ -16,6 +16,7 @@ import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 function LoginForm() {
   const t = useTranslations("auth");
+  const commonForm = useTranslations("common.form");
   const authError = useAuthError();
   const locale = useSiteLocale();
   const router = useRouter();
@@ -395,7 +396,7 @@ function LoginForm() {
                 вводил телефон. Проверяем сами и объясняем по-русски. */}
             <Field
               id="email"
-              label="Email"
+              label={commonForm("emailLabel")}
               type="text"
               inputMode="email"
               value={formData.email}

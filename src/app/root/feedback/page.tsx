@@ -28,26 +28,33 @@ import { threadKindOf } from "@/lib/support-threads-shared";
 import { FeedbackReply } from "./feedback-reply";
 import { SupportChats, type RootChatThread } from "./support-chats";
 import { TestNotifyButton } from "./test-notify-button";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { FeedbackCopyProvider } from "./feedback-copy-provider";
+import { getTranslations } from "next-intl/server";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { feedbackSourceKey, feedbackTypeKey, formatFeedbackReportDate } from "./feedback-report-presentation";
 
 export const dynamic = "force-dynamic";
 
-const TYPE_LABELS: Record<string, { label: string; icon: typeof Bug; color: string; bg: string; border: string }> = {
+export async function generateMetadata() {
+  const t = await getTranslations("rootFeedbackReports.metadata");
+  return { title: t("title") };
+}
+
+const TYPE_LABELS: Record<string, { icon: typeof Bug; color: string; bg: string; border: string }> = {
   bug: {
-    label: "Ошибка",
     icon: Bug,
     color: "#d2453d",
     bg: "#fff4f2",
     border: "#ffd2cd",
   },
   suggestion: {
-    label: "Предложение",
     icon: Lightbulb,
     color: "#5566f6",
     bg: "#eef1ff",
     border: "#c7ccea",
   },
   partnership: {
-    label: "Сотрудничество",
     icon: Handshake,
     color: "#7a5cff",
     bg: "#f5f3ff",
@@ -55,7 +62,6 @@ const TYPE_LABELS: Record<string, { label: string; icon: typeof Bug; color: stri
   },
   // Обращение из Telegram-бота — человек просто написал в поддержку.
   support: {
-    label: "Поддержка",
     icon: LifeBuoy,
     color: "#116b2a",
     bg: "#ecfdf5",
@@ -63,9 +69,9 @@ const TYPE_LABELS: Record<string, { label: string; icon: typeof Bug; color: stri
   },
 };
 
-const SOURCE_LABELS: Record<string, { label: string; icon: typeof Globe }> = {
-  site: { label: "Сайт", icon: Globe },
-  telegram: { label: "Telegram", icon: Send },
+const SOURCE_LABELS: Record<string, { icon: typeof Globe }> = {
+  site: { icon: Globe },
+  telegram: { icon: Send },
 };
 
 type SearchParams = {
@@ -80,6 +86,8 @@ export default async function RootFeedbackPage({
   searchParams: Promise<SearchParams>;
 }) {
   await requireRoot();
+  const t = await getTranslations("rootFeedbackReports");
+  const pageLocale = await getSiteLocale();
   const { type: rawType, org: rawOrg, answered: rawAnswered } = await searchParams;
 
   const typeFilter =
@@ -202,17 +210,17 @@ export default async function RootFeedbackPage({
   }));
 
   return (
+    <DomainMessagesBoundary namespaces={["rootFeedbackReports"]}>
+    <FeedbackCopyProvider>
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-black">
-            Обратная связь
+            {t("page.title")}
           </h1>
           <p className="mt-2 text-[15px] text-[#6f7282]">
-            Все обращения пользователей. Всего: {totalAll} · ошибок: {totalBugs}
-            {" "}· предложений: {totalSuggestions} · поддержка: {totalSupport}
-            {" "}· без ответа: {totalUnanswered}
-            {filtered ? ` · отфильтровано: ${reports.length}` : ""}
+            {t("page.stats", { total: String(totalAll), bugs: String(totalBugs), suggestions: String(totalSuggestions), support: String(totalSupport), unanswered: String(totalUnanswered) })}
+            {filtered ? t("page.filteredCount", { count: String(reports.length) }) : ""}
           </p>
         </div>
         <TestNotifyButton
@@ -226,7 +234,7 @@ export default async function RootFeedbackPage({
       <div className="rounded-2xl border border-[#ececf4] bg-white p-5">
         <div className="flex items-center gap-2 text-[13px] font-medium text-[#6f7282]">
           <Filter className="size-4" />
-          Фильтры
+          {t("page.filters")}
         </div>
         <form
           method="GET"
@@ -237,7 +245,7 @@ export default async function RootFeedbackPage({
               htmlFor="type"
               className="text-[12px] font-medium uppercase tracking-wider text-[#9b9fb3]"
             >
-              Тип
+              {t("page.typeLabel")}
             </label>
             <select
               id="type"
@@ -245,10 +253,10 @@ export default async function RootFeedbackPage({
               defaultValue={typeFilter ?? ""}
               className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[180px]"
             >
-              <option value="">Все типы</option>
-              <option value="bug">Ошибка ({totalBugs})</option>
-              <option value="suggestion">Предложение ({totalSuggestions})</option>
-              <option value="support">Поддержка ({totalSupport})</option>
+              <option value="">{t("page.allTypes")}</option>
+              <option value="bug">{t("page.bugCount", { count: String(totalBugs) })}</option>
+              <option value="suggestion">{t("page.suggestionCount", { count: String(totalSuggestions) })}</option>
+              <option value="support">{t("page.supportCount", { count: String(totalSupport) })}</option>
             </select>
           </div>
 
@@ -257,7 +265,7 @@ export default async function RootFeedbackPage({
               htmlFor="answered"
               className="text-[12px] font-medium uppercase tracking-wider text-[#9b9fb3]"
             >
-              Статус
+              {t("page.statusLabel")}
             </label>
             <select
               id="answered"
@@ -265,8 +273,8 @@ export default async function RootFeedbackPage({
               defaultValue={unansweredOnly ? "no" : ""}
               className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[180px]"
             >
-              <option value="">Все обращения</option>
-              <option value="no">Без ответа ({totalUnanswered})</option>
+              <option value="">{t("page.allReports")}</option>
+              <option value="no">{t("page.unansweredCount", { count: String(totalUnanswered) })}</option>
             </select>
           </div>
 
@@ -275,7 +283,7 @@ export default async function RootFeedbackPage({
               htmlFor="org"
               className="text-[12px] font-medium uppercase tracking-wider text-[#9b9fb3]"
             >
-              Организация
+              {t("page.organizationLabel")}
             </label>
             <select
               id="org"
@@ -283,7 +291,7 @@ export default async function RootFeedbackPage({
               defaultValue={orgFilter ?? ""}
               className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[280px]"
             >
-              <option value="">Все организации</option>
+              <option value="">{t("page.allOrganizations")}</option>
               {orgOptions.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.name} ({o.count})
@@ -296,7 +304,7 @@ export default async function RootFeedbackPage({
             type="submit"
             className="h-10 rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white shadow-[0_8px_20px_-12px_rgba(85,102,246,0.6)] transition-colors hover:bg-[#4a5bf0]"
           >
-            Применить
+            {t("page.apply")}
           </button>
 
           {filtered ? (
@@ -304,7 +312,7 @@ export default async function RootFeedbackPage({
               href="/root/feedback"
               className="h-10 rounded-xl border border-[#dcdfed] px-4 text-[13px] font-medium leading-[38px] text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Сбросить
+              {t("page.reset")}
             </Link>
           ) : null}
         </form>
@@ -316,20 +324,20 @@ export default async function RootFeedbackPage({
             <MessageSquareText className="size-7" />
           </div>
           <p className="mt-4 text-[17px] font-semibold text-[#0b1024]">
-            Обращений нет
+            {t("page.emptyTitle")}
           </p>
           <p className="mt-2 text-[14px] text-[#6f7282]">
             {filtered
-              ? "По выбранным фильтрам ничего не найдено."
-              : "Пока никто не написал через форму обратной связи."}
+              ? t("page.emptyFiltered")
+              : t("page.emptyAll")}
           </p>
         </div>
       ) : (
         <ul className="space-y-3">
           {reports.map((r) => {
-            const theme = TYPE_LABELS[r.type] ?? TYPE_LABELS.suggestion;
+            const theme = Object.hasOwn(TYPE_LABELS, r.type) ? TYPE_LABELS[r.type] : TYPE_LABELS.suggestion;
             const Icon = theme.icon;
-            const source = SOURCE_LABELS[r.source] ?? SOURCE_LABELS.site;
+            const source = Object.hasOwn(SOURCE_LABELS, r.source) ? SOURCE_LABELS[r.source] : SOURCE_LABELS.site;
             const SourceIcon = source.icon;
             return (
               <li
@@ -358,15 +366,15 @@ export default async function RootFeedbackPage({
                           color: theme.color,
                         }}
                       >
-                        {theme.label}
+                        {t(feedbackTypeKey(r.type))}
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
                         <SourceIcon className="size-3" />
-                        {source.label}
+                        {t(feedbackSourceKey(r.source))}
                       </span>
                       {r.responseMessage ? null : (
                         <span className="inline-flex items-center rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-medium text-[#a13a32]">
-                          Без ответа
+                          {t("page.unansweredBadge")}
                         </span>
                       )}
                       {r.organizationName ? (
@@ -376,9 +384,7 @@ export default async function RootFeedbackPage({
                         </span>
                       ) : null}
                       <span className="ml-auto text-[12px] text-[#9b9fb3]">
-                        {r.createdAt.toLocaleString("ru-RU", {
-                          timeZone: "Europe/Moscow",
-                        })}
+                        {formatFeedbackReportDate(r.createdAt, pageLocale)}
                       </span>
                     </div>
 
@@ -401,8 +407,8 @@ export default async function RootFeedbackPage({
                     {r.responseMessage ? (
                       <div className="mt-4 rounded-xl border border-[#c7ccea] bg-[#f5f6ff] p-3">
                         <div className="text-[12px] font-medium text-[#5566f6]">
-                          Ответ {r.respondedByName ? `· ${r.respondedByName}` : ""}
-                          {r.respondedAt ? ` · ${r.respondedAt.toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })}` : ""}
+                          {t("page.responseHeading")}{r.respondedByName ? ` · ${r.respondedByName}` : ""}
+                          {r.respondedAt ? ` · ${formatFeedbackReportDate(r.respondedAt, pageLocale)}` : ""}
                         </div>
                         <p className="mt-1 whitespace-pre-wrap break-words text-[14px] leading-[1.55] text-[#0b1024]">
                           {r.responseMessage}
@@ -433,8 +439,8 @@ export default async function RootFeedbackPage({
                         обращений обеих отметок нет, и «✗✗» там врало бы. */}
                     <div className="mt-2 text-[11px] text-[#9b9fb3]">
                       {r.adminTgNotifiedAt || r.adminEmailedAt
-                        ? `уведомления админу: TG ${r.adminTgNotifiedAt ? "✓" : "✗"} · почта ${r.adminEmailedAt ? "✓" : "✗"}`
-                        : "уведомления админу: нет данных"}
+                        ? t("page.adminNotifications", { telegram: r.adminTgNotifiedAt ? "✓" : "✗", email: r.adminEmailedAt ? "✓" : "✗" })
+                        : t("page.adminNotificationsNoData")}
                     </div>
                     <div className="mt-4">
                       <FeedbackReply
@@ -452,5 +458,7 @@ export default async function RootFeedbackPage({
         </ul>
       )}
     </div>
+    </FeedbackCopyProvider>
+    </DomainMessagesBoundary>
   );
 }

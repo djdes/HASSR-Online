@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
@@ -31,6 +33,7 @@ import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
+import { useLifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
@@ -265,6 +268,8 @@ function TraceabilityActionsMenu(props: {
   onDelete: () => void;
   onArchiveToggle: () => void;
 }) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const isActive = props.document.status === "active";
   // Настройки / закрытие / удаление API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
@@ -288,19 +293,19 @@ function TraceabilityActionsMenu(props: {
         isActive
           ? {
               key: "archive",
-              label: "Закрыть",
+              label: common("close"),
               icon: <Archive className="size-4 text-[#6f7282]" />,
               onSelect: props.onArchiveToggle,
             }
           : {
               key: "restore",
-              label: "В активные",
+              label: t("documentLifecycle.activeShort"),
               icon: <ArchiveRestore className="size-4 text-[#6f7282]" />,
               onSelect: props.onArchiveToggle,
             },
         {
           key: "delete",
-          label: "Удалить",
+          label: common("delete"),
           icon: <Trash2 className="size-4 text-[#ff3b30]" />,
           tone: "danger" as const,
           onSelect: props.onDelete,
@@ -324,6 +329,9 @@ export function TraceabilityDocumentsClient({
   templateCode,
   documents,
 }: Props) {
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
+  const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   // Создание документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
@@ -393,15 +401,16 @@ export function TraceabilityDocumentsClient({
   async function handleDelete(doc: TraceabilityDocumentItem) {
     const title = doc.title || DEFAULT_TITLE;
     const ok = await confirmAsync({
-      title: "Удалить документ?",
-      description: `Документ «${title}» и все его записи будут удалены безвозвратно.`,
+      title: t("documentActions.deleteTitle"),
+      description: t("documentLifecycle.deleteDescriptionWithTitle", { title }),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: common("delete"),
+      locale: lifecycleFeedback.current.locale,
     });
     if (!ok) return;
     const response = await fetch(`/api/journal-documents/${doc.id}`, { method: "DELETE" });
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(lifecycleFeedback.current.translate("documentActions.deleteError"));
       return;
     }
     setDeleteTarget(null);
@@ -415,7 +424,7 @@ export function TraceabilityDocumentsClient({
       body: JSON.stringify({ status: nextStatus }),
     });
     if (!response.ok) {
-      toast.error(nextStatus === "closed" ? "Не удалось закрыть документ" : "Не удалось восстановить документ");
+      toast.error(lifecycleFeedback.current.translate(nextStatus === "closed" ? "documentActions.closeError" : "documentLifecycle.restoreFailed"));
       return;
     }
     setArchiveTarget(null);
@@ -507,11 +516,12 @@ export function TraceabilityDocumentsClient({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
                 {archiveTarget?.status === "active"
-                  ? `Закрыть документ "${archiveTarget?.title || DEFAULT_TITLE}"`
-                  : `Восстановить документ "${archiveTarget?.title || DEFAULT_TITLE}"`}
+                  ? t("documentLifecycle.closeTitle", { title: archiveTarget?.title || DEFAULT_TITLE })
+                  : t("documentLifecycle.restoreTitle", { title: archiveTarget?.title || DEFAULT_TITLE })}
               </DialogTitle>
               <button
                 type="button"
+                aria-label={common("close")}
                 className="rounded-xl p-2 text-[#0b1024]"
                 onClick={() => setArchiveTarget(null)}
               >
@@ -531,7 +541,7 @@ export function TraceabilityDocumentsClient({
               }
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
             >
-              {archiveTarget?.status === "active" ? "Закрыть" : "Восстановить"}
+              {archiveTarget?.status === "active" ? common("close") : t("documentLifecycle.restoreAction")}
             </Button>
           </div>
         </DialogContent>
@@ -542,10 +552,11 @@ export function TraceabilityDocumentsClient({
           <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-                Удаление документа &quot;{deleteTarget?.title || DEFAULT_TITLE}&quot;
+                {t("documentLifecycle.namedDeleteTitle", { title: deleteTarget?.title || DEFAULT_TITLE })}
               </DialogTitle>
               <button
                 type="button"
+                aria-label={common("close")}
                 className="rounded-xl p-2 text-[#0b1024]"
                 onClick={() => setDeleteTarget(null)}
               >
@@ -559,7 +570,7 @@ export function TraceabilityDocumentsClient({
               onClick={() => deleteTarget && handleDelete(deleteTarget)}
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
             >
-              Удалить
+              {common("delete")}
             </Button>
           </div>
         </DialogContent>

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
-import { FORMAT_LOCALES } from "@/i18n/locales";
+import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
 import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -199,28 +199,26 @@ function typed(text: string, t: number, from: number, perChar = 0.09): string {
 }
 
 /** Число как в печатной форме журнала (`formatNumberShort` в document-pdf). */
-function pdfNumber(value: number, locale: string): string {
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value).replace(/-/g, "−");
+function pdfNumber(value: number, locale: Locale): string {
+  return formatNumber(locale, value, { maximumFractionDigits: 2 }).replace(/-/g, "−");
 }
 
-function decimalLabel(value: number, locale: string, digits = 1): string {
-  return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value).replace(/-/g, "−");
+function decimalLabel(value: number, locale: Locale, digits = 1): string {
+  return formatNumber(locale, value, { minimumFractionDigits: digits, maximumFractionDigits: digits }).replace(/-/g, "−");
 }
 
-function dateLabel(day: SceneDay, locale: string, d = day.day): string {
-  return new Intl.DateTimeFormat(locale, {
+function dateLabel(day: SceneDay, locale: Locale, d = day.day): string {
+  return formatDate(locale, new Date(Date.UTC(day.year, day.month - 1, d)), "UTC", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(day.year, day.month - 1, d)));
+  });
 }
 
-function weekday(day: SceneDay, d: number, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
+function weekday(day: SceneDay, d: number, locale: Locale): string {
+  return formatDate(locale, new Date(Date.UTC(day.year, day.month - 1, d)), "UTC", {
     weekday: "short",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(day.year, day.month - 1, d)));
+  });
 }
 
 /** Касание пальцем: круг расходится и гаснет. */
@@ -697,7 +695,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
 
 /** Показание настенного термометра — поверх фото или рисунка раздевалки. */
 function ThermometerReadout({ bodyTemp }: { bodyTemp: number }) {
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const fever = bodyFever(bodyTemp);
   return (
     <div
@@ -868,8 +866,8 @@ const headCell: CSSProperties = { ...cell, background: P.paperHead, fontWeight: 
 
 function Paper({ stampLabel, title, subtitle, caption, children, startedDay }: { stampLabel: string; title: string; subtitle?: string; caption?: string; children: ReactNode; startedDay: SceneDay }) {
   const tr = useTranslations("qrScene");
-  const locale = FORMAT_LOCALES[useSiteLocale()];
-  const startedDate = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(startedDay.year, startedDay.month - 1, 1)));
+  const locale = useSiteLocale();
+  const startedDate = dateLabel(startedDay, locale, 1);
   // Лист «лежит на столе» и поднимается навстречу камере, пока она
   // спускается к журналу.
   const { pan } = useContext(CameraContext);
@@ -975,7 +973,7 @@ type ColdRow = { name: string; norm: string; seed: number; base: number; spread:
 
 function ColdSheet({ t, day, rows, codeAt, missingPulse }: { t: number; day: SceneDay; rows: ColdRow[]; codeAt: number | null; missingPulse?: number }) {
   const tr = useTranslations("qrScene");
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const { days, isMobileVisible, mobileCount } = dayWindow(day);
   const hideOnMobile = (d: number) => (isMobileVisible(d) ? "" : "hidden md:table-cell");
   // Ячейки на всю ширину — в двух вариантах: на телефоне видно меньше дней,
@@ -1519,7 +1517,7 @@ const PHONE_OUT = { mobile: { x: 30, y: 46 }, desktop: { x: 18.5, y: 43 } } as c
 function FridgeScene({ t, value, today, qr, photo, layer }: { t: number; value: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const bad = fridgeOutOfRange(value);
   const shown = String(Math.round(value * 10) / 10).replace("-", "−");
   const typedValue = typed(decimalLabel(value, locale), t, 3.0);
@@ -1644,7 +1642,7 @@ function LockerScene({ t, bodyTemp, today, qr, photo, layer }: { t: number; body
   const journal = useTranslations("journals.names");
   const hygieneT = useTranslations("hygiene");
   const hygieneColumnsT = useTranslations("hygiene.columns");
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const fever = bodyFever(bodyTemp);
   const checkedKeys = HEALTH_CONFIRMATIONS.filter((item, index) => t >= 2.85 + index * 0.3 && !(fever && item.key === "temperature")).map((item) => item.key);
   // Решение — той же функцией, что и настоящий QR «Гигиена и здоровье».
@@ -1815,7 +1813,7 @@ function LockerScene({ t, bodyTemp, today, qr, photo, layer }: { t: number; body
 }
 
 function UvScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const hoursLabel = (value: number) => tr("ui.hoursValue", { value: Math.round(value) });
@@ -1953,7 +1951,7 @@ function UvScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; q
 }
 
 function FryerScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const save = MOMENT.fryerSave;
@@ -2139,7 +2137,7 @@ function ForgotScene({ t, today, layer }: { t: number; today: SceneDay; layer: L
 function SensorScene({ t, today, layer }: { t: number; today: SceneDay; layer: Layer }) {
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
-  const locale = FORMAT_LOCALES[useSiteLocale()];
+  const locale = useSiteLocale();
   const readings = [
     { at: 0.5, time: "09:00", value: 3.8 },
     { at: 2.0, time: "10:00", value: 4.1 },

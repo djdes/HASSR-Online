@@ -23,9 +23,13 @@ const STYLE: Record<Announcement["kind"], { box: string; icon: typeof Info }> = 
 export function AnnouncementBanner({
   announcement,
   variant = "site",
+  moreLabel = "Подробнее",
+  dismissLabel = "Скрыть объявление",
 }: {
   announcement: Announcement | null;
   variant?: "site" | "mini";
+  moreLabel?: string;
+  dismissLabel?: string;
 }) {
   const [dismissed, setDismissed] = useState(true);
 
@@ -69,13 +73,13 @@ export function AnnouncementBanner({
           target={announcement.link?.startsWith("http") ? "_blank" : undefined}
           rel="noreferrer"
         >
-          Подробнее
+          {moreLabel}
         </Link>
       </div>
       <button
         type="button"
         onClick={close}
-        aria-label="Скрыть объявление"
+        aria-label={dismissLabel}
         className="-mr-1 -mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg opacity-70 transition-opacity hover:opacity-100"
       >
         <X className="size-4" />

@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { captureMailingDisplay, mailingDiagnosticFromResponse, withMailingDiagnostic } from "@/lib/mailing/diagnostic-presentation";
+import { formatMailingDate, type MailingLocale } from "./mailing-presentation";
 import { Bell, Mail, Send, Smartphone } from "lucide-react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -182,7 +184,8 @@ export function formatDateTime(iso: string | null): string {
   });
 }
 
-export function formatDate(iso: string | null): string {
+export function formatDate(iso: string | null, locale?: MailingLocale): string {
+  if (locale && locale !== "ru") return formatMailingDate(iso, locale);
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" });
 }
@@ -197,6 +200,14 @@ export async function api<T>(url: string, init?: RequestInit & { json?: unknown 
     cache: "no-store",
   });
   const data = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!res.ok) throw new Error(data?.error ?? `Ошибка ${res.status}`);
+  if (!res.ok) {
+    let fallbackSelected = false;
+    let fallbackStatus: unknown;
+    const error = new Error(data?.error ?? (fallbackSelected = true, `Ошибка ${captureMailingDisplay(res.status, (_display, raw) => { fallbackStatus = raw; })}`));
+    withMailingDiagnostic(error, fallbackSelected
+      ? { version: 1, code: "http.status", params: { status: fallbackStatus } }
+      : mailingDiagnosticFromResponse(data));
+    throw error;
+  }
   return data as T;
 }

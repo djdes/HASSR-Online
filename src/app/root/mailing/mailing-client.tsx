@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, History, Mail, PenSquare, Send, SlidersHorizontal, Users } from "lucide-react";
-import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { useMailingFeedback } from "./mailing-feedback";
+import { formatMailingSaveClock } from "./mailing-presentation";
 
 import {
   DEFAULT_CONTACT_FILTERS,
@@ -57,12 +59,11 @@ function composeFrom(data: MailingPageData, draft: DraftDto | null): ComposeStat
   };
 }
 
-function nowTime(): string {
-  return new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-}
-
 export function MailingClient({ data }: { data: MailingPageData }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("rootMailingShellAudience");
+  const feedbackRef = useRef(useMailingFeedback());
   const [tab, setTab] = useState<MailingTab>(data.initialTab);
   // Расширенный режим — конструктор и ручной выбор; команда работает в простом.
   const [advanced, setAdvanced] = useState(() => ADVANCED_TABS.has(data.initialTab));
@@ -81,7 +82,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
   const [settings, setSettings] = useState<MailingSettings>(data.settings);
   const [sentToday, setSentToday] = useState(data.sentToday);
   const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const labelsRef = useRef(new Map<string, string>(data.draft?.labels ?? []));
   const [labelsVersion, setLabelsVersion] = useState(0);
 
@@ -143,10 +144,10 @@ export function MailingClient({ data }: { data: MailingPageData }) {
         : await api<{ campaign: CampaignListRow }>("/api/root/mailing/campaigns", { method: "POST", json: body });
       setCompose((prev) => ({ ...prev, draftId: r.campaign.id, title: r.campaign.title }));
       setCampaigns((prev) => [r.campaign, ...prev.filter((c) => c.id !== r.campaign.id)]);
-      setSavedAt(nowTime());
+      setSavedAt(Date.now());
       return r.campaign.id;
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить черновик");
+    } catch {
+      feedbackRef.current.error("saveDraftFailed");
       return null;
     } finally {
       setSaving(false);
@@ -158,8 +159,8 @@ export function MailingClient({ data }: { data: MailingPageData }) {
     try {
       const r = await api<{ campaigns: CampaignListRow[] }>("/api/root/mailing/campaigns");
       setCampaigns(r.campaigns);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось обновить");
+    } catch {
+      feedbackRef.current.error("refreshFailed");
     } finally {
       setRefreshing(false);
     }
@@ -178,8 +179,8 @@ export function MailingClient({ data }: { data: MailingPageData }) {
       setSavedAt(null);
       setAdvanced(true);
       setTab("compose");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось открыть черновик");
+    } catch {
+      feedbackRef.current.error("openDraftFailed");
     }
   }
 
@@ -210,19 +211,19 @@ export function MailingClient({ data }: { data: MailingPageData }) {
   }
 
   const allTabs: Array<{ key: MailingTab; label: string; icon: typeof Mail; count?: number }> = [
-    { key: "quick", label: "Отправить", icon: Send },
-    { key: "history", label: "История", icon: History },
-    { key: "compose", label: "Конструктор", icon: PenSquare },
-    { key: "users", label: "Пользователи", icon: Users, count: userIds.size },
-    { key: "contacts", label: "Контакты", icon: Mail, count: contactIds.size },
-    { key: "stoplist", label: "Стоп-лист", icon: Ban },
+    { key: "quick", label: t("tabs.quick"), icon: Send },
+    { key: "history", label: t("tabs.history"), icon: History },
+    { key: "compose", label: t("tabs.builder"), icon: PenSquare },
+    { key: "users", label: t("tabs.users"), icon: Users, count: userIds.size },
+    { key: "contacts", label: t("tabs.contacts"), icon: Mail, count: contactIds.size },
+    { key: "stoplist", label: t("tabs.stoplist"), icon: Ban },
   ];
   const tabs = allTabs.filter((t) => advanced || !ADVANCED_TABS.has(t.key));
 
   return (
     <div className="space-y-5">
       <nav
-        aria-label="Разделы рассылки"
+        aria-label={t("tabs.ariaLabel")}
         className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
         data-testid="mailing-tabs"
       >
@@ -259,7 +260,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
           onClick={toggleAdvanced}
           aria-pressed={advanced}
           data-testid="mailing-advanced-toggle"
-          title="Конструктор писем, ручной выбор пользователей и контактов, стоп-лист"
+          title={t("advanced.hint")}
           className={cn(
             "inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl px-3.5 text-[13px] font-medium transition-colors duration-150 sm:ml-auto",
             advanced
@@ -268,7 +269,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
           )}
         >
           <SlidersHorizontal className="size-4" />
-          {advanced ? "Скрыть расширенный режим" : "Расширенный режим"}
+          {t(advanced ? "advanced.hide" : "advanced.show")}
         </button>
       </nav>
 
@@ -297,7 +298,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
           contactIds={contactIds}
           labels={labels}
           saving={saving}
-          savedAt={savedAt}
+          savedAt={savedAt === null ? null : formatMailingSaveClock(savedAt, locale)}
           onSave={saveDraft}
           onLaunched={onLaunched}
           goTo={setTab}

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/locales";
+import { fieldDiscountLabel, fieldPromoOptionLabel, fieldSphereLabel, fieldNumber } from "@/lib/mailing/kind-fields-presentation";
 import { ExternalLink, Info, Paperclip, Ticket } from "lucide-react";
 
 import type { MailingKindFieldsProps } from "@/components/mailing/kind-fields";
@@ -8,7 +11,6 @@ import {
   KP_FIXED_MAX,
   KP_PERCENT_MAX,
   coerceKpPayload,
-  kpDiscountLabel,
   type KpFormData,
   type KpPayload,
   type KpPromoMode,
@@ -30,11 +32,7 @@ const LABEL = "mb-1.5 block text-[13px] font-medium text-[#3c4053]";
 const HINT = "mt-1.5 text-[12.5px] leading-[1.5] text-[#6f7282]";
 const CHECKBOX = "size-4 shrink-0 rounded border-[#dcdfed] accent-[#5566f6]";
 
-const MODES: Array<{ mode: KpPromoMode; title: string; text: string }> = [
-  { mode: "none", title: "Без промокода", text: "Цены без скидки, кнопка ведёт на страницу сферы" },
-  { mode: "existing", title: "Выбрать код", text: "Один общий код из «Промокодов» — всем" },
-  { mode: "personal", title: "Персональные коды", text: "Каждому свой код — создаётся при отправке" },
-];
+const MODES: KpPromoMode[] = ["none", "existing", "personal"];
 
 /** Число с правкой «как в поле»: пока печатают — строка, после — значение из данных. */
 function NumberInput({
@@ -72,6 +70,9 @@ function NumberInput({
 }
 
 export default function KpFields({ payload, onChange, disabled, audience, formData }: MailingKindFieldsProps<KpPayload>) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("rootMailingKindFields");
+  const sphereT = useTranslations("rootMailingShellAudience");
   const value = coerceKpPayload(payload);
   const data = (formData ?? null) as KpFormData | null;
   const promo = value.promo;
@@ -83,7 +84,7 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
   const selected = chosenCode ? (options.find((o) => o.code === chosenCode) ?? null) : null;
   const recipients = audience.users + audience.contacts;
   const daysOk = Number.isInteger(promo.validDays) && promo.validDays >= PROMO_VALID_DAYS_MIN && promo.validDays <= PROMO_VALID_DAYS_MAX;
-  const endsLabel = daysOk ? promotionEndLabel(promoEndsAfterDays(new Date(), promo.validDays)) : null;
+  const endsLabel = daysOk ? promotionEndLabel(promoEndsAfterDays(new Date(), promo.validDays), locale) : null;
   const valueMax = promo.kind === "percent" ? KP_PERCENT_MAX : KP_FIXED_MAX;
   const valueOk = Number.isInteger(promo.value) && promo.value >= 1 && promo.value <= valueMax;
 
@@ -91,7 +92,7 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
     <div className="space-y-5" data-testid="mailing-fields-kp">
       <div>
         <label className={LABEL} htmlFor="kp-default-sphere">
-          Сфера по умолчанию
+          {t("kp.sphere")}
         </label>
         <select
           id="kp-default-sphere"
@@ -103,41 +104,40 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
         >
           {ORG_SPHERES.map((s) => (
             <option key={s.value} value={s.value}>
-              {s.label}
+              {fieldSphereLabel(s.value, s.label, sphereT)}
             </option>
           ))}
         </select>
         <p className={HINT}>
-          Каждый получит КП своей сферы: пользователи — по организации, контакты — по колонке «сфера». Эта — для тех, у
-          кого сфера не указана.
+          {t("kp.sphereHint")}
         </p>
       </div>
 
       <fieldset>
-        <legend className={LABEL}>Промокод</legend>
+        <legend className={LABEL}>{t("kp.promo")}</legend>
         <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
           {MODES.map((m) => (
             <label
-              key={m.mode}
+              key={m}
               className={cn(
                 "flex cursor-pointer items-start gap-2.5 rounded-2xl border p-3 transition-colors",
-                promo.mode === m.mode ? "border-[#5566f6]/40 bg-[#f5f6ff]" : "border-[#ececf4] bg-white hover:bg-[#fafbff]",
+                promo.mode === m ? "border-[#5566f6]/40 bg-[#f5f6ff]" : "border-[#ececf4] bg-white hover:bg-[#fafbff]",
                 disabled && "cursor-default opacity-60"
               )}
             >
               <input
                 type="radio"
                 name="kp-promo-mode"
-                value={m.mode}
-                checked={promo.mode === m.mode}
+                value={m}
+                checked={promo.mode === m}
                 disabled={disabled}
-                onChange={() => setPromo({ mode: m.mode })}
+                onChange={() => setPromo({ mode: m })}
                 className="mt-1 size-4 shrink-0 accent-[#5566f6]"
-                data-testid={`kp-mode-${m.mode}`}
+                data-testid={`kp-mode-${m}`}
               />
               <span className="min-w-0">
-                <span className="block text-[14px] font-medium text-[#0b1024]">{m.title}</span>
-                <span className="block text-[12.5px] leading-[1.45] text-[#6f7282]">{m.text}</span>
+                <span className="block text-[14px] font-medium text-[#0b1024]">{t(`kp.modes.${m}.title`)}</span>
+                <span className="block text-[12.5px] leading-[1.45] text-[#6f7282]">{t(`kp.modes.${m}.hint`)}</span>
               </span>
             </label>
           ))}
@@ -150,33 +150,29 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
               disabled={disabled}
               onChange={(e) => setPromo({ code: e.target.value || null })}
               className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[15px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 disabled:opacity-60"
-              aria-label="Общий промокод"
+              aria-label={t("kp.existingAria")}
               data-testid="kp-existing-code"
             >
-              <option value="">{options.length ? "Выберите код…" : "Действующих общих кодов нет"}</option>
+              <option value="">{options.length ? t("kp.chooseCode") : t("kp.noCodes")}</option>
               {promo.code && !selected ? (
-                <option value={promo.code}>{promo.code} — не найден среди действующих общих кодов</option>
+                <option value={promo.code}>{t("kp.missingCode", { code: promo.code })}</option>
               ) : null}
               {options.map((o) => (
                 <option key={o.code} value={o.code}>
-                  {o.label}
+                  {fieldPromoOptionLabel(o, locale, (args) => t("kp.option", args))}
                 </option>
               ))}
             </select>
             {selected && selected.usesLeft !== null && selected.usesLeft < recipients ? (
               <p className="flex items-start gap-1.5 text-[12.5px] leading-[1.5] text-[#a16d32]">
                 <Info className="mt-0.5 size-3.5 shrink-0" />
-                Код примет ещё {selected.usesLeft} оплат, а получателей выбрано {recipients} — остальным скидка не
-                достанется.
+                {t("kp.remainingWarning", { uses: String(selected.usesLeft), recipients: String(recipients) })}
               </p>
             ) : null}
             <p className="text-[12.5px] leading-[1.5] text-[#6f7282]">
-              В списке — включённые коды без привязки к почте или организации, не исчерпанные и не одноразовые. Новый код
-              — в ROOT →{" "}
-              <a href="/root/promo-codes" target="_blank" rel="noopener" className="text-[#3848c7] underline">
-                «Промокоды»
-              </a>
-              .
+              {t.rich("kp.existingHint", {
+                link: (chunks) => <a href="/root/promo-codes" target="_blank" rel="noopener" className="text-[#3848c7] underline">{chunks}</a>,
+              })}
             </p>
           </div>
         ) : null}
@@ -197,7 +193,7 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
                     )}
                     data-testid={`kp-kind-${kind}`}
                   >
-                    {kind === "percent" ? "Процент" : "Рубли"}
+                    {t(kind === "percent" ? "kp.kindPercent" : "kp.kindFixed")}
                   </button>
                 ))}
               </div>
@@ -205,13 +201,13 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
                 value={promo.value}
                 onValue={(next) => setPromo({ value: next })}
                 disabled={disabled}
-                label={promo.kind === "percent" ? "Скидка, %" : "Скидка, ₽"}
+                label={t(promo.kind === "percent" ? "kp.percentAria" : "kp.fixedAria")}
                 testId="kp-value"
               />
             </div>
             {!valueOk ? (
               <p className="text-[12.5px] text-[#a13a32]">
-                {promo.kind === "percent" ? `Скидка — от 1 до ${KP_PERCENT_MAX} %` : `Скидка — от 1 до ${KP_FIXED_MAX.toLocaleString("ru-RU")} ₽`}
+                {promo.kind === "percent" ? t("kp.invalidPercent", { max: String(KP_PERCENT_MAX) }) : t("kp.invalidFixed", { max: fieldNumber(KP_FIXED_MAX, locale) })}
               </p>
             ) : null}
             <label className="flex items-start gap-2.5 text-[14px] text-[#0b1024]">
@@ -224,38 +220,34 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
                 data-testid="kp-lifetime"
               />
               <span>
-                Скидка навсегда
-                <span className="block text-[12.5px] text-[#6f7282]">После первой оплаты по коду остаётся на все следующие.</span>
+                {t("kp.lifetime")}
+                <span className="block text-[12.5px] text-[#6f7282]">{t("kp.lifetimeHint")}</span>
               </span>
             </label>
             <div>
               <div className="flex flex-wrap items-center gap-2 text-[14px] text-[#0b1024]">
-                <span>Код действует</span>
+                <span>{t("kp.validFor")}</span>
                 <NumberInput
                   value={promo.validDays}
                   onValue={(next) => setPromo({ validDays: next })}
                   disabled={disabled}
-                  label="Срок кода, дней"
+                  label={t("kp.daysAria")}
                   testId="kp-days"
                   className="h-10 w-[76px] px-2.5 text-center"
                 />
-                <span>дн.</span>
+                <span>{t("kp.daysAbbrev")}</span>
               </div>
               <p className={HINT} data-testid="kp-days-hint">
                 {daysOk
-                  ? `Если отправить сегодня — ${endsLabel} включительно (23:59 по Москве).${
-                      promo.lifetime ? " Кто оплатит до этого дня, сохранит скидку навсегда." : ""
-                    }`
-                  : `Срок — от ${PROMO_VALID_DAYS_MIN} до ${PROMO_VALID_DAYS_MAX} дней.`}
+                  ? t("kp.endHint", { end: endsLabel!, lifetime: promo.lifetime ? "yes" : "no" })
+                  : t("kp.invalidDays", { min: String(PROMO_VALID_DAYS_MIN), max: String(PROMO_VALID_DAYS_MAX) })}
               </p>
             </div>
             <p className="flex items-start gap-1.5 text-[12.5px] leading-[1.5] text-[#6f7282]">
               <Ticket className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
               <span>
-                {valueOk ? `${kpDiscountLabel(promo.kind, promo.value)}${promo.lifetime ? " навсегда" : ""}, одна оплата по коду. ` : ""}
-                Пользователям — код их организации, загруженным контактам — код без привязки к почте (КП могут переслать
-                тому, кто оплачивает). Коды{recipients > 0 ? ` (до ${recipients} шт.)` : ""} создадутся при отправке и будут
-                в «Промокодах» с меткой рассылки. В предпросмотре и тесте себе — пример кода.
+                {valueOk ? t("kp.personalSummary", { discount: fieldDiscountLabel(promo.kind, promo.value, locale), lifetime: promo.lifetime ? "yes" : "no" }) : ""}
+                {t("kp.personalInfo", { countState: recipients > 0 ? "positive" : "none", count: String(recipients) })}
               </span>
             </p>
           </div>
@@ -273,17 +265,19 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
         />
         <span>
           <span className="inline-flex items-center gap-1.5">
-            <Paperclip className="size-3.5 text-[#5566f6]" /> Вложить PDF
+            <Paperclip className="size-3.5 text-[#5566f6]" /> {t("kp.attachPdf")}
           </span>
           <span className="block text-[12.5px] leading-[1.5] text-[#6f7282]">
-            Вложения повышают риск попасть в спам. В письме и так есть «Скачать PDF» и веб-версия.
+            {t("kp.attachHint")}
           </span>
         </span>
       </label>
 
       <p className="rounded-2xl border border-[#ececf4] bg-white px-3.5 py-3 text-[13px] leading-[1.55] text-[#3c4053]">
-        Отправитель в КП: <b className="font-medium text-[#0b1024]">{data?.senderName ?? "Команда WeSetup"}</b>
-        {data && !data.senderName ? " (свой не настроен)" : ""}.{" "}
+        {t.rich("kp.senderLine", {
+          name: data?.senderName ?? "Команда WeSetup", unset: data && !data.senderName ? "yes" : "no",
+          sender: (chunks) => <b className="font-medium text-[#0b1024]">{chunks}</b>,
+        })}
         <a
           href="/root/proposals"
           target="_blank"
@@ -291,7 +285,7 @@ export default function KpFields({ payload, onChange, disabled, audience, formDa
           className="inline-flex items-center gap-1 text-[#3848c7] underline"
           data-testid="kp-sender-link"
         >
-          Отправитель и реквизиты — ROOT → «Коммерческие предложения»
+          {t("kp.senderLink")}
           <ExternalLink className="size-3.5" />
         </a>
       </p>

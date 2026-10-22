@@ -1,3 +1,5 @@
+import { withMailingDiagnostic } from "@/lib/mailing/diagnostic-presentation";
+
 import { db } from "@/lib/db";
 import type { EmailAttachment } from "@/lib/email";
 import { escapeHtml } from "@/lib/html-escape";
@@ -285,22 +287,22 @@ export function createKpTemplate(deps: KpTemplateDeps = defaultKpDeps): MailingT
       if (payload.promo.mode === "existing" && payload.promo.code) {
         const code = payload.promo.code;
         const audience = await deps.promoAudience(code);
-        if (!audience) return { ok: false, error: `Промокода ${code} нет в «Промокодах»` };
+        if (!audience) return withMailingDiagnostic({ ok: false, error: `Промокода ${code} нет в «Промокодах»` }, { version: 1, code: "kp.codeMissing", params: { code } });
         if (audience.personal) {
-          return {
+          return withMailingDiagnostic({
             ok: false,
             error: `Промокод ${code} персональный — он сработает только у одного клиента. Выберите общий код или «Персональные коды»`,
-          };
+          }, { version: 1, code: "kp.personalCodeNotShared", params: { code } });
         }
         if (audience.maxUses === 1) {
-          return {
+          return withMailingDiagnostic({
             ok: false,
             error: `Промокод ${code} одноразовый — оплатить по нему сможет только один получатель. Выберите общий код или «Персональные коды»`,
-          };
+          }, { version: 1, code: "kp.singleUseCodeNotShared", params: { code } });
         }
         const promo = await deps.readPromo(code);
         if (!promo) {
-          return { ok: false, error: `Промокод ${code} сейчас не действует (выключен, не начался, истёк или исчерпан)` };
+          return withMailingDiagnostic({ ok: false, error: `Промокод ${code} сейчас не действует (выключен, не начался, истёк или исчерпан)` }, { version: 1, code: "kp.codeUnavailable", params: { code } });
         }
       }
       return { ok: true, payload };

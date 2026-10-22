@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Plus, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel } from "@/lib/user-roles";
+import { getUserRoleLabel } from "@/lib/user-roles";
 import {
   Dialog,
   DialogContent,
@@ -29,8 +29,6 @@ import {
   createEquipmentMaintenanceRow,
   normalizeEquipmentMaintenanceConfig,
   MONTH_KEYS,
-  MONTH_LABELS,
-  MONTH_FULL_LABELS,
   getMonthDayOptions,
   formatMaintenanceDate,
 } from "@/lib/equipment-maintenance-document";
@@ -58,11 +56,13 @@ import {
 } from "@/components/journals/record-cards-view";
 
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { presentMaintenanceValue, createMaintenanceFailureRegistry, maintenanceText, maintenanceRoleUsesFactory, maintenanceServerSourceIdentity } from "@/lib/equipment-maintenance-presentation";
+import type { Locale } from "@/i18n/locales";
 import {
   PositionSelectItems,
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
-import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { formatPositionWithName } from "@/lib/position-name-label";
 import { resolveApprover } from "@/lib/approver-display";
@@ -74,6 +74,8 @@ type Props = {
   dateFrom: string;
   status: string;
   initialConfig: EquipmentMaintenanceConfig;
+  /** Raw config before normalization; absence identifies injected defaults. */
+  sourceConfig?: unknown;
   users: { id: string; name: string; role: string }[];
   /** Справочник «Оборудование» организации — источник имён для строк. */
   equipmentDirectory?: EquipmentDirectoryOption[];
@@ -81,7 +83,6 @@ type Props = {
   useV2?: boolean;
 };
 
-const POSITION_OPTIONS = USER_ROLE_LABEL_VALUES;
 
 function buildYearOptions(currentYear: number) {
   const options: number[] = [];
@@ -98,11 +99,18 @@ export function EquipmentMaintenanceDocumentClient({
   dateFrom,
   status,
   initialConfig,
+  sourceConfig,
   users,
   equipmentDirectory = [],
   useV2 = false,
 }: Props) {
+  const t = useTranslations("journalEquipmentMaintenance");
+  const text = useTranslations();
+  const locale = useLocale() as Locale;
+  const committed = useRef({ t, text, locale });
+  useLayoutEffect(() => { committed.current = { t, text, locale }; });
   const router = useRouter();
+  const [failureRegistry] = useState(createMaintenanceFailureRegistry);
   const [, startTransition] = useTransition();
   const [isSaving, setIsSaving] = useState(false);
   const [config, setConfig] = useState(() =>
@@ -121,6 +129,8 @@ export function EquipmentMaintenanceDocumentClient({
 
   // Settings form state
   const [settingsTitle, setSettingsTitle] = useState(title);
+  const [settingsTitleMissing, setSettingsTitleMissing] = useState(!title);
+  const [savedRoleOverrides, setSavedRoleOverrides] = useState(false);
   const [settingsDate, setSettingsDate] = useState(config.documentDate);
   const [settingsYear, setSettingsYear] = useState(config.year);
   const [settingsApproveRole, setSettingsApproveRole] = useState(config.approveRole);
@@ -187,23 +197,31 @@ export function EquipmentMaintenanceDocumentClient({
   );
 
   const isClosed = status === "closed";
-  const organizationLabel = organizationName || ORG_NAME_FALLBACK;
+  const organizationLabel = presentMaintenanceValue(organizationName, !organizationName, t("organizationFallback"));
+  const displayTitle = presentMaintenanceValue(title, !title, t("title"));
+  // Stored/custom roles remain raw, including values identical to standard Russian labels.
+  const roleLabel = (value: string, field: "approveRole" | "responsibleRole", boundId?: string | null) =>
+    !savedRoleOverrides && sourceConfig !== undefined && maintenanceRoleUsesFactory(sourceConfig, field) && !boundId
+      ? text(field === "approveRole" ? "personnelMaintenancePdf.manager" : "personnelMaintenancePdf.head_chef")
+      : value;
   const { mobileView, switchMobileView } = useMobileView("equipment_maintenance");
   const { closeDocument, isClosing } = useDocumentCloseAction({ documentId, title });
 
   /** Имя строки: у связанных — из справочника, у остальных — сохранённое. */
   const rowName = (row: EquipmentMaintenanceRow) =>
     resolveEquipmentRowName(row, equipmentDirectory);
+  const previousServer = useRef({ documentId, serialized: maintenanceServerSourceIdentity(initialConfig, sourceConfig) });
+
   const missingEquipment = getMissingDirectoryEquipment(
     equipmentDirectory,
     config.rows
   );
 
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => {
-    const planSummary = MONTH_KEYS.map((k) => `${MONTH_LABELS[k]}:${row.plan[k] || "—"}`)
+    const planSummary = MONTH_KEYS.map((k) => `${t(`monthShort_${k}`)}:${row.plan[k] || "—"}`)
       .filter((s) => !s.endsWith(":-"))
       .join(" · ");
-    const factSummary = MONTH_KEYS.map((k) => `${MONTH_LABELS[k]}:${row.fact[k] || "—"}`)
+    const factSummary = MONTH_KEYS.map((k) => `${t(`monthShort_${k}`)}:${row.fact[k] || "—"}`)
       .filter((s) => !s.endsWith(":—"))
       .join(" · ");
     return {
@@ -212,19 +230,20 @@ export function EquipmentMaintenanceDocumentClient({
       subtitle: row.workType || undefined,
       badge: (
         <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-semibold text-[#5566f6]">
-          Тип {row.maintenanceType}
+          {t("typeBadge", { type: maintenanceText(row.maintenanceType) })}
         </span>
       ),
       leading: !isClosed ? (
         <Checkbox
+          aria-label={t("selectRow", { number: maintenanceText(index + 1) })}
           checked={selectedRows.includes(row.id)}
           onCheckedChange={(checked) => toggleRow(row.id, checked === true)}
           className="size-5"
         />
       ) : null,
       fields: [
-        { label: "План по месяцам", value: planSummary, hideIfEmpty: true },
-        { label: "Факт по месяцам", value: factSummary, hideIfEmpty: true },
+        { label: t("planSummary"), value: planSummary, hideIfEmpty: true },
+        { label: t("factSummary"), value: factSummary, hideIfEmpty: true },
       ],
       onClick: !isClosed ? () => openEditRow(row.id) : undefined,
       actions: !isClosed ? (
@@ -233,7 +252,7 @@ export function EquipmentMaintenanceDocumentClient({
           onClick={() => openEditRow(row.id)}
           className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5563ff] px-4 text-[14px] font-medium text-white hover:bg-[#4452ee]"
         >
-          Редактировать
+          {text("common.edit")}
         </button>
       ) : null,
     };
@@ -249,7 +268,9 @@ export function EquipmentMaintenanceDocumentClient({
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
+      const error = new Error(result?.error || "Не удалось сохранить журнал");
+      if (!result?.error) failureRegistry.mark(error, "saveFailed");
+      throw error;
     }
     startTransition(() => router.refresh());
   }
@@ -277,7 +298,7 @@ export function EquipmentMaintenanceDocumentClient({
     } catch (error) {
       applyConfig(previous);
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить журнал")
+        failureRegistry.key(error) ? committed.current.t(failureRegistry.key(error)!) : humanizeFetchError(error, committed.current.t("saveFailed"), committed.current.t("networkError"))
       );
     } finally {
       setIsSaving(false);
@@ -323,7 +344,7 @@ export function EquipmentMaintenanceDocumentClient({
       ...current,
       rows: [...current.rows, ...added],
     }));
-    toast.success(`Добавлено строк из справочника: ${added.length}`);
+    toast.success(committed.current.t("addedFromDirectory", { count: maintenanceText(added.length) }));
   }
 
   function resetDraft() {
@@ -384,6 +405,40 @@ export function EquipmentMaintenanceDocumentClient({
     },
   });
 
+  const cancelSequentialEdit = seq.cancelled;
+  useEffect(() => {
+    const serialized = maintenanceServerSourceIdentity(initialConfig, sourceConfig);
+    const previous = previousServer.current;
+    if (previous.documentId === documentId && previous.serialized === serialized) return;
+    previousServer.current = { documentId, serialized };
+    const next = normalizeEquipmentMaintenanceConfig(initialConfig);
+    const previousEditingRow = configRef.current.rows.find((row) => row.id === editingRowId);
+    const nextEditingRow = next.rows.find((row) => row.id === editingRowId);
+    configRef.current = next;
+    setConfig(next);
+    setSavedRoleOverrides(false);
+    setSelectedRows((selected) => selected.filter((id) => next.rows.some((row) => row.id === id)));
+    if (previous.documentId !== documentId || (editingRowId && !nextEditingRow)) {
+      cancelSequentialEdit();
+      setEditModalOpen(false);
+      setEditingRowId(null);
+    } else if (nextEditingRow && JSON.stringify(previousEditingRow) !== JSON.stringify(nextEditingRow)) {
+      setEditSourceEquipmentId(nextEditingRow.sourceEquipmentId);
+      setEditEquipmentName(nextEditingRow.equipmentName);
+      setEditWorkType(nextEditingRow.workType);
+      setEditMaintenanceType(nextEditingRow.maintenanceType);
+      setEditPlan(Object.fromEntries(MONTH_KEYS.map((key) => [key, nextEditingRow.plan[key] || "-"])));
+      setEditFact(Object.fromEntries(MONTH_KEYS.map((key) => [key, nextEditingRow.fact[key] || ""])));
+    }
+    if (previous.documentId !== documentId) {
+      setSelectedRows([]);
+      setAddModalOpen(false);
+      setEditModalOpen(false);
+      setEditingRowId(null);
+      setSettingsOpen(false);
+    }
+  }, [documentId, initialConfig, sourceConfig, editingRowId, cancelSequentialEdit]);
+
   function closeEditModal() {
     // Закрытие без сохранения прерывает очередь («Изменено k из N»).
     seq.cancelled();
@@ -427,6 +482,7 @@ export function EquipmentMaintenanceDocumentClient({
 
   function openSettings() {
     setSettingsTitle(title);
+    setSettingsTitleMissing(!title);
     setSettingsDate(config.documentDate);
     setSettingsYear(config.year);
     setSettingsApproveRole(config.approveRole);
@@ -451,6 +507,8 @@ export function EquipmentMaintenanceDocumentClient({
       responsibleEmployee: settingsResponsibleEmployee,
     };
     const previous = configRef.current;
+    const previousRoleOverrides = savedRoleOverrides;
+    setSavedRoleOverrides(true);
     applyConfig(nextConfig);
 
     setIsSaving(true);
@@ -462,15 +520,18 @@ export function EquipmentMaintenanceDocumentClient({
       });
       const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(result?.error || "Не удалось сохранить настройки");
+        const error = new Error(result?.error || "Не удалось сохранить настройки");
+        if (!result?.error) failureRegistry.mark(error, "settingsFailed");
+        throw error;
       }
       setSettingsOpen(false);
       startTransition(() => router.refresh());
     } catch (error) {
-      // Откат: иначе на экране остаются настройки, которых нет в базе.
+      // Roll back the config and its presentation provenance together.
+      setSavedRoleOverrides(previousRoleOverrides);
       applyConfig(previous);
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки")
+        failureRegistry.key(error) ? committed.current.t(failureRegistry.key(error)!) : humanizeFetchError(error, committed.current.t("settingsFailed"), committed.current.t("networkError"))
       );
     } finally {
       setIsSaving(false);
@@ -483,32 +544,32 @@ export function EquipmentMaintenanceDocumentClient({
 
   return (
     <div className="space-y-6 text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={text("journalScan.focus.emptyTitle")} emptyBody={text("journalScan.focus.emptyBody")} copy={{ noCreateBody: text("journalScan.focus.noCreateBody"), later: text("journalScan.focus.later"), close: text("common.close") }} />
 
       {selectedRows.length > 0 && !isClosed && (
         <JournalSelectionBar
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
           onDelete={removeSelectedRows}
-          hint="Строки графика будут удалены без возможности отмены"
+          hint={t("selectionHint")}
         >
           <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
         </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
-        title={title}
+        title={displayTitle}
         documentId={documentId}
         backHref="/journals/equipment_maintenance"
         onSettings={openSettings}
         closed={isClosed}
-        closedHint="Откройте журнал заново, чтобы редактировать график обслуживания."
+        closedHint={t("closedHint")}
         menuItems={
           !isClosed
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: text("journalWidgets.staff.closeJournal"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => void closeDocument(),
                   disabled: isClosing,
@@ -519,13 +580,13 @@ export function EquipmentMaintenanceDocumentClient({
         mobileView={mobileView}
         onMobileView={switchMobileView}
         cards={
-          <RecordCardsView items={cardItems} emptyLabel="Оборудование не внесено." />
+          <RecordCardsView items={cardItems} emptyLabel={t("noEquipment")}  />
         }
         paperHeader={
           <>
             <JournalDocumentHeader
               orgName={organizationLabel}
-              title="ГРАФИК ПРОФИЛАКТИЧЕСКОГО ОБСЛУЖИВАНИЯ ОБОРУДОВАНИЯ"
+              title={t("header")}
               startedAt={dateFrom}
               finishedAt={isClosed ? config.documentDate : null}
             />
@@ -533,8 +594,8 @@ export function EquipmentMaintenanceDocumentClient({
             {/* "УТВЕРЖДАЮ" block */}
             <div className="mt-4 flex justify-end">
               <div className="w-[400px] text-right text-sm leading-relaxed">
-                <div className="font-semibold uppercase">УТВЕРЖДАЮ</div>
-                <div>{approver.title}</div>
+                <div className="font-semibold uppercase">{text("personnelMaintenancePdf.approve")}</div>
+                <div>{roleLabel(approver.title, "approveRole", config.approveEmployeeId)}</div>
                 <div className="mt-1 flex items-center justify-end gap-2">
                   <span className="inline-block w-[180px] border-b border-black" />
                   <span>{approver.name}</span>
@@ -548,7 +609,7 @@ export function EquipmentMaintenanceDocumentClient({
             </div>
           </>
         }
-        sheetTitle={`График профилактического обслуживания оборудования на ${config.year} г.`}
+        sheetTitle={t("yearTitle", { year: maintenanceText(config.year) })}
         sheetMinWidth={1200}
         toolbar={
           !isClosed ? (
@@ -562,7 +623,7 @@ export function EquipmentMaintenanceDocumentClient({
                 }}
               >
                 <Plus className="size-4" />
-                Добавить
+                {text("common.add")}
               </Button>
 
               {/* Одно действие вместо ручного переписывания справочника:
@@ -574,10 +635,10 @@ export function EquipmentMaintenanceDocumentClient({
                   variant="outline"
                   className="border-[#dcdfed]"
                   onClick={addMissingFromDirectory}
-                  title="Оборудование из справочника, которого нет в графике"
+                  title={t("addDirectoryHint")}
                 >
                   <ListPlus className="size-4" />
-                  Добавить из справочника ({missingEquipment.length})
+                  {t("addDirectory", { count: maintenanceText(missingEquipment.length) })}
                 </Button>
               ) : null}
             </>
@@ -588,13 +649,13 @@ export function EquipmentMaintenanceDocumentClient({
           <tbody>
             <tr>
               <td className={`${GRID_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Тип профилактического обслуживания
+                {t("maintenanceTypeLegend")}
               </td>
               <td className={`${GRID_CELL_CLASS} px-2 py-1.5 leading-tight`}>
-                <span className="font-bold">A</span> = Ежемесячно
+                {t("monthly")}
               </td>
               <td className={`${GRID_CELL_CLASS} px-2 py-1.5 leading-tight`}>
-                <span className="font-bold">B</span> = Ежегодно
+                {t("yearly")}
               </td>
             </tr>
           </tbody>
@@ -606,15 +667,15 @@ export function EquipmentMaintenanceDocumentClient({
             <tr>
               <th className={`w-10 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`} />
               <th className={`w-12 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>
-                № п/п
+                {text("personnelMaintenancePdf.number")}
               </th>
               <th className={`w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>
-                Название оборудования / Вид работ
+                {t("equipmentWork")}
               </th>
               <th className={`w-16 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`} />
               {MONTH_KEYS.map((key) => (
                 <th key={key} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  {MONTH_LABELS[key]}
+                  {t(`monthShort_${key}`)}
                 </th>
               ))}
             </tr>
@@ -637,7 +698,8 @@ export function EquipmentMaintenanceDocumentClient({
                   >
                     {!isClosed && (
                       <Checkbox
-                        checked={selectedRows.includes(row.id)}
+                        aria-label={t("selectRow", { number: maintenanceText(index + 1) })}
+          checked={selectedRows.includes(row.id)}
                         onCheckedChange={(checked) =>
                           toggleRow(row.id, checked === true)
                         }
@@ -662,7 +724,7 @@ export function EquipmentMaintenanceDocumentClient({
                     )}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center text-[13px] font-medium leading-tight`}>
-                    Тип
+                    {text("personnelMaintenancePdf.type")}
                   </td>
                   {MONTH_KEYS.map((key) => (
                     <td
@@ -677,7 +739,7 @@ export function EquipmentMaintenanceDocumentClient({
                 {/* Sub-row 2: План */}
                 <tr className={rowClassName} onClick={rowClickHandler}>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center text-[13px] font-medium leading-tight`}>
-                    План
+                    {t("plan")}
                   </td>
                   {MONTH_KEYS.map((key) => (
                     <td
@@ -692,7 +754,7 @@ export function EquipmentMaintenanceDocumentClient({
                 {/* Sub-row 3: Факт */}
                 <tr className={rowClassName} onClick={rowClickHandler}>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center text-[13px] font-medium leading-tight`}>
-                    Факт
+                    {text("personnelMaintenancePdf.actual")}
                   </td>
                   {MONTH_KEYS.map((key) => (
                     <td
@@ -705,6 +767,7 @@ export function EquipmentMaintenanceDocumentClient({
                       ) : (
                         <select
                           className="w-full border-0 bg-transparent text-center text-sm outline-none cursor-pointer"
+                          aria-label={t("rowActualDayAria", { equipment: maintenanceText(rowName(row)), month: t(`monthFull_${key}`) })}
                           value={row.fact[key] || ""}
                           onChange={(e) =>
                             handleFactChange(row.id, key, e.target.value)
@@ -731,7 +794,7 @@ export function EquipmentMaintenanceDocumentClient({
                   colSpan={4 + MONTH_KEYS.length}
                   className={`${GRID_CELL_CLASS} px-2 py-4 text-center text-gray-400 leading-tight`}
                 >
-                  Нет записей. Нажмите &laquo;Добавить&raquo; чтобы добавить оборудование.
+                  {t("emptyRows")}
                 </td>
               </tr>
             )}
@@ -751,7 +814,7 @@ export function EquipmentMaintenanceDocumentClient({
                 leading={2}
                 labelSpan={1}
                 trailing={1 + MONTH_KEYS.length}
-                label="Добавить оборудование"
+                label={t("addEquipment")}
                 onClick={() => {
                   resetDraft();
                   setAddModalOpen(true);
@@ -767,12 +830,11 @@ export function EquipmentMaintenanceDocumentClient({
               >
                 {/* Без сотрудника было «Ответственный: Управляющий,» —
                     запятая с пустотой. Разделитель — только между частями. */}
-                Ответственный:{" "}
-                {formatPositionWithName(
-                  config.responsibleRole,
+                {text("personnelMaintenancePdf.responsible", { person: formatPositionWithName(
+                  roleLabel(config.responsibleRole, "responsibleRole", config.responsibleEmployeeId),
                   config.responsibleEmployee,
                   { separator: ", ", emptyValue: "—" }
-                )}
+                ) })}
               </td>
             </tr>
 
@@ -795,16 +857,16 @@ export function EquipmentMaintenanceDocumentClient({
 
       {/* ---------- Add Row Dialog ---------- */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
+        <DialogContent closeLabel={text("common.close")} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Добавление новой строки
+              {text("journalWidgets.staff.addEmployeeTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
             <EquipmentDirectoryField
-              label="Название оборудования"
+              label={t("equipmentName")}
               value={draftEquipmentName}
               sourceEquipmentId={draftSourceEquipmentId}
               directory={equipmentDirectory}
@@ -816,22 +878,22 @@ export function EquipmentMaintenanceDocumentClient({
             />
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Вид работ по обслуживанию</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("workType")}</Label>
               <Textarea
                 className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
                 value={draftWorkType}
                 onChange={(e) => setDraftWorkType(e.target.value)}
-                placeholder="Вид работ"
+                placeholder={t("workPlaceholder")}
                 rows={2}
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Тип обслуживания</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("maintenanceType")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  ["A", "A = Ежемесячно"],
-                  ["B", "B = Ежегодно"],
+                  ["A", t("monthly")],
+                  ["B", t("yearly")],
                 ] as const).map(([value, label]) => {
                   const active = draftMaintenanceType === value;
                   return (
@@ -853,13 +915,14 @@ export function EquipmentMaintenanceDocumentClient({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Плановые дни по месяцам</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("plannedDays")}</Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {MONTH_KEYS.map((key) => (
                   <div key={key} className="flex items-center gap-2">
-                    <span className="w-20 text-[13px] text-[#3c4053]">{MONTH_FULL_LABELS[key]}</span>
+                    <span className="w-20 text-[13px] text-[#3c4053]">{t(`monthFull_${key}`)}</span>
                     <select
                       className="h-10 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024]"
+                      aria-label={t("plannedDayAria", { month: t(`monthFull_${key}`) })}
                       value={draftPlan[key]}
                       onChange={(e) =>
                         setDraftPlan((prev) => ({ ...prev, [key]: e.target.value }))
@@ -882,7 +945,7 @@ export function EquipmentMaintenanceDocumentClient({
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
               onClick={() => setAddModalOpen(false)}
             >
-              Отмена
+              {text("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -890,7 +953,7 @@ export function EquipmentMaintenanceDocumentClient({
               onClick={saveDraftRow}
               disabled={!draftEquipmentName.trim()}
             >
-              Добавить
+              {text("common.add")}
             </Button>
           </div>
         </DialogContent>
@@ -898,16 +961,16 @@ export function EquipmentMaintenanceDocumentClient({
 
       {/* ---------- Edit Row Dialog ---------- */}
       <Dialog open={editModalOpen} onOpenChange={(open) => (open ? setEditModalOpen(true) : closeEditModal())}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
+        <DialogContent closeLabel={text("common.close")} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Редактирование строки{seq.progress ? ` ${seq.progress}` : ""}
+              {t("editRowTitle", { progress: seq.progress ? ` ${seq.progress}` : "" })}
             </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
             <EquipmentDirectoryField
-              label="Название оборудования"
+              label={t("equipmentName")}
               value={editEquipmentName}
               sourceEquipmentId={editSourceEquipmentId}
               directory={equipmentDirectory}
@@ -919,7 +982,7 @@ export function EquipmentMaintenanceDocumentClient({
             />
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Вид работ по обслуживанию</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("workType")}</Label>
               <Textarea
                 className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
                 value={editWorkType}
@@ -929,11 +992,11 @@ export function EquipmentMaintenanceDocumentClient({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Тип обслуживания</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("maintenanceType")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  ["A", "A = Ежемесячно"],
-                  ["B", "B = Ежегодно"],
+                  ["A", t("monthly")],
+                  ["B", t("yearly")],
                 ] as const).map(([value, label]) => {
                   const active = editMaintenanceType === value;
                   return (
@@ -955,13 +1018,14 @@ export function EquipmentMaintenanceDocumentClient({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Плановые дни по месяцам</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("plannedDays")}</Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {MONTH_KEYS.map((key) => (
                   <div key={key} className="flex items-center gap-2">
-                    <span className="w-20 text-[13px] text-[#3c4053]">{MONTH_FULL_LABELS[key]}</span>
+                    <span className="w-20 text-[13px] text-[#3c4053]">{t(`monthFull_${key}`)}</span>
                     <select
                       className="h-10 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024]"
+                      aria-label={t("plannedDayAria", { month: t(`monthFull_${key}`) })}
                       value={editPlan[key] || "-"}
                       onChange={(e) =>
                         setEditPlan((prev) => ({ ...prev, [key]: e.target.value }))
@@ -980,14 +1044,15 @@ export function EquipmentMaintenanceDocumentClient({
                 в «Карточках» таблицы нет, а факт живёт только в ней. */}
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                Фактические дни обслуживания
+                {t("actualDays")}
               </Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {MONTH_KEYS.map((key) => (
                   <div key={key} className="flex items-center gap-2">
-                    <span className="w-20 text-[13px] text-[#3c4053]">{MONTH_FULL_LABELS[key]}</span>
+                    <span className="w-20 text-[13px] text-[#3c4053]">{t(`monthFull_${key}`)}</span>
                     <select
                       className="h-10 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024]"
+                      aria-label={t("actualDayAria", { month: t(`monthFull_${key}`) })}
                       value={editFact[key] || ""}
                       onChange={(e) =>
                         setEditFact((prev) => ({ ...prev, [key]: e.target.value }))
@@ -1013,14 +1078,14 @@ export function EquipmentMaintenanceDocumentClient({
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
               onClick={closeEditModal}
             >
-              Отмена
+              {text("common.cancel")}
             </Button>
             <Button
               type="button"
               className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
               onClick={saveEditRow}
             >
-              Сохранить
+              {text("common.save")}
             </Button>
           </div>
         </DialogContent>
@@ -1031,8 +1096,8 @@ export function EquipmentMaintenanceDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название, дата, год и две роли: утверждающий и ответственный."
+          title={text("journalWidgets.staff.settings")}
+          description={t("settingsDescription")}
           size="md"
           isSaving={isSaving}
           onSave={handleSaveSettings}
@@ -1040,18 +1105,18 @@ export function EquipmentMaintenanceDocumentClient({
         >
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название документа
+              {text("journalWidgets.staff.documentName")}
             </Label>
             <Input
-              value={settingsTitle}
-              onChange={(e) => setSettingsTitle(e.target.value)}
+              value={presentMaintenanceValue(settingsTitle, settingsTitleMissing, t("title"))}
+              onChange={(e) => { setSettingsTitle(e.target.value); setSettingsTitleMissing(false); }}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Дата документа
+                {text("journalScan.metadata.documentDate")}
               </Label>
               <Input
                 type="date"
@@ -1062,7 +1127,7 @@ export function EquipmentMaintenanceDocumentClient({
             </div>
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Год
+                {t("year")}
               </Label>
               <Select
                 value={String(settingsYear)}
@@ -1083,14 +1148,14 @@ export function EquipmentMaintenanceDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Должность «Утверждаю»
+              {text("journalScan.metadata.approverPosition")}
             </Label>
             <Select
               value={settingsApproveRole}
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={text("journalWidgets.staff.selectPlaceholder")}  />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -1099,7 +1164,7 @@ export function EquipmentMaintenanceDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Сотрудник (утверждает)
+              {t("approvingEmployee")}
             </Label>
             <Select
               value={settingsApproveEmployeeId}
@@ -1113,7 +1178,7 @@ export function EquipmentMaintenanceDocumentClient({
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={text("journalWidgets.staff.selectPlaceholder")}  />
               </SelectTrigger>
               <SelectContent>
                 {(settingsApproveRole ? approveCascade.candidates : users).map((u) => (
@@ -1126,14 +1191,14 @@ export function EquipmentMaintenanceDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Должность ответственного
+              {text("journalWidgets.staff.responsiblePosition")}
             </Label>
             <Select
               value={settingsResponsibleRole}
               onValueChange={responsibleCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={text("journalWidgets.staff.selectPlaceholder")}  />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -1142,7 +1207,7 @@ export function EquipmentMaintenanceDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Сотрудник (ответственный)
+              {t("responsibleEmployee")}
             </Label>
             <Select
               value={settingsResponsibleEmployeeId}
@@ -1156,7 +1221,7 @@ export function EquipmentMaintenanceDocumentClient({
               onOpenChange={responsibleCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={text("journalWidgets.staff.selectPlaceholder")}  />
               </SelectTrigger>
               <SelectContent>
                 {(settingsResponsibleRole ? responsibleCascade.candidates : users).map((u) => (
@@ -1170,25 +1235,25 @@ export function EquipmentMaintenanceDocumentClient({
         </JournalSettingsModal>
       ) : (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-y-auto sm:max-w-[520px]">
+          <DialogContent closeLabel={text("common.close")} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-y-auto sm:max-w-[520px]">
             <DialogHeader>
-              <DialogTitle>Настройки документа</DialogTitle>
+              <DialogTitle>{text("journalWidgets.staff.settings")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Label>Название документа</Label>
+              <Label>{text("journalWidgets.staff.documentName")}</Label>
               <Input
-                value={settingsTitle}
-                onChange={(e) => setSettingsTitle(e.target.value)}
+                value={presentMaintenanceValue(settingsTitle, settingsTitleMissing, t("title"))}
+                onChange={(e) => { setSettingsTitle(e.target.value); setSettingsTitleMissing(false); }}
               />
 
-              <Label>Дата документа</Label>
+              <Label>{text("journalScan.metadata.documentDate")}</Label>
               <Input
                 type="date"
                 value={settingsDate}
                 onChange={(e) => setSettingsDate(e.target.value)}
               />
 
-              <Label>Год</Label>
+              <Label>{t("year")}</Label>
               <Select
                 value={String(settingsYear)}
                 onValueChange={(val) => setSettingsYear(Number(val))}
@@ -1205,20 +1270,20 @@ export function EquipmentMaintenanceDocumentClient({
                 </SelectContent>
               </Select>
 
-              <Label>Должность &laquo;Утверждаю&raquo;</Label>
+              <Label>{text("journalScan.metadata.approverPosition")}</Label>
               <Select
                 value={settingsApproveRole}
                 onValueChange={approveCascade.handlePositionChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={text("journalWidgets.staff.choosePosition")}  />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
               </Select>
 
-              <Label>Сотрудник (утверждает)</Label>
+              <Label>{t("approvingEmployee")}</Label>
               <Select
                 value={settingsApproveEmployeeId}
                 onValueChange={(value) => {
@@ -1231,7 +1296,7 @@ export function EquipmentMaintenanceDocumentClient({
                 onOpenChange={approveCascade.setEmployeeOpen}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={text("journalWidgets.staff.chooseEmployee")}  />
                 </SelectTrigger>
                 <SelectContent>
                   {(settingsApproveRole ? approveCascade.candidates : users).map((u) => (
@@ -1242,20 +1307,20 @@ export function EquipmentMaintenanceDocumentClient({
                 </SelectContent>
               </Select>
 
-              <Label>Должность ответственного</Label>
+              <Label>{text("journalWidgets.staff.responsiblePosition")}</Label>
               <Select
                 value={settingsResponsibleRole}
                 onValueChange={responsibleCascade.handlePositionChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={text("journalWidgets.staff.choosePosition")}  />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
               </Select>
 
-              <Label>Сотрудник (ответственный)</Label>
+              <Label>{t("responsibleEmployee")}</Label>
               <Select
                 value={settingsResponsibleEmployeeId}
                 onValueChange={(value) => {
@@ -1268,7 +1333,7 @@ export function EquipmentMaintenanceDocumentClient({
                 onOpenChange={responsibleCascade.setEmployeeOpen}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={text("journalWidgets.staff.chooseEmployee")}  />
                 </SelectTrigger>
                 <SelectContent>
                   {(settingsResponsibleRole ? responsibleCascade.candidates : users).map((u) => (
@@ -1281,7 +1346,7 @@ export function EquipmentMaintenanceDocumentClient({
 
               <div className="flex justify-end">
                 <Button onClick={handleSaveSettings} disabled={isSaving}>
-                  Сохранить
+                  {text("common.save")}
                 </Button>
               </div>
             </div>

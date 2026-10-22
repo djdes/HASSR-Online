@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+      return NextResponse.json({ error: "Не авторизован", errorCode: "PRODUCT_UNAUTHORIZED" }, { status: 401 });
     }
 
     // Раньше: блокировался только legacy "operator". После миграции
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     // хотя UI /settings/products видят только management. Согласовываем
     // с DELETE-эндпоинтом: только management.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "PRODUCT_MANAGEMENT_REQUIRED" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
-        { error: "Название продукта обязательно" },
+        { error: "Название продукта обязательно", errorCode: "PRODUCT_NAME_REQUIRED_CREATE" },
         { status: 400 }
       );
     }
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     );
     if (duplicate) {
       return NextResponse.json(
-        { error: "Продукт с таким названием уже есть в справочнике" },
+        { error: "Продукт с таким названием уже есть в справочнике", errorCode: "PRODUCT_DUPLICATE_NAME" },
         { status: 400 }
       );
     }
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Product creation error:", error);
     return NextResponse.json(
-      { error: "Внутренняя ошибка сервера" },
+      { error: "Внутренняя ошибка сервера", errorCode: "PRODUCT_FAILED" },
       { status: 500 }
     );
   }
@@ -102,7 +102,7 @@ export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+      return NextResponse.json({ error: "Не авторизован", errorCode: "PRODUCT_UNAUTHORIZED" }, { status: 401 });
     }
 
     // Раньше: блокировался только legacy "operator". После миграции
@@ -110,14 +110,14 @@ export async function PUT(request: Request) {
     // хотя UI /settings/products видят только management. Согласовываем
     // с DELETE-эндпоинтом: только management.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "PRODUCT_MANAGEMENT_REQUIRED" }, { status: 403 });
     }
 
     const body = await request.json();
     const { id, name, supplier, barcode, unit, category, storageTemp, shelfLifeDays } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "ID не указан" }, { status: 400 });
+      return NextResponse.json({ error: "ID не указан", errorCode: "PRODUCT_ID_REQUIRED" }, { status: 400 });
     }
 
     const product = await db.product.findFirst({
@@ -125,11 +125,11 @@ export async function PUT(request: Request) {
     });
 
     if (!product) {
-      return NextResponse.json({ error: "Продукт не найден" }, { status: 404 });
+      return NextResponse.json({ error: "Продукт не найден", errorCode: "PRODUCT_NOT_FOUND" }, { status: 404 });
     }
 
     if (!name || name.trim().length === 0) {
-      return NextResponse.json({ error: "Название обязательно" }, { status: 400 });
+      return NextResponse.json({ error: "Название обязательно", errorCode: "PRODUCT_NAME_REQUIRED_UPDATE" }, { status: 400 });
     }
 
     const updated = await db.product.update({
@@ -148,7 +148,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ product: updated });
   } catch (error) {
     console.error("Product update error:", error);
-    return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
+    return NextResponse.json({ error: "Внутренняя ошибка сервера", errorCode: "PRODUCT_FAILED" }, { status: 500 });
   }
 }
 
@@ -156,7 +156,7 @@ export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+      return NextResponse.json({ error: "Не авторизован", errorCode: "PRODUCT_UNAUTHORIZED" }, { status: 401 });
     }
 
     // head_chef управляет производством и кладовкой — должен мочь
@@ -164,14 +164,14 @@ export async function DELETE(request: Request) {
     // только manager → head_chef получал 403. Также добавляем isRoot
     // bypass для согласованности с POST/PUT в этом файле.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю", errorCode: "PRODUCT_MANAGEMENT_REQUIRED" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "ID не указан" }, { status: 400 });
+      return NextResponse.json({ error: "ID не указан", errorCode: "PRODUCT_ID_REQUIRED" }, { status: 400 });
     }
 
     // Verify product belongs to this organization
@@ -180,7 +180,7 @@ export async function DELETE(request: Request) {
     });
 
     if (!product) {
-      return NextResponse.json({ error: "Продукт не найден" }, { status: 404 });
+      return NextResponse.json({ error: "Продукт не найден", errorCode: "PRODUCT_NOT_FOUND" }, { status: 404 });
     }
 
     await db.product.delete({ where: { id } });
@@ -189,7 +189,7 @@ export async function DELETE(request: Request) {
   } catch (error) {
     console.error("Product deletion error:", error);
     return NextResponse.json(
-      { error: "Внутренняя ошибка сервера" },
+      { error: "Внутренняя ошибка сервера", errorCode: "PRODUCT_FAILED" },
       { status: 500 }
     );
   }

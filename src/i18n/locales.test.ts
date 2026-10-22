@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { formatDate, formatNumber, isLocale, resolveLocale } from "./locales";
+import { FORMAT_LOCALES, formatDate, formatNumber, isLocale, resolveLocale } from "./locales";
 import { translatorFor } from "./translator";
 import { evaluatePartnerRequest } from "../lib/partners/access-guard";
 import { evaluateDirectoryRequest } from "../lib/master-directory-access";
@@ -37,4 +37,52 @@ test("read-only partners and directory users can change their own language, not 
   assert.equal(evaluatePartnerRequest({ method: "PATCH", pathname: "/api/profile/complete", claim }).allow, false);
   assert.deepEqual(evaluateDirectoryRequest("/api/profile/locale", "directory"), { action: "allow" });
   assert.equal(evaluateDirectoryRequest("/api/settings/organization", "directory").action, "deny");
+});
+
+
+test("finite Uzbek decimal separators remain stable for SSR and browser presentation", () => {
+  const cases: Array<[number, string]> = [
+    [0, "0"], [-0, "-0"], [0.5, "0,5"], [-0.5, "-0,5"],
+    [1.23456, "1,235"], [-1.23456, "-1,235"], [12.0004, "12"], [12.0005, "12,001"],
+    [12500, "12\u00a0500"], [-12500, "-12\u00a0500"],
+    [1000000.1234, "1\u00a0000\u00a0000,123"], [999999.9999, "1\u00a0000\u00a0000"],
+    [Number.MAX_SAFE_INTEGER, "9\u00a0007\u00a0199\u00a0254\u00a0740\u00a0991"],
+    [1e-7, "0"], [-1e-7, "-0"],
+  ];
+  for (const [value, expected] of cases) {
+    assert.equal(formatNumber("uz", value), expected);
+    for (const locale of ["ru", "en"] as const) {
+      assert.equal(formatNumber(locale, value), new Intl.NumberFormat(FORMAT_LOCALES[locale]).format(value));
+    }
+  }
+  assert.equal(formatNumber("uz", 0.5, { useGrouping: false, maximumFractionDigits: 1 }), "0,5");
+});
+
+test("Uzbek separator presentation preserves original words, options and nonfinite values", () => {
+  const profiles: Intl.NumberFormatOptions[] = [
+    { style: "currency", currency: "RUB", currencyDisplay: "name" },
+    { style: "unit", unit: "meter", unitDisplay: "long" },
+    { style: "percent", maximumFractionDigits: 2 },
+    { notation: "scientific", maximumFractionDigits: 2 },
+    { notation: "compact", compactDisplay: "long" },
+  ];
+  for (const options of profiles) {
+    const beforeOptions = JSON.stringify(options);
+    for (const value of [0.5, -12500.25]) {
+      const native = new Intl.NumberFormat(FORMAT_LOCALES.uz, options);
+      const actual = formatNumber("uz", value, options);
+      for (const part of native.formatToParts(value)) {
+        if (!["decimal", "group"].includes(part.type)) assert.ok(actual.includes(part.value));
+      }
+      for (const locale of ["ru", "en"] as const) {
+        assert.equal(formatNumber(locale, value, options), new Intl.NumberFormat(FORMAT_LOCALES[locale], options).format(value));
+      }
+    }
+    for (const value of [NaN, Infinity, -Infinity]) {
+      for (const locale of ["ru", "en", "uz"] as const) {
+        assert.equal(formatNumber(locale, value, options), new Intl.NumberFormat(FORMAT_LOCALES[locale], options).format(value));
+      }
+    }
+    assert.equal(JSON.stringify(options), beforeOptions);
+  }
 });

@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Camera, Delete, Fingerprint, Loader2, Search, UserRound } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { KIOSK_PIN_EXPLAINER } from "@/lib/kiosk-copy";
+import { kioskError, kioskPasskeyError, type KioskError } from "./kiosk-error-presentation";
 
 type Employee = { id: string; name: string; positionTitle: string | null; hasPin: boolean; photoConsent: boolean };
 type Roster = { organization: { name: string }; employees: Employee[]; idleLockSeconds: number; photoRequired: boolean };
@@ -48,16 +49,24 @@ async function captureFrontPhoto(): Promise<Blob | null> {
 }
 
 export function KioskScreen() {
+  const t = useTranslations("miniKiosk");
   const [roster, setRoster] = useState<Roster | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<KioskError | null>(null);
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<Employee | null>(null);
   const [pin, setPin] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinError, setPinError] = useState<KioskError | null>(null);
   /** Сотрудник вошёл, но ещё не дал согласия на фото — показываем вопрос. */
   const [consentFor, setConsentFor] = useState<Employee | null>(null);
-  const [stage, setStage] = useState<string | null>(null);
+  const [stage, setStage] = useState<"savingConsent" | "photo" | null>(null);
+
+  function errorText(value: KioskError | null) {
+    if (!value) return "";
+    if (value.key === "errors.pinWrong") return t(value.key, { attempts: value.attempts });
+    if (value.key === "errors.pinLocked") return t(value.key, { minutes: value.minutes });
+    return t(value.key);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -65,14 +74,14 @@ export function KioskScreen() {
       .then(async (r) => {
         if (!alive) return;
         if (r.status === 401) {
-          setError("Этот планшет не привязан. Откройте QR из настроек «Общий планшет».");
+          setError({ key: "device.notLinked" });
           return;
         }
         const data = await r.json();
         if (r.ok) setRoster(data);
-        else setError(data.error ?? "Не удалось загрузить список");
+        else setError(kioskError(data.error ?? "Не удалось загрузить список"));
       })
-      .catch(() => alive && setError("Нет связи"));
+      .catch(() => alive && setError({ key: "device.network" }));
     return () => {
       alive = false;
     };
@@ -96,7 +105,7 @@ export function KioskScreen() {
   }
 
   async function takePhotoAndGo() {
-    setStage("Снимаем фото для подписи…");
+    setStage("photo");
     const blob = await captureFrontPhoto();
     if (blob) {
       const form = new FormData();
@@ -118,7 +127,7 @@ export function KioskScreen() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setPinError(data.error ?? "Неверный ПИН");
+        setPinError(kioskError(data.error ?? "Неверный ПИН"));
         setPin("");
         return;
       }
@@ -134,14 +143,14 @@ export function KioskScreen() {
       }
       goToJournals();
     } catch {
-      setPinError("Нет связи");
+      setPinError({ key: "errors.network" });
     } finally {
       setSubmitting(false);
     }
   }
 
   async function decideConsent(agree: boolean) {
-    setStage(agree ? "Сохраняем согласие…" : null);
+    setStage(agree ? "savingConsent" : null);
     if (agree) {
       await fetch("/api/kiosk/photo-consent", {
         method: "POST",
@@ -177,7 +186,7 @@ export function KioskScreen() {
       });
       const optJson = (await opt.json()) as { challengeId: string; options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; error?: string };
       if (!opt.ok) {
-        setPinError(optJson.error ?? "Ключ не найден");
+        setPinError(kioskError(optJson.error ?? "Ключ не найден"));
         return;
       }
       const response = await startAuthentication({ optionsJSON: optJson.options });
@@ -188,13 +197,12 @@ export function KioskScreen() {
       });
       const verJson = (await ver.json()) as { error?: string };
       if (!ver.ok) {
-        setPinError(verJson.error ?? "Подпись не подтверждена");
+        setPinError(kioskError(verJson.error ?? "Подпись не подтверждена"));
         return;
       }
       goToJournals();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      setPinError(/NotAllowed|cancel|abort/i.test(msg) ? "Отменено" : "Не удалось подтвердить Face ID");
+      setPinError(kioskPasskeyError(e));
     } finally {
       setSubmitting(false);
     }
@@ -203,15 +211,16 @@ export function KioskScreen() {
   if (error) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-        <p className="text-[16px] text-[var(--mini-text,#e7e9f3)]">{error}</p>
+        <p className="text-[16px] text-[var(--mini-text,#e7e9f3)]" role="alert">{errorText(error)}</p>
       </div>
     );
   }
 
   if (!roster) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
+      <div className="flex min-h-[70vh] items-center justify-center" role="status" aria-label={t("device.loading")}>
         <Loader2 className="size-7 animate-spin text-[var(--mini-accent,#5566f6)]" />
+        <span className="sr-only">{t("device.loading")}</span>
       </div>
     );
   }
@@ -220,7 +229,7 @@ export function KioskScreen() {
     <div className="py-1">
       <div className="mb-4 px-1">
         <div className="mini-eyebrow">{roster.organization.name}</div>
-        <h1 className="mini-h1 mt-1">Кто заполняет?</h1>
+        <h1 className="mini-h1 mt-1">{t("page.title")}</h1>
       </div>
 
       <div className="relative mb-4">
@@ -228,7 +237,8 @@ export function KioskScreen() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Поиск по имени"
+          aria-label={t("page.searchLabel")}
+          placeholder={t("page.searchPlaceholder")}
           className="mini-input"
           style={{ paddingLeft: 46 }}
         />
@@ -247,45 +257,45 @@ export function KioskScreen() {
               {initials(e.name)}
             </span>
             <span className="line-clamp-2 text-[16px] font-semibold text-[var(--mini-text,#e7e9f3)]">{e.name}</span>
-            {!e.hasPin ? <span className="text-[13px] text-[var(--mini-muted,#9b9fb3)]">нет ПИН</span> : null}
+            {!e.hasPin ? <span className="text-[13px] text-[var(--mini-muted,#9b9fb3)]">{t("page.noPin")}</span> : null}
           </button>
         ))}
         {filtered.length === 0 ? (
-          <p className="col-span-full py-10 text-center text-[16px] text-[var(--mini-muted,#9b9fb3)]">Никого не нашли</p>
+          <p className="col-span-full py-10 text-center text-[16px] text-[var(--mini-muted,#9b9fb3)]">{t("page.empty")}</p>
         ) : null}
       </div>
 
       {stage ? (
-        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0b1024]/90 text-white">
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0b1024]/90 text-white" role="status" aria-live="polite">
           <Camera className="size-8 text-[#a3adff]" />
-          <p className="text-[17px]">{stage}</p>
+          <p className="text-[17px]">{stage === "savingConsent" ? t("stage.savingConsent") : t("stage.photo")}</p>
         </div>
       ) : null}
 
       <BottomSheet
         open={Boolean(consentFor)}
         onClose={() => decideConsent(false)}
-        title="Фото при входе"
+        title={t("consent.title")}
         subtitle={consentFor?.name ?? ""}
       >
         <div className="space-y-4 pb-2">
           <p className="text-[16px] leading-relaxed text-[var(--app-text,#0b1024)]">
-            Организация включила фотофиксацию: при вводе ПИН планшет делает один кадр с фронтальной камеры и прикладывает его к вашей подписи в журнале — как подтверждение, что запись внесли именно вы. Это не распознавание лиц: кадр просто хранится вместе с записью для проверки.
+            {t("consent.explanation")}
           </p>
           <p className="text-[15px] leading-relaxed text-[var(--app-text-muted,#6f7282)]">
-            Согласие можно не давать — вы будете работать как обычно, без фото. Отозвать его можно у руководителя.
+            {t("consent.optional")}
           </p>
           <button
             onClick={() => decideConsent(true)}
             className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-[#5566f6] px-4 text-[17px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]"
           >
-            <Camera className="size-5" /> Согласен, снимать фото при входе
+            <Camera className="size-5" /> {t("consent.agree")}
           </button>
           <button
             onClick={() => decideConsent(false)}
             className="min-h-12 w-full rounded-[14px] text-[16px] font-medium text-[var(--app-text-muted,#6f7282)]"
           >
-            Не сейчас — продолжить без фото
+            {t("consent.decline")}
           </button>
         </div>
       </BottomSheet>
@@ -294,7 +304,7 @@ export function KioskScreen() {
         open={Boolean(picked)}
         onClose={closeSheet}
         title={picked ? picked.name : ""}
-        subtitle="Введите свой ПИН"
+        subtitle={t("pin.subtitle")}
       >
         <div className="flex flex-col items-center gap-4 pb-2">
           <div className="flex gap-3">
@@ -306,7 +316,7 @@ export function KioskScreen() {
             ))}
           </div>
           {pinError ? (
-            <p className="text-[15px] font-medium text-[var(--app-warn-fg,#a13a32)]">{pinError}</p>
+            <p className="text-[15px] font-medium text-[var(--app-warn-fg,#a13a32)]" role="alert">{errorText(pinError)}</p>
           ) : null}
           {/* Клавиши — как поле PIN QR-страниц: крупные, индиго-подложка. */}
           <div className="grid grid-cols-3 gap-3">
@@ -323,7 +333,7 @@ export function KioskScreen() {
               onClick={() => setPin("")}
               className="size-16 rounded-2xl text-[15px] font-medium text-[var(--app-text-muted,#6f7282)]"
             >
-              Сброс
+              {t("pin.reset")}
             </button>
             <button
               onClick={() => tapDigit("0")}
@@ -333,7 +343,7 @@ export function KioskScreen() {
             </button>
             <button
               onClick={() => setPin((p) => p.slice(0, -1))}
-              aria-label="Стереть цифру"
+              aria-label={t("pin.erase")}
               className="flex size-16 items-center justify-center rounded-2xl text-[var(--app-text-muted,#6f7282)]"
             >
               <Delete className="size-6" />
@@ -344,17 +354,17 @@ export function KioskScreen() {
             disabled={pin.length < 4 || submitting}
             className="mt-1 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-[#5566f6] px-4 text-[17px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:opacity-50"
           >
-            {submitting ? <Loader2 className="size-5 animate-spin" /> : <UserRound className="size-5" />} Войти и заполнять
+            {submitting ? <Loader2 className="size-5 animate-spin" /> : <UserRound className="size-5" />} {t("pin.login")}
           </button>
           <button
             onClick={submitPasskey}
             disabled={submitting}
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-[var(--app-border-strong,#dcdfed)] px-4 text-[16px] font-medium text-[var(--app-text,#0b1024)] disabled:opacity-50"
           >
-            <Fingerprint className="size-5 text-[#5566f6]" /> Face ID / отпечаток своего телефона
+            <Fingerprint className="size-5 text-[#5566f6]" /> {t("pin.passkey")}
           </button>
           <p className="text-center text-[14px] leading-relaxed text-[var(--app-text-muted,#6f7282)]">
-            {KIOSK_PIN_EXPLAINER}
+            {t("pin.explainer")}
           </p>
         </div>
       </BottomSheet>

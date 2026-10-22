@@ -1,7 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { auditProtocolText, createAuditProtocolFailureRegistry, presentAuditProtocolTitle } from "@/lib/audit-protocol-presentation";
 import Link from "next/link";
 import { Archive, ClipboardList, ExternalLink, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,17 +54,31 @@ import { DOC_EXTRA_BLOCK_CLASS } from "@/components/journals/journal-responsive"
 
 import { toast } from "sonner";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+function useAuditProtocolCopy() {
+  const text = useTranslations();
+  const locale = useLocale();
+  const committed = useRef({ text, locale });
+  useLayoutEffect(() => { committed.current = { text, locale }; });
+  return { text, locale, committed };
+}
+
+type PresentedPlanSource = AuditProtocolPlanSource & { displayTitleMissing?: boolean };
+
 type Props = {
   documentId: string;
   title: string;
   organizationName: string;
   status: string;
   config: unknown;
+  /** Witnessed before router normalization; original generated record content stays raw. */
+  displayConfigMissing?: boolean;
+  /** Stable raw server JSON identity, before normalization can generate fallback IDs. */
+  configSourceIdentity?: string;
   /**
    * Планы аудитов организации — источник для «Заполнить из плана».
    * Пусто ⇒ кнопка не показывается (планов ещё нет).
    */
-  planSources?: AuditProtocolPlanSource[];
+  planSources?: PresentedPlanSource[];
   /** Design v2 toggle. */
   useV2?: boolean;
 };
@@ -76,17 +92,18 @@ function FillFromPlanButton({
   plans,
   onPick,
 }: {
-  plans: AuditProtocolPlanSource[];
-  onPick: (plan: AuditProtocolPlanSource) => void;
+  plans: PresentedPlanSource[];
+  onPick: (plan: PresentedPlanSource) => void;
 }) {
+  const text = useTranslations();
   if (plans.length === 0) return null;
   return (
     <ResponsiveMenu
-      title="Из какого плана заполнить"
+      title={text("journalAuditProtocol.planPicker")}
       contentClassName="w-[340px] rounded-[22px] border-0 p-3 shadow-xl"
       items={plans.map((plan) => ({
         key: plan.documentId,
-        label: `${plan.title} · требований: ${plan.rows.filter((row) => row.text.trim()).length}`,
+        label: text("journalAuditProtocol.planItem", { title: auditProtocolText(presentAuditProtocolTitle(plan.title, plan.displayTitleMissing, text("auditTraceabilityPdf.planTitle"))), count: auditProtocolText(plan.rows.filter((row) => row.text.trim()).length) }),
         icon: <ClipboardList className="size-4 text-[#6f7282]" />,
         onSelect: () => onPick(plan),
       }))}
@@ -97,7 +114,7 @@ function FillFromPlanButton({
           className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <ClipboardList className="size-4 text-[#5566f6]" />
-          Заполнить из плана аудитов
+          {text("journalAuditProtocol.fillFromPlan")}
         </Button>
       }
     />
@@ -113,18 +130,19 @@ function SectionDialog({
   onOpenChange: (open: boolean) => void;
   onCreate: (title: string) => Promise<void>;
 }) {
+  const text = useTranslations();
   const [value, setValue] = useState("");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[620px]">
+      <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[620px]">
         <DialogHeader className="border-b px-8 py-6">
-          <DialogTitle className="text-[22px] font-semibold text-black">Добавить новый раздел</DialogTitle>
+          <DialogTitle className="text-[22px] font-semibold text-black">{text("journalAuditProtocol.addSection")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
-          <Input value={value} onChange={(e) => setValue(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+          <Input aria-label={text("journalAuditProtocol.sectionName")} value={value} onChange={(e) => setValue(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
           <div className="flex justify-end">
             <Button type="button" onClick={async () => { if (!value.trim()) return; await onCreate(value.trim()); onOpenChange(false); setValue(""); }} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]">
-              Добавить
+              {text("common.add")}
             </Button>
           </div>
         </div>
@@ -149,6 +167,7 @@ function RowDialog({
   titleSuffix?: string;
   onSave: (row: AuditProtocolRow) => Promise<void>;
 }) {
+  const text = useTranslations();
   const [draft, setDraft] = useState<AuditProtocolRow>(
     row ||
       createAuditProtocolRow({
@@ -158,18 +177,18 @@ function RowDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[700px]">
+      <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[700px]">
         <DialogHeader className="border-b px-8 py-6">
           <DialogTitle className="text-[22px] font-semibold text-black">
-            {row ? `Редактирование строки${titleSuffix ? ` ${titleSuffix}` : ""}` : "Добавление новой строки"}
+            {row ? text("journalAuditProtocol.editRow", { suffix: titleSuffix ? ` ${titleSuffix}` : "" }) : text("journalAuditProtocol.newRow")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Раздел</Label>
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.section")}</Label>
             <Select value={draft.sectionId} onValueChange={(value) => setDraft({ ...draft, sectionId: value })}>
-              <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите раздел" />
+              <SelectTrigger aria-label={text("journalAuditProtocol.section")} className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
+                <SelectValue placeholder={text("journalAuditProtocol.chooseSection")} />
               </SelectTrigger>
               <SelectContent>
                 {sections.map((section) => (
@@ -179,25 +198,26 @@ function RowDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Требование</Label>
-            <Textarea value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} className="min-h-[160px] rounded-2xl border-[#d8dae6] px-4 py-3 text-[18px]" />
+            <Label className="text-[14px] text-[#73738a]">{text("auditTraceabilityPdf.requirement")}</Label>
+            <Textarea aria-label={text("auditTraceabilityPdf.requirement")} value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} className="min-h-[160px] rounded-2xl border-[#d8dae6] px-4 py-3 text-[18px]" />
           </div>
           {/* Результат и примечание были только в таблице: на телефоне
               окно строки не давало поставить Да/Нет вообще. */}
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Результат</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.result")}</Label>
+            <div role="group" aria-label={text("journalAuditProtocol.result")} className="grid grid-cols-3 gap-2">
               {(
                 [
-                  ["yes", "Да"],
-                  ["no", "Нет"],
-                  ["", "Не проверено"],
+                  ["yes", text("common.yes")],
+                  ["no", text("common.no")],
+                  ["", text("journalAuditProtocol.unchecked")],
                 ] as const
               ).map(([value, label]) => {
                 const active = draft.result === value;
                 return (
                   <button
-                    key={label}
+                    key={value}
+                    aria-pressed={active}
                     type="button"
                     onClick={() => setDraft({ ...draft, result: value })}
                     className={`flex h-10 items-center justify-center rounded-xl border px-3 text-[14px] font-medium transition-colors duration-150 ${
@@ -213,12 +233,12 @@ function RowDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Примечания</Label>
-            <Textarea value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} className="min-h-[90px] rounded-2xl border-[#d8dae6] px-4 py-3 text-[15px]" />
+            <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.notes")}</Label>
+            <Textarea aria-label={text("journalAuditProtocol.notes")} value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} className="min-h-[90px] rounded-2xl border-[#d8dae6] px-4 py-3 text-[15px]" />
           </div>
           <div className="flex justify-end">
             <Button type="button" onClick={async () => { await onSave(draft); onOpenChange(false); }} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]">
-              Сохранить
+              {text("common.save")}
             </Button>
           </div>
         </div>
@@ -233,12 +253,23 @@ export function AuditProtocolDocumentClient({
   organizationName,
   status,
   config: initialConfig,
+  configSourceIdentity,
   planSources = [],
   useV2 = false,
 }: Props) {
+  const { text, committed } = useAuditProtocolCopy();
+  const [failureRegistry] = useState(createAuditProtocolFailureRegistry);
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [documentTitle, setDocumentTitle] = useState(title || AUDIT_PROTOCOL_DOCUMENT_TITLE);
+  const [titleIsFallback, setTitleIsFallback] = useState(!title);
+  const displayTitle = titleIsFallback ? text("auditTraceabilityPdf.protocolTitle") : documentTitle;
+  function editDocumentTitle(value: string) { setDocumentTitle(value); setTitleIsFallback(false); }
+  function presentError(error: unknown, fallback: "saveError" | "deleteError") {
+    const current = committed.current;
+    const displayed = humanizeFetchError(error, current.text(`journalAuditProtocol.${fallback}`), current.text("journalWidgets.headerEdit.networkError"));
+    return failureRegistry.has(error) ? current.text("journalAuditProtocol.saveDocumentFailed") : displayed;
+  }
   const [config, setConfig] = useState(() => normalizeAuditProtocolConfig(initialConfig));
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -248,9 +279,15 @@ export function AuditProtocolDocumentClient({
   // Окно само зовёт onOpenChange(false) после сохранения — это не отмена.
   const rowSavedRef = useRef(false);
 
+  const previousServerConfig = useRef<{ documentId: string; serialized: string | undefined } | null>(null);
   useEffect(() => {
+    // Raw identity also survives fresh fallback IDs on language refreshes.
+    const serialized = configSourceIdentity ?? JSON.stringify(initialConfig);
+    const previous = previousServerConfig.current;
+    if (previous?.documentId === documentId && previous.serialized === serialized) return;
+    previousServerConfig.current = { documentId, serialized };
     setConfig(normalizeAuditProtocolConfig(initialConfig));
-  }, [initialConfig]);
+  }, [documentId, initialConfig, configSourceIdentity]);
 
   // Клики «Да/Нет» по разным строкам строились от ОДНОГО снимка config —
   // второй запрос затирал первый. Держим актуальный config в ref и шлём
@@ -278,12 +315,13 @@ export function AuditProtocolDocumentClient({
       })
       .catch((error) => {
         configRef.current = config;
-        toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+        toast.error(presentError(error, "saveError"));
       });
   }
 
   useEffect(() => {
     setDocumentTitle(title || AUDIT_PROTOCOL_DOCUMENT_TITLE);
+    setTitleIsFallback(!title);
   }, [title]);
 
   async function persist(nextTitle: string, nextConfig: AuditProtocolConfig, patch?: Record<string, unknown>) {
@@ -299,7 +337,12 @@ export function AuditProtocolDocumentClient({
       }),
     });
     const result = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(result?.error || "Не удалось сохранить документ");
+    if (!response.ok) {
+      const rawError = result?.error;
+      const error = new Error(rawError || "Не удалось сохранить документ");
+      if (!rawError) failureRegistry.mark(error);
+      throw error;
+    }
     setDocumentTitle(nextTitle);
     setConfig(nextConfig);
     startTransition(() => router.refresh());
@@ -347,38 +390,39 @@ export function AuditProtocolDocumentClient({
    * Заполнение протокола из плана. Копия, а не ссылка: план потом можно
    * править, подписанный протокол от этого не изменится.
    */
-  async function fillFromPlan(plan: AuditProtocolPlanSource) {
+  async function fillFromPlan(plan: PresentedPlanSource) {
     const preview = fillAuditProtocolFromPlan(config, plan);
     if (preview.addedRows === 0) {
       toast.info(
         preview.skippedRows > 0
-          ? "Все требования этого плана уже перенесены в протокол"
-          : "В этом плане нет требований для переноса"
+          ? committed.current.text("journalAuditProtocol.allImported")
+          : committed.current.text("journalAuditProtocol.noRequirements")
       );
       return;
     }
 
     const ok = await confirmAsync({
-      title: "Заполнить протокол из плана?",
-      description: `План: «${plan.title}».`,
+      locale: committed.current.locale,
+      title: committed.current.text("journalAuditProtocol.fillConfirm"),
+      description: committed.current.text("journalAuditProtocol.planDescription", { title: auditProtocolText(presentAuditProtocolTitle(plan.title, plan.displayTitleMissing, committed.current.text("auditTraceabilityPdf.planTitle"))) }),
       variant: "info",
-      confirmLabel: "Заполнить",
+      confirmLabel: committed.current.text("journalAuditProtocol.fillAction"),
       bullets: [
-        { label: `Добавится требований: ${preview.addedRows}`, tone: "info" },
+        { label: committed.current.text("journalAuditProtocol.addedCount", { count: auditProtocolText(preview.addedRows) }), tone: "info" },
         ...(preview.skippedRows > 0
-          ? [{ label: `Уже перенесено ранее: ${preview.skippedRows}`, tone: "info" as const }]
+          ? [{ label: committed.current.text("journalAuditProtocol.skippedCount", { count: auditProtocolText(preview.skippedRows) }), tone: "info" as const }]
           : []),
-        { label: "Это копия: правка плана задним числом протокол не изменит" },
-        { label: "Уже заполненные строки протокола остаются на месте" },
+        { label: committed.current.text("journalAuditProtocol.independentCopy") },
+        { label: committed.current.text("journalAuditProtocol.keepRows") },
       ],
     });
     if (!ok) return;
 
     try {
       await persist(documentTitle, preview.config);
-      toast.success(`Перенесено требований: ${preview.addedRows}`);
+      toast.success(committed.current.text("journalAuditProtocol.importedCount", { count: auditProtocolText(preview.addedRows) }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(presentError(error, "saveError"));
     }
   }
 
@@ -410,15 +454,15 @@ export function AuditProtocolDocumentClient({
 
   const allSelected = config.rows.length > 0 && selectedRowIds.length === config.rows.length;
   const { mobileView, switchMobileView } = useMobileView("audit_protocol");
-  const { closeDocument } = useDocumentCloseAction({ documentId, title: documentTitle });
+  const { closeDocument } = useDocumentCloseAction({ documentId, title: documentTitle, confirmMessage: text("journalControls.closeDocument.confirmTitle", { title: displayTitle }) });
 
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => {
     const section = config.sections.find((s) => s.id === row.sectionId);
     const resultLabel =
-      row.result === "yes" ? "Да (+)" : row.result === "no" ? "Нет (−)" : "";
+      row.result === "yes" ? text("journalAuditProtocol.yesPositive") : row.result === "no" ? text("journalAuditProtocol.noNegativeCard") : "";
     return {
       id: row.id,
-      title: `№${index + 1} · ${row.text || "—"}`,
+      title: text("journalAuditProtocol.cardTitle", { number: auditProtocolText(index + 1), text: auditProtocolText(row.text || "—") }),
       subtitle: section?.title || undefined,
       badge: row.result ? (
         <span
@@ -433,6 +477,7 @@ export function AuditProtocolDocumentClient({
       ) : undefined,
       leading: status === "active" ? (
         <Checkbox
+          aria-label={text("journalAuditProtocol.selectRow", { number: auditProtocolText(index + 1) })}
           checked={selectedRowIds.includes(row.id)}
           onCheckedChange={(checked) =>
             setSelectedRowIds((current) =>
@@ -445,8 +490,8 @@ export function AuditProtocolDocumentClient({
         />
       ) : null,
       fields: [
-        { label: "Результат", value: resultLabel, hideIfEmpty: true },
-        { label: "Примечания", value: row.note, hideIfEmpty: true },
+        { label: text("journalAuditProtocol.result"), value: resultLabel, hideIfEmpty: true },
+        { label: text("journalAuditProtocol.notes"), value: row.note, hideIfEmpty: true },
       ],
       onClick: status === "active"
         ? () => {
@@ -464,28 +509,28 @@ export function AuditProtocolDocumentClient({
           <JournalSelectionBar
             count={selectedRowIds.length}
             onClear={() => setSelectedRowIds([])}
-            onDelete={() => deleteSelected().catch((error) => toast.error(humanizeFetchError(error, "Ошибка удаления")))}
-            hint="Строки протокола будут удалены без возможности отмены"
+            onDelete={() => deleteSelected().catch((error) => toast.error(presentError(error, "deleteError")))}
+            hint={text("journalAuditProtocol.deleteRowsHint")}
           >
             <SelectionEditButton count={selectedRowIds.length} disabled={status !== "active"} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
         )}
 
-        <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+        <FocusTodayScroller copy={{ noCreateBody: text("journalScan.focus.noCreateBody"), later: text("journalScan.focus.later"), close: text("common.close") }} selector="[data-focus-today]" emptyTitle={text("journalScan.focus.emptyTitle")} emptyBody={text("journalScan.focus.emptyBody")} />
 
         <JournalDocumentShell
-          title={documentTitle}
+          title={<>{displayTitle}</>}
           documentId={documentId}
           backHref="/journals/audit_protocol"
           onSettings={status === "active" ? () => setSettingsOpen(true) : undefined}
           closed={status !== "active"}
-          closedHint="Откройте журнал заново, чтобы добавлять и править пункты протокола."
+          closedHint={text("journalAuditProtocol.closedHint")}
           menuItems={
             status === "active"
               ? [
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: text("journalControls.closeDocument.close"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => void closeDocument(),
                   },
@@ -495,30 +540,30 @@ export function AuditProtocolDocumentClient({
           mobileView={mobileView}
           onMobileView={switchMobileView}
           cards={
-            <RecordCardsView items={cardItems} emptyLabel="Пунктов протокола пока нет." />
+            <RecordCardsView items={cardItems} emptyLabel={text("journalAuditProtocol.emptyProtocol")} />
           }
           paperHeader={
           <>
             <JournalDocumentHeader
               orgName={organizationName}
-              title="ПРОТОКОЛ ВНУТРЕННЕГО АУДИТА"
+              title={text("journalAuditProtocol.paperTitle")}
               startedAt={config.documentDate}
               finishedAt={null}
             />
             <div className="grid gap-2 text-[18px]">
-                <div><span className="font-semibold">Дата:</span> {config.documentDate}</div>
-                <div><span className="font-semibold">Основание проверки:</span> {config.basisTitle}</div>
-                <div><span className="font-semibold">Проверяемый объект:</span> {config.auditedObject}</div>
+                <div><span className="font-semibold">{text("journalAuditProtocol.dateLabel")}</span> {config.documentDate}</div>
+                <div><span className="font-semibold">{text("journalAuditProtocol.basisLabel")}</span> {config.basisTitle}</div>
+                <div><span className="font-semibold">{text("journalAuditProtocol.objectLabel")}</span> {config.auditedObject}</div>
                 {/* Откуда взяты требования: видно и в печати, и на экране.
                     Ссылка ведёт в сам документ плана. */}
                 {config.sourcePlanDocumentId ? (
                   <div>
-                    <span className="font-semibold">Составлен по плану:</span>{" "}
+                    <span className="font-semibold">{text("journalAuditProtocol.sourcePlanLabel")}</span>{" "}
                     <Link
                       href={`/journals/${AUDIT_PLAN_TEMPLATE_CODE}/documents/${config.sourcePlanDocumentId}`}
                       className="inline-flex items-center gap-1 text-[#5566f6] underline-offset-2 transition-colors duration-150 hover:text-[#4a5bf0] hover:underline print:text-black print:no-underline"
                     >
-                      {config.sourcePlanTitle || "план аудитов"}
+                      {config.sourcePlanTitle || text("journalAuditProtocol.planFallback")}
                       <ExternalLink className="size-4 print:hidden" />
                     </Link>
                   </div>
@@ -530,10 +575,10 @@ export function AuditProtocolDocumentClient({
             status === "active" ? (
               <>
                 <Button className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]" onClick={() => { setEditingRow(null); setRowOpen(true); }}>
-                  <Plus className="size-5" /> Добавить строку
+                  <Plus className="size-5" /> {text("journalAuditProtocol.addRow")}
                 </Button>
                 <Button className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]" onClick={() => setSectionOpen(true)}>
-                  <Plus className="size-5" /> Добавить новый раздел
+                  <Plus className="size-5" /> {text("journalAuditProtocol.addSection")}
                 </Button>
                 <FillFromPlanButton
                   plans={planSources}
@@ -544,17 +589,17 @@ export function AuditProtocolDocumentClient({
           }
           extra={
             <div className={`${DOC_EXTRA_BLOCK_CLASS} space-y-3`}>
-              <div className="text-[20px] font-semibold">Подписи</div>
+              <div className="text-[20px] font-semibold">{text("journalAuditProtocol.signatures")}</div>
               {config.signatures.map((signature, index) => (
                 <div key={signature.id} className="grid grid-cols-1 gap-3 sm:grid-cols-[220px_1fr_240px]">
-                  <Input value={signature.role} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, role: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                  <Input value={signature.name} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, name: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                  <Input type="date" value={signature.signedAt} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, signedAt: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                  <Input aria-label={text("journalAuditProtocol.signatureRole")} value={signature.role} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, role: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(presentError(error, "saveError")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                  <Input aria-label={text("journalAuditProtocol.signatureName")} value={signature.name} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, name: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(presentError(error, "saveError")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                  <Input aria-label={text("journalAuditProtocol.signatureDate")} type="date" value={signature.signedAt} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, signedAt: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(presentError(error, "saveError")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
                 </div>
               ))}
               {status === "active" && (
-                <Button type="button" variant="outline" onClick={() => persist(documentTitle, { ...config, signatures: [...config.signatures, createAuditProtocolSignature()] }).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))}>
-                  Добавить подпись
+                <Button type="button" variant="outline" onClick={() => persist(documentTitle, { ...config, signatures: [...config.signatures, createAuditProtocolSignature()] }).catch((error) => toast.error(presentError(error, "saveError")))}>
+                  {text("journalAuditProtocol.addSignature")}
                 </Button>
               )}
             </div>
@@ -564,13 +609,13 @@ export function AuditProtocolDocumentClient({
             <thead>
               <tr>
                 <th className={`w-14 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight print:hidden`}>
-                  <Checkbox checked={allSelected} onCheckedChange={(checked) => setSelectedRowIds(checked === true ? config.rows.map((row) => row.id) : [])} disabled={status !== "active"} />
+                  <Checkbox aria-label={text("journalAuditProtocol.selectAllRows")} checked={allSelected} onCheckedChange={(checked) => setSelectedRowIds(checked === true ? config.rows.map((row) => row.id) : [])} disabled={status !== "active"} />
                 </th>
-                <th className={`w-[60px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>№ п/п</th>
-                <th className={`min-w-[520px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>Требования</th>
-                <th className={`w-[110px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>Да (+)</th>
-                <th className={`w-[110px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>Нет (-)</th>
-                <th className={`min-w-[260px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>Примечания</th>
+                <th className={`w-[60px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{text("journalAuditProtocol.rowNumber")}</th>
+                <th className={`min-w-[520px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>{text("journalAuditProtocol.requirements")}</th>
+                <th className={`w-[110px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>{text("journalAuditProtocol.yesPositive")}</th>
+                <th className={`w-[110px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>{text("journalAuditProtocol.noNegativeTable")}</th>
+                <th className={`min-w-[260px] ${GRID_HEAD_CELL_CLASS} px-3 py-1.5 font-semibold leading-tight`}>{text("journalAuditProtocol.notes")}</th>
               </tr>
             </thead>
             <tbody>
@@ -585,6 +630,7 @@ export function AuditProtocolDocumentClient({
                       <tr key={row.id}>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight print:hidden`}>
                           <Checkbox
+                            aria-label={text("journalAuditProtocol.selectRow", { number: auditProtocolText(rowNumber) })}
                             checked={selectedRowIds.includes(row.id)}
                             onCheckedChange={(checked) =>
                               setSelectedRowIds((current) =>
@@ -603,14 +649,14 @@ export function AuditProtocolDocumentClient({
                           </button>
                         </td>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
-                          <Checkbox checked={row.result === "yes"} disabled={status !== "active"} onCheckedChange={() => toggleRowResult(row.id, "yes")} />
+                          <Checkbox aria-label={text("journalAuditProtocol.yesResult", { number: auditProtocolText(rowNumber) })} checked={row.result === "yes"} disabled={status !== "active"} onCheckedChange={() => toggleRowResult(row.id, "yes")} />
                         </td>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
-                          <Checkbox checked={row.result === "no"} disabled={status !== "active"} onCheckedChange={() => toggleRowResult(row.id, "no")} />
+                          <Checkbox aria-label={text("journalAuditProtocol.noResult", { number: auditProtocolText(rowNumber) })} checked={row.result === "no"} disabled={status !== "active"} onCheckedChange={() => toggleRowResult(row.id, "no")} />
                         </td>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
                           {status === "active" ? (
-                            <Textarea value={row.note} onChange={(event) => setConfig((current) => ({ ...current, rows: current.rows.map((item) => item.id === row.id ? { ...item, note: event.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="min-h-[70px] border-0 px-0 py-0 text-[14px] shadow-none focus-visible:ring-0" />
+                            <Textarea aria-label={text("journalAuditProtocol.rowNote", { number: auditProtocolText(rowNumber) })} value={row.note} onChange={(event) => setConfig((current) => ({ ...current, rows: current.rows.map((item) => item.id === row.id ? { ...item, note: event.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(presentError(error, "saveError")))} className="min-h-[70px] border-0 px-0 py-0 text-[14px] shadow-none focus-visible:ring-0" />
                           ) : (
                             row.note
                           )}
@@ -628,7 +674,7 @@ export function AuditProtocolDocumentClient({
                   leading={2}
                   labelSpan={1}
                   trailing={3}
-                  label="Добавить строку"
+                  label={text("journalAuditProtocol.addRow")}
                   onClick={() => {
                     setEditingRow(null);
                     setRowOpen(true);
@@ -644,8 +690,8 @@ export function AuditProtocolDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Параметры протокола внутреннего аудита"
+          title={text("journalControls.actions.settings")}
+          description={text("journalAuditProtocol.settingsDescription")}
           size="md"
           onSave={async () => {
             await saveSettings(documentTitle.trim() || AUDIT_PROTOCOL_DOCUMENT_TITLE, config);
@@ -655,16 +701,16 @@ export function AuditProtocolDocumentClient({
         >
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Название документа</Label>
-              <Input
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalWidgets.staff.documentName")}</Label>
+              <Input aria-label={text("journalWidgets.staff.documentName")}
                 value={documentTitle}
-                onChange={(e) => setDocumentTitle(e.target.value)}
+                onChange={(e) => editDocumentTitle(e.target.value)}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Дата документа</Label>
-              <Input
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditProtocol.documentDate")}</Label>
+              <Input aria-label={text("journalAuditProtocol.documentDate")}
                 type="date"
                 value={config.documentDate}
                 onChange={(e) => setConfig({ ...config, documentDate: e.target.value })}
@@ -672,16 +718,16 @@ export function AuditProtocolDocumentClient({
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Основание проверки</Label>
-              <Input
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditProtocol.basis")}</Label>
+              <Input aria-label={text("journalAuditProtocol.basis")}
                 value={config.basisTitle}
                 onChange={(e) => setConfig({ ...config, basisTitle: e.target.value })}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Проверяемый объект</Label>
-              <Input
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{text("journalAuditProtocol.auditedObject")}</Label>
+              <Input aria-label={text("journalAuditProtocol.auditedObject")}
                 value={config.auditedObject}
                 onChange={(e) => setConfig({ ...config, auditedObject: e.target.value })}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
@@ -691,30 +737,30 @@ export function AuditProtocolDocumentClient({
         </JournalSettingsModal>
       ) : (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[760px]">
+          <DialogContent closeLabel={text("common.close")} className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[760px]">
             <DialogHeader className="border-b px-8 py-6">
-              <DialogTitle className="text-[22px] font-semibold text-black">Настройки документа</DialogTitle>
+              <DialogTitle className="text-[22px] font-semibold text-black">{text("journalControls.actions.settings")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 px-8 py-6">
               <div className="space-y-2">
-                <Label className="text-[14px] text-[#73738a]">Название документа</Label>
-                <Input value={documentTitle} onChange={(e) => setDocumentTitle(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+                <Label className="text-[14px] text-[#73738a]">{text("journalWidgets.staff.documentName")}</Label>
+                <Input aria-label={text("journalWidgets.staff.documentName")} value={documentTitle} onChange={(e) => editDocumentTitle(e.target.value)} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
-                <Input type="date" value={config.documentDate} onChange={(e) => setConfig({ ...config, documentDate: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+                <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.documentDate")}</Label>
+                <Input aria-label={text("journalAuditProtocol.documentDate")} type="date" value={config.documentDate} onChange={(e) => setConfig({ ...config, documentDate: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[14px] text-[#73738a]">Основание проверки</Label>
-                <Input value={config.basisTitle} onChange={(e) => setConfig({ ...config, basisTitle: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+                <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.basis")}</Label>
+                <Input aria-label={text("journalAuditProtocol.basis")} value={config.basisTitle} onChange={(e) => setConfig({ ...config, basisTitle: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[14px] text-[#73738a]">Проверяемый объект</Label>
-                <Input value={config.auditedObject} onChange={(e) => setConfig({ ...config, auditedObject: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
+                <Label className="text-[14px] text-[#73738a]">{text("journalAuditProtocol.auditedObject")}</Label>
+                <Input aria-label={text("journalAuditProtocol.auditedObject")} value={config.auditedObject} onChange={(e) => setConfig({ ...config, auditedObject: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />
               </div>
               <div className="flex justify-end">
                 <Button type="button" onClick={async () => { await saveSettings(documentTitle.trim() || AUDIT_PROTOCOL_DOCUMENT_TITLE, config); setSettingsOpen(false); }} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]">
-                  Сохранить
+                  {text("common.save")}
                 </Button>
               </div>
             </div>

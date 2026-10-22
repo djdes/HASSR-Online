@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { buildTrainingRoleDisplay, captureTrainingProvenance, completeTrainingProvenance, presentTrainingApprover, presentTrainingItem, presentTrainingRole, presentTrainingStaffOption, trainingApprovalDate, trainingMonthLabels } from "@/lib/training-plan-presentation";
 import { useRouter } from "next/navigation";
 import { Archive, CalendarDays, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,20 +80,6 @@ type SettingsState = {
   approveEmployee: string;
 };
 
-const MONTH_OPTIONS = [
-  "январь",
-  "февраль",
-  "март",
-  "апрель",
-  "май",
-  "июнь",
-  "июль",
-  "август",
-  "сентябрь",
-  "октябрь",
-  "ноябрь",
-  "декабрь",
-];
 
 function roleOptionsFromUsers(users: UserItem[]) {
   return getDistinctRoleLabels(users);
@@ -108,16 +96,6 @@ function toIsoDate(value: string) {
   return date.toISOString().slice(0, 10);
 }
 
-function toViewDateLabel(dateKey: string) {
-  const [year, month, day] = dateKey.split("-");
-  if (!year || !month || !day) return dateKey;
-  // Без дня локаль ru-RU даёт именительный падеж («январь»), а бланк
-  // требует родительный («января»): форматируем дату целиком и отрезаем день.
-  const monthName = new Date(`${year}-${month}-${day}T00:00:00`)
-    .toLocaleDateString("ru-RU", { day: "numeric", month: "long" })
-    .replace(/^\d+\s+/, "");
-  return `« ${day} » ${monthName} ${year} г.`;
-}
 
 function AddPositionDialog(props: {
   open: boolean;
@@ -125,6 +103,12 @@ function AddPositionDialog(props: {
   users: UserItem[];
   onCreate: (name: string) => Promise<void>;
 }) {
+  const tp = useTranslations("journalTrainingPlan");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const roleDisplay = useMemo(() => buildTrainingRoleDisplay(props.users), [props.users]);
+  const displayRole = (raw: string) => presentTrainingRole(raw, roleDisplay, pdf);
   const [position, setPosition] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -135,7 +119,7 @@ function AddPositionDialog(props: {
 
   async function submit() {
     if (!position.trim()) {
-      toast.error("Выберите должность");
+      toast.error(controls("positionSelect.choosePosition"));
       return;
     }
 
@@ -155,23 +139,23 @@ function AddPositionDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Добавление новой должности
+              {tp("addPositionTitle")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Должность</Label>
+            <Label className="text-[14px] text-[#73738a]">{controls("positionSelect.positionLabel")}</Label>
             <Select value={position || "__empty__"} onValueChange={(value) => setPosition(value === "__empty__" ? "" : value)}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={controls("positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите должность</SelectItem>
-                <PositionSelectItems users={props.users} />
+                <SelectItem value="__empty__">{controls("positionSelect.choosePosition")}</SelectItem>
+                <PositionSelectItems users={props.users} displayLabel={displayRole} />
               </SelectContent>
             </Select>
           </div>
@@ -182,7 +166,7 @@ function AddPositionDialog(props: {
               disabled={submitting}
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
             >
-              {submitting ? "Создание..." : "Создать"}
+              {submitting ? tp("creating") : tp("create")}
             </Button>
           </div>
         </div>
@@ -196,12 +180,14 @@ function AddTopicDialog(props: {
   onOpenChange: (value: boolean) => void;
   onCreate: (name: string) => Promise<void>;
 }) {
+  const tp = useTranslations("journalTrainingPlan");
+  const common = useTranslations("common");
   const [topicName, setTopicName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
     if (!topicName.trim()) {
-      toast.error("Введите тему обучения");
+      toast.error(tp("enterTopic"));
       return;
     }
 
@@ -221,9 +207,9 @@ function AddTopicDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Добавление новой темы
+              {tp("addTopicTitle")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
             </button>
           </div>
@@ -232,7 +218,7 @@ function AddTopicDialog(props: {
           <Input
             value={topicName}
             onChange={(event) => setTopicName(event.target.value)}
-            placeholder="Тема обучения"
+            placeholder={tp("topic")}
             className="h-9 rounded-xl border-[#5566f6] px-3.5 text-[13.5px]"
           />
           <div className="flex justify-end pt-2">
@@ -242,7 +228,7 @@ function AddTopicDialog(props: {
               disabled={submitting}
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
             >
-              {submitting ? "Создание..." : "Создать"}
+              {submitting ? tp("creating") : tp("create")}
             </Button>
           </div>
         </div>
@@ -256,10 +242,23 @@ function DocumentSettingsDialog(props: {
   onOpenChange: (value: boolean) => void;
   users: UserItem[];
   initial: SettingsState;
+  documentId: string;
   onSubmit: (value: SettingsState) => Promise<void>;
   useV2?: boolean;
 }) {
+  const tp = useTranslations("journalTrainingPlan");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const roleDisplay = useMemo(() => buildTrainingRoleDisplay(props.users), [props.users]);
+  const displayRole = (raw: string) => presentTrainingRole(raw, roleDisplay, pdf);
   const [state, setState] = useState<SettingsState>(props.initial);
+  const initialKey = JSON.stringify(props.initial);
+  const initialRef = useRef(props.initial);
+  useLayoutEffect(() => { initialRef.current = props.initial; });
+  useEffect(() => {
+    setState(initialRef.current);
+  }, [initialKey, props.open, props.documentId]);
   const [submitting, setSubmitting] = useState(false);
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
 
@@ -303,8 +302,8 @@ function DocumentSettingsDialog(props: {
           if (value) setState(props.initial);
           props.onOpenChange(value);
         }}
-        title="Настройки документа"
-        description="Параметры плана обучения и аттестации"
+        title={tp("settings")}
+        description={tp("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -312,7 +311,7 @@ function DocumentSettingsDialog(props: {
       >
         <div className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Название документа</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{tp("documentName")}</Label>
             <Input
               value={state.title}
               onChange={(event) => setState({ ...state, title: event.target.value })}
@@ -321,7 +320,7 @@ function DocumentSettingsDialog(props: {
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Дата документа</Label>
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{tp("documentDate")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -333,7 +332,7 @@ function DocumentSettingsDialog(props: {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Год</Label>
+              <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{tp("year")}</Label>
               <Select value={state.year} onValueChange={(value) => setState({ ...state, year: value })}>
                 <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
                   <SelectValue />
@@ -350,21 +349,21 @@ function DocumentSettingsDialog(props: {
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Должность «Утверждаю»</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{tp("approverPosition")}</Label>
             <Select
               value={state.approveRole}
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
-                <SelectValue placeholder="— Выберите значение —" />
+                <SelectValue placeholder={controls("positionSelect.chooseValue")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={props.users} />
+                <PositionSelectItems users={props.users} displayLabel={displayRole} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Сотрудник</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{controls("positionSelect.employeeLabel")}</Label>
             <Select
               value={state.approveEmployeeId || "__empty__"}
               onValueChange={approveCascade.handleEmployeeChange}
@@ -372,13 +371,13 @@ function DocumentSettingsDialog(props: {
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
-                <SelectValue placeholder="— Выберите значение —" />
+                <SelectValue placeholder={controls("positionSelect.chooseValue")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">— Выберите значение —</SelectItem>
+                <SelectItem value="__empty__">{controls("positionSelect.chooseValue")}</SelectItem>
                 {approveCascade.candidates.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {buildStaffOptionLabel(user)}
+                    {presentTrainingStaffOption(buildStaffOptionLabel(user), user, roleDisplay, pdf, tp("unnamed"))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -401,16 +400,16 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Настройки документа
+              {tp("settings")}
             </DialogTitle>
-            <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
+            <button type="button" aria-label={common("close")} className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-8" />
             </button>
           </div>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{tp("documentName")}</Label>
             <Input
               value={state.title}
               onChange={(event) => setState({ ...state, title: event.target.value })}
@@ -418,7 +417,7 @@ function DocumentSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Дата документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{tp("documentDate")}</Label>
             <div className="relative">
               <Input
                 type="date"
@@ -430,7 +429,7 @@ function DocumentSettingsDialog(props: {
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Год</Label>
+            <Label className="text-[14px] text-[#73738a]">{tp("year")}</Label>
             <Select value={state.year} onValueChange={(value) => setState({ ...state, year: value })}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
                 <SelectValue />
@@ -448,21 +447,21 @@ function DocumentSettingsDialog(props: {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Должность &quot;Утверждаю&quot;</Label>
+            <Label className="text-[14px] text-[#73738a]">{tp("approverPosition")}</Label>
             <Select
               value={state.approveRole}
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={controls("positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
-                <PositionSelectItems users={props.users} />
+                <PositionSelectItems users={props.users} displayLabel={displayRole} />
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{controls("positionSelect.employeeLabel")}</Label>
             <Select
               value={state.approveEmployeeId || "__empty__"}
               onValueChange={approveCascade.handleEmployeeChange}
@@ -470,13 +469,13 @@ function DocumentSettingsDialog(props: {
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={controls("positionSelect.chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                <SelectItem value="__empty__">{controls("positionSelect.chooseEmployee")}</SelectItem>
                 {approveCascade.candidates.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {buildStaffOptionLabel(user)}
+                    {presentTrainingStaffOption(buildStaffOptionLabel(user), user, roleDisplay, pdf, tp("unnamed"))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -497,13 +496,22 @@ function DocumentSettingsDialog(props: {
               }}
               className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? tp("saving") : common("save")}
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+/** Only source data for the active cell resets its private edit sheet. */
+function trainingCellEditSourceKey(documentId: string, config: TrainingPlanConfig, target: { rowId: string; topicId: string } | null): string | null {
+  if (!target) return null;
+  const row = config.rows.find((item) => item.id === target.rowId);
+  const topic = config.topics.find((item) => item.id === target.topicId);
+  if (!row || !topic) return null;
+  return JSON.stringify([documentId, row.id, topic.id, row.positionName, topic.name, config.year, row.cells[topic.id]]);
 }
 
 export function TrainingPlanDocumentClient({
@@ -515,6 +523,15 @@ export function TrainingPlanDocumentClient({
   config,
   useV2 = false,
 }: Props) {
+  const tp = useTranslations("journalTrainingPlan");
+  const common = useTranslations("common");
+  const pdf = useTranslations("personnelMaintenancePdf");
+  const controls = useTranslations("journalControls");
+  const scan = useTranslations("journalScan");
+  const locale = useLocale();
+  const feedback = useRef({ tp, controls, locale });
+  useLayoutEffect(() => { feedback.current = { tp, controls, locale }; }, [tp, controls, locale]);
+  const monthOptions = trainingMonthLabels(locale);
   const router = useRouter();
   const [addPositionOpen, setAddPositionOpen] = useState(false);
   const [addTopicOpen, setAddTopicOpen] = useState(false);
@@ -524,7 +541,19 @@ export function TrainingPlanDocumentClient({
   const [editingCell, setEditingCell] = useState<
     { rowId: string; topicId: string } | null
   >(null);
+  const captured = captureTrainingProvenance(config);
   const normalized = normalizeTrainingPlanConfig(config);
+  const origin = completeTrainingProvenance(captured, normalized);
+  const editingSourceKey = trainingCellEditSourceKey(documentId, normalized, editingCell);
+  const [editingDocument, setEditingDocument] = useState(documentId);
+  if (editingDocument !== documentId) {
+    setEditingDocument(documentId);
+    setEditingCell(null);
+  } else if (editingCell && editingSourceKey === null) {
+    setEditingCell(null);
+  }
+  const displayTopic = (topic: TrainingPlanConfig["topics"][number]) => presentTrainingItem("topics", topic, origin, pdf);
+  const displayPosition = (row: TrainingPlanConfig["rows"][number]) => presentTrainingItem("rows", row, origin, pdf);
   // «УТВЕРЖДАЮ»: должность и ФИО одного человека — из его карточки.
   const approver = resolveApprover(normalized, users);
   const readOnly = status === "closed";
@@ -551,7 +580,7 @@ export function TrainingPlanDocumentClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить документ");
+      toast.error(feedback.current.tp("saveFailed"));
       return;
     }
 
@@ -610,12 +639,12 @@ export function TrainingPlanDocumentClient({
   function buildCellEditFields(): CardEditFieldDef[] {
     const yy = String(normalized.year).slice(-2);
     return [
-      { type: "boolean", key: "required", label: "Тема нужна этой должности" },
+      { type: "boolean", key: "required", label: tp("topicRequired") },
       {
         type: "select",
         key: "month",
-        label: "Месяц обучения",
-        options: MONTH_OPTIONS.map((label, monthIndex) => ({
+        label: tp("trainingMonth"),
+        options: monthOptions.map((label, monthIndex) => ({
           value: `${String(monthIndex + 1).padStart(2, "0")}.${yy}`,
           label,
         })),
@@ -661,28 +690,29 @@ export function TrainingPlanDocumentClient({
   async function deleteSelectedRows() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: tp("deleteRowsTitle"), description: tp("deleteRowsDescription", { count: `${count}` }), variant: "danger", confirmLabel: common("delete"), locale }))) return;
     const idsToRemove = [...selectedRowIds];
     try {
       const nextRows = normalized.rows.filter((row) => !idsToRemove.includes(row.id));
       setSelectedRowIds([]);
       await patchConfig({ ...normalized, rows: nextRows });
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(feedback.current.tp("rowsDeleted", { count: `${count}` }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(humanizeFetchError(error, feedback.current.tp("deleteRowsFailed"), feedback.current.controls("closeDocument.networkError")));
     }
   }
 
   async function closeDocument() {
     const ok = await confirmAsync({
-      title: `Закончить журнал «${title}»?`,
+      title: controls("closeDocument.confirmTitle", { title }),
       description:
-        "Журнал уйдёт из рабочего списка в раздел закрытых. Все записи сохранятся — отчёты и PDF по ним останутся.",
+        tp("closeDescription"),
       bullets: [
-        { label: "Добавлять и править записи после этого нельзя", tone: "warn" },
-        { label: "Вернуть журнал в активные можно в любой момент", tone: "info" },
+        { label: tp("closeReadOnly"), tone: "warn" },
+        { label: tp("closeReopen"), tone: "info" },
       ],
-      confirmLabel: "Закончить журнал",
+      confirmLabel: controls("closeDocument.close"),
+      locale,
       variant: "warn",
     });
     if (!ok) return;
@@ -694,7 +724,7 @@ export function TrainingPlanDocumentClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось закрыть журнал");
+      toast.error(feedback.current.controls("closeDocument.failed"));
       return;
     }
 
@@ -709,16 +739,17 @@ export function TrainingPlanDocumentClient({
       .map((topic) => {
         const cell = row.cells[topic.id] || { required: false, date: "" };
         if (!cell.required) return null;
-        return cell.date ? `${topic.name} (${cell.date})` : topic.name;
+        return cell.date ? `${displayTopic(topic)} (${cell.date})` : displayTopic(topic);
       })
       .filter((x): x is string => x !== null);
 
     return {
       id: row.id,
-      title: `№${index + 1} · ${row.positionName}`,
-      subtitle: `Тем для обучения: ${required.length}`,
+      title: tp("rowTitle", { number: `${index + 1}`, position: displayPosition(row) }),
+      subtitle: tp("topicCount", { count: `${required.length}` }),
       leading: !readOnly ? (
         <Checkbox
+          aria-label={tp("selectRow", { number: `${index + 1}` })}
           checked={selectedRowIds.includes(row.id)}
           onCheckedChange={(checked) =>
             setSelectedRowIds((current) =>
@@ -736,13 +767,13 @@ export function TrainingPlanDocumentClient({
       fields: normalized.topics.map((topic) => {
         const cell = row.cells[topic.id] || { required: false, date: "" };
         return {
-          label: topic.name,
-          value: cell.required ? cell.date || "нужна" : "",
+          label: displayTopic(topic),
+          value: cell.required ? cell.date || tp("required") : "",
           hideIfEmpty: false,
           onClick: readOnly
             ? undefined
             : () => setEditingCell({ rowId: row.id, topicId: topic.id }),
-          hint: readOnly ? undefined : "нажмите, чтобы изменить",
+          hint: readOnly ? undefined : tp("tapToEdit"),
         };
       }),
     };
@@ -750,7 +781,7 @@ export function TrainingPlanDocumentClient({
 
   return (
     <div className="space-y-5">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={scan("focus.emptyTitle")} emptyBody={scan("focus.emptyBody")} copy={{ noCreateBody: scan("focus.noCreateBody"), later: scan("focus.later"), close: common("close") }} />
 
       {selectedRowIds.length > 0 && !readOnly && (
         <div className="sticky top-0 z-30 -mx-4 flex flex-wrap items-center gap-4 rounded-2xl border-b border-[#dcdfed] bg-white/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
@@ -759,10 +790,10 @@ export function TrainingPlanDocumentClient({
             className="flex items-center gap-1 text-[16px] text-[#5566f6]"
             onClick={() => setSelectedRowIds([])}
           >
-            <X className="size-4" /> Выбрано: {selectedRowIds.length}
+            <X className="size-4" /> {tp("selected", { count: `${selectedRowIds.length}` })}
           </button>
           <button type="button" className="flex items-center gap-1 text-[16px] text-[#ff3b30]" onClick={deleteSelectedRows}>
-            Удалить
+            {common("delete")}
           </button>
         </div>
       )}
@@ -777,10 +808,10 @@ export function TrainingPlanDocumentClient({
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: controls("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => {
-                    closeDocument().catch(() => toast.error("Не удалось закрыть журнал"));
+                    closeDocument().catch(() => toast.error(feedback.current.controls("closeDocument.failed")));
                   },
                 },
               ]
@@ -788,25 +819,25 @@ export function TrainingPlanDocumentClient({
         }
         mobileView={mobileView}
         onMobileView={switchMobileView}
-        cards={<RecordCardsView items={cardItems} emptyLabel="Должностей не добавлено." />}
+        cards={<RecordCardsView items={cardItems} emptyLabel={tp("noPositions")} />}
         paperHeader={
           <>
             <JournalDocumentHeader
               orgName={organizationName}
-              title="ПЛАН ОБУЧЕНИЯ ПЕРСОНАЛА"
+              title={pdf("planHeader")}
               startedAt={normalized.documentDate}
               finishedAt={null}
             />
             <div className="ml-auto flex w-full max-w-[420px] flex-col items-end gap-1 text-right text-[14px] leading-tight">
-              <div className="font-semibold">УТВЕРЖДАЮ</div>
-              <div>{approver.title}</div>
+              <div className="font-semibold">{pdf("approve")}</div>
+              <div>{presentTrainingApprover(approver.title, normalized, users, origin, pdf)}</div>
               <div>{approver.name}</div>
               <div className="mt-1 h-px w-[230px] bg-black" />
-              <div>{toViewDateLabel(normalized.documentDate)}</div>
+              <div>{trainingApprovalDate(normalized.documentDate, locale, pdf)}</div>
             </div>
           </>
         }
-        sheetTitle={`ПЛАН ОБУЧЕНИЯ ПЕРСОНАЛА НА ${normalized.year} Г.`}
+        sheetTitle={pdf("planYear", { year: `${normalized.year}` })}
         toolbar={
           !readOnly ? (
             <div className="grid w-full gap-4 md:grid-cols-2">
@@ -814,13 +845,13 @@ export function TrainingPlanDocumentClient({
                 className="h-9 w-full rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
                 onClick={() => setAddPositionOpen(true)}
               >
-                <Plus className="size-5" /> Добавить должность
+                <Plus className="size-5" /> {tp("addPosition")}
               </Button>
               <Button
                 className="h-9 w-full rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
                 onClick={() => setAddTopicOpen(true)}
               >
-                <Plus className="size-5" /> Добавить тему обучения
+                <Plus className="size-5" /> {tp("addTopic")}
               </Button>
             </div>
           ) : undefined
@@ -832,6 +863,7 @@ export function TrainingPlanDocumentClient({
               <th rowSpan={2} className={`w-14 ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
                 {!readOnly && (
                   <Checkbox
+                    aria-label={tp("selectAllRows")}
                     checked={allSelected}
                     onCheckedChange={(checked) =>
                       setSelectedRowIds(checked === true ? normalized.rows.map((row) => row.id) : [])
@@ -840,19 +872,19 @@ export function TrainingPlanDocumentClient({
                 )}
               </th>
               <th rowSpan={2} className={`w-[60px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                № п/п
+                {pdf("number")}
               </th>
               <th rowSpan={2} className={`w-[200px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Должностная единица, подлежащая обучению
+                {pdf("trainingPosition")}
               </th>
               <th colSpan={normalized.topics.length} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Требуется обучение по теме:
+                {pdf("requiredTopic")}
               </th>
             </tr>
             <tr>
               {normalized.topics.map((topic) => (
                 <th key={topic.id} className={`min-w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  {topic.name}
+                  {displayTopic(topic)}
                 </th>
               ))}
             </tr>
@@ -863,6 +895,7 @@ export function TrainingPlanDocumentClient({
                 <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
                   {!readOnly && (
                     <Checkbox
+                      aria-label={tp("selectRow", { number: `${index + 1}` })}
                       checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={(checked) =>
                         setSelectedRowIds((current) =>
@@ -875,7 +908,7 @@ export function TrainingPlanDocumentClient({
                   )}
                 </td>
                 <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{index + 1}</td>
-                <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.positionName}</td>
+                <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{displayPosition(row)}</td>
                 {normalized.topics.map((topic) => {
                   const cell = row.cells[topic.id] || { required: false, date: "" };
                   return (
@@ -893,11 +926,13 @@ export function TrainingPlanDocumentClient({
                         ) : (
                           <>
                             <Checkbox
+                              aria-label={tp("topicForPosition", { topic: displayTopic(topic), position: displayPosition(row) })}
                               checked={cell.required}
                               onCheckedChange={(checked) => void toggleCell(row.id, topic.id, checked === true)}
                             />
                             {cell.required && (
                               <select
+                                aria-label={tp("monthForTopic", { topic: displayTopic(topic), position: displayPosition(row) })}
                                 className="w-[128px] border-b border-dashed border-[#5566f6] bg-transparent text-center text-[13px] text-[#5566f6] outline-none"
                                 value={cell.date ? cell.date.split(".")[0] : ""}
                                 onChange={(event) => {
@@ -907,7 +942,7 @@ export function TrainingPlanDocumentClient({
                                 }}
                               >
                                 <option value=""></option>
-                                {MONTH_OPTIONS.map((label, monthIndex) => {
+                                {monthOptions.map((label, monthIndex) => {
                                   const month = String(monthIndex + 1).padStart(2, "0");
                                   return (
                                     <option key={month} value={month}>
@@ -941,6 +976,7 @@ export function TrainingPlanDocumentClient({
       />
       <AddTopicDialog open={addTopicOpen} onOpenChange={setAddTopicOpen} onCreate={addTopic} />
       <DocumentSettingsDialog
+        documentId={documentId}
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         users={users}
@@ -964,15 +1000,16 @@ export function TrainingPlanDocumentClient({
             );
             if (stale > 0) {
               const confirmed = await confirmAsync({
-                title: `Перенести даты на ${nextYear} год?`,
+                title: tp("moveYearTitle", { year: `${nextYear}` }),
                 description:
-                  "Месяцы останутся прежними, поменяется только год в датах ячеек.",
+                  tp("moveYearDescription"),
                 variant: "info",
-                confirmLabel: "Перенести",
+                confirmLabel: tp("moveYear"),
+                locale,
                 bullets: [
-                  { label: `Дат будет обновлено: ${stale}`, tone: "info" },
+                  { label: tp("moveYearCount", { count: `${stale}` }), tone: "info" },
                   {
-                    label: "Отказ оставит в плане даты прошлого года",
+                    label: tp("moveYearDecline"),
                     tone: "warn",
                   },
                 ],
@@ -1007,14 +1044,15 @@ export function TrainingPlanDocumentClient({
 
       {/* Правка клетки «должность × тема» из карточного режима. */}
       <CardEditSheet
-        open={editingCell !== null}
+        key={editingSourceKey ?? "closed"}
+        copy={{ cancel: common("cancel"), saving: common("saving"), missingPhoto: tp("missingPhoto") }}
+        submitLabel={common("save")}
+        open={editingCell !== null && editingSourceKey !== null}
         title={
-          normalized.topics.find((topic) => topic.id === editingCell?.topicId)
-            ?.name ?? "Тема обучения"
+          (() => { const topic = normalized.topics.find((item) => item.id === editingCell?.topicId); return topic ? displayTopic(topic) : tp("topic"); })()
         }
         subtitle={
-          normalized.rows.find((row) => row.id === editingCell?.rowId)
-            ?.positionName
+          (() => { const row = normalized.rows.find((item) => item.id === editingCell?.rowId); return row ? displayPosition(row) : undefined; })()
         }
         fields={editingCell ? buildCellEditFields() : []}
         values={
