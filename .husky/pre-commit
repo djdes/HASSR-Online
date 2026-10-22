@@ -1,33 +1,15 @@
 #!/usr/bin/env sh
-# G10 — pre-commit hook: type-check + lint только staged file'ов.
-# Не запускает full build (медленно) — только быстрые проверки которые
-# отлавливают 80% случайных регрессий.
+# pre-commit: быстрые проверки (секунды, не минуты).
+# Полный type-check и все тесты гоняет CI перед деплоем (.github/workflows/deploy.yml,
+# job «gate»): без него прод не обновится. Локально — только секреты и тесты,
+# которые лежат рядом с изменёнными файлами (foo.ts → foo.test.ts).
 
 echo "→ Проверка на секреты..."
 sh scripts/check-secrets.sh || exit 1
 
-# Type check на изменённых .ts/.tsx
-staged_ts=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
-if [ -n "$staged_ts" ]; then
-  echo "→ TypeScript type-check..."
-  npm run typecheck || {
-    echo "✗ Type-check провалился. Поправьте ошибки или пропустите hook через --no-verify."
-    exit 1
-  }
-fi
-
-# Tests gate (baseline-aware): если появилась НОВАЯ регрессия — блокируем.
-# Legacy fails в tests/.legacy-failures.txt разрешены. Запускаем только
-# если есть .ts/.tsx изменения чтобы не тормозить doc-only commit'ы.
-# См. docs/superpowers/specs/01-architecture.md.
-if [ -n "$staged_ts" ]; then
-  echo "→ Tests (baseline gate)..."
-  npm run test:gate || {
-    echo ""
-    echo "✗ НОВАЯ регрессия в тестах. Почините код, или (если осознанно)"
-    echo "  добавьте имя теста в tests/.legacy-failures.txt."
-    exit 1
-  }
-fi
+sh scripts/test-related.sh || {
+  echo "✗ Упал тест рядом с изменённым файлом. Почините или пропустите hook через --no-verify."
+  exit 1
+}
 
 echo "✓ pre-commit OK"

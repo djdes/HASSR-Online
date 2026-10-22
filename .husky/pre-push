@@ -1,32 +1,7 @@
 #!/usr/bin/env sh
-# pre-push: полный type-check + baseline-тесты на всём дереве, как в CI.
-# Причина: деплой падает на шаге `npm run typecheck` в GitHub Actions,
-# когда в коммит уехал импорт незакоммиченного файла или ошибка типов.
-# pre-commit проверяет только staged файлы и может быть обойдён --no-verify,
-# поэтому дублируем проверку ровно перед push'ем.
-# Обход в крайнем случае: git push --no-verify (деплой тогда упадёт сам).
-
-# stdin: "<local ref> <local sha> <remote ref> <remote sha>" на каждую ссылку.
-# Если push только удаляет ветки/теги (local sha = нули) — проверять нечего.
-zero=0000000000000000000000000000000000000000
-has_updates=0
-while read -r local_ref local_sha remote_ref remote_sha; do
-  [ "$local_sha" != "$zero" ] && has_updates=1
-done
-if [ "$has_updates" = "0" ]; then
-  exit 0
-fi
-
-echo "→ pre-push: TypeScript type-check (как в CI)..."
-npm run typecheck || {
-  echo "✗ Type-check провалился — push отменён. Деплой упал бы на этом же шаге."
-  exit 1
-}
-
-echo "→ pre-push: Tests (baseline gate)..."
-npm run test:gate || {
-  echo "✗ Новая регрессия в тестах — push отменён."
-  exit 1
-}
-
-echo "✓ pre-push OK"
+# pre-push: ничего тяжёлого. Полный type-check и все тесты — в CI перед
+# деплоем (job «gate» в .github/workflows/deploy.yml): если они упадут,
+# прод не обновится, а в Telegram придёт уведомление. Локальный прогон
+# на медленном диске занимал 15+ минут и падал на случайных тестах под нагрузкой.
+# Полная проверка вручную: npm run typecheck && npm run test:gate
+exit 0
