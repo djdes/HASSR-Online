@@ -135,8 +135,11 @@ function promoOptionLabel(option: Omit<KpPromoOption, "label">): string {
   return parts.join(" · ");
 }
 
-/** Действующие общие коды для «Выбрать код»: не персональные, не одноразовые, не исчерпанные. */
-async function readKpFormData(now: Date): Promise<KpFormData> {
+/**
+ * Действующие общие коды для «Выбрать код»: не персональные, не одноразовые,
+ * не исчерпанные. Их же берёт форма вида «Акция» (`promo.ts`).
+ */
+export async function readSharedPromoOptions(now: Date): Promise<KpPromoOption[]> {
   const rows = await db.promoCode.findMany({
     where: {
       active: true,
@@ -176,6 +179,11 @@ async function readKpFormData(now: Date): Promise<KpFormData> {
     };
     promoOptions.push({ ...option, label: promoOptionLabel(option) });
   }
+  return promoOptions;
+}
+
+async function readKpFormData(now: Date): Promise<KpFormData> {
+  const promoOptions = await readSharedPromoOptions(now);
   const sender = await readDefaultProposalSender();
   return { promoOptions, senderName: sender?.name ?? null };
 }

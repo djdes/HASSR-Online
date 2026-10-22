@@ -2,6 +2,7 @@ import { registerMailingTemplate } from "@/lib/mailing/templates";
 
 import { kpTemplate } from "./kp";
 import { messageTemplate } from "./message";
+import { promoTemplate } from "./promo";
 
 /**
  * Регистрация типов рассылки — по строке на тип. Импортируют сервер
@@ -11,6 +12,7 @@ import { messageTemplate } from "./message";
  */
 registerMailingTemplate(messageTemplate);
 registerMailingTemplate(kpTemplate);
+registerMailingTemplate(promoTemplate);
 
 export {
   getMailingTemplate,
