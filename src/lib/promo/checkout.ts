@@ -9,6 +9,7 @@ import {
   type PromoCodeRecord,
 } from "./checkout-core";
 import type { LifetimeDiscountView } from "./discounts";
+import { isLifetimeExpired } from "./lifetime-core";
 import { hasPaidOrders, PAID_ORDER_STATUSES } from "./service";
 
 /**
@@ -32,6 +33,7 @@ export async function findPromoCodeRecord(code: string): Promise<PromoCodeRecord
     maxUses: row.maxUses,
     newClientsOnly: row.newClientsOnly,
     lifetime: row.lifetime,
+    durationMonths: row.lifetime ? row.durationMonths : null,
     personalEmail: row.personalEmail,
     organizationId: row.organizationId,
   };
@@ -82,16 +84,17 @@ export async function resolveCheckoutTarget(input: {
   };
 }
 
-/** Действующая скидка навсегда аккаунта (отменённая — null). */
+/** Действующая скидка навсегда аккаунта (отменённая или истёкшая — null). */
 export async function readActiveLifetimeDiscount(accountId: string): Promise<LifetimeDiscountView | null> {
   const row = await db.accountLifetimeDiscount.findUnique({ where: { accountId } });
-  if (!row || row.revokedAt) return null;
+  if (!row || row.revokedAt || isLifetimeExpired(row)) return null;
   return {
     id: row.id,
     code: row.code,
     kind: row.kind === "fixed" ? "fixed" : "percent",
     value: row.value,
     boundAt: row.boundAt.toISOString(),
+    expiresAt: row.expiresAt?.toISOString() ?? null,
   };
 }
 

@@ -24,6 +24,8 @@ export type LifetimeDiscountView = {
   value: number;
   /** ISO — когда привязана. */
   boundAt: string;
+  /** ISO — до какого момента действует (срочная скидка); null — бессрочно. */
+  expiresAt?: string | null;
 };
 
 /**
@@ -42,7 +44,21 @@ export type AppliedDiscount = {
   discountRub: number;
   /** id AccountLifetimeDiscount — только у source = "lifetime". */
   lifetimeDiscountId: string | null;
+  /** Срок lifetime-кода в месяцах (source = "code"); null/нет — бессрочно. */
+  durationMonths?: number | null;
+  /** ISO — до какого момента действует привязанная скидка (source = "lifetime"). */
+  expiresAt?: string | null;
 };
+
+/** «22.10.2027» по Москве — срок срочной скидки на плашках. */
+export function formatDiscountUntil(iso: string): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Europe/Moscow",
+  }).format(new Date(iso));
+}
 
 /** «−10 %» / «−500 ₽» с неразрывным пробелом — для плашек. */
 function amountLabel(d: { kind: DiscountKind; value: number }, locale: Locale): string {
@@ -53,16 +69,25 @@ function amountLabel(d: { kind: DiscountKind; value: number }, locale: Locale): 
 }
 
 /**
- * Подпись плашки: «Ваша скидка −10 % навсегда», «Промокод ROMASHKA10:
- * −10 % навсегда», «Промокод START30: −30 %».
+ * Подпись плашки: «Ваша скидка −10 % навсегда», «Ваша скидка −50 % до
+ * 22.10.2027», «Промокод ROMASHKA10: −10 % навсегда», «Промокод YEAR50:
+ * −50 % на 12 месяцев», «Промокод START30: −30 %».
  */
 export function discountLabel(
-  d: Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime">,
+  d: Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime"> &
+    Partial<Pick<AppliedDiscount, "durationMonths" | "expiresAt">>,
   locale: Locale = "ru",
 ): string {
   const t = pricingTranslator(locale);
   const amount = amountLabel(d, locale);
-  if (d.source === "lifetime") return t("discount.lifetime", { amount });
+  if (d.source === "lifetime") {
+    return d.expiresAt
+      ? t("discount.lifetimeUntil", { amount, date: formatDiscountUntil(d.expiresAt) })
+      : t("discount.lifetime", { amount });
+  }
+  if (d.lifetime && d.durationMonths) {
+    return t("discount.promoCodeMonths", { code: d.code, amount, months: d.durationMonths });
+  }
   return t("discount.promoCode", { code: d.code, amount, lifetime: d.lifetime ? "yes" : "no" });
 }
 
@@ -106,27 +131,50 @@ export function pickBestDiscount(input: {
  */
 export function appliedDiscountNotice(input: {
   applied: AppliedDiscount | null;
-  lifetime: Pick<LifetimeDiscountView, "code" | "kind" | "value"> | null;
+  lifetime: Pick<LifetimeDiscountView, "code" | "kind" | "value" | "expiresAt"> | null;
   /** Введённый код (нормализованный) или null. */
   typedCode: string | null;
 }): string | null {
   const { applied, lifetime, typedCode } = input;
   if (!applied) return null;
   const lifetimeText = lifetime ? amountLabel(lifetime, "ru") : "";
+  // Срочная закреплённая скидка — «до 22.10.2027», обычная — «навсегда».
+  const lifetimeWord = lifetime?.expiresAt ? `до ${formatDiscountUntil(lifetime.expiresAt)}` : "навсегда";
   if (applied.source === "lifetime") {
     if (!typedCode) return null;
     if (lifetime && typedCode === lifetime.code) {
-      return `Промокод ${typedCode} уже работает у вас как скидка навсегда — вводить его не нужно.`;
+      return `Промокод ${typedCode} уже работает у вас как скидка ${lifetimeWord} — вводить его не нужно.`;
     }
-    return `Ваша скидка навсегда (${lifetimeText}) выгоднее промокода ${typedCode} — применили её. Скидки не складываются.`;
+    return `Ваша скидка ${lifetimeWord} (${lifetimeText}) выгоднее промокода ${typedCode} — применили её. Скидки не складываются.`;
   }
   if (lifetime) {
     return applied.lifetime
-      ? `Промокод ${applied.code} выгоднее вашей скидки навсегда (${lifetimeText}) — применили его. Он тоже навсегда: после оплаты заменит прежнюю скидку.`
-      : `Промокод ${applied.code} выгоднее вашей скидки навсегда (${lifetimeText}) — применили его к этой оплате. Скидки не складываются: следующие оплаты — снова со скидкой навсегда.`;
+      ? `Промокод ${applied.code} выгоднее вашей скидки ${lifetimeWord} (${lifetimeText}) — применили его. Он тоже закрепляется за аккаунтом: после оплаты заменит прежнюю скидку.`
+      : `Промокод ${applied.code} выгоднее вашей скидки ${lifetimeWord} (${lifetimeText}) — применили его к этой оплате. Скидки не складываются: следующие оплаты — снова со скидкой ${lifetimeWord}.`;
+  }
+  if (applied.lifetime && applied.durationMonths) {
+    return `Скидка на ${monthsRu(applied.durationMonths)}: после оплаты она закрепится за аккаунтом и сама применится к каждой оплате подписки в течение этого срока.`;
   }
   if (applied.lifetime) {
     return "Скидка навсегда: после оплаты она закрепится за аккаунтом и будет применяться к каждой следующей оплате подписки сама.";
   }
   return null;
+}
+
+/**
+ * Срок закрепляемой скидки для текстов (описание заказа, чек): «навсегда»,
+ * «на 12 месяцев» (код со сроком) или «до 22.10.2027» (уже закреплённая).
+ */
+export function lifetimeTerm(d: Pick<AppliedDiscount, "source"> & Partial<Pick<AppliedDiscount, "durationMonths" | "expiresAt">>): string {
+  if (d.source === "lifetime") return d.expiresAt ? `до ${formatDiscountUntil(d.expiresAt)}` : "навсегда";
+  return d.durationMonths ? `на ${monthsRu(d.durationMonths)}` : "навсегда";
+}
+
+/** «1 месяц», «3 месяца», «12 месяцев». */
+export function monthsRu(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  const word =
+    mod10 === 1 && mod100 !== 11 ? "месяц" : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "месяца" : "месяцев";
+  return `${n} ${word}`;
 }

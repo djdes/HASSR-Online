@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
-import { discountLabel } from "@/lib/promo/discounts";
+import { discountLabel, lifetimeTerm } from "@/lib/promo/discounts";
 import { getSubscriptionOffer } from "@/lib/promo/offer";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
 import { TARIFF_BUNDLE } from "@/lib/tariffs";
@@ -215,6 +215,7 @@ export async function POST(request: NextRequest) {
     promoCode,
     promoDiscountRub: amounts.promoDiscountRub,
     lifetime: applied ? (applied.source === "lifetime" ? "auto" : applied.lifetime ? "code" : null) : null,
+    lifetimeTerm: applied?.lifetime ? lifetimeTerm(applied) : null,
   });
   const orderDescription = discountNote
     ? `${description} (${discountNote})`

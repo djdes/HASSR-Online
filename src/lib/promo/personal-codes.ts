@@ -70,6 +70,7 @@ export async function readPromoForOffer(code: string): Promise<{
   kind: "percent" | "fixed";
   value: number;
   lifetime: boolean;
+  durationMonths?: number | null;
   endsAt: Date | null;
 } | null> {
   return readPromoForOfferWith(lookupDeps, code);

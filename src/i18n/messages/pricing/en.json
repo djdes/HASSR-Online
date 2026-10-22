@@ -16,6 +16,8 @@
     "percent": "−{value, number} %",
     "fixed": "−{value, number} ₽",
     "lifetime": "Your lifetime discount {amount}",
-    "promoCode": "{lifetime, select, yes {Promo code {code}: {amount} for life} no {Promo code {code}: {amount}} other {Promo code {code}: {amount}}}"
+    "promoCode": "{lifetime, select, yes {Promo code {code}: {amount} for life} no {Promo code {code}: {amount}} other {Promo code {code}: {amount}}}",
+    "lifetimeUntil": "Your discount {amount} until {date}",
+    "promoCodeMonths": "Promo code {code}: {amount} for {months, plural, one {# month} other {# months}}"
   }
 }

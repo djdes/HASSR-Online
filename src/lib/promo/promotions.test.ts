@@ -210,6 +210,35 @@ describe("подпись плашки", () => {
       "акция «Осень» −20 %; скидка навсегда по промокоду ROMASHKA10: −159 ₽",
     );
   });
+
+  it("скидка на срок: в описании заказа срок вместо «навсегда»", () => {
+    assert.equal(
+      normalize(
+        orderDiscountNote({
+          promotion: null,
+          promotionDiscountRub: 0,
+          promoCode: "YEAR50",
+          promoDiscountRub: 995,
+          lifetime: "code",
+          lifetimeTerm: "на 12 месяцев",
+        })
+      ),
+      "промокод YEAR50, скидка на 12 месяцев: −995 ₽",
+    );
+    assert.equal(
+      normalize(
+        orderDiscountNote({
+          promotion: null,
+          promotionDiscountRub: 0,
+          promoCode: "YEAR50",
+          promoDiscountRub: 995,
+          lifetime: "auto",
+          lifetimeTerm: "до 22.10.2027",
+        })
+      ),
+      "скидка до 22.10.2027 по промокоду YEAR50: −995 ₽",
+    );
+  });
 });
 
 describe("describePromotionChange — аудит ROOT", () => {

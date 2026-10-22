@@ -12,6 +12,7 @@ import type { LegalProfile } from "@/lib/org-legal-profile";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
+import { lifetimeTerm } from "@/lib/promo/discounts";
 import { getSubscriptionOffer } from "@/lib/promo/offer";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
 import { isTestMode } from "@/lib/robokassa";
@@ -129,6 +130,7 @@ export async function createInvoiceOrder(args: {
     promoCode: applied?.code ?? null,
     promoDiscountRub: amounts.promoDiscountRub,
     lifetime: applied ? (applied.source === "lifetime" ? "auto" : applied.lifetime ? "code" : null) : null,
+    lifetimeTerm: applied?.lifetime ? lifetimeTerm(applied) : null,
   });
   const order = await db.paymentOrder.create({
     data: {

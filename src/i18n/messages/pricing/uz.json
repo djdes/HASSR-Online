@@ -16,6 +16,8 @@
     "percent": "−{value, number} %",
     "fixed": "−{value, number} ₽",
     "lifetime": "Umrbod chegirmangiz: {amount}",
-    "promoCode": "{lifetime, select, yes {Promokod {code}: {amount} muddatsiz} no {Promokod {code}: {amount}} other {Promokod {code}: {amount}}}"
+    "promoCode": "{lifetime, select, yes {Promokod {code}: {amount} muddatsiz} no {Promokod {code}: {amount}} other {Promokod {code}: {amount}}}",
+    "lifetimeUntil": "Chegirmangiz {amount} — {date} gacha",
+    "promoCodeMonths": "Promokod {code}: {amount} — {months, plural, other {# oy}} davomida"
   }
 }

@@ -26,6 +26,8 @@ import {
 export type PromoCodeRecord = PromoRule & {
   id: string;
   lifetime: boolean;
+  /** Срок закреплённой скидки в месяцах (lifetime-код); null — бессрочно. */
+  durationMonths?: number | null;
   personalEmail: string | null;
   organizationId: string | null;
 };
@@ -98,6 +100,7 @@ function lifetimeApplied(lifetime: LifetimeDiscountView, discountRub: number): A
     lifetime: true,
     discountRub,
     lifetimeDiscountId: lifetime.id,
+    expiresAt: lifetime.expiresAt ?? null,
   };
 }
 
@@ -180,6 +183,7 @@ export async function resolveCheckoutDiscountWith(
           kind: row.kind,
           value: row.value,
           lifetime: row.lifetime,
+          durationMonths: row.lifetime ? (row.durationMonths ?? null) : null,
           discountRub: best.discountRub,
           lifetimeDiscountId: null,
         };

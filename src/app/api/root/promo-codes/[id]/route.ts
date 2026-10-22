@@ -46,6 +46,9 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       ...(data.newClientsOnly !== undefined ? { newClientsOnly: data.newClientsOnly } : {}),
       ...(data.note !== undefined ? { note: data.note || null } : {}),
       ...(data.lifetime !== undefined ? { lifetime: data.lifetime } : {}),
+      ...(data.durationMonths !== undefined ? { durationMonths: data.durationMonths } : {}),
+      // Код перестал быть «навсегда» — срок у него не хранится.
+      ...(data.lifetime === false ? { durationMonths: null } : {}),
       ...(data.personalEmail !== undefined ? { personalEmail: data.personalEmail } : {}),
       ...(data.organizationId !== undefined ? { organizationId: data.organizationId } : {}),
       ...(data.campaignId !== undefined ? { campaignId: data.campaignId } : {}),

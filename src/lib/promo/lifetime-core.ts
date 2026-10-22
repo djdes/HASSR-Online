@@ -29,11 +29,32 @@ export type LifetimeBindingRecord = {
   value: number;
   orderId: number;
   boundAt: Date;
+  /** Срочная скидка: снимок boundAt + durationMonths кода. null — бессрочно. */
+  expiresAt: Date | null;
   revokedAt: Date | null;
   revokedById: string | null;
 };
 
 export type LifetimeBindingData = Omit<LifetimeBindingRecord, "id">;
+
+/**
+ * Дата через `months` календарных месяцев. Если такого дня в месяце нет
+ * (31 января + 1) — последний день месяца, как у банковских подписок.
+ */
+export function addMonths(date: Date, months: number): Date {
+  const result = new Date(date.getTime());
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(day, lastDay));
+  return result;
+}
+
+/** Срок скидки истёк: дальше она не применяется, как отменённая. */
+export function isLifetimeExpired(binding: { expiresAt: Date | null }, now: Date = new Date()): boolean {
+  return binding.expiresAt !== null && binding.expiresAt.getTime() <= now.getTime();
+}
 
 export type LifetimeStore = {
   findOrder(orderId: number): Promise<{
@@ -48,6 +69,8 @@ export type LifetimeStore = {
     kind: "percent" | "fixed";
     value: number;
     lifetime: boolean;
+    /** Срок скидки в месяцах; null — бессрочно. */
+    durationMonths: number | null;
   } | null>;
   accountOfOrganization(organizationId: string): Promise<string | null>;
   findBinding(accountId: string): Promise<LifetimeBindingRecord | null>;
@@ -68,15 +91,19 @@ export type LifetimeDecision = "create" | "noop" | "rebind";
 
 /** Что делать с привязкой аккаунта при оплате заказа с lifetime-кодом. */
 export function decideLifetimeBinding(
-  existing: Pick<LifetimeBindingRecord, "orderId" | "promoCodeId" | "revokedAt"> | null,
+  existing: Pick<LifetimeBindingRecord, "orderId" | "promoCodeId" | "revokedAt"> &
+    Partial<Pick<LifetimeBindingRecord, "expiresAt">> | null,
   order: { id: number },
-  code: { id: string }
+  code: { id: string },
+  now: Date = new Date()
 ): LifetimeDecision {
   if (!existing) return "create";
   // Тот же заказ — повторная обработка оплаты: ничего не меняем, даже если
   // ROOT уже успел отменить скидку.
   if (existing.orderId === order.id) return "noop";
-  if (!existing.revokedAt && existing.promoCodeId === code.id) return "noop";
+  // Истёкшая срочная скидка — как отменённая: новая оплата с кодом привязывает заново.
+  const expired = isLifetimeExpired({ expiresAt: existing.expiresAt ?? null }, now);
+  if (!existing.revokedAt && !expired && existing.promoCodeId === code.id) return "noop";
   return "rebind";
 }
 
@@ -113,6 +140,7 @@ export async function bindLifetimeDiscount(
     return { status: "skipped", reason: "no-account" };
   }
 
+  const boundAt = input.now ?? new Date();
   const data: LifetimeBindingData = {
     accountId,
     promoCodeId: code.id,
@@ -120,20 +148,21 @@ export async function bindLifetimeDiscount(
     kind: code.kind,
     value: code.value,
     orderId: order.id,
-    boundAt: input.now ?? new Date(),
+    boundAt,
+    expiresAt: code.durationMonths ? addMonths(boundAt, code.durationMonths) : null,
     revokedAt: null,
     revokedById: null,
   };
 
   let existing = await store.findBinding(accountId);
-  let decision = decideLifetimeBinding(existing, order, code);
+  let decision = decideLifetimeBinding(existing, order, code, boundAt);
   let binding: LifetimeBindingRecord | null = null;
   if (decision === "create") {
     binding = await store.createBinding(data);
     if (!binding) {
       // Параллельная оплата успела привязать первой — решаем заново.
       existing = await store.findBinding(accountId);
-      decision = decideLifetimeBinding(existing, order, code);
+      decision = decideLifetimeBinding(existing, order, code, boundAt);
     }
   }
   if (decision === "noop" && existing) {
@@ -164,6 +193,7 @@ export async function bindLifetimeDiscount(
       value: code.value,
       orderId: order.id,
       accountId,
+      ...(data.expiresAt ? { expiresAt: data.expiresAt.toISOString() } : {}),
       ...(previous ? { previousCode: previous.code, previousRevoked: previous.revoked } : {}),
     },
   });

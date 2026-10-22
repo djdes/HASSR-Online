@@ -59,6 +59,8 @@ export async function POST(request: Request) {
       newClientsOnly: parsed.data.newClientsOnly ?? false,
       note: parsed.data.note || null,
       lifetime: parsed.data.lifetime ?? false,
+      // Срок имеет смысл только у кода «навсегда»: у обычного кода он не хранится.
+      durationMonths: parsed.data.lifetime ? (parsed.data.durationMonths ?? null) : null,
       personalEmail: parsed.data.personalEmail ?? null,
       organizationId,
       campaignId: parsed.data.campaignId ?? null,

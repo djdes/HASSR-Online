@@ -339,3 +339,40 @@ describe("прежние правила кода не сломались", () =>
     assert.equal(calls.findCode, 0);
   });
 });
+
+describe("скидка на срок (durationMonths)", () => {
+  it("код YEAR50 на 12 месяцев: применяется со сроком, подпись и пояснение — «на 12 месяцев»", async () => {
+    const { deps } = fakeDeps({ codes: [code({ code: "YEAR50", value: 50, lifetime: true, durationMonths: 12 })] });
+    const result = await resolveCheckoutDiscountWith(deps, {
+      promoRaw: "year50",
+      organizationId: null,
+      email: "new@cafe.ru",
+      offerRub: 1990,
+      now,
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.applied?.source, "code");
+    assert.equal(result.applied?.lifetime, true);
+    assert.equal(result.applied?.durationMonths, 12);
+    assert.equal(result.applied?.discountRub, 995);
+    assert.match(result.notice ?? "", /^Скидка на 12 месяцев/);
+  });
+
+  it("закреплённая срочная скидка применяется сама и несёт срок (до какого дня)", async () => {
+    const until = "2027-10-12T09:00:00.000Z";
+    const { deps } = fakeDeps({
+      lifetime: { acc_rom: { ...LIFETIME_10, code: "YEAR50", value: 50, expiresAt: until } },
+      targets: { org_rom_1: ROMASHKA },
+    });
+    const result = await resolveCheckoutDiscountWith(deps, {
+      promoRaw: null,
+      organizationId: "org_rom_1",
+      email: "owner@romashka.ru",
+      offerRub: 1990,
+      now,
+    });
+    assert.equal(result.ok && result.applied?.source, "lifetime");
+    assert.equal(result.ok && result.applied?.expiresAt, until);
+  });
+});

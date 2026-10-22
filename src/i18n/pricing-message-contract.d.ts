@@ -17,6 +17,8 @@ export type PricingMessageContract = {
     "percent": "−{value, number} %",
     "fixed": "−{value, number} ₽",
     "lifetime": "Ваша скидка {amount} навсегда",
-    "promoCode": "{lifetime, select, yes {Промокод {code}: {amount} навсегда} no {Промокод {code}: {amount}} other {Промокод {code}: {amount}}}"
+    "promoCode": "{lifetime, select, yes {Промокод {code}: {amount} навсегда} no {Промокод {code}: {amount}} other {Промокод {code}: {amount}}}",
+    "lifetimeUntil": "Ваша скидка {amount} до {date}",
+    "promoCodeMonths": "Промокод {code}: {amount} на {months, plural, one {# месяц} few {# месяца} many {# месяцев} other {# месяца}}"
   }
 };

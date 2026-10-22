@@ -42,7 +42,8 @@ type Size = "text" | "sm" | "md" | "lg" | "xl";
 type Tone = "light" | "dark" | "inherit";
 
 /** Персональная скидка для показа: размер пересчитывается от цены компонента. */
-export type PersonalDiscount = Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime">;
+export type PersonalDiscount = Pick<AppliedDiscount, "source" | "code" | "kind" | "value" | "lifetime"> &
+  Partial<Pick<AppliedDiscount, "durationMonths" | "expiresAt">>;
 
 const NEW_SIZE: Record<Size, string> = {
   text: "",
@@ -92,7 +93,7 @@ export function PromoBadge({
   );
 }
 
-/** «Ваша скидка −10 % навсегда» / «Промокод X: −10 %». */
+/** «Ваша скидка −10 % навсегда» / «Промокод X: −50 % на 12 месяцев» / «Промокод X: −10 %». */
 export function PersonalDiscountBadge({
   locale = "ru",
   discount,
@@ -104,7 +105,8 @@ export function PersonalDiscountBadge({
   tone?: "light" | "dark";
   className?: string;
 }) {
-  const Icon = discount.lifetime ? InfinityIcon : Ticket;
+  // Бесконечность — только у бессрочной скидки; срочная («на 12 месяцев») — билет.
+  const Icon = discount.lifetime && !discount.durationMonths && !discount.expiresAt ? InfinityIcon : Ticket;
   return (
     <span
       data-personal-badge

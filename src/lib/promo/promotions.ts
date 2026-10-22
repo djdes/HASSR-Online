@@ -286,6 +286,8 @@ export function orderDiscountNote(input: {
    * аккаунту), `code` — введён lifetime-код (привяжется после оплаты).
    */
   lifetime?: "auto" | "code" | null;
+  /** Срок скидки по коду: «на 12 месяцев» / «до 22.10.2027»; нет — «навсегда». */
+  lifetimeTerm?: string | null;
 }): string {
   const parts: string[] = [];
   if (input.promotion && input.promotionDiscountRub > 0) {
@@ -293,11 +295,12 @@ export function orderDiscountNote(input: {
   }
   if (input.promoCode && input.promoDiscountRub > 0) {
     const rub = `−${input.promoDiscountRub.toLocaleString("ru-RU")}${NBSP}₽`;
+    const term = input.lifetimeTerm || "навсегда";
     parts.push(
       input.lifetime === "auto"
-        ? `скидка навсегда по промокоду ${input.promoCode}: ${rub}`
+        ? `скидка ${term} по промокоду ${input.promoCode}: ${rub}`
         : input.lifetime === "code"
-          ? `промокод ${input.promoCode}, скидка навсегда: ${rub}`
+          ? `промокод ${input.promoCode}, скидка ${term}: ${rub}`
           : `промокод ${input.promoCode}: ${rub}`
     );
   }

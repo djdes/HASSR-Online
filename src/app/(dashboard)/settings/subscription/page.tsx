@@ -198,6 +198,7 @@ export default async function SubscriptionPage({
           lifetime: true,
           discountRub: discountForPrice(lifetime, offer.priceRub),
           lifetimeDiscountId: lifetime.id,
+          expiresAt: lifetime.expiresAt ?? null,
         }
       : null;
   // Код из cookie, который не подошёл, не показываем ошибкой: человек его
@@ -211,9 +212,15 @@ export default async function SubscriptionPage({
     ? `/order?plan=monthly&promo=${encodeURIComponent(acceptedCode)}`
     : "/order?plan=monthly";
   // Следующее автосписание — по цене тарифа со скидкой навсегда (акция к
-  // тому дню может закончиться, поэтому от цены без неё).
-  const recurringMonthlyRub = lifetime
-    ? monthly.priceRub - discountForPrice(lifetime, monthly.priceRub)
+  // тому дню может закончиться, поэтому от цены без неё). Срочная скидка,
+  // которая к дню списания истечёт, в эту цену не входит.
+  const nextChargeAt = org?.subscriptionEnd ?? null;
+  const lifetimeAtNextCharge =
+    lifetime && !(lifetime.expiresAt && nextChargeAt && new Date(lifetime.expiresAt) <= nextChargeAt)
+      ? lifetime
+      : null;
+  const recurringMonthlyRub = lifetimeAtNextCharge
+    ? monthly.priceRub - discountForPrice(lifetimeAtNextCharge, monthly.priceRub)
     : monthly.priceRub;
   const discountFirst = codeSource === "query" || Boolean(lifetime);
   const discountCard = isDemo ? null : (

@@ -3929,6 +3929,9 @@ model PromoCode {
   /// скидку к аккаунту (AccountLifetimeDiscount), дальше она применяется
   /// к каждой оплате сама. Правка кода привязанные скидки не меняет.
   lifetime       Boolean   @default(false)
+  /// Срок закреплённой скидки в месяцах (только для lifetime-кода): скидка
+  /// действует от первой оплаты N месяцев и снимается сама. null — бессрочно.
+  durationMonths Int?
   /// Персональный код: только для этой почты (в нижнем регистре) и/или
   /// организации (lib/promo/rules.ts → personalCodeMatches).
   personalEmail  String?
@@ -3963,6 +3966,9 @@ model AccountLifetimeDiscount {
   /// Заказ (PaymentOrder.id), оплатой которого скидка привязана.
   orderId     Int
   boundAt     DateTime  @default(now())
+  /// Когда скидка перестаёт применяться: снимок boundAt + durationMonths кода
+  /// на момент привязки. null — бессрочно (обычная скидка навсегда).
+  expiresAt   DateTime?
   revokedAt   DateTime?
   revokedById String?
 

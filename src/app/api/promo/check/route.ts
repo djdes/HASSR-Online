@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
           lifetime: true,
           discountRub: discountForPrice(result.lifetime, offer.priceRub),
           lifetimeDiscountId: result.lifetime.id,
+          expiresAt: result.lifetime.expiresAt ?? null,
         }
       : null;
     return NextResponse.json({

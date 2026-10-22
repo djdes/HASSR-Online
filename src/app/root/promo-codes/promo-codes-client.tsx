@@ -48,6 +48,7 @@ const EMPTY_FORM = {
   newClientsOnly: false,
   note: "",
   lifetime: false,
+  durationMonths: "",
   personalEmail: "",
   organizationId: "",
   campaignId: "",
@@ -59,6 +60,7 @@ type EditForm = {
   newClientsOnly: boolean;
   note: string;
   lifetime: boolean;
+  durationMonths: string;
   personalEmail: string;
   organizationId: string;
   campaignId: string;
@@ -71,6 +73,7 @@ function toEditForm(row: PromoRow): EditForm {
     newClientsOnly: row.newClientsOnly,
     note: row.note ?? "",
     lifetime: row.lifetime,
+    durationMonths: row.durationMonths ? String(row.durationMonths) : "",
     personalEmail: row.personalEmail ?? "",
     organizationId: row.organizationId ?? "",
     campaignId: row.campaignId ?? "",
@@ -139,6 +142,7 @@ export function PromoCodesClient({
           newClientsOnly: form.newClientsOnly,
           note: form.note,
           lifetime: form.lifetime,
+          durationMonths: form.lifetime && form.durationMonths ? Number(form.durationMonths) : null,
           personalEmail: form.personalEmail.trim() || null,
           organizationId: form.organizationId.trim() || null,
           campaignId: form.campaignId.trim() || null,
@@ -191,6 +195,7 @@ export function PromoCodesClient({
         newClientsOnly: editForm.newClientsOnly,
         note: editForm.note.trim() || null,
         lifetime: editForm.lifetime,
+        durationMonths: editForm.lifetime && editForm.durationMonths ? Number(editForm.durationMonths) : null,
         personalEmail: editForm.personalEmail.trim() || null,
         organizationId: editForm.organizationId.trim() || null,
         campaignId: editForm.campaignId.trim() || null,
@@ -236,7 +241,7 @@ export function PromoCodesClient({
   };
 
   const personalFields = (
-    values: { lifetime: boolean; personalEmail: string; organizationId: string; campaignId: string },
+    values: { lifetime: boolean; durationMonths: string; personalEmail: string; organizationId: string; campaignId: string },
     onChange: (next: Partial<typeof values>) => void
   ) => (
     <>
@@ -255,6 +260,25 @@ export function PromoCodesClient({
           </span>
         </span>
       </label>
+      {values.lifetime ? (
+        <label className="block">
+          <span className={LABEL}>Срок скидки, месяцев</span>
+          <input
+            name="durationMonths"
+            type="number"
+            min={1}
+            max={120}
+            inputMode="numeric"
+            value={values.durationMonths}
+            onChange={(e) => onChange({ durationMonths: e.target.value })}
+            placeholder="пусто — навсегда"
+            className={INPUT}
+          />
+          <span className="mt-1 block text-[12px] text-[#9b9fb3]">
+            Например, 12 — скидка действует год от первой оплаты и снимается сама. На сайте: «на 12 месяцев».
+          </span>
+        </label>
+      ) : null}
       <label className="block">
         <span className={LABEL}>Персональный: почта</span>
         <input
@@ -369,7 +393,7 @@ export function PromoCodesClient({
                             {row.lifetime ? (
                               <Chip tone="lifetime">
                                 <InfinityIcon className="size-3" />
-                                навсегда
+                                {row.durationMonths ? `на ${row.durationMonths} мес.` : "навсегда"}
                               </Chip>
                             ) : null}
                             {isPersonal(row) ? (
@@ -645,8 +669,12 @@ export function PromoCodesClient({
                           отменена {mskDate(row.revokedAt)}
                           {row.revokedByName ? ` · ${row.revokedByName}` : ""}
                         </span>
+                      ) : row.expired && row.expiresAt ? (
+                        <span className="text-[12.5px] text-[#6f7282]">срок вышел {mskDate(row.expiresAt)}</span>
                       ) : (
-                        <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">действует</span>
+                        <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">
+                          {row.expiresAt ? `действует до ${mskDate(row.expiresAt)}` : "действует"}
+                        </span>
                       )}
                     </td>
                     <td className="py-2.5 text-right">

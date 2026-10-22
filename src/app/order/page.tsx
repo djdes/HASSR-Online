@@ -118,6 +118,7 @@ export default async function OrderPage({
           lifetime: true,
           discountRub: discountForPrice(discount.lifetime, offer.priceRub),
           lifetimeDiscountId: discount.lifetime.id,
+          expiresAt: discount.lifetime.expiresAt ?? null,
         }
       : null;
   // Код из cookie, который уже закреплён за аккаунтом скидкой навсегда, —

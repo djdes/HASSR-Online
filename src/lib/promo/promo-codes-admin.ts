@@ -48,6 +48,7 @@ export const promoCodeCreateSchema = z.object({
   newClientsOnly: z.boolean().optional(),
   note: z.string().trim().max(200).optional(),
   lifetime: z.boolean().optional(),
+  durationMonths: z.number().int().min(1).max(120).nullable().optional(),
   personalEmail,
   organizationId: optionalId,
   campaignId,
@@ -61,6 +62,7 @@ export const promoCodePatchSchema = z.object({
   newClientsOnly: z.boolean().optional(),
   note: z.string().trim().max(200).nullable().optional(),
   lifetime: z.boolean().optional(),
+  durationMonths: z.number().int().min(1).max(120).nullable().optional(),
   personalEmail,
   organizationId: optionalId,
   campaignId,
@@ -83,6 +85,7 @@ type PromoCodeSnapshot = {
   newClientsOnly: boolean;
   note: string | null;
   lifetime: boolean;
+  durationMonths?: number | null;
   personalEmail: string | null;
   organizationId: string | null;
   campaignId: string | null;
@@ -91,7 +94,7 @@ type PromoCodeSnapshot = {
 /** «−10 % · навсегда · персональный: a@b.ru · рассылка oct-2026» — для аудита и логов. */
 export function describePromoCode(row: PromoCodeSnapshot): string {
   const parts = [describeDiscount({ kind: row.kind === "fixed" ? "fixed" : "percent", value: row.value })];
-  if (row.lifetime) parts.push("навсегда");
+  if (row.lifetime) parts.push(row.durationMonths ? `на ${row.durationMonths} мес.` : "навсегда");
   const personal = [row.personalEmail, row.organizationId ? `организация ${row.organizationId}` : null]
     .filter(Boolean)
     .join(", ");
@@ -114,6 +117,9 @@ export function describePromoCodeChange(before: PromoCodeSnapshot, after: PromoC
     parts.push(after.newClientsOnly ? "только новым" : "всем");
   }
   if (before.lifetime !== after.lifetime) parts.push(`навсегда: ${after.lifetime ? "да" : "нет"}`);
+  if ((before.durationMonths ?? null) !== (after.durationMonths ?? null)) {
+    parts.push(`срок скидки ${before.durationMonths ?? "∞"} → ${after.durationMonths ?? "∞"} мес.`);
+  }
   if ((before.personalEmail ?? "") !== (after.personalEmail ?? "")) {
     parts.push(`почта ${before.personalEmail ?? "—"} → ${after.personalEmail ?? "—"}`);
   }
@@ -140,6 +146,8 @@ export type PromoCodeAdminRow = {
   newClientsOnly: boolean;
   note: string | null;
   lifetime: boolean;
+  /** Срок закреплённой скидки, мес.; null — бессрочно. */
+  durationMonths: number | null;
   personalEmail: string | null;
   organizationId: string | null;
   organizationName: string | null;
@@ -165,6 +173,7 @@ export function toPromoCodeAdminRow(
     newClientsOnly: row.newClientsOnly,
     note: row.note,
     lifetime: row.lifetime,
+    durationMonths: row.lifetime ? (row.durationMonths ?? null) : null,
     personalEmail: row.personalEmail,
     organizationId: row.organizationId,
     organizationName: extra.organizationName,

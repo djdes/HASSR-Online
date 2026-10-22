@@ -194,11 +194,13 @@ export type PromoForOffer = {
   kind: "percent" | "fixed";
   value: number;
   lifetime: boolean;
+  /** Срок закреплённой скидки в месяцах (lifetime-код); null — бессрочно. */
+  durationMonths?: number | null;
   endsAt: Date | null;
 };
 
 export type PromoLookupDeps = {
-  findCode(code: string): Promise<(PromoRule & { lifetime: boolean }) | null>;
+  findCode(code: string): Promise<(PromoRule & { lifetime: boolean; durationMonths?: number | null }) | null>;
   countCodeUses(code: string): Promise<number>;
 };
 
@@ -235,7 +237,14 @@ export async function promoLinkStatusWith(
   }
   return {
     ok: true,
-    promo: { code: row.code, kind: row.kind, value: row.value, lifetime: row.lifetime, endsAt: row.endsAt },
+    promo: {
+      code: row.code,
+      kind: row.kind,
+      value: row.value,
+      lifetime: row.lifetime,
+      durationMonths: row.lifetime ? (row.durationMonths ?? null) : null,
+      endsAt: row.endsAt,
+    },
   };
 }
 

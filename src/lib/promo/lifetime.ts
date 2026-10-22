@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 
 import {
   bindLifetimeDiscount,
+  isLifetimeExpired,
   LIFETIME_AUDIT_ENTITY,
   revokeLifetimeDiscount,
   type LifetimeBindOutcome,
@@ -28,6 +29,7 @@ type BindingRow = {
   value: number;
   orderId: number;
   boundAt: Date;
+  expiresAt: Date | null;
   revokedAt: Date | null;
   revokedById: string | null;
 };
@@ -45,7 +47,7 @@ export const dbLifetimeStore: LifetimeStore = {
   async findCode(code) {
     const row = await db.promoCode.findUnique({
       where: { code },
-      select: { id: true, code: true, kind: true, value: true, lifetime: true },
+      select: { id: true, code: true, kind: true, value: true, lifetime: true, durationMonths: true },
     });
     return row ? { ...row, kind: row.kind === "fixed" ? "fixed" : "percent" } : null;
   },
@@ -130,6 +132,10 @@ export type LifetimeDiscountAdminRow = {
   orderId: number;
   /** ISO. */
   boundAt: string;
+  /** ISO — до какого момента действует; null — бессрочно. */
+  expiresAt: string | null;
+  /** Срок вышел — скидка больше не применяется (на момент запроса). */
+  expired: boolean;
   revokedAt: string | null;
   revokedByName: string | null;
   /** Оплат, к которым скидка применилась сама (продления). */
@@ -173,6 +179,8 @@ export async function listLifetimeDiscountsForRoot(): Promise<LifetimeDiscountAd
     value: row.value,
     orderId: row.orderId,
     boundAt: row.boundAt.toISOString(),
+    expiresAt: row.expiresAt?.toISOString() ?? null,
+    expired: isLifetimeExpired(row),
     revokedAt: row.revokedAt?.toISOString() ?? null,
     revokedByName: row.revokedById ? (revokerById.get(row.revokedById) ?? null) : null,
     autoPaidOrders: autoById.get(row.id) ?? 0,

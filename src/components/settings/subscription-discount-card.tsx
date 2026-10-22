@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { PersonalDiscountBadge, PromoPrice } from "@/components/pricing/promo-price";
-import type { AppliedDiscount, LifetimeDiscountView } from "@/lib/promo/discounts";
+import { formatDiscountUntil, type AppliedDiscount, type LifetimeDiscountView } from "@/lib/promo/discounts";
 import type { PriceWithPromotion } from "@/lib/promo/promotions";
 
 /**
@@ -74,10 +74,19 @@ export function SubscriptionDiscountCard({
           {lifetime ? (
             <div data-testid="lifetime-discount" className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-[#3c4053]">
               <PersonalDiscountBadge
-                discount={{ source: "lifetime", code: lifetime.code, kind: lifetime.kind, value: lifetime.value, lifetime: true }}
+                discount={{
+                  source: "lifetime",
+                  code: lifetime.code,
+                  kind: lifetime.kind,
+                  value: lifetime.value,
+                  lifetime: true,
+                  expiresAt: lifetime.expiresAt ?? null,
+                }}
               />
               <span className="leading-relaxed">
-                Применяется сама к каждой оплате подписки — картой и по счёту. Вводить ничего не нужно
+                {lifetime.expiresAt
+                  ? `Применяется сама к каждой оплате подписки до ${formatDiscountUntil(lifetime.expiresAt)} — картой и по счёту, потом снимется сама. Вводить ничего не нужно`
+                  : "Применяется сама к каждой оплате подписки — картой и по счёту. Вводить ничего не нужно"}
                 {boundAt ? ` (действует с ${boundAt})` : ""}.
               </span>
             </div>

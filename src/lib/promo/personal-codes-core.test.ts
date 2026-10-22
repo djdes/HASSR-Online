@@ -172,8 +172,14 @@ describe("readPromoForOffer / promoLinkStatus", () => {
       kind: "percent",
       value: 10,
       lifetime: true,
+      durationMonths: null,
       endsAt: new Date("2026-12-31T20:59:59.999Z"),
     });
+  });
+
+  it("код на срок — срок месяцев уходит в предложение («на 12 месяцев»)", async () => {
+    const offer = await readPromoForOfferWith(deps({ ...rule({}), durationMonths: 12 } as never), "ROMASHKA10", now);
+    assert.equal(offer?.durationMonths, 12);
   });
 
   it("нет / выключен / истёк / исчерпан / ещё не начался — null и причина для страницы ссылки", async () => {

@@ -5,6 +5,7 @@ import {
   appliedDiscountNotice,
   discountForPrice,
   discountLabel,
+  monthsRu,
   pickBestDiscount,
   type AppliedDiscount,
 } from "@/lib/promo/discounts";
@@ -102,5 +103,55 @@ describe("подписи и пояснения", () => {
     );
     assert.equal(appliedDiscountNotice({ applied: code, lifetime: null, typedCode: "PARTNER500" }), null);
     assert.equal(appliedDiscountNotice({ applied: lifetime, lifetime, typedCode: null }), null);
+  });
+});
+
+describe("скидка на срок", () => {
+  const year: AppliedDiscount = {
+    source: "code",
+    code: "YEAR50",
+    kind: "percent",
+    value: 50,
+    lifetime: true,
+    durationMonths: 12,
+    discountRub: 995,
+    lifetimeDiscountId: null,
+  };
+  const bound: AppliedDiscount = {
+    ...year,
+    source: "lifetime",
+    durationMonths: null,
+    lifetimeDiscountId: "ld9",
+    expiresAt: "2027-10-22T09:00:00.000Z",
+  };
+
+  it("плашки: «Промокод YEAR50: −50 % на 12 месяцев», «Ваша скидка −50 % до 22.10.2027»", () => {
+    assert.equal(nb(discountLabel(year)), "Промокод YEAR50: −50 % на 12 месяцев");
+    assert.equal(nb(discountLabel({ ...year, durationMonths: 1 })), "Промокод YEAR50: −50 % на 1 месяц");
+    assert.equal(nb(discountLabel({ ...year, durationMonths: 3 })), "Промокод YEAR50: −50 % на 3 месяца");
+    assert.equal(nb(discountLabel(bound)), "Ваша скидка −50 % до 22.10.2027");
+  });
+
+  it("пояснения: срок вместо «навсегда»", () => {
+    assert.match(
+      appliedDiscountNotice({ applied: year, lifetime: null, typedCode: "YEAR50" }) ?? "",
+      /^Скидка на 12 месяцев: после оплаты она закрепится за аккаунтом/
+    );
+    assert.equal(
+      nb(appliedDiscountNotice({ applied: bound, lifetime: bound, typedCode: "YEAR50" }) ?? ""),
+      "Промокод YEAR50 уже работает у вас как скидка до 22.10.2027 — вводить его не нужно."
+    );
+  });
+
+  it("monthsRu: 1 месяц, 2 месяца, 5 месяцев, 11 месяцев, 21 месяц", () => {
+    assert.deepEqual([1, 2, 5, 11, 12, 21, 24].map(monthsRu), [
+      "1 месяц",
+      "2 месяца",
+      "5 месяцев",
+      "11 месяцев",
+      "12 месяцев",
+      "21 месяц",
+      "24 месяца",
+    ]);
   });
 });

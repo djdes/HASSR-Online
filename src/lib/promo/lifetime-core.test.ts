@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  addMonths,
   bindLifetimeDiscount,
   decideLifetimeBinding,
+  isLifetimeExpired,
   LIFETIME_BIND_ACTION,
   LIFETIME_REVOKE_ACTION,
   revokeLifetimeDiscount,
@@ -18,7 +20,14 @@ import {
  */
 
 type Order = { id: number; status: string; promoCode: string | null; lifetimeDiscountId: string | null };
-type Code = { id: string; code: string; kind: "percent" | "fixed"; value: number; lifetime: boolean };
+type Code = {
+  id: string;
+  code: string;
+  kind: "percent" | "fixed";
+  value: number;
+  lifetime: boolean;
+  durationMonths?: number | null;
+};
 
 function memoryStore(input: { orders: Order[]; codes: Code[]; accounts: Record<string, string | null> }) {
   const bindings: LifetimeBindingRecord[] = [];
@@ -31,7 +40,8 @@ function memoryStore(input: { orders: Order[]; codes: Code[]; accounts: Record<s
       return input.orders.find((o) => o.id === id) ?? null;
     },
     async findCode(code) {
-      return input.codes.find((c) => c.code === code) ?? null;
+      const row = input.codes.find((c) => c.code === code);
+      return row ? { ...row, durationMonths: row.durationMonths ?? null } : null;
     },
     async accountOfOrganization(organizationId) {
       return input.accounts[organizationId] ?? null;
@@ -74,6 +84,7 @@ function memoryStore(input: { orders: Order[]; codes: Code[]; accounts: Record<s
 const ROMASHKA10: Code = { id: "pc_rom", code: "ROMASHKA10", kind: "percent", value: 10, lifetime: true };
 const PARTNER20: Code = { id: "pc_p20", code: "PARTNER20", kind: "percent", value: 20, lifetime: true };
 const START30: Code = { id: "pc_s30", code: "START30", kind: "percent", value: 30, lifetime: false };
+const YEAR50: Code = { id: "pc_y50", code: "YEAR50", kind: "percent", value: 50, lifetime: true, durationMonths: 12 };
 const now = new Date("2026-10-12T09:00:00.000Z");
 
 describe("привязка скидки навсегда в fulfillPaidOrder", () => {
@@ -97,6 +108,7 @@ describe("привязка скидки навсегда в fulfillPaidOrder", (
         value: 10,
         orderId: 101,
         boundAt: now,
+        expiresAt: null,
         revokedAt: null,
         revokedById: null,
       }
@@ -151,6 +163,7 @@ describe("привязка скидки навсегда в fulfillPaidOrder", (
       value: 10,
       orderId: 101,
       boundAt: now,
+      expiresAt: null,
       revokedAt: null,
       revokedById: null,
     });
@@ -242,6 +255,62 @@ describe("привязка скидки навсегда в fulfillPaidOrder", (
     assert.equal(decideLifetimeBinding({ orderId: 3, promoCodeId: "pc", revokedAt: null }, order, code), "noop");
     assert.equal(decideLifetimeBinding({ orderId: 3, promoCodeId: "pc", revokedAt: new Date() }, order, code), "rebind");
     assert.equal(decideLifetimeBinding({ orderId: 3, promoCodeId: "other", revokedAt: null }, order, code), "rebind");
+    // Срочная скидка того же кода: пока действует — ничего, истекла — переписать.
+    const until = new Date("2027-10-12T09:00:00.000Z");
+    const live = { orderId: 3, promoCodeId: "pc", revokedAt: null, expiresAt: until };
+    assert.equal(decideLifetimeBinding(live, order, code, now), "noop");
+    assert.equal(decideLifetimeBinding(live, order, code, until), "rebind");
+  });
+});
+
+describe("скидка на срок (durationMonths)", () => {
+  it("YEAR50 на 12 месяцев: привязка ставит expiresAt = дата оплаты + 12 месяцев, аудит его пишет", async () => {
+    const env = memoryStore({
+      orders: [{ id: 301, status: "paid", promoCode: "YEAR50", lifetimeDiscountId: null }],
+      codes: [YEAR50],
+      accounts: { org_y: "acc_y" },
+    });
+    const outcome = await bindLifetimeDiscount(env.store, { orderId: 301, organizationId: "org_y", now });
+    assert.equal(outcome.status, "bound");
+    assert.deepEqual(env.bindings[0].expiresAt, new Date("2027-10-12T09:00:00.000Z"));
+    assert.equal(env.audits[0].details.expiresAt, "2027-10-12T09:00:00.000Z");
+  });
+
+  it("истёкшую скидку новая оплата с тем же кодом привязывает заново на новый срок", async () => {
+    const env = memoryStore({
+      orders: [
+        { id: 301, status: "paid", promoCode: "YEAR50", lifetimeDiscountId: null },
+        { id: 302, status: "paid", promoCode: "YEAR50", lifetimeDiscountId: null },
+      ],
+      codes: [YEAR50],
+      accounts: { org_y: "acc_y" },
+    });
+    await bindLifetimeDiscount(env.store, { orderId: 301, organizationId: "org_y", now });
+    const during = await bindLifetimeDiscount(env.store, {
+      orderId: 302,
+      organizationId: "org_y",
+      now: new Date("2027-03-01T00:00:00.000Z"),
+    });
+    assert.equal(during.status, "already-bound");
+    const later = new Date("2027-11-01T00:00:00.000Z");
+    const after = await bindLifetimeDiscount(env.store, { orderId: 302, organizationId: "org_y", now: later });
+    assert.equal(after.status, "rebound");
+    assert.equal(env.bindings.length, 1);
+    assert.equal(env.bindings[0].orderId, 302);
+    assert.deepEqual(env.bindings[0].expiresAt, new Date("2028-11-01T00:00:00.000Z"));
+  });
+
+  it("addMonths: календарные месяцы, несуществующий день — последний день месяца", () => {
+    assert.deepEqual(addMonths(new Date("2026-10-12T09:00:00.000Z"), 12), new Date("2027-10-12T09:00:00.000Z"));
+    assert.deepEqual(addMonths(new Date("2026-01-31T10:00:00.000Z"), 1), new Date("2026-02-28T10:00:00.000Z"));
+    assert.deepEqual(addMonths(new Date("2027-12-31T00:00:00.000Z"), 2), new Date("2028-02-29T00:00:00.000Z"));
+  });
+
+  it("isLifetimeExpired: бессрочная не истекает, срочная — с момента expiresAt", () => {
+    const until = new Date("2027-10-12T09:00:00.000Z");
+    assert.equal(isLifetimeExpired({ expiresAt: null }, new Date("2099-01-01")), false);
+    assert.equal(isLifetimeExpired({ expiresAt: until }, new Date("2027-10-12T08:59:59.999Z")), false);
+    assert.equal(isLifetimeExpired({ expiresAt: until }, until), true);
   });
 });
 
