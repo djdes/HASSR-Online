@@ -592,7 +592,7 @@ export const NAV_SECTIONS: NavSection[] = [
     // Убраны из меню владельцем 2026-09-25 — открываются по адресу.
     // Своего меню нет: раздел — одна страница с карточками.
     // `/translations` — редактор переводов (2026-10-24): вход из меню профиля.
-    hiddenMatch: ["/batches", "/losses", "/changes", "/bonuses", "/translations"],
+    hiddenMatch: ["/batches", "/losses", "/changes", "/bonuses", "/translations", "/settings/integrations/max"],
     tabs: [{ id: "main", label: "main", href: "/more", access: FULL_ACCESS }],
   },
   {

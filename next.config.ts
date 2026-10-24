@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { MAX_FRAME_ANCESTORS } from "./src/lib/max/browser";
 import createNextIntlPlugin from "next-intl/plugin";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
@@ -168,6 +169,14 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: "/max/:path*",
+        headers: [...commonSecurityHeaders, permissionsPolicy("()"), { key: "Content-Security-Policy", value: MAX_FRAME_ANCESTORS }],
+      },
+      {
+        source: "/max",
+        headers: [...commonSecurityHeaders, permissionsPolicy("()"), { key: "Content-Security-Policy", value: MAX_FRAME_ANCESTORS }],
+      },
+      {
         // Mini App: разрешаем embedding в Telegram Web.
         source: "/mini/:path*",
         headers: miniFrameHeaders,
@@ -203,7 +212,7 @@ const nextConfig: NextConfig = {
         // X-Frame-Options: DENY запрещает даже свой же origin. В файле
         // нет ни сессии, ни чужих данных — вставлять его безопасно.
         // kp/<токен>/pdf — встроенный просмотр КП в ROOT (SAMEORIGIN выше).
-        source: "/((?!mini(?:$|/)|api/journal-samples|equipment-fill/|room-fill/|kp/[^/]+/pdf$).*)",
+        source: "/((?!max(?:$|/)|mini(?:$|/)|api/journal-samples|equipment-fill/|room-fill/|kp/[^/]+/pdf$).*)",
         headers: denyFrameHeaders,
       },
       {

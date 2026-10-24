@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { QrCode } from "lucide-react";
 import { QrLanguageChoice } from "./qr-language-choice";
+import { MaxConnectButton } from "@/components/max/max-connect-button";
 
 /**
  * Каркас QR-страницы — такой же, как у HTML-формы журналов: узкая тёмная
@@ -32,6 +33,7 @@ export function QrPageShell({ orgName, title, children }: { orgName: string; tit
             <h1 className="mt-px line-clamp-2 text-[19px] font-semibold leading-[1.25] tracking-[-0.01em]">{title}</h1>
           </div>
           <QrLanguageChoice />
+          <MaxConnectButton dark />
         </div>
       </header>
       <div
