@@ -6,7 +6,9 @@ on:
   # Fallback trigger — run the same workflow manually from the Actions
   # UI when the `push` hook silently doesn't fire (e.g. GitHub Actions
   # minutes exhausted, workflow auto-paused after inactivity, or runner
-  # outage). Use "Run workflow" on the Deploy to production page.
+  # outage). Use "Run workflow" on the Deploy to production page — with
+  # the `master` branch selected: a run on any other branch or tag is
+  # rejected (job reject-non-master) and deploys nothing.
   workflow_dispatch: {}
 
 # Serialize prod-deploys. Без этого блока два push'а в master запускали
@@ -17,8 +19,11 @@ on:
 # cancel-in-progress: false — каждый run докатывается до конца. Свежий
 # push становится pending; повторные push'и вытесняют его в очереди
 # (последний выигрывает), но активный run не убивается до pm2 reload.
+#
+# В очередь прода встаёт только master. Запуск на другой ветке всё равно
+# отклоняется — в общей очереди он вытеснил бы ожидающий деплой master.
 concurrency:
-  group: production-deploy
+  group: ${{ github.ref == 'refs/heads/master' && 'production-deploy' || format('production-deploy-rejected-{0}', github.run_id) }}
   cancel-in-progress: false
 
 env:
@@ -28,13 +33,38 @@ env:
   # "engines" mismatches during npm ci.
   NODE_VERSION: "22"
 
+# Гейт и выгрузка архива идут ПАРАЛЛЕЛЬНО, сервер трогаем только после
+# зелёного гейта. Раньше всё шло одной цепочкой: type-check (1.5 мин) →
+# тесты (4.5 мин: 415 файлов, каждый — свой процесс) → выгрузка → сервер,
+# и деплой занимал 13–15 минут. Тесты делятся на 4 шарда (`--test-shard`):
+# изоляция «процесс на файл» сохраняется — тесты на неё рассчитаны.
 jobs:
-  deploy:
+  # Прод — только из master (AGENTS.md → «Production deploy rules»).
+  # «Run workflow» на другой ветке раньше выкатывал её код поверх прода: у
+  # ветки, отставшей на недели, — старый код и старая схема БД. Теперь gate,
+  # выгрузка и деплой на такой ветке не запускаются, а этот job падает с
+  # причиной. Ветки, созданные до этой правки, несут старый deploy.yml без
+  # проверки — поэтому старые ветки удаляем.
+  reject-non-master:
+    name: Reject non-master ref
+    if: github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
-    # 45, а не 30: три SSH-шага в сумме просят до 55 минут в худшем
-    # случае (чистая установка зависимостей + сборка + миграции), и
-    # бюджета в 30 не хватало — job убивался раньше своих же шагов.
-    timeout-minutes: 45
+    timeout-minutes: 2
+
+    steps:
+      - name: Деплой только из master
+        run: |
+          echo "::error::Деплой на прод — только из master. Этот запуск на ${GITHUB_REF}, ничего не выкатывается. Передеплой — Run workflow с веткой master."
+          exit 1
+
+  gate:
+    name: ${{ matrix.check == 'typecheck' && 'Type-check' || format('Tests {0}', matrix.check) }}
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        check: [typecheck, 1/4, 2/4, 3/4, 4/4]
 
     steps:
       - name: Checkout code
@@ -69,6 +99,7 @@ jobs:
       # разрешены — это рабочие точки для постепенного устранения.
       # См. docs/superpowers/specs/01-architecture.md.
       - name: Type-check
+        if: matrix.check == 'typecheck'
         # Проект перерос стандартные ~2 ГБ кучи Node: tsc падал с
         # «JavaScript heap out of memory» (2026-09-22). У раннера 7 ГБ.
         env:
@@ -76,7 +107,23 @@ jobs:
         run: npm run typecheck
 
       - name: Tests (baseline gate)
+        if: matrix.check != 'typecheck'
+        env:
+          TEST_SHARD: ${{ matrix.check }}
         run: npm run test:gate
+
+  # Выгрузка ничего не меняет на сервере: кладёт deploy.tar и копию .env.
+  # Распаковка — в шаге 1/3, уже после гейта; не прошёл гейт — архив
+  # просто перезапишет следующий прогон.
+  upload:
+    name: Upload tarball
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Write build-time only (sha записывается на проде до build)
         run: |
@@ -137,10 +184,11 @@ jobs:
           username: ${{ secrets.DEPLOY_SSH_USER }}
           password: ${{ secrets.DEPLOY_SSH_PASS }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
+          # Копия .env — в шаге 1/3, прямо перед распаковкой: выгрузка идёт
+          # параллельно с гейтом, и ранняя копия затёрла бы правку .env,
+          # сделанную на сервере за эти минуты.
           script: |
             mkdir -p ${{ env.APP_DIR }}
-            # Backup .env if it exists
-            [ -f ${{ env.APP_DIR }}/.env ] && cp ${{ env.APP_DIR }}/.env ${{ env.APP_DIR }}/.env.bak || true
 
       - name: Upload tarball via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -152,6 +200,16 @@ jobs:
           source: deploy.tar
           target: ${{ env.APP_DIR }}
 
+  deploy:
+    needs: [gate, upload]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    # 45, а не 30: три SSH-шага в сумме просят до 55 минут в худшем
+    # случае (чистая установка зависимостей + сборка + миграции), и
+    # бюджета в 30 не хватало — job убивался раньше своих же шагов.
+    timeout-minutes: 45
+
+    steps:
       # Deploy разбит на ТРИ SSH-шага: setup / build / seed+restart.
       # Раньше всё было одним ssh-action'ом и при медленном/нестабильном
       # GitHub-runner→prod SSH-туннеле билд (~3 мин) или test-bot-wizard
@@ -159,6 +217,39 @@ jobs:
       # частично собран без `(dashboard)/dashboard/page.js`, pm2 не
       # рестартится, прод крутит старый код. Каждый шаг получает свежую
       # SSH-сессию + свой timeout-budget.
+
+      # Re-run старого прогона берёт ЕГО коммит и выкатил бы старый код
+      # поверх нового. Сверяемся с тем, что сайт отдаёт сейчас: если там
+      # коммит из master новее нашего — не деплоим. Откат делается через
+      # `git revert` в master — новый коммит эту проверку проходит; master,
+      # перезаписанный назад, и сборка не из master на проде — тоже.
+      # Сайт или GitHub API не ответили — не мешаем: проверка не должна
+      # блокировать аварийный деплой.
+      - name: Не откатывать прод на старый коммит
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROD_URL: https://wesetup.ru
+        run: |
+          serving=$(curl -fsS --max-time 20 "$PROD_URL/api/build-info" | jq -r '.fullBuildId // .buildId // empty' 2>/dev/null) || serving=""
+          case "$serving" in
+            ""|dev|unknown)
+              echo "::warning::Не удалось узнать версию на проде — проверку пропускаем"
+              exit 0 ;;
+          esac
+          compare() {
+            local s
+            s=$(gh api "repos/${GITHUB_REPOSITORY}/compare/$1...$2" --jq .status 2>/dev/null) || s=unknown
+            case "$s" in ahead|behind|identical|diverged) echo "$s" ;; *) echo unknown ;; esac
+          }
+          status=$(compare "$serving" "$GITHUB_SHA")
+          echo "На проде ${serving:0:8}, выкатываем ${GITHUB_SHA:0:8}: $status"
+          [ "$status" = "behind" ] || exit 0
+          case "$(compare "$serving" master)" in
+            ahead|identical)
+              echo "::error::Коммит ${GITHUB_SHA:0:8} старше того, что уже на проде (${serving:0:8}, есть в master). Похоже на Re-run старого прогона. Передеплой — Run workflow с веткой master, откат — git revert."
+              exit 1 ;;
+          esac
+          echo "::warning::На проде ${serving:0:8} — коммит не из master. Выкатываем master."
 
       - name: Deploy step 1/3 — setup (extract + npm ci + prisma)
         uses: appleboy/ssh-action@v1
@@ -209,6 +300,8 @@ jobs:
             rm -rf src scripts prisma public .github docs .agent journals tmp-source-journals
 
             echo "=== Extracting tarball ==="
+            # Backup .env if it exists
+            [ -f .env ] && cp .env .env.bak || true
             tar xf deploy.tar && rm deploy.tar
 
             echo "=== Re-linking user uploads ==="
@@ -234,6 +327,16 @@ jobs:
             # работающей сборки. Стоит немного места и одну операцию —
             # против минут неработающего сайта.
             rm -rf .next.cache-backup 2>/dev/null || true
+            # Тексты (src/i18n/messages) поменялись — кеш не берём: 20.10
+            # сборка 2dfcc33a взяла из него старую копию ru.json для одного
+            # из слоёв, и на страницах вместо текстов показались ключи.
+            I18N_STAMP=".i18n-messages-hash"
+            I18N_HASH=$(find src/i18n/messages -type f -name '*.json' | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
+            if [ -f "$I18N_STAMP" ] && [ "$(cat "$I18N_STAMP")" != "$I18N_HASH" ]; then
+              echo "[cache] тексты изменились — сборка холодная"
+              rm -rf .next/cache 2>/dev/null || true
+            fi
+            echo "$I18N_HASH" > "$I18N_STAMP"
             if [ -d .next/cache ]; then
               cp -r .next/cache .next.cache-backup
               echo "[cache] скопирован ($(du -sh .next.cache-backup | cut -f1))"
@@ -547,19 +650,23 @@ jobs:
             # Дальше на нём падали сиды (клиент ждёт колонок, которых нет),
             # и до перезапуска PM2 деплой не доходил — без внятной причины
             # в логе.
-            # --accept-data-loss: удаление колонок (trialWrites*, aiMonthly* —
-            # снятые лимиты бесплатного тарифа) без флага заставляет prisma
-            # ждать интерактивного подтверждения, и деплой зависал бы.
+            # Apply reviewed additive changes only; preserve custom partial
+            # indexes and stop rather than accepting destructive schema drift.
             set -o pipefail
-            if ! npx prisma db push --accept-data-loss 2>&1 | tail -15; then
-              echo "[FATAL] prisma db push не применился — деплой остановлен"
+            if ! node scripts/apply-safe-schema.cjs 2>&1 | tail -15; then
+              echo "[FATAL] безопасное обновление схемы не применилось — деплой остановлен"
               exit 1
             fi
             set +o pipefail
 
             echo "=== Seeding journal templates ==="
             if [ -f .env ]; then
+              set -o pipefail
               npx tsx prisma/seed.ts 2>&1 | tail -20
+              set +o pipefail
+              # Legacy business-data backfills require a separate reviewed run.
+              # A normal code release must not rewrite customer journal records.
+              if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
               echo "=== Seeding job positions (idempotent) ==="
               npx tsx prisma/seed-job-positions.ts 2>&1 | tail -5
               echo "=== Seeding journal fill modes + cleanup (idempotent) ==="
@@ -593,6 +700,9 @@ jobs:
               echo "=== Шапка «УТВЕРЖДАЮ»: должность и ФИО одного человека + помещения в пустых графиках ген. уборок (one-shot, PlatformSetting-guard) ==="
               npx tsx prisma/seed-fix-approver-mismatch.ts --dry-run 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch dry-run failed"
               npx tsx prisma/seed-fix-approver-mismatch.ts 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch failed — deploy continues"
+              else
+                echo "Legacy customer-data backfills skipped (explicit opt-in required)"
+              fi
             else
               echo ".env not found, skip seed"
             fi
@@ -680,15 +790,24 @@ jobs:
 
             echo "=== Deploy complete ==="
 
-      # Деплой падал по несколько раз в день (typecheck-гейт), а узнавали
-      # об этом случайно — прод оставался на старом коде. Шаг ниже
-      # срабатывает ТОЛЬКО при падении любого предыдущего шага и шлёт
-      # админу платформы сообщение в Telegram с коммитом и ссылкой на лог.
-      # Секреты: TELEGRAM_BOT_TOKEN (тот же бот @wesetupbot) и
-      # DEPLOY_ALERT_TELEGRAM_CHAT_ID (= PLATFORM_ADMIN_TELEGRAM_CHAT_ID с прода).
-      # Если секретов нет — шаг молча пропускается, деплой это не ломает.
+  # Деплой падал по несколько раз в день (typecheck-гейт), а узнавали
+  # об этом случайно — прод оставался на старом коде. Job ниже
+  # срабатывает ТОЛЬКО при падении любого job'а выше (гейт, выгрузка,
+  # сервер) и шлёт админу платформы сообщение в Telegram с коммитом и
+  # ссылкой на лог. Отдельный job, а не шаг в deploy: при упавшем гейте
+  # deploy пропускается целиком и его шаги не выполнились бы.
+  # Секреты: TELEGRAM_BOT_TOKEN (тот же бот @wesetupbot) и
+  # DEPLOY_ALERT_TELEGRAM_CHAT_ID (= PLATFORM_ADMIN_TELEGRAM_CHAT_ID с прода).
+  # Если секретов нет — шаг молча пропускается, деплой это не ломает.
+  notify-failure:
+    name: Notify Telegram on failure
+    needs: [gate, upload, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
       - name: Notify Telegram on failure
-        if: failure()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.DEPLOY_ALERT_TELEGRAM_CHAT_ID }}
