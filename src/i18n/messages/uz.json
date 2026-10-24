@@ -22322,7 +22322,6 @@
     "description": "Saytning barcha matnlari rus, ingliz va o‘zbek tillarida, toifalar bo‘yicha. Tahrir yangi chiqarishsiz, 30 soniya ichida kuchga kiradi.",
     "sourceNote": "Rus tili — asl matn. Uni o‘zgartirsangiz, ingliz va o‘zbek tilini ham tekshiring.",
     "groups": {
-      "all": "Qidiruv",
       "journals": "Jurnallar",
       "interface": "Interfeys",
       "other": "Boshqa bo‘limlar"
@@ -22339,8 +22338,12 @@
       "untranslated": "tarjimasiz: {count}",
       "stale": "asl matn o‘zgargan: {count}"
     },
-    "otherFilter": "Bo‘limni topish",
-    "searchPlaceholder": "Kalit yoki matn bo‘yicha qidirish",
+    "section": "Bo‘lim",
+    "sections": "Bo‘limlar",
+    "sectionFilter": "Bo‘limni topish",
+    "sectionEmpty": "Bo‘limlar topilmadi",
+    "searchPlaceholder": "Barcha tarjimalar bo‘yicha qidirish",
+    "searchScope": "Barcha bo‘limlar bo‘yicha qidiruv: kalit va rus, ingliz, o‘zbek tilidagi matn",
     "filters": {
       "all": "Hammasi",
       "modified": "O‘zgartirilgan",
@@ -22361,12 +22364,26 @@
       "reset": "Aslini qaytarish",
       "auto": "Avtotarjima",
       "autoBatch": "Avtotarjima: {language} ({count})",
-      "loadMore": "Yana ko‘rsatish"
+      "undo": "Tahrirni bekor qilish"
     },
     "autoBusy": "Tarjima qilinmoqda… {done} / {total}",
     "loading": "Yuklanmoqda…",
     "empty": "Hech narsa topilmadi",
-    "shown": "{total} tadan {shown} tasi ko‘rsatilgan",
+    "emptyValue": "Bo‘sh",
+    "range": "{from, number}–{to, number} qatorlar, jami {total, number}",
+    "pagination": {
+      "label": "Sahifalar",
+      "previous": "Orqaga",
+      "next": "Oldinga",
+      "page": "{page}-sahifa",
+      "compact": "{page} / {pages}"
+    },
+    "rowEditor": {
+      "position": "{index} / {count}",
+      "previous": "Oldingi qator",
+      "next": "Keyingi qator",
+      "shortcut": "Ctrl+Enter — saqlash"
+    },
     "toasts": {
       "saved": "Saqlandi",
       "savedMany": "Saqlangan matnlar: {count}",

@@ -21,7 +21,8 @@ export default async function TranslationsPage() {
       <div className="space-y-5">
         <div>
           <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("title")}</h1>
-          <p className="mt-1 max-w-[760px] text-[14px] leading-relaxed text-[#6f7282]">{t("description")}</p>
+          {/* На телефоне описание прячем: строки должны быть в первом экране. */}
+          <p className="mt-1 hidden max-w-[760px] text-[14px] leading-relaxed text-[#6f7282] sm:block">{t("description")}</p>
         </div>
         <TranslationEditor initialCategories={categories} />
       </div>

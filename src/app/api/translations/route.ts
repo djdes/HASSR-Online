@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getTranslationActor, listEntries, saveOverride } from "@/lib/translations/editor.server";
+import { MAX_SEARCH_LENGTH } from "@/lib/translations/search";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * Редактор переводов интерфейса (ROOT и переводчики).
- *   GET  ?category=&q=&filter=all|modified|untranslated&offset=&limit= — строки каталога;
+ *   GET  ?category=&q=&filter=all|modified|untranslated&offset=&limit= — страница строк
+ *        каталога (по умолчанию 100); без `category` — по всему каталогу (глобальный поиск);
  *   PUT  { key, locale, value } — правка; пустое или равное файлу значение — сброс.
  */
 
 const ListQuery = z.object({
   category: z.string().max(120).optional(),
-  q: z.string().max(200).optional(),
+  q: z.string().max(MAX_SEARCH_LENGTH).optional(),
   filter: z.enum(["all", "modified", "untranslated"]).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),

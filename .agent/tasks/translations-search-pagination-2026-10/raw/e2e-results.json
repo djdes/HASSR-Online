@@ -1,0 +1,161 @@
+{
+  "when": "2026-10-24T11:24:33.264Z",
+  "base": "http://localhost:3000",
+  "checks": [
+    {
+      "name": "phone: /translations opens",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "phone: no horizontal scroll",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: first row is on the first screen",
+      "ok": true,
+      "detail": "row at y=502 of 664"
+    },
+    {
+      "name": "phone: desktop category column hidden",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: filter labels are not cut",
+      "ok": true,
+      "detail": "[true,true,true]"
+    },
+    {
+      "name": "phone: section filter narrows the list",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: section shows 100 rows",
+      "ok": true,
+      "detail": 100
+    },
+    {
+      "name": "phone: section picker shows the section",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: rows visible right after choosing a section",
+      "ok": true,
+      "detail": "row at y=502 of 664"
+    },
+    {
+      "name": "phone: compact pagination 1 of 5",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: next page scrolls back to the list top",
+      "ok": true,
+      "detail": "range at y=112"
+    },
+    {
+      "name": "phone: next page replaces rows (still 100)",
+      "ok": true,
+      "detail": "navigation.shell.menus.journals.items.today"
+    },
+    {
+      "name": "phone: page 2 label",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: search by Uzbek text finds strings across sections",
+      "ok": true,
+      "detail": "100 rows, Строки 1–100 из 258"
+    },
+    {
+      "name": "phone: matches are highlighted",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: row editor shows ru/en/uz",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: save button visible without scrolling",
+      "ok": true,
+      "detail": "y=603"
+    },
+    {
+      "name": "phone: row editor is a full-width sheet at the bottom",
+      "ok": true,
+      "detail": "390×615 at y=49"
+    },
+    {
+      "name": "phone: edit saved",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: reset returns the file value",
+      "ok": true,
+      "detail": "QR posters"
+    },
+    {
+      "name": "phone: no horizontal scroll after the flow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: section picker hidden, column visible",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: page change brings the list top into view",
+      "ok": true,
+      "detail": "range at y=112"
+    },
+    {
+      "name": "desktop: numbered pagination jumps to page 3",
+      "ok": true,
+      "detail": "Строки 201–300 из 446"
+    },
+    {
+      "name": "desktop: current page marked",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: no horizontal scroll",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: Uzbek apostrophe variants match (o'zbek → O‘zbekcha)",
+      "ok": true,
+      "detail": "settingsManagement.organizationProfile.form.languageUz, language.invalid, blogChrome.apiErrors.invalidLocale"
+    },
+    {
+      "name": "desktop: next row in the editor",
+      "ok": true,
+      "detail": "settingsManagement.organizationProfile.form.languageUz → language.invalid"
+    },
+    {
+      "name": "desktop: previous disabled on first row only",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: row editor opened before new results stays open",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: 299-char query is searched (200, not 400)",
+      "ok": true,
+      "detail": "299 chars → 200"
+    }
+  ]
+}
