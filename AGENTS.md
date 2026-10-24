@@ -305,6 +305,7 @@ Critical env vars (see `.env.shared` for template):
 
 ## Conventions for AI Agents
 
+- **«В прод»** from the owner means: merge the task's PR into `master` (squash) without asking again; the push to `master` deploys it.
 - Visible UI follows the project design system (`design-system` skill, `.claude/skills/design-system`): every screen must look like one product.
 - For non-trivial refactors, `karpathy-guidelines` is the coding discipline to follow; for a new feature that touches existing code, lock the scope first (a frozen spec, see the proof loop above).
 - The `.cursorrules` file in repo root repeats the key coding rules for Cursor.

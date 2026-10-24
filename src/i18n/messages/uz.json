@@ -3287,7 +3287,21 @@
       "organizationLabel": "Tashkilot",
       "phoneLabel": "Javob uchun telefon",
       "timeLabel": "Vaqt",
-      "openPanel": "Murojaatlar panelini ochish"
+      "openPanel": "Murojaatlar panelini ochish",
+      "pageLabel": "Sahifa",
+      "ticketLabel": "Murojaat raqami"
+    },
+    "feedbackReceived": {
+      "subject": "{ticket}-murojaat qabul qilindi — WeSetup",
+      "layoutTitle": "Murojaat qabul qilindi",
+      "greeting": "Assalomu alaykum!",
+      "intro": "Murojaatingizni oldik va jamoaga topshirdik. Javob shu pochtaga va kabinetdagi bildirishnoma orqali keladi.",
+      "ticketLabel": "Murojaat raqami",
+      "messageLabel": "Murojaat matni",
+      "pageLabel": "Sahifa",
+      "attachmentsLabel": "Ilovalar: {count, number}",
+      "openWorkspace": "WeSetup’ni ochish",
+      "footer": "Murojaatni kabinetdagi qo‘llab-quvvatlash chatida yoki @wesetupbot Telegram-botida to‘ldirishingiz mumkin."
     },
     "feedbackReply": {
       "subject": "Murojaatingizga javob — WeSetup",
@@ -19213,6 +19227,24 @@
     "todayDescription": "Joriy smena vazifalari",
     "journalsName": "Jurnallar",
     "journalsDescription": "Jurnallar ro‘yxati"
+  },
+  "bugReport": {
+    "trigger": "Muammo haqida xabar berish",
+    "title": "Muammo haqida xabar berish",
+    "description": "Nima noto‘g‘ri ishlaganini yozing. Sahifa skrinshoti allaqachon biriktirilgan.",
+    "capturing": "Sahifa skrinshoti olinmoqda…",
+    "screenshotLabel": "Sahifa skrinshoti",
+    "screenshotFailed": "Skrinshot olinmadi — faylni qo‘lda biriktiring",
+    "removeScreenshot": "Skrinshotni olib tashlash",
+    "messageLabel": "Nima bo‘ldi?",
+    "messagePlaceholder": "Masalan: «Saqlash»ni bosaman, lekin yozuv paydo bo‘lmaydi",
+    "attachHint": "Fayl qo‘shing yoki rasmni Ctrl+V bilan qo‘ying",
+    "uploading": "Fayllar hali yuklanmoqda…",
+    "submit": "Yuborish",
+    "submitting": "Yuborilmoqda…",
+    "messageRequired": "Muammoni bir necha so‘z bilan yozing",
+    "success": "{ticket}-murojaat qabul qilindi. Javobni pochtaga yuboramiz.",
+    "successNoEmail": "{ticket}-murojaat qabul qilindi."
   },
   "feedbackDialog": {
     "trigger": "Fikr-mulohaza",

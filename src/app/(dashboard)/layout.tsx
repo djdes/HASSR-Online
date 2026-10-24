@@ -24,6 +24,7 @@ import {
 } from "@/components/theme/site-theme";
 import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
 import { SupportWidget } from "@/components/support/support-widget";
+import { BugReportLauncher } from "@/components/support/bug-report-launcher";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { UrgentJournalHotkey } from "@/components/layout/urgent-journal-hotkey";
 import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
@@ -604,6 +605,12 @@ export default async function DashboardLayout({
               Права на действия режутся на сервере (ACL, «своя строка /
               сегодня»), поэтому виджет безопасен и для рядовых ролей. */}
           <SanpinChatWidget />
+          {/* «Сообщить о проблеме» — ярлык с жуком у правого края, для
+              любого авторизованного: скриншот страницы, файлы и текст
+              уходят обращением-ошибкой (`/api/feedback`). */}
+          <DomainMessagesBoundary namespaces={["bugReport", "feedbackDialog"]}>
+            <BugReportLauncher />
+          </DomainMessagesBoundary>
           {/* Поддержка — доступна management+ из любого экрана. */}
           {hasFullWorkspaceAccess(session.user) ? (
             <SupportWidget

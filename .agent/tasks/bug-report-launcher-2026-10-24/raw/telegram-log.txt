@@ -1,0 +1,22 @@
+      kind      | status |                                    body                                    |                                    error                                    
+----------------+--------+----------------------------------------------------------------------------+-----------------------------------------------------------------------------
+ admin:feedback | failed | [attachment] extra.txt                                                     | Call to 'sendDocument' failed! (401: Unauthorized: invalid token specified)
+ admin:feedback | failed | [attachment] screenshot-2026-10-24-06-54-58.jpg                           +| Call to 'sendPhoto' failed! (401: Unauthorized: invalid token specified)
+                |        | 📎 <b>Тикет 9X2JR7</b> · #fb_cmvm1nmx30006nf7dl59x2jr7                    +| 
+                |        |                                                                           +| 
+                |        | Тестовый репорт: кнопка не работает &lt;b&gt;xss&lt;/b&gt;                +| 
+                |        | 🔗 http://localhost:3000/journals                                          | 
+ admin:feedback | failed | <b>🐞 Ошибка</b> · тикет 9X2JR7                                           +| Call to 'sendMessage' failed! (401: Unauthorized: invalid token specified)
+                |        |                                                                           +| 
+                |        | Тестовый репорт: кнопка не работает &lt;b&gt;xss&lt;/b&gt;                +| 
+                |        | 📎 screenshot-2026-10-24-06-54-58.jpg, extra.txt                          +| 
+                |        |                                                                           +| 
+                |        | 👤 Тестов Тест · bug@test.local                                           +| 
+                |        | 🏢 Тест Жучок                                                             +| 
+                |        | 🔗 http://localhost:3000/journals                                         +| 
+                |        |                                                                           +| 
+                |        | #fb_cmvm1nmx30006nf7dl59x2jr7                                             +| 
+                |        | <a href="http://localhost:3000/root/feedback">Открыть панель обращений</a> | 
+ admin:feedback | failed | [attachment] extra.txt                                                     | Call to 'sendDocument' failed! (401: Unauthorized: invalid token specified)
+(4 rows)
+

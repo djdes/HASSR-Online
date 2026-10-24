@@ -3287,7 +3287,21 @@
       "organizationLabel": "Organization",
       "phoneLabel": "Phone for reply",
       "timeLabel": "Time",
-      "openPanel": "Open the feedback inbox"
+      "openPanel": "Open the feedback inbox",
+      "pageLabel": "Page",
+      "ticketLabel": "Ticket"
+    },
+    "feedbackReceived": {
+      "subject": "Ticket {ticket} received — WeSetup",
+      "layoutTitle": "Ticket received",
+      "greeting": "Hello!",
+      "intro": "We’ve received your report and passed it to the team. You’ll get a reply by email and as a notification in your workspace.",
+      "ticketLabel": "Ticket number",
+      "messageLabel": "Your report",
+      "pageLabel": "Page",
+      "attachmentsLabel": "Attachments: {count, number}",
+      "openWorkspace": "Open WeSetup",
+      "footer": "To add details, write to support chat in your workspace or to the @wesetupbot Telegram bot."
     },
     "feedbackReply": {
       "subject": "Reply to your message — WeSetup",
@@ -19213,6 +19227,24 @@
     "todayDescription": "Tasks for the current shift",
     "journalsName": "Logs",
     "journalsDescription": "List of logs"
+  },
+  "bugReport": {
+    "trigger": "Report a problem",
+    "title": "Report a problem",
+    "description": "Describe what went wrong. A screenshot of the page is already attached.",
+    "capturing": "Taking a screenshot of the page…",
+    "screenshotLabel": "Page screenshot",
+    "screenshotFailed": "Couldn’t take a screenshot — attach a file manually",
+    "removeScreenshot": "Remove screenshot",
+    "messageLabel": "What happened?",
+    "messagePlaceholder": "For example: I press “Save” but the record doesn’t appear",
+    "attachHint": "Add files or paste an image with Ctrl+V",
+    "uploading": "Files are still uploading…",
+    "submit": "Send",
+    "submitting": "Sending…",
+    "messageRequired": "Describe the problem in a few words",
+    "success": "Ticket {ticket} received. We’ll reply by email.",
+    "successNoEmail": "Ticket {ticket} received."
   },
   "feedbackDialog": {
     "trigger": "Feedback",

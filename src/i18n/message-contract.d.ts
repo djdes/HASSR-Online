@@ -3288,7 +3288,21 @@ export type MessageContract = {
       "organizationLabel": "Организация",
       "phoneLabel": "Телефон для ответа",
       "timeLabel": "Время",
-      "openPanel": "Открыть панель обращений"
+      "openPanel": "Открыть панель обращений",
+      "pageLabel": "Страница",
+      "ticketLabel": "Тикет"
+    },
+    "feedbackReceived": {
+      "subject": "Обращение {ticket} принято — WeSetup",
+      "layoutTitle": "Обращение принято",
+      "greeting": "Здравствуйте!",
+      "intro": "Мы получили ваше обращение и передали его команде. Ответ придёт на эту почту и уведомлением в кабинете.",
+      "ticketLabel": "Номер обращения",
+      "messageLabel": "Текст обращения",
+      "pageLabel": "Страница",
+      "attachmentsLabel": "Вложения: {count, number}",
+      "openWorkspace": "Открыть WeSetup",
+      "footer": "Дополнить обращение можно в чате поддержки в кабинете или в Telegram-боте @wesetupbot."
     },
     "feedbackReply": {
       "subject": "Ответ на ваше обращение — WeSetup",
@@ -19214,6 +19228,24 @@ export type MessageContract = {
     "todayDescription": "Задачи текущей смены",
     "journalsName": "Журналы",
     "journalsDescription": "Список журналов"
+  },
+  "bugReport": {
+    "trigger": "Сообщить о проблеме",
+    "title": "Сообщить о проблеме",
+    "description": "Опишите, что пошло не так. Скриншот страницы уже прикреплён.",
+    "capturing": "Делаем скриншот страницы…",
+    "screenshotLabel": "Скриншот страницы",
+    "screenshotFailed": "Скриншот снять не удалось — прикрепите файл вручную",
+    "removeScreenshot": "Убрать скриншот",
+    "messageLabel": "Что случилось?",
+    "messagePlaceholder": "Например: нажимаю «Сохранить», а запись не появляется",
+    "attachHint": "Добавьте файлы или вставьте картинку через Ctrl+V",
+    "uploading": "Файлы ещё загружаются…",
+    "submit": "Отправить",
+    "submitting": "Отправляем…",
+    "messageRequired": "Опишите проблему хотя бы парой слов",
+    "success": "Обращение {ticket} принято. Мы ответим на почту.",
+    "successNoEmail": "Обращение {ticket} принято."
   },
   "feedbackDialog": {
     "trigger": "Обратная связь",
