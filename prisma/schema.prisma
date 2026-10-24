@@ -1664,6 +1664,9 @@ model FeedbackReport {
   respondedByName   String?
   /// Вложения: [{ url, filename, mimeType, sizeBytes }] — как у SupportMessage.
   attachments       Json?
+  /// Страница, с которой отправлен репорт (ярлык с жуком): абсолютный URL
+  /// нашего сайта, хост клиента отбрасывается (`src/lib/bug-report.ts`).
+  pageUrl           String?
   createdAt         DateTime  @default(now())
 
   @@index([createdAt])

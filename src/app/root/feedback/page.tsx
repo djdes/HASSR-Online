@@ -11,6 +11,7 @@ import {
   User,
   Building2,
   Filter,
+  Link2,
 } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -23,6 +24,7 @@ import {
 } from "@/lib/platform-admin";
 import type { Prisma } from "@prisma/client";
 import { parseStoredAttachments } from "@/lib/support-attachments";
+import { ticketCode } from "@/lib/bug-report";
 import { getPartnerThreadOwnership } from "@/lib/support-threads";
 import { threadKindOf } from "@/lib/support-threads-shared";
 import { FeedbackReply } from "./feedback-reply";
@@ -384,6 +386,8 @@ export default async function RootFeedbackPage({
                         </span>
                       ) : null}
                       <span className="ml-auto text-[12px] text-[#9b9fb3]">
+                        <span className="font-mono">{ticketCode(r.id)}</span>
+                        {" · "}
                         {formatFeedbackReportDate(r.createdAt, pageLocale)}
                       </span>
                     </div>
@@ -432,6 +436,17 @@ export default async function RootFeedbackPage({
                         >
                           <Phone className="size-3.5" />
                           {r.phone}
+                        </a>
+                      ) : null}
+                      {r.pageUrl ? (
+                        <a
+                          href={r.pageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex min-w-0 items-center gap-1.5 break-all hover:text-[#5566f6]"
+                        >
+                          <Link2 className="size-3.5 shrink-0" />
+                          {r.pageUrl.replace(/^https?:\/\/[^/]+/, "")}
                         </a>
                       ) : null}
                     </div>

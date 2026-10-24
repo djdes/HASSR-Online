@@ -681,6 +681,10 @@ export async function sendFeedbackAdminEmail(params: {
   attachmentLinks?: Array<{ url: string; filename: string }>;
   /** Файлы, вкладываемые в само письмо (мелкие; крупные — только ссылкой). */
   attachments?: EmailAttachment[];
+  /** Абсолютная ссылка на страницу, с которой отправлен репорт. */
+  pageUrl?: string | null;
+  /** Короткий номер тикета — тот же, что в письме автору. */
+  ticket?: string | null;
   locale?: Locale;
 }) {
   const {
@@ -730,10 +734,12 @@ export async function sendFeedbackAdminEmail(params: {
     </div>
     ${attachmentsBlock}
     <table style="width:100%;border-collapse:collapse;margin:0 0 24px">
+      ${row(t("email.feedbackAdmin.ticketLabel"), params.ticket)}
       ${row(t("email.feedbackAdmin.senderLabel"), userName)}
       ${row(t("email.feedbackAdmin.emailLabel"), userEmail)}
       ${row(t("email.feedbackAdmin.organizationLabel"), organizationName)}
       ${row(t("email.feedbackAdmin.phoneLabel"), phone)}
+      ${params.pageUrl ? `<tr><td style="padding:8px 0;border-bottom:1px solid #e4e4e7;color:#71717a;font-size:13px;width:140px">${t("email.feedbackAdmin.pageLabel")}</td><td style="padding:8px 0;border-bottom:1px solid #e4e4e7"><a href="${escapeHtml(params.pageUrl)}" style="color:#5566f6;word-break:break-all">${escapeHtml(params.pageUrl)}</a></td></tr>` : ""}
       <tr><td style="padding:8px 0;color:#71717a;font-size:13px">${t("email.feedbackAdmin.timeLabel")}</td><td style="padding:8px 0;color:#18181b">${escapeHtml(whenLabel)}</td></tr>
     </table>
     <a href="${APP_URL}/root/feedback" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.feedbackAdmin.openPanel")}</a>`;
@@ -743,6 +749,51 @@ export async function sendFeedbackAdminEmail(params: {
     subject,
     localizedLayout(t, locale, t("email.feedbackAdmin.layoutTitle", { feedbackType: typeLabel }), body),
     params.attachments
+  );
+}
+
+/**
+ * Подтверждение автору: обращение зарегистрировано, вот его номер.
+ *
+ * Без него человек отправлял форму в пустоту и через день писал ещё раз
+ * «вы получили?». Номер тот же, что видит админ в Telegram и письме, —
+ * по нему обращение находится в панели.
+ */
+export async function sendFeedbackReceivedEmail(params: {
+  to: string;
+  ticket: string;
+  message: string;
+  pageUrl?: string | null;
+  attachmentsCount?: number;
+  locale?: Locale;
+}): Promise<boolean> {
+  const locale = params.locale ?? "ru";
+  const t = await translatorFor(locale);
+  const subject = t("email.feedbackReceived.subject", { ticket: params.ticket });
+  const page = params.pageUrl
+    ? `<p style="margin:0 0 6px;font-size:13px;color:#71717a">${t("email.feedbackReceived.pageLabel")}: <a href="${escapeHtml(params.pageUrl)}" style="color:#5566f6;word-break:break-all">${escapeHtml(params.pageUrl)}</a></p>`
+    : "";
+  const files = params.attachmentsCount
+    ? `<p style="margin:0;font-size:13px;color:#71717a">${escapeHtml(t("email.feedbackReceived.attachmentsLabel", { count: params.attachmentsCount }))}</p>`
+    : "";
+  const body = `
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.feedbackReceived.greeting")}</p>
+    <p style="margin:0 0 20px;color:#3f3f46;line-height:1.6">${t("email.feedbackReceived.intro")}</p>
+    <div style="background:#eef1ff;border:1px solid #c7ccea;border-radius:8px;padding:16px 20px;margin:0 0 20px">
+      <p style="margin:0 0 4px;font-size:12px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:#3848c7">${t("email.feedbackReceived.ticketLabel")}</p>
+      <p style="margin:0;font-size:22px;font-weight:700;letter-spacing:2px;color:#0b1024">${escapeHtml(params.ticket)}</p>
+    </div>
+    <div style="border-left:3px solid #e4e4e7;padding:0 0 0 14px;margin:0 0 24px">
+      <p style="margin:0 0 6px;font-size:12px;color:#a1a1aa">${t("email.feedbackReceived.messageLabel")}</p>
+      <p style="margin:0 0 10px;white-space:pre-wrap;color:#3f3f46;font-size:14px;line-height:1.5">${escapeHtml(params.message)}</p>
+      ${page}${files}
+    </div>
+    <a href="${APP_URL}/dashboard" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.feedbackReceived.openWorkspace")}</a>
+    <p style="margin:24px 0 0;color:#71717a;font-size:13px">${t("email.feedbackReceived.footer")}</p>`;
+  return sendEmail(
+    params.to,
+    subject,
+    localizedLayout(t, locale, t("email.feedbackReceived.layoutTitle"), body)
   );
 }
 
