@@ -37,3 +37,4 @@ cp .env.shared .env && npm install && npx prisma generate && npx prisma db push 
 ## Git and Deployment
 Commit only the files you changed (`git add <specific files>`), with a Russian commit message.
 Deployment runs from GitHub Actions on every push to `master` (`.github/workflows/deploy.yml`); see AGENTS.md -> Deployment.
+Production gets only code from `origin/master`. Never deploy a branch, a tag, an old run (Re-run) or a local or uncommitted tree; see AGENTS.md -> "Production deploy rules".

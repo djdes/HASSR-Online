@@ -249,7 +249,7 @@ npm run test:gate        # npm test gated by the baseline tests/.legacy-failures
 ### CI/CD Pipeline
 
 File: `.github/workflows/deploy.yml`
-Trigger: push to `master` or manual `workflow_dispatch`.
+Trigger: push to `master` or manual `workflow_dispatch` on `master` (runs on any other branch or tag are rejected).
 
 Steps:
 1. Checkout, install Node.js 22, `npm ci`
@@ -259,6 +259,17 @@ Steps:
 5. On server: extract, restore `.env`, clean-install `npm ci`, `prisma generate`, `npm run build`, `prisma db push`
 6. Run seeds (`seed.ts`, `seed-job-positions.ts`, `seed-articles.ts`, `test-bot-wizard.ts`, `seed-demo-screenshots.ts`)
 7. Restart PM2 processes: `haccp-online` (web) + `haccp-telegram-poller` (bot)
+
+### Production deploy rules (master only)
+
+Production runs only code that is on `origin/master`. Everyone may deploy, and only from master:
+
+- **Normal path:** push to `master` and the workflow deploys it. To redeploy, use **Run workflow** with the `master` branch selected.
+- **Never deploy anything else:** not a feature, release or old branch, not a tag, not a local or uncommitted working tree, not a release snapshot (e.g. `.codex-releases/...`). Do not hot-patch or rebuild other code on the server. A fix that is not in master will be overwritten by the next deploy, so commit and push it to master first.
+- **Do not use Re-run on an old deploy run.** A re-run deploys that run's old commit with its old workflow file. Runs created before 2026-10-24 also lack the checks below, and runs from before 2026-10-16 still run `prisma db push --accept-data-loss`.
+- **Manual deploy** (`scripts/deploy.sh`, SSH) is only for when Actions is unavailable, and only from a clean checkout of the current `origin/master`, e.g. `git worktree add ../wesetup-deploy origin/master`. The script refuses anything else.
+- **Roll back** with `git revert` on master. The workflow refuses to deploy a commit older than the master commit production is serving.
+- **Keep branches fresh.** A branch carries its own copy of `deploy.yml`, and "Run workflow" on a branch uses that copy. Base branches on a fresh master and delete them after merging.
 
 ### Production Environment
 

@@ -1,0 +1,3 @@
+live: curl https://wesetup.ru/api/build-info | jq -r '.fullBuildId // .buildId // empty'
+16443845556ede621dbb241898b9c5086710fd4e
+date: 2026-10-24T05:22:17Z
