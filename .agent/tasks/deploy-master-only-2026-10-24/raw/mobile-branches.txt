@@ -1,0 +1,13 @@
+(2026-10-24T05:41:22Z)
+== mobile-e2e-android
+  b7c07d78 2026-10-24 05:40:11 +0000 Деплой: deploy.yml из master — с этой ветки на прод не выкатить [skip ci]
+  b9ac06f7 2026-09-28 03:39:31 +0300 Тесты Android, 5-й круг: сообщения проверяются на экране (под шапкой, не закрыты), клавиатура в форме записи распознаётся, голос в текстовом поле, гидратация
+  files in tip commit: .github/workflows/deploy.yml 
+  deploy.yml blob: 3c19912605df70287c65252daf4110907f384ebe
+== mobile-e2e-ios
+  e870a710 2026-10-24 05:40:12 +0000 Деплой: deploy.yml из master — с этой ветки на прод не выкатить [skip ci]
+  3fd0b76c 2026-09-28 07:09:26 +0300 Проверка iOS, раунд 8, после прогона 36373081937: S04d искал окно печати через driver.$ вместо driver.$$ (замена в String.replace съела «$») — окно печати в дереве не засчитывалось, хотя на кадре 014 оно на 6,6 с; «напечатать» (кнопка окна печати) больше не считается листом «Поделиться»; ожидание формы 90 с и страницы журнала 45 с — сервер отвечал на RSC до 260 с
+  files in tip commit: .github/workflows/deploy.yml 
+  deploy.yml blob: 3c19912605df70287c65252daf4110907f384ebe
+== this change: deploy.yml blob 3c19912605df70287c65252daf4110907f384ebe
+== latest workflow runs per branch (GitHub API, after the pushes): mobile-e2e-ios #31 2026-09-28T04:10:46Z (3fd0b76c), mobile-e2e-android #38 2026-09-28T00:42:14Z (b9ac06f7) — no runs for b7c07d78 / e870a710

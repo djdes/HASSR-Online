@@ -6,17 +6,17 @@
     "implementation": "845bdee1"
   },
   "verified_at": "2026-10-24",
-  "verdict": "BLOCKED",
-  "verdict_reason": "AC1: branch deletion refused by the session's git proxy (HTTP 403); needs manual deletion on GitHub",
+  "verdict": "PASS_WITH_CAVEAT",
+  "verdict_reason": "AC1-AC6 PASS; AC7: actionlint not run, the first master run after the merge is the check by GitHub's own parser",
   "criteria": {
     "AC1": {
-      "status": "BLOCKED",
+      "status": "PASS",
       "evidence": [
         "raw/codex-mobile-first-release-2026-10/README.txt",
         "raw/branch-delete.txt",
-        "raw/verify-remote-branches.txt"
+        "raw/verify-remote-branches-after.txt"
       ],
-      "note": "4 commits archived as patches (tip 6c9bae94, base ff81de23); deletion returned 403"
+      "note": "4 commits archived as patches (tip 6c9bae94, base ff81de23); session delete got 403, the owner deleted the branch on GitHub"
     },
     "AC2": {
       "status": "PASS",
@@ -67,7 +67,20 @@
   },
   "limitations": [
     "Guards apply only to runs created after the merge into master; re-runs of older runs (30 days) are not covered",
-    "Branches with the old deploy.yml (codex/mobile-first-release-2026-10, mobile-e2e-android, mobile-e2e-ios) can still be dispatched until deleted",
+    "New branches are covered only when created from a fresh master",
     "Manual SSH deploys outside scripts/deploy.sh are limited by the rule only"
-  ]
+  ],
+  "follow_up": {
+    "mobile_branches": {
+      "status": "DONE",
+      "evidence": [
+        "raw/mobile-branches.txt"
+      ],
+      "commits": {
+        "mobile-e2e-android": "b7c07d78",
+        "mobile-e2e-ios": "e870a710"
+      },
+      "note": "only .github/workflows/deploy.yml replaced with the guarded version (blob 3c19912); [skip ci], no e2e runs triggered"
+    }
+  }
 }

@@ -1,6 +1,9 @@
 # Problems — deploy-master-only-2026-10-24
 
-## 1. AC1: ветку не удалить из этой сессии
+## 1. AC1: ветку не удалить из этой сессии — решено
+
+Ветку удалил владелец в интерфейсе GitHub. Свежая проверка:
+`raw/verify-remote-branches-after.txt`.
 
 `git push origin --delete codex/mobile-first-release-2026-10` вернул HTTP 403.
 Прокси сессии пускает push только в её рабочую ветку
