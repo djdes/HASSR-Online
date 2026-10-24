@@ -328,6 +328,7 @@ function CleaningDayColorLegend() {
 export function CleaningDocumentClient(props: Props) {
   const locale = useLocale();
   const t = useTranslations("cleaningGrid.cleaning");
+  const ui = useTranslations("journalUi.cleaningDocument");
   const journalName = useTranslations("journals.names");
   const displayTitle = (value: string | undefined, fallback: string) => {
     const title = value || fallback;
@@ -1140,7 +1141,7 @@ export function CleaningDocumentClient(props: Props) {
     // Снятие подписи обратимо, поэтому не спрашиваем заранее, а даём
     // кнопку «Вернуть» — это и подтверждение, что действие прошло.
     if (next === "—" && previousVisible) {
-      toast.success(`Подпись снята: ${previousVisible}`, {
+      toast.success(ui("signatureRemoved", { name: previousVisible }), {
         action: {
           label: t("undoLabel"),
           onClick: () => {
@@ -1990,7 +1991,7 @@ export function CleaningDocumentClient(props: Props) {
       }
       setSelection([]);
       await patchDocument(nextConfig);
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(ui("rowsDeleted", { count }));
     } catch (error) {
       toast.error(humanizeFetchError(error, t("deleteSelectedRows"), t("networkError")));
     }
@@ -3062,7 +3063,7 @@ export function CleaningDocumentClient(props: Props) {
                       data-print-keep-bg={dayBg ? "" : undefined}
                       title={
                         interactive
-                          ? `${dayKind.name ? dayKind.name + " · " : ""}Тап циклит: пусто → ${cleaningCodes.join(" → ")} → пусто`
+                          ? `${dayKind.name ? dayKind.name + " · " : ""}${ui("tapCycleHint", { codes: cleaningCodes.join(" → ") })}`
                           : (dayKind.name ?? undefined)
                       }
                       role={interactive ? "button" : undefined}
@@ -3164,7 +3165,7 @@ export function CleaningDocumentClient(props: Props) {
                       data-print-keep-bg={dayBg ? "" : undefined}
                       title={
                         interactive
-                          ? `${dayKind.name ? dayKind.name + " · " : ""}Тап циклит: пусто → ${controlCodes.join(" → ")} → пусто`
+                          ? `${dayKind.name ? dayKind.name + " · " : ""}${ui("tapCycleHint", { codes: controlCodes.join(" → ") })}`
                           : (dayKind.name ?? undefined)
                       }
                       role={interactive ? "button" : undefined}

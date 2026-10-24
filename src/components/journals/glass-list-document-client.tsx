@@ -89,6 +89,7 @@ export function GlassListDocumentClient({
 }: Props) {
   const t = useTranslations("glassInventory");
   const journalNames = useTranslations("journals.names");
+  const ui = useTranslations("journalUi.glassList");
   const format = useFormatter();
   const router = useRouter();
   const isClosed = status === "closed";
@@ -308,7 +309,7 @@ export function GlassListDocumentClient({
                 <div className="font-semibold uppercase">{t("approvalHeading")}</div>
                 <div>{config.responsibleTitle === "Управляющий" || !config.responsibleTitle ? t("defaultResponsibleTitle") : config.responsibleTitle}</div>
                 <div>
-                  ____________________ {responsibleUser?.name || "Иванов И.И."}
+                  ____________________ {responsibleUser?.name || ui("sampleResponsibleName")}
                 </div>
                 <div>« {formatDisplayDate(format, config.documentDate, "long")}</div>
               </div>

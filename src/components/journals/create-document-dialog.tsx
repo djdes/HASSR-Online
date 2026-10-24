@@ -11,6 +11,7 @@ import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -117,7 +118,6 @@ import {
 } from "@/lib/sanitary-day-checklist-document";
 import {
   EQUIPMENT_CLEANING_TEMPLATE_CODE,
-  EQUIPMENT_CLEANING_VARIANT_LABELS,
   getDefaultEquipmentCleaningConfig,
   getEquipmentCleaningCreatePeriodBounds,
   type EquipmentCleaningFieldVariant,
@@ -197,13 +197,22 @@ export function CreateDocumentDialog({
   templateName,
   users,
   triggerClassName,
-  triggerLabel = "Создать документ",
+  triggerLabel,
   triggerIcon,
   triggerDataTour,
   nextLampNumber = "1",
   defaultResponsibleUserId: defaultResponsibleUserIdProp,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.createDocument");
+  const listT = useTranslations("journalControls.list");
+  const staffT = useTranslations("journalWidgets.staff");
+  const dialogT = useTranslations("journalControls.documentDialog");
+  const fpT = useTranslations("finishedProduct.settings");
+  const columnTemplatesT = useTranslations("journalControls.columnTemplates");
+  const coldT = useTranslations("coldEquipment.ui");
+  const hygieneListT = useTranslations("hygiene.list");
+  const quickAddT = useTranslations("journalControls.quickAdd");
   const formId = useId();
   const [open, setOpen] = useState(false);
   // Двойной тап по кнопке успевал отправить два одинаковых запроса:
@@ -421,7 +430,7 @@ export function CreateDocumentDialog({
     // Название обязательно везде, где поле показано (у uv_lamp_runtime
     // заголовок собирается из номера установки и участка).
     if (!isUvRuntimeJournal && !title.trim()) {
-      setTitleError("Поле не заполнено");
+      setTitleError(t("titleRequired"));
       setError("");
       return;
     }
@@ -559,7 +568,7 @@ export function CreateDocumentDialog({
           setError("");
           return;
         }
-        throw new Error(data?.error || "Ошибка создания");
+        throw new Error(data?.error || t("createFailed"));
       }
 
       const { document: doc } = await res.json();
@@ -567,7 +576,7 @@ export function CreateDocumentDialog({
       router.push(`/journals/${templateCode}/documents/${doc.id}`);
       router.refresh();
     } catch (err) {
-      setError(humanizeFetchError(err, "Ошибка"));
+      setError(humanizeFetchError(err, quickAddT("genericError")));
     } finally {
       release();
     }
@@ -651,7 +660,7 @@ export function CreateDocumentDialog({
     <DialogTrigger asChild>
       <Button className={cn(triggerClassName)} data-tour={triggerDataTour}>
         {triggerIcon || <Plus className="size-4" />}
-        {triggerLabel}
+        {triggerLabel ?? listT("create")}
       </Button>
     </DialogTrigger>
   );
@@ -662,7 +671,7 @@ export function CreateDocumentDialog({
           в первом поле, а «Создать документ: <длинное имя>» ломалось
           на 2-3 строки. */}
       <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-        Создание документа
+        {t("createTitle")}
       </DialogTitle>
     </DialogHeader>
   );
@@ -696,13 +705,23 @@ export function CreateDocumentDialog({
       }}
       positionLabel={
         isColdEquipmentJournal
-          ? "Должность ответственного за снятие показателей"
-          : "Должность ответственного"
+          ? coldT("responsiblePosition")
+          : staffT("responsiblePosition")
       }
-      employeeLabel="Ответственный"
+      employeeLabel={hygieneListT("responsible")}
       variant="floating"
     />
   );
+
+  const displayFormName = (form: JournalColumnTemplate) => {
+    if (!form.builtIn) return form.name;
+    switch (form.id) {
+      case "builtin:appendix4": return columnTemplatesT("templateNames.appendix4");
+      case "builtin:extended": return columnTemplatesT("templateNames.extended");
+      case "builtin:standard": return columnTemplatesT("templateNames.standard");
+      default: return form.name;
+    }
+  };
 
   /** Тумблер состава документа: подпись + Switch справа, как на эталоне. */
   const fieldToggle = (
@@ -758,11 +777,12 @@ export function CreateDocumentDialog({
           {duplicate && (
             <div className="rounded-2xl border border-[#ffd8a8] bg-[#fff8ed] p-4">
               <div className="text-[14px] font-medium text-[#0b1024]">
-                За этот период уже есть документ
+                {dialogT("duplicateTitle")}
               </div>
               <div className="mt-1 text-[13px] leading-[1.45] text-[#6f7282]">
-                «{duplicate.title}». Записи за одни и те же дни попадут в разные
-                документы, и ни один не будет выглядеть заполненным.
+                {duplicate.title
+                  ? dialogT("namedDuplicateDescription", { title: duplicate.title })
+                  : dialogT("duplicateDescription")}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
@@ -775,7 +795,7 @@ export function CreateDocumentDialog({
                     );
                   }}
                 >
-                  Открыть существующий
+                  {dialogT("openExisting")}
                 </Button>
                 <Button
                   type="button"
@@ -784,7 +804,7 @@ export function CreateDocumentDialog({
                   className="h-10 rounded-xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                   onClick={() => void createDocument(true)}
                 >
-                  Всё равно создать
+                  {dialogT("forceCreate")}
                 </Button>
               </div>
             </div>
@@ -800,21 +820,21 @@ export function CreateDocumentDialog({
                       поле подписано как номер, а итоговое название видно. */}
                   <FloatingInputField
                     id="uv-lamp-number"
-                    label="Номер установки"
-                    placeholder="Например: 1"
+                    label={t("uvNumber")}
+                    placeholder={t("uvNumberPlaceholder")}
                     value={trackedLampNumber}
                     onChange={setTrackedLampNumber}
                     required
                   />
                   <p className="-mt-1 text-[12.5px] leading-[1.45] text-[#6f7282]">
-                    Название документа соберётся само:{" "}
+                    {t("uvTitleAuto")}{" "}
                     <span className="font-medium text-[#3c4053]">
-                      «Бактерицидная установка №{trackedLampNumber.trim() || "1"}»
+                      {t("uvTitlePreview", { number: trackedLampNumber.trim() || "1" })}
                     </span>
                   </p>
                   <FloatingInputField
                     id="tracked-area-name"
-                    label="Наименование цеха/участка применения"
+                    label={t("uvAreaName")}
                     value={trackedAreaName}
                     onChange={setTrackedAreaName}
                   />
@@ -822,8 +842,8 @@ export function CreateDocumentDialog({
               ) : (
                 <FloatingInputField
                   id="doc-title"
-                  label="Название документа"
-                  placeholder="Введите название документа"
+                  label={staffT("documentName")}
+                  placeholder={staffT("documentNamePlaceholder")}
                   selectOnFocus
                   value={title}
                   onChange={handleTitleChange}
@@ -843,9 +863,9 @@ export function CreateDocumentDialog({
                       setMedBookIncludeVaccinations(value === true)
                     }
                     className="shrink-0"
-                    aria-label={'Включить раздел «Прививки»'}
+                    aria-label={t("medBookVaccinations")}
                   />
-                  Включить раздел «Прививки»
+                  {t("medBookVaccinations")}
                 </label>
               )}
 
@@ -857,7 +877,7 @@ export function CreateDocumentDialog({
                      Правка уже была сделана в ветке на строке ~788, но
                      general_cleaning попадает СЮДА (showCompactDateFrom),
                      и на проде подпись оставалась «Дата начала». */
-                  label={isGeneralCleaningJournal ? "Дата документа" : "Дата начала"}
+                  label={isGeneralCleaningJournal ? t("documentDate") : t("startDate")}
                   picker={isGeneralCleaningJournal ? "wheel" : "calendar"}
                   value={dateFrom}
                   onChange={(value) =>
@@ -874,15 +894,15 @@ export function CreateDocumentDialog({
                 <>
                   <DateField
                     id="perishable-date-to"
-                    label="Дата окончания"
+                    label={t("endDate")}
                     value={dateTo}
                     onChange={(value) => applyPeriod({ dateTo: value })}
                   />
-                  <FloatingLabelField label="Добавить поля">
+                  <FloatingLabelField label={fpT("addFields")}>
                     <div className="flex flex-col gap-3 pt-2">
                       {fieldToggle(
                         "perishable-note",
-                        "«Примечание»",
+                        t("noteToggle"),
                         perishableShowNote,
                         setPerishableShowNote
                       )}
@@ -892,7 +912,7 @@ export function CreateDocumentDialog({
               )}
 
               {(isEquipmentMaintenanceJournal || isEquipmentCalibrationJournal) && (
-                <FloatingLabelField label="Год" htmlFor="doc-year">
+                <FloatingLabelField label={t("year")} htmlFor="doc-year">
                   <select
                     id="doc-year"
                     value={dateFrom.slice(0, 4)}
@@ -919,12 +939,10 @@ export function CreateDocumentDialog({
               )}
 
               {isEquipmentCleaningJournal && (
-                <FloatingLabelField label="Колонка контроля">
+                <FloatingLabelField label={t("controlColumn")}>
                   <div className="flex flex-col gap-2 pt-1 text-[14px] text-[#0b1024]">
                     {(
-                      Object.keys(
-                        EQUIPMENT_CLEANING_VARIANT_LABELS
-                      ) as EquipmentCleaningFieldVariant[]
+                      ["rinse_temperature", "rinse_completeness"] as EquipmentCleaningFieldVariant[]
                     ).map((variant) => (
                       <label key={variant} className="flex items-center gap-2.5">
                         <input
@@ -933,7 +951,9 @@ export function CreateDocumentDialog({
                           onChange={() => setEquipmentCleaningVariant(variant)}
                           className="size-4 accent-[#5566f6]"
                         />
-                        {EQUIPMENT_CLEANING_VARIANT_LABELS[variant]}
+                        {variant === "rinse_temperature"
+                          ? t("rinseTemperature")
+                          : t("rinseCompleteness")}
                       </label>
                     ))}
                   </div>
@@ -944,14 +964,14 @@ export function CreateDocumentDialog({
                 <>
                   <FloatingInputField
                     id="product-writeoff-act-number"
-                    label="№ акта"
+                    label={t("actNumber")}
                     value={productWriteoffActNumber}
                     onChange={setProductWriteoffActNumber}
                     required
                   />
                   <FloatingInputField
                     id="product-writeoff-comment"
-                    label="Комментарий"
+                    label={t("comment")}
                     value={productWriteoffComment}
                     onChange={setProductWriteoffComment}
                   />
@@ -966,18 +986,18 @@ export function CreateDocumentDialog({
                       setMedBookIncludeVaccinations(checked === true)
                     }
                   />
-                  Добавить поле «Подпись инструктируемого»
+                  {t("traineeSignatureField")}
                 </label>
               )}
 
               {showResponsiblePicker && responsiblePicker}
 
               {isAcceptanceJournal && (
-                <FloatingLabelField label="Добавить поля">
+                <FloatingLabelField label={fpT("addFields")}>
                   <div className="flex flex-col gap-3 pt-2">
                     {fieldToggle(
                       "acceptance-packaging",
-                      "«Соответствие внешнего вида упаковки, маркировки требованиям НД»",
+                      t("packagingToggle"),
                       acceptanceShowPackaging,
                       setAcceptanceShowPackaging
                     )}
@@ -991,8 +1011,8 @@ export function CreateDocumentDialog({
             <>
               <FloatingInputField
                 id="doc-title-main"
-                label="Название документа"
-                placeholder="Введите название документа"
+                label={staffT("documentName")}
+                placeholder={staffT("documentNamePlaceholder")}
                 selectOnFocus
                 value={title}
                 onChange={handleTitleChange}
@@ -1004,7 +1024,7 @@ export function CreateDocumentDialog({
                   <DateField
                     id="doc-from"
                     label={
-                      isGeneralCleaningJournal ? "Дата документа" : "Дата начала"
+                      isGeneralCleaningJournal ? t("documentDate") : t("startDate")
                     }
                     value={dateFrom}
                     onChange={(value) => applyPeriod({ dateFrom: value })}
@@ -1012,7 +1032,7 @@ export function CreateDocumentDialog({
                   {showDateTo && (
                     <DateField
                       id="doc-to"
-                      label="Дата окончания"
+                      label={t("endDate")}
                       value={dateTo}
                       onChange={(value) => applyPeriod({ dateTo: value })}
                     />
@@ -1024,8 +1044,7 @@ export function CreateDocumentDialog({
 
               {isCleaningJournal && (
                 <p className="text-[13px] leading-[1.4] text-[#6f7282]">
-                  Ответственных за уборку и контроль можно настроить внутри
-                  документа.
+                  {t("cleaningResponsibleHint")}
                 </p>
               )}
 
@@ -1033,7 +1052,7 @@ export function CreateDocumentDialog({
                 <>
                   {/* Раньше обе радиогруппы назывались «Название поля» —
                       различить их было нельзя. */}
-                  <FloatingLabelField label="Колонка наименования">
+                  <FloatingLabelField label={fpT("nameColumn")}>
                     <div className="flex flex-col gap-2 pt-1 text-[14px] text-[#0b1024]">
                       <label className="flex items-center gap-2.5">
                         <input
@@ -1042,7 +1061,7 @@ export function CreateDocumentDialog({
                           onChange={() => setFpFieldNameMode("dish")}
                           className="size-4 accent-[#5566f6]"
                         />
-                        Наименование блюд (изделий)
+                        {fpT("dishName")}
                       </label>
                       <label className="flex items-center gap-2.5">
                         <input
@@ -1051,7 +1070,7 @@ export function CreateDocumentDialog({
                           onChange={() => setFpFieldNameMode("semi")}
                           className="size-4 accent-[#5566f6]"
                         />
-                        Наименование полуфабриката
+                        {fpT("semiName")}
                       </label>
                     </div>
                   </FloatingLabelField>
@@ -1064,42 +1083,41 @@ export function CreateDocumentDialog({
                       showCorrectiveAction — колонка примечаний при этом
                       не появлялась вовсе. Теперь каждый тумблер = ровно
                       одна колонка таблицы. */}
-                  <FloatingLabelField label="Форма журнала">
+                  <FloatingLabelField label={t("formLabel")}>
                     <div className="space-y-2 pt-1">
                       <select
                         value={fpFormId}
                         onChange={(event) => setFpFormId(event.target.value)}
                         className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-2 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-                        aria-label="Форма журнала"
+                        aria-label={t("formLabel")}
                       >
-                        {hasOrgColumns ? <option value="org">Общий набор колонок организации</option> : null}
+                        {hasOrgColumns ? <option value="org">{t("orgColumnSet")}</option> : null}
                         {fpForms.map((form) => (
                           <option key={form.id} value={form.id}>
-                            {form.builtIn ? "" : "Свой: "}
-                            {form.name}
+                            {form.builtIn ? "" : columnTemplatesT("customPrefix")}
+                            {displayFormName(form)}
                           </option>
                         ))}
                       </select>
                       <p className="text-[12.5px] leading-snug text-[#6f7282]">
-                        Колонки таблицы и печати. Любую колонку потом можно включить, скрыть или переименовать в
-                        «Настройках документа».
+                        {t("formHint")}
                       </p>
                       {fieldToggle(
                         "fp-note",
-                        "«Примечание под таблицей»",
+                        t("footerNoteToggle"),
                         fpShowFooterNote,
                         setFpShowFooterNote,
-                        "Текст печатается под таблицей; колонка «Примечание» у каждой строки — отдельно"
+                        t("footerNoteHint")
                       )}
                     </div>
                   </FloatingLabelField>
 
                   {fpShowFooterNote && (
                     <FloatingInputField
-                      label="Примечание под таблицей"
+                      label={fpT("footer")}
                       value={fpFooterNote}
                       onChange={setFpFooterNote}
-                      placeholder="Печатается под таблицей"
+                      placeholder={t("footerNotePlaceholder")}
                     />
                   )}
                 </>
@@ -1121,7 +1139,7 @@ export function CreateDocumentDialog({
               disabled={isSubmitting}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {isSubmitting ? "Создание..." : "Создать"}
+              {isSubmitting ? t("creating") : t("create")}
             </Button>
           </div>
         </div>

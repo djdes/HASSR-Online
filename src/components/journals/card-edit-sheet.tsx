@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { NumberField } from "@/components/journals/number-field";
@@ -66,7 +67,7 @@ export function CardEditSheet({
   onClose,
   onSubmit,
   saving = false,
-  submitLabel = "Сохранить",
+  submitLabel,
   copy,
 }: {
   open: boolean;
@@ -81,6 +82,8 @@ export function CardEditSheet({
   submitLabel?: string;
   copy?: { cancel: string; saving: string; missingPhoto: string };
 }) {
+  const t = useTranslations("journalUi.cardEdit");
+  const tc = useTranslations("common");
   const [draft, setDraft] = useState<CardEditValues>(values);
   const keyboardInset = useKeyboardInset();
 
@@ -130,7 +133,7 @@ export function CardEditSheet({
               onClick={onClose}
               className="h-12 flex-1 rounded-2xl border border-[#dcdfed] bg-white text-[15px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff]"
             >
-              {copy?.cancel ?? "Отмена"}
+              {copy?.cancel ?? tc("cancel")}
             </button>
             <button
               type="button"
@@ -141,10 +144,10 @@ export function CardEditSheet({
               className="h-12 flex-[1.4] rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-60"
             >
               {saving
-                ? (copy?.saving ?? "Сохранение…")
+                ? (copy?.saving ?? tc("saving"))
                 : missingPhoto
-                  ? (copy?.missingPhoto ?? "Нужно фото")
-                  : submitLabel}
+                  ? (copy?.missingPhoto ?? t("missingPhoto"))
+                  : (submitLabel ?? tc("save"))}
             </button>
           </div>
         </div>
@@ -191,7 +194,7 @@ export function CardEditSheet({
                 <input
                   type="text"
                   value={textOf(field.key)}
-                  placeholder="Фамилия и инициалы"
+                  placeholder={t("signaturePlaceholder")}
                   autoComplete="name"
                   onChange={(event) => setValue(field.key, event.target.value)}
                   className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"

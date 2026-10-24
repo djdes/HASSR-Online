@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   CalendarDays,
   ChevronDown,
@@ -207,12 +208,12 @@ function createId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-async function requestJson(url: string, init: RequestInit) {
+async function requestJson(url: string, init: RequestInit, fallbackError: string) {
   const response = await fetch(url, init);
   const json = await response.json().catch(() => null);
   if (!response.ok) {
     throw new Error(
-      (json && typeof json.error === "string" && json.error) || "Операция не выполнена"
+      (json && typeof json.error === "string" && json.error) || fallbackError
     );
   }
   return json;
@@ -298,6 +299,8 @@ function DocumentSettingsDialog(props: {
   onSubmit: (value: SettingsState) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("journalUi.cleaningVentilationDocument");
+  const g = useTranslations();
   const [state, setState] = useState<SettingsState>(props.initial);
   const [submitting, setSubmitting] = useState(false);
   // Окно открывается снаружи (setSettingsOpen), и Radix onOpenChange(true)
@@ -344,8 +347,8 @@ function DocumentSettingsDialog(props: {
           if (nextOpen) setState(props.initial);
           props.onOpenChange(nextOpen);
         }}
-        title="Настройки документа"
-        description="Название документа, дата начала, режим проветривания и ответственный сотрудник."
+        title={g("journalControls.actions.settings")}
+        description={t("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -353,7 +356,7 @@ function DocumentSettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {g("journalWidgets.staff.documentName")}
           </Label>
           <Input
             value={state.title}
@@ -365,7 +368,7 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
+            {t("startDate")}
           </Label>
           <Input
             type="date"
@@ -387,22 +390,22 @@ function DocumentSettingsDialog(props: {
             }
           />
           <div className="text-[14px] text-[#0b1024]">
-            Проветривание
+            {t("ventilation")}
             <div className="mt-0.5 text-[12px] text-[#6f7282]">
-              Включайте если помещение реально проветривается.
+              {t("ventilationHintShort")}
             </div>
           </div>
         </label>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного
+            {g("journalWidgets.staff.responsiblePosition")}
           </Label>
           <Select
             value={state.mainResponsibleTitle}
             onValueChange={mainCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={g("journalWidgets.staff.selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={props.users} />
@@ -411,7 +414,7 @@ function DocumentSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
+            {g("journals.employee")}
           </Label>
           <Select
             value={state.mainResponsibleUserId}
@@ -420,7 +423,7 @@ function DocumentSettingsDialog(props: {
             onOpenChange={mainCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={g("journalWidgets.staff.selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {mainCandidates.map(
@@ -451,13 +454,13 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки документа
+              {g("journalControls.actions.settings")}
             </DialogTitle>
           </div>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Название документа</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{g("journalWidgets.staff.documentName")}</Label>
             <Input
               value={state.title}
               onChange={(event) => setState((current) => ({ ...current, title: event.target.value }))}
@@ -465,7 +468,7 @@ function DocumentSettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Дата начала</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{t("startDate")}</Label>
             <div className="relative">
               <Input
                 type="date"
@@ -487,21 +490,20 @@ function DocumentSettingsDialog(props: {
                 }
                 className="size-6 rounded-[10px]"
               />
-              <span className="text-[15px] text-black">Проветривание</span>
+              <span className="text-[15px] text-black">{t("ventilation")}</span>
             </label>
             <p className="text-[15px] text-black/70">
-              Включайте, если помещение действительно проветривается. Без окон магия не сработает,
-              даже если кожаные очень верят.
+              {t("ventilationHintLong")}
             </p>
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{g("journalWidgets.staff.responsiblePosition")}</Label>
             <Select
               value={state.mainResponsibleTitle}
               onValueChange={mainCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={g("journalControls.positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
@@ -509,7 +511,7 @@ function DocumentSettingsDialog(props: {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{g("journals.employee")}</Label>
             <Select
               value={state.mainResponsibleUserId}
               onValueChange={mainCascade.handleEmployeeChange}
@@ -517,7 +519,7 @@ function DocumentSettingsDialog(props: {
               onOpenChange={mainCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={g("journalControls.positionSelect.chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {mainCandidates.map((user) => (
@@ -543,7 +545,7 @@ function DocumentSettingsDialog(props: {
                 }
               }}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? g("cleaningGrid.cleaning.saving") : g("common.save")}
             </Button>
           </div>
         </div>
@@ -558,6 +560,7 @@ function AddResponsibleDialog(props: {
   users: UserItem[];
   onAdd: (responsible: CleaningVentilationResponsible) => Promise<void>;
 }) {
+  const g = useTranslations();
   const [title, setTitle] = useState("");
   const [userId, setUserId] = useState("");
   const cascade = usePositionEmployeeCascade({
@@ -588,19 +591,19 @@ function AddResponsibleDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Добавление ответственного лица
+              {g("cleaningGrid.cleaning.addResponsibleTitle")}
             </DialogTitle>
           </div>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Должность ответственного</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{g("journalWidgets.staff.responsiblePosition")}</Label>
             <Select
               value={title}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={g("journalControls.positionSelect.choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
@@ -608,7 +611,7 @@ function AddResponsibleDialog(props: {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">{g("journals.employee")}</Label>
             <Select
               value={userId}
               onValueChange={cascade.handleEmployeeChange}
@@ -616,7 +619,7 @@ function AddResponsibleDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={g("journalControls.positionSelect.chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {candidates.map((user) => (
@@ -643,7 +646,7 @@ function AddResponsibleDialog(props: {
                 props.onOpenChange(false);
               }}
             >
-              Добавить
+              {g("common.add")}
             </Button>
           </div>
         </div>
@@ -662,6 +665,8 @@ function AddPeriodicityDialog(props: {
   onOpenChange: (open: boolean) => void;
   onAdd: (line: string) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.cleaningVentilationDocument");
+  const g = useTranslations();
   const [line, setLine] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -676,24 +681,23 @@ function AddPeriodicityDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Добавление периодичности
+            {t("addPeriodicityTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
           <div className="space-y-2">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Строка периодичности
+              {t("periodicityLine")}
             </Label>
             <Input
               value={line}
               autoFocus
-              placeholder="Например: Мытьё окон – 1 раз в неделю"
+              placeholder={t("periodicityPlaceholder")}
               onChange={(event) => setLine(event.target.value)}
               className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
             <p className="text-[12px] leading-[1.45] text-[#6f7282]">
-              Появится в блоке «Периодичность» внутри таблицы и в печатной
-              форме.
+              {t("periodicityHint")}
             </p>
           </div>
           <div className="flex justify-end pt-2">
@@ -711,7 +715,7 @@ function AddPeriodicityDialog(props: {
                 }
               }}
             >
-              {saving ? "Добавление..." : "Добавить"}
+              {saving ? t("adding") : g("common.add")}
             </Button>
           </div>
         </div>
@@ -733,6 +737,8 @@ function AddChecklistDateDialog(props: {
   hiddenDates: string[];
   onAdd: (date: string) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.cleaningVentilationDocument");
+  const g = useTranslations();
   const [date, setDate] = useState(props.suggested);
   const [saving, setSaving] = useState(false);
 
@@ -757,13 +763,13 @@ function AddChecklistDateDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Добавление даты
+            {t("addDateTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
           <div className="space-y-2">
             <Label className="text-[13px] font-medium text-[#3c4053]">
-              Дата строки
+              {t("rowDate")}
             </Label>
             <Input
               type="date"
@@ -774,15 +780,16 @@ function AddChecklistDateDialog(props: {
               className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
             <p className="text-[12px] leading-[1.45] text-[#6f7282]">
-              Можно внести день задним числом — в пределах периода документа
-              ({formatRuDate(props.min)} — {formatRuDate(props.max)}) и не в
-              будущее. Предложена ближайшая отсутствующая дата.
+              {t("dateHint", {
+                min: formatRuDate(props.min),
+                max: formatRuDate(props.max),
+              })}
             </p>
           </div>
           {props.hiddenDates.length > 0 ? (
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                Вернуть удалённую дату
+                {t("restoreDeletedDate")}
               </Label>
               <div className="flex flex-wrap gap-2">
                 {props.hiddenDates.map((item) => (
@@ -806,7 +813,7 @@ function AddChecklistDateDialog(props: {
               onClick={() => void submit(date)}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              {saving ? "Добавление..." : "Добавить"}
+              {saving ? t("adding") : g("common.add")}
             </Button>
           </div>
         </div>
@@ -828,6 +835,8 @@ export function CleaningVentilationChecklistDocumentClient({
   initialEntries,
   useV2 = false,
 }: Props) {
+  const t = useTranslations("journalUi.cleaningVentilationDocument");
+  const g = useTranslations();
   const router = useRouter();
   // «Сегодня» считаем после mount (см. useTodayKey): new Date() в
   // рендере давал hydration mismatch и подсветку не того дня.
@@ -996,7 +1005,7 @@ export function CleaningVentilationChecklistDocumentClient({
         // только config.autoFillEnabled — держим оба в одном состоянии.
         autoFill: safeConfig.autoFillEnabled,
       }),
-    });
+    }, g("journalWidgets.staff.operationFailed"));
     setConfig(safeConfig);
     router.refresh();
   };
@@ -1033,7 +1042,7 @@ export function CleaningVentilationChecklistDocumentClient({
         date: dateKey,
         data: nextData,
       }),
-    });
+    }, g("journalWidgets.staff.operationFailed"));
 
     // Ref обновляем СРАЗУ, не дожидаясь перерисовки: следующий ввод
     // времени может начаться раньше, чем React применит setState.
@@ -1123,7 +1132,7 @@ export function CleaningVentilationChecklistDocumentClient({
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
-      });
+      }, g("journalWidgets.staff.operationFailed"));
     }
 
     const nextConfig = {
@@ -1198,10 +1207,10 @@ export function CleaningVentilationChecklistDocumentClient({
         onClear={() => setSelection([])}
         onDelete={() => {
           clearSelectedRows().catch((error) =>
-            toast.error(humanizeFetchError(error, "Не удалось удалить строки"))
+            toast.error(humanizeFetchError(error, t("deleteRowsFailed")))
           );
         }}
-        hint="Выбранные даты будут скрыты из чек-листа, их отметки удалены"
+        hint={t("selectionHint")}
       />
 
       {/* V7: белой карточки-обёртки вокруг страницы нет ни у эталона, ни
@@ -1226,10 +1235,9 @@ export function CleaningVentilationChecklistDocumentClient({
               ? [
                   {
                     key: "copy-yesterday",
-                    label: "Скопировать вчерашнее",
+                    label: g("journalWidgets.staff.copyYesterday"),
                     icon: <Copy className="size-4" />,
-                    title:
-                      "Создать сегодняшние строки по вчерашним значениям — удобно, когда ничего не поменялось.",
+                    title: t("copyYesterdayHint"),
                     onSelect: () => void copyYesterday.run(false),
                     disabled: copyYesterday.busy,
                   },
@@ -1241,7 +1249,7 @@ export function CleaningVentilationChecklistDocumentClient({
         </DocumentActionsBar>
 
         {!isActive ? (
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки." documentId={documentId} />
+          <JournalClosedBanner hint={t("closedHint")} documentId={documentId} />
         ) : (
           (() => {
             // Сегодня закрыто, когда у каждой процедуры дня проставлено
@@ -1258,7 +1266,7 @@ export function CleaningVentilationChecklistDocumentClient({
                   journalCode="cleaning_ventilation_checklist"
                   total={total}
                   filled={filled}
-                  label="процедур"
+                  label={t("proceduresLabel")}
                 />
               </div>
             );
@@ -1282,7 +1290,7 @@ export function CleaningVentilationChecklistDocumentClient({
                 disabled={!isActive}
                 onCheckedChange={(checked) => {
                   persistConfig({ ...config, autoFillEnabled: checked === true }).catch((error) =>
-                    toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
+                    toast.error(humanizeFetchError(error, g("journalControls.documentDialog.settingsError")))
                   );
                 }}
                 className="data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d4d8ec]"
@@ -1293,16 +1301,16 @@ export function CleaningVentilationChecklistDocumentClient({
                 // «Автоматически запол…» при свободном месте во второй строке.
                 className={`block min-w-0 cursor-pointer break-words ${DOC_AUTOFILL_LABEL_CLASS}`}
               >
-                Автоматически заполнять чек-лист
+                {t("autoFill")}
               </label>
             </div>
             <button
               type="button"
               onClick={() => setPanelOpen((current) => !current)}
               className="ml-auto inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#5566f6]/[0.06] px-3 text-[13.5px] font-semibold text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.11]"
-              title={panelOpen ? "Свернуть настройки автозаполнения" : "Показать время и ответственных"}
+              title={panelOpen ? t("collapseAutofillTitle") : t("showTimesTitle")}
             >
-              {panelOpen ? "Свернуть" : "Настроить"}
+              {panelOpen ? t("collapse") : g("cleaningGrid.cleaning.configure")}
               {panelOpen ? (
                 <ChevronUp className="size-4" />
               ) : (
@@ -1339,7 +1347,7 @@ export function CleaningVentilationChecklistDocumentClient({
                               : item
                           );
                           persistConfig({ ...config, procedures: nextProcedures }).catch((error) =>
-                            toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
+                            toast.error(humanizeFetchError(error, g("journalControls.documentDialog.settingsError")))
                           );
                         }}
                       />
@@ -1347,7 +1355,7 @@ export function CleaningVentilationChecklistDocumentClient({
                   ))}
 
                   <div className="flex flex-col gap-3 md:flex-row md:items-center">
-                    <div className="w-full text-[18px] text-black md:w-[180px]">ФИО отв. лица</div>
+                    <div className="w-full text-[18px] text-black md:w-[180px]">{t("responsibleShort")}</div>
                     <Select
                       value={procedure.responsibleUserId}
                       disabled={!isActive}
@@ -1356,7 +1364,7 @@ export function CleaningVentilationChecklistDocumentClient({
                           item.id === procedure.id ? { ...item, responsibleUserId: value } : item
                         );
                         persistConfig({ ...config, procedures: nextProcedures }).catch((error) =>
-                          toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
+                          toast.error(humanizeFetchError(error, g("journalControls.documentDialog.settingsError")))
                         );
                       }}
                     >
@@ -1381,12 +1389,12 @@ export function CleaningVentilationChecklistDocumentClient({
                   disabled={!isActive}
                   onCheckedChange={(checked) => {
                     persistConfig({ ...config, skipWeekends: checked === true }).catch((error) =>
-                      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
+                      toast.error(humanizeFetchError(error, g("journalControls.documentDialog.settingsError")))
                     );
                   }}
                   className="size-6 rounded-[10px]"
                 />
-                Не заполнять в выходные дни
+                {t("skipWeekends")}
               </label>
             </div>
             </div>
@@ -1443,7 +1451,7 @@ export function CleaningVentilationChecklistDocumentClient({
                 <td
                   className={`${GRID_HEAD_CELL_CLASS} w-[180px] px-5 py-2 align-top text-[16px] font-semibold leading-tight print:w-[14%]`}
                 >
-                  Процедура
+                  {t("procedure")}
                 </td>
                 <td
                   className={`border-r border-[#333] print:border-black px-5 py-2 align-top text-[15px] leading-6 print:w-[46%] ${
@@ -1460,7 +1468,7 @@ export function CleaningVentilationChecklistDocumentClient({
                 <td
                   className={`${GRID_HEAD_CELL_CLASS} w-[210px] px-5 py-2 align-top text-[16px] font-semibold leading-tight print:w-[16%]`}
                 >
-                  Периодичность
+                  {t("periodicity")}
                 </td>
                 <td className="w-[260px] p-0 align-top text-[15px] leading-6 print:w-[24%]">
                   <div className="space-y-1 px-5 py-2">
@@ -1478,7 +1486,7 @@ export function CleaningVentilationChecklistDocumentClient({
                         {isActive ? (
                           <button
                             type="button"
-                            aria-label={`Удалить периодичность «${line}»`}
+                            aria-label={t("deletePeriodicityAria", { line })}
                             className="shrink-0 text-[#ff3b30] transition-colors duration-150 hover:text-[#d92b21] print:hidden"
                             onClick={() => {
                               persistConfig({
@@ -1488,7 +1496,7 @@ export function CleaningVentilationChecklistDocumentClient({
                                 ).filter((_, itemIndex) => itemIndex !== index),
                               }).catch((error) =>
                                 toast.error(
-                                  humanizeFetchError(error, "Не удалось обновить периодичность")
+                                  humanizeFetchError(error, t("updatePeriodicityFailed"))
                                 )
                               );
                             }}
@@ -1506,7 +1514,7 @@ export function CleaningVentilationChecklistDocumentClient({
                       onClick={() => setPeriodicityDialogOpen(true)}
                     >
                       <Plus className="size-5" strokeWidth={2.5} />
-                      Добавить периодичность
+                      {t("addPeriodicity")}
                     </button>
                   ) : null}
                 </td>
@@ -1515,7 +1523,7 @@ export function CleaningVentilationChecklistDocumentClient({
                 <td
                   className={`${GRID_HEAD_CELL_CLASS} w-[180px] px-5 py-2 align-top text-[16px] font-semibold leading-tight print:w-[14%]`}
                 >
-                  Ответственные лица
+                  {t("responsibles")}
                 </td>
                 {/* R5-3в: у ячейки не было НИ ОДНОЙ рамки, а строка
                     «Ответственные лица» — последняя в бланке, поэтому на
@@ -1537,12 +1545,12 @@ export function CleaningVentilationChecklistDocumentClient({
                       return (
                         <div key={responsible.id} className="flex items-center justify-between gap-3">
                           <span>
-                            {responsibleTitle} - {user?.name || "Не выбран"}
+                            {responsibleTitle} - {user?.name || g("sanitationPestPdf.notSelected")}
                           </span>
                           {isActive ? (
                             <button
                               type="button"
-                              aria-label={`Удалить ответственного «${responsibleTitle}»`}
+                              aria-label={t("deleteResponsibleAria", { title: responsibleTitle })}
                               /* R5-3а: без print:hidden иконки-корзины
                                  уходили на бумагу — в официальном бланке
                                  у каждого ответственного печаталась
@@ -1556,7 +1564,7 @@ export function CleaningVentilationChecklistDocumentClient({
                                   ),
                                 }).catch((error) =>
                                   toast.error(
-                                    humanizeFetchError(error, "Не удалось обновить список ответственных")
+                                    humanizeFetchError(error, t("updateResponsiblesFailed"))
                                   )
                                 );
                               }}
@@ -1578,7 +1586,7 @@ export function CleaningVentilationChecklistDocumentClient({
                       onClick={() => setResponsibleDialogOpen(true)}
                     >
                       <Plus className="size-5" strokeWidth={2.5} />
-                      Добавить ответственного
+                      {t("addResponsible")}
                     </button>
                   ) : null}
                 </td>
@@ -1594,7 +1602,7 @@ export function CleaningVentilationChecklistDocumentClient({
             items={rows.map((row, index) => ({
               id: row.dateKey,
               title: `№${index + 1} · ${formatRuDate(row.dateKey)}`,
-              subtitle: `${row.procedures.length} процедур`,
+              subtitle: t("procedureCount", { count: row.procedures.length }),
               leading: isActive ? (
                 <Checkbox
                   checked={selection.includes(row.dateKey)}
@@ -1632,11 +1640,11 @@ export function CleaningVentilationChecklistDocumentClient({
                           procedureId: procedure.id,
                         })
                     : undefined,
-                  hint: editable ? "нажмите, чтобы изменить время" : undefined,
+                  hint: editable ? t("tapToEditTime") : undefined,
                 };
               }),
             }))}
-            emptyLabel="Журнал пока пуст."
+            emptyLabel={t("emptyJournal")}
           />
         ) : null}
 
@@ -1650,7 +1658,7 @@ export function CleaningVentilationChecklistDocumentClient({
               className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]"
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Добавить
+              {g("common.add")}
             </Button>
           ) : null}
         </div>
@@ -1699,22 +1707,22 @@ export function CleaningVentilationChecklistDocumentClient({
                   </div>
                 </th>
                 <th className={`${CHECKLIST_STICKY_HEAD_CLASS} border-r px-4 py-4 text-left`}>
-                  Дата
+                  {g("journals.date")}
                 </th>
                 <th className={`${CHECKLIST_STICKY_HEAD_CLASS} border-r px-4 py-4 text-left`}>
-                  Процедура
+                  {t("procedure")}
                 </th>
                 <th className={`${CHECKLIST_STICKY_HEAD_CLASS} border-r px-4 py-4 text-center`}>
-                  Время 1
+                  {t("timeN", { n: 1 })}
                 </th>
                 <th className={`${CHECKLIST_STICKY_HEAD_CLASS} border-r px-4 py-4 text-center`}>
-                  Время 2
+                  {t("timeN", { n: 2 })}
                 </th>
                 <th className={`${CHECKLIST_STICKY_HEAD_CLASS} border-r px-4 py-4 text-center`}>
-                  Время 3
+                  {t("timeN", { n: 3 })}
                 </th>
                 <th className={`${CHECKLIST_STICKY_HEAD_CLASS} px-4 py-4 text-left`}>
-                  ФИО ответственного лица
+                  {t("responsibleFullName")}
                 </th>
               </tr>
             </thead>
@@ -1791,7 +1799,7 @@ export function CleaningVentilationChecklistDocumentClient({
                                 updateProcedureTime(row.dateKey, procedure, timeIndex, value).catch(
                                   (error) =>
                                     toast.error(
-                                      humanizeFetchError(error, "Не удалось сохранить время")
+                                      humanizeFetchError(error, t("saveTimeFailed"))
                                     )
                                 );
                               }}
@@ -1856,7 +1864,7 @@ export function CleaningVentilationChecklistDocumentClient({
             await addManualDate(date);
           } catch (error) {
             toast.error(
-              humanizeFetchError(error, "Не удалось добавить дату")
+              humanizeFetchError(error, t("addDateFailed"))
             );
             throw error;
           }
@@ -1905,7 +1913,7 @@ export function CleaningVentilationChecklistDocumentClient({
           (_, index) => ({
             type: "time" as const,
             key: `time${index}`,
-            label: slotCount > 1 ? `Время ${index + 1}` : "Время",
+            label: slotCount > 1 ? t("timeN", { n: index + 1 }) : g("journals.time"),
           })
         );
         const values: CardEditValues = {};
@@ -1916,7 +1924,7 @@ export function CleaningVentilationChecklistDocumentClient({
         return (
           <CardEditSheet
             open={Boolean(procedure)}
-            title={procedure?.label ?? "Процедура"}
+            title={procedure?.label ?? t("procedure")}
             subtitle={
               editingRow ? formatRuDate(editingRow.dateKey) : undefined
             }
@@ -1928,7 +1936,7 @@ export function CleaningVentilationChecklistDocumentClient({
               editProcedure(editingProcedure.dateKey, procedure, next).catch(
                 (error) =>
                   toast.error(
-                    humanizeFetchError(error, "Не удалось сохранить время")
+                    humanizeFetchError(error, t("saveTimeFailed"))
                   )
               );
             }}

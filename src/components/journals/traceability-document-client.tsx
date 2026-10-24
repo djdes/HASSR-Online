@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
@@ -250,8 +250,8 @@ function draftToRow(draft: TraceabilityRowDraft) {
     responsibleEmployee: draft.responsibleEmployee,
   });
 }
-function formatImportErrors(errors: TraceabilityImportError[]) {
-  return errors.slice(0, 8).map((item) => `Строка ${item.rowNumber}: ${item.errors.join("; ")}`).join("\n");
+function formatImportErrors(errors: TraceabilityImportError[], rowLabel: (rowNumber: number) => string) {
+  return errors.slice(0, 8).map((item) => `${rowLabel(item.rowNumber)}: ${item.errors.join("; ")}`).join("\n");
 }
 
 function SettingsDialog(props: {
@@ -263,6 +263,9 @@ function SettingsDialog(props: {
   useV2?: boolean;
 }) {
   const [draft, setDraft] = useState<TraceabilitySettingsDraft | null>(null);
+  const ui = useTranslations("journalUi.traceability");
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [loading, setLoading] = useState(false);
   useEffect(() => { if (props.open) setDraft(props.initial); }, [props.initial, props.open]);
   async function save() {
@@ -273,7 +276,7 @@ function SettingsDialog(props: {
       props.onOpenChange(false);
     } catch (error) {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
-      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"));
+      toast.error(humanizeFetchError(error, ui("saveSettingsFailed")));
     } finally {
       setLoading(false);
     }
@@ -285,7 +288,7 @@ function SettingsDialog(props: {
         open={props.open}
         onOpenChange={props.onOpenChange}
         title={props.title}
-        description="Название документа, дата начала и опциональные блоки."
+        description={ui("settingsDescription")}
         size="md"
         isSaving={loading}
         saveDisabled={!draft}
@@ -296,7 +299,7 @@ function SettingsDialog(props: {
           <>
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Название документа
+                {ui("documentName")}
               </Label>
               <Input
                 value={draft.title}
@@ -306,7 +309,7 @@ function SettingsDialog(props: {
             </div>
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Дата начала
+                {ui("dateFrom")}
               </Label>
               <Input
                 type="date"
@@ -317,17 +320,17 @@ function SettingsDialog(props: {
             </div>
             <div className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Дополнительные поля
+                {ui("additionalFields")}
               </div>
               <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors hover:bg-[#f5f6ff]">
-                <span className="text-[14px] text-[#0b1024]">T °C продукта после шоковой заморозки</span>
+                <span className="text-[14px] text-[#0b1024]">{ui("shockTempFull")}</span>
                 <Switch
                   checked={draft.showShockTempField}
                   onCheckedChange={(checked) => setDraft({ ...draft, showShockTempField: checked })}
                 />
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors hover:bg-[#f5f6ff]">
-                <span className="text-[14px] text-[#0b1024]">Блок «Отгружено»</span>
+                <span className="text-[14px] text-[#0b1024]">{ui("shipmentBlock")}</span>
                 <Switch
                   checked={draft.showShipmentBlock}
                   onCheckedChange={(checked) => setDraft({ ...draft, showShipmentBlock: checked })}
@@ -351,11 +354,11 @@ function SettingsDialog(props: {
         </DialogHeader>
         {draft && (
           <div className="space-y-5 px-8 py-6">
-            <div className="space-y-2"><Label className="text-[14px] text-[#7a7c8e]">Название документа</Label><Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>
-            <div className="space-y-2"><Label className="text-[14px] text-[#7a7c8e]">Дата начала</Label><div className="relative"><Input type="date" value={draft.dateFrom} onChange={(e) => setDraft({ ...draft, dateFrom: normalizeIsoDate(e.target.value) })} className="h-10 rounded-xl border-[#d8dae6] px-6 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
-            <div className="space-y-4 rounded-[28px] border border-[#e3e5f0] px-5 py-5"><div className="text-[20px] font-medium tracking-[-0.02em] text-black">Добавить поле</div><div className="flex items-center justify-between gap-4 rounded-[24px] bg-[#f7f8fd] px-5 py-4"><Label className="text-[18px] leading-tight text-black">T °C продукта после шоковой заморозки</Label><Switch checked={draft.showShockTempField} onCheckedChange={(checked) => setDraft({ ...draft, showShockTempField: checked })} /></div></div>
-            <div className="space-y-4 rounded-[28px] border border-[#e3e5f0] px-5 py-5"><div className="text-[20px] font-medium tracking-[-0.02em] text-black">Добавить блок</div><div className="flex items-center justify-between gap-4 rounded-[24px] bg-[#f7f8fd] px-5 py-4"><Label className="text-[18px] leading-tight text-black">Отгружено</Label><Switch checked={draft.showShipmentBlock} onCheckedChange={(checked) => setDraft({ ...draft, showShipmentBlock: checked })} /></div></div>
-            <div className="flex justify-end pt-2"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? "Сохранение..." : "Сохранить"}</Button></div>
+            <div className="space-y-2"><Label className="text-[14px] text-[#7a7c8e]">{ui("documentName")}</Label><Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>
+            <div className="space-y-2"><Label className="text-[14px] text-[#7a7c8e]">{ui("dateFrom")}</Label><div className="relative"><Input type="date" value={draft.dateFrom} onChange={(e) => setDraft({ ...draft, dateFrom: normalizeIsoDate(e.target.value) })} className="h-10 rounded-xl border-[#d8dae6] px-6 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
+            <div className="space-y-4 rounded-[28px] border border-[#e3e5f0] px-5 py-5"><div className="text-[20px] font-medium tracking-[-0.02em] text-black">{ui("addField")}</div><div className="flex items-center justify-between gap-4 rounded-[24px] bg-[#f7f8fd] px-5 py-4"><Label className="text-[18px] leading-tight text-black">{ui("shockTempFull")}</Label><Switch checked={draft.showShockTempField} onCheckedChange={(checked) => setDraft({ ...draft, showShockTempField: checked })} /></div></div>
+            <div className="space-y-4 rounded-[28px] border border-[#e3e5f0] px-5 py-5"><div className="text-[20px] font-medium tracking-[-0.02em] text-black">{ui("addBlock")}</div><div className="flex items-center justify-between gap-4 rounded-[24px] bg-[#f7f8fd] px-5 py-4"><Label className="text-[18px] leading-tight text-black">{ui("shipped")}</Label><Switch checked={draft.showShipmentBlock} onCheckedChange={(checked) => setDraft({ ...draft, showShipmentBlock: checked })} /></div></div>
+            <div className="flex justify-end pt-2"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? t("documentLifecycle.finishSaving") : common("save")}</Button></div>
           </div>
         )}
       </DialogContent>
@@ -373,6 +376,9 @@ function ListsDialog(props: {
   // хранят наименование ТЕКСТОМ, и без переноса Select переставал
   // находить значение — строка «осиротевала».
   const [rawMaterials, setRawMaterials] = useState<ListDraftItem[]>([]);
+  const ui = useTranslations("journalUi.traceability");
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [products, setProducts] = useState<ListDraftItem[]>([]);
   const [newRaw, setNewRaw] = useState("");
   const [newProduct, setNewProduct] = useState("");
@@ -442,7 +448,7 @@ function ListsDialog(props: {
       });
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить списки"));
+      toast.error(humanizeFetchError(error, ui("saveListsFailed")));
     } finally {
       setLoading(false);
     }
@@ -453,14 +459,14 @@ function ListsDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[28px] border-0 p-0 sm:max-w-[920px]">
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">Редактировать списки</DialogTitle>
+            <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{ui("editLists")}</DialogTitle>
             <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button>
           </div>
         </DialogHeader>
 
         <div className="grid gap-5 px-8 py-6 md:grid-cols-2">
           <section className="space-y-4 rounded-[24px] border border-[#e6e9f5] p-5">
-            <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">Сырье</div>
+            <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">{ui("rawMaterials")}</div>
             <div className="space-y-2">
               {rawMaterials.map((item, index) => (
                 <div key={`${item.original ?? "new"}-${index}`} className="flex items-center gap-2">
@@ -468,20 +474,20 @@ function ListsDialog(props: {
                   <button type="button" className="rounded-xl p-2 text-[#6f7282] hover:bg-[#fff2f1] hover:text-[#ff3b30]" onClick={() => remove("raw", index)}><Trash2 className="size-5" /></button>
                 </div>
               ))}
-              {rawMaterials.length === 0 && <div className="rounded-2xl border border-dashed border-[#dfe1ec] px-4 py-4 text-[15px] text-[#6f7282]">Список пуст</div>}
+              {rawMaterials.length === 0 && <div className="rounded-2xl border border-dashed border-[#dfe1ec] px-4 py-4 text-[15px] text-[#6f7282]">{ui("listEmpty")}</div>}
             </div>
             <button
               type="button"
               className="text-left text-[14px] text-[#3848c7] underline underline-offset-4"
               onClick={() => setDirectoryList("raw")}
-              title="Добавить сырьё из общего справочника организации"
+              title={ui("addRawFromDirectory")}
             >
-              Из справочника организации
+              {ui("fromDirectory")}
             </button>
-            <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder="Добавить новое сырье" className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" /><Button type="button" onClick={() => { const v = newRaw.trim(); if (!v) return; setRawMaterials((current) => [...current, { original: null, value: v }]); setNewRaw(""); }} className="h-12 rounded-2xl bg-[#5563ff] px-4 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
+            <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder={ui("addNewRaw")} className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" /><Button type="button" onClick={() => { const v = newRaw.trim(); if (!v) return; setRawMaterials((current) => [...current, { original: null, value: v }]); setNewRaw(""); }} className="h-12 rounded-2xl bg-[#5563ff] px-4 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
           </section>
           <section className="space-y-4 rounded-[24px] border border-[#e6e9f5] p-5">
-            <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">Продукция</div>
+            <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">{ui("products")}</div>
             <div className="space-y-2">
               {products.map((item, index) => (
                 <div key={`${item.original ?? "new"}-${index}`} className="flex items-center gap-2">
@@ -489,17 +495,17 @@ function ListsDialog(props: {
                   <button type="button" className="rounded-xl p-2 text-[#6f7282] hover:bg-[#fff2f1] hover:text-[#ff3b30]" onClick={() => remove("product", index)}><Trash2 className="size-5" /></button>
                 </div>
               ))}
-              {products.length === 0 && <div className="rounded-2xl border border-dashed border-[#dfe1ec] px-4 py-4 text-[15px] text-[#6f7282]">Список пуст</div>}
+              {products.length === 0 && <div className="rounded-2xl border border-dashed border-[#dfe1ec] px-4 py-4 text-[15px] text-[#6f7282]">{ui("listEmpty")}</div>}
             </div>
             <button
               type="button"
               className="text-left text-[14px] text-[#3848c7] underline underline-offset-4"
               onClick={() => setDirectoryList("product")}
-              title="Добавить продукцию из общего справочника организации"
+              title={ui("addProductsFromDirectory")}
             >
-              Из справочника организации
+              {ui("fromDirectory")}
             </button>
-            <div className="flex items-center gap-2"><Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Добавить новую продукцию" className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" /><Button type="button" onClick={() => { const v = newProduct.trim(); if (!v) return; setProducts((current) => [...current, { original: null, value: v }]); setNewProduct(""); }} className="h-12 rounded-2xl bg-[#5563ff] px-4 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
+            <div className="flex items-center gap-2"><Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder={ui("addNewProduct")} className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" /><Button type="button" onClick={() => { const v = newProduct.trim(); if (!v) return; setProducts((current) => [...current, { original: null, value: v }]); setNewProduct(""); }} className="h-12 rounded-2xl bg-[#5563ff] px-4 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
           </section>
         </div>
 
@@ -511,7 +517,7 @@ function ListsDialog(props: {
           onAdd={(items) => addFromDirectory(directoryList ?? "raw", items)}
         />
 
-        <div className="flex justify-end px-8 pb-6"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? "Сохранение..." : "Сохранить"}</Button></div>
+        <div className="flex justify-end px-8 pb-6"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? t("documentLifecycle.finishSaving") : common("save")}</Button></div>
       </DialogContent>
     </Dialog>
   );
@@ -537,6 +543,8 @@ function BatchPicker(props: {
   onPick: (batch: ActiveBatch) => void;
   disabled?: boolean;
 }) {
+  const ui = useTranslations("journalUi.traceability");
+  const format = useFormatter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [batches, setBatches] = useState<ActiveBatch[] | null>(null);
@@ -579,7 +587,7 @@ function BatchPicker(props: {
         >
           <span className="flex items-center gap-1.5">
             <Package className="size-4" />
-            Выбрать из партий
+            {ui("pickFromBatches")}
           </span>
           <ChevronDown className="size-4 text-[#9b9fb3]" />
         </Button>
@@ -588,21 +596,21 @@ function BatchPicker(props: {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Поиск по продукту, номеру, поставщику"
+          placeholder={ui("batchSearch")}
           className="h-9 rounded-xl border-[#dcdfed] px-3 text-[13px]"
         />
         <div className="mt-2 max-h-[280px] space-y-1 overflow-y-auto">
           {failed ? (
             <p className="px-2 py-4 text-center text-[13px] text-[#a13a32]">
-              Не удалось загрузить партии
+              {ui("batchesLoadFailed")}
             </p>
           ) : batches === null ? (
-            <p className="px-2 py-4 text-center text-[13px] text-[#9b9fb3]">Загрузка…</p>
+            <p className="px-2 py-4 text-center text-[13px] text-[#9b9fb3]">{ui("loading")}</p>
           ) : filtered.length === 0 ? (
             <p className="px-2 py-4 text-center text-[13px] text-[#9b9fb3]">
               {batches.length === 0
-                ? "Активных партий нет — заведите их в «Партиях» или из приёмки"
-                : "Ничего не найдено"}
+                ? ui("noActiveBatches")
+                : ui("nothingFound")}
             </p>
           ) : (
             filtered.map((batch) => (
@@ -619,10 +627,14 @@ function BatchPicker(props: {
                   {batch.productName}
                 </span>
                 <span className="mt-0.5 block text-[12px] text-[#6f7282]">
-                  № {batch.code} · остаток {batch.quantity} {batch.unit}
                   {batch.expiryDate
-                    ? ` · до ${new Date(batch.expiryDate).toLocaleDateString("ru-RU")}`
-                    : ""}
+                    ? ui("batchLineWithExpiry", {
+                        code: batch.code,
+                        quantity: batch.quantity,
+                        unit: batch.unit,
+                        date: format.dateTime(new Date(batch.expiryDate), { day: "2-digit", month: "2-digit", year: "numeric" }),
+                      })
+                    : ui("batchLine", { code: batch.code, quantity: batch.quantity, unit: batch.unit })}
                 </span>
               </button>
             ))
@@ -645,6 +657,9 @@ function RowDialog(props: {
   onSave: (row: TraceabilityRow, additions: { rawMaterials: string[]; products: string[] }) => Promise<void>;
 }) {
   const [draft, setDraft] = useState<TraceabilityRowDraft | null>(null);
+  const ui = useTranslations("journalUi.traceability");
+  const t = useTranslations("journalControls");
+  const common = useTranslations("common");
   const [rawOptions, setRawOptions] = useState<string[]>([]);
   const [productOptions, setProductOptions] = useState<string[]>([]);
   const [newRaw, setNewRaw] = useState("");
@@ -704,7 +719,7 @@ function RowDialog(props: {
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row, { rawMaterials: createdRaw, products: createdProducts });
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Не удалось сохранить строку"));
+      toast.error(humanizeFetchError(err, ui("saveRowFailed")));
     } finally {
       setLoading(false);
     }
@@ -718,27 +733,27 @@ function RowDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[28px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}</DialogTitle>
+            <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{props.initialRow ? (props.titleSuffix ? ui("editRowTitleSuffix", { suffix: props.titleSuffix }) : ui("editRowTitle")) : ui("addRowTitle")}</DialogTitle>
             <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button>
           </div>
         </DialogHeader>
 
         {draft && (
           <div className="space-y-5 px-8 py-6">
-            <div className="space-y-2"><Label className="text-[16px] text-[#7a7c8e]">Дата</Label><div className="relative"><Input type="date" value={draft.date} onChange={(e) => setField("date", normalizeIsoDate(e.target.value))} className="h-10 rounded-xl border-[#d8dae6] px-5 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
+            <div className="space-y-2"><Label className="text-[16px] text-[#7a7c8e]">{ui("date")}</Label><div className="relative"><Input type="date" value={draft.date} onChange={(e) => setField("date", normalizeIsoDate(e.target.value))} className="h-10 rounded-xl border-[#d8dae6] px-5 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
 
             <div className="space-y-3 rounded-[28px] border border-[#e3e5f0] px-4 py-4">
-              <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">Поступило</div>
+              <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">{ui("incoming")}</div>
               <div className="space-y-2">
-                <Label className="text-[15px] text-[#7a7c8e]">Наименование сырья</Label>
+                <Label className="text-[15px] text-[#7a7c8e]">{ui("rawMaterialName")}</Label>
                 <Select value={draft.incomingRawMaterialName || "__empty__"} onValueChange={(value) => setField("incomingRawMaterialName", value === "__empty__" ? "" : value)}>
-                  <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-white px-3.5 text-[18px]"><SelectValue placeholder="Выберите из списка или добавьте новое" /></SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-white px-3.5 text-[18px]"><SelectValue placeholder={ui("chooseOrAdd")} /></SelectTrigger>
                   {/* Своё значение строки — первым: после удаления позиции
                       из справочника Select переставал его находить и строка
                       выглядела пустой. */}
-                  <SelectContent><SelectItem value="__empty__">Выберите из списка</SelectItem>{Array.from(new Set([draft.incomingRawMaterialName, ...rawOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="__empty__">{ui("chooseFromList")}</SelectItem>{Array.from(new Set([draft.incomingRawMaterialName, ...rawOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
                 </Select>
-                <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder="Добавить название нового сырья" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("raw")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
+                <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder={ui("addRawName")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("raw")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
                 {/* Сырьё со склада: партия подставляет название и номер
                     и остаётся связанной со строкой. */}
                 <BatchPicker
@@ -759,42 +774,42 @@ function RowDialog(props: {
                 {draft.incomingBatchId ? (
                   <div className="flex items-center justify-between gap-2 rounded-xl border border-[#ececf4] bg-[#fafbff] px-3 py-2">
                     <span className="min-w-0 truncate text-[12.5px] text-[#6f7282]">
-                      Из партии № {draft.incomingBatchNumber || "—"}
+                      {ui("fromBatch", { number: draft.incomingBatchNumber || "—" })}
                     </span>
                     <button
                       type="button"
                       onClick={() => setField("incomingBatchId", "")}
                       className="shrink-0 rounded-lg px-2 py-1 text-[12.5px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2]"
                     >
-                      Отвязать
+                      {ui("unlink")}
                     </button>
                   </div>
                 ) : null}
               </div>
-              <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Номер партии ПФ</Label><Input value={draft.incomingBatchNumber} onChange={(e) => setField("incomingBatchNumber", e.target.value)} placeholder="Введите номер партии ПФ" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>
-              <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Дата фасовки</Label><div className="relative"><Input type="date" value={draft.incomingPackagingDate} onChange={(e) => setField("incomingPackagingDate", normalizeIsoDate(e.target.value))} className="h-10 rounded-xl border-[#d8dae6] px-3.5 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
-              <div className="grid gap-3 md:grid-cols-2"><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Кол-во, шт.</Label><Input value={draft.incomingQuantityPieces} onChange={(e) => setField("incomingQuantityPieces", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Кол-во, кг.</Label><Input value={draft.incomingQuantityKg} onChange={(e) => setField("incomingQuantityKg", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div></div>
+              <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("batchNumber")}</Label><Input value={draft.incomingBatchNumber} onChange={(e) => setField("incomingBatchNumber", e.target.value)} placeholder={ui("batchNumberPlaceholder")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>
+              <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("packagingDate")}</Label><div className="relative"><Input type="date" value={draft.incomingPackagingDate} onChange={(e) => setField("incomingPackagingDate", normalizeIsoDate(e.target.value))} className="h-10 rounded-xl border-[#d8dae6] px-3.5 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
+              <div className="grid gap-3 md:grid-cols-2"><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("qtyPieces")}</Label><Input value={draft.incomingQuantityPieces} onChange={(e) => setField("incomingQuantityPieces", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("qtyKg")}</Label><Input value={draft.incomingQuantityKg} onChange={(e) => setField("incomingQuantityKg", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div></div>
             </div>
 
             <div className="space-y-3 rounded-[28px] border border-[#e3e5f0] px-4 py-4">
-              <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">Выпущено</div>
+              <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">{ui("outgoing")}</div>
               <div className="space-y-2">
-                <Label className="text-[15px] text-[#7a7c8e]">Наименование ПФ</Label>
+                <Label className="text-[15px] text-[#7a7c8e]">{ui("productName")}</Label>
                 <Select value={draft.outgoingProductName || "__empty__"} onValueChange={(value) => setField("outgoingProductName", value === "__empty__" ? "" : value)}>
-                  <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-white px-3.5 text-[18px]"><SelectValue placeholder="Выберите из списка или добавьте новое" /></SelectTrigger>
-                  <SelectContent><SelectItem value="__empty__">Выберите из списка</SelectItem>{Array.from(new Set([draft.outgoingProductName, ...productOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-white px-3.5 text-[18px]"><SelectValue placeholder={ui("chooseOrAdd")} /></SelectTrigger>
+                  <SelectContent><SelectItem value="__empty__">{ui("chooseFromList")}</SelectItem>{Array.from(new Set([draft.outgoingProductName, ...productOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
                 </Select>
-                <div className="flex items-center gap-2"><Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Добавить название нового ПФ" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("product")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
+                <div className="flex items-center gap-2"><Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder={ui("addProductName")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("product")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
               </div>
-              <div className="grid gap-3 md:grid-cols-2"><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Кол-во фасовок, шт.</Label><Input value={draft.outgoingQuantityPieces} onChange={(e) => setField("outgoingQuantityPieces", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Кол-во фасовок, кг.</Label><Input value={draft.outgoingQuantityKg} onChange={(e) => setField("outgoingQuantityKg", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div></div>
-              {props.config.showShockTempField && <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">T °C продукта после шоковой заморозки</Label><Input value={draft.outgoingShockTemp} onChange={(e) => setField("outgoingShockTemp", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>}
+              <div className="grid gap-3 md:grid-cols-2"><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("packsPieces")}</Label><Input value={draft.outgoingQuantityPieces} onChange={(e) => setField("outgoingQuantityPieces", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div><div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("packsKg")}</Label><Input value={draft.outgoingQuantityKg} onChange={(e) => setField("outgoingQuantityKg", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div></div>
+              {props.config.showShockTempField && <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("shockTempFull")}</Label><Input value={draft.outgoingShockTemp} onChange={(e) => setField("outgoingShockTemp", e.target.value)} inputMode="decimal" placeholder="0" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>}
             </div>
 
             <div className="space-y-2 rounded-[28px] border border-[#e3e5f0] px-4 py-4">
-              <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">Ответственный</div>
+              <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">{ui("responsible")}</div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Должность ответственного</Label><Select value={draft.responsibleRole || "__empty__"} onValueChange={(value) => setField("responsibleRole", value === "__empty__" ? "" : value)} disabled={employees.length > 0}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem><PositionSelectItems users={props.employees} /></SelectContent></Select></div>
-                <div className="space-y-2"><Label className="text-[15px] text-[#7a7c8e]">Сотрудник</Label>{employees.length > 0 ? <Select value={draft.responsibleEmployeeId || "__empty__"} onValueChange={(value) => {
+                <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">{ui("responsibleRole")}</Label><Select value={draft.responsibleRole || "__empty__"} onValueChange={(value) => setField("responsibleRole", value === "__empty__" ? "" : value)} disabled={employees.length > 0}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder={ui("chooseEmployee")} /></SelectTrigger><SelectContent><SelectItem value="__empty__">{ui("chooseValue")}</SelectItem><PositionSelectItems users={props.employees} /></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="text-[15px] text-[#7a7c8e]">{ui("employee")}</Label>{employees.length > 0 ? <Select value={draft.responsibleEmployeeId || "__empty__"} onValueChange={(value) => {
                   // Одним setDraft: три setField подряд брали один и тот же
                   // устаревший draft, и применялся только последний — выбор
                   // сотрудника не сохранялся, менялась лишь должность.
@@ -809,12 +824,12 @@ function RowDialog(props: {
                     responsibleEmployee: employee?.name || "",
                     responsibleRole: employee ? getUserDisplayTitle(employee) : draft.responsibleRole,
                   });
-                }}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{employees.map((employee) => <SelectItem key={employee.id} value={employee.id}>{buildStaffOptionLabel(employee)}</SelectItem>)}</SelectContent></Select> : <Input value={draft.responsibleEmployee} onChange={(e) => setField("responsibleEmployee", e.target.value)} placeholder="ФИО ответственного" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}</div>
+                }}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder={ui("chooseEmployee")} /></SelectTrigger><SelectContent><SelectItem value="__empty__">{ui("chooseValue")}</SelectItem>{employees.map((employee) => <SelectItem key={employee.id} value={employee.id}>{buildStaffOptionLabel(employee)}</SelectItem>)}</SelectContent></Select> : <Input value={draft.responsibleEmployee} onChange={(e) => setField("responsibleEmployee", e.target.value)} placeholder={ui("responsibleFullName")} className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}</div>
               </div>
             </div>
 
             {error && <div className="rounded-[20px] border border-[#ffd7d3] bg-[#fff4f2] px-4 py-3 text-[15px] text-[#d2453d]">{error}</div>}
-            <div className="flex justify-end pt-1"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? "Сохранение..." : "Сохранить"}</Button></div>
+            <div className="flex justify-end pt-1"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? t("documentLifecycle.finishSaving") : common("save")}</Button></div>
           </div>
         )}
       </DialogContent>
@@ -826,7 +841,19 @@ function ImportDialog(props: {
   onOpenChange: (open: boolean) => void;
   onImport: (file: File) => Promise<{ importedCount: number; errors: TraceabilityImportError[] }>;
 }) {
+  const ui = useTranslations("journalUi.traceability");
+  const common = useTranslations("common");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const importColumnNames = [
+    ui("date"),
+    ui("rawMaterialName"),
+    ui("batchNumber"),
+    ui("packagingDate"),
+    ui("qtyPcsKg"),
+    ui("productName"),
+    ui("packsPcsKg"),
+    ui("shockTempFull"),
+  ];
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -839,7 +866,7 @@ function ImportDialog(props: {
       await props.onImport(file);
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось импортировать файл"));
+      toast.error(humanizeFetchError(error, ui("importFailed")));
     } finally {
       setLoading(false);
     }
@@ -848,11 +875,11 @@ function ImportDialog(props: {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent showCloseButton={false} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[28px] border-0 p-0 sm:max-w-[760px]">
-        <DialogHeader className="border-b px-8 py-6"><div className="flex items-center justify-between gap-4"><DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">Добавление из Excel</DialogTitle><button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button></div></DialogHeader>
+        <DialogHeader className="border-b px-8 py-6"><div className="flex items-center justify-between gap-4"><DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{ui("importTitle")}</DialogTitle><button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button></div></DialogHeader>
         <div className="space-y-5 px-8 py-6">
-          <div className="rounded-[24px] border border-[#e6e9f5] bg-[#fbfbff] px-5 py-4 text-[15px] leading-7 text-[#505469]"><p>Список должен быть в Excel-файле на первом листе и начинаться с первой строки.</p><p className="mt-3">Столбцы должны быть в фиксированном порядке:</p><ol className="mt-2 space-y-1 pl-5">{TRACEABILITY_IMPORT_COLUMNS.map((column, index) => <li key={column}>{index + 1}-й столбец - {column}</li>)}</ol></div>
-          <div className="space-y-2"><Button type="button" variant="outline" className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" onClick={() => fileInputRef.current?.click()}><Upload className="size-4" />Выберите файл</Button><div className="text-[15px] text-[#6f7282]">{file ? file.name : "Файл не выбран"}</div><input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} /></div>
-          <div className="flex justify-end pt-2"><Button type="button" onClick={save} disabled={!file || loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? "Импорт..." : "Добавить"}</Button></div>
+          <div className="rounded-[24px] border border-[#e6e9f5] bg-[#fbfbff] px-5 py-4 text-[15px] leading-7 text-[#505469]"><p>{ui("importIntro")}</p><p className="mt-3">{ui("importColumnsOrder")}</p><ol className="mt-2 space-y-1 pl-5">{TRACEABILITY_IMPORT_COLUMNS.map((column, index) => <li key={column}>{ui("importColumn", { number: index + 1, name: importColumnNames[index] ?? column })}</li>)}</ol></div>
+          <div className="space-y-2"><Button type="button" variant="outline" className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" onClick={() => fileInputRef.current?.click()}><Upload className="size-4" />{ui("chooseFile")}</Button><div className="text-[15px] text-[#6f7282]">{file ? file.name : ui("noFile")}</div><input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} /></div>
+          <div className="flex justify-end pt-2"><Button type="button" onClick={save} disabled={!file || loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? ui("importing") : common("add")}</Button></div>
         </div>
       </DialogContent>
     </Dialog>
@@ -887,6 +914,8 @@ function FinishDialog(props: { open: boolean; onOpenChange: (open: boolean) => v
 
 export function TraceabilityDocumentClient(props: Props) {
   const t = useTranslations("journalControls");
+  const ui = useTranslations("journalUi.traceability");
+  const common = useTranslations("common");
   const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -948,15 +977,15 @@ export function TraceabilityDocumentClient(props: Props) {
         />
       ) : null,
       fields: [
-        { label: "№ партии / дата фасовки", value: [row.incoming.batchNumber, row.incoming.packagingDate].filter(Boolean).join(" · "), hideIfEmpty: true },
-        { label: "Кол-во сырья", value: incomingQty, hideIfEmpty: true },
-        { label: "Наименование ПФ", value: row.outgoing.productName, hideIfEmpty: true },
-        { label: "Кол-во фасовок", value: outgoingQty, hideIfEmpty: true },
+        { label: ui("cardBatchPacking"), value: [row.incoming.batchNumber, row.incoming.packagingDate].filter(Boolean).join(" · "), hideIfEmpty: true },
+        { label: ui("cardRawQty"), value: incomingQty, hideIfEmpty: true },
+        { label: ui("productName"), value: row.outgoing.productName, hideIfEmpty: true },
+        { label: ui("packsQty"), value: outgoingQty, hideIfEmpty: true },
         config.showShockTempField
-          ? { label: "T°C после шока", value: row.outgoing.shockTemp != null ? String(row.outgoing.shockTemp) : "", hideIfEmpty: true }
+          ? { label: ui("cardShock"), value: row.outgoing.shockTemp != null ? String(row.outgoing.shockTemp) : "", hideIfEmpty: true }
           : null,
         {
-          label: "Ответственный",
+          label: ui("responsible"),
           // Должность этого человека из карточки, копия строки — если его нет.
           value: [
             getRowEmployeeTitle(
@@ -985,7 +1014,7 @@ export function TraceabilityDocumentClient(props: Props) {
           }}
           className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5563ff] px-4 text-[14px] font-medium text-white hover:bg-[#4554ff]"
         >
-          Редактировать
+          {common("edit")}
         </button>
       ) : null,
     };
@@ -1008,7 +1037,7 @@ export function TraceabilityDocumentClient(props: Props) {
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      const error = new Error(result?.error || "Не удалось сохранить документ");
+      const error = new Error(result?.error || ui("saveDocumentFailed"));
       throw attachLifecycleErrorMetadata(error, result?.code, response.headers.get("Content-Language"));
     }
     return result;
@@ -1087,14 +1116,14 @@ export function TraceabilityDocumentClient(props: Props) {
   async function deleteSelected() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: ui("deleteRowsTitle"), description: ui("deleteRowsDescription", { count }), variant: "danger", confirmLabel: common("delete") }))) return;
     const idsToRemove = [...selectedRowIds];
     try {
       setSelectedRowIds([]);
       await persistConfig({ ...config, rows: config.rows.filter((row) => !idsToRemove.includes(row.id)) });
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(ui("rowsDeleted", { count }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(humanizeFetchError(error, ui("deleteRowsFailed")));
     }
   }
 
@@ -1108,15 +1137,15 @@ export function TraceabilityDocumentClient(props: Props) {
     formData.append("file", file);
     const response = await fetch(`/api/journal-documents/${props.documentId}/traceability/import`, { method: "POST", body: formData });
     const result = (await response.json().catch(() => null)) as { rows?: unknown[]; errors?: TraceabilityImportError[]; error?: string } | null;
-    if (!response.ok && !result?.error) throw new Error("Не удалось импортировать файл");
+    if (!response.ok && !result?.error) throw new Error(ui("importFailed"));
     const rows = Array.isArray(result?.rows) ? result.rows.map((item) => normalizeTraceabilityRow(item)) : [];
     const errors = Array.isArray(result?.errors) ? result.errors : [];
-    if (rows.length === 0 && errors.length > 0) throw new Error(formatImportErrors(errors) || "Импорт не выполнен");
+    if (rows.length === 0 && errors.length > 0) throw new Error(formatImportErrors(errors, (rowNumber) => ui("importRowLabel", { number: rowNumber })) || ui("importNotDone"));
     if (rows.length > 0) {
       await persistConfig({ ...config, rows: [...config.rows, ...rows], rawMaterialList: mergeUnique(config.rawMaterialList, rows.map((row) => row.incoming.rawMaterialName).filter(Boolean)), productList: mergeUnique(config.productList, rows.map((row) => row.outgoing.productName).filter(Boolean)) });
     }
-    if (errors.length > 0) toast.error(`Импорт выполнен частично.\n\n${formatImportErrors(errors)}`);
-    else toast.success(`Импортировано строк: ${rows.length}`);
+    if (errors.length > 0) toast.error(`${ui("importPartial")}\n\n${formatImportErrors(errors, (rowNumber) => ui("importRowLabel", { number: rowNumber }))}`);
+    else toast.success(ui("rowsImported", { count: rows.length }));
     return { importedCount: rows.length, errors };
   }
 
@@ -1127,24 +1156,24 @@ export function TraceabilityDocumentClient(props: Props) {
           count={selectedRowIds.length}
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
-            deleteSelected().catch((error) => toast.error(humanizeFetchError(error, "Не удалось удалить строки")));
+            deleteSelected().catch((error) => toast.error(humanizeFetchError(error, ui("deleteRowsShortFailed"))));
           }}
-          hint="Строки прослеживаемости будут удалены без возможности отмены"
+          hint={ui("deleteHint")}
         >
           <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
       ) : null}
 
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={ui("noRecordsYet")} emptyBody={ui("noRecordsHint")} />
       <JournalDocumentShell
         title={title || DEFAULT_TITLE}
-        subtitle={`Начат ${formatDashDate(dateFrom)}`}
+        subtitle={ui("startedAt", { date: formatDashDate(dateFrom) })}
         documentId={props.documentId}
         backHref={props.routeCode ? `/journals/${props.routeCode}` : undefined}
         onSettings={!isClosed ? () => setSettingsOpen(true) : undefined}
-        settingsLabel="Настройки документа"
+        settingsLabel={ui("documentSettings")}
         closed={isClosed}
-        closedHint="Журнал закрыт и доступен только для чтения."
+        closedHint={ui("closedHint")}
         menuItems={
           !isClosed
             ? [
@@ -1171,17 +1200,17 @@ export function TraceabilityDocumentClient(props: Props) {
         mobileView={mobileView}
         onMobileView={switchMobileView}
         cards={
-          <RecordCardsView items={cardItems} emptyLabel="Записей по прослеживаемости нет." />
+          <RecordCardsView items={cardItems} emptyLabel={ui("noTraceRecords")} />
         }
         paperHeader={
           <JournalDocumentHeader
             orgName={organizationName}
-            title="ЖУРНАЛ ПРОСЛЕЖИВАЕМОСТИ ПРОДУКЦИИ"
+            title={ui("paperTitle")}
             startedAt={dateFrom}
             finishedAt={null}
           />
         }
-        sheetTitle="ЖУРНАЛ ПРОСЛЕЖИВАЕМОСТИ ПРОДУКЦИИ"
+        sheetTitle={ui("paperTitle")}
         sheetMinWidth={1480}
         toolbar={
           !isClosed ? (
@@ -1189,13 +1218,13 @@ export function TraceabilityDocumentClient(props: Props) {
             // отдаёт тулбар без ряда-обёртки, и кнопки слипались.
             <div className="flex flex-wrap items-center gap-2">
               <ResponsiveMenu
-              title="Добавить"
+              title={common("add")}
               align="start"
               contentClassName="min-w-[280px] rounded-[22px] border-0 p-2 shadow-xl"
               items={[
                 {
                   key: "add-row",
-                  label: "Добавить",
+                  label: common("add"),
                   icon: <Plus className="size-4 text-[#6f7282]" />,
                   onSelect: () => {
                     setEditingRow(null);
@@ -1204,7 +1233,7 @@ export function TraceabilityDocumentClient(props: Props) {
                 },
                 {
                   key: "add-file",
-                  label: "Добавить из файла",
+                  label: ui("addFromFile"),
                   icon: <Upload className="size-4 text-[#6f7282]" />,
                   onSelect: () => setImportOpen(true),
                 },
@@ -1216,13 +1245,13 @@ export function TraceabilityDocumentClient(props: Props) {
                   className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] font-medium text-white shadow-md shadow-[#5563ff]/20 hover:bg-[#4957fb]"
                 >
                   <Plus className="size-6" />
-                  Добавить
+                  {common("add")}
                   <ChevronDown className="size-4" />
                 </Button>
               }
             />
               <button type="button" onClick={() => setListsOpen(true)} className={DOC_SECONDARY_BUTTON_CLASS}>
-                Редактировать списки
+                {ui("editLists")}
               </button>
             </div>
           ) : null
@@ -1232,18 +1261,18 @@ export function TraceabilityDocumentClient(props: Props) {
           <thead>
             <tr>
               {!isClosed && <th rowSpan={2} className={`w-[44px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}><Checkbox checked={allSelected} disabled={config.rows.length === 0} onCheckedChange={(checked) => setSelectedRowIds(checked === true ? config.rows.map((row) => row.id) : [])} /></th>}
-              <th rowSpan={2} className={`w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Дата</th>
-              <th colSpan={3} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Поступило в цех сырья</th>
-              <th colSpan={config.showShockTempField ? 3 : 2} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Выпущено цехом</th>
-              <th rowSpan={2} className={`w-[210px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>ФИО ответственного</th>
+              <th rowSpan={2} className={`w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("date")}</th>
+              <th colSpan={3} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("incomingHead")}</th>
+              <th colSpan={config.showShockTempField ? 3 : 2} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("outgoingHead")}</th>
+              <th rowSpan={2} className={`w-[210px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("responsibleFullName")}</th>
             </tr>
             <tr>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Наименование сырья</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Номер партии ПФ<br />Дата фасовки</th>
-              <th className={`w-[120px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Кол-во<br />шт./кг.</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Наименование ПФ</th>
-              <th className={`w-[120px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Кол-во фасовок<br />шт./кг.</th>
-              {config.showShockTempField && <th className={`w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>T °C<br />продукта после<br />шоковой<br />заморозки</th>}
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("rawMaterialName")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("batchNumber")}<br />{ui("packagingDate")}</th>
+              <th className={`w-[120px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("qtyShort")}<br />{ui("unitsPcsKg")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("productName")}</th>
+              <th className={`w-[120px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("packsQty")}<br />{ui("unitsPcsKg")}</th>
+              {config.showShockTempField && <th className={`w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{ui("shockTempFull")}</th>}
             </tr>
           </thead>
           <tbody>
@@ -1267,7 +1296,7 @@ export function TraceabilityDocumentClient(props: Props) {
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{responsibleName(row) || "—"}</td>
                 </tr>
               );
-            }) : <tr><td colSpan={isClosed ? 8 : config.showShockTempField ? 9 : 8} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6f7282]`}>Строк пока нет</td></tr>}
+            }) : <tr><td colSpan={isClosed ? 8 : config.showShockTempField ? 9 : 8} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6f7282]`}>{ui("noRows")}</td></tr>}
             {!isClosed ? (
               <JournalAddRow
                 // Галочка — leading, подпись растянута на «Дата» +
@@ -1277,7 +1306,7 @@ export function TraceabilityDocumentClient(props: Props) {
                 leading={1}
                 labelSpan={2}
                 trailing={config.showShockTempField ? 6 : 5}
-                label="Добавить"
+                label={common("add")}
                 onClick={() => {
                   setEditingRow(null);
                   setRowOpen(true);
@@ -1288,7 +1317,7 @@ export function TraceabilityDocumentClient(props: Props) {
         </table>
       </JournalDocumentShell>
 
-      <SettingsDialog open={settingsOpen} title="Настройки документа" initial={headerSettings} onOpenChange={setSettingsOpen} onSave={saveSettings} useV2={props.useV2} />
+      <SettingsDialog open={settingsOpen} title={ui("documentSettings")} initial={headerSettings} onOpenChange={setSettingsOpen} onSave={saveSettings} useV2={props.useV2} />
       <ListsDialog open={listsOpen} onOpenChange={setListsOpen} config={config} onSave={saveLists} />
       {/* Закрытие без сохранения прерывает очередь («Изменено k из N»). */}
       <RowDialog open={rowOpen} onOpenChange={(open) => { if (open) { setRowOpen(true); return; } seq.cancelled(); }} config={config} employees={employees} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} dateFrom={dateFrom} onSave={saveRow} />

@@ -9,6 +9,7 @@ import {
 } from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpenText, Ellipsis, Pencil, Plus, Printer, Trash2, X } from "lucide-react";
@@ -89,6 +90,7 @@ function SettingsDialog(props: {
   onSubmit: (payload: { title: string; dateFrom: string }) => Promise<void>;
   mode: "create" | "edit";
 }) {
+  const t = useTranslations("journalUi.pestControlList");
   const [form, setForm] = useState({ title: "", dateFrom: "" });
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -147,7 +149,7 @@ function SettingsDialog(props: {
               было непонятно, что где. */}
           <div className="space-y-1.5">
             <Label htmlFor="pest-doc-title" className="text-[14px] text-[#6f7282]">
-              Название документа
+              {t("documentName")}
             </Label>
           <Input
             id="pest-doc-title"
@@ -156,13 +158,13 @@ function SettingsDialog(props: {
               auto.markTouched();
               setForm((current) => ({ ...current, title: event.target.value }));
             }}
-            placeholder="Введите название документа"
+            placeholder={t("documentNamePlaceholder")}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="pest-doc-date" className="text-[14px] text-[#6f7282]">
-              Дата начала
+              {t("startDate")}
             </Label>
           <Input
             id="pest-doc-date"
@@ -192,7 +194,7 @@ function SettingsDialog(props: {
                   }));
               }}
             >
-              {submitting ? "Сохранение..." : props.submitLabel}
+              {submitting ? t("saving") : props.submitLabel}
             </Button>
           </div>
         </div>
@@ -208,6 +210,7 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.pestControlList");
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
   const submitting = submit.submitting;
@@ -237,7 +240,7 @@ function ConfirmDialog(props: {
               await submit.run(() => props.onSubmit());
             }}
           >
-            {submitting ? "Подождите..." : props.submitLabel}
+            {submitting ? t("wait") : props.submitLabel}
           </Button>
         </div>
       </DialogContent>
@@ -246,6 +249,9 @@ function ConfirmDialog(props: {
 }
 
 export function PestControlDocumentsClient(props: Props) {
+  const t = useTranslations("journalUi.pestControlList");
+  const lc = useTranslations("journalControls");
+  const common = useTranslations("common");
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -308,7 +314,7 @@ export function PestControlDocumentsClient(props: Props) {
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки документа");
+      throw new Error(failure?.error || t("saveSettingsFailed"));
     }
 
     router.refresh();
@@ -320,7 +326,7 @@ export function PestControlDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(lc("documentActions.deleteError"));
       return;
     }
 
@@ -340,7 +346,7 @@ export function PestControlDocumentsClient(props: Props) {
             canManageDocuments && props.activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreating(true)}>
                 <Plus className="size-4" />
-                Создать документ
+                {lc("list.create")}
               </Button>
             ) : null
           }
@@ -367,7 +373,7 @@ export function PestControlDocumentsClient(props: Props) {
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("startDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatPestControlDate(document.dateFrom)}
                 </div>
@@ -375,13 +381,13 @@ export function PestControlDocumentsClient(props: Props) {
 
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия"
+                  title={lc("list.actions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: lc("list.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () =>
                               setEditing({
@@ -394,7 +400,7 @@ export function PestControlDocumentsClient(props: Props) {
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: lc("list.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () => openDocumentPdf(document.id),
                     },
@@ -405,7 +411,7 @@ export function PestControlDocumentsClient(props: Props) {
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: lc("list.delete"),
                             icon: <Trash2 className="size-4 text-[#6f7282]" />,
                             tone: "danger" as const,
                             onSelect: () => setDeleting(document),
@@ -431,8 +437,8 @@ export function PestControlDocumentsClient(props: Props) {
       <SettingsDialog
         open={creating}
         onOpenChange={setCreating}
-        title="Создание документа"
-        submitLabel="Создать"
+        title={t("createTitle")}
+        submitLabel={t("create")}
         initial={createState}
         onSubmit={createDocument}
         mode="create"
@@ -443,8 +449,8 @@ export function PestControlDocumentsClient(props: Props) {
         onOpenChange={(open) => {
           if (!open) setEditing(null);
         }}
-        title="Настройки документа"
-        submitLabel="Сохранить"
+        title={t("settingsTitle")}
+        submitLabel={common("save")}
         initial={editing}
         onSubmit={async (payload) => {
           if (!editing) return;
@@ -458,8 +464,8 @@ export function PestControlDocumentsClient(props: Props) {
         onOpenChange={(open) => {
           if (!open) setDeleting(null);
         }}
-        title={`Удаление документа "${deleting?.title || PEST_CONTROL_DOCUMENT_TITLE}"`}
-        submitLabel="Удалить"
+        title={t("deleteTitle", { title: deleting?.title || PEST_CONTROL_DOCUMENT_TITLE })}
+        submitLabel={common("delete")}
         onSubmit={async () => {
           if (!deleting) return;
           await deleteDocument(deleting.id);

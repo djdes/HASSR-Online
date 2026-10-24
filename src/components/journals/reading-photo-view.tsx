@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Camera } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { PhotoLightbox } from "@/components/shared/photo-lightbox";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ export function ReadingPhotoView({
   variant?: "cell" | "thumb";
   className?: string;
 }) {
+  const t = useTranslations("journalUi.readingPhoto");
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -36,8 +38,8 @@ export function ReadingPhotoView({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          title={`Фото замера — ${caption}`}
-          aria-label={`Фото замера: ${caption}`}
+          title={t("title", { caption })}
+          aria-label={t("ariaLabel", { caption })}
           data-testid="reading-photo-cell"
           className={cn(
             "flex size-[18px] items-center justify-center rounded-full bg-[#eef1ff] text-[#3848c7] ring-1 ring-white transition-colors duration-150 hover:bg-[#5566f6] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 print:hidden",
@@ -50,8 +52,8 @@ export function ReadingPhotoView({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          title={`Фото замера — ${caption}`}
-          aria-label={`Фото замера: ${caption}`}
+          title={t("title", { caption })}
+          aria-label={t("ariaLabel", { caption })}
           data-testid="reading-photo-thumb"
           className={cn(
             "relative size-12 shrink-0 overflow-hidden rounded-2xl border border-[#dcdfed] bg-[#fafbff] transition-colors duration-150 hover:border-[#5566f6]/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:hidden",
@@ -69,7 +71,7 @@ export function ReadingPhotoView({
           внутри неё встало бы не по экрану, а по контейнеру. */}
       {open
         ? createPortal(
-            <PhotoLightbox url={url} filename="Фото замера" caption={caption} onClose={() => setOpen(false)} />,
+            <PhotoLightbox url={url} filename={t("filename")} caption={caption} onClose={() => setOpen(false)} />,
             document.body
           )
         : null}

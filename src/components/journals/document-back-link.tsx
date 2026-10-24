@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,13 +30,14 @@ type DocumentBackLinkProps = {
 
 export function DocumentBackLink({
   href,
-  label = "Назад",
+  label,
   className,
   documentId,
   // По умолчанию «Назад» скрыта: и в дашборде, и в Mini App навигация
   // вверх уже есть (крошки / стрелка шапки), вторая ссылка дублировала её.
   showBack = false,
 }: DocumentBackLinkProps) {
+  const t = useTranslations("common");
   const showPrint = Boolean(documentId);
   if (!showBack && !showPrint) return null;
 
@@ -56,7 +58,7 @@ export function DocumentBackLink({
         >
           <Link href={href}>
             <ArrowLeft className="size-4" />
-            {label}
+            {label ?? t("back")}
           </Link>
         </Button>
       ) : null}
@@ -74,7 +76,7 @@ export function DocumentBackLink({
           className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
         >
           <Printer className="size-4" />
-          Печать
+          {t("print")}
         </Button>
       ) : null}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowRight, BadgeCheck, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,22 +24,23 @@ export function CreateDocumentEmptyState({
   /** Вызывается при клике по ссылке — чтобы закрыть диалог. */
   onNavigate?: () => void;
 }) {
+  const t = useTranslations("journalUi.createDocumentEmptyState");
   return (
     <div className={cn("space-y-5", className)}>
       <p className="text-[15px] leading-[1.45] text-[#6f7282]">
-        Для создания документа добавьте хотя бы одного сотрудника.
+        {t("intro")}
       </p>
 
       <div className="space-y-3 rounded-2xl border border-[#dfe1ec] bg-[#f7f8fd] p-4 sm:p-5">
         <Step
           icon={<BadgeCheck className="size-4" />}
-          label="Шаг 1"
-          text="Добавьте должность"
+          label={t("step1")}
+          text={t("addPosition")}
         />
         <Step
           icon={<UserPlus className="size-4" />}
-          label="Шаг 2"
-          text="Добавьте сотрудника"
+          label={t("step2")}
+          text={t("addEmployee")}
         />
       </div>
 
@@ -52,7 +54,7 @@ export function CreateDocumentEmptyState({
             "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
           )}
         >
-          Перейти в Сотрудники
+          {t("goToStaff")}
           <ArrowRight className="size-4" />
         </Link>
       </div>

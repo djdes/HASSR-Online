@@ -1,6 +1,7 @@
 import { captureAcceptanceSource } from "@/lib/acceptance-source.server";
 import { captureStaffTrainingSource } from "@/lib/staff-training-source.server";
 import { captureMaintenanceSource } from "@/lib/equipment-maintenance-presentation";
+import { getTranslations } from "next-intl/server";
 import { capturePpeSource, capturePpeTitle } from "@/lib/ppe-issuance-presentation";
 import { captureAcceptanceSummarySource, bindAcceptanceSummarySource, captureAcceptanceOrganizationFallbackSuffix } from "@/lib/acceptance-document-presentation";
 import { captureAuditProtocolTitle, captureAuditProtocolConfig } from "@/lib/audit-protocol-presentation";
@@ -338,6 +339,10 @@ async function JournalDocumentBody({
   const resolvedCode = resolveJournalCodeAlias(code);
   const query = await searchParams;
   const session = await requireAuth();
+  const tPage = await getTranslations("journalUi.documentPage");
+  const tJournals = await getTranslations("journals");
+  const tNames = await getTranslations("journals.names");
+  const tFryer = await getTranslations("fryerOil");
 
   const [document, organization, employees, equipment, tasksFlowIntegration] =
     await Promise.all([
@@ -487,18 +492,16 @@ async function JournalDocumentBody({
     return (
       <div className="mx-auto max-w-[640px] space-y-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-16 text-center">
         <div className="text-[20px] font-semibold text-[#0b1024]">
-          Этот журнал отключён
+          {tPage("disabledTitle")}
         </div>
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
-          «{disabledJournalName}» отключён для вашей организации. Старые
-          записи сохранены — включите журнал в настройках, чтобы продолжить
-          их редактирование.
+          {tPage("disabledDescription", { name: disabledJournalName })}
         </p>
         <a
           href="/settings/journals"
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
         >
-          Открыть настройки набора журналов
+          {tPage("openJournalSettings")}
         </a>
       </div>
     );
@@ -683,7 +686,7 @@ async function JournalDocumentBody({
       return {
         id: entry.id,
         employeeId: entry.employeeId,
-        name: emp?.name || "Сотрудник",
+        name: emp?.name || tJournals("employee"),
         data: entry.data,
       };
     });
@@ -1189,7 +1192,7 @@ async function JournalDocumentBody({
       <DomainMessagesBoundary namespaces={["journalPpe", "personnelMaintenancePdf", "journalScan", "common", "journalControls", "journalWidgets", "journals"]}>
       <PpeIssuanceDocumentClient
         documentId={document.id}
-        {...capturePpeTitle(document.title, "Журнал учета выдачи СИЗ")}
+        {...capturePpeTitle(document.title, tNames("ppe_issuance"))}
         organizationName={organizationName}
         dateFrom={toDateKey(document.dateFrom)}
         status={document.status}
@@ -1228,7 +1231,7 @@ async function JournalDocumentBody({
           documentId={document.id}
           currentUserId={session.user.id}
           controlPeriodicity={controlPeriodicity}
-          title={document.title || "Журнал учета использования фритюрных жиров"}
+          title={document.title || tFryer("pageTitle")}
           organizationName={organizationName}
           status={document.status}
           dateFrom={toIsoDate(document.dateFrom)}
@@ -1301,7 +1304,7 @@ async function JournalDocumentBody({
       return (
         <SanitaryDayChecklistDocumentClient
           documentId={document.id}
-          title={document.title || "Чек-лист"}
+          title={document.title || tPage("checklistTitle")}
           organizationName={organizationName}
           status={document.status}
           dateFrom={toIsoDate(document.dateFrom)}

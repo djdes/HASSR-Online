@@ -11,6 +11,7 @@ import { TOUR } from "@/lib/tour-anchors";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { BookOpenText, Ellipsis, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { CreateDocumentDialog } from "@/components/journals/create-document-dialog";
@@ -108,6 +109,9 @@ function EditTrackedDocumentDialog({
   users: { id: string; name: string; role: string }[];
   onSaved: () => void;
 }) {
+  const tt = useTranslations("journalUi.tracked");
+  const tw = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const [title, setTitle] = useState("");
   const [responsibleTitle, setResponsibleTitle] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -195,7 +199,7 @@ function EditTrackedDocumentDialog({
       onOpenChange(false);
       onSaved();
     } catch {
-      toast.error("Не удалось сохранить настройки документа");
+      toast.error(tt("saveDocumentSettingsFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -205,19 +209,19 @@ function EditTrackedDocumentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="border-b px-6 py-5">
-          <DialogTitle className="text-[22px] font-medium text-black">Настройки документа</DialogTitle>
+          <DialogTitle className="text-[22px] font-medium text-black">{tw("settings")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="tracked-edit-title" className="sr-only">
-              Название документа
+              {tw("documentName")}
             </Label>
             <Input
               id="tracked-edit-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Введите название документа"
+              placeholder={tw("documentNamePlaceholder")}
               className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
             />
           </div>
@@ -225,26 +229,26 @@ function EditTrackedDocumentDialog({
           {createMode === "uv" && (
             <div className="space-y-3">
               <Label htmlFor="tracked-edit-area" className="sr-only">
-                Наименование цеха
+                {tt("areaName")}
               </Label>
               <Input
                 id="tracked-edit-area"
                 value={areaName}
                 onChange={(e) => setAreaName(e.target.value)}
-                placeholder="Введите наименование цеха/участка применения"
+                placeholder={tt("areaNamePlaceholder")}
                 className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
               />
             </div>
           )}
 
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность ответственного</Label>
+            <Label className="text-[14px] text-[#73738a]">{tw("responsiblePosition")}</Label>
             <Select
               value={responsibleTitle}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={tw("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -254,7 +258,7 @@ function EditTrackedDocumentDialog({
 
           {!isAcceptance && (
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#73738a]">{tw("employee")}</Label>
               <Select
                 value={responsibleUserId}
                 onValueChange={cascade.handleEmployeeChange}
@@ -262,7 +266,7 @@ function EditTrackedDocumentDialog({
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={tw("chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {(responsibleTitle ? cascade.candidates : users).map((user) => (
@@ -277,13 +281,13 @@ function EditTrackedDocumentDialog({
 
           {createMode === "staff" ? (
             <div className="space-y-2 rounded-2xl border border-[#dfe1ec] px-5 py-4">
-              <div className="text-[14px] text-[#73738a]">Периодичность контроля</div>
+              <div className="text-[14px] text-[#73738a]">{tt("periodicity")}</div>
               <div className="text-[15px] leading-[1.35] text-black">{HYGIENE_PERIODICITY_TEXT}</div>
             </div>
           ) : (
             <div className="space-y-3">
               <Label htmlFor="tracked-edit-date-from" className="text-[14px] text-[#73738a]">
-                {createMode === "uv" || isAcceptance ? "Дата начала" : "Дата документа"}
+                {createMode === "uv" || isAcceptance ? tt("dateFrom") : tt("documentDate")}
               </Label>
               <Input
                 id="tracked-edit-date-from"
@@ -298,19 +302,19 @@ function EditTrackedDocumentDialog({
           {isAcceptance && (
             <>
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Добавить поля</Label>
+                <Label className="text-[14px] text-[#73738a]">{tt("addFields")}</Label>
                 <div className="flex items-center gap-3">
                   <Switch checked={showPackagingField} onCheckedChange={setShowPackagingField} />
                   <span className="text-[14px]">
-                    Соответствие внешнего вида упаковки, маркировки требованиям НД
+                    {tt("packagingCompliance")}
                   </span>
                 </div>
               </div>
               <div className="space-y-3">
-                <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+                <Label className="text-[14px] text-[#73738a]">{tw("employee")}</Label>
                 <Select value={responsibleUserId} onValueChange={setResponsibleUserId}>
                   <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                    <SelectValue placeholder="Выберите сотрудника" />
+                    <SelectValue placeholder={tw("chooseEmployee")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(responsibleTitle ? getUsersForRoleLabel(users, responsibleTitle, { keepUserId: responsibleUserId }) : users).map((user) => (
@@ -341,7 +345,7 @@ function EditTrackedDocumentDialog({
               disabled={submitting}
               className="h-10 rounded-xl bg-[#5566f6] px-6 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -358,6 +362,10 @@ function TrackedDocumentsClientImpl({
   users,
   documents,
 }: Props) {
+  const tt = useTranslations("journalUi.tracked");
+  const tl = useTranslations("journalControls.list");
+  const tda = useTranslations("journalControls.documentActions");
+  const common = useTranslations("common");
   const router = useRouter();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
@@ -374,14 +382,14 @@ function TrackedDocumentsClientImpl({
   }
 
   async function handleDelete(documentId: string, title: string) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${title}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: tda("deleteTitle"), description: tt("deleteDescription", { title }), variant: "danger", confirmLabel: common("delete") }))) return;
 
     const response = await fetch(`/api/journal-documents/${documentId}`, {
       method: "DELETE",
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(tda("deleteError"));
       return;
     }
 
@@ -408,7 +416,7 @@ function TrackedDocumentsClientImpl({
                   templateName={templateName}
                   users={users}
                   triggerClassName={JOURNAL_ACTION_CREATE_CLASS}
-                  triggerLabel="Создать документ"
+                  triggerLabel={tl("create")}
                   triggerIcon={<Plus className="size-4" />}
                   triggerDataTour={TOUR.createDocument}
                 />
@@ -439,7 +447,7 @@ function TrackedDocumentsClientImpl({
                 </Link>
 
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{tt("responsible")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {getResponsibleCardValue(document)}
                   </div>
@@ -452,13 +460,13 @@ function TrackedDocumentsClientImpl({
 
                 <div className="flex justify-end pt-1 sm:justify-center sm:pt-0">
                   <ResponsiveMenu
-                    title="Действия"
+                    title={tl("actions")}
                     items={filterManageMenuItems([
                       ...(document.status === "active"
                         ? [
                             {
                               key: "settings",
-                              label: "Настройки",
+                              label: tl("settings"),
                               icon: <Pencil className="size-4 text-[#6f7282]" />,
                               onSelect: () => setEditingDocument(document),
                             },
@@ -466,7 +474,7 @@ function TrackedDocumentsClientImpl({
                         : []),
                       {
                         key: "print",
-                        label: "Печать",
+                        label: tl("print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
                           window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
@@ -478,7 +486,7 @@ function TrackedDocumentsClientImpl({
                         ? [
                             {
                               key: "delete",
-                              label: "Удалить",
+                              label: tl("delete"),
                               icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                               tone: "danger" as const,
                               onSelect: () => handleDelete(document.id, document.title),

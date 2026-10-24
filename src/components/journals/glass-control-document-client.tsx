@@ -213,6 +213,9 @@ function GlassControlSettingsDialog(props: {
   }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const g = useTranslations("journalUi.glassControl");
+  const tw = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState(props.initialState.title);
   const [dateFrom, setDateFrom] = useState(props.initialState.dateFrom);
@@ -271,8 +274,8 @@ function GlassControlSettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа, частота контроля и ответственный сотрудник."
+        title={g("settingsTitle")}
+        description={g("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -280,7 +283,7 @@ function GlassControlSettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {tw("documentName")}
           </Label>
           <Input
             value={title}
@@ -291,7 +294,7 @@ function GlassControlSettingsDialog(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Дата начала
+              {g("dateFrom")}
             </Label>
             <Input
               type="date"
@@ -302,26 +305,26 @@ function GlassControlSettingsDialog(props: {
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Частота контроля
+              {g("controlFrequency")}
             </Label>
             <Input
               value={controlFrequency}
               onChange={(event) => setControlFrequency(event.target.value)}
-              placeholder="Например: 1 раз в смену"
+              placeholder={g("controlFrequencyPlaceholder")}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </div>
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного
+            {tw("responsiblePosition")}
           </Label>
           <Select
             value={responsibleTitle}
             onValueChange={cascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={tw("selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {Array.from(new Set(options.titles)).map((titleItem) => (
@@ -334,7 +337,7 @@ function GlassControlSettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
+            {tw("employee")}
           </Label>
           <Select
             value={responsibleUserId}
@@ -343,7 +346,7 @@ function GlassControlSettingsDialog(props: {
             onOpenChange={cascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={tw("selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {employeeCandidates.map(
@@ -365,7 +368,7 @@ function GlassControlSettingsDialog(props: {
       <DialogContent showCloseButton={false} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            Настройки документа
+            {g("settingsTitle")}
           </DialogTitle>
           <button
             type="button"
@@ -378,7 +381,7 @@ function GlassControlSettingsDialog(props: {
 
         <div className="space-y-4 px-7 py-6">
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Название документа</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("documentName")}</Label>
             <Input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -387,7 +390,7 @@ function GlassControlSettingsDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Дата начала</Label>
+            <Label className="text-[16px] text-[#6f7282]">{g("dateFrom")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -397,7 +400,7 @@ function GlassControlSettingsDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Частота контроля</Label>
+            <Label className="text-[16px] text-[#6f7282]">{g("controlFrequency")}</Label>
             <Input
               value={controlFrequency}
               onChange={(event) => setControlFrequency(event.target.value)}
@@ -406,13 +409,13 @@ function GlassControlSettingsDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Должность ответственного</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("responsiblePosition")}</Label>
             <Select
               value={responsibleTitle}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={tw("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 {Array.from(new Set(options.titles)).map((titleItem) => (
@@ -425,7 +428,7 @@ function GlassControlSettingsDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Сотрудник</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("employee")}</Label>
             <Select
               value={responsibleUserId}
               onValueChange={cascade.handleEmployeeChange}
@@ -433,7 +436,7 @@ function GlassControlSettingsDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={tw("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {employeeCandidates.map((user) => (
@@ -452,7 +455,7 @@ function GlassControlSettingsDialog(props: {
               onClick={handleSave}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -473,6 +476,9 @@ function RowDialog(props: {
   /** «(k из N)» при правке выделенных строк по очереди. */
   titleSuffix?: string;
 }) {
+  const g = useTranslations("journalUi.glassControl");
+  const tw = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const [submitting, setSubmitting] = useState(false);
   const [draft, setDraft] = useState<RowItem>(props.row);
   // Локальный draft для должности (не часть RowItem — она хранится
@@ -511,7 +517,7 @@ function RowDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            {props.originalRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+            {props.originalRow ? `${g("editRow")}${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : tw("addEmployeeTitle")}
           </DialogTitle>
           <button
             type="button"
@@ -524,7 +530,7 @@ function RowDialog(props: {
 
         <div className="space-y-4 px-7 py-6">
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Дата</Label>
+            <Label className="text-[16px] text-[#6f7282]">{g("date")}</Label>
             <Input
               type="date"
               value={draft.date}
@@ -537,7 +543,7 @@ function RowDialog(props: {
 
           <div className="space-y-3">
             <Label className="text-[16px] font-semibold text-black">
-              Состояние: повреждения обнаружены
+              {g("damagesDetected")}
             </Label>
             <div className="flex flex-wrap gap-6 text-[18px]">
               <label className="flex items-center gap-2">
@@ -552,7 +558,7 @@ function RowDialog(props: {
                   }
                   className="size-4 accent-[#5863f8]"
                 />
-                Да
+                {common("yes")}
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -572,19 +578,19 @@ function RowDialog(props: {
                   }
                   className="size-4 accent-[#5863f8]"
                 />
-                Нет
+                {common("no")}
               </label>
             </div>
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Должность ответственного</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("responsiblePosition")}</Label>
             <Select
               value={draftTitle}
               onValueChange={rowCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={tw("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 {Array.from(new Set(options.titles)).map((titleItem) => (
@@ -597,7 +603,7 @@ function RowDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Сотрудник</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("employee")}</Label>
             <Select
               value={draft.employeeId}
               onValueChange={rowCascade.handleEmployeeChange}
@@ -605,7 +611,7 @@ function RowDialog(props: {
               onOpenChange={rowCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={tw("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {employeeCandidates.map((user) => (
@@ -620,7 +626,7 @@ function RowDialog(props: {
           {draft.data.damagesDetected && (
             <>
               <div className="space-y-1">
-                <Label className="text-[16px] text-[#6f7282]">Наименование</Label>
+                <Label className="text-[16px] text-[#6f7282]">{g("itemName")}</Label>
                 <Input
                   list="glass-control-item-suggestions"
                   value={draft.data.itemName}
@@ -640,7 +646,7 @@ function RowDialog(props: {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[16px] text-[#6f7282]">Кол-во</Label>
+                <Label className="text-[16px] text-[#6f7282]">{g("quantityShort")}</Label>
                 <Input
                   value={draft.data.quantity}
                   onChange={(event) =>
@@ -655,7 +661,7 @@ function RowDialog(props: {
 
               <div className="space-y-1">
                 <Label className="text-[16px] text-[#6f7282]">
-                  Информация о повреждениях / замены
+                  {g("damageInfoReplacement")}
                 </Label>
                 <Input
                   value={draft.data.damageInfo}
@@ -686,7 +692,7 @@ function RowDialog(props: {
               }}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -696,6 +702,8 @@ function RowDialog(props: {
 }
 
 export function GlassControlDocumentClient(props: Props) {
+  const g = useTranslations("journalUi.glassControl");
+  const tw = useTranslations("journalWidgets.staff");
   const t = useTranslations("journalControls");
   const common = useTranslations("common");
   const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
@@ -749,23 +757,23 @@ export function GlassControlDocumentClient(props: Props) {
       subtitle: virtual ? undefined : userName || undefined,
       badge: virtual ? (
         <span
-          title="Контроль за этот день не внесён"
+          title={g("noControlForDay")}
           className="rounded-full bg-[#f2f3f8] px-2 py-0.5 text-[11px] font-semibold text-[#6f7282]"
         >
-          Не заполнено
+          {g("notFilled")}
         </span>
       ) : row.data.damagesDetected ? (
         <span className="rounded-full bg-[#fff2f1] px-2 py-0.5 text-[11px] font-semibold text-[#d2453d]">
-          Повреждения
+          {g("damages")}
         </span>
       ) : (
         // Короткая подпись: длинная «Без повреждений» на телефоне
         // съедала строку заголовка и дата обрезалась («№2 · 02-09-20…»).
         <span
-          title="Повреждений не обнаружено"
+          title={g("noDamagesFound")}
           className="rounded-full bg-[#e6f8ec] px-2 py-0.5 text-[11px] font-semibold text-[#1f7a3c]"
         >
-          Норма
+          {g("normal")}
         </span>
       ),
       leading: !isClosed ? (
@@ -782,9 +790,9 @@ export function GlassControlDocumentClient(props: Props) {
         />
       ) : null,
       fields: [
-        { label: "Наименование предмета", value: row.data.itemName, hideIfEmpty: true },
-        { label: "Количество", value: row.data.quantity, hideIfEmpty: true },
-        { label: "Информация о повреждениях", value: row.data.damageInfo, hideIfEmpty: true },
+        { label: g("itemNameFull"), value: row.data.itemName, hideIfEmpty: true },
+        { label: g("quantity"), value: row.data.quantity, hideIfEmpty: true },
+        { label: g("damageInfo"), value: row.data.damageInfo, hideIfEmpty: true },
       ],
       onClick: !isClosed ? () => setRowDialog({ open: true, row, originalRow: row }) : undefined,
     };
@@ -818,7 +826,7 @@ export function GlassControlDocumentClient(props: Props) {
 
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.entry) {
-      toast.error("Не удалось сохранить строку");
+      toast.error(g("saveRowFailed"));
       throw new Error("save_row_failed");
     }
 
@@ -860,7 +868,7 @@ export function GlassControlDocumentClient(props: Props) {
     const ids = selectedRowIds.filter((id) => !id.startsWith("virtual:"));
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: g("deleteRowsTitle"), description: g("deleteRowsDescription", { count }), variant: "danger", confirmLabel: common("delete") }))) return;
 
     try {
       if (ids.length > 0) {
@@ -871,15 +879,15 @@ export function GlassControlDocumentClient(props: Props) {
         });
 
         if (!response.ok) {
-          throw new Error("Не удалось удалить строки");
+          throw new Error(g("deleteRowsFailed"));
         }
       }
 
       setRows((current) => current.filter((row) => !selectedRowIds.includes(row.id)));
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(g("rowsDeleted", { count }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(humanizeFetchError(error, g("deleteSelectedFailed")));
     }
   }
 
@@ -898,7 +906,7 @@ export function GlassControlDocumentClient(props: Props) {
     });
 
     if (!patchResponse.ok) {
-      toast.error("Не удалось обновить автозаполнение");
+      toast.error(g("autofillUpdateFailed"));
       return;
     }
 
@@ -926,7 +934,7 @@ export function GlassControlDocumentClient(props: Props) {
         });
 
         if (!response.ok) {
-          toast.error("Не удалось автозаполнить журнал");
+          toast.error(g("autofillFailed"));
           return;
         }
       }
@@ -960,7 +968,7 @@ export function GlassControlDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки документа");
+      toast.error(g("saveSettingsFailed"));
       throw new Error("save_settings_failed");
     }
 
@@ -985,13 +993,13 @@ export function GlassControlDocumentClient(props: Props) {
 
   return (
     <div className="space-y-6 text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={g("emptyTitle")} emptyBody={g("emptyBody")} />
       {selectedCount > 0 && !isClosed && (
         <JournalSelectionBar
           count={selectedCount}
           onClear={() => setSelectedRowIds([])}
           onDelete={() => deleteSelectedRows().catch(() => undefined)}
-          hint="Записи контроля будут удалены без возможности отмены"
+          hint={g("deleteHint")}
         >
           <SelectionEditButton count={selectedCount} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
@@ -999,12 +1007,12 @@ export function GlassControlDocumentClient(props: Props) {
 
       <JournalDocumentShell
         title={documentTitle}
-        subtitle={`Начат ${formatRuDateDash(props.dateFrom)}`}
+        subtitle={g("startedAt", { date: formatRuDateDash(props.dateFrom) })}
         documentId={props.documentId}
         backHref="/journals/glass_control"
         onSettings={isClosed ? undefined : () => setSettingsOpen(true)}
         closed={isClosed}
-        closedHint="Откройте журнал заново, чтобы добавлять и править записи контроля."
+        closedHint={g("closedHint")}
         menuItems={
           !isClosed
             ? [
@@ -1023,12 +1031,12 @@ export function GlassControlDocumentClient(props: Props) {
             void syncAutoFill(next);
           },
           disabled: isClosed,
-          label: "Автоматически заполнять журнал",
+          label: tw("autofillLabel"),
         }}
         mobileView={mobileView}
         onMobileView={switchMobileView}
         cards={
-          <RecordCardsView items={cardItems} emptyLabel="Контролей пока не проведено." />
+          <RecordCardsView items={cardItems} emptyLabel={g("noControls")} />
         }
         paperHeader={
           <JournalDocumentHeader
@@ -1055,7 +1063,7 @@ export function GlassControlDocumentClient(props: Props) {
               }
             >
               <Plus className="size-5" />
-              Добавить
+              {common("add")}
             </Button>
           ) : undefined
         }
@@ -1073,23 +1081,23 @@ export function GlassControlDocumentClient(props: Props) {
                   />
                 </th>
               )}
-              <th rowSpan={2} className={`w-[130px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Дата</th>
+              <th rowSpan={2} className={`w-[130px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{g("date")}</th>
               <th colSpan={2} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                Состояние: повреждения обнаружены
+                {g("damagesDetected")}
               </th>
               <th colSpan={3} className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                Предмет, на котором обнаружены повреждения
+                {g("damagedItem")}
               </th>
               <th rowSpan={2} className={`w-[170px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                Фамилия ответственного лица
+                {g("responsibleSurname")}
               </th>
             </tr>
             <tr>
-              <th className={`w-[70px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Да</th>
-              <th className={`w-[70px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Нет</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Наименование</th>
-              <th className={`w-[100px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Кол-во</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Информация о повреждениях / замены</th>
+              <th className={`w-[70px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{common("yes")}</th>
+              <th className={`w-[70px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{common("no")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{g("itemName")}</th>
+              <th className={`w-[100px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{g("quantityShort")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{g("damageInfoReplacement")}</th>
             </tr>
           </thead>
           <tbody>
@@ -1142,7 +1150,7 @@ export function GlassControlDocumentClient(props: Props) {
                 leading={1}
                 labelSpan={1}
                 trailing={6}
-                label="Добавить"
+                label={common("add")}
                 onClick={() =>
                   setRowDialog({
                     open: true,

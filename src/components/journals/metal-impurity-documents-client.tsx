@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   BookOpenText,
   Ellipsis,
@@ -33,7 +34,6 @@ import {
 } from "@/components/ui/select";
 import {
   METAL_IMPURITY_DOCUMENT_TITLE,
-  METAL_IMPURITY_PAGE_TITLE,
   METAL_IMPURITY_RESPONSIBLE_POSITIONS,
   METAL_IMPURITY_TEMPLATE_CODE,
   type MetalImpurityUser,
@@ -101,11 +101,15 @@ type SettingsState = {
   responsibleEmployee: string;
 };
 
-function formatRuDate(value: string) {
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+
+function formatDisplayDate(value: string, locale: string) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("ru-RU").replace(/\./g, "-");
+  return date
+    .toLocaleDateString(DATE_LOCALES[locale] ?? "ru-RU")
+    .replace(/[./]/g, "-");
 }
 
 function collectEmployeeOptions(
@@ -176,6 +180,9 @@ function DocumentDialog({
   showEmployeeField: boolean;
   onSubmit: (value: SettingsState) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.metalImpurity");
+  const staffT = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const [state, setState] = useState(initial);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange });
@@ -261,10 +268,10 @@ function DocumentDialog({
         <div className="space-y-6 px-12 py-10">
           <DocumentDialogFeedback state={submit} onOpenChange={onOpenChange} />
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("documentName")}</Label>
             <Input
               value={state.title}
-              placeholder="Введите название документа"
+              placeholder={staffT("documentNamePlaceholder")}
               onChange={(event) => {
                 auto.markTouched();
                 setState({ ...state, title: event.target.value });
@@ -273,7 +280,7 @@ function DocumentDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата начала</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("startDate")}</Label>
             <Input
               type="date"
               value={state.startDate}
@@ -290,13 +297,13 @@ function DocumentDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность ответственного</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("responsiblePosition")}</Label>
             <Select
               value={state.responsiblePosition}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={staffT("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -305,7 +312,7 @@ function DocumentDialog({
           </div>
           {showEmployeeField && (
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#73738a]">{staffT("employee")}</Label>
               <Select
                 value={state.responsibleEmployeeId || EMPTY_SELECT_VALUE}
                 onValueChange={cascade.handleEmployeeChange}
@@ -313,10 +320,10 @@ function DocumentDialog({
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={staffT("chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={EMPTY_SELECT_VALUE}>Выберите сотрудника</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>{staffT("chooseEmployee")}</SelectItem>
                   {employeeOptions.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {buildStaffOptionLabel(employee)}
@@ -335,7 +342,7 @@ function DocumentDialog({
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : submitLabel}
+              {submitting ? common("saving") : submitLabel}
             </Button>
           </div>
         </div>
@@ -355,6 +362,9 @@ function DeleteDialog({
   title: string;
   onDelete: () => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.metalImpurity");
+  const lifecycleT = useTranslations("journalControls.documentLifecycle");
+  const common = useTranslations("common");
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange });
   const submitting = submit.submitting;
@@ -365,7 +375,7 @@ function DeleteDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[680px]">
         <DialogHeader className="border-b px-12 py-10">
           <DialogTitle className="pr-10 text-[22px] font-medium text-black">
-            {`Удаление документа "${title}"`}
+            {t("deleteTitle", { title })}
           </DialogTitle>
         </DialogHeader>
         <div className="flex justify-end px-12 py-10">
@@ -377,7 +387,7 @@ function DeleteDialog({
             }}
             className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
           >
-            {submitting ? "Удаление..." : "Удалить"}
+            {submitting ? lifecycleT("deleting") : common("delete")}
           </Button>
         </div>
       </DialogContent>
@@ -394,6 +404,14 @@ export function MetalImpurityDocumentsClient({
   availableSuppliers,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.metalImpurity");
+  const listT = useTranslations("journalControls.list");
+  const staffT = useTranslations("journalWidgets.staff");
+  const namesT = useTranslations("journals.names");
+  const createT = useTranslations("journalControls.documentDialog");
+  const actionsT = useTranslations("journalControls.documentActions");
+  const common = useTranslations("common");
+  const locale = useLocale();
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
@@ -449,7 +467,7 @@ export function MetalImpurityDocumentsClient({
 
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || "Не удалось создать документ");
+      throw new Error(result?.error || createT("createError"));
     }
 
     router.push(`/journals/${routeCode}/documents/${result.document.id}`);
@@ -487,7 +505,7 @@ export function MetalImpurityDocumentsClient({
     });
 
     if (!response.ok) {
-      throw new Error("Не удалось сохранить документ");
+      throw new Error(t("saveFailed"));
     }
     router.refresh();
   }
@@ -497,7 +515,7 @@ export function MetalImpurityDocumentsClient({
       method: "DELETE",
     });
     if (!response.ok) {
-      throw new Error("Не удалось удалить документ");
+      throw new Error(actionsT("deleteError"));
     }
     router.refresh();
   }
@@ -510,10 +528,10 @@ export function MetalImpurityDocumentsClient({
             <JournalHeadingName
               fallback={
                 activeTab === "closed"
-                  ? `${METAL_IMPURITY_PAGE_TITLE} (Закрытые)`
-                  : METAL_IMPURITY_PAGE_TITLE
+                  ? `${namesT("metal_impurity")} ${t("closedSuffix")}`
+                  : namesT("metal_impurity")
               }
-              suffix={activeTab === "closed" ? " (Закрытые)" : null}
+              suffix={activeTab === "closed" ? ` ${t("closedSuffix")}` : null}
             />
           </h1>
           <JournalListActions
@@ -523,7 +541,7 @@ export function MetalImpurityDocumentsClient({
               canManageDocuments && activeTab === "active" ? (
                 <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
                   <Plus className="size-4" />
-                  Создать документ
+                  {listT("create")}
                 </Button>
               ) : null
             }
@@ -555,7 +573,7 @@ export function MetalImpurityDocumentsClient({
                   href={`/journals/${routeCode}/documents/${document.id}`}
                   className={JOURNAL_CARD_SECTION_CLASS}
                 >
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("responsible")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {`${config.responsiblePosition}: ${config.responsibleEmployee}`}
                   </div>
@@ -564,20 +582,20 @@ export function MetalImpurityDocumentsClient({
                   href={`/journals/${routeCode}/documents/${document.id}`}
                   className={JOURNAL_CARD_SECTION_CLASS}
                 >
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("startDate")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
-                    {formatRuDate(config.startDate)}
+                    {formatDisplayDate(config.startDate, locale)}
                   </div>
                 </Link>
                 <div className="justify-self-end">
                   <ResponsiveMenu
-                    title="Действия"
+                    title={listT("actions")}
                     items={filterManageMenuItems([
                       ...(document.status === "active"
                         ? [
                             {
                               key: "settings",
-                              label: "Настройки",
+                              label: listT("settings"),
                               icon: <Settings2 className="size-4 text-[#6f7282]" />,
                               onSelect: () => setSettingsDocument(document),
                             },
@@ -585,12 +603,12 @@ export function MetalImpurityDocumentsClient({
                         : []),
                       {
                         key: "print",
-                        label: "Печать",
+                        label: common("print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
                           void openDocumentPdf(document.id).catch((error) =>
                             toast.error(
-                              humanizeFetchError(error, "Не удалось открыть PDF")
+                              humanizeFetchError(error, t("openPdfFailed"))
                             )
                           ),
                       },
@@ -601,7 +619,7 @@ export function MetalImpurityDocumentsClient({
                         ? [
                             {
                               key: "delete",
-                              label: "Удалить",
+                              label: common("delete"),
                               icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                               tone: "danger" as const,
                               onSelect: () => setDeleteDocument(document),
@@ -630,8 +648,8 @@ export function MetalImpurityDocumentsClient({
         onOpenChange={setCreateOpen}
         mode="create"
         initial={createState}
-        submitLabel="Создать"
-        title="Создание документа"
+        submitLabel={t("create")}
+        title={t("createTitle")}
         users={users}
         documents={documents}
         showEmployeeField={false}
@@ -645,8 +663,8 @@ export function MetalImpurityDocumentsClient({
         }}
         mode="edit"
         initial={settingsState}
-        submitLabel="Сохранить"
-        title="Настройки документа"
+        submitLabel={common("save")}
+        title={staffT("settings")}
         users={users}
         documents={documents}
         showEmployeeField={true}

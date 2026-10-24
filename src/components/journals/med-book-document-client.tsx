@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { DocumentActionsBar } from "@/components/journals/document-actions-bar";
 import { useJournalUndo } from "@/lib/journal-undo";
 import {
@@ -177,13 +178,13 @@ const emptyDraft = (): Draft => ({
 });
 const cellBg = (warn: boolean) => (warn ? "bg-[#f6caca]" : "bg-white");
 
-async function fileToDataUrl(file: File) {
+async function fileToDataUrl(file: File, readError: string) {
   return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () =>
       resolve(typeof reader.result === "string" ? reader.result : "");
     reader.onerror = () =>
-      reject(reader.error ?? new Error("Не удалось прочитать файл"));
+      reject(reader.error ?? new Error(readError));
     reader.readAsDataURL(file);
   });
 }
@@ -227,6 +228,7 @@ function MedBookPrintList({
   /** Печатать третью колонку «Примечание» (только у осмотров). */
   noteColumn?: boolean;
 }) {
+  const t = useTranslations("journalUi.medBook");
   if (items.length === 0) return null;
 
   /*
@@ -262,14 +264,14 @@ function MedBookPrintList({
         <thead>
           <tr>
             <th className="border border-black px-2 py-1 text-left font-semibold">
-              Наименование
+              {t("printName")}
             </th>
             <th className="border border-black px-2 py-1 text-left font-semibold">
-              Периодичность
+              {t("printPeriodicity")}
             </th>
             {noteColumn ? (
               <th className="border border-black px-2 py-1 text-left font-semibold">
-                Примечание
+                {t("note")}
               </th>
             ) : null}
           </tr>
@@ -311,6 +313,10 @@ export function MedBookDocumentClient({
   useV2 = false,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.medBook");
+  const tc = useTranslations("common");
+  const tw = useTranslations("journalWidgets.staff");
+  const tl = useTranslations("journalControls.list");
   const isClosed = status === "closed";
   // Единый источник status/pdf-действий над журнальным документом.
   const { setStatus, isChangingStatus } = useJournalDocumentActions(documentId);
@@ -426,7 +432,7 @@ export function MedBookDocumentClient({
           if (!entriesResponse.ok) {
             const payload = await entriesResponse.json().catch(() => null);
             throw new Error(
-              payload?.error || "Не удалось сохранить строки журнала",
+              payload?.error || t("saveRowsFailed"),
             );
           }
         }
@@ -442,7 +448,7 @@ export function MedBookDocumentClient({
           );
           if (!deleteResponse.ok) {
             const payload = await deleteResponse.json().catch(() => null);
-            throw new Error(payload?.error || "Не удалось удалить строку");
+            throw new Error(payload?.error || t("deleteRowFailed"));
           }
         }
 
@@ -469,7 +475,7 @@ export function MedBookDocumentClient({
           });
           if (!response.ok) {
             const payload = await response.json().catch(() => null);
-            throw new Error(payload?.error || "Не удалось сохранить документ");
+            throw new Error(payload?.error || t("saveDocumentFailed"));
           }
         }
       } finally {
@@ -481,6 +487,7 @@ export function MedBookDocumentClient({
       documentId,
       examColumns,
       includeVaccinations,
+      t,
       vaccColumns,
     ],
   );
@@ -510,7 +517,7 @@ export function MedBookDocumentClient({
       setRows(previousRows);
       if (options?.silent) throw error;
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить журнал"),
+        humanizeFetchError(error, t("saveFailed")),
       );
     }
   }
@@ -545,7 +552,7 @@ export function MedBookDocumentClient({
       router.refresh();
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить журнал"),
+        humanizeFetchError(error, t("saveFailed")),
       );
     }
   }
@@ -594,14 +601,14 @@ export function MedBookDocumentClient({
 
   async function closeJournal() {
     const confirmed = await confirmAsync({
-      title: "Закончить журнал?",
-      description: `Документ «${docTitle}» перейдёт в закладку «Закрытые» и станет доступен только для просмотра.`,
+      title: t("finishTitle"),
+      description: t("finishDescription", { title: docTitle }),
       variant: "warn",
-      confirmLabel: "Закончить журнал",
+      confirmLabel: t("finishJournal"),
       bullets: [
-        { label: `Строк сотрудников в журнале: ${rows.length}`, tone: "info" },
-        { label: "Даты осмотров и прививок редактировать будет нельзя", tone: "warn" },
-        { label: "Журнал можно вернуть в активные в любой момент", tone: "default" },
+        { label: t("finishBulletRows", { count: rows.length }), tone: "info" },
+        { label: t("finishBulletLocked"), tone: "warn" },
+        { label: t("finishBulletReopen"), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -618,33 +625,33 @@ export function MedBookDocumentClient({
 
   async function editExam(rowId: string, column: string) {
     if (isClosed) return;
+    const dateFormatError = t("dateFormatError");
     const row = rows.find((item) => item.id === rowId);
     if (!row) return;
     const current = row.data.examinations[column];
 
     const date = await promptAsync({
-      title: `Дата осмотра — ${column}`,
-      description: `Сотрудник: ${row.name}. Когда осмотр или исследование было пройдено.`,
-      label: "Дата прохождения",
+      title: t("examDateTitle", { column }),
+      description: t("examDateDescription", { name: row.name }),
+      label: t("examDateLabel"),
       type: "date",
       defaultValue: current?.date || "",
-      confirmLabel: "Далее",
+      confirmLabel: t("next"),
       validate: (value) =>
-        value && !ISO_DATE_RE.test(value) ? "Укажите дату в формате ГГГГ-ММ-ДД" : null,
+        value && !ISO_DATE_RE.test(value) ? dateFormatError : null,
     });
     if (date === null) return;
 
     const expiryDate = await promptAsync({
-      title: `Действует до — ${column}`,
-      description:
-        "До какой даты результат осмотра действителен. Ячейка подсветится, когда срок истечёт.",
-      label: "Действителен до",
+      title: t("validUntilTitle", { column }),
+      description: t("examValidUntilDescription"),
+      label: t("examValidUntilLabel"),
       type: "date",
       defaultValue: current?.expiryDate || "",
-      confirmLabel: "Сохранить",
+      confirmLabel: tc("save"),
       validate: (value) => {
-        if (value && !ISO_DATE_RE.test(value)) return "Укажите дату в формате ГГГГ-ММ-ДД";
-        if (value && date && value < date) return "Срок действия раньше даты осмотра";
+        if (value && !ISO_DATE_RE.test(value)) return dateFormatError;
+        if (value && date && value < date) return t("examExpiryBeforeDate");
         return null;
       },
     });
@@ -675,21 +682,22 @@ export function MedBookDocumentClient({
 
   async function editVacc(rowId: string, column: string) {
     if (isClosed) return;
+    const dateFormatError = t("dateFormatError");
     const row = rows.find((item) => item.id === rowId);
     if (!row) return;
     const current = row.data.vaccinations[column];
 
     const rawType = await promptAsync({
-      title: `Прививка «${column}»`,
-      description: `Сотрудник: ${row.name}. Что отметить в ячейке: ${VACCINATION_TYPE_HINT}.`,
-      label: "Тип отметки",
+      title: t("vaccinationTitle", { column }),
+      description: t("vaccinationTypeDescription", { name: row.name, hint: VACCINATION_TYPE_HINT }),
+      label: t("markTypeLabel"),
       placeholder: "done",
       defaultValue: current?.type || "done",
-      confirmLabel: "Далее",
+      confirmLabel: t("next"),
       validate: (value) =>
         VACCINATION_TYPES.includes(value.trim() as MedBookVaccinationType)
           ? null
-          : `Допустимые значения: ${VACCINATION_TYPES.join(", ")}`,
+          : t("allowedValues", { values: VACCINATION_TYPES.join(", ") }),
     });
     if (rawType === null) return;
     const type = rawType.trim() as MedBookVaccinationType;
@@ -699,39 +707,38 @@ export function MedBookDocumentClient({
     let expiryDate = "";
     if (type === "done") {
       const doseValue = await promptAsync({
-        title: `Доза — ${column}`,
-        description: "Какая по счёту доза или ревакцинация. Можно оставить пустым.",
-        label: "Доза",
-        placeholder: "Например, V1 или RV2",
+        title: t("doseTitle", { column }),
+        description: t("doseDescription"),
+        label: t("doseLabel"),
+        placeholder: t("dosePlaceholder"),
         defaultValue: current?.dose || "",
-        confirmLabel: "Далее",
+        confirmLabel: t("next"),
       });
       // Отмена на шаге дозы/дат раньше выбрасывала всё введённое.
       dose = doseValue === null ? current?.dose || "" : doseValue;
 
       const dateValue = await promptAsync({
-        title: `Дата прививки — ${column}`,
-        description: "Когда прививка была поставлена.",
-        label: "Дата вакцинации",
+        title: t("vaccinationDateTitle", { column }),
+        description: t("vaccinationDateDescription"),
+        label: t("vaccinationDateLabel"),
         type: "date",
         defaultValue: current?.date || "",
-        confirmLabel: "Далее",
+        confirmLabel: t("next"),
         validate: (value) =>
-          value && !ISO_DATE_RE.test(value) ? "Укажите дату в формате ГГГГ-ММ-ДД" : null,
+          value && !ISO_DATE_RE.test(value) ? dateFormatError : null,
       });
       date = dateValue === null ? current?.date || "" : dateValue;
 
       const expiryValue = await promptAsync({
-        title: `Действует до — ${column}`,
-        description:
-          "До какой даты прививка действительна. Ячейка подсветится, когда срок истечёт.",
-        label: "Действительна до",
+        title: t("validUntilTitle", { column }),
+        description: t("vaccinationValidUntilDescription"),
+        label: t("vaccinationValidUntilLabel"),
         type: "date",
         defaultValue: current?.expiryDate || "",
-        confirmLabel: "Сохранить",
+        confirmLabel: tc("save"),
         validate: (value) => {
-          if (value && !ISO_DATE_RE.test(value)) return "Укажите дату в формате ГГГГ-ММ-ДД";
-          if (value && date && value < date) return "Срок действия раньше даты прививки";
+          if (value && !ISO_DATE_RE.test(value)) return dateFormatError;
+          if (value && date && value < date) return t("vaccinationExpiryBeforeDate");
           return null;
         },
       });
@@ -763,16 +770,15 @@ export function MedBookDocumentClient({
 
   async function addExamColumn() {
     const name = await promptAsync({
-      title: "Новое исследование",
-      description:
-        "Колонка появится в таблице медкнижек — по ней можно будет отмечать даты для каждого сотрудника.",
-      label: "Название специалиста или исследования",
-      placeholder: "Например, Флюорография",
-      confirmLabel: "Добавить",
+      title: t("newExamTitle"),
+      description: t("newExamDescription"),
+      label: t("newExamLabel"),
+      placeholder: t("examPlaceholder"),
+      confirmLabel: tc("add"),
       validate: (value) => {
         const trimmed = value.trim();
-        if (!trimmed) return "Введите название";
-        if (examColumns.includes(trimmed)) return "Такая колонка уже есть";
+        if (!trimmed) return t("enterName");
+        if (examColumns.includes(trimmed)) return t("columnExists");
         return null;
       },
     });
@@ -784,16 +790,15 @@ export function MedBookDocumentClient({
 
   async function addVaccColumn() {
     const name = await promptAsync({
-      title: "Новая прививка",
-      description:
-        "Колонка появится в таблице прививок — по ней можно будет отмечать вакцинацию, отказ или мед. отвод.",
-      label: "Название прививки",
-      placeholder: "Например, АДС-М",
-      confirmLabel: "Добавить",
+      title: t("newVaccinationTitle"),
+      description: t("newVaccinationDescription"),
+      label: t("newVaccinationLabel"),
+      placeholder: t("vaccinationPlaceholder"),
+      confirmLabel: tc("add"),
       validate: (value) => {
         const trimmed = value.trim();
-        if (!trimmed) return "Введите название";
-        if (vaccColumns.includes(trimmed)) return "Такая прививка уже есть";
+        if (!trimmed) return t("enterName");
+        if (vaccColumns.includes(trimmed)) return t("vaccinationExists");
         return null;
       },
     });
@@ -805,14 +810,14 @@ export function MedBookDocumentClient({
 
   async function deleteRow(rowId: string, rowName: string) {
     const confirmed = await confirmAsync({
-      title: "Удалить строку сотрудника?",
-      description: `Строка «${rowName || "без имени"}» исчезнет из журнала медкнижек.`,
+      title: t("deleteRowTitle"),
+      description: t("deleteRowDescription", { name: rowName || t("unnamed") }),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: tc("delete"),
       bullets: [
-        { label: `Отметок об осмотрах: ${examColumns.length}`, tone: "warn" },
-        { label: `Отметок о прививках: ${vaccColumns.length}`, tone: "warn" },
-        { label: "Восстановить данные будет нельзя", tone: "warn" },
+        { label: t("deleteRowBulletExams", { count: examColumns.length }), tone: "warn" },
+        { label: t("deleteRowBulletVaccinations", { count: vaccColumns.length }), tone: "warn" },
+        { label: t("cannotRestore"), tone: "warn" },
       ],
     });
     if (!confirmed) return;
@@ -827,14 +832,14 @@ export function MedBookDocumentClient({
     const ids = selectedRowIds;
     if (ids.length === 0) return;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные строки?",
-      description: `Будет удалено строк сотрудников: ${ids.length}.`,
+      title: t("deleteSelectedTitle"),
+      description: t("deleteSelectedDescription", { count: ids.length }),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: tc("delete"),
       bullets: [
-        { label: `Отметок об осмотрах в каждой строке: ${examColumns.length}`, tone: "warn" },
-        { label: `Отметок о прививках в каждой строке: ${vaccColumns.length}`, tone: "warn" },
-        { label: "Восстановить данные будет нельзя", tone: "warn" },
+        { label: t("deleteSelectedBulletExams", { count: examColumns.length }), tone: "warn" },
+        { label: t("deleteSelectedBulletVaccinations", { count: vaccColumns.length }), tone: "warn" },
+        { label: t("cannotRestore"), tone: "warn" },
       ],
     });
     if (!confirmed) return;
@@ -846,7 +851,7 @@ export function MedBookDocumentClient({
   async function onPhoto(files: FileList | null, target: "add" | "edit") {
     const file = files?.[0];
     if (!file) return;
-    const photoUrl = await fileToDataUrl(file);
+    const photoUrl = await fileToDataUrl(file, t("fileReadFailed"));
     if (target === "add") setDraft((current) => ({ ...current, photoUrl }));
     if (target === "edit" && editRow) updateRow(editRow.id, { photoUrl });
   }
@@ -877,7 +882,7 @@ export function MedBookDocumentClient({
 
   return (
     <div className={DOC_BODY_STACK_CLASS}>
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("noRecordsTitle")} emptyBody={t("noRecordsBody")} />
       <DocumentActionsBar
         className={DOC_TITLE_ROW_NO_STRIP_CLASS}
         backHref="/journals/med_books"
@@ -899,14 +904,14 @@ export function MedBookDocumentClient({
           isClosed
             ? {
                 key: "reopen-journal",
-                label: "Вернуть в активные",
+                label: tl("restoreMenu"),
                 icon: <RotateCcw className="size-4" />,
                 onSelect: () => void setStatus("active"),
                 disabled: isChangingStatus,
               }
             : {
                 key: "close-journal",
-                label: "Закончить журнал",
+                label: t("finishJournal"),
                 icon: <Archive className="size-4" />,
                 onSelect: () => void closeJournal(),
                 disabled: isChangingStatus,
@@ -915,7 +920,7 @@ export function MedBookDocumentClient({
       />
       {isClosed ? (
         <div className="mb-5">
-          <JournalClosedBanner hint="Верните журнал в активные, чтобы менять даты осмотров, исследований и прививок." documentId={documentId} />
+          <JournalClosedBanner hint={t("closedHint")} documentId={documentId} />
         </div>
       ) : null}
 
@@ -952,39 +957,39 @@ export function MedBookDocumentClient({
                 badge:
                   expiredCount > 0 ? (
                     <span className="rounded-full bg-[#fff2f1] px-2 py-0.5 text-[11px] font-semibold text-[#d2453d]">
-                      {`Просрочено: ${expiredCount}`}
+                      {t("expiredBadge", { count: expiredCount })}
                     </span>
                   ) : soonCount > 0 ? (
                     <span className="rounded-full bg-[#fff9eb] px-2 py-0.5 text-[11px] font-semibold text-[#a16a13]">
-                      {`Скоро: ${soonCount}`}
+                      {t("soonBadge", { count: soonCount })}
                     </span>
                   ) : undefined,
                 fields: [
                   // Номер медкнижки и даты вводятся при добавлении строки,
                   // но в карточке их не было видно вообще.
                   {
-                    label: "№ мед. книжки",
+                    label: t("medBookNumberShort"),
                     value: row.data.medBookNumber || "",
                     warnIfEmpty: true,
                     onClick: !isClosed ? () => setEditId(row.id) : undefined,
                   },
                   {
-                    label: "Дата рождения",
+                    label: t("birthDate"),
                     value: formatMedBookDate(row.data.birthDate),
                     onClick: !isClosed ? () => setEditId(row.id) : undefined,
                   },
                   {
-                    label: "Дата приёма",
+                    label: t("hireDateCard"),
                     value: formatMedBookDate(row.data.hireDate),
                     onClick: !isClosed ? () => setEditId(row.id) : undefined,
                   },
                   {
-                    label: "Пол",
+                    label: t("gender"),
                     value:
                       row.data.gender === "male"
-                        ? "Мужской"
+                        ? t("male")
                         : row.data.gender === "female"
-                          ? "Женский"
+                          ? t("female")
                           : "",
                     onClick: !isClosed ? () => setEditId(row.id) : undefined,
                   },
@@ -995,15 +1000,15 @@ export function MedBookDocumentClient({
                   const soon = exam ? isExaminationExpiringSoon(exam) : false;
                   const parts: string[] = [];
                   if (exam?.date) parts.push(formatMedBookDate(exam.date));
-                  if (exam?.expiryDate) parts.push(`до ${formatMedBookDate(exam.expiryDate)}`);
+                  if (exam?.expiryDate) parts.push(t("until", { date: formatMedBookDate(exam.expiryDate) }));
                   return {
                     label: column,
                     value: parts.join(" · "),
                     warnIfEmpty: true,
                     hint: exam && (expired || soon)
                       ? expired
-                        ? "Осмотр просрочен"
-                        : "Скоро истечёт"
+                        ? t("examExpired")
+                        : t("examExpiringSoon")
                       : undefined,
                     onClick: !isClosed ? () => void editExam(row.id, column) : undefined,
                   };
@@ -1012,7 +1017,7 @@ export function MedBookDocumentClient({
                 onClick: !isClosed ? () => setEditId(row.id) : undefined,
               };
             })}
-            emptyLabel="Сотрудников пока нет."
+            emptyLabel={t("noEmployees")}
           />
           </div>
         ) : null}
@@ -1031,14 +1036,14 @@ export function MedBookDocumentClient({
         >
           <JournalDocumentHeader
             orgName={organizationName}
-            title="Журнал учёта медицинских книжек сотрудников"
+            title={t("journalTitle")}
             startedAt={documentDateKey}
             finishedAt={isClosed ? documentDateKey : null}
             controlPeriodicity={controlPeriodicity}
           />
         </div>
         <JournalDocumentTitle className={DOC_CAPS_TITLE_CLASS}>
-          Медицинские книжки
+          {t("medicalBooks")}
         </JournalDocumentTitle>
 
         {/* «Добавить сотрудника» / «Добавить исследование» — слева
@@ -1055,7 +1060,7 @@ export function MedBookDocumentClient({
               }}
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Добавить сотрудника
+              {t("addEmployee")}
             </Button>
             {/* M5: вторая кнопка — ВТОРИЧНАЯ (светлая), как «Редактировать
                 списки» в остальных журналах: первичное действие на странице
@@ -1067,7 +1072,7 @@ export function MedBookDocumentClient({
               onClick={() => void addExamColumn()}
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Добавить исследование
+              {t("addExam")}
             </Button>
           </div>
         ) : null}
@@ -1077,7 +1082,7 @@ export function MedBookDocumentClient({
             count={selectedRowIds.length}
             onClear={() => setSelectedRowIds([])}
             onDelete={() => void deleteSelectedRows()}
-            hint="Строки сотрудников исчезнут вместе с отметками об осмотрах и прививках"
+            hint={t("selectionHint")}
           >
             <SelectionEditButton count={selectedRowIds.length} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
@@ -1104,8 +1109,8 @@ export function MedBookDocumentClient({
                   className={`${GRID_HEAD_CELL_CLASS} w-[44px] px-2 py-4 text-center leading-tight print:hidden`}
                 >
                   <Checkbox
-                    aria-label="Выделить все строки"
-                    title="Выделить все строки"
+                    aria-label={t("selectAllRows")}
+                    title={t("selectAllRows")}
                     disabled={isClosed || rows.length === 0}
                     checked={rows.length > 0 && selectedRowIds.length === rows.length}
                     onCheckedChange={(checked) =>
@@ -1118,19 +1123,19 @@ export function MedBookDocumentClient({
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} px-2 py-4 leading-tight`}
                 >
-                  № п/п
+                  {t("numberShort")}
                 </th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                 >
-                  Ф.И.О. сотрудника
+                  {t("employeeName")}
                 </th>
                 <th
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                 >
-                  Должность
+                  {t("position")}
                 </th>
                 {/* Номер медкнижки вводился, но нигде не показывался —
                     именно его сверяет инспектор. */}
@@ -1138,7 +1143,7 @@ export function MedBookDocumentClient({
                   rowSpan={2}
                   className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                 >
-                  № мед. книжки
+                  {t("medBookNumberShort")}
                 </th>
                 <th
                   colSpan={examColumns.length}
@@ -1147,7 +1152,7 @@ export function MedBookDocumentClient({
                   {/* M6: пунктуация групповых шапок ОДИНАКОВАЯ в обеих
                       таблицах — с двоеточием, как «Наименование прививки:»
                       на эталоне med_books-grid.png. */}
-                  Наименование специалиста / исследования:
+                  {t("examColumnsHeading")}
                 </th>
               </tr>
               <tr>
@@ -1182,7 +1187,7 @@ export function MedBookDocumentClient({
                 <tr key={row.id}>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight print:hidden`}>
                     <Checkbox
-                      aria-label={`Выделить строку «${row.name || "без имени"}»`}
+                      aria-label={t("selectRow", { name: row.name || t("unnamed") })}
                       disabled={isClosed}
                       checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={(checked) =>
@@ -1219,10 +1224,10 @@ export function MedBookDocumentClient({
                   <td
                     title={[
                       row.data.birthDate
-                        ? `Дата рождения: ${formatMedBookDate(row.data.birthDate)}`
+                        ? t("birthDateTitle", { date: formatMedBookDate(row.data.birthDate) })
                         : "",
                       row.data.hireDate
-                        ? `Дата приёма: ${formatMedBookDate(row.data.hireDate)}`
+                        ? t("hireDateTitle", { date: formatMedBookDate(row.data.hireDate) })
                         : "",
                     ]
                       .filter(Boolean)
@@ -1253,7 +1258,7 @@ export function MedBookDocumentClient({
                                     : "text-[13px]"
                                 }
                               >
-                                до {formatMedBookDate(exam.expiryDate)}
+                                {t("until", { date: formatMedBookDate(exam.expiryDate) })}
                               </div>
                             ) : null}
                           </div>
@@ -1271,7 +1276,7 @@ export function MedBookDocumentClient({
                   leading={2}
                   labelSpan={2}
                   trailing={examColumns.length + 1}
-                  label="Добавить сотрудника"
+                  label={t("addEmployee")}
                   onClick={() => {
                     setDraft(emptyDraft());
                     setAddOpen(true);
@@ -1293,13 +1298,13 @@ export function MedBookDocumentClient({
           onClick={() => setExamListOpen(true)}
           className="text-[17px] font-semibold text-black underline decoration-1 underline-offset-4 transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:hidden"
         >
-          Список специалистов и исследований
+          {t("examList")}
         </button>
         {/* Q2-8: на экране справочник живёт за ссылкой (диалог), на
             бумаге диалога нет — инспектор получал документ без расшифровки
             колонок. Печатаем содержимое списком. */}
         <MedBookPrintList
-          title="Список специалистов и исследований"
+          title={t("examList")}
           items={examColumns}
           reference={EXAMINATION_REFERENCE_DATA}
           noteColumn
@@ -1311,7 +1316,7 @@ export function MedBookDocumentClient({
           {/* На эталоне «Прививки» — мелкий bold-подзаголовок над таблицей,
               а не плакат: 34px читались как второй H1 страницы. */}
           <h2 className="text-center text-[16px] font-bold leading-tight text-black sm:text-[18px]">
-            Прививки
+            {t("vaccinations")}
           </h2>
           <div className="space-y-2">
             {/* «Прививки» (1320px) ездят вбок внутри своей рамки — общий
@@ -1325,8 +1330,8 @@ export function MedBookDocumentClient({
                       className={`${GRID_HEAD_CELL_CLASS} w-[44px] px-2 py-4 text-center leading-tight print:hidden`}
                     >
                       <Checkbox
-                        aria-label="Выделить все строки"
-                        title="Выделить все строки"
+                        aria-label={t("selectAllRows")}
+                        title={t("selectAllRows")}
                         disabled={isClosed || rows.length === 0}
                         checked={rows.length > 0 && selectedRowIds.length === rows.length}
                         onCheckedChange={(checked) =>
@@ -1339,31 +1344,31 @@ export function MedBookDocumentClient({
                       rowSpan={2}
                       className={`${GRID_HEAD_CELL_CLASS} px-2 py-4 leading-tight`}
                     >
-                      № п/п
+                      {t("numberShort")}
                     </th>
                     <th
                       rowSpan={2}
                       className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                     >
-                      Ф.И.О. сотрудника
+                      {t("employeeName")}
                     </th>
                     <th
                       rowSpan={2}
                       className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                     >
-                      Должность
+                      {t("position")}
                     </th>
                     <th
                       rowSpan={2}
                       className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                     >
-                      № мед. книжки
+                      {t("medBookNumberShort")}
                     </th>
                     <th
                       colSpan={vaccColumns.length + 1}
                       className={`${GRID_HEAD_CELL_CLASS} px-3 py-4 leading-tight`}
                     >
-                      Наименование прививки:
+                      {t("vaccinationColumnsHeading")}
                     </th>
                   </tr>
                   <tr>
@@ -1376,7 +1381,7 @@ export function MedBookDocumentClient({
                       </th>
                     ))}
                     <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 leading-tight`}>
-                      Примечание
+                      {t("note")}
                     </th>
                   </tr>
                 </thead>
@@ -1399,7 +1404,7 @@ export function MedBookDocumentClient({
                     <tr key={row.id}>
                       <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight print:hidden`}>
                         <Checkbox
-                          aria-label={`Выделить строку «${row.name || "без имени"}»`}
+                          aria-label={t("selectRow", { name: row.name || t("unnamed") })}
                           disabled={isClosed}
                           checked={selectedRowIds.includes(row.id)}
                           onCheckedChange={(checked) =>
@@ -1457,7 +1462,7 @@ export function MedBookDocumentClient({
                                           : "text-[13px]"
                                       }
                                     >
-                                      до {formatMedBookDate(vacc.expiryDate)}
+                                      {t("until", { date: formatMedBookDate(vacc.expiryDate) })}
                                     </div>
                                   ) : null}
                                 </div>
@@ -1484,7 +1489,7 @@ export function MedBookDocumentClient({
                       leading={2}
                       labelSpan={2}
                       trailing={vaccColumns.length + 2}
-                      label="Добавить сотрудника"
+                      label={t("addEmployee")}
                       onClick={() => {
                         setDraft(emptyDraft());
                         setAddOpen(true);
@@ -1501,10 +1506,10 @@ export function MedBookDocumentClient({
               onClick={() => setVaccListOpen(true)}
               className="text-[17px] font-semibold text-black underline decoration-1 underline-offset-4 transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:hidden"
             >
-              Список прививок
+              {t("vaccinationList")}
             </button>
             <MedBookPrintList
-              title="Список прививок"
+              title={t("vaccinationList")}
               items={vaccColumns}
               reference={VACCINATION_REFERENCE_DATA}
             />
@@ -1516,12 +1521,12 @@ export function MedBookDocumentClient({
       <MedBookListDialog
             open={examListOpen}
             onOpenChange={setExamListOpen}
-            title="Список специалистов и исследований"
-            description="Каждая строка — колонка в таблице медицинских осмотров. Переименование сохраняет уже проставленные даты, удаление убирает колонку вместе с отметками."
+            title={t("examList")}
+            description={t("examListDescription")}
             items={examColumns}
-            itemLabel="Специалист / исследование"
-            addLabel="Добавить исследование"
-            placeholder="Например, Флюорография"
+            itemLabel={t("examItemLabel")}
+            addLabel={t("addExam")}
+            placeholder={t("examPlaceholder")}
             saving={saving}
             onSave={applyExamListChange}
             reference={
@@ -1555,12 +1560,12 @@ export function MedBookDocumentClient({
           <MedBookListDialog
             open={vaccListOpen}
             onOpenChange={setVaccListOpen}
-            title="Список прививок"
-            description="Каждая строка — колонка в таблице прививок. Вакцинация проводится в соответствии с Приказом Минздрава России от 06.12.2021 № 1122н."
+            title={t("vaccinationList")}
+            description={t("vaccinationListDescription")}
             items={vaccColumns}
-            itemLabel="Прививка"
-            addLabel="Добавить прививку"
-            placeholder="Например, АДС-М"
+            itemLabel={t("vaccination")}
+            addLabel={t("addVaccination")}
+            placeholder={t("vaccinationPlaceholder")}
             saving={saving}
             onSave={applyVaccListChange}
             reference={
@@ -1589,8 +1594,8 @@ export function MedBookDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название документа, перечень обследований и прививок."
+          title={tw("settings")}
+          description={t("settingsDescription")}
           size="md"
           isSaving={saving}
           saveDisabled={!settingsTitle.trim()}
@@ -1607,7 +1612,7 @@ export function MedBookDocumentClient({
               router.refresh();
             } catch (error) {
               toast.error(
-                humanizeFetchError(error, "Не удалось сохранить настройки"),
+                humanizeFetchError(error, t("saveSettingsFailed")),
               );
             }
           }}
@@ -1615,7 +1620,7 @@ export function MedBookDocumentClient({
         >
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название документа
+              {tw("documentName")}
             </Label>
             <Input
               value={settingsTitle}
@@ -1630,14 +1635,14 @@ export function MedBookDocumentClient({
               checked={settingsIncludeVacc}
               onCheckedChange={(value) => setSettingsIncludeVacc(value === true)}
               className="shrink-0"
-              aria-label={'Включить раздел «Прививки»'}
+              aria-label={t("includeVaccinations")}
             />
-            Включить раздел «Прививки»
+            {t("includeVaccinations")}
           </label>
           {settingsIncludeVacc ? (
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Прививки в журнале ({vaccColumns.length})
+                {t("vaccinationsInJournal", { count: vaccColumns.length })}
               </Label>
               {vaccColumns.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
@@ -1653,7 +1658,7 @@ export function MedBookDocumentClient({
                           setVaccColumns((current) => current.filter((item) => item !== v))
                         }
                         className="text-[#9b9fb3] hover:text-[#a13a32]"
-                        aria-label={`Удалить ${v}`}
+                        aria-label={t("removeItem", { name: v })}
                       >
                         ×
                       </button>
@@ -1661,7 +1666,7 @@ export function MedBookDocumentClient({
                   ))}
                 </div>
               ) : (
-                <p className="text-[12px] text-[#9b9fb3]">Список пуст. Добавьте первую прививку.</p>
+                <p className="text-[12px] text-[#9b9fb3]">{t("listEmptyVaccination")}</p>
               )}
               <Button
                 type="button"
@@ -1669,7 +1674,7 @@ export function MedBookDocumentClient({
                 className="h-10 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] shadow-none hover:bg-[#5566f6]/[0.09]"
                 onClick={() => void addVaccColumn()}
               >
-                + Добавить прививку
+                {t("addVaccinationPlus")}
               </Button>
             </div>
           ) : null}
@@ -1679,11 +1684,11 @@ export function MedBookDocumentClient({
           <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
               <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-                Настройки документа
+                {tw("settings")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-5 px-6 py-5">
-              <Label>Название документа</Label>
+              <Label>{tw("documentName")}</Label>
               <Input
                 value={settingsTitle}
                 onChange={(event) => setSettingsTitle(event.target.value)}
@@ -1695,7 +1700,7 @@ export function MedBookDocumentClient({
                 className="h-9 rounded-xl border-[#dcdfed] px-5"
                 onClick={() => void addVaccColumn()}
               >
-                Добавить прививку
+                {t("addVaccination")}
               </Button>
               <div className="flex justify-end">
                 <Button
@@ -1714,12 +1719,12 @@ export function MedBookDocumentClient({
                       router.refresh();
                     } catch (error) {
                       toast.error(
-                        humanizeFetchError(error, "Не удалось сохранить настройки"),
+                        humanizeFetchError(error, t("saveSettingsFailed")),
                       );
                     }
                   }}
                 >
-                  {saving ? "Сохранение..." : "Сохранить"}
+                  {saving ? tc("saving") : tc("save")}
                 </Button>
               </div>
             </div>
@@ -1731,13 +1736,13 @@ export function MedBookDocumentClient({
         <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Добавление новой строки
+              {tw("addEmployeeTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Должность</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("position")}</Label>
               <Input
                 value={draft.positionTitle}
                 onChange={(event) =>
@@ -1747,12 +1752,12 @@ export function MedBookDocumentClient({
                   }))
                 }
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-                placeholder="Должность"
+                placeholder={t("position")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("employee")}</Label>
               <Select
                 value={draft.employeeId || NONE_VALUE}
                 onValueChange={(raw) => {
@@ -1771,10 +1776,10 @@ export function MedBookDocumentClient({
                 }}
               >
                 <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                  <SelectValue placeholder="— выберите —" />
+                  <SelectValue placeholder={t("choose")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>— выберите —</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("choose")}</SelectItem>
                   {availableEmployees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {employee.name}
@@ -1786,7 +1791,7 @@ export function MedBookDocumentClient({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Дата рождения</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("birthDate")}</Label>
                 <Input
                   type="date"
                   value={draft.birthDate}
@@ -1800,7 +1805,7 @@ export function MedBookDocumentClient({
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Дата приема</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("hireDate")}</Label>
                 <Input
                   type="date"
                   value={draft.hireDate}
@@ -1816,12 +1821,12 @@ export function MedBookDocumentClient({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Пол</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("gender")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {(
                   [
-                    ["male", "Мужской"],
-                    ["female", "Женский"],
+                    ["male", t("male")],
+                    ["female", t("female")],
                   ] as const
                 ).map(([value, label]) => {
                   const active = draft.gender === value;
@@ -1844,7 +1849,7 @@ export function MedBookDocumentClient({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Номер мед. книжки</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("medBookNumber")}</Label>
               <Input
                 value={draft.medBookNumber}
                 onChange={(event) =>
@@ -1853,13 +1858,13 @@ export function MedBookDocumentClient({
                     medBookNumber: event.target.value,
                   }))
                 }
-                placeholder="Введите номер мед. книжки"
+                placeholder={t("medBookNumberPlaceholder")}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Примечание</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("note")}</Label>
               <Input
                 value={draft.note}
                 onChange={(event) =>
@@ -1868,26 +1873,26 @@ export function MedBookDocumentClient({
                     note: event.target.value,
                   }))
                 }
-                placeholder="Примечание"
+                placeholder={t("note")}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Фото</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("photo")}</Label>
               <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#dcdfed] bg-white px-6 py-8 text-center">
                 {draft.photoUrl ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={draft.photoUrl}
-                      alt="Фото сотрудника"
+                      alt={t("employeePhotoAlt")}
                       className="mx-auto h-24 rounded-xl object-cover"
                     />
                   </>
                 ) : (
                   <div className="text-[14px] text-[#5566f6]">
-                    Выберите файл или перетащите его сюда
+                    {t("chooseFile")}
                   </div>
                 )}
                 <input
@@ -1907,7 +1912,7 @@ export function MedBookDocumentClient({
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
               onClick={() => setAddOpen(false)}
             >
-              Отмена
+              {tc("cancel")}
             </Button>
             <Button
               type="button"
@@ -1915,7 +1920,7 @@ export function MedBookDocumentClient({
               disabled={!draft.employeeId}
               className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
             >
-              Добавить
+              {tc("add")}
             </Button>
           </div>
         </DialogContent>
@@ -1934,26 +1939,26 @@ export function MedBookDocumentClient({
           <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
               <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-                Редактирование строки{seq.progress ? ` ${seq.progress}` : ""}
+                {t("editRowTitle")}{seq.progress ? ` ${seq.progress}` : ""}
               </DialogTitle>
             </DialogHeader>
 
             <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Должность</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("position")}</Label>
                 <Input
                   defaultValue={editRow.data.positionTitle}
                   onBlur={(event) =>
                     updateRow(editRow.id, { positionTitle: event.target.value })
                   }
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-                  placeholder="Должность"
+                  placeholder={t("position")}
                 />
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-[13px] font-medium text-[#3c4053]">Дата рождения</Label>
+                  <Label className="text-[13px] font-medium text-[#3c4053]">{t("birthDate")}</Label>
                   <Input
                     type="date"
                     defaultValue={editRow.data.birthDate || ""}
@@ -1966,7 +1971,7 @@ export function MedBookDocumentClient({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[13px] font-medium text-[#3c4053]">Дата приема</Label>
+                  <Label className="text-[13px] font-medium text-[#3c4053]">{t("hireDate")}</Label>
                   <Input
                     type="date"
                     defaultValue={editRow.data.hireDate || ""}
@@ -1981,7 +1986,7 @@ export function MedBookDocumentClient({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Номер мед. книжки</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("medBookNumber")}</Label>
                 <Input
                   defaultValue={editRow.data.medBookNumber || ""}
                   onBlur={(event) =>
@@ -1990,19 +1995,19 @@ export function MedBookDocumentClient({
                     })
                   }
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-                  placeholder="Введите номер мед. книжки"
+                  placeholder={t("medBookNumberPlaceholder")}
                 />
               </div>
 
               {/* «Пол» задавался только при добавлении строки, исправить
                   его потом было нельзя. */}
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Пол</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("gender")}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
-                      ["male", "Мужской"],
-                      ["female", "Женский"],
+                      ["male", t("male")],
+                      ["female", t("female")],
                     ] as const
                   ).map(([value, label]) => {
                     const active = editRow.data.gender === value;
@@ -2030,32 +2035,32 @@ export function MedBookDocumentClient({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Примечание</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("note")}</Label>
                 <Input
                   defaultValue={editRow.data.note || ""}
                   onBlur={(event) =>
                     updateRow(editRow.id, { note: event.target.value || null })
                   }
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-                  placeholder="Примечание"
+                  placeholder={t("note")}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Фото</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("photo")}</Label>
                 <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#dcdfed] bg-white px-6 py-8 text-center">
                   {editRow.data.photoUrl ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={editRow.data.photoUrl}
-                        alt="Фото сотрудника"
+                        alt={t("employeePhotoAlt")}
                         className="mx-auto h-24 rounded-xl object-cover"
                       />
                     </>
                   ) : (
                     <div className="text-[14px] text-[#5566f6]">
-                      Выберите файл или перетащите его сюда
+                      {t("chooseFile")}
                     </div>
                   )}
                   <input
@@ -2076,14 +2081,14 @@ export function MedBookDocumentClient({
                 onClick={() => void deleteRow(editRow.id, editRow.name)}
               >
                 <Trash2 className="mr-2 size-4" />
-                Удалить
+                {tc("delete")}
               </Button>
               <Button
                 type="button"
                 className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
                 onClick={() => seq.saved()}
               >
-                Закрыть
+                {tc("close")}
               </Button>
             </div>
           </DialogContent>

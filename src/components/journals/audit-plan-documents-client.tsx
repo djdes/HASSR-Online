@@ -464,7 +464,7 @@ export function AuditPlanDocumentsClient({
     });
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить документ");
+      throw new Error(failure?.error || ap("errors.save"));
     }
     router.refresh();
   }

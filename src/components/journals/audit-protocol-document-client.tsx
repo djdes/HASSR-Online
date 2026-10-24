@@ -339,7 +339,7 @@ export function AuditProtocolDocumentClient({
     const result = await response.json().catch(() => null);
     if (!response.ok) {
       const rawError = result?.error;
-      const error = new Error(rawError || "Не удалось сохранить документ");
+      const error = new Error(rawError || committed.current.text("journalAuditProtocol.saveDocumentFailed"));
       if (!rawError) failureRegistry.mark(error);
       throw error;
     }

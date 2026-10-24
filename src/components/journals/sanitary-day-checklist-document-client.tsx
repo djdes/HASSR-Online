@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,9 +90,9 @@ function createId(): string {
     : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function formatRuDate(dateStr: string): string {
+function formatLocaleDate(dateStr: string, locale: string): string {
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("ru-RU", {
+  return d.toLocaleDateString(locale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -103,13 +104,13 @@ function parseTime(t: string): { h: string; m: string } {
   return { h: parts[0] || "12", m: parts[1] || "00" };
 }
 
-async function requestJson(url: string, init: RequestInit) {
+async function requestJson(url: string, init: RequestInit, fallbackMessage: string) {
   const response = await fetch(url, init);
   const result = await response.json().catch(() => null);
   if (!response.ok) {
     throw new Error(
       (result && typeof result.error === "string" && result.error) ||
-        "Операция не выполнена"
+        fallbackMessage
     );
   }
   return result;
@@ -128,6 +129,9 @@ function SettingsDialog(props: {
   onSaved: (config: SdcConfig) => void;
   useV2?: boolean;
 }) {
+  const t = useTranslations("journalUi.sanitaryDayChecklist");
+  const common = useTranslations("common");
+  const staff = useTranslations("journalWidgets.staff");
   const [docTitle, setDocTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   // Храним id, а не имя: после переименования сотрудника селект по имени
@@ -199,12 +203,12 @@ function SettingsDialog(props: {
           dateFrom,
           config: nextConfig,
         }),
-      });
+      }, staff("operationFailed"));
       props.onOpenChange(false);
       props.onSaved(nextConfig);
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Ошибка сохранения")
+        humanizeFetchError(error, t("saveFailed"))
       );
     } finally {
       setSubmitting(false);
@@ -216,16 +220,16 @@ function SettingsDialog(props: {
   const peopleSelects = (
     <>
       <div className="space-y-1">
-        <Label className="text-[16px] text-[#6f7282]">Выполнил</Label>
+        <Label className="text-[16px] text-[#6f7282]">{t("performedBy")}</Label>
         <Select
           value={responsibleId || "__none__"}
           onValueChange={(v) => setResponsibleId(v === "__none__" ? "" : v)}
         >
           <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]">
-            <SelectValue placeholder="- Не выбран -" />
+            <SelectValue placeholder={t("notSelected")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">- Не выбран -</SelectItem>
+            <SelectItem value="__none__">{t("notSelected")}</SelectItem>
             {props.users.map((user) => (
               <SelectItem key={user.id} value={user.id}>
                 {user.name}
@@ -235,16 +239,16 @@ function SettingsDialog(props: {
         </Select>
       </div>
       <div className="space-y-1">
-        <Label className="text-[16px] text-[#6f7282]">Проверил</Label>
+        <Label className="text-[16px] text-[#6f7282]">{t("checkedBy")}</Label>
         <Select
           value={checkerId || "__none__"}
           onValueChange={(v) => setCheckerId(v === "__none__" ? "" : v)}
         >
           <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]">
-            <SelectValue placeholder="- Не выбран -" />
+            <SelectValue placeholder={t("notSelected")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">- Не выбран -</SelectItem>
+            <SelectItem value="__none__">{t("notSelected")}</SelectItem>
             {props.users.map((user) => (
               <SelectItem key={user.id} value={user.id}>
                 {user.name}
@@ -261,8 +265,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа и дата документа."
+        title={staff("settings")}
+        description={t("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -270,7 +274,7 @@ function SettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {staff("documentName")}
           </Label>
           <Input
             value={docTitle}
@@ -280,7 +284,7 @@ function SettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата
+            {t("date")}
           </Label>
           <Input
             type="date"
@@ -299,7 +303,7 @@ function SettingsDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            Настройки документа
+            {staff("settings")}
           </DialogTitle>
           <button
             type="button"
@@ -312,7 +316,7 @@ function SettingsDialog(props: {
         <div className="space-y-5 px-7 py-6">
           <div className="space-y-1">
             <Label className="text-[16px] text-[#6f7282]">
-              Название документа
+              {staff("documentName")}
             </Label>
             <Input
               value={docTitle}
@@ -321,7 +325,7 @@ function SettingsDialog(props: {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Дата</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("date")}</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -337,7 +341,7 @@ function SettingsDialog(props: {
               onClick={handleSave}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -354,6 +358,8 @@ function AddItemDialog(props: {
   zones: SdcZone[];
   onAdd: (zoneId: string, text: string) => void;
 }) {
+  const t = useTranslations("journalUi.sanitaryDayChecklist");
+  const common = useTranslations("common");
   const [zoneId, setZoneId] = useState(props.zones[0]?.id || "");
   const [text, setText] = useState("");
 
@@ -362,7 +368,7 @@ function AddItemDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            Добавление новой строки
+            {t("addRowTitle")}
           </DialogTitle>
           <button
             type="button"
@@ -374,10 +380,10 @@ function AddItemDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-7 py-6">
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Зона</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("zone")}</Label>
             <Select value={zoneId} onValueChange={setZoneId}>
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите зону -" />
+                <SelectValue placeholder={t("chooseZone")} />
               </SelectTrigger>
               <SelectContent>
                 {props.zones.map((zone) => (
@@ -389,13 +395,13 @@ function AddItemDialog(props: {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Описание</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("description")}</Label>
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
               className="rounded-2xl border-[#dfe1ec] px-4 py-3 text-[18px]"
-              placeholder="Введите описание действия..."
+              placeholder={t("descriptionPlaceholder")}
             />
           </div>
           <div className="flex justify-end pt-1">
@@ -408,7 +414,7 @@ function AddItemDialog(props: {
               }}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              Добавить
+              {common("add")}
             </Button>
           </div>
         </div>
@@ -426,6 +432,8 @@ function EditItemDialog(props: {
   item: SdcItem | null;
   onSave: (itemId: string, zoneId: string, text: string) => void;
 }) {
+  const t = useTranslations("journalUi.sanitaryDayChecklist");
+  const common = useTranslations("common");
   const [zoneId, setZoneId] = useState(props.item?.zoneId || "");
   const [text, setText] = useState(props.item?.text || "");
 
@@ -436,7 +444,7 @@ function EditItemDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            Редактирование строки
+            {t("editRowTitle")}
           </DialogTitle>
           <button
             type="button"
@@ -448,10 +456,10 @@ function EditItemDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-7 py-6">
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Зона</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("zone")}</Label>
             <Select value={zoneId} onValueChange={setZoneId}>
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите зону -" />
+                <SelectValue placeholder={t("chooseZone")} />
               </SelectTrigger>
               <SelectContent>
                 {props.zones.map((zone) => (
@@ -463,7 +471,7 @@ function EditItemDialog(props: {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Описание</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("description")}</Label>
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -481,7 +489,7 @@ function EditItemDialog(props: {
               }}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              Сохранить
+              {common("save")}
             </Button>
           </div>
         </div>
@@ -498,6 +506,8 @@ function EditZonesDialog(props: {
   zones: SdcZone[];
   onSave: (zones: SdcZone[]) => void;
 }) {
+  const t = useTranslations("journalUi.sanitaryDayChecklist");
+  const common = useTranslations("common");
   // Состояние окна — копия текущих зон. Раньше стартовало пустым списком,
   // и «Закрыть» сохраняло пустоту, стирая весь чек-лист.
   const [zones, setZones] = useState<SdcZone[]>(() =>
@@ -534,10 +544,10 @@ function EditZonesDialog(props: {
 
   async function handleDeleteSelected() {
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные зоны?",
-      description: `Будет удалено зон: ${selected.size}. Вместе с зоной исчезнут её пункты чек-листа.`,
+      title: t("deleteZonesTitle"),
+      description: t("deleteZonesDescription", { count: selected.size }),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: common("delete"),
     });
     if (!confirmed) return;
     setZones((prev) => prev.filter((z) => !selected.has(z.id)));
@@ -546,11 +556,10 @@ function EditZonesDialog(props: {
 
   async function handleDeleteAll() {
     const confirmed = await confirmAsync({
-      title: "Удалить все зоны?",
-      description:
-        "Чек-лист станет пустым: исчезнут все зоны и все их пункты. Восстановить нельзя.",
+      title: t("deleteAllZonesTitle"),
+      description: t("deleteAllZonesDescription"),
       variant: "danger",
-      confirmLabel: "Удалить всё",
+      confirmLabel: t("deleteEverything"),
     });
     if (!confirmed) return;
     setZones([]);
@@ -577,7 +586,7 @@ function EditZonesDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            Редактировать список
+            {t("editListTitle")}
           </DialogTitle>
           <button
             type="button"
@@ -640,21 +649,21 @@ function EditZonesDialog(props: {
           {selected.size > 0 && (
             <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[#f3f4fb] px-4 py-3">
               <span className="text-[14px] text-[#6f7282]">
-                Выбрано: {selected.size}
+                {t("selectedCount", { count: selected.size })}
               </span>
               <button
                 type="button"
                 className="text-[14px] font-medium text-[#ff3b30] hover:underline"
                 onClick={() => void handleDeleteSelected()}
               >
-                Удалить
+                {common("delete")}
               </button>
               <button
                 type="button"
                 className="text-[14px] font-medium text-[#ff3b30] hover:underline"
                 onClick={() => void handleDeleteAll()}
               >
-                Удалить все
+                {t("deleteAll")}
               </button>
             </div>
           )}
@@ -664,7 +673,7 @@ function EditZonesDialog(props: {
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Новая зона..."
+              placeholder={t("newZonePlaceholder")}
               className="h-12 flex-1 rounded-xl border-[#dfe1ec] px-4 text-[16px]"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleAddZone();
@@ -688,7 +697,7 @@ function EditZonesDialog(props: {
               onClick={() => props.onOpenChange(false)}
               className="h-9 rounded-xl px-3.5 text-[13.5px] font-medium"
             >
-              Отмена
+              {common("cancel")}
             </Button>
             <Button
               type="button"
@@ -698,7 +707,7 @@ function EditZonesDialog(props: {
               }}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              Сохранить
+              {common("save")}
             </Button>
           </div>
         </div>
@@ -828,6 +837,12 @@ export function SanitaryDayChecklistDocumentClient({
   routeCode,
   useV2 = false,
 }: Props) {
+  const t = useTranslations("journalUi.sanitaryDayChecklist");
+  const common = useTranslations("common");
+  const staff = useTranslations("journalWidgets.staff");
+  const controls = useTranslations("journalControls");
+  const scan = useTranslations("journalScan");
+  const locale = useLocale();
   const router = useRouter();
   const [config, setConfig] = useState<SdcConfig>(() =>
     normalizeSdcConfig(initialConfig)
@@ -879,17 +894,17 @@ export function SanitaryDayChecklistDocumentClient({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ config: newConfig }),
-        });
+        }, staff("operationFailed"));
         setConfig(newConfig);
       } catch (error) {
         toast.error(
-          humanizeFetchError(error, "Ошибка сохранения")
+          humanizeFetchError(error, t("saveFailed"))
         );
       } finally {
         setSaving(false);
       }
     },
-    [documentId]
+    [documentId, t, staff]
   );
 
   /**
@@ -933,7 +948,7 @@ export function SanitaryDayChecklistDocumentClient({
             date: entryDate,
             data: { marks: next.marks, done: next.done },
           }),
-        });
+        }, staff("operationFailed"));
         if (!options?.silent) {
           undoStack.push({
             undo: () => {
@@ -953,11 +968,11 @@ export function SanitaryDayChecklistDocumentClient({
         setChecked(new Set(Object.keys(previous.done)));
         if (options?.silent) throw error;
         toast.error(
-          humanizeFetchError(error, "Ошибка сохранения")
+          humanizeFetchError(error, t("saveFailed"))
         );
       }
     },
-    [documentId, entryDate, entryEmployeeId, marks, checked, undoStack]
+    [documentId, entryDate, entryEmployeeId, marks, checked, undoStack, t, staff]
   );
 
   // Handlers
@@ -1017,7 +1032,7 @@ export function SanitaryDayChecklistDocumentClient({
     setMarks(cleaned.marks);
     setChecked(new Set(Object.keys(cleaned.done)));
     void saveEntry(cleaned, { silent: true, previous: current }).catch(() => {
-      toast.error("Не удалось очистить отметки удалённых пунктов");
+      toast.error(t("purgeMarksFailed"));
     });
   }
 
@@ -1025,12 +1040,12 @@ export function SanitaryDayChecklistDocumentClient({
     // Пункт чек-листа удалялся молча, одним кликом по корзине.
     const item = config.items.find((entry) => entry.id === itemId);
     const confirmed = await confirmAsync({
-      title: "Удалить пункт чек-листа?",
+      title: t("deleteItemTitle"),
       description: item?.text
-        ? `«${item.text}» исчезнет из чек-листа и из печати. Восстановить нельзя.`
-        : "Пункт исчезнет из чек-листа и из печати. Восстановить нельзя.",
+        ? t("deleteItemDescription", { text: item.text })
+        : t("deleteItemDescriptionNoText"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: common("delete"),
     });
     if (!confirmed) return;
     const newConfig = {
@@ -1060,7 +1075,7 @@ export function SanitaryDayChecklistDocumentClient({
 
   return (
     <div className="bg-white text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={scan("focus.emptyTitle")} emptyBody={scan("focus.emptyBody")} />
       {/* A1: чек-лист санитарного дня — единственный ВЕРТИКАЛЬНЫЙ бланк
           среди журналов. Маркер переопределяет альбомный @page страницы
           документа на именованный @page journal-portrait. */}
@@ -1110,7 +1125,7 @@ export function SanitaryDayChecklistDocumentClient({
               ? [
                   {
                     key: "edit-zones",
-                    label: "Редактировать списки",
+                    label: t("editLists"),
                     icon: <Pencil className="size-4" />,
                     onSelect: () => setEditZonesOpen(true),
                   },
@@ -1130,8 +1145,8 @@ export function SanitaryDayChecklistDocumentClient({
           }
           beforeToggle={
             <div className="mb-6 flex items-center gap-3 text-[18px]">
-              <span className="font-semibold uppercase">Дата проведения</span>
-              <span>{formatRuDate(entryDate)}</span>
+              <span className="font-semibold uppercase">{t("heldDate")}</span>
+              <span>{formatLocaleDate(entryDate, locale)}</span>
             </div>
           }
           mobileView={mobileView}
@@ -1166,7 +1181,7 @@ export function SanitaryDayChecklistDocumentClient({
                                 ? "border-[#5566f6] bg-[#5566f6] text-white"
                                 : "border-[#dcdfed] bg-white"
                             }`}
-                            aria-label={isChecked ? "Снять отметку" : "Отметить выполненным"}
+                            aria-label={isChecked ? t("clearMark") : t("markDone")}
                           >
                             {isChecked ? "✓" : ""}
                           </button>
@@ -1183,7 +1198,7 @@ export function SanitaryDayChecklistDocumentClient({
                                 показывали текстом — с телефона проставить
                                 отметку было нечем. */}
                             <div className="mt-1 flex items-center gap-2 text-[12px] text-[#6f7282]">
-                              <span>Отметка времени:</span>
+                              <span>{t("timeMarkLabel")}</span>
                               <TimeCell
                                 value={time || ""}
                                 onChange={(value) => handleTimeChange(item.id, value)}
@@ -1196,7 +1211,7 @@ export function SanitaryDayChecklistDocumentClient({
                     })}
                     {items.length === 0 ? (
                       <li className="px-4 py-4 text-center text-[13px] text-[#9b9fb3]">
-                        В зоне пока нет пунктов.
+                        {t("noItemsInZone")}
                       </li>
                     ) : null}
                   </ul>
@@ -1207,7 +1222,7 @@ export function SanitaryDayChecklistDocumentClient({
           paperHeader={
             <JournalDocumentHeader
               orgName={organizationLabel}
-              title="ЧЕК-ЛИСТ (ПАМЯТКА) ПРОВЕДЕНИЯ САНИТАРНОГО ДНЯ"
+              title={t("paperTitle")}
               startedAt={dateFrom}
               finishedAt={null}
             />
@@ -1221,14 +1236,14 @@ export function SanitaryDayChecklistDocumentClient({
                 className={DOC_PRIMARY_BUTTON_CLASS}
               >
                 <Plus className="mr-2 size-5" />
-                Добавить
+                {common("add")}
               </Button>
             ) : undefined
           }
           extra={
             <div className="mt-10 space-y-6 text-[16px]">
               <div className="flex items-end justify-between">
-                <span className="font-semibold uppercase">Выполнил:</span>
+                <span className="font-semibold uppercase">{t("performedByLabel")}</span>
                 <span className="min-w-[200px] border-b border-black text-right">
                   {resolveSdcSignerName(
                     config.responsibleUserId,
@@ -1238,7 +1253,7 @@ export function SanitaryDayChecklistDocumentClient({
                 </span>
               </div>
               <div className="flex items-end justify-between">
-                <span className="font-semibold uppercase">Проверил:</span>
+                <span className="font-semibold uppercase">{t("checkedByLabel")}</span>
                 <span className="min-w-[200px] border-b border-black text-right">
                   {resolveSdcSignerName(
                     config.checkerUserId,
@@ -1258,13 +1273,13 @@ export function SanitaryDayChecklistDocumentClient({
                   <span className="screen-only">✓</span>
                 </th>
                 <th className={`w-[72px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  № п/п
+                  {t("itemNumber")}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Действия
+                  {controls("list.actions")}
                 </th>
                 <th className={`w-[130px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Отметка времени
+                  {t("timeMarkColumn")}
                 </th>
               </tr>
             </thead>
@@ -1296,7 +1311,7 @@ export function SanitaryDayChecklistDocumentClient({
                   leading={2}
                   labelSpan={1}
                   trailing={1}
-                  label="Добавить"
+                  label={common("add")}
                   onClick={() => setAddItemOpen(true)}
                 />
               ) : null}
@@ -1394,6 +1409,7 @@ function ZoneBlock({
   onEditItem: (item: SdcItem) => void;
   onDeleteItem: (id: string) => void;
 }) {
+  const t = useTranslations("journalUi.sanitaryDayChecklist");
   return (
     <>
       {/* Zone header */}
@@ -1410,7 +1426,7 @@ function ZoneBlock({
         <tr>
           <td colSpan={4} className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
             <div className="text-[14px] font-semibold uppercase">
-              Общие принципы
+              {t("generalPrinciples")}
             </div>
             <ul className="mt-1 list-disc pl-5 text-[14px] leading-relaxed text-[#333]">
               {generalPrinciples.map((p, i) => (

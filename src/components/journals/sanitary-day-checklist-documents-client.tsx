@@ -127,6 +127,9 @@ function SettingsDialog(props: {
   submitText: string;
   title: string;
 }) {
+  const ui = useTranslations("journalUi.sanitaryDayList");
+  const common = useTranslations("common");
+  const staff = useTranslations("journalWidgets.staff");
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -168,7 +171,7 @@ function SettingsDialog(props: {
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
             <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <div className="space-y-2">
-              <Label className="text-[15px] text-[#7a7c8e]">Название документа</Label>
+              <Label className="text-[15px] text-[#7a7c8e]">{staff("documentName")}</Label>
               <Input
                 value={activeState.title}
                 onChange={(e) => setState({ ...activeState, title: e.target.value })}
@@ -177,7 +180,7 @@ function SettingsDialog(props: {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[15px] text-[#7a7c8e]">Дата проведения</Label>
+              <Label className="text-[15px] text-[#7a7c8e]">{ui("dateHeld")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -198,7 +201,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? common("saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -216,6 +219,8 @@ export function SanitaryDayChecklistDocumentsClient({
 }: Props) {
   const t = useTranslations("journalControls");
   const common = useTranslations("common");
+  const ui = useTranslations("journalUi.sanitaryDayList");
+  const staff = useTranslations("journalWidgets.staff");
   const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
@@ -272,7 +277,7 @@ export function SanitaryDayChecklistDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+      throw new Error(failure?.error || ui("saveSettingsFailed"));
     }
 
     router.refresh();
@@ -348,7 +353,7 @@ export function SanitaryDayChecklistDocumentsClient({
     });
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось сделать копию");
+      toast.error(failure?.error || ui("cloneFailed"));
       return;
     }
     router.refresh();
@@ -370,10 +375,10 @@ export function SanitaryDayChecklistDocumentsClient({
             fallback={
               <>
                 {checklistTitle}
-                {activeTab === "closed" && " (Закрытые)"}
+                {activeTab === "closed" && ` ${ui("closedSuffix")}`}
               </>
             }
-            suffix={activeTab === "closed" ? " (Закрытые)" : null}
+            suffix={activeTab === "closed" ? ` ${ui("closedSuffix")}` : null}
           />
         </h1>
         <JournalListActions
@@ -383,7 +388,7 @@ export function SanitaryDayChecklistDocumentsClient({
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
                 <Plus className="size-4" />
-                Создать документ
+                {t("list.create")}
               </Button>
             ) : null
           }
@@ -415,7 +420,7 @@ export function SanitaryDayChecklistDocumentsClient({
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата проведения</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{ui("dateHeld")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatDateLabel(documentDate)}
                 </div>
@@ -423,13 +428,13 @@ export function SanitaryDayChecklistDocumentsClient({
 
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия с документом"
+                  title={t("list.actionsTitle")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: t("list.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -437,13 +442,13 @@ export function SanitaryDayChecklistDocumentsClient({
                       : []),
                     {
                       key: "clone",
-                      label: "Сделать копию",
+                      label: ui("makeCopy"),
                       icon: <Copy className="size-4 text-[#6f7282]" />,
                       onSelect: () => cloneDocument(document.id),
                     },
                     {
                       key: "print",
-                      label: "Печать",
+                      label: t("list.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
                         window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
@@ -539,8 +544,8 @@ export function SanitaryDayChecklistDocumentsClient({
         onOpenChange={setCreateOpen}
         initial={defaultCreateState}
         onSubmit={createDocument}
-        submitText="Создать"
-        title="Создание документа"
+        submitText={ui("create")}
+        title={ui("createTitle")}
       />
 
       <SettingsDialog
@@ -553,8 +558,8 @@ export function SanitaryDayChecklistDocumentsClient({
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, value);
         }}
-        submitText="Сохранить"
-        title="Настройки документа"
+        submitText={common("save")}
+        title={staff("settings")}
       />
     </div>
   );

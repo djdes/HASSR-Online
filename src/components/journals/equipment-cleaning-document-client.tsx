@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Archive, Plus, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,11 +24,9 @@ import {
 } from "@/lib/user-roles";
 import {
   emptyEquipmentCleaningRow,
-  EQUIPMENT_CLEANING_VARIANT_LABELS,
   formatEquipmentCleaningDate,
   getEquipmentCleaningEntryDateBounds,
   getEquipmentCleaningPeriodEnd,
-  getEquipmentCleaningResultLabel,
   resolveEquipmentCleaningRowName,
   type EquipmentCleaningDocumentConfig,
   type EquipmentCleaningFieldVariant,
@@ -139,6 +138,18 @@ export function EquipmentCleaningDocumentClient({
   initialRows,
   useV2 = false,
 }: Props) {
+  const t = useTranslations("journalUi.equipmentCleaning");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const staff = useTranslations("journalWidgets.staff");
+  const scan = useTranslations("journalScan");
+  const journalNames = useTranslations("journals.names");
+  const variantLabels: Record<EquipmentCleaningFieldVariant, string> = {
+    rinse_temperature: t("variantRinseTemperature"),
+    rinse_completeness: t("variantRinseCompleteness"),
+  };
+  const resultLabel = (value: EquipmentCleaningRowData["rinseResult"]) =>
+    value === "non_compliant" ? t("nonCompliant") : value === "compliant" ? t("compliant") : "";
   const router = useRouter();
   const journalRouteCode = routeCode || templateCode;
   const viewerId = useRosterViewerId(users);
@@ -226,20 +237,20 @@ export function EquipmentCleaningDocumentClient({
       />
     ) : null,
     fields: [
-      { label: "Моющий раствор", value: row.data.detergentName, hideIfEmpty: true },
-      { label: "Концентрация моющего, %", value: row.data.detergentConcentration, hideIfEmpty: true },
-      { label: "Дезинфицирующий раствор", value: row.data.disinfectantName, hideIfEmpty: true },
-      { label: "Концентрация дез. ср-ва, %", value: row.data.disinfectantConcentration, hideIfEmpty: true },
+      { label: t("detergentCard"), value: row.data.detergentName, hideIfEmpty: true },
+      { label: t("detergentConcentrationCard"), value: row.data.detergentConcentration, hideIfEmpty: true },
+      { label: t("disinfectantCard"), value: row.data.disinfectantName, hideIfEmpty: true },
+      { label: t("disinfectantConcentrationCard"), value: row.data.disinfectantConcentration, hideIfEmpty: true },
       {
-        label: fieldVariant === "rinse_temperature" ? "Ополаскивание, °C" : "pH-нейтральность",
+        label: fieldVariant === "rinse_temperature" ? t("rinseTemperature") : t("phNeutral"),
         value: fieldVariant === "rinse_temperature"
           ? row.data.rinseTemperature
-          : getEquipmentCleaningResultLabel(row.data.rinseResult),
+          : resultLabel(row.data.rinseResult),
         hideIfEmpty: true,
       },
-      { label: "Мойщик", value: row.data.washerName, hideIfEmpty: true },
+      { label: t("washer"), value: row.data.washerName, hideIfEmpty: true },
       {
-        label: "Контроль",
+        label: t("control"),
         value: [controllerTitle(row.data), row.data.controllerName].filter(Boolean).join(", "),
         hideIfEmpty: true,
       },
@@ -322,19 +333,19 @@ export function EquipmentCleaningDocumentClient({
     // уходили на сервер молча.
     if (!options?.silent) {
       if (!target.data.equipmentName.trim()) {
-        toast.error("Укажите наименование оборудования");
+        toast.error(t("equipmentNameRequired"));
         return;
       }
       if (!target.data.washDate) {
-        toast.error("Укажите дату мойки");
+        toast.error(t("washDateRequired"));
         return;
       }
       if (target.data.washDate > dateBounds.max) {
-        toast.error("Дата мойки не может быть в будущем");
+        toast.error(t("washDateFuture"));
         return;
       }
       if (target.data.washDate < dateBounds.min) {
-        toast.error("Дата мойки раньше начала журнала");
+        toast.error(t("washDateBeforeStart"));
         return;
       }
     }
@@ -353,7 +364,7 @@ export function EquipmentCleaningDocumentClient({
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.entry) {
-        throw new Error(payload?.error || "Не удалось сохранить строку");
+        throw new Error(payload?.error || t("saveRowFailed"));
       }
 
       const nextRow = payload.entry as EquipmentCleaningRow;
@@ -383,7 +394,7 @@ export function EquipmentCleaningDocumentClient({
       }
     } catch (error) {
       if (options?.silent) throw error;
-      toast.error(humanizeFetchError(error, "Ошибка сохранения строки"));
+      toast.error(humanizeFetchError(error, t("saveRowError")));
     } finally {
       setIsSaving(false);
     }
@@ -398,7 +409,7 @@ export function EquipmentCleaningDocumentClient({
       body: JSON.stringify({ ids: selectedIds }),
     });
     if (!response.ok) {
-      toast.error("Не удалось удалить строки");
+      toast.error(t("deleteRowsFailed"));
       return;
     }
 
@@ -429,7 +440,7 @@ export function EquipmentCleaningDocumentClient({
       setSettingsOpen(false);
       router.refresh();
     } catch {
-      toast.error("Не удалось сохранить настройки журнала");
+      toast.error(t("saveJournalSettingsFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -452,7 +463,7 @@ export function EquipmentCleaningDocumentClient({
       router.push(`/journals/${journalRouteCode}?tab=closed`);
       router.refresh();
     } catch {
-      toast.error("Не удалось закрыть журнал");
+      toast.error(controls("closeDocument.failed"));
     } finally {
       setIsClosing(false);
     }
@@ -470,26 +481,26 @@ export function EquipmentCleaningDocumentClient({
             canDelete
               ? () => {
                   deleteSelectedRows().catch(() => {
-                    toast.error("Не удалось удалить строки");
+                    toast.error(t("deleteRowsFailed"));
                   });
                 }
               : undefined
           }
-          hint="Строки мойки будут удалены без возможности отмены"
+          hint={t("deleteRowsHint")}
         >
           <SelectionEditButton count={selectedIds.length} disabled={status !== "active"} onClick={() => seq.start(selectedIds)} />
         </JournalSelectionBar>
       ) : null}
 
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={scan("focus.emptyTitle")} emptyBody={scan("focus.emptyBody")} />
       <JournalDocumentShell
         title={title}
-        subtitle={`Начат ${formatEquipmentCleaningDate(settingsDateFrom)}${isSaving ? " · Сохранение…" : ""}`}
+        subtitle={`${t("startedOn", { date: formatEquipmentCleaningDate(settingsDateFrom) })}${isSaving ? ` · ${common("saving")}` : ""}`}
         documentId={documentId}
         backHref={`/journals/${journalRouteCode}`}
         onSettings={() => setSettingsOpen(true)}
         closed={status !== "active"}
-        closedHint="Откройте журнал заново, чтобы добавлять и править строки мойки."
+        closedHint={t("closedHint")}
         undo={
           status === "active"
             ? {
@@ -506,7 +517,7 @@ export function EquipmentCleaningDocumentClient({
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: staff("closeJournal"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => setCloseOpen(true),
                 },
@@ -518,18 +529,18 @@ export function EquipmentCleaningDocumentClient({
         cards={
           <RecordCardsView
             items={cardItems}
-            emptyLabel="Записей по мойке оборудования нет."
+            emptyLabel={t("noRecordsCards")}
           />
         }
         paperHeader={
           <JournalDocumentHeader
             orgName={organizationName}
-            title="Журнал мойки и дезинфекции оборудования"
+            title={journalNames("equipment_cleaning")}
             startedAt={settingsDateFrom}
             finishedAt={status === "closed" ? new Date() : null}
           />
         }
-        sheetTitle="Журнал мойки и дезинфекции оборудования"
+        sheetTitle={journalNames("equipment_cleaning")}
         sheetMinWidth={1380}
         toolbar={
           <Button
@@ -539,7 +550,7 @@ export function EquipmentCleaningDocumentClient({
             className={DOC_PRIMARY_BUTTON_CLASS}
           >
             <Plus className="size-5" />
-            Добавить
+            {common("add")}
           </Button>
         }
       >
@@ -557,19 +568,19 @@ export function EquipmentCleaningDocumentClient({
                     />
                   ) : null}
                 </th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Дата и время мойки</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Наименование оборудования</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Наименование моющего раствора</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Концентрация моющего раствора, %</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Наименование дезинфицирующего раствора</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Концентрация дезинфицирующего раствора, %</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("washDateTime")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{controls("equipmentDirectory.label")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("detergentName")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("detergentConcentration")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("disinfectantName")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("disinfectantConcentration")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
                   {fieldVariant === "rinse_temperature"
-                    ? "Ополаскивание, °C"
-                    : "Полнота смываемости дез. ср-ва с оборудования и инвентаря (тест на pH нейтральность)"}
+                    ? t("rinseTemperature")
+                    : t("rinseCompletenessHeader")}
                 </th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Мойщик (ФИО)</th>
-                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Контролирующее лицо (должность, ФИО)</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("washerFull")}</th>
+                <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("controllerFull")}</th>
               </tr>
             </thead>
             <tbody>
@@ -609,7 +620,7 @@ export function EquipmentCleaningDocumentClient({
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
                     {fieldVariant === "rinse_temperature"
                       ? row.data.rinseTemperature || "—"
-                      : getEquipmentCleaningResultLabel(row.data.rinseResult) || "—"}
+                      : resultLabel(row.data.rinseResult) || "—"}
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.data.washerName}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
@@ -620,7 +631,7 @@ export function EquipmentCleaningDocumentClient({
               {sortedRows.length === 0 ? (
                 <tr>
                   <td colSpan={10} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6d7287]`}>
-                    Записей пока нет
+                    {scan("focus.emptyTitle")}
                   </td>
                 </tr>
               ) : null}
@@ -638,7 +649,7 @@ export function EquipmentCleaningDocumentClient({
                   leading={1}
                   labelSpan={2}
                   trailing={7}
-                  label="Добавить запись"
+                  label={t("addRecord")}
                   onClick={openCreateRow}
                 />
               ) : null}
@@ -651,13 +662,13 @@ export function EquipmentCleaningDocumentClient({
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {draft.id ? `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}` : "Добавление новой строки"}
+              {draft.id ? `${t("editRowTitle")}${seq.progress ? ` ${seq.progress}` : ""}` : t("addRowTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время мойки</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("washDateTime")}</Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.4fr_1fr_1fr]">
                 <Input
                   type="date"
@@ -674,7 +685,7 @@ export function EquipmentCleaningDocumentClient({
                   onChange={(e) => updateDraft({ washTime: mergeTime(e.target.value, draftTime.minute) })}
                 >
                   {HOUR_OPTIONS.map((hour) => (
-                    <option key={hour} value={hour}>{hour} ч</option>
+                    <option key={hour} value={hour}>{t("hoursOption", { hour })}</option>
                   ))}
                 </select>
                 <select
@@ -683,7 +694,7 @@ export function EquipmentCleaningDocumentClient({
                   onChange={(e) => updateDraft({ washTime: mergeTime(draftTime.hour, e.target.value) })}
                 >
                   {MINUTE_OPTIONS.map((minute) => (
-                    <option key={minute} value={minute}>{minute} мин</option>
+                    <option key={minute} value={minute}>{t("minutesOption", { minute })}</option>
                   ))}
                 </select>
               </div>
@@ -703,13 +714,13 @@ export function EquipmentCleaningDocumentClient({
               />
             ) : (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Наименование оборудования</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{controls("equipmentDirectory.label")}</Label>
                 <Input
                   list="equipment-cleaning-options"
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                   value={draft.data.equipmentName}
                   onChange={(e) => updateDraft({ equipmentName: e.target.value })}
-                  placeholder="Введите наименование оборудования"
+                  placeholder={t("enterEquipmentName")}
                 />
                 <datalist id="equipment-cleaning-options">
                   {Array.from(new Set(equipmentOptions)).map((item) => (
@@ -720,65 +731,65 @@ export function EquipmentCleaningDocumentClient({
             )}
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Наименование моющего раствора</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("detergentName")}</Label>
               <Input
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                 value={draft.data.detergentName}
                 onChange={(e) => updateDraft({ detergentName: e.target.value })}
-                placeholder="Введите наименование моющего раствора"
+                placeholder={t("enterDetergentName")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Концентрация моющего раствора, %</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("detergentConcentration")}</Label>
               <Input
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                 value={draft.data.detergentConcentration}
                 onChange={(e) => updateDraft({ detergentConcentration: e.target.value })}
-                placeholder="Введите концентрацию моющего раствора, %"
+                placeholder={t("enterDetergentConcentration")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Наименование дезинфицирующего раствора</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("disinfectantName")}</Label>
               <Input
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                 value={draft.data.disinfectantName}
                 onChange={(e) => updateDraft({ disinfectantName: e.target.value })}
-                placeholder="Введите наименование дезинфицирующего раствора"
+                placeholder={t("enterDisinfectantName")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Концентрация дезинфицирующего раствора, %</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("disinfectantConcentration")}</Label>
               <Input
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                 value={draft.data.disinfectantConcentration}
                 onChange={(e) => updateDraft({ disinfectantConcentration: e.target.value })}
-                placeholder="Введите концентрацию дезинфицирующего раствора, %"
+                placeholder={t("enterDisinfectantConcentration")}
               />
             </div>
 
             {fieldVariant === "rinse_temperature" ? (
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Ополаскивание, °C</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("rinseTemperature")}</Label>
                 <Input
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
                   value={draft.data.rinseTemperature || ""}
                   onChange={(e) => updateDraft({ rinseTemperature: e.target.value })}
-                  placeholder="Введите температуру ополаскивания"
+                  placeholder={t("enterRinseTemperature")}
                 />
               </div>
             ) : (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">
-                  Полнота смываемости дез. ср-ва
+                  {t("rinseCompleteness")}
                 </Label>
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
-                      ["compliant", "Соответствует", "#136b2a", "#ecfdf5"],
-                      ["non_compliant", "Не соответствует", "#d2453d", "#fff4f2"],
+                      ["compliant", t("compliant"), "#136b2a", "#ecfdf5"],
+                      ["non_compliant", t("nonCompliant"), "#d2453d", "#fff4f2"],
                     ] as const
                   ).map(([value, label, fg, bg]) => {
                     // Незаполненное (null) не подсвечиваем как «Соответствует».
@@ -807,7 +818,7 @@ export function EquipmentCleaningDocumentClient({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Мойщик</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("washer")}</Label>
                 <select
                   className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]"
                   value={draft.data.washerPosition}
@@ -824,12 +835,12 @@ export function EquipmentCleaningDocumentClient({
                     });
                   }}
                 >
-                  <option value="">— выберите —</option>
+                  <option value="">{t("choose")}</option>
                   <PositionNativeOptions users={users} />
                 </select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{staff("employee")}</Label>
                 <select
                   className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]"
                   value={draft.data.washerUserId || ""}
@@ -844,7 +855,7 @@ export function EquipmentCleaningDocumentClient({
                     });
                   }}
                 >
-                  <option value="">— выберите —</option>
+                  <option value="">{t("choose")}</option>
                   {(draft.data.washerPosition
                     ? getUsersForRoleLabel(users, draft.data.washerPosition)
                     : users).map((user) => (
@@ -858,7 +869,7 @@ export function EquipmentCleaningDocumentClient({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Должность лица, проводившего контроль</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("controllerPosition")}</Label>
                 <select
                   className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]"
                   value={draft.data.controllerPosition}
@@ -875,12 +886,12 @@ export function EquipmentCleaningDocumentClient({
                     });
                   }}
                 >
-                  <option value="">— выберите —</option>
+                  <option value="">{t("choose")}</option>
                   <PositionNativeOptions users={users} />
                 </select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{staff("employee")}</Label>
                 <select
                   className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]"
                   value={draft.data.controllerUserId || ""}
@@ -894,7 +905,7 @@ export function EquipmentCleaningDocumentClient({
                     });
                   }}
                 >
-                  <option value="">— выберите —</option>
+                  <option value="">{t("choose")}</option>
                   {(draft.data.controllerPosition
                     ? getUsersForRoleLabel(users, draft.data.controllerPosition)
                     : users).map((user) => (
@@ -914,7 +925,7 @@ export function EquipmentCleaningDocumentClient({
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
               onClick={closeRowModal}
             >
-              Отмена
+              {common("cancel")}
             </Button>
             <Button
               type="button"
@@ -922,7 +933,7 @@ export function EquipmentCleaningDocumentClient({
               onClick={() => void saveRow()}
               disabled={isSaving}
             >
-              {isSaving ? "Сохранение..." : draft.id ? "Сохранить" : "Добавить"}
+              {isSaving ? common("saving") : draft.id ? common("save") : common("add")}
             </Button>
           </div>
         </DialogContent>
@@ -932,8 +943,8 @@ export function EquipmentCleaningDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название документа, дата начала и формат поля."
+          title={staff("settings")}
+          description={t("settingsDescription")}
           size="md"
           isSaving={isSaving}
           onSave={async () => {
@@ -948,7 +959,7 @@ export function EquipmentCleaningDocumentClient({
         >
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название документа
+              {staff("documentName")}
             </Label>
             <Input
               value={settingsTitle}
@@ -958,7 +969,7 @@ export function EquipmentCleaningDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Дата начала
+              {scan("metadata.startDate")}
             </Label>
             <Input
               type="date"
@@ -969,9 +980,9 @@ export function EquipmentCleaningDocumentClient({
           </div>
           <div className="space-y-2">
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название поля
+              {t("fieldName")}
             </div>
-            {(Object.keys(EQUIPMENT_CLEANING_VARIANT_LABELS) as EquipmentCleaningFieldVariant[]).map((variant) => (
+            {(Object.keys(variantLabels) as EquipmentCleaningFieldVariant[]).map((variant) => (
               <label
                 key={variant}
                 className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors hover:bg-[#f5f6ff]"
@@ -983,7 +994,7 @@ export function EquipmentCleaningDocumentClient({
                   className="size-4 accent-[#5566f6]"
                 />
                 <span className="text-[14px] text-[#0b1024]">
-                  {EQUIPMENT_CLEANING_VARIANT_LABELS[variant]}
+                  {variantLabels[variant]}
                 </span>
               </label>
             ))}
@@ -994,16 +1005,16 @@ export function EquipmentCleaningDocumentClient({
           <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[720px]">
             <DialogHeader className="border-b px-6 py-5">
               <DialogTitle className="text-[24px] font-medium text-black">
-                Настройки документа
+                {staff("settings")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-5 px-6 py-5">
               <div className="space-y-3">
-                <Label>Название документа</Label>
+                <Label>{staff("documentName")}</Label>
                 <Input value={settingsTitle} onChange={(e) => setSettingsTitle(e.target.value)} />
               </div>
               <div className="space-y-3">
-                <Label>Дата начала</Label>
+                <Label>{scan("metadata.startDate")}</Label>
                 <Input
                   type="date"
                   value={settingsDateFrom}
@@ -1011,9 +1022,9 @@ export function EquipmentCleaningDocumentClient({
                 />
               </div>
               <div className="space-y-3">
-                <div className="text-[18px] font-semibold text-black">Название поля</div>
+                <div className="text-[18px] font-semibold text-black">{t("fieldName")}</div>
                 <div className="flex flex-col gap-3 text-[18px] text-black sm:flex-row sm:gap-8">
-                  {(Object.keys(EQUIPMENT_CLEANING_VARIANT_LABELS) as EquipmentCleaningFieldVariant[]).map((variant) => (
+                  {(Object.keys(variantLabels) as EquipmentCleaningFieldVariant[]).map((variant) => (
                     <label key={variant} className="flex items-center gap-3">
                       <input
                         type="radio"
@@ -1021,14 +1032,14 @@ export function EquipmentCleaningDocumentClient({
                         onChange={() => setFieldVariant(variant)}
                         className="size-5 accent-[#5566f6]"
                       />
-                      {EQUIPMENT_CLEANING_VARIANT_LABELS[variant]}
+                      {variantLabels[variant]}
                     </label>
                   ))}
                 </div>
               </div>
               <div className="flex justify-end">
                 <Button onClick={saveSettings} disabled={isSaving} className="bg-[#5566f6] text-white hover:bg-[#4d58f5]">
-                  {isSaving ? "Сохранение..." : "Сохранить"}
+                  {isSaving ? common("saving") : common("save")}
                 </Button>
               </div>
             </div>
@@ -1040,12 +1051,12 @@ export function EquipmentCleaningDocumentClient({
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[24px] font-medium text-black">
-              {`Закончить журнал "${title}"`}
+              {controls("documentLifecycle.finishTitle", { title })}
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-end px-6 py-6">
             <Button onClick={closeDocument} disabled={isClosing} className="bg-[#5566f6] text-white hover:bg-[#4d58f5]">
-              {isClosing ? "Завершение..." : "Закончить"}
+              {isClosing ? controls("documentLifecycle.finishing") : controls("documentLifecycle.finishAction")}
             </Button>
           </div>
         </DialogContent>

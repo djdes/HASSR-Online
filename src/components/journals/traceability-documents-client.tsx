@@ -82,8 +82,6 @@ type Props = {
   documents: TraceabilityDocumentItem[];
 };
 
-const DEFAULT_TITLE = "Журнал прослеживаемости продукции";
-
 function toIsoDate(value: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const parsed = new Date(value);
@@ -103,10 +101,10 @@ function toBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function readFormState(document?: TraceabilityDocumentItem | null): TraceabilityFormState {
+function readFormState(defaultTitle: string, document?: TraceabilityDocumentItem | null): TraceabilityFormState {
   const config = document?.config && typeof document.config === "object" ? document.config : {};
   return {
-    title: document?.title || DEFAULT_TITLE,
+    title: document?.title || defaultTitle,
     dateFrom: document?.dateFrom ? toIsoDate(document.dateFrom) : localDayKey(),
     showShockTempField: toBoolean(config.showShockTempField, false),
     showShipmentBlock: toBoolean(config.showShipmentBlock, false),
@@ -131,6 +129,10 @@ function TraceabilitySettingsDialog(props: {
   onOpenChange: (open: boolean) => void;
   onSubmit: (state: TraceabilityFormState) => Promise<void>;
 }) {
+  const t = useTranslations("journalControls");
+  const ui = useTranslations("journalUi.traceabilityDocuments");
+  const journalNames = useTranslations("journals.names");
+  const defaultTitle = journalNames("traceability_test");
   const [state, setState] = useState<TraceabilityFormState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -139,7 +141,7 @@ function TraceabilitySettingsDialog(props: {
   const activeState = state || props.initial;
   const auto = useAutoDocumentTitle({
     templateCode: props.templateCode,
-    journalName: DEFAULT_TITLE,
+    journalName: defaultTitle,
     period: { dateFrom: activeState?.dateFrom },
     enabled: props.mode === "create",
   });
@@ -183,20 +185,20 @@ function TraceabilitySettingsDialog(props: {
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
             <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{ui("documentName")}</Label>
               <Input
                 value={activeState.title}
                 onChange={(e) => {
                   auto.markTouched();
                   setState({ ...activeState, title: e.target.value });
                 }}
-                placeholder="Введите название документа"
+                placeholder={ui("documentNamePlaceholder")}
                 className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px] tracking-[-0.02em]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[14px] text-[#7a7c8e]">Дата начала</Label>
+              <Label className="text-[14px] text-[#7a7c8e]">{ui("dateFrom")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -217,10 +219,10 @@ function TraceabilitySettingsDialog(props: {
             </div>
 
             <div className="space-y-4 rounded-[28px] border border-[#e3e5f0] px-5 py-5">
-              <div className="text-[20px] font-medium tracking-[-0.02em] text-black">Добавить поле</div>
+              <div className="text-[20px] font-medium tracking-[-0.02em] text-black">{ui("addField")}</div>
               <div className="flex items-center justify-between gap-4 rounded-[24px] bg-[#f7f8fd] px-5 py-4">
                 <Label className="text-[18px] leading-tight text-black">
-                  T °C продукта после шоковой заморозки
+                  {ui("shockTempField")}
                 </Label>
                 <Switch
                   checked={activeState.showShockTempField}
@@ -232,9 +234,9 @@ function TraceabilitySettingsDialog(props: {
             </div>
 
             <div className="space-y-4 rounded-[28px] border border-[#e3e5f0] px-5 py-5">
-              <div className="text-[20px] font-medium tracking-[-0.02em] text-black">Добавить блок</div>
+              <div className="text-[20px] font-medium tracking-[-0.02em] text-black">{ui("addBlock")}</div>
               <div className="flex items-center justify-between gap-4 rounded-[24px] bg-[#f7f8fd] px-5 py-4">
-                <Label className="text-[18px] leading-tight text-black">Отгружено</Label>
+                <Label className="text-[18px] leading-tight text-black">{ui("shipped")}</Label>
                 <Switch
                   checked={activeState.showShipmentBlock}
                   onCheckedChange={(checked) =>
@@ -251,7 +253,7 @@ function TraceabilitySettingsDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
-                {submitting ? "Сохранение..." : props.submitLabel}
+                {submitting ? t("documentLifecycle.finishSaving") : props.submitLabel}
               </Button>
             </div>
           </div>
@@ -276,17 +278,17 @@ function TraceabilityActionsMenu(props: {
 
   return (
     <ResponsiveMenu
-      title="Действия"
+      title={t("list.actions")}
       items={filterManageMenuItems([
         {
           key: "settings",
-          label: "Настройки",
+          label: t("list.settings"),
           icon: <Pencil className="size-4 text-[#6f7282]" />,
           onSelect: props.onSettings,
         },
         {
           key: "print",
-          label: "Печать",
+          label: t("list.print"),
           icon: <Printer className="size-4 text-[#6f7282]" />,
           onSelect: props.onPrint,
         },
@@ -331,6 +333,9 @@ export function TraceabilityDocumentsClient({
 }: Props) {
   const t = useTranslations("journalControls");
   const common = useTranslations("common");
+  const ui = useTranslations("journalUi.traceabilityDocuments");
+  const journalNames = useTranslations("journals.names");
+  const defaultTitle = journalNames("traceability_test");
   const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
   // Создание документов API отдаёт только руководителю.
@@ -342,16 +347,16 @@ export function TraceabilityDocumentsClient({
   const autoTitleTemplateCode = templateCode || "traceability_test";
 
   // Stable identities: both feed the dialog's `useEffect([initial, open])`.
-  const createInitialState = useMemo(() => readFormState(), []);
+  const createInitialState = useMemo(() => readFormState(defaultTitle), [defaultTitle]);
   const editInitialState = useMemo(
-    () => (editingDocument ? readFormState(editingDocument) : null),
-    [editingDocument]
+    () => (editingDocument ? readFormState(defaultTitle, editingDocument) : null),
+    [editingDocument, defaultTitle]
   );
 
   const heading = useMemo(
     () =>
-      DEFAULT_TITLE,
-    [activeTab]
+      defaultTitle,
+    [activeTab, defaultTitle]
   );
 
   async function persistDocument(
@@ -366,7 +371,7 @@ export function TraceabilityDocumentsClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
-        title: payload.title.trim() || DEFAULT_TITLE,
+        title: payload.title.trim() || defaultTitle,
         dateFrom: payload.dateFrom,
         dateTo: payload.dateFrom,
         config: buildConfig(payload, baseConfig),
@@ -378,7 +383,7 @@ export function TraceabilityDocumentsClient({
       // Текст сервера объясняет отказ («За этот период уже есть
       // документ…»); служебное «request failed» человеку ничего не давало.
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить документ");
+      throw new Error(failure?.error || ui("saveFailed"));
     }
 
     return response.json() as Promise<{ document: { id: string } }>;
@@ -399,7 +404,7 @@ export function TraceabilityDocumentsClient({
   }
 
   async function handleDelete(doc: TraceabilityDocumentItem) {
-    const title = doc.title || DEFAULT_TITLE;
+    const title = doc.title || defaultTitle;
     const ok = await confirmAsync({
       title: t("documentActions.deleteTitle"),
       description: t("documentLifecycle.deleteDescriptionWithTitle", { title }),
@@ -447,7 +452,7 @@ export function TraceabilityDocumentsClient({
             canManageDocuments && activeTab === "active" ? (
               <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
                 <Plus className="size-4" />
-                Создать документ
+                {t("list.create")}
               </Button>
             ) : null
           }
@@ -466,12 +471,12 @@ export function TraceabilityDocumentsClient({
             >
               <Link href={`/journals/${routeCode}/documents/${document.id}`} className="min-w-0">
                 <div className={`${JOURNAL_CARD_TITLE_CLASS} truncate`}>
-                  {document.title || DEFAULT_TITLE}
+                  {document.title || defaultTitle}
               <SharedDocumentBadge shared={document.shared} />
                 </div>
               </Link>
               <Link href={`/journals/${routeCode}/documents/${document.id}`} className={`${JOURNAL_CARD_SECTION_CLASS} justify-self-end`}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{ui("dateFrom")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatDateLabel(document.dateFrom)}
                 </div>
@@ -492,9 +497,9 @@ export function TraceabilityDocumentsClient({
         open={createOpen}
         mode="create"
         templateCode={autoTitleTemplateCode}
-        title="Создание документа"
+        title={ui("createTitle")}
         initial={createInitialState}
-        submitLabel="Создать"
+        submitLabel={ui("create")}
         onOpenChange={setCreateOpen}
         onSubmit={handleCreate}
       />
@@ -503,9 +508,9 @@ export function TraceabilityDocumentsClient({
         open={!!editingDocument}
         mode="edit"
         templateCode={autoTitleTemplateCode}
-        title="Настройки документа"
+        title={ui("settingsTitle")}
         initial={editInitialState}
-        submitLabel="Сохранить"
+        submitLabel={common("save")}
         onOpenChange={(open) => !open && setEditingDocument(null)}
         onSubmit={handleSaveSettings}
       />
@@ -516,8 +521,8 @@ export function TraceabilityDocumentsClient({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
                 {archiveTarget?.status === "active"
-                  ? t("documentLifecycle.closeTitle", { title: archiveTarget?.title || DEFAULT_TITLE })
-                  : t("documentLifecycle.restoreTitle", { title: archiveTarget?.title || DEFAULT_TITLE })}
+                  ? t("documentLifecycle.closeTitle", { title: archiveTarget?.title || defaultTitle })
+                  : t("documentLifecycle.restoreTitle", { title: archiveTarget?.title || defaultTitle })}
               </DialogTitle>
               <button
                 type="button"
@@ -552,7 +557,7 @@ export function TraceabilityDocumentsClient({
           <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-                {t("documentLifecycle.namedDeleteTitle", { title: deleteTarget?.title || DEFAULT_TITLE })}
+                {t("documentLifecycle.namedDeleteTitle", { title: deleteTarget?.title || defaultTitle })}
               </DialogTitle>
               <button
                 type="button"

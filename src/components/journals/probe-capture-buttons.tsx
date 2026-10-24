@@ -2,6 +2,7 @@
 
 import { Bluetooth, Camera, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
@@ -65,6 +66,7 @@ export function BluetoothProbeButton({
   onReading: (celsius: number) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations("journalUi.probeCapture");
   const [supported, setSupported] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -79,8 +81,8 @@ export function BluetoothProbeButton({
   return (
     <button
       type="button"
-      aria-label="Замер со щупа"
-      title="Взять замер с Bluetooth-щупа"
+      aria-label={t("probeAria")}
+      title={t("probeTitle")}
       disabled={disabled || busy}
       onClick={async () => {
         setBusy(true);
@@ -90,16 +92,16 @@ export function BluetoothProbeButton({
             onReading(result.celsius);
             toast.success(
               result.deviceName
-                ? `${result.celsius} °C — ${result.deviceName}`
-                : `Замер: ${result.celsius} °C`
+                ? t("probeReadingDevice", { celsius: result.celsius, device: result.deviceName })
+                : t("probeReading", { celsius: result.celsius })
             );
             return;
           }
           if (result.reason === "cancelled") return;
           toast.error(
             result.reason === "timeout"
-              ? "Щуп не прислал замер. Поднесите его к продукту и попробуйте снова."
-              : "Не удалось связаться со щупом"
+              ? t("probeTimeout")
+              : t("probeFailed")
           );
         } finally {
           setBusy(false);
@@ -139,6 +141,7 @@ export function DisplayOcrButton({
   /** Какое число нужно с дисплея: у термогигрометра их два. */
   metric?: ReadingMetric;
 }) {
+  const t = useTranslations("journalUi.probeCapture");
   const { controls } = useJournalControls();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -194,7 +197,7 @@ export function DisplayOcrButton({
         return;
       }
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось распознать показание", { id: toastId });
+        toast.error(data?.error || t("recognizeFailed"), { id: toastId });
         return;
       }
       if (typeof data?.value !== "number") {
@@ -206,12 +209,12 @@ export function DisplayOcrButton({
       const text = formatRecognizedReading(data.value);
       toast.success(
         data.confidence === "low"
-          ? `Распознано ${text} ${READING_PHOTO_TEXT.checkMark}, снимок нечёткий`
-          : `Распознано ${text} ${READING_PHOTO_TEXT.checkMark}`,
+          ? t("recognizedLowConfidence", { text, mark: READING_PHOTO_TEXT.checkMark })
+          : t("recognized", { text, mark: READING_PHOTO_TEXT.checkMark }),
         { id: toastId }
       );
     } catch {
-      toast.error("Нет связи — распознавание недоступно", { id: toastId });
+      toast.error(t("offline"), { id: toastId });
     } finally {
       setBusy(false);
     }
@@ -237,8 +240,8 @@ export function DisplayOcrButton({
       />
       <button
         type="button"
-        aria-label={paidOnly ? `Снять показание с дисплея — ${READING_PHOTO_TEXT.paidOnly.toLowerCase()}` : "Снять показание с дисплея"}
-        title={paidOnly ? READING_PHOTO_TEXT.paidOnly : "Сфотографировать дисплей термометра — число заполнится само"}
+        aria-label={paidOnly ? `${t("displayAria")} — ${READING_PHOTO_TEXT.paidOnly.toLowerCase()}` : t("displayAria")}
+        title={paidOnly ? READING_PHOTO_TEXT.paidOnly : t("displayTitle")}
         data-testid="display-ocr-button"
         data-autofill={status === null ? "unknown" : status.autofill ? "paid" : "free"}
         disabled={disabled || busy}

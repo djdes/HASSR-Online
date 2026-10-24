@@ -202,7 +202,7 @@ export function AuditReportDocumentClient({
     const result = await response.json().catch(() => null);
     if (!response.ok) {
       const failure = result?.error;
-      const error = new Error(failure || "Не удалось сохранить документ");
+      const error = new Error(failure || text("journalAuditReport.saveDocumentFailed"));
       if (!failure) failureRegistry.mark(error);
       throw error;
     }

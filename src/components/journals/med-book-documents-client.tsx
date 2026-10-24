@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Archive,
   Ellipsis,
@@ -104,6 +105,9 @@ function SettingsDialog({
   document: MedBookListDocument | null;
 }) {
   const router = useRouter();
+  const t = useTranslations("journalUi.medBook");
+  const tc = useTranslations("common");
+  const tw = useTranslations("journalWidgets.staff");
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -118,7 +122,7 @@ function SettingsDialog({
   async function handleSave() {
     if (!document) return;
     if (!title.trim()) {
-      setTitleError("Поле не заполнено");
+      setTitleError(t("fieldRequired"));
       return;
     }
 
@@ -134,14 +138,14 @@ function SettingsDialog({
         const payload = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(payload?.error || "Не удалось сохранить название документа");
+        throw new Error(payload?.error || t("renameFailed"));
       }
 
       onOpenChange(false);
       router.refresh();
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить название документа"),
+        humanizeFetchError(error, t("renameFailed")),
       );
     } finally {
       setSaving(false);
@@ -153,14 +157,14 @@ function SettingsDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {tw("settings")}
           </DialogTitle>
         </DialogHeader>
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <FloatingInputField
             id="med-book-settings-title"
-            label="Название документа"
-            placeholder="Введите название документа"
+            label={tw("documentName")}
+            placeholder={tw("documentNamePlaceholder")}
             value={title}
             onChange={(value) => {
               setTitle(value);
@@ -175,7 +179,7 @@ function SettingsDialog({
               disabled={saving}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {saving ? "Сохранение..." : "Сохранить"}
+              {saving ? tc("saving") : tc("save")}
             </Button>
           </div>
         </div>
@@ -192,6 +196,10 @@ export function MedBookDocumentsClient({
   documents,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.medBook");
+  const tc = useTranslations("common");
+  const tl = useTranslations("journalControls.list");
+  const tdel = useTranslations("journalControls.documentActions");
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
   const [settingsDoc, setSettingsDoc] = useState<MedBookListDocument | null>(null);
@@ -202,17 +210,17 @@ export function MedBookDocumentsClient({
   async function handleDelete(document: MedBookListDocument) {
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: t("deleteDescription", { title: document.title }),
       bullets: [
-        { label: "Удалятся медкнижки всех сотрудников этого документа", tone: "warn" },
+        { label: t("deleteBulletBooks"), tone: "warn" },
         {
-          label: "Даты осмотров, исследований и прививок восстановить будет нельзя",
+          label: t("deleteBulletDates"),
           tone: "warn",
         },
-        { label: "Печатная форма документа перестанет существовать", tone: "info" },
+        { label: t("deleteBulletPrint"), tone: "info" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: t("deleted", { title: document.title }),
+      errorMessage: tdel("deleteError"),
     });
   }
 
@@ -230,7 +238,7 @@ export function MedBookDocumentsClient({
             templateCode={templateCode}
             templateName={templateName}
             users={users}
-            triggerLabel="Создать документ"
+            triggerLabel={tl("create")}
             triggerIcon={<Plus className="size-5" strokeWidth={2.5} />}
             triggerClassName="h-11 w-full gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors hover:bg-[#4a5bf0] sm:w-auto"
           />
@@ -258,37 +266,37 @@ export function MedBookDocumentsClient({
               <SharedDocumentBadge shared={document.shared} />
                 </Link>
                 <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                  <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                  <div className={JOURNAL_CARD_LABEL_CLASS}>{t("startDate")}</div>
                   <div className={JOURNAL_CARD_VALUE_CLASS}>
                     {formatRuDate(document.dateFrom)}
                   </div>
                 </Link>
                 <div className="justify-self-end">
                   <ResponsiveMenu
-                    title="Действия"
+                    title={tl("actions")}
                     items={filterManageMenuItems([
                       {
                         key: "open",
-                        label: "Открыть",
+                        label: t("open"),
                         icon: <ExternalLink className="size-4 text-[#6f7282]" />,
                         onSelect: () => router.push(href),
                       },
                       {
                         key: "settings",
-                        label: "Настройки",
+                        label: tl("settings"),
                         icon: <Settings2 className="size-4 text-[#6f7282]" />,
                         onSelect: () => setSettingsDoc(document),
                       },
                       {
                         key: "print",
-                        label: "Печать",
+                        label: tl("print"),
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () => openPdf({ documentId: document.id }),
                       },
                       document.status === "active"
                         ? {
                             key: "close",
-                            label: "Закрыть",
+                            label: tc("close"),
                             icon: <Archive className="size-4 text-[#6f7282]" />,
                             onSelect: () => {
                               void setStatus("closed", { documentId: document.id });
@@ -296,7 +304,7 @@ export function MedBookDocumentsClient({
                           }
                         : {
                             key: "restore",
-                            label: "Вернуть в активные",
+                            label: tl("restoreMenu"),
                             icon: <RotateCcw className="size-4 text-[#6f7282]" />,
                             onSelect: () => {
                               void setStatus("active", { documentId: document.id });
@@ -304,7 +312,7 @@ export function MedBookDocumentsClient({
                           },
                       {
                         key: "delete",
-                        label: "Удалить",
+                        label: tl("delete"),
                         icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                         tone: "danger" as const,
                         onSelect: () => {

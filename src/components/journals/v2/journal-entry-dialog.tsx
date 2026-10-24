@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,8 @@ export function JournalEntryDialog({
   saveLabel?: string;
   size?: "sm" | "md" | "lg" | "xl";
 }) {
+  const t = useTranslations("journalUi.entryDialog");
+  const tc = useTranslations("common");
   const sizeClass = {
     sm: "sm:max-w-[420px]",
     md: "sm:max-w-[560px]",
@@ -67,9 +70,9 @@ export function JournalEntryDialog({
     xl: "sm:max-w-[900px]",
   }[size];
   const computedTitle =
-    title ?? (mode === "edit" ? "Редактирование записи" : "Новая запись");
+    title ?? (mode === "edit" ? t("editTitle") : t("newTitle"));
   const computedSave =
-    saveLabel ?? (mode === "edit" ? "Сохранить" : "Создать запись");
+    saveLabel ?? (mode === "edit" ? tc("save") : t("createEntry"));
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -92,7 +95,7 @@ export function JournalEntryDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               className="rounded-xl p-2 text-[#9b9fb3] transition-colors hover:bg-[#fafbff] hover:text-[#0b1024]"
-              aria-label="Закрыть"
+              aria-label={tc("close")}
             >
               <X className="size-5" />
             </button>
@@ -111,7 +114,7 @@ export function JournalEntryDialog({
                 disabled={isSaving}
                 className="h-11 rounded-2xl border-[#ffd2cd] px-4 text-[14px] text-[#a13a32] shadow-none hover:bg-[#fff4f2]"
               >
-                Удалить
+                {tc("delete")}
               </Button>
             ) : null}
           </div>
@@ -123,7 +126,7 @@ export function JournalEntryDialog({
               disabled={isSaving}
               className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px] text-[#0b1024] shadow-none hover:bg-[#fafbff]"
             >
-              Отмена
+              {tc("cancel")}
             </Button>
             <Button
               type="button"
@@ -131,7 +134,7 @@ export function JournalEntryDialog({
               disabled={isSaving || saveDisabled}
               className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_28px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
             >
-              {isSaving ? "Сохранение…" : computedSave}
+              {isSaving ? tc("saving") : computedSave}
             </Button>
           </div>
         </div>

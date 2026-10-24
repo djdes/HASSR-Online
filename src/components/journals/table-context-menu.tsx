@@ -8,6 +8,7 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
 import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
 import { Check } from "lucide-react";
@@ -66,6 +67,7 @@ const VIEWPORT_MARGIN = 8;
  *    скролл, ресайз, выбор пункта.
  */
 export function TableContextMenu({ x, y, items, onClose, ariaLabel }: Props) {
+  const t = useTranslations("journalUi.tableContextMenu");
   const narrow = useIsNarrowViewport();
   const ref = useRef<HTMLDivElement>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
@@ -132,7 +134,7 @@ export function TableContextMenu({ x, y, items, onClose, ariaLabel }: Props) {
   // перекрывает саму ячейку. Пункты те же.
   if (narrow) {
     return (
-      <BottomSheet open onClose={onClose} title={ariaLabel ?? "Действия"}>
+      <BottomSheet open onClose={onClose} title={ariaLabel ?? t("actions")}>
         {items.map((item) => (
           <div key={item.key}>
             {item.separatorBefore ? (

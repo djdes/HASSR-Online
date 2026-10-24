@@ -151,12 +151,13 @@ function HealthHeader({
   finishedAt?: string | null;
   controlPeriodicity?: string;
 }) {
+  const tNames = useTranslations("journals.names");
   return (
     <table className="health-header w-full border-collapse text-[13px]">
       <tbody>
         <JournalPaperHeaderRows
           orgName={organizationLabel}
-          title="ЖУРНАЛ ЗДОРОВЬЯ"
+          title={tNames("health_check").toUpperCase()}
           pageInfo={pageLabel}
           startedAt={startedAt}
           finishedAt={finishedAt}
@@ -195,13 +196,13 @@ type HealthCellMenu = {
   dateKey: string;
 };
 
-async function requestJson(url: string, init: RequestInit) {
+async function requestJson(url: string, init: RequestInit, fallbackError: string) {
   const response = await fetch(url, init);
   const result = await response.json().catch(() => null);
   if (!response.ok) {
     throw new Error(
       (result && typeof result.error === "string" && result.error) ||
-        "Операция не выполнена"
+        fallbackError
     );
   }
   return result;
@@ -222,6 +223,11 @@ function getHealthMeasures(
 
 export function HealthDocumentClient(props: Props) {
   const scopeT = useTranslations("journalWidgets.headerEdit");
+  const t = useTranslations("hygiene");
+  const tHealth = useTranslations("journalUi.healthDoc");
+  const tStaff = useTranslations("journalWidgets.staff");
+  const tNames = useTranslations("journals.names");
+  const common = useTranslations("common");
   const router = useRouter();
   const {
     documentId,
@@ -297,7 +303,7 @@ export function HealthDocumentClient(props: Props) {
   );
   const monthLabel = formatMonthLabel(dateFrom, dateTo);
   const organizationLabel = organizationName || ORG_NAME_FALLBACK;
-  const documentTitle = title || "Журнал здоровья";
+  const documentTitle = title || tNames("health_check");
 
   const selectedCount = selectedEmployeeIds.length;
   const allSelected = rosterUsers.length > 0 && selectedCount === rosterUsers.length;
@@ -341,10 +347,10 @@ export function HealthDocumentClient(props: Props) {
       (dateKey) => dateKey <= todayKey && !filledDates.has(dateKey)
     ).length;
     return missing > 0
-      ? `Не заполнено дней: ${missing}. После закрытия дописать их будет нельзя.`
+      ? t("bulk.missingDays", { count: missing })
       : undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialEntries, dateKeys.join(","), todayKey]);
+  }, [initialEntries, dateKeys.join(","), todayKey, t]);
 
   /** «Перейти» в полосе прогресса — скролл к сегодняшней колонке дня. */
   function scrollToTodayColumn() {
@@ -414,7 +420,7 @@ export function HealthDocumentClient(props: Props) {
             measures: nextData.measures ?? null,
           },
         }),
-      });
+      }, tStaff("operationFailed"));
       router.refresh();
     } catch (error) {
       setEntryMap((current) => {
@@ -423,7 +429,7 @@ export function HealthDocumentClient(props: Props) {
         else delete copy[key];
         return copy;
       });
-      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
+      toast.error(humanizeFetchError(error, t("errors.saveFailed")));
     } finally {
       setSavingCellKey((current) => (current === key ? null : current));
     }
@@ -453,12 +459,11 @@ export function HealthDocumentClient(props: Props) {
       entryMap[makeCellKey(menu.employeeId, menu.dateKey)]
     );
     const value = await promptAsync({
-      title: "Принятые меры",
-      description:
-        "Что сделали по результатам осмотра: отстранение от работы, направление к врачу и т. п. Пусто — меры не потребовались.",
-      label: "Принятые меры",
+      title: tHealth("measures"),
+      description: tHealth("measuresDescription"),
+      label: tHealth("measures"),
       defaultValue: current.measures || "",
-      confirmLabel: "Сохранить",
+      confirmLabel: common("save"),
     });
     if (value === null) return;
     await persistEntry(menu.employeeId, menu.dateKey, {
@@ -476,7 +481,7 @@ export function HealthDocumentClient(props: Props) {
       {
         key: "signed",
         code: "+",
-        label: "Подпись есть",
+        label: tHealth("signed"),
         active: current.signed === true,
         onSelect: () => {
           void persistEntry(menu.employeeId, menu.dateKey, {
@@ -488,7 +493,7 @@ export function HealthDocumentClient(props: Props) {
       {
         key: "not-signed",
         code: "—",
-        label: "Нет подписи",
+        label: tHealth("notSigned"),
         active: current.signed === false,
         onSelect: () => {
           void persistEntry(menu.employeeId, menu.dateKey, {
@@ -499,7 +504,7 @@ export function HealthDocumentClient(props: Props) {
       },
       {
         key: "measures",
-        label: current.measures ? "Изменить принятые меры" : "Принятые меры…",
+        label: current.measures ? tHealth("editMeasures") : tHealth("measuresEllipsis"),
         separatorBefore: true,
         onSelect: () => {
           void editMeasures(menu);
@@ -507,7 +512,7 @@ export function HealthDocumentClient(props: Props) {
       },
       {
         key: "clear",
-        label: "Очистить",
+        label: t("document.clear"),
         danger: true,
         separatorBefore: true,
         onSelect: () => {
@@ -530,15 +535,14 @@ export function HealthDocumentClient(props: Props) {
       selectedEmployeeIds.includes(entry.employeeId)
     ).length;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранных сотрудников из журнала?",
-      description:
-        "Строки исчезнут из журнала вместе со всеми отметками за период документа.",
+      title: t("bulk.deleteTitle"),
+      description: t("bulk.deleteDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: common("delete"),
       bullets: [
-        { label: `Строк сотрудников: ${selectedEmployeeIds.length}`, tone: "warn" },
-        { label: `Отметок будет удалено: ${marks}`, tone: "warn" },
-        { label: "Восстановить данные будет нельзя", tone: "warn" },
+        { label: t("bulk.deleteEmployeeCount", { count: selectedEmployeeIds.length }), tone: "warn" },
+        { label: t("bulk.deleteMarkCount", { count: marks }), tone: "warn" },
+        { label: t("bulk.deleteIrreversible"), tone: "warn" },
       ],
     });
     if (!confirmed) return;
@@ -551,18 +555,16 @@ export function HealthDocumentClient(props: Props) {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ employeeId }),
-          })
+          }, tStaff("operationFailed"))
         )
       );
       toast.success(
-        `Удалено: ${selectedEmployeeIds.length} ${
-          selectedEmployeeIds.length === 1 ? "строка" : "строк"
-        }, отметок: ${marks}`
+        t("bulk.deleteSuccess", { count: selectedEmployeeIds.length, marks })
       );
       setSelectedEmployeeIds([]);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка удаления строк"));
+      toast.error(humanizeFetchError(error, t("bulk.deleteError")));
     } finally {
       setIsDeleting(false);
     }
@@ -650,7 +652,7 @@ export function HealthDocumentClient(props: Props) {
             subtitle={getJournalDocumentPeriodLabel("health_check", dateFrom, dateTo)}
             documentId={documentId}
             closeWarning={closeWarning}
-            heading="Журнал здоровья"
+            heading={tNames("health_check")}
             title={documentTitle}
             status={status}
             autoFill={autoFill}
@@ -680,7 +682,7 @@ export function HealthDocumentClient(props: Props) {
             settingsExtraFields={
               <div className="space-y-2">
                 <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                  Добавлять пустых строк при печати
+                  {tHealth("printEmptyRows")}
                 </Label>
                 <Select value={emptyRows} onValueChange={setEmptyRows}>
                   <SelectTrigger className="h-10 w-full rounded-xl border-[#dcdfed] bg-white px-3.5 text-[13.5px] transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15">
@@ -701,12 +703,12 @@ export function HealthDocumentClient(props: Props) {
           <TodayProgressStrip
             filled={todayProgress.filled}
             total={todayProgress.total}
-            label="сотрудников"
+            label={t("document.employeesCountLabel")}
             onJumpToToday={scrollToTodayColumn}
           />
 
           {!isActive ? (
-            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки сотрудников." documentId={props.documentId} />
+            <JournalClosedBanner hint={t("document.closedEditHint")} documentId={props.documentId} />
           ) : null}
 
           {isActive && (
@@ -715,7 +717,7 @@ export function HealthDocumentClient(props: Props) {
               onClear={() => setSelectedEmployeeIds([])}
               onDelete={handleDeleteSelected}
               deleting={isDeleting}
-              hint="Сотрудники будут удалены из журнала вместе с отметками"
+              hint={t("document.selectionHint")}
             />
           )}
 
@@ -842,10 +844,10 @@ export function HealthDocumentClient(props: Props) {
                                 }`}
                               >
                                 {signed
-                                  ? "Подпись есть"
+                                  ? tHealth("signed")
                                   : refused
-                                    ? "Нет подписи"
-                                    : "— не заполнено"}
+                                    ? tHealth("notSigned")
+                                    : t("document.emptyCell")}
                                 {d?.measures ? (
                                   <span className="ml-1.5 text-[#6f7282]">
                                     · {d.measures}
@@ -857,14 +859,13 @@ export function HealthDocumentClient(props: Props) {
                         })}
                         {isActive ? (
                           <div className="pt-1 text-[11px] text-[#6f7282]">
-                            Нажмите на день, чтобы отметить подпись или
-                            записать принятые меры.
+                            {tHealth("cardHint")}
                           </div>
                         ) : null}
                         {measures.length > 0 ? (
                           <div className="mt-2 rounded-xl border border-[#ececf4] bg-[#fafbff] p-3 text-[13px] leading-5 text-[#3c4053]">
                             <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-                              Принятые меры
+                              {tHealth("measures")}
                             </div>
                             {measures.map((item) => (
                               <div key={`${employee.id}:m:${item}`}>{item}</div>
@@ -879,7 +880,7 @@ export function HealthDocumentClient(props: Props) {
             {printableEmployees.filter((employee) => employee.name).length ===
             0 ? (
               <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-                В документе пока нет сотрудников.
+                {tHealth("noEmployees")}
               </div>
             ) : null}
           </div>
@@ -896,7 +897,7 @@ export function HealthDocumentClient(props: Props) {
           <div className={DOC_PAPER_HEADER_CLASS}>
             <HealthHeader
               organizationLabel={organizationLabel}
-              pageLabel="СТР. 1 ИЗ 1"
+              pageLabel={tHealth("pageInfo")}
               startedAt={dateFrom}
               finishedAt={status === "closed" ? dateTo : null}
               controlPeriodicity={controlPeriodicity}
@@ -944,33 +945,31 @@ export function HealthDocumentClient(props: Props) {
                   className={`w-[72px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                   rowSpan={2}
                 >
-                  №
-                  <br />
-                  п/п
+                  {t("columns.number")}
                 </th>
                 <th
                   className={`w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                   rowSpan={2}
                 >
-                  Ф.И.О. работника
+                  {t("columns.employee")}
                 </th>
                 <th
                   className={`w-[270px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                   rowSpan={2}
                 >
-                  Должность
+                  {t("columns.position")}
                 </th>
                 <th
                   className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center text-[13px] font-semibold leading-tight`}
                   colSpan={dateKeys.length}
                 >
-                  Месяц {monthLabel}
+                  {t("columns.month", { monthLabel })}
                 </th>
                 <th
                   className={`w-[200px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}
                   rowSpan={2}
                 >
-                  Принятые меры
+                  {tHealth("measures")}
                 </th>
               </tr>
               <tr>
@@ -1079,7 +1078,7 @@ export function HealthDocumentClient(props: Props) {
                   leading={2}
                   labelSpan={2}
                   trailing={dateKeys.length + 1}
-                  label="Добавить сотрудника"
+                  label={t("document.addEmployee")}
                   onClick={() => setAddRowOpen(true)}
                 />
               ) : null}
@@ -1132,7 +1131,7 @@ export function HealthDocumentClient(props: Props) {
           x={cellMenu.x}
           y={cellMenu.y}
           onClose={closeCellMenu}
-          ariaLabel="Отметка о состоянии здоровья"
+          ariaLabel={tHealth("cellMenuAria")}
           items={buildCellMenuItems(cellMenu)}
         />
       ) : null}

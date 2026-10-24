@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ChevronDown, Plus, Trash2, Wand2 } from "lucide-react";
 import {
   JournalDocumentHeader,
@@ -146,6 +147,9 @@ function TrackedDocumentClientImpl({
   const [entries, setEntries] = useState(sortedEntries(initialEntries));
   const [isCreating, setIsCreating] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const tk = useTranslations("journalUi.tracked");
+  const tw = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const [addRowOpen, setAddRowOpen] = useState(false);
   const [titleInput, setTitleInput] = useState(title);
   // Ни ответственного, ни новую строку не записываем на «первого в списке»:
@@ -224,7 +228,7 @@ function TrackedDocumentClientImpl({
       return {
         label: field.label,
         value:
-          typeof value === "boolean" ? (value ? "Да" : "Нет") : String(value ?? ""),
+          typeof value === "boolean" ? (value ? common("yes") : common("no")) : String(value ?? ""),
         hideIfEmpty: true,
       };
     }),
@@ -248,7 +252,7 @@ function TrackedDocumentClientImpl({
    */
   function buildEntryEditFields(): CardEditFieldDef[] {
     return [
-      { type: "date", key: "__date", label: "Дата" } as CardEditFieldDef,
+      { type: "date", key: "__date", label: tk("date") } as CardEditFieldDef,
       ...fields.map((field): CardEditFieldDef => {
         if (field.type === "number") {
           return {
@@ -317,7 +321,7 @@ function TrackedDocumentClientImpl({
       seq.saved();
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Ошибка сохранения")
+        humanizeFetchError(error, tk("saveError"))
       );
       seq.cancelled();
     }
@@ -345,14 +349,14 @@ function TrackedDocumentClientImpl({
     });
 
     if (submit.status === "queued") {
-      toast.info("Нет связи — запись сохранится, когда она появится");
+      toast.info(tk("offlineSaved"));
       return;
     }
 
     const response = submit.response;
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.entry) {
-      throw new Error(result?.error || "Не удалось сохранить строку");
+      throw new Error(result?.error || tk("saveRowFailed"));
     }
 
     setEntries((current) => {
@@ -389,7 +393,7 @@ function TrackedDocumentClientImpl({
 
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.entry) {
-        throw new Error(result?.error || "Не удалось добавить строку");
+        throw new Error(result?.error || tk("addRowFailed"));
       }
 
       setEntries((current) =>
@@ -446,7 +450,7 @@ function TrackedDocumentClientImpl({
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить настройки");
+      throw new Error(result?.error || tk("saveSettingsFailed"));
     }
 
     setSettingsOpen(false);
@@ -456,10 +460,10 @@ function TrackedDocumentClientImpl({
   async function removeEntry(entryId: string) {
     if (
       !(await confirmAsync({
-        title: "Удалить строку?",
-        description: "Запись исчезнет из журнала. Восстановить нельзя.",
+        title: tk("deleteRowTitle"),
+        description: tk("deleteRowDescription"),
         variant: "danger",
-        confirmLabel: "Удалить",
+        confirmLabel: common("delete"),
       }))
     )
       return;
@@ -471,7 +475,7 @@ function TrackedDocumentClientImpl({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить строку");
+      toast.error(tk("deleteRowFailed"));
       return;
     }
 
@@ -482,7 +486,7 @@ function TrackedDocumentClientImpl({
   async function removeSelectedEntries() {
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
-    if (!(await confirmAsync({ title: "Удалить выбранные строки?", description: `Будет удалено строк: ${count}. Восстановить нельзя.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: tk("deleteRowsTitle"), description: tk("deleteRowsDescription", { count }), variant: "danger", confirmLabel: common("delete") }))) return;
 
     try {
       const response = await fetch(`/api/journal-documents/${documentId}/entries`, {
@@ -492,14 +496,14 @@ function TrackedDocumentClientImpl({
       });
 
       if (!response.ok) {
-        throw new Error("Не удалось удалить строки");
+        throw new Error(tk("deleteRowsFailed"));
       }
 
       setEntries((current) => current.filter((item) => !selectedRowIds.includes(item.id)));
       setSelectedRowIds([]);
-      toast.success(`Удалено строк: ${count}`);
+      toast.success(tk("rowsDeleted", { count }));
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
+      toast.error(humanizeFetchError(error, tk("deleteSelectedFailed")));
     }
   }
 
@@ -511,7 +515,7 @@ function TrackedDocumentClientImpl({
           onClear={() => setSelectedRowIds([])}
           onDelete={() =>
             removeSelectedEntries().catch((error) =>
-              toast.error(humanizeFetchError(error, "Ошибка удаления строк"))
+              toast.error(humanizeFetchError(error, tk("deleteRowsError")))
             )
           }
         >
@@ -519,16 +523,16 @@ function TrackedDocumentClientImpl({
         </JournalSelectionBar>
       ) : null}
 
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={tk("emptyTitle")} emptyBody={tk("emptyBody")} />
       <JournalDocumentShell
         title={title}
-        subtitle={`Период: ${formatDateLabel(dateFrom)} - ${formatDateLabel(dateTo)}`}
+        subtitle={tk("period", { from: formatDateLabel(dateFrom), to: formatDateLabel(dateTo) })}
         documentId={documentId}
         backHref={`/journals/${templateCode}`}
         onSettings={() => setSettingsOpen(true)}
-        settingsLabel="Настройки"
+        settingsLabel={tk("settings")}
         closed={status !== "active"}
-        closedHint="Откройте журнал заново, чтобы добавлять и править строки."
+        closedHint={tk("closedHint")}
         undo={
           status === "active"
             ? {
@@ -542,7 +546,7 @@ function TrackedDocumentClientImpl({
         }
         mobileView={mobileView}
         onMobileView={switchMobileView}
-        cards={<RecordCardsView items={cardItems} emptyLabel="Записей пока нет." />}
+        cards={<RecordCardsView items={cardItems} emptyLabel={tk("noRecords")} />}
         paperHeader={
           <JournalDocumentHeader
             orgName={organizationName}
@@ -557,24 +561,24 @@ function TrackedDocumentClientImpl({
           status === "active" ? (
             <>
               <ResponsiveMenu
-                title="Добавить"
+                title={common("add")}
                 align="start"
                 contentClassName="min-w-[260px] rounded-2xl border-0 p-2 shadow-xl"
                 items={[
                   {
                     key: "add-row",
-                    label: "Добавить строку",
+                    label: tk("addRow"),
                     icon: <Plus className="size-4 text-[#6f7282]" />,
                     onSelect: () => setAddRowOpen(true),
                   },
                   {
                     key: "fill-today",
-                    label: "Заполнить за сегодня",
+                    label: tk("fillToday"),
                     icon: <Wand2 className="size-4 text-[#6f7282]" />,
                     onSelect: () => {
                       fillForToday().catch((error) =>
                         toast.error(
-                          humanizeFetchError(error, "Ошибка автозаполнения")
+                          humanizeFetchError(error, tk("autofillError"))
                         )
                       );
                     },
@@ -587,7 +591,7 @@ function TrackedDocumentClientImpl({
                     className={DOC_PRIMARY_BUTTON_CLASS}
                   >
                     <Plus className="size-5" />
-                    Добавить
+                    {common("add")}
                     <ChevronDown className="size-4" />
                   </Button>
                 }
@@ -598,13 +602,13 @@ function TrackedDocumentClientImpl({
                   variant="outline"
                   onClick={() =>
                     removeSelectedEntries().catch((error) =>
-                      toast.error(humanizeFetchError(error, "Ошибка удаления строк"))
+                      toast.error(humanizeFetchError(error, tk("deleteRowsError")))
                     )
                   }
                   className="h-9 rounded-xl border-[#ffd7d3] px-3.5 text-[13.5px] text-[#ff3b30] hover:bg-[#fff3f2]"
                 >
                   <Trash2 className="size-5" />
-                  Удалить ({selectedRowIds.length})
+                  {common("delete")} ({selectedRowIds.length})
                 </Button>
               ) : null}
             </>
@@ -626,10 +630,10 @@ function TrackedDocumentClientImpl({
                 </th>
               )}
               <th className="border border-[#eceef5] px-4 py-3 text-left font-medium text-[#5b6075]">
-                Дата
+                {tk("date")}
               </th>
               <th className="border border-[#eceef5] px-4 py-3 text-left font-medium text-[#5b6075]">
-                Сотрудник
+                {tw("employee")}
               </th>
               {fields.map((field) => (
                 <th
@@ -641,7 +645,7 @@ function TrackedDocumentClientImpl({
               ))}
               {status === "active" && (
                 <th className="border border-[#eceef5] px-4 py-3 text-center font-medium text-[#5b6075]">
-                  Действия
+                  {tk("actions")}
                 </th>
               )}
             </tr>
@@ -682,7 +686,7 @@ function TrackedDocumentClientImpl({
                         }).catch((error) => {
                           input.value = entry.date;
                           toast.error(
-                            humanizeFetchError(error, "Ошибка сохранения")
+                            humanizeFetchError(error, tk("saveError"))
                           );
                         });
                       }}
@@ -701,13 +705,13 @@ function TrackedDocumentClientImpl({
                       onValueChange={(value) => {
                         saveEntry({ ...entry, employeeId: value }).catch((error) =>
                           toast.error(
-                            humanizeFetchError(error, "Ошибка сохранения")
+                            humanizeFetchError(error, tk("saveError"))
                           )
                         );
                       }}
                     >
                       <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec]">
-                        <SelectValue placeholder="Сотрудник" />
+                        <SelectValue placeholder={tw("employee")} />
                       </SelectTrigger>
                       <SelectContent>
                         {employees.map((employee) => (
@@ -750,7 +754,7 @@ function TrackedDocumentClientImpl({
                                 },
                               }).catch((error) =>
                                 toast.error(
-                                  humanizeFetchError(error, "Ошибка сохранения")
+                                  humanizeFetchError(error, tk("saveError"))
                                 )
                               );
                             }}
@@ -768,13 +772,13 @@ function TrackedDocumentClientImpl({
                               },
                             }).catch((error) =>
                               toast.error(
-                                humanizeFetchError(error, "Ошибка сохранения")
+                                humanizeFetchError(error, tk("saveError"))
                               )
                             );
                           }}
                         >
                           <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec]">
-                            <SelectValue placeholder="Выберите значение" />
+                            <SelectValue placeholder={tk("chooseValue")} />
                           </SelectTrigger>
                           <SelectContent>
                             {field.options.map((option) => (
@@ -804,7 +808,7 @@ function TrackedDocumentClientImpl({
                               },
                             }).catch((error) =>
                               toast.error(
-                                humanizeFetchError(error, "Ошибка сохранения")
+                                humanizeFetchError(error, tk("saveError"))
                               )
                             )
                           }
@@ -823,7 +827,7 @@ function TrackedDocumentClientImpl({
                       className="h-10 rounded-xl border-[#ffd7d3] px-3 text-[#ff3b30] hover:bg-[#fff3f2]"
                     >
                       <Trash2 className="size-4" />
-                      Удалить
+                      {common("delete")}
                     </Button>
                   </td>
                 )}
@@ -836,7 +840,7 @@ function TrackedDocumentClientImpl({
                   colSpan={status === "active" ? fields.length + 4 : fields.length + 2}
                   className="border border-[#eceef5] p-8 text-center text-[16px] text-[#7d8196]"
                 >
-                  Пока нет строк. Добавьте первую запись.
+                  {tk("noRowsYet")}
                 </td>
               </tr>
             )}
@@ -848,13 +852,13 @@ function TrackedDocumentClientImpl({
         <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[32px] border-0 p-0 sm:max-w-[760px]">
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className="text-[22px] font-medium text-black">
-              Добавить строку
+              {tk("addRow")}
             </DialogTitle>
           </DialogHeader>
 
           <div className={JOURNAL_DIALOG_BODY_CLASS}>
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Дата</Label>
+              <Label className="text-[14px] text-[#73738a]">{tk("date")}</Label>
               <Input
                 type="date"
                 value={newDate}
@@ -864,10 +868,10 @@ function TrackedDocumentClientImpl({
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+              <Label className="text-[14px] text-[#73738a]">{tw("employee")}</Label>
               <Select value={newEmployeeId} onValueChange={setNewEmployeeId}>
                 <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={tw("chooseEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {employees.map((employee) => (
@@ -885,14 +889,14 @@ function TrackedDocumentClientImpl({
                 onClick={() =>
                   createEntry(newEmployeeId, newDate).catch((error) =>
                     toast.error(
-                      humanizeFetchError(error, "Ошибка создания строки")
+                      humanizeFetchError(error, tk("createRowError"))
                     )
                   )
                 }
                 disabled={isCreating || !newDate || !newEmployeeId}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
               >
-                {isCreating ? "Создание..." : "Создать"}
+                {isCreating ? tk("creating") : tk("create")}
               </Button>
             </div>
           </div>
@@ -903,14 +907,14 @@ function TrackedDocumentClientImpl({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название документа и ответственный сотрудник."
+          title={tw("settings")}
+          description={tk("settingsDescription")}
           size="md"
           onSave={async () => {
             try {
               await saveSettings();
             } catch (error) {
-              toast.error(humanizeFetchError(error, "Ошибка сохранения настроек"));
+              toast.error(humanizeFetchError(error, tk("saveSettingsError")));
             }
           }}
           onCancel={() => setSettingsOpen(false)}
@@ -920,7 +924,7 @@ function TrackedDocumentClientImpl({
               htmlFor="tracked-title-v2"
               className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
             >
-              Название документа
+              {tw("documentName")}
             </Label>
             <Input
               id="tracked-title-v2"
@@ -931,14 +935,14 @@ function TrackedDocumentClientImpl({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Ответственный
+              {tk("responsible")}
             </Label>
             <Select
               value={responsibleUserIdInput}
               onValueChange={(value) => setResponsibleUserIdInput(value)}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-                <SelectValue placeholder="— Выберите —" />
+                <SelectValue placeholder={tw("selectPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {employees.map((employee) => (
@@ -951,12 +955,12 @@ function TrackedDocumentClientImpl({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Должность ответственного
+              {tw("responsiblePosition")}
             </Label>
             <Input
               value={responsibleTitleInput}
               onChange={(event) => setResponsibleTitleInput(event.target.value)}
-              placeholder="Например: Технолог"
+              placeholder={tk("positionPlaceholder")}
               className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </div>
@@ -966,14 +970,14 @@ function TrackedDocumentClientImpl({
           <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[32px] border-0 p-0 sm:max-w-[860px]">
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
               <DialogTitle className="text-[22px] font-medium text-black">
-                Настройки документа
+                {tw("settings")}
               </DialogTitle>
             </DialogHeader>
 
             <div className={JOURNAL_DIALOG_BODY_CLASS}>
               <div className="space-y-3">
                 <Label htmlFor="journal-title" className="text-[14px] text-[#73738a]">
-                  Название документа
+                  {tw("documentName")}
                 </Label>
                 <Input
                   id="journal-title"
@@ -985,13 +989,13 @@ function TrackedDocumentClientImpl({
 
               <div className={JOURNAL_DIALOG_GRID_CLASS}>
                 <div className="space-y-3">
-                  <Label className="text-[14px] text-[#73738a]">Ответственный</Label>
+                  <Label className="text-[14px] text-[#73738a]">{tk("responsible")}</Label>
                   <Select
                     value={responsibleUserIdInput}
                     onValueChange={(value) => setResponsibleUserIdInput(value)}
                   >
                     <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                      <SelectValue placeholder="Выберите сотрудника" />
+                      <SelectValue placeholder={tw("chooseEmployee")} />
                     </SelectTrigger>
                     <SelectContent>
                       {employees.map((employee) => (
@@ -1005,14 +1009,14 @@ function TrackedDocumentClientImpl({
 
                 <div className="space-y-3">
                   <Label htmlFor="journal-responsible-title" className="text-[14px] text-[#73738a]">
-                    Должность ответственного
+                    {tw("responsiblePosition")}
                   </Label>
                   <Input
                     id="journal-responsible-title"
                     value={responsibleTitleInput}
                     onChange={(event) => setResponsibleTitleInput(event.target.value)}
                     className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
-                    placeholder="Например: Технолог"
+                    placeholder={tk("positionPlaceholder")}
                   />
                 </div>
               </div>
@@ -1023,13 +1027,13 @@ function TrackedDocumentClientImpl({
                   onClick={() =>
                     saveSettings().catch((error) =>
                       toast.error(
-                        humanizeFetchError(error, "Ошибка сохранения настроек")
+                        humanizeFetchError(error, tk("saveSettingsError"))
                       )
                     )
                   }
                   className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
                 >
-                  Сохранить
+                  {common("save")}
                 </Button>
               </div>
             </div>
@@ -1041,7 +1045,7 @@ function TrackedDocumentClientImpl({
           template.fields, тех же, по которым построена таблица. */}
       <CardEditSheet
         open={editingEntryId !== null}
-        title={`Запись журнала${seq.progress ? ` ${seq.progress}` : ""}`}
+        title={`${tk("entryTitle")}${seq.progress ? ` ${seq.progress}` : ""}`}
         subtitle={
           editingEntryId
             ? formatDateLabel(

@@ -2,6 +2,7 @@
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, Pencil, PencilLine, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +43,7 @@ import { cn } from "@/lib/utils";
  * что и на сайте. В печать не попадает.
  */
 export function JournalTitleControls({ canRename }: { canRename: boolean }) {
+  const t = useTranslations("journalUi.titleControls");
   const current = useCurrentJournalNames();
   const toggle = useJournalToggle();
   const [renameOpen, setRenameOpen] = useState(false);
@@ -69,8 +71,8 @@ export function JournalTitleControls({ canRename }: { canRename: boolean }) {
             ref={pencilRef}
             type="button"
             onClick={() => setRenameOpen(true)}
-            title="Переименовать журнал для своей организации"
-            aria-label="Переименовать журнал"
+            title={t("renameTitle")}
+            aria-label={t("renameLabel")}
             aria-haspopup="dialog"
             // На телефоне общее правило растягивает кнопку-иконку до
             // 48×48 — отрицательные поля не дают ей раздвинуть строку
@@ -139,6 +141,7 @@ function JournalRenameDialog({
   journal: CurrentJournalNames;
   onClose: () => void;
 }) {
+  const t = useTranslations("journalUi.titleControls");
   const router = useRouter();
   const applyNames = useApplyCustomNames();
   const [value, setValue] = useState(journal.customName ?? journal.officialName);
@@ -204,17 +207,17 @@ function JournalRenameDialog({
           inputRef.current?.focus();
           return;
         }
-        throw new Error(data?.error || "Не удалось сохранить название");
+        throw new Error(data?.error || t("saveFailed"));
       }
       applyNames(data.names);
       const saved = data.names.journals[journal.code] ?? null;
       toast.success(
-        saved ? `Журнал переименован: «${saved}»` : "Вернули стандартное название журнала"
+        saved ? t("renamed", { name: saved }) : t("restoredStandard")
       );
       onClose();
       router.refresh();
     } catch (failure) {
-      toast.error(humanizeFetchError(failure, "Не удалось сохранить название"));
+      toast.error(humanizeFetchError(failure, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -223,10 +226,10 @@ function JournalRenameDialog({
   let hint: string;
   if (isStandardValue) {
     hint = journal.customName
-      ? "Сохраните — сотрудники снова увидят официальное название"
-      : "Сейчас у журнала официальное название";
+      ? t("hintSaveToRestore")
+      : t("hintOfficial");
   } else {
-    hint = "Так журнал увидят сотрудники";
+    hint = t("hintCustom");
   }
 
   return (
@@ -235,14 +238,14 @@ function JournalRenameDialog({
       onClose={onClose}
       onConfirm={save}
       icon={PencilLine}
-      title="Своё название журнала"
-      confirmLabel="Сохранить"
+      title={t("dialogTitle")}
+      confirmLabel={t("save")}
       confirmDisabled={!canSave}
     >
       <div className="space-y-4" data-testid="journal-rename-dialog">
         <div>
           <label htmlFor={inputId} className="mb-2 block text-[12px] font-medium text-[#3c4053]">
-            Название журнала в вашей организации
+            {t("fieldLabel")}
           </label>
           <Input
             id={inputId}
@@ -290,20 +293,20 @@ function JournalRenameDialog({
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#a16d32]" aria-hidden />
             <div className="min-w-0 text-[13px] leading-[1.55] text-[#3c4053]">
               <p>
-                Это название увидят ваши сотрудники в кабинете, на QR и в Telegram. В печати и у
-                проверяющего останется официальное:{" "}
-                <span className="font-medium text-[#0b1024]">«{journal.officialName}»</span> — так
-                требуют правила.
+                {t.rich("warning", {
+                  name: journal.officialName,
+                  official: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+                })}
               </p>
               <button
                 type="button"
                 onClick={resetToStandard}
                 disabled={saving || showsOfficial}
-                title={showsOfficial ? "Уже стоит официальное название" : undefined}
+                title={showsOfficial ? t("alreadyOfficial") : undefined}
                 className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[#dcdfed] disabled:hover:bg-white"
               >
                 <RotateCcw className="size-3.5" aria-hidden />
-                Вернуть стандартное
+                {t("resetToStandard")}
               </button>
             </div>
           </div>

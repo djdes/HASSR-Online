@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ArrowRight, CheckCircle2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 
@@ -47,6 +48,7 @@ export function FillRunner({
   /** Rolling-режим: «Сохранить и следующая» вместо обхода списка. */
   rolling?: { onNext: () => void; onDone: () => void; countToday: number };
 }) {
+  const t = useTranslations("journalUi.fillRunner");
   const [index, setIndex] = useState(0);
   const keyboardInset = useKeyboardInset();
 
@@ -78,13 +80,13 @@ export function FillRunner({
             </div>
             <div className="mt-0.5 text-[12.5px] text-[#6f7282] tabular-nums">
               {rolling
-                ? `Записей за сегодня: ${rolling.countToday}`
-                : `${index + 1} из ${total} · заполнено ${filled}`}
+                ? t("todayCount", { count: rolling.countToday })
+                : t("progress", { current: index + 1, total, filled })}
             </div>
           </div>
           <button
             type="button"
-            aria-label="Закрыть"
+            aria-label={t("close")}
             onClick={onClose}
             className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#6f7282] transition-colors hover:bg-[#eef1ff] hover:text-[#0b1024]"
           >
@@ -121,7 +123,7 @@ export function FillRunner({
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <CheckCircle2 className="size-10 text-[#116b2a]" />
             <div className="text-[17px] font-semibold text-[#0b1024]">
-              Всё заполнено
+              {t("allFilled")}
             </div>
           </div>
         )}
@@ -140,14 +142,14 @@ export function FillRunner({
               onClick={rolling.onDone}
               className="h-12 flex-1 rounded-2xl border border-[#dcdfed] bg-white text-[15px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff]"
             >
-              Готово на сегодня
+              {t("doneToday")}
             </button>
             <button
               type="button"
               onClick={rolling.onNext}
               className="inline-flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              Сохранить и следующая
+              {t("saveAndNext")}
               <ArrowRight className="size-4" />
             </button>
           </div>
@@ -160,7 +162,7 @@ export function FillRunner({
               className="inline-flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff] disabled:opacity-40"
             >
               <ArrowLeft className="size-4" />
-              Назад
+              {t("back")}
             </button>
             <button
               type="button"
@@ -174,7 +176,7 @@ export function FillRunner({
               }}
               className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              {atEnd ? "Готово" : "Дальше"}
+              {atEnd ? t("done") : t("next")}
               {atEnd ? (
                 <CheckCircle2 className="size-4" />
               ) : (

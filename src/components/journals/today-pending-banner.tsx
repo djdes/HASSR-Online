@@ -1,25 +1,10 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { AlertCircle, ArrowRight, CheckCircle2 } from "lucide-react";
 import {
   ALL_DAILY_JOURNAL_CODES,
   COUNTS_UNBOUNDED_CODES,
 } from "@/lib/daily-journal-codes";
-
-// Russian plural pick: `pluralRu(1,2,5)(count)` for the three grammatical
-// forms. Handles teens (11-14 always 3rd form) and 21/31/41/... (1st form)
-// correctly — keeps banner copy readable even for big row counts.
-function pluralRu(one: string, few: string, many: string) {
-  return (count: number) => {
-    const abs = Math.abs(count) % 100;
-    const lastDigit = abs % 10;
-    if (abs > 10 && abs < 20) return many;
-    if (lastDigit === 1) return one;
-    if (lastDigit >= 2 && lastDigit <= 4) return few;
-    return many;
-  };
-}
-
-const recordWord = pluralRu("запись", "записи", "записей");
 
 /**
  * Top-of-page banner for a journal's documents list. Tells staff at a
@@ -55,6 +40,8 @@ export function TodayPendingBanner({
   expectedCount?: number;
   noActiveDocument?: boolean;
 }) {
+  const t = useTranslations("journals.ui.todayBanner");
+  const journalsT = useTranslations("journals");
   if (!isMandatory) return null;
   if (!ALL_DAILY_JOURNAL_CODES.has(templateCode)) return null;
 
@@ -67,13 +54,13 @@ export function TodayPendingBanner({
   const isStrict = templateCode === "hygiene" || templateCode === "health_check";
   if (filled) {
     const greenDetail = isStrict && expectedCount > 0
-      ? ` (${todayCount} из ${expectedCount} строк)`
+      ? ` ${t("detailRows", { today: todayCount, expected: expectedCount })}`
       : todayCount > 0
-        ? ` (${todayCount} ${recordWord(todayCount)})`
+        ? ` (${journalsT("entryCount", { count: todayCount })})`
         : "";
     const greenBody = isStrict
-      ? `${templateName} заполнен за сегодняшнее число${greenDetail}. Можно открыть документ, чтобы проверить или дополнить записи.`
-      : `${templateName} уже заполнялся за сегодняшнее число${greenDetail}. Можно открыть документ, чтобы продолжить.`;
+      ? t("filledStrictBody", { name: templateName, detail: greenDetail })
+      : t("filledBody", { name: templateName, detail: greenDetail });
     return (
       <div
         data-today-banner="filled"
@@ -85,7 +72,7 @@ export function TodayPendingBanner({
           </span>
           <div className="min-w-0">
             <div className="text-[14px] font-semibold text-[#136b2a]">
-              {isStrict ? "Сегодня журнал заполнен" : "Сегодня журнал уже заполнялся"}
+              {isStrict ? t("filledStrictTitle") : t("filledTitle")}
             </div>
             <p className="mt-0.5 text-[13px] leading-snug text-[#136b2a]/80">
               {greenBody}
@@ -97,7 +84,7 @@ export function TodayPendingBanner({
             href={openUrl}
             className="inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#136b2a] px-4 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(19,107,42,0.55)] transition-colors hover:bg-[#0f5a22] sm:w-auto"
           >
-            Открыть за сегодня
+            {t("openToday")}
             <ArrowRight className="size-4" />
           </Link>
         ) : null}
@@ -109,12 +96,12 @@ export function TodayPendingBanner({
   // journals only), or completely empty.
   const partialFill = isStrict && todayCount > 0 && expectedCount > 0;
   const description = noActiveDocument
-    ? "Активного документа на сегодня нет. Создайте новый документ кнопкой «Создать документ» сверху и начните заполнять записи за текущий день."
+    ? t("noActiveDocument")
     : partialFill
-      ? `За сегодня заполнено ${todayCount} из ${expectedCount} строк. Нажмите «Перейти к сегодня» и внесите оставшиеся — как только все обязательные строки будут готовы, этот блок исчезнет.`
+      ? t("partialFill", { today: todayCount, expected: expectedCount })
       : isStrict
-        ? "За сегодня ещё нет записей. Нажмите «Перейти к сегодня» и отметьте каждого сотрудника — как только все обязательные строки будут готовы, блок исчезнет."
-        : "За сегодня журнал ещё не начинали заполнять. Откройте документ и внесите первую запись за сегодня — блок исчезнет после любой строки с сегодняшней датой.";
+        ? t("strictEmpty")
+        : t("notStarted");
 
   return (
     <div
@@ -127,7 +114,7 @@ export function TodayPendingBanner({
         </span>
         <div className="min-w-0">
           <div className="text-[14px] font-semibold text-[#d2453d]">
-            {isStrict ? "Нужно заполнить за сегодня" : "Ещё не начинали заполнять"}
+            {isStrict ? t("pendingStrictTitle") : t("pendingTitle")}
           </div>
           <p className="mt-0.5 text-[13px] leading-snug text-[#d2453d]/85">
             {description}
@@ -139,7 +126,7 @@ export function TodayPendingBanner({
           href={openUrl}
           className="inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#d2453d] px-4 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(210,69,61,0.55)] transition-colors hover:bg-[#b83a33] sm:w-auto"
         >
-          Перейти к сегодня
+          {t("goToday")}
           <ArrowRight className="size-4" />
         </Link>
       ) : null}

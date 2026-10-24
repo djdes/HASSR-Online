@@ -330,7 +330,7 @@ export function DisinfectantDocumentsClient({
     });
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить");
+      throw new Error(failure?.error || t("journalDisinfectant.saveFailed"));
     }
     router.refresh();
   }

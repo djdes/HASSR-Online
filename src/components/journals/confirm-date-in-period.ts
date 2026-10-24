@@ -14,41 +14,23 @@ import { formatDate, type Locale } from "@/i18n/locales";
 export async function confirmDateInPeriod(
   dateKey: string | null | undefined,
   period: { dateFrom?: string | null; dateTo?: string | null },
-  presentation?: { locale: Locale; t: ReturnType<typeof useTranslations<"journalControls.dateInPeriod">> }
+  presentation: { locale: Locale; t: ReturnType<typeof useTranslations<"journalControls.dateInPeriod">> }
 ): Promise<boolean> {
   const warning = describeDateOutsidePeriod(dateKey, period);
   if (!warning) return true;
-  if (presentation) {
-    const { locale, t } = presentation;
-    const date = (value: string | null | undefined) => {
-      const day = String(value ?? "").slice(0, 10), parsed = new Date(`${day}T00:00:00.000Z`);
-      return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== day ? day : formatDate(locale, parsed, "UTC", { day: "2-digit", month: "2-digit", year: "numeric" });
-    };
-    const to = String(period.dateTo ?? "").slice(0, 10);
-    return confirmAsync({
-      locale,
-      title: t("title"),
-      description: /^\d{4}-\d{2}-\d{2}$/.test(to) && !isPerpetualDateTo(to)
-        ? t("rangeDescription", { date: date(dateKey), from: date(period.dateFrom), to: date(to) })
-        : t("sinceDescription", { date: date(dateKey), from: date(period.dateFrom) }),
-      bullets: [{ label: t("printWarning"), tone: "warn" }, { label: t("correctDate"), tone: "info" }],
-      variant: "warn", confirmLabel: t("saveAnyway"),
-    });
-  }
+  const { locale, t } = presentation;
+  const date = (value: string | null | undefined) => {
+    const day = String(value ?? "").slice(0, 10), parsed = new Date(`${day}T00:00:00.000Z`);
+    return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== day ? day : formatDate(locale, parsed, "UTC", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+  const to = String(period.dateTo ?? "").slice(0, 10);
   return confirmAsync({
-    title: "Дата вне периода документа",
-    description: warning,
-    bullets: [
-      {
-        label: "Запись попадёт в этот документ и будет напечатана вместе с ним",
-        tone: "warn",
-      },
-      {
-        label: "Если дата введена по ошибке — нажмите «Отмена» и исправьте её",
-        tone: "info",
-      },
-    ],
-    variant: "warn",
-    confirmLabel: "Всё равно сохранить",
+    locale,
+    title: t("title"),
+    description: /^\d{4}-\d{2}-\d{2}$/.test(to) && !isPerpetualDateTo(to)
+      ? t("rangeDescription", { date: date(dateKey), from: date(period.dateFrom), to: date(to) })
+      : t("sinceDescription", { date: date(dateKey), from: date(period.dateFrom) }),
+    bullets: [{ label: t("printWarning"), tone: "warn" }, { label: t("correctDate"), tone: "info" }],
+    variant: "warn", confirmLabel: t("saveAnyway"),
   });
 }

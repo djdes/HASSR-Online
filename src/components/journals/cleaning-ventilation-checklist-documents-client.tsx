@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -160,6 +161,8 @@ function SettingsDialog(props: {
   requireTitle?: boolean;
   templateCode: string;
 }) {
+  const t = useTranslations("journalUi.cleaningVentilation");
+  const g = useTranslations();
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -206,8 +209,8 @@ function SettingsDialog(props: {
           <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
             <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <FloatingInputField
-              label="Название документа"
-              placeholder="Введите название документа"
+              label={g("journalWidgets.staff.documentName")}
+              placeholder={g("journalWidgets.staff.documentNamePlaceholder")}
               value={activeState.title}
               onChange={(value) => {
                 auto.markTouched();
@@ -220,7 +223,7 @@ function SettingsDialog(props: {
                 списке документов (V8 аудита); «Дата проведения» была
                 единственным местом со своей формулировкой. */}
             <DateField
-              label="Дата начала"
+              label={t("startDate")}
               value={activeState.dateFrom}
               onChange={(value) => {
                 const next = auto.titleForPeriod({ dateFrom: value });
@@ -234,10 +237,10 @@ function SettingsDialog(props: {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-[14px] leading-[1.35] text-[#0b1024]">
-                  Проветривание
+                  {t("ventilation")}
                 </div>
                 <div className="mt-1 text-[12px] leading-[1.35] text-[#8a8fa3]">
-                  Если у вас есть окна и возможность проветривать помещение
+                  {t("ventilationHint")}
                 </div>
               </div>
               <Switch
@@ -246,7 +249,7 @@ function SettingsDialog(props: {
                   setState({ ...activeState, ventilationEnabled: value === true })
                 }
                 className="mt-0.5 shrink-0"
-                aria-label="Проветривание"
+                aria-label={t("ventilation")}
               />
             </div>
             <ControlPeriodicityField
@@ -265,7 +268,7 @@ function SettingsDialog(props: {
                 onClick={async () => {
                   if (!activeState) return;
                   if (props.requireTitle && !activeState.title.trim()) {
-                    setTitleError("Поле не заполнено");
+                    setTitleError(g("cleaningGrid.cleaning.fieldRequired"));
                     return;
                   }
                   setTitleError("");
@@ -274,7 +277,7 @@ function SettingsDialog(props: {
                 disabled={submitting}
                 className={JOURNAL_DIALOG_SUBMIT_CLASS}
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? g("cleaningGrid.cleaning.saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -291,6 +294,8 @@ export function CleaningVentilationChecklistDocumentsClient({
   users,
   documents,
 }: Props) {
+  const t = useTranslations("journalUi.cleaningVentilation");
+  const g = useTranslations();
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
@@ -363,7 +368,7 @@ export function CleaningVentilationChecklistDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+      throw new Error(failure?.error || g("journalControls.documentDialog.settingsError"));
     }
 
     router.refresh();
@@ -372,13 +377,17 @@ export function CleaningVentilationChecklistDocumentsClient({
   async function handleDelete(document: DocumentItem) {
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title || CLEANING_VENTILATION_CHECKLIST_TITLE}» будет удалён безвозвратно.`,
+      description: g("cleaningGrid.cleaning.documentWillBeDeleted", {
+        title: document.title || CLEANING_VENTILATION_CHECKLIST_TITLE,
+      }),
       bullets: [
-        { label: `Дата начала: ${formatDateLabel(document.dateFrom)}`, tone: "info" },
-        { label: "Удалятся все отметки чек-листа за этот документ", tone: "warn" },
+        { label: t("startDateLine", { date: formatDateLabel(document.dateFrom) }), tone: "info" },
+        { label: t("deleteWarning"), tone: "warn" },
       ],
-      successMessage: `Документ «${document.title || CLEANING_VENTILATION_CHECKLIST_TITLE}» удалён`,
-      errorMessage: "Не удалось удалить документ",
+      successMessage: g("cleaningGrid.cleaning.documentDeletedSuccess", {
+        title: document.title || CLEANING_VENTILATION_CHECKLIST_TITLE,
+      }),
+      errorMessage: g("journalControls.documentActions.deleteError"),
     });
   }
 
@@ -386,7 +395,7 @@ export function CleaningVentilationChecklistDocumentsClient({
     <div className={JOURNAL_LIST_STACK_CLASS}>
       <JournalTopBar
         routeCode={routeCode}
-        heading={`${CLEANING_VENTILATION_CHECKLIST_TITLE}${activeTab === "closed" ? " (закрытые)" : ""}`}
+        heading={`${CLEANING_VENTILATION_CHECKLIST_TITLE}${activeTab === "closed" ? ` (${g("journalControls.list.closedSuffix")})` : ""}`}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={CLEANING_VENTILATION_CHECKLIST_TITLE}
@@ -398,7 +407,7 @@ export function CleaningVentilationChecklistDocumentsClient({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" />
-            Создать документ
+            {g("journalControls.list.create")}
           </Button>
         }
       />
@@ -414,7 +423,7 @@ export function CleaningVentilationChecklistDocumentsClient({
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="size-5" strokeWidth={2.5} />
-              Создать документ
+              {g("journalControls.list.create")}
             </Button>}
           />
         ) : null}
@@ -429,7 +438,7 @@ export function CleaningVentilationChecklistDocumentsClient({
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("startDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatDateLabel(document.dateFrom)}
                 </div>
@@ -442,7 +451,7 @@ export function CleaningVentilationChecklistDocumentsClient({
                   нормализованного config; у старых документов без него —
                   прочерк. */}
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("responsible")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {getMainResponsibleLabel(document, users)}
                 </div>
@@ -450,23 +459,23 @@ export function CleaningVentilationChecklistDocumentsClient({
 
               <div className="flex items-center justify-center text-[#5566f6]">
                 <ResponsiveMenu
-                  title="Действия с документом"
+                  title={g("journalControls.list.actionsTitle")}
                   items={filterManageMenuItems([
                     {
                       key: "settings",
-                      label: "Настройки",
+                      label: g("journalControls.list.settings"),
                       icon: <Settings2 className="size-4 text-[#6f7282]" />,
                       onSelect: () => setSettingsTarget(document),
                     },
                     {
                       key: "print",
-                      label: "Печать",
+                      label: g("journalControls.list.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () => openPdf({ documentId: document.id }),
                     },
                     {
                       key: "toggle-status",
-                      label: document.status === "active" ? "Закрыть" : "Вернуть в активные",
+                      label: document.status === "active" ? g("common.close") : g("journalControls.list.restoreMenu"),
                       icon: <CalendarDays className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
                         setStatus(document.status === "active" ? "closed" : "active", {
@@ -475,7 +484,7 @@ export function CleaningVentilationChecklistDocumentsClient({
                     },
                     {
                       key: "delete",
-                      label: "Удалить",
+                      label: g("journalControls.list.delete"),
                       icon: <Trash2 className="size-4 text-[#ff3b30]" />,
                       onSelect: () => handleDelete(document),
                       tone: "danger" as const,
@@ -501,8 +510,8 @@ export function CleaningVentilationChecklistDocumentsClient({
         onOpenChange={setCreateOpen}
         initial={createInitial}
         onSubmit={createDocument}
-        submitText="Создать"
-        title="Создание документа"
+        submitText={g("cleaningGrid.cleaning.create")}
+        title={g("cleaningGrid.cleaning.createDocument")}
         requireTitle
         templateCode={templateCode}
       />
@@ -531,8 +540,8 @@ export function CleaningVentilationChecklistDocumentsClient({
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, value);
         }}
-        submitText="Сохранить"
-        title="Настройки документа"
+        submitText={g("common.save")}
+        title={g("journalControls.actions.settings")}
         templateCode={templateCode}
       />
     </div>

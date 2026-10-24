@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { useTranslations } from "next-intl";
 import { FloatingTextareaField } from "@/components/journals/journal-dialog-field";
 import { CONTROL_PERIODICITY_MAX_LENGTH } from "@/lib/control-periodicity";
 
@@ -23,8 +24,8 @@ export function ControlPeriodicityField({
   value,
   onChange,
   disabled = false,
-  label = "Периодичность контроля",
-  placeholder = "Например: ежесменно перед началом работы",
+  label,
+  placeholder,
   className,
   textareaClassName,
 }: {
@@ -36,17 +37,18 @@ export function ControlPeriodicityField({
   className?: string;
   textareaClassName?: string;
 }) {
+  const t = useTranslations("journals.ui.controlPeriodicity");
   const id = useId();
 
   return (
     <FloatingTextareaField
       id={id}
-      label={label}
+      label={label ?? t("label")}
       value={value}
       onChange={onChange}
       disabled={disabled}
       maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t("placeholder")}
       className={className}
       textareaClassName={textareaClassName}
     />

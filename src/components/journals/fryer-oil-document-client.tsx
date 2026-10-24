@@ -368,18 +368,18 @@ function EntryDialog(props: {
     if (!tab) return;
     if (tab.id) {
       const confirmed = await confirmAsync({
-        title: "Убрать фритюрницу из этого дня?",
-        description: "Строка журнала будет удалена, когда вы нажмёте «Сохранить».",
+        title: t("removeDayFryerTitle"),
+        description: t("removeDayFryerDescription"),
         variant: "danger",
-        confirmLabel: "Убрать",
+        confirmLabel: t("removeAction"),
         bullets: [
           {
             label: tab.data.equipmentType
-              ? `Оборудование: ${tab.data.equipmentType}`
-              : "Оборудование не указано",
+              ? t("equipmentLabel", { name: tab.data.equipmentType })
+              : t("equipmentNotSpecified"),
             tone: "info",
           },
-          { label: "Закрыть диалог без сохранения — строка останется", tone: "default" },
+          { label: t("closeWithoutSaving"), tone: "default" },
         ],
       });
       if (!confirmed) return;
@@ -779,7 +779,7 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
       const buffer = await file.arrayBuffer();
       const book = XLSX.read(buffer, { type: "array" });
       const sheet = book.Sheets[book.SheetNames[0]];
-      if (!sheet) throw new Error("В файле нет ни одного листа");
+      if (!sheet) throw new Error(t("noSheets"));
 
       const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
       const values = rows
@@ -811,12 +811,12 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
     const sample = lists[key].filter(Boolean).slice(0, 5);
     const rows = (sample.length > 0
       ? sample
-      : ["Первая позиция", "Вторая позиция", "Третья позиция"]
+      : [t("sampleItem1"), t("sampleItem2"), t("sampleItem3")]
     ).map((value) => [value]);
 
     const book = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet(rows), "Список");
-    XLSX.writeFile(book, "wesetup-пример-списка.xlsx");
+    XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet(rows), t("sampleSheetName"));
+    XLSX.writeFile(book, t("sampleFileName"));
   }
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -1268,7 +1268,7 @@ export function FryerOilDocumentClient(props: Props) {
     const response = await fetch(`/api/journal-documents/${props.documentId}/fryer-oil`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items }) });
     const result = await response.json().catch(() => null);
     if (!response.ok || !Array.isArray(result?.entries)) {
-      throw new Error(result?.error || "Не удалось сохранить записи");
+      throw new Error(result?.error || t("saveEntriesError"));
     }
     const created: EntryItem[] = result.entries.map(
       (entry: { id: string; date: string; data: unknown }) => ({

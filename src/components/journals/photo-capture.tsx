@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Camera, Loader2, X, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downscaleImageFile } from "@/lib/ai-vision/downscale";
@@ -25,6 +26,7 @@ interface PhotoCaptureProps {
 }
 
 export function PhotoCapture({ onResult }: PhotoCaptureProps) {
+  const t = useTranslations("journalUi.photoCapture");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -55,12 +57,12 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Ошибка распознавания");
+        throw new Error(data.error || t("recognitionFailed"));
       }
 
       setResult(data.result);
     } catch (err) {
-      setError(humanizeFetchError(err, "Ошибка распознавания"));
+      setError(humanizeFetchError(err, t("recognitionFailed")));
     } finally {
       setIsProcessing(false);
     }
@@ -88,9 +90,9 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
   }
 
   const confidenceLabel = {
-    high: "Высокая точность",
-    medium: "Средняя точность",
-    low: "Низкая точность — проверьте данные",
+    high: t("confidenceHigh"),
+    medium: t("confidenceMedium"),
+    low: t("confidenceLow"),
   };
 
   const confidenceColor = {
@@ -118,7 +120,7 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
           className="w-full border-dashed border-2 h-20 flex flex-col gap-1"
         >
           <Camera className="size-6" />
-          <span className="text-sm">Сфотографировать этикетку</span>
+          <span className="text-sm">{t("takePhoto")}</span>
         </Button>
       )}
 
@@ -127,14 +129,14 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
           <div className="relative rounded-lg overflow-hidden border">
             <img
               src={preview}
-              alt="Фото этикетки"
+              alt={t("photoAlt")}
               className="w-full max-h-48 object-contain bg-muted"
             />
             {isProcessing && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <div className="flex items-center gap-2 text-white bg-black/70 rounded-full px-4 py-2">
                   <Loader2 className="size-4 animate-spin" />
-                  <span className="text-sm">Распознаю этикетку… обычно 10–40 секунд</span>
+                  <span className="text-sm">{t("recognizing")}</span>
                 </div>
               </div>
             )}
@@ -150,7 +152,7 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
                 onClick={() => fileInputRef.current?.click()}
               >
                 <RotateCcw className="size-3 mr-1" />
-                Ещё раз
+                {t("retry")}
               </Button>
             </div>
           )}
@@ -167,37 +169,37 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
               <div className="space-y-1 text-sm">
                 {result.productName && (
                   <p>
-                    <span className="font-medium">Продукт:</span>{" "}
+                    <span className="font-medium">{t("product")}</span>{" "}
                     {result.productName}
                   </p>
                 )}
                 {result.supplier && (
                   <p>
-                    <span className="font-medium">Производитель:</span>{" "}
+                    <span className="font-medium">{t("supplier")}</span>{" "}
                     {result.supplier}
                   </p>
                 )}
                 {result.manufactureDate && (
                   <p>
-                    <span className="font-medium">Дата изготовления:</span>{" "}
+                    <span className="font-medium">{t("manufactureDate")}</span>{" "}
                     {result.manufactureDate}
                   </p>
                 )}
                 {result.expiryDate && (
                   <p>
-                    <span className="font-medium">Срок годности:</span>{" "}
+                    <span className="font-medium">{t("expiryDate")}</span>{" "}
                     {result.expiryDate}
                   </p>
                 )}
                 {result.batchNumber && (
                   <p>
-                    <span className="font-medium">Партия:</span>{" "}
+                    <span className="font-medium">{t("batch")}</span>{" "}
                     {result.batchNumber}
                   </p>
                 )}
                 {result.storageTemp && (
                   <p>
-                    <span className="font-medium">Хранение:</span>{" "}
+                    <span className="font-medium">{t("storage")}</span>{" "}
                     {result.storageTemp}
                   </p>
                 )}
@@ -210,7 +212,7 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
                   className="flex-1"
                 >
                   <Check className="size-3 mr-1" />
-                  Заполнить форму
+                  {t("fillForm")}
                 </Button>
                 <Button
                   type="button"
@@ -219,7 +221,7 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <RotateCcw className="size-3 mr-1" />
-                  Другое фото
+                  {t("anotherPhoto")}
                 </Button>
                 <Button
                   type="button"

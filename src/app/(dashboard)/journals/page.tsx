@@ -1,5 +1,6 @@
 import { WorkspaceResourceCards } from "@/components/dashboard/workspace-resource-cards";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
@@ -22,6 +23,7 @@ export const dynamic = "force-dynamic";
 
 export default async function JournalsPage() {
   const session = await requireAuth();
+  const ui = await getTranslations("journals.ui.index");
   // Заведующая (head_chef) и не-admin'ы не должны видеть «журналы как
   // журналы». Перенаправляем туда где они работают.
   if (!hasCapability(session.user, "journals.view")) {
@@ -119,7 +121,7 @@ export default async function JournalsPage() {
       <PageHeader
         // Своё название раздела организации, если его задали.
         title={await resolveSectionName(getActiveOrgId(session), "journals")}
-        description="Электронные журналы СанПиН и ХАССП — откройте, чтобы заполнить или распечатать."
+        description={ui("description")}
         actions={
           <>
             {isManager ? (
@@ -128,7 +130,7 @@ export default async function JournalsPage() {
                 className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <SlidersHorizontal className="size-4 text-[#5566f6]" />
-                Настроить набор
+                {ui("configureSet")}
               </Link>
             ) : null}
             {enabledItems.length > 0 ? (
@@ -140,8 +142,10 @@ export default async function JournalsPage() {
                 {/* Раньше было «Заполнено сегодня 26/35» — и в эти 26
                     попадали журналы, которые сегодня вести не нужно.
                     Число то же, подпись честная. */}
-                Сегодня не требуют внимания: {filledTodayCount} из{" "}
-                {enabledItems.length}
+                {ui("noAttentionToday", {
+                  filled: filledTodayCount,
+                  total: enabledItems.length,
+                })}
               </PageHeaderStat>
             ) : null}
           </>
@@ -149,33 +153,33 @@ export default async function JournalsPage() {
       />
       <PageGuide
         storageKey="journals-list"
-        title="Как работать с журналами"
+        title={ui("guideTitle")}
         bullets={[
           {
-            title: "Зелёная галочка",
-            body: "журнал заполнен сегодня — проверка пройдёт. Серый — ещё не заполнили.",
+            title: ui("greenTickTitle"),
+            body: ui("greenTickBody"),
           },
           {
-            title: "Открыть журнал",
-            body: "клик по карточке — открывается активный документ за текущий период (месяц/полмесяца/год).",
+            title: ui("openJournalTitle"),
+            body: ui("openJournalBody"),
           },
           {
-            title: "Серый журнал",
-            body: "отключён в /settings/journals — этой кухне не нужен. Можно включить обратно там же.",
+            title: ui("greyJournalTitle"),
+            body: ui("greyJournalBody"),
           },
           {
-            title: "«Разослать всем»",
-            body: "одной кнопкой создаются TasksFlow-задачи для незаполненных журналов. Сотрудники видят их в смартфоне.",
+            title: ui("sendAllTitle"),
+            body: ui("sendAllBody"),
           },
         ]}
         qa={[
           {
-            q: "Журнал отключён, но всё равно нужно вести",
-            a: "Зайди в /settings/journals и включи обратно. Также проверь /settings/journal-responsibles — там должны быть назначены исполнители.",
+            q: ui("qDisabledQ"),
+            a: ui("qDisabledA"),
           },
           {
-            q: "У сотрудника нет доступа к журналу",
-            a: "Доступ контролируется per-должность. Открой /settings/journal-access — там матрица «должность × журнал».",
+            q: ui("qNoAccessQ"),
+            a: ui("qNoAccessA"),
           },
         ]}
       />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { CalendarPlus, Loader2, RotateCw, Search, Wand2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,16 +75,6 @@ function personLine(person: PersonPreview | null): string {
     : person.name;
 }
 
-function pluralPeople(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return "сотрудник";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return "сотрудника";
-  }
-  return "сотрудников";
-}
-
 export function JournalAutomationEnableDialog({
   open,
   mode,
@@ -101,6 +92,7 @@ export function JournalAutomationEnableDialog({
   /** Бросок исключения оставляет диалог открытым (ошибку показывает toast). */
   onConfirm: (choice: AutomationChoice) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.automationEnableDialog");
   const [preview, setPreview] = useState<AutomationPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -126,7 +118,7 @@ export function JournalAutomationEnableDialog({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(data?.error ?? "Не удалось загрузить данные журнала");
+        throw new Error(data?.error ?? t("loadJournalFailed"));
       }
       const next = data as AutomationPreview;
       setPreview(next);
@@ -161,13 +153,11 @@ export function JournalAutomationEnableDialog({
       setStaffIds(next.staff?.selectedUserIds ?? []);
       setSearch("");
     } catch (error) {
-      setLoadError(
-        humanizeFetchError(error, "Не удалось загрузить данные"),
-      );
+      setLoadError(humanizeFetchError(error, t("loadFailed")));
     } finally {
       setLoading(false);
     }
-  }, [templateCode]);
+  }, [templateCode, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -198,15 +188,15 @@ export function JournalAutomationEnableDialog({
       // Главное, что человек должен понять до включения: сайт сам
       // проставит отметки за уже прошедшие дни периода — до сегодня.
       items.push({
-        label: "Заполним по сотрудникам с начала периода по сегодня",
+        label: t("fillBullet1"),
         tone: "info",
       });
-      items.push({ label: "Дальше — каждый день сам, ночью" });
+      items.push({ label: t("fillBullet2") });
       items.push({
-        label: "Пустые клетки заполнятся, ваши записи останутся как есть",
+        label: t("fillBullet3"),
       });
       if (!autoCreateEnabled) {
-        items.push({ label: "Заодно включится создание нового периода" });
+        items.push({ label: t("fillBullet4") });
       }
       return items;
     }
@@ -214,28 +204,35 @@ export function JournalAutomationEnableDialog({
     items.push(
       preview.nextPeriod
         ? {
-            label: `${preview.nextPeriod.startsAtLabel} появится «${preview.nextPeriod.label}»`,
+            label: t("nextPeriodAppears", {
+              date: preview.nextPeriod.startsAtLabel,
+              label: preview.nextPeriod.label,
+            }),
             tone: "info",
           }
-        : { label: "Журнал бессрочный: документ один" },
+        : { label: t("perpetualJournal") },
     );
     if (!preview.hasActiveDocument) {
       items.push({
-        label: `Сегодня ночью появится «${preview.currentPeriod.label}»`,
+        label: t("currentPeriodTonight", { label: preview.currentPeriod.label }),
       });
     }
-    items.push({ label: "Строки и ответственные — из прошлого журнала" });
+    items.push({ label: t("rowsFromPrevious") });
     return items;
-  }, [preview, mode, autoCreateEnabled]);
+  }, [preview, mode, autoCreateEnabled, t]);
 
   const staffLine = useMemo(() => {
     if (!preview?.staff) return "";
     const { count, names } = preview.staff.inherit;
-    if (count === 0) return "Подберём по должностям журнала";
+    if (count === 0) return t("staffAutoPick");
     const shown = names.slice(0, 2).join(", ");
     const rest = count - Math.min(names.length, 2);
-    return `${count} ${pluralPeople(count)}: ${shown}${rest > 0 ? `, +${rest}` : ""} · новые сотрудники добавятся сами`;
-  }, [preview]);
+    return t("staffInherit", {
+      count,
+      shown,
+      more: rest > 0 ? `, +${rest}` : "",
+    });
+  }, [preview, t]);
 
   const confirmDisabled =
     loading ||
@@ -278,16 +275,16 @@ export function JournalAutomationEnableDialog({
       variant="default"
       icon={mode === "auto-fill" ? Wand2 : CalendarPlus}
       title={
-        mode === "auto-fill" ? "Заполнять журнал за вас?" : "Создавать журнал сам?"
+        mode === "auto-fill" ? t("fillTitle") : t("createTitle")
       }
       description={
         mode === "auto-fill"
-          ? "Сайт заполнит журнал за вас: отметки и показатели проставятся сами. Вам останется проверить."
-          : "Новый период журнала заведётся сам — как продолжение прошлого."
+          ? t("fillDescription")
+          : t("createDescription")
       }
       bullets={bullets}
-      confirmLabel="Да, включить"
-      cancelLabel="Нет"
+      confirmLabel={t("confirm")}
+      cancelLabel={t("cancel")}
     >
       {loading && !preview ? (
         <div className="space-y-2.5" aria-busy="true">
@@ -304,14 +301,14 @@ export function JournalAutomationEnableDialog({
             className="mt-2 inline-flex h-9 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <RotateCw className="size-3.5 text-[#5566f6]" />
-            Попробовать снова
+            {t("retry")}
           </button>
         </div>
       ) : preview ? (
         <div className="space-y-4">
           <section className="space-y-2">
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Ответственный и проверяющий в новых документах
+              {t("responsiblesHeading")}
             </div>
             <label
               className={`${CARD_BASE} ${responsiblesMode === "inherit" ? CARD_ON : CARD_OFF}`}
@@ -326,12 +323,12 @@ export function JournalAutomationEnableDialog({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13.5px] font-medium text-[#0b1024]">
-                    Как в последнем журнале
+                    {t("asInLast")}
                   </span>
                   <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">
                     {hasHistory
-                      ? `${personLine(inheritResponsible)}${inheritVerifier ? ` · проверяет ${personLine(inheritVerifier)}` : ""}`
-                      : `Прошлых документов нет — подберём по должностям: ${personLine(autoResponsible)}`}
+                      ? `${personLine(inheritResponsible)}${inheritVerifier ? ` · ${t("verifies", { person: personLine(inheritVerifier) })}` : ""}`
+                      : t("noPreviousDocuments", { person: personLine(autoResponsible) })}
                   </span>
                 </span>
               </span>
@@ -349,10 +346,10 @@ export function JournalAutomationEnableDialog({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13.5px] font-medium text-[#0b1024]">
-                    Выбрать вручную
+                    {t("chooseManually")}
                   </span>
                   <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">
-                    Эти люди попадут в шапку каждого нового документа
+                    {t("chooseManuallyHint")}
                   </span>
                 </span>
               </span>
@@ -363,8 +360,8 @@ export function JournalAutomationEnableDialog({
                   users={preview.users}
                   value={responsible}
                   onChange={setResponsible}
-                  positionLabel="Должность ответственного"
-                  employeeLabel="Ответственный"
+                  positionLabel={t("responsiblePosition")}
+                  employeeLabel={t("responsible")}
                   variant="stacked"
                   triggerClassName="h-11 rounded-2xl border-[#dcdfed] bg-white"
                 />
@@ -372,8 +369,8 @@ export function JournalAutomationEnableDialog({
                   users={preview.users}
                   value={verifier}
                   onChange={setVerifier}
-                  positionLabel="Должность проверяющего"
-                  employeeLabel="Проверяющий"
+                  positionLabel={t("verifierPosition")}
+                  employeeLabel={t("verifier")}
                   variant="stacked"
                   triggerClassName="h-11 rounded-2xl border-[#dcdfed] bg-white"
                 />
@@ -384,7 +381,7 @@ export function JournalAutomationEnableDialog({
           {preview.isPerEmployee && preview.staff ? (
             <section className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Сотрудники в журнале
+                {t("staffHeading")}
               </div>
               <label
                 className={`${CARD_BASE} ${staffMode === "inherit" ? CARD_ON : CARD_OFF}`}
@@ -399,7 +396,7 @@ export function JournalAutomationEnableDialog({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13.5px] font-medium text-[#0b1024]">
-                      Как в последнем журнале
+                      {t("asInLast")}
                     </span>
                     <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">
                       {staffLine}
@@ -420,10 +417,10 @@ export function JournalAutomationEnableDialog({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13.5px] font-medium text-[#0b1024]">
-                      Задать свой список
+                      {t("customList")}
                     </span>
                     <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">
-                      Новые сотрудники не будут добавляться автоматически
+                      {t("customListHint")}
                     </span>
                   </span>
                 </span>
@@ -435,14 +432,14 @@ export function JournalAutomationEnableDialog({
                     <input
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Поиск по фамилии"
+                      placeholder={t("searchPlaceholder")}
                       className="h-10 w-full rounded-2xl border border-[#dcdfed] bg-white pl-9 pr-3 text-[13.5px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                     />
                   </div>
                   <div className="mt-2 max-h-[220px] space-y-2 overflow-y-auto pr-1">
                     {grouped.length === 0 ? (
                       <div className="py-6 text-center text-[13px] text-[#9b9fb3]">
-                        Никого не нашлось
+                        {t("nobodyFound")}
                       </div>
                     ) : (
                       grouped.map((group) => (
@@ -480,7 +477,7 @@ export function JournalAutomationEnableDialog({
                     )}
                   </div>
                   <div className="mt-2 border-t border-[#ececf4] pt-2 text-[12px] text-[#6f7282]">
-                    Выбрано:{" "}
+                    {t("selected")}{" "}
                     <span className="tabular-nums">{staffIds.length}</span>
                   </div>
                 </div>
@@ -491,7 +488,7 @@ export function JournalAutomationEnableDialog({
           {loading ? (
             <div className="flex items-center gap-2 text-[12px] text-[#9b9fb3]">
               <Loader2 className="size-3.5 animate-spin" />
-              Обновляем данные журнала
+              {t("refreshing")}
             </div>
           ) : null}
         </div>

@@ -2096,6 +2096,7 @@ export function AcceptanceDocumentClient(props: Props) {
 
 function AcceptanceDocumentEditor(props: Props) {
   const { t, say, feedback, committed } = useAcceptanceCopy();
+  const tUi = useTranslations("journalUi.acceptance");
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [documentState, setDocumentState] = useState(() => {
@@ -2913,7 +2914,7 @@ function AcceptanceDocumentEditor(props: Props) {
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>
                   {isProductAcceptance
-                    ? "Дата, время поступления продукции, товара"
+                    ? tUi("productDeliveryDateTime")
                     : t("journalAcceptance.rawTable.deliveryDateTime")}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>
@@ -2924,7 +2925,7 @@ function AcceptanceDocumentEditor(props: Props) {
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("journalAcceptance.row.transport")}</th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>
                   {isProductAcceptance
-                    ? "Соответствие упаковки, маркировки, гигиенические требования, наличие и правильность оформления товаросопроводительной документации"
+                    ? tUi("productPackagingCompliance")
                     : t("journalAcceptance.rawTable.packagingCompliance")}
                 </th>
                 <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center leading-tight`}>{t("journalAcceptance.rawTable.organoleptic")}</th>

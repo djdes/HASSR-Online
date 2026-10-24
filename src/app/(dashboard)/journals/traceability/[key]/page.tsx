@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { Package, Clock, User as UserIcon } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -24,6 +25,8 @@ export default async function TraceabilityPage({
   const batchKey = decodeURIComponent(rawKey).trim();
   if (!batchKey || batchKey.length > 100) notFound();
 
+  const t = await getTranslations("journals.ui.traceabilityPage");
+  const format = await getFormatter();
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
 
@@ -48,31 +51,23 @@ export default async function TraceabilityPage({
       {/* Тёмный hero снят: история партии — это цепочка записей, её и
           нужно видеть первой. */}
       <PageHeader
-        eyebrow="ХАССП · Прослеживаемость партии"
+        eyebrow={t("eyebrow")}
         title={
           <>
-            Партия{" "}
+            {t("batch")}{" "}
             <span className="font-mono text-[#3848c7]">{batchKey}</span>
           </>
         }
         description={
           entries.length === 0
-            ? "Записи с этим ключом не найдены. Проверь правильность ключа или зайди через запись приёмки."
-            : `Найдено ${entries.length} ${
-                entries.length === 1
-                  ? "запись"
-                  : entries.length < 5
-                    ? "записи"
-                    : "записей"
-              } по этой партии. Хронологический порядок — от приёмки до отпуска.`
+            ? t("emptyDescription")
+            : t("foundDescription", { count: entries.length })
         }
       />
 
       {entries.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[14px] text-[#6f7282]">
-          Записи с ключом партии «{batchKey}» не найдены в текущей
-          организации. Проверь правильность ключа или зайди через запись
-          приёмки в журнале «Приёмка и входной контроль».
+          {t("emptyBox", { key: batchKey })}
         </div>
       ) : (
         <div className="space-y-3">
@@ -86,7 +81,7 @@ export default async function TraceabilityPage({
                   : null;
             const supplier =
               typeof data.supplier === "string" ? data.supplier : null;
-            const dateLabel = new Date(e.createdAt).toLocaleString("ru-RU", {
+            const dateLabel = format.dateTime(new Date(e.createdAt), {
               day: "numeric",
               month: "long",
               hour: "2-digit",
@@ -109,7 +104,7 @@ export default async function TraceabilityPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#3848c7]">
-                      Шаг {i + 1}
+                      {t("step", { number: i + 1 })}
                     </span>
                     <span className="text-[15px] font-semibold leading-tight text-[#0b1024]">
                       {e.template.name}
@@ -121,7 +116,7 @@ export default async function TraceabilityPage({
                       {supplier ? (
                         <span className="text-[#9b9fb3]">
                           {" "}
-                          · поставщик: {supplier}
+                          {t("supplier", { name: supplier })}
                         </span>
                       ) : null}
                     </div>
@@ -144,11 +139,7 @@ export default async function TraceabilityPage({
       )}
 
       <div className="rounded-2xl border border-[#5566f6]/15 bg-[#f5f6ff]/50 p-4 text-[12.5px] leading-relaxed text-[#3848c7]">
-        <strong>ХАССП-прослеживаемость:</strong> по ТР ТС 021/2011 за минуту
-        нужно восстановить путь любой партии. Этот экран показывает все
-        записи с одним ключом — приёмка → бракераж → отпуск/списание.
-        Партия автоматически связывается, если ключ записан в поле
-        «batchNumber» или «batchKey» при заполнении.
+        <strong>{t("noteTitle")}</strong> {t("noteBody")}
       </div>
     </div>
   );
