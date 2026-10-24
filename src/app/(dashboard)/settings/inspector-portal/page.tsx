@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
@@ -8,6 +9,7 @@ import { InspectorPortalClient } from "./inspector-portal-client";
 export const dynamic = "force-dynamic";
 
 export default async function InspectorPortalPage() {
+  const t = await getTranslations("settingsUi.inspectorPortalPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/settings");
@@ -23,13 +25,10 @@ export default async function InspectorPortalPage() {
         </span>
         <div className="min-w-0">
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-            Портал инспектора
+            {t("title")}
           </h1>
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-            Доступ только для просмотра для СЭС / Роспотребнадзора. Проверяющий
-            сканирует QR, выбирает период и смотрит журналы листами, как в
-            бумажной папке. Изменить ничего не может, каждый просмотр
-            фиксируется.
+            {t("description")}
           </p>
         </div>
       </div>

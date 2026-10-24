@@ -1,11 +1,15 @@
 "use client";
 
+import type { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { promptAsync } from "@/components/ui/prompt-async";
 
 const NAME_MIN = 2;
 const NAME_MAX = 120;
+
+/** `useTranslations("masterUi.renameMasterCabinet")` of the calling component. */
+export type RenameMasterCabinetTranslator = ReturnType<typeof useTranslations<"masterUi.renameMasterCabinet">>;
 
 /**
  * Окно «Переименовать мастер-кабинет» (шапка `/master` и
@@ -15,19 +19,20 @@ const NAME_MAX = 120;
 export async function renameMasterCabinetDialog(params: {
   currentName: string;
   endpoint: "/api/master/cabinet" | "/api/settings/master-cabinet";
+  t: RenameMasterCabinetTranslator;
 }): Promise<{ name: string; body: Record<string, unknown> } | null> {
+  const { t } = params;
   const raw = await promptAsync({
-    title: "Название мастер-кабинета",
-    description:
-      "Так кабинет называется в шапке, в списке организаций и в письмах сотрудникам. На журналы пищеблоков название не влияет.",
-    label: "Название",
-    placeholder: "Например: Мастер-кабинет Школы",
+    title: t("title"),
+    description: t("description"),
+    label: t("label"),
+    placeholder: t("placeholder"),
     defaultValue: params.currentName,
-    confirmLabel: "Сохранить",
+    confirmLabel: t("save"),
     validate: (value) => {
       const name = value.replace(/\s+/g, " ").trim();
-      if (name.length < NAME_MIN) return "Введите название";
-      if (name.length > NAME_MAX) return `Не длиннее ${NAME_MAX} символов`;
+      if (name.length < NAME_MIN) return t("nameRequired");
+      if (name.length > NAME_MAX) return t("nameTooLong", { max: NAME_MAX });
       return null;
     },
   });
@@ -41,9 +46,9 @@ export async function renameMasterCabinetDialog(params: {
   }).catch(() => null);
   const body = ((await response?.json().catch(() => null)) ?? {}) as Record<string, unknown>;
   if (!response?.ok) {
-    toast.error(typeof body.error === "string" ? body.error : "Не удалось переименовать кабинет");
+    toast.error(typeof body.error === "string" ? body.error : t("renameFailed"));
     return null;
   }
-  toast.success(`Кабинет переименован: «${name}»`);
+  toast.success(t("renamed", { name }));
   return { name: typeof body.name === "string" ? body.name : name, body };
 }

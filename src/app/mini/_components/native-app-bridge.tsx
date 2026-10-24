@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Bell } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -260,6 +261,7 @@ function installInterceptors(bridge: NativeBridge): () => void {
 }
 
 export function NativeAppBridge({ homeHref }: { homeHref: string }) {
+  const t = useTranslations("miniUi.nativeAppBridge");
   // Приложение ли это, знает только браузер: на сервере — «нет».
   const inApp = useSyncExternalStore(
     noopSubscribe,
@@ -410,7 +412,7 @@ export function NativeAppBridge({ homeHref }: { homeHref: string }) {
     <BottomSheet
       open={askOpen}
       onClose={later}
-      title="Уведомления о задачах"
+      title={t("title")}
       footer={
         <div className="grid gap-2 py-1">
           <button
@@ -419,7 +421,7 @@ export function NativeAppBridge({ homeHref }: { homeHref: string }) {
             data-testid="push-explainer-enable"
             className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
           >
-            Включить
+            {t("enable")}
           </button>
           <button
             type="button"
@@ -427,7 +429,7 @@ export function NativeAppBridge({ homeHref }: { homeHref: string }) {
             data-testid="push-explainer-later"
             className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
           >
-            Не сейчас
+            {t("later")}
           </button>
         </div>
       }
@@ -438,10 +440,10 @@ export function NativeAppBridge({ homeHref }: { homeHref: string }) {
         </span>
         <div className="min-w-0">
           <p className="text-[16px] leading-[1.5] text-[#0b1024]">
-            Сюда придут задачи смены, напоминания и ответы руководителя
+            {t("body")}
           </p>
           <p className="mt-1.5 text-[14px] leading-[1.5] text-[#6f7282]">
-            Нажмите «Включить», затем «Разрешить» в окне телефона. Выключить можно в профиле.
+            {t("hint")}
           </p>
         </div>
       </div>

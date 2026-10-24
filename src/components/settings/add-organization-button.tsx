@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Building2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { CreateOrganizationDialog } from "@/components/layout/create-organization-dialog";
 
 /**
@@ -23,6 +24,7 @@ export function AddOrganizationButton({
   currentName: string;
   organizationsCount: number;
 }) {
+  const t = useTranslations("settingsUi.addOrganizationButton");
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,11 +35,10 @@ export function AddOrganizationButton({
         className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
       >
         <Building2 className="size-4 text-[#5566f6]" />
-        Добавить организацию
+        {t("add")}
       </button>
       <span className="text-[13px] text-[#6f7282]">
-        Вторая точка со своими журналами и сотрудниками. Лимит бесплатного
-        тарифа общий на все организации.
+        {t("hint")}
       </span>
 
       {open ? (

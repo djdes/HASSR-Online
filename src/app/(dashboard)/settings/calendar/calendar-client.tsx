@@ -2,6 +2,7 @@
 
 import { CalendarDays, Copy, KeyRound, Link2Off, RefreshCw, ShieldAlert } from "lucide-react";
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -21,24 +22,9 @@ const PRIMARY =
 const SECONDARY =
   "inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60";
 
-const HOW_TO: Array<{ title: string; steps: string[] }> = [
-  {
-    title: "Google Календарь",
-    steps: ["На компьютере: слева «Другие календари» → «+» → «По URL».", "Вставьте ссылку и нажмите «Добавить календарь».", "Google обновляет подписки сам, обычно раз в несколько часов, иногда до суток."],
-  },
-  {
-    title: "iPhone и Mac",
-    steps: ["iPhone: Настройки → Календарь → Учётные записи → Добавить → Другое → «Подписной календарь».", "Mac: Календарь → Файл → «Новая подписка на календарь».", "Вставьте ссылку; обновление — «Автоматически» или раз в день."],
-  },
-  {
-    title: "Outlook",
-    steps: ["Outlook в браузере: «Добавить календарь» → «Подписаться из Интернета».", "В программе Outlook: Календарь → «Открыть календарь» → «Из Интернета».", "Вставьте ссылку и задайте имя календаря."],
-  },
-];
-
-function formatDay(iso: string): string {
+function formatDay(iso: string, locale: string): string {
   const d = new Date(`${iso}T00:00:00Z`);
-  return d.toLocaleDateString("ru-RU", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString(locale, { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export function CalendarClient({
@@ -52,6 +38,22 @@ export function CalendarClient({
   groups: CalendarPreviewGroup[];
   previewDays: number;
 }) {
+  const t = useTranslations("settingsUi.calendarClient");
+  const locale = useLocale();
+  const howTo: Array<{ title: string; steps: string[] }> = [
+    {
+      title: t("howGoogleTitle"),
+      steps: [t("howGoogle1"), t("howGoogle2"), t("howGoogle3")],
+    },
+    {
+      title: t("howAppleTitle"),
+      steps: [t("howApple1"), t("howApple2"), t("howApple3")],
+    },
+    {
+      title: t("howOutlookTitle"),
+      steps: [t("howOutlook1"), t("howOutlook2"), t("howOutlook3")],
+    },
+  ];
   const [url, setUrl] = useState<string | null>(initialUrl);
   const [hasToken, setHasToken] = useState(Boolean(initialToken));
   const [busy, setBusy] = useState(false);
@@ -63,12 +65,12 @@ export function CalendarClient({
     try {
       const response = await fetch("/api/settings/calendar-token", { method: "POST" });
       const data = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
-      if (!response.ok || !data?.url) throw new Error(data?.error ?? "Не удалось создать ссылку");
+      if (!response.ok || !data?.url) throw new Error(data?.error ?? t("createFailed"));
       setUrl(data.url);
       setHasToken(true);
-      toast.success(hasToken ? "Ссылка перевыпущена — старая больше не работает" : "Ссылка создана");
+      toast.success(hasToken ? t("rotated") : t("created"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setBusy(false);
       setRotateOpen(false);
@@ -79,12 +81,12 @@ export function CalendarClient({
     setBusy(true);
     try {
       const response = await fetch("/api/settings/calendar-token", { method: "DELETE" });
-      if (!response.ok) throw new Error("Не удалось отключить");
+      if (!response.ok) throw new Error(t("revokeFailed"));
       setUrl(null);
       setHasToken(false);
-      toast.success("Ссылка отключена");
+      toast.success(t("revoked"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setBusy(false);
       setRevokeOpen(false);
@@ -95,9 +97,9 @@ export function CalendarClient({
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Ссылка скопирована");
+      toast.success(t("copied"));
     } catch {
-      toast.error("Не удалось скопировать — выделите ссылку вручную");
+      toast.error(t("copyFailed"));
     }
   }
 
@@ -107,10 +109,10 @@ export function CalendarClient({
         <section className={CARD}>
           <div className="flex items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
             <KeyRound className="size-4 text-[#5566f6]" />
-            Ссылка на календарь
+            {t("linkTitle")}
           </div>
           <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-            Добавьте её как подписной календарь — события появятся сами и будут обновляться. Ссылка личная и работает без входа в кабинет.
+            {t("linkDescription")}
           </p>
           {url ? (
             <div className="mt-4 space-y-3">
@@ -124,17 +126,17 @@ export function CalendarClient({
                 />
                 <button type="button" onClick={copy} className={PRIMARY}>
                   <Copy className="size-4" />
-                  Скопировать
+                  {t("copy")}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setRotateOpen(true)} disabled={busy} className={SECONDARY}>
                   <RefreshCw className="size-4 text-[#5566f6]" />
-                  Перевыпустить
+                  {t("rotate")}
                 </button>
                 <button type="button" onClick={() => setRevokeOpen(true)} disabled={busy} className={SECONDARY}>
                   <Link2Off className="size-4 text-[#a13a32]" />
-                  Отключить
+                  {t("revoke")}
                 </button>
               </div>
             </div>
@@ -142,22 +144,22 @@ export function CalendarClient({
             <div className="mt-4">
               <button type="button" onClick={() => void rotate()} disabled={busy} className={PRIMARY}>
                 <CalendarDays className="size-4" />
-                {busy ? "Создаём…" : "Создать ссылку"}
+                {busy ? t("creating") : t("createLink")}
               </button>
             </div>
           )}
           <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[#fff8eb] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#b25f00]">
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />
             <span>
-              Ссылка — как пароль: у кого она есть, тот видит сроки медкнижек сотрудников. Не публикуйте её. Утекла — нажмите «Перевыпустить».
+              {t("warning")}
             </span>
           </div>
         </section>
 
         <section className={CARD}>
-          <div className="text-[15px] font-semibold text-[#0b1024]">Как подключить</div>
+          <div className="text-[15px] font-semibold text-[#0b1024]">{t("howToTitle")}</div>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            {HOW_TO.map((item) => (
+            {howTo.map((item) => (
               <div key={item.title} className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
                 <div className="text-[13.5px] font-semibold text-[#0b1024]">{item.title}</div>
                 <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-[#3c4053]">
@@ -175,16 +177,16 @@ export function CalendarClient({
         <section className={CARD}>
           <div className="flex items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
             <CalendarDays className="size-4 text-[#5566f6]" />
-            Что попадёт в календарь
+            {t("previewTitle")}
           </div>
           <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-            Ближайшие {previewDays} дней по разделам. Все события — на весь день, без времени.
+            {t("previewDescription", { days: previewDays })}
           </p>
           {groups.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-8 text-center">
-              <div className="text-[14px] font-medium text-[#0b1024]">Пока событий нет</div>
+              <div className="text-[14px] font-medium text-[#0b1024]">{t("emptyTitle")}</div>
               <p className="mx-auto mt-1.5 max-w-[320px] text-[12.5px] text-[#6f7282]">
-                Появятся, когда заполните журнал медкнижек, поверок, добавите допуски сотрудникам, партии или задачи CAPA со сроком.
+                {t("emptyHint")}
               </p>
             </div>
           ) : (
@@ -194,7 +196,8 @@ export function CalendarClient({
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[13.5px] font-semibold text-[#0b1024]">{group.label}</span>
                     <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] tabular-nums text-[#3848c7]">
-                      {group.total} за год{group.overdue > 0 ? ` · просрочено ${group.overdue}` : ""}
+                      {t("groupTotal", { count: group.total })}
+                      {group.overdue > 0 ? ` · ${t("groupOverdue", { count: group.overdue })}` : ""}
                     </span>
                   </div>
                   {group.upcoming.length > 0 ? (
@@ -204,13 +207,13 @@ export function CalendarClient({
                         // прибора в день, одноимённые сотрудники) — React
                         // ругался «two children with the same key».
                         <li key={`${event.date}-${event.title}-${index}`} className="flex items-start gap-3 text-[13px] leading-snug">
-                          <span className="shrink-0 tabular-nums text-[#6f7282]">{formatDay(event.date)}</span>
+                          <span className="shrink-0 tabular-nums text-[#6f7282]">{formatDay(event.date, locale)}</span>
                           <span className="min-w-0 text-[#0b1024]">{event.title}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-1.5 text-[12.5px] text-[#9b9fb3]">В ближайшие {previewDays} дней — ничего.</p>
+                    <p className="mt-1.5 text-[12.5px] text-[#9b9fb3]">{t("nothingSoon", { days: previewDays })}</p>
                   )}
                 </li>
               ))}
@@ -223,10 +226,10 @@ export function CalendarClient({
         open={rotateOpen}
         onClose={() => setRotateOpen(false)}
         variant="warn"
-        title="Перевыпустить ссылку?"
-        description="Новая ссылка появится сразу, старую нужно будет заменить во всех календарях."
-        bullets={[{ label: "Старая ссылка перестанет работать во всех календарях, где она добавлена" }, { label: "Новую нужно добавить заново" }]}
-        confirmLabel="Перевыпустить"
+        title={t("rotateTitle")}
+        description={t("rotateDescription")}
+        bullets={[{ label: t("rotateBullet1") }, { label: t("rotateBullet2") }]}
+        confirmLabel={t("rotate")}
         onConfirm={rotate}
         confirmDisabled={busy}
       />
@@ -234,10 +237,10 @@ export function CalendarClient({
         open={revokeOpen}
         onClose={() => setRevokeOpen(false)}
         variant="danger"
-        title="Отключить ссылку?"
-        description="Календари, в которые она добавлена, перестанут обновляться."
-        bullets={[{ label: "Ссылка перестанет открываться" }, { label: "Создать новую можно в любой момент" }]}
-        confirmLabel="Отключить"
+        title={t("revokeTitle")}
+        description={t("revokeDescription")}
+        bullets={[{ label: t("revokeBullet1") }, { label: t("revokeBullet2") }]}
+        confirmLabel={t("revoke")}
         onConfirm={revoke}
         confirmDisabled={busy}
       />

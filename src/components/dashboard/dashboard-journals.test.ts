@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { createElement } from "react";
+import { NextIntlClientProvider } from "next-intl";
+import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import {
@@ -38,7 +39,9 @@ import { PAPER_JOURNALS } from "@/lib/sphere-journal-rules";
 
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
-const html = (element: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(element);
+const MESSAGES = JSON.parse(readFileSync("src/i18n/messages/ru.json", "utf8"));
+const html = (element: Parameters<typeof renderToStaticMarkup>[0]) =>
+  renderToStaticMarkup(createElement(NextIntlClientProvider, { locale: "ru", messages: MESSAGES, timeZone: "UTC" } as ComponentProps<typeof NextIntlClientProvider>, element));
 
 /** Заливки и рамки прежних «зелёных/красных» карточек-строк. */
 const OLD_ROW_FILLS = /#effaf1|#fff4f2|#ffd2cd|#c8f0d5|#a1362f|#ffe1dc|XCircle/;

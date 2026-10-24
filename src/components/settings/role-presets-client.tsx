@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, RotateCcw, Save, ShieldCheck } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -26,6 +27,7 @@ export function RolePresetsClient({
   capabilityLabels,
   initialOverrides,
 }: Props) {
+  const t = useTranslations("settingsUi.rolePresetsClient");
   const router = useRouter();
   // Внутренняя модель: для каждого preset — массив capabilities, которые
   // у него ВКЛЮЧЕНЫ. Если override отсутствовал — берём дефолты пресета.
@@ -111,10 +113,10 @@ export function RolePresetsClient({
         const data = await r.json().catch(() => ({}));
         throw new Error(data.error ?? `HTTP ${r.status}`);
       }
-      toast.success("Пресеты сохранены. Сотрудники увидят новые права при следующем reload.");
+      toast.success(t("saved"));
       router.refresh();
     } catch (e: any) {
-      toast.error(e?.message ?? "Не удалось сохранить");
+      toast.error(e?.message ?? t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -129,10 +131,10 @@ export function RolePresetsClient({
       const fresh: Record<string, Set<string>> = {};
       for (const p of presets) fresh[p.value] = new Set(p.defaults);
       setMatrix(fresh);
-      toast.success("Все пресеты сброшены к дефолтам.");
+      toast.success(t("resetDone"));
       router.refresh();
     } catch (e: any) {
-      toast.error(e?.message ?? "Не удалось сбросить");
+      toast.error(e?.message ?? t("resetFailed"));
     } finally {
       setSaving(false);
       setResetOpen(false);
@@ -145,8 +147,7 @@ export function RolePresetsClient({
         <div className="flex items-center gap-2 text-[13px] text-[#3c4053]">
           <ShieldCheck className="size-4 text-[#5566f6]" />
           <span>
-            Кликай по галочкам, чтобы убрать или добавить возможность роли.
-            Изменения применяются после нажатия «Сохранить».
+            {t("hint")}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -157,7 +158,7 @@ export function RolePresetsClient({
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/50 hover:bg-[#fafbff] disabled:opacity-50"
           >
             <RotateCcw className="size-3.5" />
-            Сбросить к дефолтам
+            {t("resetToDefaults")}
           </button>
           <button
             type="button"
@@ -170,7 +171,7 @@ export function RolePresetsClient({
             ) : (
               <Save className="size-3.5" />
             )}
-            {dirty ? "Сохранить" : "Без изменений"}
+            {dirty ? t("save") : t("noChanges")}
           </button>
         </div>
       </div>
@@ -181,7 +182,7 @@ export function RolePresetsClient({
             <thead>
               <tr>
                 <th className="sticky left-0 z-10 border-b border-[#ececf4] bg-white px-3 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  Возможность
+                  {t("capability")}
                 </th>
                 {presets.map((p) => {
                   const modified = isModified(p.value);
@@ -200,7 +201,7 @@ export function RolePresetsClient({
                         </div>
                         {p.value === "admin" ? (
                           <span className="mt-1 rounded-full bg-[#fff8eb] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#a13a32]">
-                            закреплено
+                            {t("locked")}
                           </span>
                         ) : modified ? (
                           <button
@@ -209,11 +210,11 @@ export function RolePresetsClient({
                             className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#3848c7] transition-colors hover:bg-[#dde1ff]"
                           >
                             <RotateCcw className="size-2.5" />
-                            к дефолту
+                            {t("toDefault")}
                           </button>
                         ) : (
                           <span className="mt-1 rounded-full bg-[#fafbff] px-1.5 py-0.5 text-[9px] font-medium text-[#9b9fb3]">
-                            дефолт
+                            {t("default")}
                           </span>
                         )}
                       </div>
@@ -247,8 +248,8 @@ export function RolePresetsClient({
                           disabled={isAdmin}
                           aria-label={
                             has
-                              ? `Снять «${capabilityLabels[cap]}» с пресета ${p.label}`
-                              : `Дать «${capabilityLabels[cap]}» пресету ${p.label}`
+                              ? t("removeCapability", { capability: capabilityLabels[cap], preset: p.label })
+                              : t("grantCapability", { capability: capabilityLabels[cap], preset: p.label })
                           }
                           className={`inline-flex size-7 items-center justify-center rounded-lg text-[12px] font-semibold transition-all ${
                             isAdmin
@@ -275,15 +276,15 @@ export function RolePresetsClient({
       <ConfirmDialog
         open={resetOpen}
         onClose={() => setResetOpen(false)}
-        title="Сбросить все пресеты к дефолтам?"
-        description="Это вернёт права для всех ролей к стандартному варианту WeSetup. Ваши кастомные настройки будут потеряны."
+        title={t("confirmTitle")}
+        description={t("confirmDescription")}
         variant="warn"
         bullets={[
-          { label: "Override в БД будет очищен", tone: "warn" },
-          { label: "Все сотрудники переключатся на стандартные права при следующем reload" },
-          { label: "Решение можно «откатить» только если ты помнишь что было изменено" },
+          { label: t("bullet1"), tone: "warn" },
+          { label: t("bullet2") },
+          { label: t("bullet3") },
         ]}
-        confirmLabel="Сбросить"
+        confirmLabel={t("confirmLabel")}
         onConfirm={resetAll}
       />
     </div>

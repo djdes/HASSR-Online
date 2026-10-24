@@ -3,6 +3,7 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -57,46 +58,6 @@ type FlatItem =
   | (StaticItem & { source: "static" })
   | (Hit & { source: "live" });
 
-const ACTION_ITEMS: StaticItem[] = [
-  {
-    kind: "action",
-    label: "Закрыть день",
-    hint: "Скопировать вчера → сегодня для всех ежедневных журналов",
-    icon: ArrowDownToLine,
-    keywords: ["закрыть", "копировать", "вчера", "сегодня", "close day"],
-    action: async () => {
-      try {
-        const res = await fetch("/api/dashboard/close-day", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-        const j = await res.json().catch(() => null);
-        if (!res.ok)
-          throw new Error(j?.error || "Не удалось закрыть день");
-        const copied = j?.totalCopied ?? 0;
-        if (copied > 0) {
-          toast.success(`Скопировано ${copied} записей`);
-        } else {
-          toast.info("Нечего копировать или всё уже заполнено.");
-        }
-        return true;
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Ошибка");
-        return false;
-      }
-    },
-  },
-  {
-    kind: "route",
-    label: "Догнать пропуски",
-    hint: "Сетка 14 дней × все журналы",
-    icon: Wand2,
-    href: "/dashboard/catch-up",
-    keywords: ["догнать", "пропуски", "сетка", "catch up"],
-  },
-];
-
 // Разделы для поиска — из меню кабинета (`lib/app-nav.ts`): ровно то,
 // что человек откроет, со своими названиями организации. Раньше здесь
 // был свой список на 17 адресов без проверки прав.
@@ -105,13 +66,6 @@ const KIND_ICON = {
   template: ClipboardList,
   document: FileSpreadsheet,
   equipment: Boxes,
-} as const;
-
-const KIND_LABEL = {
-  user: "Сотрудники",
-  template: "Журналы",
-  document: "Документы",
-  equipment: "Оборудование",
 } as const;
 
 function fuzzyMatch(item: StaticItem, q: string): boolean {
@@ -124,6 +78,7 @@ function fuzzyMatch(item: StaticItem, q: string): boolean {
 }
 
 export function CommandPalette() {
+  const t = useTranslations("layoutUi.commandPalette");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -193,10 +148,48 @@ export function CommandPalette() {
     return [...sectionItems, ...cardItems];
   }, [nav]);
   // «Закрыть день» и «Догнать пропуски» — у кого есть «Сегодня».
-  const actionItems = useMemo(
-    () => (nav.sections.some((section) => section.tabs.some((tab) => tab.href === "/dashboard")) ? ACTION_ITEMS : []),
-    [nav]
-  );
+  const actionItems = useMemo<StaticItem[]>(() => {
+    if (!nav.sections.some((section) => section.tabs.some((tab) => tab.href === "/dashboard"))) return [];
+    return [
+      {
+        kind: "action",
+        label: t("closeDayLabel"),
+        hint: t("closeDayHint"),
+        icon: ArrowDownToLine,
+        keywords: t("closeDayKeywords").split(","),
+        action: async () => {
+          try {
+            const res = await fetch("/api/dashboard/close-day", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            });
+            const j = await res.json().catch(() => null);
+            if (!res.ok)
+              throw new Error(j?.error || t("closeDayFailed"));
+            const copied = j?.totalCopied ?? 0;
+            if (copied > 0) {
+              toast.success(t("copiedCount", { count: copied }));
+            } else {
+              toast.info(t("nothingToCopy"));
+            }
+            return true;
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : t("error"));
+            return false;
+          }
+        },
+      },
+      {
+        kind: "route",
+        label: t("catchUpLabel"),
+        hint: t("catchUpHint"),
+        icon: Wand2,
+        href: "/dashboard/catch-up",
+        keywords: t("catchUpKeywords").split(","),
+      },
+    ];
+  }, [nav, t]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -230,7 +223,7 @@ export function CommandPalette() {
     }
     const myReq = ++reqIdRef.current;
     setSearching(true);
-    const t = window.setTimeout(async () => {
+    const timer = window.setTimeout(async () => {
       try {
         const res = await fetch(
           `/api/search?q=${encodeURIComponent(q)}`,
@@ -248,8 +241,18 @@ export function CommandPalette() {
         if (reqIdRef.current === myReq) setSearching(false);
       }
     }, 200);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, [query]);
+
+  const kindLabel = useMemo(
+    () => ({
+      user: t("kindUser"),
+      template: t("kindTemplate"),
+      document: t("kindDocument"),
+      equipment: t("kindEquipment"),
+    }),
+    [t]
+  );
 
   // Build flat list with section dividers — easier for keyboard nav.
   const sections = useMemo(() => {
@@ -273,13 +276,13 @@ export function CommandPalette() {
     const blocks: { title: string; items: FlatItem[] }[] = [];
     if (filteredActions.length > 0) {
       blocks.push({
-        title: "Действия",
+        title: t("groupActions"),
         items: filteredActions.map((a) => ({ ...a, source: "static" as const })),
       });
     }
     if (filteredRoutes.length > 0) {
       blocks.push({
-        title: "Разделы",
+        title: t("groupSections"),
         items: filteredRoutes.map((r) => ({ ...r, source: "static" as const })),
       });
     }
@@ -287,12 +290,12 @@ export function CommandPalette() {
       const arr = liveByKind.get(kind);
       if (!arr || arr.length === 0) continue;
       blocks.push({
-        title: KIND_LABEL[kind],
+        title: kindLabel[kind],
         items: arr.map((h) => ({ ...h, source: "live" as const })),
       });
     }
     return blocks;
-  }, [query, hits, routeItems, actionItems]);
+  }, [query, hits, routeItems, actionItems, kindLabel, t]);
 
   const flatItems = useMemo<FlatItem[]>(() => {
     return sections.flatMap((s) => s.items);
@@ -356,7 +359,7 @@ export function CommandPalette() {
               setActiveIdx(0);
             }}
             onKeyDown={onKeyDown}
-            placeholder="Найти журнал, сотрудника, оборудование или действие…"
+            placeholder={t("placeholder")}
             className="flex-1 bg-transparent text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:outline-none"
           />
           <kbd className="rounded-md border border-[#ececf4] bg-[#fafbff] px-1.5 py-0.5 text-[11px] text-[#6f7282]">
@@ -367,10 +370,10 @@ export function CommandPalette() {
           {flatItems.length === 0 ? (
             <div className="rounded-xl px-3 py-6 text-center text-[13px] text-[#9b9fb3]">
               {query.trim().length < 2
-                ? "Начните набирать — поиск по журналам, сотрудникам, оборудованию"
+                ? t("startTyping")
                 : searching
-                  ? "Ищу…"
-                  : "Ничего не нашлось"}
+                  ? t("searching")
+                  : t("nothingFound")}
             </div>
           ) : (
             sections.map((section) => (
@@ -438,8 +441,8 @@ export function CommandPalette() {
           )}
         </div>
         <div className="flex items-center justify-between border-t border-[#ececf4] bg-[#fafbff] px-4 py-2 text-[11px] text-[#9b9fb3]">
-          <span>↑↓ навигация · Enter выбрать</span>
-          <span>⌘K / Ctrl+K — открыть/закрыть</span>
+          <span>{t("footerNav")}</span>
+          <span>{t("footerToggle")}</span>
         </div>
       </div>
     </div>

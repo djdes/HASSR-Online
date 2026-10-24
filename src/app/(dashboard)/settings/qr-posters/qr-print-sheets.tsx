@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 
 import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
 import { brandPalette, type DocumentBrand } from "@/lib/document-brand";
@@ -32,31 +33,36 @@ import type { QrPrintPage } from "@/lib/qr-print-layout";
  * печатаются и без «фоновой графики»). Без логотипа и цвета — как раньше.
  */
 
-const STEPS_JOURNAL = ["Наведите камеру телефона на код.", "Выберите себя в списке.", "Заполните форму и нажмите «Сохранить»."];
-const STEPS_HUB = ["Наведите камеру телефона на код.", "Выберите журнал и себя.", "Заполните форму и нажмите «Сохранить»."];
-const STEPS_VERIFY = ["Наведите камеру телефона на код.", "Выберите себя — ответственного за смену.", "Отметьте каждому «Допущен» или «Отстранён»."];
-const STEPS_OBJECT_JOURNAL = ["Наведите камеру телефона на код — увидите, что сегодня уже записано.", "Чтобы внести показание, отсканируйте наклейку на самом объекте."];
-const STEPS_OBJECT = ["Наведите камеру телефона на код.", "Выберите своё имя и введите показание.", "Нажмите «Сохранить» — запись попадёт в журнал за сегодня."];
+type SheetTranslator = ReturnType<typeof useTranslations<"settingsUi.qrPrintSheets">>;
 
-function stepsFor(poster: QrPoster): string[] {
-  if (poster.kind !== "journal") return STEPS_OBJECT;
-  if (poster.id.includes("@verify")) return STEPS_VERIFY;
-  if (poster.journalCode === "all") return STEPS_HUB;
-  if (isJournalObjectQrCode(poster.journalCode) && !poster.documentId) return STEPS_OBJECT_JOURNAL;
-  return STEPS_JOURNAL;
+function stepsFor(poster: QrPoster, t: SheetTranslator): string[] {
+  if (poster.kind !== "journal") {
+    return [t("scanCode"), t("chooseNameEnterReading"), t("pressSave")];
+  }
+  if (poster.id.includes("@verify")) {
+    return [t("scanCode"), t("chooseResponsible"), t("markEach")];
+  }
+  if (poster.journalCode === "all") {
+    return [t("scanCode"), t("chooseJournalAndYou"), t("fillForm")];
+  }
+  if (isJournalObjectQrCode(poster.journalCode) && !poster.documentId) {
+    return [t("scanSeeToday"), t("scanObjectSticker")];
+  }
+  return [t("scanCode"), t("chooseYourself"), t("fillForm")];
 }
 
-function eyebrowFor(poster: QrPoster): string {
-  if (poster.kind === "room") return "Температура и влажность";
-  if (poster.kind === "equipment") return "Температура";
-  if (isJournalObjectQrCode(poster.journalCode) && !poster.documentId) return "Статус за сегодня";
-  return "Заполнить с телефона";
+function eyebrowFor(poster: QrPoster, t: SheetTranslator): string {
+  if (poster.kind === "room") return t("eyebrowRoom");
+  if (poster.kind === "equipment") return t("eyebrowEquipment");
+  if (isJournalObjectQrCode(poster.journalCode) && !poster.documentId) return t("eyebrowStatus");
+  return t("eyebrowFill");
 }
 
-function validityLine(poster: QrPoster): string | null {
+function validityLine(poster: QrPoster, t: SheetTranslator): string | null {
   if (!poster.validUntil) return null;
   const until = formatQrValidUntil(poster.validUntil);
-  return until === "бессрочно" ? "Код этого документа" : `Действует до ${until} включительно`;
+  // Сравнение — с константой из lib/qr-fill-types, не отображаемый текст.
+  return until === "бессрочно" ? t("documentCode") : t("validUntil", { until });
 }
 
 const SVG_SIZE = /<svg([^>]*?)\swidth="[^"]*"\s+height="[^"]*"/;
@@ -97,18 +103,19 @@ function Logo({ brand, className }: { brand: DocumentBrand | null; className: st
 }
 
 function PosterA4({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
+  const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
-  const validity = validityLine(poster);
+  const validity = validityLine(poster, t);
   return (
     <div className={`qrp-a4${brand?.color ? " qrp-brand-band" : ""}`}>
       <Logo brand={brand} className="qrp-a4-logo" />
-      <div className="qrp-eyebrow">{eyebrowFor(poster)}</div>
+      <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
       <div className="qrp-a4-title">{poster.title}</div>
       <div className="qrp-org">{poster.orgName}</div>
       {detail ? <div className="qrp-detail">{detail}</div> : null}
       <Code poster={poster} mm={105} className="qrp-a4-code" />
       <ol className="qrp-steps qrp-a4-steps">
-        {stepsFor(poster).map((step, index) => (
+        {stepsFor(poster, t).map((step, index) => (
           <li key={step}>
             <b>{index + 1}.</b> {step}
           </li>
@@ -120,20 +127,21 @@ function PosterA4({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | 
 }
 
 function PosterA5({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
+  const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
-  const validity = validityLine(poster);
+  const validity = validityLine(poster, t);
   return (
     <div className="qrp-a5">
       <Code poster={poster} mm={78} className="qrp-a5-code" />
       {/* Полоса — над текстом, а не над листом: пунктир реза между A5 остаётся. */}
       <div className={`qrp-a5-text${brand?.color ? " qrp-brand-band" : ""}`}>
         <Logo brand={brand} className="qrp-a5-logo" />
-        <div className="qrp-eyebrow">{eyebrowFor(poster)}</div>
+        <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
         <div className="qrp-a5-title">{poster.title}</div>
         <div className="qrp-org">{poster.orgName}</div>
         {detail ? <div className="qrp-detail">{detail}</div> : null}
         <ol className="qrp-steps qrp-a5-steps">
-          {stepsFor(poster).map((step, index) => (
+          {stepsFor(poster, t).map((step, index) => (
             <li key={step}>
               <b>{index + 1}.</b> {step}
             </li>
@@ -146,8 +154,9 @@ function PosterA5({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | 
 }
 
 function Sticker({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
+  const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
-  const validity = validityLine(poster);
+  const validity = validityLine(poster, t);
   return (
     <div className="qrp-sticker">
       <Code poster={poster} mm={36} className="qrp-sticker-code" fluid />

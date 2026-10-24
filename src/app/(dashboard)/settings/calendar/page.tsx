@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { collectCalendarEvents } from "@/lib/calendar/events";
-import { CALENDAR_KIND_LABEL, type CalendarEventKind } from "@/lib/calendar/ics";
+import { type CalendarEventKind } from "@/lib/calendar/ics";
 import { calendarFeedUrl } from "@/lib/calendar/token";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -22,6 +23,25 @@ const KIND_ORDER: CalendarEventKind[] = ["medbook", "calibration", "subscription
 export default async function CalendarSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  const t = await getTranslations("settingsUi.calendarPage");
+  const kindLabel = (kind: CalendarEventKind): string => {
+    switch (kind) {
+      case "medbook":
+        return t("kindMedbook");
+      case "calibration":
+        return t("kindCalibration");
+      case "subscription":
+        return t("kindSubscription");
+      case "competency":
+        return t("kindCompetency");
+      case "capa":
+        return t("kindCapa");
+      case "batch":
+        return t("kindBatch");
+      default:
+        return kind;
+    }
+  };
   const now = new Date();
   const [me, events] = await Promise.all([
     db.user.findUnique({ where: { id: session.user.id }, select: { calendarToken: true } }),
@@ -35,15 +55,15 @@ export default async function CalendarSettingsPage() {
     const all = events.filter((e) => e.kind === kind);
     const upcoming = all.filter((e) => e.date >= today && e.date <= horizon).sort((a, b) => (a.date < b.date ? -1 : 1));
     const overdue = all.filter((e) => e.date < today).length;
-    return { kind, label: CALENDAR_KIND_LABEL[kind], total: all.length, overdue, upcoming: upcoming.slice(0, 5).map((e) => ({ date: e.date, title: e.title })) };
+    return { kind, label: kindLabel(kind), total: all.length, overdue, upcoming: upcoming.slice(0, 5).map((e) => ({ date: e.date, title: e.title })) };
   }).filter((g) => g.total > 0);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Календарь"
-        description="Сроки медкнижек, поверок, подписки и партий — в календаре на телефоне и компьютере, без входа в кабинет."
-        actions={<PageHeaderStat>Событий на год: {events.length}</PageHeaderStat>}
+        title={t("title")}
+        description={t("description")}
+        actions={<PageHeaderStat>{t("eventsPerYear", { count: events.length })}</PageHeaderStat>}
       />
       <CalendarClient initialToken={token} initialUrl={token ? calendarFeedUrl(token) : null} groups={groups} previewDays={PREVIEW_DAYS} />
     </div>

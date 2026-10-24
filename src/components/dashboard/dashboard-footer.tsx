@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { BrandLogo } from "@/components/brand/logo";
 import { PLATFORM_BADGE_TEXT } from "@/lib/partners/branding";
 
@@ -16,6 +17,7 @@ import { PLATFORM_BADGE_TEXT } from "@/lib/partners/branding";
  * платформе WeSetup» (условие white-label).
  */
 export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?: string | null }) {
+  const t = useTranslations("dashboardUi.dashboardFooter");
   const linkClass = "transition-colors hover:text-[#5566f6]";
 
   // pb-24 на телефоне — коридор под плавающую кнопку дока (48px + 20px
@@ -30,7 +32,7 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
           {partnerBrandName ? (
             <span className="text-[#6f7282]" data-platform-badge>
               {PLATFORM_BADGE_TEXT}
-              <span className="text-[#9b9fb3]"> · сопровождает {partnerBrandName}</span>
+              <span className="text-[#9b9fb3]"> · {t("supportedBy", { name: partnerBrandName })}</span>
             </span>
           ) : null}
           <span>© 2026</span>
@@ -42,13 +44,13 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
             перекрывались виджетами, когда футер попадал в нижнюю часть окна. */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:pr-[104px]">
           <Link href="/oferta" className={linkClass}>
-            Договор-оферта
+            {t("offer")}
           </Link>
           <Link href="/privacy" className={linkClass}>
-            Политика конфиденциальности
+            {t("privacy")}
           </Link>
           <Link href="/blog" className={linkClass}>
-            База знаний
+            {t("knowledgeBase")}
           </Link>
           <a href="mailto:support@wesetup.ru" className={linkClass}>
             support@wesetup.ru

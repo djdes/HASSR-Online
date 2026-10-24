@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -30,6 +31,7 @@ export function StaffHierarchyClient({
   scopes: Scope[];
   journals: Journal[];
 }) {
+  const t = useTranslations("settingsUi.staffHierarchyClient");
   const [scopes, setScopes] = useState<Scope[]>(initialScopes);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -95,7 +97,7 @@ export function StaffHierarchyClient({
       // но изменение в WeSetup-БД уже зафиксировано.
       pushHierarchyToTasksflow(false);
     } catch {
-      setError("Не удалось сохранить");
+      setError(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -117,7 +119,7 @@ export function StaffHierarchyClient({
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         const msg =
-          data?.error ?? `Ошибка синка иерархии (${res.status})`;
+          data?.error ?? t("syncFailed", { status: res.status });
         if (showError) setError(msg);
         setSyncReport(null);
       } else {
@@ -129,7 +131,7 @@ export function StaffHierarchyClient({
         setSyncReport(data);
       }
     } catch {
-      if (showError) setError("Не удалось связаться с TasksFlow");
+      if (showError) setError(t("tasksflowUnreachable"));
     } finally {
       setSyncing(false);
     }
@@ -141,7 +143,7 @@ export function StaffHierarchyClient({
       if (!res.ok) throw new Error("Failed");
       setScopes((prev) => prev.filter((s) => s.id !== id));
     } catch {
-      setError("Не удалось удалить");
+      setError(t("deleteFailed"));
     }
   }
 
@@ -160,20 +162,18 @@ export function StaffHierarchyClient({
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="min-w-0 flex-1">
           <div className="text-[14px] font-semibold text-[#0b1024]">
-            Синхронизация с TasksFlow
+            {t("syncTitle")}
           </div>
           <div className="mt-1 text-[12px] text-[#6f7282]">
-            Иерархия настраивается здесь, и эта же иерархия передаётся в
-            TasksFlow — каждый руководитель видит у себя только задачи
-            своих подчинённых.
+            {t("syncHint")}
           </div>
           {syncReport ? (
             <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#ecfdf5] px-3 py-1 text-[12px] font-medium text-[#116b2a]">
-              ✓ Применено: {syncReport.managersUpdated}
+              {t("applied", { count: syncReport.managersUpdated })}
               {syncReport.managersSkipped > 0
-                ? ` · пропущено ${syncReport.managersSkipped}`
+                ? t("appliedSkipped", { count: syncReport.managersSkipped })
                 : ""}
-              {syncReport.errors > 0 ? ` · ошибок ${syncReport.errors}` : ""}
+              {syncReport.errors > 0 ? t("appliedErrors", { count: syncReport.errors }) : ""}
             </div>
           ) : null}
         </div>
@@ -183,7 +183,7 @@ export function StaffHierarchyClient({
           disabled={syncing}
           className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
         >
-          {syncing ? "Синхронизация…" : "Применить в TasksFlow"}
+          {syncing ? t("syncing") : t("applyToTasksflow")}
         </button>
       </div>
 
@@ -224,7 +224,7 @@ export function StaffHierarchyClient({
 
       {scopes.length === 0 && availableManagers.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-[14px] text-slate-500">
-          Нет активных сотрудников для настройки.
+          {t("noActiveEmployees")}
         </div>
       ) : null}
 
@@ -238,22 +238,21 @@ export function StaffHierarchyClient({
           setScopeToDelete(null);
           if (id) await deleteScope(id);
         }}
-        title="Удалить правило?"
+        title={t("deleteTitle")}
         description={
           scopeToDelete
-            ? `Правило для сотрудника «${managerName(scopeToDelete)}» будет снято.`
+            ? t("deleteDescription", { name: managerName(scopeToDelete) })
             : undefined
         }
         bullets={[
           {
-            label:
-              "Руководитель снова начнёт видеть всю организацию — ограничение снимется",
+            label: t("deleteBullet1"),
             tone: "warn",
           },
-          { label: "Сами сотрудники и их задачи не пострадают", tone: "default" },
+          { label: t("deleteBullet2"), tone: "default" },
         ]}
-        confirmLabel="Удалить правило"
-        cancelLabel="Отмена"
+        confirmLabel={t("deleteConfirm")}
+        cancelLabel={t("cancel")}
         variant="danger"
       />
     </div>
@@ -281,13 +280,14 @@ function ScopeCard({
   onDelete: () => void;
   saving: boolean;
 }) {
+  const t = useTranslations("settingsUi.staffHierarchyClient");
   const [edit, setEdit] = useState<Scope>(scope);
 
   const viewModeLabel: Record<string, string> = {
-    all: "Все сотрудники",
-    job_positions: "Определённые должности",
-    specific_users: "Конкретные люди",
-    none: "Никого (только себя)",
+    all: t("modeAll"),
+    job_positions: t("modePositions"),
+    specific_users: t("modeUsers"),
+    none: t("modeNone"),
   };
 
   return (
@@ -296,7 +296,7 @@ function ScopeCard({
         <div>
           <div className="text-[15px] font-semibold text-[#0b1024]">{scope.managerName}</div>
           <div className="text-[13px] text-[#6f7282]">
-            {scope.managerPosition ?? "—"} · Видит: {viewModeLabel[scope.viewMode]}
+            {scope.managerPosition ?? "—"} · {t("sees", { mode: viewModeLabel[scope.viewMode] })}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -320,17 +320,17 @@ function ScopeCard({
           {/* View mode */}
           <div>
             <label className="block text-[13px] font-medium text-[#0b1024]">
-              Кого видит руководитель
+              {t("whoManagerSees")}
             </label>
             <select
               value={edit.viewMode}
               onChange={(e) => setEdit({ ...edit, viewMode: e.target.value as Scope["viewMode"] })}
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-[14px] focus:border-slate-400 focus:outline-none"
             >
-              <option value="all">Все сотрудники</option>
-              <option value="job_positions">Определённые должности</option>
-              <option value="specific_users">Конкретные люди</option>
-              <option value="none">Никого (только себя)</option>
+              <option value="all">{t("modeAll")}</option>
+              <option value="job_positions">{t("modePositions")}</option>
+              <option value="specific_users">{t("modeUsers")}</option>
+              <option value="none">{t("modeNone")}</option>
             </select>
           </div>
 
@@ -338,7 +338,7 @@ function ScopeCard({
           {edit.viewMode === "job_positions" && (
             <div>
               <label className="block text-[13px] font-medium text-[#0b1024]">
-                Должности
+                {t("positions")}
               </label>
               <div className="mt-1 flex flex-wrap gap-2">
                 {positions.map((p) => (
@@ -372,7 +372,7 @@ function ScopeCard({
           {edit.viewMode === "specific_users" && (
             <div>
               <label className="block text-[13px] font-medium text-[#0b1024]">
-                Сотрудники
+                {t("employees")}
               </label>
               <div className="mt-1 flex flex-wrap gap-2">
                 {employees
@@ -407,7 +407,7 @@ function ScopeCard({
           {/* Assignable journals */}
           <div>
             <label className="block text-[13px] font-medium text-[#0b1024]">
-              Журналы для назначения (пусто = все доступные)
+              {t("assignableJournalsAvailable")}
             </label>
             <div className="mt-1 flex flex-wrap gap-2">
               {journals.map((j) => (
@@ -444,7 +444,7 @@ function ScopeCard({
             disabled={saving}
             className="rounded-xl bg-[#0b1024] px-5 py-2.5 text-[14px] font-medium text-white disabled:opacity-50"
           >
-            {saving ? "Сохраняем…" : "Сохранить"}
+            {saving ? t("saving") : t("save")}
           </button>
         </div>
       )}
@@ -467,6 +467,7 @@ function NewScopeCard({
   onSave: (scope: Partial<Scope> & { managerId: string }) => void;
   saving: boolean;
 }) {
+  const t = useTranslations("settingsUi.staffHierarchyClient");
   const [managerId, setManagerId] = useState(managers[0]?.id ?? "");
   const [viewMode, setViewMode] = useState<Scope["viewMode"]>("all");
   const [viewJobPositionIds, setViewJobPositionIds] = useState<string[]>([]);
@@ -481,7 +482,7 @@ function NewScopeCard({
         className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-4 text-[14px] font-medium text-slate-500 hover:border-slate-400 hover:text-slate-700"
       >
         <Plus className="size-4" />
-        Добавить правило
+        {t("addRule")}
       </button>
     );
   }
@@ -490,7 +491,7 @@ function NewScopeCard({
     <div className="rounded-2xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
       <div className="space-y-4">
         <div>
-          <label className="block text-[13px] font-medium text-[#0b1024]">Руководитель</label>
+          <label className="block text-[13px] font-medium text-[#0b1024]">{t("manager")}</label>
           <select
             value={managerId}
             onChange={(e) => setManagerId(e.target.value)}
@@ -505,16 +506,16 @@ function NewScopeCard({
         </div>
 
         <div>
-          <label className="block text-[13px] font-medium text-[#0b1024]">Кого видит</label>
+          <label className="block text-[13px] font-medium text-[#0b1024]">{t("whoSees")}</label>
           <select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as Scope["viewMode"])}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-[14px] focus:border-slate-400 focus:outline-none"
           >
-            <option value="all">Все сотрудники</option>
-            <option value="job_positions">Определённые должности</option>
-            <option value="specific_users">Конкретные люди</option>
-            <option value="none">Никого (только себя)</option>
+            <option value="all">{t("modeAll")}</option>
+            <option value="job_positions">{t("modePositions")}</option>
+            <option value="specific_users">{t("modeUsers")}</option>
+            <option value="none">{t("modeNone")}</option>
           </select>
         </div>
 
@@ -580,7 +581,7 @@ function NewScopeCard({
 
         <div>
           <label className="block text-[13px] font-medium text-[#0b1024]">
-            Журналы для назначения (пусто = все)
+            {t("assignableJournalsAll")}
           </label>
           <div className="mt-1 flex flex-wrap gap-2">
             {journals.map((j) => (
@@ -624,7 +625,7 @@ function NewScopeCard({
             disabled={saving || !managerId}
             className="rounded-xl bg-[#0b1024] px-5 py-2.5 text-[14px] font-medium text-white disabled:opacity-50"
           >
-            {saving ? "Сохраняем…" : "Добавить"}
+            {saving ? t("saving") : t("add")}
           </button>
           <button
             onClick={() => {
@@ -636,7 +637,7 @@ function NewScopeCard({
             }}
             className="rounded-xl border border-slate-200 px-5 py-2.5 text-[14px] font-medium text-slate-600"
           >
-            Отмена
+            {t("cancel")}
           </button>
         </div>
       </div>

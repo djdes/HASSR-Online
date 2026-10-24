@@ -1,5 +1,6 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { MapPin, Sparkles } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { buildingTargets, getActiveBuildingId } from "@/lib/active-building";
@@ -22,6 +23,7 @@ export default async function AutoJournalsPage() {
     redirect("/settings");
   }
   const organizationId = getActiveOrgId(session);
+  const t = await getTranslations("settingsUi.autoJournalsPage");
   if ((await getJournalControls(organizationId)).specialMode) redirect("/settings/organization");
 
   const [templates, org, activeDocs] = await Promise.all([
@@ -68,20 +70,20 @@ export default async function AutoJournalsPage() {
   const activeTemplateIds = new Set(activeDocs.map((d) => d.templateId));
 
   // Журналы по алфавиту.
-  const items = sortJournalsByName(templates, (t) => t.name)
-    .filter((t) => !disabledSet.has(t.code))
-    .map((t) => ({
-      id: t.id,
-      code: t.code,
-      name: t.name,
-      description: t.description ?? null,
-      isMandatory: t.isMandatorySanpin || t.isMandatoryHaccp,
-      enabled: getJournalAutomation(org, t.code).autoCreate,
+  const items = sortJournalsByName(templates, (tpl) => tpl.name)
+    .filter((tpl) => !disabledSet.has(tpl.code))
+    .map((tpl) => ({
+      id: tpl.id,
+      code: tpl.code,
+      name: tpl.name,
+      description: tpl.description ?? null,
+      isMandatory: tpl.isMandatorySanpin || tpl.isMandatoryHaccp,
+      enabled: getJournalAutomation(org, tpl.code).autoCreate,
       // Автозаполнение умеет только «кадровая» механика (строка на
       // сотрудника × день) — для остальных журналов колонка неактивна.
-      autoFill: getJournalAutomation(org, t.code).autoFill,
-      autoFillSupported: isAutomationSupported(t.code),
-      hasActiveDocumentToday: activeTemplateIds.has(t.id),
+      autoFill: getJournalAutomation(org, tpl.code).autoFill,
+      autoFillSupported: isAutomationSupported(tpl.code),
+      hasActiveDocumentToday: activeTemplateIds.has(tpl.id),
     }));
 
   // Точки: документы создаются на каждую точку — скажем об этом прямо
@@ -98,14 +100,10 @@ export default async function AutoJournalsPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Автосоздание и автозаполнение журналов
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Отметьте журналы, для которых WeSetup должен сам заводить
-              новый документ на текущий период. Вторая галочка —
-              ежедневное автозаполнение: каждый день в 06:00 сайт
-              проставит сотрудникам «Здоров, t&nbsp;&lt;&nbsp;37», а
-              выходные, отпуска и больничные отметит сам.
+              {t("description", { example: "t\u00a0<\u00a037" })}
             </p>
           </div>
         </div>
@@ -115,23 +113,25 @@ export default async function AutoJournalsPage() {
         <div className="flex items-center gap-2.5 rounded-2xl border border-[#dfe3ff] bg-[#f5f6ff] px-4 py-2.5 text-[13px] text-[#3848c7]">
           <MapPin className="size-4 shrink-0" />
           <span>
-            Точек: <b className="font-semibold tabular-nums">{locationsCount}</b> — каждый
-            отмеченный журнал создаётся на каждую точку отдельно.
+            {t.rich("pointsNote", {
+              count: locationsCount,
+              b: (chunks) => <b className="font-semibold tabular-nums">{chunks}</b>,
+            })}
           </span>
         </div>
       ) : null}
 
       <PageGuide
-        title="Как настроить авто-создание"
+        title={t("guideTitle")}
         storageKey="settings-auto-journals-v1"
         bullets={[
-          { title: "Отметьте журналы", body: "Поставьте галочку на тех, что должны создаваться автоматически каждый месяц/период (СанПиН, ХАССП, ежедневные)." },
-          { title: "Cron делает остальное", body: "Каждое утро проверяется: есть ли активный документ. Если нет — создаётся на весь текущий период." },
-          { title: "Меньше ручной работы", body: "1-го числа месяца не нужно создавать документ по каждому журналу — система сама. Менеджер только следит за заполнением." },
+          { title: t("guide1Title"), body: t("guide1Body") },
+          { title: t("guide2Title"), body: t("guide2Body") },
+          { title: t("guide3Title"), body: t("guide3Body") },
         ]}
         qa={[
-          { q: "А если я создал документ вручную раньше?", a: "Cron не дублирует — найдёт существующий active doc и пропустит. Создаёт только когда documentов нет." },
-          { q: "Когда создаются документы со следующего периода?", a: "За 7 дней до окончания текущего — чтобы был запас." },
+          { q: t("qa1Q"), a: t("qa1A") },
+          { q: t("qa2Q"), a: t("qa2A") },
         ]}
       />
       <AutoJournalsClient items={items} />

@@ -2,6 +2,7 @@
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export function JournalAutoCreateToggle({
   autofillSupported: boolean;
   disabled?: boolean;
 }) {
+  const t = useTranslations("journalUi.autoCreate");
   const { controls } = useJournalControls();
   const router = useRouter();
   const [autoCreate, setAutoCreate] = useState(initialAutoCreate);
@@ -73,7 +75,7 @@ export function JournalAutoCreateToggle({
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      throw new Error(data?.error ?? "Не удалось сохранить");
+      throw new Error(data?.error ?? t("saveFailed"));
     }
   }
 
@@ -87,10 +89,10 @@ export function JournalAutoCreateToggle({
       });
       setAutoCreate(true);
       setDialog(null);
-      toast.success("Документ на новый период будет создаваться сам");
+      toast.success(t("createEnabled"));
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить"),
+        humanizeFetchError(error, t("saveFailed")),
       );
       throw error;
     } finally {
@@ -126,15 +128,15 @@ export function JournalAutoCreateToggle({
         const filled = Number(data?.created ?? 0) + Number(data?.updated ?? 0);
         toast.success(
           filled > 0
-            ? `Журнал будет вестись сам · Заполнено: ${filled}`
-            : "Журнал будет вестись сам",
+            ? t("fillEnabledFilled", { count: filled })
+            : t("fillEnabled"),
         );
       } catch {
-        toast.success("Журнал будет вестись сам · остальное крон догонит ночью");
+        toast.success(t("fillEnabledNightly"));
       }
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить"),
+        humanizeFetchError(error, t("saveFailed")),
       );
       throw error;
     } finally {
@@ -156,14 +158,14 @@ export function JournalAutoCreateToggle({
       setDisableConfirm(false);
       toast.success(
         alsoAutoFill
-          ? "Автосоздание и автозаполнение выключены"
-          : "Автосоздание выключено",
+          ? t("createAndFillDisabled")
+          : t("createDisabled"),
       );
     } catch (error) {
       setAutoCreate(previousCreate);
       setAutoFill(previousFill);
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить"),
+        humanizeFetchError(error, t("saveFailed")),
       );
       throw error;
     } finally {
@@ -180,7 +182,7 @@ export function JournalAutoCreateToggle({
       setFillOffConfirm(false);
 
       if (!revert) {
-        toast.success("Автозаполнение выключено");
+        toast.success(t("fillDisabled"));
         return;
       }
 
@@ -197,17 +199,17 @@ export function JournalAutoCreateToggle({
         const touched = Number(data?.removed ?? 0) + Number(data?.restored ?? 0);
         toast.success(
           touched > 0
-            ? `Автозаполнение выключено · убрано записей: ${touched}`
-            : "Автозаполнение выключено",
+            ? t("fillDisabledRemoved", { count: touched })
+            : t("fillDisabled"),
         );
         router.refresh();
       } catch {
-        toast.warning("Автозаполнение выключено, но убрать записи не вышло");
+        toast.warning(t("fillDisabledRevertFailed"));
       }
     } catch (error) {
       setAutoFill(previous);
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить"),
+        humanizeFetchError(error, t("saveFailed")),
       );
     } finally {
       setBusy(null);
@@ -254,7 +256,7 @@ export function JournalAutoCreateToggle({
             {/* Пояснение убрано: подробности показывает всплывашка
                 включения, а в полосе остаётся короткая подпись. */}
             <span className="block text-[13.5px] font-medium text-[#0b1024]">
-              Создавать журнал автоматически
+              {t("createLabel")}
             </span>
           </span>
           <Switch
@@ -275,7 +277,7 @@ export function JournalAutoCreateToggle({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[13.5px] font-medium text-[#0b1024]">
-                Заполнять журнал автоматически
+                {t("fillLabel")}
               </span>
             </span>
             <Switch
@@ -301,10 +303,10 @@ export function JournalAutoCreateToggle({
         onClose={() => setFillOffConfirm(false)}
         onConfirm={() => disableAutoFill(revertOnDisable)}
         variant="warn"
-        title="Выключить автозаполнение?"
-        description="Дальше журнал заполняете вы."
-        confirmLabel="Да, выключить"
-        cancelLabel="Нет"
+        title={t("fillOffTitle")}
+        description={t("fillOffDescription")}
+        confirmLabel={t("confirmDisable")}
+        cancelLabel={t("no")}
       >
         <label className="flex cursor-pointer items-start gap-2.5 rounded-2xl border border-[#dcdfed] bg-white p-3.5 transition-colors hover:border-[#5566f6]/40">
           <input
@@ -315,10 +317,10 @@ export function JournalAutoCreateToggle({
           />
           <span className="min-w-0 flex-1">
             <span className="block text-[13.5px] font-medium text-[#0b1024]">
-              Убрать то, что заполнилось само
+              {t("revertLabel")}
             </span>
             <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">
-              Ваши записи останутся на месте
+              {t("revertHint")}
             </span>
           </span>
         </label>
@@ -329,14 +331,14 @@ export function JournalAutoCreateToggle({
         onClose={() => setDisableConfirm(false)}
         onConfirm={() => disableAutoCreate(true)}
         variant="warn"
-        title="Выключить автосоздание?"
-        description="Заодно выключится автозаполнение: заполнять будет нечего."
+        title={t("createOffTitle")}
+        description={t("createOffDescription")}
         bullets={[
-          { label: "Созданные документы останутся", tone: "info" },
-          { label: "Новый период заводите кнопкой «Создать документ»", tone: "warn" },
+          { label: t("createOffKept"), tone: "info" },
+          { label: t("createOffManual"), tone: "warn" },
         ]}
-        confirmLabel="Да, выключить"
-        cancelLabel="Нет"
+        confirmLabel={t("confirmDisable")}
+        cancelLabel={t("no")}
       />
     </>
   );

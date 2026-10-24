@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArrowRight, ListChecks } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -17,6 +18,7 @@ export const dynamic = "force-dynamic";
  * Per-organization: каждое заведение видит только свои чек-листы.
  */
 export default async function JournalChecklistsHubPage() {
+  const t = await getTranslations("settingsUi.journalChecklistsPage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -52,8 +54,8 @@ export default async function JournalChecklistsHubPage() {
       {/* Тёмный hero снят: главное здесь — сетка журналов, её и надо
           показать сразу. Иконка ListChecks осталась только на карточках. */}
       <PageHeader
-        title="Чек-листы для журналов"
-        description="Для каждого журнала можно создать список действий (например «разобрать оборудование, промыть, собрать»). Сотрудник увидит чек-лист в форме заполнения и отметит галочки. Обязательные пункты блокируют отправку. Все отметки идут в audit-log."
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -80,8 +82,8 @@ export default async function JournalChecklistsHubPage() {
                 </div>
                 <div className="mt-1 text-[12.5px] text-[#6f7282]">
                   {count > 0
-                    ? `${count} ${count === 1 ? "пункт" : count < 5 ? "пункта" : "пунктов"}`
-                    : "Нет чек-листа"}
+                    ? t("itemsCount", { count })
+                    : t("noChecklist")}
                 </div>
               </div>
               <ArrowRight className="mt-2 size-4 text-[#9b9fb3] transition-transform group-hover:translate-x-0.5 group-hover:text-[#5566f6]" />
@@ -93,13 +95,10 @@ export default async function JournalChecklistsHubPage() {
       {disabledList.length > 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Отключённые журналы
+            {t("disabledTitle")}
           </div>
           <p className="mt-1 text-[12.5px] text-[#9b9fb3]">
-            {disabledList.length} журнал
-            {disabledList.length === 1 ? "" : disabledList.length < 5 ? "а" : "ов"}{" "}
-            отключены в этой организации. Чек-листы для них можно
-            настроить, но они не будут показаны сотрудникам.
+            {t("disabledHint", { count: disabledList.length })}
           </p>
         </div>
       ) : null}

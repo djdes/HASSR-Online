@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, PauseCircle, Play } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 /**
@@ -12,6 +13,7 @@ import { toast } from "sonner";
  * безопасное и обратимое (пауза наступит снова через 100 дней тишины).
  */
 export function ResumePausedCard() {
+  const t = useTranslations("settingsUi.resumePausedCard");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -20,11 +22,11 @@ export function ResumePausedCard() {
     try {
       const res = await fetch("/api/settings/subscription/resume", { method: "POST" });
       const body = (await res.json().catch(() => null)) as { error?: string; plan?: string } | null;
-      if (!res.ok) throw new Error(body?.error || "Не удалось возобновить работу");
-      toast.success("Аккаунт снова активен — автозаполнение и задачи включены");
+      if (!res.ok) throw new Error(body?.error || t("resumeFailed"));
+      toast.success(t("resumed"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось возобновить работу");
+      toast.error(error instanceof Error ? error.message : t("resumeFailed"));
     } finally {
       setBusy(false);
     }
@@ -38,15 +40,13 @@ export function ResumePausedCard() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#a13a32]">
-            Аккаунт на паузе
+            {t("eyebrow")}
           </div>
           <h2 className="mt-1 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-            100 дней не было записей — автоматика остановлена
+            {t("title")}
           </h2>
           <p className="mt-2 max-w-[560px] text-[14px] leading-[1.6] text-[#3c4053]">
-            Автозаполнение журналов, задачи сотрудникам и напоминания не
-            работают, пока аккаунт на паузе. Записи, документы и настройки
-            сохранены. Нажмите кнопку — всё включится сразу.
+            {t("description")}
           </p>
           <button
             type="button"
@@ -55,7 +55,7 @@ export function ResumePausedCard() {
             className="mt-4 inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
-            {busy ? "Включаем…" : "Возобновить работу"}
+            {busy ? t("resuming") : t("resume")}
           </button>
         </div>
       </div>

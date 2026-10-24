@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Copy, ExternalLink, Loader2, Plus, Printer, QrCode, ShieldX } from "lucide-react";
 import { toast } from "sonner";
 import { fileNameFromContentDisposition, saveBlob } from "@/lib/native-bridge";
@@ -27,12 +28,7 @@ type Props = {
   initialActivity: CabinetInspectorActivity[];
 };
 
-const QR_TTL_OPTIONS: Array<{ value: "1d" | "7d" | "30d" | "forever"; label: string; hint: string }> = [
-  { value: "1d", label: "1 день", hint: "на время визита" },
-  { value: "7d", label: "7 дней", hint: "плановая проверка" },
-  { value: "30d", label: "30 дней", hint: "проверка с доработками" },
-  { value: "forever", label: "До отзыва", hint: "постоянный лист в зале" },
-];
+type QrTtl = "1d" | "7d" | "30d" | "forever";
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -44,16 +40,16 @@ function daysAgo(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-function fmt(value: string | null): string {
+function fmt(value: string | null, locale: string): string {
   if (!value) return "—";
-  return new Date(value).toLocaleString("ru-RU", {
+  return new Date(value).toLocaleString(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   });
 }
 
-function fmtDate(value: string): string {
-  return new Date(value).toLocaleDateString("ru-RU", {
+function fmtDate(value: string, locale: string): string {
+  return new Date(value).toLocaleDateString(locale, {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -61,6 +57,8 @@ function fmtDate(value: string): string {
 }
 
 export function InspectorPortalClient({ initialTokens, initialActivity }: Props) {
+  const t = useTranslations("settingsUi.inspectorPortalClient");
+  const locale = useLocale();
   const [tokens, setTokens] = useState<TokenRow[]>(initialTokens);
   const [activity, setActivity] = useState<CabinetInspectorActivity[]>(initialActivity);
   const [createOpen, setCreateOpen] = useState(false);
@@ -85,10 +83,10 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
       { method: "DELETE" }
     );
     if (!response.ok) {
-      toast.error("Не удалось отозвать");
+      toast.error(t("revokeFailed"));
       return;
     }
-    toast.success("Доступ отозван — QR и ссылка больше не открываются");
+    toast.success(t("revoked"));
     refresh();
   }
 
@@ -110,8 +108,8 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
         <div>
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">Все доступы</h2>
-          <p className="text-[13px] text-[#6f7282]">QR и разовые ссылки с фиксированным периодом.</p>
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("allAccess")}</h2>
+          <p className="text-[13px] text-[#6f7282]">{t("allAccessHint")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -120,7 +118,7 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
           onClick={() => setCertOpen(true)}
           className="h-10 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
         >
-          🏆 Сертификат соответствия
+          🏆 {t("certificate")}
         </Button>
         <Button
           type="button"
@@ -128,7 +126,7 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
           className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
         >
           <Plus className="size-4" />
-          Разовая ссылка
+          {t("oneTimeLink")}
         </Button>
         </div>
       </div>
@@ -140,12 +138,10 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
       {tokens.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Пока нет активных ссылок для инспектора
+            {t("emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Создайте первую ссылку перед визитом контролёра — выберите
-            период, на который инспектор должен видеть журналы, и получите
-            ссылку для пересылки.
+            {t("emptyHint")}
           </p>
         </div>
       ) : (
@@ -153,51 +149,51 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
           <table className="w-full min-w-[720px] text-[13px]">
             <thead className="bg-[#fafbff] text-[12px] uppercase tracking-[0.06em] text-[#6f7282]">
               <tr>
-                <th className="px-4 py-3 text-left">Назначение</th>
-                <th className="px-4 py-3 text-left">Период</th>
-                <th className="px-4 py-3 text-left">Действует до</th>
-                <th className="px-4 py-3 text-left">Доступов</th>
-                <th className="px-4 py-3 text-left">Статус</th>
+                <th className="px-4 py-3 text-left">{t("colPurpose")}</th>
+                <th className="px-4 py-3 text-left">{t("colPeriod")}</th>
+                <th className="px-4 py-3 text-left">{t("colValidUntil")}</th>
+                <th className="px-4 py-3 text-left">{t("colAccesses")}</th>
+                <th className="px-4 py-3 text-left">{t("colStatus")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ececf4]">
-              {tokens.map((t) => {
-                const isRevoked = Boolean(t.revokedAt);
-                const isExpired = !isRevoked && new Date(t.expiresAt) < new Date();
+              {tokens.map((tok) => {
+                const isRevoked = Boolean(tok.revokedAt);
+                const isExpired = !isRevoked && new Date(tok.expiresAt) < new Date();
                 const isActive = !isRevoked && !isExpired;
                 return (
-                  <tr key={t.id}>
+                  <tr key={tok.id}>
                     <td className="px-4 py-3 text-[#0b1024]">
                       <span className="mr-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] text-[#3848c7]">
-                        {t.isQr ? "QR" : "Ссылка"}
+                        {tok.isQr ? "QR" : t("link")}
                       </span>
-                      {t.label ?? <span className="text-[#9b9fb3]">без названия</span>}
+                      {tok.label ?? <span className="text-[#9b9fb3]">{t("untitled")}</span>}
                     </td>
                     <td className="px-4 py-3 text-[#3c4053]">
-                      {t.isQr ? "Выбирает проверяющий" : `${fmtDate(t.periodFrom)} — ${fmtDate(t.periodTo)}`}
+                      {tok.isQr ? t("inspectorChooses") : `${fmtDate(tok.periodFrom, locale)} — ${fmtDate(tok.periodTo, locale)}`}
                     </td>
-                    <td className="px-4 py-3 text-[#3c4053]">{fmt(t.expiresAt)}</td>
+                    <td className="px-4 py-3 text-[#3c4053]">{fmt(tok.expiresAt, locale)}</td>
                     <td className="px-4 py-3 text-[#3c4053]">
-                      {t.accessCount}
-                      {t.lastAccessedAt ? (
+                      {tok.accessCount}
+                      {tok.lastAccessedAt ? (
                         <span className="ml-2 text-[12px] text-[#9b9fb3]">
-                          ({fmt(t.lastAccessedAt)})
+                          ({fmt(tok.lastAccessedAt, locale)})
                         </span>
                       ) : null}
                     </td>
                     <td className="px-4 py-3">
                       {isActive ? (
                         <span className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] text-[#116b2a]">
-                          Активна
+                          {t("statusActive")}
                         </span>
                       ) : isRevoked ? (
                         <span className="rounded-full bg-[#fff4f2] px-2.5 py-1 text-[12px] text-[#a13a32]">
-                          Отозвана
+                          {t("statusRevoked")}
                         </span>
                       ) : (
                         <span className="rounded-full bg-[#f3f4f6] px-2.5 py-1 text-[12px] text-[#6b7280]">
-                          Просрочена
+                          {t("statusExpired")}
                         </span>
                       )}
                     </td>
@@ -205,11 +201,11 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
                       {isActive ? (
                         <button
                           type="button"
-                          onClick={() => setTokenToRevoke(t.id)}
+                          onClick={() => setTokenToRevoke(tok.id)}
                           className="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-[12px] text-[#a13a32] hover:bg-[#fff4f2]"
                         >
                           <ShieldX className="size-4" />
-                          Отозвать
+                          {t("revoke")}
                         </button>
                       ) : null}
                     </td>
@@ -247,15 +243,15 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
           setTokenToRevoke(null);
           if (id) await handleRevoke(id);
         }}
-        title="Отозвать доступ для проверяющего?"
-        description="QR-код и ссылка перестанут открываться сразу же."
+        title={t("revokeTitle")}
+        description={t("revokeDescription")}
         bullets={[
-          { label: "По этому QR проверяющий увидит экран «Доступ отозван»", tone: "warn" },
-          { label: "Распечатанный лист с этим QR больше не работает — снимите его", tone: "warn" },
-          { label: "Вернуть доступ нельзя — понадобится выпустить новый QR", tone: "warn" },
+          { label: t("revokeBullet1"), tone: "warn" },
+          { label: t("revokeBullet2"), tone: "warn" },
+          { label: t("revokeBullet3"), tone: "warn" },
         ]}
-        confirmLabel="Отозвать"
-        cancelLabel="Отмена"
+        confirmLabel={t("revoke")}
+        cancelLabel={t("cancel")}
         variant="danger"
       />
     </div>
@@ -271,6 +267,7 @@ function CreateTokenDialog({
   onOpenChange: (value: boolean) => void;
   onCreated: (data: { rawToken: string; inspectorUrl: string }) => void;
 }) {
+  const t = useTranslations("settingsUi.inspectorPortalClient");
   const [label, setLabel] = useState("");
   const [periodFrom, setPeriodFrom] = useState(daysAgo(30));
   const [periodTo, setPeriodTo] = useState(todayKey());
@@ -292,13 +289,13 @@ function CreateTokenDialog({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось создать");
+        throw new Error(data?.error ?? t("createFailed"));
       }
       onCreated({ rawToken: data.rawToken, inspectorUrl: data.inspectorUrl });
       onOpenChange(false);
       setLabel("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setSubmitting(false);
     }
@@ -309,24 +306,24 @@ function CreateTokenDialog({
       <DialogContent className="rounded-3xl">
         <DialogHeader>
           <DialogTitle className="text-[18px]">
-            Создать ссылку для инспектора
+            {t("createLinkTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label className="text-[13px] text-[#6f7282]">
-              Название (для своего списка)
+              {t("nameLabel")}
             </Label>
             <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Проверка СЭС 2026-04-30 / Иванова И.И."
+              placeholder={t("namePlaceholder")}
               className="rounded-xl"
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-[13px] text-[#6f7282]">Период с</Label>
+              <Label className="text-[13px] text-[#6f7282]">{t("periodFrom")}</Label>
               <Input
                 type="date"
                 value={periodFrom}
@@ -335,7 +332,7 @@ function CreateTokenDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[13px] text-[#6f7282]">Период по</Label>
+              <Label className="text-[13px] text-[#6f7282]">{t("periodTo")}</Label>
               <Input
                 type="date"
                 value={periodTo}
@@ -346,7 +343,7 @@ function CreateTokenDialog({
           </div>
           <div className="space-y-1.5">
             <Label className="text-[13px] text-[#6f7282]">
-              Срок действия ссылки (часов)
+              {t("ttlLabel")}
             </Label>
             <Input
               type="number"
@@ -357,7 +354,7 @@ function CreateTokenDialog({
               className="rounded-xl"
             />
             <p className="text-[12px] text-[#9b9fb3]">
-              По умолчанию 72 ч. Максимум — 14 дней (336 ч).
+              {t("ttlHint")}
             </p>
           </div>
           <div className="flex justify-end gap-2 pt-2">
@@ -368,7 +365,7 @@ function CreateTokenDialog({
               disabled={submitting}
               className="h-10 rounded-2xl border-[#dcdfed] px-4"
             >
-              Отмена
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -378,7 +375,7 @@ function CreateTokenDialog({
               className="h-10 min-w-[112px] rounded-2xl bg-[#5566f6] px-5 text-white hover:bg-[#4a5bf0]"
             >
               {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-              Создать
+              {t("create")}
             </Button>
           </div>
         </div>
@@ -395,12 +392,13 @@ function SuccessDialog({
   onClose: () => void;
 }) {
   const urlInputRef = useRef<HTMLInputElement | null>(null);
+  const t = useTranslations("settingsUi.inspectorPortalClient");
 
   async function handleCopy() {
     try {
       if (!navigator.clipboard?.writeText) throw new Error("no clipboard");
       await navigator.clipboard.writeText(data.inspectorUrl);
-      toast.success("Ссылка скопирована");
+      toast.success(t("copied"));
     } catch {
       // Буфер обмена недоступен (WebView Telegram, http) — выделяем
       // текст в поле, чтобы человек скопировал его сам.
@@ -410,7 +408,7 @@ function SuccessDialog({
         input.select();
         input.setSelectionRange(0, input.value.length);
       }
-      toast.info("Ссылка выделена — скопируйте её долгим нажатием");
+      toast.info(t("selected"));
     }
   }
 
@@ -419,16 +417,15 @@ function SuccessDialog({
       <DialogContent className="rounded-3xl">
         <DialogHeader>
           <DialogTitle className="text-[18px]">
-            Ссылка создана
+            {t("linkCreated")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-2xl border border-[#ffe7c0] bg-[#fff8eb] p-4 text-[13px] leading-relaxed text-[#7a4a00]">
-            <strong>Скопируйте ссылку сейчас.</strong> После закрытия окна
-            показать её повторно нельзя — придётся создавать новую.
+            {t.rich("copyNow", { strong: (chunks) => <strong>{chunks}</strong> })}
           </div>
           <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4">
-            <div className="text-[12px] font-medium text-[#6f7282]">Ссылка</div>
+            <div className="text-[12px] font-medium text-[#6f7282]">{t("linkField")}</div>
             {/* Поле, а не текст: если буфер обмена недоступен (оболочка
                 Telegram), ссылка остаётся выделенной — её копируют сами. */}
             <input
@@ -445,7 +442,7 @@ function SuccessDialog({
                 className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-[12px] font-medium text-[#3848c7] transition-colors hover:bg-[#f5f6ff]"
               >
                 <Copy className="size-3.5" />
-                Скопировать ссылку
+                {t("copyLink")}
               </button>
               <a
                 href={data.inspectorUrl}
@@ -454,7 +451,7 @@ function SuccessDialog({
                 className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-[12px] font-medium text-[#3848c7] hover:bg-[#f5f6ff]"
               >
                 <ExternalLink className="size-3.5" />
-                Открыть в новой вкладке
+                {t("openInTab")}
               </a>
             </div>
           </div>
@@ -464,7 +461,7 @@ function SuccessDialog({
               onClick={onClose}
               className="h-10 rounded-2xl bg-[#5566f6] px-5 text-white hover:bg-[#4a5bf0]"
             >
-              Готово
+              {t("done")}
             </Button>
           </div>
         </div>
@@ -480,6 +477,7 @@ function SuccessDialog({
  * tab с blob URL.
  */
 function CertificateDialog({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("settingsUi.inspectorPortalClient");
   const [periodFrom, setPeriodFrom] = useState(daysAgo(30));
   const [periodTo, setPeriodTo] = useState(todayKey());
   const [generating, setGenerating] = useState(false);
@@ -492,7 +490,7 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
       const response = await fetch(url);
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error ?? "Не удалось сформировать");
+        throw new Error(data?.error ?? t("certFailed"));
       }
       const blob = await response.blob();
       // В браузере — скачивание, в приложении WeSetup — «Поделиться».
@@ -501,10 +499,10 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
         fileNameFromContentDisposition(response.headers.get("content-disposition")) ??
           "certificate.pdf"
       );
-      toast.success("Сертификат скачан — печатайте на A4 и вешайте в зале");
+      toast.success(t("certDownloaded"));
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setGenerating(false);
     }
@@ -515,19 +513,16 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
       <DialogContent className="rounded-3xl">
         <DialogHeader>
           <DialogTitle className="text-[18px]">
-            🏆 Сертификат соответствия
+            🏆 {t("certificate")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-[13px] leading-relaxed text-[#6f7282]">
-            PDF на A4 с уровнем соответствия за период и QR-кодом для
-            проверки. QR ведёт на действующий «QR для проверяющих» — новый
-            доступ при каждом скачивании не создаётся. Если действующего QR
-            нет, будет выпущен один, «до отзыва».
+            {t("certDescription")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-[13px] text-[#6f7282]">За период с</Label>
+              <Label className="text-[13px] text-[#6f7282]">{t("certFrom")}</Label>
               <Input
                 type="date"
                 value={periodFrom}
@@ -536,7 +531,7 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[13px] text-[#6f7282]">по</Label>
+              <Label className="text-[13px] text-[#6f7282]">{t("certTo")}</Label>
               <Input
                 type="date"
                 value={periodTo}
@@ -553,7 +548,7 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
               disabled={generating}
               className="h-10 rounded-2xl border-[#dcdfed] px-4"
             >
-              Отмена
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -564,7 +559,7 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
               {generating ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                "Скачать PDF"
+                t("downloadPdf")
               )}
             </Button>
           </div>
@@ -589,6 +584,7 @@ function InspectorQrCard({
   onRevoke: (id: string) => void;
 }) {
   const [formOpen, setFormOpen] = useState(false);
+  const t = useTranslations("settingsUi.inspectorPortalClient");
   const showForm = formOpen || activeQrs.length === 0;
 
   return (
@@ -601,11 +597,9 @@ function InspectorQrCard({
           <QrCode className="size-5" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">QR для проверяющих</h2>
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("qrTitle")}</h2>
           <p className="mt-1 max-w-[640px] text-[13.5px] leading-relaxed text-[#6f7282]">
-            Распечатайте лист с QR и отдайте проверяющему (или повесьте у входа).
-            Скан открывает журналы без входа и PIN: проверяющий сам выбирает
-            период за последние 12 месяцев и листает журналы как бумажные.
+            {t("qrDescription")}
           </p>
         </div>
       </div>
@@ -629,7 +623,7 @@ function InspectorQrCard({
           className="mt-5 inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <Plus className="size-4 text-[#5566f6]" />
-          Выпустить ещё один QR
+          {t("issueAnother")}
         </button>
       )}
     </section>
@@ -637,11 +631,13 @@ function InspectorQrCard({
 }
 
 function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => void }) {
+  const t = useTranslations("settingsUi.inspectorPortalClient");
+  const locale = useLocale();
   async function copy() {
     if (!token.inspectorUrl) return;
     try {
       await navigator.clipboard.writeText(token.inspectorUrl);
-      toast.success("Ссылка скопирована");
+      toast.success(t("copied"));
     } catch {
       toast.info(token.inspectorUrl);
     }
@@ -654,7 +650,7 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
     >
       <div
         className="mx-auto w-[168px] rounded-2xl border border-[#dcdfed] bg-white p-3 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
-        aria-label="QR-код для проверяющих"
+        aria-label={t("qrAria")}
         role="img"
         data-qr-svg
         // SVG строит сервер библиотекой qrcode из нашего же адреса — не пользовательский ввод.
@@ -662,19 +658,19 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
       />
       <div className="min-w-0">
         <div className="text-[15px] font-semibold text-[#0b1024]">
-          {token.label || "QR для проверяющих"}
+          {token.label || t("qrTitle")}
         </div>
         <dl className="mt-2 grid gap-x-4 gap-y-1 text-[13px] sm:grid-cols-2">
           <div className="flex gap-2">
-            <dt className="text-[#6f7282]">Действует</dt>
-            <dd className="text-[#0b1024]">{forever ? "до отзыва" : `до ${fmt(token.expiresAt)}`}</dd>
+            <dt className="text-[#6f7282]">{t("validity")}</dt>
+            <dd className="text-[#0b1024]">{forever ? t("untilRevoked") : t("until", { date: fmt(token.expiresAt, locale) })}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-[#6f7282]">Просмотров</dt>
+            <dt className="text-[#6f7282]">{t("views")}</dt>
             <dd className="tabular-nums text-[#0b1024]" data-access-count>
               {token.accessCount}
               {token.lastAccessedAt ? (
-                <span className="text-[#9b9fb3]">, последний {fmt(token.lastAccessedAt)}</span>
+                <span className="text-[#9b9fb3]">, {t("lastView", { date: fmt(token.lastAccessedAt, locale) })}</span>
               ) : null}
             </dd>
           </div>
@@ -684,7 +680,7 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
           value={token.inspectorUrl ?? ""}
           onFocus={(e) => e.currentTarget.select()}
           className="mt-3 w-full rounded-xl border border-[#dcdfed] bg-white px-3 py-2 font-mono text-[12px] text-[#3c4053] outline-none transition-shadow focus:ring-4 focus:ring-[#5566f6]/15"
-          aria-label="Адрес QR"
+          aria-label={t("qrUrlAria")}
           data-qr-url
         />
         <div className="mt-3 flex flex-wrap gap-2">
@@ -696,7 +692,7 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
             data-print-sheet
           >
             <Printer className="size-4" />
-            Печать листа A4
+            {t("printSheet")}
           </a>
           <a
             href={token.inspectorUrl ?? "#"}
@@ -705,7 +701,7 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <ExternalLink className="size-4 text-[#5566f6]" />
-            Как видит проверяющий
+            {t("inspectorView")}
           </a>
           <button
             type="button"
@@ -713,7 +709,7 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <Copy className="size-4 text-[#5566f6]" />
-            Скопировать ссылку
+            {t("copyLink")}
           </button>
           <button
             type="button"
@@ -722,7 +718,7 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
             data-revoke-qr
           >
             <ShieldX className="size-4" />
-            Отозвать
+            {t("revoke")}
           </button>
         </div>
       </div>
@@ -737,7 +733,14 @@ function CreateQrForm({
   onCancel?: () => void;
   onCreated: (data: { tokens?: TokenRow[]; activity?: CabinetInspectorActivity[] }) => void;
 }) {
-  const [ttl, setTtl] = useState<(typeof QR_TTL_OPTIONS)[number]["value"]>("7d");
+  const t = useTranslations("settingsUi.inspectorPortalClient");
+  const ttlOptions: Array<{ value: QrTtl; label: string; hint: string }> = [
+    { value: "1d", label: t("ttl1dLabel"), hint: t("ttl1dHint") },
+    { value: "7d", label: t("ttl7dLabel"), hint: t("ttl7dHint") },
+    { value: "30d", label: t("ttl30dLabel"), hint: t("ttl30dHint") },
+    { value: "forever", label: t("ttlForeverLabel"), hint: t("ttlForeverHint") },
+  ];
+  const [ttl, setTtl] = useState<QrTtl>("7d");
   const [label, setLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -750,12 +753,12 @@ function CreateQrForm({
         body: JSON.stringify({ mode: "qr", ttl, label: label.trim() || undefined }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось создать QR");
-      toast.success("QR для проверяющих создан — распечатайте лист A4");
+      if (!res.ok) throw new Error(data?.error ?? t("qrCreateFailed"));
+      toast.success(t("qrCreated"));
       setLabel("");
       onCreated(data ?? {});
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setSubmitting(false);
     }
@@ -763,9 +766,9 @@ function CreateQrForm({
 
   return (
     <div className="mt-5 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-4 sm:p-5" data-create-qr>
-      <div className="text-[13px] font-medium text-[#0b1024]">Срок действия QR</div>
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Срок действия QR">
-        {QR_TTL_OPTIONS.map((o) => {
+      <div className="text-[13px] font-medium text-[#0b1024]">{t("qrTtlTitle")}</div>
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label={t("qrTtlTitle")}>
+        {ttlOptions.map((o) => {
           const active = ttl === o.value;
           return (
             <button
@@ -788,19 +791,18 @@ function CreateQrForm({
         })}
       </div>
       <Label htmlFor="qr-label" className="mt-4 block text-[13px] text-[#6f7282]">
-        Заметка для себя (необязательно)
+        {t("noteLabel")}
       </Label>
       <Input
         id="qr-label"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         maxLength={120}
-        placeholder="Плановая проверка РПН"
+        placeholder={t("notePlaceholder")}
         className="mt-1.5 h-11 rounded-2xl"
       />
       <p className="mt-2 text-[12.5px] text-[#6f7282]">
-        После создания появится QR и кнопка печати листа A4. Лист можно
-        печатать сколько угодно раз — QR не меняется, пока вы его не отзовёте.
+        {t("afterCreate")}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button
@@ -812,7 +814,7 @@ function CreateQrForm({
           data-create-qr-submit
         >
           {submitting ? <Loader2 className="size-4 animate-spin" /> : <QrCode className="size-4" />}
-          Создать QR
+          {t("createQr")}
         </Button>
         {onCancel ? (
           <Button
@@ -821,7 +823,7 @@ function CreateQrForm({
             onClick={onCancel}
             className="h-11 rounded-2xl border-[#dcdfed] px-4"
           >
-            Отмена
+            {t("cancel")}
           </Button>
         ) : null}
       </div>
@@ -830,25 +832,27 @@ function CreateQrForm({
 }
 
 function VisitsCard({ activity, tokens }: { activity: CabinetInspectorActivity[]; tokens: TokenRow[] }) {
-  const labels = new Map(tokens.map((t) => [t.id, t.label || (t.isQr ? "QR" : "Ссылка")]));
+  const t = useTranslations("settingsUi.inspectorPortalClient");
+  const locale = useLocale();
+  const labels = new Map(tokens.map((tok) => [tok.id, tok.label || (tok.isQr ? "QR" : t("link"))]));
   return (
     <section
       className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7"
       data-visits
     >
-      <h2 className="text-[16px] font-semibold text-[#0b1024]">Последние просмотры</h2>
+      <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("recentViews")}</h2>
       <p className="mt-0.5 text-[13px] text-[#6f7282]">
-        Что открывал проверяющий, когда и с какого адреса. Полный список — в журнале действий.
+        {t("recentViewsHint")}
       </p>
       {activity.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-8 text-center text-[13px] text-[#6f7282]">
-          Пока никто не открывал журналы по QR или ссылке.
+          {t("noViews")}
         </div>
       ) : (
         <ul className="mt-4 divide-y divide-[#ececf4]">
           {activity.map((a) => (
             <li key={a.id} className="grid gap-1 py-2.5 text-[13px] sm:grid-cols-[150px_1fr_auto] sm:gap-4" data-visit-row>
-              <span className="tabular-nums text-[#6f7282]">{fmt(a.at)}</span>
+              <span className="tabular-nums text-[#6f7282]">{fmt(a.at, locale)}</span>
               <span className="min-w-0 text-[#0b1024] [overflow-wrap:anywhere]">
                 {a.what}
                 {a.viewer ? <span className="text-[#3848c7]"> — {a.viewer}</span> : null}

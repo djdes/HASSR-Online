@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   DocumentActionsMenu,
   EmptyDocumentsState,
@@ -19,7 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  EQUIPMENT_CLEANING_VARIANT_LABELS,
   type EquipmentCleaningFieldVariant,
 } from "@/lib/equipment-cleaning-document";
 
@@ -59,6 +59,16 @@ export function EquipmentCleaningDocumentsClient({
   users,
   documents,
 }: Props) {
+  const t = useTranslations("journalUi.equipmentCleaning");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
+  const staff = useTranslations("journalWidgets.staff");
+  const scan = useTranslations("journalScan");
+  const journalNames = useTranslations("journals.names");
+  const variantLabels: Record<EquipmentCleaningFieldVariant, string> = {
+    rinse_temperature: t("variantRinseTemperature"),
+    rinse_completeness: t("variantRinseCompleteness"),
+  };
   const router = useRouter();
   const [editingDocument, setEditingDocument] =
     useState<EquipmentCleaningListDocument | null>(null);
@@ -100,7 +110,7 @@ export function EquipmentCleaningDocumentsClient({
       setEditingDocument(null);
       router.refresh();
     } catch {
-      toast.error("Не удалось сохранить настройки документа");
+      toast.error(t("saveSettingsFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +129,7 @@ export function EquipmentCleaningDocumentsClient({
       setDeletingDocument(null);
       router.refresh();
     } catch {
-      toast.error("Не удалось удалить документ");
+      toast.error(controls("documentActions.deleteError"));
     } finally {
       setIsDeleting(false);
     }
@@ -128,7 +138,7 @@ export function EquipmentCleaningDocumentsClient({
   return (
     <div className="space-y-5">
       <JournalTopBar
-        heading="Журнал мойки и дезинфекции оборудования"
+        heading={journalNames("equipment_cleaning")}
         activeTab={activeTab}
         templateCode={templateCode}
         templateName={templateName}
@@ -154,7 +164,7 @@ export function EquipmentCleaningDocumentsClient({
               href={`/journals/${templateCode}/documents/${document.id}`}
               className={`${JOURNAL_CARD_SECTION_CLASS} justify-self-end`}
             >
-              <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+              <div className={JOURNAL_CARD_LABEL_CLASS}>{scan("metadata.startDate")}</div>
               <div className={JOURNAL_CARD_VALUE_CLASS}>
                 {document.startedAtLabel}
               </div>
@@ -175,22 +185,22 @@ export function EquipmentCleaningDocumentsClient({
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[720px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[22px] font-medium text-black">
-              Настройки документа
+              {staff("settings")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-5 px-6 py-5">
             <div className="space-y-2">
-              <Label>Название документа</Label>
+              <Label>{staff("documentName")}</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Дата начала</Label>
+              <Label>{scan("metadata.startDate")}</Label>
               <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
             </div>
             <div className="space-y-3">
-              <div className="text-[18px] font-semibold text-black">Название поля</div>
+              <div className="text-[18px] font-semibold text-black">{t("fieldName")}</div>
               <div className="flex flex-col gap-3 text-[18px] text-black sm:flex-row sm:gap-8">
-                {(Object.keys(EQUIPMENT_CLEANING_VARIANT_LABELS) as EquipmentCleaningFieldVariant[]).map((variant) => (
+                {(Object.keys(variantLabels) as EquipmentCleaningFieldVariant[]).map((variant) => (
                   <label key={variant} className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -198,14 +208,14 @@ export function EquipmentCleaningDocumentsClient({
                       onChange={() => setFieldVariant(variant)}
                       className="size-5 accent-[#5566f6]"
                     />
-                    {EQUIPMENT_CLEANING_VARIANT_LABELS[variant]}
+                    {variantLabels[variant]}
                   </label>
                 ))}
               </div>
             </div>
             <div className="flex justify-end">
               <Button onClick={saveSettings} disabled={isSaving} className="bg-[#5566f6] text-white hover:bg-[#4d58f5]">
-                {isSaving ? "Сохранение..." : "Сохранить"}
+                {isSaving ? common("saving") : common("save")}
               </Button>
             </div>
           </div>
@@ -216,7 +226,7 @@ export function EquipmentCleaningDocumentsClient({
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[22px] font-medium text-black">
-              {`Удаление документа "${deletingDocument?.title || ""}"`}
+              {controls("documentLifecycle.namedDeleteTitle", { title: deletingDocument?.title || "" })}
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-end px-6 py-6">
@@ -225,7 +235,7 @@ export function EquipmentCleaningDocumentsClient({
               disabled={isDeleting}
               className="bg-[#5566f6] text-white hover:bg-[#4d58f5]"
             >
-              {isDeleting ? "Удаление..." : "Удалить"}
+              {isDeleting ? controls("documentLifecycle.deleting") : common("delete")}
             </Button>
           </div>
         </DialogContent>

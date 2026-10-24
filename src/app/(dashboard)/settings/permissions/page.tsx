@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Library, ShieldCheck } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -17,6 +18,7 @@ import { listAccountCabinetsAccess } from "@/lib/master-cabinet-access";
 export const dynamic = "force-dynamic";
 
 export default async function PermissionsSettingsPage() {
+  const t = await getTranslations("settingsUi.permissionsPage");
   const session = await requireAuth();
   const hasAccess = await sessionHasPermission(session, "settings.permissions");
   if (!hasAccess) {
@@ -93,16 +95,14 @@ export default async function PermissionsSettingsPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Права доступа
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Три уровня настройки: базовый пакет для{" "}
-              <strong className="text-[#0b1024]">группы</strong> (Руководство
-              / Сотрудники), особые права для{" "}
-              <strong className="text-[#0b1024]">должности</strong> и, при
-              необходимости, индивидуально на{" "}
-              <strong className="text-[#0b1024]">конкретном человеке</strong>.
-              Более низкий уровень переопределяет более высокий.
+              {t.rich("description", {
+                strong: (chunks) => (
+                  <strong className="text-[#0b1024]">{chunks}</strong>
+                ),
+              })}
             </p>
             {cabinetsAccess ? (
               <a
@@ -110,7 +110,7 @@ export default async function PermissionsSettingsPage() {
                 className="mt-3 inline-flex h-9 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <Library className="size-4 text-[#5566f6]" />
-                Доступ к мастер-кабинетам
+                {t("masterCabinets")}
               </a>
             ) : null}
           </div>

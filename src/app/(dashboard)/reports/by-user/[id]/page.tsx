@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -28,6 +29,8 @@ export default async function ByUserReportPage({
   const orgId = getActiveOrgId(session);
   const { id: userId } = await params;
   const { from, to } = await searchParams;
+  const t = await getTranslations("reportsUi.byUserPage");
+  const locale = await getLocale();
 
   const user = await db.user.findFirst({
     where: { id: userId, organizationId: orgId },
@@ -112,28 +115,28 @@ export default async function ByUserReportPage({
           {user.phone ? ` · ${user.phone}` : ""}
         </p>
         <p className="mt-2 text-[13px] text-[#9b9fb3]">
-          Период: {fromDate.toISOString().slice(0, 10)} —{" "}
+          {t("period")}: {fromDate.toISOString().slice(0, 10)} —{" "}
           {toDate.toISOString().slice(0, 10)}
         </p>
       </div>
 
       {/* Сводка */}
       <div className="grid gap-3 sm:grid-cols-4">
-        <StatCard label="Записей" value={totalEntries} />
+        <StatCard label={t("entries")} value={totalEntries} />
         <StatCard
-          label="В журналах"
+          label={t("inJournals")}
           value={docEntries.length}
-          hint="отметки в документах"
+          hint={t("inJournalsHint")}
         />
-        <StatCard label="Открыл нарушений" value={capaCreated} />
-        <StatCard label="Закрыл нарушений" value={capaResolved} />
+        <StatCard label={t("capaOpened")} value={capaCreated} />
+        <StatCard label={t("capaClosed")} value={capaResolved} />
       </div>
 
       {/* Document entries */}
       {docEntries.length > 0 && (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            Записи в журнальных документах ({docEntries.length})
+            {t("docEntriesTitle", { count: docEntries.length })}
           </h2>
           <ul className="mt-3 divide-y divide-[#ececf4]">
             {docEntries.slice(0, 50).map((e) => (
@@ -150,7 +153,7 @@ export default async function ByUserReportPage({
                 </span>
                 <span className="shrink-0 text-[12px] text-[#6f7282]">
                   {e.createdAt
-                    .toLocaleString("ru-RU", {
+                    .toLocaleString(locale, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -165,7 +168,7 @@ export default async function ByUserReportPage({
       {fieldEntries.length > 0 && (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            Отдельные записи ({fieldEntries.length})
+            {t("fieldEntriesTitle", { count: fieldEntries.length })}
           </h2>
           <ul className="mt-3 divide-y divide-[#ececf4]">
             {fieldEntries.slice(0, 50).map((e) => (
@@ -178,7 +181,7 @@ export default async function ByUserReportPage({
                   {e.template.name}
                 </span>
                 <span className="shrink-0 text-[12px] text-[#9b9fb3]">
-                  {e.createdAt.toLocaleString("ru-RU", {
+                  {e.createdAt.toLocaleString(locale, {
                     day: "numeric",
                     month: "short",
                     hour: "2-digit",
@@ -194,10 +197,10 @@ export default async function ByUserReportPage({
       {totalEntries === 0 && (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Записей за период нет
+            {t("emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[400px] text-[13px] text-[#6f7282]">
-            Этот сотрудник не заполнял журналы в выбранном диапазоне.
+            {t("emptyHint")}
           </p>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   ArrowRight,
@@ -39,6 +40,7 @@ type Resp = {
  * продуктами. Просрочка на одного — штраф 30-50 тысяч.
  */
 export function MedBooksExpiryCard() {
+  const t = useTranslations("dashboardUi.medBooksExpiryCard");
   const [data, setData] = useState<Resp | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ export function MedBooksExpiryCard() {
   if (loading) {
     return (
       <div className="rounded-3xl border border-[#ececf4] bg-white p-5 text-[#6f7282]">
-        <Loader2 className="size-4 animate-spin inline" /> Проверяю медкнижки…
+        <Loader2 className="size-4 animate-spin inline" /> {t("loading")}
       </div>
     );
   }
@@ -81,15 +83,18 @@ export function MedBooksExpiryCard() {
           </span>
           <div>
             <div className="text-[15px] font-semibold text-[#0b1024]">
-              Медкнижки сотрудников
+              {t("title")}
             </div>
             <div className="mt-0.5 text-[12px] text-[#6f7282]">
               {isClean ? (
-                "Все актуальны"
+                t("allCurrent")
               ) : (
                 <>
-                  Просрочено: {data.summary.expired} · Истекают &lt;30 дней:{" "}
-                  {data.summary.warning} · Без записи: {data.summary.missing}
+                  {t("summary", {
+                    expired: data.summary.expired,
+                    warning: data.summary.warning,
+                    missing: data.summary.missing,
+                  })}
                 </>
               )}
             </div>
@@ -99,7 +104,7 @@ export function MedBooksExpiryCard() {
           href="/competencies"
           className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#3848c7] hover:underline"
         >
-          Открыть компетенции
+          {t("openCompetencies")}
           <LinkPendingSpinner />
         </Link>
       </div>
@@ -107,7 +112,7 @@ export function MedBooksExpiryCard() {
       {isClean ? (
         <div className="mt-4 inline-flex items-center gap-2 text-[13px] text-[#136b2a]">
           <CheckCircle2 className="size-4" />
-          Все медкнижки в порядке.
+          {t("allOk")}
         </div>
       ) : (
         <>
@@ -126,8 +131,8 @@ export function MedBooksExpiryCard() {
               className="mt-2 text-[12px] font-medium text-[#3848c7] hover:underline"
             >
               {expanded
-                ? "Свернуть"
-                : `Ещё ${data.rows.filter((r) => r.status !== "ok").length - 5}`}
+                ? t("collapse")
+                : t("more", { count: data.rows.filter((r) => r.status !== "ok").length - 5 })}
             </button>
           ) : null}
         </>
@@ -137,6 +142,7 @@ export function MedBooksExpiryCard() {
 }
 
 function RowItem({ row }: { row: Row }) {
+  const t = useTranslations("dashboardUi.medBooksExpiryCard");
   const map: Record<
     Row["status"],
     { bg: string; border: string; chip: string; iconClr: string; label: string }
@@ -146,28 +152,28 @@ function RowItem({ row }: { row: Row }) {
       border: "border-[#ffd2cd]",
       chip: "bg-[#ffe1dc] text-[#a13a32]",
       iconClr: "text-[#d2453d]",
-      label: "Просрочена",
+      label: t("statusExpired"),
     },
     warning: {
       bg: "bg-[#fff8eb]",
       border: "border-[#ffe9b0]",
       chip: "bg-[#ffe9b0] text-[#a13a32]",
       iconClr: "text-[#a13a32]",
-      label: "<30 дней",
+      label: t("statusWarning"),
     },
     missing: {
       bg: "bg-[#fafbff]",
       border: "border-[#ececf4]",
       chip: "bg-[#ececf4] text-[#6f7282]",
       iconClr: "text-[#9b9fb3]",
-      label: "Нет записи",
+      label: t("statusMissing"),
     },
     no_expiry: {
       bg: "bg-[#fafbff]",
       border: "border-[#ececf4]",
       chip: "bg-[#ececf4] text-[#6f7282]",
       iconClr: "text-[#9b9fb3]",
-      label: "Без срока",
+      label: t("statusNoExpiry"),
     },
     ok: {
       bg: "bg-white",
@@ -189,8 +195,8 @@ function RowItem({ row }: { row: Row }) {
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium text-[#0b1024]">{row.name}</div>
         <div className="mt-0.5 text-[11px] text-[#6f7282]">
-          {row.expiresAt ? `до ${row.expiresAt}` : "—"}
-          {row.daysLeft !== undefined ? ` · ${row.daysLeft} дн.` : ""}
+          {row.expiresAt ? t("until", { date: row.expiresAt }) : "—"}
+          {row.daysLeft !== undefined ? ` · ${t("daysShort", { count: row.daysLeft })}` : ""}
         </div>
       </div>
       <span

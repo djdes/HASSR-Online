@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getActiveBuildingId, listOrganizationBuildings } from "@/lib/active-building";
 import { positionSuggestionOptionsFor } from "@/lib/sphere-positions";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -19,6 +20,7 @@ import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-bounda
 export const dynamic = "force-dynamic";
 
 export default async function StaffPage() {
+  const t = await getTranslations("settingsUi.usersPage");
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
     // Non-managers don't manage staff. Push them to the generic settings hub.
@@ -175,7 +177,7 @@ export default async function StaffPage() {
       hasTasksflowIntegration={Boolean(tasksflowIntegration)}
       organization={{
         id: organization?.id ?? orgId,
-        name: organization?.name ?? "Организация",
+        name: organization?.name ?? t("organizationFallback"),
       }}
       telegramBotUrl={telegramBotUrl}
       positions={positions.map((p) => ({
@@ -252,7 +254,7 @@ export default async function StaffPage() {
       }))}
       seatsNote={
         seatsFull
-          ? `Бесплатный тариф — ${FREE_SEATS_LABEL}: вернуть сотрудников из архива можно после оплаты подписки.`
+          ? t("seatsNote", { seats: FREE_SEATS_LABEL })
           : null
       }
       payHref={seatsFull && !inMobileApp ? BILLING_PAY_HREF : null}

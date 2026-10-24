@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Счётчик с кнопками −/+ и полем для ручного ввода.
@@ -31,6 +32,7 @@ export function NumberStepper({
   max?: number;
   ariaLabel?: string;
 }) {
+  const t = useTranslations("sharedUi.numberStepper");
   const [draft, setDraft] = useState(String(value));
   const [seenValue, setSeenValue] = useState(value);
 
@@ -64,7 +66,7 @@ export function NumberStepper({
         type="button"
         onClick={() => onChange(clamp(value - 1))}
         disabled={value <= min}
-        aria-label="Меньше"
+        aria-label={t("less")}
         className={buttonCls}
       >
         <Minus className="size-4" />
@@ -95,7 +97,7 @@ export function NumberStepper({
         type="button"
         onClick={() => onChange(clamp(value + 1))}
         disabled={value >= max}
-        aria-label="Больше"
+        aria-label={t("more")}
         className={buttonCls}
       >
         <Plus className="size-4" />

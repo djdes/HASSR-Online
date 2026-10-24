@@ -2,6 +2,44 @@
 
 import { Minus, Plus } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+
+/**
+ * Message lookup for the pure helpers below. The component passes a
+ * catalog-backed implementation; callers without React (and the unit tests)
+ * get the Russian defaults.
+ */
+export type NumberFieldMessage =
+  | "notANumber"
+  | "rangeBetween"
+  | "rangeMax"
+  | "rangeMin"
+  | "normBetween"
+  | "normMax"
+  | "normMin";
+export type NumberFieldMessages = (
+  key: NumberFieldMessage,
+  values?: { min?: number | null; max?: number | null; suffix?: string }
+) => string;
+
+export const defaultNumberFieldMessages: NumberFieldMessages = (key, v) => {
+  switch (key) {
+    case "notANumber":
+      return "Введите число, например 3,5";
+    case "rangeBetween":
+      return `Проверьте значение: допустимо от ${v?.min} до ${v?.max}${v?.suffix ?? ""}`;
+    case "rangeMax":
+      return `Проверьте значение: допустимо не выше ${v?.max}${v?.suffix ?? ""}`;
+    case "rangeMin":
+      return `Проверьте значение: допустимо не ниже ${v?.min}${v?.suffix ?? ""}`;
+    case "normBetween":
+      return `норма ${v?.min}…${v?.max}${v?.suffix ?? ""}`;
+    case "normMax":
+      return `норма не выше ${v?.max}${v?.suffix ?? ""}`;
+    case "normMin":
+      return `норма не ниже ${v?.min}${v?.suffix ?? ""}`;
+  }
+};
 
 /**
  * Числовое поле журнала «под перчатки».
@@ -66,14 +104,17 @@ export function parseNumeric(raw: string): number | null {
  * Незаконченный ввод («-», «,», «3,») ошибкой не считается: человек ещё
  * печатает, ругаться рано.
  */
-export function numericInputError(raw: string): string | null {
+export function numericInputError(
+  raw: string,
+  msg: NumberFieldMessages = defaultNumberFieldMessages
+): string | null {
   const text = String(raw ?? "").trim();
   if (text === "") return null;
   if (/^[-+]?[.,]?$/.test(text)) return null;
   const normalized = text.replace(",", ".");
   if (/^[-+]?\d*\.?$/.test(normalized)) return null;
   if (Number.isFinite(Number(normalized))) return null;
-  return "Введите число, например 3,5";
+  return msg("notANumber");
 }
 
 /** Значение вне нормы? null-норма и пустое значение — всегда «в норме». */
@@ -148,7 +189,8 @@ export function outOfRangeMessage(
   raw: string,
   min?: number,
   max?: number,
-  unit?: string
+  unit?: string,
+  msg: NumberFieldMessages = defaultNumberFieldMessages
 ): string | null {
   const value = parseNumeric(raw);
   if (value === null) return null;
@@ -159,23 +201,24 @@ export function outOfRangeMessage(
   if (!tooLow && !tooHigh) return null;
   const suffix = unit ? ` ${unit}` : "";
   if (hasMin && hasMax) {
-    return `Проверьте значение: допустимо от ${min} до ${max}${suffix}`;
+    return msg("rangeBetween", { min, max, suffix });
   }
-  if (hasMax) return `Проверьте значение: допустимо не выше ${max}${suffix}`;
-  return `Проверьте значение: допустимо не ниже ${min}${suffix}`;
+  if (hasMax) return msg("rangeMax", { max, suffix });
+  return msg("rangeMin", { min, suffix });
 }
 
 export function formatNorm(
   norm?: { min?: number | null; max?: number | null } | null,
-  unit?: string
+  unit?: string,
+  msg: NumberFieldMessages = defaultNumberFieldMessages
 ): string | null {
   if (!norm) return null;
   const hasMin = typeof norm.min === "number";
   const hasMax = typeof norm.max === "number";
   const suffix = unit ? ` ${unit}` : "";
-  if (hasMin && hasMax) return `норма ${norm.min}…${norm.max}${suffix}`;
-  if (hasMax) return `норма не выше ${norm.max}${suffix}`;
-  if (hasMin) return `норма не ниже ${norm.min}${suffix}`;
+  if (hasMin && hasMax) return msg("normBetween", { min: norm.min, max: norm.max, suffix });
+  if (hasMax) return msg("normMax", { max: norm.max, suffix });
+  if (hasMin) return msg("normMin", { min: norm.min, suffix });
   return null;
 }
 
@@ -196,10 +239,29 @@ export function NumberField({
   trailing,
   className = "",
 }: NumberFieldProps) {
+  const t = useTranslations("journals.ui.numberField");
+  const msg: NumberFieldMessages = (key, v) => {
+    switch (key) {
+      case "notANumber":
+        return t("notANumber");
+      case "rangeBetween":
+        return t("rangeBetween", { min: String(v?.min ?? ""), max: String(v?.max ?? ""), suffix: v?.suffix ?? "" });
+      case "rangeMax":
+        return t("rangeMax", { max: String(v?.max ?? ""), suffix: v?.suffix ?? "" });
+      case "rangeMin":
+        return t("rangeMin", { min: String(v?.min ?? ""), suffix: v?.suffix ?? "" });
+      case "normBetween":
+        return t("normBetween", { min: String(v?.min ?? ""), max: String(v?.max ?? ""), suffix: v?.suffix ?? "" });
+      case "normMax":
+        return t("normMax", { max: String(v?.max ?? ""), suffix: v?.suffix ?? "" });
+      case "normMin":
+        return t("normMin", { min: String(v?.min ?? ""), suffix: v?.suffix ?? "" });
+    }
+  };
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const outOfNorm = isOutOfNorm(value, norm);
-  const normHint = hint ?? formatNorm(norm, unit);
+  const normHint = hint ?? formatNorm(norm, unit, msg);
   // Ошибка «так не бывает» живёт до следующей правки поля.
   const [rangeError, setRangeError] = useState<string | null>(null);
   /**
@@ -214,7 +276,7 @@ export function NumberField({
 
   /** Единая точка сохранения: и blur, и Enter, и степпер. */
   function commit(next: string) {
-    const notANumber = numericInputError(next);
+    const notANumber = numericInputError(next, msg);
     if (notANumber) {
       setRangeError(notANumber);
       // Ничего не сохраняем и ничего не стираем: в поле возвращается
@@ -222,7 +284,7 @@ export function NumberField({
       onChange(lastNumericRef.current);
       return;
     }
-    const problem = outOfRangeMessage(next, min, max, unit);
+    const problem = outOfRangeMessage(next, min, max, unit, msg);
     setRangeError(problem);
     if (problem) return;
     lastNumericRef.current = next;
@@ -250,7 +312,7 @@ export function NumberField({
       <div className="flex items-stretch gap-1.5">
         <button
           type="button"
-          aria-label="Уменьшить"
+          aria-label={t("decrease")}
           onClick={() => nudge(-1)}
           disabled={disabled}
           className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-40"
@@ -300,7 +362,7 @@ export function NumberField({
 
         <button
           type="button"
-          aria-label="Увеличить"
+          aria-label={t("increase")}
           onClick={() => nudge(1)}
           disabled={disabled}
           className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-40"
@@ -321,7 +383,7 @@ export function NumberField({
             outOfNorm ? "font-medium text-[#a13a32]" : "text-[#9b9fb3]"
           }`}
         >
-          {outOfNorm ? `Вне нормы · ${normHint}` : normHint}
+          {outOfNorm ? t("outOfNorm", { hint: normHint }) : normHint}
         </div>
       ) : null}
     </div>

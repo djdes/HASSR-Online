@@ -92,3 +92,35 @@ export function placeholderNames(message: string): string[] {
     return [];
   }
 }
+
+/**
+ * Правка устарела, если русский исходник изменился после её сохранения.
+ * Правка при этом продолжает действовать — ей только нужна повторная проверка.
+ * Правки, сохранённые до появления снимка (`sourceRu == null`), не помечаем.
+ */
+export function isStaleOverride(sourceRu: string | null | undefined, currentRu: string): boolean {
+  return sourceRu != null && sourceRu !== currentRu;
+}
+
+/**
+ * Применяем только правки, чьи аргументы ICU совпадают с текущим русским
+ * исходником: после смены исходника старая правка с другими подстановками
+ * ломала бы страницу.
+ */
+export function selectSafeOverrides(
+  overrides: Iterable<readonly [string, string]>,
+  russian: (key: string) => string | undefined,
+): [string, string][] {
+  const safe: [string, string][] = [];
+  for (const [key, value] of overrides) {
+    const reference = russian(key);
+    if (reference === undefined) continue;
+    try {
+      if (JSON.stringify(messageArguments(value)) !== JSON.stringify(messageArguments(reference))) continue;
+    } catch {
+      continue;
+    }
+    safe.push([key, value]);
+  }
+  return safe;
+}

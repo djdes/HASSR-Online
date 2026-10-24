@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { BookOpen } from "lucide-react";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -34,27 +35,6 @@ type PipelineStatus =
   | { kind: "legacy_only" }
   | { kind: "not_configured" };
 
-function pluralRu(n: number, one: string, few: string, many: string) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 14) return many;
-  if (mod10 === 1) return one;
-  if (mod10 >= 2 && mod10 <= 4) return few;
-  return many;
-}
-function pluralUzly(n: number) {
-  return pluralRu(n, "свой шаг", "своих шага", "своих шагов");
-}
-function pluralKolonok(n: number) {
-  return pluralRu(n, "колонка", "колонки", "колонок");
-}
-function pluralOwnSteps(n: number) {
-  return pluralRu(n, "свой шаг", "своих шага", "своих шагов");
-}
-function pluralStepsForGuide(n: number) {
-  return pluralRu(n, "шаг", "шага", "шагов");
-}
-
 function computeStatus(args: {
   code: string;
   pinned: number;
@@ -84,6 +64,7 @@ export const dynamic = "force-dynamic";
 // дописать. Теперь list = source of truth = JournalTemplate (active).
 
 export default async function JournalPipelinesPage() {
+  const t = await getTranslations("settingsUi.journalPipelinesPage");
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
   if (!hasCapability(session.user, "admin.full")) redirect("/journals");
@@ -154,24 +135,23 @@ export default async function JournalPipelinesPage() {
       {/* Тёмный hero снят: на рабочей странице важнее сразу увидеть список
           журналов, а название раздела уже есть в PageNav. */}
       <PageHeader
-        title="Пошаговые инструкции журналов"
-        description="Pipeline-инструкции для сотрудников. Кликни на блок чтобы настроить шаги: какие средства взять, куда пойти, что проверить. Чем подробнее — тем понятнее новой уборщице / повару / продавцу."
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="flex flex-col gap-3 rounded-3xl border border-[#dcdfed] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            🚀 Быстрый старт
+            {t("quickStart")}
           </div>
           <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            Создать pipeline для всех журналов одним кликом
+            {t("quickStartTitle")}
           </h2>
           <p className="mt-1 max-w-[600px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Создаёт базовое дерево pinned-узлов на каждый журнал по
-            его колонкам. Уже настроенные журналы (
-            <strong>{treeTemplates.length}</strong>) не пересоздаются.
-            Журналы без описанных колонок придут в уведомления для
-            ручной настройки.
+            {t.rich("quickStartBody", {
+              configured: treeTemplates.length,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </p>
         </div>
         <SeedAllPipelinesButton
@@ -181,45 +161,43 @@ export default async function JournalPipelinesPage() {
       </div>
 
       <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[13px] leading-[1.55] text-[#3c4053]">
-        <strong className="text-[#0b1024]">Расшифровка статусов:</strong>
+        <strong className="text-[#0b1024]">{t("legendTitle")}</strong>
         <ul className="mt-1.5 space-y-0.5 text-[12px] text-[#3c4053]">
           <li>
             <span className="mr-1 inline-block rounded-full bg-[#10b981] px-1.5 text-[10px] font-medium text-white">
-              🌳 Шаблон
+              {t("legendTemplate")}
             </span>{" "}
-            — pipeline создан по колонкам журнала, базовая настройка.
+            {t("legendTemplateBody")}
           </li>
           <li>
             <span className="mr-1 inline-block rounded-full bg-[#5566f6] px-1.5 text-[10px] font-medium text-white">
-              🌳 Шаблон + N
+              {t("legendTemplatePlus")}
             </span>{" "}
-            — есть и базовый шаблон, и добавленные вручную шаги.
+            {t("legendTemplatePlusBody")}
           </li>
           <li>
             <span className="mr-1 inline-block rounded-full bg-[#f5f0ff] px-1.5 text-[10px] font-medium text-[#7a5cff]">
-              📦 Свой адаптер
+              {t("legendAdapter")}
             </span>{" "}
-            — журнал работает через специальный адаптер (cleaning,
-            hygiene и т.п.), pipeline-tree не нужен.
+            {t("legendAdapterBody")}
           </li>
           <li>
             <span className="mr-1 inline-block rounded-full bg-[#fff8e6] px-1.5 text-[10px] font-medium text-[#92561c]">
-              Legacy
+              {t("legendLegacy")}
             </span>{" "}
-            — устаревший JSON-формат, лучше пересоздать через 🌳 Pipeline (beta).
+            {t("legendLegacyBody")}
           </li>
           <li>
             <span className="mr-1 inline-block rounded-full bg-[#fff4f2] px-1.5 text-[10px] font-medium text-[#a13a32]">
-              ⚠️ Гибрид
+              {t("legendHybrid")}
             </span>{" "}
-            — настроены оба формата одновременно, лучше оставить только
-            tree-шаблон.
+            {t("legendHybridBody")}
           </li>
           <li>
             <span className="mr-1 inline-block rounded-full bg-[#fafbff] px-1.5 text-[10px] text-[#9b9fb3]">
-              Не настроен
+              {t("legendNotConfigured")}
             </span>{" "}
-            — сотрудник увидит свободную форму, колонки не будут заполняться.
+            {t("legendNotConfiguredBody")}
           </li>
         </ul>
       </div>
@@ -244,62 +222,53 @@ export default async function JournalPipelinesPage() {
             switch (status.kind) {
               case "exempt":
                 return {
-                  label: "📦 Свой адаптер",
+                  label: t("badgeAdapter"),
                   bg: "bg-[#f5f0ff]",
                   fg: "text-[#7a5cff]",
-                  hint:
-                    "Pipeline через src/lib/tasksflow-adapters/" +
-                    j.code +
-                    ".ts — отдельная настройка не нужна.",
+                  hint: t("hintAdapter", { code: j.code }),
                 };
               case "template_with_custom":
                 return {
-                  label: `🌳 Шаблон + ${status.custom} ${pluralUzly(status.custom)}`,
+                  label: t("badgeTemplateWithCustom", { count: status.custom }),
                   bg: "bg-[#5566f6]",
                   fg: "text-white",
-                  hint:
-                    "Базовый шаблон + добавленные вручную шаги. Сотрудник видит обе части.",
+                  hint: t("hintTemplateWithCustom"),
                 };
               case "template_only":
                 return {
-                  label: `🌳 Шаблон · ${status.pinned} ${pluralKolonok(status.pinned)}`,
+                  label: t("badgeTemplateOnly", { count: status.pinned }),
                   bg: "bg-[#10b981]",
                   fg: "text-white",
-                  hint:
-                    "Дефолтный pipeline по колонкам журнала. Можно дополнить своими шагами.",
+                  hint: t("hintTemplateOnly"),
                 };
               case "custom_only":
                 return {
-                  label: `🌳 ${status.custom} ${pluralOwnSteps(status.custom)}`,
+                  label: t("badgeCustomOnly", { count: status.custom }),
                   bg: "bg-[#5566f6]",
                   fg: "text-white",
-                  hint:
-                    "Свои шаги без базового шаблона. Колонки журнала не привязаны.",
+                  hint: t("hintCustomOnly"),
                 };
               case "hybrid_legacy_tree":
                 return {
-                  label: "⚠️ Гибрид (Legacy + Шаблон)",
+                  label: t("badgeHybrid"),
                   bg: "bg-[#fff4f2]",
                   fg: "text-[#a13a32]",
-                  hint:
-                    "Настроены оба формата. Tree-шаблон побеждает в TasksFlow. Legacy лучше удалить.",
+                  hint: t("hintHybrid"),
                 };
               case "legacy_only":
                 return {
-                  label: "Legacy (старый формат)",
+                  label: t("badgeLegacy"),
                   bg: "bg-[#fff8e6]",
                   fg: "text-[#92561c]",
-                  hint:
-                    "Старый JSON-pipeline. Перенеси на 🌳 Pipeline (beta), у него больше возможностей.",
+                  hint: t("hintLegacy"),
                 };
               case "not_configured":
               default:
                 return {
-                  label: "Не настроен",
+                  label: t("badgeNotConfigured"),
                   bg: "bg-[#fafbff]",
                   fg: "text-[#9b9fb3]",
-                  hint:
-                    "Сотрудник в TasksFlow увидит свободную форму. Создай шаблон — данные будут писаться в колонки.",
+                  hint: t("hintNotConfigured"),
                 };
             }
           })();
@@ -342,7 +311,7 @@ export default async function JournalPipelinesPage() {
                     </span>
                     {guideNodeCount > 0 ? (
                       <span
-                        title={`Кастомный гайд «как заполнять» — ${guideNodeCount} ${pluralStepsForGuide(guideNodeCount)}`}
+                        title={t("guideTitle", { count: guideNodeCount })}
                         className="inline-flex items-center gap-1 rounded-full bg-[#f5f0ff] px-2 py-0.5 font-medium text-[#7a5cff]"
                       >
                         📖 {guideNodeCount}
@@ -359,19 +328,19 @@ export default async function JournalPipelinesPage() {
                   href={`/settings/journal-pipelines/${j.code}`}
                   className="rounded-full px-2.5 py-1 text-[#3848c7] hover:bg-[#eef1ff]"
                 >
-                  Legacy редактор →
+                  {t("legacyEditor")}
                 </Link>
                 <Link
                   href={`/settings/journal-pipelines-tree/${j.code}`}
                   className="rounded-full px-2.5 py-1 text-[#5566f6] hover:bg-[#f5f6ff]"
                 >
-                  🌳 Pipeline (beta) →
+                  {t("pipelineBeta")}
                 </Link>
                 <Link
                   href={`/settings/journal-guides-tree/${j.code}`}
                   className="rounded-full px-2.5 py-1 text-[#7a5cff] hover:bg-[#f5f0ff]"
                 >
-                  📖 Гайд (beta) →
+                  {t("guideBeta")}
                 </Link>
               </div>
             </div>

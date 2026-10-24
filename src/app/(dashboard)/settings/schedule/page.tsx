@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { CalendarRange } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -15,6 +16,7 @@ function weekAnchor(now: Date): Date {
 }
 
 export default async function ScheduleSettingsPage() {
+  const t = await getTranslations("settingsUi.schedulePage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/settings");
@@ -80,13 +82,10 @@ export default async function ScheduleSettingsPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              График смен
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Отмечайте, кто и в какой должности сегодня на смене. Это
-              расписание видят Telegram-бот и мини-приложение: сотрудник
-              открывает смену, напоминания уходят дежурному, а не
-              фиксированному повару.
+              {t("intro")}
             </p>
             {/* Честно про границу: журналы читают не WorkShift, а отпуска и
                 выходные из карточки сотрудника. Раньше здесь было обещание
@@ -99,25 +98,23 @@ export default async function ScheduleSettingsPage() {
                 чем одно отличается от другого. */}
             <p className="mt-2 max-w-[680px] rounded-2xl border border-[#dcdfed] bg-[#f8f9fc] px-4 py-3 text-[13px] leading-relaxed text-[#6f7282]">
               <strong className="font-semibold text-[#0b1024]">
-                Здесь — про конкретный день.
+                {t("noteDay")}
               </strong>{" "}
-              Отметки «Выходной», «Отпуск» и «Больничный» в этой таблице
-              говорят, что человека не будет именно в эту дату: он не
-              получит напоминания и в приложении увидит плашку «Сегодня у
-              вас по графику: больничный».
+              {t("noteDayBody")}
               <br />
               <strong className="font-semibold text-[#0b1024]">
-                Длинный отпуск, больничный лист и постоянные выходные
+                {t("noteLong")}
               </strong>{" "}
-              заводятся в карточке сотрудника в разделе{" "}
-              <a
-                href="/settings/users"
-                className="font-medium text-[#5566f6] transition-colors duration-150 hover:text-[#4a5bf0]"
-              >
-                «Сотрудники»
-              </a>
-              : оттуда их берут журналы — гигиенический проставляет «В» и
-              «Отп» сам и не требует отметку от отсутствующего.
+              {t.rich("noteLongBody", {
+                link: (chunks) => (
+                  <a
+                    href="/settings/users"
+                    className="font-medium text-[#5566f6] transition-colors duration-150 hover:text-[#4a5bf0]"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           </div>
         </div>

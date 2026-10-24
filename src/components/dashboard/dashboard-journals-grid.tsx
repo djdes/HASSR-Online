@@ -3,6 +3,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Eye, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -107,6 +108,7 @@ export function DashboardJournalsGrid({
   /** Кнопки секции («Автозаполнить», «QR-коды») — в одной панели с поиском. */
   actions?: React.ReactNode;
 }) {
+  const t = useTranslations("dashboardUi.dashboardJournalsGrid");
   const router = useRouter();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -184,12 +186,12 @@ export function DashboardJournalsGrid({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error || "Не удалось включить журнал");
+        throw new Error(body?.error || t("enableFailed"));
       }
-      toast.success(`Журнал включён: ${name}`);
+      toast.success(t("enabledToast", { name }));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось включить журнал");
+      toast.error(error instanceof Error ? error.message : t("enableFailed"));
     } finally {
       setEnablingCode(null);
     }
@@ -206,15 +208,15 @@ export function DashboardJournalsGrid({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Найти журнал, даже отключённый"
-            aria-label="Поиск по журналам"
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchLabel")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-11 text-[15px] text-[#0b1024] placeholder:truncate placeholder:text-[#c1c5d6] max-sm:text-[14px] shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="Очистить поиск"
+              aria-label={t("clearSearch")}
               className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6] touch:min-w-8"
             >
               <X className="size-4" />
@@ -223,17 +225,16 @@ export function DashboardJournalsGrid({
         </div>
         {normalizedQuery ? (
           <div className="text-[13px] text-[#6f7282] lg:order-2 lg:whitespace-nowrap">
-            Найдено {foundCount} из {totalCount}
+            {t("found", { found: foundCount, total: totalCount })}
           </div>
         ) : null}
       </div>
 
       {normalizedQuery && foundCount === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
-          <div className="text-[15px] font-medium text-[#0b1024]">Ничего не нашли</div>
+          <div className="text-[15px] font-medium text-[#0b1024]">{t("nothingFound")}</div>
           <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-            Поиск идёт по названию, описанию и коду журнала — включая те, что
-            отключены для вашей организации.
+            {t("nothingFoundHint")}
           </p>
         </div>
       ) : null}
@@ -259,8 +260,8 @@ export function DashboardJournalsGrid({
       {foundPaper.length > 0 ? (
         <section className="space-y-2" data-paper-list="">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <h3 className={GROUP_TITLE_CLASS}>Бумажные журналы</h3>
-            <p className="text-[13px] text-[#9b9fb3]">распечатать и вести от руки</p>
+            <h3 className={GROUP_TITLE_CLASS}>{t("paperJournals")}</h3>
+            <p className="text-[13px] text-[#9b9fb3]">{t("paperHint")}</p>
           </div>
           <ul role="list" className={JOURNAL_LIST_CLASS}>
             {foundPaper.map((paper) => (
@@ -275,10 +276,10 @@ export function DashboardJournalsGrid({
       {foundDisabled.length > 0 ? (
         <section className="space-y-2" data-disabled-list="">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <h3 className={GROUP_TITLE_CLASS}>Отключённые</h3>
+            <h3 className={GROUP_TITLE_CLASS}>{t("disabled")}</h3>
             <p className="text-[13px] text-[#9b9fb3]">
-              не показываются на дашборде и сотрудникам
-              {canToggle ? " — включите, если журнал всё-таки нужен" : null}
+              {t("disabledHint")}
+              {canToggle ? t("disabledEnableHint") : null}
             </p>
           </div>
           <ul role="list" className={JOURNAL_LIST_CLASS}>
@@ -298,11 +299,11 @@ export function DashboardJournalsGrid({
                         className={ENABLE_BUTTON_CLASS}
                       >
                         <Eye className="size-3.5" />
-                        {enablingCode === item.code ? "Включаю…" : "Включить"}
+                        {enablingCode === item.code ? t("enabling") : t("enable")}
                       </button>
                     ) : (
                       <Link href={`/settings/journals#journal-${item.code}`} className={ENABLE_BUTTON_CLASS}>
-                        Включить
+                        {t("enable")}
                       </Link>
                     )
                   }

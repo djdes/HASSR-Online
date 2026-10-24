@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
 import type { Prisma } from "@prisma/client";
 import { TemperatureChart } from "@/components/charts/temperature-chart";
@@ -24,33 +26,51 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
-import { pluralRu } from "@/lib/plural-ru";
 
 export const dynamic = "force-dynamic";
 
-const TYPE_LABELS: Record<string, string> = {
-  refrigerator: "Холодильник",
-  freezer: "Морозильник",
-  oven: "Печь",
-  dishwasher: "Посудомоечная машина",
-  scale: "Весы",
-  thermometer: "Термометр",
-  sensor: "Датчик",
-  uv_lamp: "УФ-лампа",
-  fryer: "Фритюрница",
-  other: "Другое",
-};
+type EquipmentTypeT = ReturnType<typeof useTranslations<"settingsManagement.points.equipmentTypes">>;
 
-function tempRange(min: number | null, max: number | null): string {
+function equipmentTypeLabel(t: EquipmentTypeT, type: string): string {
+  switch (type) {
+    case "refrigerator":
+      return t("refrigerator");
+    case "freezer":
+      return t("freezer");
+    case "oven":
+      return t("oven");
+    case "dishwasher":
+      return t("dishwasher");
+    case "scale":
+      return t("scale");
+    case "thermometer":
+      return t("thermometer");
+    case "sensor":
+      return t("sensor");
+    case "uv_lamp":
+      return t("uv_lamp");
+    case "fryer":
+      return t("fryer");
+    case "other":
+      return t("other");
+    default:
+      return type;
+  }
+}
+
+type TempRangeT = ReturnType<typeof useTranslations<"settingsUi.equipmentPage">>;
+
+function tempRange(t: TempRangeT, min: number | null, max: number | null): string {
   if (min !== null && max !== null) return `${min}°C … ${max}°C`;
-  if (min !== null) return `от ${min}°C`;
-  if (max !== null) return `до ${max}°C`;
+  if (min !== null) return t("tempFrom", { value: min });
+  if (max !== null) return t("tempTo", { value: max });
   return "—";
 }
 
 export default async function EquipmentSettingsPage() {
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
+  const t = await getTranslations("settingsUi.equipmentPage");
 
   const [equipment, areas, staff, buildings, rooms, buildingContext] = await Promise.all([
     db.equipment.findMany({
@@ -142,25 +162,25 @@ export default async function EquipmentSettingsPage() {
             <span className="flex size-10 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
               <ThermometerSun className="size-5" />
             </span>
-            <h2 className="text-[18px] font-semibold text-[#0b1024]">Температура с датчиков</h2>
+            <h2 className="text-[18px] font-semibold text-[#0b1024]">{t("sensorsTitle")}</h2>
           </div>
           <TemperatureChart equipmentList={iotEquipment} />
         </section>
       ) : null}
       <PageGuide
-        title="Как настроить оборудование"
+        title={t("guideTitle")}
         storageKey="settings-equipment-v2"
         bullets={[
-          { title: "Закрепите сотрудника за холодильником или складом", body: "Карточка оборудования (карандаш) → «Кто заполняет по QR» → отметьте людей → «Сохранить». На наклейке останутся только они; остальным наклейка откажет даже с верным PIN. Руководство заполняет любой объект." },
-          { title: "Одна наклейка — один объект", body: "Распечатайте «QR-наклейки» и приклейте на каждый холодильник. Сменить холодильник на телефоне нельзя — замер делают у самого оборудования." },
-          { title: "УФ-лампа", body: "Тип «УФ-лампа» → модель (ресурс подставится) → «Уже отработала» для не новой лампы. На наклейке лампы — кнопки «Я включил» и «Я выключил»; наработка считается сама, за 10 % до конца ресурса придёт уведомление." },
-          { title: "Точка → помещение → оборудование", body: "Оборудование стоит в помещении своей точки. Если помещений нет — заведите их в «Точках и помещениях», они сразу появятся в окне оборудования. Выбрана точка в шапке — список показывает её оборудование." },
-          { title: "Заполните min/max температуру", body: "Например, холодильник: 2°C - 6°C. Эти значения попадут в журнал температурного режима как нормативный диапазон. Сотрудник увидит «выход за пределы» сразу." },
-          { title: "Tuya Device ID — опционально", body: "Если стоит WiFi-датчик температуры (HACCP/Aubess) — введите Device ID, и WeSetup сам будет писать показания в журнал каждый час." },
+          { title: t("guide1Title"), body: t("guide1Body") },
+          { title: t("guide2Title"), body: t("guide2Body") },
+          { title: t("guide3Title"), body: t("guide3Body") },
+          { title: t("guide4Title"), body: t("guide4Body") },
+          { title: t("guide5Title"), body: t("guide5Body") },
+          { title: t("guide6Title"), body: t("guide6Body") },
         ]}
         qa={[
-          { q: "Что если у меня нет холодильников?", a: "Можно ничего не заводить — журнал температуры будет пустой. Но для большинства общепита нужен минимум 1 холодильник." },
-          { q: "Tuya Device ID — где взять?", a: "В приложении Tuya / Smart Life: устройство → шестерёнка → Информация об устройстве → Виртуальный ID. Подробнее в /settings/integrations." },
+          { q: t("qa1Q"), a: t("qa1A") },
+          { q: t("qa2Q"), a: t("qa2A") },
         ]}
       />
       {/* Header */}
@@ -173,12 +193,12 @@ export default async function EquipmentSettingsPage() {
             </div>
             <div>
               <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-                Оборудование
+                {t("title")}
               </h1>
               <p className="mt-0.5 text-[14px] text-[#6f7282]">
                 {buildings.length > 1
-                  ? "Холодильники, датчики, печи — по точкам и помещениям"
-                  : "Холодильники, датчики, печи — по цехам"}
+                  ? t("subtitleByPoints")
+                  : t("subtitle")}
               </p>
             </div>
           </div>
@@ -188,20 +208,20 @@ export default async function EquipmentSettingsPage() {
             <Link
               href="/settings/qr-posters?kind=equipment&layout=sheet"
               className="inline-flex h-10 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
-              title="Распечатать QR-наклейки для быстрой записи температуры с телефона"
+              title={t("stickersHint")}
             >
               <QrCode className="size-4" />
-              QR-наклейки
+              {t("stickers")}
             </Link>
           ) : null}
           {canManage && equipment.length > 0 ? (
             <Link
               href="/settings/qr-posters?kind=equipment"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-              title="Плакат A4 с QR-кодом на каждый холодильник: сотрудник сканирует и вносит температуру без входа"
+              title={t("postersHint")}
             >
               <QrCode className="size-4 text-[#5566f6]" />
-              Плакаты A4
+              {t("posters")}
             </Link>
           ) : null}
           {canManage && (
@@ -224,12 +244,12 @@ export default async function EquipmentSettingsPage() {
             <Wrench className="size-7 text-[#7a5cff]" />
           </div>
           <h3 className="mt-5 text-[17px] font-semibold text-[#0b1024]">
-            Оборудования пока нет
+            {t("emptyTitle")}
           </h3>
           <p className="mt-2 text-[14px] text-[#6f7282]">
             {canManage
-              ? "Сначала заведите помещение точки, потом оборудование в нём."
-              : "Администратор ещё не добавил оборудование."}
+              ? t("emptyAdd")
+              : t("emptyNone")}
           </p>
         </div>
       ) : (
@@ -247,8 +267,8 @@ export default async function EquipmentSettingsPage() {
               <section key={group.building?.id ?? "loose"} className="space-y-3" data-testid="equipment-building-group">
                 <BuildingGroupHeader
                   building={group.building}
-                  countLabel={`${group.items.length} ${pluralRu(group.items.length, "единица", "единицы", "единиц")}`}
-                  looseHint="Цех этого оборудования не привязан к точке — выберите точку цеха в «Цехах и участках»."
+                  countLabel={t("unitCount", { count: group.items.length })}
+                  looseHint={t("looseHint")}
                 />
                 {group.items.length > 0 ? (
                   <EquipmentTable
@@ -260,7 +280,7 @@ export default async function EquipmentSettingsPage() {
                   />
                 ) : (
                   <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-6 text-[13px] text-[#6f7282]">
-                    В этой точке пока нет оборудования.
+                    {t("emptyPoint")}
                   </div>
                 )}
               </section>
@@ -294,6 +314,8 @@ function EquipmentTable({
   canDelete: boolean;
   dialog: EquipmentDialogShared;
 }) {
+  const t = useTranslations("settingsUi.equipmentPage");
+  const tTypes = useTranslations("settingsManagement.points.equipmentTypes");
   return (
     <div className="overflow-x-auto rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
       <table className="w-full min-w-[720px] text-[15px]">
@@ -302,15 +324,15 @@ function EquipmentTable({
             {/* Закреплена: на телефоне таблицу крутят вбок, и без
                 названия остаются безымянные строки. */}
             <th className="sticky left-0 z-10 bg-[#f8f9fc] px-6 py-3 text-left font-medium">
-              Название
+              {t("colName")}
             </th>
-            <th className="px-6 py-3 text-left font-medium">Тип</th>
-            <th className="px-6 py-3 text-left font-medium">Помещение</th>
-            <th className="px-6 py-3 text-left font-medium">T° диапазон</th>
+            <th className="px-6 py-3 text-left font-medium">{t("colType")}</th>
+            <th className="px-6 py-3 text-left font-medium">{t("colRoom")}</th>
+            <th className="px-6 py-3 text-left font-medium">{t("colRange")}</th>
             <th className="px-6 py-3 text-center font-medium">IoT</th>
             {canManage && (
               <th className="w-[100px] px-6 py-3 text-right font-medium">
-                Действия
+                {t("colActions")}
               </th>
             )}
           </tr>
@@ -353,7 +375,7 @@ function EquipmentTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-[#6f7282]">
-                  {TYPE_LABELS[item.type] ?? item.type}
+                  {equipmentTypeLabel(tTypes, item.type)}
                 </td>
                 <td className="px-6 py-4">
                   <span className="inline-flex items-center gap-1.5 text-[14px] text-[#6f7282]">
@@ -362,7 +384,7 @@ function EquipmentTable({
                   </span>
                 </td>
                 <td className="px-6 py-4 font-mono text-[14px] text-[#0b1024]">
-                  {tempRange(item.tempMin, item.tempMax)}
+                  {tempRange(t, item.tempMin, item.tempMax)}
                 </td>
                 <td className="px-6 py-4 text-center">
                   {item.tuyaDeviceId ? (
@@ -405,7 +427,7 @@ function EquipmentTable({
                     <div className="flex justify-end gap-1">
                       <CopyIdButton
                         id={item.id}
-                        hint="Скопировать Equipment ID (для DIY-датчика, скрипта)"
+                        hint={t("copyIdHint")}
                       />
                       <EquipmentDialog
                         {...dialog}
@@ -430,7 +452,7 @@ function EquipmentTable({
                         <DeleteButton
                           id={item.id}
                           endpoint="/api/equipment"
-                          entityName={`оборудование «${item.name}»`}
+                          entityName={t("entityName", { name: item.name })}
                           usageEndpoint={`/api/equipment/${item.id}/usage`}
                         />
                       )}

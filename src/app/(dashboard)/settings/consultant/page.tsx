@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Handshake } from "lucide-react";
 
 import { requireAuth } from "@/lib/auth-helpers";
@@ -24,7 +25,8 @@ export default async function ConsultantSettingsPage({
   searchParams: Promise<{ attach?: string; level?: string }>;
 }) {
   const session = await requireAuth();
-  if (session.user.partnerAccess) redirect("/partner/denied?reason=" + encodeURIComponent("Настройки консультанта меняет только клиент."));
+  const t = await getTranslations("settingsUi.consultantPage");
+  if (session.user.partnerAccess) redirect("/partner/denied?reason=" + encodeURIComponent(t("clientOnly")));
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
 
   const { attach, level } = await searchParams;
@@ -40,11 +42,10 @@ export default async function ConsultantSettingsPage({
         </span>
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Консультант
+            {t("title")}
           </h1>
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-            Консультант по СанПиН / ХАССП или интегратор видит ваш кабинет и помогает вести журналы. Уровень
-            доступа выбираете вы, отключить сопровождение можно в любой момент — доступ закрывается сразу.
+            {t("description")}
           </p>
         </div>
       </div>

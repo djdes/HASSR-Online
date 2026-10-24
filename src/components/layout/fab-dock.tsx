@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
@@ -130,6 +131,7 @@ export function FabDockProvider({
 }
 
 function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string }) {
+  const t = useTranslations("layoutUi.fabDock");
   const narrow = useIsNarrowViewport();
   const [sheetRequested, setSheetRequested] = useState(false);
   // Слот живёт в шапке, которая монтируется рядом с доком, — ищем его
@@ -163,10 +165,10 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
             onClick={() => (single ? single.onSelect() : setSheetRequested(true))}
             aria-label={
               unread > 0
-                ? `Помощь · новых сообщений: ${unread}`
+                ? t("helpAriaUnread", { count: unread })
                 : single
                   ? single.label
-                  : "Помощь и подсказки"
+                  : t("helpAria")
             }
             style={{
               background: "var(--mini-surface-1, var(--app-fab-bg))",
@@ -211,7 +213,7 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
           type="button"
           onClick={() => setSheetRequested(true)}
           aria-label={
-            unread > 0 ? `Помощь · новых сообщений: ${unread}` : "Помощь и подсказки"
+            unread > 0 ? t("helpAriaUnread", { count: unread }) : t("helpAria")
           }
           // Полупрозрачная «таблетка» с размытием, как в приложениях:
           // сплошная фиолетовая кнопка перебивала контент под собой.
@@ -251,12 +253,13 @@ function FabSheet({
   onClose: () => void;
   actions: FabAction[];
 }) {
+  const t = useTranslations("layoutUi.fabDock");
   return (
     <BottomSheet
       open={open}
       onClose={onClose}
-      title="Помощь"
-      subtitle="Спросить, написать в поддержку или посмотреть инструкцию"
+      title={t("sheetTitle")}
+      subtitle={t("sheetSubtitle")}
     >
       {actions.map((action) => {
         const Icon = action.icon;
@@ -300,6 +303,7 @@ function FabButton({
   action: FabAction;
   onSelect: () => void;
 }) {
+  const t = useTranslations("layoutUi.fabDock");
   const Icon = action.icon;
   const brand = action.tone === "brand";
   return (
@@ -308,7 +312,7 @@ function FabButton({
       onClick={onSelect}
       aria-label={
         action.badge
-          ? `${action.label} · новых сообщений: ${action.badge}`
+          ? t("actionAriaUnread", { label: action.label, count: action.badge })
           : action.label
       }
       style={{

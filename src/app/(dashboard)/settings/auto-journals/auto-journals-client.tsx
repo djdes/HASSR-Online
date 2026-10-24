@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   CheckCircle2,
   Loader2,
@@ -45,6 +46,7 @@ type Props = {
  */
 export function AutoJournalsClient({ items }: Props) {
   const router = useRouter();
+  const t = useTranslations("settingsUi.autoJournalsClient");
   const [state, setState] = useState<Item[]>(items);
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState("");
@@ -130,18 +132,18 @@ export function AutoJournalsClient({ items }: Props) {
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error ?? "Не удалось сохранить");
+        toast.error(data?.error ?? t("saveFailed"));
         return;
       }
       toast.success(
         codes.length === 0
-          ? "Автосоздание выключено для всех журналов"
-          : `Сохранено · автосоздание для ${codes.length} журнал(ов)`
+          ? t("savedNone")
+          : t("savedCount", { count: codes.length })
       );
       setDirty(false);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -150,11 +152,11 @@ export function AutoJournalsClient({ items }: Props) {
   async function runNow() {
     if (running) return;
     if (dirty) {
-      toast.error("Сначала сохраните изменения");
+      toast.error(t("saveFirst"));
       return;
     }
     if (enabledCount === 0) {
-      toast.error("Ни один журнал не включён в автосоздание");
+      toast.error(t("noneEnabled"));
       return;
     }
     setRunning(true);
@@ -165,19 +167,19 @@ export function AutoJournalsClient({ items }: Props) {
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error ?? "Не удалось запустить");
+        toast.error(data?.error ?? t("runFailed"));
         return;
       }
       if (data.created === 0 && data.skipped === 0) {
-        toast.info(data.message ?? "Нечего создавать");
+        toast.info(data.message ?? t("nothingToCreate"));
       } else {
         toast.success(
-          `Создано: ${data.created}, уже были: ${data.skipped}`
+          t("created", { created: data.created, skipped: data.skipped })
         );
       }
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setRunning(false);
     }
@@ -193,7 +195,7 @@ export function AutoJournalsClient({ items }: Props) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Поиск журнала"
+              placeholder={t("searchPlaceholder")}
               className="h-10 rounded-2xl border-[#dcdfed] pl-9"
             />
           </div>
@@ -202,7 +204,7 @@ export function AutoJournalsClient({ items }: Props) {
               checked={onlyMandatory}
               onCheckedChange={(v) => setOnlyMandatory(v === true)}
             />
-            Только обязательные
+            {t("onlyMandatory")}
           </label>
           <div className="ml-auto flex gap-2">
             <button
@@ -210,14 +212,14 @@ export function AutoJournalsClient({ items }: Props) {
               onClick={() => selectAll(true)}
               className="rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[12px] font-medium text-[#3c4053] hover:bg-[#f5f6ff]"
             >
-              Выбрать все
+              {t("selectAll")}
             </button>
             <button
               type="button"
               onClick={() => selectAll(false)}
               className="rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[12px] font-medium text-[#3c4053] hover:bg-[#f5f6ff]"
             >
-              Снять все
+              {t("clearAll")}
             </button>
           </div>
         </div>
@@ -238,17 +240,17 @@ export function AutoJournalsClient({ items }: Props) {
                     </span>
                     {item.isMandatory ? (
                       <span className="rounded-full bg-[#fff4f2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#a13a32]">
-                        обязательный
+                        {t("mandatory")}
                       </span>
                     ) : null}
                     {item.hasActiveDocumentToday ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[10px] font-medium text-[#116b2a]">
                         <CheckCircle2 className="size-3" />
-                        есть документ на сегодня
+                        {t("hasDocToday")}
                       </span>
                     ) : (
                       <span className="rounded-full bg-[#fff8eb] px-2 py-0.5 text-[10px] font-medium text-[#b25f00]">
-                        документа на сегодня нет
+                        {t("noDocToday")}
                       </span>
                     )}
                   </div>
@@ -272,12 +274,12 @@ export function AutoJournalsClient({ items }: Props) {
                   >
                     <Wand2 className="size-3.5" />
                     {item.autoFill
-                      ? "Автозаполнение включено · каждый день в 06:00"
-                      : "Автозаполнение выключено"}
+                      ? t("autoFillOn")
+                      : t("autoFillOff")}
                   </button>
                 ) : (
                   <span className="text-[12px] text-[#9b9fb3]">
-                    Автозаполнение для этого журнала недоступно
+                    {t("autoFillUnavailable")}
                   </span>
                 )}
               </div>
@@ -285,7 +287,7 @@ export function AutoJournalsClient({ items }: Props) {
           ))}
           {filtered.length === 0 ? (
             <li className="py-10 text-center text-[13px] text-[#9b9fb3]">
-              Ничего не найдено по запросу
+              {t("nothingFound")}
             </li>
           ) : null}
         </ul>
@@ -295,12 +297,12 @@ export function AutoJournalsClient({ items }: Props) {
       <aside className="space-y-4">
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сводка
+            {t("summary")}
           </div>
           <ul className="mt-3 space-y-2.5 text-[13px]">
             <li className="flex items-center justify-between gap-2">
               <span className="text-[#3c4053]">
-                В автосоздании сейчас
+                {t("summaryEnabled")}
               </span>
               <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] font-semibold text-[#3848c7] tabular-nums">
                 {enabledCount}
@@ -308,14 +310,14 @@ export function AutoJournalsClient({ items }: Props) {
             </li>
             <li className="flex items-center justify-between gap-2">
               <span className="text-[#3c4053]">
-                С активным документом сегодня
+                {t("summaryActive")}
               </span>
               <span className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-semibold text-[#116b2a] tabular-nums">
                 {activeCount}
               </span>
             </li>
             <li className="flex items-center justify-between gap-2">
-              <span className="text-[#3c4053]">Будут созданы по запуску</span>
+              <span className="text-[#3c4053]">{t("summaryNeeded")}</span>
               <span
                 className={`rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums ${
                   neededCount > 0
@@ -331,7 +333,7 @@ export function AutoJournalsClient({ items }: Props) {
 
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Действия
+            {t("actions")}
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <Button
@@ -345,7 +347,7 @@ export function AutoJournalsClient({ items }: Props) {
               ) : (
                 <Save className="size-4" />
               )}
-              Сохранить список
+              {t("saveList")}
             </Button>
             <Button
               type="button"
@@ -355,10 +357,10 @@ export function AutoJournalsClient({ items }: Props) {
               className="h-10 rounded-lg border-0 bg-[#5566f6]/[0.04] px-5 text-[14px] font-semibold text-[#5566f6]"
               title={
                 dirty
-                  ? "Сначала сохраните список"
+                  ? t("runTitleSaveFirst")
                   : neededCount === 0
-                    ? "Всё уже создано — нечего запускать"
-                    : "Создать недостающие документы прямо сейчас"
+                    ? t("runTitleAllDone")
+                    : t("runTitle")
               }
             >
               {running ? (
@@ -366,7 +368,7 @@ export function AutoJournalsClient({ items }: Props) {
               ) : (
                 <Play className="size-4" />
               )}
-              Создать сейчас ({neededCount})
+              {t("runNow", { count: neededCount })}
             </Button>
           </div>
         </div>
@@ -374,20 +376,13 @@ export function AutoJournalsClient({ items }: Props) {
         <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-5">
           <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
             <Sparkles className="size-3.5" />
-            Автоматика
+            {t("automation")}
           </div>
           <p className="mt-2 text-[13px] leading-relaxed text-[#3c4053]">
-            Каждый день в 04:00 проверяем включённые здесь журналы и
-            создаём недостающие документы на текущий период. В 06:00
-            журналы с автозаполнением получают сегодняшний день: кадровые —
-            отметки о здоровье с учётом выходных, остальные — показатели и
-            подписи из настроек документа. Вам не нужно заходить сюда
-            каждое 1-е число.
+            {t("automationBody1")}
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-[#3c4053]">
-            Кто станет ответственным в новых документах и какие сотрудники
-            попадут в строки — выбирается на странице самого журнала, при
-            включении тумблера. Здесь — только сами тумблеры.
+            {t("automationBody2")}
           </p>
         </div>
       </aside>

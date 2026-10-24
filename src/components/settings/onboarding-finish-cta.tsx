@@ -9,6 +9,7 @@ import {
   PartyPopper,
   Wand2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -26,6 +27,7 @@ export function OnboardingFinishCta({
   missing,
   activeDocumentsCount,
 }: Props) {
+  const t = useTranslations("settingsUi.onboardingFinishCta");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -50,18 +52,18 @@ export function OnboardingFinishCta({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось создать");
+        toast.error(data?.error ?? t("createFailed"));
         return;
       }
       toast.success(
-        `Создано документов: ${data?.created ?? 0}` +
-          (data?.closed ? `, закрыто старых: ${data.closed}` : "")
+        t("createdDocs", { count: data?.created ?? 0 }) +
+          (data?.closed ? t("closedOld", { count: data.closed }) : "")
       );
       // После успеха — переходим в журналы, чтобы пользователь сразу
       // увидел результат.
       setTimeout(() => router.push("/journals"), 800);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -76,11 +78,10 @@ export function OnboardingFinishCta({
           </span>
           <div className="flex-1">
             <h2 className="text-[16px] font-semibold text-[#0b1024]">
-              Создать документы журналов — пока недоступно
+              {t("lockedTitle")}
             </h2>
             <p className="mt-1.5 text-[13px] leading-relaxed text-[#6f7282]">
-              Сначала закройте обязательные шаги выше, и кнопка создания
-              документов разблокируется.
+              {t("lockedBody")}
             </p>
             {missing.length > 0 ? (
               <ul className="mt-3 space-y-1">
@@ -118,17 +119,17 @@ export function OnboardingFinishCta({
           </span>
           <div>
             <div className="text-[11px] uppercase tracking-[0.16em] text-[#9b9fb3]">
-              Финал быстрой настройки
+              {t("eyebrow")}
             </div>
             <h2 className="mt-1 text-[18px] font-semibold leading-tight text-[#0b1024]">
               {alreadyHas
-                ? `Документы уже созданы (${activeDocumentsCount} активн.)`
-                : "Готовы создать все документы журналов"}
+                ? t("alreadyTitle", { count: activeDocumentsCount })
+                : t("readyTitle")}
             </h2>
             <p className="mt-1 max-w-[480px] text-[13px] leading-relaxed text-[#6f7282]">
               {alreadyHas
-                ? "Можно пересоздать с нуля — старые закроются, а в свежих уже будут вписаны сотрудники с должностями."
-                : "Один клик — заведёт документы по всем включённым журналам и впишет сотрудников с должностями. Показатели и подписи остаются за людьми."}
+                ? t("alreadyBody")
+                : t("readyBody")}
             </p>
           </div>
         </div>
@@ -144,10 +145,10 @@ export function OnboardingFinishCta({
             <Wand2 className="size-4" />
           )}
           {busy
-            ? "Создаём…"
+            ? t("creating")
             : alreadyHas
-              ? "Пересоздать документы"
-              : "Создать все документы"}
+              ? t("recreate")
+              : t("createAll")}
         </button>
       </div>
 
@@ -159,18 +160,17 @@ export function OnboardingFinishCta({
           await createAll();
         }}
         variant="warn"
-        title="Пересоздать документы?"
-        description={`Сейчас активных документов: ${activeDocumentsCount}. Они закроются, вместо них заведутся свежие на текущий период.`}
+        title={t("confirmTitle")}
+        description={t("confirmDescription", { count: activeDocumentsCount })}
         bullets={[
-          { label: "Записи в старых документах сохранятся — они закрываются, а не удаляются" },
-          { label: "В новых уже вписаны сотрудники, должности и ответственные" },
+          { label: t("bullet1") },
+          { label: t("bullet2") },
           {
-            label:
-              "Показатели, отметки и подписи останутся пустыми — их ставят люди",
+            label: t("bullet3"),
             tone: "warn",
           },
         ]}
-        confirmLabel="Пересоздать"
+        confirmLabel={t("confirmLabel")}
       />
     </section>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,7 +34,6 @@ import {
 } from "@/components/journals/document-list-ui";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import { PageGuide } from "@/components/ui/page-guide";
-import { AUTOMATION_ENABLE_BULLETS } from "@/lib/journal-automation";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -97,6 +97,10 @@ function EditDocumentDialog(props: {
   document: HealthListDocument | null;
 }) {
   const router = useRouter();
+  const t = useTranslations("journalWidgets.staff");
+  const tHealth = useTranslations("journalUi.healthList");
+  const tList = useTranslations("hygiene.list");
+  const tCommon = useTranslations("common");
   const [title, setTitle] = useState("");
   const [emptyRows, setEmptyRows] = useState("0");
   const [from, setFrom] = useState("");
@@ -117,11 +121,11 @@ function EditDocumentDialog(props: {
     if (!props.document) return;
     if (periodEditable) {
       if (!from || !to) {
-        toast.error("Укажите период документа");
+        toast.error(t("periodRequired"));
         return;
       }
       if (from > to) {
-        toast.error("Дата начала не может быть позже даты окончания");
+        toast.error(t("dateOrderInvalid"));
         return;
       }
     }
@@ -133,16 +137,16 @@ function EditDocumentDialog(props: {
       (from > (props.document.dateFrom || "") || to < (props.document.dateTo || ""));
     if (shrinks) {
       const confirmed = await confirmAsync({
-        title: "Сократить период документа?",
-        description: `Новый период: ${from} — ${to}.`,
+        title: t("shrinkPeriodTitle"),
+        description: t("newPeriod", { from, to }),
         variant: "warn",
-        confirmLabel: "Сократить период",
+        confirmLabel: t("shrinkPeriodConfirm"),
         bullets: [
           {
-            label: "Записи вне нового периода пропадут из журнала и печати",
+            label: tList("shrinkOutsideHidden"),
             tone: "warn",
           },
-          { label: "Из базы они не удаляются", tone: "info" },
+          { label: tList("shrinkKeptInDb"), tone: "info" },
         ],
       });
       if (!confirmed) return;
@@ -170,14 +174,14 @@ function EditDocumentDialog(props: {
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Не удалось сохранить настройки документа");
+        throw new Error(data?.error || tHealth("saveFailed"));
       }
 
       props.onOpenChange(false);
       router.refresh();
     } catch (error) {
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки документа")
+        humanizeFetchError(error, tHealth("saveFailed"))
       );
     } finally {
       setIsSubmitting(false);
@@ -189,19 +193,19 @@ function EditDocumentDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки документа
+            {t("settings")}
           </DialogTitle>
         </DialogHeader>
 
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <FloatingInputField
             id="edit-health-doc-title"
-            label="Название документа"
+            label={t("documentName")}
             value={title}
             onChange={setTitle}
           />
 
-          <FloatingLabelField label="Добавлять пустых строк при печати">
+          <FloatingLabelField label={tHealth("printEmptyRows")}>
             <Select value={emptyRows} onValueChange={setEmptyRows}>
               <SelectTrigger className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                 {/* P8: то же, что в диалоге создания — значение рендерим
@@ -222,22 +226,22 @@ function EditDocumentDialog(props: {
           {periodEditable ? (
             <div className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Период документа
+                {t("period")}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="date"
                   value={from}
                   onChange={(event) => setFrom(event.target.value)}
-                  aria-label="Период документа: с"
+                  aria-label={t("periodFrom")}
                   className="h-10 w-[165px] rounded-xl border border-[#dcdfed] px-3.5 text-[13.5px] text-[#0b1024] outline-none transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
                 />
-                <span className="text-[13.5px] text-[#6f7282]">по</span>
+                <span className="text-[13.5px] text-[#6f7282]">{t("periodTo")}</span>
                 <input
                   type="date"
                   value={to}
                   onChange={(event) => setTo(event.target.value)}
-                  aria-label="Период документа: по"
+                  aria-label={t("periodToAria")}
                   className="h-10 w-[165px] rounded-xl border border-[#dcdfed] px-3.5 text-[13.5px] text-[#0b1024] outline-none transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
                 />
               </div>
@@ -253,7 +257,7 @@ function EditDocumentDialog(props: {
               onClick={handleSave}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? tCommon("saving") : tCommon("save")}
             </Button>
           </div>
         </div>
@@ -272,6 +276,7 @@ function HealthDocumentRow(props: {
   onPrint: (document: HealthListDocument) => void;
   onDelete: (document: HealthListDocument) => void;
 }) {
+  const tList = useTranslations("hygiene.list");
   const href = `/journals/${props.templateCode}/documents/${props.document.id}`;
   const canManage = props.document.status === "active" && props.canManage !== false;
 
@@ -282,7 +287,7 @@ function HealthDocumentRow(props: {
               <SharedDocumentBadge shared={props.document.shared} />
       </Link>
       <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-        <div className={JOURNAL_CARD_LABEL_CLASS}>Период</div>
+        <div className={JOURNAL_CARD_LABEL_CLASS}>{tList("period")}</div>
         <div className={JOURNAL_CARD_VALUE_CLASS}>{props.document.periodLabel}</div>
       </Link>
       {/* Пустая мета-колонка БЕЗ делителя: раньше здесь стоял
@@ -303,21 +308,24 @@ function HealthDocumentRow(props: {
 }
 
 export function HealthDocumentsClient(props: Props) {
+  const tList = useTranslations("hygiene.list");
+  const tHealth = useTranslations("journalUi.healthList");
+  const tNames = useTranslations("journals.names");
   const [editingDocument, setEditingDocument] = useState<HealthListDocument | null>(null);
-  const heading = props.activeTab === "closed" ? "Журнал здоровья (закрытые)" : "Журнал здоровья";
+  const heading = props.activeTab === "closed" ? tHealth("headingClosed") : tNames("health_check");
   const { deleteDocument, openPdf } = useJournalDocumentActions();
 
   async function handleDelete(document: HealthListDocument) {
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: tList("deleteDescription", { title: document.title }),
       bullets: [
-        { label: `Период документа: ${document.periodLabel}`, tone: "info" },
-        { label: "Удалятся все отметки сотрудников за этот период", tone: "warn" },
-        { label: "Печатную форму этого документа восстановить будет нельзя", tone: "warn" },
+        { label: tList("deletePeriod", { period: document.periodLabel }), tone: "info" },
+        { label: tList("deleteMarks"), tone: "warn" },
+        { label: tList("deletePrint"), tone: "warn" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Ошибка удаления документа",
+      successMessage: tList("deleteSuccess", { title: document.title }),
+      errorMessage: tList("deleteError"),
     });
   }
 
@@ -339,22 +347,18 @@ export function HealthDocumentsClient(props: Props) {
         {props.automation ? (
           <>
             <PageGuide
-              title="Как журнал ведётся сам"
+              title={tList("automation.title")}
               storageKey="journal-automation-staff-v1"
-              bullets={[...AUTOMATION_ENABLE_BULLETS]}
+              bullets={[
+                tList("automation.bullet1"),
+                tList("automation.bullet2"),
+                tList("automation.bullet3"),
+                tList("automation.bullet4"),
+              ]}
               qa={[
-                {
-                  q: "А если у сотрудника температура?",
-                  a: "Откройте журнал в тот же день и поменяйте отметку. Прошлые дни закрыты — задним числом журнал править нельзя.",
-                },
-                {
-                  q: "Нужно ли создавать документ вручную?",
-                  a: "Нет. Каждый день в 06:00 документ на текущий период создаётся сам. Вручную — только если нужен документ на другой период.",
-                },
-                {
-                  q: "Как выключить?",
-                  a: "Автосоздание — тумблер на этой странице, ежедневное заполнение — в самом документе. Уже заполненное останется на месте.",
-                },
+                { q: tList("automation.qa1q"), a: tList("automation.qa1a") },
+                { q: tList("automation.qa2q"), a: tList("automation.qa2a") },
+                { q: tList("automation.qa3q"), a: tList("automation.qa3a") },
               ]}
             />
           </>

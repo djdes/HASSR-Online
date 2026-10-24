@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -77,6 +78,9 @@ export function MedBookListDialog({
   saving?: boolean;
   onSave: (change: MedBookListChange) => void | Promise<void>;
 }) {
+  const t = useTranslations("journalUi.medBookList");
+  const common = useTranslations("common");
+  const controls = useTranslations("journalControls");
   const [draft, setDraft] = useState<Item[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
@@ -93,11 +97,11 @@ export function MedBookListDialog({
   function commit() {
     const names = draft.map((item) => item.name.trim()).filter(Boolean);
     if (names.length === 0) {
-      setError("Список не может быть пустым — добавьте хотя бы одну строку.");
+      setError(t("emptyError"));
       return;
     }
     if (new Set(names).size !== names.length) {
-      setError("Названия повторяются — сделайте их разными.");
+      setError(t("duplicateError"));
       return;
     }
 
@@ -147,8 +151,8 @@ export function MedBookListDialog({
                 />
                 <button
                   type="button"
-                  aria-label={`Удалить «${item.name || "без названия"}»`}
-                  title="Удалить строку"
+                  aria-label={t("deleteItemAria", { name: item.name || controls("list.untitled") })}
+                  title={t("deleteRow")}
                   onClick={() => {
                     setError(null);
                     setDraft((current) =>
@@ -186,7 +190,7 @@ export function MedBookListDialog({
           {reference ? (
             <details className="rounded-[14px] border border-[#ececf4] bg-[#fafbff] px-4 py-3">
               <summary className="cursor-pointer text-[13.5px] font-semibold text-[#0b1024]">
-                Справочно: периодичность и требования
+                {t("referenceSummary")}
               </summary>
               <div className="pt-3">{reference}</div>
             </details>
@@ -200,7 +204,7 @@ export function MedBookListDialog({
             className="h-10 rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff]"
             onClick={() => onOpenChange(false)}
           >
-            Отмена
+            {common("cancel")}
           </Button>
           <Button
             type="button"
@@ -208,7 +212,7 @@ export function MedBookListDialog({
             onClick={commit}
             className={JOURNAL_DIALOG_SUBMIT_CLASS}
           >
-            {saving ? "Сохранение..." : "Сохранить"}
+            {saving ? common("saving") : common("save")}
           </Button>
         </div>
       </DialogContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { customJournalName } from "@/lib/custom-names";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import {
@@ -35,41 +36,16 @@ type Response = {
   byJournal: { code: string; active: number; completed: number }[];
 };
 
-function pluralRu(one: string, few: string, many: string) {
-  return (n: number) => {
-    const abs = Math.abs(n) % 100;
-    const last = abs % 10;
-    if (abs > 10 && abs < 20) return many;
-    if (last === 1) return one;
-    if (last >= 2 && last <= 4) return few;
-    return many;
-  };
-}
-const minWord = pluralRu("минута", "минуты", "минут");
-const taskWord = pluralRu("задача", "задачи", "задач");
+type Translate = ReturnType<typeof useTranslations<"dashboardUi.liveClaimsCard">>;
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: Translate): string {
   const diff = Date.now() - new Date(iso).getTime();
   const minutes = Math.max(0, Math.floor(diff / 60000));
-  if (minutes < 1) return "только что";
-  if (minutes < 60) return `${minutes} ${minWord(minutes)} назад`;
+  if (minutes < 1) return t("justNow");
+  if (minutes < 60) return t("minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  return `${hours} ч ${minutes % 60} мин назад`;
+  return t("hoursMinutesAgo", { hours, minutes: minutes % 60 });
 }
-
-const JOURNAL_LABELS: Record<string, string> = {
-  hygiene: "Гигиена",
-  health_check: "Здоровье",
-  cold_equipment_control: "Холодильники",
-  climate_control: "Климат",
-  cleaning: "Уборка",
-  incoming_control: "Приёмка",
-  finished_product: "Бракераж",
-  disinfectant_usage: "Дезсредства",
-  fryer_oil: "Фритюр",
-  accident_journal: "Аварии",
-  complaint_register: "Жалобы",
-};
 
 /**
  * Live-виджет «Кто что делает» на дашборде. Опрашивает
@@ -79,11 +55,25 @@ const JOURNAL_LABELS: Record<string, string> = {
  * задачу — менеджер видит изменение почти в реальном времени.
  */
 export function LiveClaimsCard() {
+  const t = useTranslations("dashboardUi.liveClaimsCard");
   const [data, setData] = useState<Response | null>(null);
   // Своё название журнала организации — первым, затем короткая подпись.
   const customNames = useCustomNames();
+  const journalLabels: Record<string, string> = {
+    hygiene: t("journalHygiene"),
+    health_check: t("journalHealthCheck"),
+    cold_equipment_control: t("journalColdEquipment"),
+    climate_control: t("journalClimate"),
+    cleaning: t("journalCleaning"),
+    incoming_control: t("journalIncoming"),
+    finished_product: t("journalFinishedProduct"),
+    disinfectant_usage: t("journalDisinfectant"),
+    fryer_oil: t("journalFryerOil"),
+    accident_journal: t("journalAccident"),
+    complaint_register: t("journalComplaints"),
+  };
   const journalLabel = (code: string) =>
-    customJournalName(customNames, code) ?? JOURNAL_LABELS[code] ?? code;
+    customJournalName(customNames, code) ?? journalLabels[code] ?? code;
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -99,14 +89,14 @@ export function LiveClaimsCard() {
 
   useEffect(() => {
     void load();
-    const t = window.setInterval(() => void load(), 15000);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => void load(), 15000);
+    return () => window.clearInterval(timer);
   }, []);
 
   if (loading && !data) {
     return (
       <div className="rounded-3xl border border-[#ececf4] bg-white p-5 text-[#6f7282]">
-        <Loader2 className="size-4 animate-spin inline" /> Загружаю активность…
+        <Loader2 className="size-4 animate-spin inline" /> {t("loading")}
       </div>
     );
   }
@@ -124,11 +114,10 @@ export function LiveClaimsCard() {
           </span>
           <div>
             <div className="text-[15px] font-semibold text-[#0b1024]">
-              Сейчас работают
+              {t("title")}
             </div>
             <div className="mt-0.5 text-[12px] text-[#6f7282]">
-              {totalActive} {taskWord(totalActive)} в процессе ·{" "}
-              {totalCompleted} завершено сегодня · обновляется каждые 15 секунд
+              {t("summary", { active: totalActive, completed: totalCompleted })}
             </div>
           </div>
         </div>
@@ -136,15 +125,14 @@ export function LiveClaimsCard() {
 
       {totalActive === 0 && totalCompleted === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-6 text-center text-[13px] text-[#6f7282]">
-          Никто пока не взял задачи. Сотрудники могут открыть мини-апп и
-          начать смену.
+          {t("empty")}
         </div>
       ) : null}
 
       {totalActive > 0 ? (
         <div className="mt-4">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-            В работе ({totalActive})
+            {t("inProgress", { count: totalActive })}
           </div>
           <div className="space-y-2">
             {data.activeNow.map((c) => (
@@ -161,13 +149,13 @@ export function LiveClaimsCard() {
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[#6f7282]">
                     <span className="text-[#3848c7]">
-                      {c.userName || "сотрудник"}
+                      {c.userName || t("employee")}
                     </span>
                     <span>·</span>
                     <span>{journalLabel(c.journalCode)}</span>
                     <span>·</span>
                     <Clock className="size-3" />
-                    {timeAgo(c.claimedAt)}
+                    {timeAgo(c.claimedAt, t)}
                   </div>
                 </div>
               </div>
@@ -179,7 +167,7 @@ export function LiveClaimsCard() {
       {totalCompleted > 0 ? (
         <div className="mt-4">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-            Готово сегодня ({totalCompleted})
+            {t("doneToday", { count: totalCompleted })}
           </div>
           <div className="space-y-2">
             {data.completedToday.slice(0, 6).map((c) => (
@@ -196,7 +184,7 @@ export function LiveClaimsCard() {
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[#6f7282]">
                     <span className="text-[#136b2a]">
-                      {c.userName || "сотрудник"}
+                      {c.userName || t("employee")}
                     </span>
                     <span>·</span>
                     <span>{journalLabel(c.journalCode)}</span>

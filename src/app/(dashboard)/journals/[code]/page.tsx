@@ -4,6 +4,7 @@ import { auditPlanConfigWithDisplay, auditPlanOrganizationFallback, captureAudit
 import { captureAuditReportTitle } from "@/lib/audit-report-presentation";
 import { scanHeadingKey, scanDateLabelKey, scanResponsibleLabelKey } from "@/lib/scan-journal-presentation";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { getLocale, getTranslations } from "next-intl/server";
 import type React from "react";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { hasSeenNotice } from "@/lib/seen-notices";
@@ -531,24 +532,26 @@ function buildTrackedDemoValue(field: TrackedTemplateField, rowIndex: number) {
   }
 }
 
-function getTrackedMeta(templateCode: string, dateFrom: Date, dateTo: Date) {
+type PageT = Awaited<ReturnType<typeof getTranslations<"journalUi.page">>>;
+
+function getTrackedMeta(templateCode: string, dateFrom: Date, dateTo: Date, t: PageT) {
   if (isAcceptanceDocumentTemplate(templateCode)) {
     return {
-      metaLabel: "Дата начала",
+      metaLabel: t("startDate"),
       metaValue: toSourceDateLabel(dateFrom),
     };
   }
 
   if (templateCode === CLIMATE_DOCUMENT_TEMPLATE_CODE) {
     return {
-      metaLabel: "Дата начала",
+      metaLabel: t("startDate"),
       metaValue: toSourceDateLabel(dateFrom),
     };
   }
 
   if (!isSourceStyleTrackedTemplate(templateCode)) {
     return {
-      metaLabel: "Период",
+      metaLabel: t("period"),
       metaValue: getJournalDocumentPeriodLabel(templateCode, dateFrom, dateTo),
     };
   }
@@ -556,20 +559,20 @@ function getTrackedMeta(templateCode: string, dateFrom: Date, dateTo: Date) {
   const mode = getTrackedDocumentCreateMode(templateCode);
   if (mode === "staff") {
     return {
-      metaLabel: "Период",
+      metaLabel: t("period"),
       metaValue: getJournalDocumentPeriodLabel(templateCode, dateFrom, dateTo),
     };
   }
 
   if (mode === "uv") {
     return {
-      metaLabel: "Дата начала",
+      metaLabel: t("startDate"),
       metaValue: toSourceDateLabel(dateFrom),
     };
   }
 
   return {
-    metaLabel: "Дата документа",
+    metaLabel: t("documentDate"),
     metaValue: toSourceDateLabel(dateFrom),
   };
 }
@@ -1341,6 +1344,9 @@ export default async function JournalDocumentsPage({
   // организации выключен, объясняем это и даём включить одним нажатием.
   const { tab, from } = await searchParams;
   const session = await requireAuth();
+  const t = await getTranslations("journalUi.page");
+  const locale = await getLocale();
+  const dateLocale = locale === "en" ? "en-GB" : locale === "uz" ? "uz-UZ" : "ru-RU";
 
   const template = await db.journalTemplate.findUnique({
     where: { code: resolvedCode },
@@ -1404,15 +1410,12 @@ export default async function JournalDocumentsPage({
         className="mx-auto max-w-[640px] space-y-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-16 text-center"
       >
         <div className="text-[20px] font-semibold text-[#0b1024]">
-          Этот журнал отключён
+          {t("disabledTitle")}
         </div>
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
-          {fromQr ? "Вы открыли его по QR со скачанного шаблона. " : null}
-          «{journalTitle}» отключён для вашей организации: он не показывается
-          на дашборде и сотрудникам.{" "}
-          {canEnable
-            ? "Включите его одним нажатием — записи и документы за прошлые периоды никуда не делись."
-            : "Включить его может руководитель — в «Настройки → Набор журналов»."}
+          {fromQr ? `${t("disabledFromQr")} ` : null}
+          {t("disabledDescription", { title: journalTitle })}{" "}
+          {canEnable ? t("disabledEnableHint") : t("disabledManagerHint")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           {canEnable ? (
@@ -1426,7 +1429,7 @@ export default async function JournalDocumentsPage({
                 href="/settings/journals"
                 className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
-                Весь набор журналов
+                {t("allJournals")}
               </a>
             </>
           ) : (
@@ -4089,7 +4092,7 @@ export default async function JournalDocumentsPage({
               ? orgUsers.find((user) => user.id === document.responsibleUserId)?.name || null
               : null,
             periodLabel: getJournalDocumentPeriodLabel(resolvedCode, document.dateFrom, document.dateTo),
-            ...getTrackedMeta(resolvedCode, document.dateFrom, document.dateTo),
+            ...getTrackedMeta(resolvedCode, document.dateFrom, document.dateTo, t),
             dateFrom: document.dateFrom.toISOString().slice(0, 10),
             dateTo: document.dateTo.toISOString().slice(0, 10),
             config:
@@ -4267,7 +4270,7 @@ export default async function JournalDocumentsPage({
       {/* Тёмный hero снят: на рабочей странице журнала он занимал первый
           экран, а название журнала и так стоит в крошках PageNav. */}
       <PageHeader
-        eyebrow="Журнал"
+        eyebrow={t("eyebrow")}
         // Своё название с карандашом и «Включён» сразу за ним, под ним
         // официальное — как у документных журналов.
         title={<JournalHeadingName fallback={officialJournalTitle} />}
@@ -4275,7 +4278,7 @@ export default async function JournalDocumentsPage({
         actions={
           <>
             <PageHeaderStat>
-              {entries.length} {entries.length === 1 ? "запись" : "записей"}
+              {t("entryCount", { count: entries.length })}
             </PageHeaderStat>
             {/* «QR-точка контроля» над рядом «Новая запись | Инструкция» —
                 тот же блок, что у документных журналов. */}
@@ -4286,7 +4289,7 @@ export default async function JournalDocumentsPage({
               create={
                 <Link href={`/journals/${resolvedCode}/new`} className={JOURNAL_ACTION_CREATE_CLASS}>
                   <Plus className="size-4" />
-                  Новая запись
+                  {t("newEntry")}
                 </Link>
               }
             />
@@ -4297,18 +4300,17 @@ export default async function JournalDocumentsPage({
       {entries.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-14 text-center sm:px-6">
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Записей пока нет
+            {t("emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-            Первая запись появится здесь сразу после сохранения на
-            странице «Новая запись».
+            {t("emptyDescription")}
           </p>
           <Link
             href={`/journals/${resolvedCode}/new`}
             className="mt-5 inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
             <Plus className="size-4" />
-            Создать запись
+            {t("createEntry")}
           </Link>
         </div>
       ) : (
@@ -4316,11 +4318,11 @@ export default async function JournalDocumentsPage({
           {entries.map((entry) => {
             const statusLabel =
               entry.status === "submitted"
-                ? "Отправлено"
+                ? t("statusSubmitted")
                 : entry.status === "draft"
-                ? "Черновик"
+                ? t("statusDraft")
                 : entry.status === "finalized"
-                ? "Закрыто"
+                ? t("statusFinalized")
                 : entry.status;
             return (
               <li key={entry.id}>
@@ -4331,7 +4333,7 @@ export default async function JournalDocumentsPage({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[15px] font-semibold leading-tight text-[#0b1024]">
-                        {entry.createdAt.toLocaleString("ru-RU", {
+                        {entry.createdAt.toLocaleString(dateLocale, {
                           day: "2-digit",
                           month: "long",
                           year: "numeric",
@@ -4340,7 +4342,7 @@ export default async function JournalDocumentsPage({
                         })}
                       </div>
                       <div className="mt-1.5 text-[13px] text-[#6f7282]">
-                        Заполнил: {entry.filledBy?.name || "—"}
+                        {t("filledBy", { name: entry.filledBy?.name || "—" })}
                       </div>
                     </div>
                     <span className="inline-flex shrink-0 items-center rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-[#3848c7]">

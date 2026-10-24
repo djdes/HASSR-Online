@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   AlertCircle,
   CheckCircle2,
@@ -35,6 +36,7 @@ export function OrgHealthWidget({
   warnCount,
   totalCount,
 }: Props) {
+  const t = useTranslations("dashboardUi.orgHealthWidget");
   const params = useSearchParams();
   const focusParam = params.get("focus");
   const [open, setOpen] = useState(focusParam === "health");
@@ -57,18 +59,18 @@ export function OrgHealthWidget({
       ? {
           chipClass: "bg-[#ecfdf5] text-[#116b2a]",
           fgColor: "#116b2a",
-          label: "отлично",
+          label: t("toneExcellent"),
         }
       : scorePercent >= 60
         ? {
             chipClass: "bg-[#fff8eb] text-[#7a4a00]",
             fgColor: "#7a4a00",
-            label: "почти готово",
+            label: t("toneAlmost"),
           }
         : {
             chipClass: "bg-[#fff4f2] text-[#a13a32]",
             fgColor: "#a13a32",
-            label: "нужна донастройка",
+            label: t("toneNeedsSetup"),
           };
 
   return (
@@ -101,8 +103,8 @@ export function OrgHealthWidget({
               ничего. */}
           <div className="flex items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
             {warnCount > 0
-              ? `Проверка настроек — замечаний: ${warnCount}`
-              : "Проверка настроек — всё в порядке"}
+              ? t("titleWarnings", { count: warnCount })
+              : t("titleOk")}
             <span
               className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tone.chipClass}`}
             >
@@ -110,9 +112,9 @@ export function OrgHealthWidget({
             </span>
           </div>
           <div className="mt-0.5 text-[12px] text-[#6f7282]">
-            {okCount} из {totalCount} готово
+            {t("ready", { ok: okCount, total: totalCount })}
             {" · "}
-            {open ? "кликните строку чтобы перейти" : "кликните чтобы раскрыть"}
+            {open ? t("clickRow") : t("clickExpand")}
           </div>
           {/* F5 — progress-bar «настройки готовы X%». Визуал прогресса
               делает онбординг ощутимее: «осталось 20% и я готов». */}

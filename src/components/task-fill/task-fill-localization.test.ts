@@ -96,7 +96,7 @@ test("photo presentation localizes validation and accessible copy while legacy c
     const copy = taskFillPhotoCopy(t);
     assert.equal(checkPhotoBeforeUpload(invalid, copy), messages.taskFill.photo.invalidType);
     assert.equal(checkPhotoBeforeUpload({ type: "image/png", size: PHOTO_MAX_BYTES + 1 } as File, copy), messages.taskFill.photo.tooLarge);
-    const html = renderToStaticMarkup(createElement(PhotoField, { label: "Customer photo", value: "/uploads/original.png", onChange() {}, required: true, copy }));
+    const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages } as ComponentProps<typeof NextIntlClientProvider>, createElement(PhotoField, { label: "Customer photo", value: "/uploads/original.png", onChange() {}, required: true, copy })));
     assert.ok(html.includes("/uploads/original.png"));
     assert.ok(html.includes(copy.remove));
     assert.ok(html.includes(copy.alt(1)));

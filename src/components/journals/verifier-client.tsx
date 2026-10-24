@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Loader2, X, ShieldCheck } from "lucide-react";
@@ -12,32 +13,44 @@ import {
 } from "@/lib/completion-labels";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
-const VALUE_LABELS: Record<string, string> = {
-  healthy: "здоров",
-  sick: "болен",
-  day_off: "выходной",
-  on_leave: "отпуск",
-  passed: "допущен",
-  failed: "не допущен",
-};
+type VerifierT = ReturnType<typeof useTranslations<"journalUi.verifier">>;
+
+function valueLabel(value: string, t: VerifierT): string | undefined {
+  switch (value) {
+    case "healthy":
+      return t("values.healthy");
+    case "sick":
+      return t("values.sick");
+    case "day_off":
+      return t("values.dayOff");
+    case "on_leave":
+      return t("values.onLeave");
+    case "passed":
+      return t("values.passed");
+    case "failed":
+      return t("values.failed");
+    default:
+      return undefined;
+  }
+}
 
 // Словарь подписей общий с «Проверками» (`lib/completion-labels.ts`):
 // одно и то же поле не должно называться по-разному на двух экранах.
 const formatFieldLabel = completionEntryLabel;
 
-function formatFieldValue(value: unknown): ReactNode {
+function formatFieldValue(value: unknown, t: VerifierT): ReactNode {
   if (value === null || value === undefined) return "—";
   if (typeof value === "boolean") {
-    return value ? "✓ да" : "— нет";
+    return value ? t("yes") : t("no");
   }
   if (typeof value === "string") {
-    return VALUE_LABELS[value] ?? value;
+    return valueLabel(value, t) ?? value;
   }
   if (typeof value === "number") return String(value);
   if (Array.isArray(value)) {
     return value.length === 0
       ? "—"
-      : value.map((v) => formatFieldValue(v)).join(", ");
+      : value.map((v) => formatFieldValue(v, t)).join(", ");
   }
   // Объект — рекурсивно plain
   return (
@@ -47,11 +60,11 @@ function formatFieldValue(value: unknown): ReactNode {
   );
 }
 
-function CellDataView({ data }: { data: unknown }) {
+function CellDataView({ data, t }: { data: unknown; t: VerifierT }) {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return (
       <div className="mt-1 rounded-lg bg-white p-2 text-[11px] text-[#9b9fb3]">
-        Пусто
+        {t("empty")}
       </div>
     );
   }
@@ -63,7 +76,7 @@ function CellDataView({ data }: { data: unknown }) {
   if (entries.length === 0) {
     return (
       <div className="mt-1 rounded-lg bg-white p-2 text-[11px] text-[#9b9fb3]">
-        Пусто
+        {t("empty")}
       </div>
     );
   }
@@ -73,7 +86,7 @@ function CellDataView({ data }: { data: unknown }) {
         <li key={k} className="flex gap-1.5">
           <span className="text-[#9b9fb3]">{formatFieldLabel(k)}:</span>
           <span className="font-medium text-[#0b1024]">
-            {formatFieldValue(v)}
+            {formatFieldValue(v, t)}
           </span>
         </li>
       ))}
@@ -103,6 +116,10 @@ export function VerifierClient({
   initialEntries,
   docVerificationStatus,
 }: Props) {
+  const t = useTranslations("journalUi.verifier");
+  const common = useTranslations("common");
+  const locale = useLocale();
+  const dateLocale = locale === "en" ? "en-GB" : locale === "uz" ? "uz-UZ" : "ru-RU";
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -177,10 +194,10 @@ export function VerifierClient({
         })),
       );
       setSelected(new Set());
-      toast.success("Журнал принят целиком");
+      toast.success(t("approvedAll"));
       router.refresh();
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Ошибка"));
+      toast.error(humanizeFetchError(err, t("error")));
     } finally {
       setBusy(false);
     }
@@ -205,10 +222,10 @@ export function VerifierClient({
         ),
       );
       setSelected(new Set());
-      toast.success(`Принято ячеек: ${ids.length}`);
+      toast.success(t("approvedCells", { count: ids.length }));
       router.refresh();
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Ошибка"));
+      toast.error(humanizeFetchError(err, t("error")));
     } finally {
       setBusy(false);
     }
@@ -218,7 +235,7 @@ export function VerifierClient({
     if (busy) return;
     const reason = rejectReason.trim();
     if (!reason) {
-      toast.error("Укажите причину");
+      toast.error(t("reasonRequired"));
       return;
     }
     setBusy(true);
@@ -240,10 +257,10 @@ export function VerifierClient({
       setSelected(new Set());
       setRejectOpen(false);
       setRejectReason("");
-      toast.success(`Отклонено ячеек: ${ids.length}`);
+      toast.success(t("rejectedCells", { count: ids.length }));
       router.refresh();
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Ошибка"));
+      toast.error(humanizeFetchError(err, t("error")));
     } finally {
       setBusy(false);
     }
@@ -264,10 +281,10 @@ export function VerifierClient({
             readOnly
             className="size-3.5"
           />
-          {allSelected ? "Снять отметку со всех" : "Отметить всё"}
+          {allSelected ? t("deselectAll") : t("selectAll")}
         </button>
         <span className="text-[12px] text-[#6f7282]">
-          Выделено: {selected.size}
+          {t("selected", { count: selected.size })}
         </span>
         <div className="ml-auto flex flex-wrap gap-2">
           <button
@@ -281,7 +298,7 @@ export function VerifierClient({
             ) : (
               <Check className="size-4" />
             )}
-            Принять отмеченные
+            {t("approveSelected")}
           </button>
           <button
             type="button"
@@ -292,7 +309,7 @@ export function VerifierClient({
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#a13a32] bg-white px-3 text-[13px] font-medium text-[#a13a32] hover:bg-[#fff4f2] disabled:opacity-50"
           >
             <X className="size-4" />
-            Отклонить отмеченные
+            {t("rejectSelected")}
           </button>
           <button
             type="button"
@@ -306,13 +323,13 @@ export function VerifierClient({
             }
             title={
               entries.length === 0
-                ? "Нет записей для проверки"
-                : "Одобрить все записи документа"
+                ? t("noEntries")
+                : t("approveAllTitle")
             }
             className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-50"
           >
             <ShieldCheck className="size-4" />
-            {entries.length === 0 ? "Нет записей для проверки" : "Принять весь журнал"}
+            {entries.length === 0 ? t("noEntries") : t("approveAll")}
           </button>
         </div>
       </div>
@@ -324,30 +341,30 @@ export function VerifierClient({
           setApproveAllOpen(false);
           await approveAll();
         }}
-        title="Принять весь журнал?"
-        description={`Одобрены будут все записи документа — ${entries.length}. Отмечать ячейки по одной не придётся.`}
+        title={t("confirmTitle")}
+        description={t("confirmDescription", { count: entries.length })}
         bullets={[
-          { label: "Все записи получат статус «Принято»", tone: "info" },
+          { label: t("confirmBulletStatus"), tone: "info" },
           {
-            label: "Отклонить отдельную запись после этого можно, но придётся делать это вручную",
+            label: t("confirmBulletManual"),
             tone: "warn",
           },
         ]}
-        confirmLabel="Принять всё"
-        cancelLabel="Отмена"
+        confirmLabel={t("confirmAll")}
+        cancelLabel={common("cancel")}
         variant="info"
       />
 
       {rejectOpen ? (
         <div className="mt-3 rounded-2xl border border-[#fecaca] bg-[#fff4f2] p-3">
           <div className="text-[13px] font-medium text-[#a13a32]">
-            Причина отказа ({selected.size} ячеек):
+            {t("rejectReasonTitle", { count: selected.size })}
           </div>
           <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             rows={2}
-            placeholder="Что не так — что нужно исправить"
+            placeholder={t("rejectReasonPlaceholder")}
             className="mt-2 w-full rounded-xl border border-[#dcdfed] bg-white px-3 py-2 text-[13px] focus:border-[#a13a32] focus:outline-none focus:ring-2 focus:ring-[#fecaca]"
           />
           <div className="mt-2 flex flex-wrap gap-2">
@@ -362,7 +379,7 @@ export function VerifierClient({
               ) : (
                 <X className="size-4" />
               )}
-              Отклонить
+              {t("reject")}
             </button>
             <button
               type="button"
@@ -373,7 +390,7 @@ export function VerifierClient({
               disabled={busy}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] hover:bg-[#fafbff] disabled:opacity-50"
             >
-              Отмена
+              {common("cancel")}
             </button>
           </div>
         </div>
@@ -382,7 +399,7 @@ export function VerifierClient({
       <div className="mt-3 space-y-3">
         {grouped.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-6 text-center text-[13px] text-[#6f7282]">
-            В журнале пока нет записей. Сотрудники ещё ничего не заполнили.
+            {t("emptyJournal")}
           </div>
         ) : (
           grouped.map(({ date, items }) => (
@@ -391,7 +408,7 @@ export function VerifierClient({
               className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3"
             >
               <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-                {new Date(date).toLocaleDateString("ru-RU", {
+                {new Date(date).toLocaleDateString(dateLocale, {
                   day: "2-digit",
                   month: "long",
                   year: "numeric",
@@ -422,22 +439,22 @@ export function VerifierClient({
                         </span>
                         {e.verificationStatus === "approved" ? (
                           <span className="rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[10px] text-[#136b2a]">
-                            принято
+                            {t("statusApproved")}
                           </span>
                         ) : e.verificationStatus === "rejected" ? (
                           <span className="rounded-full bg-[#fff4f2] px-2 py-0.5 text-[10px] text-[#d2453d]">
-                            отклонено
+                            {t("statusRejected")}
                           </span>
                         ) : (
                           <span className="rounded-full bg-[#fff8eb] px-2 py-0.5 text-[10px] text-[#a13a32]">
-                            на проверке
+                            {t("statusPending")}
                           </span>
                         )}
                       </div>
-                      <CellDataView data={e.data} />
+                      <CellDataView data={e.data} t={t} />
                       {e.verificationRejectReason ? (
                         <div className="mt-1 text-[12px] text-[#d2453d]">
-                          Причина: {e.verificationRejectReason}
+                          {t("reason", { reason: e.verificationRejectReason })}
                         </div>
                       ) : null}
                     </div>

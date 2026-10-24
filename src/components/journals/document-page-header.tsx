@@ -1,6 +1,7 @@
 "use client";
 
 import { Printer } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 type DocumentPageHeaderProps = {
@@ -31,6 +32,7 @@ export function DocumentPageHeader({
   className,
   rightActions,
 }: DocumentPageHeaderProps) {
+  const t = useTranslations("common");
   const hasPrint = Boolean(showPrint && documentId);
   const hasActions = hasPrint || Boolean(rightActions);
   if (!hasActions) return null;
@@ -58,7 +60,7 @@ export function DocumentPageHeader({
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           >
             <Printer className="size-4" />
-            Печать
+            {t("print")}
           </Button>
         ) : null}
         {rightActions}

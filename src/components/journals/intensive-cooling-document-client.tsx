@@ -130,6 +130,8 @@ function RowDialog(props: {
   titleSuffix?: string;
   onSave: (row: IntensiveCoolingRow) => Promise<void>;
 }) {
+  const tCooling = useTranslations("journalUi.intensiveCooling");
+  const common = useTranslations("common");
   const [row, setRow] = useState<IntensiveCoolingRow>(() => createIntensiveCoolingRow());
   const [submitting, setSubmitting] = useState(false);
   const viewerId = useRosterViewerId(props.users);
@@ -202,7 +204,7 @@ function RowDialog(props: {
       // хотя сервер отказал, и правка терялась. Показываем текст сервера
       // и оставляем окно открытым.
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить строку")
+        humanizeFetchError(error, tCooling("saveRowFailed"))
       );
     } finally {
       setSubmitting(false);
@@ -215,7 +217,7 @@ function RowDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
+              {props.initialRow ? `${tCooling("editRowTitle")}${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : tCooling("addRowTitle")}
             </DialogTitle>
             <button
               type="button"
@@ -229,7 +231,7 @@ function RowDialog(props: {
         <div className="space-y-5 px-8 py-6">
           <fieldset className="space-y-3 rounded-[18px] border border-[#e5e8f2] p-4">
             <legend className="px-1 text-base font-medium">
-              Дата и время изготовления блюда
+              {tCooling("productionDateTime")}
             </legend>
             <div className="relative">
               <Input
@@ -254,10 +256,10 @@ function RowDialog(props: {
           </fieldset>
 
           <SuggestInput
-            ariaLabel="Наименование блюда"
+            ariaLabel={tCooling("dishName")}
             value={row.dishName}
             options={props.dishOptions ?? Array.from(new Set(props.config.dishSuggestions))}
-            placeholder="Введите наименование блюда"
+            placeholder={tCooling("dishNamePlaceholder")}
             onChange={(next) => setValue("dishName", next)}
           />
 
@@ -265,50 +267,50 @@ function RowDialog(props: {
             value={row.startTemperature}
             onChange={(event) => setValue("startTemperature", event.target.value)}
             className="h-9 rounded-xl border-[#d7dbea]"
-            placeholder="Введите температуру в начале процесса охлаждения, °C"
+            placeholder={tCooling("startTempPlaceholder")}
           />
 
           <Input
             value={row.endTemperature}
             onChange={(event) => setValue("endTemperature", event.target.value)}
             className="h-9 rounded-xl border-[#d7dbea]"
-            placeholder="Введите температуру через 1 час, °C"
+            placeholder={tCooling("endTempPlaceholder")}
           />
 
           <Textarea
             value={row.correctiveAction}
             onChange={(event) => setValue("correctiveAction", event.target.value)}
             className="min-h-32 rounded-2xl border-[#d7dbea]"
-            placeholder="Корректирующие действия"
+            placeholder={tCooling("correctiveActions")}
           />
 
           <Textarea
             value={row.comment}
             onChange={(event) => setValue("comment", event.target.value)}
             className="min-h-32 rounded-2xl border-[#d7dbea]"
-            placeholder="Комментарий"
+            placeholder={tCooling("comment")}
           />
 
           <div className="space-y-2">
             <Label className="text-base text-[#6e7387]">
-              Лицо, проводившее контроль
+              {tCooling("controlPerson")}
             </Label>
             <Select
               value={row.responsibleTitle || "__empty__"}
               onValueChange={responsibleCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d7dbea]">
-                <SelectValue placeholder="Лицо, проводившее контроль" />
+                <SelectValue placeholder={tCooling("controlPerson")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите должность</SelectItem>
+                <SelectItem value="__empty__">{tCooling("choosePosition")}</SelectItem>
                 <PositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base text-[#6e7387]">Сотрудник</Label>
+            <Label className="text-base text-[#6e7387]">{tCooling("employee")}</Label>
             <Select
               value={row.responsibleUserId || "__empty__"}
               onValueChange={(value) => {
@@ -327,10 +329,10 @@ function RowDialog(props: {
               onOpenChange={responsibleCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d7dbea]">
-                <SelectValue placeholder="Сотрудник" />
+                <SelectValue placeholder={tCooling("employee")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
+                <SelectItem value="__empty__">{tCooling("chooseEmployee")}</SelectItem>
                 {(row.responsibleTitle ? responsibleCascade.candidates : props.users).map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.name}
@@ -355,10 +357,10 @@ function RowDialog(props: {
               className="h-9 rounded-xl bg-[#5563ff] px-8 text-[13.5px] text-white hover:bg-[#4452ee]"
             >
               {submitting
-                ? "Сохранение..."
+                ? common("saving")
                 : props.initialRow
-                  ? "Сохранить"
-                  : "Добавить"}
+                  ? common("save")
+                  : common("add")}
             </Button>
           </div>
         </div>
@@ -382,6 +384,7 @@ function RowHistorySection(props: {
   history: IntensiveCoolingRowHistoryEntry[];
   users: UserItem[];
 }) {
+  const tCooling = useTranslations("journalUi.intensiveCooling");
   // Reverse-chronological — newest first.
   const ordered = [...props.history].sort((a, b) => {
     return new Date(b.at).getTime() - new Date(a.at).getTime();
@@ -391,12 +394,11 @@ function RowHistorySection(props: {
       <legend className="px-1 text-base font-medium text-[#3848c7]">
         <span className="inline-flex items-center gap-2">
           <History className="size-4" />
-          История изменений · {props.history.length}
+          {tCooling("historyTitle", { count: props.history.length })}
         </span>
       </legend>
       <p className="text-[12px] leading-snug text-[#6f7282]">
-        Все правки строки фиксируются автоматически — это требование
-        ХАССП. Ниже показаны значения ДО каждого изменения.
+        {tCooling("historyNote")}
       </p>
       <ul className="space-y-3">
         {ordered.map((entry, idx) => {
@@ -415,12 +417,12 @@ function RowHistorySection(props: {
                 <span className="font-medium text-[#0b1024]">
                   {formatHistoryTimestamp(entry.at)}
                 </span>
-                <span>Изменил: {editorName}</span>
+                <span>{tCooling("changedBy", { name: editorName })}</span>
               </div>
               <dl className="mt-2 grid grid-cols-1 gap-y-1 sm:grid-cols-2 sm:gap-x-4">
-                <HistoryField label="Блюдо" value={entry.prev.dishName} />
+                <HistoryField label={tCooling("dish")} value={entry.prev.dishName} />
                 <HistoryField
-                  label="Время"
+                  label={tCooling("time")}
                   value={
                     entry.prev.productionHour || entry.prev.productionMinute
                       ? `${entry.prev.productionHour || "00"}:${entry.prev.productionMinute || "00"}`
@@ -428,7 +430,7 @@ function RowHistorySection(props: {
                   }
                 />
                 <HistoryField
-                  label="T° в начале"
+                  label={tCooling("tempStart")}
                   value={
                     entry.prev.startTemperature
                       ? `${entry.prev.startTemperature} °C`
@@ -436,7 +438,7 @@ function RowHistorySection(props: {
                   }
                 />
                 <HistoryField
-                  label="T° через 1 час"
+                  label={tCooling("tempOneHour")}
                   value={
                     entry.prev.endTemperature
                       ? `${entry.prev.endTemperature} °C`
@@ -444,10 +446,10 @@ function RowHistorySection(props: {
                   }
                 />
                 <HistoryField
-                  label="Корректирующие действия"
+                  label={tCooling("correctiveActions")}
                   value={entry.prev.correctiveAction}
                 />
-                <HistoryField label="Комментарий" value={entry.prev.comment} />
+                <HistoryField label={tCooling("comment")} value={entry.prev.comment} />
               </dl>
             </li>
           );
@@ -475,6 +477,9 @@ function SettingsDialog(props: {
   onSave: (payload: { title: string; dateFrom: string }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const tStaff = useTranslations("journalWidgets.staff");
+  const tCooling = useTranslations("journalUi.intensiveCooling");
+  const common = useTranslations("common");
   const [title, setTitle] = useState(props.title);
   const [dateFrom, setDateFrom] = useState(props.dateFrom);
   const [submitting, setSubmitting] = useState(false);
@@ -493,7 +498,7 @@ function SettingsDialog(props: {
     } catch (error) {
       // Не закрываем окно при отказе сервера — иначе правка теряется молча.
       toast.error(
-        humanizeFetchError(error, "Не удалось сохранить настройки")
+        humanizeFetchError(error, tCooling("saveSettingsFailed"))
       );
     } finally {
       setSubmitting(false);
@@ -505,8 +510,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа и дата начала."
+        title={tStaff("settings")}
+        description={tCooling("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -514,7 +519,7 @@ function SettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {tStaff("documentName")}
           </Label>
           <Input
             value={title}
@@ -524,7 +529,7 @@ function SettingsDialog(props: {
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
+            {tCooling("startDate")}
           </Label>
           <Input
             type="date"
@@ -543,7 +548,7 @@ function SettingsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              Настройки документа
+              {tStaff("settings")}
             </DialogTitle>
             <button
               type="button"
@@ -556,7 +561,7 @@ function SettingsDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-base text-[#6e7387]">Название документа</Label>
+            <Label className="text-base text-[#6e7387]">{tStaff("documentName")}</Label>
             <Input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -564,7 +569,7 @@ function SettingsDialog(props: {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-base text-[#6e7387]">Дата начала</Label>
+            <Label className="text-base text-[#6e7387]">{tCooling("startDate")}</Label>
             <div className="relative">
               <Input
                 type="date"
@@ -582,7 +587,7 @@ function SettingsDialog(props: {
               disabled={submitting}
               className="h-9 rounded-xl bg-[#5563ff] px-8 text-[13.5px] text-white hover:bg-[#4452ee]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -649,6 +654,7 @@ function FinishDialog(props: {
 }
 
 export function IntensiveCoolingDocumentClient(props: Props) {
+  const tCooling = useTranslations("journalUi.intensiveCooling");
   const t = useTranslations("journalControls");
   const common = useTranslations("common");
   const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
@@ -691,7 +697,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      const error = new Error(result?.error || "Не удалось сохранить журнал");
+      const error = new Error(result?.error || tCooling("saveFailed"));
       throw attachLifecycleErrorMetadata(error, result?.code, response.headers.get("Content-Language"));
     }
     setTitle(nextTitle);
@@ -716,7 +722,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
     });
     const freshResult = await fresh.json().catch(() => null);
     if (!fresh.ok) {
-      throw new Error(freshResult?.error || "Не удалось загрузить журнал");
+      throw new Error(freshResult?.error || tCooling("loadFailed"));
     }
     const nextConfig = mutate(
       normalizeIntensiveCoolingConfig(freshResult?.document?.config, props.users)
@@ -729,7 +735,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
+      throw new Error(result?.error || tCooling("saveFailed"));
     }
     setConfig(nextConfig);
     startTransition(() => router.refresh());
@@ -784,15 +790,14 @@ export function IntensiveCoolingDocumentClient(props: Props) {
       0
     );
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные строки?",
-      description:
-        "Записи интенсивного охлаждения будут удалены безвозвратно — вместе с историей их правок.",
+      title: tCooling("deleteRowsTitle"),
+      description: tCooling("deleteRowsDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: common("delete"),
       bullets: [
-        { label: `Строк будет удалено: ${doomed.length}`, tone: "warn" },
-        { label: `Заполненных значений потеряется: ${filledValues}`, tone: "warn" },
-        { label: `Останется строк: ${rows.length - doomed.length}`, tone: "default" },
+        { label: tCooling("rowsToDelete", { count: doomed.length }), tone: "warn" },
+        { label: tCooling("valuesLost", { count: filledValues }), tone: "warn" },
+        { label: tCooling("rowsRemain", { count: rows.length - doomed.length }), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -803,7 +808,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
     }));
     setSelectedRowIds([]);
     toast.success(
-      `Удалено строк: ${doomed.length}; значений: ${filledValues}`
+      tCooling("deletedSummary", { rows: doomed.length, values: filledValues })
     );
   }
 
@@ -833,23 +838,23 @@ export function IntensiveCoolingDocumentClient(props: Props) {
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
             handleDeleteSelected().catch((error) =>
-              toast.error(humanizeFetchError(error, "Ошибка"))
+              toast.error(humanizeFetchError(error, tCooling("genericError")))
             );
           }}
-          hint="Строки будут удалены вместе с историей правок"
+          hint={tCooling("deleteHint")}
         >
           <SelectionEditButton count={selectedRowIds.length} disabled={!isActive} onClick={() => seq.start(selectedRowIds)} />
         </JournalSelectionBar>
       ) : null}
 
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={tCooling("emptyTitle")} emptyBody={tCooling("emptyBody")} />
       <JournalDocumentShell
         title={title || INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME}
         documentId={props.documentId}
         backHref={`/journals/${props.routeCode}`}
         onSettings={isActive ? () => setSettingsOpen(true) : undefined}
         closed={!isActive}
-        closedHint="Откройте журнал заново, чтобы добавлять и править строки."
+        closedHint={tCooling("closedHint")}
         menuItems={
           isActive
             ? [
@@ -884,11 +889,11 @@ export function IntensiveCoolingDocumentClient(props: Props) {
                 />
               ) : null,
               fields: [
-                { label: "T° в начале", value: formatTemperatureLabel(row.startTemperature), hideIfEmpty: true },
-                { label: "T° через час", value: formatTemperatureLabel(row.endTemperature), hideIfEmpty: true },
-                { label: "Корректирующие действия", value: row.correctiveAction, hideIfEmpty: true },
-                { label: "Комментарий", value: row.comment, hideIfEmpty: true },
-                { label: "Контроль осуществлял", value: getResponsibleLabel(row, props.users), hideIfEmpty: true },
+                { label: tCooling("tempStart"), value: formatTemperatureLabel(row.startTemperature), hideIfEmpty: true },
+                { label: tCooling("tempOneHourShort"), value: formatTemperatureLabel(row.endTemperature), hideIfEmpty: true },
+                { label: tCooling("correctiveActions"), value: row.correctiveAction, hideIfEmpty: true },
+                { label: tCooling("comment"), value: row.comment, hideIfEmpty: true },
+                { label: tCooling("controlledBy"), value: getResponsibleLabel(row, props.users), hideIfEmpty: true },
               ],
               onClick: isActive
                 ? () => {
@@ -905,11 +910,11 @@ export function IntensiveCoolingDocumentClient(props: Props) {
                   }}
                   className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5863f8] px-4 text-[14px] font-medium text-white hover:bg-[#4752e6]"
                 >
-                  Редактировать
+                  {common("edit")}
                 </button>
               ) : null,
             }))}
-            emptyLabel="Записей по интенсивному охлаждению нет."
+            emptyLabel={tCooling("emptyCards")}
           />
         }
         paperHeader={
@@ -937,7 +942,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
               }}
             >
               <Plus className="size-5" />
-              Добавить
+              {common("add")}
             </Button>
           ) : null
         }
@@ -955,27 +960,27 @@ export function IntensiveCoolingDocumentClient(props: Props) {
                 />
               </th>
               <th className={`w-[170px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Дата и время изготовления блюда
+                {tCooling("productionDateTime")}
               </th>
               <th className={`w-[180px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Наименование блюда
+                {tCooling("dishName")}
               </th>
               <th className={`w-[170px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Температура в начале процесса охлаждения
+                {tCooling("tableStartTemp")}
               </th>
               <th className={`w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Температура через 1 час
+                {tCooling("tableEndTemp")}
               </th>
               <th className={`w-[410px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Корректирующие действия
+                {tCooling("correctiveActions")}
               </th>
               <th className={`w-[170px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Комментарий
+                {tCooling("comment")}
               </th>
               <th className={`w-[260px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>
-                Лицо, проводившее контроль интенсивного охлаждения
+                {tCooling("tableControlPerson")}
                 <br />
-                (должность, ФИО)
+                {tCooling("tablePositionName")}
               </th>
             </tr>
           </thead>
@@ -1010,7 +1015,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
                   {formatIntensiveCoolingDateTime(row)}
                   {row.history && row.history.length > 0 ? (
                     <span
-                      title={`Запись редактировалась ${row.history.length} раз`}
+                      title={tCooling("editedTimes", { count: row.history.length })}
                       className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[10px] font-medium text-[#3848c7]"
                     >
                       <History className="size-3" />
@@ -1042,7 +1047,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
               <tr>
                 <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`} />
                 <td className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#8a8ea4]`} colSpan={7}>
-                  Строк пока нет
+                  {tCooling("noRows")}
                 </td>
               </tr>
             ) : null}
@@ -1060,7 +1065,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
                 leading={1}
                 labelSpan={2}
                 trailing={5}
-                label="Добавить"
+                label={common("add")}
                 onClick={() => {
                   setEditingRow(null);
                   setRowDialogOpen(true);

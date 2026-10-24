@@ -39,10 +39,11 @@ export function JournalControlsProvider({ children }: { children: React.ReactNod
 
 export function useJournalControls() { return useContext(Context); }
 
-export async function saveJournalControls(patch: unknown) {
+/** `fallbackMessage` is shown when the server returns no error text; pass a translated string. */
+export async function saveJournalControls(patch: unknown, fallbackMessage = "Failed to save settings") {
   const response = await fetch("/api/settings/journal-controls", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
   const body = await response.json();
-  if (!response.ok) throw new Error(body.error || "Не удалось сохранить настройки");
+  if (!response.ok) throw new Error(body.error || fallbackMessage);
   window.dispatchEvent(new Event("journal-controls-changed"));
   return parseJournalControls(body);
 }

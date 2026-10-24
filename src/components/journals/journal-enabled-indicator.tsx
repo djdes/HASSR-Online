@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +41,7 @@ function useJournalEnabledToggle({
   /** Полный список отключённых кодов: PATCH ждёт набор, а не дельту. */
   disabledCodes: string[];
 }) {
+  const t = useTranslations("journalUi.journalEnabled");
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -54,12 +56,12 @@ function useJournalEnabledToggle({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error || "Не удалось сохранить настройку");
+        throw new Error(body?.error || t("saveFailed"));
       }
       toast.success(successText);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить настройку"));
+      toast.error(humanizeFetchError(error, t("saveFailed")));
     } finally {
       setBusy(false);
       setConfirmOpen(false);
@@ -69,12 +71,12 @@ function useJournalEnabledToggle({
   function enable() {
     return patch(
       disabledCodes.filter((item) => item !== code),
-      `Журнал включён: ${name}`,
+      t("enabledToast", { name }),
     );
   }
 
   function turnOff() {
-    return patch(Array.from(new Set([...disabledCodes, code])), `Журнал отключён: ${name}`);
+    return patch(Array.from(new Set([...disabledCodes, code])), t("disabledToast", { name }));
   }
 
   const confirmDialog = (
@@ -84,15 +86,15 @@ function useJournalEnabledToggle({
       onConfirm={turnOff}
       variant="warn"
       icon={EyeOff}
-      title="Отключить журнал?"
-      description={`«${name}» перестанет считаться обязательным для вашей организации.`}
+      title={t("confirmTitle")}
+      description={t("confirmDescription", { name })}
       bullets={[
-        { label: "Исчезнет с дашборда и у сотрудников в приложении", tone: "warn" },
-        { label: "Задачи по нему больше не создаются" },
-        { label: "Записи и документы сохраняются — ничего не удаляется" },
-        { label: "Включить обратно можно здесь же или в «Настройки → Набор журналов»", tone: "info" },
+        { label: t("bulletDashboard"), tone: "warn" },
+        { label: t("bulletTasks") },
+        { label: t("bulletRecords") },
+        { label: t("bulletReenable"), tone: "info" },
       ]}
-      confirmLabel="Отключить"
+      confirmLabel={t("confirmLabel")}
     />
   );
 
@@ -116,13 +118,14 @@ export function JournalEnabledIndicator({
   canToggle: boolean;
   className?: string;
 }) {
+  const t = useTranslations("journalUi.journalEnabled");
   const { busy, enable, askTurnOff, confirmDialog } = useJournalEnabledToggle({
     code,
     name,
     disabledCodes,
   });
 
-  const label = disabled ? "Отключён" : "Включён";
+  const label = disabled ? t("statusOff") : t("statusOn");
   const Icon = disabled ? EyeOff : Eye;
 
   const pill = (
@@ -143,7 +146,7 @@ export function JournalEnabledIndicator({
       {label}
       {canToggle ? (
         <span className={cn("text-[12px] font-normal", disabled ? "text-[#9b9fb3]" : "text-[#116b2a]/70")}>
-          · {disabled ? "включить" : "отключить"}
+          · {disabled ? t("actionEnable") : t("actionDisable")}
         </span>
       ) : null}
     </span>
@@ -157,9 +160,9 @@ export function JournalEnabledIndicator({
         type="button"
         disabled={busy}
         onClick={() => (disabled ? void enable() : askTurnOff())}
-        title={disabled ? "Включить журнал" : "Отключить журнал"}
+        title={disabled ? t("enableTitle") : t("disableTitle")}
         aria-label={
-          disabled ? `Включить журнал «${name}»` : `Отключить журнал «${name}»`
+          disabled ? t("enableAria", { name }) : t("disableAria", { name })
         }
         className="disabled:opacity-60"
       >
@@ -194,6 +197,7 @@ export function JournalEnabledSwitch({
   disabledCodes: string[];
   canToggle: boolean;
 }) {
+  const t = useTranslations("journalUi.journalEnabled");
   const { busy, askTurnOff, confirmDialog } = useJournalEnabledToggle({
     code,
     name,
@@ -204,11 +208,11 @@ export function JournalEnabledSwitch({
     return (
       <span
         data-journal-enabled="on"
-        title="Журнал включён для вашей организации"
+        title={t("enabledHint")}
         className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-[#116b2a]"
       >
         <span aria-hidden className="size-2 rounded-full bg-[#22c55e]" />
-        Включён
+        {t("statusOn")}
       </span>
     );
   }
@@ -217,7 +221,7 @@ export function JournalEnabledSwitch({
     <>
       <label
         data-journal-enabled="on"
-        title="Отключить журнал"
+        title={t("disableTitle")}
         className={cn(
           "inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-[#3c4053]",
           busy && "cursor-progress",
@@ -233,10 +237,10 @@ export function JournalEnabledSwitch({
           onCheckedChange={(checked) => {
             if (!checked) askTurnOff();
           }}
-          aria-label="Вести журнал"
+          aria-label={t("switchAria")}
         />
         {busy ? <Loader2 aria-hidden className="size-3.5 animate-spin text-[#6f7282]" /> : null}
-        <span aria-hidden>Включён</span>
+        <span aria-hidden>{t("statusOn")}</span>
       </label>
       {confirmDialog}
     </>

@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import {
-  INSPECTOR_PERIOD_LABELS,
   formatDayKeyRu,
   type DayWindow,
   type InspectorPeriodPreset,
@@ -28,6 +28,14 @@ export function PeriodPicker({
   period: ResolvedPeriod;
   window: DayWindow;
 }) {
+  const t = useTranslations("inspectorUi.periodPicker");
+  const labels: Record<InspectorPeriodPreset, string> = {
+    today: t("today"),
+    "7d": t("days7"),
+    month: t("month"),
+    quarter: t("quarter"),
+    custom: t("custom"),
+  };
   return (
     <div className="flex flex-col gap-3" data-period-picker>
       <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap" role="list">
@@ -45,7 +53,7 @@ export function PeriodPicker({
                   : "border-[#c9cdd5] bg-white text-[#141821] hover:border-[#141821]"
               }`}
             >
-              {INSPECTOR_PERIOD_LABELS[p]}
+              {labels[p]}
             </Link>
           );
         })}
@@ -53,7 +61,7 @@ export function PeriodPicker({
       <form method="get" action={basePath} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="p" value="custom" />
         <label className="flex flex-col gap-1 text-[12.5px] text-[#5b6170]">
-          с
+          {t("from")}
           <input
             type="date"
             name="from"
@@ -64,7 +72,7 @@ export function PeriodPicker({
           />
         </label>
         <label className="flex flex-col gap-1 text-[12.5px] text-[#5b6170]">
-          по
+          {t("to")}
           <input
             type="date"
             name="to"
@@ -82,11 +90,11 @@ export function PeriodPicker({
               : "border-[#c9cdd5] bg-white text-[#141821] hover:border-[#141821]"
           }`}
         >
-          {INSPECTOR_PERIOD_LABELS.custom}
+          {labels.custom}
         </button>
       </form>
       <p className="text-[12.5px] text-[#8a8f9c]">
-        Доступны даты с {formatDayKeyRu(window.from)} по {formatDayKeyRu(window.to)}.
+        {t("available", { from: formatDayKeyRu(window.from), to: formatDayKeyRu(window.to) })}
       </p>
     </div>
   );

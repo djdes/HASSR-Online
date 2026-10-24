@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ export function JournalEnableButton({
   /** `blank-qr` — пришли по QR со скачанного шаблона (для аудита). */
   source: "blank-qr" | "journal-page";
 }) {
+  const t = useTranslations("journalUi.journalEnabled");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -36,13 +38,13 @@ export function JournalEnableButton({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error || "Не удалось включить журнал");
+        throw new Error(body?.error || t("enableFailed"));
       }
-      toast.success(`Журнал включён: ${name}`);
+      toast.success(t("enabledToast", { name }));
       // Страница перерисуется уже с журналом; кнопка крутится до этого.
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось включить журнал"));
+      toast.error(humanizeFetchError(error, t("enableFailed")));
       setBusy(false);
     }
   }
@@ -56,7 +58,7 @@ export function JournalEnableButton({
       className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-70"
     >
       {busy ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
-      Включить журнал
+      {t("enableJournal")}
     </button>
   );
 }

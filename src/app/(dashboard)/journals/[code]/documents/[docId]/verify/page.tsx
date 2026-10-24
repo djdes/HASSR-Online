@@ -37,6 +37,7 @@ export default async function VerifyDocumentPage({
   const locale = await getSiteLocale();
   const tCrumbs = await getTranslations({ locale, namespace: "navigation.breadcrumbs" });
   const tHeader = await getTranslations({ locale, namespace: "navigation.header" });
+  const t = await getTranslations({ locale, namespace: "journalUi.verifyPage" });
 
   const doc = await db.journalDocument.findFirst({
     where: { id: docId, organizationId: orgId },
@@ -125,7 +126,7 @@ export default async function VerifyDocumentPage({
             </span>
             <div>
               <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Проверка журнала
+                {t("heading")}
               </div>
               <h1 className="mt-1 text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
                 {doc.template.name}
@@ -135,59 +136,56 @@ export default async function VerifyDocumentPage({
           </div>
           <div className="flex flex-wrap gap-2 text-[12px]">
             <span className="rounded-full bg-[#fff8eb] px-3 py-1 text-[#a13a32]">
-              На проверке: {pending}
+              {t("pending", { count: pending })}
             </span>
             <span className="rounded-full bg-[#ecfdf5] px-3 py-1 text-[#136b2a]">
-              Принято: {totals.approved}
+              {t("approved", { count: totals.approved })}
             </span>
             <span className="rounded-full bg-[#fff4f2] px-3 py-1 text-[#d2453d]">
-              Отклонено: {totals.rejected}
+              {t("rejected", { count: totals.rejected })}
             </span>
           </div>
         </div>
 
         {doc.verificationStatus === "approved" ? (
           <div className="mt-4 rounded-2xl border border-[#a7f3d0] bg-[#ecfdf5] p-3 text-[13px] text-[#136b2a]">
-            Журнал принят целиком —{" "}
-            {doc.verificationDecidedAt?.toLocaleDateString("ru-RU", {
-              dateStyle: "medium",
+            {t("approvedAll", {
+              date:
+                doc.verificationDecidedAt?.toLocaleDateString(locale, {
+                  dateStyle: "medium",
+                }) ?? "",
             })}
-            .
           </div>
         ) : doc.verificationStatus === "rejected" ? (
           <div className="mt-4 rounded-2xl border border-[#fecaca] bg-[#fff4f2] p-3 text-[13px] text-[#d2453d]">
-            Отклонено целиком: {doc.verificationRejectReason}
+            {t("rejectedAll", { reason: doc.verificationRejectReason ?? "" })}
           </div>
         ) : null}
 
         <p className="mt-4 text-[13px] leading-relaxed text-[#3c4053]">
-          Проверьте все записи. Если всё в порядке — нажмите{" "}
-          <b>«Принять весь журнал»</b>. Если нашли ошибку — отметьте
-          конкретные ячейки и нажмите <b>«Отклонить отмеченные»</b> с
-          причиной. Сотрудники, заполнившие отклонённые ячейки, получат
-          уведомление и смогут исправить.
+          {t.rich("intro", { b: (chunks) => <b>{chunks}</b> })}
         </p>
       </section>
 
       <PageGuide
         storageKey="document-verify"
-        title="Как принимать журнал"
+        title={t("guideTitle")}
         bullets={[
           {
-            title: "Беглый осмотр",
-            body: "Записи сгруппированы по дням. Проверьте что ничего не пропущено и значения адекватны.",
+            title: t("guide1Title"),
+            body: t("guide1Body"),
           },
           {
-            title: "Если всё ок",
-            body: "«Принять весь журнал» одной кнопкой — все ячейки одобрены, supervisor-задача в TasksFlow закрыта, журнал считается завершённым.",
+            title: t("guide2Title"),
+            body: t("guide2Body"),
           },
           {
-            title: "Если что-то не так",
-            body: "Отметьте конкретные ячейки чекбоксами и нажмите «Отклонить отмеченные» с указанием причины. Сотрудники, заполнившие эти ячейки, получат push в Telegram «возвращено на доработку: <причина>».",
+            title: t("guide3Title"),
+            body: t("guide3Body"),
           },
           {
-            title: "Что увидит сотрудник",
-            body: "Отклонённые ячейки помечаются красной рамкой в журнале. После исправления он снова отправляет на проверку — придёт сюда обратно.",
+            title: t("guide4Title"),
+            body: t("guide4Body"),
           },
         ]}
       />

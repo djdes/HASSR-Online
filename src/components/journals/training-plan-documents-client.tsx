@@ -372,6 +372,7 @@ export function TrainingPlanDocumentsClient({
   const tp = useTranslations("journalTrainingPlan");
   const pdf = useTranslations("personnelMaintenancePdf");
   const scan = useTranslations("journalScan");
+  const ui = useTranslations("journalUi.trainingPlan");
   const locale = useLocale();
   const t = useTranslations("journalControls");
   const common = useTranslations("common");
@@ -445,7 +446,7 @@ export function TrainingPlanDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить");
+      throw new Error(failure?.error || ui("saveFailed"));
     }
 
     router.refresh();

@@ -279,7 +279,7 @@ function StaffTrainingDocumentEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config: nextConfig }),
       });
-      if (!response.ok) throw new Error("Не удалось сохранить журнал");
+      if (!response.ok) throw new Error(st("saveFailed"));
       startTransition(() => router.refresh());
     } catch (error) {
       if (options?.silent) throw error;
@@ -982,7 +982,7 @@ function StaffTrainingDocumentEditor({
                 body: JSON.stringify({ title: settingsTitle }),
               });
               if (!response.ok) {
-                throw new Error("Не удалось сохранить настройки");
+                throw new Error(st("settingsFailed"));
               }
               setSettingsOpen(false);
               router.refresh();
@@ -1023,7 +1023,7 @@ function StaffTrainingDocumentEditor({
                         body: JSON.stringify({ title: settingsTitle }),
                       });
                       if (!response.ok) {
-                        throw new Error("Не удалось сохранить настройки");
+                        throw new Error(st("settingsFailed"));
                       }
                       setSettingsOpen(false);
                       router.refresh();

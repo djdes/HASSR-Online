@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { BookOpenText, Ellipsis, Pencil, Plus, Printer, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +125,9 @@ function GlassControlFormDialog(props: {
   submitLabel: string;
   onSubmit: (state: FormState) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.glassControl");
+  const tc = useTranslations("common");
+  const tw = useTranslations("journalWidgets.staff");
   const [state, setState] = useState<FormState>(props.initialState);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -170,7 +174,7 @@ function GlassControlFormDialog(props: {
         <div className="space-y-4 px-7 py-6">
           <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Название документа</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("documentName")}</Label>
             <Input
               value={state.title}
               onChange={(event) =>
@@ -181,7 +185,7 @@ function GlassControlFormDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Дата начала</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("dateFrom")}</Label>
             <Input
               type="date"
               value={state.dateFrom}
@@ -193,7 +197,7 @@ function GlassControlFormDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Частота контроля</Label>
+            <Label className="text-[16px] text-[#6f7282]">{t("controlFrequency")}</Label>
             <Input
               value={state.controlFrequency}
               onChange={(event) =>
@@ -207,13 +211,13 @@ function GlassControlFormDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Должность ответственного</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("responsiblePosition")}</Label>
             <Select
               value={state.responsibleTitle}
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={tw("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 {options.titles.map((title) => (
@@ -226,7 +230,7 @@ function GlassControlFormDialog(props: {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-[16px] text-[#6f7282]">Сотрудник</Label>
+            <Label className="text-[16px] text-[#6f7282]">{tw("employee")}</Label>
             <Select
               value={state.responsibleUserId}
               onValueChange={cascade.handleEmployeeChange}
@@ -234,7 +238,7 @@ function GlassControlFormDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={tw("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
                 {employeeCandidates.map((user) => (
@@ -255,7 +259,7 @@ function GlassControlFormDialog(props: {
               }}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
-              {submitting ? "Сохранение..." : props.submitLabel}
+              {submitting ? tc("saving") : props.submitLabel}
             </Button>
           </div>
         </div>
@@ -265,6 +269,10 @@ function GlassControlFormDialog(props: {
 }
 
 export function GlassControlDocumentsClient(props: Props) {
+  const t = useTranslations("journalUi.glassControl");
+  const tc = useTranslations("common");
+  const tl = useTranslations("journalControls.list");
+  const tda = useTranslations("journalControls.documentActions");
   const router = useRouter();
   const routeCode = props.routeCode || props.templateCode;
   // Создание / настройки / удаление документов API отдаёт только
@@ -332,7 +340,7 @@ export function GlassControlDocumentsClient(props: Props) {
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
       throw new Error(
-        failure?.error || "Не удалось сохранить настройки документа"
+        failure?.error || t("saveSettingsFailed")
       );
     }
 
@@ -341,14 +349,14 @@ export function GlassControlDocumentsClient(props: Props) {
   }
 
   async function handleDelete(documentId: string, title: string) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${title}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: tda("deleteTitle"), description: t("deleteDescription", { title }), variant: "danger", confirmLabel: tc("delete") }))) return;
 
     const response = await fetch(`/api/journal-documents/${documentId}`, {
       method: "DELETE",
     });
 
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(tda("deleteError"));
       return;
     }
 
@@ -368,7 +376,7 @@ export function GlassControlDocumentsClient(props: Props) {
             canManageDocuments && props.activeTab === "active" ? (
               <Button type="button" onClick={() => setCreating(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
                 <Plus className="size-4" />
-                Создать документ
+                {tl("create")}
               </Button>
             ) : null
           }
@@ -399,7 +407,7 @@ export function GlassControlDocumentsClient(props: Props) {
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("responsible")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {document.responsibleTitle
                     ? `${document.responsibleTitle}${responsibleName ? `: ${responsibleName}` : ""}`
@@ -408,7 +416,7 @@ export function GlassControlDocumentsClient(props: Props) {
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("dateFrom")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatRuDateDash(document.dateFrom)}
                 </div>
@@ -416,13 +424,13 @@ export function GlassControlDocumentsClient(props: Props) {
 
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия"
+                  title={tl("actions")}
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: tl("settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setEditingDocument(document),
                           },
@@ -430,7 +438,7 @@ export function GlassControlDocumentsClient(props: Props) {
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: tl("print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
                         window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
@@ -442,7 +450,7 @@ export function GlassControlDocumentsClient(props: Props) {
                       ? [
                           {
                             key: "delete",
-                            label: "Удалить",
+                            label: tl("delete"),
                             icon: <Trash2 className="size-4 text-[#6f7282]" />,
                             tone: "danger" as const,
                             onSelect: () =>
@@ -472,17 +480,17 @@ export function GlassControlDocumentsClient(props: Props) {
       <GlassControlFormDialog
         open={creating}
         onOpenChange={setCreating}
-        title="Создание документа"
+        title={t("createTitle")}
         users={props.users}
         initialState={defaultState}
-        submitLabel="Создать"
+        submitLabel={t("create")}
         onSubmit={createDocument}
       />
 
       <GlassControlFormDialog
         open={!!editingDocument}
         onOpenChange={(open) => !open && setEditingDocument(null)}
-        title="Настройки документа"
+        title={t("settingsTitle")}
         users={props.users}
         initialState={
           editingDocument
@@ -499,7 +507,7 @@ export function GlassControlDocumentsClient(props: Props) {
               }
             : defaultState
         }
-        submitLabel="Сохранить"
+        submitLabel={tc("save")}
         onSubmit={saveSettings}
       />
     </div>

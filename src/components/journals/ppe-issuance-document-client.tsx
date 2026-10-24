@@ -778,7 +778,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
       }),
     });
     if (!response.ok) {
-      throw tagPpeError(new Error("Не удалось сохранить документ"), "saveDocumentFailed");
+      throw tagPpeError(new Error(p("saveDocumentFailed")), "saveDocumentFailed");
     }
     setTitle(nextTitle);
     setTitleFallback(false);

@@ -15,12 +15,6 @@ import { AcknowledgeButton } from "./acknowledge-button";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_RU = {
-  leader: "Руководитель группы",
-  deputy: "Заместитель руководителя",
-  member: "Член группы",
-  secretary: "Секретарь",
-} as const;
 const ROLE_ORDER = { leader: 0, deputy: 1, member: 2, secretary: 3 } as const;
 
 /** Документ для ознакомления: текст политики, положение с составом группы или файл инструкции. */
@@ -48,6 +42,18 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
     }),
     getTranslations("acknowledge"),
   ]);
+  const roleLabel = (role: keyof typeof ROLE_ORDER) => {
+    switch (role) {
+      case "leader":
+        return t("roleLeader");
+      case "deputy":
+        return t("roleDeputy");
+      case "member":
+        return t("roleMember");
+      case "secretary":
+        return t("roleSecretary");
+    }
+  };
   const moment = mark ? formatAckMoment(mark.acknowledgedAt.toISOString(), org?.timezone ?? "Europe/Moscow") : null;
 
   let body: React.ReactNode = null;
@@ -96,7 +102,7 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
             <ul className="space-y-1">
               {members.map((member) => (
                 <li key={member.userId}>
-                  {staffById.get(member.userId)?.name ?? "—"} — {ROLE_RU[member.role]}
+                  {staffById.get(member.userId)?.name ?? "—"} — {roleLabel(member.role)}
                 </li>
               ))}
             </ul>

@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { PhotoLightbox } from "@/components/shared/photo-lightbox";
 import { Switch } from "@/components/ui/switch";
-import { pluralRu } from "@/lib/plural-ru";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { FillMode } from "@/lib/journal-routing";
 import { ORG_SPHERES, sphereLabel, type OrgSphere } from "@/lib/org-profile";
@@ -73,23 +73,29 @@ type Item = {
 /** Бумажный бланк с тем же тумблером вкл/выкл, что у электронных. */
 type PaperItem = PaperJournal & { enabled: boolean };
 
-const FILL_MODE_LABELS: Record<FillMode, { label: string; hint: string; icon: typeof Users }> = {
-  "per-employee": {
-    label: "Каждый сотрудник",
-    hint: "Все подходящие — отдельная задача каждому",
-    icon: Users,
-  },
-  single: {
-    label: "Один исполнитель",
-    hint: "Один человек заполняет за всю смену",
-    icon: UserRound,
-  },
-  sensor: {
-    label: "Датчик",
-    hint: "Заполнит IoT — людям не приходит",
-    icon: Wifi,
-  },
-};
+function useFillModeLabels(): Record<
+  FillMode,
+  { label: string; hint: string; icon: typeof Users }
+> {
+  const t = useTranslations("settingsUi.journalsSettingsClient");
+  return {
+    "per-employee": {
+      label: t("fillEachLabel"),
+      hint: t("fillEachHint"),
+      icon: Users,
+    },
+    single: {
+      label: t("fillSingleLabel"),
+      hint: t("fillSingleHint"),
+      icon: UserRound,
+    },
+    sensor: {
+      label: t("fillSensorLabel"),
+      hint: t("fillSensorHint"),
+      icon: Wifi,
+    },
+  };
+}
 
 export function JournalsSettingsClient({
   items,
@@ -107,6 +113,10 @@ export function JournalsSettingsClient({
   /** Коды журналов, у которых на диске есть PNG-превью бланка. */
   sampleCodes: string[];
 }) {
+  const t = useTranslations("settingsUi.journalsSettingsClient");
+  const tc = useTranslations("common");
+  const FILL_MODE_LABELS = useFillModeLabels();
+  const basisNote = useBasisNote();
   const router = useRouter();
   const [state, setState] = useState<Record<string, boolean>>(
     Object.fromEntries(items.map((item) => [item.code, item.enabled]))
@@ -188,8 +198,8 @@ export function JournalsSettingsClient({
     if (!target) return;
     target.scrollIntoView({ behavior: "smooth", block: "center" });
     setHighlightCode(code);
-    const t = window.setTimeout(() => setHighlightCode(null), 2400);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setHighlightCode(null), 2400);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Счётчик единый: после объединения секций делить «включено» на
@@ -233,20 +243,20 @@ export function JournalsSettingsClient({
       items.find((item) => item.code === code)?.activeDocumentCount ?? 0;
     if (state[code] && activeDocs > 0) {
       const ok = await confirmAsync({
-        title: "Выключить журнал?",
-        description: "Данные останутся в базе, но журнал пропадёт из интерфейса.",
+        title: t("disableTitle"),
+        description: t("disableDescription"),
         bullets: [
           {
-            label: `Активных документов: ${activeDocs} — они скроются из списка журналов, дашборда и задач`,
+            label: t("disableActiveDocs", { count: activeDocs }),
             tone: "warn",
           },
           {
-            label: "Ничего не удаляется: включите журнал обратно — документы вернутся",
+            label: t("disableNothingDeleted"),
             tone: "info",
           },
         ],
         variant: "warn",
-        confirmLabel: "Выключить журнал",
+        confirmLabel: t("disableConfirm"),
       });
       if (!ok) return;
     }
@@ -327,13 +337,13 @@ export function JournalsSettingsClient({
       );
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error || "Не удалось сохранить распределение");
+        throw new Error(data?.error || t("distributionSaveFailed"));
       }
-      toast.success("Распределение обновлено");
+      toast.success(t("distributionUpdated"));
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Ошибка сохранения"
+        error instanceof Error ? error.message : t("saveError")
       );
     } finally {
       setDistSavingCode(null);
@@ -366,16 +376,16 @@ export function JournalsSettingsClient({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error || "Не удалось сохранить настройки");
+        throw new Error(data?.error || t("settingsSaveFailed"));
       }
       toast.success(
         enabledCount === totalCount
-          ? "Все журналы включены"
-          : `Включено ${enabledCount} из ${totalCount} журналов`
+          ? t("allEnabled")
+          : t("enabledToast", { enabled: enabledCount, total: totalCount })
       );
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(error instanceof Error ? error.message : t("saveError"));
     } finally {
       setSaving(false);
     }
@@ -391,7 +401,7 @@ export function JournalsSettingsClient({
       <button
         type="button"
         onClick={() => setLightbox({ url: src, name })}
-        title="Увеличить страницу журнала"
+        title={t("zoomTitle")}
         className="group/preview relative block w-full overflow-hidden border-b border-[#ececf4] bg-white"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -414,7 +424,7 @@ export function JournalsSettingsClient({
                   : "size-4 text-[#b45309]"
               }
             />
-            Увеличить
+            {t("zoom")}
           </span>
         </span>
       </button>
@@ -463,7 +473,7 @@ export function JournalsSettingsClient({
             <Switch
               checked={enabled}
               onCheckedChange={() => toggle(item.code)}
-              aria-label={`Вести журнал «${item.name}»`}
+              aria-label={t("toggleAria", { name: item.name })}
               className="mt-0.5 shrink-0"
             />
             <button
@@ -505,8 +515,8 @@ export function JournalsSettingsClient({
             >
               <AlertTriangle className="mt-px size-3.5 shrink-0" />
               {rule.condition
-                ? "Обязателен при условии выше — включите, если оно про вас"
-                : "Обязателен для вашей сферы — включите"}
+                ? t("requiredConditional")
+                : t("requiredForSphere")}
             </button>
           ) : null}
 
@@ -514,13 +524,13 @@ export function JournalsSettingsClient({
             {item.isMandatorySanpin ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4f2] px-1.5 py-0.5 text-[10px] font-medium text-[#d2453d]">
                 <ShieldCheck className="size-3" />
-                СанПиН
+                {t("badgeSanpin")}
               </span>
             ) : null}
             {item.isMandatoryHaccp ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-1.5 py-0.5 text-[10px] font-medium text-[#5566f6]">
                 <ShieldAlert className="size-3" />
-                ХАССП
+                {t("badgeHaccp")}
               </span>
             ) : null}
             {dist.bonusAmountKopecks > 0 ? (
@@ -537,22 +547,24 @@ export function JournalsSettingsClient({
             <button
               type="button"
               onClick={() => setDistDialogCode(item.code)}
-              title={`Распределение: ${FILL_MODE_LABELS[dist.fillMode].label}`}
-              aria-label={`Кому заполнять журнал «${item.name}»`}
+              title={t("distributionTitle", {
+                mode: FILL_MODE_LABELS[dist.fillMode].label,
+              })}
+              aria-label={t("distributionAria", { name: item.name })}
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl border border-[#ececf4] bg-[#fafbff] px-2 text-[11px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Settings2 className="size-3.5 shrink-0" />
               <ModeIcon className="size-3.5 shrink-0 text-[#6f7282]" />
-              <span className="truncate">Кому</span>
+              <span className="truncate">{t("whoShort")}</span>
             </button>
             <Link
               href={`/settings/journals/${item.code}/scope`}
-              title="Тип задачи и кнопки"
-              aria-label={`Задачи журнала «${item.name}»`}
+              title={t("scopeTitle")}
+              aria-label={t("scopeAria", { name: item.name })}
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl border border-[#ececf4] bg-[#fafbff] px-2 text-[11px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <ClipboardList className="size-3.5 shrink-0" />
-              <span className="truncate">Задачи</span>
+              <span className="truncate">{t("tasksShort")}</span>
             </Link>
           </div>
         </div>
@@ -596,7 +608,7 @@ export function JournalsSettingsClient({
             <Switch
               checked={enabled}
               onCheckedChange={() => togglePaper(journal.id)}
-              aria-label={`Вести бумажный журнал «${journal.name}»`}
+              aria-label={t("paperToggleAria", { name: journal.name })}
               className="mt-0.5 shrink-0"
             />
             <button
@@ -612,7 +624,10 @@ export function JournalsSettingsClient({
 
           <div
             className="line-clamp-3 text-[11px] leading-snug text-[#6f7282]"
-            title={`${journal.why} Штраф ${journal.fineHint}.`}
+            title={t("paperCardHint", {
+              why: journal.why,
+              fine: journal.fineHint,
+            })}
           >
             {journal.why}
           </div>
@@ -629,7 +644,7 @@ export function JournalsSettingsClient({
               }`}
             >
               <Printer className="size-3" />
-              {journal.paperOnly ? "Только на бумаге" : "Для печати"}
+              {journal.paperOnly ? t("paperOnly") : t("paperForPrint")}
             </span>
             <a
               href={journal.law.url}
@@ -645,19 +660,19 @@ export function JournalsSettingsClient({
           <div className="flex gap-1.5">
             <a
               href={`/api/settings/journals/paper/${journal.id}/pdf`}
-              title="Скачать пустой журнал в PDF"
+              title={t("paperDownloadTitle")}
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl border border-[#f0e2c6] bg-white px-2 text-[11px] font-medium text-[#8a4a08] transition-colors hover:border-[#f5c451] hover:bg-[#fff8ec]"
             >
               <Download className="size-3.5 shrink-0" />
-              <span className="truncate">Скачать</span>
+              <span className="truncate">{tc("download")}</span>
             </a>
             <Link
               href={`/settings/journals/paper/${journal.id}`}
-              title="Заполнить и распечатать"
+              title={t("paperFillTitle")}
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl bg-[#b45309] px-2 text-[11px] font-medium text-white transition-colors hover:bg-[#9a460a]"
             >
               <Printer className="size-3.5 shrink-0" />
-              <span className="truncate">Заполнить</span>
+              <span className="truncate">{t("paperFill")}</span>
             </Link>
           </div>
         </div>
@@ -747,13 +762,13 @@ export function JournalsSettingsClient({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error || "Не удалось сменить сферу");
+        throw new Error(data?.error || t("sphereChangeFailed"));
       }
       applyRequired(next);
-      toast.success(`Сфера: ${sphereLabel(next)}. Не забудьте сохранить набор.`);
+      toast.success(t("sphereChanged", { sphere: sphereLabel(next) }));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
       setSphereDraft(sphere);
     } finally {
       setSwitchingSphere(false);
@@ -773,18 +788,24 @@ export function JournalsSettingsClient({
     label: string;
     tone?: "default" | "warn" | "info";
   }> = [
-    { label: "Карточка исчезнет с дашборда", tone: "warn" },
+    { label: t("paperOffBulletDashboard"), tone: "warn" },
     ...(paperOffTarget
       ? [
           {
             label: paperOffTarget.paperOnly
-              ? `Вести журнал всё равно обязаны на бумаге — штраф ${paperOffTarget.fineHint} (${paperOffTarget.law.label})`
-              : `Требование не отменяется — штраф ${paperOffTarget.fineHint} (${paperOffTarget.law.label})`,
+              ? t("paperOffBulletPaperOnly", {
+                  fine: paperOffTarget.fineHint,
+                  law: paperOffTarget.law.label,
+                })
+              : t("paperOffBulletRequirement", {
+                  fine: paperOffTarget.fineHint,
+                  law: paperOffTarget.law.label,
+                }),
             tone: "warn" as const,
           },
         ]
       : []),
-    { label: "Журнал останется доступен по прямой ссылке", tone: "default" },
+    { label: t("paperOffBulletLink"), tone: "default" },
   ];
 
   return (
@@ -800,21 +821,19 @@ export function JournalsSettingsClient({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-                  Набор журналов
+                  {t("title")}
                 </h1>
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#5566f6]">
                   <CheckCircle2 className="size-3.5" />
-                  Включено {enabledCount} из {totalCount}
+                  {t("enabledOfTotal", {
+                    enabled: enabledCount,
+                    total: totalCount,
+                  })}
                   {/* На главной и в «Режимах задач» стоит другая цифра:
                       там только электронные журналы. Разницу называем
                       прямо, иначе она читается как ошибка. */}
                   {enabledPaperCount > 0
-                    ? `, из них ${enabledPaperCount} ${pluralRu(
-                        enabledPaperCount,
-                        "бумажный",
-                        "бумажных",
-                        "бумажных"
-                      )}`
+                    ? t("enabledPaperSuffix", { count: enabledPaperCount })
                     : ""}
                 </span>
               </div>
@@ -835,7 +854,7 @@ export function JournalsSettingsClient({
 
           <div className="w-full sm:w-[280px]">
             <label className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-              Сфера деятельности
+              {t("sphereLabel")}
             </label>
             <span className="relative block">
               <select
@@ -853,15 +872,17 @@ export function JournalsSettingsClient({
             </span>
             {sphereDraft !== sphere ? (
               <div className="mt-2 rounded-xl bg-[#f5f6ff] p-2.5 text-[12px] leading-relaxed text-[#3c4053]">
-                Включим: {sphereDiff.willEnable} · Выключим:{" "}
-                {sphereDiff.willDisable} · Ваши ручные останутся:{" "}
-                {sphereDiff.manual}
+                {t("sphereDiffSummary", {
+                  enable: sphereDiff.willEnable,
+                  disable: sphereDiff.willDisable,
+                  manual: sphereDiff.manual,
+                })}
                 <button
                   type="button"
                   onClick={() => setSphereConfirmOpen(true)}
                   className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#5566f6] text-[13px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
                 >
-                  Сменить сферу
+                  {t("changeSphere")}
                 </button>
               </div>
             ) : (
@@ -871,7 +892,7 @@ export function JournalsSettingsClient({
                 className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <ShieldCheck className="size-4 text-[#5566f6]" />
-                Включить обязательные
+                {t("applyRequired")}
               </button>
             )}
           </div>
@@ -892,12 +913,12 @@ export function JournalsSettingsClient({
           {saving ? (
             <>
               <Loader2 className="size-3.5 animate-spin" />
-              Сохраняю…
+              {t("saving")}
             </>
           ) : (
             <>
               <Check className="size-3.5" />
-              Изменения сохраняются сами
+              {t("autoSaved")}
             </>
           )}
         </span>
@@ -912,15 +933,15 @@ export function JournalsSettingsClient({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Название, описание или код"
-            aria-label="Поиск по набору журналов"
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchAria")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-11 text-[15px] text-[#0b1024] placeholder:text-[#c1c5d6] shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="Очистить поиск"
+              aria-label={t("searchClear")}
               className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6]"
             >
               <X className="size-4" />
@@ -929,17 +950,16 @@ export function JournalsSettingsClient({
         </div>
         <div className="text-[13px] text-[#6f7282] sm:whitespace-nowrap">
           {normalizedQuery
-            ? `Найдено ${foundCount} из ${totalCount}`
-            : `Всего журналов: ${totalCount}`}
+            ? t("foundCount", { found: foundCount, total: totalCount })
+            : t("totalCount", { total: totalCount })}
         </div>
       </div>
 
       {normalizedQuery && foundCount === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
-          <div className="text-[15px] font-medium text-[#0b1024]">Ничего не нашли</div>
+          <div className="text-[15px] font-medium text-[#0b1024]">{t("nothingFound")}</div>
           <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-            Попробуйте другое слово — поиск идёт по названию, описанию и коду
-            журнала, включая отключённые.
+            {t("nothingFoundHint")}
           </p>
         </div>
       ) : null}
@@ -947,8 +967,8 @@ export function JournalsSettingsClient({
       {groups.required.length + foundPaper.length > 0 ? (
         <>
       <GroupHeading
-        title="Обязательные"
-        hint="электронные — зелёные, бумажные — жёлтые, в конце"
+        title={t("groupRequired")}
+        hint={t("groupRequiredHint")}
         count={groups.required.length + foundPaper.length}
         tone="required"
       />
@@ -967,7 +987,7 @@ export function JournalsSettingsClient({
       {groups.recommended.length > 0 ? (
         <>
           <GroupHeading
-            title={`Рекомендуем для сферы «${sphereLabel(sphere)}»`}
+            title={t("groupRecommended", { sphere: sphereLabel(sphere) })}
             count={groups.recommended.length}
             tone="recommended"
           />
@@ -983,7 +1003,7 @@ export function JournalsSettingsClient({
       <details open className="group rounded-2xl border border-[#ececf4] bg-white">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
           <span className="text-[15px] font-semibold text-[#0b1024]">
-            Остальные журналы
+            {t("groupRest")}
             <span className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[12px] font-medium text-[#6f7282]">
               {groups.rest.length}
             </span>
@@ -1000,7 +1020,7 @@ export function JournalsSettingsClient({
             className="mt-4 inline-flex items-center gap-2 text-[13px] font-medium text-[#6f7282] transition-colors hover:text-[#d2453d]"
           >
             <EyeOff className="size-4" />
-            Отключить все, кроме обязательных
+            {t("disableRest")}
           </button>
         </div>
       </details>
@@ -1014,24 +1034,31 @@ export function JournalsSettingsClient({
           setRequiredOffCode(null);
         }}
         variant="warn"
-        title={`Выключить обязательный журнал?`}
-        description={`Журнал обязателен для сферы «${sphereLabel(sphere)}».`}
+        title={t("requiredOffTitle")}
+        description={t("requiredOffDescription", {
+          sphere: sphereLabel(sphere),
+        })}
         bullets={[
           ...(requiredOffDocCount > 0
             ? [
                 {
                   // Число прячущихся документов — то, о чём спрашивают чаще
                   // всего: «а заполненное куда делось?».
-                  label: `Скроется активных документов: ${requiredOffDocCount} (данные останутся, вернутся при включении)`,
+                  label: t("requiredOffDocs", {
+                    count: requiredOffDocCount,
+                  }),
                   tone: "warn" as const,
                 },
               ]
             : []),
-          { label: "Исчезнет из дашборда и из задач сотрудникам", tone: "warn" },
-          { label: "Перестанет учитываться в готовности", tone: "default" },
-          { label: `Проверка Роспотребнадзора — ${rules.introLaw.label}, до 50 000 ₽`, tone: "warn" },
+          { label: t("requiredOffDashboard"), tone: "warn" },
+          { label: t("requiredOffReadiness"), tone: "default" },
+          {
+            label: t("requiredOffInspection", { law: rules.introLaw.label }),
+            tone: "warn",
+          },
         ]}
-        confirmLabel="Всё равно выключить"
+        confirmLabel={t("requiredOffConfirm")}
       />
 
       <ConfirmDialog
@@ -1042,14 +1069,14 @@ export function JournalsSettingsClient({
         }}
         onConfirm={confirmSphereChange}
         variant="info"
-        title={`Сменить сферу на «${sphereLabel(sphereDraft)}»?`}
-        description="Пересчитаем обязательный набор журналов. Всё, что вы включили руками, останется."
+        title={t("sphereConfirmTitle", { sphere: sphereLabel(sphereDraft) })}
+        description={t("sphereConfirmDescription")}
         bullets={[
-          { label: `Включим: ${sphereDiff.willEnable}`, tone: "info" },
-          { label: `Выключим: ${sphereDiff.willDisable}`, tone: "default" },
-          { label: `Ваши ручные останутся: ${sphereDiff.manual}`, tone: "default" },
+          { label: t("willEnable", { count: sphereDiff.willEnable }), tone: "info" },
+          { label: t("willDisable", { count: sphereDiff.willDisable }), tone: "default" },
+          { label: t("manualStay", { count: sphereDiff.manual }), tone: "default" },
         ]}
-        confirmLabel={switchingSphere ? "Меняю…" : "Сменить"}
+        confirmLabel={switchingSphere ? t("switching") : t("change")}
       />
 
       <ConfirmDialog
@@ -1060,10 +1087,15 @@ export function JournalsSettingsClient({
           setApplyConfirmOpen(false);
         }}
         variant="info"
-        title="Включить обязательные журналы?"
-        description={`Минимум для сферы «${sphereLabel(sphere)}». Остальное не трогаем.`}
-        bullets={[{ label: `Включим: ${diffFor(sphere).willEnable}`, tone: "info" }]}
-        confirmLabel="Включить"
+        title={t("applyTitle")}
+        description={t("applyDescription", { sphere: sphereLabel(sphere) })}
+        bullets={[
+          {
+            label: t("willEnable", { count: diffFor(sphere).willEnable }),
+            tone: "info",
+          },
+        ]}
+        confirmLabel={t("applyConfirm")}
       />
 
       <ConfirmDialog
@@ -1078,13 +1110,13 @@ export function JournalsSettingsClient({
           setDisableRestConfirmOpen(false);
         }}
         variant="warn"
-        title="Отключить все, кроме обязательных?"
-        description="Останется только минимум для вашей сферы."
+        title={t("disableRestTitle")}
+        description={t("disableRestDescription")}
         bullets={[
-          { label: "Отключённые журналы исчезнут из дашборда", tone: "warn" },
-          { label: "Записи останутся в архиве — ничего не удаляем", tone: "default" },
+          { label: t("disableRestDashboard"), tone: "warn" },
+          { label: t("disableRestArchive"), tone: "default" },
         ]}
-        confirmLabel="Отключить"
+        confirmLabel={t("disableRestConfirm")}
       />
 
       <ConfirmDialog
@@ -1095,14 +1127,14 @@ export function JournalsSettingsClient({
           setPaperOffId(null);
         }}
         variant="warn"
-        title="Убрать бумажный журнал из набора?"
+        title={t("paperOffTitle")}
         description={
           paperOffTarget
-            ? `${paperOffTarget.name}. Мы только перестанем напоминать о нём — обязанность вести журнал остаётся.`
+            ? t("paperOffDescription", { name: paperOffTarget.name })
             : ""
         }
         bullets={paperOffBullets}
-        confirmLabel="Всё равно убрать"
+        confirmLabel={t("paperOffConfirm")}
       />
 
       {/* Редактор распределения — модалкой: в карточке шириной 1/5
@@ -1119,7 +1151,7 @@ export function JournalsSettingsClient({
             <>
               <DialogHeader className="shrink-0 border-b border-[#ececf4] px-5 py-4">
                 <DialogTitle className="text-[16px] font-semibold text-[#0b1024]">
-                  Кому отправлять журнал
+                  {t("distDialogTitle")}
                 </DialogTitle>
                 <DialogDescription className="text-[13px] text-[#6f7282]">
                   {distDialogItem.name}
@@ -1165,24 +1197,28 @@ export function JournalsSettingsClient({
 }
 
 /** Человеческая подпись основания под названием журнала. */
-function basisNote(rule: ElectronicRule | undefined): string | null {
-  if (!rule) return null;
-  const parts: string[] = [];
-  if (rule.basis === "sanpin") parts.push(rule.note ?? "Требует СанПиН");
-  else if (rule.basis === "haccp") {
-    parts.push(
-      `Обязательная запись ХАССП${rule.law ? ` (${rule.law.label})` : ""}`,
-    );
-  }
-  else if (rule.basis === "practice") {
-    parts.push(
-      `Закон не обязывает, но спрашивают при проверках${
-        rule.law ? ` (${rule.law.label})` : ""
-      }`,
-    );
-  }
-  if (rule.condition) parts.push(rule.condition);
-  return parts.length > 0 ? parts.join(" · ") : null;
+function useBasisNote(): (rule: ElectronicRule | undefined) => string | null {
+  const t = useTranslations("settingsUi.journalsSettingsClient");
+  return (rule) => {
+    if (!rule) return null;
+    const parts: string[] = [];
+    if (rule.basis === "sanpin") parts.push(rule.note ?? t("basisSanpin"));
+    else if (rule.basis === "haccp") {
+      parts.push(
+        rule.law
+          ? t("basisHaccpLaw", { law: rule.law.label })
+          : t("basisHaccp"),
+      );
+    } else if (rule.basis === "practice") {
+      parts.push(
+        rule.law
+          ? t("basisPracticeLaw", { law: rule.law.label })
+          : t("basisPractice"),
+      );
+    }
+    if (rule.condition) parts.push(rule.condition);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  };
 }
 
 function GroupHeading({
@@ -1243,6 +1279,9 @@ function DistributionEditor({
   onSave: () => void;
   saving: boolean;
 }) {
+  const t = useTranslations("settingsUi.journalsSettingsClient");
+  const tc = useTranslations("common");
+  const FILL_MODE_LABELS = useFillModeLabels();
   const dirty =
     dist.fillMode !== item.fillMode ||
     dist.defaultAssigneeId !== item.defaultAssigneeId ||
@@ -1266,7 +1305,7 @@ function DistributionEditor({
       {/* Fill mode selector */}
       <div className="mb-3">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-          Режим распределения
+          {t("distModeTitle")}
         </div>
         <div className="grid grid-cols-1 gap-1.5">
           {(Object.keys(FILL_MODE_LABELS) as FillMode[]).map((mode) => {
@@ -1311,7 +1350,7 @@ function DistributionEditor({
       {dist.fillMode === "single" ? (
         <div className="mb-3">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-            Исполнитель по умолчанию
+            {t("defaultAssignee")}
           </div>
           <select
             value={dist.defaultAssigneeId ?? ""}
@@ -1320,7 +1359,7 @@ function DistributionEditor({
             }
             className="h-9 w-full rounded-lg border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024]"
           >
-            <option value="">— Авто (round-robin) —</option>
+            <option value="">{t("autoRoundRobin")}</option>
             {eligibleUsers.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.name}
@@ -1328,8 +1367,7 @@ function DistributionEditor({
             ))}
           </select>
           <div className="mt-1 text-[11px] text-[#9b9fb3]">
-            Если не указан — система чередует подходящих сотрудников
-            по последним 7 дням.
+            {t("autoHint")}
           </div>
         </div>
       ) : null}
@@ -1338,11 +1376,11 @@ function DistributionEditor({
       {dist.fillMode !== "sensor" ? (
         <div className="mb-3">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-            Кому можно отправлять
+            {t("allowedPositions")}
           </div>
           {positions.length === 0 ? (
             <div className="rounded-lg border border-dashed border-[#dcdfed] bg-white px-3 py-2 text-[12px] text-[#6f7282]">
-              Должности ещё не созданы. Добавьте на странице «Сотрудники».
+              {t("noPositions")}
             </div>
           ) : (
             <div className="flex flex-wrap gap-1.5">
@@ -1366,7 +1404,7 @@ function DistributionEditor({
             </div>
           )}
           <div className="mt-1 text-[11px] text-[#9b9fb3]">
-            Пусто — разрешено всем должностям.
+            {t("allowedPositionsHint")}
           </div>
         </div>
       ) : null}
@@ -1375,7 +1413,7 @@ function DistributionEditor({
       {dist.fillMode !== "sensor" ? (
         <div className="mb-3">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-            Премия за выполнение
+            {t("bonusTitle")}
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -1393,14 +1431,12 @@ function DistributionEditor({
             <span className="text-[13px] text-[#6f7282]">₽</span>
             {dist.bonusAmountKopecks > 0 ? (
               <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-medium text-[#116b2a]">
-                Премиальный журнал
+                {t("bonusBadge")}
               </span>
             ) : null}
           </div>
           <div className="mt-1 text-[11px] text-[#9b9fb3]">
-            0 ₽ — обычное обязательство. Если &gt; 0 — у сотрудника
-            появится кнопка «Взять с бонусом» с фото-доказательством;
-            бонус начисляется первому, кто выполнил.
+            {t("bonusHint")}
           </div>
         </div>
       ) : null}
@@ -1413,7 +1449,7 @@ function DistributionEditor({
           className="inline-flex h-9 items-center gap-2 rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(85,102,246,0.6)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-50"
         >
           <Save className="size-3.5" />
-          {saving ? "Сохраняю…" : dirty ? "Сохранить" : "Сохранено"}
+          {saving ? t("saving") : dirty ? tc("save") : t("savedState")}
         </button>
       </div>
     </div>

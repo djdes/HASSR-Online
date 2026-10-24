@@ -1,6 +1,7 @@
 "use client";
 
 import { Monitor, Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useSiteTheme, type SiteTheme, type ThemeMode } from "./site-theme";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +11,8 @@ import { cn } from "@/lib/utils";
  * `ThemeQuickSwitch`. Источник истины состояния — site-theme provider.
  */
 export function ThemeSwitcher({ className }: { className?: string }) {
+  const t = useTranslations("sharedUi.themeSwitcher");
+  const tc = useTranslations("common.theme");
   const { theme, mode, autoBySchedule, setMode, setAutoBySchedule } =
     useSiteTheme();
 
@@ -23,16 +26,13 @@ export function ThemeSwitcher({ className }: { className?: string }) {
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#3848c7]">
-            Тема оформления
+            {t("eyebrow")}
           </div>
           <h3 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            Как должен выглядеть дашборд
+            {t("heading")}
           </h3>
           <p className="mt-1.5 max-w-[420px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Светлая — привычный бело-индиго как на лендинге. Тёмная — для
-            поздней смены и слабого освещения в цехе. Системная — синхронизация
-            с настройками устройства. Влияет только на личный кабинет; лендинг
-            и форма входа остаются светлыми.
+            {t("description")}
           </p>
         </div>
 
@@ -41,28 +41,28 @@ export function ThemeSwitcher({ className }: { className?: string }) {
 
       <div
         role="radiogroup"
-        aria-label="Тема дашборда"
+        aria-label={t("groupLabel")}
         className={cn(
           "mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-1.5",
           autoBySchedule && "opacity-60"
         )}
       >
         <ModeOption
-          label="Системная"
+          label={t("system")}
           icon={Monitor}
           active={mode === "system"}
           disabled={autoBySchedule}
           onSelect={() => setMode("system")}
         />
         <ModeOption
-          label="Светлая"
+          label={tc("mode.light")}
           icon={Sun}
           active={mode === "light"}
           disabled={autoBySchedule}
           onSelect={() => setMode("light")}
         />
         <ModeOption
-          label="Тёмная"
+          label={tc("mode.dark")}
           icon={Moon}
           active={mode === "dark"}
           disabled={autoBySchedule}
@@ -79,12 +79,10 @@ export function ThemeSwitcher({ className }: { className?: string }) {
         />
         <div className="min-w-0 flex-1">
           <div className="text-[14px] font-medium text-[#0b1024]">
-            Менять по времени суток
+            {tc("autoScheduleLabel")}
           </div>
           <div className="mt-1 text-[12px] leading-[1.5] text-[#6f7282]">
-            С 7:00 до 19:00 — светлая, ночью — тёмная. Перекрывает выбор
-            сверху, пока включено. Удобно если работаете и днём, и в ночную
-            смену — глазам легче.
+            {t("autoHint")}
           </div>
         </div>
       </label>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, FileText, Lightbulb } from "lucide-react";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { JOURNAL_HELP } from "@/lib/journal-help";
@@ -26,6 +27,7 @@ export default async function JournalHelpPage({
 }) {
   const session = await requireAuth();
   const { code } = await params;
+  const t = await getTranslations("journalUi.help");
 
   const template = await db.journalTemplate.findFirst({
     where: { code, isActive: true },
@@ -49,7 +51,7 @@ export default async function JournalHelpPage({
         journalName={template.name}
         journalCode={code}
         journalMenu={journalMenu}
-        tail={[{ label: "Справка" }]}
+        tail={[{ label: t("crumb") }]}
       />
       <div>
         <div className="flex items-start gap-3">
@@ -61,9 +63,9 @@ export default async function JournalHelpPage({
               {template.name}
             </h1>
             <p className="mt-1 text-[13px] text-[#6f7282]">
-              Справка как заполнять журнал
-              {template.isMandatorySanpin ? " · обязательный по СанПиН" : ""}
-              {template.isMandatoryHaccp ? " · обязательный по ХАССП" : ""}
+              {t("subtitle")}
+              {template.isMandatorySanpin ? ` · ${t("mandatorySanpin")}` : ""}
+              {template.isMandatoryHaccp ? ` · ${t("mandatoryHaccp")}` : ""}
             </p>
           </div>
         </div>
@@ -71,11 +73,11 @@ export default async function JournalHelpPage({
 
       {/* Зачем нужен */}
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-        <h2 className="text-[16px] font-semibold text-[#0b1024]">Зачем</h2>
+        <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("whyTitle")}</h2>
         <p className="mt-2 text-[14px] leading-relaxed text-[#3c4053]">
           {help?.purpose ??
             template.description ??
-            "Журнал ведётся в соответствии с требованиями производственного контроля."}
+            t("defaultPurpose")}
         </p>
       </section>
 
@@ -83,7 +85,7 @@ export default async function JournalHelpPage({
       {help?.howToFill && (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <h2 className="text-[16px] font-semibold text-[#0b1024]">
-            Как заполнять
+            {t("howToFillTitle")}
           </h2>
           <ol className="mt-3 space-y-2 text-[14px] leading-relaxed text-[#3c4053]">
             {help.howToFill.map((step, i) => (
@@ -105,7 +107,7 @@ export default async function JournalHelpPage({
             <FileText className="size-5 shrink-0 text-[#b25f00]" />
             <div>
               <h2 className="text-[15px] font-semibold text-[#0b1024]">
-                Норматив
+                {t("regulationTitle")}
               </h2>
               <p className="mt-1 text-[13px] leading-relaxed text-[#3c4053]">
                 {help.regulation}
@@ -122,7 +124,7 @@ export default async function JournalHelpPage({
             <Lightbulb className="size-5 shrink-0 text-[#116b2a]" />
             <div>
               <h2 className="text-[15px] font-semibold text-[#0b1024]">
-                Совет от опытных рестораторов
+                {t("tipTitle")}
               </h2>
               <p className="mt-1 text-[13px] leading-relaxed text-[#3c4053]">
                 {help.tip}
@@ -136,14 +138,16 @@ export default async function JournalHelpPage({
       {!help && (
         <section className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
           <p className="text-[14px] text-[#6f7282]">
-            Подробной справки по этому журналу пока нет. Используйте{" "}
-            <Link
-              href="/sanpin"
-              className="text-[#3848c7] underline"
-            >
-              справочник СанПиН
-            </Link>{" "}
-            или ИИ-помощника для конкретных вопросов.
+            {t.rich("noHelp", {
+              link: (chunks) => (
+                <Link
+                  href="/sanpin"
+                  className="text-[#3848c7] underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         </section>
       )}
@@ -153,7 +157,7 @@ export default async function JournalHelpPage({
           href={`/journals/${code}`}
           className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
         >
-          К журналу «{template.name}» →
+          {t("backToJournal", { name: template.name })}
         </Link>
       </div>
     </div>

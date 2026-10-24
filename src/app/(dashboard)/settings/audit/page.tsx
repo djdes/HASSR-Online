@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { AuditLogViewer } from "@/components/settings/audit-log-viewer";
@@ -15,14 +16,15 @@ export default async function AuditPage() {
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/settings");
   }
+  const t = await getTranslations("settingsUi.auditPage");
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold">Журнал действий</h1>
+          <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            События WeSetup и TasksFlow в одной ленте.
+            {t("subtitle")}
           </p>
         </div>
         <Link
@@ -31,7 +33,7 @@ export default async function AuditPage() {
           prefetch={false}
         >
           <Download className="size-4 text-[#5566f6]" />
-          Скачать CSV (90 дней)
+          {t("downloadCsv")}
         </Link>
       </div>
       <AuditLogViewer />

@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Loader2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 import { compressImageIfWorthwhile } from "@/lib/image-compress";
@@ -43,6 +44,7 @@ export type PhotoFieldCopy = {
   alt: (index: number) => string;
 };
 
+/** Russian fallback for non-React callers of `checkPhotoBeforeUpload` that pass no copy; the component itself uses catalog copy. */
 const DEFAULT_PHOTO_COPY: PhotoFieldCopy = {
   rules: PHOTO_RULES_HINT, invalidType: "Подойдут JPG, PNG или WebP",
   tooLarge: "Фото больше 5 МБ — сожмите или снимите заново",
@@ -100,7 +102,14 @@ export function PhotoField({
   /** Explicit presentation context; omitted callers retain Russian compatibility. */
   copy?: PhotoFieldCopy;
 }) {
-  const copy = suppliedCopy ?? DEFAULT_PHOTO_COPY;
+  const t = useTranslations("journals.ui.photoField");
+  const translatedCopy: PhotoFieldCopy = {
+    rules: t("rules"), invalidType: t("invalidType"), tooLarge: t("tooLarge"), uploadError: t("uploadError"),
+    networkError: t("networkError"), required: t("required"), present: t("present"), queued: t("queued"),
+    remove: t("remove"), uploading: t("uploading"), more: t("more"), take: t("take"),
+    alt: index => t("alt", { index }),
+  };
+  const copy = suppliedCopy ?? translatedCopy;
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<{ key: "invalidType" | "tooLarge" | "uploadError" | "networkError" } | { text: string } | null>(null);

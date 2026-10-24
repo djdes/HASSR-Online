@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -6,7 +7,6 @@ import { countCustomNames, parseCustomNames, RENAMABLE_SECTIONS } from "@/lib/cu
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { pluralRu } from "@/lib/plural-ru";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 import { NamesSettingsClient } from "./names-settings-client";
@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
  * берут официальные (см. `src/lib/custom-names.ts`).
  */
 export default async function NamesSettingsPage() {
+  const t = await getTranslations("settingsUi.namesPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/dashboard");
   const organizationId = getActiveOrgId(session);
@@ -45,12 +46,12 @@ export default async function NamesSettingsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Названия"
-        description="Назовите разделы меню и журналы так, как привыкла ваша команда. Своё название увидят только сотрудники вашей организации — в меню, на главной, в журналах, QR-формах, мини-приложении и Telegram. В печати, у проверяющего и в отчётах остаются официальные названия."
+        title={t("title")}
+        description={t("description")}
         actions={
           customCount > 0 ? (
             <PageHeaderStat>
-              {customCount} {pluralRu(customCount, "своё название", "своих названия", "своих названий")}
+              {t("customCount", { count: customCount })}
             </PageHeaderStat>
           ) : null
         }
@@ -62,7 +63,7 @@ export default async function NamesSettingsPage() {
         }))}
         // По алфавиту официальных названий: строка редактора подписана
         // официальным названием, и во время ввода своего она не прыгает.
-        journals={sortJournalsByName(templates, (t) => t.name).map((template) => ({
+        journals={sortJournalsByName(templates, (item) => item.name).map((template) => ({
           code: template.code,
           name: template.name,
           disabled: disabled.has(template.code),

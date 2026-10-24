@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Building2, CheckCircle2, FilePlus2, FileSpreadsheet, Loader2, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import {
@@ -21,7 +22,6 @@ import { FINISHED_PRODUCT_ORGANOLEPTIC_DISH } from "@/lib/finished-product-docum
 import type { MasterBrakerageResult } from "@/lib/master-brakerage";
 import type { MasterBrakerageHistoryBatch } from "@/lib/master-brakerage-history";
 import type { SharedItem } from "@/lib/master-directory";
-import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 import { brakerageCommentRequired, brakerageRelease } from "@/lib/brakerage-assessment";
 
@@ -37,13 +37,8 @@ function formatDate(date: string): string {
   return y && m && d ? `${d}-${m}-${y}` : date;
 }
 
-function kitchens(count: number): string {
-  return `${count} ${pluralRu(count, "пищеблок", "пищеблока", "пищеблоков")}`;
-}
-
-function rowsLabel(count: number): string {
-  return `${count} ${pluralRu(count, "строка", "строки", "строк")}`;
-}
+/** `useTranslations("masterUi.masterBrakerageDialog")` of the calling component. */
+export type MasterBrakerageTranslator = ReturnType<typeof useTranslations<"masterUi.masterBrakerageDialog">>;
 
 /** Блюда из файла или с фото → строки выгрузки (не больше одного дня меню) + пустая строка в конце. */
 export function itemsToExportRows(items: Array<Pick<SharedItem, "name" | "portion" | "time">>): BulkDishRow[] {
@@ -58,22 +53,22 @@ export function itemsToExportRows(items: Array<Pick<SharedItem, "name" | "portio
  * (`/api/master/directory/preview`, колонки «Наименование», «Выход»,
  * «Время»), но ничего не сохраняется: строки идут только в эту выгрузку.
  */
-export async function readMenuFile(file: File): Promise<BulkDishRow[] | null> {
+export async function readMenuFile(file: File, t: MasterBrakerageTranslator): Promise<BulkDishRow[] | null> {
   const form = new FormData();
   form.set("kind", "dish");
   form.set("file", file);
   const response = await fetch("/api/master/directory/preview", { method: "POST", body: form }).catch(() => null);
   const json = (await response?.json().catch(() => null)) as { error?: string; items?: SharedItem[] } | null;
   if (!response?.ok || !json?.items) {
-    toast.error(json?.error ?? "Не удалось прочитать файл. Проверьте интернет и попробуйте ещё раз.");
+    toast.error(json?.error ?? t("readFailed"));
     return null;
   }
   if (json.items.length === 0) {
-    toast.error("В файле не нашлось блюд — нужна колонка «Наименование» (или первая колонка с названиями).");
+    toast.error(t("noDishes"));
     return null;
   }
   if (json.items.length > MASTER_EXPORT_ROWS_MAX) {
-    toast.warning(`В файле ${json.items.length} блюд — за одну выгрузку берём первые ${MASTER_EXPORT_ROWS_MAX}.`);
+    toast.warning(t("tooManyDishes", { count: json.items.length, max: MASTER_EXPORT_ROWS_MAX }));
   }
   return itemsToExportRows(json.items);
 }
@@ -100,6 +95,22 @@ export function MasterBrakerageDialog({
   initialRows?: BulkDishRow[] | null;
   editingBatch?: MasterBrakerageHistoryBatch | null;
 }) {
+  const t = useTranslations("masterUi.masterBrakerageDialog");
+  const tc = useTranslations("common");
+  const tGrades = useTranslations("finishedProduct.grades");
+  const kitchens = (count: number) => t("kitchens", { count });
+  const rowsLabel = (count: number) => t("rows", { count });
+  const gradeLabel = (option: string): string => {
+    switch (option) {
+      case "Отлично": return tGrades("excellent");
+      case "Хорошо": return tGrades("good");
+      case "Удовлетворительно": return tGrades("satisfactory");
+      case "Неудовлетворительно": return tGrades("unsatisfactory");
+      case "Доброкачественно": return tGrades("sound");
+      case "Недоброкачественно": return tGrades("unsound");
+      default: return option;
+    }
+  };
   const [rows, setRows] = useState<BulkDishRow[]>(() => emptyBulkDishRows(START_ROWS));
   const [date, setDate] = useState("");
   const [organoleptic, setOrganoleptic] = useState(ORGANOLEPTIC_DEFAULT);
@@ -144,7 +155,7 @@ export function MasterBrakerageDialog({
   }, [open, editingBatch, initialRows]);
 
   async function saveHistoryInput() {
-    if (organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) && !note.trim()) { toast.error("Добавьте комментарий к оценке блюда"); return; }
+    if (organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) && !note.trim()) { toast.error(t("commentRequired")); return; }
     const dateInput = document.querySelector<HTMLInputElement>('[data-testid="master-brakerage-date"]');
     if (dateInput && !dateInput.reportValidity()) return;
     if (!editingBatch || !canSubmit || !scope || (scope === "selected" && !selectedOrganizations.length) || busy) return;
@@ -155,12 +166,12 @@ export function MasterBrakerageDialog({
         body: JSON.stringify({ input: payload(false), updatedAt: historyVersion, scope, organizationIds: selectedOrganizations }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Не удалось сохранить ввод");
+      if (!response.ok) throw new Error(body.error || t("saveInputFailed"));
       setHistoryVersion(body.batch.updatedAt);
       window.dispatchEvent(new Event("master-brakerage-changed"));
-      toast.success(`Изменения сохранены. Обновлено журналов: ${body.changed.length}. Предыдущая версия осталась в истории.`);
+      toast.success(t("historySaved", { count: body.changed.length }));
       onOpenChange(false);
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Не удалось сохранить ввод"); }
+    } catch (error) { toast.error(error instanceof Error ? error.message : t("saveInputFailed")); }
     finally { setBusy(false); }
   }
 
@@ -168,14 +179,14 @@ export function MasterBrakerageDialog({
     if (!file) return;
     setReading(true);
     try {
-      const fromFile = await readMenuFile(file);
+      const fromFile = await readMenuFile(file, t);
       if (!fromFile) return;
       // Уже вписанное остаётся, блюда из файла — следом.
       setRows((prev) => {
         const filled = prev.filter((row) => row.name.trim() !== "");
         return [...filled, ...fromFile].slice(0, MASTER_EXPORT_ROWS_MAX);
       });
-      toast.success(`Из файла «${file.name}»: ${rowsLabel(fromFile.filter((row) => row.name.trim()).length)}`);
+      toast.success(t("fromFile", { file: file.name, rows: rowsLabel(fromFile.filter((row) => row.name.trim()).length) }));
     } finally {
       setReading(false);
       if (fileInput.current) fileInput.current.value = "";
@@ -218,14 +229,14 @@ export function MasterBrakerageDialog({
     }).catch(() => null);
     const json = (await response?.json().catch(() => null)) as (MasterBrakerageResult & { error?: string }) | null;
     if (!response?.ok || !json?.organizations) {
-      toast.error(json?.error ?? "Не удалось связаться с сервером. Проверьте интернет и попробуйте ещё раз.");
+      toast.error(json?.error ?? t("serverFailed"));
       return null;
     }
     return json;
   }
 
   async function openPreview() {
-    if (organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) && !note.trim()) { toast.error("Добавьте комментарий к оценке блюда"); return; }
+    if (organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) && !note.trim()) { toast.error(t("commentRequired")); return; }
     const dateInput = document.querySelector<HTMLInputElement>('[data-testid="master-brakerage-date"]');
     if (dateInput && !dateInput.reportValidity()) return;
     if (!canSubmit || busy) return;
@@ -249,8 +260,8 @@ export function MasterBrakerageDialog({
     setResult(done);
     window.dispatchEvent(new Event("master-brakerage-changed"));
     const { added, organizations: reached, failed } = done.totals;
-    const text = `Добавлено ${rowsLabel(added)} в ${kitchens(reached)}`;
-    if (failed > 0) toast.warning(`${text}; не удалось — ${kitchens(failed)}`);
+    const text = t("added", { rows: rowsLabel(added), kitchens: kitchens(reached) });
+    if (failed > 0) toast.warning(t("addedWithFailures", { text, kitchens: kitchens(failed) }));
     else toast.success(text);
     if (added > 0) setRows(emptyBulkDishRows(START_ROWS));
   }
@@ -258,8 +269,7 @@ export function MasterBrakerageDialog({
   const top = editingBatch ? null : (
     <div className="flex flex-col gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
-        Впишите блюда или встаньте в ячейку и нажмите Ctrl+V — из Excel можно вставить сразу наименование, выход и
-        время. Меню в файле — «Загрузить Excel/CSV», на бумаге — «С фото» под таблицей.
+        {t("topHint")}
       </p>
       <input
         ref={fileInput}
@@ -277,7 +287,7 @@ export function MasterBrakerageDialog({
         data-testid="master-brakerage-upload"
       >
         {reading ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
-        Загрузить Excel/CSV
+        {t("uploadFile")}
       </button>
     </div>
   );
@@ -286,7 +296,7 @@ export function MasterBrakerageDialog({
   const targetsBlock = editingBatch ? null : (
     <div className="space-y-2" data-testid="master-brakerage-targets">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Label className="text-[13px] font-medium text-[#3c4053]">В какие пищеблоки выгрузить?</Label>
+        <Label className="text-[13px] font-medium text-[#3c4053]">{t("targetsQuestion")}</Label>
         {organizations.length > 1 ? (
           <button
             type="button"
@@ -294,13 +304,13 @@ export function MasterBrakerageDialog({
             className="rounded-lg px-2 py-1 text-[12.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             data-testid="master-brakerage-targets-toggle"
           >
-            {allTargets ? "Снять все" : "Отметить все"}
+            {allTargets ? t("deselectAll") : t("selectAll")}
           </button>
         ) : null}
       </div>
       {organizations.length === 0 ? (
         <p className="rounded-xl bg-[#fff4f2] px-3 py-2 text-[12.5px] leading-snug text-[#a13a32]">
-          Пищеблоков пока нет — подключите их во вкладке «Подключённые объекты».
+          {t("noKitchens")}
         </p>
       ) : (
         <ul className="max-h-48 space-y-1 overflow-y-auto rounded-2xl border border-[#ececf4] bg-white p-2">
@@ -333,7 +343,7 @@ export function MasterBrakerageDialog({
       )}
       {organizations.length > 0 && targetIds.length === 0 ? (
         <p className="text-[12px] leading-snug text-[#a13a32]" data-testid="master-brakerage-targets-empty">
-          Отметьте хотя бы один пищеблок.
+          {t("selectAtLeastOne")}
         </p>
       ) : null}
     </div>
@@ -342,19 +352,19 @@ export function MasterBrakerageDialog({
   const commonFields = (
     <div className="min-w-0 space-y-5">
       {editingBatch ? <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
-        <p className="text-[14px] font-medium text-[#0b1024]">Где применить исправления?</p>
-        <div role="radiogroup" aria-label="Где применить исправления" className="space-y-2 text-[13px] text-[#3c4053]">{([
-          ["all", "Во всех пищеблоках, получивших эту выгрузку"],
-          ["selected", "В выбранных пищеблоках"],
-          ["history", "Только в истории мастер-кабинета"],
+        <p className="text-[14px] font-medium text-[#0b1024]">{t("scopeQuestion")}</p>
+        <div role="radiogroup" aria-label={t("scopeQuestion")} className="space-y-2 text-[13px] text-[#3c4053]">{([
+          ["all", t("scopeAll")],
+          ["selected", t("scopeSelected")],
+          ["history", t("scopeHistory")],
         ] as const).map(([value, label]) => <label key={value} className="flex items-start gap-2"><input type="radio" name="master-correction-scope" value={value} checked={scope === value} disabled={busy || (value !== "history" && !recipients.length)} onChange={() => setScope(value)} className="mt-0.5 accent-[#5566f6]" />{label}</label>)}</div>
         {scope === "selected" ? <div className="max-h-48 space-y-2 overflow-auto rounded-2xl border border-[#ececf4] bg-white p-3">{recipients.map(org => <label key={org.organizationId} className="flex items-start gap-2 text-[13px]"><input type="checkbox" checked={selectedOrganizations.includes(org.organizationId)} disabled={busy} onChange={event => setSelectedOrganizations(ids => event.target.checked ? [...ids, org.organizationId] : ids.filter(id => id !== org.organizationId))} className="mt-0.5 accent-[#5566f6]" /><span className="break-words">{org.organizationName}</span></label>)}</div> : null}
-        <p className="text-[12.5px] leading-relaxed text-[#6f7282]">Подписанные и проверенные записи, а также закрытые журналы изменять нельзя. Если данные в пищеблоке конфликтуют с исправлениями, сохранение остановится без частичного обновления.</p>
+        <p className="text-[12.5px] leading-relaxed text-[#6f7282]">{t("correctionsNote")}</p>
       </div> : null}
       <div className="space-y-2">
-        <Label className="text-[13px] font-medium text-[#3c4053]">На какую дату выгрузить блюда?</Label>
+        <Label className="text-[13px] font-medium text-[#3c4053]">{t("dateQuestion")}</Label>
         <BrakerageDateInput
-          aria-label="Дата изготовления"
+          aria-label={t("dateAria")}
           className="block h-11 w-full min-w-0 appearance-none rounded-xl border-[#dcdfed] px-3 text-left text-[15px] sm:max-w-[280px]"
           value={date}
           onChange={setDate}
@@ -363,88 +373,80 @@ export function MasterBrakerageDialog({
         />
         {withoutTime > 0 ? (
           <p className="text-[12px] leading-snug text-[#a13a32]" data-testid="master-brakerage-time-missing">
-            У {rowsLabel(withoutTime)} нет времени изготовления — впишите его в строке. Стрелка ↓ у времени проставит
-            его всем строкам ниже.
+            {t("timeMissing", { rows: rowsLabel(withoutTime) })}
           </p>
         ) : null}
         <p className="rounded-xl bg-[#f5f6ff] px-3 py-2 text-[12.5px] leading-snug text-[#3848c7]">
-          Время бракеража и разрешения к реализации посчитается у каждого пищеблока по его настройкам журнала
-          (обычно +5 и +5 минут от изготовления). Ответственный и проверяющий — из документа пищеблока.
+          {t("timingNote")}
         </p>
       </div>
 
       {targetsBlock}
 
       <div className="space-y-2">
-        <Label className="text-[13px] font-medium text-[#3c4053]">Органолептическая оценка</Label>
+        <Label className="text-[13px] font-medium text-[#3c4053]">{t("organolepticLabel")}</Label>
         <Select value={organoleptic} onValueChange={setOrganoleptic}>
-          <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]" aria-label="Органолептическая оценка">
+          <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]" aria-label={t("organolepticLabel")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ORGANOLEPTIC_DEFAULT}>Как в журнале пищеблока (первая оценка)</SelectItem>
+            <SelectItem value={ORGANOLEPTIC_DEFAULT}>{t("organolepticDefault")}</SelectItem>
             {FINISHED_PRODUCT_ORGANOLEPTIC_DISH.map((option) => (
               <SelectItem key={option} value={option}>
-                {option}
+                {gradeLabel(option)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <p className="text-[13px] text-[#3c4053]">Разрешение к реализации: {brakerageRelease(organoleptic) === "no" ? "Не разрешено" : "Разрешено"}. Определяется оценкой автоматически.</p>
+      <p className="text-[13px] text-[#3c4053]">{t("releaseAllowed", { state: brakerageRelease(organoleptic) === "no" ? t("releaseNo") : t("releaseYes") })}</p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-[13px] font-medium text-[#3c4053]">T°C внутри продукта</Label>
+          <Label className="text-[13px] font-medium text-[#3c4053]">{t("tempLabel")}</Label>
           <Input
             className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
             value={productTemp}
             maxLength={20}
-            placeholder="Необязательно"
-            aria-label="T°C внутри продукта"
+            placeholder={t("optional")}
+            aria-label={t("tempLabel")}
             onChange={(event) => setProductTemp(event.target.value)}
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-[13px] font-medium text-[#3c4053]">Примечание{organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) ? " *" : ""}</Label>
+          <Label className="text-[13px] font-medium text-[#3c4053]">{t("noteLabel")}{organoleptic !== ORGANOLEPTIC_DEFAULT && brakerageCommentRequired(organoleptic) ? " *" : ""}</Label>
           <Input
             className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
             value={note}
             maxLength={500}
-            placeholder="Необязательно"
-            aria-label="Примечание"
+            placeholder={t("optional")}
+            aria-label={t("noteLabel")}
             onChange={(event) => setNote(event.target.value)}
           />
         </div>
         <p className="text-[11.5px] leading-snug text-[#6f7282] sm:col-span-2">
-          Выход, T° и примечание попадут в журнал пищеблока, если эти колонки у него включены.
+          {t("fieldsHint")}
         </p>
       </div>
     </div>
   );
 
   const submitLabel = editingBatch
-    ? "Сохранить исправления"
+    ? t("submitSave")
     : organizations.length === 0
-      ? "Нет подключённых пищеблоков"
+      ? t("submitNoKitchens")
       : targetIds.length === 0
-        ? "Отметьте пищеблоки"
-        : `Выгрузить в ${kitchens(targetIds.length)}`;
+        ? t("submitSelectKitchens")
+        : t("submitExport", { kitchens: kitchens(targetIds.length) });
 
   return (
     <>
       <FinishedProductBulkDialog
         open={open}
         onOpenChange={onOpenChange}
-        title={editingBatch ? "Исправить выгрузку" : "Выгрузить в журналы"}
-        description={
-          <>
-            Блюда из таблицы появятся строками в журнале бракеража готовой продукции отмеченных пищеблоков на
-            выбранную дату. Нет документа на эту дату — он создастся. Повторная выгрузка тех же блюд с тем же
-            временем строки не задвоит. Таблица не сохраняется: следующая выгрузка начнётся с чистого листа.
-          </>
-        }
+        title={editingBatch ? t("titleCorrect") : t("titleExport")}
+        description={<>{t("description")}</>}
         top={top}
         table={
           <FinishedProductBulkTable
@@ -470,13 +472,13 @@ export function MasterBrakerageDialog({
           onOpenChange(true);
         }}
         onConfirm={commit}
-        title="Проверьте, куда уйдут строки"
+        title={t("previewTitle")}
         icon={Send}
-        description={preview ? <>Бракераж на {formatDate(preview.date)}. Ничего ещё не записано.</> : null}
+        description={preview ? <>{t("previewDescription", { date: formatDate(preview.date) })}</> : null}
         confirmLabel={
-          preview ? `Добавить ${rowsLabel(preview.totals.added)} в ${kitchens(preview.organizations.filter((org) => org.added > 0).length)}` : "Добавить"
+          preview ? t("confirmAdd", { rows: rowsLabel(preview.totals.added), kitchens: kitchens(preview.organizations.filter((org) => org.added > 0).length) }) : t("add")
         }
-        cancelLabel="Назад к списку"
+        cancelLabel={t("backToList")}
         confirmDisabled={!preview || preview.totals.added === 0}
       >
         {preview ? <OrgResults result={preview} /> : null}
@@ -488,14 +490,14 @@ export function MasterBrakerageDialog({
         onConfirm={() => setResult(null)}
         title={
           result
-            ? `Добавлено ${rowsLabel(result.totals.added)} в ${kitchens(result.totals.organizations)}`
-            : "Готово"
+            ? t("added", { rows: rowsLabel(result.totals.added), kitchens: kitchens(result.totals.organizations) })
+            : t("done")
         }
         variant="info"
         icon={CheckCircle2}
-        description={result ? <>Бракераж на {formatDate(result.date)}. Итог по каждому пищеблоку:</> : null}
-        confirmLabel="Готово"
-        cancelLabel="Закрыть"
+        description={result ? <>{t("resultDescription", { date: formatDate(result.date) })}</> : null}
+        confirmLabel={t("done")}
+        cancelLabel={tc("close")}
       >
         {result ? <OrgResults result={result} /> : null}
       </ConfirmDialog>
@@ -504,6 +506,7 @@ export function MasterBrakerageDialog({
 }
 
 function OrgResults({ result }: { result: MasterBrakerageResult }) {
+  const t = useTranslations("masterUi.masterBrakerageDialog");
   const dry = result.dryRun;
   return (
     <ul
@@ -526,20 +529,20 @@ function OrgResults({ result }: { result: MasterBrakerageResult }) {
               <span className="mt-0.5 block text-[12.5px] leading-snug text-[#a13a32]">{org.error}</span>
             ) : (
               <span className="mt-0.5 block text-[12.5px] leading-snug text-[#6f7282]">
-                {dry ? "Будет добавлено" : "Добавлено"}: <b className="font-semibold tabular-nums text-[#0b1024]">{org.added}</b>
+                {dry ? t("willAdd") : t("addedLabel")} <b className="font-semibold tabular-nums text-[#0b1024]">{org.added}</b>
                 {org.skipped > 0 ? (
                   <>
                     {" "}
-                    · уже есть, {dry ? "пропустим" : "пропущено"}: <span className="tabular-nums">{org.skipped}</span>
+                    {dry ? t("skippedDry") : t("skippedDone")} <span className="tabular-nums">{org.skipped}</span>
                   </>
                 ) : null}
                 {org.documentCreated ? (
                   <span className="mt-1 flex items-center gap-1 text-[#3848c7]">
                     <FilePlus2 className="size-3.5 shrink-0" />
-                    {dry ? "Документа на эту дату нет — создадим новый" : `Создан документ «${org.documentTitle ?? "Бракеражный журнал"}»`}
+                    {dry ? t("documentWillCreate") : t("documentCreated", { title: org.documentTitle ?? t("defaultJournalTitle") })}
                   </span>
                 ) : org.documentTitle ? (
-                  <span className="mt-1 block truncate">в документ «{org.documentTitle}»</span>
+                  <span className="mt-1 block truncate">{t("intoDocument", { title: org.documentTitle })}</span>
                 ) : null}
               </span>
             )}

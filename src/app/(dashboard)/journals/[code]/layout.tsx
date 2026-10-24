@@ -71,7 +71,7 @@ export default async function JournalCodeLayout({ children, params }: { children
        есть подложка растягивалась минимум на страницу независимо от
        объёма бланка и вместе с вертикальными паддингами выдавливала
        лишний пустой лист. Белая подложка нужна только экрану. */
-    <DomainMessagesBoundary namespaces={["journalFields", "journalForm", "journalWidgets", "hygiene", "reports", "journalDocGuides", "journalFillingGuides", ...journalMessages]}>
+    <DomainMessagesBoundary namespaces={["journalFields", "journalForm", "journalWidgets", "hygiene", "reports", "journalDocGuides", "journalFillingGuides", "journalUi", ...journalMessages]}>
     <div className="relative left-1/2 -my-4 min-h-[calc(100vh-140px)] w-[calc(100vw-var(--app-sidebar-w,0px))] -translate-x-1/2 bg-white py-4 md:-my-6 md:py-6 print:min-h-0 print:py-0 md:print:py-0">
       {/* 1800px — раздел журналов идёт во всю ширину экрана (R1).
           Широкие таблицы журналов скроллятся внутри собственного

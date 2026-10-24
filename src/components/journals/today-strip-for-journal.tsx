@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { TodayProgressStrip } from "@/components/journals/today-progress-strip";
 import { COUNTS_UNBOUNDED_CODES } from "@/lib/daily-journal-codes";
 
@@ -34,6 +35,7 @@ export function TodayStripForJournal({
   label?: string;
   onJumpToToday?: () => void;
 }) {
+  const t = useTranslations("journalUi.todayStrip");
   const unbounded = COUNTS_UNBOUNDED_CODES.has(journalCode);
 
   if (unbounded || total == null) {
@@ -42,7 +44,7 @@ export function TodayStripForJournal({
       <TodayProgressStrip
         filled={has ? 1 : 0}
         total={1}
-        label={label ?? "запись за сегодня"}
+        label={label ?? t("defaultLabel")}
         onJumpToToday={onJumpToToday}
       />
     );

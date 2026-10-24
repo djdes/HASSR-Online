@@ -408,6 +408,7 @@ export function FinishedProductDocumentClient({
   const t = useTranslations("finishedProduct");
   const locale = useLocale() as Locale;
   const selectionT = useTranslations("journalControls.selection");
+  const jt = useTranslations("journalUi.finishedProduct");
   const displayTitle = finishedTitle(title, dateFrom, dateTo, locale, t);
   const commissionT = useTranslations("journalControls.commissionDialog");
   const commissionRoleLabels = { chair: commissionT("chair"), member: commissionT("member") };
@@ -1493,8 +1494,8 @@ export function FinishedProductDocumentClient({
   async function saveDraftRow(options: { keepOpen?: boolean } = {}) {
     const fields = document.querySelectorAll<HTMLInputElement>("[data-time-digits], [data-brakerage-date]");
     for (const field of fields) if (!field.reportValidity()) return;
-    if (brakerageCommentRequired(draftRow.organoleptic) && !draftRow.note.trim()) { toast.error("Добавьте комментарий к оценке блюда"); return; }
-    if (signAsMember && brakerageCommentRequired(draftRow.organoleptic) && !draftNoteEdited) { toast.error("Введите свой комментарий к оценке блюда"); return; }
+    if (brakerageCommentRequired(draftRow.organoleptic) && !draftRow.note.trim()) { toast.error(jt("commentRequired")); return; }
+    if (signAsMember && brakerageCommentRequired(draftRow.organoleptic) && !draftNoteEdited) { toast.error(jt("ownCommentRequired")); return; }
     if (canSign && !editingRowId) return;
     if (signAsMember && canSign && withCommission) {
       const signed = await signRows([{ rowId: draftRow.id, grade: draftRow.organoleptic, note: draftNoteEdited ? draftRow.note : "", rejectionTime: brakerageTimeDigits(draftRow.rejectionTime) }]);

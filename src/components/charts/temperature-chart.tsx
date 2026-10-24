@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
 /**
  * Полотно графика грузится по требованию: `recharts` весит 359 КБ
@@ -63,21 +64,19 @@ interface ChartData {
 
 type Period = "24h" | "7d" | "30d";
 
-const PERIOD_LABELS: Record<Period, string> = {
-  "24h": "24\u0447",
-  "7d": "7\u0434",
-  "30d": "30\u0434",
-};
+const PERIODS: Period[] = ["24h", "7d", "30d"];
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
 
-function formatTime(isoString: string, period: Period): string {
+function formatTime(isoString: string, period: Period, locale: string): string {
   const date = new Date(isoString);
+  const tag = DATE_LOCALES[locale] ?? "ru-RU";
   if (period === "24h") {
-    return date.toLocaleTimeString("ru-RU", {
+    return date.toLocaleTimeString(tag, {
       hour: "2-digit",
       minute: "2-digit",
     });
   }
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(tag, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -90,6 +89,10 @@ interface TemperatureChartProps {
 }
 
 export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
+  const t = useTranslations("sharedUi.temperatureChart");
+  const locale = useLocale();
+  const periodLabel = (key: Period) =>
+    key === "24h" ? t("period24h") : key === "7d" ? t("period7d") : t("period30d");
   const connectedEquipment = equipmentList.filter(
     (eq) => eq.tuyaDeviceId != null
   );
@@ -119,7 +122,7 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(
-          (body as { error?: string }).error || "Ошибка загрузки данных"
+          (body as { error?: string }).error || t("loadFailed")
         );
       }
 
@@ -127,13 +130,13 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
       setData(json);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Ошибка загрузки данных"
+        err instanceof Error ? err.message : t("loadFailed")
       );
       setData(null);
     } finally {
       setLoading(false);
     }
-  }, [selectedEquipmentId, period]);
+  }, [selectedEquipmentId, period, t]);
 
   useEffect(() => {
     fetchData();
@@ -141,18 +144,18 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
 
   const chartPoints = data?.points.map((p) => ({
     ...p,
-    time: formatTime(p.time, period),
+    time: formatTime(p.time, period, locale),
   }));
 
   if (connectedEquipment.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Температурный график</CardTitle>
+          <CardTitle>{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Нет оборудования с подключёнными IoT-датчиками.
+            {t("noIotEquipment")}
           </p>
         </CardContent>
       </Card>
@@ -162,7 +165,7 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Температурный график</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Controls */}
@@ -172,7 +175,7 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
             onValueChange={setSelectedEquipmentId}
           >
             <SelectTrigger className="w-full sm:w-[260px]">
-              <SelectValue placeholder="Выберите оборудование" />
+              <SelectValue placeholder={t("selectEquipment")} />
             </SelectTrigger>
             <SelectContent>
               {connectedEquipment.map((eq) => (
@@ -188,9 +191,9 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
             onValueChange={(v) => setPeriod(v as Period)}
           >
             <TabsList>
-              {(Object.keys(PERIOD_LABELS) as Period[]).map((key) => (
+              {PERIODS.map((key) => (
                 <TabsTrigger key={key} value={key}>
-                  {PERIOD_LABELS[key]}
+                  {periodLabel(key)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -215,7 +218,7 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
             {chartPoints.length === 0 ? (
               <div className="flex h-[300px] items-center justify-center">
                 <p className="text-sm text-muted-foreground">
-                  Нет данных за выбранный период.
+                  {t("noData")}
                 </p>
               </div>
             ) : (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ export function EntryApprovalActions({
   userRole,
   journalCode,
 }: EntryApprovalActionsProps) {
+  const t = useTranslations("journalUi.entryApproval");
   const router = useRouter();
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -49,13 +51,13 @@ export function EntryApprovalActions({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "\u041e\u0448\u0438\u0431\u043a\u0430");
+        throw new Error(data.error || t("error"));
       }
 
       router.push(`/journals/${journalCode}`);
       router.refresh();
     } catch (err) {
-      setError(humanizeFetchError(err, "\u041e\u0448\u0438\u0431\u043a\u0430"));
+      setError(humanizeFetchError(err, t("error")));
     } finally {
       setIsApproving(false);
       setIsRejecting(false);
@@ -65,7 +67,7 @@ export function EntryApprovalActions({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{"\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u043f\u0438\u0441\u0438"}</CardTitle>
+        <CardTitle className="text-base">{t("title")}</CardTitle>
       </CardHeader>
       <CardContent>
         {error && (
@@ -82,7 +84,7 @@ export function EntryApprovalActions({
             ) : (
               <CheckCircle2 className="size-4" />
             )}
-            {"\u0423\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c"}
+            {t("approve")}
           </Button>
           <Button
             variant="outline"
@@ -95,7 +97,7 @@ export function EntryApprovalActions({
             ) : (
               <XCircle className="size-4" />
             )}
-            {"\u0412\u0435\u0440\u043d\u0443\u0442\u044c \u043d\u0430 \u0434\u043e\u0440\u0430\u0431\u043e\u0442\u043a\u0443"}
+            {t("returnToDraft")}
           </Button>
         </div>
       </CardContent>

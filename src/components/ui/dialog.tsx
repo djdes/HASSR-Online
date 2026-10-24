@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { XIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
@@ -58,7 +59,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  closeLabel = "Закрыть",
+  closeLabel,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -69,6 +70,7 @@ function DialogContent({
   showCloseButton?: boolean
   closeLabel?: string
 }) {
+  const t = useTranslations("common")
   // Свайп вниз за верхнюю зону закрывает шторку — как системные шторки
   // телефона. Только на узких экранах и только от верхних 72px (ручка и
   // шапка), чтобы не спорить со скроллом содержимого. Закрываем через
@@ -147,7 +149,7 @@ function DialogContent({
               className="absolute top-4 right-4 rounded-full bg-white/80 p-1 text-[#6f7282] opacity-90 backdrop-blur-sm ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 touch:top-2 touch:right-2 touch:flex touch:size-12 touch:items-center touch:justify-center touch:[&_svg:not([class*='size-'])]:size-5"
             >
               <XIcon />
-              <span className="sr-only">{closeLabel}</span>
+              <span className="sr-only">{closeLabel ?? t("close")}</span>
             </DialogPrimitive.Close>
           </div>
         )}
@@ -192,6 +194,7 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean
 }) {
+  const t = useTranslations("common")
   return (
     <div
       data-slot="dialog-footer"
@@ -204,7 +207,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Закрыть</Button>
+          <Button variant="outline">{t("close")}</Button>
         </DialogPrimitive.Close>
       )}
     </div>

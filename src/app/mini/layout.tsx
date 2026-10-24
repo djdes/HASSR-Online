@@ -84,7 +84,7 @@ export default async function MiniLayout({
   const shell = await loadMiniShellData(session);
 
   return (
-    <DomainMessagesBoundary namespaces={["miniHome"]}>
+    <DomainMessagesBoundary namespaces={["miniHome", "miniUi", "billingUi"]}>
       <MiniSessionProvider initialSession={session}>
         <MiniAppShell {...shell}>{children}</MiniAppShell>
       </MiniSessionProvider>

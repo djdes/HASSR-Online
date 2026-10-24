@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,7 @@ export function DocumentToolbarRow({
   sticky?: boolean;
   className?: string;
 }) {
+  const t = useTranslations("journalUi.toolbar");
   const descriptionId = useId();
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -116,7 +118,7 @@ export function DocumentToolbarRow({
               onClick={() => setExpanded((value) => !value)}
               className="mt-1 py-0.5 text-[13px] font-medium leading-snug text-[#5566f6] hover:underline sm:hidden print:hidden"
             >
-              {expanded ? "Свернуть" : "Подробнее"}
+              {expanded ? t("collapse") : t("more")}
             </button>
           ) : null}
         </div>
@@ -140,8 +142,8 @@ export function DocumentToolbarRow({
  * телефоне правило «крупнее на телефоне» поднимает её до 48px.
  */
 export function DocumentToolbarAddButton({
-  label = "Добавить строку",
-  shortLabel = "Добавить",
+  label,
+  shortLabel,
   className,
   ...props
 }: Omit<ComponentProps<typeof Button>, "children"> & {
@@ -150,6 +152,9 @@ export function DocumentToolbarAddButton({
   /** Подпись на узком телефоне. */
   shortLabel?: string;
 }) {
+  const t = useTranslations("journalUi.toolbar");
+  label = label ?? t("addRow");
+  shortLabel = shortLabel ?? t("add");
   return (
     <Button
       type="button"

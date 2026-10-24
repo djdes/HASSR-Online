@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Archive, ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { formatJournalPeriodLabel } from "@/lib/journal-document-title";
 import { personFieldLabels } from "@/lib/paper-journal-columns";
 import type { PaperJournal } from "@/lib/sphere-journal-rules";
@@ -12,7 +13,7 @@ import type { PaperJournal } from "@/lib/sphere-journal-rules";
  * проверкой, чего у бумажного документа нет. Здесь только то, что
  * выбрали в модалке: название, период, люди и статус.
  */
-export function PaperDocumentHeader({
+export async function PaperDocumentHeader({
   journal,
   title,
   period,
@@ -27,10 +28,11 @@ export function PaperDocumentHeader({
   verifier: string | null;
   closed: boolean;
 }) {
+  const t = await getTranslations("settingsUi.paperDocumentHeader");
   const labels = personFieldLabels(journal);
   const periodLabel = formatJournalPeriodLabel(period.from, period.to);
   const facts = [
-    periodLabel ? { label: "Период", value: periodLabel } : null,
+    periodLabel ? { label: t("period"), value: periodLabel } : null,
     responsible ? { label: labels.responsible, value: responsible } : null,
     verifier ? { label: labels.verifier, value: verifier } : null,
   ].filter((fact): fact is { label: string; value: string } => fact !== null);
@@ -51,7 +53,7 @@ export function PaperDocumentHeader({
         {closed ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]">
             <Archive className="size-3.5" />
-            Закрыт
+            {t("closed")}
           </span>
         ) : null}
       </div>

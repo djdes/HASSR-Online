@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 
@@ -31,6 +32,7 @@ export function OrganizationAccessCard({
   userName: string;
   organizations: OrganizationAccessRow[];
 }) {
+  const t = useTranslations("settingsUi.organizationAccessCard");
   const router = useRouter();
   const [state, setState] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(organizations.map((row) => [row.id, row.enabled])),
@@ -51,16 +53,16 @@ export function OrganizationAccessCard({
         body: JSON.stringify({ userId, organizationId: row.id, enabled: next }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok) throw new Error(data?.error ?? t("saveFailed"));
       toast.success(
         next
-          ? `${userName} видит «${row.name}»`
-          : `Доступ к «${row.name}» закрыт`,
+          ? t("nowVisible", { userName, name: row.name })
+          : t("accessClosed", { name: row.name }),
       );
       router.refresh();
     } catch (error) {
       setState((prev) => ({ ...prev, [row.id]: !next }));
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingId(null);
     }
@@ -69,10 +71,10 @@ export function OrganizationAccessCard({
   return (
     <section className="rounded-2xl border border-[#ececf4] bg-white p-5">
       <h2 className="text-[16px] font-semibold text-[#0b1024]">
-        Доступ к организациям
+        {t("title")}
       </h2>
       <p className="mt-1 text-[13px] text-[#6f7282]">
-        В какие точки аккаунта сотрудник может переключаться из меню профиля.
+        {t("description")}
       </p>
       <div className="mt-4 space-y-1">
         {organizations.map((row) => (
@@ -85,7 +87,7 @@ export function OrganizationAccessCard({
               {row.name}
               {row.isHome ? (
                 <span className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#5566f6]">
-                  основная
+                  {t("home")}
                 </span>
               ) : null}
             </span>
@@ -96,7 +98,7 @@ export function OrganizationAccessCard({
                 checked={row.isHome || state[row.id]}
                 disabled={row.isHome}
                 onCheckedChange={() => toggle(row)}
-                aria-label={`Доступ к ${row.name}`}
+                aria-label={t("accessTo", { name: row.name })}
               />
             )}
           </div>

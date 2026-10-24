@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Archive, Loader2, Pencil, Plus, Trash2, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -92,12 +93,12 @@ function getRoleLabelByUserId(users: UserItem[], userId: string) {
   return user ? getUserDisplayTitle(user) : "";
 }
 
-function actDateParts(value: string) {
+function actDateParts(value: string, locale: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return { day: "__", month: "", year: "____" };
   return {
     day: String(date.getDate()).padStart(2, "0"),
-    month: new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(date),
+    month: new Intl.DateTimeFormat(locale, { month: "long" }).format(date),
     year: String(date.getFullYear()),
   };
 }
@@ -113,6 +114,9 @@ export function ProductWriteoffDocumentClient({
   useV2 = false,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.productWriteoff");
+  const tc = useTranslations("common");
+  const locale = useLocale();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isClosed = status === "closed";
   const { mobileView, switchMobileView } = useMobileView("product_writeoff");
@@ -143,7 +147,8 @@ export function ProductWriteoffDocumentClient({
   );
   const { closeDocument } = useDocumentCloseAction({ documentId, title });
 
-  const actDate = actDateParts(config.documentDate || dateFrom);
+  const actDate = actDateParts(config.documentDate || dateFrom, locale);
+  const actDateText = t("actDate", { day: actDate.day, month: actDate.month, year: actDate.year });
 
   async function persistConfig(nextConfig: ProductWriteoffConfig) {
     setSaving(true);
@@ -164,7 +169,7 @@ export function ProductWriteoffDocumentClient({
       router.refresh();
       return true;
     } catch {
-      toast.error("Не удалось сохранить акт");
+      toast.error(t("saveFailed"));
       return false;
     } finally {
       setSaving(false);
@@ -203,7 +208,7 @@ export function ProductWriteoffDocumentClient({
     };
 
     if (!nextRow.productName.trim()) {
-      toast.error("Укажите наименование ТМЦ");
+      toast.error(t("productRequired"));
       return;
     }
 
@@ -247,7 +252,7 @@ export function ProductWriteoffDocumentClient({
       });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        toast.error(payload?.error || "Не удалось записать потерю");
+        toast.error(payload?.error || t("lossFailed"));
         return;
       }
       const record = (await response.json()) as { id: string };
@@ -259,8 +264,8 @@ export function ProductWriteoffDocumentClient({
       const ok = await persistConfig(nextConfig);
       if (!ok) return;
       setRowDialog((prev) => (prev.open ? { ...prev, row: nextRow } : prev));
-      toast.success("Записано в потери", {
-        action: { label: "Открыть", onClick: () => router.push("/losses") },
+      toast.success(t("lossRecorded"), {
+        action: { label: t("open"), onClick: () => router.push("/losses") },
       });
     } finally {
       setSaving(false);
@@ -278,7 +283,7 @@ export function ProductWriteoffDocumentClient({
 
   async function saveCommissionMember() {
     if (!commissionDialog.member.employeeName.trim()) {
-      toast.error("Выберите сотрудника");
+      toast.error(t("chooseEmployee"));
       return;
     }
     const normalizedMember = {
@@ -319,9 +324,9 @@ export function ProductWriteoffDocumentClient({
           index === 0 ? { ...list, items: Array.from(new Set([...list.items, ...items])) } : list
         ),
       });
-      toast.success(`Импортировано ${items.length} позиций`);
+      toast.success(t("imported", { count: items.length }));
     } catch {
-      toast.error("Не удалось импортировать файл");
+      toast.error(t("importFailed"));
     } finally {
       setImporting(false);
     }
@@ -345,9 +350,9 @@ export function ProductWriteoffDocumentClient({
       />
     ) : null,
     fields: [
-      { label: "Количество", value: row.quantity, hideIfEmpty: true },
-      { label: "Несоответствие", value: row.discrepancyDescription, hideIfEmpty: true },
-      { label: "Действия с ТМЦ", value: row.action, hideIfEmpty: true },
+      { label: t("quantity"), value: row.quantity, hideIfEmpty: true },
+      { label: t("discrepancy"), value: row.discrepancyDescription, hideIfEmpty: true },
+      { label: t("action"), value: row.action, hideIfEmpty: true },
     ],
     onClick: !isClosed
       ? () => {
@@ -364,7 +369,7 @@ export function ProductWriteoffDocumentClient({
         }}
         className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white hover:bg-[#4b57ff]"
       >
-        Редактировать
+        {tc("edit")}
       </button>
     ) : null,
   }));
@@ -372,7 +377,7 @@ export function ProductWriteoffDocumentClient({
   /** Состав комиссии — один и тот же блок для бланка и для телефона. */
   const commissionBlock = (
     <div>
-      Комиссия в составе:
+      {t("commissionInclude")}
       <div className="ml-5 mt-1 space-y-1">
         {config.commissionMembers.map((member, index) => (
           <div key={member.id} className="flex items-center gap-3">
@@ -382,20 +387,20 @@ export function ProductWriteoffDocumentClient({
             {!isClosed && <button type="button" className="rounded-full p-1 text-[#5566f6]" onClick={() => setCommissionDialog({ open: true, index, member })}><Pencil className="size-4" /></button>}
           </div>
         ))}
-        {!isClosed && <button type="button" className="text-left underline" onClick={() => setCommissionDialog({ open: true, index: null, member: emptyCommissionMember() })}>Добавить</button>}
+        {!isClosed && <button type="button" className="text-left underline" onClick={() => setCommissionDialog({ open: true, index: null, member: emptyCommissionMember() })}>{tc("add")}</button>}
       </div>
     </div>
   );
 
   return (
     <div className="space-y-6 text-black">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("noRecords")} emptyBody={t("noRecordsBody")} />
       {selectedRows.length > 0 && !isClosed && (
         <JournalSelectionBar
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
           onDelete={() => deleteSelectedRows().catch(() => undefined)}
-          hint="Строки акта будут удалены без возможности отмены"
+          hint={t("deleteHint")}
         >
           <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
         </JournalSelectionBar>
@@ -418,20 +423,20 @@ export function ProductWriteoffDocumentClient({
         }
         onSettings={isClosed ? undefined : () => setSettingsOpen(true)}
         closed={isClosed}
-        closedHint="Откройте журнал заново, чтобы добавлять и редактировать акт."
+        closedHint={t("closedHint")}
         menuItems={
           isClosed
             ? []
             : [
                 {
                   key: "edit-lists",
-                  label: "Редактировать списки",
+                  label: t("editLists"),
                   icon: <Pencil className="size-4" />,
                   onSelect: () => setListsOpen(true),
                 },
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: t("closeJournal"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => void closeDocument(),
                 },
@@ -439,7 +444,7 @@ export function ProductWriteoffDocumentClient({
         }
         mobileView={mobileView}
         onMobileView={switchMobileView}
-        cards={<RecordCardsView items={cardItems} emptyLabel="Списаний пока не зарегистрировано." />}
+        cards={<RecordCardsView items={cardItems} emptyLabel={t("noWriteoffs")} />}
         paperHeader={
           <>
             <JournalDocumentHeader
@@ -449,15 +454,15 @@ export function ProductWriteoffDocumentClient({
               finishedAt={null}
             />
             <div className="space-y-4 pt-4 text-center">
-              <div className="text-[30px] font-semibold">АКТ</div>
-              <div className="text-[24px] font-semibold">№ {config.actNumber || "1"} от « {actDate.day} » {actDate.month} {actDate.year} г.</div>
+              <div className="text-[30px] font-semibold">{t("actTitle")}</div>
+              <div className="text-[24px] font-semibold">{t("actHeading", { number: config.actNumber || "1", date: actDateText })}</div>
             </div>
           </>
         }
         sheetMinWidth={1100}
         extra={
           <div className="mt-6 space-y-2 text-[18px]">
-            <div>Подписи членов комиссии:</div>
+            <div>{t("commissionSignatures")}</div>
             {config.commissionMembers.length === 0 && <div>________________</div>}
             {config.commissionMembers.map((member) => (
               <div key={member.id} className="flex items-end gap-3">
@@ -471,7 +476,7 @@ export function ProductWriteoffDocumentClient({
           !isClosed ? (
             <Button type="button" className={DOC_PRIMARY_BUTTON_CLASS} onClick={() => { setRowDialog({ open: true, index: null, row: emptyRow(), newProductName: "" }); setRowDialogProductOptions(productOptions); }}>
               <Plus className="size-5" />
-              Добавить
+              {tc("add")}
             </Button>
           ) : null
         }
@@ -479,25 +484,25 @@ export function ProductWriteoffDocumentClient({
         <div className="space-y-5 py-4 text-[18px] leading-8">
           {commissionBlock}
 
-          <p>составила настоящий АКТ о том, что « {actDate.day} » {actDate.month} {actDate.year} г. на предприятии выявлены ТМЦ с несоответствиями по качеству и (или) безопасности согласно списку ниже.</p>
+          <p>{t("actBody", { date: actDateText })}</p>
           <p className="flex flex-wrap items-center gap-2">
-            Указанные ТМЦ были выработаны
+            {t("producedBy")}
             <input value={config.supplierName} disabled={isClosed} onChange={(event) => updateConfig({ supplierName: event.target.value })} onBlur={() => persistConfig(config).catch(() => undefined)} className="min-w-[280px] flex-1 border-b border-black bg-transparent px-1 outline-none" />
-            и поставлены...
+            {t("andSupplied")}
           </p>
-          <p>Комиссия постановила выполнить в отношении выявленных ТМЦ следующие действия:</p>
+          <p>{t("commissionDecided")}</p>
         </div>
 
         <table className="w-full border-collapse text-[13px]">
           <thead>
             <tr>
               {!isClosed && <th className={`w-[34px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 print:hidden`} />}
-              <th className={`w-[70px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>№ п/п</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Наименование ТМЦ</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>№ партии, дата выработки</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Количество (кг, шт)</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Описание несоответствия</th>
-              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>Действия с ТМЦ</th>
+              <th className={`w-[70px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("colNumber")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("colName")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("colBatch")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("colQuantity")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("colDiscrepancy")}</th>
+              <th className={`${GRID_HEAD_CELL_CLASS} px-2 py-1.5 font-semibold leading-tight`}>{t("colAction")}</th>
             </tr>
           </thead>
           <tbody>
@@ -533,7 +538,7 @@ export function ProductWriteoffDocumentClient({
                 leading={2}
                 labelSpan={1}
                 trailing={4}
-                label="Добавить"
+                label={tc("add")}
                 onClick={() => {
                   setRowDialog({ open: true, index: null, row: emptyRow(), newProductName: "" });
                   setRowDialogProductOptions(productOptions);
@@ -561,8 +566,8 @@ export function ProductWriteoffDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки документа"
-          description="Название документа, № акта, дата и комментарий."
+          title={t("settingsTitle")}
+          description={t("settingsDescription")}
           size="md"
           isSaving={saving}
           onSave={async () => {
@@ -572,7 +577,7 @@ export function ProductWriteoffDocumentClient({
         >
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Название документа
+              {t("documentName")}
             </Label>
             <Input
               value={config.documentName}
@@ -583,18 +588,18 @@ export function ProductWriteoffDocumentClient({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                № акта
+                {t("actNumber")}
               </Label>
               <Input
                 value={config.actNumber}
                 onChange={(event) => updateConfig({ actNumber: event.target.value })}
-                placeholder="Например: 1"
+                placeholder={t("actNumberPlaceholder")}
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Дата документа
+                {t("documentDate")}
               </Label>
               <Input
                 type="date"
@@ -606,7 +611,7 @@ export function ProductWriteoffDocumentClient({
           </div>
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Комментарий
+              {t("comment")}
             </Label>
             <Textarea
               value={config.comment}
@@ -619,28 +624,28 @@ export function ProductWriteoffDocumentClient({
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[720px]">
             <DialogHeader className="border-b px-8 py-6">
-              <DialogTitle className="text-[24px] font-medium text-black">Настройки документа</DialogTitle>
+              <DialogTitle className="text-[24px] font-medium text-black">{t("settingsTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-5 px-8 py-6">
               <div className="space-y-2">
-                <Label>Название документа</Label>
+                <Label>{t("documentName")}</Label>
                 <Input value={config.documentName} onChange={(event) => updateConfig({ documentName: event.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label>№ акта</Label>
+                <Label>{t("actNumber")}</Label>
                 <Input value={config.actNumber} onChange={(event) => updateConfig({ actNumber: event.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label>Дата документа</Label>
+                <Label>{t("documentDate")}</Label>
                 <Input type="date" value={config.documentDate} onChange={(event) => updateConfig({ documentDate: event.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label>Комментарий</Label>
+                <Label>{t("comment")}</Label>
                 <Textarea value={config.comment} onChange={(event) => updateConfig({ comment: event.target.value })} className="min-h-[160px] rounded-2xl border-[#dfe1ec] px-5 py-4 text-[18px]" />
               </div>
               <div className="flex justify-end">
                 <Button type="button" onClick={() => saveSettings().catch(() => undefined)} disabled={saving} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]">
-                  {saving ? "Сохранение..." : "Сохранить"}
+                  {saving ? t("saving") : tc("save")}
                 </Button>
               </div>
             </div>
@@ -656,21 +661,21 @@ export function ProductWriteoffDocumentClient({
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {rowDialog.index === null ? "Добавление новой строки" : `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`}
+              {rowDialog.index === null ? t("addNewRow") : `${t("editRow")}${seq.progress ? ` ${seq.progress}` : ""}`}
             </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Наименование ТМЦ</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("colName")}</Label>
               <select value={rowDialog.row.productName} onChange={(event) => setRowDialog((prev) => ({ ...prev, row: { ...prev.row, productName: event.target.value } }))} className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]">
-                <option value="">Выберите из списка</option>
+                <option value="">{t("chooseFromList")}</option>
                 {Array.from(new Set(rowDialogProductOptions.length > 0 ? rowDialogProductOptions : productOptions)).map((item) => (
                   <option key={item} value={item}>{item}</option>
                 ))}
               </select>
               <div className="flex gap-2">
-                <Input value={rowDialog.newProductName} onChange={(event) => setRowDialog((prev) => ({ ...prev, newProductName: event.target.value }))} placeholder="Добавить название новых ТМЦ" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
+                <Input value={rowDialog.newProductName} onChange={(event) => setRowDialog((prev) => ({ ...prev, newProductName: event.target.value }))} placeholder={t("newProductPlaceholder")} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
                 <Button type="button" className="h-10 rounded-xl bg-[#5566f6] px-5 text-[14px] text-white hover:bg-[#4a5bf0]" onClick={() => {
                   const item = rowDialog.newProductName.trim();
                   if (!item) return;
@@ -688,27 +693,27 @@ export function ProductWriteoffDocumentClient({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">№ партии</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("batchNumber")}</Label>
                 <Input value={rowDialog.row.batchNumber} onChange={(event) => setRowDialog((prev) => ({ ...prev, row: { ...prev.row, batchNumber: event.target.value } }))} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Дата выработки</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("productionDate")}</Label>
                 <Input value={rowDialog.row.productionDate} onChange={(event) => setRowDialog((prev) => ({ ...prev, row: { ...prev.row, productionDate: event.target.value } }))} placeholder="02.04.2025" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Количество (кг, шт)</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("colQuantity")}</Label>
               <Input value={rowDialog.row.quantity} onChange={(event) => setRowDialog((prev) => ({ ...prev, row: { ...prev.row, quantity: event.target.value } }))} className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Описание несоответствия</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("colDiscrepancy")}</Label>
               <Textarea value={rowDialog.row.discrepancyDescription} onChange={(event) => setRowDialog((prev) => ({ ...prev, row: { ...prev.row, discrepancyDescription: event.target.value } }))} className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]" rows={4} />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Действия с ТМЦ</Label>
+              <Label className="text-[13px] font-medium text-[#3c4053]">{t("colAction")}</Label>
               <Textarea value={rowDialog.row.action} onChange={(event) => setRowDialog((prev) => ({ ...prev, row: { ...prev.row, action: event.target.value } }))} className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]" rows={3} />
             </div>
           </div>
@@ -724,7 +729,7 @@ export function ProductWriteoffDocumentClient({
                 className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] px-4 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] sm:mr-auto sm:w-auto"
               >
                 <TrendingDown className="size-4" />
-                Записано в потери
+                {t("lossRecorded")}
               </a>
             ) : rowDialog.index !== null &&
               !isClosed &&
@@ -734,11 +739,11 @@ export function ProductWriteoffDocumentClient({
                 variant="outline"
                 disabled={saving}
                 onClick={() => void createLossFromRow(rowDialog.index as number)}
-                title="Заведёт запись в «Учёте потерь»: категория «Списание», продукт, количество, причина и дата акта"
+                title={t("createLossHint")}
                 className="h-9 w-full gap-1.5 rounded-xl border-[#5566f6]/30 bg-[#f5f6ff] px-4 text-[13.5px] font-medium text-[#5566f6] shadow-none transition-colors duration-150 hover:bg-[#eef1ff] sm:mr-auto sm:w-auto"
               >
                 <TrendingDown className="size-4" />
-                Записать в потери
+                {t("createLoss")}
               </Button>
             ) : null}
             <Button
@@ -747,7 +752,7 @@ export function ProductWriteoffDocumentClient({
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
               onClick={() => setRowDialog({ open: false, index: null, row: emptyRow(), newProductName: "" })}
             >
-              Отмена
+              {tc("cancel")}
             </Button>
             <Button
               type="button"
@@ -755,7 +760,7 @@ export function ProductWriteoffDocumentClient({
               disabled={saving}
               className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
             >
-              {saving ? "Сохранение..." : rowDialog.index === null ? "Добавить" : "Сохранить"}
+              {saving ? t("saving") : rowDialog.index === null ? tc("add") : tc("save")}
             </Button>
           </div>
         </DialogContent>
@@ -768,14 +773,14 @@ export function ProductWriteoffDocumentClient({
                 строки» и кнопкой «Сохранить» — человек не понимал, создаёт
                 он новую строку или правит чужую. */}
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {commissionDialog.index === null ? "Добавление строки" : "Редактирование строки"}
+              {commissionDialog.index === null ? t("addRow") : t("editRowShort")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Должность</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("position")}</Label>
                 <select
                   value={commissionDialog.member.role}
                   onChange={(event) => {
@@ -801,17 +806,17 @@ export function ProductWriteoffDocumentClient({
                   }}
                   className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]"
                 >
-                  <option value="">— выберите —</option>
+                  <option value="">{t("choosePlaceholder")}</option>
                   <PositionNativeOptions users={users} />
                 </select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("employee")}</Label>
                 <select value={commissionDialog.member.employeeId} onChange={(event) => {
                   const user = users.find((item) => item.id === event.target.value);
                   setCommissionDialog((prev) => ({ ...prev, member: { ...prev.member, employeeId: event.target.value, employeeName: user?.name || "", role: user ? getUserDisplayTitle(user) : prev.member.role } }));
                 }} className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]">
-                  <option value="">Выберите сотрудника</option>
+                  <option value="">{t("chooseEmployee")}</option>
                   {(commissionDialog.member.role
                     ? getUsersForRoleLabel(users, commissionDialog.member.role)
                     : users
@@ -832,7 +837,7 @@ export function ProductWriteoffDocumentClient({
                   className="h-9 w-full rounded-xl border-[#ffd7d3] px-5 text-[14px] font-medium text-[#ff3b30] shadow-none hover:bg-[#fff4f2] sm:w-auto"
                   onClick={() => deleteCommissionMember(commissionDialog.index ?? 0).catch(() => undefined)}
                 >
-                  Удалить
+                  {tc("delete")}
                 </Button>
               ) : null}
             </div>
@@ -843,7 +848,7 @@ export function ProductWriteoffDocumentClient({
                 className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
                 onClick={() => setCommissionDialog({ open: false, index: null, member: emptyCommissionMember() })}
               >
-                Отмена
+                {tc("cancel")}
               </Button>
               <Button
                 type="button"
@@ -852,10 +857,10 @@ export function ProductWriteoffDocumentClient({
                 className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
               >
                 {saving
-                  ? "Сохранение..."
+                  ? t("saving")
                   : commissionDialog.index === null
-                    ? "Добавить"
-                    : "Сохранить"}
+                    ? tc("add")
+                    : tc("save")}
               </Button>
             </div>
           </div>
@@ -873,7 +878,7 @@ export function ProductWriteoffDocumentClient({
       >
         <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[28px] border-0 p-0 sm:max-w-[720px]">
           <DialogHeader className="border-b px-8 py-6">
-            <DialogTitle className="text-[24px] font-medium text-black">Редактировать список продукции</DialogTitle>
+            <DialogTitle className="text-[24px] font-medium text-black">{t("editProductList")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 px-8 py-6">
             {config.productLists[0]?.items.map((item, index) => (
@@ -901,7 +906,7 @@ export function ProductWriteoffDocumentClient({
             {!isClosed && (
               <>
                 <div className="flex gap-3">
-                  <Input value={rowDialog.newProductName} onChange={(event) => setRowDialog((prev) => ({ ...prev, newProductName: event.target.value }))} placeholder="Введите наименование продукции" className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
+                  <Input value={rowDialog.newProductName} onChange={(event) => setRowDialog((prev) => ({ ...prev, newProductName: event.target.value }))} placeholder={t("productNamePlaceholder")} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
                   <Button type="button" className="h-9 rounded-xl bg-[#5563ff] px-5 text-[13.5px] text-white" onClick={() => {
                     const item = rowDialog.newProductName.trim();
                     if (!item) return;
@@ -919,9 +924,9 @@ export function ProductWriteoffDocumentClient({
                   type="button"
                   className="block text-[18px] text-[#3848c7] underline"
                   onClick={() => setDirectoryOpen(true)}
-                  title="Добавить позиции из общего справочника организации"
+                  title={t("fromDirectoryHint")}
                 >
-                  Из справочника организации
+                  {t("fromDirectory")}
                 </button>
                 <OrgDirectoryDialog
                   open={directoryOpen}
@@ -939,18 +944,18 @@ export function ProductWriteoffDocumentClient({
                 />
 
                 <button type="button" className="text-[18px] text-[#6c77ff] underline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-                  Добавить из файла
+                  {t("addFromFile")}
                 </button>
 
                 <div className="rounded-[24px] border border-[#e6e9f5] bg-[#fbfbff] px-5 py-4 text-[15px] leading-7 text-[#505469]">
-                  Список должен быть в файле Excel, на первом листе в первом столбце и начинаться с первой строки.
+                  {t("fileHint")}
                 </div>
               </>
             )}
 
             <div className="flex justify-end">
               <Button type="button" onClick={() => setListsOpen(false)} disabled={saving} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]">
-                {saving ? "Сохранение..." : "Закрыть"}
+                {saving ? t("saving") : tc("close")}
               </Button>
             </div>
           </div>
@@ -973,7 +978,7 @@ export function ProductWriteoffDocumentClient({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/20">
           <div className="rounded-2xl bg-white px-6 py-4 text-[18px]">
             <Loader2 className="mr-3 inline size-5 animate-spin" />
-            Импортируем Excel...
+            {t("importing")}
           </div>
         </div>
       )}

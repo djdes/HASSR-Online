@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Archive,
   CalendarDays,
@@ -114,11 +115,13 @@ type ListEditorSectionProps = {
   onDirectoryAdd?: (names: string[]) => void;
 };
 
-function formatRuDate(value: string) {
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+
+function formatDisplayDate(value: string, locale: string) {
   if (!value) return "__________";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("ru-RU");
+  return date.toLocaleDateString(DATE_LOCALES[locale] ?? "ru-RU");
 }
 
 function AddableSelectField(props: {
@@ -179,6 +182,9 @@ function RowDialog({
   responsibleEmployee,
   onSave,
 }: RowDialogProps) {
+  const t = useTranslations("journalUi.metalImpurityDocument");
+  const staffT = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const today = localDayKey();
   const [draft, setDraft] = useState<MetalImpurityRow>(
     createMetalImpurityRow({
@@ -274,12 +280,12 @@ function RowDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <DialogTitle className="text-[22px] font-medium text-black">
-            {row ? `Редактирование строки${titleSuffix ? ` ${titleSuffix}` : ""}` : "Добавление новой строки"}
+            {row ? `${t("rowEditTitle")}${titleSuffix ? ` ${titleSuffix}` : ""}` : t("rowAddTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("date")}</Label>
             <div className="relative">
               <Input
                 type="date"
@@ -292,11 +298,11 @@ function RowDialog({
           </div>
 
           <AddableSelectField
-            label="Поставщик"
+            label={t("supplier")}
             value={draft.supplierId}
             options={supplierOptions}
-            selectPlaceholder="Выберите из списка или добавьте новое"
-            addPlaceholder="Добавить название нового поставщика"
+            selectPlaceholder={t("chooseOrAdd")}
+            addPlaceholder={t("addSupplierPlaceholder")}
             addValue={newSupplier}
             onValueChange={(value) => setDraft({ ...draft, supplierId: value })}
             onAddValueChange={setNewSupplier}
@@ -311,11 +317,11 @@ function RowDialog({
           />
 
           <AddableSelectField
-            label="Сырье"
+            label={t("rawMaterial")}
             value={draft.materialId}
             options={materialOptions}
-            selectPlaceholder="Выберите из списка или добавьте новое"
-            addPlaceholder="Добавить название нового сырья"
+            selectPlaceholder={t("chooseOrAdd")}
+            addPlaceholder={t("addMaterialPlaceholder")}
             addValue={newMaterial}
             onValueChange={(value) => setDraft({ ...draft, materialId: value })}
             onAddValueChange={setNewMaterial}
@@ -332,7 +338,7 @@ function RowDialog({
           <div className="space-y-3">
             <Input
               value={draft.consumedQuantityKg}
-              placeholder="Введите кол-во израсходованного сырья, кг"
+              placeholder={t("consumedPlaceholder")}
               onChange={(event) =>
                 setDraft({ ...draft, consumedQuantityKg: event.target.value })
               }
@@ -343,7 +349,7 @@ function RowDialog({
           <div className="space-y-3">
             <Input
               value={draft.impurityQuantityG}
-              placeholder="Введите кол-во металломагнитной примеси, г"
+              placeholder={t("impurityQuantityPlaceholder")}
               onChange={(event) =>
                 setDraft({ ...draft, impurityQuantityG: event.target.value })
               }
@@ -354,7 +360,7 @@ function RowDialog({
           <div className="space-y-3">
             <Input
               value={draft.impurityCharacteristic}
-              placeholder="Введите хар-ку металломагнитной примеси"
+              placeholder={t("characteristicPlaceholder")}
               onChange={(event) =>
                 setDraft({ ...draft, impurityCharacteristic: event.target.value })
               }
@@ -363,13 +369,13 @@ function RowDialog({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность ответственного</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("responsiblePosition")}</Label>
             <Select
               value={draftPosition}
               onValueChange={rowCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={staffT("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -378,7 +384,7 @@ function RowDialog({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("employee")}</Label>
             <Select
               value={draftEmployeeId || EMPTY_SELECT_VALUE}
               onValueChange={rowCascade.handleEmployeeChange}
@@ -386,10 +392,10 @@ function RowDialog({
               onOpenChange={rowCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={staffT("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE}>Выберите сотрудника</SelectItem>
+                <SelectItem value={EMPTY_SELECT_VALUE}>{staffT("chooseEmployee")}</SelectItem>
                 {employeeOptions.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {buildStaffOptionLabel(employee)}
@@ -428,7 +434,7 @@ function RowDialog({
                 } catch (error) {
                   // Без catch ошибка глохла: окно висело, тоста не было.
                   toast.error(
-                    humanizeFetchError(error, "Не удалось сохранить строку")
+                    humanizeFetchError(error, t("saveRowFailed"))
                   );
                 } finally {
                   setSubmitting(false);
@@ -436,7 +442,7 @@ function RowDialog({
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-8 text-[16px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : row ? "Сохранить" : "Добавить"}
+              {submitting ? common("saving") : row ? common("save") : common("add")}
             </Button>
           </div>
         </div>
@@ -464,6 +470,9 @@ function SettingsDialog({
   onSave: (params: { title: string; config: MetalImpurityDocumentConfig }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("journalUi.metalImpurityDocument");
+  const staffT = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
   const [draftTitle, setDraftTitle] = useState(title);
   const [draftConfig, setDraftConfig] = useState(config);
   const [submitting, setSubmitting] = useState(false);
@@ -540,8 +549,8 @@ function SettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки документа"
-        description="Название документа, дата и ответственный сотрудник."
+        title={staffT("settings")}
+        description={t("settingsDescription")}
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -549,7 +558,7 @@ function SettingsDialog({
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {staffT("documentName")}
           </Label>
           <Input
             value={draftTitle}
@@ -559,7 +568,7 @@ function SettingsDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
+            {t("startDate")}
           </Label>
           <Input
             type="date"
@@ -572,14 +581,14 @@ function SettingsDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного
+            {staffT("responsiblePosition")}
           </Label>
           <Select
             value={draftConfig.responsiblePosition}
             onValueChange={settingsCascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={staffT("selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={users} />
@@ -588,7 +597,7 @@ function SettingsDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
+            {staffT("employee")}
           </Label>
           <Select
             value={draftConfig.responsibleEmployeeId || EMPTY_SELECT_VALUE}
@@ -597,10 +606,10 @@ function SettingsDialog({
             onOpenChange={settingsCascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={staffT("selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={EMPTY_SELECT_VALUE}>— не выбран —</SelectItem>
+              <SelectItem value={EMPTY_SELECT_VALUE}>{t("notSelected")}</SelectItem>
               {filteredEmployees.map((employee) => (
                 <SelectItem key={employee.id} value={employee.id}>
                   {buildStaffOptionLabel(employee)}
@@ -618,12 +627,12 @@ function SettingsDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <DialogTitle className="text-[22px] font-medium text-black">
-            Настройки документа
+            {staffT("settings")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Название документа</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("documentName")}</Label>
             <Input
               value={draftTitle}
               onChange={(event) => setDraftTitle(event.target.value)}
@@ -631,7 +640,7 @@ function SettingsDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Дата начала</Label>
+            <Label className="text-[14px] text-[#73738a]">{t("startDate")}</Label>
             <div className="relative">
               <Input
                 type="date"
@@ -645,13 +654,13 @@ function SettingsDialog({
             </div>
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Должность ответственного</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("responsiblePosition")}</Label>
             <Select
               value={draftConfig.responsiblePosition}
               onValueChange={settingsCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="Выберите должность" />
+                <SelectValue placeholder={staffT("choosePosition")} />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -659,7 +668,7 @@ function SettingsDialog({
             </Select>
           </div>
           <div className="space-y-3">
-            <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
+            <Label className="text-[14px] text-[#73738a]">{staffT("employee")}</Label>
             <Select
               value={draftConfig.responsibleEmployeeId || EMPTY_SELECT_VALUE}
               onValueChange={settingsCascade.handleEmployeeChange}
@@ -667,10 +676,10 @@ function SettingsDialog({
               onOpenChange={settingsCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="Выберите сотрудника" />
+                <SelectValue placeholder={staffT("chooseEmployee")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE}>Выберите сотрудника</SelectItem>
+                <SelectItem value={EMPTY_SELECT_VALUE}>{staffT("chooseEmployee")}</SelectItem>
                 {filteredEmployees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {buildStaffOptionLabel(employee)}
@@ -686,7 +695,7 @@ function SettingsDialog({
               onClick={handleSave}
               className="h-10 rounded-xl bg-[#5566f6] px-8 text-[16px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? common("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -713,6 +722,7 @@ function ListEditorSection({
   directoryKind,
   onDirectoryAdd,
 }: ListEditorSectionProps) {
+  const t = useTranslations("journalUi.metalImpurityDocument");
   const [directoryOpen, setDirectoryOpen] = useState(false);
   return (
     <div className="space-y-4">
@@ -742,7 +752,7 @@ function ListEditorSection({
               type="button"
               onClick={() => onEditStart(item.id, item.name)}
               className="rounded-lg p-2 text-[#5566f6] transition-colors duration-150 hover:bg-[#eef1ff] hover:text-[#4b57ff]"
-              title="Переименовать"
+              title={t("rename")}
             >
               <Pencil className="size-4" />
             </button>
@@ -750,7 +760,7 @@ function ListEditorSection({
               type="button"
               onClick={() => onDelete(item)}
               className="rounded-lg p-2 text-[#9a9db0] transition-colors duration-150 hover:bg-[#fff3f2] hover:text-[#ff3b30]"
-              title="Удалить из списка"
+              title={t("removeFromList")}
             >
               <Trash2 className="size-4" />
             </button>
@@ -779,7 +789,7 @@ function ListEditorSection({
               onClick={onImportClick}
             className="text-left text-[#5f66ff] underline underline-offset-2"
           >
-            Добавить из файла
+            {t("addFromFile")}
           </button>
           {directoryKind && onDirectoryAdd ? (
             <>
@@ -787,9 +797,9 @@ function ListEditorSection({
                 type="button"
                 onClick={() => setDirectoryOpen(true)}
                 className="ml-4 text-left text-[#3848c7] underline underline-offset-2"
-                title="Добавить позиции из общего справочника организации"
+                title={t("directoryHint")}
               >
-                Из справочника организации
+                {t("fromDirectory")}
               </button>
               <OrgDirectoryDialog
                 open={directoryOpen}
@@ -801,8 +811,7 @@ function ListEditorSection({
             </>
           ) : null}
           <div>
-            Список должен быть в файле Excel, на первом листе в первом столбце и начинаться с
-            первой строки.
+            {t("excelHint")}
           </div>
             <div
               role="button"
@@ -826,7 +835,7 @@ function ListEditorSection({
             >
               <div className="flex flex-col items-center gap-2 text-[#727890]">
                 <Paperclip className="size-5" />
-                <span>Выберите файл или перетащите его сюда</span>
+                <span>{t("dropHint")}</span>
               </div>
           </div>
         </div>
@@ -846,6 +855,8 @@ function ListsDialog({
   config: MetalImpurityDocumentConfig;
   onSave: (config: MetalImpurityDocumentConfig) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.metalImpurityDocument");
+  const common = useTranslations("common");
   const [draft, setDraft] = useState(config);
   const [newMaterial, setNewMaterial] = useState("");
   const [newSupplier, setNewSupplier] = useState("");
@@ -907,9 +918,7 @@ function ListsDialog({
       (row) => (target === "materials" ? row.materialId : row.supplierId) === item.id
     );
     if (used) {
-      toast.error(
-        `«${item.name}» уже стоит в записях журнала — сначала измените эти строки`
-      );
+      toast.error(t("itemInUse", { name: item.name }));
       return;
     }
     setDraft((current) => ({
@@ -918,7 +927,7 @@ function ListsDialog({
         (option) => option.id !== item.id
       ),
     }));
-    toast.success(`Удалено из списка: ${item.name}`);
+    toast.success(t("itemRemoved", { name: item.name }));
   }
 
   async function importItems(file: File, target: "materials" | "suppliers") {
@@ -947,7 +956,7 @@ function ListsDialog({
           : { ...current, suppliers: [...current.suppliers, ...imported] };
       });
     } catch {
-      toast.error("Не удалось импортировать файл");
+      toast.error(t("importFailed"));
     }
   }
 
@@ -956,12 +965,12 @@ function ListsDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[620px]">
         <DialogHeader className="border-b px-8 py-6">
           <DialogTitle className="text-[24px] font-medium text-black">
-            Редактировать список
+            {t("editListTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-8 px-8 py-6">
           <ListEditorSection
-            title="Сырье"
+            title={t("rawMaterial")}
             items={draft.materials}
             draftValue={newMaterial}
             onDraftChange={setNewMaterial}
@@ -986,7 +995,7 @@ function ListsDialog({
             }}
             onEditChange={setEditingValue}
             onEditCommit={commitMaterialEdit}
-            addPlaceholder="Введите название нового сырья"
+            addPlaceholder={t("newMaterialPlaceholder")}
             directoryKind="product"
             onDirectoryAdd={(names) =>
               setDraft((current) => ({
@@ -1008,7 +1017,7 @@ function ListsDialog({
           />
 
           <ListEditorSection
-            title="Поставщики"
+            title={t("suppliers")}
             items={draft.suppliers}
             draftValue={newSupplier}
             onDraftChange={setNewSupplier}
@@ -1033,7 +1042,7 @@ function ListsDialog({
             }}
             onEditChange={setEditingValue}
             onEditCommit={commitSupplierEdit}
-            addPlaceholder="Введите название нового поставщика"
+            addPlaceholder={t("newSupplierPlaceholder")}
             directoryKind="supplier"
             onDirectoryAdd={(names) =>
               setDraft((current) => ({
@@ -1069,7 +1078,7 @@ function ListsDialog({
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-8 text-[16px] text-white hover:bg-[#4b57ff]"
             >
-              {submitting ? "Сохранение..." : "Закрыть"}
+              {submitting ? common("saving") : common("close")}
             </Button>
           </div>
         </div>
@@ -1110,6 +1119,11 @@ export function MetalImpurityDocumentClient({
   useV2 = false,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.metalImpurityDocument");
+  const staffT = useTranslations("journalWidgets.staff");
+  const common = useTranslations("common");
+  const namesT = useTranslations("journals.names");
+  const locale = useLocale();
   const [isPending, startTransition] = useTransition();
   const [documentTitle, setDocumentTitle] = useState(title || METAL_IMPURITY_DOCUMENT_TITLE);
   const [config, setConfig] = useState(() => normalizeMetalImpurityConfig(initialConfig));
@@ -1142,7 +1156,7 @@ export function MetalImpurityDocumentClient({
 
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
-    title: `№${index + 1} · ${formatRuDate(row.date) || "—"}`,
+    title: `№${index + 1} · ${formatDisplayDate(row.date, locale) || "—"}`,
     subtitle: supplierNameById.get(row.supplierId) || undefined,
     leading: status === "active" ? (
       <Checkbox
@@ -1158,22 +1172,22 @@ export function MetalImpurityDocumentClient({
       />
     ) : null,
     fields: [
-      { label: "Наименование сырья", value: materialNameById.get(row.materialId) || "", hideIfEmpty: true },
-      { label: "Количество сырья, кг", value: row.consumedQuantityKg, hideIfEmpty: true },
-      { label: "Количество примеси, г", value: row.impurityQuantityG, hideIfEmpty: true },
-      { label: "Характеристика примеси", value: row.impurityCharacteristic, hideIfEmpty: true },
+      { label: t("colMaterial"), value: materialNameById.get(row.materialId) || "", hideIfEmpty: true },
+      { label: t("cardConsumed"), value: row.consumedQuantityKg, hideIfEmpty: true },
+      { label: t("cardImpurity"), value: row.impurityQuantityG, hideIfEmpty: true },
+      { label: t("cardCharacteristic"), value: row.impurityCharacteristic, hideIfEmpty: true },
       // Главная цифра журнала (норма — не более 3 мг/кг) была только в
       // таблице и в печати: с телефона превышение было не увидеть.
       {
-        label: "Количество в мг на 1 кг",
+        label: t("cardPerKg"),
         value: getMetalImpurityValuePerKg(row.impurityQuantityG, row.consumedQuantityKg),
         hideIfEmpty: true,
         hint:
           Number(getMetalImpurityValuePerKg(row.impurityQuantityG, row.consumedQuantityKg)) > 3
-            ? "Превышение: норма — не более 3 мг/кг"
+            ? t("exceeded")
             : undefined,
       },
-      { label: "Ответственный", value: row.responsibleName, hideIfEmpty: true },
+      { label: t("cardResponsible"), value: row.responsibleName, hideIfEmpty: true },
     ],
     onClick: status === "active"
       ? () => {
@@ -1190,7 +1204,7 @@ export function MetalImpurityDocumentClient({
         }}
         className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5563ff] px-4 text-[14px] font-medium text-white hover:bg-[#4452ee]"
       >
-        Редактировать
+        {common("edit")}
       </button>
     ) : null,
   }));
@@ -1226,7 +1240,7 @@ export function MetalImpurityDocumentClient({
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.error || "Не удалось сохранить журнал");
+      throw new Error(result?.error || t("saveJournalFailed"));
     }
 
     setDocumentTitle(nextTitle);
@@ -1295,13 +1309,13 @@ export function MetalImpurityDocumentClient({
     if (selectedRowIds.length === 0) return;
     const count = selectedRowIds.length;
     const confirmed = await confirmAsync({
-      title: "Удалить выбранные строки?",
-      description: "Записи контроля металлопримесей исчезнут из журнала.",
+      title: t("deleteRowsTitle"),
+      description: t("deleteRowsDescription"),
       variant: "danger",
-      confirmLabel: "Удалить",
+      confirmLabel: common("delete"),
       bullets: [
-        { label: `Строк будет удалено: ${count}`, tone: "warn" },
-        { label: `Останется строк: ${config.rows.length - count}`, tone: "default" },
+        { label: t("rowsToDelete", { count }), tone: "warn" },
+        { label: t("rowsRemaining", { count: config.rows.length - count }), tone: "default" },
       ],
     });
     if (!confirmed) return;
@@ -1310,7 +1324,7 @@ export function MetalImpurityDocumentClient({
       rows: config.rows.filter((row) => !selectedRowIds.includes(row.id)),
     });
     setSelectedRowIds([]);
-    toast.success(`Удалено строк: ${count}`);
+    toast.success(t("rowsDeleted", { count }));
   }
 
   async function finishJournal() {
@@ -1346,17 +1360,17 @@ export function MetalImpurityDocumentClient({
             onClear={() => setSelectedRowIds([])}
             onDelete={() =>
               deleteSelectedRows().catch((error) =>
-                toast.error(humanizeFetchError(error, "Ошибка удаления"))
+                toast.error(humanizeFetchError(error, t("deleteError")))
               )
             }
             deleting={isPending}
-            hint="Записи контроля металлопримесей будут удалены без возможности отмены"
+            hint={t("selectionHint")}
           >
             <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
         )}
 
-        <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+        <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("emptyTitle")} emptyBody={t("emptyBody")} />
 
         <JournalDocumentShell
           title={documentTitle}
@@ -1364,19 +1378,19 @@ export function MetalImpurityDocumentClient({
           backHref={`/journals/${METAL_IMPURITY_TEMPLATE_CODE}`}
           onSettings={status === "active" ? () => setSettingsOpen(true) : undefined}
           closed={status !== "active"}
-          closedHint="Откройте журнал заново, чтобы добавлять и редактировать строки."
+          closedHint={t("closedHint")}
           menuItems={
             status === "active"
               ? [
                   {
                     key: "edit-lists",
-                    label: "Редактировать списки",
+                    label: t("editLists"),
                     icon: <Pencil className="size-4" />,
                     onSelect: () => setListsOpen(true),
                   },
                   {
                     key: "close-journal",
-                    label: "Закончить журнал",
+                    label: staffT("closeJournal"),
                     icon: <Archive className="size-4" />,
                     onSelect: () => setFinishOpen(true),
                   },
@@ -1385,16 +1399,16 @@ export function MetalImpurityDocumentClient({
           }
           mobileView={mobileView}
           onMobileView={switchMobileView}
-          cards={<RecordCardsView items={cardItems} emptyLabel="Записей пока нет." />}
+          cards={<RecordCardsView items={cardItems} emptyLabel={t("emptyCards")} />}
           paperHeader={
             <JournalDocumentHeader
               orgName={organizationName}
-              title="ЖУРНАЛ УЧЕТА МЕТАЛЛОПРИМЕСЕЙ В СЫРЬЕ"
+              title={namesT("metal_impurity").toLocaleUpperCase(locale)}
               startedAt={config.startDate}
               finishedAt={config.endDate || null}
             />
           }
-          sheetTitle="Журнал учета металлопримесей в сырье"
+          sheetTitle={namesT("metal_impurity")}
           sheetMinWidth={1540}
           toolbar={
             status === "active" ? (
@@ -1407,7 +1421,7 @@ export function MetalImpurityDocumentClient({
                 className={DOC_PRIMARY_BUTTON_CLASS}
               >
                 <Plus className="size-5" />
-                Добавить
+                {common("add")}
               </Button>
             ) : null
           }
@@ -1425,28 +1439,28 @@ export function MetalImpurityDocumentClient({
                   />
                 </th>
                 <th className={`w-[130px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Дата
+                  {t("date")}
                 </th>
                 <th className={`w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Поставщик
+                  {t("supplier")}
                 </th>
                 <th className={`w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Наименование сырья
+                  {t("colMaterial")}
                 </th>
                 <th className={`w-[180px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Количество израсходованного сырья, кг
+                  {t("colConsumed")}
                 </th>
                 <th className={`w-[180px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Количество металломагнитной примеси, г
+                  {t("colImpurityQuantity")}
                 </th>
                 <th className={`w-[260px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Характеристика металломагнитной примеси
+                  {t("colCharacteristic")}
                 </th>
                 <th className={`w-[170px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  Количество в мг на 1 кг муки (N - не более 3 мг)
+                  {t("colPerKg")}
                 </th>
                 <th className={`w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>
-                  ФИО ответственного
+                  {t("colResponsible")}
                 </th>
               </tr>
             </thead>
@@ -1489,7 +1503,7 @@ export function MetalImpurityDocumentClient({
                       }}
                       className="w-full text-left disabled:cursor-default"
                     >
-                      {formatRuDate(row.date)}
+                      {formatDisplayDate(row.date, locale)}
                     </button>
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 align-top leading-tight`}>{row.supplierName}</td>
@@ -1523,7 +1537,7 @@ export function MetalImpurityDocumentClient({
                     colSpan={9}
                     className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6d7287]`}
                   >
-                    Записей пока нет
+                    {t("emptyTitle")}
                   </td>
                 </tr>
               )}
@@ -1535,7 +1549,7 @@ export function MetalImpurityDocumentClient({
                   leading={1}
                   labelSpan={2}
                   trailing={6}
-                  label="Добавить"
+                  label={common("add")}
                   onClick={() => {
                     setEditingRow(null);
                     setRowDialogOpen(true);
@@ -1594,7 +1608,7 @@ export function MetalImpurityDocumentClient({
         <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[680px]">
           <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
             <DialogTitle className="pr-10 text-[22px] font-medium text-black">
-              {`Закончить журнал "${documentTitle}"`}
+              {t("finishTitle", { title: documentTitle })}
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-end px-5 py-6 sm:px-10 sm:py-8">
@@ -1602,12 +1616,12 @@ export function MetalImpurityDocumentClient({
               type="button"
               onClick={() =>
                 finishJournal().catch((error) =>
-                  toast.error(humanizeFetchError(error, "Ошибка закрытия"))
+                  toast.error(humanizeFetchError(error, t("closeError")))
                 )
               }
               className="h-10 rounded-xl bg-[#5566f6] px-8 text-[16px] text-white hover:bg-[#4b57ff]"
             >
-              Закончить
+              {t("finish")}
             </Button>
           </div>
         </DialogContent>

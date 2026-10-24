@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 import type { PpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
 
 /** Плашка пустого раздела: только на экране, со ссылкой на блок, который его заполнит. */
@@ -9,7 +10,7 @@ export type PpkEmptyBanner = { href: string; text: string; linkText: string };
  * Раздел собираемого документа. Пустой — на экране плашка со ссылкой на
  * блок, в печати строка «Не заполнено».
  */
-export function PpkDocSection({
+export async function PpkDocSection({
   title,
   empty,
   children,
@@ -18,6 +19,7 @@ export function PpkDocSection({
   empty?: PpkEmptyBanner | null;
   children?: ReactNode;
 }) {
+  const t = await getTranslations("productionControlUi");
   return (
     <section className="mt-5 break-inside-avoid-page">
       <h2 className="mb-2 text-[15px] font-semibold">{title}</h2>
@@ -32,7 +34,7 @@ export function PpkDocSection({
               {empty.linkText}
             </Link>
           </div>
-          <p className="hidden text-[#6f7282] print:block">Не заполнено</p>
+          <p className="hidden text-[#6f7282] print:block">{t("ppkDocUi.notFilled")}</p>
         </>
       ) : (
         children
@@ -83,26 +85,27 @@ export function PpkDocTable({
  * Строка «УТВЕРЖДАЮ»: должность и ФИО руководителя из реквизитов, подпись и дата.
  * Если у документа есть утверждённая версия с утвердившим — вместо руководителя он, с датой версии.
  */
-export function PpkApproveBlock({
+export async function PpkApproveBlock({
   org,
   approval,
 }: {
   org: PpkPrintOrg;
   approval?: { approvedAt: string; approver: { name: string; title: string } | null } | null;
 }) {
+  const t = await getTranslations("productionControlUi");
   const director = org.snapshot;
   const approver = approval?.approver ?? null;
   return (
     <div className="mb-6 ml-auto w-[260px] text-[13.5px]">
-      <div className="font-semibold">УТВЕРЖДАЮ</div>
-      <div>{approver ? approver.title || "Руководитель" : director?.directorPost || "Руководитель"}</div>
+      <div className="font-semibold">{t("ppkDocUi.approve")}</div>
+      <div>{approver ? approver.title || t("ppkDocUi.leader") : director?.directorPost || t("ppkDocUi.leader")}</div>
       <div>{approver ? approver.name : director?.directorName || "—"}</div>
       <div className="mt-4 flex items-end gap-2">
         <span className="w-[110px] border-b border-[#0b1024]" />
         <span>/</span>
         <span className="w-[80px] border-b border-[#0b1024]" />
       </div>
-      <div className="mt-3">{approver && approval ? `${ruDate(approval.approvedAt)} г.` : "«____» ______________ 20___ г."}</div>
+      <div className="mt-3">{approver && approval ? t("ppkDocUi.dateYear", { date: ruDate(approval.approvedAt) }) : t("ppkDocUi.datePlaceholder")}</div>
     </div>
   );
 }

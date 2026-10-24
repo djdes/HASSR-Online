@@ -157,7 +157,7 @@ test("description and add button share one row in the document header", () => {
   assert.match(row, /className="flex shrink-0 flex-col items-end/);
   assert.match(row, /max-sm:line-clamp-3/);
   assert.match(row, /<span className="sm:hidden">\{shortLabel\}<\/span>/);
-  assert.match(row, /shortLabel = "Добавить"/);
+  assert.match(row, /shortLabel = shortLabel \?\? t\("add"\)/);
   const climate = readFileSync(path.join(JOURNALS_DIR, "climate-document-client.tsx"), "utf8");
   assert.match(climate, /<DocumentToolbarRow[\s\S]*?description=/);
   assert.match(climate, /<DocumentToolbarRow[\s\S]*?<DocumentToolbarAddButton[\s\S]*?<\/DocumentToolbarRow>/);

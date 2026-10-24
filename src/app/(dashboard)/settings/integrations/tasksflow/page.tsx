@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -8,6 +9,7 @@ import { PageGuide } from "@/components/ui/page-guide";
 export const dynamic = "force-dynamic";
 
 export default async function TasksFlowSettingsPage() {
+  const t = await getTranslations("settingsUi.tasksflowPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/journals");
@@ -33,16 +35,16 @@ export default async function TasksFlowSettingsPage() {
   return (
     <div className="space-y-5">
       <PageGuide
-        title="Как подключить TasksFlow"
+        title={t("guideTitle")}
         storageKey="settings-tasksflow-v1"
         bullets={[
-          { title: "Получите API-ключ", body: "В админке TasksFlow → Интеграции → Создать API-токен. Скопируйте + укажите base URL вашего инстанса." },
-          { title: "Свяжите сотрудников", body: "После подключения откроется список ваших сотрудников и команды TasksFlow. Связывайте по совпадению ФИО или телефона." },
-          { title: "Задачи начнут разлетаться", body: "После связки каждое утро WeSetup отправляет в TasksFlow задачи на день: «Заполни журнал X». Сотрудник видит push в Telegram." },
+          { title: t("b1Title"), body: t("b1Body") },
+          { title: t("b2Title"), body: t("b2Body") },
+          { title: t("b3Title"), body: t("b3Body") },
         ]}
         qa={[
-          { q: "Что такое verifierWorkerId?", a: "Это сотрудник, который проверяет заполненный журнал — двухступенчатая проверка. Настраивается в /settings/journal-responsibles, слот «Проверяет»." },
-          { q: "Можно без TasksFlow?", a: "Да — используйте Telegram-бота WeSetup (/settings/users → инвайт). Сотрудник заполняет журналы прямо в Mini App." },
+          { q: t("q1"), a: t("a1") },
+          { q: t("q2"), a: t("a2") },
         ]}
       />
       <TasksFlowSettingsClient

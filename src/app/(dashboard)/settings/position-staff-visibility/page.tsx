@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Users } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -21,6 +22,7 @@ export const dynamic = "force-dynamic";
  * человека (legacy fallback).
  */
 export default async function PositionStaffVisibilityPage() {
+  const t = await getTranslations("settingsUi.positionStaffVisibilityPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
   const orgId = getActiveOrgId(session);
@@ -70,15 +72,10 @@ export default async function PositionStaffVisibilityPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024] dark:text-white">
-              Видимость сотрудников по должностям
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[760px] text-[14px] leading-relaxed text-[#6f7282] dark:text-white/70">
-              Кого видят сотрудники каждой должности. Эта настройка
-              синхронизируется в TasksFlow и Telegram-бот: шеф-повар
-              увидит у себя на главной только задачи поваров, технолога
-              — нет; в боте при просмотре других сотрудников та же
-              картина. Сохраняется per-position — при добавлении нового
-              «шеф-повара» он автоматически получит этот же scope.
+              {t("description")}
             </p>
           </div>
         </div>

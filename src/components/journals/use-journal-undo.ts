@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 /**
  * Отмена только что сделанной отметки.
@@ -28,6 +29,7 @@ export type UndoableAction = {
 };
 
 export function useJournalUndo() {
+  const t = useTranslations("journalUi.undo");
   // Идентификатор последнего тоста: новое действие гасит предыдущее,
   // иначе после десяти свайпов подряд экран зарастает тостами.
   const lastToast = useRef<string | number | null>(null);
@@ -38,13 +40,13 @@ export function useJournalUndo() {
     lastToast.current = toast.success(action.label, {
       duration: UNDO_MS,
       action: {
-        label: "Вернуть",
+        label: t("action"),
         onClick: () => {
           void Promise.resolve(action.onUndo()).catch(() => {
-            toast.error("Не удалось вернуть — обновите страницу");
+            toast.error(t("failed"));
           });
         },
       },
     });
-  }, []);
+  }, [t]);
 }

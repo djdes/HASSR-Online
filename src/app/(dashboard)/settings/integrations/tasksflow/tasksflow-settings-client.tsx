@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -81,9 +82,18 @@ type HealthState = {
   };
 };
 
+type ApiMessages = {
+  sessionExpired: string;
+  forbidden: string;
+  redirectedHtml: string;
+  notJson: (fallback: string, status: number) => string;
+  badJson: (fallback: string, status: number) => string;
+};
+
 async function readApiJson<T>(
   response: Response,
-  fallbackMessage: string
+  fallbackMessage: string,
+  msgs: ApiMessages
 ): Promise<T> {
   const contentType = response.headers.get("content-type") ?? "";
   const text = await response.text();
@@ -91,20 +101,20 @@ async function readApiJson<T>(
 
   if (!isJson) {
     if (response.status === 401) {
-      throw new Error("Сессия истекла. Войдите заново.");
+      throw new Error(msgs.sessionExpired);
     }
     if (response.status === 403) {
-      throw new Error("Недостаточно прав для этого действия.");
+      throw new Error(msgs.forbidden);
     }
-    const suffix = response.redirected ? " После редиректа сервер вернул HTML." : "";
-    throw new Error(`${fallbackMessage}. Сервер вернул не JSON (HTTP ${response.status}).${suffix}`);
+    const suffix = response.redirected ? ` ${msgs.redirectedHtml}` : "";
+    throw new Error(`${msgs.notJson(fallbackMessage, response.status)}${suffix}`);
   }
 
   let data: unknown;
   try {
     data = text.length > 0 ? JSON.parse(text) : {};
   } catch {
-    throw new Error(`${fallbackMessage}. Сервер вернул поврежденный JSON (HTTP ${response.status}).`);
+    throw new Error(msgs.badJson(fallbackMessage, response.status));
   }
 
   if (!response.ok) {
@@ -133,6 +143,14 @@ export function TasksFlowSettingsClient({
   organizationName: string;
   initialIntegration: Integration | null;
 }) {
+  const t = useTranslations("settingsUi.tasksflowSettingsClient");
+  const apiMsgs: ApiMessages = {
+    sessionExpired: t("sessionExpired"),
+    forbidden: t("forbidden"),
+    redirectedHtml: t("redirectedHtml"),
+    notJson: (fallback, status) => t("notJson", { fallback, status }),
+    badJson: (fallback, status) => t("badJson", { fallback, status }),
+  };
   const router = useRouter();
   const [integration, setIntegration] = useState<Integration | null>(
     initialIntegration
@@ -162,7 +180,8 @@ export function TasksFlowSettingsClient({
       .then(async (r) => {
         const data = await readApiJson<{ links?: LinkRow[] }>(
           r,
-          "Не удалось загрузить сопоставление сотрудников"
+          t("loadLinksFailed"),
+          apiMsgs
         );
         if (!cancelled) setLinks(data.links ?? []);
       })
@@ -172,6 +191,7 @@ export function TasksFlowSettingsClient({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [integrationId, integrationLastSyncAt]);
 
   // Health-check polling: пингуем TasksFlow `/api/health` через
@@ -202,7 +222,7 @@ export function TasksFlowSettingsClient({
           setHealth({
             status: "red",
             reason: "client_error",
-            message: "Не удалось проверить статус.",
+            message: t("healthCheckFailed"),
           });
         }
       } finally {
@@ -215,6 +235,7 @@ export function TasksFlowSettingsClient({
       cancelled = true;
       window.clearInterval(intervalId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [integrationId]);
 
   function handleConnect() {
@@ -233,25 +254,29 @@ export function TasksFlowSettingsClient({
           integration: Integration;
           probedUserCount?: number;
           userSync?: SyncResponse;
-        }>(response, "Не удалось подключить TasksFlow");
+        }>(response, t("connectFailed"), apiMsgs);
         const sync = data.userSync;
         if (sync) {
-          const t = sync.totals;
+          const totals = sync.totals;
           const failures = Array.isArray(sync.failures) ? sync.failures : [];
           setLastFailures(failures);
-          const summary =
-            `TasksFlow подключён. Связано ${t.linked} из ${t.wesetupUsers}. ` +
-            `Создано в TasksFlow: ${t.createdRemote}, без телефона: ${t.withoutPhone}, не связаны: ${t.withoutMatch}.`;
+          const summary = t("connectedSummary", {
+            linked: totals.linked,
+            total: totals.wesetupUsers,
+            created: totals.createdRemote,
+            noPhone: totals.withoutPhone,
+            noMatch: totals.withoutMatch,
+          });
           if (failures.length > 0) {
             toast.warning(
-              summary + ` Не удалось создать ${failures.length} — см. детали ниже.`
+              `${summary} ${t("createFailedSuffix", { count: failures.length })}`
             );
           } else {
             toast.success(summary);
           }
         } else {
           toast.success(
-            `TasksFlow подключён. Найдено ${data.probedUserCount ?? 0} сотрудников.`
+            t("connectedFound", { count: data.probedUserCount ?? 0 })
           );
         }
         // Re-fetch the full integration via status endpoint so the UI
@@ -261,7 +286,8 @@ export function TasksFlowSettingsClient({
         }).then((r) =>
           readApiJson<{ integration: Integration | null }>(
             r,
-            "Не удалось обновить статус интеграции"
+            t("statusRefreshFailed"),
+            apiMsgs
           )
         );
         setIntegration(status.integration);
@@ -269,7 +295,7 @@ export function TasksFlowSettingsClient({
         router.refresh();
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Ошибка подключения"
+          error instanceof Error ? error.message : t("connectError")
         );
       }
     });
@@ -284,16 +310,21 @@ export function TasksFlowSettingsClient({
         );
         const data = await readApiJson<SyncResponse>(
           response,
-          "Не удалось синхронизировать"
+          t("syncFailed"),
+          apiMsgs
         );
-        const t = data.totals;
+        const totals = data.totals;
         const failures = Array.isArray(data.failures) ? data.failures : [];
         setLastFailures(failures);
-        const summary =
-          `Связано ${t.linked} из ${t.wesetupUsers}. ` +
-          `Создано в TasksFlow: ${t.createdRemote}, без телефона: ${t.withoutPhone}, не связаны: ${t.withoutMatch}.`;
+        const summary = t("syncSummary", {
+          linked: totals.linked,
+          total: totals.wesetupUsers,
+          created: totals.createdRemote,
+          noPhone: totals.withoutPhone,
+          noMatch: totals.withoutMatch,
+        });
         if (failures.length > 0) {
-          toast.warning(summary + ` Не удалось создать ${failures.length} — см. детали ниже.`);
+          toast.warning(`${summary} ${t("createFailedSuffix", { count: failures.length })}`);
         } else {
           toast.success(summary);
         }
@@ -302,13 +333,14 @@ export function TasksFlowSettingsClient({
         }).then((r) =>
           readApiJson<{ integration: Integration | null }>(
             r,
-            "Не удалось обновить статус интеграции"
+            t("statusRefreshFailed"),
+            apiMsgs
           )
         );
         setIntegration(status.integration);
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Ошибка синхронизации"
+          error instanceof Error ? error.message : t("syncError")
         );
       }
     });
@@ -316,22 +348,19 @@ export function TasksFlowSettingsClient({
 
   async function handleDisconnect() {
     const ok = await confirmAsync({
-      title: "Отключить интеграцию с TasksFlow?",
-      description:
-        "Маппинг сотрудников и связи задач будут удалены. Остановится автоматическая отправка задач в TasksFlow до повторной настройки интеграции.",
+      title: t("disconnectTitle"),
+      description: t("disconnectDescription"),
       bullets: [
         {
-          label:
-            "Сами задачи в TasksFlow не удаляются — там они останутся, просто без связи с этой WeSetup-оргой.",
+          label: t("disconnectBullet1"),
           tone: "info",
         },
         {
-          label:
-            "Если нужно очистить и в TasksFlow — сначала жми «Очистить невыполненные» в превью отправки, потом отключай.",
+          label: t("disconnectBullet2"),
           tone: "warn",
         },
       ],
-      confirmLabel: "Отключить",
+      confirmLabel: t("disconnect"),
       variant: "danger",
     });
     if (!ok) return;
@@ -340,15 +369,15 @@ export function TasksFlowSettingsClient({
         const response = await fetch("/api/integrations/tasksflow", {
           method: "DELETE",
         });
-        await readApiJson<{ ok: true }>(response, "Не удалось отключить");
-        toast.success("TasksFlow отключён");
+        await readApiJson<{ ok: true }>(response, t("disconnectFailed"), apiMsgs);
+        toast.success(t("disconnected"));
         setIntegration(null);
         setLinks(null);
         setApiKey("");
         router.refresh();
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Ошибка отключения"
+          error instanceof Error ? error.message : t("disconnectError")
         );
       }
     });
@@ -360,20 +389,19 @@ export function TasksFlowSettingsClient({
         title="TasksFlow"
         description={
           <>
-            Автоматическая отправка задач уборщикам через{" "}
-            <a
-              href="https://tasksflow.ru"
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#5566f6] underline decoration-[#5566f6]/30 underline-offset-2 transition-colors hover:decoration-[#5566f6]"
-            >
-              tasksflow.ru
-              <ExternalLink className="ml-1 inline size-3" />
-            </a>
-            . Синхронизация сотрудников автоматически создаёт отсутствующих
-            людей в TasksFlow, а строки журнала уборки превращаются в
-            recurring-задачи для уборщицы. Когда задача отмечена
-            выполненной — клетка журнала проставляется автоматически.
+            {t.rich("pageDescription", {
+              link: (chunks) => (
+                <a
+                  href="https://tasksflow.ru"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#5566f6] underline decoration-[#5566f6]/30 underline-offset-2 transition-colors hover:decoration-[#5566f6]"
+                >
+                  {chunks}
+                  <ExternalLink className="ml-1 inline size-3" />
+                </a>
+              ),
+            })}
           </>
         }
         actions={
@@ -395,7 +423,7 @@ export function TasksFlowSettingsClient({
               : "border-[#f6cfc8] bg-[#fff4f2] text-[#a13a32]"
           }`}
         >
-          {health.message || "TasksFlow недоступен"}
+          {health.message || t("unavailable")}
           {health.remote?.buildSha ? (
             <span className="ml-2 font-mono text-[11px] opacity-70">
               build {health.remote.buildSha}
@@ -435,31 +463,29 @@ export function TasksFlowSettingsClient({
           <div className="mb-4 flex items-center gap-2">
             <UsersIcon className="size-4 text-[#5566f6]" />
             <h2 className="text-[15px] font-semibold text-[#0b1024]">
-              Сопоставление сотрудников
+              {t("linksTitle")}
             </h2>
           </div>
           <p className="mb-4 max-w-[640px] text-[13px] text-[#6f7282]">
-            Синхронизация идёт по номеру телефона. Если сотрудник уже есть в
-            TasksFlow, он свяжется автоматически. Если его там ещё нет, WeSetup
-            создаст его в компании, к которой привязан API-ключ. Номер телефона
-            должен быть в формате
-            <code className="mx-1 rounded bg-[#f5f6ff] px-1.5 py-0.5 font-mono text-[12px] text-[#3848c7]">
-              +7XXXXXXXXXX
-            </code>
-            — тогда синхронизация пройдет без ручной магии.
+            {t.rich("linksHint", {
+              code: (chunks) => (
+                <code className="mx-1 rounded bg-[#f5f6ff] px-1.5 py-0.5 font-mono text-[12px] text-[#3848c7]">
+                  {chunks}
+                </code>
+              ),
+            })}
           </p>
           {links === null ? (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center text-[13px] text-[#6f7282]">
-              Загрузка…
+              {t("loading")}
             </div>
           ) : links.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
               <div className="text-[14px] font-medium text-[#0b1024]">
-                Нет сотрудников с активным аккаунтом
+                {t("noEmployees")}
               </div>
               <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-                Добавьте сотрудников в разделе «Сотрудники», заполните им
-                номер телефона, затем нажмите «Синхронизировать».
+                {t("noEmployeesHint")}
               </p>
             </div>
           ) : (
@@ -467,10 +493,10 @@ export function TasksFlowSettingsClient({
               <table className="w-full min-w-[640px] border-collapse text-[14px]">
                 <thead>
                   <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
-                    <th className="px-4 py-3 font-medium">Сотрудник</th>
-                    <th className="px-4 py-3 font-medium">Телефон</th>
+                    <th className="px-4 py-3 font-medium">{t("colEmployee")}</th>
+                    <th className="px-4 py-3 font-medium">{t("colPhone")}</th>
                     <th className="px-4 py-3 font-medium">TasksFlow</th>
-                    <th className="px-4 py-3 font-medium">Статус</th>
+                    <th className="px-4 py-3 font-medium">{t("colStatus")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -526,30 +552,17 @@ export function TasksFlowSettingsClient({
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[#a13a32]" />
             <div className="flex-1">
               <h2 className="text-[15px] font-semibold text-[#0b1024]">
-                Не получилось связать {lastFailures.length}{" "}
-                {pluralPeople(lastFailures.length)}
+                {t("failuresTitle", { count: lastFailures.length })}
               </h2>
               {hasForbiddenFailure(lastFailures) ? (
                 <div className="mt-1 space-y-3 text-[13px] leading-relaxed text-[#3c4053]">
-                  <p>
-                    TasksFlow не даёт создать пользователей по Bearer
-                    API-ключу — это ограничение на их стороне. Есть два
-                    способа продолжить:
-                  </p>
+                  <p>{t("forbiddenIntro")}</p>
                   <ol className="list-decimal space-y-2 pl-5">
                     <li>
-                      <strong>Выдать ключу право создавать</strong> —
-                      если в вашем TasksFlow есть роль API-ключа с
-                      правом «Создание пользователей», выпустите такой
-                      ключ, подставьте его сюда и нажмите
-                      «Синхронизировать» заново.
+                      <strong>{t("option1Title")}</strong> — {t("option1Body")}
                     </li>
                     <li>
-                      <strong>Добавить руками в TasksFlow</strong> —
-                      откройте TasksFlow, добавьте сотрудника с тем же
-                      телефоном (через «+Сотрудник»), вернитесь сюда и
-                      нажмите «Синхронизировать». WeSetup свяжется по
-                      номеру автоматически.
+                      <strong>{t("option2Title")}</strong> — {t("option2Body")}
                     </li>
                   </ol>
                   {integration?.baseUrl ? (
@@ -559,16 +572,14 @@ export function TasksFlowSettingsClient({
                       rel="noreferrer"
                       className="inline-flex h-10 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
                     >
-                      Открыть TasksFlow
+                      {t("openTasksflow")}
                       <ExternalLink className="size-3.5" />
                     </a>
                   ) : null}
                 </div>
               ) : (
                 <p className="mt-1 text-[13px] leading-relaxed text-[#3c4053]">
-                  Смотрите точную причину по каждому сотруднику ниже.
-                  Часто дело в формате телефона или в отсутствии
-                  сотрудника в TasksFlow.
+                  {t("failuresHint")}
                 </p>
               )}
               <ul className="mt-4 space-y-2">
@@ -579,7 +590,7 @@ export function TasksFlowSettingsClient({
                   >
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="font-medium text-[#0b1024]">
-                        {f.name ?? "(без имени)"}
+                        {f.name ?? t("unnamed")}
                       </span>
                       <span className="font-mono text-[12px] text-[#6f7282]">
                         {f.phone}
@@ -591,15 +602,15 @@ export function TasksFlowSettingsClient({
                       ) : null}
                     </div>
                     <div className="mt-1 text-[12px] leading-relaxed text-[#6f7282]">
-                      {friendlyReason(f.reason)}: {f.message}
+                      {friendlyReason(f.reason, t)}: {f.message}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <CopyChip
-                        label="Скопировать телефон"
+                        label={t("copyPhone")}
                         value={f.phone}
                       />
                       {f.name ? (
-                        <CopyChip label="Скопировать ФИО" value={f.name} />
+                        <CopyChip label={t("copyName")} value={f.name} />
                       ) : null}
                     </div>
                   </li>
@@ -622,6 +633,7 @@ function HealthBadge({
   health: HealthState | null;
   loading: boolean;
 }) {
+  const t = useTranslations("settingsUi.tasksflowSettingsClient");
   // Бейдж переехал в светлый PageHeader, поэтому вся палитра —
   // светлые токены дизайн-системы вместо полупрозрачно-белых.
   const neutral =
@@ -631,7 +643,7 @@ function HealthBadge({
     return (
       <div className={neutral}>
         <CheckCircle2 className="size-3.5" />
-        Не подключено
+        {t("notConnected")}
       </div>
     );
   }
@@ -641,24 +653,24 @@ function HealthBadge({
     return (
       <div className={neutral}>
         <Loader2 className="size-3.5 animate-spin" />
-        Проверяем
+        {t("checking")}
       </div>
     );
   }
   const palette = {
     green: {
       icon: <CheckCircle2 className="size-3.5" />,
-      label: "Здоров",
+      label: t("healthGreen"),
       classes: "border-[#bfe8cd] bg-[#ecfdf5] text-[#116b2a]",
     },
     yellow: {
       icon: <AlertTriangle className="size-3.5" />,
-      label: "Замедлен",
+      label: t("healthYellow"),
       classes: "border-[#f3d9a8] bg-[#fffaf0] text-[#8a5a12]",
     },
     red: {
       icon: <XCircle className="size-3.5" />,
-      label: "Недоступен",
+      label: t("healthRed"),
       classes: "border-[#f6cfc8] bg-[#fff4f2] text-[#a13a32]",
     },
   } as const;
@@ -676,6 +688,7 @@ function HealthBadge({
 }
 
 function CopyChip({ label, value }: { label: string; value: string }) {
+  const t = useTranslations("settingsUi.tasksflowSettingsClient");
   const [done, setDone] = useState(false);
   async function copy() {
     try {
@@ -683,7 +696,7 @@ function CopyChip({ label, value }: { label: string; value: string }) {
       setDone(true);
       setTimeout(() => setDone(false), 1500);
     } catch {
-      toast.error("Не удалось скопировать. Выделите вручную.");
+      toast.error(t("copyFailed"));
     }
   }
   return (
@@ -697,21 +710,24 @@ function CopyChip({ label, value }: { label: string; value: string }) {
       ) : (
         <ClipboardCopy className="size-3 text-[#6f7282]" />
       )}
-      {done ? "Скопировано" : label}
+      {done ? t("copied") : label}
     </button>
   );
 }
 
-function friendlyReason(reason: string): string {
+function friendlyReason(
+  reason: string,
+  t: ReturnType<typeof useTranslations<"settingsUi.tasksflowSettingsClient">>
+): string {
   switch (reason) {
     case "remote_create_forbidden":
-      return "TasksFlow не даёт создать";
+      return t("reasonForbidden");
     case "remote_create_failed":
-      return "Ошибка создания";
+      return t("reasonCreateFailed");
     case "phone_invalid":
-      return "Плохой телефон";
+      return t("reasonBadPhone");
     default:
-      return "Не удалось связать";
+      return t("reasonDefault");
   }
 }
 
@@ -719,15 +735,6 @@ function hasForbiddenFailure(
   list: Array<{ reason: string }>
 ): boolean {
   return list.some((f) => f.reason === "remote_create_forbidden");
-}
-
-function pluralPeople(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "сотрудника";
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100))
-    return "сотрудников";
-  return "сотрудников";
 }
 
 function ConnectForm({
@@ -749,6 +756,7 @@ function ConnectForm({
   onSubmit: () => void;
   pending: boolean;
 }) {
+  const t = useTranslations("settingsUi.tasksflowSettingsClient");
   return (
     <form
       onSubmit={(e) => {
@@ -759,21 +767,21 @@ function ConnectForm({
     >
       <div>
         <h2 className="text-[16px] font-semibold text-[#0b1024]">
-          Подключить TasksFlow
+          {t("connectTitle")}
         </h2>
         <p className="mt-1 text-[13px] text-[#6f7282]">
-          Создайте API-ключ в TasksFlow:{" "}
-          <span className="font-mono text-[12px] text-[#3848c7]">
-            Настройки → API ключи → Создать
-          </span>
-          . Ключ начинается с <code className="font-mono">tfk_</code> и
-          показывается один раз.
+          {t.rich("connectHint", {
+            path: (chunks) => (
+              <span className="font-mono text-[12px] text-[#3848c7]">{chunks}</span>
+            ),
+            code: (chunks) => <code className="font-mono">{chunks}</code>,
+          })}
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label className="text-[13px] font-medium text-[#3c4053]">
-            URL TasksFlow
+            {t("urlLabel")}
           </Label>
           <Input
             value={baseUrl}
@@ -785,7 +793,7 @@ function ConnectForm({
         </div>
         <div className="space-y-2">
           <Label className="text-[13px] font-medium text-[#3c4053]">
-            Метка (для себя)
+            {t("labelLabel")}
           </Label>
           <Input
             value={label}
@@ -797,7 +805,7 @@ function ConnectForm({
       </div>
       <div className="space-y-2">
         <Label className="text-[13px] font-medium text-[#3c4053]">
-          API ключ
+          {t("apiKeyLabel")}
         </Label>
         <div className="relative">
           <KeyRound className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
@@ -819,7 +827,7 @@ function ConnectForm({
           className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white hover:bg-[#4a5bf0]"
         >
           <Plug className="size-4" />
-          {pending ? "Проверяю…" : "Подключить"}
+          {pending ? t("checkingProgress") : t("connect")}
         </Button>
       </div>
     </form>
@@ -841,6 +849,9 @@ function ConnectedView({
   pendingSync: boolean;
   pendingDisconnect: boolean;
 }) {
+  const t = useTranslations("settingsUi.tasksflowSettingsClient");
+  const locale = useLocale();
+  const dateLocale = locale === "en" ? "en-GB" : locale === "uz" ? "uz-UZ" : "ru-RU";
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
@@ -859,7 +870,7 @@ function ConnectedView({
           }
         />
         <Field
-          label="Ключ"
+          label={t("fieldKey")}
           value={
             <span className="font-mono text-[13px]">
               {integration.apiKeyPrefix}…
@@ -867,17 +878,17 @@ function ConnectedView({
           }
         />
         <Field
-          label="Компания в TasksFlow"
+          label={t("fieldCompany")}
           value={
             integration.tasksflowCompanyId !== null ? (
               <span className="font-mono">#{integration.tasksflowCompanyId}</span>
             ) : (
-              <span className="text-[#9b9fb3]">не определена</span>
+              <span className="text-[#9b9fb3]">{t("companyUnknown")}</span>
             )
           }
         />
         <Field
-          label="Метка"
+          label={t("fieldLabel")}
           value={
             integration.label || (
               <span className="text-[#9b9fb3]">—</span>
@@ -885,22 +896,22 @@ function ConnectedView({
           }
         />
         <Field
-          label="Связано сотрудников"
+          label={t("fieldLinkedUsers")}
           value={`${integration.linkedUserCount}`}
         />
         <Field
-          label="Активных задач"
+          label={t("fieldActiveTasks")}
           value={`${integration.taskLinkCount}`}
         />
         <Field
-          label="Последняя синхронизация"
+          label={t("fieldLastSync")}
           value={
             integration.lastSyncAt
-              ? new Date(integration.lastSyncAt).toLocaleString("ru-RU")
-              : "не проводилась"
+              ? new Date(integration.lastSyncAt).toLocaleString(dateLocale)
+              : t("neverSynced")
           }
         />
-        <Field label="Организация" value={organizationName} />
+        <Field label={t("fieldOrganization")} value={organizationName} />
       </div>
       <div className="flex flex-col gap-2 border-t border-[#ececf4] pt-5 sm:flex-row sm:justify-end">
         <Button
@@ -913,7 +924,7 @@ function ConnectedView({
           <RefreshCw
             className={`size-4 ${pendingSync ? "animate-spin" : ""}`}
           />
-          {pendingSync ? "Синхронизирую…" : "Синхронизировать сотрудников"}
+          {pendingSync ? t("syncing") : t("syncEmployees")}
         </Button>
         <Button
           type="button"
@@ -923,7 +934,7 @@ function ConnectedView({
           className="h-11 rounded-2xl border-[#ffd2cd] px-4 text-[14px] text-[#a13a32] hover:bg-[#fff4f2]"
         >
           <Trash2 className="size-4" />
-          Отключить
+          {t("disconnect")}
         </Button>
       </div>
     </div>
@@ -948,24 +959,25 @@ function Field({
 }
 
 function StatusBadge({ status }: { status: LinkRow["status"] }) {
+  const t = useTranslations("settingsUi.tasksflowSettingsClient");
   const map: Record<
     LinkRow["status"],
     { label: string; className: string }
   > = {
     linked: {
-      label: "Связан",
+      label: t("statusLinked"),
       className: "bg-[#ecfdf5] text-[#116b2a]",
     },
     no_phone: {
-      label: "Без телефона",
+      label: t("statusNoPhone"),
       className: "bg-[#fff4f2] text-[#a13a32]",
     },
     no_match: {
-      label: "Не найден в TasksFlow",
+      label: t("statusNoMatch"),
       className: "bg-[#fff8eb] text-[#92400e]",
     },
     pending: {
-      label: "Не синхронизирован",
+      label: t("statusPending"),
       className: "bg-[#f5f6ff] text-[#3848c7]",
     },
   };

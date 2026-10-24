@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Activity,
   AlertTriangle,
@@ -53,7 +54,6 @@ type Resp = {
 const STATUS_META: Record<
   WorkStatus,
   {
-    label: string;
     icon: typeof Activity;
     color: string;
     bg: string;
@@ -61,56 +61,48 @@ const STATUS_META: Record<
   }
 > = {
   working: {
-    label: "В работе",
     icon: Activity,
     color: "text-[#3848c7]",
     bg: "bg-[#eef1ff]",
     border: "border-[#5566f6]/40",
   },
   completed_only: {
-    label: "Закончил смену",
     icon: CheckCircle2,
     color: "text-[#136b2a]",
     bg: "bg-[#ecfdf5]",
     border: "border-[#c8f0d5]",
   },
   not_started: {
-    label: "Без задачи",
     icon: Coffee,
     color: "text-[#a13a32]",
     bg: "bg-[#fff8eb]",
     border: "border-[#ffe9b0]",
   },
   off_day: {
-    label: "Отгул",
     icon: Calendar,
     color: "text-[#6f7282]",
     bg: "bg-[#fafbff]",
     border: "border-[#dcdfed]",
   },
   vacation: {
-    label: "Отпуск",
     icon: Plane,
     color: "text-[#6f7282]",
     bg: "bg-[#fafbff]",
     border: "border-[#dcdfed]",
   },
   sick: {
-    label: "Больничный",
     icon: Bed,
     color: "text-[#6f7282]",
     bg: "bg-[#fafbff]",
     border: "border-[#dcdfed]",
   },
   shift_off: {
-    label: "Не на смене",
     icon: Coffee,
     color: "text-[#9b9fb3]",
     bg: "bg-[#f5f6ff]",
     border: "border-[#dcdfed]",
   },
   no_telegram: {
-    label: "Нет Telegram",
     icon: MessageSquareOff,
     color: "text-[#a13a32]",
     bg: "bg-[#fff4f2]",
@@ -118,18 +110,42 @@ const STATUS_META: Record<
   },
 };
 
-function timeAgo(iso: string | null): string {
+type TeamTranslator = ReturnType<typeof useTranslations<"teamUi.teamClient">>;
+
+function statusLabel(t: TeamTranslator, status: WorkStatus): string {
+  switch (status) {
+    case "working":
+      return t("status.working");
+    case "completed_only":
+      return t("status.completedOnly");
+    case "not_started":
+      return t("status.notStarted");
+    case "off_day":
+      return t("status.offDay");
+    case "vacation":
+      return t("status.vacation");
+    case "sick":
+      return t("status.sick");
+    case "shift_off":
+      return t("status.shiftOff");
+    case "no_telegram":
+      return t("status.noTelegram");
+  }
+}
+
+function timeAgo(t: TeamTranslator, iso: string | null): string {
   if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "только что";
-  if (m < 60) return `${m} мин назад`;
+  if (m < 1) return t("ago.justNow");
+  if (m < 60) return t("ago.minutes", { count: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} ч назад`;
-  return `${Math.floor(h / 24)} д назад`;
+  if (h < 24) return t("ago.hours", { count: h });
+  return t("ago.days", { count: Math.floor(h / 24) });
 }
 
 export function TeamClient() {
+  const t = useTranslations("teamUi.teamClient");
   const [data, setData] = useState<Resp | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -144,8 +160,8 @@ export function TeamClient() {
 
   useEffect(() => {
     void load();
-    const t = window.setInterval(() => void load(), 30000);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => void load(), 30000);
+    return () => window.clearInterval(timer);
   }, []);
 
   // Первая загрузка — тот же скелет, что у `loading.tsx`, без промежуточного
@@ -156,27 +172,27 @@ export function TeamClient() {
   const groups = ([
     {
       key: "active_now" as const,
-      label: "Сейчас работают",
+      label: t("groups.activeNow"),
       items: data.team.filter((m) => m.workStatus === "working"),
     },
     {
       key: "completed_only",
-      label: "Закончили смену",
+      label: t("groups.completedOnly"),
       items: data.team.filter((m) => m.workStatus === "completed_only"),
     },
     {
       key: "not_started",
-      label: "Ещё не взяли задачу",
+      label: t("groups.notStarted"),
       items: data.team.filter((m) => m.workStatus === "not_started"),
     },
     {
       key: "no_telegram",
-      label: "Не подключили Telegram",
+      label: t("groups.noTelegram"),
       items: data.team.filter((m) => m.workStatus === "no_telegram"),
     },
     {
       key: "shift_off",
-      label: "Не на смене / отгул",
+      label: t("groups.shiftOff"),
       items: data.team.filter(
         (m) =>
           m.workStatus === "shift_off" ||
@@ -185,12 +201,12 @@ export function TeamClient() {
     },
     {
       key: "vacation",
-      label: "Отпуск",
+      label: t("groups.vacation"),
       items: data.team.filter((m) => m.workStatus === "vacation"),
     },
     {
       key: "sick",
-      label: "Больничный",
+      label: t("groups.sick"),
       items: data.team.filter((m) => m.workStatus === "sick"),
     },
   ] as { key: string; label: string; items: TeamMember[] }[]).filter((g) => g.items.length > 0);
@@ -200,14 +216,13 @@ export function TeamClient() {
       {/* Счётчики по статусам не дублируем в шапке: ниже каждая группа
           сотрудников и так подписана «Название (N)». */}
       <PageHeader
-        title="Моя команда"
-        description="Кто работает, кто закончил, кто ещё не начал. Обновляется каждые 30 секунд."
+        title={t("title")}
+        description={t("description")}
       />
 
       {groups.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center text-[14px] text-[#6f7282]">
-          В вашей команде пока нет сотрудников. Попросите админа добавить вас в
-          ManagerScope.
+          {t("empty")}
         </div>
       ) : null}
 
@@ -228,6 +243,8 @@ export function TeamClient() {
 }
 
 function MemberCard({ member }: { member: TeamMember }) {
+  const t = useTranslations("teamUi.teamClient");
+  const locale = useLocale();
   const meta = STATUS_META[member.workStatus];
   const Icon = meta.icon;
   return (
@@ -248,7 +265,7 @@ function MemberCard({ member }: { member: TeamMember }) {
             {member.positionLabel}
           </div>
           <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium ${meta.color}`}>
-            {meta.label}
+            {statusLabel(t, member.workStatus)}
           </div>
         </div>
       </div>
@@ -258,47 +275,47 @@ function MemberCard({ member }: { member: TeamMember }) {
           <div className="font-medium text-[#3848c7]">{member.activeClaim.scopeLabel}</div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[#6f7282]">
             <Clock className="size-3" />
-            Взято {timeAgo(member.activeClaim.claimedAt)}
+            {t("claimed", { ago: timeAgo(t, member.activeClaim.claimedAt) })}
           </div>
         </div>
       ) : null}
 
       {member.workStatus === "completed_only" && member.doneCount > 0 ? (
         <div className="mt-3 text-[12px] text-[#136b2a]">
-          Выполнено сегодня: {member.doneCount}
+          {t("doneToday", { count: member.doneCount })}
         </div>
       ) : null}
 
       {member.workStatus === "not_started" && member.hasTelegram ? (
         <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] text-[#a13a32]">
           <AlertTriangle className="size-3" />
-          Задач сегодня ещё нет
+          {t("noTasksToday")}
         </div>
       ) : null}
 
       {member.workStatus === "no_telegram" ? (
         <div className="mt-3 text-[12px] leading-snug text-[#a13a32]">
-          Без бота сотрудник не получает задачи. Отправьте ему приглашение в разделе «Сотрудники».
+          {t("noTelegramHint")}
         </div>
       ) : null}
 
       {member.sick ? (
         <div className="mt-3 text-[12px] text-[#6f7282]">
-          Больничный до {new Date(member.sick.dateTo).toLocaleDateString("ru-RU")}
+          {t("sickUntil", { date: new Date(member.sick.dateTo).toLocaleDateString(locale) })}
         </div>
       ) : null}
       {member.vacation ? (
         <div className="mt-3 text-[12px] text-[#6f7282]">
-          Отпуск до {new Date(member.vacation.dateTo).toLocaleDateString("ru-RU")}
+          {t("vacationUntil", { date: new Date(member.vacation.dateTo).toLocaleDateString(locale) })}
         </div>
       ) : null}
       {member.offDay ? (
-        <div className="mt-3 text-[12px] text-[#6f7282]">Отгул сегодня</div>
+        <div className="mt-3 text-[12px] text-[#6f7282]">{t("offDayToday")}</div>
       ) : null}
 
       {member.lastSeenAt ? (
         <div className="mt-3 text-[11px] text-[#9b9fb3]">
-          Активность: {timeAgo(member.lastSeenAt)}
+          {t("activity", { ago: timeAgo(t, member.lastSeenAt) })}
         </div>
       ) : null}
     </div>

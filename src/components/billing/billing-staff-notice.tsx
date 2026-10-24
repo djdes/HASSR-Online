@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Тонкая плашка сотруднику без прав на тариф, пока руководитель решает
@@ -6,6 +7,7 @@ import { Info } from "lucide-react";
  * объяснение, почему руководитель может спросить про состав смены.
  */
 export function BillingStaffNotice({ variant = "site" }: { variant?: "site" | "mini" }) {
+  const t = useTranslations("billingUi.billingStaffNotice");
   return (
     <div
       role="status"
@@ -15,7 +17,7 @@ export function BillingStaffNotice({ variant = "site" }: { variant?: "site" | "m
       }`}
     >
       <Info className="size-4 shrink-0 text-[#5566f6]" />
-      <span>Руководитель выбирает тариф — работа продолжается как обычно.</span>
+      <span>{t("message")}</span>
     </div>
   );
 }

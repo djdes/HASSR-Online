@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
  * подписывает записи в журналах своим именем.
  */
 export default async function KioskSettingsPage() {
+  const t = await getTranslations("settingsUi.kioskPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const orgId = getActiveOrgId(session);
@@ -53,9 +55,9 @@ export default async function KioskSettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Общий планшет"
-        description="Один планшет на кухне или складе: каждый сотрудник подписывает записи своим 4-значным ПИН, никто не путается в чужих именах."
-        actions={<PageHeaderStat tone={withoutPin > 0 ? "warn" : "ok"}>{withoutPin > 0 ? `Без ПИН: ${withoutPin}` : "У всех есть ПИН"}</PageHeaderStat>}
+        title={t("title")}
+        description={t("description")}
+        actions={<PageHeaderStat tone={withoutPin > 0 ? "warn" : "ok"}>{withoutPin > 0 ? t("withoutPin", { count: withoutPin }) : t("allHavePin")}</PageHeaderStat>}
       />
       <KioskClient
         idleLockSeconds={org?.kioskIdleLockSeconds ?? 90}

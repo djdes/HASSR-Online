@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ArrowRight,
@@ -60,14 +61,6 @@ function orderHref(row: OnboardingOrderRow): string {
     : `/orders/${row.code}?from=onboarding`;
 }
 
-function pluralItems(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return `${n} пункт`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} пункта`;
-  return `${n} пунктов`;
-}
-
 export function OnboardingDocumentsPhase({
   requiredOrders,
   recommendedOrders,
@@ -79,6 +72,7 @@ export function OnboardingDocumentsPhase({
   checklists: OnboardingChecklistRow[];
   checklistsReviewedAt: string | null;
 }) {
+  const t = useTranslations("settingsUi.onboardingDocumentsPhase");
   const router = useRouter();
   const [fillingCode, setFillingCode] = useState<string | null>(null);
   const [confirmReview, setConfirmReview] = useState(false);
@@ -103,13 +97,16 @@ export function OnboardingDocumentsPhase({
       const data = (await res.json().catch(() => null)) as
         | { created?: number; error?: string }
         | null;
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось заполнить");
+      if (!res.ok) throw new Error(data?.error ?? t("fillFailed"));
       toast.success(
-        `«${row.name}»: добавлено ${pluralItems(data?.created ?? 0)}`,
+        t("defaultsAdded", {
+          name: row.name,
+          items: t("items", { count: data?.created ?? 0 }),
+        }),
       );
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сети");
+      toast.error(error instanceof Error ? error.message : t("networkError"));
     } finally {
       setFillingCode(null);
     }
@@ -126,12 +123,12 @@ export function OnboardingDocumentsPhase({
       const data = (await res.json().catch(() => null)) as
         | { error?: string }
         | null;
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось сохранить");
-      toast.success("Чек-листы отмечены проверенными");
+      if (!res.ok) throw new Error(data?.error ?? t("saveFailed"));
+      toast.success(t("markedReviewed"));
       setConfirmReview(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сети");
+      toast.error(error instanceof Error ? error.message : t("networkError"));
     } finally {
       setMarking(false);
     }
@@ -159,9 +156,9 @@ export function OnboardingDocumentsPhase({
           {/* basis: на узком экране описание не сжимается в столбик рядом
               с пилюлей — пилюля уходит на свою строку. */}
           <div className="min-w-0 flex-1 basis-[220px]">
-            <h4 className="text-[15px] font-semibold text-[#0b1024]">Приказы</h4>
+            <h4 className="text-[15px] font-semibold text-[#0b1024]">{t("ordersTitle")}</h4>
             <p className="text-[12.5px] leading-snug text-[#6f7282]">
-              Инспектор спрашивает не только журналы, но и кто за них отвечает.
+              {t("ordersHint")}
             </p>
           </div>
           <span
@@ -171,7 +168,7 @@ export function OnboardingDocumentsPhase({
                 : "bg-[#f5f6ff] text-[#3848c7]"
             }`}
           >
-            Оформлено {issuedCount} из {totalRequired}
+            {t("issuedProgress", { issued: issuedCount, total: totalRequired })}
           </span>
         </div>
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#ececf4]">
@@ -192,14 +189,14 @@ export function OnboardingDocumentsPhase({
         {recommendedOrders.length > 0 ? (
           <details className="group mt-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3.5 py-2.5">
             <summary className="flex cursor-pointer list-none items-center gap-2 text-[13px] font-medium text-[#3c4053] [&::-webkit-details-marker]:hidden">
-              Рекомендуемые приказы
+              {t("recommendedOrders")}
               <span className="rounded-full bg-white px-2 py-0.5 text-[11px] tabular-nums text-[#6f7282]">
                 {recommendedIssued}/{recommendedOrders.length}
               </span>
               <ChevronDown className="ml-auto size-4 text-[#9b9fb3] transition-transform duration-200 group-open:rotate-180" />
             </summary>
             <p className="mt-1.5 text-[12px] leading-snug text-[#6f7282]">
-              Не обязательны для закрытия шага, но пригодятся на проверке.
+              {t("recommendedHint")}
             </p>
             <ul className="mt-1 divide-y divide-[#ececf4]">
               {recommendedOrders.map((row) => (
@@ -217,18 +214,16 @@ export function OnboardingDocumentsPhase({
             <ListChecks className="size-4" />
           </span>
           <div className="min-w-0 flex-1 basis-[220px]">
-            <h4 className="text-[15px] font-semibold text-[#0b1024]">Чек-листы</h4>
+            <h4 className="text-[15px] font-semibold text-[#0b1024]">{t("checklistsTitle")}</h4>
             <p className="text-[12.5px] leading-snug text-[#6f7282]">
-              Пункты, которые сотрудник отмечает при заполнении журнала: что
-              взять, куда пойти, что проверить.
+              {t("checklistsHint")}
             </p>
           </div>
         </div>
 
         {checklists.length === 0 ? (
           <div className="mt-3 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-5 text-center text-[13px] text-[#6f7282]">
-            Среди включённых журналов нет тех, где нужен чек-лист. Отметьте шаг
-            пройденным — вернуться к чек-листам можно в любой момент.
+            {t("noChecklists")}
           </div>
         ) : (
           <ul className="mt-3 divide-y divide-[#ececf4]">
@@ -256,12 +251,14 @@ export function OnboardingDocumentsPhase({
                             empty ? "text-[#a13a32]" : "text-[#116b2a]"
                           }`}
                         >
-                          {empty ? "Пусто" : pluralItems(row.itemsCount)}
+                          {empty ? t("empty") : t("items", { count: row.itemsCount })}
                         </div>
                         {empty && row.defaultsExample ? (
                           <div className="mt-1 text-[12px] leading-snug text-[#6f7282]">
-                            Вставим {pluralItems(row.defaultsCount)}, например:
-                            «{row.defaultsExample}»
+                            {t("willInsert", {
+                              items: t("items", { count: row.defaultsCount }),
+                              example: row.defaultsExample,
+                            })}
                           </div>
                         ) : null}
                       </div>
@@ -280,7 +277,7 @@ export function OnboardingDocumentsPhase({
                         ) : (
                           <Sparkles className="size-4" />
                         )}
-                        Заполнить типовыми
+                        {t("fillDefaults")}
                       </button>
                     ) : null}
                     <Link
@@ -288,7 +285,7 @@ export function OnboardingDocumentsPhase({
                       className={OUTLINE_SMALL}
                     >
                       <Pencil className="size-3.5 text-[#5566f6]" />
-                      Открыть редактор
+                      {t("openEditor")}
                     </Link>
                   </div>
                 </li>
@@ -300,8 +297,8 @@ export function OnboardingDocumentsPhase({
         <div className="mt-3 flex flex-col gap-2 rounded-2xl bg-[#fafbff] p-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[12.5px] leading-snug text-[#6f7282]">
             {checklistsReviewedAt
-              ? `Проверены ${formatDate(checklistsReviewedAt)}. Если поменяли пункты — отметьте ещё раз.`
-              : "Просмотрите пункты и отметьте — шаг закроется, когда оформлены и приказы."}
+              ? t("reviewedOn", { date: formatDate(checklistsReviewedAt) })
+              : t("reviewPrompt")}
           </p>
           <button
             type="button"
@@ -320,7 +317,7 @@ export function OnboardingDocumentsPhase({
                 className={`size-4 ${checklistsReviewedAt ? "text-[#116b2a]" : ""}`}
               />
             )}
-            Чек-листы проверены
+            {t("reviewed")}
           </button>
         </div>
       </section>
@@ -330,19 +327,19 @@ export function OnboardingDocumentsPhase({
         onClose={() => setConfirmReview(false)}
         onConfirm={markReviewed}
         variant="warn"
-        title="Отметить чек-листы проверенными?"
-        description="У части журналов чек-лист пуст — сотрудник не увидит ни одного пункта при заполнении."
+        title={t("confirmTitle")}
+        description={t("confirmDescription")}
         bullets={[
           ...emptyChecklists.map((row) => ({
-            label: `Пусто: ${row.name}`,
+            label: t("emptyNamed", { name: row.name }),
             tone: "warn" as const,
           })),
           {
-            label: "Заполнить можно и позже — в редакторе чек-листа",
+            label: t("fillLater"),
             tone: "info" as const,
           },
         ]}
-        confirmLabel="Да, проверены"
+        confirmLabel={t("confirmLabel")}
       />
     </div>
   );
@@ -355,6 +352,7 @@ function OrderRow({
   row: OnboardingOrderRow;
   compact?: boolean;
 }) {
+  const t = useTranslations("settingsUi.onboardingDocumentsPhase");
   return (
     <li
       className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 ${
@@ -385,8 +383,8 @@ function OrderRow({
             }`}
           >
             {row.issued
-              ? `Создан № ${row.issued.number} от ${formatDate(row.issued.issuedAt)}`
-              : "Не оформлен"}
+              ? t("createdNo", { number: row.issued.number, date: formatDate(row.issued.issuedAt) })
+              : t("notIssued")}
           </div>
         </div>
       </div>
@@ -395,7 +393,7 @@ function OrderRow({
           href={orderHref(row)}
           className={row.issued || compact ? OUTLINE_SMALL : PRIMARY_SMALL}
         >
-          {row.issued ? "Открыть" : "Оформить"}
+          {row.issued ? t("open") : t("issue")}
           <ArrowRight
             className={`size-4 ${row.issued || compact ? "text-[#5566f6]" : ""}`}
           />

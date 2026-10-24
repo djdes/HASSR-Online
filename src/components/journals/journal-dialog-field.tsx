@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -181,23 +182,6 @@ export function FloatingTextareaField({
  * сегодняшний день — кружком, стрелки переключения месяца.
  */
 
-const MONTHS_RU = [
-  "Январь",
-  "Февраль",
-  "Март",
-  "Апрель",
-  "Май",
-  "Июнь",
-  "Июль",
-  "Август",
-  "Сентябрь",
-  "Октябрь",
-  "Ноябрь",
-  "Декабрь",
-];
-
-const WEEKDAYS_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
 function pad(value: number) {
   return String(value).padStart(2, "0");
 }
@@ -286,6 +270,14 @@ export function DateField({
   picker?: "calendar" | "wheel";
   calendarCopy?: AcceptanceCalendarCopy;
 }) {
+  const t = useTranslations("journals.ui.dateField");
+  const months = [
+    t("month1"), t("month2"), t("month3"), t("month4"), t("month5"), t("month6"),
+    t("month7"), t("month8"), t("month9"), t("month10"), t("month11"), t("month12"),
+  ];
+  const weekdays = [
+    t("weekday1"), t("weekday2"), t("weekday3"), t("weekday4"), t("weekday5"), t("weekday6"), t("weekday7"),
+  ];
   const generatedId = useId();
   const fieldId = id || generatedId;
   const [open, setOpen] = useState(false);
@@ -339,7 +331,7 @@ export function DateField({
           value={text}
           onChange={(event) => commitText(event.target.value)}
           onBlur={() => setText(formatRuDateValue(value))}
-          placeholder={calendarCopy?.placeholder ?? "ДД.ММ.ГГГГ"}
+          placeholder={calendarCopy?.placeholder ?? t("placeholder")}
           inputMode="numeric"
           disabled={disabled}
           className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
@@ -355,7 +347,7 @@ export function DateField({
             <button
               type="button"
               disabled={disabled}
-              aria-label={picker === "wheel" ? "Выбрать дату" : calendarCopy?.open ?? "Открыть календарь"}
+              aria-label={picker === "wheel" ? t("pickDate") : calendarCopy?.open ?? t("openCalendar")}
               className="shrink-0 rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-50"
             >
               <CalendarDays className="size-5" />
@@ -385,7 +377,7 @@ export function DateField({
             <div className="mb-2 flex items-center justify-between">
               <button
                 type="button"
-                aria-label={calendarCopy?.previousMonth ?? "Предыдущий месяц"}
+                aria-label={calendarCopy?.previousMonth ?? t("previousMonth")}
                 onClick={() =>
                   setViewDate(
                     new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)
@@ -396,11 +388,11 @@ export function DateField({
                 <ChevronLeft className="size-4" />
               </button>
               <div className="text-[14px] font-semibold text-[#0b1024]">
-                {calendarCopy ? calendarCopy.heading(calendarCopy.months[viewDate.getMonth()], viewDate.getFullYear()) : <>{MONTHS_RU[viewDate.getMonth()]} {viewDate.getFullYear()}</>}
+                {calendarCopy ? calendarCopy.heading(calendarCopy.months[viewDate.getMonth()], viewDate.getFullYear()) : <>{months[viewDate.getMonth()]} {viewDate.getFullYear()}</>}
               </div>
               <button
                 type="button"
-                aria-label={calendarCopy?.nextMonth ?? "Следующий месяц"}
+                aria-label={calendarCopy?.nextMonth ?? t("nextMonth")}
                 onClick={() =>
                   setViewDate(
                     new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1)
@@ -416,7 +408,7 @@ export function DateField({
                 до 48px (`data-touch-compact`), иначе в 7 колонок по 38px круги
                 наезжали друг на друга. Стрелки месяца выше — 48×48. */}
             <div className="grid grid-cols-7 gap-y-1" data-touch-compact="">
-              {(calendarCopy?.weekdays ?? WEEKDAYS_RU).map((day) => (
+              {(calendarCopy?.weekdays ?? weekdays).map((day) => (
                 <div
                   key={day}
                   className="py-1 text-center text-[12px] font-semibold text-[#0b1024]"

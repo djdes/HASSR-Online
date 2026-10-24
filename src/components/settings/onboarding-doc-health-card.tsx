@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 type Props = {
@@ -19,6 +20,7 @@ export function OnboardingDocHealthCard({
   missingVerifier,
   missingResponsible,
 }: Props) {
+  const t = useTranslations("settingsUi.onboardingDocHealthCard");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -36,15 +38,19 @@ export function OnboardingDocHealthCard({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось применить");
+        toast.error(data?.error ?? t("applyFailed"));
         return;
       }
       toast.success(
-        `Готово: исправлено ${data?.fixed ?? 0} документов (было без verifier: ${data?.verifiersBefore}, стало: ${data?.verifiersAfter}).`
+        t("applied", {
+          fixed: data?.fixed ?? 0,
+          before: String(data?.verifiersBefore),
+          after: String(data?.verifiersAfter),
+        })
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -59,11 +65,10 @@ export function OnboardingDocHealthCard({
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold text-[#0b1024]">
-              Все {totalActive} документов готовы к TasksFlow
+              {t("allReadyTitle", { count: totalActive })}
             </div>
             <div className="mt-0.5 text-[12px] text-[#136b2a]">
-              Каждый документ имеет ответственного и проверяющего —
-              двухступенчатая проверка сработает корректно.
+              {t("allReadyBody")}
             </div>
           </div>
         </div>
@@ -80,28 +85,24 @@ export function OnboardingDocHealthCard({
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold text-[#0b1024]">
-              Документы есть, но не все готовы к TasksFlow
+              {t("notReadyTitle")}
             </div>
             <ul className="mt-1.5 space-y-1 text-[12px] text-[#a13a32]">
               {missingResponsible > 0 ? (
                 <li className="flex items-start gap-1.5">
                   <span className="mt-1 inline-flex size-1.5 shrink-0 rounded-full bg-[#a13a32]" />
-                  {missingResponsible} без ответственного — задача-исполнителю
-                  не уйдёт
+                  {t("missingResponsible", { count: missingResponsible })}
                 </li>
               ) : null}
               {missingVerifier > 0 ? (
                 <li className="flex items-start gap-1.5">
                   <span className="mt-1 inline-flex size-1.5 shrink-0 rounded-full bg-[#a13a32]" />
-                  {missingVerifier} без проверяющего — заведующий производством не получит
-                  «проверь когда заполнят»
+                  {t("missingVerifier", { count: missingVerifier })}
                 </li>
               ) : null}
             </ul>
             <p className="mt-2 text-[11px] text-[#6f7282]">
-              Один клик ниже — пройдём каскадом по всем активным документам и
-              запишем сохранённых в /settings/journal-responsibles слот-юзеров
-              в каждый документ.
+              {t("hint")}
             </p>
           </div>
         </div>
@@ -116,7 +117,7 @@ export function OnboardingDocHealthCard({
           ) : (
             <ShieldCheck className="size-4" />
           )}
-          {busy ? "Применяем…" : "Применить ответственных"}
+          {busy ? t("applying") : t("apply")}
         </button>
       </div>
     </div>

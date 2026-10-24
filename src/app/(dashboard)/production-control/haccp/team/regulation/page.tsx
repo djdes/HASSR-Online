@@ -11,12 +11,6 @@ import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/
 
 export const dynamic = "force-dynamic";
 
-const ROLE_RU: Record<TeamMember["role"], string> = {
-  leader: "Руководитель группы",
-  deputy: "Заместитель руководителя",
-  member: "Член группы",
-  secretary: "Секретарь",
-};
 const ROLE_ORDER: Record<TeamMember["role"], number> = { leader: 0, deputy: 1, member: 2, secretary: 3 };
 
 /** Положение о группе ХАССП для печати: разделы, лист «Утверждаю» и состав группы из записей блока. */
@@ -25,7 +19,7 @@ export default async function TeamRegulationPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [org, rows, staff, t] = await Promise.all([
+  const [org, rows, staff, t, u] = await Promise.all([
     loadPpkPrintOrg(organizationId),
     db.ppkRecord.findMany({
       where: { organizationId, block: "team" },
@@ -34,7 +28,16 @@ export default async function TeamRegulationPage() {
     }),
     loadPpkStaff(organizationId),
     getTranslations("productionControl.print"),
+    getTranslations("productionControlUi"),
   ]);
+  const roleLabel = (role: TeamMember["role"]) => {
+    switch (role) {
+      case "leader": return u("regulationPage.roleLeader");
+      case "deputy": return u("haccpPlanPage.roleDeputy");
+      case "member": return u("haccpPlanPage.roleMember");
+      case "secretary": return u("haccpPlanPage.roleSecretary");
+    }
+  };
 
   const staffById = new Map(staff.map((person) => [person.id, person]));
   const members = rows
@@ -57,17 +60,17 @@ export default async function TeamRegulationPage() {
         </div>
       ) : null}
 
-      <PpkPrintSheet org={org} title="Положение о группе ХАССП">
+      <PpkPrintSheet org={org} title={u("regulationPage.title")}>
         <div className="mb-6 ml-auto w-[260px] text-[13.5px]">
-          <div className="font-semibold">УТВЕРЖДАЮ</div>
-          <div>{director?.directorPost || "Руководитель"}</div>
+          <div className="font-semibold">{u("ppkDocUi.approve")}</div>
+          <div>{director?.directorPost || u("ppkDocUi.leader")}</div>
           <div>{director?.directorName || "—"}</div>
           <div className="mt-4 flex items-end gap-2">
             <span className="w-[110px] border-b border-[#0b1024]" />
             <span>/</span>
             <span className="w-[80px] border-b border-[#0b1024]" />
           </div>
-          <div className="mt-3">«____» ______________ 20___ г.</div>
+          <div className="mt-3">{u("ppkDocUi.datePlaceholder")}</div>
         </div>
 
         {sections.map((section) => (
@@ -82,11 +85,11 @@ export default async function TeamRegulationPage() {
         ))}
 
         <section className="mt-5">
-          <h2 className="mb-2 text-[15px] font-semibold">6. Состав группы</h2>
+          <h2 className="mb-2 text-[15px] font-semibold">{u("regulationPage.teamTitle")}</h2>
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr>
-                {["Ф. И. О.", "Должность", "Роль в группе", "Обязанности"].map((head) => (
+                {[u("haccpPlanPage.colFullName"), u("haccpPlanPage.colPosition"), u("haccpPlanPage.colRole"), u("haccpPlanPage.colDuties")].map((head) => (
                   <th key={head} className="border border-[#0b1024] px-2 py-1.5 text-left font-semibold">
                     {head}
                   </th>
@@ -100,7 +103,7 @@ export default async function TeamRegulationPage() {
                   <tr key={member.userId} className="align-top">
                     <td className="border border-[#0b1024] px-2 py-1.5">{person?.name ?? "—"}</td>
                     <td className="border border-[#0b1024] px-2 py-1.5">{person?.title ?? "—"}</td>
-                    <td className="border border-[#0b1024] px-2 py-1.5">{ROLE_RU[member.role]}</td>
+                    <td className="border border-[#0b1024] px-2 py-1.5">{roleLabel(member.role)}</td>
                     <td className="border border-[#0b1024] px-2 py-1.5">{member.duties}</td>
                   </tr>
                 );

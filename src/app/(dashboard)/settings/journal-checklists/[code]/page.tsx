@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
@@ -24,6 +25,7 @@ export default async function JournalChecklistEditorPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
+  const t = await getTranslations("settingsUi.journalChecklistsCodePage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) {
     redirect("/settings");
@@ -93,29 +95,27 @@ export default async function JournalChecklistEditorPage({
           Надстрочная подпись оставлена — она не дублирует название
           журнала, а объясняет, чей это чек-лист. */}
       <PageHeader
-        eyebrow="Чек-лист сотрудника"
+        eyebrow={t("eyebrow")}
         title={meta.name}
-        description="Список действий, которые сотрудник должен выполнить перед сохранением записи журнала. Каждый пункт можно сделать обязательным — тогда форма не отправится пока не отмечены все галочки. Все отметки сохраняются в audit-log."
+        description={t("description")}
       />
 
       {code === "cleaning" ? (
         <div className="rounded-3xl border border-[#ffe9b0] bg-[#fff8eb] p-5 text-[13px] text-[#7a5500]">
           <div className="text-[14px] font-semibold mb-1 text-[#0b1024]">
-            Чек-лист уборки настраивается в «Зданиях и помещениях»
+            {t("cleaningTitle")}
           </div>
           <p className="mt-1.5">
-            Cleaning unification 2026-05-08: с этой даты scope «Текущая» и
-            «Генеральная» уборка хранятся на самом помещении (Room). Открой{" "}
-            <Link
-              href="/settings/buildings"
-              className="font-medium text-[#3848c7] underline underline-offset-2"
-            >
-              /settings/buildings
-            </Link>
-            , нажми «Настроить» у нужного помещения — там полный редактор
-            scope/days/средства/чек-листа. Отдельные пункты ниже —
-            backwards-compat с прошлой моделью; новые items создавай через
-            редактор Room.
+            {t.rich("cleaningBody", {
+              link: (chunks) => (
+                <Link
+                  href="/settings/buildings"
+                  className="font-medium text-[#3848c7] underline underline-offset-2"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         </div>
       ) : null}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ChevronDown,
@@ -34,6 +35,7 @@ type Props = {
 };
 
 export function JournalTaskModeClient({ journals: initial }: Props) {
+  const t = useTranslations("settingsUi.journalTaskModeClient");
   const router = useRouter();
   const [journals, setJournals] = useState(initial);
   const [savingCode, setSavingCode] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export function JournalTaskModeClient({ journals: initial }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Не удалось сохранить");
+        throw new Error(body?.error ?? t("saveFailed"));
       }
       const data = await res.json();
       const updatedOverride = (data?.modes?.[code] ?? {}) as Partial<TaskMode>;
@@ -67,10 +69,10 @@ export function JournalTaskModeClient({ journals: initial }: Props) {
           j.code === code ? { ...j, override: updatedOverride } : j,
         ),
       );
-      toast.success(patch === null ? "Сброшено к умолчанию" : "Сохранено");
+      toast.success(patch === null ? t("resetToast") : t("savedToast"));
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setSavingCode(null);
     }
@@ -82,11 +84,11 @@ export function JournalTaskModeClient({ journals: initial }: Props) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Поиск журнала…"
+          placeholder={t("searchPlaceholder")}
           className="h-10 flex-1 min-w-[200px] rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
         />
         <span className="text-[12px] text-[#6f7282]">
-          Журналов: {filtered.length} / {journals.length}
+          {t("journalsCount", { shown: filtered.length, total: journals.length })}
         </span>
       </div>
 
@@ -107,13 +109,13 @@ export function JournalTaskModeClient({ journals: initial }: Props) {
         <summary className="cursor-pointer list-none font-medium text-[#0b1024]">
           <span className="inline-flex items-center gap-1.5">
             <HelpCircle className="size-4 text-[#5566f6]" />
-            Что значат режимы и как выбрать
+            {t("helpSummary")}
           </span>
         </summary>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <div>
             <div className="font-semibold text-[#0b1024]">
-              Режимы раздачи
+              {t("distributionModes")}
             </div>
             <ul className="mt-1.5 space-y-1.5">
               {TASK_DISTRIBUTION_MODES.map((m) => (
@@ -125,7 +127,7 @@ export function JournalTaskModeClient({ journals: initial }: Props) {
           </div>
           <div>
             <div className="font-semibold text-[#0b1024]">
-              Режимы проверки
+              {t("verificationModes")}
             </div>
             <ul className="mt-1.5 space-y-1.5">
               {TASK_VERIFICATION_MODES.map((m) => (
@@ -150,6 +152,7 @@ function JournalRow({
   saving: boolean;
   onPatch: (patch: Partial<TaskMode> | null) => void;
 }) {
+  const t = useTranslations("settingsUi.journalTaskModeClient");
   const [open, setOpen] = useState(false);
   const eff: TaskMode = {
     distribution: row.override.distribution ?? row.defaultMode.distribution,
@@ -186,10 +189,10 @@ function JournalRow({
               </span>
               {hasOverride ? (
                 <span className="ml-1.5 rounded-full bg-[#fff8eb] px-2 py-0.5 text-[#a13a32]">
-                  настроено
+                  {t("customised")}
                 </span>
               ) : (
-                <span className="ml-1.5 text-[#9b9fb3]">по умолчанию</span>
+                <span className="ml-1.5 text-[#9b9fb3]">{t("defaultLabel")}</span>
               )}
             </div>
           </div>
@@ -199,11 +202,11 @@ function JournalRow({
             type="button"
             onClick={() => onPatch(null)}
             disabled={saving}
-            title="Вернуть к режиму по умолчанию"
+            title={t("resetTitle")}
             className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12px] text-[#6f7282] hover:border-[#a13a32]/40 hover:bg-[#fff4f2] hover:text-[#a13a32] disabled:opacity-60"
           >
             <RefreshCw className="size-3" />
-            Сброс
+            {t("reset")}
           </button>
         ) : null}
         {saving ? (
@@ -215,7 +218,7 @@ function JournalRow({
         <div className="mt-2 grid gap-3 rounded-2xl bg-[#fafbff] p-3 md:grid-cols-2">
           <label className="block">
             <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-              Раздача задач
+              {t("taskDistribution")}
             </div>
             <select
               value={eff.distribution}
@@ -240,7 +243,7 @@ function JournalRow({
 
           <label className="block">
             <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
-              Проверка
+              {t("verification")}
             </div>
             <select
               value={eff.verification}
@@ -274,10 +277,9 @@ function JournalRow({
               className="mt-0.5 size-4 rounded border-[#dcdfed] text-[#5566f6]"
             />
             <span className="text-[12px] text-[#3c4053]">
-              <b>Показывать «Сделано Иваном»</b> другим исполнителям. Когда
-              один сотрудник закрыл задачу (помещение А), остальные видят
-              рядом со своими задачами «помещение А — закрыл Иван». Полезно
-              для прозрачности команды; бесполезно для personal-журналов.
+              {t.rich("siblingVisibility", {
+                b: (chunks) => <b>{chunks}</b>,
+              })}
             </span>
           </label>
         </div>

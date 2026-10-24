@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function ExperimentalClient({ initialExperimentalUiV2 }: Props) {
+  const t = useTranslations("settingsUi.experimentalClient");
   const [v2, setV2] = useState(initialExperimentalUiV2);
   const [savingV2, setSavingV2] = useState(false);
 
@@ -25,16 +27,16 @@ export function ExperimentalClient({ initialExperimentalUiV2 }: Props) {
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
       toast.success(
         next
-          ? "Design v2 включён. Журналы постепенно переходят на новый вид."
-          : "Design v2 выключен. Вернулись к старому виду."
+          ? t("v2On")
+          : t("v2Off")
       );
     } catch (error) {
       setV2(prev);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingV2(false);
     }
@@ -51,22 +53,16 @@ export function ExperimentalClient({ initialExperimentalUiV2 }: Props) {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
-                  Design v2 для журнальных интерфейсов
+                  {t("v2Title")}
                   <span className="rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#136b2a]">
-                    рекомендуем
+                    {t("recommended")}
                   </span>
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  Единый визуал всех страниц журналов: одинаковые модалки,
-                  тулбары, диалоги. Меняется только внешний вид — функционал,
-                  таблицы и кнопки те же. По умолчанию включено для всех
-                  с мая 2026 — все 33 активных журнала покрыты, регрессий
-                  не было.
+                  {t("v2Body")}
                   <br />
                   <span className="text-[12px] text-[#9b9fb3]">
-                    Если что-то выглядит странно — выключите toggle, вернётесь
-                    к старому виду без потери данных (legacy-код жив в
-                    каждом журнале как fallback).
+                    {t("v2Note")}
                   </span>
                 </p>
               </div>

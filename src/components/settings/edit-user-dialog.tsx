@@ -3,6 +3,7 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,23 @@ interface EditUserDialogProps {
 }
 
 export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
+  const t = useTranslations("settingsUi.editUserDialog");
+  const tc = useTranslations("common");
+  const tRole = useTranslations("staffManagement.roleLabels");
+  const roleLabel = (value: string, fallback: string) => {
+    switch (value) {
+      case "manager":
+        return tRole("manager");
+      case "head_chef":
+        return tRole("head_chef");
+      case "cook":
+        return tRole("cook");
+      case "waiter":
+        return tRole("waiter");
+      default:
+        return fallback;
+    }
+  };
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,13 +97,13 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || "Ошибка");
+        throw new Error(result.error || t("error"));
       }
 
       setOpen(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError(err instanceof Error ? err.message : t("error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -106,7 +124,7 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Редактировать сотрудника</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -116,7 +134,7 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
           )}
           <div className="space-y-2">
             <Label htmlFor="edit-user-name">
-              Имя <span className="text-destructive">*</span>
+              {t("nameLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="edit-user-name"
@@ -131,7 +149,7 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-user-role">
-              Должность <span className="text-destructive">*</span>
+              {t("roleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Select value={role} onValueChange={setRole} disabled={isSelf}>
               <SelectTrigger id="edit-user-role" className="w-full">
@@ -140,32 +158,31 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
               <SelectContent>
                 {roles.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {roleLabel(item.value, item.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {isSelf && (
               <p className="text-xs text-muted-foreground">
-                Нельзя изменить свою должность
+                {t("cannotChangeOwnRole")}
               </p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-user-position">Название должности</Label>
+            <Label htmlFor="edit-user-position">{t("positionTitleLabel")}</Label>
             <Input
               id="edit-user-position"
               value={positionTitle}
               onChange={(e) => setPositionTitle(e.target.value)}
-              placeholder="Например: Повар холодного цеха"
+              placeholder={t("positionTitlePlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
-              Отображается в журналах вместо обобщённой роли. Оставьте пустым,
-              чтобы использовать стандартную подпись роли.
+              {t("positionTitleHint")}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-user-phone">Телефон</Label>
+            <Label htmlFor="edit-user-phone">{t("phoneLabel")}</Label>
             <Input
               id="edit-user-phone"
               type="tel"
@@ -176,9 +193,9 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
           {!isSelf && (
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
-                <Label>Активен</Label>
+                <Label>{t("activeLabel")}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Деактивированный сотрудник не сможет войти
+                  {t("activeHint")}
                 </p>
               </div>
               <Switch checked={isActive} onCheckedChange={setIsActive} />
@@ -191,10 +208,10 @@ export function EditUserDialog({ user, isSelf }: EditUserDialogProps) {
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
             >
-              Отмена
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? tc("saving") : tc("save")}
             </Button>
           </div>
         </form>

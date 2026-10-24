@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, ChevronRight, Pencil, Search, SlidersHorizontal } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -86,7 +87,7 @@ export type DayFirstItem = {
 
 export function DayFirstCards({
   items,
-  emptyLabel = "На сегодня заполнять нечего.",
+  emptyLabel,
   bulkAction,
 }: {
   items: DayFirstItem[];
@@ -104,6 +105,7 @@ export function DayFirstCards({
     onUndo?: () => void;
   };
 }) {
+  const t = useTranslations("journalUi.dayFirstCards");
   const undo = useJournalUndo();
   const [filter, setFilter] = useState<DayFilter>({ query: "", onlyPending: false });
   const [filterOpen, setFilterOpen] = useState(false);
@@ -119,7 +121,7 @@ export function DayFirstCards({
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-        {emptyLabel}
+        {emptyLabel ?? t("nothingToFill")}
       </div>
     );
   }
@@ -147,8 +149,8 @@ export function DayFirstCards({
           >
             <Search className="size-4" />
             {filterActive
-              ? `Показано ${visible.length} из ${items.length}`
-              : "Найти или отфильтровать"}
+              ? t("shown", { visible: visible.length, total: items.length })
+              : t("findOrFilter")}
           </button>
           {filterActive ? (
             <button
@@ -156,7 +158,7 @@ export function DayFirstCards({
               onClick={() => setFilter({ query: "", onlyPending: false })}
               className="min-h-[44px] rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#6f7282]"
             >
-              Сбросить
+              {t("reset")}
             </button>
           ) : null}
         </div>
@@ -170,7 +172,7 @@ export function DayFirstCards({
             const count = pending.length;
             const revert = bulkAction.onUndo;
             bulkAction.onRun();
-            if (revert) undo({ label: `Отмечено: ${count}`, onUndo: revert });
+            if (revert) undo({ label: t("marked", { count }), onUndo: revert });
           }}
           disabled={bulkAction.disabled}
           className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-[#5566f6]/25 bg-[#f5f6ff] px-4 text-[14px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/45 hover:bg-[#eef1ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60"
@@ -182,7 +184,7 @@ export function DayFirstCards({
 
       {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-          Ничего не найдено. Измените запрос или сбросьте фильтр.
+          {t("nothingFound")}
         </div>
       ) : null}
 
@@ -243,8 +245,8 @@ export function DayFirstCards({
                   event.stopPropagation();
                   item.onEdit?.();
                 }}
-                title={item.editLabel ?? `Изменить ${item.title}`}
-                aria-label={item.editLabel ?? `Изменить ${item.title}`}
+                title={item.editLabel ?? t("edit", { title: item.title })}
+                aria-label={item.editLabel ?? t("edit", { title: item.title })}
                 className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               >
                 <Pencil className="size-4" />
@@ -268,7 +270,7 @@ export function DayFirstCards({
                 }`}
               >
                 <span className="min-w-0 truncate">
-                  {filled ? item.value : "Заполнить"}
+                  {filled ? item.value : t("fill")}
                 </span>
                 {!locked ? <ChevronRight className="size-3.5 shrink-0" /> : null}
               </button>
@@ -291,7 +293,7 @@ export function DayFirstCards({
               onRun: () => {
                 quick.onApply();
                 undo({
-                  label: `${item.title} — ${quick.label}`,
+                  label: t("quickUndoLabel", { title: item.title, label: quick.label }),
                   onUndo: quick.onUndo,
                 });
                 focusNext(item.id);
@@ -300,7 +302,7 @@ export function DayFirstCards({
             left={
               item.onPress
                 ? {
-                    label: "Выбрать",
+                    label: t("choose"),
                     tone: "neutral",
                     icon: <SlidersHorizontal className="size-4" />,
                     onRun: () =>
@@ -319,7 +321,7 @@ export function DayFirstCards({
       <BottomActionBar
         hint={
           pending.length > 0
-            ? `Осталось заполнить: ${pending.length} из ${items.length}`
+            ? t("remaining", { pending: pending.length, total: items.length })
             : null
         }
         primary={
@@ -327,8 +329,8 @@ export function DayFirstCards({
             ? {
                 label:
                   pending.length === 1
-                    ? `Заполнить: ${pending[0].title}`
-                    : `Заполнить оставшиеся · ${pending.length}`,
+                    ? t("fillOne", { title: pending[0].title })
+                    : t("fillRemaining", { count: pending.length }),
                 onRun: () => {
                   const target = pending[0];
                   document
@@ -344,15 +346,15 @@ export function DayFirstCards({
       <BottomSheet
         open={filterOpen}
         onClose={() => setFilterOpen(false)}
-        title="Поиск и фильтр"
-        subtitle={`Всего строк: ${items.length}`}
+        title={t("searchAndFilter")}
+        subtitle={t("totalRows", { count: items.length })}
       >
         <div className="space-y-3 pb-2">
           <input
             autoFocus
             value={filter.query}
             onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
-            placeholder="Фамилия, помещение, оборудование"
+            placeholder={t("searchPlaceholder")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
           <button
@@ -366,7 +368,7 @@ export function DayFirstCards({
                 : "border-[#dcdfed] bg-white text-[#0b1024]"
             }`}
           >
-            Только незаполненные
+            {t("onlyPending")}
             <span className="text-[13px] text-[#6f7282]">{pending.length}</span>
           </button>
         </div>

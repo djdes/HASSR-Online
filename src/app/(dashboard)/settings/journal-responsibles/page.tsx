@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
@@ -15,6 +16,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function JournalResponsiblesPage() {
+  const t = await getTranslations("settingsUi.journalResponsiblesPage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -107,43 +109,43 @@ export default async function JournalResponsiblesPage() {
       {/* Тёмный hero снят: ниже идёт большая рабочая таблица журналов,
           баннер только отодвигал её за первый экран. */}
       <PageHeader
-        title="Ответственные за журналы"
-        description="Кто из должностей заполняет каждый журнал и какой именно сотрудник идёт в шапку документа. Изменения сразу попадают в открытые документы и в печать. Нажмите «Применить умные пресеты ко всем» — система сама назначит уборку уборщикам, температуру поварам и так далее."
+        title={t("title")}
+        description={t("description")}
       />
 
       <PageGuide
         storageKey="journal-responsibles"
-        title="Как назначить ответственных по журналам"
+        title={t("guideTitle")}
         bullets={[
           {
-            title: "«Заполняют» (верхний блок)",
-            body: "сотрудники которые ведут запись. Может быть один или несколько (для комиссий).",
+            title: t("b1Title"),
+            body: t("b1Body"),
           },
           {
-            title: "«Кто проверяет»",
-            body: "один человек — обычно заведующий производством. Получает в TasksFlow задачу «Проверить журнал» когда все заполнили.",
+            title: t("b2Title"),
+            body: t("b2Body"),
           },
           {
-            title: "«Умный пресет»",
-            body: "одной кнопкой подставляет должности по семантике. Уборка — уборщикам, медкнижки — админу/HR.",
+            title: t("b3Title"),
+            body: t("b3Body"),
           },
           {
-            title: "Сохранить (в активных)",
-            body: "обычное действие. Меняется в текущих документах + незавершённых задачах в TasksFlow.",
+            title: t("b4Title"),
+            body: t("b4Body"),
           },
           {
-            title: "Изменить во всех…",
-            body: "опасное действие — переписывает архивные документы и одобренные задачи. Используйте если меняете «исторически».",
+            title: t("b5Title"),
+            body: t("b5Body"),
           },
         ]}
         qa={[
           {
-            q: "Зачем верификер если уже указан исполнитель",
-            a: "Двойная проверка: исполнитель заполняет, верификер открывает таблицу и одобряет/возвращает на доработку. Если у вас один человек — оставьте verifier пустым.",
+            q: t("q1"),
+            a: t("a1"),
           },
           {
-            q: "Почему мой админ не появляется в умном пресете на уборке",
-            a: "Намеренно: админ ставится только на медкнижки и аудит. Уборка → уборщикам/заведующему производством. Так задачи не валятся в одну корзину.",
+            q: t("q2"),
+            a: t("a2"),
           },
         ]}
       />

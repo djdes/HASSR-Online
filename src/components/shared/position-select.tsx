@@ -143,10 +143,6 @@ function GroupCount({ count }: { count: number }) {
   );
 }
 
-/** Единые тексты плейсхолдеров каскада — «селект сам говорит, что выбираем». */
-export const POSITION_PLACEHOLDER = "Выберите должность";
-export const EMPLOYEE_PLACEHOLDER = "Выберите сотрудника";
-
 /** Значение-сентинел для пункта «ничего не выбрано» (Radix не даёт `""`). */
 export const EMPTY_SELECT_VALUE = "__empty__";
 
@@ -488,11 +484,12 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
  * and friends). Drop-in for `{ROLE_OPTIONS.map(...)}` inside `<select>`.
  */
 export function PositionNativeOptions({ users }: { users: UserLike[] }) {
+  const t = useTranslations("journalControls.positionSelect");
   const groups = useMemo(() => getPositionLabelsGrouped(users), [users]);
   return (
     <>
       {groups.management.length > 0 ? (
-        <optgroup label="Руководство">
+        <optgroup label={t("management")}>
           {groups.management.map((label) => (
             <option key={`m:${label}`} value={label}>
               {label}
@@ -501,7 +498,7 @@ export function PositionNativeOptions({ users }: { users: UserLike[] }) {
         </optgroup>
       ) : null}
       {groups.staff.length > 0 ? (
-        <optgroup label="Сотрудники">
+        <optgroup label={t("staff")}>
           {groups.staff.map((label) => (
             <option key={`s:${label}`} value={label}>
               {label}

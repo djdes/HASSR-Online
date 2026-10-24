@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
@@ -39,6 +40,8 @@ type Result = {
  * отрендерить ВНЕ DropdownMenuContent (иначе он размонтируется вместе с меню).
  */
 export function useCopyYesterdayAction(documentId: string) {
+  const t = useTranslations("journalUi.copyYesterday");
+  const tCopy = useTranslations("journalControls.dishPool");
   const { controls } = useJournalControls();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -62,19 +65,24 @@ export function useCopyYesterdayAction(documentId: string) {
         | null;
       if (!response.ok) {
         toast.error(
-          (data && "error" in data && data.error) || "Не удалось скопировать"
+          (data && "error" in data && data.error) || tCopy("copyFailed")
         );
         return;
       }
       const result = data as Result;
       if (result.copied === 0 && result.kept === 0) {
-        toast.info(result.message ?? "Вчера записей не было");
+        toast.info(result.message ?? t("noYesterday"));
         return;
       }
       if (overwrite || result.kept === 0) {
-        const parts = [`добавлено ${result.copied}`];
-        if (result.kept > 0) parts.push(`оставлено ${result.kept}`);
-        toast.success(`Скопировано из ${result.yesterdayKey} · ${parts.join(" · ")}`);
+        const parts = [t("addedPart", { count: result.copied })];
+        if (result.kept > 0) parts.push(t("keptPart", { count: result.kept }));
+        toast.success(
+          t("copiedSummary", {
+            date: result.yesterdayKey,
+            parts: parts.join(" · "),
+          })
+        );
         setConfirmOverwrite(null);
         router.refresh();
         return;
@@ -83,12 +91,12 @@ export function useCopyYesterdayAction(documentId: string) {
       setConfirmOverwrite(result.kept);
       if (result.copied > 0) {
         toast.success(
-          `Добавлено строк: ${result.copied}. Оставлено уже заполненных: ${result.kept}.`
+          t("addedAndKept", { copied: result.copied, kept: result.kept })
         );
         router.refresh();
       }
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Ошибка сети"));
+      toast.error(humanizeFetchError(err, t("networkError")));
     } finally {
       setBusy(false);
     }
@@ -104,11 +112,9 @@ export function useCopyYesterdayAction(documentId: string) {
       >
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Перезаписать сегодняшние строки?</DialogTitle>
+            <DialogTitle>{t("overwriteTitle")}</DialogTitle>
             <DialogDescription>
-              На сегодня уже заполнено строк: {confirmOverwrite}. Если
-              нажмёте «Перезаписать», они заменятся вчерашними значениями.
-              Это нельзя отменить.
+              {t("overwriteDescription", { count: confirmOverwrite ?? 0 })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -118,7 +124,7 @@ export function useCopyYesterdayAction(documentId: string) {
               disabled={busy}
               onClick={() => setConfirmOverwrite(null)}
             >
-              Оставить как есть
+              {t("keep")}
             </Button>
             <Button
               type="button"
@@ -126,7 +132,7 @@ export function useCopyYesterdayAction(documentId: string) {
               onClick={() => void run(true)}
               className="bg-[#5566f6] text-white hover:bg-[#4a5bf0]"
             >
-              {busy ? "…" : "Перезаписать"}
+              {busy ? "…" : t("overwrite")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -138,6 +144,8 @@ export function useCopyYesterdayAction(documentId: string) {
 }
 
 export function CopyYesterdayButton({ documentId }: { documentId: string }) {
+  const t = useTranslations("journalUi.copyYesterday");
+  const tStaff = useTranslations("journalWidgets.staff");
   const { run, busy, dialog, hidden } = useCopyYesterdayAction(documentId);
   if (hidden) return null;
   return (
@@ -147,7 +155,7 @@ export function CopyYesterdayButton({ documentId }: { documentId: string }) {
         variant="outline"
         onClick={() => run(false)}
         disabled={busy}
-        title="Создать сегодняшние строки по вчерашним значениям — удобно, когда ничего не поменялось."
+        title={t("buttonHint")}
         className="h-10 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[15px] text-[#5566f6] shadow-none hover:bg-[#5566f6]/[0.09]"
       >
         {busy ? (
@@ -155,7 +163,7 @@ export function CopyYesterdayButton({ documentId }: { documentId: string }) {
         ) : (
           <Copy className="size-4" />
         )}
-        Скопировать вчерашнее
+        {tStaff("copyYesterday")}
       </Button>
       {dialog}
     </>

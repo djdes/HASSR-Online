@@ -1202,6 +1202,7 @@ export function ColdEquipmentDocumentClient({
   const locale = useLocale() as Locale;
   const { controls: journalControls } = useJournalControls();
   const scopeT = useTranslations("journalWidgets.headerEdit");
+  const jt = useTranslations("journalUi.coldEquipment");
   const router = useRouter();
   const [documentTitle, setDocumentTitle] = useState(title);
   const displayedDocumentTitle = useDocumentDisplayTitle(documentTitle);
@@ -1311,7 +1312,7 @@ export function ColdEquipmentDocumentClient({
     title,
     confirmDescription:
       missingDaysBeforeClose > 0
-        ? `Не заполнено дней: ${missingDaysBeforeClose}. После закрытия дописать их будет нельзя.`
+        ? jt("missingDaysBeforeClose", { count: missingDaysBeforeClose })
         : undefined,
   });
   const [equipmentDialogOpen, setEquipmentDialogOpen] = useState(false);
@@ -1838,7 +1839,7 @@ export function ColdEquipmentDocumentClient({
       method: "PUT",
       url: `/api/journal-documents/${documentId}/entries`,
       body: { employeeId, date: dateKey, data: nextData },
-      label: `Температура · ${dateKey}`,
+      label: jt("offlineLabel", { date: dateKey }),
       group: "cold_equipment_control",
     });
 
@@ -2103,20 +2104,20 @@ export function ColdEquipmentDocumentClient({
                   className="grid h-[52px] w-full grid-cols-[minmax(0,1fr)_96px_96px] items-center gap-3 rounded-[14px] bg-white/70 px-4 text-left transition-colors duration-150 hover:bg-white disabled:cursor-default disabled:hover:bg-white/70"
                 >
                   <span className="truncate text-[14px] text-black">
-                    {item.name}, Темп. (T)
+                    {jt("temperatureShort", { name: item.name })}
                   </span>
                   <span className="rounded-[10px] border border-[#dcdfed] bg-white px-3 py-1.5 text-center text-[13.5px] tabular-nums">
-                    От {item.min ?? "—"}
+                    {jt("from", { value: String(item.min ?? "—") })}
                   </span>
                   <span className="rounded-[10px] border border-[#dcdfed] bg-white px-3 py-1.5 text-center text-[13.5px] tabular-nums">
-                    До {item.max ?? "—"}
+                    {jt("to", { value: String(item.max ?? "—") })}
                   </span>
                 </button>
               ))}
 
               <div className="grid h-[52px] w-full grid-cols-[minmax(0,1fr)_minmax(0,200px)] items-center gap-3 rounded-[14px] bg-white/70 px-4">
                 <span className="truncate text-[14px] text-black">
-                  ФИО отв. лица
+                  {jt("responsibleShort")}
                   {responsibleTitle ? (
                     <span className="ml-1 text-[13px] text-[#6f7282]">
                       ({responsibleTitle})
@@ -2152,7 +2153,7 @@ export function ColdEquipmentDocumentClient({
                 </span>
                 {config.skipWeekends ? (
                   <span className="rounded-full bg-white px-3 py-1.5">
-                    Выходные пропускаются при автозаполнении
+                    {t("ui.weekendsSkipped")}
                   </span>
                 ) : null}
               </div>
@@ -2197,7 +2198,7 @@ export function ColdEquipmentDocumentClient({
           view={mobileView}
           axis={mobileAxis}
           axisAvailable={todayInPeriod}
-          entityLabel="По оборудованию"
+          entityLabel={t("ui.viewByEquipment")}
           onChange={(next) => {
             if (next.view === "table") {
               switchMobileView("table");
@@ -2227,7 +2228,7 @@ export function ColdEquipmentDocumentClient({
                   // Вторая копия только отъедала место у названия.
                   subtitle: undefined,
                   disabledReason:
-                    status === "active" ? undefined : "журнал закрыт",
+                    status === "active" ? undefined : jt("closedLower"),
                   // Карандаш — то же окно строки (название, норма, QR),
                   // что и клик по названию в таблице.
                   onEdit:

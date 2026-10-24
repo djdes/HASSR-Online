@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ArrowLeft, Info, Save } from "lucide-react";
 
@@ -60,6 +61,7 @@ export function OrderEditor({
   returnTo?: string | null;
 }) {
   const router = useRouter();
+  const t = useTranslations("ordersUi");
   const draftKey = `wesetup.order-draft:${template.code}`;
 
   const [number, setNumber] = useState(existing?.number ?? initialNumber);
@@ -108,7 +110,7 @@ export function OrderEditor({
 
   async function handleSave() {
     if (rendered.missingFields.length > 0) {
-      toast.error(`Заполните: ${rendered.missingFields.join(", ")}`);
+      toast.error(t("editor.fillIn", { fields: rendered.missingFields.join(", ") }));
       return;
     }
     setSaving(true);
@@ -125,9 +127,9 @@ export function OrderEditor({
       const data = (await response.json().catch(() => null)) as
         | { id?: string; error?: string }
         | null;
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok) throw new Error(data?.error ?? t("editor.saveFailed"));
 
-      toast.success(existing ? "Приказ обновлён" : "Приказ добавлен в реестр");
+      toast.success(existing ? t("editor.updated") : t("editor.added"));
       try {
         window.localStorage.removeItem(draftKey);
       } catch {
@@ -145,7 +147,7 @@ export function OrderEditor({
       }
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить");
+      toast.error(error instanceof Error ? error.message : t("editor.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -160,26 +162,25 @@ export function OrderEditor({
       {returnTo ? (
         <div className="flex flex-col gap-2 rounded-2xl border border-[#5566f6]/25 bg-[#f5f6ff] p-3.5 sm:flex-row sm:items-center sm:justify-between print:hidden">
           <p className="text-[13px] leading-snug text-[#3c4053]">
-            Приказ из начальной настройки. После сохранения вернём вас к
-            шагу «Документы».
+            {t("editor.fromOnboarding")}
           </p>
           <Link
             href={returnTo}
             className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:self-auto"
           >
             <ArrowLeft className="size-4 text-[#5566f6]" />
-            К начальной настройке
+            {t("editor.toOnboarding")}
           </Link>
         </div>
       ) : null}
       <div className="print:hidden">
         <PageHeader
-          eyebrow="Приказ по предприятию"
+          eyebrow={t("editor.eyebrow")}
           title={template.title}
           description={template.purpose}
           actions={
             <>
-              <PrintJournalButton label="Печать" />
+              <PrintJournalButton label={t("editor.print")} />
               {canManage ? (
                 <button
                   type="button"
@@ -189,10 +190,10 @@ export function OrderEditor({
                 >
                   <Save className="size-4" />
                   {saving
-                    ? "Сохраняем…"
+                    ? t("editor.saving")
                     : existing
-                      ? "Сохранить изменения"
-                      : "Сохранить в реестр"}
+                      ? t("editor.saveChanges")
+                      : t("editor.saveToRegistry")}
                 </button>
               ) : null}
             </>
@@ -205,23 +206,23 @@ export function OrderEditor({
         <div className="space-y-4 print:hidden">
           <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <div className="mb-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Данные приказа
+              {t("editor.orderData")}
             </div>
             <div className="space-y-3.5">
               <label className="block">
                 <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-                  Номер приказа
+                  {t("editor.number")}
                 </span>
                 <input
                   value={number}
                   onChange={(event) => setNumber(event.target.value)}
-                  placeholder="12-ОД"
+                  placeholder={t("editor.numberPlaceholder")}
                   className={FIELD_CLASS}
                 />
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-                  Дата издания
+                  {t("editor.issueDate")}
                 </span>
                 <input
                   type="date"
@@ -268,9 +269,7 @@ export function OrderEditor({
             <div className="flex gap-3 rounded-2xl border border-[#5566f6]/25 bg-[#f5f6ff] p-4">
               <Info className="size-4 shrink-0 text-[#3848c7]" />
               <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
-                Реквизиты организации не заполнены, поэтому в приказе стоят
-                прочерки. Добавьте ИНН в настройках организации — название,
-                адрес и Ф. И. О. руководителя подставятся автоматически.
+                {t("editor.missingRequisites")}
               </p>
             </div>
           ) : null}
@@ -337,7 +336,7 @@ export function OrderEditor({
             </div>
 
             <div className="mt-10 text-[13px]">
-              <div className="mb-3 font-medium">С приказом ознакомлены:</div>
+              <div className="mb-3 font-medium">{t("editor.acknowledgedBy")}</div>
               {[0, 1, 2, 3].map((row) => (
                 <div key={row} className="mb-5 flex gap-8">
                   {/* Линии на бумаге — серые (ч/б принтеры), не сине-серые. */}

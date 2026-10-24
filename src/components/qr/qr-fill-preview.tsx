@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ExternalLink, FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
 
 import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
@@ -41,6 +42,7 @@ type State =
  * диалог с несохранёнными полями не потерялся.
  */
 export function QrFillPreview({ kind, id, emptyHint, className, heading, accent = false, allHref }: Props) {
+  const t = useTranslations("sharedUi");
   const [result, setResult] = useState<Result | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -52,7 +54,7 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
       .then(async (response) => {
         const payload = await response.json().catch(() => null);
         if (!response.ok || !payload?.poster) {
-          throw new Error(payload?.error || "Не удалось загрузить QR-код");
+          throw new Error(payload?.error || t("qrFillPreview.loadFailed"));
         }
         if (!cancelled) setResult({ key, status: "ready", poster: payload.poster as QrPoster });
       })
@@ -61,13 +63,13 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
         setResult({
           key,
           status: "error",
-          message: error instanceof Error ? error.message : "Не удалось загрузить QR-код",
+          message: error instanceof Error ? error.message : t("qrFillPreview.loadFailed"),
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [id, kind, attempt]);
+  }, [id, kind, attempt, t]);
 
   // Состояние выводится из результата: пока ключ не совпал — грузим.
   const state: State = !id
@@ -92,7 +94,7 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
     >
       <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
         <QrCode className="size-3.5 text-[#5566f6]" />
-        {heading ?? "QR-код для заполнения с телефона"}
+        {heading ?? t("qrFillPreview.heading")}
       </div>
 
       {!id ? (
@@ -108,7 +110,7 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
             className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <RefreshCw className="size-3.5" />
-            Повторить
+            {t("qrFillPreview.retry")}
           </button>
         </div>
       ) : (
@@ -140,18 +142,18 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
                 <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
                   {kind === "journal"
                     ? state.poster.validUntil
-                      ? "Ведёт только в этот документ: сотрудник выбирает себя и отвечает на вопросы формы."
-                      : "Сотрудник наводит камеру, выбирает себя и отвечает на вопросы формы — запись ложится в действующий документ журнала."
-                    : "Сотрудник наводит камеру, выбирает своё имя и вводит показание — запись ложится в журнал за сегодня."}
+                      ? t("qrFillPreview.hintDocumentOnly")
+                      : t("qrFillPreview.hintJournal")
+                    : t("qrFillPreview.hintReading")}
                 </p>
                 {state.poster.validUntil ? (
                   <div data-qr-valid-until={state.poster.validUntil} className="inline-flex rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7]">
-                    {formatQrValidUntil(state.poster.validUntil) === "бессрочно"
-                      ? "Действует, пока действует документ"
-                      : `Действует до ${formatQrValidUntil(state.poster.validUntil).slice(0, 5)} — до конца периода документа`}
+                    {state.poster.validUntil >= "2099-01-01"
+                      ? t("qrFillPreview.validWhileDocument")
+                      : t("qrFillPreview.validUntil", { date: formatQrValidUntil(state.poster.validUntil).slice(0, 5) })}
                   </div>
                 ) : (
-                  <div className="text-[11.5px] text-[#9b9fb3]">Код бессрочный — печатается один раз.</div>
+                  <div className="text-[11.5px] text-[#9b9fb3]">{t("qrFillPreview.permanent")}</div>
                 )}
               </>
             ) : (
@@ -166,35 +168,35 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
                 target="_blank"
                 rel="noopener"
                 aria-disabled={state.status !== "ready"}
-                title="Открыть плакат A4 с этим QR-кодом и сразу отправить на печать"
+                title={t("qrFillPreview.posterTitle")}
                 className={cn(
                   "inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3.5 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]",
                   state.status !== "ready" && "pointer-events-none opacity-50"
                 )}
               >
                 <Printer className="size-4" />
-                Плакат A4
+                {t("qrFillPreview.poster")}
               </a>
               <a
                 href={printHref("sheet")}
                 target="_blank"
                 rel="noopener"
                 aria-disabled={state.status !== "ready"}
-                title="Маленькая наклейка на дверцу — печать на листе A4"
+                title={t("qrFillPreview.stickerTitle")}
                 className={cn(
                   "inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
                   state.status !== "ready" && "pointer-events-none opacity-50"
                 )}
               >
                 <Sticker className="size-4 text-[#5566f6]" />
-                Наклейка
+                {t("qrFillPreview.sticker")}
               </a>
               <a
                 href={state.status === "ready" ? state.poster.url : "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-disabled={state.status !== "ready"}
-                title="Открыть ссылку из QR-кода в новой вкладке — проверить, что форма открывается"
+                title={t("qrFillPreview.checkTitle")}
                 data-testid="qr-check-link"
                 className={cn(
                   "inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
@@ -202,17 +204,17 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
                 )}
               >
                 <ExternalLink className="size-4 text-[#5566f6]" />
-                Проверить ссылку
+                {t("qrFillPreview.check")}
               </a>
               <a
                 href={allHref ?? `/settings/qr-posters?kind=${posterKind}`}
                 target="_blank"
                 rel="noopener"
-                title="Все плакаты и наклейки организации"
+                title={t("qrFillPreview.allTitle")}
                 className="inline-flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff]"
               >
                 <FileText className="size-3.5" />
-                Все коды
+                {t("qrFillPreview.all")}
               </a>
             </div>
           </div>

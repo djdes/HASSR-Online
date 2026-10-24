@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AlertTriangle, Package, TrendingDown } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -19,6 +20,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export default async function MorePage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  const t = await getTranslations("moreUi");
   const organizationId = getActiveOrgId(session);
   const now = Date.now();
 
@@ -45,13 +47,13 @@ export default async function MorePage() {
       {hasAlerts ? (
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-more-alerts>
           {openCapaCount > 0 ? (
-            <AlertPill href="/capa" tone="red" icon={AlertTriangle} value={openCapaCount} label="открытых нарушений" />
+            <AlertPill href="/capa" tone="red" icon={AlertTriangle} value={openCapaCount} label={t("page.openCapa")} />
           ) : null}
           {expiringBatches > 0 ? (
-            <AlertPill href="/batches?status=received" tone="amber" icon={Package} value={expiringBatches} label="партий скоро истекут" />
+            <AlertPill href="/batches?status=received" tone="amber" icon={Package} value={expiringBatches} label={t("page.expiringBatches")} />
           ) : null}
           {weekLossCount > 0 ? (
-            <AlertPill href="/losses" tone="orange" icon={TrendingDown} value={weekLossCount} label="потерь за неделю" />
+            <AlertPill href="/losses" tone="orange" icon={TrendingDown} value={weekLossCount} label={t("page.weekLosses")} />
           ) : null}
         </section>
       ) : null}

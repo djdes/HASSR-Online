@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -153,6 +154,7 @@ export function JournalsBrowser({
   canBulkCreate = false,
   canToggle = false,
 }: JournalsBrowserProps) {
+  const ui = useTranslations("journals.ui.browser");
   const router = useRouter();
   // Свои названия организации («Настройки → Названия»): карточки и
   // подтверждения показывают своё, поиск ищет и по официальному.
@@ -261,18 +263,18 @@ export function JournalsBrowser({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось создать документы");
+        toast.error(data?.error ?? ui("bulkCreateFailed"));
         return;
       }
       toast.success(
-        `Создано: ${data.created ?? 0}${
-          data.skipped ? ` · пропущено: ${data.skipped}` : ""
-        }`
+        data.skipped
+          ? ui("bulkCreatedSkipped", { created: data.created ?? 0, skipped: data.skipped })
+          : ui("bulkCreated", { created: data.created ?? 0 })
       );
       clearSelection();
       router.refresh();
     } catch (err) {
-      toast.error(humanizeFetchError(err, "Ошибка сети"));
+      toast.error(humanizeFetchError(err, ui("networkError")));
     } finally {
       setBulkBusy(false);
     }
@@ -289,8 +291,8 @@ export function JournalsBrowser({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Название, описание или код"
-            aria-label="Поиск по журналам"
+            placeholder={ui("searchPlaceholder")}
+            aria-label={ui("searchAria")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-11 text-[15px] text-[#0b1024] placeholder:text-[#c1c5d6] shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
           {query ? (
@@ -298,7 +300,7 @@ export function JournalsBrowser({
               type="button"
               onClick={() => setQuery("")}
               className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6]"
-              aria-label="Очистить поиск"
+              aria-label={ui("clearSearch")}
             >
               <X className="size-4" />
             </button>
@@ -306,8 +308,8 @@ export function JournalsBrowser({
         </div>
         <div className="text-[13px] text-[#6f7282] lg:whitespace-nowrap">
           {normalizedQuery
-            ? `Найдено ${filteredTemplates.length} из ${totalCount}`
-            : `Всего журналов: ${totalCount}`}
+            ? ui("found", { found: filteredTemplates.length, total: totalCount })
+            : ui("total", { total: totalCount })}
         </div>
 
         {canBulkCreate && canBulkSelectAll ? (
@@ -316,8 +318,8 @@ export function JournalsBrowser({
             <Sparkles className="size-4 text-[#5566f6]" />
             <span>
               {selectedCount === 0
-                ? `К созданию доступно: ${bulkCandidateCodes.length}`
-                : `Выбрано: ${selectedCount} из ${bulkCandidateCodes.length}`}
+                ? ui("bulkAvailable", { count: bulkCandidateCodes.length })
+                : ui("bulkSelected", { selected: selectedCount, total: bulkCandidateCodes.length })}
             </span>
           </div>
           <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -327,7 +329,7 @@ export function JournalsBrowser({
                 onClick={selectAllCandidates}
                 className="rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[12px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
-                Выбрать все
+                {ui("selectAll")}
               </button>
             ) : null}
             {selectedCount > 0 ? (
@@ -336,7 +338,7 @@ export function JournalsBrowser({
                 onClick={clearSelection}
                 className="rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[12px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
-                Снять выбор
+                {ui("clearSelection")}
               </button>
             ) : null}
             <button
@@ -346,16 +348,16 @@ export function JournalsBrowser({
               className="inline-flex h-9 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0] disabled:shadow-none"
               title={
                 selectedCount === 0
-                  ? "Отметьте хотя бы один журнал"
-                  : "Создать документы для выбранных журналов"
+                  ? ui("bulkPickOne")
+                  : ui("bulkCreateTitle")
               }
             >
               <CheckCircle2 className="size-4" />
               {bulkBusy
-                ? "Создаём…"
-                : `Создать выбранные${
-                    selectedCount > 0 ? ` (${selectedCount})` : ""
-                  }`}
+                ? ui("bulkCreating")
+                : selectedCount > 0
+                  ? ui("bulkCreateSelectedCount", { count: selectedCount })
+                  : ui("bulkCreateSelected")}
             </button>
           </div>
         </div>
@@ -388,21 +390,24 @@ export function JournalsBrowser({
             <section className="space-y-3">
               <div className="flex items-center gap-3">
                 <h3 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#9b9fb3]">
-                  Отключённые журналы
+                  {ui("disabledJournals")}
                 </h3>
                 <span className="text-[13px] text-[#9b9fb3]">
                   ({filteredDisabled.length})
                   {canToggle ? (
-                    " — не показываются на дашборде и сотрудникам"
+                    ` ${ui("disabledHint")}`
                   ) : (
                     <>
-                      {" "}— включить в{" "}
-                      <Link
-                        href="/settings/journals"
-                        className="font-medium text-[#5566f6] hover:underline"
-                      >
-                        настройках
-                      </Link>
+                      {" "}{ui.rich("enableInSettings", {
+                        link: (chunks) => (
+                          <Link
+                            href="/settings/journals"
+                            className="font-medium text-[#5566f6] hover:underline"
+                          >
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
                     </>
                   )}
                 </span>
@@ -440,6 +445,7 @@ function TemplateCard({
   canToggle?: boolean;
   disabledCodes?: string[];
 }) {
+  const ui = useTranslations("journals.ui.browser");
   const router = useRouter();
   const [hideConfirmOpen, setHideConfirmOpen] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -459,12 +465,12 @@ function TemplateCard({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error || "Не удалось сохранить настройку");
+        throw new Error(body?.error || ui("settingSaveFailed"));
       }
       toast.success(successText);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить настройку"));
+      toast.error(humanizeFetchError(error, ui("settingSaveFailed")));
     } finally {
       setToggling(false);
     }
@@ -472,12 +478,12 @@ function TemplateCard({
 
   function hideJournal() {
     const next = Array.from(new Set([...disabledCodes, template.code]));
-    return patchDisabled(next, `Журнал скрыт: ${template.name}`);
+    return patchDisabled(next, ui("journalHidden", { name: template.name }));
   }
 
   function enableJournal() {
     const next = disabledCodes.filter((code) => code !== template.code);
-    return patchDisabled(next, `Журнал включён: ${template.name}`);
+    return patchDisabled(next, ui("journalEnabled", { name: template.name }));
   }
   const isMandatory = template.isMandatorySanpin || template.isMandatoryHaccp;
   const isDaily = ALL_DAILY_JOURNAL_CODES.has(template.code);
@@ -531,7 +537,7 @@ function TemplateCard({
     return (
       <div
         className="flex h-full flex-col overflow-hidden rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] opacity-70"
-        aria-label={`${template.name} — отключён в настройках`}
+        aria-label={ui("disabledCardAria", { name: template.name })}
       >
         {preview}
         <div className="flex min-w-0 flex-1 flex-col gap-2 px-3.5 py-3">
@@ -541,7 +547,7 @@ function TemplateCard({
           <div className="mt-auto flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-full bg-[#eef0f6] px-2 py-0.5 text-[11px] font-medium text-[#6f7282]">
               <EyeOff className="size-3" />
-              Отключён
+              {ui("disabledBadge")}
             </span>
             {canToggle ? (
               // Включение безопасно (ничего не теряется), поэтому без
@@ -553,14 +559,14 @@ function TemplateCard({
                 className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#5566f6] transition-colors hover:bg-[#eef1ff] disabled:opacity-60"
               >
                 <Eye className="size-3" />
-                {toggling ? "Включаю…" : "Включить"}
+                {toggling ? ui("enabling") : ui("enable")}
               </button>
             ) : (
               <Link
                 href={`/settings/journals#journal-${template.code}`}
                 className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#5566f6] hover:bg-[#eef1ff]"
               >
-                Включить
+                {ui("enable")}
               </Link>
             )}
           </div>
@@ -584,8 +590,8 @@ function TemplateCard({
               setHideConfirmOpen(true);
             }}
             disabled={toggling}
-            title="Скрыть с дашборда"
-            aria-label={`Скрыть «${template.name}» с дашборда`}
+            title={ui("hideFromDashboard")}
+            aria-label={ui("hideFromDashboardAria", { name: template.name })}
             className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-full bg-white/90 text-[#9b9fb3] shadow-[0_0_0_1px_rgba(220,223,237,0.9)] backdrop-blur transition-all duration-150 hover:text-[#5566f6] hover:shadow-[0_0_0_1px_rgba(85,102,246,0.6)] disabled:opacity-60 sm:opacity-0 sm:group-hover/card:opacity-100 sm:focus-visible:opacity-100"
           >
             <EyeOff className="size-3.5" />
@@ -599,14 +605,14 @@ function TemplateCard({
             }}
             variant="warn"
             icon={EyeOff}
-            title="Скрыть журнал с дашборда?"
-            description={`«${template.name}» перестанет показываться как обязательный.`}
+            title={ui("hideConfirmTitle")}
+            description={ui("hideConfirmDescription", { name: template.name })}
             bullets={[
-              { label: "Исчезнет с дашборда и из Mini App у сотрудников", tone: "warn" },
-              { label: "Записи и документы сохраняются — ничего не удаляется" },
-              { label: "Включить обратно можно здесь же, в блоке «Отключённые журналы»", tone: "info" },
+              { label: ui("hideBullet1"), tone: "warn" },
+              { label: ui("hideBullet2") },
+              { label: ui("hideBullet3"), tone: "info" },
             ]}
-            confirmLabel="Скрыть"
+            confirmLabel={ui("hide")}
           />
         </>
       ) : null}
@@ -616,14 +622,14 @@ function TemplateCard({
           onClick={(event) => event.stopPropagation()}
           title={
             bulkSelected
-              ? "Убрать из bulk-создания"
-              : "Добавить в bulk-создание"
+              ? ui("bulkRemoveTitle")
+              : ui("bulkAddTitle")
           }
         >
           <Checkbox
             checked={bulkSelected}
             onCheckedChange={() => onBulkToggle?.(template.code)}
-            aria-label={`Выбрать «${template.name}» для массового создания`}
+            aria-label={ui("bulkSelectAria", { name: template.name })}
           />
         </label>
       ) : null}
@@ -651,7 +657,7 @@ function TemplateCard({
                 className="line-clamp-3 min-w-0 flex-1 text-[14px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] sm:line-clamp-2"
                 title={
                   template.officialName
-                    ? `Официальное название: ${template.officialName}`
+                    ? ui("officialName", { name: template.officialName })
                     : undefined
                 }
               >
@@ -664,24 +670,24 @@ function TemplateCard({
               {needsAttentionToday ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-medium text-[#d2453d]">
                   <AlertCircle className="size-3" />
-                  Заполнить сегодня
+                  {ui("fillToday")}
                 </span>
               ) : readyToday ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-medium text-[#136b2a]">
                   <CheckCircle2 className="size-3" />
-                  Сегодня готово
+                  {ui("readyToday")}
                 </span>
               ) : null}
               {template.isMandatorySanpin ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-medium text-[#d2453d]">
                   <ShieldCheck className="size-3" />
-                  СанПиН
+                  {ui("sanpin")}
                 </span>
               ) : null}
               {template.isMandatoryHaccp ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#5566f6]">
                   <ShieldAlert className="size-3" />
-                  ХАССП
+                  {ui("haccp")}
                 </span>
               ) : null}
             </div>
@@ -693,23 +699,24 @@ function TemplateCard({
 }
 
 function EmptyState({ onReset }: { onReset: () => void }) {
+  const ui = useTranslations("journals.ui.browser");
   return (
     <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-white px-6 py-16 text-center">
       <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
         <SearchX className="size-7" />
       </div>
       <p className="mt-4 text-[17px] font-semibold text-[#0b1024]">
-        Ничего не найдено
+        {ui("emptyTitle")}
       </p>
       <p className="mt-2 text-[14px] text-[#6f7282]">
-        Попробуйте изменить запрос или очистить поиск.
+        {ui("emptyHint")}
       </p>
       <button
         type="button"
         onClick={onReset}
         className="mt-6 inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
       >
-        Очистить поиск
+        {ui("clearSearch")}
         <X className="size-4 text-[#5566f6]" />
       </button>
     </div>

@@ -23,14 +23,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const ROLE_RU = {
-  leader: "Руководитель",
-  deputy: "Заместитель руководителя",
-  member: "Член группы",
-  secretary: "Секретарь",
-} as const;
-const HAZARD_TYPE_RU = { bio: "Биологическая", chem: "Химическая", phys: "Физическая", allergen: "Аллерген" } as const;
-const KIND_RU = { ccp: "ККТ", oprp: "ОПП", prp: "ПРП", none: "—" } as const;
 
 /** План ХАССП: собирается из заполненных блоков группы, политики, продукции, схем, опасностей и ККТ. */
 export default async function HaccpPlanPage() {
@@ -38,14 +30,39 @@ export default async function HaccpPlanPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [bundle, versionRows, staff, t, nav] = await Promise.all([
+  const [bundle, versionRows, staff, t, nav, u] = await Promise.all([
     loadPpkBundle(organizationId),
     loadDocVersions(organizationId),
     loadPpkStaff(organizationId),
     getTranslations("productionControl.program"),
     getTranslations("navigation"),
+    getTranslations("productionControlUi"),
   ]);
   const { org } = bundle;
+  const roleLabel = (role: "leader" | "deputy" | "member" | "secretary") => {
+    switch (role) {
+      case "leader": return u("haccpPlanPage.roleLeader");
+      case "deputy": return u("haccpPlanPage.roleDeputy");
+      case "member": return u("haccpPlanPage.roleMember");
+      case "secretary": return u("haccpPlanPage.roleSecretary");
+    }
+  };
+  const hazardTypeLabel = (type: "bio" | "chem" | "phys" | "allergen") => {
+    switch (type) {
+      case "bio": return u("haccpPlanPage.hazardBio");
+      case "chem": return u("haccpPlanPage.hazardChem");
+      case "phys": return u("haccpPlanPage.hazardPhys");
+      case "allergen": return u("haccpPlanPage.hazardAllergen");
+    }
+  };
+  const kindLabel = (kind: "ccp" | "oprp" | "prp" | "none") => {
+    switch (kind) {
+      case "ccp": return u("haccpPlanPage.kindCcp");
+      case "oprp": return u("haccpPlanPage.kindOprp");
+      case "prp": return u("haccpPlanPage.kindPrp");
+      case "none": return "—";
+    }
+  };
   const banner = (key: PpkBlockKey): PpkEmptyBanner => ({
     href: ppkBlock(key).href,
     text: t("emptySection", { block: nav(`shell.menus.productionControl.items.${key}`) }),
@@ -71,18 +88,18 @@ export default async function HaccpPlanPage() {
         pdfHref="/api/production-control/haccp-plan/pdf"
         pdfLabel={t("downloadPdf")}
         org={org}
-        title="План ХАССП"
-        subtitle={approval ? `Версия ${approval.version} от ${ruDate(approval.approvedAt)}` : org.orgName}
+        title={u("haccpPlanPage.title")}
+        subtitle={approval ? u("haccpPlanPage.versionFrom", { version: String(approval.version), date: ruDate(approval.approvedAt) }) : org.orgName}
       >
         {approval?.approver ? <PpkApproveBlock org={org} approval={approval} /> : null}
-        <PpkDocSection title="1. Группа ХАССП" empty={bundle.team.length === 0 ? banner("team") : null}>
+        <PpkDocSection title={u("haccpPlanPage.s1")} empty={bundle.team.length === 0 ? banner("team") : null}>
           <PpkDocTable
-            heads={["Ф. И. О.", "Должность", "Роль в группе", "Обязанности"]}
-            rows={bundle.team.map((member) => [member.name, member.title || "—", ROLE_RU[member.role], member.duties || "—"])}
+            heads={[u("haccpPlanPage.colFullName"), u("haccpPlanPage.colPosition"), u("haccpPlanPage.colRole"), u("haccpPlanPage.colDuties")]}
+            rows={bundle.team.map((member) => [member.name, member.title || "—", roleLabel(member.role), member.duties || "—"])}
           />
         </PpkDocSection>
 
-        <PpkDocSection title="2. Политика в области качества и безопасности" empty={bundle.policy ? null : banner("policy")}>
+        <PpkDocSection title={u("haccpPlanPage.s2")} empty={bundle.policy ? null : banner("policy")}>
           {bundle.policy ? (
             <>
               {bundle.policy.text.split(/\n{2,}/).map((paragraph) => (
@@ -92,27 +109,27 @@ export default async function HaccpPlanPage() {
               ))}
               <p className="mt-2 text-[13px]">
                 {bundle.policy.approvedByName
-                  ? `Утвердил: ${bundle.policy.approvedByName}${bundle.policy.approvedAt ? `, ${ruDate(bundle.policy.approvedAt)}` : ""}`
-                  : "Утверждение: ______________________"}
+                  ? `${u("haccpPlanPage.approvedBy", { name: bundle.policy.approvedByName })}${bundle.policy.approvedAt ? `, ${ruDate(bundle.policy.approvedAt)}` : ""}`
+                  : u("haccpPlanPage.approvalBlank")}
               </p>
             </>
           ) : null}
         </PpkDocSection>
 
-        <PpkDocSection title="3. Описание продукции" empty={bundle.products.length === 0 ? banner("products") : null}>
+        <PpkDocSection title={u("haccpPlanPage.s3")} empty={bundle.products.length === 0 ? banner("products") : null}>
           <div className="space-y-4">
             {bundle.products.map((product, index) => (
               <div key={`${product.name}-${index}`} className="break-inside-avoid">
                 <h3 className="mb-1 text-[14px] font-semibold">{product.name}</h3>
                 <PpkDocTable
-                  heads={["Показатель", "Значение"]}
+                  heads={[u("haccpPlanPage.colIndicator"), u("haccpPlanPage.colValue")]}
                   rows={[
-                    ["Состав", product.composition || "—"],
-                    ["Условия хранения", product.storage || "—"],
-                    ["Срок годности", product.shelfLife || "—"],
-                    ["Назначение и использование", product.usage || "—"],
-                    ["Упаковка", product.packaging || "—"],
-                    ...product.indicators.map((item) => [`Показатель: ${item.name}`, item.norm || "—"]),
+                    [u("haccpPlanPage.composition"), product.composition || "—"],
+                    [u("haccpPlanPage.storage"), product.storage || "—"],
+                    [u("haccpPlanPage.shelfLife"), product.shelfLife || "—"],
+                    [u("haccpPlanPage.usage"), product.usage || "—"],
+                    [u("haccpPlanPage.packaging"), product.packaging || "—"],
+                    ...product.indicators.map((item) => [u("haccpPlanPage.indicatorNamed", { name: item.name }), item.norm || "—"]),
                   ]}
                 />
               </div>
@@ -120,13 +137,13 @@ export default async function HaccpPlanPage() {
           </div>
         </PpkDocSection>
 
-        <PpkDocSection title="4. Блок-схемы" empty={bundle.flowcharts.length === 0 ? banner("flowcharts") : null}>
+        <PpkDocSection title={u("haccpPlanPage.s4")} empty={bundle.flowcharts.length === 0 ? banner("flowcharts") : null}>
           <div className="space-y-6">
             {bundle.flowcharts.map((chart) => {
               const box = diagramBounds(chart);
               return (
                 <figure key={chart.id} className="break-inside-avoid">
-                  <figcaption className="mb-1 text-[14px] font-semibold">{chart.title || "Блок-схема"}</figcaption>
+                  <figcaption className="mb-1 text-[14px] font-semibold">{chart.title || u("haccpPlanPage.flowchartDefault")}</figcaption>
                   <DiagramSvg
                     data={chart}
                     kind="flowchart"
@@ -140,39 +157,39 @@ export default async function HaccpPlanPage() {
           </div>
         </PpkDocSection>
 
-        <PpkDocSection title="5. Анализ опасностей" empty={bundle.hazards.length === 0 ? banner("hazards") : null}>
+        <PpkDocSection title={u("haccpPlanPage.s5")} empty={bundle.hazards.length === 0 ? banner("hazards") : null}>
           <PpkDocTable
             small
-            heads={["Этап", "Опасность", "Вид", "Вероятность", "Тяжесть", "Риск", "Значимая", "Меры управления"]}
+            heads={[u("haccpPlanPage.colStep"), u("haccpPlanPage.colHazard"), u("haccpPlanPage.colType"), u("haccpPlanPage.colProbability"), u("haccpPlanPage.colSeverity"), u("haccpPlanPage.colRisk"), u("haccpPlanPage.colSignificant"), u("haccpPlanPage.colMeasures")]}
             rows={bundle.hazards.map((hazard) => [
               hazard.step,
               hazard.hazard,
-              HAZARD_TYPE_RU[hazard.type],
+              hazardTypeLabel(hazard.type),
               String(hazard.probability),
               String(hazard.severity),
               String(hazardRisk(hazard.probability, hazard.severity)),
-              isSignificantHazard(hazard.probability, hazard.severity) ? "Да" : "Нет",
+              isSignificantHazard(hazard.probability, hazard.severity) ? u("haccpPlanPage.yes") : u("haccpPlanPage.no"),
               hazard.measures || "—",
             ])}
           />
         </PpkDocSection>
 
-        <PpkDocSection title="6. Критические контрольные точки и операционные программы" empty={controlPoints.length === 0 ? banner("control-points") : null}>
+        <PpkDocSection title={u("haccpPlanPage.s6")} empty={controlPoints.length === 0 ? banner("control-points") : null}>
           <PpkDocTable
             small
             heads={[
-              "№",
-              "Этап",
-              "Опасность",
-              "Критические пределы",
-              "Мониторинг",
-              "Периодичность",
-              "Ответственный",
-              "Корректирующие действия",
-              "Записи",
+              u("haccpPlanPage.colNumber"),
+              u("haccpPlanPage.colStep"),
+              u("haccpPlanPage.colHazard"),
+              u("haccpPlanPage.colLimits"),
+              u("haccpPlanPage.colMonitoring"),
+              u("haccpPlanPage.colFrequency"),
+              u("haccpPlanPage.colResponsible"),
+              u("haccpPlanPage.colCorrective"),
+              u("haccpPlanPage.colRecords"),
             ]}
             rows={controlPoints.map((point) => [
-              point.number || KIND_RU[point.kind],
+              point.number || kindLabel(point.kind),
               point.hazardStep ?? "—",
               point.hazardText ?? "—",
               point.limits || "—",
@@ -185,11 +202,9 @@ export default async function HaccpPlanPage() {
           />
         </PpkDocSection>
 
-        <PpkDocSection title="7. Верификация">
+        <PpkDocSection title={u("haccpPlanPage.s7")}>
           <p className="text-justify">
-            Верификация системы ХАССП проводится не реже раза в год и при любых изменениях продукции или процессов: группа ХАССП
-            организует внутренний аудит, результаты фиксируются в журналах внутреннего аудита (план, протокол и отчёт аудита), а
-            выявленные несоответствия устраняются корректирующими действиями.
+            {u("haccpPlanPage.verification")}
           </p>
         </PpkDocSection>
       </PpkPrintSheet>

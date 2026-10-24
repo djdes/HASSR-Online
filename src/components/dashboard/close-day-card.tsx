@@ -4,6 +4,7 @@ import { useJournalControls } from "@/components/journals/journal-controls-provi
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { QrCode, Wand2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
@@ -32,6 +33,7 @@ import {
  * секция — одна строка. Гасить клик больше не нужно — `<summary>` рядом нет.
  */
 export function CloseDayCard() {
+  const t = useTranslations("dashboardUi.closeDayCard");
   const { controls } = useJournalControls();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -48,7 +50,7 @@ export function CloseDayCard() {
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error || "Не удалось заполнить журналы");
+        throw new Error(data?.error || t("fillFailed"));
       }
       const message = autofillToast(data as AutofillResult);
       if (message.kind === "info") {
@@ -59,7 +61,7 @@ export function CloseDayCard() {
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Ошибка при автозаполнении"
+        error instanceof Error ? error.message : t("autofillError")
       );
     } finally {
       setSubmitting(false);
@@ -68,7 +70,7 @@ export function CloseDayCard() {
 
   const busy = submitting || pending;
 
-  if (controls.specialMode) return <Link href="/settings/qr-posters" className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]"><QrCode className="size-4" />QR-коды</Link>;
+  if (controls.specialMode) return <Link href="/settings/qr-posters" className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]"><QrCode className="size-4" />{t("qrCodes")}</Link>;
 
   return (
     <div
@@ -83,7 +85,7 @@ export function CloseDayCard() {
         className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:opacity-60 sm:min-w-[180px]"
       >
         <Wand2 className="size-4" />
-        {busy ? "Заполняю…" : "Автозаполнить"}
+        {busy ? t("filling") : t("autofill")}
       </button>
       <Link
         href="/settings/qr-posters"
@@ -91,7 +93,7 @@ export function CloseDayCard() {
         className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:min-w-[180px]"
       >
         <QrCode className="size-4 text-[#5566f6]" />
-        QR-коды
+        {t("qrCodes")}
         <LinkPendingSpinner />
       </Link>
 
@@ -104,9 +106,9 @@ export function CloseDayCard() {
         }}
         variant="info"
         icon={Wand2}
-        title="Автозаполнить журналы?"
+        title={t("confirmTitle")}
         description={AUTOFILL_DESCRIPTION}
-        confirmLabel="Автозаполнить"
+        confirmLabel={t("autofill")}
       >
         <AutofillIllustration />
       </ConfirmDialog>
@@ -120,13 +122,14 @@ export function CloseDayCard() {
  * теме бланк не светился белым пятном.
  */
 function AutofillIllustration() {
+  const t = useTranslations("dashboardUi.closeDayCard");
   const rows = [0, 1, 2, 3];
   const sheet = (filled: boolean) => (
     <svg
       viewBox="0 0 120 92"
       className="h-auto w-full"
       role="img"
-      aria-label={filled ? "Страница журнала с заполненными строками" : "Пустая страница журнала"}
+      aria-label={filled ? t("sheetFilled") : t("sheetEmpty")}
     >
       <rect
         x="1"
@@ -184,7 +187,7 @@ function AutofillIllustration() {
     >
       <div className="space-y-1.5">
         <div className="text-center text-[12px] font-semibold uppercase tracking-[0.12em] text-[#9b9fb3]">
-          Было
+          {t("before")}
         </div>
         {sheet(false)}
       </div>
@@ -200,12 +203,12 @@ function AutofillIllustration() {
       </svg>
       <div className="space-y-1.5">
         <div className="text-center text-[12px] font-semibold uppercase tracking-[0.12em] text-[#3848c7]">
-          Стало
+          {t("after")}
         </div>
         {sheet(true)}
       </div>
       <figcaption className="col-span-3 text-center text-[12.5px] leading-snug text-[#6f7282]">
-        Пустые строки за сегодня заполнятся, уже введённое останется как было.
+        {t("illustrationCaption")}
       </figcaption>
     </figure>
   );

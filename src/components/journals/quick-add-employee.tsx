@@ -210,8 +210,7 @@ export function QuickAddEmployee({
       </div>
 
       <p className="mt-2 text-[12.5px] leading-[1.45] text-[#9b9fb3]">
-        {t("laterHint")}
-        сотрудника.
+        {t("laterHintFull")}
       </p>
     </div>
   );

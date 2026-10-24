@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -17,6 +18,7 @@ import { PageHeader } from "@/components/ui/page-header";
 export const dynamic = "force-dynamic";
 
 export default async function RolePresetsPage() {
+  const t = await getTranslations("settingsUi.rolePresetsPage");
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
   if (!hasCapability(session.user, "admin.full")) redirect("/journals");
@@ -47,24 +49,25 @@ export default async function RolePresetsPage() {
           Переход в «Сотрудники» вынесен в действие справа, чтобы не
           прятать его внутри абзаца. */}
       <PageHeader
-        title="Наборы прав по ролям"
-        description="Что видит каждая роль на сайте и в Telegram-боте. Назначить пресет конкретному сотруднику можно в «Сотрудниках»."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Link
             href="/settings/users"
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            Сотрудники
+            {t("staff")}
           </Link>
         }
       />
 
       <div className="rounded-3xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[13px] text-[#a13a32]">
-        <strong>Заведующий производством (head_chef)</strong> по умолчанию НЕ имеет
-        capability <code className="rounded bg-white/50 px-1 font-mono">journals.view</code>
-        — она видит «задачи» вместо «журналы», работает на Контрольной
-        доске и проверяет выполненные задачи. Если нужно — поставь
-        галочку ниже и она получит доступ к /journals.
+        {t.rich("headChefWarning", {
+          strong: (chunks) => <strong>{chunks}</strong>,
+          code: (chunks) => (
+            <code className="rounded bg-white/50 px-1 font-mono">{chunks}</code>
+          ),
+        })}
       </div>
 
       <RolePresetsClient
@@ -75,12 +78,13 @@ export default async function RolePresetsPage() {
       />
 
       <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[12px] text-[#6f7282]">
-        Чтобы сменить пресет конкретному сотруднику — открой{" "}
-        <Link href="/settings/users" className="text-[#3848c7] underline">
-          /settings/users
-        </Link>{" "}
-        и выбери из списка. Изменения применяются live — сотрудник сразу
-        видит новый интерфейс при следующем reload.
+        {t.rich("changePresetHint", {
+          link: (chunks) => (
+            <Link href="/settings/users" className="text-[#3848c7] underline">
+              {chunks}
+            </Link>
+          ),
+        })}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { TOUR } from "@/lib/tour-anchors";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +52,6 @@ import {
 } from "@/components/journals/journal-responsive";
 import { PositionEmployeePicker } from "@/components/shared/position-select";
 import { PageGuide } from "@/components/ui/page-guide";
-import { AUTOMATION_ENABLE_BULLETS } from "@/lib/journal-automation";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type JournalListDocument = {
@@ -118,6 +118,9 @@ function EditDocumentDialog({
   templateCode: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("journalWidgets.staff");
+  const tList = useTranslations("hygiene.list");
+  const tCommon = useTranslations("common");
   const [title, setTitle] = useState("");
   const [responsibleTitle, setResponsibleTitle] = useState("");
   const [responsibleUserId, setResponsibleUserId] = useState("");
@@ -144,11 +147,11 @@ function EditDocumentDialog({
     if (!document) return;
     if (periodEditable) {
       if (!from || !to) {
-        toast.error("Укажите период документа");
+        toast.error(t("periodRequired"));
         return;
       }
       if (from > to) {
-        toast.error("Дата начала не может быть позже даты окончания");
+        toast.error(t("dateOrderInvalid"));
         return;
       }
     }
@@ -160,16 +163,16 @@ function EditDocumentDialog({
       (from > (document.dateFrom || "") || to < (document.dateTo || ""));
     if (shrinks) {
       const confirmed = await confirmAsync({
-        title: "Сократить период документа?",
-        description: `Новый период: ${from} — ${to}.`,
+        title: t("shrinkPeriodTitle"),
+        description: t("newPeriod", { from, to }),
         variant: "warn",
-        confirmLabel: "Сократить период",
+        confirmLabel: t("shrinkPeriodConfirm"),
         bullets: [
           {
-            label: "Записи вне нового периода пропадут из журнала и печати",
+            label: tList("shrinkOutsideHidden"),
             tone: "warn",
           },
-          { label: "Из базы они не удаляются", tone: "info" },
+          { label: tList("shrinkKeptInDb"), tone: "info" },
         ],
       });
       if (!confirmed) return;
@@ -198,13 +201,13 @@ function EditDocumentDialog({
         const data = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(data?.error || "Не удалось сохранить настройки документа");
+        throw new Error(data?.error || t("saveSettingsFailed"));
       }
 
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки документа"));
+      toast.error(humanizeFetchError(error, t("saveSettingsFailed")));
     } finally {
       setIsSubmitting(false);
     }
@@ -214,13 +217,13 @@ function EditDocumentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки документа</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("settings")}</DialogTitle>
         </DialogHeader>
 
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
           <FloatingInputField
             id="edit-doc-title"
-            label="Название документа"
+            label={t("documentName")}
             value={title}
             onChange={setTitle}
           />
@@ -232,8 +235,8 @@ function EditDocumentDialog({
               setResponsibleTitle(n.positionTitle);
               setResponsibleUserId(n.userId);
             }}
-            positionLabel="Должность ответственного"
-            employeeLabel="Ответственный"
+            positionLabel={t("responsiblePosition")}
+            employeeLabel={tList("responsible")}
             variant="floating"
             autoPick="first"
           />
@@ -247,22 +250,22 @@ function EditDocumentDialog({
           {periodEditable ? (
             <div className="space-y-2">
               <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                Период документа
+                {t("period")}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="date"
                   value={from}
                   onChange={(event) => setFrom(event.target.value)}
-                  aria-label="Период документа: с"
+                  aria-label={t("periodFrom")}
                   className="h-10 w-[165px] rounded-xl border border-[#dcdfed] px-3.5 text-[13.5px] text-[#0b1024] outline-none transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
                 />
-                <span className="text-[13.5px] text-[#6f7282]">по</span>
+                <span className="text-[13.5px] text-[#6f7282]">{t("periodTo")}</span>
                 <input
                   type="date"
                   value={to}
                   onChange={(event) => setTo(event.target.value)}
-                  aria-label="Период документа: по"
+                  aria-label={t("periodToAria")}
                   className="h-10 w-[165px] rounded-xl border border-[#dcdfed] px-3.5 text-[13.5px] text-[#0b1024] outline-none transition-colors duration-150 focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
                 />
               </div>
@@ -278,7 +281,7 @@ function EditDocumentDialog({
               onClick={handleSave}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
-              {isSubmitting ? "Сохранение..." : "Сохранить"}
+              {isSubmitting ? tCommon("saving") : tCommon("save")}
             </Button>
           </div>
         </div>
@@ -305,6 +308,8 @@ function DocumentRow({
   onPrint: (document: JournalListDocument) => void;
   onDelete: (document: JournalListDocument) => void;
 }) {
+  const t = useTranslations("journalWidgets.staff");
+  const tList = useTranslations("hygiene.list");
   const href = `/journals/${templateCode}/documents/${document.id}`;
 
   return (
@@ -314,11 +319,11 @@ function DocumentRow({
               <SharedDocumentBadge shared={document.shared} />
       </Link>
       <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-        <div className={JOURNAL_CARD_LABEL_CLASS}>Должность ответственного</div>
+        <div className={JOURNAL_CARD_LABEL_CLASS}>{t("responsiblePosition")}</div>
         <div className={JOURNAL_CARD_VALUE_CLASS}>{document.responsibleTitle || ""}</div>
       </Link>
       <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-        <div className={JOURNAL_CARD_LABEL_CLASS}>Период</div>
+        <div className={JOURNAL_CARD_LABEL_CLASS}>{tList("period")}</div>
         <div className={JOURNAL_CARD_VALUE_CLASS}>{document.periodLabel}</div>
       </Link>
       <div className="flex items-center justify-center text-[#5566f6]">
@@ -343,6 +348,7 @@ export function HygieneDocumentsClient(props: Props) {
     documents,
     canManageDocuments = true,
   } = props;
+  const tList = useTranslations("hygiene.list");
   const [editingDocument, setEditingDocument] = useState<JournalListDocument | null>(null);
   const responsibleOptions = getStaffJournalResponsibleTitleOptions(users);
   // Единый источник delete / status / pdf для журнальных документов.
@@ -352,17 +358,17 @@ export function HygieneDocumentsClient(props: Props) {
   async function handleDelete(document: JournalListDocument) {
     await deleteDocument({
       documentId: document.id,
-      description: `Документ «${document.title}» будет удалён безвозвратно.`,
+      description: tList("deleteDescription", { title: document.title }),
       bullets: [
-        { label: `Период документа: ${document.periodLabel}`, tone: "info" },
+        { label: tList("deletePeriod", { period: document.periodLabel }), tone: "info" },
         {
-          label: "Удалятся все отметки сотрудников за этот период",
+          label: tList("deleteMarks"),
           tone: "warn",
         },
-        { label: "Печатную форму этого документа восстановить будет нельзя", tone: "warn" },
+        { label: tList("deletePrint"), tone: "warn" },
       ],
-      successMessage: `Документ «${document.title}» удалён`,
-      errorMessage: "Ошибка удаления документа",
+      successMessage: tList("deleteSuccess", { title: document.title }),
+      errorMessage: tList("deleteError"),
     });
   }
 
@@ -385,21 +391,26 @@ export function HygieneDocumentsClient(props: Props) {
         {props.automation ? (
           <>
             <PageGuide
-              title="Как журнал ведётся сам"
+              title={tList("automation.title")}
               storageKey="journal-automation-staff-v1"
-              bullets={[...AUTOMATION_ENABLE_BULLETS]}
+              bullets={[
+                tList("automation.bullet1"),
+                tList("automation.bullet2"),
+                tList("automation.bullet3"),
+                tList("automation.bullet4"),
+              ]}
               qa={[
                 {
-                  q: "А если у сотрудника температура?",
-                  a: "Откройте журнал в тот же день и поменяйте отметку. Прошлые дни закрыты — задним числом журнал править нельзя.",
+                  q: tList("automation.qa1q"),
+                  a: tList("automation.qa1a"),
                 },
                 {
-                  q: "Нужно ли создавать документ вручную?",
-                  a: "Нет. Каждый день в 06:00 документ на текущий период создаётся сам. Вручную — только если нужен документ на другой период.",
+                  q: tList("automation.qa2q"),
+                  a: tList("automation.qa2a"),
                 },
                 {
-                  q: "Как выключить?",
-                  a: "Автосоздание — тумблер на этой странице, ежедневное заполнение — в самом документе. Уже заполненное останется на месте.",
+                  q: tList("automation.qa3q"),
+                  a: tList("automation.qa3a"),
                 },
               ]}
             />

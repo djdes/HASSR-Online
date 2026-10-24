@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { GRID_CELL_CLASS } from "@/components/journals/journal-grid";
 
@@ -26,7 +27,7 @@ import { GRID_CELL_CLASS } from "@/components/journals/journal-grid";
  * «Добавлять пустых строк при печати».
  */
 export function JournalAddRow({
-  label = "Добавить строку",
+  label,
   onClick,
   disabled = false,
   /** Пустых ячеек слева от подписи — обычно колонка с галочкой. */
@@ -52,6 +53,8 @@ export function JournalAddRow({
   colSpan?: number;
   cellClassName?: string;
 }) {
+  const t = useTranslations("journalUi.addRow");
+  const resolvedLabel = label ?? t("label");
   const trailingCount =
     trailing > 0
       ? trailing
@@ -98,7 +101,7 @@ export function JournalAddRow({
           <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-[#eef1ff] text-[#5566f6]">
             <Plus className="size-4" strokeWidth={2.5} />
           </span>
-          {label}
+          {resolvedLabel}
         </button>
       </td>
 

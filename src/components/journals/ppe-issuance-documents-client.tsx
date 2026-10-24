@@ -196,14 +196,15 @@ function SettingsDialog(props: {
 }) {
   const p = useTranslations("journalPpe");
   const pdf = useTranslations("personnelMaintenancePdf");
+  const controls = useTranslations("journalControls");
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({
     onOpenChange: props.onOpenChange,
     fallbackError:
       props.mode === "create"
-        ? "Не удалось создать документ"
-        : "Не удалось сохранить настройки",
+        ? controls("documentDialog.createError")
+        : p("saveSettingsFailed"),
   });
   const submitting = submit.submitting;
   const titles = useMemo(() => roleOptions(props.users), [props.users]);
@@ -512,7 +513,7 @@ export function PpeIssuanceDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+      throw new Error(failure?.error || p("saveSettingsFailed"));
     }
 
     router.refresh();

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { getActiveBuildingId } from "@/lib/active-building";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -11,7 +12,10 @@ import { QrPostersClient } from "./qr-posters-client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "QR-коды" };
+export async function generateMetadata() {
+  const t = await getTranslations("settingsUi.qrPostersPage");
+  return { title: t("metaTitle") };
+}
 
 /**
  * QR-коды для записи в журналы с телефона — основные (работают всегда),

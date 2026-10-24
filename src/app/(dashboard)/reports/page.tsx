@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { resolveSectionName } from "@/lib/org-custom-names";
 import { loadBuildingContext } from "@/lib/active-building";
@@ -30,6 +31,7 @@ export default async function ReportsPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
 
   const orgId = getActiveOrgId(session);
+  const t = await getTranslations("reportsUi.reportsPage");
   // Точки: графики и счётчики по документам — для активной точки; записи
   // поле-ориентированных журналов остаются на организацию.
   const buildingContext = await loadBuildingContext(session);
@@ -149,16 +151,15 @@ export default async function ReportsPage() {
 
   // Подготавливаем mailto-link для шеринга отчёта.
   const subj = encodeURIComponent(
-    `Отчёт по заполнению журналов — ${session.user.organizationName}`
+    t("mailSubject", { organization: session.user.organizationName })
   );
   const body = encodeURIComponent(
-    `Здравствуйте,\n\n` +
-      `делюсь данными о заполнении журналов из системы WeSetup.\n\n` +
-      `Доля записей с фото: ${
-        photoEvidencePct === null ? "нет данных" : photoEvidencePct + "%"
-      } (${entriesWithAttachment30Count} из ${entries30Count} за 30 дней)\n\n` +
-      `Подробный обзор и графики — в системе WeSetup на странице /reports.\n\n` +
-      `Это автоматическое письмо из WeSetup.`
+    t("mailBody", {
+      photoShare:
+        photoEvidencePct === null ? t("noData") : photoEvidencePct + "%",
+      withPhoto: entriesWithAttachment30Count,
+      total: entries30Count,
+    })
   );
   const mailtoHref = `mailto:?subject=${subj}&body=${body}`;
 
@@ -171,14 +172,14 @@ export default async function ReportsPage() {
             {await resolveSectionName(getActiveOrgId(session), "reports")}
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">
-            Выгрузки журналов за период — PDF и Excel для проверок
+            {t("subtitle")}
           </p>
         </div>
         <a
           href={mailtoHref}
           className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          ✉ Поделиться по email
+          ✉ {t("shareByEmail")}
         </a>
       </div>
       <AiPeriodReportCard />
@@ -187,18 +188,20 @@ export default async function ReportsPage() {
           Помогает заметить тренды без ковыряния в графиках. */}
       <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6">
         <h2 className="mb-4 text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-          Эта неделя и прошлая
+          {t("weekCompareTitle")}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <CompareTile
-            label="Записи в журналах"
+            label={t("entriesLabel")}
+            wasLabel={(n) => t("was", { count: n })}
             now={thisWeekTotal}
             prev={prevWeekTotal}
             deltaPct={entriesDeltaPct}
             betterIs="up"
           />
           <CompareTile
-            label="Открыто CAPA"
+            label={t("capaOpenedLabel")}
+            wasLabel={(n) => t("was", { count: n })}
             now={thisWeekCapaCount}
             prev={prevWeekCapaCount}
             deltaPct={capaDeltaPct}
@@ -211,7 +214,7 @@ export default async function ReportsPage() {
         <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="flex items-baseline gap-3">
             <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              Записей с фото
+              {t("photoEntries")}
             </h2>
             <span
               className="text-[24px] font-semibold tabular-nums"
@@ -227,12 +230,14 @@ export default async function ReportsPage() {
               {photoEvidencePct}%
             </span>
             <span className="text-[13px] text-[#6f7282]">
-              ({entriesWithAttachment30Count} из {entries30Count} за 30 дней)
+              {t("photoShareOf", {
+                withPhoto: entriesWithAttachment30Count,
+                total: entries30Count,
+              })}
             </span>
           </div>
           <p className="mt-2 text-[13px] text-[#6f7282]">
-            Инспектор больше доверяет журналам с фото-доказательствами.
-            Норма «хорошая» — 60% и выше.
+            {t("photoHint")}
           </p>
         </section>
       ) : null}
@@ -248,8 +253,10 @@ export default async function ReportsPage() {
       <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
         {buildingContext.activeBuilding ? (
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[13px] text-[#3848c7]">
-            Точка: <b className="font-semibold">{buildingContext.activeBuilding.name}</b> — графики и
-            счётчики по документам считаются для неё
+            {t.rich("activePoint", {
+              name: buildingContext.activeBuilding.name,
+              b: (chunks) => <b className="font-semibold">{chunks}</b>,
+            })}
           </div>
         ) : null}
         <ReportForm
@@ -279,12 +286,14 @@ function formatYmdInZone(date: Date, timeZone: string): string {
 
 function CompareTile({
   label,
+  wasLabel,
   now,
   prev,
   deltaPct,
   betterIs,
 }: {
   label: string;
+  wasLabel: (count: number) => string;
   now: number;
   prev: number;
   deltaPct: number | null;
@@ -321,7 +330,7 @@ function CompareTile({
           {now}
         </span>
         <span className="text-[12px] text-[#9b9fb3]">
-          было {prev}
+          {wasLabel(prev)}
         </span>
         {deltaPct !== null ? (
           <span

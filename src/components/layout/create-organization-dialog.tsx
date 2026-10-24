@@ -3,6 +3,7 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ORG_SPHERES } from "@/lib/org-profile";
@@ -28,6 +29,8 @@ export function CreateOrganizationDialog({
   organizationsCount: number;
   onClose: () => void;
 }) {
+  const t = useTranslations("layoutUi.createOrganizationDialog");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [name, setName] = useState("");
   const [sphere, setSphere] = useState(currentSphere);
@@ -52,13 +55,13 @@ export function CreateOrganizationDialog({
         }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось создать");
-      toast.success(`Организация «${name.trim()}» создана`);
+      if (!response.ok) throw new Error(data?.error ?? t("createFailed"));
+      toast.success(t("created", { name: name.trim() }));
       onClose();
       router.push("/dashboard?welcome-org=1");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSaving(false);
     }
@@ -76,21 +79,21 @@ export function CreateOrganizationDialog({
         className="w-full max-w-[440px] rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_30px_80px_-30px_rgba(11,16,36,0.5)]"
       >
         <h2 className="text-[18px] font-semibold text-[#0b1024]">
-          Новая организация
+          {t("title")}
         </h2>
         <p className="mt-1 text-[13px] text-[#6f7282]">
-          Отдельная точка со своими сотрудниками, журналами и задачами.
+          {t("description")}
         </p>
 
         <label className="mt-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-            Название
+            {t("nameLabel")}
           </span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             autoFocus
-            placeholder="Кафе на Ленина"
+            placeholder={t("namePlaceholder")}
             maxLength={200}
             className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
@@ -98,7 +101,7 @@ export function CreateOrganizationDialog({
 
         <label className="mt-3 block">
           <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-            Сфера
+            {t("sphereLabel")}
           </span>
           <select
             value={sphere}
@@ -122,15 +125,13 @@ export function CreateOrganizationDialog({
               className="mt-0.5 size-4 accent-[#5566f6]"
             />
             <span className="text-[13px] leading-snug text-[#3c4053]">
-              Скопировать должности и набор журналов из «{currentName}».
-              Сотрудников не переносим.
+              {t("copyLabel", { name: currentName })}
             </span>
           </label>
         ) : null}
 
         <p className="mt-3 text-[12px] text-[#9b9fb3]">
-          После создания: {organizationsCount + 1} организации · лимит
-          сотрудников общий на аккаунт.
+          {t("afterCreate", { count: organizationsCount + 1 })}
         </p>
 
         <div className="mt-4 flex justify-end gap-2">
@@ -139,7 +140,7 @@ export function CreateOrganizationDialog({
             onClick={onClose}
             className="inline-flex h-11 items-center rounded-2xl px-4 text-[15px] text-[#6f7282] transition-colors hover:bg-[#f5f6ff]"
           >
-            Отмена
+            {tc("cancel")}
           </button>
           <button
             type="submit"
@@ -147,7 +148,7 @@ export function CreateOrganizationDialog({
             className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c9cef7]"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            Создать и перейти
+            {t("submit")}
           </button>
         </div>
       </form>

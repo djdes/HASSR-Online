@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -93,6 +94,8 @@ function DocumentSettingsDialog(props: {
   onSubmit: (payload: { title: string; dateFrom: string }) => Promise<void>;
   useV2?: boolean;
 }) {
+  const t = useTranslations("journalUi.pestControl");
+  const common = useTranslations("common");
   const [title, setTitle] = useState(props.initialTitle);
   const [dateFrom, setDateFrom] = useState(props.initialDateFrom);
   const [submitting, setSubmitting] = useState(false);
@@ -121,8 +124,8 @@ function DocumentSettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки документа"
-        description="Название документа и дата начала."
+        title={t("settingsTitle")}
+        description={t("settingsDescription")}
         size="md"
         isSaving={submitting}
         saveDisabled={!dateFrom}
@@ -131,18 +134,18 @@ function DocumentSettingsDialog(props: {
       >
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название документа
+            {t("documentName")}
           </Label>
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Введите название"
+            placeholder={t("documentNameShortPlaceholder")}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Дата начала
+            {t("startDate")}
           </Label>
           <Input
             type="date"
@@ -160,7 +163,7 @@ function DocumentSettingsDialog(props: {
       <DialogContent showCloseButton={false} className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-medium text-black">
-            Настройки документа
+            {t("settingsTitle")}
           </DialogTitle>
           <button
             type="button"
@@ -171,16 +174,16 @@ function DocumentSettingsDialog(props: {
           </button>
         </DialogHeader>
         <div className="space-y-5 px-7 py-6">
-          <PestFieldLabel htmlFor="pest-settings-title" label="Название документа">
+          <PestFieldLabel htmlFor="pest-settings-title" label={t("documentName")}>
           <Input
             id="pest-settings-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Введите название документа"
+            placeholder={t("documentNamePlaceholder")}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
           </PestFieldLabel>
-          <PestFieldLabel htmlFor="pest-settings-date" label="Дата начала">
+          <PestFieldLabel htmlFor="pest-settings-date" label={t("startDate")}>
           <Input
             id="pest-settings-date"
             type="date"
@@ -196,7 +199,7 @@ function DocumentSettingsDialog(props: {
               className="h-12 rounded-xl bg-[#5863f8] px-7 text-[18px] text-white hover:bg-[#4b57f3]"
               onClick={handleSave}
             >
-              {submitting ? "Сохранение..." : "Сохранить"}
+              {submitting ? t("saving") : common("save")}
             </Button>
           </div>
         </div>
@@ -212,6 +215,7 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.pestControl");
   const [submitting, setSubmitting] = useState(false);
 
   return (
@@ -244,7 +248,7 @@ function ConfirmDialog(props: {
               }
             }}
           >
-            {submitting ? "Подождите..." : props.submitLabel}
+            {submitting ? t("wait") : props.submitLabel}
           </Button>
         </div>
       </DialogContent>
@@ -280,6 +284,7 @@ function EntryDialog(props: {
   initial: EditingEntry | null;
   onSubmit: (payload: PestControlEntryData, entryId?: string) => Promise<void>;
 }) {
+  const t = useTranslations("journalUi.pestControl");
   const roleOptions = useMemo(() => getPestControlRoleOptions(props.users), [props.users]);
   const [entry, setEntry] = useState<PestControlEntryData>(
     createEmptyPestControlEntry(props.users, localDayKey())
@@ -338,7 +343,7 @@ function EntryDialog(props: {
         </DialogHeader>
         <div className="space-y-5 px-7 py-6">
           <div className="rounded-[24px] border border-[#dfe1ec] p-4">
-            <div className="mb-3 text-[18px] font-medium">Дата и время проведения</div>
+            <div className="mb-3 text-[18px] font-medium">{t("dateTime")}</div>
             <Input
               type="date"
               value={entry.performedDate}
@@ -358,9 +363,9 @@ function EntryDialog(props: {
                   }))
                 }
               >
-                <SelectTrigger aria-label="Часы" className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <span className="mr-1 text-[#9b9fb3]">ч</span>
-                  <SelectValue placeholder="Часы" />
+                <SelectTrigger aria-label={t("hours")} className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+                  <span className="mr-1 text-[#9b9fb3]">{t("hoursUnit")}</span>
+                  <SelectValue placeholder={t("hours")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__">--</SelectItem>
@@ -381,9 +386,9 @@ function EntryDialog(props: {
                   }))
                 }
               >
-                <SelectTrigger aria-label="Минуты" className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <span className="mr-1 text-[#9b9fb3]">мин</span>
-                  <SelectValue placeholder="Минуты" />
+                <SelectTrigger aria-label={t("minutes")} className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+                  <span className="mr-1 text-[#9b9fb3]">{t("minutesUnit")}</span>
+                  <SelectValue placeholder={t("minutes")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__">--</SelectItem>
@@ -399,65 +404,65 @@ function EntryDialog(props: {
 
           {/* Постоянные подписи над полями: раньше поля жили на одних
               плейсхолдерах, и после ввода было не понять, что где. */}
-          <PestFieldLabel htmlFor="pest-row-event" label="Мероприятие (вид, место)">
+          <PestFieldLabel htmlFor="pest-row-event" label={t("event")}>
           <Input
             id="pest-row-event"
             value={entry.event}
             onChange={(event) =>
               setEntry((current) => ({ ...current, event: event.target.value }))
             }
-            placeholder="Например: дератизация, склад сырья"
+            placeholder={t("eventPlaceholder")}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
           </PestFieldLabel>
-          <PestFieldLabel htmlFor="pest-row-area" label="Площадь и (или) объём">
+          <PestFieldLabel htmlFor="pest-row-area" label={t("area")}>
           <Input
             id="pest-row-area"
             value={entry.areaOrVolume}
             onChange={(event) =>
               setEntry((current) => ({ ...current, areaOrVolume: event.target.value }))
             }
-            placeholder="Например: 120 м²"
+            placeholder={t("areaPlaceholder")}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
           </PestFieldLabel>
-          <PestFieldLabel htmlFor="pest-row-product" label="Средство обработки">
+          <PestFieldLabel htmlFor="pest-row-product" label={t("product")}>
           <Input
             id="pest-row-product"
             value={entry.treatmentProduct}
             onChange={(event) =>
               setEntry((current) => ({ ...current, treatmentProduct: event.target.value }))
             }
-            placeholder="Название средства"
+            placeholder={t("productPlaceholder")}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
           </PestFieldLabel>
-          <PestFieldLabel htmlFor="pest-row-note" label="Примечание">
+          <PestFieldLabel htmlFor="pest-row-note" label={t("note")}>
           <Textarea
             id="pest-row-note"
             value={entry.note}
             onChange={(event) =>
               setEntry((current) => ({ ...current, note: event.target.value }))
             }
-            placeholder="Необязательно"
+            placeholder={t("notePlaceholder")}
             className="min-h-[140px] rounded-2xl border-[#dfe1ec] px-4 py-3 text-[18px]"
           />
           </PestFieldLabel>
-          <PestFieldLabel htmlFor="pest-row-by" label="Кем проведено">
+          <PestFieldLabel htmlFor="pest-row-by" label={t("performedBy")}>
           <Input
             id="pest-row-by"
             value={entry.performedBy}
             onChange={(event) =>
               setEntry((current) => ({ ...current, performedBy: event.target.value }))
             }
-            placeholder="Организация или специалист"
+            placeholder={t("performedByPlaceholder")}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
           </PestFieldLabel>
-          <PestFieldLabel label="Должность принявшего работы">
+          <PestFieldLabel label={t("acceptedRole")}>
           <Select value={entry.acceptedRole} onValueChange={updateAcceptedRole}>
-            <SelectTrigger aria-label="Должность принявшего работы" className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Выберите должность" />
+            <SelectTrigger aria-label={t("acceptedRole")} className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+              <SelectValue placeholder={t("chooseRole")} />
             </SelectTrigger>
             <SelectContent>
               {roleOptions.map((role) => (
@@ -468,15 +473,15 @@ function EntryDialog(props: {
             </SelectContent>
           </Select>
           </PestFieldLabel>
-          <PestFieldLabel label="Сотрудник, принявший работы">
+          <PestFieldLabel label={t("acceptedEmployee")}>
           <Select
             value={entry.acceptedEmployeeId}
             onValueChange={(value) =>
               setEntry((current) => ({ ...current, acceptedEmployeeId: value }))
             }
           >
-            <SelectTrigger aria-label="Сотрудник, принявший работы" className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Выберите сотрудника" />
+            <SelectTrigger aria-label={t("acceptedEmployee")} className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+              <SelectValue placeholder={t("chooseEmployee")} />
             </SelectTrigger>
             <SelectContent>
               {employeeOptions.map((user) => (
@@ -503,7 +508,7 @@ function EntryDialog(props: {
                 }
               }}
             >
-              {submitting ? "Подождите..." : props.submitLabel}
+              {submitting ? t("wait") : props.submitLabel}
             </Button>
           </div>
         </div>
@@ -513,6 +518,9 @@ function EntryDialog(props: {
 }
 
 export function PestControlDocumentClient(props: Props) {
+  const t = useTranslations("journalUi.pestControl");
+  const common = useTranslations("common");
+  const lc = useTranslations("journalControls");
   const router = useRouter();
   // DELETE на сервере требует управленческой роли — кнопку «Удалить»
   // рядовому сотруднику не показываем, иначе она просто отдавала 403.
@@ -585,13 +593,13 @@ export function PestControlDocumentClient(props: Props) {
         />
       ) : null,
       fields: [
-        { label: "Время", value: dateTime.timeLabel, hideIfEmpty: true },
-        { label: "Площадь/объём", value: entry.data.areaOrVolume, hideIfEmpty: true },
-        { label: "Средство обработки", value: entry.data.treatmentProduct, hideIfEmpty: true },
-        { label: "Примечание", value: entry.data.note, hideIfEmpty: true },
-        { label: "Кем проведено", value: entry.data.performedBy, hideIfEmpty: true },
+        { label: t("time"), value: dateTime.timeLabel, hideIfEmpty: true },
+        { label: t("areaShort"), value: entry.data.areaOrVolume, hideIfEmpty: true },
+        { label: t("product"), value: entry.data.treatmentProduct, hideIfEmpty: true },
+        { label: t("note"), value: entry.data.note, hideIfEmpty: true },
+        { label: t("performedBy"), value: entry.data.performedBy, hideIfEmpty: true },
         {
-          label: "Принявший",
+          label: t("acceptedShort"),
           value: [getRowEmployeeTitle(acceptedUser, entry.data.acceptedRole), acceptedUser?.name].filter(Boolean).join(", "),
           hideIfEmpty: true,
         },
@@ -605,7 +613,7 @@ export function PestControlDocumentClient(props: Props) {
           onClick={() => setEditing({ id: entry.id, data: entry.data })}
           className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#5863f8] px-4 text-[14px] font-medium text-white hover:bg-[#4752e6]"
         >
-          Редактировать
+          {common("edit")}
         </button>
       ) : null,
     };
@@ -623,7 +631,7 @@ export function PestControlDocumentClient(props: Props) {
 
     if (!response.ok) {
       const result = await response.json().catch(() => null);
-      toast.error(result?.error || "Не удалось добавить строку");
+      toast.error(result?.error || t("addRowFailed"));
       return;
     }
 
@@ -671,7 +679,7 @@ export function PestControlDocumentClient(props: Props) {
 
     if (!response.ok) {
       const result = await response.json().catch(() => null);
-      const message = result?.error || "Не удалось сохранить строку";
+      const message = result?.error || t("saveRowFailed");
       if (options?.silent) throw new Error(message);
       toast.error(message);
       return;
@@ -704,7 +712,7 @@ export function PestControlDocumentClient(props: Props) {
 
     if (!response.ok) {
       const result = await response.json().catch(() => null);
-      toast.error(result?.error || "Не удалось удалить строки");
+      toast.error(result?.error || t("deleteRowsFailed"));
       return;
     }
 
@@ -723,7 +731,7 @@ export function PestControlDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки документа");
+      toast.error(t("saveSettingsFailed"));
       return;
     }
 
@@ -742,7 +750,7 @@ export function PestControlDocumentClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось завершить журнал");
+      toast.error(t("closeFailed"));
       return;
     }
 
@@ -752,7 +760,7 @@ export function PestControlDocumentClient(props: Props) {
 
   return (
     <div className="space-y-5">
-      <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+      <FocusTodayScroller selector="[data-focus-today]" emptyTitle={t("noEntriesTitle")} emptyBody={t("noEntriesBody")} />
 
       {!readOnly && selectedIds.length > 0 && (
         <JournalSelectionBar
@@ -761,8 +769,8 @@ export function PestControlDocumentClient(props: Props) {
           onDelete={canDelete ? () => void deleteEntries(selectedIds) : undefined}
           hint={
             canDelete
-              ? "Записи будут удалены без возможности отмены"
-              : "Удалять записи может только управляющий"
+              ? t("deleteHint")
+              : t("deleteForbiddenHint")
           }
         >
           <SelectionEditButton count={selectedIds.length} disabled={readOnly} onClick={() => seq.start(selectedIds)} />
@@ -775,7 +783,7 @@ export function PestControlDocumentClient(props: Props) {
         backHref={`/journals/${props.routeCode}`}
         onSettings={!readOnly ? () => setSettingsOpen(true) : undefined}
         closed={readOnly}
-        closedHint="Откройте журнал заново, чтобы добавлять и редактировать мероприятия."
+        closedHint={t("closedHint")}
         undo={
           !readOnly
             ? {
@@ -792,7 +800,7 @@ export function PestControlDocumentClient(props: Props) {
             ? [
                 {
                   key: "close-journal",
-                  label: "Закончить журнал",
+                  label: lc("closeDocument.close"),
                   icon: <Archive className="size-4" />,
                   onSelect: () => setCloseOpen(true),
                 },
@@ -801,7 +809,7 @@ export function PestControlDocumentClient(props: Props) {
         }
         mobileView={mobileView}
         onMobileView={switchMobileView}
-        cards={<RecordCardsView items={cardItems} emptyLabel="Мероприятий пока не проводилось." />}
+        cards={<RecordCardsView items={cardItems} emptyLabel={t("noEvents")} />}
         paperHeader={
           <JournalDocumentHeader
             orgName={props.organizationName}
@@ -819,7 +827,7 @@ export function PestControlDocumentClient(props: Props) {
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="size-5" />
-              Добавить
+              {common("add")}
             </Button>
           ) : null
         }
@@ -837,13 +845,13 @@ export function PestControlDocumentClient(props: Props) {
                   />
                 )}
               </th>
-              <th className={`min-w-[110px] sm:min-w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Дата и время проведения</th>
-              <th className={`min-w-[170px] sm:min-w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Мероприятие (вид, место)</th>
-              <th className={`min-w-[120px] sm:min-w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Площадь и (или) объем</th>
-              <th className={`min-w-[150px] sm:min-w-[190px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Средство обработки</th>
-              <th className={`min-w-[220px] sm:min-w-[320px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Примечание</th>
-              <th className={`min-w-[120px] sm:min-w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>Кем проведено</th>
-              <th className={`min-w-[170px] sm:min-w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>ФИО принявшего работы</th>
+              <th className={`min-w-[110px] sm:min-w-[140px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("dateTime")}</th>
+              <th className={`min-w-[170px] sm:min-w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("event")}</th>
+              <th className={`min-w-[120px] sm:min-w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("colArea")}</th>
+              <th className={`min-w-[150px] sm:min-w-[190px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("product")}</th>
+              <th className={`min-w-[220px] sm:min-w-[320px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("note")}</th>
+              <th className={`min-w-[120px] sm:min-w-[150px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("performedBy")}</th>
+              <th className={`min-w-[170px] sm:min-w-[220px] ${GRID_HEAD_CELL_CLASS} px-2 py-1.5 text-center font-semibold leading-tight`}>{t("colAccepted")}</th>
             </tr>
           </thead>
           <tbody>
@@ -921,7 +929,7 @@ export function PestControlDocumentClient(props: Props) {
                 leading={1}
                 labelSpan={2}
                 trailing={5}
-                label="Добавить"
+                label={common("add")}
                 onClick={() => setCreateOpen(true)}
               />
             ) : null}
@@ -942,8 +950,8 @@ export function PestControlDocumentClient(props: Props) {
         open={createOpen}
         onOpenChange={setCreateOpen}
         users={props.users}
-        title="Добавление новой строки"
-        submitLabel="Добавить"
+        title={t("addRowTitle")}
+        submitLabel={common("add")}
         initial={null}
         onSubmit={(payload) => createEntry(payload)}
       />
@@ -960,8 +968,8 @@ export function PestControlDocumentClient(props: Props) {
           seq.cancelled();
         }}
         users={props.users}
-        title={`Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`}
-        submitLabel="Сохранить"
+        title={`${t("editRowTitle")}${seq.progress ? ` ${seq.progress}` : ""}`}
+        submitLabel={common("save")}
         initial={editing}
         onSubmit={(payload, entryId) => updateEntry(payload, entryId)}
       />
@@ -969,8 +977,8 @@ export function PestControlDocumentClient(props: Props) {
       <ConfirmDialog
         open={closeOpen}
         onOpenChange={setCloseOpen}
-        title={`Закончить журнал "${props.title || PEST_CONTROL_DOCUMENT_TITLE}"`}
-        submitLabel="Закончить"
+        title={t("closeConfirmTitle", { title: props.title || PEST_CONTROL_DOCUMENT_TITLE })}
+        submitLabel={lc("documentLifecycle.finishAction")}
         onSubmit={closeDocument}
       />
     </div>

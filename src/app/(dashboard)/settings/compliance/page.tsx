@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ShieldCheck } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -15,6 +16,7 @@ export default async function CompliancePage() {
     redirect("/settings");
   }
   const orgId = getActiveOrgId(session);
+  const t = await getTranslations("settingsUi.compliancePage");
 
   const [org, readingPhoto, paidPlan] = await Promise.all([
     db.organization.findUnique({
@@ -45,14 +47,10 @@ export default async function CompliancePage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Строгость журналов
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Настройки строгости журналов: кто и когда может править уже
-              сохранённые записи и что происходит, когда температура
-              вышла за норму. По умолчанию — любой сотрудник может
-              открыть свою выполненную задачу и изменить значения. История
-              правок сохраняется в журнале независимо от настроек.
+              {t("description")}
             </p>
           </div>
         </div>

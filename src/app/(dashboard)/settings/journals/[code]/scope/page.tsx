@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { ListChecks } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -17,6 +18,7 @@ export default async function JournalScopePage({
     redirect("/settings/journals");
   }
 
+  const t = await getTranslations("settingsUi.journalScopePage");
   const { code } = await params;
   const template = await db.journalTemplate.findFirst({
     where: { code },
@@ -52,9 +54,7 @@ export default async function JournalScopePage({
               {template.name}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Как ведут себя задачи этого журнала у сотрудников — в
-              приложении и в TasksFlow: тип задачи (личная или общая),
-              кнопка «Не требуется сегодня» и список причин.
+              {t("description")}
             </p>
           </div>
         </div>

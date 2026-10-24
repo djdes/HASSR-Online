@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * D8 — psychological progress-bar для долгих операций (AI report,
@@ -14,7 +15,7 @@ import { useEffect, useState } from "react";
  *   {busy ? <GlowLoader label="Анализирую данные..." /> : null}
  */
 export function GlowLoader({
-  label = "Загружаем...",
+  label,
   /** Через сколько секунд бар должен остановиться у 95% (синхронизировать
    *  с реальным временем операции). Default — 20s. */
   targetSeconds = 20,
@@ -22,6 +23,7 @@ export function GlowLoader({
   label?: string;
   targetSeconds?: number;
 }) {
+  const t = useTranslations("sharedUi.glowLoader");
   const [pct, setPct] = useState(2);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function GlowLoader({
   return (
     <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-[13px] font-medium text-[#3c4053]">{label}</span>
+        <span className="text-[13px] font-medium text-[#3c4053]">{label ?? t("loading")}</span>
         <span className="text-[12px] font-semibold tabular-nums text-[#3848c7]">
           {pct}%
         </span>

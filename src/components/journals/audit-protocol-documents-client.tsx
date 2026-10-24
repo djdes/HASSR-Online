@@ -267,7 +267,7 @@ export function AuditProtocolDocumentsClient({
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || "Не удалось создать документ");
+      throw new Error(result?.error || committed.current.text("journalControls.documentDialog.createError"));
     }
     router.push(`/journals/${routeCode}/documents/${result.document.id}`);
     router.refresh();
@@ -290,7 +290,7 @@ export function AuditProtocolDocumentsClient({
         },
       }),
     });
-    if (!response.ok) throw new Error("Не удалось сохранить документ");
+    if (!response.ok) throw new Error(committed.current.text("journalAuditProtocol.saveDocumentFailed"));
     router.refresh();
   }
 
@@ -335,7 +335,7 @@ export function AuditProtocolDocumentsClient({
     const response = await fetch(`/api/journal-documents/${documentId}`, {
       method: "DELETE",
     });
-    if (!response.ok) throw new Error("Не удалось удалить документ");
+    if (!response.ok) throw new Error(committed.current.text("journalControls.documentActions.deleteError"));
     router.refresh();
   }
 

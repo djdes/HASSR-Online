@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -13,7 +14,7 @@ import {
   SkipForward,
   Undo2,
 } from "lucide-react";
-import { claimReasonRu } from "@/app/mini/_lib/claim-errors";
+import { claimReasonMessage } from "@/app/mini/_lib/claim-errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PhotoField, parsePhotoValue } from "@/components/journals/photo-field";
 import { NumberField } from "@/components/journals/number-field";
@@ -24,6 +25,8 @@ import { humanizeFetchError, isFetchNetworkError } from "@/lib/humanize-fetch-er
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { completionFieldIssues } from "@/lib/journal-completion-rules";
 import { SKIP_REASON_MIN_LENGTH } from "@/lib/no-events-reason";
+
+type ClaimText = ReturnType<typeof useTranslations<"miniUi">>;
 
 type Claim = {
   id: string;
@@ -170,278 +173,278 @@ function pickStepProgress(
  * journal-документы (которые остаются для подробного режима).
  */
 
-const JOURNAL_FORMS: Record<string, TaskFormSchema> = {
+function journalForms(t: ClaimText): Record<string, TaskFormSchema> {
+  return {
   cold_equipment_control: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "temperature", label: "Температура (°C)", type: "number", required: true, placeholder: "напр. 4" },
-      { key: "correctiveAction", label: "Корректирующее действие (если вне нормы)", type: "text", placeholder: "коротко описать" },
+      { key: "temperature", label: t("claimPage.forms.fTemperature"), type: "number", required: true, placeholder: t("claimPage.forms.phExample4") },
+      { key: "correctiveAction", label: t("claimPage.forms.fCorrectiveIfOutOfNorm"), type: "text", placeholder: t("claimPage.forms.phDescribeBriefly") },
     ],
   },
   climate_control: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "temperature", label: "Температура воздуха (°C)", type: "number", required: true },
-      { key: "humidity", label: "Влажность (%)", type: "number", required: true },
+      { key: "temperature", label: t("claimPage.forms.fAirTemperature"), type: "number", required: true },
+      { key: "humidity", label: t("claimPage.forms.fHumidity"), type: "number", required: true },
     ],
   },
   fryer_oil: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "temperatureC", label: "Температура жира (°C)", type: "number", required: true },
-      { key: "polarCompoundsPercent", label: "Полярные соединения (%)", type: "number", placeholder: "если есть прибор" },
-      { key: "colorAcceptable", label: "Цвет приемлемый", type: "boolean" },
-      { key: "replaced", label: "Заменил масло", type: "boolean" },
+      { key: "temperatureC", label: t("claimPage.forms.fOilTemperature"), type: "number", required: true },
+      { key: "polarCompoundsPercent", label: t("claimPage.forms.fPolarCompounds"), type: "number", placeholder: t("claimPage.forms.phIfDevice") },
+      { key: "colorAcceptable", label: t("claimPage.forms.fColorAcceptable"), type: "boolean" },
+      { key: "replaced", label: t("claimPage.forms.fOilReplaced"), type: "boolean" },
     ],
   },
   incoming_control: {
-    submitLabel: "Записать приёмку",
+    submitLabel: t("claimPage.forms.submitAcceptance"),
     fields: [
-      { key: "supplier", label: "Поставщик", type: "text", required: true },
-      { key: "productName", label: "Товар", type: "text", required: true },
-      { key: "expirationDate", label: "Срок годности", type: "date" },
-      { key: "temperature", label: "Температура (°C)", type: "number", placeholder: "для скоропорта" },
-      { key: "quantity", label: "Количество", type: "text", placeholder: "напр. 5 кг / 12 шт" },
-      { key: "accepted", label: "Принято", type: "boolean" },
-      { key: "rejectionReason", label: "Причина отказа (если не принято)", type: "text" },
+      { key: "supplier", label: t("claimPage.forms.fSupplier"), type: "text", required: true },
+      { key: "productName", label: t("claimPage.forms.fGoods"), type: "text", required: true },
+      { key: "expirationDate", label: t("claimPage.forms.fExpiry"), type: "date" },
+      { key: "temperature", label: t("claimPage.forms.fTemperature"), type: "number", placeholder: t("claimPage.forms.phForPerishables") },
+      { key: "quantity", label: t("claimPage.forms.fQuantity"), type: "text", placeholder: t("claimPage.forms.phExampleQuantity") },
+      { key: "accepted", label: t("claimPage.forms.fAccepted"), type: "boolean" },
+      { key: "rejectionReason", label: t("claimPage.forms.fRejectionReason"), type: "text" },
     ],
   },
   finished_product: {
-    submitLabel: "Записать бракераж",
+    submitLabel: t("claimPage.forms.submitQualityCheck"),
     fields: [
-      { key: "dish", label: "Блюдо / партия", type: "text", required: true },
-      { key: "appearanceOk", label: "Внешний вид соответствует", type: "boolean" },
-      { key: "tasteOk", label: "Вкус соответствует", type: "boolean" },
-      { key: "temperature", label: "Температура подачи (°C)", type: "number" },
-      { key: "correctiveAction", label: "Замечания / корректирующее действие", type: "text" },
+      { key: "dish", label: t("claimPage.forms.fDishBatch"), type: "text", required: true },
+      { key: "appearanceOk", label: t("claimPage.forms.fAppearanceOk"), type: "boolean" },
+      { key: "tasteOk", label: t("claimPage.forms.fTasteOk"), type: "boolean" },
+      { key: "temperature", label: t("claimPage.forms.fServingTemperature"), type: "number" },
+      { key: "correctiveAction", label: t("claimPage.forms.fRemarksCorrective"), type: "text" },
     ],
   },
   disinfectant_usage: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "disinfectantName", label: "Дезсредство", type: "text", required: true },
-      { key: "concentration", label: "Концентрация", type: "text", placeholder: "напр. 0.1%" },
-      { key: "volumeLiters", label: "Объём (литров)", type: "number" },
-      { key: "purpose", label: "Назначение / зона", type: "text" },
+      { key: "disinfectantName", label: t("claimPage.forms.fDisinfectant"), type: "text", required: true },
+      { key: "concentration", label: t("claimPage.forms.fConcentration"), type: "text", placeholder: t("claimPage.forms.phExampleConcentration") },
+      { key: "volumeLiters", label: t("claimPage.forms.fVolumeLitres"), type: "number" },
+      { key: "purpose", label: t("claimPage.forms.fPurposeZone"), type: "text" },
     ],
   },
   accident_journal: {
-    submitLabel: "Записать ЧП",
+    submitLabel: t("claimPage.forms.submitIncident"),
     fields: [
-      { key: "description", label: "Что произошло", type: "text", required: true },
-      { key: "severity", label: "Насколько серьёзно", type: "text", placeholder: "лёгкое / среднее / тяжёлое" },
-      { key: "actionTaken", label: "Принятые меры", type: "text" },
+      { key: "description", label: t("claimPage.forms.fWhatHappened"), type: "text", required: true },
+      { key: "severity", label: t("claimPage.forms.fSeverity"), type: "text", placeholder: t("claimPage.forms.phSeverity") },
+      { key: "actionTaken", label: t("claimPage.forms.fActionsTaken"), type: "text" },
     ],
   },
   complaint_register: {
-    submitLabel: "Записать жалобу",
+    submitLabel: t("claimPage.forms.submitComplaint"),
     fields: [
-      { key: "complaintText", label: "Текст жалобы", type: "text", required: true },
-      { key: "source", label: "Источник (телефон/сайт/посетитель)", type: "text" },
-      { key: "actionTaken", label: "Принятые меры", type: "text" },
+      { key: "complaintText", label: t("claimPage.forms.fComplaintText"), type: "text", required: true },
+      { key: "source", label: t("claimPage.forms.fComplaintSource"), type: "text" },
+      { key: "actionTaken", label: t("claimPage.forms.fActionsTaken"), type: "text" },
     ],
   },
   hygiene: {
-    submitLabel: "Завершить осмотр",
+    submitLabel: t("claimPage.forms.submitInspection"),
     fields: [
-      { key: "allHealthy", label: "Все сотрудники допущены", type: "boolean" },
-      { key: "notes", label: "Примечания", type: "text" },
+      { key: "allHealthy", label: t("claimPage.forms.fAllHealthy"), type: "boolean" },
+      { key: "notes", label: t("claimPage.forms.fNotes"), type: "text" },
     ],
   },
   health_check: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "allHealthy", label: "Все сотрудники допущены", type: "boolean" },
-      { key: "notes", label: "Примечания", type: "text" },
+      { key: "allHealthy", label: t("claimPage.forms.fAllHealthy"), type: "boolean" },
+      { key: "notes", label: t("claimPage.forms.fNotes"), type: "text" },
     ],
   },
   cleaning: {
-    submitLabel: "Завершить уборку",
+    submitLabel: t("claimPage.forms.submitCleaning"),
     fields: [
-      { key: "completedSteps", label: "Что сделано (через запятую)", type: "text", placeholder: "пол, поверхности, тех. инвентарь" },
-      { key: "notes", label: "Замечания", type: "text" },
+      { key: "completedSteps", label: t("claimPage.forms.fDoneCommaSeparated"), type: "text", placeholder: t("claimPage.forms.phCleaningSteps") },
+      { key: "notes", label: t("claimPage.forms.fRemarks"), type: "text" },
     ],
   },
   breakdown_history: {
-    submitLabel: "Записать поломку",
+    submitLabel: t("claimPage.forms.submitBreakdown"),
     fields: [
-      { key: "equipmentName", label: "Оборудование", type: "text", required: true },
-      { key: "description", label: "Что сломалось", type: "text", required: true },
-      { key: "actionTaken", label: "Что сделано", type: "text" },
+      { key: "equipmentName", label: t("claimPage.forms.fEquipment"), type: "text", required: true },
+      { key: "description", label: t("claimPage.forms.fWhatBroke"), type: "text", required: true },
+      { key: "actionTaken", label: t("claimPage.forms.fWhatDone"), type: "text" },
     ],
   },
   ppe_issuance: {
-    submitLabel: "Записать выдачу СИЗ",
+    submitLabel: t("claimPage.forms.submitPpe"),
     fields: [
-      { key: "ppeName", label: "Тип СИЗ", type: "text", required: true, placeholder: "перчатки/халат/маска" },
-      { key: "recipient", label: "Кому выдано", type: "text", required: true },
-      { key: "quantity", label: "Количество", type: "number" },
+      { key: "ppeName", label: t("claimPage.forms.fPpeType"), type: "text", required: true, placeholder: t("claimPage.forms.phPpeTypes") },
+      { key: "recipient", label: t("claimPage.forms.fIssuedTo"), type: "text", required: true },
+      { key: "quantity", label: t("claimPage.forms.fQuantity"), type: "number" },
     ],
   },
   glass_items_list: {
-    submitLabel: "Записать",
+    submitLabel: t("claimPage.forms.submitRecord"),
     fields: [
-      { key: "itemName", label: "Наименование", type: "text", required: true },
-      { key: "material", label: "Материал (стекло/пластик/керамика)", type: "text" },
-      { key: "quantity", label: "Количество", type: "number" },
-      { key: "location", label: "Место хранения", type: "text" },
+      { key: "itemName", label: t("claimPage.forms.fItemName"), type: "text", required: true },
+      { key: "material", label: t("claimPage.forms.fMaterial"), type: "text" },
+      { key: "quantity", label: t("claimPage.forms.fQuantity"), type: "number" },
+      { key: "location", label: t("claimPage.forms.fStorageLocation"), type: "text" },
     ],
   },
   glass_control: {
-    submitLabel: "Завершить контроль",
+    submitLabel: t("claimPage.forms.submitControl"),
     fields: [
-      { key: "checkedItems", label: "Что проверено", type: "text", required: true, placeholder: "стаканы, тарелки, посуда" },
-      { key: "damaged", label: "Найдены повреждения", type: "boolean" },
-      { key: "actionTaken", label: "Действия (если повреждения)", type: "text" },
+      { key: "checkedItems", label: t("claimPage.forms.fWhatChecked"), type: "text", required: true, placeholder: t("claimPage.forms.phGlassware") },
+      { key: "damaged", label: t("claimPage.forms.fDamageFound"), type: "boolean" },
+      { key: "actionTaken", label: t("claimPage.forms.fActionsIfDamage"), type: "text" },
     ],
   },
   metal_impurity: {
-    submitLabel: "Записать контроль",
+    submitLabel: t("claimPage.forms.submitRecordControl"),
     fields: [
-      { key: "productName", label: "Продукт", type: "text", required: true },
-      { key: "batchNumber", label: "Номер партии", type: "text" },
-      { key: "metalDetected", label: "Металл обнаружен", type: "boolean" },
-      { key: "actionTaken", label: "Действия", type: "text" },
+      { key: "productName", label: t("claimPage.forms.fProduct"), type: "text", required: true },
+      { key: "batchNumber", label: t("claimPage.forms.fBatchNumber"), type: "text" },
+      { key: "metalDetected", label: t("claimPage.forms.fMetalDetected"), type: "boolean" },
+      { key: "actionTaken", label: t("claimPage.forms.fActions"), type: "text" },
     ],
   },
   perishable_rejection: {
-    submitLabel: "Записать утилизацию",
+    submitLabel: t("claimPage.forms.submitDisposal"),
     fields: [
-      { key: "productName", label: "Продукт", type: "text", required: true },
-      { key: "quantity", label: "Количество", type: "text" },
-      { key: "reason", label: "Причина (просрочка/повреждение/др.)", type: "text", required: true },
-      { key: "disposalMethod", label: "Способ утилизации", type: "text" },
+      { key: "productName", label: t("claimPage.forms.fProduct"), type: "text", required: true },
+      { key: "quantity", label: t("claimPage.forms.fQuantity"), type: "text" },
+      { key: "reason", label: t("claimPage.forms.fReasonExpiredDamaged"), type: "text", required: true },
+      { key: "disposalMethod", label: t("claimPage.forms.fDisposalMethod"), type: "text" },
     ],
   },
   product_writeoff: {
-    submitLabel: "Записать списание",
+    submitLabel: t("claimPage.forms.submitWriteOff"),
     fields: [
-      { key: "productName", label: "Продукт", type: "text", required: true },
-      { key: "quantity", label: "Количество", type: "text", required: true },
-      { key: "costRub", label: "Стоимость, ₽", type: "number" },
-      { key: "reason", label: "Причина", type: "text", required: true },
+      { key: "productName", label: t("claimPage.forms.fProduct"), type: "text", required: true },
+      { key: "quantity", label: t("claimPage.forms.fQuantity"), type: "text", required: true },
+      { key: "costRub", label: t("claimPage.forms.fCostRub"), type: "number" },
+      { key: "reason", label: t("claimPage.forms.fReason"), type: "text", required: true },
     ],
   },
   traceability_test: {
-    submitLabel: "Завершить проверку",
+    submitLabel: t("claimPage.forms.submitCheck"),
     fields: [
-      { key: "productBatch", label: "Партия / продукт", type: "text", required: true },
-      { key: "supplier", label: "Поставщик", type: "text" },
-      { key: "destinationTraced", label: "Прослежен путь до потребителя", type: "boolean" },
-      { key: "notes", label: "Замечания", type: "text" },
+      { key: "productBatch", label: t("claimPage.forms.fBatchProduct"), type: "text", required: true },
+      { key: "supplier", label: t("claimPage.forms.fSupplier"), type: "text" },
+      { key: "destinationTraced", label: t("claimPage.forms.fTraced"), type: "boolean" },
+      { key: "notes", label: t("claimPage.forms.fRemarks"), type: "text" },
     ],
   },
   general_cleaning: {
-    submitLabel: "Завершить генуборку",
+    submitLabel: t("claimPage.forms.submitDeepClean"),
     fields: [
-      { key: "areaName", label: "Помещение / зона", type: "text", required: true },
-      { key: "completedSteps", label: "Что сделано", type: "text", required: true },
-      { key: "controllerName", label: "Контролёр", type: "text" },
+      { key: "areaName", label: t("claimPage.forms.fRoomZone"), type: "text", required: true },
+      { key: "completedSteps", label: t("claimPage.forms.fWhatDone"), type: "text", required: true },
+      { key: "controllerName", label: t("claimPage.forms.fController"), type: "text" },
     ],
   },
   sanitation_day_control: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "completedSteps", label: "Что сделано", type: "text", required: true },
-      { key: "notes", label: "Замечания", type: "text" },
+      { key: "completedSteps", label: t("claimPage.forms.fWhatDone"), type: "text", required: true },
+      { key: "notes", label: t("claimPage.forms.fRemarks"), type: "text" },
     ],
   },
   sanitary_day_control: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "completedSteps", label: "Что сделано", type: "text", required: true },
-      { key: "notes", label: "Замечания", type: "text" },
+      { key: "completedSteps", label: t("claimPage.forms.fWhatDone"), type: "text", required: true },
+      { key: "notes", label: t("claimPage.forms.fRemarks"), type: "text" },
     ],
   },
   pest_control: {
-    submitLabel: "Завершить обработку",
+    submitLabel: t("claimPage.forms.submitTreatment"),
     fields: [
-      { key: "treatmentType", label: "Тип обработки (дератизация/дезинсекция)", type: "text", required: true },
-      { key: "agent", label: "Применённое средство", type: "text" },
-      { key: "areaTreated", label: "Обработанная зона", type: "text" },
-      { key: "contractorName", label: "Подрядчик / специалист", type: "text" },
+      { key: "treatmentType", label: t("claimPage.forms.fTreatmentType"), type: "text", required: true },
+      { key: "agent", label: t("claimPage.forms.fAgentUsed"), type: "text" },
+      { key: "areaTreated", label: t("claimPage.forms.fAreaTreated"), type: "text" },
+      { key: "contractorName", label: t("claimPage.forms.fContractor"), type: "text" },
     ],
   },
   intensive_cooling: {
-    submitLabel: "Завершить охлаждение",
+    submitLabel: t("claimPage.forms.submitCooling"),
     fields: [
-      { key: "productName", label: "Продукт", type: "text", required: true },
-      { key: "startTemp", label: "Температура старт (°C)", type: "number" },
-      { key: "endTemp", label: "Температура конец (°C)", type: "number" },
-      { key: "durationMinutes", label: "Время охлаждения, мин", type: "number" },
+      { key: "productName", label: t("claimPage.forms.fProduct"), type: "text", required: true },
+      { key: "startTemp", label: t("claimPage.forms.fStartTemp"), type: "number" },
+      { key: "endTemp", label: t("claimPage.forms.fEndTemp"), type: "number" },
+      { key: "durationMinutes", label: t("claimPage.forms.fCoolingMinutes"), type: "number" },
     ],
   },
   uv_lamp_runtime: {
-    submitLabel: "Завершить",
+    submitLabel: t("claimPage.forms.submitDone"),
     fields: [
-      { key: "runtimeHours", label: "Наработка часов (с прошлой проверки)", type: "number", required: true },
-      { key: "totalHours", label: "Общий ресурс, ч", type: "number" },
-      { key: "lampOk", label: "Лампа исправна", type: "boolean" },
-      { key: "notes", label: "Замечания", type: "text" },
+      { key: "runtimeHours", label: t("claimPage.forms.fRuntimeHours"), type: "number", required: true },
+      { key: "totalHours", label: t("claimPage.forms.fTotalHours"), type: "number" },
+      { key: "lampOk", label: t("claimPage.forms.fLampOk"), type: "boolean" },
+      { key: "notes", label: t("claimPage.forms.fRemarks"), type: "text" },
     ],
   },
   equipment_maintenance: {
-    submitLabel: "Записать обслуживание",
+    submitLabel: t("claimPage.forms.submitMaintenance"),
     fields: [
-      { key: "equipmentName", label: "Оборудование", type: "text", required: true },
-      { key: "workType", label: "Тип работ (плановое/внеплановое)", type: "text" },
-      { key: "description", label: "Что сделано", type: "text", required: true },
-      { key: "performerName", label: "Исполнитель", type: "text" },
+      { key: "equipmentName", label: t("claimPage.forms.fEquipment"), type: "text", required: true },
+      { key: "workType", label: t("claimPage.forms.fWorkType"), type: "text" },
+      { key: "description", label: t("claimPage.forms.fWhatDone"), type: "text", required: true },
+      { key: "performerName", label: t("claimPage.forms.fPerformer"), type: "text" },
     ],
   },
   equipment_calibration: {
-    submitLabel: "Записать поверку",
+    submitLabel: t("claimPage.forms.submitCalibration"),
     fields: [
-      { key: "equipmentName", label: "Прибор", type: "text", required: true },
-      { key: "method", label: "Метод поверки", type: "text" },
-      { key: "result", label: "Результат (годен/не годен)", type: "text" },
-      { key: "nextDate", label: "Следующая поверка", type: "date" },
+      { key: "equipmentName", label: t("claimPage.forms.fInstrument"), type: "text", required: true },
+      { key: "method", label: t("claimPage.forms.fCalibrationMethod"), type: "text" },
+      { key: "result", label: t("claimPage.forms.fCalibrationResult"), type: "text" },
+      { key: "nextDate", label: t("claimPage.forms.fNextCalibration"), type: "date" },
     ],
   },
   equipment_cleaning: {
-    submitLabel: "Завершить чистку",
+    submitLabel: t("claimPage.forms.submitCleanEquipment"),
     fields: [
-      { key: "equipmentName", label: "Оборудование", type: "text", required: true },
-      { key: "method", label: "Метод чистки", type: "text" },
-      { key: "agent", label: "Моющее/санит. средство", type: "text" },
-      { key: "rinseTemp", label: "Температура ополаскивания (°C)", type: "number" },
+      { key: "equipmentName", label: t("claimPage.forms.fEquipment"), type: "text", required: true },
+      { key: "method", label: t("claimPage.forms.fCleaningMethod"), type: "text" },
+      { key: "agent", label: t("claimPage.forms.fDetergent"), type: "text" },
+      { key: "rinseTemp", label: t("claimPage.forms.fRinseTemp"), type: "number" },
     ],
   },
   audit_plan: {
-    submitLabel: "Сохранить план",
+    submitLabel: t("claimPage.forms.submitSavePlan"),
     fields: [
-      { key: "topic", label: "Тема аудита", type: "text", required: true },
-      { key: "date", label: "Дата проведения", type: "date" },
-      { key: "responsible", label: "Ответственный", type: "text" },
+      { key: "topic", label: t("claimPage.forms.fAuditTopic"), type: "text", required: true },
+      { key: "date", label: t("claimPage.forms.fHeldOn"), type: "date" },
+      { key: "responsible", label: t("claimPage.forms.fResponsible"), type: "text" },
     ],
   },
   audit_protocol: {
-    submitLabel: "Сохранить протокол",
+    submitLabel: t("claimPage.forms.submitSaveProtocol"),
     fields: [
-      { key: "auditTopic", label: "Тема", type: "text", required: true },
-      { key: "findings", label: "Выявленные нарушения", type: "text" },
-      { key: "auditorName", label: "Аудитор", type: "text" },
+      { key: "auditTopic", label: t("claimPage.forms.fTopic"), type: "text", required: true },
+      { key: "findings", label: t("claimPage.forms.fFindings"), type: "text" },
+      { key: "auditorName", label: t("claimPage.forms.fAuditor"), type: "text" },
     ],
   },
   audit_report: {
-    submitLabel: "Сохранить отчёт",
+    submitLabel: t("claimPage.forms.submitSaveReport"),
     fields: [
-      { key: "summary", label: "Резюме", type: "text", required: true },
-      { key: "actions", label: "Корректирующие действия", type: "text" },
-      { key: "nextAuditDate", label: "Дата следующего аудита", type: "date" },
+      { key: "summary", label: t("claimPage.forms.fSummary"), type: "text", required: true },
+      { key: "actions", label: t("claimPage.forms.fCorrectiveActions"), type: "text" },
+      { key: "nextAuditDate", label: t("claimPage.forms.fNextAudit"), type: "date" },
     ],
   },
   training_plan: {
-    submitLabel: "Записать выполнение",
+    submitLabel: t("claimPage.forms.submitSaveCompletion"),
     fields: [
-      { key: "topic", label: "Тема обучения", type: "text", required: true },
-      { key: "completedBy", label: "Прошёл (ФИО)", type: "text" },
-      { key: "score", label: "Результат", type: "text" },
+      { key: "topic", label: t("claimPage.forms.fTrainingTopic"), type: "text", required: true },
+      { key: "completedBy", label: t("claimPage.forms.fCompletedBy"), type: "text" },
+      { key: "score", label: t("claimPage.forms.fResult"), type: "text" },
     ],
   },
 };
-
-
+}
 
 export default function ClaimPage({
   params,
@@ -450,6 +453,8 @@ export default function ClaimPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const t = useTranslations("miniUi");
+  const tc = useTranslations("common");
   const [claim, setClaim] = useState<Claim | null>(null);
   const [data, setData] = useState<Record<string, unknown>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -489,7 +494,7 @@ export default function ClaimPage({
         const body = (await res.json().catch(() => null)) as {
           reason?: string;
         } | null;
-        setError(claimReasonRu(body?.reason, res.status));
+        setError(claimReasonMessage(t, body?.reason, res.status));
         return;
       }
       const j = (await res.json()) as { claim: Claim };
@@ -518,7 +523,7 @@ export default function ClaimPage({
     } catch (e) {
       setError(humanizeFetchError(e));
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     void loadClaim();
@@ -533,7 +538,7 @@ export default function ClaimPage({
     writeDraft(id, { data, pipelineProgress, stepPhotos });
   }, [claim, id, data, pipelineProgress, stepPhotos]);
 
-  const form = claim ? JOURNAL_FORMS[claim.journalCode] : null;
+  const form = claim ? journalForms(t)[claim.journalCode] : null;
   const steps = pipeline?.steps ?? [];
   const requiredFields = (form?.fields ?? []).filter(
     // `required` есть не у всех вариантов TaskFormField (у булева его нет
@@ -554,7 +559,7 @@ export default function ClaimPage({
     .map((issue) =>
       claim?.journalCode === "cold_equipment_control" &&
       issue.field === "correctiveAction"
-        ? "Опишите, что сделали: температура вне нормы"
+        ? t("claimPage.describeOutOfNorm")
         : issue.message
     );
   const conditionalRequired = new Set(fieldCheck.conditionalRequired);
@@ -574,12 +579,12 @@ export default function ClaimPage({
     // числе при пошаговой инструкции: раньше pipeline её выключал, и
     // замер температуры уходил на сервер пустым.
     if (missingSteps > 0) {
-      setError(`Отметьте все шаги: ${doneSteps} из ${steps.length}`);
+      setError(t("claimPage.markAllSteps", { done: doneSteps, total: steps.length }));
       return;
     }
     if (missingFields.length > 0) {
       setError(
-        `Заполните: ${missingFields.map((f) => f.label).join(", ")}`
+        t("claimPage.fillIn", { fields: missingFields.map((f) => f.label).join(", ") })
       );
       return;
     }
@@ -591,7 +596,7 @@ export default function ClaimPage({
         !Number.isFinite(toNumber(data[f.key]))
     );
     if (badNumber) {
-      setError(`В поле «${badNumber.label}» нужно число, а не буквы.`);
+      setError(t("claimPage.numberRequired", { field: badNumber.label }));
       return;
     }
     if (fieldIssueMessages.length > 0) {
@@ -639,7 +644,7 @@ export default function ClaimPage({
         const msg =
           errs?.map((e) => e.message).join("; ") ||
           j?.message ||
-          claimReasonRu(j?.reason, res.status);
+          claimReasonMessage(t, j?.reason, res.status);
         throw new Error(msg);
       }
       clearDraft(id);
@@ -649,8 +654,8 @@ export default function ClaimPage({
     } catch (e) {
       setError(
         isFetchNetworkError(e)
-          ? "Нет связи. Введённое на экране сохранилось — нажми «Завершить» ещё раз, когда связь появится"
-          : humanizeFetchError(e, "Не получилось. Попробуй ещё раз.")
+          ? t("claimPage.offlineComplete")
+          : humanizeFetchError(e, t("claimPage.genericFailed"))
       );
     } finally {
       setSubmitting(false);
@@ -665,9 +670,9 @@ export default function ClaimPage({
       setError(
         allowFreeSkipReason
           ? skipReasons.length > 0
-            ? "Выбери причину из списка или напиши свою"
-            : "Напиши, почему сегодня заполнять не нужно"
-          : "Выбери причину из списка"
+            ? t("claimPage.skipPickOrWrite")
+            : t("claimPage.skipWrite")
+          : t("claimPage.skipPick")
       );
       return;
     }
@@ -684,15 +689,15 @@ export default function ClaimPage({
       });
       const j = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(j?.message || claimReasonRu(j?.reason, res.status));
+        throw new Error(j?.message || claimReasonMessage(t, j?.reason, res.status));
       }
       clearDraft(id);
       setTimeout(() => router.push("/mini/today"), 800);
     } catch (e) {
       setError(
         isFetchNetworkError(e)
-          ? "Нет связи. Попробуй ещё раз, когда связь появится"
-          : humanizeFetchError(e, "Не получилось. Попробуй ещё раз.")
+          ? t("claimPage.offlineSkip")
+          : humanizeFetchError(e, t("claimPage.genericFailed"))
       );
     } finally {
       setSubmitting(false);
@@ -719,15 +724,15 @@ export default function ClaimPage({
         body: JSON.stringify({ action: "release" }),
       });
       const j = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(claimReasonRu(j?.reason, res.status));
+      if (!res.ok) throw new Error(claimReasonMessage(t, j?.reason, res.status));
       // Окно обещало «Введённое не сохранится» — черновик убираем, иначе
       // он всплыл бы у того, кто возьмёт задачу на этом же телефоне.
       clearDraft(id);
-      toast.success("Задача снова в общем списке");
+      toast.success(t("claimPage.released"));
       router.push("/mini/today");
     } catch (e) {
       setError(
-        humanizeFetchError(e, "Не получилось вернуть задачу.")
+        humanizeFetchError(e, t("claimPage.releaseFailed"))
       );
     } finally {
       setSubmitting(false);
@@ -747,13 +752,13 @@ export default function ClaimPage({
               className="mini-btn-primary mini-press w-full"
             >
               <RotateCcw className="size-5" />
-              Попробовать ещё раз
+              {t("claimPage.retry")}
             </button>
             <Link
               href="/mini/today"
               className="mini-btn-secondary mini-press w-full"
             >
-              К задачам на сегодня
+              {t("claimPage.toToday")}
             </Link>
           </div>
         </div>
@@ -769,7 +774,7 @@ export default function ClaimPage({
           style={{ color: "var(--mini-text-muted)" }}
         >
           <Loader2 className="size-5 animate-spin" />
-          Открываем задачу…
+          {t("claimPage.opening")}
         </div>
       </div>
     );
@@ -787,12 +792,12 @@ export default function ClaimPage({
   // 3 из 4», «Заполните: Температура».
   const blockers: string[] = [];
   if (missingSteps > 0) {
-    blockers.push(`Отметьте шаги: ${doneSteps} из ${steps.length}`);
+    blockers.push(t("claimPage.markSteps", { done: doneSteps, total: steps.length }));
   }
   if (missingFields.length > 0) {
-    blockers.push(`Заполните: ${missingFields.map((f) => f.label).join(", ")}`);
+    blockers.push(t("claimPage.fillIn", { fields: missingFields.map((f) => f.label).join(", ") }));
   }
-  if (missingStepPhoto) blockers.push("Нужно фото шага");
+  if (missingStepPhoto) blockers.push(t("claimPage.needStepPhoto"));
   blockers.push(...fieldIssueMessages);
   const canSubmit = blockers.length === 0;
 
@@ -827,7 +832,7 @@ export default function ClaimPage({
             />
           </span>
           <div className="min-w-0">
-            <div className="mini-eyebrow">В работе</div>
+            <div className="mini-eyebrow">{t("claimPage.inProgress")}</div>
             <div
               className="text-[20px] font-semibold leading-tight"
               style={{ color: "var(--mini-text)" }}
@@ -844,11 +849,11 @@ export default function ClaimPage({
       {claim.verificationStatus === "rejected" ? (
         <div className="mini-warn">
           <div className="font-semibold" style={{ color: "var(--mini-warn)" }}>
-            Вернули на переделку
+            {t("claimPage.returnedForRework")}
           </div>
           <div className="mt-1">
             {claim.verifierComment?.trim() ||
-              "Комментария нет — уточни у заведующего производством, что поправить."}
+              t("claimPage.noComment")}
           </div>
           {claim.verifiedByName ? (
             <div className="mt-1" style={{ color: "var(--mini-text-muted)" }}>
@@ -856,8 +861,7 @@ export default function ClaimPage({
             </div>
           ) : null}
           <div className="mt-2" style={{ color: "var(--mini-text-muted)" }}>
-            Прошлые ответы уже стоят в полях — поправь, что нужно, и
-            нажми «Завершить» ещё раз.
+            {t("claimPage.previousAnswers")}
           </div>
         </div>
       ) : null}
@@ -977,7 +981,7 @@ export default function ClaimPage({
                   {step.requirePhoto ? (
                     <div className="mt-2">
                       <PhotoField
-                        label="Фото шага"
+                        label={t("claimPage.stepPhoto")}
                         value={stepPhotos[step.id] ?? ""}
                         onChange={(next) =>
                           setStepPhotos((prev) => ({ ...prev, [step.id]: next }))
@@ -991,7 +995,7 @@ export default function ClaimPage({
             })}
           </div>
           <div className="mini-note">
-            Отметь все шаги, заполни поля ниже — и нажми «Завершить».
+            {t("claimPage.stepsHint")}
           </div>
         </div>
       ) : null}
@@ -999,7 +1003,7 @@ export default function ClaimPage({
       {form ? (
         <div className="space-y-3">
           {steps.length > 0 ? (
-            <div className="mini-label px-1">Запиши результат</div>
+            <div className="mini-label px-1">{t("claimPage.recordResult")}</div>
           ) : null}
           {form.fields.map((f) =>
             // Числовое поле — тот же компонент, что в журналах: степпер
@@ -1047,8 +1051,7 @@ export default function ClaimPage({
             color: "var(--mini-text-muted)",
           }}
         >
-          Для этой задачи короткой формы нет — нажми «Завершить», чтобы
-          её закрыть. Подробную запись заполняют в полной версии кабинета.
+          {t("claimPage.noShortForm")}
         </div>
       ) : null}
 
@@ -1071,7 +1074,7 @@ export default function ClaimPage({
             className="text-[17px] font-semibold"
             style={{ color: "var(--mini-text)" }}
           >
-            Сегодня не требуется заполнять?
+            {t("claimPage.skipTitle")}
           </div>
           <div
             className="text-[15px] leading-relaxed"
@@ -1079,10 +1082,10 @@ export default function ClaimPage({
           >
             {skipReasons.length > 0
               ? allowFreeSkipReason
-                ? "Выбери причину или напиши свою — заведующий производством её увидит и подтвердит пропуск."
-                : "Выбери причину — заведующий производством её увидит и подтвердит пропуск."
-              : "Напиши причину — заведующий производством её увидит и подтвердит пропуск."}{" "}
-            Без причины пропустить нельзя.
+                ? t("claimPage.skipIntroPickOrWrite")
+                : t("claimPage.skipIntroPick")
+              : t("claimPage.skipIntroWrite")}{" "}
+            {t("claimPage.skipNoReason")}
           </div>
           {skipReasons.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -1109,8 +1112,8 @@ export default function ClaimPage({
               onChange={(e) => setSkipReason(e.target.value)}
               placeholder={
                 skipReasons.length > 0
-                  ? "Или своя причина"
-                  : "Причина (например: поставщик не приехал)"
+                  ? t("claimPage.skipOwnReason")
+                  : t("claimPage.skipReasonPlaceholder")
               }
               className="mini-input"
             />
@@ -1122,7 +1125,7 @@ export default function ClaimPage({
               disabled={submitting}
               className="mini-btn-secondary mini-press flex-1"
             >
-              Отмена
+              {tc("cancel")}
             </button>
             <button
               type="button"
@@ -1131,7 +1134,7 @@ export default function ClaimPage({
               className="mini-btn-danger mini-press flex-1"
             >
               {submitting ? <Loader2 className="size-4 animate-spin" /> : <SkipForward className="size-4" />}
-              Пропустить
+              {t("claimPage.skip")}
             </button>
           </div>
         </div>
@@ -1157,7 +1160,7 @@ export default function ClaimPage({
             className="mini-btn-primary mini-press w-full"
           >
             {submitting ? <Loader2 className="size-5 animate-spin" /> : <CheckCircle2 className="size-5" />}
-            {form?.submitLabel || "Завершить"}
+            {form?.submitLabel || t("claimPage.forms.submitDone")}
           </button>
           {/* Кнопка серая — человек должен видеть, чего именно не хватает,
               а не гадать. */}
@@ -1180,7 +1183,7 @@ export default function ClaimPage({
               className="mini-btn-secondary mini-press w-full"
             >
               <SkipForward className="size-4" />
-              Сегодня не требуется
+              {t("claimPage.skipToday")}
             </button>
           ) : null}
           {/* Выход из задачи, взятой по ошибке: без него «Сегодня» держит
@@ -1192,7 +1195,7 @@ export default function ClaimPage({
             className="mini-btn-ghost mini-press w-full"
           >
             <Undo2 className="size-4" />
-            Вернуть задачу — её возьмёт кто-то другой
+            {t("claimPage.releaseButton")}
           </button>
         </div>
       )}
@@ -1202,16 +1205,16 @@ export default function ClaimPage({
         onClose={() => setConfirmRelease(false)}
         onConfirm={releaseTask}
         variant="warn"
-        title="Вернуть задачу в общий список?"
+        title={t("claimPage.releaseTitle")}
         description={claim.scopeLabel}
         bullets={[
-          { label: "Задача снова станет свободной — её сможет взять любой" },
-          { label: "Введённое на этом экране не сохранится", tone: "warn" },
+          { label: t("claimPage.releaseBullet1") },
+          { label: t("claimPage.releaseBullet2"), tone: "warn" },
           // Экран задачи и инструкции на нём — на «ты», как и сами шаги.
-          { label: "После этого ты сможешь взять другую задачу" },
+          { label: t("claimPage.releaseBullet3") },
         ]}
-        confirmLabel="Вернуть задачу"
-        cancelLabel="Остаюсь делать"
+        confirmLabel={t("claimPage.releaseConfirm")}
+        cancelLabel={t("claimPage.releaseStay")}
       />
     </div>
   );
@@ -1219,13 +1222,14 @@ export default function ClaimPage({
 
 /** Возврат к списку задач — выход с экрана в любом состоянии. */
 function BackToday() {
+  const t = useTranslations("miniUi");
   return (
     <Link
       href="/mini/today"
       className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
     >
       <ArrowLeft className="size-5" />
-      Сегодня
+      {t("claimPage.backToday")}
     </Link>
   );
 }

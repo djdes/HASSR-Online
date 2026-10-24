@@ -268,7 +268,7 @@ export function EquipmentMaintenanceDocumentClient({
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      const error = new Error(result?.error || "Не удалось сохранить журнал");
+      const error = new Error(result?.error || committed.current.t("saveFailed"));
       if (!result?.error) failureRegistry.mark(error, "saveFailed");
       throw error;
     }
@@ -520,7 +520,7 @@ export function EquipmentMaintenanceDocumentClient({
       });
       const result = await response.json().catch(() => null);
       if (!response.ok) {
-        const error = new Error(result?.error || "Не удалось сохранить настройки");
+        const error = new Error(result?.error || committed.current.t("settingsFailed"));
         if (!result?.error) failureRegistry.mark(error, "settingsFailed");
         throw error;
       }

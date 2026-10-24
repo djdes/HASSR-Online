@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { CalendarPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,9 +43,9 @@ export function FocusTodayScroller({
   selector = "[data-focus-today]",
   copy,
   onCreate,
-  createLabel = "Создать запись за сегодня",
-  emptyTitle = "Записи за сегодня ещё нет",
-  emptyBody = "Нажмите кнопку ниже, чтобы создать строку за сегодняшнее число — откроется форма с предзаполненной датой.",
+  createLabel: createLabelProp,
+  emptyTitle: emptyTitleProp,
+  emptyBody: emptyBodyProp,
 }: {
   selector?: string;
   copy?: { noCreateBody: string; later: string; close: string };
@@ -53,6 +54,10 @@ export function FocusTodayScroller({
   emptyTitle?: string;
   emptyBody?: string;
 }) {
+  const t = useTranslations("journalUi.focusToday");
+  const createLabel = createLabelProp ?? t("createLabel");
+  const emptyTitle = emptyTitleProp ?? t("emptyTitle");
+  const emptyBody = emptyBodyProp ?? t("emptyBody");
   const searchParams = useSearchParams();
   const router = useRouter();
   const focus = searchParams.get("focus");
@@ -118,7 +123,7 @@ export function FocusTodayScroller({
               type="button"
               onClick={dismiss}
               className="rounded-full p-1 text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6]"
-              aria-label={copy?.close ?? "Закрыть"}
+              aria-label={copy?.close ?? t("close")}
             >
               <X className="size-5" />
             </button>
@@ -128,7 +133,7 @@ export function FocusTodayScroller({
           <p className="text-[14px] leading-[1.55] text-[#6f7282]">
             {onCreate
               ? emptyBody
-              : copy?.noCreateBody ?? "Форма создания записи откроется на этой странице — воспользуйтесь кнопкой «Добавить строку» в панели инструментов документа."}
+              : copy?.noCreateBody ?? t("noCreateBody")}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button
@@ -137,7 +142,7 @@ export function FocusTodayScroller({
               className="h-11 w-full rounded-2xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none sm:w-auto"
               onClick={dismiss}
             >
-              {copy?.later ?? "Позже"}
+              {copy?.later ?? t("later")}
             </Button>
             {onCreate ? (
               <Button

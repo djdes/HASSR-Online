@@ -10,6 +10,7 @@ import {
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { Archive, BookOpenText, Ellipsis, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { CreateDocumentDialog } from "@/components/journals/create-document-dialog";
@@ -78,19 +79,20 @@ function ProductWriteoffActionsMenu(props: {
   // Настройки / архив / удаление API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
   const restoreMenu = useRestoreMenuItems();
+  const tc = useTranslations("journalControls");
   return (
     <ResponsiveMenu
-      title="Действия"
+      title={tc("list.actions")}
       items={filterManageMenuItems([
         {
           key: "settings",
-          label: "Настройки",
+          label: tc("list.settings"),
           icon: <Pencil className="size-4 text-[#6f7282]" />,
           onSelect: props.onEdit,
         },
         {
           key: "print",
-          label: "Печать",
+          label: tc("list.print"),
           icon: <Printer className="size-4 text-[#6f7282]" />,
           onSelect: props.onPrint,
         },
@@ -101,7 +103,7 @@ function ProductWriteoffActionsMenu(props: {
           ? [
               {
                 key: "archive",
-                label: "Отправить в закрытые",
+                label: tc("documentLifecycle.sendToClosed"),
                 icon: <Archive className="size-4 text-[#6f7282]" />,
                 onSelect: props.onArchive,
               },
@@ -109,7 +111,7 @@ function ProductWriteoffActionsMenu(props: {
           : []),
         {
           key: "delete",
-          label: "Удалить",
+          label: tc("list.delete"),
           icon: <Trash2 className="size-4 text-[#6f7282]" />,
           tone: "danger" as const,
           onSelect: props.onDelete,
@@ -135,6 +137,8 @@ export function ProductWriteoffDocumentsClient({
   documents,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("journalUi.productWriteoffList");
+  const tc = useTranslations("journalControls");
   // Создание документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
   const [editingDocument, setEditingDocument] = useState<JournalListDocument | null>(null);
@@ -172,10 +176,10 @@ export function ProductWriteoffDocumentsClient({
   }
 
   async function handleDelete(documentId: string, title: string) {
-    if (!(await confirmAsync({ title: "Удалить документ?", description: `Документ «${title}» и все его записи будут удалены безвозвратно.`, variant: "danger", confirmLabel: "Удалить" }))) return;
+    if (!(await confirmAsync({ title: tc("documentActions.deleteTitle"), description: tc("documentLifecycle.deleteDescriptionWithTitle", { title }), variant: "danger", confirmLabel: tc("documentActions.delete") }))) return;
     const response = await fetch(`/api/journal-documents/${documentId}`, { method: "DELETE" });
     if (!response.ok) {
-      toast.error("Не удалось удалить документ");
+      toast.error(tc("documentActions.deleteError"));
       return;
     }
     router.refresh();
@@ -183,14 +187,13 @@ export function ProductWriteoffDocumentsClient({
 
   async function handleArchive(documentId: string) {
     const ok = await confirmAsync({
-      title: "Перенести документ в закрытые?",
-      description:
-        "Документ уйдёт из рабочего списка в раздел закрытых. Все записи сохранятся — отчёты и PDF по ним останутся.",
+      title: t("archiveTitle"),
+      description: t("archiveDescription"),
       bullets: [
-        { label: "Заполнять закрытый документ нельзя", tone: "warn" },
-        { label: "Вернуть в активные можно в любой момент", tone: "info" },
+        { label: t("archiveNoFill"), tone: "warn" },
+        { label: t("archiveRestorable"), tone: "info" },
       ],
-      confirmLabel: "Перенести",
+      confirmLabel: t("archiveConfirm"),
       variant: "warn",
     });
     if (!ok) return;
@@ -198,7 +201,7 @@ export function ProductWriteoffDocumentsClient({
       await patchDocument(documentId, { status: "closed" });
       router.refresh();
     } catch {
-      toast.error("Не удалось изменить статус документа");
+      toast.error(tc("documentLifecycle.statusFailed"));
     }
   }
 
@@ -215,7 +218,7 @@ export function ProductWriteoffDocumentsClient({
       setEditingDocument(null);
       router.refresh();
     } catch {
-      toast.error("Не удалось сохранить настройки");
+      toast.error(tc("documentDialog.settingsError"));
     } finally {
       setIsSaving(false);
     }
@@ -226,7 +229,7 @@ export function ProductWriteoffDocumentsClient({
       <div className="space-y-5">
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
           <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-            <JournalHeadingName fallback="Акт забраковки" />
+            <JournalHeadingName fallback={t("title")} />
           </h1>
           <JournalListActions
             templateCode={templateCode}
@@ -239,7 +242,7 @@ export function ProductWriteoffDocumentsClient({
                   templateName={templateName}
                   users={users}
                   triggerClassName={JOURNAL_ACTION_CREATE_CLASS}
-                  triggerLabel="Создать документ"
+                  triggerLabel={tc("list.create")}
                   triggerIcon={<Plus className="size-4" />}
                 />
               ) : null
@@ -266,7 +269,7 @@ export function ProductWriteoffDocumentsClient({
                 href={`/journals/${templateCode}/documents/${document.id}`}
                 className={`${JOURNAL_CARD_SECTION_CLASS} min-w-0`}
               >
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Комментарий</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("comment")}</div>
                 <div className={`${JOURNAL_CARD_VALUE_CLASS} truncate`}>
                   {document.config.comment || "—"}
                 </div>
@@ -275,7 +278,7 @@ export function ProductWriteoffDocumentsClient({
                 href={`/journals/${templateCode}/documents/${document.id}`}
                 className={JOURNAL_CARD_SECTION_CLASS}
               >
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{t("documentDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatProductWriteoffDate(document.config.documentDate || document.dateFrom)}
                 </div>
@@ -299,12 +302,12 @@ export function ProductWriteoffDocumentsClient({
       <Dialog open={!!editingDocument} onOpenChange={(open) => !open && setEditingDocument(null)}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[720px]">
           <DialogHeader className="border-b px-8 py-6">
-            <DialogTitle className="text-[22px] font-medium text-black">Настройки документа</DialogTitle>
+            <DialogTitle className="text-[22px] font-medium text-black">{t("settingsTitle")}</DialogTitle>
           </DialogHeader>
           {settings && (
             <div className="space-y-5 px-8 py-6">
               <div className="space-y-2">
-                <Label>Название документа</Label>
+                <Label>{t("documentName")}</Label>
                 <Input
                   value={settings.documentName}
                   onChange={(event) =>
@@ -314,7 +317,7 @@ export function ProductWriteoffDocumentsClient({
                 />
               </div>
               <div className="space-y-2">
-                <Label>№ акта</Label>
+                <Label>{t("actNumber")}</Label>
                 <Input
                   value={settings.actNumber}
                   onChange={(event) =>
@@ -324,7 +327,7 @@ export function ProductWriteoffDocumentsClient({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Дата документа</Label>
+                <Label>{t("documentDate")}</Label>
                 <Input
                   type="date"
                   value={settings.documentDate}
@@ -335,7 +338,7 @@ export function ProductWriteoffDocumentsClient({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Комментарий</Label>
+                <Label>{t("comment")}</Label>
                 <Textarea
                   value={settings.comment}
                   onChange={(event) =>
@@ -351,7 +354,7 @@ export function ProductWriteoffDocumentsClient({
                   disabled={isSaving}
                   className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
                 >
-                  {isSaving ? "Сохранение..." : "Сохранить"}
+                  {isSaving ? t("saving") : t("save")}
                 </Button>
               </div>
             </div>

@@ -16,6 +16,7 @@ export default async function BuildingsPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const orgId = getActiveOrgId(session);
   const tPoint = await getTranslations("navigation.shell.point");
+  const t = await getTranslations("settingsUi.buildingsPage");
   // Консультант уровня «просмотр» видит точки, но не меняет их:
   // отказ по клику выглядел бы как поломка.
   const readOnly = session.user.partnerAccess?.level === "view";
@@ -80,13 +81,10 @@ export default async function BuildingsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-          Точки и помещения
+          {t("title")}
         </h1>
         <p className="mt-1.5 max-w-[640px] text-[14px] leading-[1.6] text-[#6f7282]">
-          Точки бизнеса (здания с адресом) и помещения внутри них. По
-          помещениям раздаются задачи в журналах уборки — одна задача на
-          помещение в день. Если точек несколько, журналы можно вести
-          отдельно по каждой: включается тумблером ниже.
+          {t("description")}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -94,10 +92,10 @@ export default async function BuildingsPage() {
         <Link
           href="/settings/qr-posters?kind=rooms"
           className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-          title="Плакат A4 с QR-кодом на каждое помещение: сотрудник сканирует и вносит температуру и влажность без входа"
+          title={t("qrPostersHint")}
         >
           <QrCode className="size-4 text-[#5566f6]" />
-          QR-плакаты помещений
+          {t("qrPosters")}
         </Link>
       ) : null}
       {/* Мастер новой точки — главное действие страницы (меню: «+ Добавить точку»). */}
@@ -115,16 +113,16 @@ export default async function BuildingsPage() {
       </div>
       </div>
       <PageGuide
-        title="Как настроить точки и помещения"
+        title={t("guideTitle")}
         storageKey="settings-buildings-v4"
         bullets={[
-          { title: "Точка — это адрес", body: "Кафе на Ленина и кафе на Мира — две точки. Внутри каждой — помещения: кухня, зал, мойка, склад. По помещениям раздаются задачи уборки, по ним же печатаются журналы климата." },
-          { title: "Минимум для запуска", body: "Одна точка и 2–3 помещения. Если точек несколько — заведите каждую и включите «Вести журналы отдельно по точкам»: документы будут создаваться на каждую, а в шапке появится выбор точки." },
-          { title: "Сотрудники общие", body: "Сотрудники, должности и настройки одни на организацию. В карточке сотрудника чипами «Точки» можно ограничить, с каких точек ему приходят задачи; пусто — со всех." },
+          { title: t("guide1Title"), body: t("guide1Body") },
+          { title: t("guide2Title"), body: t("guide2Body") },
+          { title: t("guide3Title"), body: t("guide3Body") },
         ]}
         qa={[
-          { q: "Что будет с документами, если включить режим точек?", a: "Уже созданные документы останутся общими и будут видны на каждой точке. Со следующего периода документы создаются отдельно на каждую точку." },
-          { q: "А если удалить точку?", a: "Помещения точки удалятся, а документы журналов останутся в организации и станут общими." },
+          { q: t("qa1Q"), a: t("qa1A") },
+          { q: t("qa2Q"), a: t("qa2A") },
         ]}
       />
       <BuildingsClient

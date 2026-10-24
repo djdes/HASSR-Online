@@ -8,6 +8,8 @@ import {
 } from "@/lib/whats-new-seen";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import {
   Library,
   Dumbbell,
@@ -211,6 +213,8 @@ function iconForCategory(name: string): LucideIcon {
  * accordion'ы помещаются без скролла.
  */
 export function WhatsNewModal({ buildSha, notes, mode = "show" }: Props) {
+  const t = useTranslations("dashboardUi.whatsNewModal");
+  const locale = useLocale();
   const [open, setOpen] = useState(mode === "show");
   // По умолчанию открыта первая категория (если есть). Иначе ничего.
   const [openCategoryIdx, setOpenCategoryIdx] = useState<number | null>(0);
@@ -297,16 +301,16 @@ export function WhatsNewModal({ buildSha, notes, mode = "show" }: Props) {
                   id="whats-new-title"
                   className="text-[18px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]"
                 >
-                  Что нового в WeSetup
+                  {t("title")}
                 </h2>
                 {/* Окно теперь приходит в серверной разметке: дата — по
                     Москве, чтобы сервер и браузер написали одно и то же
                     (иначе около полуночи — расхождение гидрации). */}
                 <p className="mt-0.5 text-[12px] text-[#6f7282]" suppressHydrationWarning>
-                  Сборка{" "}
+                  {t("build")}{" "}
                   <span className="font-mono text-[#3848c7]">{buildSha}</span>
                   {" · "}
-                  {new Date().toLocaleDateString("ru-RU", {
+                  {new Date().toLocaleDateString(FORMAT_LOCALES[locale as Locale] ?? FORMAT_LOCALES.ru, {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -319,7 +323,7 @@ export function WhatsNewModal({ buildSha, notes, mode = "show" }: Props) {
               type="button"
               onClick={dismiss}
               className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#9b9fb3] hover:bg-white/60 hover:text-[#0b1024]"
-              aria-label="Закрыть"
+              aria-label={t("close")}
             >
               <X className="size-4" />
             </button>
@@ -413,7 +417,9 @@ export function WhatsNewModal({ buildSha, notes, mode = "show" }: Props) {
             onClick={dismiss}
             className="inline-flex h-11 w-full items-center justify-center rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
           >
-            Спасибо, понял · {totalCategories > 1 ? `${totalCategories} раздела` : "ок"}
+            {totalCategories > 1
+              ? t("gotItSections", { count: totalCategories })
+              : t("gotItOk")}
           </button>
           <a
             href="/whats-new"
@@ -421,7 +427,7 @@ export function WhatsNewModal({ buildSha, notes, mode = "show" }: Props) {
             rel="noreferrer"
             className="mt-2 block text-center text-[12.5px] text-[#6f7282] underline-offset-2 hover:underline"
           >
-            Вся история изменений — wesetup.ru/whats-new
+            {t("fullHistory")}
           </a>
         </div>
       </div>

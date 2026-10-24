@@ -3,6 +3,7 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FlaskConical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ORG_SPHERES } from "@/lib/org-profile";
@@ -24,6 +25,7 @@ export function CreateDemoDialog({
   currentSphere: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("layoutUi.createDemoDialog");
   const router = useRouter();
   const [sphere, setSphere] = useState(currentSphere);
   const [creating, setCreating] = useState(false);
@@ -39,13 +41,13 @@ export function CreateDemoDialog({
         body: JSON.stringify({ sphere }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось создать демо");
-      toast.success("Демо-организация готова");
+      if (!response.ok) throw new Error(data?.error ?? t("createFailed"));
+      toast.success(t("ready"));
       onClose();
       router.push("/dashboard?welcome-demo=1");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
       setCreating(false);
     }
   }
@@ -68,19 +70,17 @@ export function CreateDemoDialog({
           </div>
           <div className="min-w-0">
             <h2 className="text-[18px] font-semibold text-[#0b1024]">
-              Создать демо-организацию?
+              {t("title")}
             </h2>
             <p className="mt-1 text-[13px] leading-[1.55] text-[#6f7282]">
-              Появится отдельная тестовая организация «{demoOrgName(sphere)}»
-              с командой и журналами, заполненными за последние {DEMO_ORG_TTL_DAYS}{" "}
-              дней — с отклонениями и корректирующими действиями, как в жизни.
+              {t("description", { name: demoOrgName(sphere), days: DEMO_ORG_TTL_DAYS })}
             </p>
           </div>
         </div>
 
         <label className="mt-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-            Сфера демо
+            {t("sphereLabel")}
           </span>
           <select
             value={sphere}
@@ -96,17 +96,15 @@ export function CreateDemoDialog({
           </select>
           <span className="mt-1.5 block text-[12px] text-[#9b9fb3]">
             {sphere === currentSphere
-              ? "Как у вашей организации. Хотите посмотреть другую — смените."
-              : "Отличается от вашей — демо покажет набор журналов этой сферы."}
+              ? t("sameSphere")
+              : t("otherSphere")}
           </span>
         </label>
 
         <ul className="mt-3 space-y-1 rounded-2xl bg-[#f5f6ff] p-3 text-[13px] leading-snug text-[#3c4053]">
-          <li>· Ваша организация не изменится — демо живёт отдельно.</li>
-          <li>· Переключаться между ними — в меню профиля.</li>
-          <li>
-            · Удалится по кнопке «Удалить демо» или само через {DEMO_ORG_TTL_DAYS} дней.
-          </li>
+          <li>{t("noteUnchanged")}</li>
+          <li>{t("noteSwitch")}</li>
+          <li>{t("noteDelete", { days: DEMO_ORG_TTL_DAYS })}</li>
         </ul>
 
         <div className="mt-4 flex justify-end gap-2">
@@ -116,7 +114,7 @@ export function CreateDemoDialog({
             disabled={creating}
             className="inline-flex h-11 items-center rounded-2xl px-4 text-[15px] text-[#6f7282] transition-colors hover:bg-[#f5f6ff] disabled:opacity-50"
           >
-            Нет
+            {t("no")}
           </button>
           <button
             type="submit"
@@ -125,7 +123,7 @@ export function CreateDemoDialog({
             className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-wait disabled:bg-[#c9cef7]"
           >
             {creating ? <Loader2 className="size-4 animate-spin" /> : null}
-            {creating ? "Готовим демо…" : "Да, создать"}
+            {creating ? t("preparing") : t("confirm")}
           </button>
         </div>
       </form>

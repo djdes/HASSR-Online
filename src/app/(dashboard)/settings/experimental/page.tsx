@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { FlaskConical } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -21,6 +22,7 @@ export default async function ExperimentalPage() {
     redirect("/settings");
   }
   const orgId = getActiveOrgId(session);
+  const t = await getTranslations("settingsUi.experimentalPage");
 
   const org = await db.organization.findUnique({
     where: { id: orgId },
@@ -39,13 +41,10 @@ export default async function ExperimentalPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Бета-функции
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Экспериментальные фичи которые ещё не готовы для широкого
-              релиза. Включайте на свою организацию по одному — если что-то
-              сломалось, выключите toggle и вернётесь к старому виду без
-              потери данных. Все изменения попадают в audit-log.
+              {t("description")}
             </p>
           </div>
         </div>

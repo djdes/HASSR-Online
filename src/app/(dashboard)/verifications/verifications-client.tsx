@@ -3,6 +3,7 @@
 import { useLiveRefetch } from "@/lib/use-live-refetch";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   BookOpen,
@@ -53,10 +54,13 @@ type PendingItem = {
   temperatureNorm?: { min: number | null; max: number | null } | null;
 };
 
+type VerificationsTranslator = ReturnType<typeof useTranslations<"verificationsUi.verificationsClient">>;
+
 const TEMPERATURE_KEYS = new Set(["temperature", "temperatureC", "temp", "tempC"]);
 
 /** Значение вне нормы → подпись «вне нормы 2…6 °C», иначе null. */
 function outOfNormHint(
+  t: VerificationsTranslator,
   key: string,
   raw: unknown,
   norm: { min: number | null; max: number | null } | null | undefined
@@ -72,13 +76,11 @@ function outOfNormHint(
   const tooLow = typeof norm.min === "number" && value < norm.min;
   const tooHigh = typeof norm.max === "number" && value > norm.max;
   if (!tooLow && !tooHigh) return null;
-  const range =
-    typeof norm.min === "number" && typeof norm.max === "number"
-      ? `${norm.min}…${norm.max} °C`
-      : typeof norm.min === "number"
-        ? `от ${norm.min} °C`
-        : `до ${norm.max} °C`;
-  return `вне нормы ${range}`;
+  if (typeof norm.min === "number" && typeof norm.max === "number") {
+    return t("outOfNormRange", { min: String(norm.min), max: String(norm.max) });
+  }
+  if (typeof norm.min === "number") return t("outOfNormFrom", { min: String(norm.min) });
+  return t("outOfNormTo", { max: String(norm.max) });
 }
 
 type InProgressItem = {
@@ -119,14 +121,18 @@ function dayMonth(dateKey: string): string {
   return month && day ? `${day}.${month}` : dateKey;
 }
 
-function timeAgo(iso: string | null): string {
-  if (!iso) return "—";
+function minutesSince(iso: string): number {
   const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.max(0, Math.floor(diff / 60000));
-  if (m < 1) return "только что";
-  if (m < 60) return `${m} мин`;
+  return Math.max(0, Math.floor(diff / 60000));
+}
+
+function timeAgo(t: VerificationsTranslator, iso: string | null): string {
+  if (!iso) return "—";
+  const m = minutesSince(iso);
+  if (m < 1) return t("justNow");
+  if (m < 60) return t("minutes", { count: m });
   const h = Math.floor(m / 60);
-  return `${h} ч ${m % 60} мин`;
+  return t("hoursMinutes", { hours: h, minutes: m % 60 });
 }
 
 /**
@@ -135,14 +141,14 @@ function timeAgo(iso: string | null): string {
  * Отдельно от `timeAgo`: к нему приклеивали « назад» без разбора, и на
  * экране появлялись «только что назад» и «— назад».
  */
-function sinceText(iso: string | null): string {
-  const ago = timeAgo(iso);
-  if (ago === "—") return "недавно";
-  if (ago === "только что") return ago;
-  return `${ago} назад`;
+function sinceText(t: VerificationsTranslator, iso: string | null): string {
+  if (!iso) return t("recently");
+  if (minutesSince(iso) < 1) return t("justNow");
+  return t("sinceAgo", { time: timeAgo(t, iso) });
 }
 
 export function VerificationsClient() {
+  const t = useTranslations("verificationsUi.verificationsClient");
   const [data, setData] = useState<Resp | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -162,8 +168,8 @@ export function VerificationsClient() {
 
   useEffect(() => {
     void load();
-    const t = window.setInterval(() => void load(), 30000);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => void load(), 30000);
+    return () => window.clearInterval(timer);
   }, []);
 
   // Живое событие «журнал изменился» — перечитать сразу; опрос раз в
@@ -196,12 +202,12 @@ export function VerificationsClient() {
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success(action === "approve" ? "Одобрено" : "Отправлено на переделку");
+      toast.success(action === "approve" ? t("approved") : t("sentBack"));
       setCommentByItem((m) => ({ ...m, [id]: "" }));
       setExpandedId(null);
       await load();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("error"));
     } finally {
       setBusy(null);
     }
@@ -217,12 +223,12 @@ export function VerificationsClient() {
       });
       const j = (await res.json().catch(() => ({}))) as RemindResult;
       if (!res.ok) {
-        toast.error(j.error || "Не получилось отправить напоминание");
+        toast.error(j.error || t("remindFailed"));
         return;
       }
-      showRemindResult(j, () => "Напоминание отправлено");
+      showRemindResult(j, () => t("reminderSent"));
     } catch {
-      toast.error("Не получилось отправить напоминание");
+      toast.error(t("remindFailed"));
     } finally {
       setBusy(null);
     }
@@ -238,15 +244,15 @@ export function VerificationsClient() {
       {/* Счётчики pending / inProgress / notTaken в шапку не тащим —
           каждая секция ниже уже показывает свой count. */}
       <PageHeader
-        title="Проверка задач"
-        description="Нажмите на карточку, чтобы увидеть подробности, подсказку и кнопки «Одобрить» и «Переделать». Сверху — сделанное, снизу — ещё не взятые задачи."
+        title={t("title")}
+        description={t("description")}
       />
 
       {/* SECTION: Pending review (top — самое важное) */}
       <Section
-        title="Ждут проверки"
+        title={t("pendingTitle")}
         count={data.pendingReview.length}
-        empty="Нет задач на проверку"
+        empty={t("pendingEmpty")}
       >
         {data.pendingReview.map((item) => (
           <PendingCard
@@ -272,9 +278,9 @@ export function VerificationsClient() {
 
       {/* SECTION: In progress */}
       <Section
-        title="В работе"
+        title={t("inProgressTitle")}
         count={data.inProgress.length}
-        empty="Никто сейчас не работает"
+        empty={t("inProgressEmpty")}
       >
         {data.inProgress.map((item) => (
           <InProgressCard
@@ -288,9 +294,9 @@ export function VerificationsClient() {
 
       {/* SECTION: Not taken */}
       <Section
-        title="Ещё не взято"
+        title={t("notTakenTitle")}
         count={data.notTaken.length}
-        empty="Все задачи разобрали — отлично!"
+        empty={t("notTakenEmpty")}
       >
         {data.notTaken.map((item) => (
           <NotTakenCard key={item.scopeKey} item={item} />
@@ -350,6 +356,7 @@ function PendingCard({
   onReject: () => void;
   busy: boolean;
 }) {
+  const t = useTranslations("verificationsUi.verificationsClient");
   // Снимок раскладываем на понятные части: шаги, причина пропуска и
   // обычные поля. Раньше печатали `String(v)` подряд, и заведующая
   // видела «steps [object Object],[object Object]».
@@ -381,7 +388,7 @@ function PendingCard({
             <span className="font-medium text-[#0b1024]">{item.executedBy}</span>
             <span>·</span>
             <Clock className="size-3" />
-            {sinceText(item.completedAt)}
+            {sinceText(t, item.completedAt)}
           </div>
         </div>
         {expanded ? (
@@ -396,12 +403,12 @@ function PendingCard({
           {hasCompletion ? (
             <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-white p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                Введённые данные
+                {t("enteredData")}
               </div>
 
               {completion.skippedReason ? (
                 <div className="rounded-xl bg-[#fff8eb] px-3 py-2 text-[13px] text-[#8a5a00]">
-                  Пропущено: {completion.skippedReason}
+                  {t("skipped", { reason: completion.skippedReason })}
                 </div>
               ) : null}
 
@@ -438,6 +445,7 @@ function PendingCard({
                     // Замер вне нормы — красным и с подписью нормы, иначе
                     // заведующая пролистывала отклонение как обычную цифру.
                     const outHint = outOfNormHint(
+                      t,
                       f.key,
                       item.completionData?.[f.key],
                       item.temperatureNorm
@@ -467,7 +475,7 @@ function PendingCard({
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-white p-3 text-[12px] text-[#9b9fb3]">
-              Сотрудник завершил задачу, не заполнив поля.
+              {t("noFields")}
             </div>
           )}
 
@@ -477,11 +485,11 @@ function PendingCard({
               <BookOpen className="size-4 shrink-0 text-[#3848c7]" />
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  Гайд по проверке
+                  {t("guideTitle")}
                 </div>
                 {!guide ? (
                   <div className="mt-1 inline-flex items-center gap-1 text-[12px] text-[#6f7282]">
-                    <Loader2 className="size-3 animate-spin" /> Загружаю...
+                    <Loader2 className="size-3 animate-spin" /> {t("loading")}
                   </div>
                 ) : (
                   <div className="mt-1 space-y-2 text-[12px]">
@@ -510,7 +518,7 @@ function PendingCard({
                     {guide.checks.length > 0 ? (
                       <div className="rounded-xl bg-[#ecfdf5] p-2">
                         <div className="text-[11px] font-semibold text-[#136b2a]">
-                          ✓ Проверить:
+                          ✓ {t("checkLabel")}
                         </div>
                         <ul className="ml-4 list-disc text-[#136b2a]">
                           {guide.checks.map((c, i) => (
@@ -522,7 +530,7 @@ function PendingCard({
                     {guide.redFlags.length > 0 ? (
                       <div className="rounded-xl bg-[#fff4f2] p-2">
                         <div className="text-[11px] font-semibold text-[#a13a32]">
-                          🚩 Переделать если:
+                          🚩 {t("redoIf")}
                         </div>
                         <ul className="ml-4 list-disc text-[#a13a32]">
                           {guide.redFlags.map((r, i) => (
@@ -545,7 +553,7 @@ function PendingCard({
             <input
               value={comment}
               onChange={(e) => onCommentChange(e.target.value)}
-              placeholder="Комментарий (необязательно) — сотрудник увидит его в задаче и в Telegram"
+              placeholder={t("commentPlaceholder")}
               className="h-11 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none"
             />
             <div className="flex flex-wrap gap-2">
@@ -560,7 +568,7 @@ function PendingCard({
                 ) : (
                   <CheckCircle2 className="size-4" />
                 )}
-                Одобрить
+                {t("approve")}
               </button>
               <button
                 type="button"
@@ -569,7 +577,7 @@ function PendingCard({
                 className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#d2453d] px-4 text-[14px] font-medium text-white disabled:opacity-50"
               >
                 <XCircle className="size-4" />
-                Переделать
+                {t("redo")}
               </button>
             </div>
           </div>
@@ -588,6 +596,7 @@ function InProgressCard({
   onRemind: () => void;
   busy: boolean;
 }) {
+  const t = useTranslations("verificationsUi.verificationsClient");
   return (
     <div
       className={`rounded-2xl border p-3 transition-colors ${
@@ -617,7 +626,7 @@ function InProgressCard({
             <span>·</span>
             <Clock className="size-3" />
             <span className={item.overdue ? "font-medium text-[#a13a32]" : ""}>
-              {timeAgo(item.claimedAt)} в работе
+              {t("inWork", { time: timeAgo(t, item.claimedAt) })}
             </span>
             {item.overdue ? (
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-[#a13a32]">
@@ -625,8 +634,8 @@ function InProgressCard({
                 {/* «Зависло» без даты ничего не объясняло: задача со
                     вчера выглядела как взятая только что. */}
                 {item.fromPreviousDay && item.dateKey
-                  ? `Зависло с ${dayMonth(item.dateKey)}`
-                  : "Зависло"}
+                  ? t("stuckSince", { date: dayMonth(item.dateKey) })
+                  : t("stuck")}
               </span>
             ) : null}
           </div>
@@ -638,7 +647,7 @@ function InProgressCard({
           className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
-          Напомнить
+          {t("remind")}
         </button>
       </div>
     </div>
@@ -646,6 +655,7 @@ function InProgressCard({
 }
 
 function NotTakenCard({ item }: { item: NotTakenItem }) {
+  const t = useTranslations("verificationsUi.verificationsClient");
   return (
     <div className="rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-3">
       <div className="flex items-start gap-3">
@@ -667,7 +677,7 @@ function NotTakenCard({ item }: { item: NotTakenItem }) {
               </>
             ) : null}
             <span>·</span>
-            <span>никто не взял</span>
+            <span>{t("nobodyTook")}</span>
           </div>
         </div>
       </div>

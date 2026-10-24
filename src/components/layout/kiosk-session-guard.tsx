@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { LogOut, TabletSmartphone } from "lucide-react";
 
 import { KIOSK_LOCK_URL, signOutAndOpen } from "@/lib/sign-out";
@@ -22,6 +23,7 @@ const HEARTBEAT_MIN_MS = 25_000;
  * ничего не делает.
  */
 export function KioskSessionGuard() {
+  const t = useTranslations("layoutUi.kioskSessionGuard");
   const { data: session } = useSession();
   const kioskDeviceId = session?.user?.kioskDeviceId ?? null;
   const [leaving, setLeaving] = useState(false);
@@ -80,13 +82,13 @@ export function KioskSessionGuard() {
     <div className="pointer-events-none fixed bottom-4 left-1/2 z-[60] -translate-x-1/2">
       <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#dcdfed] bg-white/95 px-3 py-1.5 text-[13px] text-[#0b1024] shadow-[0_12px_36px_-12px_rgba(11,16,36,0.35)] backdrop-blur">
         <TabletSmartphone className="size-4 text-[#5566f6]" />
-        <span className="max-w-[180px] truncate font-medium">{session?.user?.name ?? "Сотрудник"}</span>
+        <span className="max-w-[180px] truncate font-medium">{session?.user?.name ?? t("employee")}</span>
         <button
           onClick={leave}
           disabled={leaving}
           className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7] transition-colors hover:bg-[#eef1ff] disabled:opacity-60"
         >
-          <LogOut className="size-3.5" /> Выйти
+          <LogOut className="size-3.5" /> {t("leave")}
         </button>
       </div>
     </div>

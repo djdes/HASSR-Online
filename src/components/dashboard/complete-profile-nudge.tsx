@@ -3,6 +3,7 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Check,
@@ -71,6 +72,38 @@ export type CompleteProfileInitial = {
  * Сразу после регистрации (`?welcome=1`) модалка открывается сама —
  * это единственный авто-показ, дальше только баннер.
  */
+type Translate = ReturnType<typeof useTranslations<"dashboardUi.completeProfileNudge">>;
+
+function sphereLabel(value: string, tn: Translate): string {
+  switch (value) {
+    case "restaurant": return tn("sphereRestaurant");
+    case "cafe": return tn("sphereCafe");
+    case "bar": return tn("sphereBar");
+    case "canteen": return tn("sphereCanteen");
+    case "fastfood": return tn("sphereFastfood");
+    case "bakery": return tn("sphereBakery");
+    case "catering": return tn("sphereCatering");
+    case "hotel": return tn("sphereHotel");
+    case "retail": return tn("sphereRetail");
+    case "gas_station": return tn("sphereGasStation");
+    case "education": return tn("sphereEducation");
+    case "medical": return tn("sphereMedical");
+    case "production": return tn("sphereProduction");
+    case "fitness": return tn("sphereFitness");
+    case "beauty": return tn("sphereBeauty");
+    default: return tn("sphereOther");
+  }
+}
+
+function ownershipLabel(value: string, tn: Translate): string {
+  switch (value) {
+    case "private": return tn("ownershipPrivate");
+    case "chain": return tn("ownershipChain");
+    case "state": return tn("ownershipState");
+    default: return tn("ownershipOther");
+  }
+}
+
 export function CompleteProfileNudge({
   email,
   initial,
@@ -78,6 +111,7 @@ export function CompleteProfileNudge({
   email: string;
   initial?: CompleteProfileInitial;
 }) {
+  const tn = useTranslations("dashboardUi.completeProfileNudge");
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome") === "1";
 
@@ -116,19 +150,18 @@ export function CompleteProfileNudge({
         <div className="flex items-center gap-3 bg-[#5566f6] px-4 py-2.5 text-white md:px-6">
           <Sparkles className="size-4 shrink-0" />
           <p className="hidden min-w-0 flex-1 text-[13px] leading-[1.45] sm:block">
-            <span className="font-medium">Завершите регистрацию:</span>{" "}
+            <span className="font-medium">{tn("bannerTitle")}</span>{" "}
             <span className="text-white/85">
-              название организации и телефон — они идут в шапку журналов и
-              PDF для проверок.
+              {tn("bannerBodyLong")}
             </span>
           </p>
           {/* На узком экране — короче: без «и PDF для проверок», чтобы
               уместиться в одну-две строки и не толкать кнопку с крестиком
               на отдельную строку. */}
           <p className="line-clamp-2 min-w-0 flex-1 text-[13px] leading-[1.45] sm:hidden">
-            <span className="font-medium">Завершите регистрацию:</span>{" "}
+            <span className="font-medium">{tn("bannerTitle")}</span>{" "}
             <span className="text-white/85">
-              название организации и телефон — они идут в шапку журналов.
+              {tn("bannerBodyShort")}
             </span>
           </p>
           <button
@@ -136,12 +169,12 @@ export function CompleteProfileNudge({
             onClick={() => setOpen(true)}
             className="shrink-0 rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-white/25"
           >
-            Завершить
+            {tn("finish")}
           </button>
           <button
             type="button"
             onClick={dismiss}
-            aria-label="Скрыть до следующего входа"
+            aria-label={tn("hideUntilNextLogin")}
             className="shrink-0 rounded-lg p-1 text-white/70 transition-colors hover:text-white"
           >
             <X className="size-4" />
@@ -212,6 +245,7 @@ function CompleteProfileModal({
   initial?: CompleteProfileInitial;
   onClose: () => void;
 }) {
+  const tn = useTranslations("dashboardUi.completeProfileNudge");
   const router = useRouter();
   // Фон под анкетой не должен прокручиваться (на iOS body.overflow не помогает).
   useBodyScrollLock(true);
@@ -300,7 +334,7 @@ function CompleteProfileModal({
         }
         if (found.personPost && !positionTouchedRef.current) setPositionName(found.personPost);
         setInnState("found");
-        toast.success(`Из ЕГРЮЛ: ${found.name}`);
+        toast.success(tn("fromEgrul", { name: found.name }));
       } catch {
         if (!cancelled) setInnState("missing");
       }
@@ -309,7 +343,7 @@ function CompleteProfileModal({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [inn]);
+  }, [inn, tn]);
 
   // Подсказки идут за сферой: у производства и столовой свой «директор».
   const positionOptions = useMemo(
@@ -364,11 +398,11 @@ function CompleteProfileModal({
         }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Не удалось сохранить");
+      if (!res.ok) throw new Error(data?.error || tn("saveFailed"));
       return (data ?? {}) as { buildings?: Array<{ id: string; name: string; address: string | null }> };
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Не удалось сохранить",
+        err instanceof Error ? err.message : tn("saveFailed"),
       );
       return null;
     }
@@ -388,22 +422,22 @@ function CompleteProfileModal({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error || `Не удалось сохранить «${name}»`);
+          throw new Error(data?.error || tn("saveNamedFailed", { name }));
         }
       }
-      toast.success("Точки названы — они уже в шапке и в меню");
+      toast.success(tn("namingSaved"));
       onClose();
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось сохранить");
+      toast.error(err instanceof Error ? err.message : tn("saveFailed"));
     } finally {
       setNamingSaving(false);
     }
   }
 
   const savedMessage = newPassword.trim()
-    ? "Готово. Данные сохранены, пароль для входа отправили на почту"
-    : "Готово. Данные организации сохранены";
+    ? tn("savedWithPassword")
+    : tn("saved");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -452,16 +486,16 @@ function CompleteProfileModal({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(data?.error || "Не удалось создать демо");
+        throw new Error(data?.error || tn("demoFailed"));
       }
-      toast.success("Демо-организация готова");
+      toast.success(tn("demoReady"));
       onClose();
       router.push("/dashboard?welcome-demo=1");
       router.refresh();
     } catch (err) {
       // Анкета уже сохранена — закрываем модалку, человек остаётся у себя.
       toast.error(
-        err instanceof Error ? err.message : "Не удалось создать демо",
+        err instanceof Error ? err.message : tn("demoFailed"),
       );
       onClose();
       router.refresh();
@@ -494,17 +528,17 @@ function CompleteProfileModal({
               className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]"
             >
               {namingBuildings
-                ? "Назовите точки"
+                ? tn("titleNaming")
                 : welcome
-                  ? "Аккаунт создан!"
-                  : "Завершите регистрацию"}
+                  ? tn("titleCreated")
+                  : tn("titleComplete")}
             </h2>
             <p className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
               {namingBuildings ? (
-                "Названия и адреса печатаются в шапке журналов и PDF"
+                tn("namingSubtitle")
               ) : (
                 <>
-                  Логин: <span className="text-[#3c4053]">{email}</span>
+                  {tn("login")} <span className="text-[#3c4053]">{email}</span>
                 </>
               )}
             </p>
@@ -512,7 +546,7 @@ function CompleteProfileModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={tn("close")}
             className="shrink-0 rounded-lg p-1 text-[#9b9fb3] transition-colors hover:text-[#0b1024]"
           >
             <X className="size-5" />
@@ -539,16 +573,16 @@ function CompleteProfileModal({
           className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 sm:space-y-3 sm:p-5"
         >
           <Field
-            label="Название организации"
+            label={tn("orgName")}
             required
-            error={touched.org && !nameOk ? "Минимум 2 символа" : null}
+            error={touched.org && !nameOk ? tn("min2Chars") : null}
           >
             <input
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, org: true }))}
               aria-required
-              placeholder="ООО «Ромашка»"
+              placeholder={tn("orgNamePlaceholder")}
               maxLength={200}
               className={CONTROL_CLASS}
             />
@@ -564,7 +598,7 @@ function CompleteProfileModal({
               «скопировать» перехватывались бы фокусом инпута. */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
             <Field
-              label="Телефон"
+              label={tn("phone")}
               required
               className="sm:w-[188px] sm:shrink-0"
               invalid={touched.phone && !phoneOk}
@@ -593,7 +627,7 @@ function CompleteProfileModal({
               большинства, а снять галочку дешевле, чем искать экран. */}
           <div className="flex items-stretch gap-2">
             <label
-              title="Появитесь в списке команды с должностью и сможете подтверждать заполненные журналы"
+              title={tn("asEmployeeTitle")}
               className={`flex cursor-pointer items-center gap-2 rounded-2xl border px-3 transition-colors ${
                 asEmployee
                   ? "shrink-0 border-[#5566f6]/40 bg-[#f5f6ff]"
@@ -607,17 +641,17 @@ function CompleteProfileModal({
                 className="size-4 shrink-0 cursor-pointer accent-[#5566f6]"
               />
               <span className="whitespace-nowrap text-[14px] font-medium text-[#0b1024]">
-                Я сотрудник
+                {tn("asEmployee")}
               </span>
               {!asEmployee ? (
                 <span className="truncate text-[12px] text-[#6f7282]">
-                  без должности в команде
+                  {tn("noPosition")}
                 </span>
               ) : null}
             </label>
 
             {asEmployee ? (
-              <Field label="Должность" className="min-w-0 flex-1">
+              <Field label={tn("position")} className="min-w-0 flex-1">
                 <input
                   value={positionName}
                   onChange={(e) => {
@@ -641,7 +675,7 @@ function CompleteProfileModal({
           {/* Остальное необязательно и стоит парами по смыслу, чтобы анкета
               помещалась в первый экран телефона. */}
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Сфера">
+            <Field label={tn("sphere")}>
               <SelectShell>
                 <select
                   value={sphere}
@@ -653,14 +687,14 @@ function CompleteProfileModal({
                 >
                   {ORG_SPHERES.map((s) => (
                     <option key={s.value} value={s.value}>
-                      {s.label}
+                      {sphereLabel(s.value, tn)}
                     </option>
                   ))}
                 </select>
               </SelectShell>
             </Field>
 
-            <Field label="Тип">
+            <Field label={tn("ownership")}>
               <SelectShell>
                 <select
                   value={ownershipKind}
@@ -672,7 +706,7 @@ function CompleteProfileModal({
                 >
                   {ORG_OWNERSHIP.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {ownershipLabel(o.value, tn)}
                     </option>
                   ))}
                 </select>
@@ -681,7 +715,7 @@ function CompleteProfileModal({
           </div>
 
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-2">
-            <Field label="Точек" plain>
+            <Field label={tn("locations")} plain>
               {/* -my-1: кнопки счётчика 32px, а строка значения в соседних
                   полях 24px — вытягиваем поле до общей высоты, зона нажатия
                   остаётся 32px. */}
@@ -691,12 +725,12 @@ function CompleteProfileModal({
                   onChange={setLocationsCount}
                   min={1}
                   max={MAX_LOCATIONS}
-                  ariaLabel="Количество точек"
+                  ariaLabel={tn("locationsCount")}
                 />
               </span>
             </Field>
 
-            <Field label="ИНН">
+            <Field label={tn("inn")}>
               {/* Иконка справа обещает автозаполнение: лупа до ввода, спиннер,
                   галочка или предупреждение после. */}
               <span className="flex items-center gap-1">
@@ -714,24 +748,24 @@ function CompleteProfileModal({
                 {innState === "loading" ? (
                   <Loader2
                     className="size-4 shrink-0 animate-spin text-[#5566f6]"
-                    aria-label="Ищем в ЕГРЮЛ"
+                    aria-label={tn("egrulSearching")}
                   />
                 ) : innState === "found" ? (
                   <Check
                     className="size-4 shrink-0 text-[#116b2a]"
-                    aria-label="Найдено в ЕГРЮЛ"
+                    aria-label={tn("egrulFound")}
                   />
                 ) : innState === "missing" ? (
                   <CircleAlert
                     className="size-4 shrink-0 text-[#a13a32]"
-                    aria-label="По этому ИНН ничего не нашли"
+                    aria-label={tn("egrulMissing")}
                   />
                 ) : (
                   <span
-                    title="Введите ИНН: название, адрес, руководителя и реквизиты подставим из ЕГРЮЛ"
+                    title={tn("innHint")}
                     className="flex shrink-0 text-[#9b9fb3]"
                   >
-                    <Search className="size-4" aria-label="Подставим данные из ЕГРЮЛ по ИНН" />
+                    <Search className="size-4" aria-label={tn("innAutofill")} />
                   </span>
                 )}
               </span>
@@ -739,11 +773,11 @@ function CompleteProfileModal({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Ваше имя">
+            <Field label={tn("yourName")}>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Мария Иванова"
+                placeholder={tn("yourNamePlaceholder")}
                 maxLength={100}
                 className={CONTROL_CLASS}
               />
@@ -753,9 +787,9 @@ function CompleteProfileModal({
                 записать. Кнопка справа подбирает другой; можно и напечатать
                 свой — от 6 знаков. */}
             <Field
-              label="Пароль для входа"
+              label={tn("password")}
               error={
-                touched.password && !passwordOk ? "Минимум 6 знаков" : null
+                touched.password && !passwordOk ? tn("min6Chars") : null
               }
             >
               <span className="flex items-center gap-1">
@@ -774,8 +808,8 @@ function CompleteProfileModal({
                 <button
                   type="button"
                   onClick={() => setNewPassword(suggestPassword())}
-                  aria-label="Подобрать другой пароль"
-                  title="Другой пароль"
+                  aria-label={tn("suggestPassword")}
+                  title={tn("anotherPassword")}
                   className="-my-0.5 -mr-1.5 flex size-7 shrink-0 items-center justify-center rounded-lg text-[#5566f6] transition-colors hover:bg-[#eef1ff] hover:text-[#3848c7]"
                 >
                   <RefreshCw className="size-3.5" />
@@ -787,12 +821,7 @@ function CompleteProfileModal({
           {/* Единственное пояснение: что произойдёт с точками. */}
           {locationsCount > 1 ? (
             <p className="text-[12px] leading-snug text-[#6f7282]">
-              Создадим {locationsCount}{" "}
-              {locationsCount % 10 >= 2 && locationsCount % 10 <= 4 && (locationsCount % 100 < 12 || locationsCount % 100 > 14)
-                ? "точки"
-                : "точек"}
-              : журналы по каждой отдельно, сотрудники общие. Названия и
-              адреса — в настройках.
+              {tn("locationsNote", { count: locationsCount })}
             </p>
           ) : null}
         </form>
@@ -814,17 +843,17 @@ function CompleteProfileModal({
                 {demoLoading ? (
                   <>
                     <Loader2 className="size-4 animate-spin text-[#5566f6]" />
-                    Готовим…
+                    {tn("preparing")}
                   </>
                 ) : (
                   <>
                     <Sparkles className="size-4 text-[#5566f6]" />
-                    Показать демо
+                    {tn("showDemo")}
                   </>
                 )}
               </button>
               <p className="mt-1.5 whitespace-nowrap text-center text-[11px] leading-snug text-[#9b9fb3]">
-                Отдельная организация, 7 дней
+                {tn("demoNote")}
               </p>
             </div>
             <button
@@ -834,7 +863,7 @@ function CompleteProfileModal({
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c9cef7] disabled:shadow-none"
             >
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              Готово
+              {tn("done")}
             </button>
           </div>
         </div>
@@ -872,6 +901,7 @@ function LocationNamingStep({
   onSkip: () => void;
   onSave: () => void;
 }) {
+  const tn = useTranslations("dashboardUi.completeProfileNudge");
   const inputClass =
     "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
   return (
@@ -885,8 +915,8 @@ function LocationNamingStep({
               onChange={(e) =>
                 onChange(items.map((it, i) => (i === index ? { ...it, name: e.target.value } : it)))
               }
-              placeholder={`Точка ${index + 1}`}
-              aria-label={`Название точки ${index + 1}`}
+              placeholder={tn("pointPlaceholder", { index: index + 1 })}
+              aria-label={tn("pointNameLabel", { index: index + 1 })}
               className={inputClass}
             />
             <input
@@ -895,14 +925,14 @@ function LocationNamingStep({
               onChange={(e) =>
                 onChange(items.map((it, i) => (i === index ? { ...it, address: e.target.value } : it)))
               }
-              placeholder="Адрес"
-              aria-label={`Адрес точки ${index + 1}`}
+              placeholder={tn("address")}
+              aria-label={tn("pointAddressLabel", { index: index + 1 })}
               className={inputClass}
             />
           </div>
         ))}
         <p className="text-[12px] leading-snug text-[#6f7282]">
-          Сотрудники общие; кому с какой точки приходят задачи — в карточке сотрудника.
+          {tn("namingNote")}
         </p>
       </div>
       <div className="shrink-0 border-t border-[#eef0f6] p-4 sm:p-5">
@@ -912,7 +942,7 @@ function LocationNamingStep({
             onClick={onSkip}
             className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            Позже
+            {tn("later")}
           </button>
           <button
             type="button"
@@ -921,7 +951,7 @@ function LocationNamingStep({
             className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            Сохранить
+            {tn("save")}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Award } from "lucide-react";
 
 import { requireAuth } from "@/lib/auth-helpers";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
  * клиента, заявку подать не может — путь в PARTNER_DENYLIST middleware.
  */
 export default async function PartnerApplicationPage() {
+  const t = await getTranslations("settingsUi.partnerPage");
   const session = await requireAuth();
   if (session.user.partnerAccess) redirect("/partner");
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
@@ -26,11 +28,10 @@ export default async function PartnerApplicationPage() {
         </span>
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Стать партнёром
+            {t("title")}
           </h1>
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-            Консультируете по СанПиН / ХАССП, внедряете системы или обслуживаете оборудование? Подключайте своих
-            клиентов к WeSetup под собственным брендом и получайте вознаграждение с их подписки.
+            {t("description")}
           </p>
         </div>
       </div>

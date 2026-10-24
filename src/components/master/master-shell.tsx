@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Building2, Library, Loader2, LogOut, PenLine, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/logo";
@@ -38,13 +39,15 @@ export function MasterShell({
   returnTargets,
   children,
 }: MasterShellProps) {
+  const t = useTranslations("masterUi.masterShell");
+  const tRename = useTranslations("masterUi.renameMasterCabinet");
   const [switching, setSwitching] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
   /** Название кабинета — переименовывается карандашом в шапке. */
   const [name, setName] = useState(organizationName);
 
   async function rename() {
-    const result = await renameMasterCabinetDialog({ currentName: name, endpoint: "/api/master/cabinet" });
+    const result = await renameMasterCabinetDialog({ currentName: name, endpoint: "/api/master/cabinet", t: tRename });
     if (result) setName(result.name);
   }
   const initials = (userName || userEmail || "?").trim().slice(0, 1).toUpperCase();
@@ -54,7 +57,7 @@ export function MasterShell({
     try {
       await switchOrganizationAndOpen(target.id, "/dashboard");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось переключиться");
+      toast.error(err instanceof Error ? err.message : t("switchFailed"));
       setSwitching(false);
     }
   }
@@ -71,12 +74,12 @@ export function MasterShell({
   }));
   const returnEntries: ResponsiveMenuEntry[] =
     returnItems.length === 1
-      ? [{ ...returnItems[0], label: "Моя организация", title: returnTargets[0].name }]
+      ? [{ ...returnItems[0], label: t("myOrganization"), title: returnTargets[0].name }]
       : returnItems.length > 1
         ? [
             {
               key: "return",
-              label: "Моя организация",
+              label: t("myOrganization"),
               icon: <Building2 className="size-4 text-[#5566f6]" />,
               items: returnItems,
             },
@@ -87,14 +90,14 @@ export function MasterShell({
     ...returnEntries,
     {
       key: "logout",
-      label: "Выйти",
+      label: t("logout"),
       icon: <LogOut className="size-4 text-[#6f7282]" />,
       // Полный выход (`lib/sign-out.ts`). Раньше `signOut` next-auth гасил
       // одну свою куку, по остальным proxy возвращал в кабинет — выйти
       // из мастер-кабинета было нельзя.
       onSelect: () =>
         void signOutAndOpen("/login").catch(() =>
-          toast.error("Не удалось выйти. Проверьте связь и попробуйте ещё раз.")
+          toast.error(t("logoutFailed"))
         ),
       tone: "danger" as const,
     },
@@ -120,21 +123,21 @@ export function MasterShell({
                   type="button"
                   onClick={() => void rename()}
                   className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 max-sm:-my-2 max-sm:size-11"
-                  aria-label="Переименовать мастер-кабинет"
-                  title="Переименовать"
+                  aria-label={t("renameAria")}
+                  title={t("renameTitle")}
                   data-testid="master-rename"
                 >
                   <PenLine className="size-3.5" />
                 </button>
               </span>
               <span className="block truncate text-[11px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
-                Мастер-кабинет справочников
+                {t("subtitle")}
               </span>
             </span>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {switching ? <Loader2 className="size-4 animate-spin text-[#5566f6]" aria-label="Переключаем" /> : null}
+            {switching ? <Loader2 className="size-4 animate-spin text-[#5566f6]" aria-label={t("switching")} /> : null}
             <ResponsiveMenu
               title={userName || userEmail}
               contentClassName="w-[280px] rounded-2xl p-1.5"
@@ -142,7 +145,7 @@ export function MasterShell({
               trigger={
                 <button
                   type="button"
-                  aria-label="Профиль"
+                  aria-label={t("profile")}
                   className="flex size-11 items-center justify-center rounded-full bg-[#eef1ff] text-[14px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#e3e8ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:size-10"
                 >
                   {initials}
@@ -161,11 +164,11 @@ export function MasterShell({
               type="button"
               onClick={() => setAccessOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 max-sm:min-h-11"
-              title="Пригласить по почте, дать или убрать доступ к кабинету"
+              title={t("accessTitle")}
               data-testid="master-access"
             >
               <Users className="size-3.5 text-[#5566f6]" />
-              Доступ
+              {t("access")}
             </button>
           </div>
         ) : null}
@@ -181,7 +184,7 @@ export function MasterShell({
         <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-4 text-[12px] text-[#6f7282] md:px-8">
           <span className="inline-flex items-center gap-2">
             <BrandLogo height={16} title="WeSetup" />
-            Мастер-кабинет справочников
+            {t("subtitle")}
           </span>
           <a href="mailto:support@wesetup.ru" className="transition-colors duration-150 hover:text-[#5566f6]">
             support@wesetup.ru

@@ -2,6 +2,7 @@
 
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Check,
   ChevronDown,
@@ -12,26 +13,19 @@ import { cn } from "@/lib/utils";
 import { PricingCalculator } from "@/components/public/pricing-calculator";
 import {
   EXTRA_USER_PRICE_RUB,
-  LARGE_TEAM_NOTE,
   PLAN_CATALOG,
   SUBSCRIPTION_MAX_USERS,
   catalogPlanIdFor,
-  employeesGenitiveLabel,
-  employeesLabel,
   type CatalogPlanId,
 } from "@/lib/plan-catalog";
+import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
+import { formatNumber, type Locale } from "@/i18n/locales";
 import { PlanCard } from "@/components/pricing/plan-card";
 import { PromoPrice, type PersonalDiscount } from "@/components/pricing/promo-price";
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 import { formatPriceRub } from "@/lib/billing-period";
-import { planBreakdownRows, subscriptionTotal } from "@/lib/cabinet-plan";
-
-/** Что даёт железо — те же три пункта, что в карточке на лендинге. */
-const HARDWARE_POINTS = [
-  "Датчики в холодильники — температура пишется сама",
-  "Планшет на кухне и NFC-брелоки для смены",
-  "Выезд, монтаж и обучение смены",
-];
+import { subscriptionTotal } from "@/lib/cabinet-plan";
 
 type Props = {
   /** Текущее значение `Organization.subscriptionPlan`. */
@@ -87,6 +81,8 @@ export function PlanUpgrade({
   payHref = "/order?plan=monthly",
   freeAction = null,
 }: Props) {
+  const t = useTranslations("settingsUi.planUpgrade");
+  const locale = useLocale() as Locale;
   const [hardwareOpen, setHardwareOpen] = useState(false);
 
   const currentId: CatalogPlanId = catalogPlanIdFor(currentPlan);
@@ -99,7 +95,48 @@ export function PlanUpgrade({
     promotion: subscriptionPromotion,
     personal: subscriptionDiscount,
   });
-  const rows = planBreakdownRows(total.quote);
+  const employees = (count: number) => t("employees", { count });
+  const employeesGenitive = (count: number) => t("employeesGenitive", { count });
+  // Что даёт железо — те же три пункта, что в карточке на лендинге.
+  const hardwarePoints = [t("hardwarePoint1"), t("hardwarePoint2"), t("hardwarePoint3")];
+  const planCopy: Record<CatalogPlanId, { name: string; features: string[] }> = {
+    free: {
+      name: t("planFreeName"),
+      features: [
+        employees(FREE_MAX_USERS),
+        t("planFreeJournals", { count: JOURNALS_TOTAL }),
+        t("planFreeTelegram"),
+        t("planFreePdf"),
+        t("planFreeNoLimits"),
+      ],
+    },
+    paid: {
+      name: t("planPaidName"),
+      features: [
+        t("planPaidUpTo", { employees: employeesGenitive(SUBSCRIPTION_MAX_USERS) }),
+        t("planPaidIot"),
+        t("planPaidSupport"),
+      ],
+    },
+  };
+  const rows = [
+    {
+      label: t("breakdownBase", { employees: employeesGenitive(SUBSCRIPTION_MAX_USERS) }),
+      amountRub: total.quote.baseRub,
+    },
+    ...(total.quote.extraEmployees > 0
+      ? [
+          {
+            label: t("breakdownExtra", {
+              max: SUBSCRIPTION_MAX_USERS,
+              count: total.quote.extraEmployees,
+              price: formatPriceRub(EXTRA_USER_PRICE_RUB),
+            }),
+            amountRub: total.quote.extraRub,
+          },
+        ]
+      : []),
+  ];
   const breakdown = total.quote.isFree ? null : (
     <dl data-testid="plan-breakdown" className="mt-3 w-full max-w-[440px] space-y-1 text-[13.5px]">
       {rows.map((row) => (
@@ -109,13 +146,13 @@ export function PlanUpgrade({
         </div>
       ))}
       <div className="flex items-baseline justify-between gap-4 border-t border-[#ececf4] pt-1.5">
-        <dt className="font-semibold text-[#0b1024]">Итого</dt>
+        <dt className="font-semibold text-[#0b1024]">{t("total")}</dt>
         <dd className="shrink-0 text-right" data-testid="plan-total">
           <PromoPrice
             price={total.withPromotion}
             personal={subscriptionDiscount}
             size="sm"
-            suffix="/мес"
+            suffix={t("perMonth")}
             showBadge={false}
           />
         </dd>
@@ -128,39 +165,44 @@ export function PlanUpgrade({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Ваш план: {currentPlanLabel}
+            {t("yourPlan", { plan: currentPlanLabel })}
           </h2>
           <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]">
             <Users className="size-3.5" />
             {currentId === "free"
               ? activeUsers > freeUserLimit
                 ? // Сверх бесплатного (до решения после бесплатного периода) дробь «4/1» путает.
-                  `${employeesLabel(activeUsers)} · бесплатный тариф — ${employeesLabel(freeUserLimit)}`
-                : `${activeUsers}/${freeUserLimit} сотрудников · свободно мест: ${seatsLeft}`
-              : employeesLabel(activeUsers)}
+                  t("overFreeLine", { users: employees(activeUsers), free: employees(freeUserLimit) })
+                : t("seatsLine", { used: activeUsers, limit: freeUserLimit, left: seatsLeft })
+              : employees(activeUsers)}
           </p>
           {planNote ? (
             <p className="mt-1 text-[13px] text-[#6f7282]">{planNote}</p>
           ) : null}
           {currentId === "free" ? (
             <p className="mt-2 text-[13.5px] text-[#3c4053]">
-              {employeesLabel(freeUserLimit)} бесплатно; для команды — подписка
+              {t("freeSummary", { employees: employees(freeUserLimit) })}
               {total.quote.isFree ? (
                 <>
-                  {" "}от{" "}
-                  <PromoPrice
-                    price={applyPromotion(subscriptionMonthly, subscriptionPromotion)}
-                    personal={subscriptionDiscount}
-                    size="text"
-                    tone="inherit"
-                    suffix="/мес"
-                    showBadge={false}
-                  />{" "}
-                  до {SUBSCRIPTION_MAX_USERS} сотрудников, +{EXTRA_USER_PRICE_RUB} ₽/мес за каждого сверх{" "}
-                  {SUBSCRIPTION_MAX_USERS}.
+                  {" "}
+                  {t.rich("fromPrice", {
+                    price: () => (
+                      <PromoPrice
+                        price={applyPromotion(subscriptionMonthly, subscriptionPromotion)}
+                        personal={subscriptionDiscount}
+                        size="text"
+                        tone="inherit"
+                        suffix={t("perMonth")}
+                        showBadge={false}
+                      />
+                    ),
+                    employees: employeesGenitive(SUBSCRIPTION_MAX_USERS),
+                    extra: EXTRA_USER_PRICE_RUB,
+                    max: SUBSCRIPTION_MAX_USERS,
+                  })}
                 </>
               ) : (
-                <>, для ваших {employeesGenitiveLabel(activeUsers)}:</>
+                <>{t("forYours", { employees: employeesGenitive(activeUsers) })}</>
               )}
             </p>
           ) : null}
@@ -169,7 +211,7 @@ export function PlanUpgrade({
         </div>
         {billingTestMode ? (
           <span className="rounded-full bg-[#ecfdf5] px-3 py-1 text-[12px] font-medium text-[#116b2a]">
-            Тестовый режим — оплата не списывается
+            {t("testMode")}
           </span>
         ) : null}
       </div>
@@ -181,10 +223,10 @@ export function PlanUpgrade({
           className="mt-4 rounded-2xl border border-[#ffe9b0] bg-[#fffaf0] px-4 py-3 text-[13px] leading-relaxed text-[#3c4053]"
         >
           {paymentRequired
-            ? "Бесплатные места закончились. Чтобы добавить сотрудников или вернуть их из архива, оплатите подписку."
-            : `Бесплатные места закончились. Следующий сотрудник переведёт организацию на подписку${
-                billingTestMode ? " — сейчас это бесплатно, сайт в тестовом режиме." : "."
-              }`}
+            ? t("seatsEndedPaymentRequired")
+            : billingTestMode
+              ? t("seatsEndedTestMode")
+              : t("seatsEnded")}
         </p>
       ) : null}
 
@@ -203,10 +245,10 @@ export function PlanUpgrade({
             <PlanCard
               key={plan.id}
               kind={isPaidPlan ? "team" : "free"}
-              name={plan.nameRu}
+              name={planCopy[plan.id].name}
               from={
                 isPaidPlan
-                  ? `${subscriptionMonthly.toLocaleString("ru-RU")} ₽`
+                  ? `${formatNumber(locale, subscriptionMonthly)} ₽`
                   : plan.price
               }
               price={
@@ -215,19 +257,19 @@ export function PlanUpgrade({
                   : undefined
               }
               personal={isPaidPlan ? subscriptionDiscount : null}
-              period={plan.priceHint}
+              period={t("perMonth")}
               pointsIntro={
-                plan.inheritsFrom ? `Всё из «${plan.inheritsFrom}», плюс:` : undefined
+                plan.inheritsFrom ? t("inheritsIntro") : undefined
               }
-              points={[...plan.features]}
+              points={planCopy[plan.id].features}
               highlighted={isPaidPlan}
-              badge={isPaidPlan && !isCurrent ? "Популярный" : undefined}
+              badge={isPaidPlan && !isCurrent ? t("popular") : undefined}
               ctaLabel={
                 isCurrent
-                  ? "Текущий"
+                  ? t("ctaCurrent")
                   : isPaidPlan
-                    ? "Оплатить картой"
-                    : "Бесплатный тариф"
+                    ? t("ctaPay")
+                    : t("ctaFree")
               }
               // Бесплатный тариф покупать негде: он и так доступен.
               ctaDisabled={isCurrent || !isPaidPlan}
@@ -241,7 +283,7 @@ export function PlanUpgrade({
         <div className="flex flex-col rounded-2xl border border-[#ececf4] bg-white p-5">
           <div className="flex min-h-6 items-center justify-between gap-2">
             <span className="text-[15px] font-semibold text-[#0b1024]">
-              + Оборудование
+              {t("equipmentTitle")}
             </span>
             <span className="flex size-7 items-center justify-center rounded-lg bg-[#eef1ff] text-[#5566f6]">
               <Wrench className="size-4" />
@@ -249,18 +291,18 @@ export function PlanUpgrade({
           </div>
 
           <div className="mt-1 text-[26px] font-semibold leading-none tabular-nums text-[#0b1024]">
-            от {hardwareFromRub.toLocaleString("ru-RU")} ₽
-            <span className="text-[14px] font-normal text-[#6f7282]"> разово</span>
+            {t("hardwareFrom", { amount: formatNumber(locale, hardwareFromRub) })}
+            <span className="text-[14px] font-normal text-[#6f7282]"> {t("oneTime")}</span>
           </div>
           <p className="mt-1.5 text-[12.5px] leading-[1.5] text-[#6f7282]">
-            Чтобы температура писалась сама, а смена отмечалась брелоком
+            {t("hardwareHint")}
           </p>
 
           <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-            Что входит
+            {t("whatIncluded")}
           </div>
           <ul className="mt-2 flex-1 space-y-1.5 text-[13px]">
-            {HARDWARE_POINTS.map((point) => (
+            {hardwarePoints.map((point) => (
               <li key={point} className="flex gap-2 text-[#3c4053]">
                 <Check className="mt-0.5 size-4 shrink-0 text-[#5566f6]/70" />
                 <span>{point}</span>
@@ -277,7 +319,7 @@ export function PlanUpgrade({
             aria-controls="hardware-calculator"
             className="mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            {hardwareOpen ? "Свернуть подбор" : "Подобрать комплект"}
+            {hardwareOpen ? t("collapse") : t("pickKit")}
             <ChevronDown
               className={cn(
                 "size-4 text-[#5566f6] transition-transform duration-200",
@@ -299,11 +341,10 @@ export function PlanUpgrade({
         >
           <div className="mb-5 max-w-[560px]">
             <div className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-              Подбор оборудования
+              {t("calculatorTitle")}
             </div>
             <p className="mt-1.5 text-[14px] leading-[1.55] text-[#6f7282]">
-              Выберите, что нужно — цена пересчитается. Уже есть планшет
-              или датчики: снимите галочку, и останется только подписка.
+              {t("calculatorHint")}
             </p>
           </div>
           <PricingCalculator
@@ -318,21 +359,21 @@ export function PlanUpgrade({
           места сверх лимита оформляются через поддержку, поэтому рядом
           кнопка связи. Молчать нельзя — человек оплатит и упрётся в лимит. */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
-        <span className="text-[13px] text-[#3c4053]">{LARGE_TEAM_NOTE}</span>
+        <span className="text-[13px] text-[#3c4053]">{t("largeTeamNote", { max: SUBSCRIPTION_MAX_USERS, price: EXTRA_USER_PRICE_RUB })}</span>
         <a
           href="https://t.me/wesetupbot"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          Связаться с поддержкой
+          {t("contactSupport")}
         </a>
       </div>
 
       <p className="mt-5 text-center text-[12px] leading-relaxed text-[#6f7282]">
         {billingTestMode
-          ? "Оплата появится позже. Сейчас все функции доступны бесплатно — сайт в тестовом режиме."
-          : "Тариф можно изменить в любой момент."}
+          ? t("paymentLater")
+          : t("changeAnytime")}
       </p>
 
     </section>

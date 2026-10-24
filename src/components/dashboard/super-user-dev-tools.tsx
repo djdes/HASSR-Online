@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Eraser, Loader2, Send, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export function SuperUserDevTools({ enabled }: Props) {
+  const t = useTranslations("dashboardUi.superUserDevTools");
   const router = useRouter();
   const [clearOpen, setClearOpen] = useState(false);
   const [forceOpen, setForceOpen] = useState(false);
@@ -44,15 +46,20 @@ export function SuperUserDevTools({ enabled }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Ошибка очистки");
+        toast.error(data?.error ?? t("clearError"));
         return;
       }
       toast.success(
-        `Очищено: ${data.entriesDeleted} field-записей · ${data.documentsDeleted} документов · ${data.documentEntriesDeleted} строк · ${data.tasksflowLinksDeleted} TF-связок`,
+        t("clearedToast", {
+          entries: data.entriesDeleted,
+          documents: data.documentsDeleted,
+          rows: data.documentEntriesDeleted,
+          links: data.tasksflowLinksDeleted,
+        }),
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Сеть упала");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setClearing(false);
     }
@@ -74,15 +81,20 @@ export function SuperUserDevTools({ enabled }: Props) {
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Ошибка fan-out");
+        toast.error(data?.error ?? t("fanOutError"));
         return;
       }
       toast.success(
-        `TF: создано ${data.created ?? 0} · уже было ${data.alreadyLinked ?? 0} · пропущено ${data.skipped ?? 0} · ошибок ${data.errors ?? 0}`,
+        t("forceToast", {
+          created: data.created ?? 0,
+          already: data.alreadyLinked ?? 0,
+          skipped: data.skipped ?? 0,
+          errors: data.errors ?? 0,
+        }),
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Сеть упала");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setForcing(false);
     }
@@ -100,9 +112,7 @@ export function SuperUserDevTools({ enabled }: Props) {
               Dev-tools (super-user)
             </h2>
             <p className="mt-1 text-[13px] leading-snug text-[#6f7282]">
-              Видны только тебе. Нужны для тестирования: можно очистить
-              все журналы и переслать задачи в TasksFlow без ожидания
-              «до завтра».
+              {t("intro")}
             </p>
           </div>
         </div>
@@ -119,7 +129,7 @@ export function SuperUserDevTools({ enabled }: Props) {
             ) : (
               <Eraser className="size-4" />
             )}
-            Очистить все журналы
+            {t("clearButton")}
           </button>
 
           <button
@@ -133,7 +143,7 @@ export function SuperUserDevTools({ enabled }: Props) {
             ) : (
               <Send className="size-4" />
             )}
-            Force-отправить в TasksFlow
+            {t("forceButton")}
           </button>
         </div>
       </section>
@@ -146,28 +156,26 @@ export function SuperUserDevTools({ enabled }: Props) {
             setClearOpen(false);
             await handleClear();
           }}
-          title="Очистить все журналы?"
-          description="Это безвозвратно удалит ВСЕ заполненные записи журналов, документы, фотографии и связки с TasksFlow. Структура (сотрудники, должности, шаблоны журналов) НЕ затрагивается."
+          title={t("clearTitle")}
+          description={t("clearDescription")}
           bullets={[
             {
-              label: "Затрагивает только текущую организацию.",
+              label: t("clearBulletOrg"),
               tone: "info",
             },
             {
-              label:
-                "После очистки можно сразу нажать «Force-отправить в TasksFlow» — задачи разлетятся заново.",
+              label: t("clearBulletForce"),
               tone: "info",
             },
             {
-              label:
-                "Используй только в тестовой орге. Эта операция не журналируется в audit-log в полном объёме.",
+              label: t("clearBulletTestOnly"),
               tone: "warn",
             },
           ]}
-          confirmLabel="Да, очистить"
+          confirmLabel={t("clearConfirm")}
           variant="danger"
           icon={Eraser}
-          typeToConfirm="ОЧИСТИТЬ"
+          typeToConfirm={t("clearConfirmWord")}
         />
       ) : null}
 
@@ -179,21 +187,19 @@ export function SuperUserDevTools({ enabled }: Props) {
             setForceOpen(false);
             await handleForceSend();
           }}
-          title="Force-отправить в TasksFlow?"
-          description="Снимет фильтр «уже заполнено сегодня» и rate-limit. ВСЕ выбранные журналы получат task'и в TasksFlow заново — даже если кто-то уже заполнил их сегодня."
+          title={t("forceTitle")}
+          description={t("forceDescription")}
           bullets={[
             {
-              label:
-                "Старые task'и в TasksFlow удалятся (force=true), новые создадутся вместо них.",
+              label: t("forceBulletOld"),
               tone: "info",
             },
             {
-              label:
-                "Если только что нажимал «Очистить все журналы» — этот шаг пересоздаст task'и для свежих документов.",
+              label: t("forceBulletRecreate"),
               tone: "info",
             },
           ]}
-          confirmLabel="Отправить заново"
+          confirmLabel={t("forceConfirm")}
           variant="default"
           icon={Send}
         />

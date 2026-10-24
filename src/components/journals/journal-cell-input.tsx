@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
@@ -79,6 +80,7 @@ export function JournalCellInput({
   list,
   ...props
 }: JournalCellInputProps) {
+  const t = useTranslations("journalUi.cellInput");
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
   // Подсказки справочника: открыты пока ячейка в фокусе.
   const [suggestOpen, setSuggestOpen] = React.useState(false);
@@ -227,7 +229,7 @@ export function JournalCellInput({
       {suggestions.length > 0 ? (
         <ul
           role="listbox"
-          aria-label="Подсказки"
+          aria-label={t("suggestions")}
           className="absolute left-0 top-full z-30 mt-1 max-h-56 w-max min-w-full max-w-[320px] overflow-auto rounded-2xl border border-[#ececf4] bg-white p-1.5 text-left shadow-[0_24px_60px_-24px_rgba(11,16,36,0.35)] print:hidden"
         >
           {suggestions.map((option, index) => (

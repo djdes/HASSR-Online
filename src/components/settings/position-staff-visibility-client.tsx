@@ -11,6 +11,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ const UNASSIGNED_GROUP_ID = "__unassigned__";
  * редко нужно тонкое исключение.
  */
 export function PositionStaffVisibilityClient({ positions, employees }: Props) {
+  const t = useTranslations("settingsUi.positionStaffVisibilityClient");
+  const locale = useLocale();
   const router = useRouter();
 
   // Группируем сотрудников по jobPositionId — это «целевые группы»
@@ -76,7 +79,7 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
       byGroup.set(key, {
         groupId: key,
         groupName:
-          positionRow?.name ?? e.positionName ?? "Без должности",
+          positionRow?.name ?? e.positionName ?? t("noPosition"),
         groupCategory: positionRow?.categoryKey ?? e.positionCategory ?? null,
         members: [e],
       });
@@ -87,9 +90,9 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
         c === "management" ? 0 : c === "staff" ? 1 : 2;
       const r = catRank(a.groupCategory) - catRank(b.groupCategory);
       if (r !== 0) return r;
-      return a.groupName.localeCompare(b.groupName, "ru");
+      return a.groupName.localeCompare(b.groupName, locale);
     });
-  }, [positions, employees]);
+  }, [positions, employees, t, locale]);
 
   const [base] = useState<VisibilityMap>(
     () =>
@@ -214,12 +217,12 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
         if (res.ok) ok += 1;
         else failed += 1;
       }
-      if (failed > 0) toast.error(`Сохранено ${ok}, ошибок ${failed}`);
-      else toast.success(`Сохранено для ${ok} ${pluralPos(ok)}`);
+      if (failed > 0) toast.error(t("savedWithErrors", { ok, failed }));
+      else toast.success(t("savedFor", { count: ok }));
       pushToTasksflow(false);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -242,13 +245,13 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
           errors: number;
         };
         toast.success(
-          `TasksFlow: ${data.managersUpdated}${
-            data.managersSkipped ? ` · пропущено ${data.managersSkipped}` : ""
-          }${data.errors ? ` · ошибок ${data.errors}` : ""}`
+          t("syncResult", { updated: data.managersUpdated }) +
+            (data.managersSkipped ? t("syncSkipped", { count: data.managersSkipped }) : "") +
+            (data.errors ? t("syncErrors", { count: data.errors }) : "")
         );
       }
     } catch {
-      if (showError) toast.error("TasksFlow недоступен");
+      if (showError) toast.error(t("tasksflowUnavailable"));
     } finally {
       setSyncing(false);
     }
@@ -263,16 +266,16 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Фильтр должностей"
+            placeholder={t("filterPlaceholder")}
             className="h-10 rounded-2xl border-[#dcdfed] pl-9 dark:border-white/15"
           />
         </div>
         <div className="flex flex-wrap gap-2">
           {(
             [
-              ["all", "Все"],
-              ["management", "Руковод."],
-              ["staff", "Сотруд."],
+              ["all", t("filterAll")],
+              ["management", t("filterManagement")],
+              ["staff", t("filterStaff")],
             ] as const
           ).map(([k, l]) => (
             <button
@@ -297,16 +300,14 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
           className="ml-auto inline-flex h-10 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] transition-colors hover:bg-[#5566f6]/[0.09] disabled:opacity-60 dark:border-white/15 dark:/5 dark:text-[#c4b5fd] dark:hover:/10"
         >
           {syncing ? <Loader2 className="size-4 animate-spin" /> : null}
-          Синхронизировать TasksFlow
+          {t("syncTasksflow")}
         </button>
       </section>
 
       {/* Hint */}
       <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[12px] leading-relaxed text-[#6f7282] dark:border-white/10 dark:bg-white/5 dark:text-white/65">
         <Sparkles className="mr-1.5 inline size-3.5 text-[#5566f6]" />
-        Нажмите на чип-должность чтобы включить/выключить всю группу
-        целиком. Стрелка справа от чипа раскрывает список сотрудников
-        этой должности — там можно убрать конкретного человека из видимости.
+        {t("hint")}
       </div>
 
       {/* Position rows */}
@@ -334,19 +335,18 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                       {viewer.name}
                     </h3>
                     <span className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7] dark:bg-white/10 dark:text-[#c4b5fd]">
-                      {viewer.activeUsers}{" "}
-                      {pluralActive(viewer.activeUsers)}
+                      {t("employees", { count: viewer.activeUsers })}
                     </span>
                     <span className="text-[11px] text-[#9b9fb3] dark:text-white/50">
                       {viewer.categoryKey === "management"
-                        ? "руководство"
-                        : "сотрудники"}
+                        ? t("categoryManagement")
+                        : t("categoryStaff")}
                     </span>
                   </div>
                   <div className="mt-1 text-[12px] text-[#6f7282] dark:text-white/60">
                     {totalSelected === 0
-                      ? "Никого не видит — только свои задачи"
-                      : `Видит ${totalSelected} из ${totalEmployees} сотрудников`}
+                      ? t("seesNobody")
+                      : t("seesCount", { selected: totalSelected, total: totalEmployees })}
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1.5">
@@ -355,14 +355,14 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                     onClick={() => selectAllForViewer(viewer.id)}
                     className="rounded-full border border-[#dcdfed] bg-white px-3 py-1 text-[11px] font-medium text-[#3c4053] hover:bg-[#f5f6ff] dark:border-white/15 dark:bg-white/10 dark:text-white/85 dark:hover:bg-white/15"
                   >
-                    Все
+                    {t("selectAll")}
                   </button>
                   <button
                     type="button"
                     onClick={() => clearViewer(viewer.id)}
                     className="rounded-full border border-[#dcdfed] bg-white px-3 py-1 text-[11px] font-medium text-[#3c4053] hover:bg-[#f5f6ff] dark:border-white/15 dark:bg-white/10 dark:text-white/85 dark:hover:bg-white/15"
                   >
-                    Снять
+                    {t("clear")}
                   </button>
                 </div>
               </div>
@@ -401,8 +401,8 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                           className="inline-flex items-center gap-1.5 px-3 py-1 text-[12px] font-medium"
                           title={
                             state === "full"
-                              ? "Все включены — клик снимет всю группу"
-                              : "Клик — включить всю группу"
+                              ? t("groupFullTitle")
+                              : t("groupEnableTitle")
                           }
                         >
                           {state === "full" ? (
@@ -420,7 +420,7 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                         <button
                           type="button"
                           onClick={() => toggleExpanded(viewer.id, g.groupId)}
-                          aria-label="Раскрыть список"
+                          aria-label={t("expandList")}
                           className="inline-flex items-center px-2 border-l border-current/15 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                         >
                           <ChevronDown
@@ -439,8 +439,7 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                         <div className="mt-1 basis-full">
                           <div className="ml-1 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 dark:border-white/10 dark:bg-white/[0.04]">
                             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#6f7282] dark:text-white/55">
-                              {g.groupName} · {total}{" "}
-                              {pluralActive(total)}
+                              {g.groupName} · {t("employees", { count: total })}
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {g.members.map((m) => {
@@ -475,7 +474,7 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                 })}
                 {groups.length === 0 ? (
                   <div className="text-[12px] text-[#9b9fb3] dark:text-white/50">
-                    В организации нет активных сотрудников.
+                    {t("noActiveEmployees")}
                   </div>
                 ) : null}
               </div>
@@ -484,7 +483,7 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
         })}
         {filteredPositions.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-12 text-center text-[13px] text-[#9b9fb3] dark:border-white/10 dark:bg-white/[0.04] dark:text-white/50">
-            Ни одной должности под фильтр.
+            {t("noPositionsMatch")}
           </div>
         ) : null}
       </div>
@@ -493,8 +492,8 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-3xl border border-[#ececf4] bg-white/95 px-4 py-3 shadow-[0_12px_32px_-16px_rgba(11,16,36,0.18)] backdrop-blur dark:border-white/10 dark:bg-[#0b1024]/85 dark:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.6)] sm:px-5">
         <div className="text-[13px] text-[#3c4053] dark:text-white/80">
           {dirty.size === 0
-            ? "Изменений нет"
-            : `Изменено: ${dirty.size} ${pluralPos(dirty.size)}`}
+            ? t("noChanges")
+            : t("changedCount", { count: dirty.size })}
         </div>
         <Button
           type="button"
@@ -507,26 +506,10 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
           ) : (
             <Save className="size-4" />
           )}
-          Сохранить
+          {t("save")}
         </Button>
       </div>
     </div>
   );
 }
 
-function pluralPos(n: number): string {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return "должность";
-  if ([2, 3, 4].includes(m10) && ![12, 13, 14].includes(m100))
-    return "должности";
-  return "должностей";
-}
-function pluralActive(n: number): string {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return "сотрудник";
-  if ([2, 3, 4].includes(m10) && ![12, 13, 14].includes(m100))
-    return "сотрудника";
-  return "сотрудников";
-}

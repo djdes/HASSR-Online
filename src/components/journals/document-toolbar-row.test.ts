@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { createElement, type ReactElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
+import { createElement, type ComponentProps, type ReactElement } from "react";
+import { renderToStaticMarkup as renderMarkup } from "react-dom/server";
 
 import {
   DocumentToolbarAddButton,
@@ -19,6 +20,10 @@ import {
  * Раскладку на живых ширинах (360–1280) меряет e2e задачи
  * doc-toolbar-row-phone-2026-09, здесь — разметка и классы.
  */
+
+const MESSAGES = JSON.parse(readFileSync("src/i18n/messages/ru.json", "utf8"));
+const renderToStaticMarkup = (element: ReactElement) =>
+  renderMarkup(createElement(NextIntlClientProvider, { locale: "ru", messages: MESSAGES, timeZone: "UTC" } as ComponentProps<typeof NextIntlClientProvider>, element));
 
 const SOURCE = readFileSync("src/components/journals/document-toolbar-row.tsx", "utf8");
 const DESCRIPTION = "Только складские помещения с продуктами. Раз в день, в первой половине дня.";
@@ -76,7 +81,7 @@ test("описание: до 640px — три строки 13px, «Подроб�
   assert.match(SOURCE, /new ResizeObserver\(measure\)/);
   assert.match(SOURCE, /addEventListener\("resize", measure\)/);
   assert.match(SOURCE, /expanded \|\| clipped \?/);
-  assert.match(SOURCE, /expanded \? "Свернуть" : "Подробнее"/);
+  assert.match(SOURCE, /expanded \? t\("collapse"\) : t\("more"\)/);
   assert.match(SOURCE, /aria-expanded=\{expanded\}/);
 });
 

@@ -111,6 +111,9 @@ function DocumentDialog(props: {
   routeCode: string;
   onSubmit: (value: DialogState, force: boolean) => Promise<void>;
 }) {
+  const tStaff = useTranslations("journalWidgets.staff");
+  const tCooling = useTranslations("journalUi.intensiveCooling");
+  const common = useTranslations("common");
   const [state, setState] = useState<DialogState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
   const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
@@ -155,19 +158,19 @@ function DocumentDialog(props: {
             />
             <div className="space-y-2">
               <Label className="text-base text-[#6e7387]">
-                Название документа
+                {tStaff("documentName")}
               </Label>
               <Input
                 value={activeState.title}
                 onChange={(event) =>
                   setState({ ...activeState, title: event.target.value })
                 }
-                placeholder="Введите название документа"
+                placeholder={tStaff("documentNamePlaceholder")}
                 className="h-9 rounded-xl border-[#d7dbea] px-3.5 text-[13.5px]"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-base text-[#6e7387]">Дата начала</Label>
+              <Label className="text-base text-[#6e7387]">{tCooling("startDate")}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -187,7 +190,7 @@ function DocumentDialog(props: {
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-10 text-[13.5px] text-white hover:bg-[#4452ee]"
               >
-                {submitting ? "Сохранение..." : props.submitText}
+                {submitting ? common("saving") : props.submitText}
               </Button>
             </div>
           </div>
@@ -258,6 +261,8 @@ export function IntensiveCoolingDocumentsClient({
   dishSuggestions,
 }: Props) {
   const t = useTranslations("journalControls");
+  const tStaff = useTranslations("journalWidgets.staff");
+  const tCooling = useTranslations("journalUi.intensiveCooling");
   const common = useTranslations("common");
   const lifecycleFeedback = useLifecycleFeedbackRef(useLocale(), (key) => t(key));
   const router = useRouter();
@@ -315,7 +320,7 @@ export function IntensiveCoolingDocumentsClient({
 
     if (!response.ok) {
       const failure = await response.json().catch(() => null);
-      throw new Error(failure?.error || "Не удалось сохранить настройки");
+      throw new Error(failure?.error || tCooling("saveSettingsFailed"));
     }
 
     router.refresh();
@@ -347,7 +352,7 @@ export function IntensiveCoolingDocumentsClient({
             canManageDocuments && activeTab === "active" ? (
               <Button className={JOURNAL_ACTION_CREATE_CLASS} onClick={() => setCreateOpen(true)}>
                 <Plus className="size-4" />
-                Создать документ
+                {t("list.create")}
               </Button>
             ) : null
           }
@@ -373,21 +378,21 @@ export function IntensiveCoolingDocumentsClient({
               <SharedDocumentBadge shared={document.shared} />
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
-                <div className={JOURNAL_CARD_LABEL_CLASS}>Дата начала</div>
+                <div className={JOURNAL_CARD_LABEL_CLASS}>{tCooling("startDate")}</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
                   {formatDateDMY(document.dateFrom)}
                 </div>
               </Link>
               <div className="flex justify-center">
                 <ResponsiveMenu
-                  title="Действия с документом"
+                  title={t("list.actionsTitle")}
                   contentClassName="w-[320px] rounded-[28px] border-0 p-5 shadow-xl"
                   items={filterManageMenuItems([
                     ...(document.status === "active"
                       ? [
                           {
                             key: "settings",
-                            label: "Настройки",
+                            label: t("list.settings"),
                             icon: <Pencil className="size-4 text-[#6f7282]" />,
                             onSelect: () => setSettingsTarget(document),
                           },
@@ -395,7 +400,7 @@ export function IntensiveCoolingDocumentsClient({
                       : []),
                     {
                       key: "print",
-                      label: "Печать",
+                      label: t("list.print"),
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () =>
                         window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
@@ -437,8 +442,8 @@ export function IntensiveCoolingDocumentsClient({
         routeCode={routeCode}
         initial={createInitialState}
         onSubmit={createDocument}
-        submitText="Создать"
-        dialogTitle="Создание документа"
+        submitText={tCooling("create")}
+        dialogTitle={tCooling("createTitle")}
       />
 
       <DocumentDialog
@@ -460,8 +465,8 @@ export function IntensiveCoolingDocumentsClient({
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, payload);
         }}
-        submitText="Сохранить"
-        dialogTitle="Настройки документа"
+        submitText={common("save")}
+        dialogTitle={tStaff("settings")}
       />
 
       <DeleteDialog

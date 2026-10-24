@@ -2,6 +2,8 @@ import { Coins, FlaskConical, Users } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -60,6 +62,8 @@ export default async function SubscriptionPage({
   // недостижима: normalizeUserRole переводит legacy-«owner» в «manager»,
   // так что список ["owner"] не совпадал ни с кем. Тариф правит тот же,
   // кто имеет полный доступ к кабинету, — как и в POST /upgrade.
+  const t = await getTranslations("settingsUi.subscriptionPage");
+  const locale = await getLocale();
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/dashboard");
@@ -113,13 +117,15 @@ export default async function SubscriptionPage({
         : plan;
   const shownPlanLabel =
     kind === "paid"
-      ? `Подписка${billing?.state.paidUntil ? ` до ${formatMskDay(billing.state.paidUntil)}` : ""}`
+      ? billing?.state.paidUntil
+        ? t("planPaidUntil", { date: formatMskDay(billing.state.paidUntil) })
+        : t("planPaid")
       : kind === "free_period" && billing
-        ? `Подписка — бесплатно по ${formatMskDay(lastFreeDay(billing.settings))}`
+        ? t("planFreePeriod", { date: formatMskDay(lastFreeDay(billing.settings)) })
         : kind === "needs_decision"
-          ? "Бесплатный период закончился"
+          ? t("planNeedsDecision")
           : kind === "free"
-            ? "Бесплатный"
+            ? t("planFree")
             : tariffName(plan);
   // Надписи «тестовый режим — оплата не списывается» — только до
   // перехода на оплату: после него это была бы неправда.
@@ -316,15 +322,14 @@ export default async function SubscriptionPage({
   return (
     <div className="space-y-5">
       <h1 className="text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-        Улучшение тарифа
+        {t("title")}
       </h1>
 
       {isDemo ? (
         <div className="flex items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] px-4 py-3 text-[13.5px] leading-[1.5] text-[#3848c7]">
           <FlaskConical className="mt-0.5 size-4 shrink-0" />
           <span>
-            Это демо-организация — её сотрудники не учитываются в тарифе.
-            Тариф общий для аккаунта и настраивается из вашей организации.
+            {t("demoNote")}
           </span>
         </div>
       ) : null}
@@ -338,12 +343,10 @@ export default async function SubscriptionPage({
         >
           <Coins className="mt-0.5 size-4 shrink-0" />
           <span>
-            На балансе{" "}
-            <strong className="tabular-nums">
-              {(org?.balanceRub ?? 0).toLocaleString("ru-RU")} ₽
-            </strong>{" "}
-            — спишутся при оплате подписки. Как заработать ещё — в разделе
-            «Баланс и бонусы».
+            {t.rich("balanceNote", {
+              amount: (org?.balanceRub ?? 0).toLocaleString(locale),
+              b: (chunks) => <strong className="tabular-nums">{chunks}</strong>,
+            })}
           </span>
         </Link>
       ) : null}
@@ -356,15 +359,14 @@ export default async function SubscriptionPage({
           blocking={false}
           cardNote={
             invoiceReady && !isDemo
-              ? "Оплатить можно и счётом по безналу — блок «Оплата по безналу для юрлиц» ниже."
+              ? t("invoiceCardNote")
               : null
           }
         />
       ) : null}
       {decisionReadOnly ? (
         <p className="rounded-2xl border border-[#ffd9a8] bg-[#fffaf0] px-4 py-3 text-[13.5px] leading-[1.5] text-[#7a4a00]">
-          Бесплатный период подписки закончился. Оплатить подписку или перейти
-          на бесплатный тариф может руководитель организации в своём кабинете.
+          {t("decisionReadOnly")}
         </p>
       ) : null}
 
@@ -400,7 +402,7 @@ export default async function SubscriptionPage({
       {!isDemo ? (
         <InvoiceCard
           ready={invoiceReady}
-          orgName={org?.name ?? "организацию"}
+          orgName={org?.name ?? t("orgNameFallback")}
           orgInn={org?.inn ?? null}
           amountRub={monthly.priceRub}
           promotion={offer.promotion}
@@ -428,49 +430,53 @@ export default async function SubscriptionPage({
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <span className="text-[16px] font-semibold text-[#0b1024]">
-            История платежей
+            {t("paymentHistory")}
           </span>
           {paidTotalRub > 0 ? (
             <span className="text-[13.5px] text-[#6f7282]">
-              Оплачено за всё время:{" "}
-              <span className="font-semibold tabular-nums text-[#0b1024]">
-                {paidTotalRub.toLocaleString("ru-RU")} ₽
-              </span>
+              {t.rich("paidTotal", {
+                amount: paidTotalRub.toLocaleString(locale),
+                b: (chunks) => (
+                  <span className="font-semibold tabular-nums text-[#0b1024]">{chunks}</span>
+                ),
+              })}
             </span>
           ) : null}
         </div>
 
         {documentsReady && !org?.inn && payments.some(closingEligible) ? (
           <p className="mt-3 rounded-2xl bg-[#fff8eb] px-3.5 py-2.5 text-[13px] leading-relaxed text-[#b25f00]">
-            В закрывающих документах пока только название организации. Укажите ИНН в{" "}
-            <Link href="/settings/organization" className="underline underline-offset-2">
-              настройках организации
-            </Link>{" "}
-            и нажмите «обновить» рядом с документом — реквизиты покупателя подставятся.
+            {t.rich("closingInnNote", {
+              link: (chunks) => (
+                <Link href="/settings/organization" className="underline underline-offset-2">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         ) : null}
 
         {payments.length === 0 ? (
           <p className="mt-4 text-[13.5px] text-[#9b9fb3]">
-            Платежей пока не было.
+            {t("noPayments")}
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] text-[13.5px]">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  <th className="pb-2 font-medium">Дата и время</th>
-                  <th className="pb-2 font-medium">Назначение</th>
-                  <th className="pb-2 font-medium">Статус</th>
-                  <th className="pb-2 text-right font-medium">Сумма</th>
-                  <th className="pb-2 pl-4 font-medium">Документы</th>
+                  <th className="pb-2 font-medium">{t("colDateTime")}</th>
+                  <th className="pb-2 font-medium">{t("colPurpose")}</th>
+                  <th className="pb-2 font-medium">{t("colStatus")}</th>
+                  <th className="pb-2 text-right font-medium">{t("colAmount")}</th>
+                  <th className="pb-2 pl-4 font-medium">{t("colDocuments")}</th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((payment) => (
                   <tr key={payment.id} className="border-t border-[#f2f3f8]">
                     <td className="py-2.5 text-[#0b1024]">
-                      {(payment.paidAt ?? payment.createdAt).toLocaleString("ru-RU")}
+                      {(payment.paidAt ?? payment.createdAt).toLocaleString(locale)}
                     </td>
                     <td className="py-2.5 text-[#6f7282]">
                       {payment.description}
@@ -478,7 +484,7 @@ export default async function SubscriptionPage({
                           иначе «оплачено» покажет деньги, которых не было. */}
                       {payment.isTest ? (
                         <span className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] text-[#6f7282]">
-                          тест
+                          {t("testBadge")}
                         </span>
                       ) : null}
                     </td>
@@ -494,10 +500,10 @@ export default async function SubscriptionPage({
                       </span>
                     </td>
                     <td className="py-2.5 text-right tabular-nums text-[#0b1024]">
-                      {Number(payment.amountRub).toLocaleString("ru-RU")} ₽
+                      {Number(payment.amountRub).toLocaleString(locale)} ₽
                       {payment.pointsSpent > 0 ? (
                         <div className="text-[12px] text-[#3848c7]">
-                          баллами −{payment.pointsSpent.toLocaleString("ru-RU")}
+                          {t("pointsSpent", { points: payment.pointsSpent.toLocaleString(locale) })}
                         </div>
                       ) : null}
                     </td>
@@ -508,7 +514,7 @@ export default async function SubscriptionPage({
                             href={`/api/payments/invoice/${payment.id}/pdf`}
                             className="inline-flex h-8 items-center rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                           >
-                            Счёт (PDF)
+                            {t("invoicePdf")}
                           </a>
                         ) : null}
                         {closingEligible(payment) ? (
@@ -537,19 +543,29 @@ export default async function SubscriptionPage({
           </span>
           <div className="flex-1">
             <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Как считается стоимость
+              {t("howCalculated")}
             </h2>
             <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-              {FREE_SEATS_LABEL} — бесплатно. Команда {SUBSCRIPTION_SEATS_LABEL} —
-              одна подписка{" "}
-              <PromoPrice price={offer} size="text" tone="inherit" suffix="/мес" showBadge={false} />{" "}
-              на всех, не за человека. Каждый сотрудник сверх{" "}
-              {SUBSCRIPTION_MAX_USERS} — {`+${EXTRA_USER_PRICE_RUB} ₽/мес.`}
+              {t.rich("calcIntro", {
+                free: FREE_SEATS_LABEL,
+                seats: SUBSCRIPTION_SEATS_LABEL,
+                price: () => (
+                  <PromoPrice
+                    price={offer}
+                    size="text"
+                    tone="inherit"
+                    suffix={t("perMonthSuffix")}
+                    showBadge={false}
+                  />
+                ),
+                max: SUBSCRIPTION_MAX_USERS,
+                extra: EXTRA_USER_PRICE_RUB,
+              })}
             </p>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               <PricingStat
-                label="Активных"
+                label={t("statActive")}
                 value={String(employees)}
                 hint={
                   <span className="inline-flex items-center gap-1 text-[#6f7282]">
@@ -558,18 +574,18 @@ export default async function SubscriptionPage({
                 }
               />
               <PricingStat
-                label={`Сверх ${SUBSCRIPTION_MAX_USERS}`}
+                label={t("statOver", { max: SUBSCRIPTION_MAX_USERS })}
                 value={String(price.extraEmployees)}
                 hint={
                   <span className="text-[#6f7282]">
                     {price.extraEmployees > 0
-                      ? `+${EXTRA_USER_PRICE_RUB} ₽/мес за каждого`
-                      : "входит в подписку"}
+                      ? t("statOverHint", { extra: EXTRA_USER_PRICE_RUB })
+                      : t("statIncluded")}
                   </span>
                 }
               />
               <PricingStat
-                label="В месяц"
+                label={t("statPerMonth")}
                 value={
                   price.isFree ? (
                     "0 ₽"
@@ -581,18 +597,18 @@ export default async function SubscriptionPage({
                       layout="stacked"
                     />
                   ) : (
-                    `${price.monthlyRub.toLocaleString("ru-RU")} ₽`
+                    `${price.monthlyRub.toLocaleString(locale)} ₽`
                   )
                 }
                 hint={
                   price.isFree ? (
                     <span className="font-medium text-[#116b2a]">
-                      Бесплатно
+                      {t("statFree")}
                     </span>
                   ) : (
                     // Годового тарифа нет — ×12 только для ориентира.
                     <span className="text-[#6f7282]">
-                      {price.yearlyRub.toLocaleString("ru-RU")} ₽/год без скидки
+                      {t("statYearly", { amount: price.yearlyRub.toLocaleString(locale) })}
                     </span>
                   )
                 }
@@ -601,7 +617,7 @@ export default async function SubscriptionPage({
             </div>
 
             <div className="mt-5 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13px] leading-relaxed text-[#6f7282]">
-              <strong className="text-[#0b1024]">Шкала тарифов:</strong>
+              <strong className="text-[#0b1024]">{t("scaleTitle")}</strong>
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 {pricingScaleRows(monthly.priceRub).map((row) => (
                   <li key={row.range}>
@@ -610,22 +626,24 @@ export default async function SubscriptionPage({
                 ))}
               </ul>
               <p className="mt-2">
-                Например, {exampleEmployees} сотрудников:{" "}
-                {example.baseRub.toLocaleString("ru-RU")} +{" "}
-                {example.extraEmployees} × {EXTRA_USER_PRICE_RUB} ={" "}
-                {example.monthlyRub.toLocaleString("ru-RU")} ₽/мес.
+                {t("scaleExample", {
+                  employees: exampleEmployees,
+                  base: example.baseRub.toLocaleString(locale),
+                  extraEmployees: example.extraEmployees,
+                  extraPrice: EXTRA_USER_PRICE_RUB,
+                  total: example.monthlyRub.toLocaleString(locale),
+                })}
               </p>
               {offer.promotion ? (
                 <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#3c4053]">
-                  <span>Сейчас акция «{offer.promotion.title}»:</span>
+                  <span>{t("promoNow", { title: offer.promotion.title })}</span>
                   <PromoBadge promotion={offer.promotion} />
-                  <span>на всю сумму подписки, вместе с доплатой сверх {SUBSCRIPTION_MAX_USERS}.</span>
+                  <span>{t("promoScope", { max: SUBSCRIPTION_MAX_USERS })}</span>
                 </p>
               ) : null}
               {testModeActive ? (
                 <p className="mt-3 text-[#3c4053]">
-                  Пока сайт в тестовом режиме, суммы выше — справочные:
-                  оплата не списывается.
+                  {t("testModeNote")}
                 </p>
               ) : null}
             </div>
@@ -702,10 +720,12 @@ function InAppSubscriptionStatus({
     amountRub: number;
   }>;
 }) {
+  const t = useTranslations("settingsUi.subscriptionPage");
+  const locale = useLocale();
   return (
     <div className="space-y-5">
       <h1 className="text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-        Тариф
+        {t("appTitle")}
       </h1>
 
       {decisionCopy ? (
@@ -716,7 +736,7 @@ function InAppSubscriptionStatus({
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
         <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Тариф компании
+          {t("companyPlan")}
         </div>
         <div className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
           {label}
@@ -730,36 +750,36 @@ function InAppSubscriptionStatus({
             data-testid="subscription-expired"
             className="mt-4 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[14px] leading-[1.5] text-[#a13a32]"
           >
-            Подписка компании закончилась. Обратитесь к владельцу компании.
+            {t("expiredNotice")}
           </p>
         ) : null}
 
         <dl className="mt-5 grid gap-3 sm:grid-cols-3">
           <StatusCell
-            label={expired ? "Закончилась" : "Действует до"}
-            value={activeUntil ? activeUntil.toLocaleDateString("ru-RU") : "без срока"}
+            label={expired ? t("expiredLabel") : t("validUntilLabel")}
+            value={activeUntil ? activeUntil.toLocaleDateString(locale) : t("noExpiry")}
           />
-          <StatusCell label="Сотрудников" value={String(employees)} />
-          <StatusCell label="Баланс баллов" value={`${balanceRub.toLocaleString("ru-RU")} ₽`} />
+          <StatusCell label={t("employeesLabel")} value={String(employees)} />
+          <StatusCell label={t("pointsBalance")} value={`${balanceRub.toLocaleString(locale)} ₽`} />
         </dl>
       </section>
 
       {payments.length > 0 ? (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
-          <h2 className="text-[16px] font-semibold text-[#0b1024]">История платежей</h2>
+          <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("paymentHistory")}</h2>
           <ul className="mt-3 divide-y divide-[#f2f3f8]">
             {payments.map((payment) => (
               <li key={payment.id} className="flex items-start justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <div className="text-[14px] text-[#0b1024]">{payment.description}</div>
                   <div className="mt-0.5 text-[12.5px] text-[#6f7282]">
-                    {payment.at.toLocaleDateString("ru-RU")} · {payment.status}
+                    {payment.at.toLocaleDateString(locale)} · {payment.status}
                   </div>
                 </div>
                 <div
                   className={`shrink-0 text-[14px] tabular-nums ${payment.paid ? "text-[#0b1024]" : "text-[#6f7282]"}`}
                 >
-                  {payment.amountRub.toLocaleString("ru-RU")} ₽
+                  {payment.amountRub.toLocaleString(locale)} ₽
                 </div>
               </li>
             ))}

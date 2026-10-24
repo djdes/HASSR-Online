@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClipboardCheck, ClipboardX } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ type Props = { organizationId: string };
  * /api/external/summary but inlined here to avoid an HTTP round-trip.
  */
 export async function JournalsTodayWidget({ organizationId }: Props) {
+  const tToday = await getTranslations("dashboardUi.journalsTodayWidget");
   const day = new Date();
   day.setUTCHours(0, 0, 0, 0);
   const nextDay = new Date(day);
@@ -79,7 +81,7 @@ export async function JournalsTodayWidget({ organizationId }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <ClipboardCheck className="size-4 text-green-600" />
-          Журналы за сегодня
+          {tToday("title")}
           <Badge variant="secondary" className="ml-1 h-5 px-2 text-[11px]">
             {filled}/{totalActive}
           </Badge>
@@ -87,12 +89,12 @@ export async function JournalsTodayWidget({ organizationId }: Props) {
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {unfilled.length === 0 ? (
-          <p className="text-muted-foreground">Во всех активных журналах уже есть записи за сегодня.</p>
+          <p className="text-muted-foreground">{tToday("allFilled")}</p>
         ) : (
           <>
             <div className="flex items-center gap-2 text-amber-700">
               <ClipboardX className="size-4" />
-              <span>Не начинали заполняться: {unfilled.length}</span>
+              <span>{tToday("notStarted", { count: unfilled.length })}</span>
             </div>
             <ul className="space-y-1">
               {unfilled.slice(0, 8).map((row) => (
@@ -106,7 +108,7 @@ export async function JournalsTodayWidget({ organizationId }: Props) {
                 </li>
               ))}
               {unfilled.length > 8 ? (
-                <li className="text-muted-foreground">…и ещё {unfilled.length - 8}</li>
+                <li className="text-muted-foreground">{tToday("andMore", { count: unfilled.length - 8 })}</li>
               ) : null}
             </ul>
           </>

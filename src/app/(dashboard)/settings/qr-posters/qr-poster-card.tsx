@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, Info, Infinity as InfinityIcon, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { formatQrValidUntil, type QrPosterItem, type QrPrintFormat } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
@@ -41,13 +42,14 @@ const CHECKBOX_CLASS =
   "size-5 shrink-0 cursor-pointer rounded-md accent-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed";
 
 function CheckLink({ url, compact = false }: { url: string; compact?: boolean }) {
+  const t = useTranslations("settingsUi.qrPosterCard");
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      title="Открыть ссылку из QR-кода в новой вкладке — проверить, что форма открывается"
-      aria-label={compact ? "Проверить ссылку" : undefined}
+      title={t("checkLinkTitle")}
+      aria-label={compact ? t("checkLink") : undefined}
       data-qr-check=""
       className={cn(
         "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-2xl text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
@@ -55,7 +57,7 @@ function CheckLink({ url, compact = false }: { url: string; compact?: boolean })
       )}
     >
       <ExternalLink className="size-4" aria-hidden />
-      {compact ? null : "Проверить ссылку"}
+      {compact ? null : t("checkLink")}
     </a>
   );
 }
@@ -83,6 +85,7 @@ function QrPreview({ svg, className }: { svg: string; className?: string }) {
 
 /** Основной QR журнала: отмечен по умолчанию, бессрочный. */
 export function QrMainCard({ item, selected, format, onToggle, onFormat }: CardProps) {
+  const t = useTranslations("settingsUi.qrPosterCard");
   const inputId = `qr-${item.key}`;
   return (
     <article
@@ -111,7 +114,7 @@ export function QrMainCard({ item, selected, format, onToggle, onFormat }: CardP
         <div className="min-w-0 flex-1">
           <span className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]">
             <InfinityIcon className="size-3.5" aria-hidden />
-            Бессрочный
+            {t("perpetual")}
           </span>
           {item.sublabel ? (
             <p className="mt-2 flex items-center gap-1 text-[12.5px] font-medium text-[#3c4053]">
@@ -124,7 +127,7 @@ export function QrMainCard({ item, selected, format, onToggle, onFormat }: CardP
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <QrFormatSwitch value={format} onChange={onFormat} label={`Формат: ${item.label}`} />
+        <QrFormatSwitch value={format} onChange={onFormat} label={t("format", { label: item.label })} />
         <CheckLink url={item.poster.url} />
       </div>
     </article>
@@ -133,6 +136,7 @@ export function QrMainCard({ item, selected, format, onToggle, onFormat }: CardP
 
 /** Строка дополнительного QR (или QR журнала на общем экране): компактно, формат — после галки. */
 export function QrCompactRow({ item, selected, format, onToggle, onFormat }: CardProps) {
+  const t = useTranslations("settingsUi.qrPosterCard");
   const inputId = `qr-${item.key}`;
   const validUntil = item.poster.validUntil ?? null;
   return (
@@ -168,13 +172,15 @@ export function QrCompactRow({ item, selected, format, onToggle, onFormat }: Car
         </label>
         {validUntil ? (
           item.expired ? (
-            <span className="shrink-0 rounded-full bg-[#fff4f2] px-2.5 py-1 text-[12px] font-medium text-[#a13a32]">срок истёк</span>
+            <span className="shrink-0 rounded-full bg-[#fff4f2] px-2.5 py-1 text-[12px] font-medium text-[#a13a32]">{t("expired")}</span>
           ) : (
             <span
-              title="Код перестанет работать на следующий день после этой даты"
+              title={t("untilTitle")}
               className="shrink-0 whitespace-nowrap rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7]"
             >
-              {formatQrValidUntil(validUntil) === "бессрочно" ? "бессрочно" : `до ${formatQrValidUntil(validUntil)}`}
+              {formatQrValidUntil(validUntil) === "бессрочно"
+                ? t("perpetualShort")
+                : t("until", { date: formatQrValidUntil(validUntil) })}
             </span>
           )
         ) : null}
@@ -182,7 +188,7 @@ export function QrCompactRow({ item, selected, format, onToggle, onFormat }: Car
       </div>
       {selected ? (
         <div className="flex flex-wrap items-center gap-2 pb-2.5 sm:pl-8">
-          <QrFormatSwitch value={format} onChange={onFormat} label={`Формат: ${item.label}`} />
+          <QrFormatSwitch value={format} onChange={onFormat} label={t("format", { label: item.label })} />
           {item.poster.notice ? <Notice notice={item.poster.notice} /> : null}
         </div>
       ) : null}
@@ -192,6 +198,7 @@ export function QrCompactRow({ item, selected, format, onToggle, onFormat }: Car
 
 /** Наклейка на объект: холодильник, помещение, лампа. */
 export function QrObjectCard({ item, selected, format, onToggle, onFormat }: CardProps) {
+  const t = useTranslations("settingsUi.qrPosterCard");
   const inputId = `qr-${item.key}`;
   return (
     <article
@@ -219,7 +226,7 @@ export function QrObjectCard({ item, selected, format, onToggle, onFormat }: Car
         <p className="min-w-0 flex-1 text-[12.5px] leading-[1.45] text-[#6f7282]">{item.caption}</p>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-1">
-        <QrFormatSwitch value={format} onChange={onFormat} label={`Формат: ${item.label}`} />
+        <QrFormatSwitch value={format} onChange={onFormat} label={t("format", { label: item.label })} />
         <CheckLink url={item.poster.url} compact />
       </div>
     </article>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/ui/page-header";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
@@ -25,6 +26,8 @@ export default async function NewJournalEntryPage({
   const { code } = await params;
   const resolvedCode = resolveJournalCodeAlias(code);
   const session = await requireAuth();
+  const t = await getTranslations("journalUi.newEntry");
+  const tJournals = await getTranslations("journals");
 
   const template = await db.journalTemplate.findUnique({
     where: { code: resolvedCode },
@@ -51,17 +54,16 @@ export default async function NewJournalEntryPage({
     return (
       <div className="mx-auto max-w-[640px] space-y-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-16 text-center">
         <div className="text-[20px] font-semibold text-[#0b1024]">
-          Журнал отключён
+          {t("disabledTitle")}
         </div>
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
-          Нельзя создать запись для отключённого журнала. Включите его в
-          настройках набора журналов, чтобы продолжить.
+          {t("disabledBody")}
         </p>
         <Link
           href="/settings/journals"
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
         >
-          Открыть настройки
+          {t("openSettings")}
         </Link>
       </div>
     );
@@ -161,13 +163,13 @@ export default async function NewJournalEntryPage({
         journalName={template.name}
         journalCode={resolvedCode}
         journalMenu={journalMenu}
-        tail={[{ label: "Новая запись" }]}
+        tail={[{ label: t("title") }]}
       />
 
       {/* Тёмный hero снят: форма — главное на этом экране, заголовку
           достаточно одной строки. */}
       <PageHeader
-        eyebrow="Новая запись"
+        eyebrow={t("title")}
         // Своё название журнала организации; в форму и данные — официальное.
         title={await resolveJournalDisplayName(getActiveOrgId(session), resolvedCode, template.name)}
         description={template.description ?? undefined}
@@ -179,8 +181,8 @@ export default async function NewJournalEntryPage({
             rollingMode={rollingMode}
             dailyCountInitial={dailyCountInitial}
             rollingDailyCap={spec.rolling?.dailyCap ?? 50}
-            rollingContinueLabel="Сохранить и следующее блюдо"
-            rollingDoneLabel={spec.rolling?.doneLabel ?? "Готово на сегодня"}
+            rollingContinueLabel={t("saveNextDish")}
+            rollingDoneLabel={spec.rolling?.doneLabel ?? tJournals("doneToday")}
           />
         ) : (
           <DynamicForm
@@ -197,9 +199,9 @@ export default async function NewJournalEntryPage({
             dailyCountInitial={dailyCountInitial}
             rollingDailyCap={spec.rolling?.dailyCap ?? 50}
             rollingContinueLabel={
-              spec.rolling?.continueLabel ?? "Сохранить и продолжить"
+              spec.rolling?.continueLabel ?? tJournals("saveContinue")
             }
-            rollingDoneLabel={spec.rolling?.doneLabel ?? "Готово на сегодня"}
+            rollingDoneLabel={spec.rolling?.doneLabel ?? tJournals("doneToday")}
           />
         )}
       </div>

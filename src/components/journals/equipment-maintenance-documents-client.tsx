@@ -158,7 +158,7 @@ export function EquipmentMaintenanceDocumentsClient({
   async function handleDelete(docId: string, docTitle: string) {
     if (!(await confirmAsync({ locale: committed.current.locale, title: committed.current.t("deleteTitle"), description: committed.current.t("deleteDescription", { title: maintenanceText(docTitle) }), variant: "danger", confirmLabel: committed.current.text("common.delete"), cancelLabel: committed.current.text("common.cancel") }))) return;
     const response = await fetch(`/api/journal-documents/${docId}`, { method: "DELETE" });
-    if (!response.ok) throw new Error("Не удалось удалить документ");
+    if (!response.ok) throw new Error(committed.current.t("deleteFailed"));
     router.refresh();
   }
 
@@ -188,7 +188,7 @@ export function EquipmentMaintenanceDocumentsClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
-    if (!response.ok) throw new Error("Не удалось изменить статус документа");
+    if (!response.ok) throw new Error(committed.current.t("statusFailed"));
     router.refresh();
   }
 
@@ -249,7 +249,7 @@ export function EquipmentMaintenanceDocumentsClient({
           },
         }),
       });
-      if (!response.ok) throw new Error("Не удалось сохранить");
+      if (!response.ok) throw new Error(committed.current.t("saveSettingsFailed"));
       setEditingDoc(null);
       router.refresh();
     } catch {

@@ -1,4 +1,5 @@
 import { Handshake, Mail, Phone, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   phoneHref,
   telegramHref,
@@ -20,6 +21,7 @@ export function ConsultantCard({
   compact?: boolean;
   className?: string;
 }) {
+  const t = useTranslations("dashboardUi.consultantCard");
   const contacts = [
     consultant.phone
       ? { icon: Phone, label: consultant.phone, href: phoneHref(consultant.phone) }
@@ -39,7 +41,7 @@ export function ConsultantCard({
         compact ? "p-4" : "p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6",
         className,
       )}
-      aria-label="Ваш консультант"
+      aria-label={t("title")}
     >
       <div className="flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eef1ff] text-[#5566f6]">
@@ -52,15 +54,14 @@ export function ConsultantCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Ваш консультант
+            {t("title")}
           </div>
           <div className="mt-0.5 truncate text-[15px] font-semibold text-[#0b1024]">
             {consultant.brandName}
           </div>
           {!compact ? (
             <p className="mt-1 text-[13px] leading-[1.55] text-[#6f7282]">
-              Сопровождает ваши журналы и поможет с настройкой. Свяжитесь напрямую —
-              это быстрее, чем через общую поддержку.
+              {t("description")}
             </p>
           ) : null}
         </div>
@@ -82,7 +83,7 @@ export function ConsultantCard({
         </div>
       ) : (
         <p className={cn("text-[13px] text-[#9b9fb3]", compact ? "mt-2" : "mt-3")}>
-          Контакты консультант пока не указал.
+          {t("noContacts")}
         </p>
       )}
     </section>

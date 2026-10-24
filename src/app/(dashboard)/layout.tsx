@@ -116,6 +116,7 @@ export default async function DashboardLayout({
 
   const session = await requireAuth();
   const tAnnouncement = await getTranslations("common.announcementBanner");
+  const tLayout = await getTranslations("layoutUi.dashboardLayout");
 
   const activeOrgId =
     isImpersonating(session) && session.user.actingAsOrganizationId
@@ -392,6 +393,7 @@ export default async function DashboardLayout({
       : null;
 
   return (
+    <DomainMessagesBoundary namespaces={["dashboardUi", "billingUi", "organizationsUi", "cleaningUi"]}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
@@ -451,8 +453,8 @@ export default async function DashboardLayout({
           ) : null}
           {partnerAccess ? (
             <PartnerAccessBanner
-              organizationName={brandedOrg?.name ?? "Организация"}
-              brandName={partnerAccessBrand?.brandName ?? "партнёр"}
+              organizationName={brandedOrg?.name ?? tLayout("fallbackOrganization")}
+              brandName={partnerAccessBrand?.brandName ?? tLayout("fallbackPartner")}
               level={partnerAccess.level}
             />
           ) : null}
@@ -486,7 +488,7 @@ export default async function DashboardLayout({
           <JournalUndoProvider>
           <DomainMessagesBoundary namespaces={["masterCabinetUi"]}>
           <Header
-            userName={session.user.name ?? "Пользователь"}
+            userName={session.user.name ?? tLayout("fallbackUser")}
             userEmail={session.user.email ?? ""}
             organizationName={impersonatedName ?? session.user.organizationName ?? ""}
             organizationLogoUrl={headerLogoUrl}
@@ -520,7 +522,7 @@ export default async function DashboardLayout({
           <Suspense fallback={null}>
             <WelcomeOrgBanner
               organizationId={activeOrgId}
-              organizationName={brandedOrg?.name ?? "Организация"}
+              organizationName={brandedOrg?.name ?? tLayout("fallbackOrganization")}
             />
           </Suspense>
           {/* Песочница: постоянная полоса «данные тестовые» с выходом
@@ -669,6 +671,7 @@ export default async function DashboardLayout({
       </SiteThemeProvider>
       </CustomNamesProvider>
     </AuthSessionProvider>
+    </DomainMessagesBoundary>
   );
 }
 
@@ -692,6 +695,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
   // requireAuth() увёл бы на `/login` — в приложении вход происходит сам
   // (по Telegram initData), и форма с паролем там выглядит поломкой.
   const session = await getServerSession(authOptions).catch(() => null);
+  const tLayout = await getTranslations("layoutUi.dashboardLayout");
   if (!session?.user) {
     // Куда человек шёл, знает только прокси — он кладёт путь в заголовок.
     // Без этого ссылка из бота на журнал после входа теряла цель и
@@ -775,7 +779,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
   return (
     // Сообщения пространства miniHome нужны навигации мини-приложения
     // (mini-nav); без них next-intl пишет MISSING_MESSAGE в консоль.
-    <DomainMessagesBoundary namespaces={["miniHome"]}>
+    <DomainMessagesBoundary namespaces={["miniHome", "miniUi", "billingUi", "organizationsUi"]}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
@@ -803,8 +807,8 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
               ) : null}
               {partnerAccess ? (
                 <PartnerAccessBanner
-                  organizationName={orgRow?.name ?? "Организация"}
-                  brandName={partnerAccessBrand?.brandName ?? "партнёр"}
+                  organizationName={orgRow?.name ?? tLayout("fallbackOrganization")}
+                  brandName={partnerAccessBrand?.brandName ?? tLayout("fallbackPartner")}
                   level={partnerAccess.level}
                 />
               ) : null}

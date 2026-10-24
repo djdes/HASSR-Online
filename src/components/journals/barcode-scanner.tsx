@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ScanBarcode, Camera, CameraOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,6 +23,7 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
+  const t = useTranslations("journals.ui.barcodeScanner");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,14 +112,14 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
               errorMessage.includes("NotFoundError") ||
               errorMessage.includes("NotReadableError")
             ) {
-              setError("Нет доступа к камере. Разрешите доступ в настройках браузера.");
+              setError(t("cameraDenied"));
             }
           }
         );
 
         scannerRef.current = scanner;
       } catch {
-        setError("Не удалось инициализировать сканер.");
+        setError(t("initFailed"));
       }
     }, 100);
 
@@ -132,7 +134,7 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
         scannerRef.current = null;
       }
     };
-  }, [isOpen, handleScanSuccess]);
+  }, [isOpen, handleScanSuccess, t]);
 
   function toggleScanner() {
     setIsOpen((prev) => {
@@ -163,13 +165,13 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
         {isOpen ? (
           <>
             <CameraOff className="size-4" />
-            Закрыть сканер
+            {t("close")}
           </>
         ) : (
           <>
             <Camera className="size-4" />
             <ScanBarcode className="size-4" />
-            Сканировать штрих-код
+            {t("scan")}
           </>
         )}
       </Button>
@@ -188,7 +190,7 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
 
       {isLoading && (
         <div className="text-sm text-muted-foreground animate-pulse">
-          Поиск продукта по штрих-коду...
+          {t("lookingUp")}
         </div>
       )}
 
@@ -197,7 +199,7 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
           <ScanBarcode className="size-4 shrink-0 text-muted-foreground" />
           {lastScan.product ? (
             <span>
-              Найден:{" "}
+              {t("found")}{" "}
               <span className="font-medium">{lastScan.product.name}</span>
               {lastScan.product.supplier && (
                 <span className="text-muted-foreground">
@@ -211,10 +213,10 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
             </span>
           ) : (
             <span>
-              Штрих-код:{" "}
+              {t("barcode")}{" "}
               <span className="font-medium">{lastScan.barcode}</span>
               <Badge variant="outline" className="ml-2">
-                не найден в справочнике
+                {t("notFound")}
               </Badge>
             </span>
           )}

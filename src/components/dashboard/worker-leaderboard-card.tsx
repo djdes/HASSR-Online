@@ -1,4 +1,5 @@
 import { Coins, Trophy, User as UserIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderboard";
 
 /**
@@ -7,6 +8,7 @@ import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderb
  * Команда», рядом с теми, о ком они.
  */
 export async function WorkerLeaderboardCards({ organizationId }: { organizationId: string }) {
+  const t = await getTranslations("dashboardUi.workerLeaderboardCard");
   const [leaderboard, strugglers] = await Promise.all([
     getWorkerLeaderboard(organizationId, 3, 30),
     getStrugglingWorkers(organizationId, 3, 30),
@@ -24,10 +26,10 @@ export async function WorkerLeaderboardCards({ organizationId }: { organizationI
             </span>
             <div className="min-w-0 flex-1">
               <h2 className="text-[18px] font-semibold text-[#0b1024]">
-                Топ за месяц
+                {t("topTitle")}
               </h2>
               <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Кто заполнял журналы чаще всех за последние 30 дней.
+                {t("topDescription")}
               </p>
               <ol className="mt-4 space-y-2">
                 {leaderboard.map((row, idx) => {
@@ -65,7 +67,7 @@ export async function WorkerLeaderboardCards({ organizationId }: { organizationI
                         <span className="text-[14px] font-semibold tabular-nums text-[#0b1024]">
                           {row.entryCount}
                           <span className="ml-1 text-[12px] font-normal text-[#6f7282]">
-                            записей
+                            {t("entries", { count: row.entryCount })}
                           </span>
                         </span>
                         {row.bonusKopecks > 0 ? (
@@ -96,11 +98,10 @@ export async function WorkerLeaderboardCards({ organizationId }: { organizationI
               </span>
               <div className="min-w-0 flex-1">
                 <h2 className="text-[18px] font-semibold text-[#0b1024]">
-                  Кому помочь
+                  {t("helpTitle")}
                 </h2>
                 <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                  Сотрудники с наименьшим числом записей за 30 дней —
-                  поддержите их или проверьте загрузку.
+                  {t("helpDescription")}
                 </p>
                 <ol className="mt-4 space-y-2">
                   {strugglers.map((row) => (
@@ -124,7 +125,7 @@ export async function WorkerLeaderboardCards({ organizationId }: { organizationI
                       <span className="text-right text-[14px] font-semibold tabular-nums text-[#0b1024]">
                         {row.entryCount}
                         <span className="ml-1 text-[12px] font-normal text-[#6f7282]">
-                          записей
+                          {t("entries", { count: row.entryCount })}
                         </span>
                       </span>
                     </li>

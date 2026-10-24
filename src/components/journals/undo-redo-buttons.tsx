@@ -1,6 +1,7 @@
 "use client";
 
 import { Redo2, Undo2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Контракт кнопок отмены. Проп опциональный: журналы, где отмена ещё
@@ -36,14 +37,15 @@ export function UndoRedoButtons({
   undo: DocumentBarUndo;
   className?: string;
 }) {
+  const t = useTranslations("journals.ui.undoRedo");
   return (
     <div className={className ?? "flex items-center gap-1.5"}>
       <button
         type="button"
         onClick={undo.onUndo}
         disabled={!undo.canUndo}
-        aria-label="Отменить последнее изменение"
-        title="Отменить (Ctrl+Z). Отменяются только ваши правки в этой вкладке — автозаполнение не трогаем."
+        aria-label={t("undoAria")}
+        title={t("undoTitle")}
         className={UNDO_ICON_BUTTON_CLASS}
       >
         <Undo2 className="size-4" />
@@ -57,8 +59,8 @@ export function UndoRedoButtons({
         type="button"
         onClick={undo.onRedo}
         disabled={!undo.canRedo}
-        aria-label="Повторить отменённое изменение"
-        title="Повторить (Ctrl+Shift+Z)"
+        aria-label={t("redoAria")}
+        title={t("redoTitle")}
         className={UNDO_ICON_BUTTON_CLASS}
       >
         <Redo2 className="size-4" />

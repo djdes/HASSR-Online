@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -34,6 +35,7 @@ type Resp = {
  * Источник: JournalDocumentEntry журнала staff_training.
  */
 export function StaffTrainingCard() {
+  const t = useTranslations("dashboardUi.staffTrainingCard");
   const [data, setData] = useState<Resp | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -53,7 +55,7 @@ export function StaffTrainingCard() {
   if (loading) {
     return (
       <div className="rounded-3xl border border-[#ececf4] bg-white p-5 text-[#6f7282]">
-        <Loader2 className="size-4 animate-spin inline" /> Проверяю обучение…
+        <Loader2 className="size-4 animate-spin inline" /> {t("loading")}
       </div>
     );
   }
@@ -74,16 +76,19 @@ export function StaffTrainingCard() {
           </span>
           <div>
             <div className="text-[15px] font-semibold text-[#0b1024]">
-              Гигиеническое обучение
+              {t("title")}
             </div>
             <div className="mt-0.5 text-[12px] text-[#6f7282]">
               {need > 0 ? (
                 <>
-                  Просрочено: {data.summary.overdue} · Истекает:{" "}
-                  {data.summary.warning} · Без записи: {data.summary.missing}
+                  {t("summary", {
+                    overdue: data.summary.overdue,
+                    warning: data.summary.warning,
+                    missing: data.summary.missing,
+                  })}
                 </>
               ) : (
-                "Все актуальны"
+                t("allCurrent")
               )}
             </div>
           </div>
@@ -92,7 +97,7 @@ export function StaffTrainingCard() {
           href="/journals/staff_training"
           className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#3848c7] hover:underline"
         >
-          Журнал обучения
+          {t("journalLink")}
           <LinkPendingSpinner />
         </Link>
       </div>
@@ -100,7 +105,7 @@ export function StaffTrainingCard() {
       {need === 0 ? (
         <div className="mt-4 inline-flex items-center gap-2 text-[13px] text-[#136b2a]">
           <CheckCircle2 className="size-4" />
-          Все сотрудники прошли обучение в текущем году.
+          {t("allTrained")}
         </div>
       ) : (
         <div className="mt-4 space-y-1.5">
@@ -128,8 +133,8 @@ export function StaffTrainingCard() {
                   </div>
                   <div className="mt-0.5 text-[11px] text-[#6f7282]">
                     {r.lastTrainedAt
-                      ? `Последнее: ${r.lastTrainedAt} (${r.daysSince} дн назад)`
-                      : "Нет записи о прохождении"}
+                      ? t("lastTrained", { date: r.lastTrainedAt, days: r.daysSince ?? 0 })
+                      : t("noRecord")}
                   </div>
                 </div>
                 <span
@@ -142,10 +147,10 @@ export function StaffTrainingCard() {
                   }`}
                 >
                   {r.status === "overdue"
-                    ? ">365 дн"
+                    ? t("badgeOverdue")
                     : r.status === "warning"
-                      ? "<30 дн"
-                      : "Нет"}
+                      ? t("badgeWarning")
+                      : t("badgeNone")}
                 </span>
               </div>
             ))}

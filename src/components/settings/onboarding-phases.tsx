@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   ArrowRight,
@@ -72,6 +73,7 @@ export function PhaseCard({
   isLocked: boolean;
   isLast: boolean;
 }) {
+  const t = useTranslations("settingsUi.onboardingPhases");
   const Icon = phase.icon;
   const requiredItems = phase.items.filter((i) => !i.optional);
   const required = phase.progress
@@ -161,15 +163,15 @@ export function PhaseCard({
                 <h3
                   className={`text-[16px] font-semibold leading-tight ${tone.titleClr}`}
                 >
-                  Этап {phase.number}. {phase.title}
+                  {t("phaseHeading", { number: phase.number, title: phase.title })}
                 </h3>
                 {status === "complete" ? (
                   <span className="rounded-full bg-[#136b2a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                    Готово
+                    {t("done")}
                   </span>
                 ) : isActive ? (
                   <span className="rounded-full bg-[#5566f6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                    Сейчас
+                    {t("current")}
                   </span>
                 ) : null}
                 {required.length > 0 ? (
@@ -219,6 +221,7 @@ export function PhaseCard({
 // ─────────────────────────────────────────────────────────────────────
 
 export function SetupCard({ item }: { item: SetupItem }) {
+  const t = useTranslations("settingsUi.onboardingPhases");
   const Icon = item.icon;
   const stateMeta =
     item.state === "complete"
@@ -262,7 +265,7 @@ export function SetupCard({ item }: { item: SetupItem }) {
               {item.title}
               {item.optional ? (
                 <span className="rounded-full bg-[#fafbff] px-1.5 py-0.5 text-[10px] font-medium text-[#9b9fb3]">
-                  по желанию
+                  {t("optional")}
                 </span>
               ) : null}
             </div>

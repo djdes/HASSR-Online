@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { WeekdayHeatmapRow } from "@/lib/compliance-heatmap";
 
 type Props = {
@@ -12,7 +14,15 @@ type Props = {
  *
  * Сортировка: сверху самые проблемные шаблоны (низкое среднее).
  */
-export function WeekdayHeatmap({ rows, weekdayLabels }: Props) {
+export function WeekdayHeatmap({ rows }: Props) {
+  const t = useTranslations("reportsUi.weekdayHeatmap");
+  const locale = useLocale();
+  // Columns are Monday..Sunday; labels follow the interface language
+  // (2024-01-01 is a Monday).
+  const weekdayLabels = useMemo(() => {
+    const format = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
+    return Array.from({ length: 7 }, (_, i) => format.format(new Date(Date.UTC(2024, 0, 1 + i))));
+  }, [locale]);
   if (rows.length === 0) return null;
 
   return (
@@ -20,11 +30,10 @@ export function WeekdayHeatmap({ rows, weekdayLabels }: Props) {
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            По дням недели (8 нед.)
+            {t("title")}
           </h2>
           <p className="mt-0.5 text-[13px] text-[#6f7282]">
-            Какой % дней этого дня недели каждый журнал заполняется.
-            Низкие значения — паттерн пропусков.
+            {t("description")}
           </p>
         </div>
         <div className="flex items-center gap-2 text-[12px] text-[#6f7282]">
@@ -44,7 +53,7 @@ export function WeekdayHeatmap({ rows, weekdayLabels }: Props) {
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-white pr-3 text-left font-medium text-[#6f7282]">
-                Журнал
+                {t("journal")}
               </th>
               {weekdayLabels.map((label) => (
                 <th
@@ -79,7 +88,7 @@ export function WeekdayHeatmap({ rows, weekdayLabels }: Props) {
                       <div
                         className="rounded-md px-2 py-1.5 text-[13px] font-semibold tabular-nums"
                         style={{ backgroundColor: bg, color: fg }}
-                        title={`${c.pct}% (${c.sampleSize} дней)`}
+                        title={t("cellTitle", { pct: c.pct, count: c.sampleSize })}
                       >
                         {c.pct}%
                       </div>

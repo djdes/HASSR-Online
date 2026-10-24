@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -26,7 +27,8 @@ export async function generateMetadata({
 }) {
   const { code } = await params;
   const template = findOrderTemplate(code);
-  return { title: template ? template.title : "Приказ" };
+  const t = await getTranslations("ordersUi");
+  return { title: template ? template.title : t("orderPage.title") };
 }
 
 /**

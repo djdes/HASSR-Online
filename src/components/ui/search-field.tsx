@@ -2,6 +2,7 @@
 
 import { Search, X } from "lucide-react";
 import { useRef } from "react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export function SearchField({
   total?: number;
   className?: string;
 }) {
+  const t = useTranslations("sharedUi.searchField");
   const inputRef = useRef<HTMLInputElement>(null);
   const searching = value.trim().length > 0;
   return (
@@ -59,7 +61,7 @@ export function SearchField({
               onChange("");
               inputRef.current?.focus();
             }}
-            aria-label="Очистить поиск"
+            aria-label={t("clear")}
             className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 touch:min-w-8"
           >
             <X className="size-4" />
@@ -68,7 +70,7 @@ export function SearchField({
       </div>
       {searching && found !== undefined && total !== undefined ? (
         <div className="text-[13px] text-[#6f7282] sm:whitespace-nowrap" role="status" data-search-count="">
-          Найдено {found} из {total}
+          {t("found", { found, total })}
         </div>
       ) : null}
     </div>
