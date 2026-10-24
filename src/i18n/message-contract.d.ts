@@ -22323,7 +22323,6 @@ export type MessageContract = {
     "description": "Все строки сайта на русском, английском и узбекском, по категориям. Правка начинает действовать без выкладки — в течение 30 секунд.",
     "sourceNote": "Русский — исходный текст. Если меняете его, проверьте английский и узбекский.",
     "groups": {
-      "all": "Поиск",
       "journals": "Журналы",
       "interface": "Интерфейс",
       "other": "Прочие разделы"
@@ -22340,8 +22339,12 @@ export type MessageContract = {
       "untranslated": "без перевода: {count}",
       "stale": "исходник изменился: {count}"
     },
-    "otherFilter": "Найти раздел",
-    "searchPlaceholder": "Поиск по ключу или тексту",
+    "section": "Раздел",
+    "sections": "Разделы",
+    "sectionFilter": "Найти раздел",
+    "sectionEmpty": "Разделов не найдено",
+    "searchPlaceholder": "Поиск по всем переводам",
+    "searchScope": "Поиск по всем разделам: ключ и текст на русском, английском и узбекском",
     "filters": {
       "all": "Все",
       "modified": "Изменённые",
@@ -22362,12 +22365,26 @@ export type MessageContract = {
       "reset": "Вернуть исходный",
       "auto": "Автоперевод",
       "autoBatch": "Автоперевод: {language} ({count})",
-      "loadMore": "Показать ещё"
+      "undo": "Отменить правку"
     },
     "autoBusy": "Перевожу… {done} из {total}",
     "loading": "Загрузка…",
     "empty": "Ничего не найдено",
-    "shown": "Показано {shown} из {total}",
+    "emptyValue": "Пусто",
+    "range": "Строки {from, number}–{to, number} из {total, number}",
+    "pagination": {
+      "label": "Страницы",
+      "previous": "Назад",
+      "next": "Вперёд",
+      "page": "Страница {page}",
+      "compact": "{page} из {pages}"
+    },
+    "rowEditor": {
+      "position": "{index} из {count}",
+      "previous": "Предыдущая строка",
+      "next": "Следующая строка",
+      "shortcut": "Ctrl+Enter — сохранить"
+    },
     "toasts": {
       "saved": "Сохранено",
       "savedMany": "Сохранено строк: {count}",

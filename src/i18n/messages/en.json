@@ -22322,7 +22322,6 @@
     "description": "Every site string in Russian, English and Uzbek, by category. Edits take effect without a deploy, within 30 seconds.",
     "sourceNote": "Russian is the source text. If you change it, check English and Uzbek too.",
     "groups": {
-      "all": "Search",
       "journals": "Journals",
       "interface": "Interface",
       "other": "Other sections"
@@ -22339,8 +22338,12 @@
       "untranslated": "untranslated: {count}",
       "stale": "source changed: {count}"
     },
-    "otherFilter": "Find a section",
-    "searchPlaceholder": "Search by key or text",
+    "section": "Section",
+    "sections": "Sections",
+    "sectionFilter": "Find a section",
+    "sectionEmpty": "No sections found",
+    "searchPlaceholder": "Search all translations",
+    "searchScope": "Searching all sections: key and text in Russian, English and Uzbek",
     "filters": {
       "all": "All",
       "modified": "Edited",
@@ -22361,12 +22364,26 @@
       "reset": "Restore original",
       "auto": "Auto-translate",
       "autoBatch": "Auto-translate: {language} ({count})",
-      "loadMore": "Show more"
+      "undo": "Undo edit"
     },
     "autoBusy": "Translating… {done} of {total}",
     "loading": "Loading…",
     "empty": "Nothing found",
-    "shown": "Showing {shown} of {total}",
+    "emptyValue": "Empty",
+    "range": "Strings {from, number}–{to, number} of {total, number}",
+    "pagination": {
+      "label": "Pages",
+      "previous": "Back",
+      "next": "Next",
+      "page": "Page {page}",
+      "compact": "{page} of {pages}"
+    },
+    "rowEditor": {
+      "position": "{index} of {count}",
+      "previous": "Previous string",
+      "next": "Next string",
+      "shortcut": "Ctrl+Enter to save"
+    },
     "toasts": {
       "saved": "Saved",
       "savedMany": "Strings saved: {count}",

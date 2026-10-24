@@ -7,6 +7,7 @@ import { loadBaseMessages } from "@/i18n/messages";
 import { isStaleOverride, looksUntranslated, placeholderNames, validateOverride, type FlatCatalog, type OverrideValidation } from "./catalog";
 import { buildCategories, type TranslationCategorySummary } from "./categories";
 import { invalidateTranslationOverrides } from "./overrides.server";
+import { normalizeSearchText, searchRank, TRANSLATION_PAGE_SIZE } from "./search";
 
 export type TranslationActor = { id: string; name: string; organizationId: string; isRoot: boolean };
 
@@ -35,7 +36,13 @@ export async function canEditTranslations(userId: string): Promise<boolean> {
   return Boolean(user && user.isActive && !user.archivedAt && (user.isRoot || user.canEditTranslations));
 }
 
-type BaseCatalogs = { flat: Record<Locale, FlatCatalog>; keys: string[]; categories: TranslationCategorySummary[] };
+type BaseCatalogs = {
+  flat: Record<Locale, FlatCatalog>;
+  keys: string[];
+  categories: TranslationCategorySummary[];
+  /** Ключ → id категории: результат поиска показывает, откуда строка. */
+  categoryOf: Map<string, string>;
+};
 let baseCatalogs: Promise<BaseCatalogs> | null = null;
 
 export function getBaseCatalogs(): Promise<BaseCatalogs> {
@@ -43,7 +50,9 @@ export function getBaseCatalogs(): Promise<BaseCatalogs> {
     const entries = await Promise.all(LOCALES.map(async (locale) => [locale, flattenMessages(await loadBaseMessages(locale))] as const));
     const flat = Object.fromEntries(entries) as Record<Locale, FlatCatalog>;
     const keys = Object.keys(flat.ru);
-    return { flat, keys, categories: buildCategories(keys) };
+    const categories = buildCategories(keys);
+    const categoryOf = new Map(categories.flatMap((category) => category.keys.map((key) => [key, category.id] as const)));
+    return { flat, keys, categories, categoryOf };
   })();
   return baseCatalogs;
 }
@@ -66,6 +75,8 @@ async function overrideMap(keys?: string[]): Promise<Map<string, OverrideRow>> {
 
 export type TranslationEntry = {
   key: string;
+  /** Категория редактора, в которой лежит строка. */
+  category: string;
   /** Значение, которое видит интерфейс (файл или правка). */
   values: Record<Locale, string>;
   /** Значение из файла каталога — для сброса и сравнения. */
@@ -80,6 +91,19 @@ export type TranslationEntry = {
 // Разбор ICU дорогой, а русский исходник не меняется до деплоя.
 const placeholderCache = new Map<string, string[]>();
 
+// Текст для поиска: каталог не меняется до деплоя, правок — сотни, так
+// что кэш ограничен самими строками каталога и правок.
+const searchTextCache = new Map<string, string>();
+
+function searchText(text: string): string {
+  let normalized = searchTextCache.get(text);
+  if (normalized === undefined) {
+    normalized = normalizeSearchText(text);
+    searchTextCache.set(text, normalized);
+  }
+  return normalized;
+}
+
 function placeholdersOf(key: string, russian: string): string[] {
   let names = placeholderCache.get(key);
   if (!names) {
@@ -89,8 +113,10 @@ function placeholdersOf(key: string, russian: string): string[] {
   return names;
 }
 
-/** Без `placeholders`: их добавляет `withPlaceholders` для выдаваемой страницы. */
-function toEntry(key: string, flat: Record<Locale, FlatCatalog>, overrides: OverrideRow | undefined): Omit<TranslationEntry, "placeholders"> {
+type BareEntry = Omit<TranslationEntry, "placeholders" | "category">;
+
+/** Без `placeholders` и `category`: их добавляет `finishEntry` для выдаваемой страницы. */
+function toEntry(key: string, flat: Record<Locale, FlatCatalog>, overrides: OverrideRow | undefined): BareEntry {
   const base = Object.fromEntries(LOCALES.map((locale) => [locale, flat[locale][key] ?? ""])) as Record<Locale, string>;
   const values = Object.fromEntries(LOCALES.map((locale) => [locale, overrides?.[locale]?.value ?? base[locale]])) as Record<Locale, string>;
   return {
@@ -104,8 +130,8 @@ function toEntry(key: string, flat: Record<Locale, FlatCatalog>, overrides: Over
   };
 }
 
-function withPlaceholders(entry: Omit<TranslationEntry, "placeholders">): TranslationEntry {
-  return { ...entry, placeholders: placeholdersOf(entry.key, entry.base.ru) };
+function finishEntry(entry: BareEntry, categoryOf: Map<string, string>): TranslationEntry {
+  return { ...entry, category: categoryOf.get(entry.key) ?? "", placeholders: placeholdersOf(entry.key, entry.base.ru) };
 }
 
 export type CategoryStats = { id: string; group: TranslationCategorySummary["group"]; namespace?: string; title?: string; total: number; modified: number; stale: number; untranslated: number };
@@ -130,35 +156,51 @@ export async function listCategoryStats(): Promise<CategoryStats[]> {
 
 export type EntryQuery = { category?: string; q?: string; filter?: "all" | "modified" | "untranslated"; offset?: number; limit?: number };
 
-export async function listEntries(query: EntryQuery): Promise<{ total: number; entries: TranslationEntry[] } | null> {
-  const { flat, keys, categories } = await getBaseCatalogs();
+/**
+ * Страница строк. Без категории — весь каталог: так работает глобальный
+ * поиск. С запросом строки упорядочены по `searchRank` (точные совпадения
+ * выше), без запроса — в порядке категории.
+ */
+export async function listEntries(query: EntryQuery): Promise<{ total: number; offset: number; entries: TranslationEntry[] } | null> {
+  const { flat, keys, categories, categoryOf } = await getBaseCatalogs();
   let scope = keys;
   if (query.category) {
     const category = categories.find((item) => item.id === query.category);
     if (!category) return null;
     scope = category.keys;
   }
-  const needle = query.q?.trim().toLocaleLowerCase("ru");
+  const needle = normalizeSearchText(query.q ?? "").trim();
   const filter = query.filter ?? "all";
   // Правок — сотни, не тысячи: читаем все одним запросом.
   const overrides = await overrideMap();
-  const matched: Omit<TranslationEntry, "placeholders">[] = [];
+  const matched: { entry: BareEntry; rank: number }[] = [];
   for (const key of scope) {
     const entry = toEntry(key, flat, overrides.get(key));
     if (filter === "modified" && !entry.overridden.length) continue;
     if (filter === "untranslated" && !entry.untranslated.length) continue;
-    if (needle && !key.toLocaleLowerCase("ru").includes(needle) && !LOCALES.some((locale) => entry.values[locale].toLocaleLowerCase("ru").includes(needle))) continue;
-    matched.push(entry);
+    let rank = 0;
+    if (needle) {
+      const found = searchRank(needle, searchText(key), LOCALES.map((locale) => searchText(entry.values[locale])));
+      if (found === null) continue;
+      rank = found;
+    }
+    matched.push({ entry, rank });
   }
+  // Сортировка устойчивая: при равном месте — порядок каталога.
+  if (needle) matched.sort((a, b) => a.rank - b.rank);
+  const limit = Math.min(200, Math.max(1, query.limit ?? TRANSLATION_PAGE_SIZE));
   const offset = Math.max(0, query.offset ?? 0);
-  const limit = Math.min(200, Math.max(1, query.limit ?? 100));
-  return { total: matched.length, entries: matched.slice(offset, offset + limit).map(withPlaceholders) };
+  return {
+    total: matched.length,
+    offset,
+    entries: matched.slice(offset, offset + limit).map(({ entry }) => finishEntry(entry, categoryOf)),
+  };
 }
 
 export async function getEntries(keys: string[]): Promise<TranslationEntry[]> {
-  const { flat } = await getBaseCatalogs();
+  const { flat, categoryOf } = await getBaseCatalogs();
   const overrides = await overrideMap(keys);
-  return keys.filter((key) => flat.ru[key] !== undefined).map((key) => withPlaceholders(toEntry(key, flat, overrides.get(key))));
+  return keys.filter((key) => flat.ru[key] !== undefined).map((key) => finishEntry(toEntry(key, flat, overrides.get(key)), categoryOf));
 }
 
 export type SaveResult = { ok: true; entry: TranslationEntry } | Extract<OverrideValidation, { ok: false }>;
