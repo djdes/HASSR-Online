@@ -12,6 +12,7 @@ import {
   Coins,
   CreditCard,
   Handshake,
+  Languages,
   Library,
   Loader2,
   LogOut,
@@ -132,6 +133,8 @@ type HeaderProps = {
    * ссылка «Логотип и цвета».
    */
   canEditBranding?: boolean;
+  /** ROOT или переводчик (`canEditTranslations`) — пункт «Переводы интерфейса». */
+  canEditTranslations?: boolean;
 };
 
 /**
@@ -158,6 +161,7 @@ export function Header({
   partnerHint = null,
   whiteLabel = false,
   canEditBranding = false,
+  canEditTranslations = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
   const pathname = usePathname();
@@ -452,6 +456,15 @@ export function Header({
                   </DropdownMenuItem>
                 ) : null}
 
+                {canEditTranslations ? (
+                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
+                    <Link href={isRoot ? "/root/translations" : "/translations"} data-testid="profile-translations">
+                      <Languages className="mr-2 size-4 text-[#5566f6]" />
+                      {t("profile.translations")}
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+
                 {isRoot ? (
                   <DropdownMenuItem asChild className="md:hidden">
                     <Link href="/root">
@@ -537,6 +550,7 @@ export function Header({
         canManagePlan={canManagePlan}
         fullAccess={fullAccess}
         canEditBranding={canEditBranding}
+        canEditTranslations={canEditTranslations}
         isRoot={isRoot}
         onLogout={handleLogout}
       />

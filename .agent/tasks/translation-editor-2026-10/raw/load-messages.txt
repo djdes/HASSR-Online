@@ -1,0 +1,3 @@
+before: Entire period | same object: true
+after: Whole period (override) | base untouched: Entire period | ru untouched: Весь период
+reset: Entire period

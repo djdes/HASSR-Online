@@ -731,8 +731,35 @@ async function seedPlatformOrgAndRoot() {
   console.log(`  Root user ready: ${rootEmail}`);
 }
 
+/**
+ * Первый переводчик интерфейса (решение владельца 2026-10-24). Однократно:
+ * после выдачи пишем маркер, и дальше правом управляет ROOT в
+ * /root/translations — снятое право следующий деплой не вернёт. Пока
+ * пользователя нет, маркер не пишем: шаг повторится на следующем деплое.
+ */
+const TRANSLATORS_BOOTSTRAP_KEY = "translators_bootstrap_2026_10";
+const BOOTSTRAP_TRANSLATOR_EMAILS = ["alexey@wesetup.ru"];
+
+async function seedTranslatorsOnce() {
+  const done = await prisma.platformSetting.findUnique({ where: { key: TRANSLATORS_BOOTSTRAP_KEY } });
+  if (done) return;
+  const { count } = await prisma.user.updateMany({
+    where: { email: { in: BOOTSTRAP_TRANSLATOR_EMAILS, mode: "insensitive" } },
+    data: { canEditTranslations: true },
+  });
+  if (count === 0) {
+    console.log("  Translators bootstrap: users not found yet, will retry next seed");
+    return;
+  }
+  await prisma.platformSetting.create({
+    data: { key: TRANSLATORS_BOOTSTRAP_KEY, value: new Date().toISOString() },
+  });
+  console.log(`  Translators bootstrap: granted ${count}`);
+}
+
 async function main() {
   await seedPlatformOrgAndRoot();
+  await seedTranslatorsOnce();
 
   console.log("Seeding journal templates...");
   const allTemplates = [

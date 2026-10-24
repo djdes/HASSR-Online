@@ -8,7 +8,7 @@ import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { formatNumber } from "@/i18n/locales";
-import { loadMessages } from "@/i18n/messages";
+import { loadBaseMessages } from "@/i18n/messages";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ const PLATFORM_ORG_ID = process.env.PLATFORM_ORG_ID || "platform";
 
 export default async function RootMetricsPage() {
   await requireRoot();
-  const [t, locale, sourceMessages] = await Promise.all([getTranslations("rootMetrics"), getSiteLocale(), loadMessages("ru")]);
+  const [t, locale, sourceMessages] = await Promise.all([getTranslations("rootMetrics"), getSiteLocale(), loadBaseMessages("ru")]);
 
   // Один момент времени на весь рендер: и окна 7/14/30 дней в метриках,
   // и относительные подписи «N дн назад» в таблице считаются от него.

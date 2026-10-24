@@ -16,6 +16,7 @@ import {
   FileText,
   Handshake,
   HeartPulse,
+  Languages,
   LayoutDashboard,
   Lightbulb,
   Mail,
@@ -113,6 +114,7 @@ const NAV: NavEntry[] = [
       { href: "/root/blog", label: "blog", icon: NotebookText },
       { href: "/root/seo", label: "seo", icon: SearchCheck },
       { href: "/root/yandex-direct", label: "yandexDirect", icon: Megaphone },
+      { href: "/root/translations", label: "translations", icon: Languages },
     ],
   },
   {

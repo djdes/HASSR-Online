@@ -2688,6 +2688,7 @@
       "backOfficeTitle": "Separate back-office workspace: menus and ingredients for selected locations"
     },
     "profile": {
+      "translations": "Interface translations",
       "organizationSwitcher": "Organizations in this workspace",
       "otherCabinets": "Other workspaces",
       "createMasterCabinet": "Create reference workspace",
@@ -15053,6 +15054,7 @@
     }
   },
   "rootNavigation": {
+    "translations": "Translations",
     "platformBrand": "WeSetup · Platform",
     "backToApp": "Open application",
     "sections": "Sections",
@@ -18989,6 +18991,8 @@
       "platform": "Platform console",
       "sections": "All sections",
       "sectionsHint": "journals, reports, settings",
+      "translations": "Interface translations",
+      "translationsHint": "edit ru / en / uz texts",
       "feedback": "Feedback",
       "feedbackHint": "a problem or idea",
       "fullSite": "Open the full website",
@@ -22080,6 +22084,87 @@
       "provider_auth": "Direct denied access. The advertising account connection needs to be checked.",
       "provider_unavailable": "Could not get a response from Direct. Try again a little later.",
       "rate_limited": "Direct has temporarily limited requests. Wait a little and try again."
+    }
+  },
+  "translationEditor": {
+    "title": "Interface translations",
+    "description": "Every site string in Russian, English and Uzbek, by category. Edits take effect without a deploy, within 30 seconds.",
+    "sourceNote": "Russian is the source text. If you change it, check English and Uzbek too.",
+    "groups": {
+      "all": "Search",
+      "journals": "Journals",
+      "interface": "Interface",
+      "other": "Other sections"
+    },
+    "categories": {
+      "all": "All strings",
+      "journal-hygiene": "Hygiene log",
+      "navigation": "Menu and navigation",
+      "common": "Common buttons and labels"
+    },
+    "categoryTotal": "{total, plural, one {# string} other {# strings}}",
+    "badges": {
+      "modified": "edited: {count}",
+      "untranslated": "untranslated: {count}"
+    },
+    "otherFilter": "Find a section",
+    "searchPlaceholder": "Search by key or text",
+    "filters": {
+      "all": "All",
+      "modified": "Edited",
+      "untranslated": "Untranslated"
+    },
+    "rowState": {
+      "modified": "Edited",
+      "untranslated": "Not translated",
+      "draft": "Unsaved"
+    },
+    "placeholders": "Placeholders: {list}",
+    "original": "In file: {text}",
+    "actions": {
+      "save": "Save",
+      "saveAll": "Save all ({count})",
+      "discard": "Discard",
+      "reset": "Restore original",
+      "auto": "Auto-translate",
+      "autoBatch": "Auto-translate: {language} ({count})",
+      "loadMore": "Show more"
+    },
+    "autoBusy": "Translating… {done} of {total}",
+    "loading": "Loading…",
+    "empty": "Nothing found",
+    "shown": "Showing {shown} of {total}",
+    "toasts": {
+      "saved": "Saved",
+      "savedMany": "Strings saved: {count}",
+      "reset": "Original text restored",
+      "autoDone": "Draft translations: {count}. Review and save.",
+      "autoRejected": "Strings not translated: {count}"
+    },
+    "errors": {
+      "forbidden": "No access to translations",
+      "bad_request": "Invalid request",
+      "unknown_key": "This string is no longer in the catalog",
+      "unknown_locale": "Unknown language",
+      "too_long": "The text is too long",
+      "corrupted": "The text is corrupted: it has broken characters",
+      "invalid_icu": "Placeholder error — check the curly braces",
+      "argument_mismatch": "Placeholders must match the Russian text: {expected}",
+      "rate_limited": "Too many auto-translate requests, wait a minute",
+      "ai_not_configured": "Auto-translate is unavailable: the AI assistant is not set up",
+      "ai_failed": "Auto-translate did not respond, try again",
+      "user_not_found": "No user with this email",
+      "generic": "Could not save"
+    },
+    "translators": {
+      "title": "Translators",
+      "description": "Who may edit translations. A translator opens the editor from the profile menu in the workspace.",
+      "emailPlaceholder": "User email",
+      "grant": "Grant access",
+      "revoke": "Revoke access",
+      "empty": "Nobody yet",
+      "granted": "Access granted",
+      "revoked": "Access revoked"
     }
   }
 }

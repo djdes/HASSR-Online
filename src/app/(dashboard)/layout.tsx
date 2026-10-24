@@ -152,6 +152,7 @@ export default async function DashboardLayout({
         name: true,
         phone: true,
         legalVersion: true,
+        canEditTranslations: true,
       },
     }),
     // H1 — white-label: читаем brandColor для override основного
@@ -510,6 +511,7 @@ export default async function DashboardLayout({
             partnerHint={partnerHint}
             whiteLabel={Boolean(consultant)}
             canEditBranding={hasCapability(session.user, "admin.full")}
+            canEditTranslations={session.user.isRoot === true || profile?.canEditTranslations === true}
           />
           </DomainMessagesBoundary>
           {/* Быстрый старт только что созданной точки. Живёт в layout'е,

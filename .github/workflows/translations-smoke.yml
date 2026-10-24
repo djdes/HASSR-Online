@@ -1,0 +1,33 @@
+name: Translations smoke check
+
+# Manual, read-only check of the translation editor on production after a
+# deploy. Credentials live only in repository secrets:
+#   SMOKE_ROOT_EMAIL, SMOKE_ROOT_PASSWORD (required), SMOKE_TRANSLATOR_EMAIL (optional).
+# Does not deploy and does not write anything.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Site to check
+        default: https://wesetup.ru
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check /root/translations and its APIs
+        env:
+          SMOKE_BASE_URL: ${{ inputs.base_url }}
+          SMOKE_ROOT_EMAIL: ${{ secrets.SMOKE_ROOT_EMAIL }}
+          SMOKE_ROOT_PASSWORD: ${{ secrets.SMOKE_ROOT_PASSWORD }}
+          SMOKE_TRANSLATOR_EMAIL: ${{ secrets.SMOKE_TRANSLATOR_EMAIL }}
+        run: node scripts/translations-smoke.mjs

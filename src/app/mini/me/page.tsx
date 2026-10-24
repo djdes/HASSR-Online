@@ -28,6 +28,7 @@ export default async function MiniMePage() {
             phone: true,
             positionTitle: true,
             telegramChatId: true,
+            canEditTranslations: true,
             // Должность почти всегда задана справочником, а не строкой:
             // раньше читали только `positionTitle`, и у всех, кого
             // завели правильно, в профиле стояло «не указана».
@@ -64,6 +65,7 @@ export default async function MiniMePage() {
       }
       phone={profile?.phone ?? null}
       telegramLinked={Boolean(profile?.telegramChatId)}
+      canEditTranslations={session?.user?.isRoot === true || profile?.canEditTranslations === true}
     />
     </DomainMessagesBoundary>
   );
