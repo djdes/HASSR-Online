@@ -380,8 +380,8 @@ export function MiniMeClient({
         <Link href="/acknowledge" className="mini-item mini-press">
           <ProfileRow
             icon={FileSignature}
-            label="Документы для ознакомления"
-            hint="политика и инструкции"
+            label={t("rows.acknowledge")}
+            hint={t("rows.acknowledgeHint")}
           />
         </Link>
         {/* Баланс и бонусы — тот же пункт, что в меню профиля на сайте. */}
@@ -404,8 +404,8 @@ export function MiniMeClient({
             <Link href="/mini/sections" className="mini-item mini-press">
               <ProfileRow
                 icon={LayoutGrid}
-                label="Все разделы"
-                hint="меню кабинета"
+                label={t("rows.sections")}
+                hint={t("rows.sectionsMenuHint")}
               />
             </Link>
           </>

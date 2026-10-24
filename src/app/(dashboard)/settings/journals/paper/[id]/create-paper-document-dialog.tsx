@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FilePlus2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,7 @@ export function CreatePaperDocumentDialog({
   users: PaperPickerUser[];
   triggerClassName?: string;
 }) {
+  const t = useTranslations("settingsUi.createPaperDocumentDialog");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [defaults] = useState(() => currentMonthBounds(new Date()));
@@ -137,11 +139,11 @@ export function CreatePaperDocumentDialog({
 
   async function submit() {
     if (!title.trim()) {
-      setError("Укажите название документа");
+      setError(t("titleRequired"));
       return;
     }
     if (dateFrom && dateTo && dateTo < dateFrom) {
-      setError("Дата окончания раньше даты начала");
+      setError(t("dateOrder"));
       return;
     }
     setSaving(true);
@@ -165,16 +167,16 @@ export function CreatePaperDocumentDialog({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.document?.id) {
-        setError(data?.error ?? "Не удалось создать документ");
+        setError(data?.error ?? t("createFailed"));
         return;
       }
-      toast.success("Документ создан");
+      toast.success(t("created"));
       setOpen(false);
       router.push(
         `/settings/journals/paper/${journal.id}/documents/${data.document.id}`,
       );
     } catch {
-      setError("Сеть недоступна. Попробуйте ещё раз");
+      setError(t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -191,13 +193,13 @@ export function CreatePaperDocumentDialog({
           )}
         >
           <FilePlus2 className="size-4" />
-          Новый документ
+          {t("newDocument")}
         </button>
       </DialogTrigger>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Создание документа
+            {t("dialogTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -206,7 +208,7 @@ export function CreatePaperDocumentDialog({
 
           <FloatingInputField
             id="paper-doc-title"
-            label="Название документа"
+            label={t("nameLabel")}
             value={title}
             onChange={handleTitleChange}
             required
@@ -215,13 +217,13 @@ export function CreatePaperDocumentDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <DateField
               id="paper-doc-date-from"
-              label="Дата начала"
+              label={t("dateFrom")}
               value={dateFrom}
               onChange={(value) => applyPeriod({ dateFrom: value })}
             />
             <DateField
               id="paper-doc-date-to"
-              label="Дата окончания"
+              label={t("dateTo")}
               value={dateTo}
               onChange={(value) => applyPeriod({ dateTo: value })}
             />
@@ -229,14 +231,13 @@ export function CreatePaperDocumentDialog({
 
           {hasNoEmployees ? (
             <p className={JOURNAL_DIALOG_HINT_CLASS}>
-              Активных сотрудников пока нет — документ создастся без
-              ответственного, фамилии впишете в журнал от руки.{" "}
+              {t("noEmployeesHint")}{" "}
               <Link
                 href="/settings/users"
                 onClick={() => setOpen(false)}
                 className="font-medium text-[#3848c7] underline-offset-4 hover:underline"
               >
-                Добавить сотрудников
+                {t("addEmployees")}
               </Link>
             </p>
           ) : (
@@ -246,7 +247,7 @@ export function CreatePaperDocumentDialog({
                   users={users}
                   value={responsible}
                   onChange={setResponsible}
-                  positionLabel="Должность ответственного"
+                  positionLabel={t("responsiblePosition")}
                   employeeLabel={labels.responsible}
                   variant="floating"
                 />
@@ -256,7 +257,7 @@ export function CreatePaperDocumentDialog({
                   users={users}
                   value={verifier}
                   onChange={setVerifier}
-                  positionLabel="Должность проверяющего"
+                  positionLabel={t("verifierPosition")}
                   employeeLabel={labels.verifier}
                   variant="floating"
                 />
@@ -274,7 +275,7 @@ export function CreatePaperDocumentDialog({
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              Создать документ
+              {t("submit")}
             </button>
           </div>
         </div>

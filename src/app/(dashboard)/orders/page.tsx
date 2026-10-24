@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FileText, Plus, ScrollText } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireAuth } from "@/lib/auth-helpers";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -11,9 +12,10 @@ import { OrdersRegistry } from "./orders-registry";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Приказы",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("ordersUi");
+  return { title: t("page.title") };
+}
 
 /**
  * Раздел «Приказы» — третий тип документов рядом с журналами и
@@ -25,6 +27,7 @@ export const metadata = {
  * завести новый.
  */
 export default async function OrdersPage() {
+  const t = await getTranslations("ordersUi");
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
   const canManage = hasFullWorkspaceAccess(session.user);
@@ -37,8 +40,8 @@ export default async function OrdersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Приказы"
-        description="Готовые приказы по предприятию: реквизиты подставляются сами, остаётся распечатать и подписать."
+        title={t("page.title")}
+        description={t("page.description")}
       />
 
       <OrdersRegistry
@@ -56,7 +59,7 @@ export default async function OrdersPage() {
         <div className="flex items-center gap-2">
           <ScrollText className="size-5 text-[#5566f6]" />
           <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Шаблоны приказов
+            {t("page.templates")}
           </h2>
         </div>
 
@@ -87,7 +90,7 @@ export default async function OrdersPage() {
                   </div>
                   <div className="mt-auto flex items-center gap-1.5 pt-1 text-[13px] font-medium text-[#3848c7] opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                     <Plus className="size-3.5" />
-                    Заполнить и распечатать
+                    {t("page.fillAndPrint")}
                   </div>
                 </Link>
               ))}

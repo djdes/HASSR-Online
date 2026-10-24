@@ -22,14 +22,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const ROLE_RU = {
-  leader: "Руководитель группы ХАССП",
-  deputy: "Заместитель руководителя группы ХАССП",
-  member: "Член группы ХАССП",
-  secretary: "Секретарь группы ХАССП",
-} as const;
-const PEST_KIND_RU = { disinsection: "Дезинсекция", deratization: "Дератизация", disinfection: "Дезинфекция" } as const;
-const LAB_OBJECT_RU = { product: "Продукция", swabs: "Смывы", water: "Вода", air: "Воздух", other: "Другое" } as const;
 /** Лист ознакомления: строк не больше этого числа. */
 const ACQUAINTANCE_MAX = 30;
 
@@ -39,14 +31,39 @@ export default async function ProgramPage() {
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [bundle, versionRows, staff, t, nav] = await Promise.all([
+  const [bundle, versionRows, staff, t, nav, u] = await Promise.all([
     loadPpkBundle(organizationId),
     loadDocVersions(organizationId),
     loadPpkStaff(organizationId),
     getTranslations("productionControl.program"),
     getTranslations("navigation"),
+    getTranslations("productionControlUi"),
   ]);
   const { org } = bundle;
+  const roleLabel = (role: "leader" | "deputy" | "member" | "secretary") => {
+    switch (role) {
+      case "leader": return u("programPage.roleLeader");
+      case "deputy": return u("programPage.roleDeputy");
+      case "member": return u("programPage.roleMember");
+      case "secretary": return u("programPage.roleSecretary");
+    }
+  };
+  const pestKindLabel = (kind: "disinsection" | "deratization" | "disinfection") => {
+    switch (kind) {
+      case "disinsection": return u("programPage.pestDisinsection");
+      case "deratization": return u("programPage.pestDeratization");
+      case "disinfection": return u("programPage.pestDisinfection");
+    }
+  };
+  const labObjectLabel = (object: "product" | "swabs" | "water" | "air" | "other") => {
+    switch (object) {
+      case "product": return u("programPage.labProduct");
+      case "swabs": return u("programPage.labSwabs");
+      case "water": return u("programPage.labWater");
+      case "air": return u("programPage.labAir");
+      case "other": return u("programPage.labOther");
+    }
+  };
   const banner = (key: PpkBlockKey): PpkEmptyBanner => ({
     href: ppkBlock(key).href,
     text: t("emptySection", { block: nav(`shell.menus.productionControl.items.${key}`) }),
@@ -70,17 +87,17 @@ export default async function ProgramPage() {
       pdfHref="/api/production-control/program/pdf"
       pdfLabel={t("downloadPdf")}
       org={org}
-      title="Программа производственного контроля"
-      subtitle={approval ? `Версия ${approval.version} от ${ruDate(approval.approvedAt)}` : org.orgName}
+      title={u("programPage.title")}
+      subtitle={approval ? u("programPage.versionFrom", { version: String(approval.version), date: ruDate(approval.approvedAt) }) : org.orgName}
     >
       <PpkApproveBlock org={org} approval={approval} />
 
-      <PpkDocSection title="1. Общие сведения">
-        <PpkDocTable heads={["Показатель", "Значение"]} rows={ppkGeneralInfoRows(org, leader)} />
+      <PpkDocSection title={u("programPage.s1")}>
+        <PpkDocTable heads={[u("programPage.colIndicator"), u("programPage.colValue")]} rows={ppkGeneralInfoRows(org, leader)} />
       </PpkDocSection>
 
       <PpkDocSection
-        title="2. Перечень официально изданных санитарных правил и нормативных документов"
+        title={u("programPage.s2")}
         empty={bundle.norms.length === 0 ? banner("norm-documents") : null}
       >
         <ol className="list-decimal space-y-1 pl-6">
@@ -91,41 +108,41 @@ export default async function ProgramPage() {
       </PpkDocSection>
 
       <PpkDocSection
-        title="3. Должностные лица, на которых возложены функции производственного контроля"
+        title={u("programPage.s3")}
         empty={bundle.team.length === 0 && bundle.responsibles.length === 0 ? banner("team") : null}
       >
         <PpkDocTable
-          heads={["Ф. И. О.", "Должность", "Функция"]}
+          heads={[u("programPage.colFullName"), u("programPage.colPosition"), u("programPage.colFunction")]}
           rows={[
             ...bundle.team.map((member) => [
               member.name,
               member.title || "—",
-              `${ROLE_RU[member.role]}${member.duties ? `. ${member.duties}` : ""}`,
+              `${roleLabel(member.role)}${member.duties ? `. ${member.duties}` : ""}`,
             ]),
             ...bundle.responsibles.map((person) => [
               person.name,
               person.title || "—",
-              `Ответственный за журналы: ${person.journals.join(", ")}`,
+              u("programPage.journalsResponsible", { journals: person.journals.join(", ") }),
             ]),
           ]}
         />
       </PpkDocSection>
 
-      <PpkDocSection title="4. Лабораторный контроль" empty={bundle.lab.length === 0 ? banner("lab") : null}>
+      <PpkDocSection title={u("programPage.s4")} empty={bundle.lab.length === 0 ? banner("lab") : null}>
         <PpkDocTable
-          heads={["Объект", "Что исследуем", "Показатели", "Периодичность", "Лаборатория"]}
+          heads={[u("programPage.colObject"), u("programPage.colSubject"), u("programPage.colIndicators"), u("programPage.colFrequency"), u("programPage.colLaboratory")]}
           rows={bundle.lab.map((item) => [
-            LAB_OBJECT_RU[item.object],
+            labObjectLabel(item.object),
             item.subject,
             item.indicator || "—",
-            `Раз в ${item.everyMonths} мес.${item.nextDate ? `, следующий — ${ruDate(item.nextDate)}` : ""}`,
+            `${u("programPage.everyMonths", { months: item.everyMonths })}${item.nextDate ? u("programPage.nextSuffix", { date: ruDate(item.nextDate) }) : ""}`,
             item.laboratory || "—",
           ])}
         />
       </PpkDocSection>
 
       <PpkDocSection
-        title="5. Перечень должностей, работники которых проходят медицинские осмотры и гигиеническую подготовку"
+        title={u("programPage.s5")}
         empty={bundle.positions.length === 0 ? banner("team") : null}
       >
         <ul className="list-disc space-y-1 pl-6">
@@ -137,13 +154,13 @@ export default async function ProgramPage() {
       </PpkDocSection>
 
       <PpkDocSection
-        title="6. Мероприятия по дезинсекции и дератизации"
+        title={u("programPage.s6")}
         empty={bundle.pest.length === 0 ? banner("pest-control") : null}
       >
         <PpkDocTable
-          heads={["Вид", "Объект", "Периодичность", "Исполнитель", "Последняя", "Следующая"]}
+          heads={[u("programPage.colKind"), u("programPage.colObject"), u("programPage.colFrequency"), u("programPage.colPerformer"), u("programPage.colLast"), u("programPage.colNext")]}
           rows={bundle.pest.map((item) => [
-            PEST_KIND_RU[item.kind],
+            pestKindLabel(item.kind),
             item.object,
             item.frequency || "—",
             item.contractor || "—",
@@ -154,7 +171,7 @@ export default async function ProgramPage() {
       </PpkDocSection>
 
       <PpkDocSection
-        title="7. Формы учёта и отчётности"
+        title={u("programPage.s7")}
         empty={bundle.journals.length === 0 ? banner("instructions") : null}
       >
         <ol className="list-decimal space-y-0.5 pl-6">
@@ -164,7 +181,7 @@ export default async function ProgramPage() {
         </ol>
       </PpkDocSection>
 
-      <PpkDocSection title="8. Перечень возможных аварийных ситуаций и действий персонала">
+      <PpkDocSection title={u("programPage.s8")}>
         <ol className="list-decimal space-y-2 pl-6">
           {EMERGENCIES.map((item) => (
             <li key={item.title}>
@@ -174,9 +191,9 @@ export default async function ProgramPage() {
         </ol>
       </PpkDocSection>
 
-      <PpkDocSection title="9. Лист ознакомления">
+      <PpkDocSection title={u("programPage.s9")}>
         <PpkDocTable
-          heads={["Ф. И. О.", "Должность", "Дата", "Подпись"]}
+          heads={[u("programPage.colFullName"), u("programPage.colPosition"), u("programPage.colDate"), u("programPage.colSignature")]}
           rows={
             acquaintanceRows.length
               ? acquaintanceRows.map((person) => [person.name, person.title, "", ""])

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowDown,
   ArrowUp,
@@ -50,8 +51,6 @@ type Draft = {
   justCreated: boolean;
 };
 
-const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
 function makeKey(): string {
   return Math.random().toString(36).slice(2, 10);
 }
@@ -75,6 +74,7 @@ export function ChecklistEditor({
   cleaningDocInfo?: CleaningDocInfo;
   initial: Item[];
 }) {
+  const t = useTranslations("settingsUi.checklistEditor");
   const [autoSwitching, setAutoSwitching] = useState(false);
 
   async function autoSwitchToRoomsMode() {
@@ -82,7 +82,7 @@ export function ChecklistEditor({
     setAutoSwitching(true);
     try {
       const res = await fetch(`/api/journal-documents/${cleaningDocInfo.docId}`);
-      if (!res.ok) throw new Error("Не удалось загрузить документ");
+      if (!res.ok) throw new Error(t("loadDocFailed"));
       const doc = await res.json();
       // Все комнаты + все юзеры с подходящей должностью.
       const usedRoomIds = [
@@ -103,9 +103,7 @@ export function ChecklistEditor({
             : [];
 
       if (existingCleaners.length === 0) {
-        toast.error(
-          "В документе нет ни одного уборщика. Сначала открой /journals/cleaning и добавь уборщиков.",
-        );
+        toast.error(t("noCleaners"));
         return;
       }
 
@@ -125,14 +123,17 @@ export function ChecklistEditor({
       );
       if (!patchRes.ok) {
         const err = await patchRes.json().catch(() => null);
-        toast.error(err?.error ?? "Не удалось переключить режим");
+        toast.error(err?.error ?? t("switchFailed"));
         return;
       }
       toast.success(
-        `Документ в rooms-mode! ${targetRoomIds.length} комнат × ${existingCleaners.length} уборщиков. Жми «Force-отправить в TasksFlow» на дашборде чтобы увидеть room-задачи.`,
+        t("switchedToRooms", {
+          rooms: targetRoomIds.length,
+          cleaners: existingCleaners.length,
+        }),
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setAutoSwitching(false);
     }
@@ -167,7 +168,7 @@ export function ChecklistEditor({
     if (byRoom.has(null)) {
       sections.push({
         roomId: null,
-        roomName: "Общие пункты (для всего журнала)",
+        roomName: t("commonItems"),
         items: byRoom.get(null)!,
       });
     }
@@ -178,7 +179,7 @@ export function ChecklistEditor({
       }
     }
     return sections;
-  }, [drafts, rooms]);
+  }, [drafts, rooms, t]);
 
   function addNew(roomId: string | null) {
     setDrafts((d) => [
@@ -259,11 +260,11 @@ export function ChecklistEditor({
         }
       }
       toast.success(
-        `Сохранено: ${savedCount} новых, ${updatedCount} обновлено`,
+        t("savedSummary", { created: savedCount, updated: updatedCount }),
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -279,11 +280,11 @@ export function ChecklistEditor({
       { method: "DELETE" },
     );
     if (!res.ok) {
-      toast.error("Не удалось удалить");
+      toast.error(t("deleteFailed"));
       return;
     }
     setDrafts((d) => d.filter((it) => it.key !== draft.key));
-    toast.success("Пункт удалён");
+    toast.success(t("itemDeleted"));
     router.refresh();
   }
 
@@ -307,12 +308,10 @@ export function ChecklistEditor({
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13.5px] font-semibold text-emerald-900">
-                Документ в режиме «По комнатам» — per-room работают
+                {t("roomsModeTitle")}
               </div>
               <p className="mt-1 text-[12.5px] leading-snug text-emerald-800">
-                «{cleaningDocInfo.title}» — каждая комната получит
-                отдельную задачу в TasksFlow. Чек-лист внутри задачи
-                фильтруется по комнате (общие пункты + per-room).
+                {t("roomsModeBody", { title: cleaningDocInfo.title })}
               </p>
             </div>
           </div>
@@ -325,15 +324,10 @@ export function ChecklistEditor({
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13.5px] font-semibold text-amber-900">
-                Документ в режиме «Пары» — per-room пункты НЕ
-                показываются
+                {t("pairsModeTitle")}
               </div>
               <p className="mt-1 text-[12.5px] leading-snug text-amber-800">
-                «{cleaningDocInfo.title}» сейчас в pairs-mode (1 пара
-                cleaner-control = 1 task). Чтобы каждая комната получила
-                отдельную задачу с per-room чек-листом — переключи
-                документ в режим «По комнатам». Существующие настройки
-                (уборщики, контролёры) сохранятся.
+                {t("pairsModeBody", { title: cleaningDocInfo.title })}
               </p>
             </div>
             <button
@@ -347,7 +341,7 @@ export function ChecklistEditor({
               ) : (
                 <Home className="size-4" />
               )}
-              Переключить
+              {t("switch")}
             </button>
           </div>
         )
@@ -360,16 +354,16 @@ export function ChecklistEditor({
         <div className="min-w-0 flex-1">
           <div className="text-[14.5px] font-semibold text-[#0b1024]">
             {totalCount === 0
-              ? "Чек-лист пуст"
-              : `${totalCount} пунктов в чек-листе`}
+              ? t("checklistEmpty")
+              : t("itemsInChecklist", { count: totalCount })}
             {isCleaningJournal && rooms.length > 0
-              ? ` · ${rooms.length} комнат доступно`
+              ? ` · ${t("roomsAvailable", { count: rooms.length })}`
               : ""}
           </div>
           <p className="mt-0.5 text-[13px] text-[#6f7282]">
             {requiredCount > 0
-              ? `${requiredCount} обязательных — без отметки сотрудник не сможет отправить форму.`
-              : "Добавь пункты — без них чек-лист не показывается сотруднику."}
+              ? t("requiredHint", { count: requiredCount })
+              : t("addItemsHint")}
           </p>
         </div>
         <button
@@ -379,7 +373,7 @@ export function ChecklistEditor({
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white shadow-[0_8px_22px_-12px_rgba(85,102,246,0.6)] hover:bg-[#4a5bf0] disabled:opacity-60"
         >
           <Plus className="size-4" />
-          {isCleaningJournal ? "Общий пункт" : "Добавить пункт"}
+          {isCleaningJournal ? t("commonItem") : t("addItem")}
         </button>
       </div>
 
@@ -390,12 +384,12 @@ export function ChecklistEditor({
             <CheckCircle2 className="size-6" />
           </div>
           <div className="mt-3 text-[15px] font-medium text-[#0b1024]">
-            Пока нет ни одного пункта
+            {t("noItems")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
             {isCleaningJournal
-              ? "Можно добавить общие пункты ИЛИ привязать к конкретным комнатам — для уборщицы будут разные списки в каждой задаче."
-              : "Например «Разобрать оборудование», «Промыть детали»."}
+              ? t("noItemsCleaningHint")
+              : t("noItemsHint")}
           </p>
         </div>
       ) : null}
@@ -424,12 +418,7 @@ export function ChecklistEditor({
               {section.roomName}
             </h3>
             <span className="text-[12px] text-[#9b9fb3]">
-              {section.items.length}{" "}
-              {section.items.length === 1
-                ? "пункт"
-                : section.items.length < 5
-                  ? "пункта"
-                  : "пунктов"}
+              {t("itemsCount", { count: section.items.length })}
             </span>
           </div>
           <div className="space-y-2.5">
@@ -454,11 +443,10 @@ export function ChecklistEditor({
       {isCleaningJournal && rooms.length > 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-4 sm:p-5">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Привязать к комнате
+            {t("bindToRoom")}
           </div>
           <p className="mt-1 text-[12.5px] text-[#9b9fb3]">
-            Для каждой комнаты можно сделать свой набор пунктов — сотрудник
-            увидит их только в задаче этой комнаты.
+            {t("bindToRoomHint")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {rooms.map((r) => {
@@ -488,7 +476,7 @@ export function ChecklistEditor({
       {hasDirty ? (
         <div className="sticky bottom-3 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-[#5566f6]/30 bg-[#eef1ff] p-4 shadow-[0_12px_32px_-12px_rgba(85,102,246,0.4)]">
           <span className="text-[13px] text-[#3848c7]">
-            Есть несохранённые изменения
+            {t("unsavedChanges")}
           </span>
           <button
             type="button"
@@ -501,7 +489,7 @@ export function ChecklistEditor({
             ) : (
               <CheckCircle2 className="size-4" />
             )}
-            Сохранить чек-лист
+            {t("saveChecklist")}
           </button>
         </div>
       ) : null}
@@ -515,15 +503,16 @@ export function ChecklistEditor({
             setPendingDelete(null);
             if (d) await confirmDelete(d);
           }}
-          title="Удалить пункт?"
+          title={t("deleteTitle")}
           description={
             <>
-              Пункт «<strong>{pendingDelete.label || "(без названия)"}</strong>»
-              будет архивирован — для новых задач он не показан, старые галочки
-              в audit-log сохранятся.
+              {t.rich("deleteDescription", {
+                name: pendingDelete.label || t("untitled"),
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </>
           }
-          confirmLabel="Удалить"
+          confirmLabel={t("delete")}
           variant="danger"
           icon={Trash2}
         />
@@ -551,6 +540,16 @@ function DraftRow({
   onMove: (dir: -1 | 1) => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("settingsUi.checklistEditor");
+  const WEEKDAY_LABELS = [
+    t("weekdayMon"),
+    t("weekdayTue"),
+    t("weekdayWed"),
+    t("weekdayThu"),
+    t("weekdayFri"),
+    t("weekdaySat"),
+    t("weekdaySun"),
+  ];
   const dirtyMark = d.dirty
     ? "border-amber-200 bg-amber-50/30"
     : "border-[#ececf4]";
@@ -573,14 +572,14 @@ function DraftRow({
             type="text"
             value={d.label}
             onChange={(e) => onUpdate({ label: e.target.value })}
-            placeholder="Что нужно сделать?"
+            placeholder={t("labelPlaceholder")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
           <input
             type="text"
             value={d.hint ?? ""}
             onChange={(e) => onUpdate({ hint: e.target.value })}
-            placeholder="Подсказка (по желанию) — например «температура воды 65°C»"
+            placeholder={t("hintPlaceholder")}
             className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] text-[#3c4053] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
 
@@ -588,7 +587,7 @@ function DraftRow({
           <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[12.5px] font-medium text-[#6f7282]">
-                Частота:
+                {t("frequency")}
               </span>
               {(["daily", "weekly", "monthly"] as const).map((f) => (
                 <button
@@ -602,10 +601,10 @@ function DraftRow({
                   }`}
                 >
                   {f === "daily"
-                    ? "Каждый день"
+                    ? t("freqDaily")
                     : f === "weekly"
-                      ? "По дням недели"
-                      : "Раз в месяц"}
+                      ? t("freqWeekly")
+                      : t("freqMonthly")}
                 </button>
               ))}
             </div>
@@ -636,7 +635,7 @@ function DraftRow({
             {d.frequency === "monthly" ? (
               <div className="mt-3 flex items-center gap-2">
                 <CalendarDays className="size-4 text-[#9b9fb3]" />
-                <span className="text-[12.5px] text-[#6f7282]">День месяца:</span>
+                <span className="text-[12.5px] text-[#6f7282]">{t("monthDay")}</span>
                 <input
                   type="number"
                   min={1}
@@ -651,7 +650,7 @@ function DraftRow({
                   className="h-9 w-20 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13.5px] tabular-nums focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                 />
                 <span className="text-[12px] text-[#9b9fb3]">
-                  (если короткий месяц — последний день)
+                  {t("monthDayHint")}
                 </span>
               </div>
             ) : null}
@@ -661,7 +660,7 @@ function DraftRow({
           {isCleaningJournal && rooms.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[12.5px] font-medium text-[#6f7282]">
-                Комната:
+                {t("room")}
               </span>
               <select
                 value={d.roomId ?? ""}
@@ -670,7 +669,7 @@ function DraftRow({
                 }
                 className="h-8 rounded-lg border border-[#dcdfed] bg-white px-2 text-[12.5px] text-[#3c4053] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
               >
-                <option value="">— Общий (все комнаты) —</option>
+                <option value="">{t("allRoomsOption")}</option>
                 {rooms.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.name}
@@ -690,14 +689,14 @@ function DraftRow({
                   : "bg-[#f5f6ff] text-[#9b9fb3] hover:bg-[#eef1ff]"
               }`}
             >
-              {d.required ? "обязательно" : "по желанию"}
+              {d.required ? t("required") : t("optional")}
             </button>
             <button
               type="button"
               onClick={() => onMove(-1)}
               disabled={isFirstInSection}
               className="inline-flex size-9 items-center justify-center rounded-full bg-[#fafbff] text-[#6f7282] hover:bg-[#eef1ff] hover:text-[#3848c7] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Выше"
+              aria-label={t("moveUp")}
             >
               <ArrowUp className="size-4" />
             </button>
@@ -706,7 +705,7 @@ function DraftRow({
               onClick={() => onMove(1)}
               disabled={isLastInSection}
               className="inline-flex size-9 items-center justify-center rounded-full bg-[#fafbff] text-[#6f7282] hover:bg-[#eef1ff] hover:text-[#3848c7] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Ниже"
+              aria-label={t("moveDown")}
             >
               <ArrowDown className="size-4" />
             </button>
@@ -716,7 +715,7 @@ function DraftRow({
               className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full bg-rose-50 px-3 text-[12.5px] font-medium text-rose-700 hover:bg-rose-100"
             >
               <Trash2 className="size-3.5" />
-              Удалить
+              {t("delete")}
             </button>
           </div>
         </div>

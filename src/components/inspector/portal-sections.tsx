@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { SERIF } from "@/components/inspector/paper";
 import { InspectorVisitForm } from "@/components/inspector/visit-form";
 import type { InspectionNorms } from "@/lib/inspection-norms";
-import { inspectionVisitBasisRu, inspectionVisitKindLabelRu } from "@/lib/inspection-visits";
+import { isInspectionVisitKind } from "@/lib/inspection-visits";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import type { InspectionVisitListItem } from "@/lib/inspection-visits.server";
 import type { InspectorChecklistRow } from "@/lib/inspector-portal-extras.server";
 
@@ -22,8 +24,14 @@ function dayRu(ymd: string): string {
   return ymd.split("-").reverse().join(".");
 }
 
-function dateTimeRu(iso: string, timeZone: string): string {
-  return new Date(iso).toLocaleString("ru-RU", {
+type Translate = ReturnType<typeof useTranslations<"inspectorUi.portalSections">>;
+
+function formatLocale(locale: string): string {
+  return FORMAT_LOCALES[locale as Locale] ?? FORMAT_LOCALES.ru;
+}
+
+function dateTimeRu(iso: string, timeZone: string, locale: string): string {
+  return new Date(iso).toLocaleString(formatLocale(locale), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -31,6 +39,28 @@ function dateTimeRu(iso: string, timeZone: string): string {
     minute: "2-digit",
     timeZone,
   });
+}
+
+function visitKindLabel(kind: string, note: string | null | undefined, t: Translate): string {
+  let label: string = kind;
+  if (isInspectionVisitKind(kind)) {
+    switch (kind) {
+      case "planned": label = t("kindPlanned"); break;
+      case "unplanned": label = t("kindUnplanned"); break;
+      case "complaint": label = t("kindComplaint"); break;
+      default: label = t("kindOther"); break;
+    }
+  }
+  return kind === "other" && note ? `${label}: ${note}` : label;
+}
+
+function visitBasisLabel(number: string | null, date: Date | string | null, t: Translate): string {
+  const day = date ? (typeof date === "string" ? date : date.toISOString().slice(0, 10)) : null;
+  const dateRu = day ? day.split("-").reverse().join(".") : null;
+  if (number && dateRu) return t("basisNumberDate", { number, date: dateRu });
+  if (number) return t("basisNumber", { number });
+  if (dateRu) return t("basisDate", { date: dateRu });
+  return "—";
 }
 
 function PortalSection({
@@ -59,6 +89,8 @@ function PortalSection({
 
 /** Под реквизитами: напоминание внести запись о посещении (или отметка, что внесена). */
 export function PortalVisitCallout({ last, timeZone }: { last: InspectionVisitListItem | null; timeZone: string }) {
+  const t = useTranslations("inspectorUi.portalSections");
+  const locale = useLocale();
   return (
     <div
       className="mx-auto mt-6 flex max-w-[620px] flex-col gap-2 border border-[#1f3a8a]/35 bg-[#f6f7fb] px-4 py-3 text-[14px] leading-relaxed text-[#141821] sm:flex-row sm:items-center sm:justify-between"
@@ -66,29 +98,29 @@ export function PortalVisitCallout({ last, timeZone }: { last: InspectionVisitLi
     >
       {last ? (
         <span>
-          Запись о посещении внесена {dateTimeRu(last.visitedAt, timeZone)}: {last.inspectorName}.
+          {t("visitRecorded", { dateTime: dateTimeRu(last.visitedAt, timeZone, locale), name: last.inspectorName })}
         </span>
       ) : (
-        <span>Пожалуйста, внесите запись о посещении и приложите скан или фото решения (распоряжения) о проверке.</span>
+        <span>{t("visitPrompt")}</span>
       )}
       <a href="#visit" className={`${LINK} shrink-0 font-medium`}>
-        {last ? "Журнал посещений" : "Внести запись"}
+        {last ? t("visitJournal") : t("addRecord")}
       </a>
     </div>
   );
 }
 
-const DOCS: Array<{ key: "ppk" | "haccp-plan"; title: string }> = [
-  { key: "ppk", title: "Программа производственного контроля (ППК)" },
-  { key: "haccp-plan", title: "План ХАССП" },
-];
-
 export function PortalProductionControl({ token, norms }: { token: string; norms: InspectionNorms }) {
+  const t = useTranslations("inspectorUi.portalSections");
+  const docs: Array<{ key: "ppk" | "haccp-plan"; title: string }> = [
+    { key: "ppk", title: t("docPpk") },
+    { key: "haccp-plan", title: t("docHaccpPlan") },
+  ];
   const base = `/api/inspector/${token}/production-control`;
   return (
-    <PortalSection title="Производственный контроль" aside="только просмотр" data="production-control">
+    <PortalSection title={t("productionControl")} aside={t("viewOnly")} data="production-control">
       <ol className="border-t border-[#e3e5ea]">
-        {DOCS.map((doc, index) => {
+        {docs.map((doc, index) => {
           const approval = norms.approvals[doc.key];
           const uploaded = norms.uploaded[doc.key];
           return (
@@ -101,15 +133,15 @@ export function PortalProductionControl({ token, norms }: { token: string; norms
               <div className="min-w-0">
                 <div className="text-[15px] leading-snug text-[#141821]">{doc.title}</div>
                 <div className="mt-0.5 text-[13px] text-[#5b6170]">
-                  {approval ? `Утверждена версия ${approval.version} от ${dayRu(approval.approvedAt)}` : "Собрана из разделов электронного ППК"}
+                  {approval ? t("approvedVersion", { version: approval.version, date: dayRu(approval.approvedAt) }) : t("assembledFromSections")}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[14px]">
                   <a href={`${base}/${doc.key}`} target="_blank" rel="noopener" className={LINK}>
-                    Открыть PDF
+                    {t("openPdf")}
                   </a>
                   {uploaded ? (
                     <a href={`${base}/${doc.key}?file=1`} target="_blank" rel="noopener" className={`${LINK} min-w-0 [overflow-wrap:anywhere]`}>
-                      Подписанный экземпляр: {uploaded.fileName}
+                      {t("signedCopy", { name: uploaded.fileName })}
                     </a>
                   ) : null}
                 </div>
@@ -123,12 +155,13 @@ export function PortalProductionControl({ token, norms }: { token: string; norms
 }
 
 export function PortalNorms({ norms }: { norms: InspectionNorms }) {
+  const t = useTranslations("inspectorUi.portalSections");
   return (
-    <PortalSection title="Нормативные документы" aside={`${norms.norms.length}`} data="norms">
+    <PortalSection title={t("normsTitle")} aside={`${norms.norms.length}`} data="norms">
       <p className="mt-3 text-[13.5px] text-[#5b6170]">
         {norms.normsSource === "org"
-          ? "Документы, по которым организация ведёт производственный контроль."
-          : "Основные документы, по которым ведётся производственный контроль на предприятиях питания."}
+          ? t("normsOrg")
+          : t("normsDefault")}
       </p>
       <ol className="mt-2 border-t border-[#e3e5ea]">
         {norms.norms.map((title, index) => (
@@ -143,10 +176,12 @@ export function PortalNorms({ norms }: { norms: InspectionNorms }) {
 }
 
 export function PortalChecklists({ rows, total, timeZone }: { rows: InspectorChecklistRow[]; total: number; timeZone: string }) {
+  const t = useTranslations("inspectorUi.portalSections");
+  const locale = useLocale();
   return (
-    <PortalSection title="Внутренние проверки по чек-листам" aside={`за период: ${total}`} data="checklists">
+    <PortalSection title={t("checklistsTitle")} aside={t("checklistsPeriod", { total })} data="checklists">
       {rows.length === 0 ? (
-        <p className="mt-3 text-[14px] text-[#5b6170]">За выбранный период проверок по чек-листам не проводилось.</p>
+        <p className="mt-3 text-[14px] text-[#5b6170]">{t("checklistsEmpty")}</p>
       ) : (
         <ol className="border-t border-[#e3e5ea]">
           {rows.map((row) => {
@@ -158,19 +193,19 @@ export function PortalChecklists({ rows, total, timeZone }: { rows: InspectorChe
                 data-checklist-row
               >
                 <span className="text-[13px] tabular-nums text-[#8a8f9c]">
-                  {new Date(row.completedAt).toLocaleDateString("ru-RU", { timeZone })}
+                  {new Date(row.completedAt).toLocaleDateString(formatLocale(locale), { timeZone })}
                 </span>
                 <span className="min-w-0 [overflow-wrap:anywhere]">{row.title}</span>
                 <span className={`text-[13px] tabular-nums ${s && (s.critical > 0 || s.violations > 0) ? "text-[#a13a32]" : "text-[#5b6170]"}`}>
                   {s
                     ? [
                         s.percent !== null ? `${s.percent}%` : null,
-                        `нарушений: ${s.violations}`,
-                        s.critical > 0 ? `критических: ${s.critical}` : null,
+                        t("violations", { count: s.violations }),
+                        s.critical > 0 ? t("critical", { count: s.critical }) : null,
                       ]
                         .filter(Boolean)
                         .join(", ")
-                    : "итог не записан"}
+                    : t("noSummary")}
                 </span>
               </li>
             );
@@ -178,31 +213,32 @@ export function PortalChecklists({ rows, total, timeZone }: { rows: InspectorChe
         </ol>
       )}
       {total > rows.length ? (
-        <p className="mt-2 text-[12.5px] text-[#8a8f9c]">Показаны последние {rows.length} из {total}.</p>
+        <p className="mt-2 text-[12.5px] text-[#8a8f9c]">{t("showingLast", { shown: rows.length, total })}</p>
       ) : null}
     </PortalSection>
   );
 }
 
 export function PortalMedBooks({ counts }: { counts: { valid: number; expired: number } }) {
+  const t = useTranslations("inspectorUi.portalSections");
   return (
-    <PortalSection title="Личные медицинские книжки" data="med-books">
+    <PortalSection title={t("medBooksTitle")} data="med-books">
       <dl className="mt-3 grid max-w-[420px] grid-cols-2 border border-[#e3e5ea] text-center">
         <div className="border-r border-[#e3e5ea] px-3 py-3">
-          <dt className="text-[13px] text-[#5b6170]">Действуют</dt>
+          <dt className="text-[13px] text-[#5b6170]">{t("medValid")}</dt>
           <dd className={`${SERIF} mt-1 text-[26px] tabular-nums`} data-med-valid>
             {counts.valid}
           </dd>
         </div>
         <div className="px-3 py-3">
-          <dt className="text-[13px] text-[#5b6170]">Просрочены</dt>
+          <dt className="text-[13px] text-[#5b6170]">{t("medExpired")}</dt>
           <dd className={`${SERIF} mt-1 text-[26px] tabular-nums ${counts.expired > 0 ? "text-[#a13a32]" : ""}`} data-med-expired>
             {counts.expired}
           </dd>
         </div>
       </dl>
       <p className="mt-2 text-[12.5px] text-[#8a8f9c]">
-        Сведения о конкретных сотрудниках здесь не показываются (152-ФЗ) — их предъявит руководство организации.
+        {t("medPrivacy")}
       </p>
     </PortalSection>
   );
@@ -217,10 +253,12 @@ export function PortalVisitJournal({
   visits: InspectionVisitListItem[];
   timeZone: string;
 }) {
+  const t = useTranslations("inspectorUi.portalSections");
+  const locale = useLocale();
   return (
-    <PortalSection id="visit" title="Журнал посещений" data="visits">
+    <PortalSection id="visit" title={t("visitJournal")} data="visits">
       <p className="mt-3 text-[13px] leading-relaxed text-[#5b6170]" data-own-visits-note>
-        Здесь видны записи, внесённые с этого устройства. Все записи журнала посещений видит руководство организации.
+        {t("ownVisitsNote")}
       </p>
       {visits.length > 0 ? (
         <ol className="border-b border-[#e3e5ea]" data-own-visits>
@@ -231,11 +269,11 @@ export function PortalVisitJournal({
                   {visit.inspectorName}
                   {visit.inspectorPosition ? <span className="font-normal text-[#5b6170]">, {visit.inspectorPosition}</span> : null}
                 </span>
-                <span className="text-[13px] tabular-nums text-[#8a8f9c]">{dateTimeRu(visit.visitedAt, timeZone)}</span>
+                <span className="text-[13px] tabular-nums text-[#8a8f9c]">{dateTimeRu(visit.visitedAt, timeZone, locale)}</span>
               </div>
               <div className="text-[13.5px] text-[#3a3f4c] [overflow-wrap:anywhere]">
-                {visit.authority} · {inspectionVisitKindLabelRu(visit.kind, visit.kindNote)} · основание:{" "}
-                {inspectionVisitBasisRu(visit.basisNumber, visit.basisDate)}
+                {visit.authority} · {visitKindLabel(visit.kind, visit.kindNote, t)} · {t("basis")}{" "}
+                {visitBasisLabel(visit.basisNumber, visit.basisDate, t)}
               </div>
               {visit.files.length > 0 ? (
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13.5px]">
@@ -247,18 +285,18 @@ export function PortalVisitJournal({
                       rel="noopener"
                       className={`${LINK} min-w-0 [overflow-wrap:anywhere]`}
                     >
-                      Скан {index + 1}: {file.fileName}
+                      {t("scan", { index: index + 1, name: file.fileName })}
                     </a>
                   ))}
                 </div>
               ) : (
-                <div className="text-[13px] text-[#8a8f9c]">Скан основания не приложен</div>
+                <div className="text-[13px] text-[#8a8f9c]">{t("noScan")}</div>
               )}
             </li>
           ))}
         </ol>
       ) : null}
-      <h3 className={`${SERIF} mb-3 mt-6 text-[17px]`}>{visits.length > 0 ? "Внести ещё одну запись" : "Внести запись о посещении"}</h3>
+      <h3 className={`${SERIF} mb-3 mt-6 text-[17px]`}>{visits.length > 0 ? t("addAnother") : t("addVisitRecord")}</h3>
       <InspectorVisitForm token={token} />
     </PortalSection>
   );

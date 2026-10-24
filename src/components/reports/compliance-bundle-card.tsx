@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CalendarRange, Download, Loader2, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { saveBlob } from "@/lib/native-bridge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ function todayYmd(): string {
 
 type Preset = { label: string; from: string; to: string };
 
-function buildPresets(): Preset[] {
+function buildPresets(t: (key: "presetInspector" | "presetThisMonth" | "presetLastMonth" | "presetQuarter") => string): Preset[] {
   const now = new Date();
   const thisMonthFrom = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
@@ -50,13 +51,13 @@ function buildPresets(): Preset[] {
   );
   return [
     {
-      label: "По звонку инспектора (7 дней)",
+      label: t("presetInspector"),
       from: ymd(weekFrom),
       to: ymd(weekTo),
     },
-    { label: "Текущий месяц", from: ymd(thisMonthFrom), to: ymd(thisMonthTo) },
-    { label: "Прошлый месяц", from: ymd(lastMonthFrom), to: ymd(lastMonthTo) },
-    { label: "Текущий квартал", from: ymd(quarterFrom), to: ymd(quarterTo) },
+    { label: t("presetThisMonth"), from: ymd(thisMonthFrom), to: ymd(thisMonthTo) },
+    { label: t("presetLastMonth"), from: ymd(lastMonthFrom), to: ymd(lastMonthTo) },
+    { label: t("presetQuarter"), from: ymd(quarterFrom), to: ymd(quarterTo) },
   ];
 }
 
@@ -75,30 +76,31 @@ export function ComplianceBundleCard({
   /** Только выбор периода и кнопка — без своей карточки и заголовка (шаг «Пришла проверка»). */
   bare?: boolean;
 } = {}) {
+  const t = useTranslations("reportsUi.complianceBundleCard");
   const [from, setFrom] = useState<string>(firstOfCurrentMonth());
   const [to, setTo] = useState<string>(todayYmd());
   const [busy, setBusy] = useState(false);
-  const presets = useMemo(buildPresets, []);
+  const presets = useMemo(() => buildPresets(t), [t]);
 
   async function download() {
     if (busy) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-      toast.error("Выберите корректные даты");
+      toast.error(t("invalidDates"));
       return;
     }
     if (from > to) {
-      toast.error("Дата «по» не может быть раньше «с»");
+      toast.error(t("dateOrder"));
       return;
     }
     setBusy(true);
-    toast.info("Собираем архив — это может занять минуту для большого периода.");
+    toast.info(t("building"));
     try {
       const url = `/api/reports/compliance-bundle?from=${from}&to=${to}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(
-          data?.error || `Не удалось собрать архив (${response.status})`
+          data?.error || t("buildFailed", { status: response.status })
         );
       }
       const included = response.headers.get("x-compliance-included");
@@ -106,11 +108,11 @@ export function ComplianceBundleCard({
       const blob = await response.blob();
       // В браузере — скачивание, в приложении WeSetup — «Поделиться».
       await saveBlob(blob, `compliance-${from}__${to}.zip`);
-      const parts = [`включено ${included ?? "?"}`];
-      if (failed && failed !== "0") parts.push(`ошибок ${failed}`);
-      toast.success(`Архив скачан · ${parts.join(" · ")}`);
+      const parts = [t("included", { count: included ?? "?" })];
+      if (failed && failed !== "0") parts.push(t("failedCount", { count: failed }));
+      toast.success(t("downloaded", { details: parts.join(" · ") }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -144,7 +146,7 @@ export function ComplianceBundleCard({
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <div>
           <label className="text-[12px] font-medium text-[#6f7282]">
-            С
+            {t("from")}
           </label>
           <Input
             type="date"
@@ -155,7 +157,7 @@ export function ComplianceBundleCard({
         </div>
         <div>
           <label className="text-[12px] font-medium text-[#6f7282]">
-            По
+            {t("to")}
           </label>
           <Input
             type="date"
@@ -176,15 +178,14 @@ export function ComplianceBundleCard({
             ) : (
               <Download className="size-4" />
             )}
-            {busy ? "Собираем…" : "Скачать архив"}
+            {busy ? t("downloadBusy") : t("download")}
           </Button>
         </div>
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-[12px] text-[#9b9fb3]">
         <CalendarRange className="size-3.5" />
-        Включаются все документы, чей период пересекается с выбранным.
-        Максимум 400 дней за один архив.
+        {t("note")}
       </div>
     </>
   );
@@ -206,12 +207,10 @@ export function ComplianceBundleCard({
         </span>
         <div className="flex-1 min-w-0">
           <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Сводный отчёт за проверкой
+            {t("title")}
           </h2>
           <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-            Один ZIP со всеми журналами за период. Подойдёт для визита
-            Роспотребнадзора: отдал архив — и инспектор видит всю картину
-            сам. Внутри лежат PDF каждого журнала + манифест с перечнем.
+            {t("description")}
           </p>
 
           {controls}

@@ -3,11 +3,13 @@
 import { ArrowRight, Loader2, Ticket } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
 import { PersonalDiscountBadge, PromoPrice } from "@/components/pricing/promo-price";
 import { formatDiscountUntil, type AppliedDiscount, type LifetimeDiscountView } from "@/lib/promo/discounts";
 import type { PriceWithPromotion } from "@/lib/promo/promotions";
+import { FORMAT_LOCALES, formatNumber, type Locale } from "@/i18n/locales";
 
 /**
  * «Промокод и скидка» на странице тарифа.
@@ -45,6 +47,8 @@ export function SubscriptionDiscountCard({
   /** «Оплатить картой» — /order с кодом. */
   payHref: string;
 }) {
+  const t = useTranslations("settingsUi.subscriptionDiscountCard");
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const [input, setInput] = useState(typedCode ?? "");
   const [pending, startTransition] = useTransition();
@@ -57,7 +61,7 @@ export function SubscriptionDiscountCard({
     });
   }
 
-  const boundAt = lifetime ? new Date(lifetime.boundAt).toLocaleDateString("ru-RU") : null;
+  const boundAt = lifetime ? new Date(lifetime.boundAt).toLocaleDateString(FORMAT_LOCALES[locale]) : null;
 
   return (
     <section
@@ -69,7 +73,7 @@ export function SubscriptionDiscountCard({
           <Ticket className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">Промокод и скидка</h2>
+          <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("title")}</h2>
 
           {lifetime ? (
             <div data-testid="lifetime-discount" className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-[#3c4053]">
@@ -85,15 +89,14 @@ export function SubscriptionDiscountCard({
               />
               <span className="leading-relaxed">
                 {lifetime.expiresAt
-                  ? `Применяется сама к каждой оплате подписки до ${formatDiscountUntil(lifetime.expiresAt)} — картой и по счёту, потом снимется сама. Вводить ничего не нужно`
-                  : "Применяется сама к каждой оплате подписки — картой и по счёту. Вводить ничего не нужно"}
-                {boundAt ? ` (действует с ${boundAt})` : ""}.
+                  ? t("lifetimeUntil", { date: formatDiscountUntil(lifetime.expiresAt) })
+                  : t("lifetimeForever")}
+                {boundAt ? t("validSince", { date: boundAt }) : ""}.
               </span>
             </div>
           ) : (
             <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-              Есть персональный промокод? Введите его — цена ниже пересчитается, скидка попадёт в оплату
-              картой и в счёт.
+              {t("hint")}
             </p>
           )}
 
@@ -107,8 +110,8 @@ export function SubscriptionDiscountCard({
                   apply();
                 }
               }}
-              placeholder="Например, ROMASHKA10"
-              aria-label="Промокод"
+              placeholder={t("placeholder")}
+              aria-label={t("codeLabel")}
               className="h-11 min-w-0 flex-1 rounded-2xl border border-[#dcdfed] bg-white px-4 font-mono text-[14px] text-[#0b1024] placeholder:font-sans placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
             <button
@@ -118,7 +121,7 @@ export function SubscriptionDiscountCard({
               className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
             >
               {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-              {pending ? "Проверяем…" : "Применить"}
+              {pending ? t("checking") : t("apply")}
             </button>
           </div>
 
@@ -129,8 +132,11 @@ export function SubscriptionDiscountCard({
           ) : null}
           {!error && applied?.source === "code" ? (
             <p data-testid="promo-applied" className="mt-2 text-[13px] text-[#116b2a]">
-              Промокод {applied.code} применён: −{applied.discountRub.toLocaleString("ru-RU")} ₽ от подписки
-              {offer.promotion ? " (считается от цены по акции)" : ""}.
+              {t("codeApplied", {
+                code: applied.code,
+                amount: formatNumber(locale, applied.discountRub),
+              })}
+              {offer.promotion ? t("fromPromoPrice") : ""}.
             </p>
           ) : null}
           {notice ? (
@@ -139,14 +145,14 @@ export function SubscriptionDiscountCard({
             </p>
           ) : null}
           {personalPending ? (
-            <p className="mt-2 text-[13px] text-[#6f7282]">Персональный промокод — проверим по почте при оплате.</p>
+            <p className="mt-2 text-[13px] text-[#6f7282]">{t("personalPending")}</p>
           ) : null}
 
           {applied ? (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
               <div className="min-w-0 text-[13px] text-[#3c4053]">
                 <div className="text-[12px] font-medium uppercase tracking-[0.06em] text-[#6f7282]">
-                  К оплате за {periodDays} дн.
+                  {t("payFor", { days: periodDays })}
                 </div>
                 <PromoPrice price={offer} personal={applied} size="md" className="mt-1" />
               </div>
@@ -155,7 +161,7 @@ export function SubscriptionDiscountCard({
                 data-testid="discount-pay"
                 className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
               >
-                Оплатить картой
+                {t("payByCard")}
                 <ArrowRight className="size-4" />
               </Link>
             </div>

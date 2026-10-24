@@ -2,6 +2,7 @@
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { AlertTriangle, X } from "lucide-react";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
@@ -24,6 +25,7 @@ const SESSION_DISMISS_KEY = "wesetup.stale-capa-nag.dismissed";
  * При count === 0 не рендерится вообще.
  */
 export function StaleCapaNag({ count }: Props) {
+  const t = useTranslations("dashboardUi.staleCapaNag");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -47,9 +49,6 @@ export function StaleCapaNag({ count }: Props) {
 
   if (!open || count === 0) return null;
 
-  const wordForm =
-    count === 1 ? "тикет висит" : count < 5 ? "тикета висят" : "тикетов висят";
-
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
       <BodyScrollLock />
@@ -60,12 +59,10 @@ export function StaleCapaNag({ count }: Props) {
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Внимание: {count} {wordForm} больше недели
+              {t("title", { count })}
             </h2>
             <p className="mt-1.5 text-[13px] leading-relaxed text-[#3c4053]">
-              CAPA-тикеты с open-статусом старше 7 дней — закройте или
-              делегируйте. Просроченные тикеты — главный риск-флаг при
-              проверке СЭС: «вы не реагируете на свои нарушения».
+              {t("body")}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
@@ -73,7 +70,7 @@ export function StaleCapaNag({ count }: Props) {
                 className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
                 onClick={dismiss}
               >
-                Открыть CAPA
+                {t("openCapa")}
                 <LinkPendingSpinner />
               </Link>
               <button
@@ -81,7 +78,7 @@ export function StaleCapaNag({ count }: Props) {
                 onClick={dismiss}
                 className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3a3f55] hover:bg-[#fafbff]"
               >
-                Напомнить позже
+                {t("remindLater")}
               </button>
             </div>
           </div>
@@ -89,7 +86,7 @@ export function StaleCapaNag({ count }: Props) {
             type="button"
             onClick={dismiss}
             className="rounded-lg p-1.5 text-[#9b9fb3] hover:bg-[#fafbff] hover:text-[#0b1024]"
-            aria-label="Закрыть"
+            aria-label={t("close")}
           >
             <X className="size-4" />
           </button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Loader2, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ function daysAgo(n: number) {
  * собственнику. Раньше — 2 часа ручного truda.
  */
 export function AiPeriodReportCard() {
+  const t = useTranslations("reportsUi.aiPeriodReport");
   const [from, setFrom] = useState(daysAgo(30));
   const [to, setTo] = useState(todayKey());
   const [busy, setBusy] = useState(false);
@@ -46,12 +48,12 @@ export function AiPeriodReportCard() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.error ?? "Ошибка генерации");
+        throw new Error(data?.error ?? t("generationFailed"));
       }
       setReport(data.report ?? "");
       setFacts(data.facts ?? null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -60,7 +62,7 @@ export function AiPeriodReportCard() {
   function copy() {
     if (!report) return;
     navigator.clipboard.writeText(report);
-    toast.success("Отчёт скопирован");
+    toast.success(t("copied"));
   }
 
   return (
@@ -71,18 +73,15 @@ export function AiPeriodReportCard() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            ИИ-отчёт за период
+            {t("title")}
           </div>
           <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-            Система собирает все журналы, инциденты, CAPA, премии за
-            период и пишет связный текст «вот что было хорошо, вот
-            проблемы, вот рекомендации». Готовый материал для
-            ежемесячного отчёта собственнику.
+            {t("description")}
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label className="text-[13px] text-[#6f7282]">За период с</Label>
+              <Label className="text-[13px] text-[#6f7282]">{t("from")}</Label>
               <Input
                 type="date"
                 value={from}
@@ -92,7 +91,7 @@ export function AiPeriodReportCard() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[13px] text-[#6f7282]">по</Label>
+              <Label className="text-[13px] text-[#6f7282]">{t("to")}</Label>
               <Input
                 type="date"
                 value={to}
@@ -113,7 +112,7 @@ export function AiPeriodReportCard() {
                 ) : (
                   <Sparkles className="mr-2 size-4" />
                 )}
-                Сгенерировать
+                {t("generate")}
               </Button>
             </div>
           </div>
@@ -121,7 +120,7 @@ export function AiPeriodReportCard() {
           {busy && !report ? (
             <div className="mt-5">
               <GlowLoader
-                label="Собираю данные за период и формирую narrative..."
+                label={t("loading")}
                 targetSeconds={20}
               />
             </div>
@@ -131,7 +130,7 @@ export function AiPeriodReportCard() {
             <div className="mt-5 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#6f7282]">
-                  Отчёт
+                  {t("report")}
                 </span>
                 <button
                   type="button"
@@ -139,7 +138,7 @@ export function AiPeriodReportCard() {
                   className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-medium text-[#3848c7] hover:bg-[#f5f6ff]"
                 >
                   <Copy className="size-3.5" />
-                  Скопировать
+                  {t("copy")}
                 </button>
               </div>
               <textarea
@@ -151,7 +150,7 @@ export function AiPeriodReportCard() {
               {facts ? (
                 <details className="rounded-xl border border-[#ececf4] bg-[#fafbff] px-3 py-2">
                   <summary className="cursor-pointer text-[12px] font-medium text-[#6f7282]">
-                    Показать сырые данные на которых построен отчёт
+                    {t("showFacts")}
                   </summary>
                   <pre className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-[#3c4053]">
                     {facts}

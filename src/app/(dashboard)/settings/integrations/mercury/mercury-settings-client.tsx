@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,24 +36,6 @@ type Integration = {
   queueCount: number;
 };
 
-const MODES: Array<{ value: string; title: string; body: string }> = [
-  {
-    value: "off",
-    title: "Только читать",
-    body: "Входящие ВСД видны и заполняют журнал приёмки, но гасите вы сами в кабинете Меркурия.",
-  },
-  {
-    value: "assisted",
-    title: "Гашу сам, одной кнопкой — рекомендуем",
-    body: "Система находит документ, считает срок, напоминает и заполняет строку журнала. Гашение — по вашей кнопке после физической приёмки.",
-  },
-  {
-    value: "auto_after_journal",
-    title: "Автоматически после заполнения журнала",
-    body: "Гасит само, но ТОЛЬКО после того, как человек заполнил строку входного контроля и поставил «принять», и только при полном совпадении объёма. Работает по белому списку поставщиков.",
-  },
-];
-
 export function MercurySettingsClient({
   available,
   mode,
@@ -70,6 +53,18 @@ export function MercurySettingsClient({
   buildings: Array<{ id: string; name: string; address: string | null }>;
   users: Array<{ id: string; name: string }>;
 }) {
+  const t = useTranslations("settingsUi.mercurySettingsClient");
+  const locale = useLocale();
+  const dateLocale = locale === "en" ? "en-GB" : locale === "uz" ? "uz-UZ" : "ru-RU";
+  const MODES: Array<{ value: string; title: string; body: string }> = [
+    { value: "off", title: t("modeOffTitle"), body: t("modeOffBody") },
+    { value: "assisted", title: t("modeAssistedTitle"), body: t("modeAssistedBody") },
+    {
+      value: "auto_after_journal",
+      title: t("modeAutoTitle"),
+      body: t("modeAutoBody"),
+    },
+  ];
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [issuerGuid, setIssuerGuid] = useState(integration?.issuerGuid ?? "");
@@ -88,11 +83,11 @@ export function MercurySettingsClient({
         body: JSON.stringify({ issuerGuid, initiatorLogin, environment }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Не удалось сохранить");
-      toast.success("Реквизиты сохранены");
+      if (!res.ok) throw new Error(body.error || t("saveFailed"));
+      toast.success(t("credentialsSaved"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSaving(false);
     }
@@ -107,11 +102,11 @@ export function MercurySettingsClient({
         body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Не удалось сохранить");
+      if (!res.ok) throw new Error(body.error || t("saveFailed"));
       toast.success(okText);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSaving(false);
     }
@@ -121,10 +116,10 @@ export function MercurySettingsClient({
     return (
       <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
         <div className="text-[15px] font-medium text-[#0b1024]">
-          Меркурий доступен на тарифе «Про»
+          {t("unavailableTitle")}
         </div>
         <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-[1.6] text-[#6f7282]">
-          Входящие ВСД, гашение в один тап и автозаполнение журнала приёмки.
+          {t("unavailableBody")}
         </p>
       </div>
     );
@@ -138,10 +133,8 @@ export function MercurySettingsClient({
         <div className="flex items-start gap-3 rounded-2xl border border-[#f0c674] bg-[#fff8e6] p-4">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[#a1740a]" />
           <div className="text-[13px] leading-[1.6] text-[#7a5a08]">
-            <div className="font-semibold">Демо-режим — данные не из Меркурия</div>
-            Ключ доступа к Ветис.API ещё не настроен на сервере, поэтому
-            показываются учебные документы. Настоящие ВСД появятся после
-            одобрения заявки Россельхознадзором.
+            <div className="font-semibold">{t("demoTitle")}</div>
+            {t("demoBody")}
           </div>
         </div>
       ) : null}
@@ -149,19 +142,19 @@ export function MercurySettingsClient({
       {/* Статус информационной системы */}
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="mb-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-          Подключение
+          {t("connection")}
         </div>
         <div className="flex items-center gap-2 text-[13px]">
           {mode === "live" ? (
             <>
               <ShieldCheck className="size-4 text-[#116b2a]" />
               <span className="text-[#116b2a]">
-                Информационная система WeSetup зарегистрирована в Ветис.API
+                {t("systemRegistered")}
               </span>
             </>
           ) : (
             <span className="text-[#6f7282]">
-              Ключ Ветис.API не настроен на сервере — работает демо-режим
+              {t("systemDemo")}
             </span>
           )}
         </div>
@@ -169,29 +162,29 @@ export function MercurySettingsClient({
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="issuerGuid" className="text-[13px]">
-              ГУИД хозяйствующего субъекта
+              {t("issuerGuidLabel")}
             </Label>
             <Input
               id="issuerGuid"
               value={issuerGuid}
               onChange={(e) => setIssuerGuid(e.target.value)}
-              placeholder="из кабинета Меркурия"
+              placeholder={t("issuerGuidPlaceholder")}
               className="mt-1.5 h-11 rounded-2xl border-[#dcdfed] px-3.5 text-[14px]"
             />
             <p className="mt-1 text-[12px] text-[#9b9fb3]">
               {orgName}
-              {orgInn ? ` · ИНН ${orgInn}` : ""}
+              {orgInn ? ` · ${t("inn", { inn: orgInn })}` : ""}
             </p>
           </div>
           <div>
             <Label htmlFor="initiatorLogin" className="text-[13px]">
-              Логин уполномоченного лица
+              {t("initiatorLoginLabel")}
             </Label>
             <Input
               id="initiatorLogin"
               value={initiatorLogin}
               onChange={(e) => setInitiatorLogin(e.target.value)}
-              placeholder="от чьего имени гасятся ВСД"
+              placeholder={t("initiatorLoginPlaceholder")}
               className="mt-1.5 h-11 rounded-2xl border-[#dcdfed] px-3.5 text-[14px]"
             />
           </div>
@@ -203,8 +196,8 @@ export function MercurySettingsClient({
             onChange={(e) => setEnvironment(e.target.value)}
             className="h-11 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px]"
           >
-            <option value="test">Тестовый контур</option>
-            <option value="prod">Продуктивный контур</option>
+            <option value="test">{t("envTest")}</option>
+            <option value="prod">{t("envProd")}</option>
           </select>
           <Button
             onClick={connect}
@@ -212,7 +205,7 @@ export function MercurySettingsClient({
             className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
           >
             {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-            Сохранить реквизиты
+            {t("saveCredentials")}
           </Button>
         </div>
       </section>
@@ -221,11 +214,10 @@ export function MercurySettingsClient({
       {integration ? (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Режим гашения
+            {t("redemptionMode")}
           </div>
           <p className="mb-4 text-[13px] leading-[1.6] text-[#6f7282]">
-            Гашение ВСД — юридически значимое действие уполномоченного лица.
-            Мы намеренно не делаем его за вас по умолчанию.
+            {t("redemptionModeHint")}
           </p>
           <div className="space-y-2.5">
             {MODES.map((item) => (
@@ -246,7 +238,7 @@ export function MercurySettingsClient({
                     setAutoMode(item.value);
                     void patch(
                       { autoProcessMode: item.value },
-                      "Режим гашения изменён",
+                      t("modeChanged"),
                     );
                   }}
                   className="mt-1 size-4 accent-[#5566f6]"
@@ -270,27 +262,26 @@ export function MercurySettingsClient({
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Площадки и синхронизация
+              {t("enterprisesAndSync")}
             </div>
             <Button
               variant="outline"
               onClick={() =>
                 void patch(
                   { enabled: !integration.enabled },
-                  integration.enabled ? "Синхронизация выключена" : "Синхронизация включена",
+                  integration.enabled ? t("syncDisabled") : t("syncEnabled"),
                 )
               }
               disabled={saving || integration.enterprises.length === 0}
               className="h-10 rounded-2xl border-[#dcdfed] px-4 text-[14px]"
             >
-              {integration.enabled ? "Выключить" : "Включить"} синхронизацию
+              {integration.enabled ? t("disableSync") : t("enableSync")}
             </Button>
           </div>
 
           {integration.enterprises.length === 0 ? (
             <p className="text-[13px] leading-[1.6] text-[#6f7282]">
-              Площадки подтянутся из реестра «Цербер» при первой синхронизации.
-              Пока их нет, включать синхронизацию нечему.
+              {t("noEnterprises")}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -309,8 +300,8 @@ export function MercurySettingsClient({
                   </span>
                   <span className="text-[12px] text-[#6f7282]">
                     {e.buildingId
-                      ? (buildings.find((b) => b.id === e.buildingId)?.name ?? "точка")
-                      : "общий журнал"}
+                      ? (buildings.find((b) => b.id === e.buildingId)?.name ?? t("pointFallback"))
+                      : t("commonJournal")}
                   </span>
                 </li>
               ))}
@@ -319,19 +310,19 @@ export function MercurySettingsClient({
 
           <dl className="mt-5 grid gap-3 text-[13px] sm:grid-cols-3">
             <div>
-              <dt className="text-[#6f7282]">ВСД получено</dt>
+              <dt className="text-[#6f7282]">{t("vsdReceived")}</dt>
               <dd className="tabular-nums text-[#0b1024]">{integration.documentsCount}</dd>
             </div>
             <div>
-              <dt className="text-[#6f7282]">В очереди заявок</dt>
+              <dt className="text-[#6f7282]">{t("queueCount")}</dt>
               <dd className="tabular-nums text-[#0b1024]">{integration.queueCount}</dd>
             </div>
             <div>
-              <dt className="text-[#6f7282]">Последняя синхронизация</dt>
+              <dt className="text-[#6f7282]">{t("lastSync")}</dt>
               <dd className="text-[#0b1024]">
                 {integration.lastSyncAt
-                  ? new Date(integration.lastSyncAt).toLocaleString("ru-RU")
-                  : "не было"}
+                  ? new Date(integration.lastSyncAt).toLocaleString(dateLocale)
+                  : t("never")}
               </dd>
             </div>
           </dl>
@@ -342,24 +333,24 @@ export function MercurySettingsClient({
             </p>
           ) : (
             <p className="mt-3 flex items-center gap-2 text-[13px] text-[#116b2a]">
-              <CheckCircle2 className="size-4" /> Ошибок нет
+              <CheckCircle2 className="size-4" /> {t("noErrors")}
             </p>
           )}
 
           {users.length > 0 ? (
             <div className="mt-5">
-              <Label className="text-[13px]">Кому напоминать о сроках</Label>
+              <Label className="text-[13px]">{t("notifyWhom")}</Label>
               <select
                 defaultValue={integration.notifyUserId ?? ""}
                 onChange={(e) =>
                   void patch(
                     { notifyUserId: e.target.value || null },
-                    "Ответственный изменён",
+                    t("notifyChanged"),
                   )
                 }
                 className="mt-1.5 h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] sm:w-[320px]"
               >
-                <option value="">Всё руководство</option>
+                <option value="">{t("allManagement")}</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.name}

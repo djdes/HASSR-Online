@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
@@ -23,6 +24,7 @@ export const revalidate = 0;
  * плюс погашенный в Меркурии документ.
  */
 export default async function MercuryPage() {
+  const t = await getTranslations("mercuryUi.page");
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
   const buildingId = await getActiveBuildingId(session);
@@ -88,14 +90,13 @@ export default async function MercuryPage() {
   if (!available) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Входящие ВСД" eyebrow="ФГИС «Меркурий»" />
+        <PageHeader title={t("title")} eyebrow={t("eyebrow")} />
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Интеграция доступна на тарифе «Про»
+            {t("proTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-[1.6] text-[#6f7282]">
-            Входящие ветеринарные документы, гашение в один тап и
-            автозаполнение журнала приёмки.
+            {t("proDescription")}
           </p>
         </div>
       </div>
@@ -105,52 +106,52 @@ export default async function MercuryPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="ФГИС «Меркурий»"
-        title="Входящие ВСД"
-        description="Приняли товар — здесь же вносите контроль и гасите документ."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
         actions={
           <>
             {overdue.length > 0 ? (
               <PageHeaderStat tone="warn">
-                Просрочено {overdue.length}
+                {t("overdue", { count: overdue.length })}
               </PageHeaderStat>
             ) : null}
-            <PageHeaderStat>Ждут гашения {pending.length}</PageHeaderStat>
+            <PageHeaderStat>{t("pending", { count: pending.length })}</PageHeaderStat>
             <Link
               href="/settings/integrations/mercury"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
-              Настройки
+              {t("settings")}
             </Link>
           </>
         }
       />
 
       <PageGuide
-        title="Как это работает"
+        title={t("guideTitle")}
         storageKey="mercury-incoming-v1"
         bullets={[
           {
-            title: "Документы приходят сами",
-            body: "Раз в 10 минут мы спрашиваем Меркурий, что нового приехало на ваши площадки.",
+            title: t("bullet1Title"),
+            body: t("bullet1Body"),
           },
           {
-            title: "Срок — один рабочий день",
-            body: "Столько закон даёт на гашение входящего ВСД. Считаем по производственному календарю, просроченные подсвечиваем.",
+            title: t("bullet2Title"),
+            body: t("bullet2Body"),
           },
           {
-            title: "Приёмка и гашение — одно окно",
-            body: "Вводите температуру, состояние транспорта и упаковки, решение — получаете строку журнала входного контроля и погашенный ВСД.",
+            title: t("bullet3Title"),
+            body: t("bullet3Body"),
           },
         ]}
         qa={[
           {
-            q: "Почему нельзя просто «погасить всё»?",
-            a: "Гашение подтверждает, что партию физически приняли и проверили. Без осмотра это подпись под тем, чего не было, — и журнал входного контроля перестаёт быть доказательством для проверки.",
+            q: t("q1"),
+            a: t("a1"),
           },
           {
-            q: "Меркурий не отвечает — что с приёмкой?",
-            a: "Строка журнала сохраняется сразу и от Меркурия не зависит. Гашение встанет в очередь и уйдёт, когда шлюз ответит.",
+            q: t("q2"),
+            a: t("a2"),
           },
         ]}
       />

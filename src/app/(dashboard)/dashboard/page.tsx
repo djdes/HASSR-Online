@@ -38,14 +38,15 @@ import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { PausedBanner } from "@/components/dashboard/paused-banner";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function formatTime(date: Date): string {
-  return date.toLocaleString("ru-RU", {
+function formatTime(date: Date, locale: string): string {
+  return date.toLocaleString(FORMAT_LOCALES[locale as Locale] ?? FORMAT_LOCALES.ru, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -53,14 +54,18 @@ function formatTime(date: Date): string {
   });
 }
 
-function formatRelativeTime(date: Date): string {
+type DashboardTranslate = Awaited<
+  ReturnType<typeof getTranslations<"dashboardUi.dashboardPage">>
+>;
+
+function formatRelativeTime(date: Date, tDash: DashboardTranslate): string {
   const diff = new Date().getTime() - date.getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "только что";
-  if (minutes < 60) return `${minutes} мин назад`;
+  if (minutes < 1) return tDash("justNow");
+  if (minutes < 60) return tDash("minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} ч назад`;
-  return `${Math.floor(hours / 24)} д назад`;
+  if (hours < 24) return tDash("hoursAgo", { count: hours });
+  return tDash("daysAgo", { count: Math.floor(hours / 24) });
 }
 
 type EntryData = Record<string, unknown>;
@@ -75,6 +80,8 @@ function getEntryData(data: unknown): EntryData {
 const SAMPLE_CODES = new Set<string>(SAMPLE_JOURNAL_CODES);
 
 export default async function DashboardPage() {
+  const tDash = await getTranslations("dashboardUi.dashboardPage");
+  const locale = await getLocale();
   const session = await requireAuth();
   // Заведующая (head_chef) и не-admin'ы не должны видеть «журналы» —
   // редирект на control-board или mini-app.
@@ -212,7 +219,7 @@ export default async function DashboardPage() {
           {complianceItems.length > 0 && (
             <DashboardSection
               storageKey="compliance-grid"
-              title="Обязательные журналы"
+              title={tDash("requiredJournals")}
               // Без карточки, во всю ширину, по умолчанию развёрнута
               // (владелец, 2026-09-27: «без блока-кругляшка… а то
               // прямоугольник в прямоугольнике»). Строка заголовка —
@@ -227,16 +234,16 @@ export default async function DashboardPage() {
                 <>
                 <Link
                   href="/dashboard/catch-up"
-                  title="Догнать пропуски"
-                  aria-label="Догнать пропуски"
+                  title={tDash("catchUp")}
+                  aria-label={tDash("catchUp")}
                   className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
                   <History className="size-[18px]" />
                 </Link>
                 <Link
                   href="/settings/journals"
-                  title="Выбрать, какие журналы вести"
-                  aria-label="Настройка журналов"
+                  title={tDash("chooseJournals")}
+                  aria-label={tDash("journalSettings")}
                   className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
                   <SlidersHorizontal className="size-[18px]" />
@@ -249,7 +256,7 @@ export default async function DashboardPage() {
                       text: `${filledCount}/${complianceItems.length}`,
                       tone: unfilledCount === complianceItems.length ? "danger" : "warn",
                     }
-                  : { text: "все ✓", tone: "ok" }
+                  : { text: tDash("allDone"), tone: "ok" }
               }
             >
               {/* Сетка и поиск над ней — клиентский компонент: фильтрация
@@ -273,7 +280,7 @@ export default async function DashboardPage() {
               tone="indigo"
               icon={AlertTriangle}
               value={pendingApproval}
-              label="записей ждут проверки"
+              label={tDash("pendingReview")}
             />
           )}
 
@@ -281,8 +288,8 @@ export default async function DashboardPage() {
 
           <DashboardSection
             storageKey="live-claims"
-            title="Лента заполнений в реальном времени"
-            subtitle="Кто что заполнил сегодня — обновляется каждые 15 секунд."
+            title={tDash("liveFeedTitle")}
+            subtitle={tDash("liveFeedSubtitle")}
             icon={Inbox}
             defaultOpen={false}
           >
@@ -299,11 +306,10 @@ export default async function DashboardPage() {
             </span>
             <div>
               <h2 className="text-[18px] font-semibold text-[#0b1024]">
-                Последние записи
+                {tDash("recentEntries")}
               </h2>
               <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Что сделано за 48 часов — {recentEntries.length}{" "}
-                {recentEntries.length === 1 ? "запись" : "записей"}
+                {tDash("last48h", { count: recentEntries.length })}
               </p>
             </div>
           </div>
@@ -311,7 +317,7 @@ export default async function DashboardPage() {
             href="/journals"
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-medium text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
           >
-            Все журналы
+            {tDash("allJournals")}
             <ArrowRight className="size-4" />
           </Link>
         </div>
@@ -322,10 +328,10 @@ export default async function DashboardPage() {
               <Sparkles className="size-7" />
             </span>
             <p className="mt-2 text-[15px] font-medium text-[#0b1024]">
-              Записей пока нет
+              {tDash("noEntries")}
             </p>
             <p className="text-[13px] text-[#6f7282]">
-              Как только кто-то внесёт первую запись, она появится здесь.
+              {tDash("noEntriesHint")}
             </p>
           </div>
         ) : (
@@ -333,12 +339,12 @@ export default async function DashboardPage() {
             <table className="w-full min-w-[720px] text-[13px]">
               <thead>
                 <tr className="bg-[#fafbff] text-[12px] uppercase tracking-wider text-[#9b9fb3]">
-                  <th className="px-5 py-3 text-left font-medium">Когда</th>
-                  <th className="px-5 py-3 text-left font-medium">Журнал</th>
-                  <th className="px-5 py-3 text-left font-medium">Детали</th>
-                  <th className="px-5 py-3 text-left font-medium">Участок</th>
-                  <th className="px-5 py-3 text-left font-medium">Кто</th>
-                  <th className="px-5 py-3 text-left font-medium">Источник</th>
+                  <th className="px-5 py-3 text-left font-medium">{tDash("colWhen")}</th>
+                  <th className="px-5 py-3 text-left font-medium">{tDash("colJournal")}</th>
+                  <th className="px-5 py-3 text-left font-medium">{tDash("colDetails")}</th>
+                  <th className="px-5 py-3 text-left font-medium">{tDash("colArea")}</th>
+                  <th className="px-5 py-3 text-left font-medium">{tDash("colWho")}</th>
+                  <th className="px-5 py-3 text-left font-medium">{tDash("colSource")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -352,10 +358,10 @@ export default async function DashboardPage() {
                     <tr key={entry.id} className="border-t border-[#ececf4]">
                       <td className="whitespace-nowrap px-5 py-3">
                         <div className="font-medium text-[#0b1024]">
-                          {formatTime(entry.createdAt)}
+                          {formatTime(entry.createdAt, locale)}
                         </div>
                         <div className="text-[11px] text-[#9b9fb3]">
-                          {formatRelativeTime(entry.createdAt)}
+                          {formatRelativeTime(entry.createdAt, tDash)}
                         </div>
                       </td>
                       <td className="px-5 py-3">
@@ -397,10 +403,10 @@ export default async function DashboardPage() {
                         {isIoT ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f7ff] px-2 py-0.5 text-[11px] font-medium text-[#0b7ea1]">
                             <Wifi className="size-3" />
-                            {source === "tuya_auto" ? "Авто" : "Датчик"}
+                            {source === "tuya_auto" ? tDash("sourceAuto") : tDash("sourceSensor")}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-[#9b9fb3]">Вручную</span>
+                          <span className="text-[11px] text-[#9b9fb3]">{tDash("sourceManual")}</span>
                         )}
                       </td>
                     </tr>

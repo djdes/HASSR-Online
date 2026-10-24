@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   Bell,
   Building2,
@@ -40,6 +41,7 @@ import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingAdvancedPage() {
+  const t = await getTranslations("settingsUi.onboardingAdvancedPage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -173,7 +175,7 @@ export default async function OnboardingAdvancedPage() {
       : []
   );
   const enabledCodes = activeTemplates
-    .map((t) => t.code)
+    .map((tpl) => tpl.code)
     .filter((c) => !disabledCodes.has(c));
   const enabledTemplatesCount = enabledCodes.length;
   // Сколько из enabled — exempt'ы (свой адаптер): hygiene, climate,
@@ -191,8 +193,8 @@ export default async function OnboardingAdvancedPage() {
   // === Items ===
 
   const orgInfoItem: SetupItem = {
-    title: "Название, ИНН, адрес",
-    description: "Для договоров, печати журналов и шапки PDF",
+    title: t("orgInfoTitle"),
+    description: t("orgInfoDescription"),
     href: "/settings/organization",
     icon: Building2,
     state:
@@ -203,27 +205,25 @@ export default async function OnboardingAdvancedPage() {
           : "empty",
     metric: org?.name ?? undefined,
     issue: !org?.inn
-      ? "ИНН не указан"
+      ? t("orgInnMissing")
       : !org?.address
-        ? "Адрес не указан"
+        ? t("orgAddressMissing")
         : undefined,
   };
 
   const positionsItem: SetupItem = {
-    title: "Должности",
-    description:
-      "Шеф, повар, продавец, уборщик — для распределения задач по ролям",
+    title: t("positionsTitle"),
+    description: t("positionsDescription"),
     href: "/settings/users",
     icon: ListChecks,
     state: positionsCount === 0 ? "empty" : "complete",
     metric: `${positionsCount}`,
-    issue: positionsCount === 0 ? "Создайте хотя бы 4 должности" : undefined,
+    issue: positionsCount === 0 ? t("positionsIssue") : undefined,
   };
 
   const buildingsItem: SetupItem = {
-    title: "Здания и помещения",
-    description:
-      "Помещения = строки таблиц «Уборка», «Климат», «Санитарный день»",
+    title: t("buildingsTitle"),
+    description: t("buildingsDescription"),
     href: "/settings/buildings",
     icon: Building2,
     state:
@@ -232,32 +232,34 @@ export default async function OnboardingAdvancedPage() {
         : roomsCount === 0
           ? "partial"
           : "complete",
-    metric: `${buildingsCount} зд., ${roomsCount} помещ.`,
+    metric: t("buildingsMetric", {
+      buildings: buildingsCount,
+      rooms: roomsCount,
+    }),
     issue:
       buildingsCount === 0
-        ? "Создайте здание (точку бизнеса)"
+        ? t("buildingsIssueNone")
         : roomsCount === 0
-          ? "Добавьте помещения внутри здания"
+          ? t("buildingsIssueRooms")
           : undefined,
   };
 
   const equipmentItem: SetupItem = {
-    title: "Оборудование",
-    description:
-      "Холодильники с min/max — попадут в «Контроль температуры», «Поверка», «ППР»",
+    title: t("equipmentTitle"),
+    description: t("equipmentDescription"),
     href: "/settings/equipment",
     icon: Wrench,
     state: equipmentCount === 0 ? "empty" : "complete",
     metric: `${equipmentCount}`,
     issue:
       equipmentCount === 0
-        ? "Добавьте холодильники / морозильники"
+        ? t("equipmentIssue")
         : undefined,
   };
 
   const usersItem: SetupItem = {
-    title: "Сотрудники",
-    description: "Минимум: админ + 1 человек на каждую должность",
+    title: t("usersTitle"),
+    description: t("usersDescription"),
     href: "/settings/users",
     icon: Users,
     state:
@@ -269,15 +271,15 @@ export default async function OnboardingAdvancedPage() {
     metric: `${activeUsersCount}`,
     issue:
       activeUsersCount < 2
-        ? "Добавьте сотрудников"
+        ? t("usersIssueNone")
         : activeUsersCount < 4
-          ? "Команда меньше 4 — возможно нет всех ролей"
+          ? t("usersIssueFew")
           : undefined,
   };
 
   const presetsItem: SetupItem = {
-    title: "Permission-пресеты",
-    description: "Кому что доступно: admin / head_chef / cook / seller",
+    title: t("presetsTitle"),
+    description: t("presetsDescription"),
     href: "/settings/role-presets",
     icon: ShieldCheck,
     state:
@@ -291,28 +293,28 @@ export default async function OnboardingAdvancedPage() {
     metric: `${usersWithPreset}/${activeUsersCount}`,
     issue:
       activeUsersCount > 0 && usersWithPreset < activeUsersCount
-        ? `${activeUsersCount - usersWithPreset} без preset'а — попадают на дефолт по role`
+        ? t("presetsIssue", { count: activeUsersCount - usersWithPreset })
         : undefined,
     optional: true,
   };
 
   const hierarchyItem: SetupItem = {
-    title: "Иерархия управления",
-    description: "Заведующий производством видит свою подсменую через ManagerScope",
+    title: t("hierarchyTitle"),
+    description: t("hierarchyDescription"),
     href: "/settings/staff-hierarchy",
     icon: Network,
     state: managerScopesCount === 0 ? "empty" : "complete",
     metric: `${managerScopesCount}`,
     issue:
       managerScopesCount === 0
-        ? "Без scope head_chef видит всех — норм для маленькой орги"
+        ? t("hierarchyIssue")
         : undefined,
     optional: true,
   };
 
   const telegramItem: SetupItem = {
-    title: "Telegram-приглашения",
-    description: "Опционально. Если хотите чтобы задачи приходили в Telegram. Без него сотрудники видят задачи на сайте и в Mini App.",
+    title: t("telegramTitle"),
+    description: t("telegramDescription"),
     href: "/settings/users",
     icon: Bell,
     state:
@@ -328,8 +330,8 @@ export default async function OnboardingAdvancedPage() {
   };
 
   const journalsSetItem: SetupItem = {
-    title: "Набор журналов",
-    description: "Какие журналы каталога реально ведёт ваша компания",
+    title: t("journalsSetTitle"),
+    description: t("journalsSetDescription"),
     href: "/settings/journals",
     icon: ClipboardList,
     state:
@@ -341,14 +343,13 @@ export default async function OnboardingAdvancedPage() {
     metric: `${enabledTemplatesCount}`,
     issue:
       enabledTemplatesCount === 0
-        ? "Включите минимум 5 базовых журналов"
+        ? t("journalsSetIssue")
         : undefined,
   };
 
   const responsiblesItem: SetupItem = {
-    title: "Ответственные за журналы",
-    description:
-      "Кто заполняет каждый журнал. Один клик — умные пресеты по ХАССП",
+    title: t("responsiblesTitle"),
+    description: t("responsiblesDescription"),
     href: "/settings/journal-responsibles",
     icon: Network,
     state:
@@ -363,13 +364,15 @@ export default async function OnboardingAdvancedPage() {
     issue:
       enabledTemplatesCount > 0 &&
       journalsWithResponsiblesCount < enabledTemplatesCount
-        ? `${enabledTemplatesCount - journalsWithResponsiblesCount} без ответственных`
+        ? t("responsiblesIssue", {
+            count: enabledTemplatesCount - journalsWithResponsiblesCount,
+          })
         : undefined,
   };
 
   const pipelinesItem: SetupItem = {
-    title: "Pipeline-инструкции",
-    description: "Пошаговое ТЗ для журнала: чем подробнее, тем меньше вопросов",
+    title: t("pipelinesTitle"),
+    description: t("pipelinesDescription"),
     href: "/settings/journal-pipelines",
     icon: ListChecks,
     state:
@@ -378,42 +381,41 @@ export default async function OnboardingAdvancedPage() {
         : pipelinesCount < 3
           ? "partial"
           : "complete",
-    metric: `${pipelinesCount} настроено`,
+    metric: t("pipelinesMetric", { count: pipelinesCount }),
     issue:
-      pipelinesCount === 0 ? "Без pipeline сотрудник заполняет «как поймёт»" : undefined,
+      pipelinesCount === 0 ? t("pipelinesIssue") : undefined,
     optional: true,
   };
 
   const tfModeItem: SetupItem = {
-    title: "Режим распределения задач",
-    description: "Гонка / Свободно / Только админ — стиль работы команды",
+    title: t("tfModeTitle"),
+    description: t("tfModeDescription"),
     href: "/settings/journal-flow",
     icon: Shuffle,
     state: org?.taskFlowMode ? "complete" : "empty",
     metric:
       org?.taskFlowMode === "race"
-        ? "Гонка"
+        ? t("tfModeRace")
         : org?.taskFlowMode === "shared"
-          ? "Свободно"
+          ? t("tfModeShared")
           : org?.taskFlowMode === "manual"
-            ? "Только админ"
-            : "Не выбран",
+            ? t("tfModeManual")
+            : t("tfModeNone"),
   };
 
   const tfIntegrationItem: SetupItem = {
-    title: "Подключение TasksFlow",
-    description: "Telegram-бот, который доставляет задачи сотрудникам",
+    title: t("tfIntegrationTitle"),
+    description: t("tfIntegrationDescription"),
     href: "/settings/integrations/tasksflow",
     icon: Plug,
     state: tfIntegration ? "complete" : "empty",
     metric: tfIntegration?.label ?? undefined,
-    issue: tfIntegration ? undefined : "Без TF — задачи только внутри сайта",
+    issue: tfIntegration ? undefined : t("tfIntegrationIssue"),
   };
 
   const tfLinkItem: SetupItem = {
-    title: "Привязка сотрудников к TasksFlow",
-    description:
-      "Каждый сотрудник связывает свой TG с TF — иначе задачи silently пропускаются",
+    title: t("tfLinkTitle"),
+    description: t("tfLinkDescription"),
     href: "/settings/integrations/tasksflow",
     icon: Send,
     state: !tfIntegration
@@ -433,7 +435,7 @@ export default async function OnboardingAdvancedPage() {
       tfIntegration &&
       activeUsersCount > 0 &&
       tfLinkedUsersCount < activeUsersCount
-        ? `${activeUsersCount - tfLinkedUsersCount} без TF-привязки — пропустит fan-out`
+        ? t("tfLinkIssue", { count: activeUsersCount - tfLinkedUsersCount })
         : undefined,
   };
 
@@ -441,75 +443,74 @@ export default async function OnboardingAdvancedPage() {
 
   const extras: SetupItem[] = [
     {
-      title: "Уведомления",
-      description: "Кто получает Telegram-алерты при out-of-range / CAPA",
+      title: t("extraNotificationsTitle"),
+      description: t("extraNotificationsDescription"),
       href: "/settings/notifications",
       icon: Bell,
       state: "complete",
-      metric: "Default",
+      metric: t("extraNotificationsMetric"),
     },
     {
-      title: "Compliance / закрытие дня",
-      description:
-        "Кто может править выполненные записи и через сколько закрывается день",
+      title: t("extraComplianceTitle"),
+      description: t("extraComplianceDescription"),
       href: "/settings/compliance",
       icon: ShieldCheck,
       state: "complete",
     },
     {
-      title: "Премии за журналы",
-      description: "Бонусы сотрудникам за заполнение премиальных журналов",
+      title: t("extraBonusesTitle"),
+      description: t("extraBonusesDescription"),
       href: "/settings/journal-bonuses",
       icon: Coins,
       state: bonusJournalsCount === 0 ? "empty" : "complete",
-      metric: `${bonusJournalsCount} премиальных`,
+      metric: t("extraBonusesMetric", { count: bonusJournalsCount }),
     },
     {
-      title: "График смен",
-      description: "Расписание для авто-назначений и компенсаций",
+      title: t("extraScheduleTitle"),
+      description: t("extraScheduleDescription"),
       href: "/settings/schedule",
       icon: Layers,
       state: "empty",
     },
     {
-      title: "Авто-бэкап на Я.Диск",
-      description: "Еженедельный JSON-дамп всех журналов в облако",
+      title: t("extraBackupTitle"),
+      description: t("extraBackupDescription"),
       href: "/settings/backup",
       icon: CloudUpload,
       state: "empty",
     },
     {
-      title: "Бухгалтерия (1С)",
-      description: "Еженедельный отчёт списаний на email бухгалтера",
+      title: t("extraAccountingTitle"),
+      description: t("extraAccountingDescription"),
       href: "/settings/accounting",
       icon: FileSpreadsheet,
       state: "empty",
     },
     {
-      title: "Портал инспектора (СЭС/РПН)",
-      description: "Read-only ссылка с TTL для проверяющих органов",
+      title: t("extraInspectorTitle"),
+      description: t("extraInspectorDescription"),
       href: "/settings/inspector-portal",
       icon: ShieldCheck,
       state: inspectorTokensCount === 0 ? "empty" : "complete",
-      metric: `${inspectorTokensCount} активных токенов`,
+      metric: t("extraInspectorMetric", { count: inspectorTokensCount }),
     },
     {
-      title: "Справочник продуктов",
-      description: "Импорт из Excel / iiko / 1С — для списаний и приёмок",
+      title: t("extraProductsTitle"),
+      description: t("extraProductsDescription"),
       href: "/settings/products",
       icon: Package,
       state: "empty",
     },
     {
-      title: "Подписка",
-      description: "Тариф и период оплаты",
+      title: t("extraSubscriptionTitle"),
+      description: t("extraSubscriptionDescription"),
       href: "/settings/subscription",
       icon: CreditCard,
       state: "complete",
     },
     {
-      title: "Аудит-журнал",
-      description: "Кто что менял в системе — для compliance-проверок",
+      title: t("extraAuditTitle"),
+      description: t("extraAuditDescription"),
       href: "/settings/audit",
       icon: ScrollText,
       state: "complete",
@@ -519,21 +520,23 @@ export default async function OnboardingAdvancedPage() {
   // === Phase 5 (документы) — pre-flight для CTA ===
   const finishMissing: string[] = [];
   if (!org?.name || !org?.inn || !org?.address)
-    finishMissing.push("Заполните название, ИНН и адрес организации");
-  if (positionsCount === 0) finishMissing.push("Создайте должности");
-  if (activeUsersCount < 2) finishMissing.push("Добавьте сотрудников");
+    finishMissing.push(t("finishOrg"));
+  if (positionsCount === 0) finishMissing.push(t("finishPositions"));
+  if (activeUsersCount < 2) finishMissing.push(t("finishUsers"));
   if (buildingsCount === 0)
-    finishMissing.push("Заведите здания и помещения");
+    finishMissing.push(t("finishBuildings"));
   if (equipmentCount === 0)
-    finishMissing.push("Добавьте оборудование (холодильники)");
+    finishMissing.push(t("finishEquipment"));
   if (enabledTemplatesCount === 0)
-    finishMissing.push("Включите хотя бы один журнал");
+    finishMissing.push(t("finishJournals"));
   if (
     enabledTemplatesCount > 0 &&
     journalsWithResponsiblesCount < enabledTemplatesCount
   )
     finishMissing.push(
-      `Назначьте ответственных ещё для ${enabledTemplatesCount - journalsWithResponsiblesCount} журналов`
+      t("finishResponsibles", {
+        count: enabledTemplatesCount - journalsWithResponsiblesCount,
+      })
     );
   const finishReady = finishMissing.length === 0;
 
@@ -543,35 +546,32 @@ export default async function OnboardingAdvancedPage() {
     {
       id: "company",
       number: 1,
-      title: "О компании",
-      subtitle: "Юр-данные, которые попадают в шапку каждого PDF и договора",
+      title: t("phaseCompanyTitle"),
+      subtitle: t("phaseCompanySubtitle"),
       icon: Building2,
       items: [orgInfoItem],
     },
     {
       id: "structure",
       number: 2,
-      title: "Структура заведения",
-      subtitle:
-        "Должности, помещения, оборудование — это строки в ваших журналах",
+      title: t("phaseStructureTitle"),
+      subtitle: t("phaseStructureSubtitle"),
       icon: Layers,
       items: [positionsItem, buildingsItem, equipmentItem],
     },
     {
       id: "team",
       number: 3,
-      title: "Команда",
-      subtitle:
-        "Сотрудники — обязательно. Telegram, permission-пресеты, иерархия — по желанию.",
+      title: t("phaseTeamTitle"),
+      subtitle: t("phaseTeamSubtitle"),
       icon: Users,
       items: [usersItem, telegramItem, presetsItem, hierarchyItem],
     },
     {
       id: "journals",
       number: 4,
-      title: "Журналы",
-      subtitle:
-        "Какие журналы ведёте + кто их заполняет. Pipeline-инструкции — по желанию",
+      title: t("phaseJournalsTitle"),
+      subtitle: t("phaseJournalsSubtitle"),
       icon: ClipboardList,
       items: [journalsSetItem, responsiblesItem, pipelinesItem],
       finalNode: (
@@ -585,9 +585,8 @@ export default async function OnboardingAdvancedPage() {
     {
       id: "documents",
       number: 5,
-      title: "Создаём документы за сегодня",
-      subtitle:
-        "Один клик — заводятся документы по всем включённым журналам, с ответственными и автозаполнением цехов / оборудования",
+      title: t("phaseDocumentsTitle"),
+      subtitle: t("phaseDocumentsSubtitle"),
       icon: FileSpreadsheet,
       items: [],
       finalNode: (
@@ -608,9 +607,8 @@ export default async function OnboardingAdvancedPage() {
     {
       id: "tasksflow",
       number: 6,
-      title: "TasksFlow — отправляем задачи",
-      subtitle:
-        "Подключаем бот, выбираем режим работы, привязываем сотрудников — и нажимаем «Отправить» на дашборде",
+      title: t("phaseTasksflowTitle"),
+      subtitle: t("phaseTasksflowSubtitle"),
       icon: Plug,
       items: [tfModeItem, tfIntegrationItem, tfLinkItem],
       finalNode: (
@@ -689,18 +687,21 @@ export default async function OnboardingAdvancedPage() {
       <PageHeader
         title={
           allDone
-            ? "Всё готово — компания работает на полную"
-            : "Продвинутая настройка — 6 этапов"
+            ? t("headingAllDone")
+            : t("headingInProgress")
         }
         description={
           allDone
-            ? "Все этапы пройдены. Сотрудники получают задачи в Telegram, документы автоматически заводятся и заполняются по СанПиН."
-            : "Прошёл этап → разблокировался следующий. От «зарегистрировал компанию» до «сотрудники получают задачи в TasksFlow» — за 30–40 минут."
+            ? t("descriptionAllDone")
+            : t("descriptionInProgress")
         }
         actions={
           <PageHeaderStat tone={allDone ? "ok" : "neutral"}>
-            Готовность {overallProgress}% · {completedPhases}/{phases.length}{" "}
-            этапов
+            {t("readiness", {
+              percent: overallProgress,
+              done: completedPhases,
+              total: phases.length,
+            })}
           </PageHeaderStat>
         }
       />
@@ -718,7 +719,7 @@ export default async function OnboardingAdvancedPage() {
                     ? "bg-[#5566f6]"
                     : "bg-[#ececf4]"
               }`}
-              title={`Этап ${p.number}: ${p.title}`}
+              title={t("stageTitle", { number: p.number, title: p.title })}
             />
           );
         })}
@@ -749,11 +750,11 @@ export default async function OnboardingAdvancedPage() {
         <div className="flex items-center gap-2 px-1">
           <span className="size-2 rounded-full bg-[#9b9fb3]" />
           <h2 className="text-[16px] font-semibold text-[#0b1024]">
-            Зрелость
+            {t("maturity")}
           </h2>
           <span className="text-[12px] text-[#9b9fb3]">·</span>
           <span className="text-[12px] text-[#9b9fb3]">
-            Bonus-фичи для зрелых организаций — настраивайте когда захотите
+            {t("maturityHint")}
           </span>
         </div>
         <div className="grid gap-2 lg:grid-cols-2">
@@ -774,7 +775,7 @@ export default async function OnboardingAdvancedPage() {
  * отправка идёт оттуда (а не отсюда), потому что dashboard-карточка
  * показывает per-журнал статус «получит / не получит» с причиной.
  */
-function SendTasksCta({
+async function SendTasksCta({
   ready,
   activeDocumentsCount,
   tfLinkedUsersCount,
@@ -785,13 +786,14 @@ function SendTasksCta({
   tfLinkedUsersCount: number;
   tfConnected: boolean;
 }) {
+  const t = await getTranslations("settingsUi.onboardingAdvancedPage");
   if (!ready) {
     const blockers: string[] = [];
-    if (!tfConnected) blockers.push("Подключите TasksFlow в этом этапе");
+    if (!tfConnected) blockers.push(t("sendBlockerTf"));
     if (activeDocumentsCount === 0)
-      blockers.push("Создайте документы в этапе 5");
+      blockers.push(t("sendBlockerDocs"));
     if (tfLinkedUsersCount === 0)
-      blockers.push("Сотрудники должны привязать TG к TasksFlow");
+      blockers.push(t("sendBlockerLinks"));
 
     return (
       <section className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5">
@@ -801,10 +803,10 @@ function SendTasksCta({
           </span>
           <div className="flex-1">
             <h3 className="text-[15px] font-semibold text-[#0b1024]">
-              Отправить первые задачи — пока недоступно
+              {t("sendUnavailable")}
             </h3>
             <p className="mt-1 text-[13px] text-[#6f7282]">
-              Сначала закройте обязательные пункты выше:
+              {t("sendCloseFirst")}
             </p>
             <ul className="mt-2 space-y-1">
               {blockers.map((b) => (
@@ -834,14 +836,13 @@ function SendTasksCta({
           </span>
           <div>
             <div className="text-[11px] uppercase tracking-[0.16em] text-white/70">
-              Финал быстрого старта
+              {t("sendFinalEyebrow")}
             </div>
             <h3 className="mt-1 text-[18px] font-semibold leading-tight">
-              Можно отправлять первые задачи
+              {t("sendReadyTitle")}
             </h3>
             <p className="mt-1 max-w-[480px] text-[13px] text-white/80">
-              Откройте дашборд → карточка «Превью отправки задач TasksFlow».
-              Там видно кому что уйдёт, и кнопка «Отправить готовые».
+              {t("sendReadyBody")}
             </p>
           </div>
         </div>
@@ -850,7 +851,7 @@ function SendTasksCta({
           className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white px-5 text-[14px] font-semibold text-[#5566f6] shadow-[0_10px_24px_-12px_rgba(0,0,0,0.45)] transition-opacity hover:opacity-90"
         >
           <Sparkles className="size-4" />
-          Открыть дашборд
+          {t("openDashboard")}
         </Link>
       </div>
     </section>

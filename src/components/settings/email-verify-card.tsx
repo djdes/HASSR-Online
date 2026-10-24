@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 
@@ -17,6 +18,7 @@ import { CheckCircle2, Loader2, Mail } from "lucide-react";
  * перезагрузки.
  */
 export function EmailVerifyCard({ email }: { email: string }) {
+  const t = useTranslations("settingsUi.emailVerifyCard");
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -29,19 +31,19 @@ export function EmailVerifyCard({ email }: { email: string }) {
         method: "POST",
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Не удалось отправить код");
+      if (!res.ok) throw new Error(data?.error || t("sendFailed"));
       // Сервер знает, что почта уже подтверждена (например, отметку
       // проставил backfill, а страница отрисована из кэша). Не просим
       // код, которого не будет, — просто убираем карточку.
       if (data?.alreadyVerified) {
         setDone(true);
-        toast.success("Почта уже подтверждена");
+        toast.success(t("alreadyVerified"));
         return;
       }
       setSent(true);
-      toast.success(`Код отправлен на ${email}`);
+      toast.success(t("codeSent", { email }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось отправить код");
+      toast.error(e instanceof Error ? e.message : t("sendFailed"));
     } finally {
       setBusy(false);
     }
@@ -56,11 +58,11 @@ export function EmailVerifyCard({ email }: { email: string }) {
         body: JSON.stringify({ code }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Неверный код");
+      if (!res.ok) throw new Error(data?.error || t("wrongCode"));
       setDone(true);
-      toast.success("Почта подтверждена");
+      toast.success(t("verified"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Неверный код");
+      toast.error(e instanceof Error ? e.message : t("wrongCode"));
     } finally {
       setBusy(false);
     }
@@ -82,11 +84,10 @@ export function EmailVerifyCard({ email }: { email: string }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            Подтвердите почту
+            {t("title")}
           </div>
           <p className="mt-1 text-[13px] leading-snug text-[#6f7282]">
-            Мы отправим шесть цифр на {email}. Ничего не заблокировано —
-            подтверждение нужно, чтобы мы могли до вас дописаться.
+            {t("description", { email })}
           </p>
         </div>
         </div>
@@ -113,7 +114,7 @@ export function EmailVerifyCard({ email }: { email: string }) {
               ) : (
                 <CheckCircle2 className="size-4" />
               )}
-              Подтвердить
+              {t("confirm")}
             </button>
           </div>
         ) : (
@@ -124,7 +125,7 @@ export function EmailVerifyCard({ email }: { email: string }) {
             className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 sm:w-auto text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Отправить код
+            {t("sendCode")}
           </button>
         )}
       </div>

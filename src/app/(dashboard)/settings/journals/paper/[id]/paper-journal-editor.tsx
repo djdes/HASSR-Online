@@ -10,6 +10,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { saveBlob } from "@/lib/native-bridge";
 import type { PaperJournal } from "@/lib/sphere-journal-rules";
 import {
@@ -82,6 +83,7 @@ export function PaperJournalEditor({
   /** Документ закрыт — смотреть можно, править нельзя. */
   readOnly?: boolean;
 }) {
+  const t = useTranslations("settingsUi.paperJournalEditor");
   const isDocument = mode === "document";
   const canFillStaff = staff.length > 0 && hasSubjectColumn(journal);
   // Дата в строках: у документа — начало периода, у черновика — сегодня.
@@ -124,10 +126,11 @@ export function PaperJournalEditor({
           body: JSON.stringify({ rows }),
         },
       )
-        .catch(() => toast.error("Не удалось сохранить"))
+        .catch(() => toast.error(t("saveFailed")))
         .finally(() => setSaving(false));
     }, 500);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, isDocument, documentId, journal.id, readOnly]);
 
   function setCell(rowIndex: number, columnIndex: number, value: string) {
@@ -180,13 +183,13 @@ export function PaperJournalEditor({
           }),
         },
       );
-      if (!response.ok) throw new Error("Не удалось собрать PDF");
+      if (!response.ok) throw new Error(t("pdfFailed"));
       const blob = await response.blob();
       // В браузере — скачивание, в приложении WeSetup — «Поделиться».
       await saveBlob(blob, `${journal.id}.pdf`);
-      toast.success("PDF готов — откройте файл и распечатайте");
+      toast.success(t("pdfReady"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -224,7 +227,7 @@ export function PaperJournalEditor({
                 {organization.name}
                 {organization.inn ? (
                   <div className="mt-0.5 text-[11px] font-normal text-[#3c4053]">
-                    ИНН {organization.inn}
+                    {t("inn", { inn: organization.inn })}
                   </div>
                 ) : null}
                 {organization.address ? (
@@ -234,11 +237,13 @@ export function PaperJournalEditor({
                 ) : null}
               </td>
               <td className="border border-[#0b1024] px-3 py-2 text-center">
-                СИСТЕМА ХАССП
+                {t("haccpSystem")}
               </td>
               <td className="w-[22%] border border-[#0b1024] px-3 py-2 text-[12px]">
-                Начат&nbsp;&nbsp;{startedLabel}
-                <div className="mt-1">Окончен&nbsp;&nbsp;{finishedLabel}</div>
+                {t("started")}&nbsp;&nbsp;{startedLabel}
+                <div className="mt-1">
+                  {t("finished")}&nbsp;&nbsp;{finishedLabel}
+                </div>
               </td>
             </tr>
             <tr>
@@ -246,7 +251,7 @@ export function PaperJournalEditor({
                 {journal.name}
               </td>
               <td className="border border-[#0b1024] px-3 py-2 text-center text-[12px]">
-                СТР. 1 ИЗ 1
+                {t("pageOf")}
               </td>
             </tr>
           </tbody>
@@ -289,7 +294,7 @@ export function PaperJournalEditor({
                     <button
                       type="button"
                       onClick={() => removeRow(rowIndex)}
-                      aria-label="Удалить строку"
+                      aria-label={t("removeRowAria")}
                       className="inline-flex size-8 items-center justify-center rounded-xl text-[#9b9fb3] transition-colors hover:bg-[#fff4f2] hover:text-[#d2453d]"
                     >
                       <Trash2 className="size-4" />
@@ -307,18 +312,16 @@ export function PaperJournalEditor({
       {isDocument ? (
         <p className="text-[12px] text-[#6f7282]">
           {readOnly
-            ? "Документ закрыт — правка недоступна."
+            ? t("closedNotice")
             : saving
-              ? "Сохраняю…"
-              : "Изменения сохраняются сами"}
+              ? t("saving")
+              : t("autoSaved")}
         </p>
       ) : null}
 
       {isDocument && canFillStaff && !readOnly ? (
         <p className="rounded-2xl bg-[#f5f6ff] px-4 py-2.5 text-[13px] leading-snug text-[#3c4053]">
-          Сотрудники и дата подставлены из карточек — остаётся собрать
-          подписи на распечатке. Подписи специально пустые: бумажный журнал
-          тем и ценен, что они живые.
+          {t("staffFilledNotice")}
         </p>
       ) : null}
 
@@ -331,27 +334,27 @@ export function PaperJournalEditor({
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Plus className="size-4 text-[#5566f6]" />
-              Строка
+              {t("addRow")}
             </button>
             {canFillStaff ? (
               <button
                 type="button"
                 onClick={fillStaff}
-                title="Добавить строку на каждого активного сотрудника"
+                title={t("fillStaffTitle")}
                 className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <UserPlus className="size-4 text-[#5566f6]" />
-                Подставить сотрудников
+                {t("fillStaff")}
               </button>
             ) : null}
             <button
               type="button"
               onClick={clearRows}
-              title="Убрать все строки и начать с пустого листа"
+              title={t("clearTitle")}
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#6f7282] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Eraser className="size-4" />
-              Очистить
+              {t("clear")}
             </button>
           </>
         )}
@@ -363,7 +366,7 @@ export function PaperJournalEditor({
           className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
         >
           <Download className="size-4 text-[#5566f6]" />
-          Пустой журнал
+          {t("blankJournal")}
         </button>
         <button
           type="button"
@@ -372,14 +375,14 @@ export function PaperJournalEditor({
           className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_12px_36px_-16px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
         >
           <Printer className="size-4" />
-          {busy ? "Готовлю…" : "Скачать и распечатать"}
+          {busy ? t("preparing") : t("downloadAndPrint")}
         </button>
       </div>
 
       <p className="text-[13px] text-[#9b9fb3]">
         {isDocument
-          ? "Оригинал — распечатанный лист с живыми подписями. Здесь хранится подготовка к печати."
-          : "Черновик не сохраняется — чтобы вести журнал с историей, создайте документ."}
+          ? t("footerDocument")
+          : t("footerDraft")}
       </p>
     </div>
   );

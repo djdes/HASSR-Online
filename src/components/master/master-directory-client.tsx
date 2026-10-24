@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Building2,
   CalendarPlus,
@@ -32,14 +33,14 @@ import type { MasterBrakerageHistoryBatch } from "@/lib/master-brakerage-history
 import { MasterObjectsPanel } from "@/components/master/master-objects-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { SharedItem, SharedKind } from "@/lib/master-directory";
-import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 export type MasterTab = "menu" | "raw" | "objects";
 
 /** changed — та же позиция меню с другим выходом или временем. */
 type Diff = { added: string[]; removed: string[]; changed?: string[]; unchanged: number };
-type Preview = { kind: SharedKind; items: SharedItem[]; diff: Diff; source: string };
+type PreviewSource = { type: "file"; name: string } | { type: "paste" } | { type: "photo" };
+type Preview = { kind: SharedKind; items: SharedItem[]; diff: Diff; source: PreviewSource };
 
 const PREVIEW_LIMIT = 20;
 const PAGE_SIZE = 200;
@@ -51,35 +52,34 @@ const OUTLINE =
 const CARD =
   "rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6";
 
-const KIND_META: Record<
-  SharedKind,
-  { title: string; journal: string; noun: [string, string, string]; example: string; exampleFile: string }
-> = {
-  dish: {
-    title: "Справочник блюд",
-    journal: "журналы бракеража готовой продукции (БЖГП)",
-    noun: ["блюдо", "блюда", "блюд"],
-    example: "Борщ со сметаной    250      08:30\nПлов с курицей      200/10   11:00\nКомпот из сухофруктов 200   07:30",
-    exampleFile:
-      "колонка «Наименование» (или просто первая колонка), по желанию «Выход» и «Время изготовления»",
-  },
-  product: {
-    title: "Сырьё для скоропорта",
-    journal: "журналы бракеража скоропортящейся продукции",
-    noun: ["позиция", "позиции", "позиций"],
-    example: "Молоко 3,2% | ООО «Ферма» | Молокозавод №1\nКефир 1% | ООО «Ферма»\nТворог 9%",
-    exampleFile: "колонки «Наименование», «Поставщик», «Изготовитель»",
-  },
-};
+type T = ReturnType<typeof useTranslations<"masterUi.masterDirectoryClient">>;
 
-function countLabel(count: number, noun: [string, string, string]): string {
-  return `${count} ${pluralRu(count, noun[0], noun[1], noun[2])}`;
+type KindMeta = { title: string; journal: string; example: string; exampleFile: string; count: (count: number) => string };
+
+function kindMeta(t: T, kind: SharedKind): KindMeta {
+  if (kind === "dish") {
+    return {
+      title: t("dishTitle"),
+      journal: t("dishJournal"),
+      example: t("dishExample"),
+      exampleFile: t("dishExampleFile"),
+      count: (count) => t("dishCount", { count }),
+    };
+  }
+  return {
+    title: t("productTitle"),
+    journal: t("productJournal"),
+    example: t("productExample"),
+    exampleFile: t("productExampleFile"),
+    count: (count) => t("productCount", { count }),
+  };
 }
+
 /** «во всех 3 объектах» / «в 1 объекте». */
-function inObjects(count: number): string {
-  if (count === 0) return "во всех объектах с кодом справочника (пока ни одного)";
-  if (count === 1) return "в 1 объекте";
-  return `во всех ${count} ${pluralRu(count, "объекте", "объектах", "объектах")}`;
+function inObjects(t: T, count: number): string {
+  if (count === 0) return t("inObjectsNone");
+  if (count === 1) return t("inObjectsOne");
+  return t("inObjectsMany", { count });
 }
 
 function itemsToText(kind: SharedKind, items: SharedItem[]): string {
@@ -111,6 +111,8 @@ export function MasterDirectoryClient({
   initialProducts: SharedItem[];
   organizations: Array<{ id: string; name: string }>;
 }) {
+  const t = useTranslations("masterUi.masterDirectoryClient");
+  const tDialog = useTranslations("masterUi.masterBrakerageDialog");
   const router = useRouter();
   const [interactive, setInteractive] = useState(false);
   useEffect(() => { setInteractive(true); }, []);
@@ -143,7 +145,7 @@ export function MasterDirectoryClient({
   async function requestPreview(
     kind: SharedKind,
     body: FormData | { text: string } | { items: SharedItem[] },
-    source: string
+    source: PreviewSource
   ) {
     const isForm = body instanceof FormData;
     const response = await fetch("/api/master/directory/preview", {
@@ -155,7 +157,7 @@ export function MasterDirectoryClient({
       | { error?: string; items?: SharedItem[]; diff?: Diff }
       | null;
     if (!response?.ok || !json?.items || !json.diff) {
-      toast.error(json?.error ?? "Не удалось прочитать список. Проверьте интернет и попробуйте ещё раз.");
+      toast.error(json?.error ?? t("previewFailed"));
       return false;
     }
     setPreview({ kind, items: json.items, diff: json.diff, source });
@@ -181,14 +183,14 @@ export function MasterDirectoryClient({
     try {
       if (kind === "dish") {
         // Блюда из файла не сохраняются — сразу в окно выгрузки.
-        const rows = await readMenuFile(file);
+        const rows = await readMenuFile(file, tDialog);
         if (rows) openExport(rows);
         return;
       }
       const form = new FormData();
       form.set("kind", kind);
       form.set("file", file);
-      await requestPreview(kind, form, `файл «${file.name}»`);
+      await requestPreview(kind, form, { type: "file", name: file.name });
     } finally {
       setUploading(null);
       if (fileInput.current) fileInput.current.value = "";
@@ -217,14 +219,14 @@ export function MasterDirectoryClient({
     const known = new Set(lists[kind].map((item) => item.name.replace(/\s+/g, " ").trim().toLowerCase()));
     const fresh = items.filter((item) => !known.has(item.name.replace(/\s+/g, " ").trim().toLowerCase()));
     if (fresh.length === 0) return { added: 0, skipped: items.length };
-    const ok = await requestPreview(kind, { items: [...lists[kind], ...fresh] }, "распознанное фото");
-    if (!ok) throw new Error("Не удалось подготовить изменения — попробуйте ещё раз");
+    const ok = await requestPreview(kind, { items: [...lists[kind], ...fresh] }, { type: "photo" });
+    if (!ok) throw new Error(t("photoPrepareFailed"));
     return { added: fresh.length, skipped: items.length - fresh.length };
   }
 
   async function submitPaste() {
     if (!pasteKind) return;
-    const ok = await requestPreview(pasteKind, { text: pasteText }, "вставленный список");
+    const ok = await requestPreview(pasteKind, { text: pasteText }, { type: "paste" });
     if (ok) setPasteKind(null);
   }
 
@@ -239,21 +241,14 @@ export function MasterDirectoryClient({
       | { error?: string; total?: number; organizations?: number; documents?: number }
       | null;
     if (!response?.ok || !json) {
-      toast.error(json?.error ?? "Не удалось сохранить. Список не изменился — попробуйте ещё раз.");
+      toast.error(json?.error ?? t("saveFailed"));
       return;
     }
     const orgs = json.organizations ?? 0;
     const docs = json.documents ?? 0;
     setLists((prev) => ({ ...prev, [preview.kind]: preview.items }));
     setPreview(null);
-    toast.success(
-      `Готово: список обновлён в ${orgs} ${pluralRu(orgs, "объекте", "объектах", "объектах")} (${docs} ${pluralRu(
-        docs,
-        "журнал",
-        "журнала",
-        "журналов"
-      )})`
-    );
+    toast.success(t("distributed", { orgs, docs }));
   }
 
   // Подписи вкладок — как у партнёра (правки 19.10): журнал, для которого справочник.
@@ -261,23 +256,30 @@ export function MasterDirectoryClient({
   const tabs: Array<{ key: MasterTab; label: string; short: string; icon: typeof Package; count: number | null }> = [
     {
       key: "menu",
-      label: "Мастер-справочник журнала бракеража готовой продукции",
-      short: "Готовая продукция",
+      label: t("tabMenuLabel"),
+      short: t("tabMenuShort"),
       icon: UtensilsCrossed,
       count: null,
     },
     {
       key: "raw",
-      label: "Мастер-справочник журнала бракеража скоропортящейся продукции",
-      short: "Скоропорт",
+      label: t("tabRawLabel"),
+      short: t("tabRawShort"),
       icon: Package,
       count: lists.product.length,
     },
-    { key: "objects", label: "Подключённые объекты", short: "Объекты", icon: Building2, count: organizations.length },
+    { key: "objects", label: t("tabObjectsLabel"), short: t("tabObjectsShort"), icon: Building2, count: organizations.length },
   ];
 
-  const pasteMeta = pasteKind ? KIND_META[pasteKind] : null;
-  const previewMeta = preview ? KIND_META[preview.kind] : null;
+  const pasteMeta = pasteKind ? kindMeta(t, pasteKind) : null;
+  const previewMeta = preview ? kindMeta(t, preview.kind) : null;
+  const previewSource = !preview
+    ? ""
+    : preview.source.type === "file"
+      ? t("sourceFile", { name: preview.source.name })
+      : preview.source.type === "paste"
+        ? t("sourcePaste")
+        : t("sourcePhoto");
 
   return (
     <fieldset disabled={!interactive} data-ready={interactive ? "true" : "false"} data-testid="master-directory-client" className="m-0 min-w-0 space-y-5 border-0 p-0">
@@ -290,7 +292,7 @@ export function MasterDirectoryClient({
         data-testid="master-file-input"
       />
 
-      <nav aria-label="Разделы мастер-кабинета" className="-mx-4 px-4 md:mx-0 md:px-0">
+      <nav aria-label={t("navAria")} className="-mx-4 px-4 md:mx-0 md:px-0">
         <div
           role="tablist"
           className="no-mobile-shrink grid grid-cols-3 gap-1 rounded-2xl border border-[#ececf4] bg-white p-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
@@ -373,18 +375,14 @@ export function MasterDirectoryClient({
         open={pasteKind !== null}
         onClose={() => setPasteKind(null)}
         onConfirm={submitPaste}
-        title="Вставить списком"
+        title={t("pasteTitle")}
         icon={ClipboardPaste}
         description={
           pasteMeta ? (
-            <>
-              Одна позиция — одна строка (или через «;»).
-              {pasteKind === "product" ? " Поставщик и изготовитель — через «|», по желанию." : ""} В поле уже
-              текущий список: удалите строку — позиция уберётся, допишите — добавится.
-            </>
+            <>{t("pasteDescription", { extra: pasteKind === "product" ? t("pasteProductExtra") : "" })}</>
           ) : null
         }
-        confirmLabel="Показать изменения"
+        confirmLabel={t("showChanges")}
         confirmDisabled={pasteText.trim().length === 0}
       >
         <textarea
@@ -393,12 +391,12 @@ export function MasterDirectoryClient({
           rows={10}
           autoFocus
           placeholder={pasteMeta?.example}
-          aria-label="Список позиций"
+          aria-label={t("itemsListAria")}
           className="w-full resize-y rounded-2xl border border-[#dcdfed] bg-white px-4 py-3 text-[14px] leading-[1.6] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           data-testid="master-paste-text"
         />
         <p className="mt-2 text-[12px] text-[#6f7282]">
-          Строк в поле: {pasteText.split(/[\r\n;]+/).filter((line) => line.trim()).length}
+          {t("rowsInField", { count: pasteText.split(/[\r\n;]+/).filter((line) => line.trim()).length })}
         </p>
       </ConfirmDialog>
 
@@ -407,17 +405,14 @@ export function MasterDirectoryClient({
         open={preview !== null}
         onClose={() => setPreview(null)}
         onConfirm={saveAndDistribute}
-        title="Проверьте изменения"
+        title={t("previewTitle")}
         icon={Send}
         description={
           preview && previewMeta ? (
-            <>
-              {previewMeta.title}, {preview.source}. После сохранения список получат {previewMeta.journal}{" "}
-              {inObjects(organizations.length)}.
-            </>
+            <>{t("previewDescription", { title: previewMeta.title, source: previewSource, journal: previewMeta.journal, where: inObjects(t, organizations.length) })}</>
           ) : null
         }
-        confirmLabel="Сохранить и разослать"
+        confirmLabel={t("saveAndSend")}
       >
         {preview ? <PreviewBody preview={preview} /> : null}
       </ConfirmDialog>
@@ -426,6 +421,7 @@ export function MasterDirectoryClient({
 }
 
 function PreviewBody({ preview }: { preview: Preview }) {
+  const t = useTranslations("masterUi.masterDirectoryClient");
   const { added, removed, unchanged } = preview.diff;
   const changed = preview.diff.changed ?? [];
   const isMenu = preview.kind === "dish";
@@ -433,37 +429,37 @@ function PreviewBody({ preview }: { preview: Preview }) {
   /** «Борщ — 250 · 08:30»: что станет у изменённого блюда. */
   const changedLabel = (name: string) => {
     const item = byName.get(name.toLowerCase());
-    const parts = [item?.portion ? `выход ${item.portion}` : "без выхода", item?.time ? `время ${item.time}` : "без времени"];
+    const parts = [item?.portion ? t("withYield", { value: item.portion }) : t("noYield"), item?.time ? t("withTime", { value: item.time }) : t("noTime")];
     return `${name} — ${parts.join(", ")}`;
   };
   return (
     <div className="space-y-4" data-testid="master-preview">
       <div className={cn("grid gap-2 text-center", isMenu ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}>
-        <Stat label="Добавится" value={added.length} tone="ok" />
-        <Stat label="Уберётся" value={removed.length} tone={removed.length > 0 ? "warn" : "neutral"} />
-        {isMenu ? <Stat label="Изменится" value={changed.length} tone="neutral" /> : null}
-        <Stat label="Без изменений" value={unchanged} tone="neutral" />
+        <Stat label={t("statAdded")} value={added.length} tone="ok" />
+        <Stat label={t("statRemoved")} value={removed.length} tone={removed.length > 0 ? "warn" : "neutral"} />
+        {isMenu ? <Stat label={t("statChanged")} value={changed.length} tone="neutral" /> : null}
+        <Stat label={t("statUnchanged")} value={unchanged} tone="neutral" />
       </div>
       <p className="text-[12.5px] text-[#6f7282]" data-testid="master-preview-summary">
-        Добавится {added.length} · Уберётся {removed.length}
-        {isMenu ? ` · Изменится ${changed.length}` : ""} · Без изменений {unchanged} · всего в списке{" "}
-        {preview.items.length}
+        {isMenu
+          ? t("summaryMenu", { added: added.length, removed: removed.length, changed: changed.length, unchanged, total: preview.items.length })
+          : t("summaryRaw", { added: added.length, removed: removed.length, unchanged, total: preview.items.length })}
       </p>
-      {added.length > 0 ? <NameList title="Новые" names={added} tone="ok" /> : null}
-      {changed.length > 0 ? <NameList title="Изменятся выход или время" names={changed.map(changedLabel)} tone="edit" /> : null}
+      {added.length > 0 ? <NameList title={t("listNew")} names={added} tone="ok" /> : null}
+      {changed.length > 0 ? <NameList title={t("listChanged")} names={changed.map(changedLabel)} tone="edit" /> : null}
       {removed.length > 0 ? (
         <>
-          <NameList title="Уберутся" names={removed} tone="warn" />
+          <NameList title={t("listRemoved")} names={removed} tone="warn" />
           <p className="rounded-2xl bg-[#fafbff] px-3 py-2 text-[12.5px] leading-[1.5] text-[#3c4053]">
-            У объектов уйдут только эти позиции. То, что объекты внесли сами, останется.
+            {t("removedNote")}
           </p>
         </>
       ) : null}
       {added.length === 0 && removed.length === 0 && changed.length === 0 ? (
         <p className="rounded-2xl bg-[#fafbff] px-3 py-2 text-[12.5px] leading-[1.5] text-[#3c4053]">
           {isMenu
-            ? "Меню не изменилось."
-            : "Названия не изменились. Сохраните, если поменяли поставщиков или изготовителей."}
+            ? t("menuUnchanged")
+            : t("rawUnchanged")}
         </p>
       ) : null}
     </div>
@@ -485,13 +481,14 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: "ok"
 }
 
 function NameList({ title, names, tone }: { title: string; names: string[]; tone: "ok" | "warn" | "edit" }) {
+  const t = useTranslations("masterUi.masterDirectoryClient");
   const shown = names.slice(0, PREVIEW_LIMIT);
   const Icon = tone === "ok" ? Plus : tone === "edit" ? PenLine : Minus;
   return (
     <div>
       <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
         {title}
-        {names.length > PREVIEW_LIMIT ? ` · первые ${PREVIEW_LIMIT} из ${names.length}` : ""}
+        {names.length > PREVIEW_LIMIT ? t("firstOf", { limit: PREVIEW_LIMIT, total: names.length }) : ""}
       </div>
       <ul className="space-y-1">
         {shown.map((name) => (
@@ -530,33 +527,28 @@ function MenuExportPanel({
   onPhotoItems: (kind: SharedKind, items: SharedItem[]) => Promise<RecognizeResult>;
   onConnect: () => void;
 }) {
+  const t = useTranslations("masterUi.masterDirectoryClient");
   const noObjects = objectsCount === 0;
-  const steps = [
-    "Впишите блюда, вставьте из Excel, загрузите файл или сфотографируйте меню",
-    "Поставьте дату и время изготовления",
-    "Отметьте пищеблоки — по умолчанию все",
-    "Нажмите «Выгрузить» и проверьте, куда уйдут строки",
-  ];
+  const steps = [t("step1"), t("step2"), t("step3"), t("step4")];
   return (
     <section className={CARD} aria-labelledby="master-export-title" data-testid="master-export-panel">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h1 id="master-export-title" className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-            Выгрузка блюд в журналы бракеража готовой продукции
+            {t("exportTitle")}
           </h1>
           <p className="mt-1.5 max-w-[640px] text-[14px] leading-[1.55] text-[#6f7282]">
-            Блюда появятся строками в журнале бракеража готовой продукции каждого отмеченного пищеблока на выбранную
-            дату. Список не хранится: каждая выгрузка начинается с чистой таблицы.
+            {t("exportDescription")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onExport} disabled={noObjects} className={PRIMARY} data-testid="master-brakerage-open">
             <CalendarPlus className="size-4" />
-            Выгрузить в журналы
+            {t("exportToJournals")}
           </button>
           <button type="button" onClick={onUpload} disabled={noObjects || uploading} className={OUTLINE} data-testid="master-upload-dish">
             {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4 text-[#5566f6]" />}
-            Загрузить Excel/CSV
+            {t("uploadFile")}
           </button>
           {noObjects ? null : (
             <RecognizeFromPhoto
@@ -573,7 +565,7 @@ function MenuExportPanel({
                   }))
                 )
               }
-              resultLabel="Блюд в выгрузке"
+              resultLabel={t("photoResultExport")}
               className="sm:h-11 sm:rounded-2xl"
               testId="master-photo-dish"
             />
@@ -583,17 +575,17 @@ function MenuExportPanel({
 
       {noObjects ? (
         <div className="mt-5 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-8 text-center sm:px-6">
-          <div className="text-[15px] font-medium text-[#0b1024]">Пищеблоки ещё не подключены</div>
+          <div className="text-[15px] font-medium text-[#0b1024]">{t("noObjectsTitle")}</div>
           <p className="mx-auto mt-1.5 max-w-[460px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Выгружать пока некуда. Подключите пищеблок по коду его журнала — и сюда можно будет выгружать блюда.
+            {t("noObjectsText")}
           </p>
           <button type="button" onClick={onConnect} className={cn(OUTLINE, "mt-4")} data-testid="master-export-connect">
             <Building2 className="size-4 text-[#5566f6]" />
-            Подключить пищеблок
+            {t("connectKitchen")}
           </button>
         </div>
       ) : (
-        <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4" aria-label="Как выгрузить">
+        <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4" aria-label={t("stepsAria")}>
           {steps.map((step, index) => (
             <li key={step} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3.5">
               <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[13px] font-semibold tabular-nums text-[#3848c7]">
@@ -626,7 +618,8 @@ function ListPanel({
   /** «С фото»: распознанные позиции → предпросмотр различий. */
   onPhotoItems: (kind: SharedKind, items: SharedItem[]) => Promise<RecognizeResult>;
 }) {
-  const meta = KIND_META[kind];
+  const t = useTranslations("masterUi.masterDirectoryClient");
+  const meta = kindMeta(t, kind);
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const needle = query.trim().toLowerCase();
@@ -653,11 +646,11 @@ function ListPanel({
         data-testid={`master-upload-${kind}`}
       >
         {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
-        Загрузить Excel/CSV
+        {t("uploadFile")}
       </button>
       <button type="button" onClick={() => onPaste(kind)} className={OUTLINE} data-testid={`master-paste-${kind}`}>
         <ClipboardPaste className="size-4 text-[#5566f6]" />
-        Вставить списком
+        {t("pasteList")}
       </button>
       {kind === "dish" ? (
         <RecognizeFromPhoto
@@ -674,7 +667,7 @@ function ListPanel({
               }))
             )
           }
-          resultLabel="Новых блюд"
+          resultLabel={t("resultNewDishes")}
           className="sm:h-11 sm:rounded-2xl"
           testId="master-photo-dish"
         />
@@ -692,7 +685,7 @@ function ListPanel({
               }))
             )
           }
-          resultLabel="Новых позиций"
+          resultLabel={t("resultNewItems")}
           className="sm:h-11 sm:rounded-2xl"
           testId="master-photo-product"
         />
@@ -708,7 +701,7 @@ function ListPanel({
             {meta.title}
           </h1>
           <p className="mt-1.5 text-[14px] leading-[1.55] text-[#6f7282]">
-            {kind === "dish" ? "Добавьте блюда списком, из Excel или с фото. Для выгрузки в журналы отдельно выберите дату." : <>Этот список получат {meta.journal} {inObjects(objectsCount)}.</>}
+            {kind === "dish" ? t("listDishDescription") : t("listProductDescription", { journal: meta.journal, where: inObjects(t, objectsCount) })}
           </p>
         </div>
         {items.length > 0 ? actions : null}
@@ -716,27 +709,25 @@ function ListPanel({
 
       {items.length === 0 ? (
         <div className="mt-5 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-10 text-center sm:px-6">
-          <div className="text-[15px] font-medium text-[#0b1024]">Список пока пуст</div>
+          <div className="text-[15px] font-medium text-[#0b1024]">{t("emptyTitle")}</div>
           <p className="mx-auto mt-1.5 max-w-[460px] text-[13px] leading-[1.55] text-[#6f7282]">
-            {kind === "dish" ? "Загрузите файл, вставьте список или распознайте фото. Перед сохранением покажем изменения; выгрузка в журналы выполняется отдельно." : <>Загрузите файл или вставьте список — перед сохранением покажем, что добавится. После сохранения {meta.journal} {inObjects(objectsCount)} получат его сразу.</>}
+            {kind === "dish" ? t("emptyDishText") : t("emptyProductText", { journal: meta.journal, where: inObjects(t, objectsCount) })}
           </p>
           <div className="mt-5 flex justify-center">{actions}</div>
           <div className="mx-auto mt-6 grid max-w-[640px] gap-3 text-left sm:grid-cols-2">
             <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">Списком</div>
+              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">{t("asList")}</div>
               <p className="mt-1 text-[12.5px] text-[#3c4053]">
-                {kind === "dish"
-                  ? "Таблица «Наименование — Выход — Время», можно вставить из Excel или сфотографировать меню («С фото»):"
-                  : "Одна позиция в строке — или сфотографируйте накладную («С фото»):"}
+                {kind === "dish" ? t("dishListHint") : t("productListHint")}
               </p>
               <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-[#f5f6ff] px-3 py-2 font-mono text-[12px] leading-[1.6] text-[#3848c7]">
                 {meta.example}
               </pre>
             </div>
             <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">Файлом</div>
+              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">{t("asFile")}</div>
               <p className="mt-1 text-[12.5px] leading-[1.55] text-[#3c4053]">
-                Excel (.xlsx, .xls) или CSV: {meta.exampleFile}. Первый лист, строка заголовков по желанию.
+                {t("fileHint", { columns: meta.exampleFile })}
               </p>
             </div>
           </div>
@@ -752,15 +743,15 @@ function ListPanel({
                   setQuery(event.target.value);
                   setLimit(PAGE_SIZE);
                 }}
-                placeholder={kind === "dish" ? "Найти блюдо" : "Найти сырьё, поставщика, изготовителя"}
-                aria-label="Поиск по списку"
+                placeholder={kind === "dish" ? t("searchDish") : t("searchRaw")}
+                aria-label={t("searchAria")}
                 className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white pl-10 pr-10 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-colors duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
               {query ? (
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  aria-label="Очистить поиск"
+                  aria-label={t("clearSearch")}
                   className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
                 >
                   <X className="size-4" />
@@ -768,7 +759,7 @@ function ListPanel({
               ) : null}
             </label>
             <span className="text-[13px] tabular-nums text-[#6f7282]" data-testid={`master-count-${kind}`}>
-              {needle ? `Найдено ${filtered.length} из ${items.length}` : `В списке ${countLabel(items.length, meta.noun)}`}
+              {needle ? t("foundOf", { found: filtered.length, total: items.length }) : t("inList", { count: meta.count(items.length) })}
             </span>
           </div>
 
@@ -776,20 +767,20 @@ function ListPanel({
             {kind === "product" ? (
               <div className="hidden grid-cols-[56px_minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1.3fr)] gap-3 border-b border-[#ececf4] bg-[#fafbff] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] md:grid">
                 <span>№</span>
-                <span>Наименование</span>
-                <span>Поставщик</span>
-                <span>Изготовитель</span>
+                <span>{t("colName")}</span>
+                <span>{t("colSupplier")}</span>
+                <span>{t("colManufacturer")}</span>
               </div>
             ) : (
               <div className="hidden grid-cols-[56px_minmax(0,1fr)_120px_96px] gap-3 border-b border-[#ececf4] bg-[#fafbff] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] md:grid">
                 <span>№</span>
-                <span>Наименование</span>
-                <span>Выход</span>
-                <span>Время</span>
+                <span>{t("colName")}</span>
+                <span>{t("colYield")}</span>
+                <span>{t("colTime")}</span>
               </div>
             )}
             {visible.length === 0 ? (
-              <div className="px-4 py-8 text-center text-[13.5px] text-[#6f7282]">Ничего не нашли — измените запрос.</div>
+              <div className="px-4 py-8 text-center text-[13.5px] text-[#6f7282]">{t("nothingFound")}</div>
             ) : (
               <ul className="divide-y divide-[#ececf4]" data-testid={`master-list-${kind}`}>
                 {visible.map((item) => {
@@ -810,7 +801,7 @@ function ListPanel({
                           <span className="min-w-0 flex-1 md:contents">
                             <span className="block break-words font-medium md:font-normal">{item.name}</span>
                             <span className="mt-0.5 block text-[12.5px] text-[#6f7282] md:hidden">
-                              {[item.supplier, item.manufacturer].filter(Boolean).join(" · ") || "Поставщик не указан"}
+                              {[item.supplier, item.manufacturer].filter(Boolean).join(" · ") || t("supplierNotSpecified")}
                             </span>
                             <span className="hidden break-words text-[#3c4053] md:block">{item.supplier ?? "—"}</span>
                             <span className="hidden break-words text-[#3c4053] md:block">{item.manufacturer ?? "—"}</span>
@@ -821,7 +812,7 @@ function ListPanel({
                           <span className="block break-words">{item.name}</span>
                           {item.portion || item.time ? (
                             <span className="mt-0.5 block text-[12.5px] tabular-nums text-[#6f7282] md:hidden">
-                              {[item.portion ? `Выход ${item.portion}` : "", item.time ? `время ${item.time}` : ""]
+                              {[item.portion ? t("yieldCapital", { value: item.portion }) : "", item.time ? t("withTime", { value: item.time }) : ""]
                                 .filter(Boolean)
                                 .join(" · ")}
                             </span>
@@ -839,7 +830,7 @@ function ListPanel({
           {filtered.length > visible.length ? (
             <div className="flex justify-center">
               <button type="button" onClick={() => setLimit((value) => value + PAGE_SIZE)} className={OUTLINE}>
-                Показать ещё {Math.min(PAGE_SIZE, filtered.length - visible.length)}
+                {t("showMore", { count: Math.min(PAGE_SIZE, filtered.length - visible.length) })}
               </button>
             </div>
           ) : null}

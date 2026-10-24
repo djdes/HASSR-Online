@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Network } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -10,6 +11,7 @@ import { sortJournalsByName } from "@/lib/journal-sort";
 export const dynamic = "force-dynamic";
 
 export default async function StaffHierarchyPage() {
+  const t = await getTranslations("settingsUi.staffHierarchyPage");
   const session = await requireAuth();
   const hasAccess = await sessionHasPermission(session, "settings.permissions");
   if (!hasAccess) {
@@ -60,10 +62,10 @@ export default async function StaffHierarchyPage() {
           </div>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold text-[#0b1024]">
-              Иерархия управления
+              {t("title")}
             </h1>
             <p className="text-[13px] text-[#6f7282]">
-              Кто каких сотрудников видит и какие журналы может назначать
+              {t("subtitle")}
             </p>
           </div>
         </div>
@@ -71,29 +73,29 @@ export default async function StaffHierarchyPage() {
 
       <PageGuide
         storageKey="staff-hierarchy"
-        title="Что такое иерархия и зачем"
+        title={t("guideTitle")}
         bullets={[
           {
-            title: "Кого вижу — тому выдаю",
-            body: "Каждый менеджер с настройкой scope видит только своих подчинённых в TasksFlow и при создании задач.",
+            title: t("bullet1Title"),
+            body: t("bullet1Body"),
           },
           {
-            title: "Режимы scope",
-            body: "«Все» — видит всех (но не админов и менеджеров — фильтр от 2026-04-30). «По должностям» — выбираешь должности (повар, уборщица). «Конкретные» — поштучно.",
+            title: t("bullet2Title"),
+            body: t("bullet2Body"),
           },
           {
-            title: "После сохранения",
-            body: "Изменения сразу пушатся в TasksFlow — у менеджера обновляется список подчинённых через несколько секунд.",
+            title: t("bullet3Title"),
+            body: t("bullet3Body"),
           },
         ]}
         qa={[
           {
-            q: "Заведующий производством видит admin'a — почему?",
-            a: "Если у его scope режим «Все» и admin тоже стоит как management, он его НЕ должна видеть. Если видит — проверь свежий ли deploy WeSetup или попробуй сменить scope на «По должностям» с явным выбором.",
+            q: t("qa1q"),
+            a: t("qa1a"),
           },
           {
-            q: "Можно ли отключить иерархию",
-            a: "Да: ставишь menager'у scope=«Все» — он видит всех cooks/waiters своей орги. У admin'a по дефолту так уже — он всегда видит всё.",
+            q: t("qa2q"),
+            a: t("qa2a"),
           },
         ]}
       />

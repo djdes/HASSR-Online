@@ -1,9 +1,9 @@
 "use client";
 
 import { ExternalLink, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  TASKSFLOW_PROMO_BENEFIT,
   TASKSFLOW_PROMO_CODE,
   tasksflowPromoUrl,
 } from "@/lib/tasksflow-promo";
@@ -20,7 +20,7 @@ import { useInAppShell } from "@/lib/use-in-app-shell";
 export function TasksFlowPromoHint({
   campaign,
   hasIntegration = false,
-  autolinkNote = "Аккаунт TasksFlow с этим номером свяжется автоматически.",
+  autolinkNote,
   compact = false,
   className = "",
 }: {
@@ -41,11 +41,13 @@ export function TasksFlowPromoHint({
   // В оболочке приложения (Telegram) рекламу с внешней ссылкой не
   // показываем вовсе: тап по ней выбрасывает человека из Telegram
   // посреди незаполненной анкеты, и введённое теряется.
+  const t = useTranslations("sharedUi.tasksflowPromoHint");
   const inAppShell = useInAppShell();
+  const note = autolinkNote ?? t("autolinkNote");
   if (inAppShell) {
     return (
       <p className={`text-[11px] leading-snug text-[#6f7282] ${className}`}>
-        {autolinkNote}
+        {note}
       </p>
     );
   }
@@ -53,7 +55,7 @@ export function TasksFlowPromoHint({
   if (hasIntegration) {
     return (
       <p className={`text-[11px] leading-snug text-[#6f7282] ${className}`}>
-        {autolinkNote}
+        {note}
       </p>
     );
   }
@@ -61,9 +63,9 @@ export function TasksFlowPromoHint({
   async function copyPromo() {
     try {
       await navigator.clipboard.writeText(TASKSFLOW_PROMO_CODE);
-      toast.success("Промокод скопирован");
+      toast.success(t("copied"));
     } catch {
-      toast.error("Не удалось скопировать — выделите код вручную");
+      toast.error(t("copyFailed"));
     }
   }
 
@@ -78,25 +80,25 @@ export function TasksFlowPromoHint({
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-[#0b1024]">
-            TasksFlow.ru — задачи сотрудникам
+            {t("compactTitle")}
           </p>
           <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <button
               type="button"
               onClick={copyPromo}
-              title="Скопировать промокод"
+              title={t("copyTitle")}
               className="rounded-full bg-white px-1.5 py-0.5 font-semibold tracking-[0.04em] text-[#3848c7] ring-1 ring-[#dcdfed] transition-colors hover:bg-[#eef1ff] hover:ring-[#5566f6]/40"
             >
               {TASKSFLOW_PROMO_CODE}
             </button>
-            <span className="text-[#6f7282]">{TASKSFLOW_PROMO_BENEFIT}</span>
+            <span className="text-[#6f7282]">{t("benefit")}</span>
             <a
               href={tasksflowPromoUrl(campaign)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
             >
-              Перейти
+              {t("go")}
               <ExternalLink className="size-3" />
             </a>
           </p>
@@ -119,23 +121,23 @@ export function TasksFlowPromoHint({
         <div className="min-w-0 flex-1">
           <p>
             <span className="font-semibold text-[#0b1024]">TasksFlow.ru</span>
-            {" — задачи сотрудникам со ссылкой на журналы. Промокод "}
+            {t("fullIntro")}
             <button
               type="button"
               onClick={copyPromo}
-              title="Скопировать промокод"
+              title={t("copyTitle")}
               className="rounded-full bg-white px-1.5 py-0.5 font-semibold tracking-[0.04em] text-[#3848c7] ring-1 ring-[#dcdfed] transition-colors hover:bg-[#eef1ff] hover:ring-[#5566f6]/40"
             >
               {TASKSFLOW_PROMO_CODE}
             </button>
-            {` — ${TASKSFLOW_PROMO_BENEFIT}. `}
+            {t("fullBenefit", { benefit: t("benefit") })}
             <a
               href={tasksflowPromoUrl(campaign)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
             >
-              Перейти
+              {t("go")}
               <ExternalLink className="size-3" />
             </a>
           </p>

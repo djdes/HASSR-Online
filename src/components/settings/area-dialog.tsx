@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ interface AreaDialogProps {
 const NO_BUILDING = "__none__";
 
 export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: AreaDialogProps) {
+  const t = useTranslations("settingsUi.areaDialog");
+  const tc = useTranslations("common");
   const router = useRouter();
   const isEdit = !!area;
   const [open, setOpen] = useState(false);
@@ -77,14 +80,14 @@ export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: A
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || "Ошибка");
+        throw new Error(result.error || t("error"));
       }
 
       if (!isEdit) resetForm();
       setOpen(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError(err instanceof Error ? err.message : t("error"));
     } finally {
       release();
     }
@@ -96,27 +99,27 @@ export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: A
         {isEdit ? (
           <Button variant="ghost" size="sm"><Pencil className="size-4" /></Button>
         ) : (
-          <Button><Plus className="size-4" />Добавить цех</Button>
+          <Button><Plus className="size-4" />{t("addArea")}</Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Редактировать цех" : "Добавить цех"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("editArea") : t("addArea")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="area-name">Название <span className="text-destructive">*</span></Label>
-            <Input id="area-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Например: Цех №1" required />
+            <Label htmlFor="area-name">{t("nameLabel")} <span className="text-destructive">*</span></Label>
+            <Input id="area-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} required />
           </div>
           {showBuilding ? (
             <div className="space-y-2">
-              <Label htmlFor="area-building">Точка</Label>
+              <Label htmlFor="area-building">{t("pointLabel")}</Label>
               <Select value={buildingId} onValueChange={setBuildingId}>
                 <SelectTrigger id="area-building" className="w-full">
-                  <SelectValue placeholder="Выберите точку" />
+                  <SelectValue placeholder={t("pointPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {buildings.map((building) => (
@@ -124,23 +127,23 @@ export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: A
                       {building.name}
                     </SelectItem>
                   ))}
-                  <SelectItem value={NO_BUILDING}>Без точки — виден на всех точках</SelectItem>
+                  <SelectItem value={NO_BUILDING}>{t("noPoint")}</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-[12.5px] text-[#6f7282]">
                 {isEdit
-                  ? "Оборудование цеха переедет в эту точку вместе с ним."
-                  : "Цех появится и помещением этой точки — для уборки и климата."}
+                  ? t("editHint")
+                  : t("createHint")}
               </p>
             </div>
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="area-description">Описание</Label>
-            <Textarea id="area-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание цеха или участка" />
+            <Label htmlFor="area-description">{t("descriptionLabel")}</Label>
+            <Textarea id="area-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("descriptionPlaceholder")} />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>Отмена</Button>
-            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Сохранение..." : isEdit ? "Сохранить" : "Создать"}</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>{tc("cancel")}</Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? tc("saving") : isEdit ? tc("save") : t("create")}</Button>
           </div>
         </form>
       </DialogContent>

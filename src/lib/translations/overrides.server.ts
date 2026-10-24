@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import type { Locale } from "@/i18n/locales";
-import { applyOverrides } from "./catalog";
+import { flattenMessages } from "@/i18n/catalog-validation";
+import { loadBaseMessages } from "@/i18n/messages";
+import { applyOverrides, selectSafeOverrides, type FlatCatalog } from "./catalog";
 
 /**
  * Правки каталога из БД с кэшем в памяти процесса. Страницы, письма и
@@ -22,6 +24,13 @@ let generation = 0;
 let inflight: Promise<Snapshot> | null = null;
 const merged = new Map<string, { base: object; snapshot: Snapshot; messages: object }>();
 
+let russianCatalog: Promise<FlatCatalog> | null = null;
+
+function getRussianCatalog(): Promise<FlatCatalog> {
+  russianCatalog ??= loadBaseMessages("ru").then((messages) => flattenMessages(messages));
+  return russianCatalog;
+}
+
 async function fetchSnapshot(): Promise<Snapshot> {
   const startedAt = generation;
   try {
@@ -32,12 +41,16 @@ async function fetchSnapshot(): Promise<Snapshot> {
     const signature = rows.map((row) => `${row.locale}\u0000${row.key}\u0000${row.value}`).join("\u0001");
     // Тот же набор — тот же объект: собранный каталог не пересобираем.
     if (signature !== snapshot.signature) {
+      const russian = await getRussianCatalog();
       const byLocale = new Map<string, [string, string][]>();
       for (const row of rows) {
         const list = byLocale.get(row.locale) ?? [];
         list.push([row.key, row.value]);
         byLocale.set(row.locale, list);
       }
+      // Правка с подстановками, не совпадающими с текущим русским исходником,
+      // не применяется (исходник могли поменять после правки).
+      for (const [locale, list] of byLocale) byLocale.set(locale, selectSafeOverrides(list, (key) => russian[key]));
       snapshot = { signature, byLocale };
     }
   } catch (error) {

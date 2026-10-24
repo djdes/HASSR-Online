@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { getNativeBridge, type NativeBridge } from "@/lib/native-bridge";
 import { pickSpokenNumber, speechErrorMessage } from "@/lib/spoken-number";
@@ -65,6 +66,7 @@ export function VoiceNumberInput({
   className,
   disabled,
 }: VoiceNumberInputProps) {
+  const t = useTranslations("sharedUi.voiceNumberInput");
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export function VoiceNumberInput({
     } else if (matches.length === 0 || !matches[0]?.trim()) {
       setError(speechErrorMessage("no-speech"));
     } else {
-      setError(`Не распознал число в «${matches[0].trim()}». Скажите ещё раз, например «два и восемь».`);
+      setError(t("notRecognized", { text: matches[0].trim() }));
     }
   }
 
@@ -111,7 +113,7 @@ export function VoiceNumberInput({
     try {
       const available = await bridge.call<{ available?: boolean }>("SpeechRecognition", "available");
       if (available?.available === false) {
-        setError("Распознавание речи на этом телефоне недоступно. Введите число вручную.");
+        setError(t("unavailable"));
         return;
       }
       const permission = await bridge.call<{ speechRecognition?: string }>("SpeechRecognition", "requestPermissions");
@@ -127,7 +129,7 @@ export function VoiceNumberInput({
           maxResults: 3,
           partialResults: false,
           popup: true,
-          prompt: "Скажите число, например «два и восемь»",
+          prompt: t("prompt"),
         });
         setListening(false);
         applyMatches(res?.matches ?? []);
@@ -200,7 +202,7 @@ export function VoiceNumberInput({
       rec.start();
       setListening(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось запустить");
+      setError(err instanceof Error ? err.message : t("startFailed"));
     }
   }
 
@@ -218,11 +220,11 @@ export function VoiceNumberInput({
         type="button"
         aria-controls={inputId}
         aria-pressed={listening}
-        aria-label={listening ? "Остановить запись" : "Голосовой ввод"}
+        aria-label={listening ? t("stopRecording") : t("voiceInput")}
         title={
           listening
-            ? "Слушаю… Скажите «два и восемь» или «минус три»"
-            : "Голосовой ввод температуры"
+            ? t("listeningHint")
+            : t("voiceInputTemperature")
         }
         disabled={disabled}
         onClick={listening ? stop : start}

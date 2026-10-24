@@ -3180,6 +3180,9 @@ model TranslationOverride {
   /// Путь в каталоге через точку: `hygiene.columns.employee`.
   key         String
   value       String
+  /// Русский исходник на момент правки: изменился позже — правка помечена
+  /// «исходник изменился» (но продолжает действовать).
+  sourceRu    String?
   updatedById String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

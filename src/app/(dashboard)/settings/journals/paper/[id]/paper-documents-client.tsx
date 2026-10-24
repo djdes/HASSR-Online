@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Archive, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatJournalPeriodLabel } from "@/lib/journal-document-title";
 import type { PaperJournal } from "@/lib/sphere-journal-rules";
@@ -49,6 +50,11 @@ export function PaperDocumentsClient({
   journal: PaperJournal;
   users: PaperPickerUser[];
 }) {
+  const t = useTranslations("settingsUi.paperDocumentsClient");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  const dateLocale =
+    locale === "en" ? "en-GB" : locale === "uz" ? "uz-UZ" : "ru-RU";
   const [documents, setDocuments] = useState<PaperDocument[] | null>(null);
   const [tab, setTab] = useState<"active" | "closed">("active");
   const [closing, setClosing] = useState<PaperDocument | null>(null);
@@ -81,7 +87,7 @@ export function PaperDocumentsClient({
       },
     );
     if (!res.ok) {
-      toast.error("Не удалось сохранить");
+      toast.error(t("saveFailed"));
       return false;
     }
     await reload();
@@ -96,7 +102,7 @@ export function PaperDocumentsClient({
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#9b9fb3]">
         <Loader2 className="size-4 animate-spin" />
-        Загружаем документы
+        {t("loading")}
       </div>
     );
   }
@@ -117,7 +123,7 @@ export function PaperDocumentsClient({
                   : "text-[#6f7282] hover:bg-[#f5f6ff]",
               )}
             >
-              {value === "active" ? "Активные" : "Закрытые"}
+              {value === "active" ? t("tabActive") : t("tabClosed")}
               <span className="ml-1.5 text-[12px] opacity-70">
                 {
                   (documents ?? []).filter((d) =>
@@ -140,8 +146,8 @@ export function PaperDocumentsClient({
       {visible.length === 0 ? (
         <p className="px-5 py-8 text-center text-[13.5px] text-[#6f7282]">
           {tab === "active"
-            ? "Активных документов нет. Создайте — и заполняйте журнал на странице документа, не теряя введённое."
-            : "Закрытых документов пока нет."}
+            ? t("emptyActive")
+            : t("emptyClosed")}
         </p>
       ) : (
         <ul className="divide-y divide-[#eef0f6]">
@@ -154,8 +160,12 @@ export function PaperDocumentsClient({
               period,
               doc.responsible,
               doc.closedAt
-                ? `Закрыт ${new Date(doc.closedAt).toLocaleDateString("ru-RU")}`
-                : `Изменён ${new Date(doc.updatedAt).toLocaleString("ru-RU")}`,
+                ? t("closedOn", {
+                    date: new Date(doc.closedAt).toLocaleDateString(dateLocale),
+                  })
+                : t("changedAt", {
+                    date: new Date(doc.updatedAt).toLocaleString(dateLocale),
+                  }),
             ].filter(Boolean);
             return (
               <li
@@ -179,7 +189,7 @@ export function PaperDocumentsClient({
                     className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#6f7282] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                   >
                     <Archive className="size-4" />
-                    Закрыть
+                    {tc("close")}
                   </button>
                 ) : (
                   <button
@@ -187,14 +197,14 @@ export function PaperDocumentsClient({
                     onClick={() => void patch(doc.id, { status: "active" })}
                     className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#6f7282] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                   >
-                    Открыть заново
+                    {t("reopen")}
                   </button>
                 )}
 
                 <button
                   type="button"
                   onClick={() => setRemoving(doc)}
-                  aria-label="Удалить документ"
+                  aria-label={t("removeAria")}
                   className="rounded-lg p-2 text-[#9b9fb3] transition-colors hover:bg-[#fff4f2] hover:text-[#a13a32]"
                 >
                   <Trash2 className="size-4" />
@@ -214,13 +224,13 @@ export function PaperDocumentsClient({
           setClosing(null);
         }}
         variant="info"
-        title="Закрыть документ?"
-        description="Заполнять его больше нельзя — он уйдёт во вкладку «Закрытые»."
+        title={t("closeTitle")}
+        description={t("closeDescription")}
         bullets={[
-          { label: "Введённое сохранится и останется доступным для печати" },
-          { label: "Открыть заново можно в любой момент" },
+          { label: t("closeBulletSaved") },
+          { label: t("closeBulletReopen") },
         ]}
-        confirmLabel="Закрыть"
+        confirmLabel={tc("close")}
       />
 
       <ConfirmDialog
@@ -236,12 +246,12 @@ export function PaperDocumentsClient({
           setRemoving(null);
         }}
         variant="danger"
-        title={`Удалить «${removing?.title ?? ""}»?`}
-        description="Заполненные строки пропадут безвозвратно."
+        title={t("removeTitle", { title: removing?.title ?? "" })}
+        description={t("removeDescription")}
         bullets={[
-          { label: "Распечатанные листы с подписями это не затронет", tone: "info" },
+          { label: t("removeBullet"), tone: "info" },
         ]}
-        confirmLabel="Удалить"
+        confirmLabel={tc("delete")}
       />
     </section>
   );

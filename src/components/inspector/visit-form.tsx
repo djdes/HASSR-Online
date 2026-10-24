@@ -2,12 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   INSPECTION_VISIT_ACCEPT,
   INSPECTION_VISIT_FILE_MAX_BYTES,
   INSPECTION_VISIT_KINDS,
-  INSPECTION_VISIT_KIND_RU,
   INSPECTION_VISIT_MAX_FILES,
   INSPECTION_VISIT_MAX_TOTAL_BYTES,
   type InspectionVisitKind,
@@ -18,8 +18,21 @@ const INPUT =
   "h-11 w-full min-w-0 rounded-[4px] border border-[#c9cdd5] bg-white px-3 text-[15px] text-[#141821] placeholder:text-[#a3a8b3] transition-[border-color,box-shadow] duration-150 focus:border-[#1f3a8a] focus:outline-none focus:ring-2 focus:ring-[#1f3a8a]/15";
 const LABEL = "text-[13px] text-[#5b6170]";
 
-function sizeLabel(bytes: number): string {
-  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} МБ` : `${Math.max(1, Math.round(bytes / 1024))} КБ`;
+type Translate = ReturnType<typeof useTranslations<"inspectorUi.visitForm">>;
+
+function sizeLabel(bytes: number, t: Translate): string {
+  return bytes >= 1024 * 1024
+    ? t("sizeMb", { value: (bytes / 1024 / 1024).toFixed(1) })
+    : t("sizeKb", { value: Math.max(1, Math.round(bytes / 1024)) });
+}
+
+function kindLabel(kind: InspectionVisitKind, t: Translate): string {
+  switch (kind) {
+    case "planned": return t("kindPlanned");
+    case "unplanned": return t("kindUnplanned");
+    case "complaint": return t("kindComplaint");
+    default: return t("kindOther");
+  }
 }
 
 /**
@@ -28,6 +41,7 @@ function sizeLabel(bytes: number): string {
  * Отправляется по токену QR без входа; данные журналов не меняются.
  */
 export function InspectorVisitForm({ token }: { token: string }) {
+  const t = useTranslations("inspectorUi.visitForm");
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<InspectionVisitKind>("planned");
@@ -49,18 +63,18 @@ export function InspectorVisitForm({ token }: { token: string }) {
     try {
       for (const original of picked) {
         if (next.length >= INSPECTION_VISIT_MAX_FILES) {
-          setError(`Можно приложить не больше ${INSPECTION_VISIT_MAX_FILES} файлов`);
+          setError(t("tooManyFiles", { max: INSPECTION_VISIT_MAX_FILES }));
           setErrorField("file");
           break;
         }
         const file = await prepareVisitUpload(original);
         if (file.size > INSPECTION_VISIT_FILE_MAX_BYTES) {
-          setError(`«${original.name}» больше 10 МБ — сфотографируйте документ ещё раз или сохраните скан в меньшем разрешении`);
+          setError(t("fileTooLarge", { name: original.name }));
           setErrorField("file");
           continue;
         }
         if (next.reduce((sum, item) => sum + item.size, 0) + file.size > INSPECTION_VISIT_MAX_TOTAL_BYTES) {
-          setError(`С «${original.name}» файлы в сумме больше 25 МБ — приложите меньше листов или сфотографируйте их заново`);
+          setError(t("totalTooLarge", { name: original.name }));
           setErrorField("file");
           continue;
         }
@@ -86,7 +100,7 @@ export function InspectorVisitForm({ token }: { token: string }) {
       const body = (await response.json().catch(() => null)) as { error?: string; field?: string } | null;
       if (!response.ok) {
         setErrorField(body?.field ?? null);
-        throw new Error(body?.error ?? "Не удалось внести запись — попробуйте ещё раз");
+        throw new Error(body?.error ?? t("submitFailedRetry"));
       }
       setState("saved");
       setFiles([]);
@@ -95,7 +109,7 @@ export function InspectorVisitForm({ token }: { token: string }) {
       router.refresh();
     } catch (err) {
       setState("error");
-      setError(err instanceof Error ? err.message : "Не удалось внести запись");
+      setError(err instanceof Error ? err.message : t("submitFailed"));
     }
   }
 
@@ -105,43 +119,43 @@ export function InspectorVisitForm({ token }: { token: string }) {
     <form onSubmit={submit} className="grid gap-4" data-visit-form noValidate>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5">
-          <span className={LABEL}>Фамилия, имя, отчество</span>
+          <span className={LABEL}>{t("fullName")}</span>
           <input
             name="inspectorName"
             required
             maxLength={160}
             autoComplete="name"
-            placeholder="Иванова Анна Петровна"
+            placeholder={t("fullNamePlaceholder")}
             className={INPUT + invalid("inspectorName")}
           />
         </label>
         <label className="grid gap-1.5">
-          <span className={LABEL}>Должность</span>
+          <span className={LABEL}>{t("position")}</span>
           <input
             name="inspectorPosition"
             required
             maxLength={160}
             autoComplete="organization-title"
-            placeholder="Главный специалист-эксперт"
+            placeholder={t("positionPlaceholder")}
             className={INPUT + invalid("inspectorPosition")}
           />
         </label>
       </div>
 
       <label className="grid gap-1.5">
-        <span className={LABEL}>Орган контроля (надзора)</span>
+        <span className={LABEL}>{t("authority")}</span>
         <input
           name="authority"
           required
           maxLength={300}
           autoComplete="organization"
-          placeholder="Управление Роспотребнадзора по Московской области"
+          placeholder={t("authorityPlaceholder")}
           className={INPUT + invalid("authority")}
         />
       </label>
 
       <fieldset className="grid gap-2">
-        <legend className={`${LABEL} mb-1.5`}>Вид проверки</legend>
+        <legend className={`${LABEL} mb-1.5`}>{t("kind")}</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {INSPECTION_VISIT_KINDS.map((value) => (
             <label
@@ -158,7 +172,7 @@ export function InspectorVisitForm({ token }: { token: string }) {
                 onChange={() => setKind(value)}
                 className="size-4 accent-[#1f3a8a]"
               />
-              {INSPECTION_VISIT_KIND_RU[value]}
+              {kindLabel(value, t)}
             </label>
           ))}
         </div>
@@ -166,8 +180,8 @@ export function InspectorVisitForm({ token }: { token: string }) {
           <input
             name="kindNote"
             maxLength={200}
-            placeholder="Например: профилактический визит"
-            aria-label="Какая проверка"
+            placeholder={t("kindNotePlaceholder")}
+            aria-label={t("kindNoteLabel")}
             className={INPUT + invalid("kindNote")}
           />
         ) : null}
@@ -175,17 +189,17 @@ export function InspectorVisitForm({ token }: { token: string }) {
 
       <div className="grid gap-4 sm:grid-cols-[1fr_12rem]">
         <label className="grid gap-1.5">
-          <span className={LABEL}>Номер решения (распоряжения) о проверке</span>
-          <input name="basisNumber" maxLength={80} placeholder="№ 12-р" className={INPUT + invalid("basisNumber")} />
+          <span className={LABEL}>{t("basisNumber")}</span>
+          <input name="basisNumber" maxLength={80} placeholder={t("basisNumberPlaceholder")} className={INPUT + invalid("basisNumber")} />
         </label>
         <label className="grid gap-1.5">
-          <span className={LABEL}>Дата решения</span>
+          <span className={LABEL}>{t("basisDate")}</span>
           <input name="basisDate" type="date" className={INPUT + invalid("basisDate")} />
         </label>
       </div>
 
       <div className="grid gap-2">
-        <span className={LABEL}>Скан или фото решения (распоряжения) — PDF, JPG или PNG до 10 МБ</span>
+        <span className={LABEL}>{t("scanLabel")}</span>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -195,9 +209,9 @@ export function InspectorVisitForm({ token }: { token: string }) {
               errorField === "file" ? "border-[#a13a32]" : "border-[#141821]"
             }`}
           >
-            {preparing ? "Готовим файл…" : "Сфотографировать или выбрать файл"}
+            {preparing ? t("preparingFile") : t("pickFile")}
           </button>
-          <span className="text-[12.5px] text-[#8a8f9c]">до {INSPECTION_VISIT_MAX_FILES} файлов, вместе до 25 МБ: каждый лист — отдельным фото</span>
+          <span className="text-[12.5px] text-[#8a8f9c]">{t("fileLimits", { max: INSPECTION_VISIT_MAX_FILES })}</span>
         </div>
         <input
           ref={fileInput}
@@ -215,13 +229,13 @@ export function InspectorVisitForm({ token }: { token: string }) {
             {files.map((file, index) => (
               <li key={`${file.name}-${index}`} className="flex items-center gap-3 py-2 text-[14px]">
                 <span className="min-w-0 flex-1 truncate">{file.name}</span>
-                <span className="shrink-0 tabular-nums text-[12.5px] text-[#8a8f9c]">{sizeLabel(file.size)}</span>
+                <span className="shrink-0 tabular-nums text-[12.5px] text-[#8a8f9c]">{sizeLabel(file.size, t)}</span>
                 <button
                   type="button"
                   onClick={() => setFiles(files.filter((_, i) => i !== index))}
                   className="shrink-0 text-[13px] text-[#1f3a8a] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f3a8a]/35"
                 >
-                  Убрать
+                  {t("remove")}
                 </button>
               </li>
             ))}
@@ -235,7 +249,7 @@ export function InspectorVisitForm({ token }: { token: string }) {
           disabled={state === "saving" || preparing}
           className="h-11 shrink-0 rounded-[4px] border border-[#141821] bg-[#141821] px-5 text-[14.5px] font-medium text-white transition-colors duration-150 hover:bg-[#2a3040] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f3a8a]/40"
         >
-          {state === "saving" ? "Вносим запись…" : "Внести запись в журнал посещений"}
+          {state === "saving" ? t("saving") : t("submit")}
         </button>
         <p
           className={`text-[12.5px] ${state === "error" ? "text-[#a13a32]" : state === "saved" ? "text-[#1f3a8a]" : "text-[#8a8f9c]"}`}
@@ -243,10 +257,10 @@ export function InspectorVisitForm({ token }: { token: string }) {
           data-visit-status={state}
         >
           {state === "saved"
-            ? "Запись внесена. Организация увидит её в своём журнале посещений вместе со сканом."
+            ? t("saved")
             : state === "error"
               ? error
-              : error ?? "Запись увидит руководство организации. Изменить журналы отсюда нельзя."}
+              : error ?? t("hint")}
         </p>
       </div>
     </form>

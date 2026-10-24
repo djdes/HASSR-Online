@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Gift, X } from "lucide-react";
 
 import { PromoPrice } from "@/components/pricing/promo-price";
@@ -49,6 +50,7 @@ export function BillingAnnouncement({
   onlyOnPaths?: string[];
   variant?: "site" | "mini";
 }) {
+  const t = useTranslations("billingUi.billingAnnouncement");
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
 
@@ -91,7 +93,7 @@ export function BillingAnnouncement({
           <span>
             {" "}
             {tailParts.before}
-            <PromoPrice price={tailParts.price} size="text" tone="inherit" suffix="/мес" />
+            <PromoPrice price={tailParts.price} size="text" tone="inherit" suffix={t("perMonth")} />
             {tailParts.after}
           </span>
         ) : tail ? (
@@ -101,7 +103,7 @@ export function BillingAnnouncement({
           <>
             {" "}
             <Link href={href} className="font-medium underline underline-offset-2">
-              Подробнее
+              {t("details")}
             </Link>
           </>
         ) : null}
@@ -109,8 +111,8 @@ export function BillingAnnouncement({
       <button
         type="button"
         onClick={close}
-        aria-label="Скрыть до завтра"
-        title="Скрыть до завтра"
+        aria-label={t("hideUntilTomorrow")}
+        title={t("hideUntilTomorrow")}
         className="-mr-1 -mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg opacity-70 transition-opacity duration-150 hover:opacity-100"
       >
         <X className="size-4" />

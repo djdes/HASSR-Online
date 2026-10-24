@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +22,8 @@ type Props = {
 };
 
 export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
+  const t = useTranslations("settingsUi.userAccessEditor");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [saving, setSaving] = useState(false);
@@ -92,14 +95,12 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? "Не удалось сохранить");
+        throw new Error(body?.error ?? t("saveFailed"));
       }
-      toast.success("Доступ обновлён");
+      toast.success(t("updated"));
       startTransition(() => router.refresh());
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Ошибка при сохранении"
-      );
+      toast.error(error instanceof Error ? error.message : t("saveError"));
     } finally {
       setSaving(false);
     }
@@ -114,7 +115,7 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
           className="h-11 rounded-2xl border-[#eef0fb] px-4 text-[15px] text-[#5464ff]"
           onClick={() => toggleAll(true)}
         >
-          Разрешить все
+          {t("allowAll")}
         </Button>
         <Button
           type="button"
@@ -122,7 +123,7 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
           className="h-11 rounded-2xl border-[#eef0fb] px-4 text-[15px] text-[#5464ff]"
           onClick={() => toggleAll(false)}
         >
-          Запретить все
+          {t("denyAll")}
         </Button>
       </div>
 
@@ -135,16 +136,16 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
                   безымянные галочки. Фон непрозрачный, иначе под ним
                   просвечивают проезжающие ячейки. */}
               <th className="sticky left-0 z-10 bg-[#f6f7fb] px-6 py-3 text-left font-medium">
-                Журнал
+                {t("colJournal")}
               </th>
               <th className="w-[120px] py-3 text-center font-medium">
-                Просмотр
+                {t("colView")}
               </th>
               <th className="w-[120px] py-3 text-center font-medium">
-                Заполнение
+                {t("colFill")}
               </th>
               <th className="w-[120px] py-3 text-center font-medium">
-                Закрытие
+                {t("colClose")}
               </th>
             </tr>
           </thead>
@@ -191,7 +192,7 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
           disabled={saving}
           onClick={handleSave}
         >
-          {saving ? "Сохранение..." : "Сохранить"}
+          {saving ? tc("saving") : tc("save")}
         </Button>
       </div>
     </div>

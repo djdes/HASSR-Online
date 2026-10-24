@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
  * только hard reload, чтобы layout перечитал свежий JWT.
  */
 export function ImpersonationBanner({ organizationName }: Props) {
+  const t = useTranslations("dashboardUi.impersonationBanner");
   const [busy, setBusy] = useState(false);
 
   async function stop() {
@@ -21,13 +23,13 @@ export function ImpersonationBanner({ organizationName }: Props) {
     try {
       const res = await fetch("/api/root/impersonate", { method: "DELETE" });
       if (!res.ok) {
-        throw new Error("Не удалось выйти из просмотра");
+        throw new Error(t("stopFailed"));
       }
-      toast.success("Выход из организации");
+      toast.success(t("stopped"));
       window.location.href = "/root";
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось выйти"
+        error instanceof Error ? error.message : t("exitFailed")
       );
       setBusy(false);
     }
@@ -36,7 +38,7 @@ export function ImpersonationBanner({ organizationName }: Props) {
   return (
     <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-2 border-b border-[#ff3b30] bg-[#fff4f2] px-4 py-3 text-[13px] text-[#d2453d] sm:gap-4 sm:px-6 sm:text-[14px]">
       <div className="min-w-0 flex-1 font-medium">
-        ROOT · Просмотр организации:{" "}
+        {t("viewing")}{" "}
         <span className="font-semibold">{organizationName}</span>
       </div>
       <button
@@ -45,7 +47,7 @@ export function ImpersonationBanner({ organizationName }: Props) {
         disabled={busy}
         className="inline-flex h-9 shrink-0 items-center rounded-xl bg-[#ff3b30] px-4 text-white hover:bg-[#e0342a] disabled:opacity-60"
       >
-        {busy ? "..." : "Выйти"}
+        {busy ? "..." : t("exit")}
       </button>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LinkPendingOverlay } from "@/components/ui/link-pending";
 
 /**
@@ -19,7 +20,7 @@ export function QuickStartCardCompact({
   completed: number;
   total: number;
 }) {
-
+  const t = useTranslations("dashboardUi.quickStartCardClient");
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
@@ -59,7 +60,7 @@ export function QuickStartCardCompact({
                 обрезка превращала его в «Начальная настр…», а из огрызка
                 непонятно, что за настройка. */}
             <h2 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024] sm:truncate sm:whitespace-nowrap sm:text-[16px]">
-              Начальная настройка
+              {t("title")}
             </h2>
           </div>
 
@@ -106,7 +107,7 @@ export function QuickStartCardCompact({
                 «Завершить →» помещаются в одну строку только если
                 кнопка сжимается по содержимому. */}
             <span className="inline-flex h-10 w-[180px] items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors group-hover:bg-[#4a5bf0] max-sm:w-auto">
-              Завершить
+              {t("finish")}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </span>
           </div>

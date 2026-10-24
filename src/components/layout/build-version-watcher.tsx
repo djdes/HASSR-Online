@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import {
@@ -42,6 +43,7 @@ import {
  */
 export function BuildVersionWatcher() {
   const pathname = usePathname();
+  const t = useTranslations("layoutUi.buildVersionWatcher");
   const inMiniApp = pathname === "/mini" || pathname.startsWith("/mini/");
   // На публичных QR-формах опрос сборки не нужен: форму открывают на минуту.
   const inFillRoute = /^\/(journal-fill|equipment-fill|room-fill|task-fill)(\/|$)/.test(pathname);
@@ -76,11 +78,11 @@ export function BuildVersionWatcher() {
       }
       if (action === "notify") {
         notified.current = true;
-        toast.message("Сайт обновился", {
-          description: "Обновите страницу, чтобы увидеть последние изменения.",
+        toast.message(t("title"), {
+          description: t("description"),
           duration: Infinity,
           action: {
-            label: "Обновить",
+            label: t("reload"),
             onClick: () => void reloadOntoBuild(serverBuildId),
           },
         });
@@ -88,7 +90,7 @@ export function BuildVersionWatcher() {
     } finally {
       checking.current = false;
     }
-  }, []);
+  }, [t]);
 
   // Опрос и возврат во вкладку.
   useEffect(() => {

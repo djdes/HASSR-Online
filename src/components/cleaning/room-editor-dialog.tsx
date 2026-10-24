@@ -17,6 +17,7 @@ import { isManagementRole } from "@/lib/user-roles";
  * автоматически синкает JournalChecklistItem (stage 6 hook).
  */
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -43,14 +44,12 @@ import { Switch } from "@/components/ui/switch";
 import { QrFillPreview } from "@/components/qr/qr-fill-preview";
 import { ChevronDown } from "lucide-react";
 import { roomKindOptions } from "@/lib/room-kinds";
+import type { Locale } from "@/i18n/locales";
 import {
   DEFAULT_CLIMATE_HUMIDITY,
   DEFAULT_CLIMATE_TEMPERATURE,
   type ClimateRoomNorms,
 } from "@/lib/climate-document";
-
-// Виды — общий список (`room-kinds.ts`); экран пока только на русском.
-const KIND_OPTIONS: Array<{ value: string; label: string }> = roomKindOptions("ru");
 
 export type RoomEditorInitial = {
   id: string;
@@ -133,30 +132,6 @@ type Props = {
   roomsPerVerifier?: Map<string, number>;
 };
 
-/**
- * Примеры-чипы под списком шагов — состав как на эталоне
- * (cleaning-05-add-room-dialog.png). Клик добавляет предмет в список.
- */
-const CURRENT_SCOPE_EXAMPLES = [
-  "Производственные столы",
-  "Холодильное/морозильное оборудование",
-  "Производственный инвентарь",
-  "Пол",
-  "Моечные ванны",
-  "Полки",
-  "Измельчители (мясорубки, блендеры и т.д.)",
-  "Двери",
-];
-
-const GENERAL_SCOPE_EXAMPLES = [
-  "Стены",
-  "Стоки",
-  "Вентиляционные зонты",
-  "Стеллажи",
-  "Окна",
-  "Радиаторы отопления",
-];
-
 export function RoomEditorDialog({
   open,
   onOpenChange,
@@ -167,6 +142,50 @@ export function RoomEditorDialog({
   roomsPerVerifier,
   focus = "cleaning",
 }: Props) {
+  const t = useTranslations("cleaningUi.roomEditorDialog");
+  const locale = useLocale() as Locale;
+  // Виды — общий список (`room-kinds.ts`).
+  const KIND_OPTIONS: Array<{ value: string; label: string }> = roomKindOptions(locale);
+  /**
+   * Примеры-чипы под списком шагов — состав как на эталоне
+   * (cleaning-05-add-room-dialog.png). Клик добавляет предмет в список.
+   */
+  const CURRENT_SCOPE_EXAMPLES = [
+    t("currentExample1"),
+    t("currentExample2"),
+    t("currentExample3"),
+    t("currentExample4"),
+    t("currentExample5"),
+    t("currentExample6"),
+    t("currentExample7"),
+    t("currentExample8"),
+  ];
+  const GENERAL_SCOPE_EXAMPLES = [
+    t("generalExample1"),
+    t("generalExample2"),
+    t("generalExample3"),
+    t("generalExample4"),
+    t("generalExample5"),
+    t("generalExample6"),
+  ];
+  const describeMetric = (enabled: boolean, min: string, max: string, unit: string): string | null => {
+    if (!enabled) return null;
+    const a = min.trim();
+    const b = max.trim();
+    if (a && b) return t("rangeFromTo", { min: a, max: b, unit });
+    if (a) return t("rangeFrom", { min: a, unit });
+    if (b) return t("rangeTo", { max: b, unit });
+    return t("rangeNone");
+  };
+  const describeClimate = (f: ClimateNormsForm): string => {
+    const parts = [
+      describeMetric(f.temperatureEnabled, f.temperatureMin, f.temperatureMax, "°C"),
+      describeMetric(f.humidityEnabled, f.humidityMin, f.humidityMax, "%"),
+    ];
+    const temperature = parts[0] ? t("describeTemperature", { value: parts[0] }) : null;
+    const humidity = parts[1] ? t("describeHumidity", { value: parts[1] }) : null;
+    return [temperature, humidity].filter(Boolean).join(" · ") || t("normsNone");
+  };
   const [name, setName] = useState(initial?.name ?? "");
   const [cleanerUserIds, setCleanerUserIds] = useState<string[]>(
     initial?.cleanerUserIds ?? [],
@@ -245,12 +264,12 @@ export function RoomEditorDialog({
   async function save() {
     if (!initial) return;
     if (!name.trim()) {
-      toast.error("Название не может быть пустым");
+      toast.error(t("nameEmpty"));
       return;
     }
     const climateNorms = climateEnabled ? fromClimateForm(climate) : null;
     if (climateNorms && !climateNorms.temperature.enabled && !climateNorms.humidity.enabled) {
-      toast.error("Нужно оставить включённой хотя бы одну норму климата — или выключить контроль климата.");
+      toast.error(t("climateNeedOne"));
       return;
     }
     for (const metric of climateNorms ? [climateNorms.temperature, climateNorms.humidity] : []) {
@@ -260,7 +279,7 @@ export function RoomEditorDialog({
         metric.max !== null &&
         metric.min > metric.max
       ) {
-        toast.error("Минимум нормы не может быть больше максимума.");
+        toast.error(t("minGreaterThanMax"));
         return;
       }
     }
@@ -302,7 +321,7 @@ export function RoomEditorDialog({
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
-      toast.success("Помещение сохранено");
+      toast.success(t("saved"));
       onOpenChange(false);
       const sameList = (a: string[], b: string[]) =>
         a.length === b.length && a.every((v, i) => v === b[i]);
@@ -332,7 +351,7 @@ export function RoomEditorDialog({
         climateNorms,
       });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось сохранить");
+      toast.error(e instanceof Error ? e.message : t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -343,7 +362,7 @@ export function RoomEditorDialog({
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
         <DialogHeader className="border-b px-6 py-5">
           <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Редактирование помещения
+            {t("title")}
           </DialogTitle>
         </DialogHeader>
         {initial ? (
@@ -351,18 +370,18 @@ export function RoomEditorDialog({
             <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">
-                  Название помещения
+                  {t("nameLabel")}
                 </Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Например: Горячий цех"
+                  placeholder={t("namePlaceholder")}
                   className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[15px]"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Тип</Label>
+                <Label className="text-[13px] font-medium text-[#3c4053]">{t("typeLabel")}</Label>
                 <select
                   value={kind}
                   onChange={(e) => setKind(e.target.value)}
@@ -380,16 +399,14 @@ export function RoomEditorDialog({
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <Label className="text-[13px] font-semibold text-[#0b1024]">
-                      Кто убирает
+                      {t("cleanersTitle")}
                     </Label>
                     <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                      Задачи на это помещение приходят этим сотрудникам. Несколько —
-                      кто первый закроет. Изменения вступят в силу с завтрашних задач
-                      или после «Отправить задачи».
+                      {t("cleanersHint")}
                     </p>
                   </div>
                   <span className="shrink-0 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-medium text-[#3848c7] tabular-nums">
-                    {cleanerUserIds.length} чел.
+                    {t("peopleCount", { count: cleanerUserIds.length })}
                   </span>
                 </div>
                 <MultiUserPicker
@@ -398,7 +415,7 @@ export function RoomEditorDialog({
                   onChange={setCleanerUserIds}
                   users={users}
                   roomsPerUser={roomsPerCleaner}
-                  emptyHint="Никто не назначен — помещение раздаётся из общего пула журнала уборки (гонка или по очереди)."
+                  emptyHint={t("cleanersEmpty")}
                   disabled={saving}
                 />
               </div>
@@ -407,16 +424,14 @@ export function RoomEditorDialog({
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <Label className="text-[13px] font-semibold text-[#0b1024]">
-                      Кто проверяет (необязательно)
+                      {t("verifiersTitle")}
                     </Label>
                     <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                      Первый в списке получит задачу на проверку в TasksFlow, остальные —
-                      вечернюю сводку по этому помещению. Пусто — проверяет контролёр
-                      журнала.
+                      {t("verifiersHint")}
                     </p>
                   </div>
                   <span className="shrink-0 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-medium text-[#3848c7] tabular-nums">
-                    {verifierUserIds.length} чел.
+                    {t("peopleCount", { count: verifierUserIds.length })}
                   </span>
                 </div>
                 <MultiUserPicker
@@ -425,8 +440,8 @@ export function RoomEditorDialog({
                   onChange={setVerifierUserIds}
                   users={users}
                   roomsPerUser={roomsPerVerifier}
-                  emptyHint="Свой проверяющий не назначен — результат принимает контролёр журнала."
-                  primaryBadge="основной"
+                  emptyHint={t("verifiersEmpty")}
+                  primaryBadge={t("primaryBadge")}
                   disabled={saving}
                 />
               </div>
@@ -436,7 +451,7 @@ export function RoomEditorDialog({
                   <FillerPicker
                     value={fillerUserIds}
                     onChange={setFillerUserIds}
-                    objectNoun="помещение"
+                    objectNoun={t("fillerNoun")}
                     options={users.map((user) => ({
                       id: user.id,
                       name: user.name,
@@ -458,12 +473,12 @@ export function RoomEditorDialog({
                 >
                   <div>
                     <div className="text-[13px] font-semibold text-[#0b1024]">
-                      Климат — нормы температуры и влажности
+                      {t("climateTitle")}
                     </div>
                     <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
                       {climateEnabled
                         ? describeClimate(climate)
-                        : "Помещение не контролируется в журнале температуры и влажности."}
+                        : t("climateNotControlled")}
                     </p>
                   </div>
                   <ChevronDown
@@ -483,12 +498,12 @@ export function RoomEditorDialog({
                         }}
                         className="data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d6d9ee]"
                       />
-                      Контролировать климат в этом помещении
+                      {t("climateToggle")}
                     </label>
                     {climateEnabled ? (
                       <div className="space-y-3">
                         <ClimateMetricRow
-                          label="Температура (T)"
+                          label={t("temperatureLabel")}
                           unit="°C"
                           enabled={climate.temperatureEnabled}
                           min={climate.temperatureMin}
@@ -503,7 +518,7 @@ export function RoomEditorDialog({
                           }
                         />
                         <ClimateMetricRow
-                          label="Влажность воздуха (ВВ)"
+                          label={t("humidityLabel")}
                           unit="%"
                           enabled={climate.humidityEnabled}
                           min={climate.humidityMin}
@@ -518,8 +533,7 @@ export function RoomEditorDialog({
                           }
                         />
                         <p className="text-[11.5px] leading-[1.5] text-[#6f7282]">
-                          Нормы общие для всех документов климата, где есть это помещение.
-                          Выход за норму подсветится в журнале и в форме TasksFlow.
+                          {t("climateNormsNote")}
                         </p>
                       </div>
                     ) : null}
@@ -529,7 +543,7 @@ export function RoomEditorDialog({
                       <QrFillPreview
                         kind="room"
                         id={climateEnabled ? initial.id : null}
-                        emptyHint="Включите контроль климата — появится QR-код, по которому сотрудник вносит температуру и влажность этого помещения с телефона."
+                        emptyHint={t("qrEmptyHint")}
                         className="bg-white"
                       />
                     ) : null}
@@ -546,7 +560,7 @@ export function RoomEditorDialog({
                 className="flex w-full items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-white px-4 py-2.5 text-left transition-colors hover:bg-[#f5f6ff]"
               >
                 <span className="text-[13px] font-semibold text-[#0b1024]">
-                  Уборка — средства, фото, состав текущей и генеральной
+                  {t("cleaningTitle")}
                 </span>
                 <ChevronDown
                   className={`size-4 shrink-0 text-[#6f7282] transition-transform ${cleaningOpen ? "rotate-180" : ""}`}
@@ -556,12 +570,12 @@ export function RoomEditorDialog({
               <div className={cleaningOpen ? "space-y-5" : "hidden"}>
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">
-                  Моющие и дезинфицирующие средства
+                  {t("detergentLabel")}
                 </Label>
                 <Textarea
                   value={detergent}
                   onChange={(e) => setDetergent(e.target.value)}
-                  placeholder="Например: Хлоргексидин 0,05% + Sanit"
+                  placeholder={t("detergentPlaceholder")}
                   className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
                   rows={3}
                 />
@@ -576,12 +590,10 @@ export function RoomEditorDialog({
                 />
                 <div className="flex-1">
                   <div className="text-[14px] font-semibold text-[#0b1024]">
-                    📸 Требовать фото на каждом шаге
+                    {t("requirePhotoTitle")}
                   </div>
                   <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                    Когда включено, уборщица не сможет нажать «Сделал» в TasksFlow
-                    без загрузки фотографии. Это превращает заполнение из «галочки»
-                    в реальный evidence-trail для проверок РПН.
+                    {t("requirePhotoHint")}
                   </p>
                 </div>
               </label>
@@ -590,14 +602,14 @@ export function RoomEditorDialog({
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <Label className="text-[13px] font-semibold text-[#0b1024]">
-                      Предмет текущей уборки
+                      {t("currentScopeTitle")}
                     </Label>
                     <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                      Пошаговый чек-лист — каждый шаг станет подзадачей в TasksFlow.
+                      {t("currentScopeHint")}
                     </p>
                   </div>
                   <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-medium text-[#3848c7] tabular-nums">
-                    {currentScope.filter((s) => s.label.trim()).length} шаг.
+                    {t("stepsCount", { count: currentScope.filter((s) => s.label.trim()).length })}
                   </span>
                 </div>
                 <ScopeListEditor
@@ -606,14 +618,14 @@ export function RoomEditorDialog({
                   onChange={setCurrentScope}
                   roomRequirePhoto={requirePhoto}
                   examples={CURRENT_SCOPE_EXAMPLES}
-                  placeholder="Например: Протереть рабочие поверхности"
-                  addLabel="Добавить шаг текущей уборки"
-                  emptyHint="Шагов текущей уборки пока нет — добавьте первый шаг ниже."
+                  placeholder={t("currentScopePlaceholder")}
+                  addLabel={t("addCurrentStep")}
+                  emptyHint={t("currentStepsEmpty")}
                 />
                 <div className="space-y-2 border-t border-[#ececf4] pt-3">
                   <div className="flex items-center justify-between gap-2">
                     <Label className="text-[12px] font-medium text-[#3c4053]">
-                      Когда проводить
+                      {t("whenLabel")}
                     </Label>
                     <div className="inline-flex rounded-xl border border-[#dcdfed] bg-white p-0.5">
                       <button
@@ -625,7 +637,7 @@ export function RoomEditorDialog({
                             : "text-[#3c4053] hover:bg-[#f5f6ff]"
                         }`}
                       >
-                        Каждую неделю
+                        {t("weekly")}
                       </button>
                       <button
                         type="button"
@@ -636,14 +648,14 @@ export function RoomEditorDialog({
                             : "text-[#3c4053] hover:bg-[#f5f6ff]"
                         }`}
                       >
-                        По датам месяца
+                        {t("monthly")}
                       </button>
                     </div>
                   </div>
                   {currentScheduleType === "weekly" ? (
                     <>
                       <p className="text-[11px] leading-[1.45] text-[#6f7282]">
-                        Уборка повторяется каждую неделю в выбранные дни.
+                        {t("currentWeeklyHint")}
                       </p>
                       <WeekdayMaskPicker
                         value={currentDays}
@@ -653,8 +665,7 @@ export function RoomEditorDialog({
                   ) : (
                     <>
                       <p className="text-[11px] leading-[1.45] text-[#6f7282]">
-                        Выберите конкретные числа месяца. Подходит для нерегулярного
-                        графика — например «1 и 15» или «последний день месяца».
+                        {t("currentMonthlyHint")}
                       </p>
                       <MonthDaysPicker
                         value={currentMonthDays}
@@ -669,14 +680,14 @@ export function RoomEditorDialog({
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <Label className="text-[13px] font-semibold text-[#0b1024]">
-                      Предмет генеральной уборки (в дополнение к текущей)
+                      {t("generalScopeTitle")}
                     </Label>
                     <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                      Подробный список — что моется/дезинфицируется в день генеральной.
+                      {t("generalScopeHint")}
                     </p>
                   </div>
                   <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-medium text-[#3848c7] tabular-nums">
-                    {generalScope.filter((s) => s.label.trim()).length} шаг.
+                    {t("stepsCount", { count: generalScope.filter((s) => s.label.trim()).length })}
                   </span>
                 </div>
                 <ScopeListEditor
@@ -685,14 +696,14 @@ export function RoomEditorDialog({
                   onChange={setGeneralScope}
                   roomRequirePhoto={requirePhoto}
                   examples={GENERAL_SCOPE_EXAMPLES}
-                  placeholder="Например: Демонтировать съёмные части и промыть"
-                  addLabel="Добавить шаг генеральной уборки"
-                  emptyHint="Шагов генеральной уборки пока нет — добавьте первый шаг ниже."
+                  placeholder={t("generalScopePlaceholder")}
+                  addLabel={t("addGeneralStep")}
+                  emptyHint={t("generalStepsEmpty")}
                 />
                 <div className="space-y-2 border-t border-[#ececf4] pt-3">
                   <div className="flex items-center justify-between gap-2">
                     <Label className="text-[12px] font-medium text-[#3c4053]">
-                      Когда проводить
+                      {t("whenLabel")}
                     </Label>
                     <div className="inline-flex rounded-xl border border-[#dcdfed] bg-white p-0.5">
                       <button
@@ -704,7 +715,7 @@ export function RoomEditorDialog({
                             : "text-[#3c4053] hover:bg-[#f5f6ff]"
                         }`}
                       >
-                        Каждую неделю
+                        {t("weekly")}
                       </button>
                       <button
                         type="button"
@@ -715,14 +726,14 @@ export function RoomEditorDialog({
                             : "text-[#3c4053] hover:bg-[#f5f6ff]"
                         }`}
                       >
-                        По датам месяца
+                        {t("monthly")}
                       </button>
                     </div>
                   </div>
                   {generalScheduleType === "weekly" ? (
                     <>
                       <p className="text-[11px] leading-[1.45] text-[#6f7282]">
-                        Обычно — раз в неделю. Например, только Сб или только Пн.
+                        {t("generalWeeklyHint")}
                       </p>
                       <WeekdayMaskPicker
                         value={generalDays}
@@ -732,8 +743,7 @@ export function RoomEditorDialog({
                   ) : (
                     <>
                       <p className="text-[11px] leading-[1.45] text-[#6f7282]">
-                        Удобно для генералки «раз в месяц последнего числа» или
-                        конкретных дат — выбери число и/или «Последний день месяца».
+                        {t("generalMonthlyHint")}
                       </p>
                       <MonthDaysPicker
                         value={generalMonthDays}
@@ -753,7 +763,7 @@ export function RoomEditorDialog({
                 className="h-11 w-full rounded-2xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
                 onClick={() => onOpenChange(false)}
               >
-                Отмена
+                {t("cancel")}
               </Button>
               <Button
                 type="button"
@@ -761,7 +771,7 @@ export function RoomEditorDialog({
                 className="h-11 w-full rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
                 onClick={save}
               >
-                {saving ? "Сохранение…" : "Сохранить"}
+                {saving ? t("savingNow") : t("save")}
               </Button>
             </div>
           </>
@@ -834,26 +844,6 @@ function fromClimateForm(f: ClimateNormsForm): ClimateRoomNorms {
   };
 }
 
-function describeMetric(enabled: boolean, min: string, max: string, unit: string): string | null {
-  if (!enabled) return null;
-  const a = min.trim();
-  const b = max.trim();
-  if (a && b) return `${a}…${b} ${unit}`;
-  if (a) return `от ${a} ${unit}`;
-  if (b) return `до ${b} ${unit}`;
-  return "без диапазона";
-}
-
-function describeClimate(f: ClimateNormsForm): string {
-  const parts = [
-    describeMetric(f.temperatureEnabled, f.temperatureMin, f.temperatureMax, "°C"),
-    describeMetric(f.humidityEnabled, f.humidityMin, f.humidityMax, "%"),
-  ];
-  const t = parts[0] ? `t° ${parts[0]}` : null;
-  const h = parts[1] ? `влажность ${parts[1]}` : null;
-  return [t, h].filter(Boolean).join(" · ") || "нормы не выбраны";
-}
-
 function ClimateMetricRow(props: {
   label: string;
   unit: string;
@@ -862,6 +852,7 @@ function ClimateMetricRow(props: {
   max: string;
   onChange: (next: { enabled: boolean; min: string; max: string }) => void;
 }) {
+  const t = useTranslations("cleaningUi.roomEditorDialog");
   const { enabled, min, max } = props;
   return (
     <div className="flex flex-wrap items-center gap-2.5">
@@ -876,7 +867,7 @@ function ClimateMetricRow(props: {
         value={min}
         disabled={!enabled}
         onChange={(e) => props.onChange({ enabled, min: e.target.value, max })}
-        aria-label={`${props.label}: минимум`}
+        aria-label={t("minAria", { label: props.label })}
         className="h-9 w-[84px] rounded-xl border-[#dcdfed] px-3 text-[13.5px]"
       />
       <span className="text-[13px] text-[#6f7282]">{props.unit}</span>
@@ -886,7 +877,7 @@ function ClimateMetricRow(props: {
         value={max}
         disabled={!enabled}
         onChange={(e) => props.onChange({ enabled, min, max: e.target.value })}
-        aria-label={`${props.label}: максимум`}
+        aria-label={t("maxAria", { label: props.label })}
         className="h-9 w-[84px] rounded-xl border-[#dcdfed] px-3 text-[13.5px]"
       />
       <span className="text-[13px] text-[#6f7282]">{props.unit}</span>

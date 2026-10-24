@@ -4,6 +4,7 @@ import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   AlertCircle,
   Check,
@@ -186,6 +187,7 @@ const MODE_TONE: Record<string, string> = {
  * составом из окна «Сторонняя бракеражная комиссия», а не слотами.
  */
 function CommissionSlotRow({ code }: { code: string }) {
+  const t = useTranslations("settingsUi.journalResponsiblesClient");
   const [open, setOpen] = useState(false);
   const [names, setNames] = useState<string[] | null>(null);
   const load = useCallback(() => {
@@ -201,18 +203,18 @@ function CommissionSlotRow({ code }: { code: string }) {
     <div className="mt-3">
       <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#116b2a]">
         <span className="inline-block size-1.5 rounded-full bg-[#16a34a]" />
-        Комиссия — подписывает бракераж
+        {t("commissionTitle")}
       </div>
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ececf4] bg-white px-3 py-2 text-[13px]">
         <span className="min-w-0 flex-1 text-[#3c4053]">
-          {names === null ? "…" : names.length > 0 ? names.join(", ") : "Не задана — строки закрываются без подписи комиссии"}
+          {names === null ? "…" : names.length > 0 ? names.join(", ") : t("commissionNotSet")}
         </span>
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="inline-flex h-8 items-center rounded-lg border border-[#dcdfed] px-3 text-[12.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          Изменить
+          {t("change")}
         </button>
       </div>
       <CommissionDialog code={code} open={open} onClose={() => setOpen(false)} onSaved={() => load()} />
@@ -245,20 +247,31 @@ type UserPickerProps = {
   emptyHint?: string;
 };
 
-const TIER_LABELS: Record<number, string> = {
-  3: "админ",
-  2: "менеджер",
-  1: "шеф-повар",
-  0: "сотрудник",
-};
+type ResponsiblesTranslator = ReturnType<
+  typeof useTranslations<"settingsUi.journalResponsiblesClient">
+>;
+
+function tierLabel(tier: number, t: ResponsiblesTranslator): string {
+  switch (tier) {
+    case 3:
+      return t("tierAdmin");
+    case 2:
+      return t("tierManager");
+    case 1:
+      return t("tierHeadChef");
+    default:
+      return t("tierEmployee");
+  }
+}
 
 function UserPicker({
   value,
   groups,
   onChange,
-  placeholder = "— не выбран —",
+  placeholder,
   emptyHint,
 }: UserPickerProps) {
+  const t = useTranslations("settingsUi.journalResponsiblesClient");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -317,7 +330,7 @@ function UserPicker({
     ? `${selected.user.name}${
         selected.positionName ? ` · ${selected.positionName}` : ""
       }`
-    : placeholder;
+    : (placeholder ?? t("pickerNone"));
 
   return (
     <div className="relative" ref={wrapperRef}>
@@ -364,7 +377,7 @@ function UserPicker({
 
       {totalCount === 0 ? (
         <div className="mt-1 text-[11px] text-[#a13a32]">
-          {emptyHint ?? "Нет подходящих сотрудников. Заведите/назначьте."}
+          {emptyHint ?? t("pickerEmptyHint")}
         </div>
       ) : null}
 
@@ -378,7 +391,7 @@ function UserPicker({
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Поиск сотрудника или должности…"
+                placeholder={t("pickerSearch")}
                 className="h-8 w-full rounded-lg border border-[#dcdfed] bg-white pl-8 pr-2 text-[12px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-2 focus:ring-[#5566f6]/15"
               />
             </div>
@@ -392,13 +405,13 @@ function UserPicker({
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-[#a13a32] transition-colors hover:bg-[#fff4f2]"
               >
                 <Minus className="size-3.5" />
-                Убрать выбор
+                {t("pickerClear")}
               </button>
             ) : null}
 
             {recommended.length > 0 ? (
               <UserPickerGroup
-                title="Рекомендуем"
+                title={t("groupRecommended")}
                 tone="recommended"
                 items={recommended}
                 selectedId={value}
@@ -407,7 +420,7 @@ function UserPicker({
             ) : null}
             {ok.length > 0 ? (
               <UserPickerGroup
-                title="Можно"
+                title={t("groupOk")}
                 tone="ok"
                 items={ok}
                 selectedId={value}
@@ -416,7 +429,7 @@ function UserPicker({
             ) : null}
             {notRecommended.length > 0 ? (
               <UserPickerGroup
-                title="Не рекомендуем"
+                title={t("groupNotRecommended")}
                 tone="not-recommended"
                 items={notRecommended}
                 selectedId={value}
@@ -428,7 +441,7 @@ function UserPicker({
             ok.length === 0 &&
             notRecommended.length === 0 ? (
               <div className="px-3 py-6 text-center text-[12px] text-[#9b9fb3]">
-                Никого не найдено под «{query}».
+                {t("pickerNobody", { query })}
               </div>
             ) : null}
           </div>
@@ -451,6 +464,7 @@ function UserPickerGroup({
   selectedId: string | null;
   onPick: (uid: string) => void;
 }) {
+  const t = useTranslations("settingsUi.journalResponsiblesClient");
   const headerTone =
     tone === "recommended"
       ? "bg-emerald-50/60 text-emerald-700"
@@ -500,28 +514,28 @@ function UserPickerGroup({
                 {c.tier >= 3 ? (
                   <Crown
                     className="ml-1 inline size-3 -translate-y-px text-[#a16d32]"
-                    aria-label="админ"
+                    aria-label={t("tierAdmin")}
                   />
                 ) : null}
               </span>
               <span className="block truncate text-[11px] text-[#9b9fb3]">
-                {c.positionName ?? "Без должности"}
-                {c.tier > 0 ? ` · ${TIER_LABELS[c.tier]}` : ""}
+                {c.positionName ?? t("noPosition")}
+                {c.tier > 0 ? ` · ${tierLabel(c.tier, t)}` : ""}
                 {c.reason ? ` · ${c.reason}` : ""}
               </span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5">
               {c.alreadyInOtherSlot ? (
                 <span
-                  title="Этот сотрудник уже назначен в другом слоте этого журнала"
+                  title={t("alreadyInOtherSlotTitle")}
                   className="rounded-full bg-[#eef1ff] px-1.5 py-0.5 text-[10px] font-medium text-[#3848c7]"
                 >
-                  уже в др. слоте
+                  {t("alreadyInOtherSlot")}
                 </span>
               ) : null}
               {c.monthlyLoad > 0 ? (
                 <span
-                  title="Текущая месячная нагрузка по всем журналам"
+                  title={t("monthlyLoadTitle")}
                   className="rounded-full bg-[#fafbff] px-1.5 py-0.5 text-[10px] tabular-nums text-[#6f7282]"
                 >
                   {Math.round(c.monthlyLoad)}
@@ -564,6 +578,7 @@ function SlotPicker({
   candidateGroupsForSlot,
   onSetUser,
 }: SlotPickerProps) {
+  const t = useTranslations("settingsUi.journalResponsiblesClient");
   const userId = slotMap[slot.id] ?? null;
   const groups = candidateGroupsForSlot(journalCode, slot.id);
   const totalCount =
@@ -585,7 +600,7 @@ function SlotPicker({
         positionName: pos?.name ?? null,
         monthlyLoad: 0,
         group: "not-recommended",
-        reason: "вне фильтра",
+        reason: t("reasonOutOfFilter"),
         tier: 0,
       });
     }
@@ -599,8 +614,8 @@ function SlotPicker({
           </span>
           {slot.label}
           {slot.primary ? (
-            <span className="rounded-full bg-[#fff8eb] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#a13a32]" title="Этот сотрудник попадает в шапку документа">
-              главный
+            <span className="rounded-full bg-[#fff8eb] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#a13a32]" title={t("primaryTitle")}>
+              {t("primaryBadge")}
             </span>
           ) : null}
         </div>
@@ -616,11 +631,11 @@ function SlotPicker({
           groups={groups}
           onChange={(uid) => onSetUser(journalCode, slot.id, uid)}
           placeholder={
-            totalCount === 0 ? "Нет подходящих" : "Выбрать сотрудника"
+            totalCount === 0 ? t("slotNoneSuitable") : t("slotChooseEmployee")
           }
           emptyHint={
             totalCount === 0
-              ? "Нет сотрудников. Заведите в /settings/users."
+              ? t("slotNoEmployeesHint")
               : undefined
           }
         />
@@ -635,6 +650,8 @@ export function JournalResponsiblesClient({
   journals,
   difficultyOverride,
 }: Props) {
+  const t = useTranslations("settingsUi.journalResponsiblesClient");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const fixCode = searchParams?.get("fix") ?? null;
@@ -668,11 +685,11 @@ export function JournalResponsiblesClient({
       });
     } else {
       // Карточки ещё нет (рендер не завершён) — повторим через 200ms.
-      const t = setTimeout(() => {
+      const timer = setTimeout(() => {
         const n = cardRefs.current.get(fixCode);
         if (n) n.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 200);
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
   }, [fixCode, fixDismissed]);
 
@@ -932,7 +949,7 @@ export function JournalResponsiblesClient({
 
     for (const u of users) {
 
-      const t = userTier(u);
+      const tier = userTier(u);
       const kw = matchesKeywords(u);
       const pset = inPositionSet(u);
 
@@ -941,25 +958,25 @@ export function JournalResponsiblesClient({
         // Tier 1 (head_chef) — ok.
         // Tier 0 (cook/waiter) — not-recommended.
         // Keywords match повышает на одну ступень.
-        if (t >= 2) {
+        if (tier >= 2) {
           recommended.push(
             makeCandidate(
               u,
               "recommended",
-              t === 3 ? "админ — самый главный" : "руководитель",
+              tier === 3 ? t("reasonAdmin") : t("reasonManager"),
             ),
           );
-        } else if (t === 1 || kw) {
+        } else if (tier === 1 || kw) {
           ok.push(
             makeCandidate(
               u,
               "ok",
-              kw ? "matches keywords" : "шеф-повар",
+              kw ? t("reasonMatchesKeywords") : t("reasonHeadChef"),
             ),
           );
         } else {
           notRecommended.push(
-            makeCandidate(u, "not-recommended", "не управленческая роль"),
+            makeCandidate(u, "not-recommended", t("reasonNotManagerial")),
           );
         }
       } else {
@@ -972,12 +989,12 @@ export function JournalResponsiblesClient({
             makeCandidate(
               u,
               "ok",
-              kw ? "должность подходит, но не в chips" : "в chips, но другой профиль",
+              kw ? t("reasonPositionFits") : t("reasonInChipsOther"),
             ),
           );
         } else {
           notRecommended.push(
-            makeCandidate(u, "not-recommended", "не из назначенных должностей"),
+            makeCandidate(u, "not-recommended", t("reasonNotAssigned")),
           );
         }
       }
@@ -989,7 +1006,7 @@ export function JournalResponsiblesClient({
       if (Math.abs(a.monthlyLoad - b.monthlyLoad) > 0.5) {
         return a.monthlyLoad - b.monthlyLoad;
       }
-      return a.user.name.localeCompare(b.user.name, "ru");
+      return a.user.name.localeCompare(b.user.name, locale);
     }
     recommended.sort(sortFn);
     ok.sort(sortFn);
@@ -1109,7 +1126,7 @@ export function JournalResponsiblesClient({
         const wa = workloadAcc?.get(a.id) ?? 0;
         const wb = workloadAcc?.get(b.id) ?? 0;
         if (wa !== wb) return wa - wb;
-        return a.name.localeCompare(b.name, "ru");
+        return a.name.localeCompare(b.name, locale);
       });
 
       const pick = ranked[0];
@@ -1218,7 +1235,7 @@ export function JournalResponsiblesClient({
         const sorted = [...users].sort((a, b) => {
           const td = userTier(b) - userTier(a);
           if (td !== 0) return td;
-          return a.name.localeCompare(b.name, "ru");
+          return a.name.localeCompare(b.name, locale);
         });
         slotUsers[slot.id] = sorted[0]?.id ?? null;
       } else {
@@ -1233,9 +1250,7 @@ export function JournalResponsiblesClient({
     if (journal && isPerEmployeeJournal(journal)) {
       const a = buildPerEmployeeAssignment(code);
       if (a.positionIds.size === 0) {
-        toast.error(
-          "Нет должностей с активными сотрудниками — preset нечего распределять",
-        );
+        toast.error(t("noActivePositions"));
         return;
       }
       setCurr((prev) => {
@@ -1250,21 +1265,22 @@ export function JournalResponsiblesClient({
         ? users.find((u) => u.id === verifierUser)?.name
         : null;
       toast.success(
-        `На каждого сотрудника · все должности (${a.positionIds.size})${verifierName ? `, проверяет ${verifierName}` : ""}`,
+        t("perEmployeeApplied", {
+          count: a.positionIds.size,
+          verifier: verifierName ? t("perEmployeeVerifier", { name: verifierName }) : "",
+        }),
       );
       return;
     }
 
     const meta = getJournalResponsibilityMeta(code);
     if (!meta) {
-      toast.error("Для этого журнала не описан умный пресет");
+      toast.error(t("noPreset"));
       return;
     }
     const matchedIds = matchPositionsForJournal(code, positions);
     if (matchedIds.length === 0) {
-      toast.error(
-        `Не нашёл должности под ключевые слова: ${meta.keywords.join(", ")}. Заведите подходящую должность или добавьте вручную.`
-      );
+      toast.error(t("noKeywordPositions", { keywords: meta.keywords.join(", ") }));
       return;
     }
     const matchedSet = new Set(matchedIds);
@@ -1279,8 +1295,8 @@ export function JournalResponsiblesClient({
     const filledSlots = Object.values(slotMap).filter(Boolean).length;
     toast.success(
       filledSlots > 0
-        ? `${meta.code} ← ${matchedIds.length} должн., ${filledSlots} ответственн.`
-        : `${meta.code} ← ${matchedIds.length} должн. (нет подходящих сотрудников)`
+        ? t("presetApplied", { code: meta.code, positions: matchedIds.length, slots: filledSlots })
+        : t("presetAppliedNoUsers", { code: meta.code, positions: matchedIds.length })
     );
   }
 
@@ -1454,7 +1470,7 @@ export function JournalResponsiblesClient({
   function requestApplyAllPresets() {
     if (applying) return;
     if (positions.length === 0) {
-      toast.error("Сначала создайте должности и сотрудников");
+      toast.error(t("createPositionsFirst"));
       return;
     }
     setApplyAllOpen(true);
@@ -1466,21 +1482,18 @@ export function JournalResponsiblesClient({
       const allCodes = journals.map((j) => j.code);
       const assignments = computeAssignmentsFor(allCodes);
       if (assignments.size === 0) {
-        toast.error(
-          "Ни одна должность не подошла под пресеты. Заведите должности " +
-            "вроде «Уборщица», «Повар», «Менеджер»."
-        );
+        toast.error(t("noPositionsFitPresets"));
         return;
       }
       const { ok, failed } = await persistAssignments(assignments);
       if (failed > 0) {
-        toast.error(`Готово · применено: ${ok}, не удалось: ${failed}`);
+        toast.error(t("doneFailed", { ok, failed }));
       } else {
-        toast.success(`Применено к ${ok} журналам`);
+        toast.success(t("appliedToJournals", { ok }));
       }
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setApplying(false);
     }
@@ -1489,7 +1502,7 @@ export function JournalResponsiblesClient({
   async function applyCategoryPresets(category: JournalCategory) {
     if (applyingCategory) return;
     if (positions.length === 0) {
-      toast.error("Сначала создайте должности и сотрудников");
+      toast.error(t("createPositionsFirst"));
       return;
     }
     setApplyingCategory(category);
@@ -1502,24 +1515,22 @@ export function JournalResponsiblesClient({
         .map((j) => j.code);
       const assignments = computeAssignmentsFor(codesInCategory);
       if (assignments.size === 0) {
-        toast.error(
-          `Не нашёл подходящих должностей для категории «${CATEGORY_LABELS[category]}». Заведите должность по теме (например, «Уборщица» для уборки).`
-        );
+        toast.error(t("noPositionsForCategory", { category: CATEGORY_LABELS[category] }));
         return;
       }
       const { ok, failed } = await persistAssignments(assignments);
       if (failed > 0) {
         toast.error(
-          `«${CATEGORY_LABELS[category]}» · применено: ${ok}, не удалось: ${failed}`
+          t("categoryPartial", { category: CATEGORY_LABELS[category], ok, failed })
         );
       } else {
         toast.success(
-          `«${CATEGORY_LABELS[category]}» · применено к ${ok} журналам`
+          t("categoryApplied", { category: CATEGORY_LABELS[category], ok })
         );
       }
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setApplyingCategory(null);
     }
@@ -1538,19 +1549,17 @@ export function JournalResponsiblesClient({
       }
       const { ok, failed } = await persistAssignments(dirtyAssignments, scope);
       if (failed > 0) {
-        toast.error(
-          `Сохранено: ${ok}, не удалось: ${failed}. Попробуйте ещё раз.`
-        );
+        toast.error(t("savedPartial", { ok, failed }));
       } else {
         toast.success(
           scope === "all"
-            ? `Применено ко всем документам · журналов: ${ok}`
-            : `Применено к активным документам · журналов: ${ok}`
+            ? t("appliedAllDocs", { ok })
+            : t("appliedActiveDocs", { ok })
         );
         router.refresh();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -1589,23 +1598,21 @@ export function JournalResponsiblesClient({
     // и печатные ФИО внутри УЖЕ заполненных документов — отменить это
     // нечем. Спрашиваем подтверждение и называем последствия.
     const ok = await confirmAsync({
-      title: "Перезаписать ответственных в документах?",
-      description:
-        "Во все документы, действующие сегодня, будут записаны ответственные из этой таблицы.",
+      title: t("resyncTitle"),
+      description: t("resyncDescription"),
       bullets: [
         {
-          label:
-            "Заполненные документы тоже будут переписаны: в шапке и в печати поменяются ФИО",
+          label: t("resyncBullet1"),
           tone: "warn",
         },
         {
-          label: "Сами отметки и записи сотрудников не пострадают",
+          label: t("resyncBullet2"),
           tone: "info",
         },
-        { label: "Откатить одной кнопкой нельзя", tone: "warn" },
+        { label: t("resyncBullet3"), tone: "warn" },
       ],
       variant: "danger",
-      confirmLabel: "Да, перезаписать",
+      confirmLabel: t("resyncConfirm"),
     });
     if (!ok) return;
     setResyncing(true);
@@ -1616,15 +1623,18 @@ export function JournalResponsiblesClient({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Ошибка resync");
+        toast.error(data?.error ?? t("resyncError"));
         return;
       }
       toast.success(
-        `Перезаписано документов: ${data?.documentsUpdated ?? 0} (${data?.journalsProcessed ?? 0} журналов)`
+        t("resyncDone", {
+          docs: data?.documentsUpdated ?? 0,
+          journals: data?.journalsProcessed ?? 0,
+        })
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setResyncing(false);
     }
@@ -1664,18 +1674,18 @@ export function JournalResponsiblesClient({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Ошибка удаления");
+        toast.error(data?.error ?? t("deleteError"));
         return;
       }
       toast.success(
-        `Удалено документов: ${data?.deletedDocuments ?? 0}` +
+        t("deletedDocs", { docs: data?.deletedDocuments ?? 0 }) +
           (data?.deletedEntries
-            ? `, записей: ${data.deletedEntries}`
+            ? t("deletedEntriesSuffix", { entries: data.deletedEntries })
             : "")
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setDeleting(false);
     }
@@ -1706,16 +1716,16 @@ export function JournalResponsiblesClient({
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Ошибка пересоздания");
+        toast.error(data?.error ?? t("recreateError"));
         return;
       }
       toast.success(
-        `Закрыто: ${data?.closed ?? 0}, создано новых: ${data?.created ?? 0}` +
-          (data?.errorsTotal ? `, ошибок: ${data.errorsTotal}` : "")
+        t("recreated", { closed: data?.closed ?? 0, created: data?.created ?? 0 }) +
+          (data?.errorsTotal ? t("recreatedErrorsSuffix", { errors: data.errorsTotal }) : "")
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setRecreating(false);
     }
@@ -1745,14 +1755,14 @@ export function JournalResponsiblesClient({
           ) : (
             <Wand2 className="size-4" />
           )}
-          Применить умные пресеты ко всем
+          {t("applyAllButton")}
         </button>
 
         <button
           type="button"
           onClick={resyncAll}
           disabled={resyncing || recreating}
-          title="Перезаписать ФИО ответственных в шапке всех активных документов на текущие из настроек. Полезно если документы создавались до изменений."
+          title={t("resyncTitleAttr")}
           className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {resyncing ? (
@@ -1760,14 +1770,14 @@ export function JournalResponsiblesClient({
           ) : (
             <Sparkles className="size-4 text-[#5566f6]" />
           )}
-          Перезаписать в документах
+          {t("resyncButton")}
         </button>
 
         <button
           type="button"
           onClick={requestRecreateDocuments}
           disabled={recreating || resyncing || deleting}
-          title="Закрыть все активные документы и создать свежие со строками по умолчанию и текущими ответственными. Старые записи сохранятся в закрытых документах."
+          title={t("recreateTitleAttr")}
           className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#ffd2cd] bg-white px-4 text-[13px] font-medium text-[#a13a32] hover:border-[#a13a32]/50 hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {recreating ? (
@@ -1775,14 +1785,14 @@ export function JournalResponsiblesClient({
           ) : (
             <Wand2 className="size-4" />
           )}
-          Пересоздать документы
+          {t("recreateButton")}
         </button>
 
         <button
           type="button"
           onClick={requestDeleteAllDocuments}
           disabled={deleting || recreating || resyncing}
-          title="Опасно: удалит ВСЕ документы журналов вместе с заполненными записями. Используется только для полного сброса."
+          title={t("deleteTitleAttr")}
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#a13a32] px-4 text-[13px] font-medium text-white hover:bg-[#8b3128] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {deleting ? (
@@ -1790,7 +1800,7 @@ export function JournalResponsiblesClient({
           ) : (
             <Trash2 className="size-4" />
           )}
-          Удалить все документы
+          {t("deleteButton")}
         </button>
 
         <div className="relative ml-auto flex items-center">
@@ -1798,7 +1808,7 @@ export function JournalResponsiblesClient({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск по журналу или роли…"
+            placeholder={t("searchJournals")}
             className="h-11 w-[280px] rounded-2xl border border-[#dcdfed] bg-[#fafbff] pl-9 pr-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
@@ -1806,7 +1816,7 @@ export function JournalResponsiblesClient({
         {dirty.size > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[12px] text-[#a13a32]">
-              Несохранённых: {dirty.size}
+              {t("unsavedCount", { count: dirty.size })}
             </span>
             <button
               type="button"
@@ -1814,7 +1824,7 @@ export function JournalResponsiblesClient({
               disabled={saving}
               className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#3c4053] hover:bg-[#fafbff] disabled:opacity-60"
             >
-              Сбросить
+              {t("discard")}
             </button>
             {/* «В активных» — обычное безопасное сохранение. Каскад
                 идёт только на active-документы и не-завершённые TF-задачи. */}
@@ -1822,7 +1832,7 @@ export function JournalResponsiblesClient({
               type="button"
               onClick={save}
               disabled={saving}
-              title="Применить только к текущим/активным документам и невыполненным TasksFlow-задачам. Закрытые архивные документы не трогаются."
+              title={t("saveActiveTitle")}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-60"
             >
               {saving ? (
@@ -1830,7 +1840,7 @@ export function JournalResponsiblesClient({
               ) : (
                 <Save className="size-3.5" />
               )}
-              Сохранить (в активных)
+              {t("saveActive")}
             </button>
             {/* «Во всех» — каскад в архив + закрытые TF-задачи. Опасно,
                 с confirm-модалкой. Кнопка outlined чтобы не сливалась с
@@ -1839,7 +1849,7 @@ export function JournalResponsiblesClient({
               type="button"
               onClick={requestSaveAll}
               disabled={saving}
-              title="Каскадно применить во ВСЕ документы — включая закрытые и архивные. Также переписывает verifier на уже одобренных/отклонённых TasksFlow-задачах. Опасное действие — потребует подтверждения."
+              title={t("saveAllTitle")}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#a13a32] bg-white px-3 text-[13px] font-medium text-[#a13a32] hover:bg-[#fff4f2] disabled:opacity-60"
             >
               {saving ? (
@@ -1847,7 +1857,7 @@ export function JournalResponsiblesClient({
               ) : (
                 <Save className="size-3.5" />
               )}
-              Изменить во всех…
+              {t("saveAll")}
             </button>
           </div>
         ) : null}
@@ -1855,12 +1865,13 @@ export function JournalResponsiblesClient({
 
       {positions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[14px] text-[#6f7282]">
-          В организации нет должностей. Сначала создайте должности и
-          сотрудников в{" "}
-          <a href="/settings/users" className="text-[#3848c7] hover:underline">
-            Сотрудники
-          </a>
-          .
+          {t.rich("noPositionsNote", {
+            link: (chunks) => (
+              <a href="/settings/users" className="text-[#3848c7] hover:underline">
+                {chunks}
+              </a>
+            ),
+          })}
         </div>
       ) : null}
 
@@ -1914,22 +1925,24 @@ export function JournalResponsiblesClient({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#a13a32]">
-                      Проблема с уведомления
+                      {t("fixEyebrow")}
                     </div>
                     <h3 className="mt-1 text-[16px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]">
                       {targetJournal.name}
                     </h3>
                     {fixReason ? (
                       <p className="mt-1 text-[13px] leading-snug text-[#3c4053]">
-                        Что не так:{" "}
-                        <strong className="text-[#a13a32]">{fixReason}</strong>
+                        {t.rich("fixWhatWrong", {
+                          reason: fixReason,
+                          b: (chunks) => <strong className="text-[#a13a32]">{chunks}</strong>,
+                        })}
                       </p>
                     ) : null}
 
                     {hasAnySuggestion ? (
                       <div className="mt-3 rounded-2xl border border-[#dcdfed] bg-white p-3">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#3848c7]">
-                          Рекомендация системы
+                          {t("fixRecommendation")}
                         </div>
                         <ul className="mt-1.5 space-y-1 text-[13px]">
                           {fillerSuggestions.map((sug) => (
@@ -1956,7 +1969,7 @@ export function JournalResponsiblesClient({
                             <li className="flex items-start gap-1.5">
                               <span className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full bg-[#a16d32]" />
                               <span className="text-[#3c4053]">
-                                <strong>Кто проверяет</strong> →{" "}
+                                <strong>{t("whoVerifies")}</strong> →{" "}
                                 <span className="text-[#0b1024]">
                                   {verifierSuggestion.candidate.user.name}
                                 </span>
@@ -1974,15 +1987,13 @@ export function JournalResponsiblesClient({
                       </div>
                     ) : (
                       <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
-                        Не нашёл подходящих сотрудников. Заведите должность
-                        вроде «Заведующий производством» или «Старший повар» в{" "}
-                        <a
-                          href="/settings/users"
-                          className="underline"
-                        >
-                          Сотрудниках
-                        </a>
-                        .
+                        {t.rich("fixNoSuitable", {
+                          link: (chunks) => (
+                            <a href="/settings/users" className="underline">
+                              {chunks}
+                            </a>
+                          ),
+                        })}
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -1997,7 +2008,7 @@ export function JournalResponsiblesClient({
                           className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(85,102,246,0.5)] hover:bg-[#4a5bf0]"
                         >
                           <Wand2 className="size-3.5" />
-                          Применить рекомендацию
+                          {t("applyRecommendation")}
                         </button>
                       ) : null}
                       <button
@@ -2005,7 +2016,7 @@ export function JournalResponsiblesClient({
                         onClick={() => setFixDismissed(true)}
                         className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
                       >
-                        Скрыть подсказку
+                        {t("hideHint")}
                       </button>
                     </div>
                   </div>
@@ -2022,16 +2033,16 @@ export function JournalResponsiblesClient({
           <div className="mb-3 flex items-center gap-2">
             <Scale className="size-4 text-[#5566f6]" />
             <h3 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#0b1024]">
-              Прогноз нагрузки после сохранения
+              {t("forecastTitle")}
             </h3>
             <a
               href="/settings/workload-balance"
               className="ml-auto text-[11px] text-[#5566f6] hover:underline"
               target="_blank"
               rel="noopener noreferrer"
-              title="Открыть полный дашборд распределения"
+              title={t("fullDashboardTitle")}
             >
-              полный дашборд →
+              {t("fullDashboard")}
             </a>
           </div>
 
@@ -2055,15 +2066,15 @@ export function JournalResponsiblesClient({
                     <div className="min-w-0">
                       <div className="font-semibold">{row.positionName}</div>
                       <div className="text-[11px] opacity-80">
-                        перекос:{" "}
-                        <span className="tabular-nums">
-                          {(row.beforeImb * 100).toFixed(0)}%
-                        </span>
-                        {" → "}
-                        <span className="tabular-nums font-semibold">
-                          {(row.afterImb * 100).toFixed(0)}%
-                        </span>
-                        {improved ? " · стало ровнее" : " · стало неравномернее"}
+                        {t.rich("skewLine", {
+                          beforePct: (row.beforeImb * 100).toFixed(0),
+                          afterPct: (row.afterImb * 100).toFixed(0),
+                          trend: improved ? t("trendBetter") : t("trendWorse"),
+                          before: (chunks) => <span className="tabular-nums">{chunks}</span>,
+                          after: (chunks) => (
+                            <span className="tabular-nums font-semibold">{chunks}</span>
+                          ),
+                        })}
                       </div>
                     </div>
                   </div>
@@ -2075,7 +2086,7 @@ export function JournalResponsiblesClient({
           {workloadDiffs.length > 0 ? (
             <div className="space-y-1">
               <div className="text-[11px] font-medium uppercase tracking-[0.1em] text-[#6f7282]">
-                Изменения по сотрудникам
+                {t("changesByEmployee")}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {workloadDiffs.slice(0, 12).map((d) => {
@@ -2083,7 +2094,12 @@ export function JournalResponsiblesClient({
                   return (
                     <span
                       key={d.userId}
-                      title={`${d.name} (${d.position ?? "без должности"}): было ${Math.round(d.before)}, станет ${Math.round(d.after)}`}
+                      title={t("diffTitle", {
+                        name: d.name,
+                        position: d.position ?? t("withoutPositionShort"),
+                        before: Math.round(d.before),
+                        after: Math.round(d.after),
+                      })}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] tabular-nums ${
                         positive
                           ? "bg-rose-50 text-rose-700"
@@ -2100,7 +2116,7 @@ export function JournalResponsiblesClient({
                 })}
                 {workloadDiffs.length > 12 ? (
                   <span className="inline-flex items-center rounded-full bg-[#fafbff] px-2.5 py-1 text-[11px] text-[#9b9fb3]">
-                    +{workloadDiffs.length - 12} ещё
+                    {t("moreCount", { count: workloadDiffs.length - 12 })}
                   </span>
                 ) : null}
               </div>
@@ -2109,9 +2125,7 @@ export function JournalResponsiblesClient({
 
           {imbalanceDiffs.length === 0 && workloadDiffs.length > 0 ? (
             <div className="mt-2 text-[11px] text-[#6f7282]">
-              Изменения внутри одной должности не меняют картину
-              перекоса — система просто перераспределяет работу между
-              сотрудниками одной роли.
+              {t("sameRoleNote")}
             </div>
           ) : null}
         </div>
@@ -2151,14 +2165,14 @@ export function JournalResponsiblesClient({
                     positions.length === 0
                   }
                   className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12px] font-medium text-[#5566f6] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
-                  title={`Применить умные пресеты для категории «${CATEGORY_LABELS[cat]}»`}
+                  title={t("applyCategoryTitle", { category: CATEGORY_LABELS[cat] })}
                 >
                   {isApplyingThis ? (
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : (
                     <Wand2 className="size-3.5" />
                   )}
-                  Применить пресет
+                  {t("applyPreset")}
                 </button>
               </div>
 
@@ -2216,10 +2230,12 @@ export function JournalResponsiblesClient({
                               type="button"
                               onClick={() => applyJournalPreset(j.code)}
                               className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12px] text-[#5566f6] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                              title={`Подставить должности по keywords: ${meta.keywords.join(", ") || "(всем)"}`}
+                              title={t("smartPresetTitle", {
+                                keywords: meta.keywords.join(", ") || t("allKeyword"),
+                              })}
                             >
                               <Sparkles className="size-3.5" />
-                              Умный пресет
+                              {t("smartPreset")}
                             </button>
                           ) : null}
                         </div>
@@ -2227,7 +2243,7 @@ export function JournalResponsiblesClient({
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {set.size === 0 ? (
                             <span className="rounded-full bg-[#fff4f2] px-2.5 py-1 text-[11px] font-medium text-[#a13a32]">
-                              Никто не назначен
+                              {t("nobodyAssigned")}
                             </span>
                           ) : null}
                           {[...set].map((pid) => {
@@ -2239,7 +2255,7 @@ export function JournalResponsiblesClient({
                                 key={pid}
                                 onClick={() => togglePosition(j.code, pid)}
                                 className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7] transition-colors hover:bg-[#fff4f2] hover:text-[#a13a32]"
-                                title="Снять"
+                                title={t("removeTitle")}
                               >
                                 <Check className="size-3" />
                                 {p.name}
@@ -2254,7 +2270,7 @@ export function JournalResponsiblesClient({
                         <details className="mt-3">
                           <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[12px] text-[#6f7282] hover:text-[#5566f6]">
                             <Plus className="size-3.5" />
-                            Добавить должность
+                            {t("addPosition")}
                           </summary>
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {positions
@@ -2296,7 +2312,7 @@ export function JournalResponsiblesClient({
                             <>
                               <div className="mt-3">
                                 <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                                  Заполняют журнал
+                                  {t("fillersTitle")}
                                 </div>
                                 <div className="space-y-2">
                                   {fillerSlots.map((slot, slotIdx) => (
@@ -2321,19 +2337,14 @@ export function JournalResponsiblesClient({
                                   Помечаем явно подсказкой. */}
                               {isPerEmployeeJournal(j) ? (
                                 <div className="mt-2 rounded-xl border border-[#5566f6]/15 bg-[#f5f6ff] p-2.5 text-[11px] leading-snug text-[#3848c7]">
-                                  Журнал «На каждого сотрудника» —
-                                  filler-слоты не нужны. Чек выполняет
-                                  сам сотрудник, проверяет старший.
-                                  Жми «Умный пресет» — добавит все
-                                  должности и поставит админа в
-                                  «Кто проверяет».
+                                  {t("perEmployeeNote")}
                                 </div>
                               ) : null}
                               {verifierSlots.length > 0 ? (
                                 <div className="mt-3">
                                   <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#3848c7]">
                                     <span className="inline-block size-1.5 rounded-full bg-[#5566f6]" />
-                                    Кто проверяет
+                                    {t("whoVerifies")}
                                   </div>
                                   <div className="space-y-2">
                                     {verifierSlots.map((slot, slotIdx) => (
@@ -2373,7 +2384,7 @@ export function JournalResponsiblesClient({
 
         {grouped.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[14px] text-[#6f7282]">
-            Не найдено журналов под «{query}».
+            {t("journalsNotFound", { query })}
           </div>
         ) : null}
       </div>
@@ -2385,34 +2396,25 @@ export function JournalResponsiblesClient({
           setApplyAllOpen(false);
           await applyAllPresets();
         }}
-        title="Применить умные пресеты ко всем журналам?"
-        description={
-          <>
-            Система пройдётся по всем журналам в порядке убывания нагрузки
-            и расставит должности и сотрудников по семантике. Уборка —
-            уборщикам, температура — поварам, поверка — технологу или
-            заведующему производством. Админ автоматически попадёт в «Кто проверяет».
-          </>
-        }
+        title={t("applyAllTitle")}
+        description={<>{t("applyAllDescription")}</>}
         bullets={[
           {
-            label:
-              "Существующие назначения будут перезаписаны там, где система нашла подходящих кандидатов.",
+            label: t("applyAllBullet1"),
             tone: "warn",
           },
           {
-            label:
-              "Если для журнала нет matching должностей — он не трогается.",
+            label: t("applyAllBullet2"),
             tone: "info",
           },
           {
             // Число журналов диалог раньше не называл — а каскад заодно
             // переписывает ответственных внутри активных документов.
-            label: `Будет перебрано журналов: ${journals.length}; в активных документах ответственные тоже обновятся`,
+            label: t("applyAllBullet3", { count: journals.length }),
             tone: "warn",
           },
         ]}
-        confirmLabel="Да, применить ко всем"
+        confirmLabel={t("applyAllConfirm")}
         variant="default"
         icon={Wand2}
       />
@@ -2424,41 +2426,31 @@ export function JournalResponsiblesClient({
           setSaveAllOpen(false);
           await saveAll();
         }}
-        title="Изменить ответственных во всех документах?"
-        description={
-          <>
-            Каскад затронет не только активные, но и закрытые/архивные
-            документы. Это удобно для ретроспективы, но переписывает
-            историю — будь осторожен.
-          </>
-        }
+        title={t("saveAllDialogTitle")}
+        description={<>{t("saveAllDialogDescription")}</>}
         bullets={[
           {
-            label:
-              "Старые подписи в PDF меняются на новые ФИО.",
+            label: t("saveAllBullet1"),
             tone: "warn",
           },
           {
-            label:
-              "Verifier меняется и у уже отправленных TasksFlow-задач, включая «На проверке».",
+            label: t("saveAllBullet2"),
             tone: "warn",
           },
           {
-            label:
-              "Откатить нельзя — каскад идёт в БД и в TasksFlow одновременно.",
+            label: t("saveAllBullet3"),
             tone: "warn",
           },
           {
-            label:
-              "Если хочешь только текущие/активные — закрой и используй кнопку «Сохранить (в активных)».",
+            label: t("saveAllBullet4"),
             tone: "info",
           },
         ]}
-        confirmLabel="Да, переписать все документы"
+        confirmLabel={t("saveAllConfirm")}
         variant="danger"
         /* Переписывает историю и живые задачи TasksFlow без отката —
            по правилам проекта такое подтверждают фразой, а не кликом. */
-        typeToConfirm="ПЕРЕПИСАТЬ"
+        typeToConfirm={t("saveAllPhrase")}
       />
 
       <ConfirmDialog
@@ -2468,36 +2460,30 @@ export function JournalResponsiblesClient({
           setRecreateOpen(false);
           await recreateDocuments();
         }}
-        title="Пересоздать документы?"
-        description={
-          <>
-            Все ТЕКУЩИЕ активные документы будут закрыты, и взамен
-            создадутся свежие — с дефолтными строками и текущими
-            ответственными. Заполненные ранее записи останутся в
-            закрытых документах (можно открыть для отчёта).
-          </>
-        }
+        title={t("recreateDialogTitle")}
+        description={<>{t("recreateDialogDescription")}</>}
         bullets={[
           ...(recreatePreflight
             ? [
                 {
-                  label: `Будет закрыто документов: ${recreatePreflight.activeDocCount}, в них уже заполнено строк: ${recreatePreflight.filledEntryCount}`,
+                  label: t("recreateBulletCounts", {
+                    active: recreatePreflight.activeDocCount,
+                    filled: recreatePreflight.filledEntryCount,
+                  }),
                   tone: "warn" as const,
                 },
               ]
             : []),
           {
-            label:
-              "Старые записи не теряются — они уйдут в закрытые документы.",
+            label: t("recreateBullet1"),
             tone: "info",
           },
           {
-            label:
-              "Новые документы возьмут ответственных из текущих настроек.",
+            label: t("recreateBullet2"),
             tone: "info",
           },
         ]}
-        confirmLabel="Пересоздать"
+        confirmLabel={t("recreateConfirm")}
         variant="warn"
       />
 
@@ -2508,44 +2494,35 @@ export function JournalResponsiblesClient({
           setDeleteOpen(false);
           await deleteAllDocuments();
         }}
-        title="Удалить ВСЕ документы журналов?"
+        title={t("deleteDialogTitle")}
         description={
           <>
             {deletePreflight ? (
               <span>
-                Сейчас в БД:{" "}
-                <strong className="text-[#a13a32]">
-                  {deletePreflight.docCount} документ(ов)
-                </strong>{" "}
-                и{" "}
-                <strong className="text-[#a13a32]">
-                  {deletePreflight.entryCount} запис(ей)
-                </strong>
-                . Все они уйдут безвозвратно.
+                {t.rich("deleteDialogCounts", {
+                  docs: deletePreflight.docCount,
+                  entries: deletePreflight.entryCount,
+                  b: (chunks) => <strong className="text-[#a13a32]">{chunks}</strong>,
+                })}
               </span>
             ) : (
-              <span>
-                Все документы журналов организации будут удалены вместе со
-                всеми заполненными записями.
-              </span>
+              <span>{t("deleteDialogNoCounts")}</span>
             )}
           </>
         }
         bullets={[
           {
-            label:
-              "Восстановить нельзя — это полный сброс данных журналов.",
+            label: t("deleteBullet1"),
             tone: "warn",
           },
           {
-            label:
-              "Используется только когда нужно начать с чистого листа (тестовая компания, прежний пилот).",
+            label: t("deleteBullet2"),
             tone: "info",
           },
         ]}
-        confirmLabel="Удалить навсегда"
+        confirmLabel={t("deleteConfirm")}
         variant="danger"
-        typeToConfirm="УДАЛИТЬ"
+        typeToConfirm={t("deletePhrase")}
       />
     </div>
   );

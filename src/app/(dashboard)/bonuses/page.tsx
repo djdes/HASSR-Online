@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Coins } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { orgTodayKey } from "@/lib/timezone";
@@ -32,6 +33,8 @@ export default async function BonusesPage({
     user?: string;
   }>;
 }) {
+  const t = await getTranslations("bonusesUi.page");
+  const locale = await getLocale();
   const session = await requireAuth();
   const fullAccess = hasFullWorkspaceAccess({
     role: session.user.role,
@@ -126,12 +129,13 @@ export default async function BonusesPage({
     <div className="space-y-5">
       <div>
         <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-          Премии за работу
+          {t("title")}
         </h1>
         <p className="mt-1.5 text-[14px] text-[#6f7282]">
-          За период {formatDateRu(filters.fromIso)} —{" "}
-          {formatDateRu(filters.toIso)}. CSV-выгрузка пригодна для
-          ручного импорта в зарплатный сервис.
+          {t("periodLead", {
+            from: formatDate(filters.fromIso, locale),
+            to: formatDate(filters.toIso, locale),
+          })}
         </p>
       </div>
 
@@ -148,22 +152,22 @@ export default async function BonusesPage({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
-          label="Всего премий"
+          label={t("total")}
           value={String(summary.total)}
           tone="indigo"
         />
         <SummaryCard
-          label="К оплате"
-          value={formatRubles(summary.payableKopecks)}
+          label={t("payable")}
+          value={formatRubles(summary.payableKopecks, locale)}
           tone="lime"
         />
         <SummaryCard
-          label="Ждут проверки"
+          label={t("pending")}
           value={String(summary.pending)}
           tone="amber"
         />
         <SummaryCard
-          label="Отозвано"
+          label={t("rejected")}
           value={String(summary.rejected)}
           tone="rose"
         />
@@ -173,17 +177,19 @@ export default async function BonusesPage({
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <Coins className="mx-auto size-7 text-[#9b9fb3]" strokeWidth={1.6} />
           <div className="mt-3 text-[15px] font-medium text-[#0b1024]">
-            За период премий нет
+            {t("emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Поменяйте период в фильтре или включите премию у нужного журнала —{" "}
-            <Link
-              href="/settings/journals"
-              className="font-medium text-[#3848c7] transition-colors hover:text-[#0b1024]"
-            >
-              Настройки журналов
-            </Link>
-            .
+            {t.rich("emptyHint", {
+              link: (chunks) => (
+                <Link
+                  href="/settings/journals"
+                  className="font-medium text-[#3848c7] transition-colors hover:text-[#0b1024]"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         </div>
       ) : (
@@ -240,13 +246,15 @@ function isValidIsoDate(value: string | undefined): boolean {
   return !Number.isNaN(parsed.getTime());
 }
 
-function formatDateRu(iso: string): string {
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+
+function formatDate(iso: string, locale: string): string {
   try {
     const d = new Date(`${iso}T00:00:00.000Z`);
     // «21 сентября 2026 г.» — сокращение уже заканчивается точкой, и
     // следом за ним в тексте шла вторая: «2026 г.. CSV-выгрузка…».
     return d
-      .toLocaleDateString("ru-RU", {
+      .toLocaleDateString(DATE_LOCALES[locale] ?? "ru-RU", {
         day: "2-digit",
         month: "long",
         year: "numeric",
@@ -287,10 +295,10 @@ function SummaryCard({
   );
 }
 
-function formatRubles(kopecks: number): string {
+function formatRubles(kopecks: number, locale: string): string {
   if (!Number.isFinite(kopecks) || kopecks <= 0) return "0 ₽";
   const rubles = kopecks / 100;
-  return `${rubles.toLocaleString("ru-RU", {
+  return `${rubles.toLocaleString(DATE_LOCALES[locale] ?? "ru-RU", {
     minimumFractionDigits: rubles % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   })} ₽`;

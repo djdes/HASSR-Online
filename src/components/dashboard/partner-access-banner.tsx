@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Eye, Handshake, PencilLine } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 type Props = {
@@ -17,16 +18,17 @@ type Props = {
  * (POST /api/partner/exit) и возвращает в партнёрский кабинет.
  */
 export function PartnerAccessBanner({ organizationName, brandName, level }: Props) {
+  const t = useTranslations("dashboardUi.partnerAccessBanner");
   const [busy, setBusy] = useState(false);
 
   async function exit() {
     setBusy(true);
     try {
       const res = await fetch("/api/partner/exit", { method: "POST" });
-      if (!res.ok) throw new Error("Не удалось выйти из кабинета клиента");
+      if (!res.ok) throw new Error(t("exitClientFailed"));
       window.location.href = "/partner";
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось выйти");
+      toast.error(error instanceof Error ? error.message : t("exitFailed"));
       setBusy(false);
     }
   }
@@ -38,19 +40,19 @@ export function PartnerAccessBanner({ organizationName, brandName, level }: Prop
       <div className="flex min-w-0 flex-1 items-center gap-2 font-medium">
         <Handshake className="size-4 shrink-0" />
         <span className="truncate">
-          Кабинет клиента <span className="font-semibold">{organizationName}</span> · вы здесь
-          как партнёр {brandName}
+          {t("clientCabinet")} <span className="font-semibold">{organizationName}</span> ·{" "}
+          {t("youArePartner", { brand: brandName })}
         </span>
         <span
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[12px] font-semibold"
           title={
             level === "edit"
-              ? "Клиент разрешил редактирование: записи и настройки можно менять"
-              : "Клиент разрешил только просмотр: любые изменения будут отклонены"
+              ? t("editTitle")
+              : t("viewTitle")
           }
         >
           <LevelIcon className="size-3.5" />
-          {level === "edit" ? "редактирование" : "только просмотр"}
+          {level === "edit" ? t("editLevel") : t("viewLevel")}
         </span>
       </div>
       <button
@@ -59,7 +61,7 @@ export function PartnerAccessBanner({ organizationName, brandName, level }: Prop
         disabled={busy}
         className="inline-flex h-9 shrink-0 items-center rounded-xl bg-[#5566f6] px-4 font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
       >
-        {busy ? "..." : "В партнёрский кабинет"}
+        {busy ? "..." : t("toPartnerCabinet")}
       </button>
     </div>
   );

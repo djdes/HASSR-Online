@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Camera,
   Check,
@@ -104,6 +105,7 @@ function SortableNodeRow({
   onSplit: () => void;
   onAddSubtask: () => void;
 }) {
+  const t = useTranslations("settingsUi.pipelineTreeEditor");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: node.id });
   const style = {
@@ -128,7 +130,7 @@ function SortableNodeRow({
           type="button"
           {...attributes}
           {...listeners}
-          aria-label="Перетащить"
+          aria-label={t("drag")}
           className="mt-0.5 flex size-7 shrink-0 cursor-grab items-center justify-center rounded-lg text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#5566f6] active:cursor-grabbing"
         >
           <GripVertical className="size-4" />
@@ -143,7 +145,7 @@ function SortableNodeRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[15px] font-medium text-[#0b1024]">
-              {node.title || "(без названия)"}
+              {node.title || t("untitled")}
             </span>
             {isPinned ? (
               <span className="rounded-full bg-[#eef1ff] px-2.5 py-0.5 font-mono text-[11px] text-[#3848c7]">
@@ -156,12 +158,12 @@ function SortableNodeRow({
             )}
             {node.photoMode !== "none" ? (
               <span className="rounded-full bg-[#fff4f2] px-2.5 py-0.5 text-[11px] text-[#a13a32]">
-                фото: {node.photoMode}
+                {t("photoModeBadge", { mode: node.photoMode })}
               </span>
             ) : null}
             {node.requireComment ? (
               <span className="rounded-full bg-[#fff4f2] px-2.5 py-0.5 text-[11px] text-[#a13a32]">
-                комментарий обязателен
+                {t("commentRequired")}
               </span>
             ) : null}
           </div>
@@ -178,7 +180,7 @@ function SortableNodeRow({
               type="button"
               variant="ghost"
               size="sm"
-              title="Добавить подшаг"
+              title={t("addSubstep")}
               onClick={onAddSubtask}
               className="h-8 rounded-xl px-2 text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#5566f6]"
             >
@@ -189,7 +191,7 @@ function SortableNodeRow({
             type="button"
             variant="ghost"
             size="sm"
-            title="Редактировать"
+            title={t("edit")}
             onClick={onEdit}
             className="h-8 rounded-xl px-2 text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#5566f6]"
           >
@@ -200,7 +202,7 @@ function SortableNodeRow({
               type="button"
               variant="ghost"
               size="sm"
-              title="Разделить на два шага"
+              title={t("splitTitle")}
               onClick={onSplit}
               className="h-8 rounded-xl px-2 text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#5566f6]"
             >
@@ -229,6 +231,7 @@ export function TreeEditorClient({
   fields,
   initialTree,
 }: Props) {
+  const t = useTranslations("settingsUi.pipelineTreeEditor");
   const router = useRouter();
   const [tree, setTree] = useState<PipelineTree | null>(initialTree);
   const [, startTransition] = useTransition();
@@ -270,12 +273,12 @@ export function TreeEditorClient({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось создать pipeline");
+        toast.error(data?.error || t("seedFailed"));
         return;
       }
       setTree(data.tree);
       toast.success(
-        `Создано pinned-узлов: ${data.created?.length ?? 0}`
+        t("seedCreated", { count: data.created?.length ?? 0 })
       );
       setSeedOpen(false);
       startTransition(() => router.refresh());
@@ -291,11 +294,11 @@ export function TreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось удалить узел");
+      toast.error(data?.error || t("deleteNodeFailed"));
       return;
     }
     setTree(data.tree);
-    toast.success("Узел удалён");
+    toast.success(t("nodeDeleted"));
     setConfirmDelete(null);
     startTransition(() => router.refresh());
   }
@@ -307,11 +310,11 @@ export function TreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось разделить узел");
+      toast.error(data?.error || t("splitFailed"));
       return;
     }
     setTree(data.tree);
-    toast.success("Узел разделён");
+    toast.success(t("nodeSplit"));
     startTransition(() => router.refresh());
   }
 
@@ -322,14 +325,14 @@ export function TreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось очистить custom-шаги");
+      toast.error(data?.error || t("clearCustomFailed"));
       return;
     }
     setTree(data.tree);
     toast.success(
       data.removed
-        ? `Удалено custom-узлов: ${data.removed}`
-        : "Очищено"
+        ? t("customRemoved", { count: data.removed })
+        : t("cleared")
     );
     setConfirmClearCustom(false);
     startTransition(() => router.refresh());
@@ -342,14 +345,14 @@ export function TreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось очистить дерево");
+      toast.error(data?.error || t("clearAllFailed"));
       return;
     }
     setTree(data.tree);
     toast.success(
       data.removed
-        ? `Удалено узлов: ${data.removed}`
-        : "Дерево очищено"
+        ? t("nodesRemoved", { count: data.removed })
+        : t("treeCleared")
     );
     setConfirmClearAll(false);
     startTransition(() => router.refresh());
@@ -408,7 +411,7 @@ export function TreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось переместить узел");
+      toast.error(data?.error || t("moveNodeFailed"));
       // Rollback
       await refresh();
       return;
@@ -431,7 +434,7 @@ export function TreeEditorClient({
       <PageHeader
         eyebrow="Pipeline (beta)"
         title={journalName}
-        description="Дерево шагов, по которым будет вести сотрудника TasksFlow. Pinned-узлы (📌) привязаны к колонкам журнала и заполняют их автоматически. Custom-узлы (✏) — ваши инструкции и подсказки."
+        description={t("description")}
         actions={
           <>
             {tree && tree.nodes.length > 0 ? (
@@ -444,7 +447,7 @@ export function TreeEditorClient({
                 className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
               >
                 <Plus className="size-4" />
-                Добавить шаг
+                {t("addStep")}
               </Button>
             ) : null}
             {tree && tree.nodes.some((n) => n.kind === "pinned") ? null : (
@@ -455,12 +458,12 @@ export function TreeEditorClient({
                 className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 title={
                   fields.length === 0
-                    ? "У журнала нет описанных колонок"
+                    ? t("noColumns")
                     : undefined
                 }
               >
                 <Sparkles className="size-4 text-[#5566f6]" />
-                Создать из колонок журнала
+                {t("seedFromColumns")}
               </Button>
             )}
           </>
@@ -473,12 +476,10 @@ export function TreeEditorClient({
             <Sparkles className="size-5" />
           </div>
           <div className="mt-4 text-[15px] font-medium text-[#0b1024]">
-            Pipeline ещё не настроен
+            {t("emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Нажмите «Создать из колонок журнала» — мы автоматически
-            создадим pinned-узел для каждой колонки. Потом можно добавить
-            свои custom-шаги между ними.
+            {t("emptyBody")}
           </p>
         </div>
       ) : tree === null ? (
@@ -487,11 +488,10 @@ export function TreeEditorClient({
             <ListTree className="size-5" />
           </div>
           <div className="mt-4 text-[15px] font-medium text-[#0b1024]">
-            Pipeline-шаблон ещё не создан
+            {t("noTemplateTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Запустите seed чтобы создать дерево по колонкам журнала, либо
-            добавьте первый custom-шаг.
+            {t("noTemplateBody")}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Button
@@ -501,7 +501,7 @@ export function TreeEditorClient({
               className="h-10 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
             >
               <Sparkles className="size-4" />
-              Создать из колонок
+              {t("seedFromColumnsShort")}
             </Button>
             <Button
               type="button"
@@ -513,7 +513,7 @@ export function TreeEditorClient({
               className="h-10 rounded-2xl border-[#dcdfed] bg-white px-4 text-[14px] text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Plus className="size-4" />
-              Добавить custom-шаг
+              {t("addCustomStep")}
             </Button>
           </div>
         </div>
@@ -550,7 +550,11 @@ export function TreeEditorClient({
             </DndContext>
             <div className="mt-3 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[12px] leading-snug text-[#9b9fb3]">
-                💡 Перетаскивайте узлы за иконку <GripVertical className="inline size-3 align-text-bottom" /> чтобы изменить порядок. Изменения сохраняются автоматически.
+                {t.rich("dragHint", {
+                  grip: () => (
+                    <GripVertical className="inline size-3 align-text-bottom" />
+                  ),
+                })}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {customNodeCount > 0 ? (
@@ -558,10 +562,10 @@ export function TreeEditorClient({
                     type="button"
                     onClick={() => setConfirmClearCustom(true)}
                     className="inline-flex items-center gap-1.5 rounded-full bg-[#fff4f2] px-3 py-1 text-[12px] font-medium text-[#a13a32] hover:bg-[#ffe5e1]"
-                    title="Удалить только свои шаги — pinned (📌) останутся"
+                    title={t("clearCustomHint")}
                   >
                     <Trash2 className="size-3" />
-                    Удалить свои шаги ({customNodeCount})
+                    {t("clearCustomButton", { count: customNodeCount })}
                   </button>
                 ) : null}
                 {flatNodes.length > 0 ? (
@@ -569,10 +573,10 @@ export function TreeEditorClient({
                     type="button"
                     onClick={() => setConfirmClearAll(true)}
                     className="inline-flex items-center gap-1.5 rounded-full border border-[#fed4ce] bg-[#fff4f2] px-3 py-1 text-[12px] font-semibold text-[#a13a32] hover:border-[#a13a32]/30 hover:bg-[#ffe5e1]"
-                    title={`Полностью очистить всё дерево (${flatNodes.length} узлов: pinned + custom). Требует подтверждения «удалить»`}
+                    title={t("clearAllHint", { count: flatNodes.length, word: t("clearAllWord") })}
                   >
                     <Trash2 className="size-3" />
-                    Удалить ВСЁ ({flatNodes.length})
+                    {t("clearAllButton", { count: flatNodes.length })}
                   </button>
                 ) : null}
               </div>
@@ -618,13 +622,13 @@ export function TreeEditorClient({
         open={confirmDelete !== null}
         onClose={() => setConfirmDelete(null)}
         variant="danger"
-        title="Удалить узел?"
+        title={t("deleteTitle")}
         description={
           confirmDelete
-            ? `«${confirmDelete.title}» и все его подузлы будут удалены.`
+            ? t("deleteDescription", { title: confirmDelete.title })
             : ""
         }
-        confirmLabel="Удалить"
+        confirmLabel={t("delete")}
         onConfirm={async () => {
           if (confirmDelete) {
             await handleDelete(confirmDelete);
@@ -636,32 +640,29 @@ export function TreeEditorClient({
         open={confirmClearCustom}
         onClose={() => setConfirmClearCustom(false)}
         variant="danger"
-        title="Удалить все custom-шаги?"
+        title={t("clearCustomTitle")}
         description={
           <span>
-            Будут удалены <strong>{customNodeCount}</strong> custom-узлов.
-            Pinned (📌) останутся — они привязаны к колонкам журнала и
-            восстановятся в исходном виде. Подшаги custom-узлов тоже
-            удалятся каскадом.
+            {t.rich("clearCustomDescription", {
+              count: customNodeCount,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </span>
         }
         bullets={[
           {
-            label:
-              "Это удобно когда заиграл с шагами и хочется откатить к минимальной форме «только колонки журнала».",
+            label: t("clearCustomBullet1"),
           },
           {
-            label:
-              "Pinned-узлы (📌) и их редактирование (title/photoMode/requireComment) НЕ затрагиваются.",
+            label: t("clearCustomBullet2"),
           },
           {
-            label:
-              "Действие необратимо. Удалённые custom-узлы и их подшаги придётся создавать заново.",
+            label: t("clearCustomBullet3"),
             tone: "warn",
           },
         ]}
-        typeToConfirm="ОЧИСТИТЬ"
-        confirmLabel="Очистить"
+        typeToConfirm={t("clearCustomWord")}
+        confirmLabel={t("clear")}
         onConfirm={handleClearCustom}
       />
 
@@ -669,32 +670,30 @@ export function TreeEditorClient({
         open={confirmClearAll}
         onClose={() => setConfirmClearAll(false)}
         variant="danger"
-        title="Полностью очистить дерево?"
+        title={t("clearAllTitle")}
         description={
           <span>
-            Будут удалены <strong>ВСЕ {flatNodes.length} узлов</strong> —
-            и pinned (📌, привязанные к колонкам журнала), и custom (✏,
-            добавленные тобой). Дерево станет пустым.
+            {t.rich("clearAllDescription", {
+              count: flatNodes.length,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </span>
         }
         bullets={[
           {
-            label:
-              "После этого нажми «Создать из колонок журнала» чтобы получить чистый шаблон по колонкам — заново.",
+            label: t("clearAllBullet1"),
           },
           {
-            label:
-              "Это полностью удалит всю текущую настройку pipeline'а — и base, и кастомные шаги.",
+            label: t("clearAllBullet2"),
             tone: "warn",
           },
           {
-            label:
-              "Действие необратимо. Если хочешь оставить базовые pinned-узлы — используй кнопку «Удалить свои шаги».",
+            label: t("clearAllBullet3"),
             tone: "warn",
           },
         ]}
-        typeToConfirm="удалить"
-        confirmLabel="Удалить ВСЁ"
+        typeToConfirm={t("clearAllWord")}
+        confirmLabel={t("clearAllConfirm")}
         onConfirm={handleClearAll}
       />
 
@@ -702,12 +701,11 @@ export function TreeEditorClient({
         open={confirmSplit !== null}
         onClose={() => setConfirmSplit(null)}
         variant="info"
-        title="Разделить шаг на две части?"
+        title={t("splitDialogTitle")}
         description={
           confirmSplit ? (
             <span>
-              «{confirmSplit.title}» станет «(часть 1)», и появится новый
-              шаг «(часть 2)» с тем же привязанным полем журнала.
+              {t("splitDescription", { title: confirmSplit.title })}
             </span>
           ) : (
             ""
@@ -715,20 +713,17 @@ export function TreeEditorClient({
         }
         bullets={[
           {
-            label:
-              "Оба шага запишут значения в одну и ту же колонку журнала — сотрудник заполнит её в два этапа.",
+            label: t("splitBullet1"),
           },
           {
-            label:
-              "Удобно когда столбец нужно заполнять разными людьми или в разных местах помещения.",
+            label: t("splitBullet2"),
           },
           {
-            label:
-              "Можно делать сколько угодно — каждый split увеличит номер части.",
+            label: t("splitBullet3"),
             tone: "info",
           },
         ]}
-        confirmLabel="Разделить"
+        confirmLabel={t("split")}
         onConfirm={async () => {
           if (confirmSplit) {
             await handleSplit(confirmSplit);
@@ -751,23 +746,24 @@ export function TreeEditorClient({
  * в indigo-current стиле, остальные — в lock-стиле.
  */
 function WizardPreview({ nodes }: { nodes: PipelineNode[] }) {
+  const t = useTranslations("settingsUi.pipelineTreeEditor");
   const total = nodes.length;
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
       <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="mb-3 flex items-center justify-between">
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Превью wizard&apos;а
+            {t("previewTitle")}
           </div>
           <div className="rounded-full bg-white px-2.5 py-0.5 text-[11px] text-[#9b9fb3]">
-            как увидит сотрудник
+            {t("previewSubtitle")}
           </div>
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#dcdfed] bg-white px-4 py-3">
             <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
               <ClipboardCheck className="size-4 text-[#5566f6]" />
-              Пошаговое выполнение
+              {t("stepByStep")}
             </div>
             <div className="flex items-center gap-2">
               <div className="text-[13px] font-semibold tabular-nums text-[#0b1024]">
@@ -781,7 +777,7 @@ function WizardPreview({ nodes }: { nodes: PipelineNode[] }) {
 
           {total === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 py-8 text-center text-[13px] text-[#9b9fb3]">
-              Нет шагов для превью
+              {t("noPreviewSteps")}
             </div>
           ) : (
             <ol className="space-y-2.5">
@@ -819,7 +815,7 @@ function WizardPreview({ nodes }: { nodes: PipelineNode[] }) {
                             isCurrent ? "text-[#0b1024]" : "text-[#9b9fb3]",
                           ].join(" ")}
                         >
-                          {node.title || "(без названия)"}
+                          {node.title || t("untitled")}
                         </div>
                         {isCurrent && node.detail ? (
                           <p className="mt-1.5 whitespace-pre-line text-[14px] leading-relaxed text-[#3c4053]">
@@ -836,24 +832,24 @@ function WizardPreview({ nodes }: { nodes: PipelineNode[] }) {
                             {node.photoMode === "required" ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4f2] px-2.5 py-0.5 text-[11px] font-medium text-[#a13a32]">
                                 <Camera className="size-3" />
-                                фото обязательно
+                                {t("photoRequired")}
                               </span>
                             ) : node.photoMode === "optional" ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[11px] text-[#3848c7]">
                                 <Camera className="size-3" />
-                                можно фото
+                                {t("photoOptional")}
                               </span>
                             ) : null}
                             {node.requireComment ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4f2] px-2.5 py-0.5 text-[11px] font-medium text-[#a13a32]">
                                 <MessageSquare className="size-3" />
-                                комментарий
+                                {t("comment")}
                               </span>
                             ) : null}
                             {node.requireSignature ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4f2] px-2.5 py-0.5 text-[11px] font-medium text-[#a13a32]">
                                 <PenLine className="size-3" />
-                                подпись
+                                {t("signature")}
                               </span>
                             ) : null}
                             {node.kind === "pinned" && node.linkedFieldKey ? (
@@ -869,7 +865,7 @@ function WizardPreview({ nodes }: { nodes: PipelineNode[] }) {
                       <div className="border-t border-[#ececf4] px-4 py-3">
                         <div className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6]/30 px-4 text-[13px] font-medium text-white opacity-50">
                           <Check className="size-4" />
-                          Сделал
+                          {t("done")}
                         </div>
                       </div>
                     ) : null}
@@ -897,21 +893,20 @@ function SeedConfirmDialog({
   onConfirm: () => void;
   busy: boolean;
 }) {
+  const t = useTranslations("settingsUi.pipelineTreeEditor");
   return (
     <JournalSettingsModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Создать pipeline из колонок"
-      description={`Будет создано ${fieldsCount} pinned-узлов — по одному на каждую колонку журнала. Потом их можно редактировать, добавлять custom-шаги и менять порядок.`}
+      title={t("seedDialogTitle")}
+      description={t("seedDialogDescription", { count: fieldsCount })}
       size="md"
       isSaving={busy}
       onSave={onConfirm}
       onCancel={() => onOpenChange(false)}
     >
       <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[13px] text-[#3c4053]">
-        💡 Pinned-узлы — это шаги, которые автоматически заполнят колонки
-        журнала, когда сотрудник дойдёт до них в TasksFlow. Они не
-        удаляются (можно только редактировать или разделить).
+        {t("seedDialogHint")}
       </div>
     </JournalSettingsModal>
   );
@@ -930,6 +925,7 @@ function AddCustomDialog({
   code: string;
   onCreated: () => void;
 }) {
+  const t = useTranslations("settingsUi.pipelineTreeEditor");
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [photoRequired, setPhotoRequired] = useState(false);
@@ -954,10 +950,10 @@ function AddCustomDialog({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось создать узел");
+        toast.error(data?.error || t("createNodeFailed"));
         return;
       }
-      toast.success("Узел добавлен");
+      toast.success(t("nodeAdded"));
       setTitle("");
       setDetail("");
       setPhotoRequired(false);
@@ -978,8 +974,8 @@ function AddCustomDialog({
         }
         onOpenChange(value);
       }}
-      title="Добавить custom-шаг"
-      description="Шаг с произвольным названием — например, «Возьми ведро» или «Запиши номер партии». Не привязан к колонке журнала."
+      title={t("addCustomTitle")}
+      description={t("addCustomDescription")}
       size="md"
       isSaving={busy}
       saveDisabled={!title.trim()}
@@ -989,24 +985,24 @@ function AddCustomDialog({
       <div className="space-y-5">
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название шага
+            {t("stepName")}
           </Label>
           <Input
             autoFocus
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Например: Возьми перчатки и ведро"
+            placeholder={t("addCustomTitlePlaceholder")}
             className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Подробное описание (необязательно)
+            {t("detailOptional")}
           </Label>
           <Textarea
             value={detail}
             onChange={(event) => setDetail(event.target.value)}
-            placeholder="Что именно сделать. Можно несколько строк."
+            placeholder={t("detailPlaceholder")}
             className="min-h-[120px] rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
@@ -1018,10 +1014,9 @@ function AddCustomDialog({
             className="size-4 accent-[#5566f6]"
           />
           <div className="text-[13px] text-[#0b1024]">
-            <div className="font-medium">Требовать фото</div>
+            <div className="font-medium">{t("requirePhoto")}</div>
             <div className="text-[12px] text-[#6f7282]">
-              Сотрудник не сможет нажать «Сделал», пока не приложит
-              фото на этом шаге.
+              {t("requirePhotoHint")}
             </div>
           </div>
         </label>
@@ -1043,6 +1038,7 @@ function EditNodeDialog({
   onOpenChange: (value: boolean) => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("settingsUi.pipelineTreeEditor");
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [hint, setHint] = useState("");
@@ -1087,10 +1083,10 @@ function EditNodeDialog({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось сохранить узел");
+        toast.error(data?.error || t("saveNodeFailed"));
         return;
       }
-      toast.success("Узел сохранён");
+      toast.success(t("nodeSaved"));
       onSaved();
     } finally {
       setBusy(false);
@@ -1101,11 +1097,11 @@ function EditNodeDialog({
     <JournalSettingsModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Редактирование узла"
+      title={t("editDialogTitle")}
       description={
         isPinned
-          ? `Pinned-шаг привязан к колонке журнала «${node.linkedFieldKey ?? ""}». Можно менять название и инструкцию, но удалить нельзя.`
-          : "Custom-шаг — ваш произвольный шаг pipeline'а."
+          ? t("editPinnedDescription", { key: node.linkedFieldKey ?? "" })
+          : t("editCustomDescription")
       }
       size="md"
       isSaving={busy}
@@ -1125,7 +1121,7 @@ function EditNodeDialog({
 
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Название шага
+            {t("stepName")}
           </Label>
           <Input
             value={title}
@@ -1136,31 +1132,31 @@ function EditNodeDialog({
 
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Подробное описание
+            {t("detail")}
           </Label>
           <Textarea
             value={detail}
             onChange={(event) => setDetail(event.target.value)}
-            placeholder="Что именно сделать. Можно несколько строк."
+            placeholder={t("detailPlaceholder")}
             className="min-h-[120px] rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
 
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Подсказка (показывается мелким шрифтом)
+            {t("hintLabel")}
           </Label>
           <Input
             value={hint}
             onChange={(event) => setHint(event.target.value)}
-            placeholder="Например: «См. фото в WhatsApp»"
+            placeholder={t("hintPlaceholder")}
             className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
 
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Фото-доказательство
+            {t("photoProof")}
           </Label>
           <div className="grid grid-cols-3 gap-2">
             {(["none", "optional", "required"] as const).map((mode) => (
@@ -1175,10 +1171,10 @@ function EditNodeDialog({
                 }`}
               >
                 {mode === "none"
-                  ? "Не нужно"
+                  ? t("photoNone")
                   : mode === "optional"
-                    ? "По желанию"
-                    : "Обязательно"}
+                    ? t("photoOptionalMode")
+                    : t("photoRequiredMode")}
               </button>
             ))}
           </div>
@@ -1192,9 +1188,9 @@ function EditNodeDialog({
             className="size-4 accent-[#5566f6]"
           />
           <div className="text-[13px] text-[#0b1024]">
-            <div className="font-medium">Требовать комментарий</div>
+            <div className="font-medium">{t("requireComment")}</div>
             <div className="text-[12px] text-[#6f7282]">
-              Сотрудник должен написать текст перед «Сделал».
+              {t("requireCommentHint")}
             </div>
           </div>
         </label>
@@ -1207,9 +1203,9 @@ function EditNodeDialog({
             className="size-4 accent-[#5566f6]"
           />
           <div className="text-[13px] text-[#0b1024]">
-            <div className="font-medium">Требовать подпись (ФИО)</div>
+            <div className="font-medium">{t("requireSignature")}</div>
             <div className="text-[12px] text-[#6f7282]">
-              Полезно для финальных шагов — сотрудник вводит ФИО.
+              {t("requireSignatureHint")}
             </div>
           </div>
         </label>

@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import type { HeatmapRow } from "@/lib/compliance-heatmap";
 
 type Props = {
@@ -16,15 +17,16 @@ type Props = {
  * = 900 div'ов, не нужен heavyweight chart engine.
  */
 export function ComplianceHeatmap({ rows, days }: Props) {
+  const t = useTranslations("reportsUi.complianceHeatmap");
+  const locale = useLocale();
   if (rows.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
         <div className="text-[15px] font-medium text-[#0b1024]">
-          Нет активных журналов
+          {t("emptyTitle")}
         </div>
         <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-          Включите хотя бы один журнал в /settings/journals — heatmap
-          появится автоматически.
+          {t("emptyHint")}
         </p>
       </div>
     );
@@ -38,22 +40,21 @@ export function ComplianceHeatmap({ rows, days }: Props) {
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            Карта заполнения журналов
+            {t("title")}
           </h2>
           <p className="mt-0.5 text-[13px] text-[#6f7282]">
-            Строки — журналы (сверху самые проблемные), колонки — дни
-            ({days.length}-дневное окно).
+            {t("description", { count: days.length })}
           </p>
         </div>
         <div className="flex items-center gap-3 text-[12px] text-[#6f7282]">
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-3 rounded-sm bg-[#22c55e]" /> заполнено
+            <span className="size-3 rounded-sm bg-[#22c55e]" /> {t("filled")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-3 rounded-sm bg-[#fda5a5]" /> пропуск
+            <span className="size-3 rounded-sm bg-[#fda5a5]" /> {t("missed")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-3 rounded-sm bg-[#ececf4]" /> будущее
+            <span className="size-3 rounded-sm bg-[#ececf4]" /> {t("future")}
           </span>
         </div>
       </div>
@@ -63,7 +64,7 @@ export function ComplianceHeatmap({ rows, days }: Props) {
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-white pr-3 text-left font-medium text-[#6f7282]">
-                Журнал
+                {t("journal")}
               </th>
               {days.map((d, i) => {
                 const dt = new Date(d);
@@ -80,7 +81,7 @@ export function ComplianceHeatmap({ rows, days }: Props) {
                   >
                     {dayNum === 1 || i === 0 ? (
                       <span className="text-[#0b1024]">
-                        {dt.toLocaleString("ru-RU", { month: "short" })}
+                        {dt.toLocaleString(locale, { month: "short" })}
                       </span>
                     ) : null}
                     <br />
@@ -137,10 +138,10 @@ export function ComplianceHeatmap({ rows, days }: Props) {
                           style={{ backgroundColor: bg }}
                           title={`${cell.date}: ${
                             cell.status === "filled"
-                              ? `${cell.count} запис(ей)`
+                              ? t("cellEntries", { count: cell.count })
                               : cell.status === "missed"
-                                ? "пропуск"
-                                : "будущее"
+                                ? t("missed")
+                                : t("future")
                           }`}
                         />
                       </td>

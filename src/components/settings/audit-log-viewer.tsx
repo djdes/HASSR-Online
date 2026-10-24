@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Loader2,
   ChevronLeft,
@@ -22,7 +23,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { sortJournalsByName } from "@/lib/journal-sort";
-import { pluralRu } from "@/lib/plural-ru";
 import {
   AUDIT_ACTION_LABELS,
   AUDIT_ENTITY_FILTER_OPTIONS,
@@ -31,6 +31,8 @@ import {
   auditDetailPairs,
   auditEntityLabel,
 } from "@/lib/audit-labels";
+
+type AuditTranslator = ReturnType<typeof useTranslations<"settingsUi.auditLogViewer">>;
 
 interface AuditEntry {
   id: string;
@@ -51,17 +53,20 @@ const JOURNAL_LABEL_BY_CODE: Record<string, string> =
 /** Журналы в фильтре — по алфавиту. */
 const JOURNALS_BY_NAME = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (item) => item.name);
 
-function formatDuration(ms: number | null | undefined): string | null {
+function formatDuration(
+  ms: number | null | undefined,
+  t: AuditTranslator
+): string | null {
   if (typeof ms !== "number" || ms <= 0) return null;
-  if (ms < 1000) return `${ms} мс`;
+  if (ms < 1000) return t("durMs", { ms });
   const sec = Math.round(ms / 1000);
-  if (sec < 60) return `${sec} сек`;
+  if (sec < 60) return t("durSec", { sec });
   const min = Math.floor(sec / 60);
   const restSec = sec % 60;
-  return restSec > 0 ? `${min} мин ${restSec} сек` : `${min} мин`;
+  return restSec > 0 ? t("durMinSec", { min, sec: restSec }) : t("durMin", { min });
 }
 
-function renderDetails(entry: AuditEntry): ReactElement {
+function renderDetails(entry: AuditEntry, t: AuditTranslator): ReactElement {
   const d = entry.details ?? {};
 
   // Pipeline step — самый важный case: показываем шаг с длительностью
@@ -75,7 +80,8 @@ function renderDetails(entry: AuditEntry): ReactElement {
       (d as { journalCode?: string }).journalCode ??
       "—";
     const dur = formatDuration(
-      (d as { msSinceFormOpen?: number }).msSinceFormOpen
+      (d as { msSinceFormOpen?: number }).msSinceFormOpen,
+      t
     );
     const photoUrl = (d as { photoUrl?: string }).photoUrl;
     return (
@@ -89,7 +95,7 @@ function renderDetails(entry: AuditEntry): ReactElement {
           >
             <img
               src={photoUrl}
-              alt="Фото"
+              alt={t("photoAlt")}
               loading="lazy"
               decoding="async"
               className="size-full object-cover"
@@ -107,8 +113,8 @@ function renderDetails(entry: AuditEntry): ReactElement {
           </div>
           <div className="text-[12px] text-[#6f7282]">
             {journalLabel}
-            {dur ? <span> · через {dur} от открытия формы</span> : null}
-            {photoUrl ? <span className="ml-1 text-emerald-700">· с фото</span> : null}
+            {dur ? <span>{t("afterFormOpen", { dur })}</span> : null}
+            {photoUrl ? <span className="ml-1 text-emerald-700">{t("withPhoto")}</span> : null}
           </div>
         </div>
       </div>
@@ -134,7 +140,7 @@ function renderDetails(entry: AuditEntry): ReactElement {
           >
             <img
               src={photoUrl}
-              alt="Фото"
+              alt={t("photoAlt")}
               loading="lazy"
               decoding="async"
               className="size-full object-cover"
@@ -143,7 +149,9 @@ function renderDetails(entry: AuditEntry): ReactElement {
         ) : null}
         <div className="min-w-0 space-y-1">
           <div className="font-medium text-[#0b1024]">
-            Фото-доказательство шага {typeof stepIdx === "number" ? stepIdx + 1 : "?"}
+            {t("photoEvidence", {
+              step: typeof stepIdx === "number" ? String(stepIdx + 1) : "?",
+            })}
           </div>
           <div className="text-[12px] text-[#6f7282]">{journalLabel}</div>
         </div>
@@ -159,7 +167,8 @@ function renderDetails(entry: AuditEntry): ReactElement {
       (d as { journalCode?: string }).journalCode ??
       "—";
     const dur = formatDuration(
-      (d as { totalDurationMs?: number }).totalDurationMs
+      (d as { totalDurationMs?: number }).totalDurationMs,
+      t
     );
     return (
       <div className="space-y-1">
@@ -167,10 +176,8 @@ function renderDetails(entry: AuditEntry): ReactElement {
           ✓ {journalLabel}
         </div>
         <div className="text-[12px] text-[#6f7282]">
-          {stepsCount
-            ? `${stepsCount} ${pluralRu(stepsCount, "шаг", "шага", "шагов")}`
-            : ""}
-          {dur ? ` · всего ${dur}` : ""}
+          {stepsCount ? t("stepsCount", { count: stepsCount }) : ""}
+          {dur ? t("totalDuration", { dur }) : ""}
         </div>
       </div>
     );
@@ -192,24 +199,28 @@ function renderDetails(entry: AuditEntry): ReactElement {
     let primary = "";
     if (entry.action === "settings.journal-pipelines.seed") {
       const count = (d as { createdCount?: number }).createdCount ?? 0;
-      primary = `Создано шагов из колонок журнала: ${count}`;
+      primary = t("pipelineSeed", { count });
     } else if (entry.action === "settings.journal-pipelines.seed-all") {
       const created = (d as { created?: number }).created ?? 0;
       const skippedExisting =
         (d as { skippedExisting?: number }).skippedExisting ?? 0;
       const skippedNoFields =
         (d as { skippedNoFields?: number }).skippedNoFields ?? 0;
-      primary = `Создано: ${created} · Уже было: ${skippedExisting} · Без колонок: ${skippedNoFields}`;
+      primary = t("pipelineSeedAll", {
+        created,
+        skippedExisting,
+        skippedNoFields,
+      });
     } else if (entry.action === "settings.journal-pipelines.clear-custom") {
       const removed = (d as { removed?: number }).removed ?? 0;
-      primary = `Удалено своих шагов: ${removed}`;
+      primary = t("pipelineClearCustom", { removed });
     } else if (entry.action === "settings.journal-pipelines.clear-all") {
       const removed = (d as { removed?: number }).removed ?? 0;
-      primary = `Удалено шагов: ${removed} (и из колонок, и своих)`;
+      primary = t("pipelineClearAll", { removed });
     } else if (entry.action.endsWith(".node.create")) {
-      primary = title ? `«${title}»` : "(новый шаг)";
+      primary = title ? `«${title}»` : t("nodeNew");
     } else if (entry.action.endsWith(".node.delete")) {
-      primary = title ? `«${title}»` : "(шаг)";
+      primary = title ? `«${title}»` : t("nodeStep");
     } else if (entry.action.endsWith(".node.update")) {
       // Подсветим какие поля поменялись
       const changed = Object.keys(d).filter(
@@ -218,19 +229,19 @@ function renderDetails(entry: AuditEntry): ReactElement {
       const titlePart = title ? `«${title}»` : "";
       const fieldsPart =
         changed.length > 0
-          ? ` · изменено: ${changed.map((key) => auditDetailLabel(key)).join(", ")}`
+          ? t("changedFields", {
+              fields: changed.map((key) => auditDetailLabel(key)).join(", "),
+            })
           : "";
-      primary = `${titlePart}${fieldsPart}`.trim() || "(изменён)";
+      primary = `${titlePart}${fieldsPart}`.trim() || t("nodeChanged");
     } else if (entry.action.endsWith(".node.move")) {
       const parent = (d as { parentId?: string | null }).parentId;
       primary = parent
-        ? "Перемещён внутрь другого шага"
-        : "Перемещён на верхний уровень";
+        ? t("movedInside")
+        : t("movedTop");
     } else if (entry.action === "settings.journal-pipelines.node.split") {
       const partNum = (d as { newPartNumber?: number }).newPartNumber;
-      primary = partNum
-        ? `Разделён → создан «(часть ${partNum})»`
-        : "Разделён";
+      primary = partNum ? t("splitWithPart", { part: partNum }) : t("split");
     }
 
     return (
@@ -244,7 +255,7 @@ function renderDetails(entry: AuditEntry): ReactElement {
                 : "bg-[#f5f0ff] text-[#7a5cff]"
             }`}
           >
-            {isPipeline ? "Инструкция" : "Подсказка"}
+            {isPipeline ? t("badgeInstruction") : t("badgeHint")}
           </span>
           {journalLabel}
         </div>
@@ -272,6 +283,8 @@ function renderDetails(entry: AuditEntry): ReactElement {
 }
 
 export function AuditLogViewer() {
+  const t = useTranslations("settingsUi.auditLogViewer");
+  const locale = useLocale();
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -351,10 +364,10 @@ export function AuditLogViewer() {
           }}
         >
           <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Все сущности" />
+            <SelectValue placeholder={t("allEntities")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все сущности</SelectItem>
+            <SelectItem value="all">{t("allEntities")}</SelectItem>
             {AUDIT_ENTITY_FILTER_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -370,10 +383,10 @@ export function AuditLogViewer() {
           }}
         >
           <SelectTrigger className="w-full sm:w-[220px]">
-            <SelectValue placeholder="Все действия" />
+            <SelectValue placeholder={t("allActions")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все действия</SelectItem>
+            <SelectItem value="all">{t("allActions")}</SelectItem>
             {Object.entries(AUDIT_ACTION_LABELS).map(([k, v]) => (
               <SelectItem key={k} value={k}>
                 {v.label}
@@ -389,10 +402,10 @@ export function AuditLogViewer() {
           }}
         >
           <SelectTrigger className="w-full sm:w-[260px]">
-            <SelectValue placeholder="Все журналы" />
+            <SelectValue placeholder={t("allJournals")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все журналы</SelectItem>
+            <SelectItem value="all">{t("allJournals")}</SelectItem>
             {JOURNALS_BY_NAME.map((j) => (
               <SelectItem key={j.code} value={j.code}>
                 {j.name}
@@ -403,7 +416,7 @@ export function AuditLogViewer() {
         <div className="relative w-full sm:w-[220px]">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
           <Input
-            placeholder="Сотрудник…"
+            placeholder={t("employeePlaceholder")}
             value={userQuery}
             onChange={(e) => setUserQuery(e.target.value)}
             className="h-10 rounded-2xl border-[#dcdfed] pl-9 text-[14px]"
@@ -417,7 +430,7 @@ export function AuditLogViewer() {
         </div>
       ) : groupedLogs.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] py-12 text-center text-[#6f7282]">
-          Записей не найдено
+          {t("noRecords")}
         </div>
       ) : (
         <>
@@ -449,15 +462,16 @@ export function AuditLogViewer() {
                         {first.userName ?? "—"}
                       </div>
                       <div className="text-[12px] text-[#6f7282]">
-                        {group.entries.length}{" "}
-                        {pluralRu(group.entries.length, "событие", "события", "событий")}
+                        {t("eventsCount", { count: group.entries.length })}
                       </div>
                     </div>
                     <div className="text-[12px] text-[#6f7282] tabular-nums">
-                      {new Date(last.createdAt).toLocaleString("ru-RU")}
+                      {new Date(last.createdAt).toLocaleString(locale)}
                       {sessionMs > 1000 ? (
                         <span className="ml-2 text-[#9b9fb3]">
-                          · сессия {formatDuration(sessionMs)}
+                          {t("sessionDuration", {
+                            dur: formatDuration(sessionMs, t) ?? "",
+                          })}
                         </span>
                       ) : null}
                     </div>
@@ -472,7 +486,7 @@ export function AuditLogViewer() {
                         >
                           <div className="w-[80px] shrink-0 text-[12px] tabular-nums text-[#6f7282]">
                             {new Date(log.createdAt).toLocaleTimeString(
-                              "ru-RU",
+                              locale,
                               { hour: "2-digit", minute: "2-digit", second: "2-digit" }
                             )}
                           </div>
@@ -482,7 +496,7 @@ export function AuditLogViewer() {
                             </Badge>
                           </div>
                           <div className="min-w-0 flex-1">
-                            {renderDetails(log)}
+                            {renderDetails(log, t)}
                           </div>
                           <div className="shrink-0 text-[11px] text-[#9b9fb3]">
                             {auditEntityLabel(log.entity)}
@@ -499,7 +513,7 @@ export function AuditLogViewer() {
           {/* Pagination */}
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[#6f7282]">
-              Страница {page} из {totalPages}
+              {t("pageOf", { page, total: totalPages })}
             </span>
             <div className="flex gap-1">
               <Button

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { createElement } from "react";
+import { NextIntlClientProvider } from "next-intl";
+import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
@@ -14,6 +15,10 @@ import {
   whatsNewMode,
 } from "./whats-new-seen";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "./whats-new-notes";
+
+const MESSAGES = JSON.parse(readFileSync("src/i18n/messages/ru.json", "utf8"));
+const renderIntl = (element: Parameters<typeof renderToStaticMarkup>[0]) =>
+  renderToStaticMarkup(createElement(NextIntlClientProvider, { locale: "ru", messages: MESSAGES, timeZone: "UTC" } as ComponentProps<typeof NextIntlClientProvider>, element));
 
 const V = "abc123";
 
@@ -74,7 +79,7 @@ describe("окно «Что нового» в серверной разметк�
   const notes = [{ category: "Интерфейс", items: ["Тема без морганий"] }];
 
   it("show — окно уже в HTML сервера и открыто (не всплывает после гидрации)", () => {
-    const html = renderToStaticMarkup(createElement(WhatsNewModal, { buildSha: V, notes, mode: "show" }));
+    const html = renderIntl(createElement(WhatsNewModal, { buildSha: V, notes, mode: "show" }));
     assert.match(html, /role="dialog"/);
     assert.match(html, /aria-labelledby="whats-new-title"/);
     assert.match(html, /Что нового в WeSetup/);
@@ -82,7 +87,7 @@ describe("окно «Что нового» в серверной разметк�
   });
 
   it("legacy — сервер окно не рисует (решит клиент один раз)", () => {
-    const html = renderToStaticMarkup(createElement(WhatsNewModal, { buildSha: V, notes, mode: "legacy" }));
+    const html = renderIntl(createElement(WhatsNewModal, { buildSha: V, notes, mode: "legacy" }));
     assert.equal(html, "");
   });
 });

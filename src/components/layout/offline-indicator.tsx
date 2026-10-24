@@ -1,6 +1,7 @@
 "use client";
 
 import { Cloud, CloudOff, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useOfflineQueue } from "@/lib/use-offline-submit";
 
@@ -11,6 +12,7 @@ import { useOfflineQueue } from "@/lib/use-offline-submit";
  * «Отправить сейчас».
  */
 export function OfflineIndicator() {
+  const t = useTranslations("layoutUi.offlineIndicator");
   const { online, pending, flushNow, busy } = useOfflineQueue();
 
   // Всё в порядке — молчим. Зелёная плашка «В сети» висела в шапке
@@ -20,10 +22,10 @@ export function OfflineIndicator() {
   if (online && pending === 0) return null;
 
   const label = online
-    ? `В сети · ждёт отправки ${pending}`
+    ? t("onlinePending", { count: pending })
     : pending > 0
-      ? `Офлайн · ${pending} в очереди`
-      : "Офлайн";
+      ? t("offlineQueued", { count: pending })
+      : t("offline");
 
   return (
     <button
@@ -32,8 +34,8 @@ export function OfflineIndicator() {
       disabled={busy || pending === 0}
       title={
         online
-          ? "Есть записи, которые не успели уйти. Нажмите, чтобы отправить сейчас."
-          : "Нет интернета. Записи сохраняются локально и отправятся, когда сеть вернётся."
+          ? t("titleOnline")
+          : t("titleOffline")
       }
       className={cn(
         // На телефоне 44px — как остальные кнопки шапки.

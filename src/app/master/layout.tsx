@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 import { AuthSessionProvider } from "@/components/layout/session-provider";
@@ -15,10 +16,13 @@ import "@/app/app-theme.css";
 export const dynamic = "force-dynamic";
 
 // Рабочий кабинет бэк-офиса — индексировать нечего.
-export const metadata = {
-  title: "Мастер-кабинет справочников — WeSetup",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata() {
+  const t = await getTranslations("masterUi.layout");
+  return {
+    title: t("title"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * `/master` — мастер-кабинет справочников пула служебного кода. Proxy уже
@@ -50,7 +54,7 @@ export default async function MasterLayout({ children }: { children: React.React
     .map((item) => ({ id: item.id, name: item.name }));
 
   return (
-    <DomainMessagesBoundary namespaces={["finishedProduct"]}>
+    <DomainMessagesBoundary namespaces={["finishedProduct", "masterUi"]}>
     <AuthSessionProvider session={session}>
       <SiteThemeProvider initialTheme={initialTheme}>
         <div className="app-shell min-h-screen bg-[#f4f5fb]" data-app-theme={initialTheme} suppressHydrationWarning>

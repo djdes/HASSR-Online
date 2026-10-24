@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -16,6 +17,7 @@ import { PageHeader } from "@/components/ui/page-header";
 export const dynamic = "force-dynamic";
 
 export default async function JournalTaskModePage() {
+  const t = await getTranslations("settingsUi.journalTaskModePage");
   const session = await requireAuth();
   if (
     !hasFullWorkspaceAccess({
@@ -61,66 +63,67 @@ export default async function JournalTaskModePage() {
           дублировал название из PageNav. Предупреждение про помещения
           вынесено отдельной плашкой — на светлом фоне оно заметнее. */}
       <PageHeader
-        title="Режимы раздачи задач"
-        description="Для каждого журнала выберите как именно создаются TasksFlow-задачи и как их проверяет ответственный. Уборку можно раздать по помещениям, гигиену — по сотрудникам, бракераж — по сменам. Один журнал = одна сводная задача по умолчанию. Если оставить «Как по умолчанию» — система сама подставит разумный режим под этот тип журнала."
+        title={t("title")}
+        description={t("description")}
       />
 
       {areaCount === 0 ? (
         <p className="max-w-[680px] rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[13px] leading-[1.55] text-[#8a5a06]">
-          ⚠ В организации не настроены помещения. Режим «На каждое
-          помещение» не будет создавать задачи пока не добавите цеха в{" "}
-          <Link href="/settings/areas" className="underline">
-            «Помещения»
-          </Link>
-          .
+          {t.rich("noAreasWarning", {
+            link: (chunks) => (
+              <Link href="/settings/areas" className="underline">
+                {chunks}
+              </Link>
+            ),
+          })}
         </p>
       ) : null}
 
       <PageGuide
         storageKey="journal-task-mode"
-        title="Как работают режимы раздачи задач"
+        title={t("guideTitle")}
         bullets={[
           {
-            title: "На каждое помещение",
-            body: "уборщикам прилетит N задач = N помещений из «Цеха». Каждый берёт своё.",
+            title: t("b1Title"),
+            body: t("b1Body"),
           },
           {
-            title: "На каждого сотрудника",
-            body: "каждый получает свою задачу — для гигиены и медосмотра, где «Иван прошёл, Петя нет» — норма.",
+            title: t("b2Title"),
+            body: t("b2Body"),
           },
           {
-            title: "По графику дежурств",
-            body: "Round-robin: каждый день дежурный новый. Идеально для ротации админ-задач (медкнижки, аудит).",
+            title: t("b3Title"),
+            body: t("b3Body"),
           },
           {
-            title: "Одна сводная задача",
-            body: "Простой режим — одна задача primary-исполнителю. Подходит когда один человек ведёт.",
+            title: t("b4Title"),
+            body: t("b4Body"),
           },
           {
-            title: "По задаче каждому ответственному",
-            body: "Для комиссий: бракераж готовой продукции, акт списания. Каждый член комиссии получает свою копию.",
+            title: t("b5Title"),
+            body: t("b5Body"),
           },
           {
-            title: "Сводная проверка",
-            body: "По умолчанию: когда исполнители заполнили — заведующий производством получает одну задачу «Проверить журнал». Открывает таблицу, ставит «Принять» или отклоняет конкретные ячейки.",
+            title: t("b6Title"),
+            body: t("b6Body"),
           },
           {
-            title: "Проверка каждой ячейки",
-            body: "Альтернатива: на каждое заполнение — отдельная задача проверки. Полезно для критичных журналов где каждое блюдо проверяется индивидуально.",
+            title: t("b7Title"),
+            body: t("b7Body"),
           },
         ]}
         qa={[
           {
-            q: "Что выбрать если не знаю",
-            a: "Оставьте «Как по умолчанию» — система сама подберёт разумный режим под тип журнала. Можете менять позже.",
+            q: t("q1"),
+            a: t("a1"),
           },
           {
-            q: "Когда нажать «Сброс»",
-            a: "Если жалеете о настройке и хотите вернуться к default'у. Не удаляет уже отправленные задачи в TasksFlow.",
+            q: t("q2"),
+            a: t("a2"),
           },
           {
-            q: "Что значит «Показывать сделано Иваном»",
-            a: "Опционально: если включено, уборщица 2 видит на своей карточке «помещение А — закрыл Иван». Хорошо для прозрачности команды.",
+            q: t("q3"),
+            a: t("a3"),
           },
         ]}
       />

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { Loader2, Users, X } from "lucide-react";
 
 import { CabinetAccessBlock, type AccessData } from "@/components/settings/master-cabinet-access-card";
@@ -16,6 +17,7 @@ const MASTER_ACCESS_ENDPOINT = "/api/master/access";
  * открытого кабинета. Портал в `document.body`, как у остальных окон.
  */
 export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; onClose: () => void }) {
+  const t = useTranslations("masterUi.masterAccessDialog");
   const [access, setAccess] = useState<AccessData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,19 +26,19 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
     fetch(MASTER_ACCESS_ENDPOINT, { cache: "no-store" })
       .then(async (response) => {
         const json = (await response.json().catch(() => null)) as (AccessData & { error?: string }) | null;
-        if (!response.ok || !json?.cabinets) throw new Error(json?.error ?? "Не удалось загрузить доступ");
+        if (!response.ok || !json?.cabinets) throw new Error(json?.error ?? t("loadFailed"));
         return json;
       })
       .then((data) => {
         if (!cancelled) setAccess(data);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Не удалось загрузить доступ");
+        if (!cancelled) setError(err instanceof Error ? err.message : t("loadFailed"));
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -70,17 +72,16 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
           </span>
           <div className="min-w-0 flex-1">
             <h2 id="master-access-title" className="text-[18px] font-semibold leading-snug text-[#0b1024]">
-              Доступ к кабинету
+              {t("title")}
             </h2>
             <p className="mt-1 text-[13px] leading-[1.5] text-[#6f7282]">
-              Кто ведёт меню и сырьё. Приглашённый по почте закреплён за кабинетом; уже заведённому сотруднику доступ
-              даётся одним выбором. В тарифе кабинет — +1 сотрудник в каждом подключённом пищеблоке.
+              {t("description")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t("close")}
             className="-mr-1 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
           >
             <X className="size-4" />
@@ -94,7 +95,7 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
           ) : !access ? (
             <div className="flex items-center gap-2 rounded-2xl border border-[#ececf4] px-4 py-3 text-[13px] text-[#6f7282]">
               <Loader2 className="size-4 animate-spin text-[#5566f6]" />
-              Загружаем…
+              {t("loading")}
             </div>
           ) : cabinet ? (
             <CabinetAccessBlock
@@ -105,7 +106,7 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
             />
           ) : (
             <p className="rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13px] text-[#a13a32]" role="alert">
-              Кабинет не найден среди кабинетов вашего аккаунта.
+              {t("notFound")}
             </p>
           )}
         </div>

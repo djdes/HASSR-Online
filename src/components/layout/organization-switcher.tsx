@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Check, Loader2, Plus, Settings, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
+import { DEMO_ORG_TTL_DAYS } from "@/lib/demo-organization.shared";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { switchOrganizationAndOpen } from "@/lib/switch-organization";
 
@@ -42,7 +44,7 @@ export function OrganizationSwitcher({
   onOpenCreate,
   showSettings = false,
   onNavigate,
-  label = "Организации",
+  label,
 }: {
   organizations: AccessibleOrganization[];
   activeId: string;
@@ -56,6 +58,7 @@ export function OrganizationSwitcher({
   /** Заголовок группы: в меню профиля «Организации», в nav-пилюле — «Сменить организацию». */
   label?: string;
 }) {
+  const t = useTranslations("layoutUi.organizationSwitcher");
   const router = useRouter();
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const [settingsId, setSettingsId] = useState<string | null>(null);
@@ -77,11 +80,11 @@ export function OrganizationSwitcher({
         body: JSON.stringify({ organizationId: organization.id }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось переключиться");
-      toast.success(`Переключено: ${organization.name}`);
+      if (!response.ok) throw new Error(data?.error ?? t("switchFailed"));
+      toast.success(t("switched", { name: organization.name }));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSwitchingId(null);
     }
@@ -100,7 +103,7 @@ export function OrganizationSwitcher({
       // Полная загрузка: смена организации перевыпускает куку сессии.
       await switchOrganizationAndOpen(organization.id, ORGANIZATION_SETTINGS_HREF);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось открыть настройки");
+      toast.error(error instanceof Error ? error.message : t("openSettingsFailed"));
       setSettingsId(null);
     }
   }
@@ -108,7 +111,7 @@ export function OrganizationSwitcher({
   return (
     <>
       <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-        {label}
+        {label ?? t("label")}
       </div>
       {organizations.map((organization) => {
         const active = organization.id === activeId;
@@ -148,7 +151,7 @@ export function OrganizationSwitcher({
               </span>
               {organization.isDemo ? (
                 <span className="shrink-0 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
-                  Демо
+                  {t("demo")}
                 </span>
               ) : null}
             </button>
@@ -162,8 +165,8 @@ export function OrganizationSwitcher({
                   event.stopPropagation();
                   void openSettings(organization);
                 }}
-                aria-label={`Настройки ${organization.name}`}
-                title="Настройки организации"
+                aria-label={t("settingsAria", { name: organization.name })}
+                title={t("settingsTitle")}
                 data-testid="org-switcher-settings"
                 className="flex size-10 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               >
@@ -185,7 +188,7 @@ export function OrganizationSwitcher({
           className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[14px] text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
         >
           <Plus className="size-5 shrink-0" />
-          Добавить организацию
+          {t("addOrganization")}
         </button>
       ) : null}
 
@@ -195,11 +198,11 @@ export function OrganizationSwitcher({
         <button
           type="button"
           onClick={() => onOpenCreate?.("demo")}
-          title="Отдельная тестовая организация с сотрудниками и заполненными журналами. Удалится через 7 дней или по кнопке."
+          title={t("demoTitle", { days: DEMO_ORG_TTL_DAYS })}
           className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[14px] text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
         >
           <Sparkles className="size-5 shrink-0" />
-          Создать демо-организацию
+          {t("createDemo")}
         </button>
       ) : null}
     </>

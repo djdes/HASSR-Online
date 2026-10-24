@@ -2,6 +2,7 @@
 
 import { Building2, FileText } from "lucide-react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -47,12 +48,14 @@ export function InvoiceCard({
   /** Введённый код — уходит в запрос, сумму сервер пересчитает сам. */
   promoCode?: string | null;
 }) {
+  const t = useTranslations("settingsUi.invoiceCard");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   if (!ready) return null;
 
-  const rub = (value: number) => `${value.toLocaleString("ru-RU")} ₽`;
+  const rub = (value: number) => `${value.toLocaleString(locale)} ₽`;
   const price = applyPromotion(amountRub, promotion);
   const totalRub = Math.max(0, price.priceRub - (discount ? discountForPrice(discount, price.priceRub) : 0));
 
@@ -65,13 +68,13 @@ export function InvoiceCard({
         body: JSON.stringify({ tariffKey: "monthly", ...(promoCode ? { promoCode } : {}) }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string; orderId?: number; pdfUrl?: string } | null;
-      if (!response.ok || !data?.orderId) throw new Error(data?.error ?? "Не удалось выставить счёт");
-      toast.success(`Счёт № ${data.orderId} выставлен — PDF скачивается, копия ушла на почту`);
+      if (!response.ok || !data?.orderId) throw new Error(data?.error ?? t("issueFailed"));
+      toast.success(t("issued", { id: data.orderId }));
       if (data.pdfUrl) window.open(data.pdfUrl, "_blank", "noopener");
       setOpen(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -85,15 +88,20 @@ export function InvoiceCard({
         </span>
         <div className="flex-1">
           <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Оплата по безналу для юрлиц
+            {t("title")}
           </h2>
           {pending ? (
             <>
               <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-                Счёт № {pending.id} на {rub(pending.amountRub)} выставлен
-                {pending.dueAt ? ` и действителен до ${new Date(pending.dueAt).toLocaleDateString("ru-RU")}` : ""}.
-                Как только деньги поступят, подписка продлится автоматически, а закрывающие
-                документы появятся в истории оплат ниже.
+                {t("pendingText", {
+                  id: pending.id,
+                  amount: rub(pending.amountRub),
+                  due: pending.dueAt
+                    ? t("dueSuffix", {
+                        date: new Date(pending.dueAt).toLocaleDateString(locale),
+                      })
+                    : "",
+                })}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a
@@ -101,29 +109,35 @@ export function InvoiceCard({
                   className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 >
                   <FileText className="size-4 text-[#5566f6]" />
-                  Скачать счёт (PDF)
+                  {t("downloadPdf")}
                 </a>
                 <span className="inline-flex h-10 items-center rounded-2xl bg-[#fff8eb] px-3 text-[13px] font-medium text-[#b25f00]">
-                  Ждём оплату
+                  {t("awaitingPayment")}
                 </span>
               </div>
             </>
           ) : (
             <>
               <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-                Не платите картой? Выставим счёт на{" "}
-                <PromoPrice price={price} personal={discount} size="text" tone="inherit" /> за {periodDays} дн. на{" "}
-                <strong className="text-[#0b1024]">{orgName}</strong>
-                {orgInn ? ` (ИНН ${orgInn})` : ""}. Бухгалтерия оплачивает по реквизитам, подписка
-                продлевается с даты поступления денег, закрывающие документы — автоматически.
+                {t.rich("offerText", {
+                  price: () => (
+                    <PromoPrice price={price} personal={discount} size="text" tone="inherit" />
+                  ),
+                  periodDays,
+                  orgName,
+                  inn: orgInn ? t("innParen", { inn: orgInn }) : "",
+                  org: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
+                })}
               </p>
               {!orgInn ? (
                 <p className="mt-2 text-[13px] text-[#b25f00]">
-                  Для счёта нужен ИНН организации —{" "}
-                  <Link href="/settings/organization" className="underline underline-offset-2">
-                    укажите его в настройках
-                  </Link>
-                  .
+                  {t.rich("innRequired", {
+                    link: (chunks) => (
+                      <Link href="/settings/organization" className="underline underline-offset-2">
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
                 </p>
               ) : null}
               <button
@@ -133,7 +147,7 @@ export function InvoiceCard({
                 className="mt-3 inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
               >
                 <FileText className="size-4 text-[#5566f6]" />
-                Выставить счёт
+                {t("issueInvoice")}
               </button>
             </>
           )}
@@ -145,15 +159,18 @@ export function InvoiceCard({
         onClose={() => setOpen(false)}
         onConfirm={issue}
         variant="info"
-        title={`Выставить счёт на ${rub(totalRub)}?`}
-        description={`Плательщик — ${orgName}${orgInn ? `, ИНН ${orgInn}` : ""}. Счёт действителен 7 дней.`}
+        title={t("confirmTitle", { amount: rub(totalRub) })}
+        description={t("confirmDescription", {
+          orgName,
+          inn: orgInn ? t("confirmInn", { inn: orgInn }) : "",
+        })}
         bullets={[
-          ...(discount ? [{ label: `Со скидкой: ${discountLabel(discount)}` }] : []),
-          { label: "PDF скачается сразу и уйдёт на вашу почту" },
-          { label: "Подписка продлится с даты поступления денег, баллы к счёту не применяются" },
-          { label: "УПД появится в истории оплат автоматически" },
+          ...(discount ? [{ label: t("bulletDiscount", { label: discountLabel(discount) }) }] : []),
+          { label: t("bulletPdf") },
+          { label: t("bulletExtend") },
+          { label: t("bulletUpd") },
         ]}
-        confirmLabel={busy ? "Выставляем…" : "Выставить счёт"}
+        confirmLabel={busy ? t("issuing") : t("issueInvoice")}
         confirmDisabled={busy}
       />
     </section>

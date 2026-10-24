@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { MasterCabinetClient } from "@/components/settings/master-cabinet-client";
 import { PageHeader } from "@/components/ui/page-header";
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
  * бэк-офиса. Только полный доступ (как «Общий справочник блюд»).
  */
 export default async function MasterCabinetSettingsPage() {
+  const t = await getTranslations("settingsUi.masterCabinetPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
   const orgId = getActiveOrgId(session);
@@ -31,8 +33,8 @@ export default async function MasterCabinetSettingsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Мастер-кабинет справочников"
-        description="Меню и сырьё загружает один человек в бэк-офисе — все объекты с вашим кодом получают их в журналы бракеража и скоропорта."
+        title={t("title")}
+        description={t("description")}
       />
       <MasterCabinetClient
         initialStatus={status}

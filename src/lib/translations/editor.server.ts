@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { flattenMessages } from "@/i18n/catalog-validation";
 import { LOCALES, type Locale } from "@/i18n/locales";
 import { loadBaseMessages } from "@/i18n/messages";
-import { looksUntranslated, placeholderNames, validateOverride, type FlatCatalog, type OverrideValidation } from "./catalog";
+import { isStaleOverride, looksUntranslated, placeholderNames, validateOverride, type FlatCatalog, type OverrideValidation } from "./catalog";
 import { buildCategories, type TranslationCategorySummary } from "./categories";
 import { invalidateTranslationOverrides } from "./overrides.server";
 
@@ -48,15 +48,18 @@ export function getBaseCatalogs(): Promise<BaseCatalogs> {
   return baseCatalogs;
 }
 
-async function overrideMap(keys?: string[]): Promise<Map<string, Partial<Record<Locale, string>>>> {
+type StoredOverride = { value: string; sourceRu: string | null };
+type OverrideRow = Partial<Record<Locale, StoredOverride>>;
+
+async function overrideMap(keys?: string[]): Promise<Map<string, OverrideRow>> {
   const rows = await db.translationOverride.findMany({
     where: keys ? { key: { in: keys } } : undefined,
-    select: { locale: true, key: true, value: true },
+    select: { locale: true, key: true, value: true, sourceRu: true },
   });
-  const map = new Map<string, Partial<Record<Locale, string>>>();
+  const map = new Map<string, OverrideRow>();
   for (const row of rows) {
     if (!(LOCALES as readonly string[]).includes(row.locale)) continue;
-    map.set(row.key, { ...map.get(row.key), [row.locale]: row.value });
+    map.set(row.key, { ...map.get(row.key), [row.locale]: { value: row.value, sourceRu: row.sourceRu } });
   }
   return map;
 }
@@ -68,6 +71,8 @@ export type TranslationEntry = {
   /** Значение из файла каталога — для сброса и сравнения. */
   base: Record<Locale, string>;
   overridden: Locale[];
+  /** Правка сделана вручную, а русский исходник с тех пор изменился. */
+  stale: Locale[];
   untranslated: Locale[];
   placeholders: string[];
 };
@@ -85,14 +90,16 @@ function placeholdersOf(key: string, russian: string): string[] {
 }
 
 /** Без `placeholders`: их добавляет `withPlaceholders` для выдаваемой страницы. */
-function toEntry(key: string, flat: Record<Locale, FlatCatalog>, overrides: Partial<Record<Locale, string>> | undefined): Omit<TranslationEntry, "placeholders"> {
+function toEntry(key: string, flat: Record<Locale, FlatCatalog>, overrides: OverrideRow | undefined): Omit<TranslationEntry, "placeholders"> {
   const base = Object.fromEntries(LOCALES.map((locale) => [locale, flat[locale][key] ?? ""])) as Record<Locale, string>;
-  const values = Object.fromEntries(LOCALES.map((locale) => [locale, overrides?.[locale] ?? base[locale]])) as Record<Locale, string>;
+  const values = Object.fromEntries(LOCALES.map((locale) => [locale, overrides?.[locale]?.value ?? base[locale]])) as Record<Locale, string>;
   return {
     key,
     values,
     base,
     overridden: LOCALES.filter((locale) => overrides?.[locale] !== undefined),
+    // Русская строка сверяется с файлом, en/uz — с русским, каким его видит сайт.
+    stale: LOCALES.filter((locale) => overrides?.[locale] !== undefined && isStaleOverride(overrides[locale]!.sourceRu, locale === "ru" ? base.ru : values.ru)),
     untranslated: LOCALES.filter((locale) => looksUntranslated(locale, values[locale], values.ru)),
   };
 }
@@ -101,20 +108,23 @@ function withPlaceholders(entry: Omit<TranslationEntry, "placeholders">): Transl
   return { ...entry, placeholders: placeholdersOf(entry.key, entry.base.ru) };
 }
 
-export type CategoryStats = { id: string; group: TranslationCategorySummary["group"]; namespace?: string; total: number; modified: number; untranslated: number };
+export type CategoryStats = { id: string; group: TranslationCategorySummary["group"]; namespace?: string; title?: string; total: number; modified: number; stale: number; untranslated: number };
 
 export async function listCategoryStats(): Promise<CategoryStats[]> {
   const { flat, categories } = await getBaseCatalogs();
   const overrides = await overrideMap();
   return categories.map((category) => {
     let modified = 0;
+    let stale = 0;
     let untranslated = 0;
     for (const key of category.keys) {
       const entry = toEntry(key, flat, overrides.get(key));
       if (entry.overridden.length) modified++;
+      if (entry.stale.length) stale++;
       if (entry.untranslated.length) untranslated++;
     }
-    return { id: category.id, group: category.group, namespace: category.namespace, total: category.keys.length, modified, untranslated };
+    const title = category.titleKey ? flat.ru[category.titleKey] : undefined;
+    return { id: category.id, group: category.group, namespace: category.namespace, title, total: category.keys.length, modified, stale, untranslated };
   });
 }
 
@@ -163,12 +173,18 @@ export async function saveOverride(actor: TranslationActor, input: { key: string
     select: { value: true },
   });
   const before = previous?.value ?? flat[locale][input.key];
+  // Снимок русского исходника: по нему видно, что строка устарела после его правки.
+  let sourceRu = flat.ru[input.key];
+  if (locale !== "ru") {
+    const russianOverride = await db.translationOverride.findUnique({ where: { locale_key: { locale: "ru", key: input.key } }, select: { value: true } });
+    sourceRu = russianOverride?.value ?? sourceRu;
+  }
   const after = verdict.action === "set" ? verdict.value : flat[locale][input.key];
   if (verdict.action === "set") {
     await db.translationOverride.upsert({
       where: { locale_key: { locale, key: input.key } },
-      update: { value: verdict.value, updatedById: actor.id },
-      create: { locale, key: input.key, value: verdict.value, updatedById: actor.id },
+      update: { value: verdict.value, sourceRu, updatedById: actor.id },
+      create: { locale, key: input.key, value: verdict.value, sourceRu, updatedById: actor.id },
     });
   } else if (previous) {
     // deleteMany: параллельный сброс той же строки не превращается в 500.

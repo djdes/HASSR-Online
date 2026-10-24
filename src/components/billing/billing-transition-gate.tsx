@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,7 +23,6 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import type { BillingPrice } from "@/lib/billing-period";
-import { employeesLabel } from "@/lib/plan-catalog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -82,6 +82,7 @@ export function BillingTransitionGate({
   /** Подпись под карточкой (например, про оплату счётом). */
   cardNote?: string | null;
 }) {
+  const t = useTranslations("billingUi.billingTransitionGate");
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
   // Выбор сотрудника в карточке открывается поверх страницы.
@@ -97,7 +98,7 @@ export function BillingTransitionGate({
           <OverviewBody
             copy={copy}
             payHref={payHref}
-            payLabel="Оплатить картой"
+            payLabel={t("payByCard")}
             onFree={() => setChooserOpen(true)}
           />
           {cardNote ? (
@@ -109,7 +110,7 @@ export function BillingTransitionGate({
             <Chooser
               onBack={() => setChooserOpen(false)}
               onDone={() => setChooserOpen(false)}
-              backLabel="Отмена"
+              backLabel={t("cancel")}
             />
           </ModalShell>
         ) : null}
@@ -140,6 +141,7 @@ export function VoluntaryFreeButton({
   paidUntilLabel: string | null;
   className?: string;
 }) {
+  const t = useTranslations("billingUi.billingTransitionGate");
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -155,14 +157,14 @@ export function VoluntaryFreeButton({
           className
         )}
       >
-        Перейти на бесплатный
+        {t("goFree")}
       </button>
       {open ? (
         <ModalShell onClose={() => setOpen(false)} closable>
           <Chooser
             onBack={() => setOpen(false)}
             onDone={() => setOpen(false)}
-            backLabel="Отмена"
+            backLabel={t("cancel")}
             voluntary
             paidUntilLabel={paidUntilLabel}
           />
@@ -181,6 +183,7 @@ function ModalShell({
   onClose: () => void;
   closable: boolean;
 }) {
+  const t = useTranslations("billingUi.billingTransitionGate");
   // Портал в <body> — как у ConfirmDialog: внутри оболочки мини-приложения
   // страница живёт в `main` на первом слое, и окно оказывалось под шапкой
   // и нижним меню (50-й слой) — кнопку «Перейти на бесплатный» закрывала
@@ -215,7 +218,7 @@ function ModalShell({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t("close")}
             className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
           >
             <X className="size-4" />
@@ -239,9 +242,10 @@ function FlowInModal({
   blocking: boolean;
   onLater: () => void;
 }) {
+  const t = useTranslations("billingUi.billingTransitionGate");
   const [step, setStep] = useState<"overview" | "choose">("overview");
   if (step === "choose") {
-    return <Chooser onBack={() => setStep("overview")} onDone={onLater} backLabel="Назад" />;
+    return <Chooser onBack={() => setStep("overview")} onDone={onLater} backLabel={t("back")} />;
   }
   return (
     <>
@@ -249,7 +253,7 @@ function FlowInModal({
         <OverviewBody
           copy={copy}
           payHref={payHref}
-          payLabel="Оплатить подписку"
+          payLabel={t("paySubscription")}
           onFree={() => setStep("choose")}
         />
       </div>
@@ -260,7 +264,7 @@ function FlowInModal({
             onClick={onLater}
             className="inline-flex h-10 w-full items-center justify-center rounded-2xl text-[14px] font-medium text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
           >
-            Решу позже
+            {t("later")}
           </button>
         </div>
       ) : null}
@@ -279,6 +283,7 @@ function OverviewBody({
   payLabel: string;
   onFree: () => void;
 }) {
+  const t = useTranslations("billingUi.billingTransitionGate");
   return (
     <div>
       <div className="flex items-start gap-3 pr-8">
@@ -306,7 +311,7 @@ function OverviewBody({
             <p className="mt-1 text-[13px] leading-[1.5] text-[#3c4053]">
               {copy.payPrice && copy.payTerms ? (
                 <>
-                  <PromoPrice price={copy.payPrice} size="sm" suffix="/мес" />
+                  <PromoPrice price={copy.payPrice} size="sm" suffix={t("perMonth")} />
                   {" · "}
                   {copy.payTerms}
                 </>
@@ -367,6 +372,7 @@ function Chooser({
   /** Оплачено до этой даты — предупредить, что срок не сохранится. */
   paidUntilLabel?: string | null;
 }) {
+  const t = useTranslations("billingUi.billingTransitionGate");
   const router = useRouter();
   const [step, setStep] = useState<Exclude<Step, "overview">>("choose");
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
@@ -381,7 +387,7 @@ function Chooser({
     try {
       const res = await fetch("/api/settings/subscription/transition", { cache: "no-store" });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data) throw new Error(data?.error ?? "Не удалось загрузить сотрудников");
+      if (!res.ok || !data) throw new Error(data?.error ?? t("loadFailed"));
       const list = (data.candidates ?? []) as Candidate[];
       setCandidates(list);
       setMultiOrg(data.multiOrg === true);
@@ -391,9 +397,9 @@ function Chooser({
       // Выбирать не из кого — сразу подтверждение.
       if (list.length === 1) setStep("confirm");
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : "Не удалось загрузить сотрудников");
+      setLoadError(error instanceof Error ? error.message : t("loadFailed"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -421,11 +427,11 @@ function Chooser({
         body: JSON.stringify(voluntary ? { keepUserId: chosen.id, voluntary: true } : { keepUserId: chosen.id }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new Error(data?.error ?? "Не удалось перейти на бесплатный тариф");
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? t("transitionFailed"));
       toast.success(
         data.archivedCount > 0
-          ? `Готово: бесплатный тариф. В архиве: ${employeesLabel(data.archivedCount)}`
-          : "Готово: бесплатный тариф"
+          ? t("doneArchived", { employees: t("employeesCount", { count: Number(data.archivedCount) }) })
+          : t("done")
       );
       if (data.selfArchived) {
         // Руководитель оставил другого — его сессия уже завершена.
@@ -435,7 +441,7 @@ function Chooser({
       onDone();
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось перейти на бесплатный тариф");
+      toast.error(error instanceof Error ? error.message : t("transitionFailed"));
     } finally {
       setBusy(false);
     }
@@ -451,29 +457,35 @@ function Chooser({
             id="billing-transition-title"
             className="pr-8 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]"
           >
-            Перейти на бесплатный тариф?
+            {t("confirmTitle")}
           </h2>
           <ul className="mt-4 space-y-2.5 text-[14px] leading-[1.55] text-[#3c4053]">
             <li className="flex gap-2.5">
               <Check className="mt-0.5 size-4 shrink-0 text-[#116b2a]" />
               <span>
-                В работе останется: <strong className="text-[#0b1024]">{chosen.name}</strong>
+                {t.rich("keepRemains", {
+                  name: chosen.name,
+                  b: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
+                })}
               </span>
             </li>
             {others.length > 0 ? (
             <li className="flex gap-2.5">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-[#b25f00]" />
               <span data-testid="billing-archive-list">
-                В архив перейдут: {employeesLabel(others.length)}
-                {preview.length ? ` — ${preview.join(", ")}${rest > 0 ? ` и ещё ${rest}` : ""}` : ""}. Они
-                не смогут входить в кабинет и приложение, их записи в журналах сохранятся.
+                {t("archiveList", {
+                  employees: t("employeesCount", { count: others.length }),
+                  names: preview.length
+                    ? ` — ${preview.join(", ")}${rest > 0 ? ` ${t("andMore", { count: rest })}` : ""}`
+                    : "",
+                })}
               </span>
             </li>
             ) : null}
             {others.length > 0 ? (
             <li className="flex gap-2.5">
               <Check className="mt-0.5 size-4 shrink-0 text-[#3848c7]" />
-              <span>Вернуть их можно после оплаты подписки: «Сотрудники» → «Архив».</span>
+              <span>{t("restoreHint")}</span>
             </li>
             ) : null}
           </ul>
@@ -482,28 +494,29 @@ function Chooser({
               data-testid="billing-paid-term-warning"
               className="mt-4 rounded-2xl bg-[#fff8eb] px-4 py-3 text-[13.5px] leading-[1.55] text-[#7a4a00]"
             >
-              Подписка оплачена до {paidUntilLabel}. При переходе на бесплатный оплаченный срок не
-              сохранится, автопродление выключится. Вернуть деньги за неиспользованные дни можно по
-              заявлению на{" "}
-              <a href="mailto:support@wesetup.ru" className="underline underline-offset-2">
-                support@wesetup.ru
-              </a>{" "}
-              —{" "}
-              <a href="/oferta" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-                п. 6.2 оферты
-              </a>
-              .
+              {t.rich("paidTerm", {
+                date: paidUntilLabel,
+                mail: (chunks) => (
+                  <a href="mailto:support@wesetup.ru" className="underline underline-offset-2">
+                    {chunks}
+                  </a>
+                ),
+                offer: (chunks) => (
+                  <a href="/oferta" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           ) : null}
           {!chosen.isSelf ? (
             <p className="mt-4 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13.5px] leading-[1.55] text-[#a13a32]">
-              Вы тоже перейдёте в архив и сразу выйдете из кабинета.
+              {t("selfArchived")}
             </p>
           ) : null}
           {!chosen.canSignIn ? (
             <p className="mt-3 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13.5px] leading-[1.55] text-[#a13a32]">
-              У «{chosen.name}» нет пароля и Telegram — войти в кабинет будет некому. Лучше оставить
-              себя.
+              {t("noSignIn", { name: chosen.name })}
             </p>
           ) : null}
         </div>
@@ -515,7 +528,7 @@ function Chooser({
             className="inline-flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
           >
             <ArrowLeft className="size-4" />
-            Назад
+            {t("back")}
           </button>
           <button
             type="button"
@@ -525,7 +538,7 @@ function Chooser({
             className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#e5484d] px-5 text-[15px] font-medium text-white shadow-[0_12px_30px_-14px_rgba(229,72,77,0.75)] transition-colors duration-150 hover:bg-[#d93d42] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Перейти на бесплатный
+            {t("goFree")}
           </button>
         </div>
       </>
@@ -539,23 +552,22 @@ function Chooser({
           id="billing-transition-title"
           className="pr-8 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]"
         >
-          Кто остаётся на бесплатном тарифе
+          {t("chooserTitle")}
         </h2>
         <p className="mt-2 text-[13.5px] leading-[1.55] text-[#6f7282]">
-          Бесплатный тариф — {employeesLabel(1)}. Остальные перейдут в архив; вернуть их можно после
-          оплаты подписки.
+          {t("chooserLead", { employees: t("employeesCount", { count: 1 }) })}
         </p>
 
         {loadError ? (
           <div className="mt-4 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13.5px] text-[#a13a32]">
             {loadError}{" "}
             <button type="button" onClick={() => void load()} className="font-medium underline underline-offset-2">
-              Повторить
+              {t("retry")}
             </button>
           </div>
         ) : !candidates ? (
           <div className="mt-6 flex items-center justify-center gap-2 py-6 text-[13.5px] text-[#6f7282]">
-            <Loader2 className="size-4 animate-spin" /> Загружаем сотрудников…
+            <Loader2 className="size-4 animate-spin" /> {t("loadingEmployees")}
           </div>
         ) : (
           <>
@@ -565,12 +577,12 @@ function Chooser({
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Найти сотрудника"
+                  placeholder={t("searchEmployee")}
                   className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white pl-10 pr-4 text-[14.5px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                 />
               </label>
             ) : null}
-            <div role="radiogroup" aria-label="Кто остаётся" className="mt-4 space-y-2">
+            <div role="radiogroup" aria-label={t("whoStays")} className="mt-4 space-y-2">
               {visible.map((c) => {
                 const active = c.id === selected;
                 return (
@@ -601,19 +613,19 @@ function Chooser({
                         <span className="truncate text-[14.5px] font-medium text-[#0b1024]">{c.name}</span>
                         {c.isSelf ? (
                           <span className="rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11.5px] font-medium text-[#3848c7]">
-                            Вы
+                            {t("you")}
                           </span>
                         ) : null}
                         {c.isOwner ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-[#fff3dd] px-2 py-0.5 text-[11.5px] font-medium text-[#8a5300]">
-                            <Crown className="size-3" /> Владелец
+                            <Crown className="size-3" /> {t("owner")}
                           </span>
                         ) : null}
                       </span>
                       <span className="mt-0.5 block truncate text-[12.5px] text-[#6f7282]">
                         {[c.position, multiOrg ? c.organizationName : null].filter(Boolean).join(" · ") ||
-                          "Сотрудник"}
-                        {!c.canSignIn ? " · не может войти в кабинет" : ""}
+                          t("employee")}
+                        {!c.canSignIn ? t("cannotSignIn") : ""}
                       </span>
                     </span>
                     <span
@@ -629,7 +641,7 @@ function Chooser({
                 );
               })}
               {visible.length === 0 ? (
-                <p className="py-4 text-center text-[13px] text-[#9b9fb3]">Никого не нашли</p>
+                <p className="py-4 text-center text-[13px] text-[#9b9fb3]">{t("nobodyFound")}</p>
               ) : null}
             </div>
           </>
@@ -651,7 +663,7 @@ function Chooser({
           data-testid="billing-next"
           className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Далее
+          {t("next")}
           <ArrowRight className="size-4" />
         </button>
       </div>

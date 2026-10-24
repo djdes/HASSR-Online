@@ -363,7 +363,7 @@ export default function MiniTodayPage() {
             style={{ color: "var(--mini-warn)" }}
           />
           <span className="min-w-0 flex-1">
-            Нужно ознакомиться с документами:{" "}
+            {t("pendingAck")}{" "}
             <span className="font-semibold">{data.pendingAck}</span>
           </span>
         </Link>

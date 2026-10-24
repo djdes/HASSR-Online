@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   CheckCircle2,
   Loader2,
@@ -51,32 +52,40 @@ type FillResult = {
   }[];
 };
 
-const RU_DAYS_SHORT = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
-const RU_MONTHS_SHORT = [
-  "янв",
-  "фев",
-  "мар",
-  "апр",
-  "май",
-  "июн",
-  "июл",
-  "авг",
-  "сен",
-  "окт",
-  "ноя",
-  "дек",
-];
+type Translate = ReturnType<typeof useTranslations<"dashboardUi.catchUpClient">>;
 
-function formatDayHeader(dateKey: string) {
+function formatDayHeader(dateKey: string, t: Translate) {
   const d = new Date(`${dateKey}T00:00:00Z`);
-  return {
-    weekday: RU_DAYS_SHORT[d.getUTCDay()],
-    label: `${d.getUTCDate()} ${RU_MONTHS_SHORT[d.getUTCMonth()]}`,
-    full: `${RU_DAYS_SHORT[d.getUTCDay()]} ${d.getUTCDate()} ${RU_MONTHS_SHORT[d.getUTCMonth()]}`,
-  };
+  const days = [
+    t("daySun"),
+    t("dayMon"),
+    t("dayTue"),
+    t("dayWed"),
+    t("dayThu"),
+    t("dayFri"),
+    t("daySat"),
+  ];
+  const months = [
+    t("monthJan"),
+    t("monthFeb"),
+    t("monthMar"),
+    t("monthApr"),
+    t("monthMay"),
+    t("monthJun"),
+    t("monthJul"),
+    t("monthAug"),
+    t("monthSep"),
+    t("monthOct"),
+    t("monthNov"),
+    t("monthDec"),
+  ];
+  const weekday = days[d.getUTCDay()];
+  const label = `${d.getUTCDate()} ${months[d.getUTCMonth()]}`;
+  return { weekday, label, full: `${weekday} ${label}` };
 }
 
 export function CatchUpClient() {
+  const t = useTranslations("dashboardUi.catchUpClient");
   const router = useRouter();
   const [data, setData] = useState<GridResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,13 +101,13 @@ export function CatchUpClient() {
       const res = await fetch("/api/dashboard/catch-up", { cache: "no-store" });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error || "Ошибка загрузки");
+        throw new Error(j?.error || t("loadError"));
       }
       const j = (await res.json()) as GridResponse;
       setData(j);
       setSelected(new Map());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка");
+      setError(e instanceof Error ? e.message : t("error"));
     } finally {
       setLoading(false);
     }
@@ -167,24 +176,20 @@ export function CatchUpClient() {
         body: JSON.stringify({ targets }),
       });
       const j = (await res.json().catch(() => null)) as FillResult | null;
-      if (!res.ok) throw new Error((j as { error?: string } | null)?.error || "Ошибка");
+      if (!res.ok) throw new Error((j as { error?: string } | null)?.error || t("error"));
       const totalCopied = j?.totalCopied ?? 0;
       const noSource = j?.results.filter((r) => r.skippedReason === "no_source").length ?? 0;
       if (totalCopied > 0) {
-        toast.success(
-          `Заполнено ${totalCopied} ${totalCopied === 1 ? "запись" : totalCopied < 5 ? "записи" : "записей"}`
-        );
+        toast.success(t("filledToast", { count: totalCopied }));
       } else if (noSource > 0) {
-        toast.info(
-          `Не из чего копировать — в выбранных журналах ещё нет ни одной записи раньше выбранной даты.`
-        );
+        toast.info(t("noSourceToast"));
       } else {
-        toast.info("Все выбранные ячейки уже были заполнены.");
+        toast.info(t("alreadyFilledToast"));
       }
       await loadGrid();
       startTransition(() => router.refresh());
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("error"));
     } finally {
       setSubmitting(false);
     }
@@ -195,8 +200,8 @@ export function CatchUpClient() {
       {/* Пилюлю «Пропусков всего» не переносим: то же число стоит прямо
           под шапкой на кнопке «Выбрать все пропуски (N)». */}
       <PageHeader
-        title="Догнать пропуски"
-        description="Сетка последних 14 дней по всем ежедневным журналам. Красные ячейки — пропуски. Выберите нужные и нажмите «Заполнить» — система скопирует данные из ближайшего непустого дня."
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
@@ -208,7 +213,7 @@ export function CatchUpClient() {
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
           >
             <Sparkles className="size-4 text-[#5566f6]" />
-            Выбрать все пропуски ({totalMissing})
+            {t("selectAllMissing", { count: totalMissing })}
           </button>
           <button
             type="button"
@@ -216,7 +221,7 @@ export function CatchUpClient() {
             disabled={loading || totalSelected === 0}
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#3c4053] transition-colors hover:border-[#dcdfed] hover:bg-[#fafbff] disabled:opacity-50"
           >
-            Сбросить
+            {t("reset")}
           </button>
         </div>
         <button
@@ -230,7 +235,7 @@ export function CatchUpClient() {
           ) : (
             <Wand2 className="size-4" />
           )}
-          Заполнить выбранное ({totalSelected})
+          {t("fillSelected", { count: totalSelected })}
         </button>
       </div>
 
@@ -266,10 +271,10 @@ export function CatchUpClient() {
             <thead>
               <tr>
                 <th className="sticky left-0 z-10 border-b border-[#ececf4] bg-white px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  Журнал
+                  {t("journalColumn")}
                 </th>
                 {data.days.map((d) => {
-                  const h = formatDayHeader(d);
+                  const h = formatDayHeader(d, t);
                   return (
                     <th
                       key={d}
@@ -306,7 +311,7 @@ export function CatchUpClient() {
                         </div>
                       ) : (
                         <div className="mt-0.5 text-[11px] text-[#a13a32]">
-                          Нет активного документа
+                          {t("noActiveDocument")}
                         </div>
                       )}
                     </Link>
@@ -354,14 +359,14 @@ export function CatchUpClient() {
                           ].join(" ")}
                           title={
                             cell.status === "filled"
-                              ? `${cell.date} — заполнено${row.expectedRoster ? ` (${cell.filledCount}/${row.expectedRoster})` : ""}`
+                              ? `${cell.date} — ${t("cellFilled")}${row.expectedRoster ? ` (${cell.filledCount}/${row.expectedRoster})` : ""}`
                               : cell.status === "missing"
-                                ? `${cell.date} — пропуск`
+                                ? `${cell.date} — ${t("cellMissing")}`
                                 : cell.status === "future"
-                                  ? `${cell.date} — будущая дата`
+                                  ? `${cell.date} — ${t("cellFuture")}`
                                   : cell.status === "out_of_period"
-                                    ? `${cell.date} — вне периода документа`
-                                    : `${cell.date} — нет активного документа`
+                                    ? `${cell.date} — ${t("cellOutOfPeriod")}`
+                                    : `${cell.date} — ${t("cellNoDocument")}`
                           }
                         >
                           {cell.status === "filled" ? (
@@ -391,19 +396,19 @@ export function CatchUpClient() {
       <div className="flex flex-wrap gap-3 text-[12px] text-[#6f7282]">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-3 rounded-md border border-[#c8f0d5] bg-[#ecfdf5]" />
-          Заполнено
+          {t("legendFilled")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-3 rounded-md border border-[#ffd2cd] bg-[#fff4f2]" />
-          Пропуск (можно выбрать)
+          {t("legendMissing")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-3 rounded-md border border-[#5566f6] bg-[#5566f6]" />
-          Выбрано
+          {t("legendSelected")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-3 rounded-md border border-dashed border-[#ececf4] bg-white" />
-          Будущая дата / вне периода
+          {t("legendFuture")}
         </span>
       </div>
     </div>

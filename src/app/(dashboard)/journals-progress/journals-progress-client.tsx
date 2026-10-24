@@ -5,9 +5,9 @@ import { useLiveRefetch } from "@/lib/use-live-refetch";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Loader2, RefreshCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
-import { pluralRu } from "@/lib/plural-ru";
 import JournalsProgressLoading from "./loading";
 
 type Status = "untouched" | "in_progress" | "completed";
@@ -26,6 +26,7 @@ type Item = {
 type Counts = { untouched: number; in_progress: number; completed: number };
 
 export function JournalsProgressClient() {
+  const t = useTranslations("journalsProgressUi.journalsProgressClient");
   const [items, setItems] = useState<Item[]>([]);
   const [counts, setCounts] = useState<Counts>({
     untouched: 0,
@@ -49,7 +50,7 @@ export function JournalsProgressClient() {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось загрузить");
+        toast.error(data?.error ?? t("loadFailed"));
         return;
       }
       setItems(data.items ?? []);
@@ -57,7 +58,7 @@ export function JournalsProgressClient() {
     } catch (err) {
       // AbortError при unmount — игнорируем, это штатный сценарий.
       if (err instanceof DOMException && err.name === "AbortError") return;
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -109,10 +110,10 @@ export function JournalsProgressClient() {
       <PageHeader
         title={
           counts.untouched + counts.in_progress > 0
-            ? `Сегодня нужно заполнить: ${counts.untouched + counts.in_progress} ${pluralRu(counts.untouched + counts.in_progress, "журнал", "журнала", "журналов")}`
-            : "Все журналы на сегодня готовы"
+            ? t("titleTodo", { count: counts.untouched + counts.in_progress })
+            : t("titleDone")
         }
-        description="Только те журналы, которые нужно вести сегодня. Откройте журнал, чтобы заполнить или проверить. Обновляется автоматически."
+        description={t("description")}
         actions={
           <button
             type="button"
@@ -125,7 +126,7 @@ export function JournalsProgressClient() {
             ) : (
               <RefreshCcw className="size-4" />
             )}
-            Обновить
+            {t("refresh")}
           </button>
         }
       />
@@ -136,19 +137,19 @@ export function JournalsProgressClient() {
             где ещё надо подтолкнуть сотрудников. */}
         <div className="lg:col-span-2">
           <Column
-            title={`Нужно внимание · ${untouched.length + inProgress.length}`}
-            subtitle="Не начаты или не закончены — проверь, подтолкни сотрудников"
+            title={t("attentionTitle", { count: untouched.length + inProgress.length })}
+            subtitle={t("attentionSubtitle")}
             tone="warn"
             items={[...inProgress, ...untouched]}
-            emptyHint="Все журналы либо готовы, либо ещё не подошёл срок"
+            emptyHint={t("attentionEmpty")}
           />
         </div>
         <Column
-          title={`Готовы · ${completed.length}`}
-          subtitle="Все задачи закрыты"
+          title={t("readyTitle", { count: completed.length })}
+          subtitle={t("readySubtitle")}
           tone="success"
           items={completed}
-          emptyHint="Пока ни один журнал не сделан полностью"
+          emptyHint={t("readyEmpty")}
         />
       </div>
     </div>
@@ -212,6 +213,7 @@ function ItemRow({
   item: Item;
   tone: "success" | "warn" | "muted";
 }) {
+  const t = useTranslations("journalsProgressUi.journalsProgressClient");
   const href = item.primaryDocumentId
     ? `/journals/${item.code}/documents/${item.primaryDocumentId}`
     : `/journals/${item.code}`;
@@ -234,7 +236,7 @@ function ItemRow({
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-[#6f7282]">
             {item.totalCount > 0 ? (
               <span className="rounded-full bg-white px-2 py-0.5 font-medium text-[#3c4053]">
-                строк: {item.realCount}/{item.totalCount}
+                {t("rows", { done: item.realCount, total: item.totalCount })}
               </span>
             ) : null}
             {item.tfTotal > 0 ? (
@@ -243,7 +245,7 @@ function ItemRow({
               </span>
             ) : null}
             {item.realCount === 0 && item.tfCompleted === 0 ? (
-              <span className="text-[#9b9fb3]">пока пусто</span>
+              <span className="text-[#9b9fb3]">{t("empty")}</span>
             ) : null}
           </div>
         </div>

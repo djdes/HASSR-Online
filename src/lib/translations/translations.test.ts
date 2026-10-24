@@ -3,7 +3,7 @@ import { test } from "node:test";
 import ru from "@/i18n/messages/ru.json";
 import { flattenMessages } from "@/i18n/catalog-validation";
 import { loadBaseMessages, loadMessages } from "@/i18n/messages";
-import { applyOverrides, looksUntranslated, placeholderNames, readCatalogString, validateOverride } from "./catalog";
+import { applyOverrides, isStaleOverride, looksUntranslated, placeholderNames, readCatalogString, selectSafeOverrides, validateOverride } from "./catalog";
 import { buildCategories, CURATED_CATEGORIES } from "./categories";
 import { AUTO_TRANSLATE_BATCH, buildAutoTranslateJob, parseAutoTranslateReply } from "./auto-translate";
 
@@ -69,6 +69,8 @@ test("categories cover every catalog key exactly once and start with the hygiene
   assert.ok(!hygiene.some((key) => key.startsWith("journalFields.health_check.")));
   // Every curated prefix still points at real strings after catalog refactors.
   for (const category of CURATED_CATEGORIES) {
+    // Прочие журналы не обязаны иметь строки в каждом пространстве — их проверяет тест ниже.
+    if (category.id.startsWith("journal-") && category.id !== "journal-hygiene") continue;
     for (const prefix of category.prefixes) {
       assert.ok(keys.some((key) => key === prefix || key.startsWith(`${prefix}.`)), `${category.id}: ${prefix}`);
     }
@@ -93,4 +95,39 @@ test("auto-translate job keeps the dispatcher type and accepts only safe replies
 
 test("loadMessages reads the catalog files under node --test", async () => {
   assert.equal(await loadMessages("en"), await loadBaseMessages("en"));
+});
+
+test("every journal of the catalog has its own category with a title from the catalog", () => {
+  const flat = flattenMessages(ru);
+  const categories = buildCategories(Object.keys(flat));
+  const journalCategories = categories.filter((category) => category.group === "journals");
+  assert.ok(journalCategories.length > 20);
+  for (const category of journalCategories) {
+    assert.ok(category.keys.length > 0, category.id);
+    assert.ok(category.titleKey && flat[category.titleKey], `${category.id} title`);
+  }
+  assert.ok(journalCategories.find((category) => category.id === "journal-climate_control")?.keys.some((key) => key.startsWith("climate.")));
+});
+
+test("big client namespaces are split per component in other sections", () => {
+  const categories = buildCategories(["journalUi.medBook.save", "journalUi.photoCapture.title", "settingsUi.staff.add", "unknownPlain.key"]);
+  const ids = categories.filter((category) => category.group === "other").map((category) => category.id);
+  assert.deepEqual(ids, ["ns:journalUi.medBook", "ns:journalUi.photoCapture", "ns:settingsUi.staff", "ns:unknownPlain"]);
+});
+
+test("a hand-made translation is marked stale when the Russian source changes, and never loses its value", () => {
+  assert.equal(isStaleOverride("Сохранить", "Сохранить"), false);
+  assert.equal(isStaleOverride("Сохранить", "Записать"), true);
+  // Правки, сохранённые до появления снимка исходника, не помечаем.
+  assert.equal(isStaleOverride(null, "Записать"), false);
+  assert.equal(isStaleOverride(undefined, "Записать"), false);
+});
+
+test("overrides whose arguments no longer match the Russian source are not applied", () => {
+  const russian: Record<string, string> = { "a.title": "Журнал {name}", "a.plain": "Сохранить" };
+  const safe = selectSafeOverrides(
+    [["a.title", "Log {name}"], ["a.title", "Log"], ["a.plain", "Save"], ["gone", "x"], ["a.plain", "Save {oops"]],
+    (key) => russian[key],
+  );
+  assert.deepEqual(safe, [["a.title", "Log {name}"], ["a.plain", "Save"]]);
 });

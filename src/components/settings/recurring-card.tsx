@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Loader2, RefreshCw } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FORMAT_LOCALES, formatNumber, type Locale } from "@/i18n/locales";
 
 /**
  * Автопродление подписки.
@@ -30,12 +32,14 @@ export function RecurringCard({
   nextChargeAt: string | null;
   monthlyRub: number;
 }) {
+  const t = useTranslations("settingsUi.recurringCard");
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const nextChargeLabel = nextChargeAt
-    ? new Date(nextChargeAt).toLocaleDateString("ru-RU")
+    ? new Date(nextChargeAt).toLocaleDateString(FORMAT_LOCALES[locale])
     : null;
 
   async function disable() {
@@ -46,13 +50,13 @@ export function RecurringCard({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось отключить");
+        throw new Error(data?.error ?? t("disableFailed"));
       }
-      toast.success("Автопродление отключено");
+      toast.success(t("disabled"));
       setConfirmOpen(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -68,7 +72,7 @@ export function RecurringCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[16px] font-semibold text-[#0b1024]">
-                Автопродление
+                {t("title")}
               </span>
               <span
                 className={
@@ -77,32 +81,30 @@ export function RecurringCard({
                     : "rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[11px] font-medium text-[#6f7282]"
                 }
               >
-                {active ? "Включено" : "Выключено"}
+                {active ? t("on") : t("off")}
               </span>
             </div>
 
             {active ? (
               <p className="mt-1.5 max-w-[560px] text-[13.5px] leading-[1.55] text-[#6f7282]">
-                Подписка продлевается сама.
+                {t("activeIntro")}
                 {nextChargeLabel ? (
                   <>
                     {" "}
-                    Следующее списание{" "}
-                    <span className="font-medium text-[#0b1024]">
-                      {nextChargeLabel}
-                    </span>{" "}
-                    на {monthlyRub.toLocaleString("ru-RU")} ₽.
+                    {t.rich("nextCharge", {
+                      date: nextChargeLabel,
+                      amount: formatNumber(locale, monthlyRub),
+                      strong: (chunks) => (
+                        <span className="font-medium text-[#0b1024]">{chunks}</span>
+                      ),
+                    })}
                   </>
                 ) : null}{" "}
-                О сумме предупредим за 3 дня. Отключить можно в любой момент —
-                доступ сохранится до конца оплаченного периода.
+                {t("activeOutro")}
               </p>
             ) : (
               <p className="mt-1.5 max-w-[560px] text-[13.5px] leading-[1.55] text-[#6f7282]">
-                Оплата разовая — когда период закончится, доступ к платным
-                функциям приостановится. Чтобы включить автопродление, оплатите
-                месяц вперёд с галочкой согласия: оплаченное время не сгорает,
-                новый месяц прибавится к текущему сроку.
+                {t("inactiveBody")}
               </p>
             )}
           </div>
@@ -116,7 +118,7 @@ export function RecurringCard({
             className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Отключить автопродление
+            {t("disable")}
           </button>
         ) : (
           <Link
@@ -124,7 +126,7 @@ export function RecurringCard({
             className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
           >
             <CalendarClock className="size-4" />
-            Включить автопродление
+            {t("enable")}
           </Link>
         )}
       </div>
@@ -134,15 +136,15 @@ export function RecurringCard({
         onClose={() => setConfirmOpen(false)}
         onConfirm={disable}
         variant="info"
-        title="Отключить автопродление?"
-        description="Списания прекратятся. Доступ останется до конца оплаченного периода."
+        title={t("confirmTitle")}
+        description={t("confirmDescription")}
         bullets={[
           nextChargeLabel
-            ? { label: `Доступ сохранится до ${nextChargeLabel}`, tone: "info" as const }
-            : { label: "Оплаченный период не пропадёт", tone: "info" as const },
-          { label: "Включить обратно можно в любой момент" },
+            ? { label: t("accessUntil", { date: nextChargeLabel }), tone: "info" as const }
+            : { label: t("paidKept"), tone: "info" as const },
+          { label: t("canReenable") },
         ]}
-        confirmLabel="Отключить"
+        confirmLabel={t("confirmLabel")}
       />
     </section>
   );

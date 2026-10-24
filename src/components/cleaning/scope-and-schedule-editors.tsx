@@ -31,10 +31,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Camera, CameraOff, GripVertical, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import type { ScopeStep } from "@/lib/cleaning-document";
 import {
-  WEEKDAY_LABELS_RU,
   WEEKDAY_MASK_ALL,
   WEEKDAY_MASK_NONE,
   WEEKDAY_MASK_WEEKENDS,
@@ -83,6 +83,7 @@ function SortableScopeRow(props: {
   effectiveRequirePhoto?: boolean;
   onCyclePhoto?: () => void;
 }) {
+  const t = useTranslations("cleaningUi.scopeAndScheduleEditors");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: props.item.uid });
   const style = {
@@ -103,7 +104,7 @@ function SortableScopeRow(props: {
         type="button"
         {...attributes}
         {...listeners}
-        aria-label="Перетащить шаг"
+        aria-label={t("dragStep")}
         className="flex size-7 shrink-0 cursor-grab items-center justify-center rounded-lg text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#5566f6] active:cursor-grabbing"
       >
         <GripVertical className="size-4" />
@@ -136,15 +137,15 @@ function SortableScopeRow(props: {
         <button
           type="button"
           onClick={props.onCyclePhoto}
-          aria-label="Требовать фото для этого шага"
+          aria-label={t("requirePhotoStep")}
           title={
             props.item.requirePhoto === true
-              ? "Фото обязательно (override)"
+              ? t("photoRequired")
               : props.item.requirePhoto === false
-                ? "Фото не требуется (override)"
+                ? t("photoNotRequired")
                 : props.effectiveRequirePhoto
-                  ? "Наследует «Требовать фото» помещения (сейчас включено)"
-                  : "Наследует «Требовать фото» помещения (сейчас выключено)"
+                  ? t("inheritOn")
+                  : t("inheritOff")
           }
           className={`flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
             props.item.requirePhoto === true
@@ -167,7 +168,7 @@ function SortableScopeRow(props: {
         type="button"
         onClick={props.onRemove}
         className="flex size-8 shrink-0 items-center justify-center rounded-xl text-[#9b9fb3] transition-colors hover:bg-[#fff4f2] hover:text-[#a13a32]"
-        aria-label="Удалить шаг"
+        aria-label={t("removeStep")}
       >
         <X className="size-4" />
       </button>
@@ -207,6 +208,7 @@ type ScopeListEditorProps =
     };
 
 export function ScopeListEditor(props: ScopeListEditorProps) {
+  const t = useTranslations("cleaningUi.scopeAndScheduleEditors");
   const isWithPhoto = props.mode === "with-photo";
   const [items, setItems] = useState<ScopeListItem[]>(() =>
     isWithPhoto
@@ -339,7 +341,7 @@ export function ScopeListEditor(props: ScopeListEditorProps) {
     <div className="space-y-2">
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-          {props.emptyHint ?? "Шагов пока нет — добавьте первый шаг ниже."}
+          {props.emptyHint ?? t("emptyHint")}
         </div>
       ) : (
         <DndContext
@@ -387,7 +389,7 @@ export function ScopeListEditor(props: ScopeListEditorProps) {
       )}
       {props.examples && props.examples.length > 0 ? (
         <div className="space-y-1.5">
-          <div className="text-[12px] font-medium text-[#6f7282]">Пример:</div>
+          <div className="text-[12px] font-medium text-[#6f7282]">{t("examplesLabel")}</div>
           <div className="flex flex-wrap gap-1.5">
             {props.examples.map((example) => {
               const already = items.some(
@@ -399,7 +401,7 @@ export function ScopeListEditor(props: ScopeListEditorProps) {
                   type="button"
                   disabled={already}
                   onClick={() => addNamed(example)}
-                  title={already ? "Уже добавлено" : `Добавить «${example}»`}
+                  title={already ? t("alreadyAdded") : t("addExample", { example })}
                   className={`rounded-full border px-3 py-1 text-[12px] transition-colors duration-150 ${
                     already
                       ? "cursor-default border-[#ececf4] bg-[#f5f6ff] text-[#9b9fb3]"
@@ -424,15 +426,15 @@ export function ScopeListEditor(props: ScopeListEditorProps) {
             e.preventDefault();
             addNamed(draft);
           }}
-          placeholder="Введите название нового предмета"
-          aria-label={props.addLabel ?? "Добавить шаг"}
+          placeholder={t("newItemPlaceholder")}
+          aria-label={props.addLabel ?? t("addStep")}
           className="h-10 flex-1 rounded-xl border-[#dcdfed] bg-white px-3.5 text-[14px]"
         />
         <button
           type="button"
           onClick={() => (draft.trim() ? addNamed(draft) : add())}
-          aria-label={props.addLabel ?? "Добавить шаг"}
-          title={props.addLabel ?? "Добавить шаг"}
+          aria-label={props.addLabel ?? t("addStep")}
+          title={props.addLabel ?? t("addStep")}
           className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
         >
           <Plus className="size-5" strokeWidth={2.5} />
@@ -453,6 +455,7 @@ export function MonthDaysPicker(props: {
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const t = useTranslations("cleaningUi.scopeAndScheduleEditors");
   const set = new Set(props.value);
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
@@ -499,15 +502,15 @@ export function MonthDaysPicker(props: {
             : "border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#a16d32]/40 hover:bg-[#fff8eb]/40"
         }`}
       >
-        ⭐ Последний день месяца
+        {t("lastDay")}
       </button>
       {props.value.length > 0 ? (
         <div className="text-[11px] text-[#6f7282]">
-          Выбрано: {props.value.length} {props.value.length === 1 ? "день" : "дня/дней"} в каждом месяце
+          {t("daysSelected", { count: props.value.length })}
         </div>
       ) : (
         <div className="text-[11px] text-[#a13a32]">
-          Не выбрано ни одного дня — расписание не сработает.
+          {t("noDaysSelected")}
         </div>
       )}
     </div>
@@ -518,11 +521,13 @@ export function WeekdayMaskPicker(props: {
   value: number;
   onChange: (next: number) => void;
 }) {
+  const t = useTranslations("cleaningUi.scopeAndScheduleEditors");
+  const weekdayLabels = [t("weekdayMon"), t("weekdayTue"), t("weekdayWed"), t("weekdayThu"), t("weekdayFri"), t("weekdaySat"), t("weekdaySun")];
   const mask = normalizeMask(props.value, 0);
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
-        {WEEKDAY_LABELS_RU.map((label, idx) => {
+        {weekdayLabels.map((label, idx) => {
           const isOn = isMaskedWeekday(mask, idx);
           const isWeekendChip = idx >= 5;
           return (
@@ -550,28 +555,28 @@ export function WeekdayMaskPicker(props: {
           onClick={() => props.onChange(WEEKDAY_MASK_ALL)}
           className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-1 text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          Каждый день
+          {t("everyDay")}
         </button>
         <button
           type="button"
           onClick={() => props.onChange(WEEKDAY_MASK_WORKDAYS)}
           className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-1 text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          По будням
+          {t("workdays")}
         </button>
         <button
           type="button"
           onClick={() => props.onChange(WEEKDAY_MASK_WEEKENDS)}
           className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-1 text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          По выходным
+          {t("weekends")}
         </button>
         <button
           type="button"
           onClick={() => props.onChange(WEEKDAY_MASK_NONE)}
           className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-1 text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
-          Очистить
+          {t("clear")}
         </button>
         <span className="ml-auto text-[#6f7282]">{describeMask(mask)}</span>
       </div>

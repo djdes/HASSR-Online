@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 /**
  * Voice-input для textarea. Использует Web Speech API (Chrome/Safari)
@@ -47,21 +48,25 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+type VoiceText = ReturnType<typeof useTranslations<"miniUi">>;
+
+const SPEECH_LANG: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+
 /** Почему запись не пошла — словами, и что делать дальше. */
-function micErrorText(code?: string): string {
+function micErrorText(t: VoiceText, code?: string): string {
   if (code === "not-allowed" || code === "service-not-allowed") {
-    return "Доступ к микрофону запрещён. Разрешите его в настройках телефона — или просто наберите текст вручную.";
+    return t("voiceInput.micDenied");
   }
   if (code === "no-speech") {
-    return "Ничего не расслышали. Попробуйте ещё раз поближе к телефону.";
+    return t("voiceInput.noSpeech");
   }
   if (code === "audio-capture") {
-    return "Микрофон недоступен. Наберите текст вручную.";
+    return t("voiceInput.micUnavailable");
   }
   if (code === "network") {
-    return "Нет связи — распознавание речи не работает. Наберите текст вручную.";
+    return t("voiceInput.network");
   }
-  return "Запись прервалась. Попробуйте ещё раз или наберите текст вручную.";
+  return t("voiceInput.interrupted");
 }
 
 export function VoiceInput({
@@ -75,6 +80,8 @@ export function VoiceInput({
   placeholder?: string;
   rows?: number;
 }) {
+  const t = useTranslations("miniUi");
+  const locale = useLocale();
   const [recording, setRecording] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
   // Отказ в доступе к микрофону раньше просто гасил запись: человек
@@ -106,7 +113,7 @@ export function VoiceInput({
     if (!Ctor) return;
 
     const rec = new Ctor();
-    rec.lang = "ru-RU";
+    rec.lang = SPEECH_LANG[locale] ?? "ru-RU";
     rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -136,7 +143,7 @@ export function VoiceInput({
 
     rec.onerror = (event) => {
       setRecording(false);
-      setMicError(micErrorText(event?.error));
+      setMicError(micErrorText(t, event?.error));
     };
 
     rec.onend = () => {
@@ -148,9 +155,9 @@ export function VoiceInput({
       rec.start();
       setRecording(true);
     } catch {
-      setMicError("Не получилось включить запись. Наберите текст вручную.");
+      setMicError(t("voiceInput.startFailed"));
     }
-  }, [recording, value, onChange]);
+  }, [recording, value, onChange, t, locale]);
 
   if (unsupported) {
     return (
@@ -195,8 +202,8 @@ export function VoiceInput({
             ? { background: "var(--mini-crimson)", color: "#fff" }
             : { background: "var(--mini-surface-1)", color: "var(--mini-text-muted)" }
         }
-        aria-label={recording ? "Остановить запись" : "Голосовой ввод"}
-        title={recording ? "Остановить запись" : "Голосовой ввод"}
+        aria-label={recording ? t("voiceInput.stop") : t("voiceInput.start")}
+        title={recording ? t("voiceInput.stop") : t("voiceInput.start")}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
@@ -208,7 +215,7 @@ export function VoiceInput({
           className="absolute right-2 top-10 rounded px-2 py-0.5 text-[10px]"
           style={{ background: "var(--mini-surface-1)", color: "var(--mini-text)" }}
         >
-          Слушаем…
+          {t("voiceInput.listening")}
         </div>
       ) : null}
       {micError ? (

@@ -2,16 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useBillingError } from "@/lib/billing-limit-toast";
 import { toastPlanUpgraded } from "@/lib/plan-upgraded-toast";
 import { Button } from "@/components/ui/button";
-
-const PLACEHOLDER = `ФИО\tДолжность\tТелефон
-Иван Петров\tПовар\t+7 985 123-45-67
-Сергей Поваров\tШеф-повар\t+7 925 555-12-34
-Мария Чайкова\tОфициант\t+7 999 444-22-11`;
 
 const ACCEPTED_EXT = [".csv", ".tsv", ".xlsx", ".xls"];
 const ACCEPTED_MIME = new Set([
@@ -37,6 +33,7 @@ type ColumnRole = "fullName" | "position" | "phone" | null;
  * точно «Шеф-повар», достаточно «шеф повар».
  */
 export function BulkStaffImport() {
+  const t = useTranslations("settingsUi.bulkStaffImport");
   const { toastApiError } = useBillingError();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,7 +121,7 @@ export function BulkStaffImport() {
         const wb = xlsx.read(buf, { type: "array" });
         const firstSheet = wb.SheetNames[0];
         if (!firstSheet) {
-          throw new Error("Файл не содержит листов");
+          throw new Error(t("noSheets"));
         }
         const ws = wb.Sheets[firstSheet];
         const aoa = xlsx.utils.sheet_to_json<unknown[]>(ws, {
@@ -142,7 +139,7 @@ export function BulkStaffImport() {
         const text = new TextDecoder("utf-8").decode(buf);
         const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
         if (lines.length === 0) {
-          throw new Error("Файл пустой");
+          throw new Error(t("emptyFile"));
         }
         const sep = lower.endsWith(".tsv")
           ? "\t"
@@ -153,9 +150,7 @@ export function BulkStaffImport() {
       }
 
       if (rows.length < 2) {
-        throw new Error(
-          "В файле меньше 2 строк (нужны заголовок + хотя бы одна строка данных)"
-        );
+        throw new Error(t("tooFewRows"));
       }
 
       const hs = rows[0];
@@ -165,9 +160,7 @@ export function BulkStaffImport() {
       setPreviewRows(dataRows.slice(0, 5));
       setColumnMap(autoMapHeaders(hs));
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Не смог разобрать файл"
-      );
+      toast.error(err instanceof Error ? err.message : t("parseFailed"));
       reset();
     } finally {
       setParsing(false);
@@ -183,9 +176,7 @@ export function BulkStaffImport() {
     const okExt = ACCEPTED_EXT.some((e) => lower.endsWith(e));
     const okMime = ACCEPTED_MIME.has(file.type);
     if (!okExt && !okMime) {
-      toast.error(
-        `Файл «${file.name}» не поддерживается. Используйте .xlsx / .xls / .csv / .tsv`
-      );
+      toast.error(t("unsupportedFile", { name: file.name }));
       return;
     }
     void handleFile(file);
@@ -213,8 +204,8 @@ export function BulkStaffImport() {
     if (!payload.trim()) {
       toast.error(
         allRows.length > 0
-          ? "Сначала укажите соответствие колонок"
-          : "Вставьте данные или загрузите файл"
+          ? t("mapColumnsFirst")
+          : t("pasteOrUpload")
       );
       return;
     }
@@ -226,28 +217,26 @@ export function BulkStaffImport() {
         body: JSON.stringify({ csv: payload }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Ошибка импорта");
+      if (!res.ok) throw new Error(data?.error ?? t("importFailed"));
       const errCount = (data.errors ?? []).length;
       const autoMatched = data.autoMatched ?? 0;
       toast.success(
-        `Создано: ${data.created}, пропущено (дубли): ${data.skipped}` +
-          (autoMatched > 0
-            ? `, авто-распознано должностей: ${autoMatched}`
-            : "") +
-          (errCount > 0 ? `, ошибок: ${errCount}` : "")
+        t("importResult", { created: data.created, skipped: data.skipped }) +
+          (autoMatched > 0 ? t("importAutoMatched", { count: autoMatched }) : "") +
+          (errCount > 0 ? t("importErrors", { count: errCount }) : "")
       );
       if (data.planUpgraded) toastPlanUpgraded();
-      if (data.billingLimit) toastApiError(data.billingLimit, "Лимит тарифа");
+      if (data.billingLimit) toastApiError(data.billingLimit, t("planLimit"));
       if (errCount > 0) {
         for (const e of data.errors.slice(0, 3)) {
-          toast.warning(`Строка ${e.line}: ${e.message}`);
+          toast.warning(t("lineError", { line: e.line, message: e.message }));
         }
       }
       reset();
       setOpen(false);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -262,7 +251,7 @@ export function BulkStaffImport() {
         className="h-10 rounded-xl border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3a3f55] hover:bg-[#f5f6ff]"
       >
         <Upload className="mr-2 size-4" />
-        Импорт CSV / Excel
+        {t("importButton")}
       </Button>
     );
   }
@@ -276,7 +265,7 @@ export function BulkStaffImport() {
     <div className="space-y-4 rounded-2xl border border-[#dcdfed] bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="text-[14px] font-semibold text-[#0b1024]">
-          Импорт сотрудников
+          {t("importTitle")}
         </div>
         <button
           type="button"
@@ -286,7 +275,7 @@ export function BulkStaffImport() {
           }}
           className="text-[13px] text-[#6f7282] hover:text-[#0b1024]"
         >
-          Отмена
+          {t("cancel")}
         </button>
       </div>
 
@@ -311,17 +300,17 @@ export function BulkStaffImport() {
               <>
                 <Loader2 className="mb-2 size-7 animate-spin text-[#5566f6]" />
                 <div className="text-[13px] font-medium text-[#0b1024]">
-                  Разбираю файл…
+                  {t("parsing")}
                 </div>
               </>
             ) : (
               <>
                 <FileSpreadsheet className="mb-2 size-7 text-[#5566f6]" />
                 <div className="text-[14px] font-semibold text-[#0b1024]">
-                  Перетащите Excel или CSV сюда
+                  {t("dropHere")}
                 </div>
                 <div className="mt-1 text-[12px] text-[#6f7282]">
-                  или кликните, чтобы выбрать файл (.xlsx, .xls, .csv, .tsv)
+                  {t("orClick")}
                 </div>
               </>
             )}
@@ -341,11 +330,15 @@ export function BulkStaffImport() {
           {/* Paste fallback */}
           <details className="rounded-xl border border-[#ececf4] bg-[#fafbff] px-3 py-2">
             <summary className="cursor-pointer text-[13px] font-medium text-[#3a3f55]">
-              Или вставьте текстом из Excel / Google Sheets
+              {t("pasteSummary")}
             </summary>
             <p className="mt-2 text-[12px] leading-snug text-[#6f7282]">
-              Колонки: <strong>ФИО</strong> / <strong>Должность</strong> /{" "}
-              <strong>Телефон</strong>. Разделитель — табуляция или запятая.
+              {t.rich("pasteColumns", {
+                fullName: t("colFullName"),
+                position: t("colPosition"),
+                phone: t("colPhone"),
+                b: (chunks) => <strong>{chunks}</strong>,
+              })}
             </p>
             <textarea
               value={csv}
@@ -353,7 +346,7 @@ export function BulkStaffImport() {
               rows={6}
               spellCheck={false}
               className="mt-2 w-full rounded-xl border border-[#dcdfed] bg-white px-3 py-2 font-mono text-[12px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
-              placeholder={PLACEHOLDER}
+              placeholder={t("placeholderSample")}
             />
             <div className="mt-2 flex justify-end">
               <Button
@@ -367,7 +360,7 @@ export function BulkStaffImport() {
                 ) : (
                   <Upload className="mr-2 size-4" />
                 )}
-                Импортировать paste
+                {t("importPaste")}
               </Button>
             </div>
           </details>
@@ -380,14 +373,14 @@ export function BulkStaffImport() {
               <FileSpreadsheet className="size-4 text-[#5566f6]" />
               <span className="font-medium">{fileName}</span>
               <span className="text-[#6f7282]">
-                · {allRows.length} строк · {headers.length} колонок
+                {t("rowsColumns", { rows: allRows.length, columns: headers.length })}
               </span>
             </div>
             <button
               type="button"
               onClick={reset}
               className="rounded-lg p-1.5 text-[#6f7282] hover:bg-white"
-              aria-label="Сбросить"
+              aria-label={t("reset")}
             >
               <X className="size-4" />
             </button>
@@ -395,11 +388,11 @@ export function BulkStaffImport() {
 
           <div>
             <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#6f7282]">
-              Соответствие колонок
+              {t("mapping")}
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
               <ColumnSelector
-                label="ФИО *"
+                label={`${t("colFullName")} *`}
                 value={columnMap.fullName}
                 headers={headers}
                 onChange={(idx) =>
@@ -407,7 +400,7 @@ export function BulkStaffImport() {
                 }
               />
               <ColumnSelector
-                label="Должность *"
+                label={`${t("colPosition")} *`}
                 value={columnMap.position}
                 headers={headers}
                 onChange={(idx) =>
@@ -415,7 +408,7 @@ export function BulkStaffImport() {
                 }
               />
               <ColumnSelector
-                label="Телефон *"
+                label={`${t("colPhone")} *`}
                 value={columnMap.phone}
                 headers={headers}
                 onChange={(idx) =>
@@ -428,7 +421,7 @@ export function BulkStaffImport() {
           {/* Preview table */}
           <div>
             <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#6f7282]">
-              Предпросмотр (первые 5 строк)
+              {t("previewTitle")}
             </div>
             <div className="overflow-x-auto rounded-xl border border-[#dcdfed]">
               <table className="w-full text-[12px]">
@@ -440,16 +433,16 @@ export function BulkStaffImport() {
                           k && columnMap[k as Exclude<ColumnRole, null>] === i
                       );
                       const labelByRole: Record<string, string> = {
-                        fullName: "ФИО",
-                        position: "Должность",
-                        phone: "Телефон",
+                        fullName: t("colFullName"),
+                        position: t("colPosition"),
+                        phone: t("colPhone"),
                       };
                       return (
                         <th
                           key={i}
                           className="px-2.5 py-1.5 text-left font-medium text-[#3a3f55]"
                         >
-                          {h || `Колонка ${i + 1}`}
+                          {h || t("columnN", { n: i + 1 })}
                           {role ? (
                             <span className="ml-1 rounded-full bg-[#eef1ff] px-1.5 py-0.5 text-[10px] font-semibold text-[#3848c7]">
                               → {labelByRole[role]}
@@ -478,11 +471,11 @@ export function BulkStaffImport() {
           <div className="flex items-center justify-between gap-3">
             {!mappingComplete ? (
               <span className="text-[12px] text-[#a13a32]">
-                Укажите все три колонки
+                {t("mapAllThree")}
               </span>
             ) : (
               <span className="text-[12px] text-[#116b2a]">
-                Готово к импорту: {allRows.length} строк
+                {t("readyToImport", { rows: allRows.length })}
               </span>
             )}
             <Button
@@ -496,7 +489,7 @@ export function BulkStaffImport() {
               ) : (
                 <Upload className="mr-2 size-4" />
               )}
-              Импортировать {allRows.length} строк
+              {t("importRows", { rows: allRows.length })}
             </Button>
           </div>
         </>
@@ -516,6 +509,7 @@ function ColumnSelector({
   headers: string[];
   onChange: (idx: number | null) => void;
 }) {
+  const t = useTranslations("settingsUi.bulkStaffImport");
   return (
     <label className="block">
       <span className="block text-[12px] font-medium text-[#3a3f55]">
@@ -528,10 +522,10 @@ function ColumnSelector({
         }
         className="mt-1 h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
       >
-        <option value="">— выберите колонку —</option>
+        <option value="">{t("chooseColumn")}</option>
         {headers.map((h, i) => (
           <option key={i} value={i}>
-            {h || `Колонка ${i + 1}`}
+            {h || t("columnN", { n: i + 1 })}
           </option>
         ))}
       </select>

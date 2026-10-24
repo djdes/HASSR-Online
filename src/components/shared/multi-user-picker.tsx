@@ -15,6 +15,7 @@
  * поднимает сотрудника в начало.
  */
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowUp, Check, Crown, Plus, Search, X } from "lucide-react";
 import {
   groupRoomResponsibleCandidates,
@@ -38,12 +39,6 @@ export type MultiUserPickerProps = {
   disabled?: boolean;
 };
 
-const GROUP_TITLES: Record<CandidateGroupKey, string> = {
-  recommended: "Рекомендуем",
-  ok: "Можно",
-  notRecommended: "Не рекомендуем",
-};
-
 const GROUP_ORDER: CandidateGroupKey[] = ["recommended", "ok", "notRecommended"];
 
 function initialsOf(name: string): string {
@@ -56,6 +51,12 @@ function initialsOf(name: string): string {
 }
 
 export function MultiUserPicker(props: MultiUserPickerProps) {
+  const t = useTranslations("sharedUi.multiUserPicker");
+  const groupTitles: Record<CandidateGroupKey, string> = {
+    recommended: t("groupRecommended"),
+    ok: t("groupOk"),
+    notRecommended: t("groupNotRecommended"),
+  };
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -121,8 +122,8 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
                     type="button"
                     disabled={props.disabled}
                     onClick={() => makePrimary(id)}
-                    title="Сделать основным"
-                    aria-label={`Сделать основным: ${name}`}
+                    title={t("makePrimary")}
+                    aria-label={t("makePrimaryNamed", { name })}
                     className="rounded-full p-1 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#5566f6] disabled:opacity-50"
                   >
                     <ArrowUp className="size-3.5" />
@@ -132,7 +133,7 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
                   type="button"
                   disabled={props.disabled}
                   onClick={() => remove(id)}
-                  aria-label={`Убрать: ${name}`}
+                  aria-label={t("removeNamed", { name })}
                   className="rounded-full p-1 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#a13a32] disabled:opacity-50"
                 >
                   <X className="size-3.5" />
@@ -155,7 +156,7 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
         }`}
       >
         {open ? <Check className="size-3.5" /> : <Plus className="size-3.5" />}
-        {open ? "Готово" : props.value.length === 0 ? "Выбрать сотрудников" : "Добавить"}
+        {open ? t("done") : props.value.length === 0 ? t("selectEmployees") : t("add")}
       </button>
 
       {open ? (
@@ -166,7 +167,7 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск по имени или должности"
+              placeholder={t("searchPlaceholder")}
               className="h-10 w-full bg-transparent text-[13.5px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:outline-none"
             />
           </label>
@@ -177,7 +178,7 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
               return (
                 <div key={key} className="mb-1 last:mb-0">
                   <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                    {GROUP_TITLES[key]}
+                    {groupTitles[key]}
                   </div>
                   {list.map((c) => {
                     const active = selected.has(c.user.id);
@@ -207,7 +208,7 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
                           <span className="flex items-center gap-1 text-[13.5px] font-medium text-[#0b1024]">
                             <span className="truncate">{c.user.name}</span>
                             {c.tier === 3 ? (
-                              <Crown className="size-3.5 shrink-0 text-[#d9a400]" aria-label="Администратор" />
+                              <Crown className="size-3.5 shrink-0 text-[#d9a400]" aria-label={t("administrator")} />
                             ) : null}
                           </span>
                           {c.positionName ? (
@@ -228,8 +229,8 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
             {GROUP_ORDER.every((key) => groups[key].filter(matches).length === 0) ? (
               <div className="px-3 py-6 text-center text-[13px] text-[#6f7282]">
                 {props.users.length === 0
-                  ? "В организации пока нет активных сотрудников."
-                  : "Никого не нашли — попробуйте другое имя."}
+                  ? t("noActiveEmployees")
+                  : t("nobodyFound")}
               </div>
             ) : null}
           </div>

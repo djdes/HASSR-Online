@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { ORG_TEMPLATES } from "@/lib/onboarding-templates";
@@ -8,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingTemplatePage() {
+  const t = await getTranslations("settingsUi.onboardingTemplatePage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
 
@@ -17,8 +19,8 @@ export default async function OnboardingTemplatePage() {
           раздела из хлебных крошек PageNav. Строка-заголовок даёт то же
           объяснение, а карточки шаблонов видны сразу. */}
       <PageHeader
-        title="Шаблоны заведений"
-        description="Один клик — и у организации настроены: должности, помещения, оборудование, обязательные журналы. Сотрудников и их телефоны добавишь сам потом. Можно применять несколько шаблонов подряд — будет добавление, не замена."
+        title={t("title")}
+        description={t("description")}
       />
 
       <OnboardingTemplateClient templates={ORG_TEMPLATES} />

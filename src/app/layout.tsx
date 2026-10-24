@@ -86,7 +86,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getSiteLocale();
-  const messages = pickMessages(await loadMessages(locale), ["common", "language", "journals", "auth", "navigation", "journalControls", "notifications", "landingComponents", "publicSupport", "publicUi", "errorSurface", "loadingSurfaces"]);
+  const messages = pickMessages(await loadMessages(locale), ["common", "language", "journals", "auth", "navigation", "journalControls", "notifications", "landingComponents", "publicSupport", "publicUi", "errorSurface", "loadingSurfaces", "layoutUi", "sharedUi"]);
   return (
     <html lang={locale}>
       <head>

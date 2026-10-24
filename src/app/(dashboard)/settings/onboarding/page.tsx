@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   Building2,
   ClipboardList,
@@ -45,6 +46,7 @@ export const dynamic = "force-dynamic";
  * человек увидит на самой странице настройки.
  */
 export default async function OnboardingPage() {
+  const t = await getTranslations("settingsUi.onboardingPage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/settings");
   const organizationId = getActiveOrgId(session);
@@ -101,9 +103,9 @@ export default async function OnboardingPage() {
     .filter((row): row is OnboardingOrderRow => row !== null);
 
   const disabled = parseDisabledCodes(org?.disabledJournalCodes);
-  const templateNameByCode = new Map(templates.map((t) => [t.code, t.name]));
+  const templateNameByCode = new Map(templates.map((tpl) => [tpl.code, tpl.name]));
   const enabledCodes = new Set(
-    templates.map((t) => t.code).filter((code) => !disabled.has(code)),
+    templates.map((tpl) => tpl.code).filter((code) => !disabled.has(code)),
   );
   const checklistCodes = checklistJournalsForOrg(status.sphere, enabledCodes);
   const checklistCounts = checklistCodes.length
@@ -137,15 +139,18 @@ export default async function OnboardingPage() {
   // === Items ===
 
   const buildingsItem: SetupItem = {
-    title: "Помещения",
+    title: t("buildingsTitle"),
     href: "/settings/buildings",
     icon: Building2,
     state: status.buildings.state,
-    metric: `${status.buildings.buildingsCount} зд., ${status.buildings.roomsCount} помещ.`,
+    metric: t("buildingsMetric", {
+      buildings: status.buildings.buildingsCount,
+      rooms: status.buildings.roomsCount,
+    }),
   };
 
   const equipmentItem: SetupItem = {
-    title: "Оборудование",
+    title: t("equipmentTitle"),
     href: "/settings/equipment",
     icon: Wrench,
     state: status.equipment.state,
@@ -155,7 +160,7 @@ export default async function OnboardingPage() {
   // Должности заводятся на странице сотрудников — отдельного роута
   // /settings/job-positions в проекте нет.
   const positionsItem: SetupItem = {
-    title: "Должности",
+    title: t("positionsTitle"),
     href: "/settings/users",
     icon: ListChecks,
     state: status.positions.state,
@@ -163,7 +168,7 @@ export default async function OnboardingPage() {
   };
 
   const usersItem: SetupItem = {
-    title: "Сотрудники",
+    title: t("usersTitle"),
     href: "/settings/users",
     icon: Users,
     state: status.users.state,
@@ -171,11 +176,11 @@ export default async function OnboardingPage() {
   };
 
   const journalsSetItem: SetupItem = {
-    title: "Выбор журналов",
+    title: t("journalsPickTitle"),
     href: "/settings/journals",
     icon: ClipboardList,
     state: status.journals.state,
-    metric: `${status.journals.enabledCount} по сфере`,
+    metric: t("journalsMetric", { count: status.journals.enabledCount }),
   };
 
   // === Phases ===
@@ -184,29 +189,29 @@ export default async function OnboardingPage() {
     {
       id: "site",
       number: 1,
-      title: "Объект",
+      title: t("phaseSite"),
       icon: Building2,
       items: [buildingsItem, equipmentItem],
     },
     {
       id: "team",
       number: 2,
-      title: "Команда",
+      title: t("phaseTeam"),
       icon: Users,
       items: [positionsItem, usersItem],
     },
     {
       id: "journals",
       number: 3,
-      title: "Журналы",
+      title: t("phaseJournals"),
       icon: ClipboardList,
       items: [journalsSetItem],
     },
     {
       id: "documents",
       number: 4,
-      title: "Документы",
-      subtitle: "Приказы и чек-листы — чтобы к проверке было заполнено всё, а не только журналы.",
+      title: t("phaseDocuments"),
+      subtitle: t("phaseDocumentsSubtitle"),
       icon: FileSignature,
       items: [],
       // Счётчик этапа: обязательные приказы + отметка о чек-листах.
@@ -249,11 +254,10 @@ export default async function OnboardingPage() {
     <div className="space-y-5">
       <header className="px-1">
         <h1 className="text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-          Быстрый старт
+          {t("title")}
         </h1>
         <p className="mt-1.5 text-[15px] text-[#6f7282]">
-          4 шага — сотрудники получают задачи, а к проверке готовы и
-          журналы, и приказы.
+          {t("subtitle")}
         </p>
       </header>
 

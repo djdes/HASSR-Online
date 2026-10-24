@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { CheckCircle2, Lock, Sparkles } from "lucide-react";
 
@@ -47,6 +48,8 @@ export function ServicesCatalog({
    */
   initialServiceKey?: string | null;
 }) {
+  const t = useTranslations("settingsUi.servicesCatalog");
+  const locale = useLocale();
   const router = useRouter();
   // В приложении WeSetup без слова «оплатить»: правила магазинов про
   // покупки. Услуга всё равно оказывается вне приложения, списываются баллы.
@@ -79,7 +82,7 @@ export function ServicesCatalog({
   async function submit() {
     if (!active) return;
     if (form.name.trim().length < 2 || form.phone.trim().length < 6) {
-      toast.error("Укажите имя и телефон для связи");
+      toast.error(t("contactRequired"));
       return;
     }
 
@@ -104,26 +107,24 @@ export function ServicesCatalog({
       } | null;
 
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось отправить заявку");
+        throw new Error(data?.error ?? t("sendFailed"));
       }
 
       if (data?.paidRub && data.paidRub > 0) {
         toast.success(
-          `Оплачено ${data.paidRub.toLocaleString("ru-RU")} ₽ с баланса. Свяжемся с вами в течение рабочего дня`
+          t("paidSuccess", { amount: data.paidRub.toLocaleString(locale) })
         );
       } else if (data?.paymentSkippedReason === "insufficient") {
-        toast.success(
-          "Заявка отправлена. Баллов не хватило, поэтому оплату обсудим отдельно"
-        );
+        toast.success(t("insufficientSuccess"));
       } else {
-        toast.success("Заявка отправлена. Свяжемся с вами в течение рабочего дня");
+        toast.success(t("sentSuccess"));
       }
 
       setActive(null);
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось отправить заявку"
+        error instanceof Error ? error.message : t("sendFailed")
       );
     } finally {
       setSending(false);
@@ -136,8 +137,7 @@ export function ServicesCatalog({
         <div className="flex gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4">
           <Lock className="size-4 shrink-0 text-[#6f7282]" />
           <p className="text-[13px] leading-[1.55] text-[#3c4053]">
-            Услуги заказывает руководитель организации. Покажите этот раздел
-            управляющему или владельцу — они смогут оформить заявку.
+            {t("managerOnlyNotice")}
           </p>
         </div>
       ) : null}
@@ -178,11 +178,11 @@ export function ServicesCatalog({
                         {instant && balanceRub >= (service.priceRub ?? 0) ? (
                           <Sparkles className="size-4" />
                         ) : null}
-                        Заказать
+                        {t("order")}
                       </button>
                     ) : (
                       <span className="text-[12.5px] text-[#9b9fb3]">
-                        Заказывает руководитель
+                        {t("orderedByManager")}
                       </span>
                     )}
                   </div>
@@ -198,7 +198,9 @@ export function ServicesCatalog({
         onClose={() => setActive(null)}
         onConfirm={submit}
         variant="info"
-        title={active ? `Заказать: ${active.title}` : "Заказать услугу"}
+        title={
+          active ? t("orderTitle", { title: active.title }) : t("orderService")
+        }
         description={
           active ? (
             <span className="text-[13px] text-[#3c4053]">
@@ -210,43 +212,48 @@ export function ServicesCatalog({
           enoughBalance
             ? [
                 {
-                  label: `Спишем ${price.toLocaleString("ru-RU")} ₽ с баланса, останется ${(balanceRub - price).toLocaleString("ru-RU")} ₽`,
+                  label: t("bulletDebit", {
+                    price: price.toLocaleString(locale),
+                    rest: (balanceRub - price).toLocaleString(locale),
+                  }),
                   tone: "info",
                 },
-                { label: "Свяжемся с вами в течение рабочего дня" },
+                { label: t("bulletContactDay") },
               ]
             : payable
               ? [
                   {
-                    label: `На балансе ${balanceRub.toLocaleString("ru-RU")} ₽ — этого не хватает, оплату обсудим отдельно`,
+                    label: t("bulletBalanceShort", {
+                      balance: balanceRub.toLocaleString(locale),
+                    }),
                     tone: "warn",
                   },
-                  { label: "Заявку всё равно примем и свяжемся с вами" },
+                  { label: t("bulletAcceptAnyway") },
                 ]
               : [
                   {
-                    label: "Стоимость зависит от объёма — посчитаем после разговора",
+                    label: t("bulletPriceByVolume"),
                     tone: "info",
                   },
-                  { label: "Баллы за эту услугу сейчас не списываются" },
-                  { label: "Свяжемся с вами в течение рабочего дня" },
+                  { label: t("bulletNoPointsDebited") },
+                  { label: t("bulletContactDay") },
                 ]
         }
         confirmLabel={
           sending
-            ? "Отправляем…"
+            ? t("sending")
             : enoughBalance
               ? insideApp
-                ? "Заказать"
-                : "Оплатить и заказать"
-              : "Отправить заявку"
+                ? t("order")
+                : t("payAndOrder")
+              : t("sendRequest")
         }
         confirmDisabled={sending}
       >
         <div className="space-y-3">
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-              Как к вам обращаться
+              {t("nameLabel")}
             </span>
             <input
               value={form.name}
@@ -258,7 +265,7 @@ export function ServicesCatalog({
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-              Телефон для связи
+              {t("phoneLabel")}
             </span>
             <input
               value={form.phone}
@@ -271,13 +278,13 @@ export function ServicesCatalog({
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-              Что важно знать заранее
+              {t("commentLabel")}
             </span>
             <textarea
               value={comment}
               onChange={(event) => setComment(event.target.value)}
               rows={3}
-              placeholder="Например: открываемся через месяц, проверка в октябре"
+              placeholder={t("commentPlaceholder")}
               className="w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 py-2.5 text-[14px] leading-[1.5] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </label>
@@ -285,8 +292,7 @@ export function ServicesCatalog({
             <div className="flex items-start gap-2 rounded-2xl bg-[#ecfdf5] p-3">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#116b2a]" />
               <span className="text-[12.5px] leading-[1.5] text-[#116b2a]">
-                Оплата пройдёт баллами сразу после подтверждения. Возврат — по
-                договорённости, если мы ещё не начали работу.
+                {t("payNotice")}
               </span>
             </div>
           ) : null}

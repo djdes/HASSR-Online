@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cloneElement, isValidElement, useState, type ReactElement, type ReactNode } from "react";
 
 import {
@@ -62,7 +63,7 @@ function isGroup(entry: ResponsiveMenuEntry): entry is ResponsiveMenuGroup {
 export function ResponsiveMenu({
   trigger,
   items,
-  title = "Действия",
+  title,
   align = "end",
   contentClassName,
 }: {
@@ -74,6 +75,7 @@ export function ResponsiveMenu({
   align?: "start" | "center" | "end";
   contentClassName?: string;
 }) {
+  const t = useTranslations("sharedUi.responsiveMenu");
   const narrow = useIsNarrowViewport();
   const [sheetOpen, setSheetOpen] = useState(false);
   const visible = items.filter(Boolean);
@@ -95,7 +97,7 @@ export function ResponsiveMenu({
         <BottomSheet
           open={sheetOpen}
           onClose={() => setSheetOpen(false)}
-          title={title}
+          title={title ?? t("actions")}
         >
           {visible.map((entry) =>
             isGroup(entry) ? (

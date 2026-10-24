@@ -1,3 +1,5 @@
+import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+
 /**
  * Категории редактора переводов. Курируемая категория — список префиксов
  * ключей каталога (журнал целиком: документ, поля, инструкции, печать,
@@ -13,12 +15,59 @@ export type CuratedCategory = {
   id: string;
   group: Exclude<TranslationCategoryGroup, "other">;
   prefixes: readonly string[];
+  /** Ключ каталога, русское значение которого — название категории (журнал). */
+  titleKey?: string;
 };
+
+/**
+ * Журнал целиком: префиксы одного кода журнала по всем пространствам
+ * каталога (+ собственные пространства журнала, если они есть).
+ */
+function journalCategory(code: string, extraPrefixes: readonly string[] = []): CuratedCategory {
+  return {
+    id: `journal-${code}`,
+    group: "journals",
+    titleKey: `journals.names.${code}`,
+    prefixes: [
+      `journals.names.${code}`,
+      `journalDescriptions.${code}`,
+      `journalInfoTaglines.${code}`,
+      `journalWidgets.periodicity.${code}`,
+      `journalFields.${code}`,
+      `taskFillSchema.forms.${code}`,
+      `taskFillSchema.fields.${code}`,
+      `taskFillSchema.options.${code}`,
+      `journalFillingGuides.${code}`,
+      `journalDocGuides.${code}`,
+      ...extraPrefixes,
+    ],
+  };
+}
+
+/** Пространства каталога, которыми пользуется ровно один журнал. */
+const JOURNAL_OWN_NAMESPACES: Record<string, readonly string[]> = {
+  climate_control: ["climate"],
+  cold_equipment_control: ["coldEquipment"],
+  uv_lamp_runtime: ["uvLampRuntime"],
+  fryer_oil: ["fryerOil"],
+  equipment_calibration: ["equipmentCalibration"],
+  finished_product: ["finishedProduct"],
+  perishable_rejection: ["perishableRejection"],
+  accident_journal: ["accidentJournal"],
+  breakdown_history: ["breakdownHistory"],
+  complaint_register: ["complaintRegister"],
+  glass_items_list: ["glassInventory"],
+  cleaning: ["cleaningGrid.cleaning"],
+};
+
+/** Коды всех журналов каталога, кроме гигиенического (он ведётся отдельной категорией выше). */
+const OTHER_JOURNAL_CODES = ACTIVE_JOURNAL_CATALOG.map((item) => item.code).filter((code) => code !== "hygiene");
 
 export const CURATED_CATEGORIES: readonly CuratedCategory[] = [
   {
     id: "journal-hygiene",
     group: "journals",
+    titleKey: "journals.names.hygiene",
     prefixes: [
       "journals.names.hygiene",
       "journalDescriptions.hygiene",
@@ -39,6 +88,7 @@ export const CURATED_CATEGORIES: readonly CuratedCategory[] = [
       "notifications.messages.hygieneComplaints",
     ],
   },
+  ...OTHER_JOURNAL_CODES.map((code) => journalCategory(code, JOURNAL_OWN_NAMESPACES[code] ?? [])),
   { id: "navigation", group: "interface", prefixes: ["navigation", "rootNavigation"] },
   { id: "common", group: "interface", prefixes: ["common"] },
 ];
@@ -48,10 +98,20 @@ const OTHER_PREFIX = "ns:";
 export type TranslationCategorySummary = {
   id: string;
   group: TranslationCategoryGroup;
+  titleKey?: string;
   /** Для «Прочих» — имя пространства имён каталога. */
   namespace?: string;
   keys: string[];
 };
+
+/**
+ * Пространство «Прочих разделов». Большие «клиентские» пространства
+ * (`journalUi`, `settingsUi`, …) делятся по компоненту: `journalUi.medBook`.
+ */
+function otherNamespace(key: string): string {
+  const [head, second] = key.split(".");
+  return /Ui$/.test(head) && second ? `${head}.${second}` : head;
+}
 
 function matchesPrefix(key: string, prefix: string): boolean {
   return key === prefix || key.startsWith(`${prefix}.`);
@@ -82,15 +142,18 @@ export function buildCategories(catalogKeys: readonly string[]): TranslationCate
       curated[hit.category].rows.push({ key, prefix: hit.prefix, order });
       return;
     }
-    const namespace = key.split(".")[0];
+    const namespace = otherNamespace(key);
     const list = other.get(namespace) ?? [];
     list.push(key);
     other.set(namespace, list);
   });
   return [
-    ...curated.map(({ category, rows }) => ({
+    ...curated
+      .filter(({ category, rows }) => rows.length > 0 || !category.id.startsWith("journal-"))
+      .map(({ category, rows }) => ({
       id: category.id,
       group: category.group,
+      titleKey: category.titleKey,
       keys: rows.sort((a, b) => a.prefix - b.prefix || a.order - b.order).map((row) => row.key),
     })),
     ...[...other.entries()]

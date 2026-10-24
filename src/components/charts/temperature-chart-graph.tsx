@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import { useTranslations } from "next-intl";
 
 /**
  * Само полотно графика — вынесено из `temperature-chart.tsx`, чтобы
@@ -43,6 +44,7 @@ export function TemperatureChartGraph({
   tempMin: number | null;
   tempMax: number | null;
 }) {
+  const t = useTranslations("sharedUi.temperatureChartGraph");
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={points} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -52,8 +54,8 @@ export function TemperatureChartGraph({
         <Tooltip
           formatter={(value: unknown, name: unknown) => {
             const v = Number(value ?? 0);
-            if (name === "temperature") return [`${v}°C`, "Температура"];
-            if (name === "humidity") return [`${v}%`, "Влажность"];
+            if (name === "temperature") return [`${v}°C`, t("temperature")];
+            if (name === "humidity") return [`${v}%`, t("humidity")];
             return [v, String(name)];
           }}
         />

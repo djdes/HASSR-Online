@@ -4,6 +4,7 @@ import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { Copy, Plus, Send } from "lucide-react";
@@ -38,6 +39,23 @@ type TgInviteResult = {
 };
 
 export function InviteUserDialog() {
+  const t = useTranslations("settingsUi.inviteUserDialog");
+  const tc = useTranslations("common");
+  const tRole = useTranslations("staffManagement.roleLabels");
+  const roleLabel = (value: string, fallback: string) => {
+    switch (value) {
+      case "manager":
+        return tRole("manager");
+      case "head_chef":
+        return tRole("head_chef");
+      case "cook":
+        return tRole("cook");
+      case "waiter":
+        return tRole("waiter");
+      default:
+        return fallback;
+    }
+  };
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<InviteMode>("email");
@@ -85,7 +103,7 @@ export function InviteUserDialog() {
           planUpgraded?: boolean;
         };
         if (!response.ok) {
-          throw new Error(result.error || "Ошибка при создании сотрудника");
+          throw new Error(result.error || t("createError"));
         }
         if (result.planUpgraded) toastPlanUpgraded();
         resetForm();
@@ -106,7 +124,7 @@ export function InviteUserDialog() {
           planUpgraded?: boolean;
         };
         if (!response.ok) {
-          throw new Error(result.error || "Ошибка при создании сотрудника");
+          throw new Error(result.error || t("createError"));
         }
         if (result.planUpgraded) toastPlanUpgraded();
         setTgResult({
@@ -117,9 +135,7 @@ export function InviteUserDialog() {
         router.refresh();
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Ошибка при создании сотрудника"
-      );
+      setError(err instanceof Error ? err.message : t("createError"));
     } finally {
       release();
     }
@@ -147,26 +163,24 @@ export function InviteUserDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          Пригласить сотрудника
+          {t("invite")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Пригласить сотрудника</DialogTitle>
+          <DialogTitle>{t("invite")}</DialogTitle>
         </DialogHeader>
 
         {tgResult ? (
           <div className="space-y-4">
             <div className="rounded-lg border border-[#eef0fb] bg-[#f8f9ff] p-3 text-[13px] text-[#5464ff]">
-              Готово! Отправьте ссылку сотруднику в любом мессенджере или
-              покажите QR-код. При первом открытии в Telegram кабинет
-              активируется автоматически. Ссылка действительна 7 дней.
+              {t("tgDone")}
             </div>
             <div className="flex justify-center">
               <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5">
                 <Image
                   src={tgResult.qrPngDataUrl}
-                  alt="QR-код приглашения"
+                  alt={t("qrAlt")}
                   width={240}
                   height={brandQrHeightFor(240)}
                   className="h-auto"
@@ -175,17 +189,17 @@ export function InviteUserDialog() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Ссылка</Label>
+              <Label>{t("link")}</Label>
               <div className="flex gap-2">
                 <Input readOnly value={tgResult.inviteUrl} />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCopy}
-                  aria-label="Скопировать ссылку"
+                  aria-label={t("copyLinkAria")}
                 >
                   <Copy className="size-4" />
-                  {copied ? "Скопировано" : "Копировать"}
+                  {copied ? t("copied") : t("copy")}
                 </Button>
               </div>
             </div>
@@ -197,7 +211,7 @@ export function InviteUserDialog() {
                   setOpen(false);
                 }}
               >
-                Готово
+                {t("done")}
               </Button>
             </div>
           </div>
@@ -218,7 +232,7 @@ export function InviteUserDialog() {
                     : "text-[#5464ff]/60"
                 }`}
               >
-                По email
+                {t("modeEmail")}
               </button>
               <button
                 type="button"
@@ -230,19 +244,19 @@ export function InviteUserDialog() {
                 }`}
               >
                 <Send className="size-3.5" />
-                Telegram без пароля
+                {t("modeTelegram")}
               </button>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="user-name">
-                Имя <span className="text-destructive">*</span>
+                {t("nameLabel")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="user-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Иванов Иван"
+                placeholder={t("namePlaceholder")}
                 required
               />
             </div>
@@ -262,29 +276,26 @@ export function InviteUserDialog() {
                   />
                 </div>
                 <div className="rounded-lg border border-[#eef0fb] bg-[#f8f9ff] p-3 text-[13px] text-[#5464ff]">
-                  Сотруднику на email придёт ссылка для установки пароля.
-                  Ссылка действительна 7 дней.
+                  {t("emailHint")}
                 </div>
               </>
             ) : (
               <div className="rounded-lg border border-[#eef0fb] bg-[#f8f9ff] p-3 text-[13px] text-[#5464ff]">
-                Создадим сотрудника без email и пароля. Вы получите ссылку на
-                бота и QR — отдадите сотруднику любым способом. Он откроет
-                её и сразу попадёт в рабочий кабинет.
+                {t("telegramHint")}
               </div>
             )}
             <div className="space-y-2">
               <Label htmlFor="user-role">
-                Должность <span className="text-destructive">*</span>
+                {t("roleLabel")} <span className="text-destructive">*</span>
               </Label>
               <Select value={role} onValueChange={setRole} required>
                 <SelectTrigger id="user-role" className="w-full">
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={t("rolePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
-                      {item.label}
+                      {roleLabel(item.value, item.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -292,7 +303,7 @@ export function InviteUserDialog() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="user-phone">
-                Телефон <span className="text-destructive">*</span>
+                {t("phoneLabel")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="user-phone"
@@ -304,8 +315,7 @@ export function InviteUserDialog() {
               {/* Номер — ключ связки с TasksFlow (П-8): без него сотрудник
                   не получит задачи и его приходится «дружить» вручную. */}
               <p className="text-xs text-muted-foreground">
-                По номеру сотрудник входит в приложение и связывается с
-                TasksFlow. Без телефона задачи ему не дойдут.
+                {t("phoneHint")}
               </p>
             </div>
             <div className="flex justify-end gap-2">
@@ -315,10 +325,10 @@ export function InviteUserDialog() {
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                Отмена
+                {tc("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Создание..." : "Пригласить"}
+                {isSubmitting ? t("creating") : t("inviteShort")}
               </Button>
             </div>
           </form>

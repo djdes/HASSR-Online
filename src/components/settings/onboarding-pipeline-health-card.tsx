@@ -8,6 +8,7 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 type Props = {
@@ -30,6 +31,7 @@ export function OnboardingPipelineHealthCard({
   exemptCount,
   configured,
 }: Props) {
+  const t = useTranslations("settingsUi.onboardingPipelineHealthCard");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -48,20 +50,20 @@ export function OnboardingPipelineHealthCard({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось создать pipeline'ы");
+        toast.error(data?.error ?? t("createFailed"));
         return;
       }
       const created = data?.summary?.created?.length ?? 0;
       const skippedExisting = data?.summary?.skippedExisting?.length ?? 0;
       const skippedNoFields = data?.summary?.skippedNoFields?.length ?? 0;
       toast.success(
-        `Создано ${created}${skippedExisting ? `, уже было ${skippedExisting}` : ""}${
-          skippedNoFields ? `, требует ручной настройки ${skippedNoFields}` : ""
-        }`
+        t("created", { created })
+          + (skippedExisting ? t("alreadyExisted", { count: skippedExisting }) : "")
+          + (skippedNoFields ? t("needsManual", { count: skippedNoFields }) : "")
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -76,12 +78,12 @@ export function OnboardingPipelineHealthCard({
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold text-[#0b1024]">
-              Pipeline настроен для всех {target} журналов
+              {t("allTitle", { count: target })}
             </div>
             <div className="mt-0.5 text-[12px] text-[#136b2a]">
               {exemptCount > 0
-                ? `+${exemptCount} журналов используют свой адаптер (pipeline-tree им не нужен)`
-                : "Сотрудник в TasksFlow увидит пошаговый wizard вместо голой формы."}
+                ? t("exemptNote", { count: exemptCount })
+                : t("wizardNote")}
             </div>
           </div>
         </div>
@@ -98,18 +100,13 @@ export function OnboardingPipelineHealthCard({
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold text-[#0b1024]">
-              Pipeline настроен для {configured} из {target} журналов
+              {t("partialTitle", { configured, target })}
             </div>
             <p className="mt-1 text-[12px] text-[#a13a32]">
-              {missing} журналов без pipeline-tree — сотрудник получит голую
-              форму вместо пошагового wizard'а. Это работает, но новый
-              сотрудник может растеряться.
+              {t("missingNote", { count: missing })}
             </p>
             <p className="mt-2 text-[11px] text-[#6f7282]">
-              Один клик ниже — система создаст pinned-узел на каждое поле
-              каждого журнала из шаблонов по умолчанию. Потом любой
-              pipeline можно отредактировать через
-              /settings/journal-pipelines.
+              {t("hint")}
             </p>
           </div>
         </div>
@@ -124,7 +121,7 @@ export function OnboardingPipelineHealthCard({
           ) : (
             <Sparkles className="size-4" />
           )}
-          {busy ? "Создаём…" : "Создать pipeline для всех"}
+          {busy ? t("creating") : t("createAll")}
         </button>
       </div>
     </div>

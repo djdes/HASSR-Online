@@ -2,63 +2,48 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, Loader2, Lock, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 
 type Mode = "race" | "shared" | "manual";
 
-const MODES: {
-  value: Mode;
-  label: string;
-  short: string;
-  icon: typeof Sparkles;
-  pros: string[];
-  cons: string[];
-}[] = [
-  {
-    value: "race",
-    label: "Гонка (по умолчанию)",
-    short: "Кто первый — того и задача",
-    icon: Sparkles,
-    pros: [
-      "Сотрудник видит что свободно и берёт сам",
-      "Нет конфликтов — взятую задачу другим уже не взять",
-      "У каждого не больше одной задачи в работе — фокус",
-    ],
-    cons: ["Кто шустрее — нагребает больше", "Менее опытные могут стесняться"],
-  },
-  {
-    value: "shared",
-    label: "Свободно",
-    short: "Все могут заполнять параллельно",
-    icon: Users,
-    pros: [
-      "Никаких блокировок — берёт кто хочет когда хочет",
-      "Подходит для малых команд из 2-3 человек",
-    ],
-    cons: [
-      "Возможно дублирование (двое начали одну задачу)",
-      "Правило «одна задача за раз» отключено",
-    ],
-  },
-  {
-    value: "manual",
-    label: "Только руководитель назначает",
-    short: "Сотрудники не берут сами",
-    icon: Lock,
-    pros: [
-      "Жёсткий контроль — задачи распределяют только заведующий производством или руководитель",
-      "Подходит для строгих организаций",
-    ],
-    cons: [
-      "Сотрудники не могут себе брать — придётся ждать назначения",
-      "Больше работы для руководителя",
-    ],
-  },
-];
-
 export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
+  const t = useTranslations("settingsUi.journalFlowClient");
+  const MODES: {
+    value: Mode;
+    label: string;
+    short: string;
+    icon: typeof Sparkles;
+    pros: string[];
+    cons: string[];
+  }[] = [
+    {
+      value: "race",
+      label: t("raceLabel"),
+      short: t("raceShort"),
+      icon: Sparkles,
+      pros: [t("racePro1"), t("racePro2"), t("racePro3")],
+      cons: [t("raceCon1"), t("raceCon2")],
+    },
+    {
+      value: "shared",
+      label: t("sharedLabel"),
+      short: t("sharedShort"),
+      icon: Users,
+      pros: [t("sharedPro1"), t("sharedPro2")],
+      cons: [t("sharedCon1"), t("sharedCon2")],
+    },
+    {
+      value: "manual",
+      label: t("manualLabel"),
+      short: t("manualShort"),
+      icon: Lock,
+      pros: [t("manualPro1"), t("manualPro2")],
+      cons: [t("manualCon1"), t("manualCon2")],
+    },
+  ];
   const [mode, setMode] = useState<Mode>(initialMode);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<Mode>(initialMode);
@@ -74,9 +59,9 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSaved(next);
       setMode(next);
-      toast.success("Режим сохранён");
+      toast.success(t("modeSaved"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("error"));
     } finally {
       setSaving(false);
     }
@@ -87,8 +72,8 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
       {/* Тёмный hero снят: выбор режима — три карточки прямо под
           заголовком, и именно их человек пришёл нажимать. */}
       <PageHeader
-        title="Режим распределения задач"
-        description="Как сотрудники получают задачи. Изменение применяется к ВСЕМ журналам сразу. Можно поменять в любой момент — незавершённые задачи продолжат работать как были взяты."
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="grid gap-3 lg:grid-cols-3">
@@ -130,7 +115,7 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
               </div>
               <div className="space-y-1.5">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#136b2a]">
-                  Плюсы
+                  {t("pros")}
                 </div>
                 <ul className="ml-4 list-disc space-y-0.5 text-[12px] text-[#3c4053]">
                   {m.pros.map((p, i) => (
@@ -138,7 +123,7 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
                   ))}
                 </ul>
                 <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#a13a32]">
-                  Минусы
+                  {t("cons")}
                 </div>
                 <ul className="ml-4 list-disc space-y-0.5 text-[12px] text-[#3c4053]">
                   {m.cons.map((c, i) => (
@@ -149,7 +134,7 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
               {saving && active ? (
                 <div className="inline-flex items-center gap-1.5 text-[11px] text-[#3848c7]">
                   <Loader2 className="size-3 animate-spin" />
-                  Сохраняю...
+                  {t("saving")}
                 </div>
               ) : null}
             </button>
@@ -158,15 +143,16 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
       </div>
 
       <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[13px] text-[#3c4053]">
-        💡 Режим общий для всех журналов организации. Что именно делать в
-        каждой задаче, по шагам, настраивается в разделе{" "}
-        <Link
-          href="/settings/journal-pipelines"
-          className="font-medium text-[#3848c7] underline-offset-2 transition-colors hover:text-[#5566f6] hover:underline"
-        >
-          «Пошаговые инструкции журналов»
-        </Link>
-        .
+        {t.rich("footerHint", {
+          link: (chunks) => (
+            <Link
+              href="/settings/journal-pipelines"
+              className="font-medium text-[#3848c7] underline-offset-2 transition-colors hover:text-[#5566f6] hover:underline"
+            >
+              {chunks}
+            </Link>
+          ),
+        })}
       </div>
     </div>
   );

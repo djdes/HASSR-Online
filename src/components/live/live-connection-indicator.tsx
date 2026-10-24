@@ -2,6 +2,7 @@
 
 import { Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ import { useLiveConnection, useLiveEvents } from "@/lib/use-live-events";
 const CHECK_MS = 5_000;
 
 export function LiveConnectionIndicator({ variant = "site" }: { variant?: "site" | "mini" }) {
+  const t = useTranslations("sharedUi.liveConnectionIndicator");
   useLiveEvents(() => {});
   const connection = useLiveConnection();
   const [shown, setShown] = useState(false);
@@ -52,14 +54,13 @@ export function LiveConnectionIndicator({ variant = "site" }: { variant?: "site"
     }
     if (announced.current && connection.status === "open") {
       announced.current = false;
-      toast.success("Связь восстановлена", { description: "Данные обновлены." });
+      toast.success(t("restoredTitle"), { description: t("restoredDescription") });
     }
-  }, [shown, connection.status]);
+  }, [shown, connection.status, t]);
 
   if (!shown) return null;
 
-  const title =
-    "Сервер не отвечает уже больше минуты. Страница показывает то, что успела получить; как только связь вернётся, всё обновится само.";
+  const title = t("tooltip");
 
   if (variant === "mini") {
     // В body, а не в .mini-root: правило `.mini-root > *` в mini-theme.css
@@ -72,7 +73,7 @@ export function LiveConnectionIndicator({ variant = "site" }: { variant?: "site"
         className="fixed left-1/2 top-2 z-[60] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1.5 rounded-full bg-amber-500 px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg"
       >
         <Unplug className="size-3.5" />
-        Нет связи с сервером
+        {t("noConnection")}
       </div>,
       document.body
     );
@@ -85,7 +86,7 @@ export function LiveConnectionIndicator({ variant = "site" }: { variant?: "site"
       className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#fff8eb] px-3 text-[13px] font-semibold text-[#b25f00]"
     >
       <Unplug className="size-4" />
-      Нет связи с сервером
+      {t("noConnection")}
     </div>
   );
 }

@@ -22,6 +22,7 @@ export default async function PolicyPrintPage() {
     select: { id: true, data: true },
   });
   const t = await getTranslations("productionControl.print");
+  const u = await getTranslations("productionControlUi");
   if (!row) {
     // Политики ещё нет: вместо молчаливого редиректа объясняем, что делать.
     return (
@@ -57,7 +58,7 @@ export default async function PolicyPrintPage() {
   const paragraphs = data.text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
 
   return (
-    <PpkPrintSheet org={org} title="Политика в области качества и безопасности пищевой продукции">
+    <PpkPrintSheet org={org} title={u("policyPrintPage.title")}>
       <div className="space-y-3 text-justify">
         {paragraphs.map((paragraph, index) => (
           <p key={index}>{paragraph}</p>
@@ -65,11 +66,11 @@ export default async function PolicyPrintPage() {
       </div>
 
       <div className="mt-8 flex flex-wrap items-end gap-x-3 gap-y-1">
-        <span className="font-semibold">Утверждаю:</span>
+        <span className="font-semibold">{u("policyPrintPage.approve")}</span>
         <span>{approver?.title}</span>
         <span>{approver?.name}</span>
         <span className="w-[110px] border-b border-[#0b1024]" />
-        <span>{approvedOn || "«____» ______________ 20___ г."}</span>
+        <span>{approvedOn || u("ppkDocUi.datePlaceholder")}</span>
       </div>
 
       <div className="mt-8 flex flex-col items-end gap-1.5 break-inside-avoid">

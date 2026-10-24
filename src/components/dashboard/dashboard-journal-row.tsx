@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Check, ChevronRight, Clock3, FileText, Printer } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -122,6 +123,7 @@ export function DashboardJournalRow({
   filled: boolean;
   thumb: JournalThumbSource;
 }) {
+  const t = useTranslations("dashboardUi.dashboardJournalRow");
   return (
     <Link
       href={`/journals/${code}`}
@@ -135,11 +137,11 @@ export function DashboardJournalRow({
       <span className="min-w-0 flex-1">
         <span
           className={NAME_LINK}
-          title={officialName ? `Официальное название: ${officialName}` : undefined}
+          title={officialName ? t("officialName", { name: officialName }) : undefined}
         >
           {name}
         </span>
-        <span className="sr-only">{filled ? ", заполнен сегодня" : ", сегодня ещё не заполнен"}</span>
+        <span className="sr-only">{filled ? t("filledToday") : t("notFilledToday")}</span>
       </span>
       <ChevronRight
         className="size-4 shrink-0 text-[#c7ccea] transition-[transform,color] duration-150 group-hover:translate-x-0.5 group-hover:text-[#5566f6]"
@@ -155,12 +157,13 @@ export function DashboardJournalRow({
  * ставится ручкой на распечатке).
  */
 export function DashboardPaperRow({ id, name }: { id: string; name: string }) {
+  const t = useTranslations("dashboardUi.dashboardJournalRow");
   return (
     <Link href={`/settings/journals/paper/${id}`} data-paper-row={id} className={ROW_LINK}>
       <JournalThumb source={{ src: `/journal-samples/paper_${id}.webp`, optimized: true }} />
       <span className="min-w-0 flex-1">
         <span className={NAME_LINK}>{name}</span>
-        <span className="sr-only">, бумажный — распечатать</span>
+        <span className="sr-only">{t("paperPrint")}</span>
       </span>
       <Printer
         className="size-4 shrink-0 text-[#9b9fb3] transition-colors duration-150 group-hover:text-[#5566f6]"

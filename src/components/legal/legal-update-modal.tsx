@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileCheck2, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
@@ -12,6 +13,7 @@ import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox"
  * продолжается по новой оферте, согласие фиксируется в истории.
  */
 export function LegalUpdateModal() {
+  const t = useTranslations("sharedUi.legalUpdateModal");
   const [open, setOpen] = useState(true);
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,11 +29,11 @@ export function LegalUpdateModal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ consent: true }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Не удалось сохранить");
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? t("saveFailed"));
       setOpen(false);
-      toast.success("Спасибо! Условия приняты");
+      toast.success(t("accepted"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить");
+      toast.error(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -51,17 +53,17 @@ export function LegalUpdateModal() {
             <FileCheck2 className="size-5" />
           </span>
           <h2 id="legal-update-title" className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Мы обновили условия
+            {t("title")}
           </h2>
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto px-6 py-5 text-[14px] leading-[1.6] text-[#3c4053]">
-          <p>С 30 сентября 2026 года действует новая редакция оферты. Что изменилось:</p>
+          <p>{t("intro")}</p>
           <ul className="list-disc space-y-1.5 pl-5">
-            <li>баланс можно пополнять деньгами: внесённое зачисляется баллами (1 ₽ = 1 балл) и идёт на оплату подписки;</li>
-            <li>чек и закрывающий документ (УПД) выдаются сразу после каждой оплаты, в том числе пополнения;</li>
-            <li>неиспользованный остаток баланса не возвращается, кроме случаев, прямо предусмотренных законом (п. 6.9 оферты).</li>
+            <li>{t("item1")}</li>
+            <li>{t("item2")}</li>
+            <li>{t("item3")}</li>
           </ul>
-          <p className="text-[13px] text-[#6f7282]">Ваши данные и уже оплаченные периоды не меняются.</p>
+          <p className="text-[13px] text-[#6f7282]">{t("unchanged")}</p>
           <LegalConsentCheckbox checked={consent} onChange={setConsent} />
         </div>
         <div className="shrink-0 border-t border-[#ececf4] px-6 py-4">
@@ -73,7 +75,7 @@ export function LegalUpdateModal() {
             data-testid="legal-update-accept"
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Принять и продолжить
+            {t("accept")}
           </button>
         </div>
       </div>

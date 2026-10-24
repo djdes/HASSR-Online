@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   BookOpen,
   GripVertical,
@@ -81,6 +82,7 @@ export function GuideTreeEditorClient({
   journalName,
   initialTree,
 }: Props) {
+  const t = useTranslations("settingsUi.guideTreeEditor");
   const router = useRouter();
   const [tree, setTree] = useState<GuideTree | null>(initialTree);
   const [, startTransition] = useTransition();
@@ -113,11 +115,11 @@ export function GuideTreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось удалить узел");
+      toast.error(data?.error || t("deleteNodeFailed"));
       return;
     }
     setTree(data.tree);
-    toast.success("Шаг удалён");
+    toast.success(t("stepDeleted"));
     setConfirmDelete(null);
     startTransition(() => router.refresh());
   }
@@ -163,7 +165,7 @@ export function GuideTreeEditorClient({
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      toast.error(data?.error || "Не удалось переместить узел");
+      toast.error(data?.error || t("moveNodeFailed"));
       await refresh();
       return;
     }
@@ -184,9 +186,9 @@ export function GuideTreeEditorClient({
           которое уже есть в PageNav. Оставляем строку-заголовок и главное
           действие рядом с ним. */}
       <PageHeader
-        eyebrow="Гайд для сотрудника (beta)"
+        eyebrow={t("eyebrow")}
         title={journalName}
-        description="Инструкция «как заполнять журнал», которую видит сотрудник в FillingGuide-модалке. Не привязана к колонкам — это справка/контекст. Можно вкладывать подсекции."
+        description={t("description")}
         actions={
           <Button
             type="button"
@@ -194,7 +196,7 @@ export function GuideTreeEditorClient({
             className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
           >
             <Plus className="size-4" />
-            Добавить шаг
+            {t("addStep")}
           </Button>
         }
       />
@@ -205,12 +207,10 @@ export function GuideTreeEditorClient({
             <BookOpen className="size-5" />
           </div>
           <div className="mt-4 text-[15px] font-medium text-[#0b1024]">
-            Гайд ещё не настроен
+            {t("emptyTitle")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Добавьте первый шаг — например, «Что должно быть в наличии»
-            или «Как часто заполнять». Каждый шаг состоит из заголовка,
-            пояснения и опционального фото.
+            {t("emptyBody")}
           </p>
           <div className="mt-5 flex justify-center">
             <Button
@@ -219,7 +219,7 @@ export function GuideTreeEditorClient({
               className="h-10 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
             >
               <Plus className="size-4" />
-              Добавить первый шаг
+              {t("addFirstStep")}
             </Button>
           </div>
         </div>
@@ -249,7 +249,11 @@ export function GuideTreeEditorClient({
             </SortableContext>
           </DndContext>
           <p className="mt-3 px-1 text-[12px] text-[#9b9fb3]">
-            💡 Перетаскивайте шаги за иконку <GripVertical className="inline size-3 align-text-bottom" /> чтобы изменить порядок.
+            {t.rich("dragHint", {
+              grip: () => (
+                <GripVertical className="inline size-3 align-text-bottom" />
+              ),
+            })}
           </p>
         </div>
       )}
@@ -281,13 +285,13 @@ export function GuideTreeEditorClient({
         open={confirmDelete !== null}
         onClose={() => setConfirmDelete(null)}
         variant="danger"
-        title="Удалить шаг?"
+        title={t("deleteTitle")}
         description={
           confirmDelete
-            ? `«${confirmDelete.title}» и его подшаги будут удалены.`
+            ? t("deleteDescription", { title: confirmDelete.title })
             : ""
         }
-        confirmLabel="Удалить"
+        confirmLabel={t("delete")}
         onConfirm={async () => {
           if (confirmDelete) {
             await handleDelete(confirmDelete);
@@ -311,6 +315,7 @@ function SortableGuideRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("settingsUi.guideTreeEditor");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: node.id });
   const style = {
@@ -333,7 +338,7 @@ function SortableGuideRow({
           type="button"
           {...attributes}
           {...listeners}
-          aria-label="Перетащить"
+          aria-label={t("drag")}
           className="mt-0.5 flex size-7 shrink-0 cursor-grab items-center justify-center rounded-lg text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#5566f6] active:cursor-grabbing"
         >
           <GripVertical className="size-4" />
@@ -344,12 +349,12 @@ function SortableGuideRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[15px] font-medium text-[#0b1024]">
-              {node.title || "(без названия)"}
+              {node.title || t("untitled")}
             </span>
             {node.photoUrl ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[11px] text-[#3848c7]">
                 <ImageIcon className="size-3" />
-                фото
+                {t("photo")}
               </span>
             ) : null}
           </div>
@@ -364,7 +369,7 @@ function SortableGuideRow({
             type="button"
             variant="ghost"
             size="sm"
-            title="Редактировать"
+            title={t("edit")}
             onClick={onEdit}
             className="h-8 rounded-xl px-2 text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#5566f6]"
           >
@@ -396,6 +401,7 @@ function AddGuideDialog({
   code: string;
   onCreated: () => void;
 }) {
+  const t = useTranslations("settingsUi.guideTreeEditor");
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
@@ -420,10 +426,10 @@ function AddGuideDialog({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось добавить шаг");
+        toast.error(data?.error || t("addFailed"));
         return;
       }
-      toast.success("Шаг добавлен");
+      toast.success(t("stepAdded"));
       setTitle("");
       setDetail("");
       setPhotoUrl("");
@@ -444,8 +450,8 @@ function AddGuideDialog({
         }
         onOpenChange(value);
       }}
-      title="Добавить шаг гайда"
-      description="Шаг отображается сотруднику в инструкции «как заполнять журнал»."
+      title={t("addDialogTitle")}
+      description={t("addDialogDescription")}
       size="md"
       isSaving={busy}
       saveDisabled={!title.trim()}
@@ -455,30 +461,30 @@ function AddGuideDialog({
       <div className="space-y-5">
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Заголовок
+            {t("titleLabel")}
           </Label>
           <Input
             autoFocus
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Например: Когда заполнять"
+            placeholder={t("titlePlaceholder")}
             className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Описание (можно несколько строк)
+            {t("detailLabelMultiline")}
           </Label>
           <Textarea
             value={detail}
             onChange={(event) => setDetail(event.target.value)}
-            placeholder="Например: «Сразу после смены, до конца дня. Если задержался — напиши причину в комментарии»"
+            placeholder={t("detailPlaceholder")}
             className="min-h-[140px] rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Ссылка на фото (опционально)
+            {t("photoUrlOptional")}
           </Label>
           <Input
             value={photoUrl}
@@ -488,8 +494,7 @@ function AddGuideDialog({
             className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
           <p className="text-[12px] text-[#9b9fb3]">
-            Иллюстрация — например, «вот так выглядит правильно
-            заполненная строка» или фото нужного оборудования.
+            {t("photoHint")}
           </p>
         </div>
       </div>
@@ -510,6 +515,7 @@ function EditGuideDialog({
   onOpenChange: (value: boolean) => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("settingsUi.guideTreeEditor");
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
@@ -544,10 +550,10 @@ function EditGuideDialog({
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось сохранить шаг");
+        toast.error(data?.error || t("saveFailed"));
         return;
       }
-      toast.success("Шаг сохранён");
+      toast.success(t("stepSaved"));
       onSaved();
     } finally {
       setBusy(false);
@@ -558,8 +564,8 @@ function EditGuideDialog({
     <JournalSettingsModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Редактирование шага"
-      description="Изменения видны сотруднику сразу после сохранения."
+      title={t("editDialogTitle")}
+      description={t("editDialogDescription")}
       size="md"
       isSaving={busy}
       saveDisabled={!title.trim()}
@@ -569,7 +575,7 @@ function EditGuideDialog({
       <div className="space-y-5">
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Заголовок
+            {t("titleLabel")}
           </Label>
           <Input
             value={title}
@@ -579,7 +585,7 @@ function EditGuideDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Описание
+            {t("detailLabel")}
           </Label>
           <Textarea
             value={detail}
@@ -589,7 +595,7 @@ function EditGuideDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Ссылка на фото
+            {t("photoUrl")}
           </Label>
           <Input
             value={photoUrl}

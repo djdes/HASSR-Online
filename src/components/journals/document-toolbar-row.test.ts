@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { NextIntlClientProvider } from "next-intl";
-import { createElement, type ReactElement } from "react";
+import { createElement, type ComponentProps, type ReactElement } from "react";
 import { renderToStaticMarkup as renderMarkup } from "react-dom/server";
 
 import {
@@ -23,7 +23,7 @@ import {
 
 const MESSAGES = JSON.parse(readFileSync("src/i18n/messages/ru.json", "utf8"));
 const renderToStaticMarkup = (element: ReactElement) =>
-  renderMarkup(createElement(NextIntlClientProvider, { locale: "ru", messages: MESSAGES, timeZone: "UTC" }, element));
+  renderMarkup(createElement(NextIntlClientProvider, { locale: "ru", messages: MESSAGES, timeZone: "UTC" } as ComponentProps<typeof NextIntlClientProvider>, element));
 
 const SOURCE = readFileSync("src/components/journals/document-toolbar-row.tsx", "utf8");
 const DESCRIPTION = "Только складские помещения с продуктами. Раз в день, в первой половине дня.";

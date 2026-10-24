@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Coins } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -29,6 +30,7 @@ const NO_BONUS_DEFAULT_CODES = new Set([
  * хочет — можно поставить бонус и на гигиену.
  */
 export default async function JournalBonusesPage() {
+  const t = await getTranslations("settingsUi.journalBonusesPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
 
@@ -59,14 +61,10 @@ export default async function JournalBonusesPage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024] dark:text-white">
-              Премии за журналы
+              {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[720px] text-[14px] leading-relaxed text-[#6f7282] dark:text-white/70">
-              Сумма, которую сотрудник получает на счёт «Дополнительной
-              премии» в TasksFlow за выполнение «единичного» журнала за
-              день. Видна работнику прямо на карточке задачи и
-              стимулирует «забрать» работу первым. Если поставить 0 —
-              бонус не начисляется.
+              {t("description")}
             </p>
           </div>
         </div>

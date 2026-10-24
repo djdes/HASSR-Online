@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { WheelColumn, type WheelOption } from "@/components/ui/wheel-picker";
 import { cn } from "@/lib/utils";
 import {
-  MONTH_NAMES_RU,
-  WEEKDAY_FULL_RU,
   buildDayOptions,
   clampDay,
   daysInMonth,
@@ -51,6 +50,18 @@ export type WheelDatePickerProps = {
   className?: string;
 };
 
+/** Localised month names ("January") and weekday names, Sunday first. */
+function localizedNames(locale: string) {
+  const month = new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" });
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" });
+  const capitalize = (s: string) => s.charAt(0).toLocaleUpperCase(locale) + s.slice(1);
+  return {
+    months: Array.from({ length: 12 }, (_, i) => capitalize(month.format(Date.UTC(2024, i, 1)))),
+    // 2024-01-07 is a Sunday.
+    weekdays: Array.from({ length: 7 }, (_, i) => weekday.format(Date.UTC(2024, 0, 7 + i))),
+  };
+}
+
 function browserTodayKey(): string {
   const now = new Date();
   return isoDate(now.getFullYear(), now.getMonth(), now.getDate());
@@ -71,9 +82,12 @@ export function WheelDatePicker({
   disabledNote,
   todayKey,
   onDone,
-  doneLabel = "Готово",
+  doneLabel,
   className,
 }: WheelDatePickerProps) {
+  const t = useTranslations("sharedUi.wheelDatePicker");
+  const locale = useLocale();
+  const { months: monthNames, weekdays: weekdayNames } = useMemo(() => localizedNames(locale), [locale]);
   const today = todayKey || browserTodayKey();
   const parsed = parseIsoDate(value) ?? parseIsoDate(today)!;
   const year = mode === "day" ? yearProp ?? parsed.year : parsed.year;
@@ -105,14 +119,14 @@ export function WheelDatePicker({
   const lastYear = maxYear ?? Math.max(year, parseIsoDate(today)!.year) + 5;
   const monthOptions = useMemo<WheelOption<number>[]>(
     () =>
-      MONTH_NAMES_RU.map((name, index) => ({
+      monthNames.map((name, index) => ({
         value: index,
         label: name,
         disabled:
           (maxDate ? isoDate(year, index, 1) > maxDate : false) ||
           (minDate ? isoDate(year, index, daysInMonth(year, index)) < minDate : false),
       })),
-    [year, maxDate, minDate],
+    [monthNames, year, maxDate, minDate],
   );
   const yearOptions = useMemo<WheelOption<number>[]>(
     () =>
@@ -147,13 +161,13 @@ export function WheelDatePicker({
         !dayOptions[todayParts.day - 1]?.disabled));
 
   const dayValueText = (option: WheelOption<number>) =>
-    `${option.value}, ${WEEKDAY_FULL_RU[weekdayIndex(isoDate(year, monthIndex, option.value))]}`;
+    `${option.value}, ${weekdayNames[weekdayIndex(isoDate(year, monthIndex, option.value))]}`;
 
   return (
     <div className={cn("space-y-3", className)}>
       {mode === "day" ? (
         <WheelColumn
-          ariaLabel={`День, ${MONTH_NAMES_RU[monthIndex].toLowerCase()} ${year}`}
+          ariaLabel={t("dayInMonth", { month: monthNames[monthIndex].toLocaleLowerCase(locale), year: String(year) })}
           options={dayOptions}
           value={day}
           onChange={(next) => onChange(isoDate(year, monthIndex, next))}
@@ -162,20 +176,20 @@ export function WheelDatePicker({
       ) : (
         <div className="grid grid-cols-[1fr_1.45fr_1fr] gap-1">
           <WheelColumn
-            ariaLabel="День"
+            ariaLabel={t("day")}
             options={dayOptions}
             value={day}
             onChange={(next) => emit(year, monthIndex, next)}
             valueText={dayValueText}
           />
           <WheelColumn
-            ariaLabel="Месяц"
+            ariaLabel={t("month")}
             options={monthOptions}
             value={monthIndex}
             onChange={(next) => emit(year, next, day)}
           />
           <WheelColumn
-            ariaLabel="Год"
+            ariaLabel={t("year")}
             options={yearOptions}
             value={year}
             onChange={(next) => emit(next, monthIndex, day)}
@@ -190,7 +204,7 @@ export function WheelDatePicker({
               onClick={() => onChange(today)}
               className="inline-flex h-9 items-center rounded-xl px-3 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
-              Сегодня
+              {t("today")}
             </button>
           ) : (
             <span />
@@ -201,7 +215,7 @@ export function WheelDatePicker({
               onClick={onDone}
               className="inline-flex h-9 items-center rounded-xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
-              {doneLabel}
+              {doneLabel ?? t("done")}
             </button>
           ) : null}
         </div>

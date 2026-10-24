@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Check, MapPin } from "lucide-react";
 
 /**
@@ -31,6 +32,7 @@ export function nextQuickSwitchItem(items: QuickSwitchItem[]): QuickSwitchItem |
 
 /** Компактная строка сверху формы: где вы, что уже снято, куда дальше. */
 export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; title: string }) {
+  const t = useTranslations("sharedUi");
   const scroller = useRef<HTMLDivElement>(null);
   // Текущий объект — в центр полосы, чтобы соседи были видны с обеих сторон (без вертикального скролла страницы).
   useEffect(() => {
@@ -49,7 +51,7 @@ export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; t
           {title}
         </span>
         <span className="tabular-nums normal-case tracking-normal text-[#9b9fb3]">
-          снято {filled} из {items.length}
+          {t("quickSwitch.progress", { filled, total: items.length })}
         </span>
       </div>
       <div ref={scroller} className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -85,6 +87,7 @@ export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; t
 
 /** После сохранения: кнопка «Дальше: следующий» и список всех объектов со статусом. */
 export function QuickSwitchNext({ items, title }: { items: QuickSwitchItem[]; title: string }) {
+  const t = useTranslations("sharedUi");
   if (items.length < 2) return null;
   const next = nextQuickSwitchItem(items);
   const filled = items.filter((item) => item.filled).length;
@@ -95,18 +98,18 @@ export function QuickSwitchNext({ items, title }: { items: QuickSwitchItem[]; ti
           href={next.href}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[16px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
         >
-          Дальше: {next.name}
+          {t("quickSwitch.next", { name: next.name })}
           <ArrowRight className="size-5" />
         </a>
       ) : (
         <p className="rounded-2xl border border-[#d4f5e3] bg-[#f3fdf7] p-3 text-center text-[14px] font-medium text-[#116b2a]">
-          Все объекты на этот срок сняты ✓
+          {t("quickSwitch.allDone")}
         </p>
       )}
       <div className="mt-4 mb-2 flex items-center justify-between text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
         <span>{title}</span>
         <span className="tabular-nums normal-case tracking-normal text-[#9b9fb3]">
-          снято {filled} из {items.length}
+          {t("quickSwitch.progress", { filled, total: items.length })}
         </span>
       </div>
       <div className="space-y-2">
@@ -128,7 +131,7 @@ export function QuickSwitchNext({ items, title }: { items: QuickSwitchItem[]; ti
             <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-normal">
               {item.filled ? (
                 <>
-                  {item.summary ?? "снято"}
+                  {item.summary ?? t("quickSwitch.taken")}
                   <Check className="size-4" />
                 </>
               ) : (
@@ -144,6 +147,7 @@ export function QuickSwitchNext({ items, title }: { items: QuickSwitchItem[]; ti
 
 /** Список объектов для «Сменить»: текущий отмечен, снятые — с показанием. */
 export function QuickSwitchList({ items }: { items: QuickSwitchItem[] }) {
+  const t = useTranslations("sharedUi");
   if (items.length < 2) return null;
   return (
     <div className="mt-2 flex flex-col gap-2">
@@ -165,7 +169,7 @@ export function QuickSwitchList({ items }: { items: QuickSwitchItem[] }) {
             <span className="flex shrink-0 items-center gap-1.5 text-[15px] font-normal">
               {item.filled ? (
                 <>
-                  {item.summary ?? "снято"}
+                  {item.summary ?? t("quickSwitch.taken")}
                   <Check className="size-5" />
                 </>
               ) : (

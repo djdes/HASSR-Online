@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -23,6 +24,7 @@ export function DeleteButton({
   entityName,
   usageEndpoint,
 }: DeleteButtonProps) {
+  const t = useTranslations("settingsUi.deleteButton");
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
 
@@ -47,23 +49,23 @@ export function DeleteButton({
       }
 
       const ok = await confirmAsync({
-        title: "Удалить запись справочника?",
-        description: `Будет удалено ${entityName}. Действие нельзя отменить.`,
+        title: t("confirmTitle"),
+        description: t("confirmDescription", { entityName }),
         bullets,
         variant: "danger",
-        confirmLabel: "Да, удалить",
+        confirmLabel: t("confirmLabel"),
       });
       if (!ok) return;
 
       const response = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || "Ошибка при удалении");
+        throw new Error(result.error || t("deleteError"));
       }
-      toast.success("Удалено");
+      toast.success(t("deleted"));
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка при удалении");
+      toast.error(err instanceof Error ? err.message : t("deleteError"));
     } finally {
       setIsBusy(false);
     }
@@ -76,8 +78,8 @@ export function DeleteButton({
       onClick={handleClick}
       disabled={isBusy}
       // Кнопка из одной иконки: без подписи скринридер читал «кнопка».
-      aria-label={`Удалить ${entityName}`}
-      title="Удалить"
+      aria-label={t("ariaDelete", { entityName })}
+      title={t("titleDelete")}
       className="text-destructive hover:text-destructive"
     >
       <Trash2 className="size-4" />

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Plus, Pencil, Building2, ArrowRight } from "lucide-react";
 import { getEquipmentTypeLabel } from "@/lib/equipment-type-label";
 import { FillerPicker, type FillerOption } from "@/components/settings/filler-picker";
@@ -28,22 +29,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// Все типы, которые реально встречаются в данных: заведённые руками,
-// из шаблонов онбординга и справочника журналов. Раньше в списке не было
-// «Датчика» — у датчика поле «Тип» открывалось пустым, а любой выбор
-// перетирал тип.
-const equipmentTypes = [
-  { value: "refrigerator", label: "Холодильник" },
-  { value: "freezer", label: "Морозильник" },
-  { value: "sensor", label: "Датчик температуры" },
-  { value: "thermometer", label: "Термометр" },
-  { value: "oven", label: "Печь" },
-  { value: "fryer", label: "Фритюрница" },
-  { value: "dishwasher", label: "Посудомоечная машина" },
-  { value: "uv_lamp", label: "УФ-лампа" },
-  { value: "other", label: "Другое" },
-];
 
 /** Синонимы старых кодов: «fridge» — тот же холодильник. */
 const TYPE_ALIASES: Record<string, string> = { fridge: "refrigerator" };
@@ -130,6 +115,24 @@ export function EquipmentDialog({
   defaultType,
   triggerLabel,
 }: EquipmentDialogProps) {
+  const t = useTranslations("settingsUi.equipmentDialog");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  // Все типы, которые реально встречаются в данных: заведённые руками,
+  // из шаблонов онбординга и справочника журналов. Раньше в списке не было
+  // «Датчика» — у датчика поле «Тип» открывалось пустым, а любой выбор
+  // перетирал тип.
+  const equipmentTypes = [
+    { value: "refrigerator", label: t("typeRefrigerator") },
+    { value: "freezer", label: t("typeFreezer") },
+    { value: "sensor", label: t("typeSensor") },
+    { value: "thermometer", label: t("typeThermometer") },
+    { value: "oven", label: t("typeOven") },
+    { value: "fryer", label: t("typeFryer") },
+    { value: "dishwasher", label: t("typeDishwasher") },
+    { value: "uv_lamp", label: t("typeUvLamp") },
+    { value: "other", label: t("typeOther") },
+  ];
   const router = useRouter();
   const isEdit = !!equipment;
   const [open, setOpen] = useState(false);
@@ -211,29 +214,27 @@ export function EquipmentDialog({
     const parsedMin = parseTempInput(tempMin);
     const parsedMax = parseTempInput(tempMax);
     if (parsedMin === "invalid" || parsedMax === "invalid") {
-      setError("Температура должна быть числом, например 2 или -18,5");
+      setError(t("tempNotNumber"));
       return;
     }
     if (parsedMin !== null && parsedMax !== null && parsedMin > parsedMax) {
-      setError(
-        "Минимальная температура больше максимальной — поменяйте значения местами"
-      );
+      setError(t("tempMinGreater"));
       return;
     }
 
     const lifetimeNumber = lampLifetime.trim() ? Number(lampLifetime.trim()) : null;
     const usedNumber = lampUsed.trim() ? Number(lampUsed.trim().replace(",", ".")) : 0;
     if (isLamp && (lifetimeNumber === null || !Number.isFinite(lifetimeNumber) || lifetimeNumber <= 0)) {
-      setError("Укажите ресурс лампы в часах — он есть в паспорте лампы");
+      setError(t("lampLifetimeRequired"));
       return;
     }
     if (isLamp && (!Number.isFinite(usedNumber) || usedNumber < 0)) {
-      setError("«Уже отработала» — число часов, 0 для новой лампы");
+      setError(t("lampUsedInvalid"));
       return;
     }
 
     if (!selectedPlace && !(isEdit && placeKey === `area:${equipment?.areaId}`)) {
-      setError("Выберите помещение, где стоит оборудование");
+      setError(t("placeRequired"));
       return;
     }
 
@@ -270,14 +271,14 @@ export function EquipmentDialog({
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || "Ошибка при создании");
+        throw new Error(result.error || t("createError"));
       }
 
       if (!isEdit) resetForm();
       setOpen(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError(err instanceof Error ? err.message : t("error"));
     } finally {
       release();
     }
@@ -300,20 +301,20 @@ export function EquipmentDialog({
             size="sm"
             aria-label={
               equipment?.name
-                ? `Изменить оборудование «${equipment.name}»`
-                : "Изменить оборудование"
+                ? t("editAriaNamed", { name: equipment.name })
+                : t("editAria")
             }
-            title="Изменить"
+            title={t("editTitle")}
           >
             <Pencil className="size-4" />
           </Button>
         ) : (
-          <Button><Plus className="size-4" />{triggerLabel ?? "Добавить оборудование"}</Button>
+          <Button><Plus className="size-4" />{triggerLabel ?? t("addEquipment")}</Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Редактировать оборудование" : "Добавить оборудование"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("editEquipment") : t("addEquipment")}</DialogTitle>
         </DialogHeader>
         {/* Зависимость: Цех / участок — обязательное поле, и select
             берёт значения из props.areas. Если у орги нет ни одного
@@ -328,12 +329,12 @@ export function EquipmentDialog({
               </span>
               <div className="min-w-0 flex-1">
                 <h3 className="text-[14px] font-semibold text-[#7a4900]">
-                  Сначала нужно помещение
+                  {t("needRoomTitle")}
                 </h3>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#7a4900]/80">
-                  Оборудование стоит в <strong>помещении точки</strong> (горячий цех, склад,
-                  бар). Заведите помещение в «Точках и помещениях» — оно сразу появится здесь
-                  в выборе помещения.
+                  {t.rich("needRoomBody", {
+                    b: (chunks) => <strong>{chunks}</strong>,
+                  })}
                 </p>
               </div>
             </div>
@@ -341,7 +342,7 @@ export function EquipmentDialog({
               href="/settings/buildings"
               className="inline-flex items-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_8px_24px_-10px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
             >
-              Открыть «Точки и помещения»
+              {t("openBuildings")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -354,40 +355,38 @@ export function EquipmentDialog({
           )}
           <div className="space-y-2">
             <Label htmlFor="eq-name">
-              Название <span className="text-destructive">*</span>
+              {t("nameLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="eq-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Например: Холодильник Samsung"
+              placeholder={t("namePlaceholder")}
               required
             />
             {duplicateName ? (
               <p className="text-[13px] text-[#b45309]">
-                Единица с таким названием уже есть. В журналах и на QR-плакатах их
-                будет не различить — добавьте цех или номер, например «Холодильник
-                Samsung (бар)».
+                {t("duplicateName")}
               </p>
             ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="eq-type">
-              Тип <span className="text-destructive">*</span>
+              {t("typeLabel")} <span className="text-destructive">*</span>
             </Label>
             <Select value={type} onValueChange={setType} required>
               <SelectTrigger id="eq-type" className="w-full">
-                <SelectValue placeholder="Выберите тип" />
+                <SelectValue placeholder={t("typePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                {(type && !equipmentTypes.some((t) => t.value === type)
+                {(type && !equipmentTypes.some((option) => option.value === type)
                   ? // Тип не из списка (введён иначе) — показываем как есть,
                     // чтобы поле не было пустым и тип не терялся.
                     [...equipmentTypes, { value: type, label: getEquipmentTypeLabel(type) }]
                   : equipmentTypes
-                ).map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                ).map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -396,11 +395,11 @@ export function EquipmentDialog({
           {byPoints && (buildings.length >= 2 || loosePlaces.length > 0) ? (
             <div className="space-y-2">
               <Label htmlFor="eq-building">
-                Точка <span className="text-destructive">*</span>
+                {t("pointLabel")} <span className="text-destructive">*</span>
               </Label>
               <Select value={buildingId} onValueChange={changeBuilding}>
                 <SelectTrigger id="eq-building" className="w-full">
-                  <SelectValue placeholder="Выберите точку" />
+                  <SelectValue placeholder={t("pointPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {buildings.map((building) => (
@@ -409,7 +408,7 @@ export function EquipmentDialog({
                     </SelectItem>
                   ))}
                   {loosePlaces.length > 0 ? (
-                    <SelectItem value={NO_BUILDING}>Без точки</SelectItem>
+                    <SelectItem value={NO_BUILDING}>{t("noPoint")}</SelectItem>
                   ) : null}
                 </SelectContent>
               </Select>
@@ -417,11 +416,11 @@ export function EquipmentDialog({
           ) : null}
           <div className="space-y-2">
             <Label htmlFor="eq-area">
-              Помещение <span className="text-destructive">*</span>
+              {t("roomLabel")} <span className="text-destructive">*</span>
             </Label>
             <Select value={placeKey} onValueChange={setPlaceKey} required>
               <SelectTrigger id="eq-area" className="w-full">
-                <SelectValue placeholder="Выберите помещение" />
+                <SelectValue placeholder={t("roomPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {byPoints ? (
@@ -429,7 +428,7 @@ export function EquipmentDialog({
                     {pointPlaces.length > 0 ? (
                       <SelectGroup>
                         <SelectLabel>
-                          {buildings.find((building) => building.id === buildingId)?.name ?? "Точка"}
+                          {buildings.find((building) => building.id === buildingId)?.name ?? t("pointFallback")}
                         </SelectLabel>
                         {pointPlaces.map((place) => (
                           <SelectItem key={place.key} value={place.key}>
@@ -440,7 +439,7 @@ export function EquipmentDialog({
                     ) : null}
                     {loosePlaces.length > 0 ? (
                       <SelectGroup>
-                        <SelectLabel>Без точки</SelectLabel>
+                        <SelectLabel>{t("noPoint")}</SelectLabel>
                         {loosePlaces.map((place) => (
                           <SelectItem key={place.key} value={place.key}>
                             {place.name}
@@ -460,48 +459,48 @@ export function EquipmentDialog({
             </Select>
             {byPoints && pointPlaces.length === 0 && buildingId !== NO_BUILDING ? (
               <p className="text-[12.5px] text-[#b45309]">
-                В этой точке пока нет помещений — добавьте их в «Точках и помещениях».
+                {t("noRoomsInPoint")}
               </p>
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="eq-serial">Серийный номер</Label>
+            <Label htmlFor="eq-serial">{t("serialLabel")}</Label>
             <Input
               id="eq-serial"
               value={serialNumber}
               onChange={(e) => setSerialNumber(e.target.value)}
-              placeholder="Серийный номер"
+              placeholder={t("serialPlaceholder")}
             />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="eq-temp-min">Мин. температура</Label>
+              <Label htmlFor="eq-temp-min">{t("tempMinLabel")}</Label>
               <Input
                 id="eq-temp-min"
                 type="text"
                 inputMode="decimal"
                 value={tempMin}
                 onChange={(e) => setTempMin(e.target.value)}
-                placeholder="например 2 или -18"
+                placeholder={t("tempMinPlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="eq-temp-max">Макс. температура</Label>
+              <Label htmlFor="eq-temp-max">{t("tempMaxLabel")}</Label>
               <Input
                 id="eq-temp-max"
                 type="text"
                 inputMode="decimal"
                 value={tempMax}
                 onChange={(e) => setTempMax(e.target.value)}
-                placeholder="например 6 или -15"
+                placeholder={t("tempMaxPlaceholder")}
               />
             </div>
           </div>
           {isLamp ? (
             <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="lamp-section">
-              <div className="text-[14px] font-semibold text-[#0b1024]">Ресурс лампы</div>
+              <div className="text-[14px] font-semibold text-[#0b1024]">{t("lampSection")}</div>
               <div className="space-y-2">
-                <Label htmlFor="eq-lamp-model">Модель лампы или облучателя</Label>
+                <Label htmlFor="eq-lamp-model">{t("lampModelLabel")}</Label>
                 <Select
                   value={lampModel}
                   onValueChange={(value) => {
@@ -511,12 +510,12 @@ export function EquipmentDialog({
                   }}
                 >
                   <SelectTrigger id="eq-lamp-model" className="w-full">
-                    <SelectValue placeholder="Выберите — ресурс подставится сам" />
+                    <SelectValue placeholder={t("lampModelPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {LAMP_PRESETS.map((preset) => (
                       <SelectItem key={preset.key} value={preset.label}>
-                        {preset.label} — {preset.hours.toLocaleString("ru-RU")} ч
+                        {t("presetHours", { label: preset.label, hours: preset.hours.toLocaleString(locale) })}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -524,16 +523,16 @@ export function EquipmentDialog({
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="eq-lamp-life">Ресурс по паспорту, ч</Label>
-                  <Input id="eq-lamp-life" inputMode="numeric" value={lampLifetime} onChange={(e) => setLampLifetime(e.target.value)} placeholder="например 8000" />
+                  <Label htmlFor="eq-lamp-life">{t("lampLifeLabel")}</Label>
+                  <Input id="eq-lamp-life" inputMode="numeric" value={lampLifetime} onChange={(e) => setLampLifetime(e.target.value)} placeholder={t("lampLifePlaceholder")} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="eq-lamp-used">Уже отработала, ч</Label>
-                  <Input id="eq-lamp-used" inputMode="decimal" value={lampUsed} onChange={(e) => setLampUsed(e.target.value)} placeholder="0 — новая лампа" />
+                  <Label htmlFor="eq-lamp-used">{t("lampUsedLabel")}</Label>
+                  <Input id="eq-lamp-used" inputMode="decimal" value={lampUsed} onChange={(e) => setLampUsed(e.target.value)} placeholder={t("lampUsedPlaceholder")} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="eq-lamp-installed">Дата установки лампы</Label>
+                <Label htmlFor="eq-lamp-installed">{t("lampInstalledLabel")}</Label>
                 <Input id="eq-lamp-installed" type="date" value={lampInstalledAt} onChange={(e) => setLampInstalledAt(e.target.value)} />
               </div>
               {(() => {
@@ -546,7 +545,7 @@ export function EquipmentDialog({
                 return (
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-[#6f7282]">Осталось ресурса</span>
+                      <span className="text-[#6f7282]">{t("lampRemaining")}</span>
                       <span className={level ? "font-semibold text-[#b42318]" : "font-semibold text-[#116b2a]"}>
                         {formatHours(remaining)} ({Math.round(share * 100)} %)
                       </span>
@@ -556,7 +555,7 @@ export function EquipmentDialog({
                     </div>
                     {level ? (
                       <p className="text-[12.5px] text-[#b42318]">
-                        {level === "over" ? "Ресурс исчерпан — замените лампу." : "Ресурс почти исчерпан — пора заказать лампу."}
+                        {level === "over" ? t("lampOver") : t("lampAlmost")}
                       </p>
                     ) : null}
                   </div>
@@ -571,28 +570,27 @@ export function EquipmentDialog({
                   }}
                   className="text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#0b1024]"
                 >
-                  Заменили лампу — начать отсчёт заново
+                  {t("lampReplaced")}
                 </button>
               ) : null}
               <p className="text-[12px] leading-[1.5] text-[#6f7282]">
-                Наработка считается сама по кнопкам «Я включил / Я выключил» на наклейке лампы. Когда ресурса останется 10 %,
-                ответственный за журнал получит уведомление.
+                {t("lampHint")}
               </p>
             </div>
           ) : null}
           {fillerOptions.length > 0 ? (
-            <FillerPicker value={fillerUserIds} onChange={setFillerUserIds} options={fillerOptions} objectNoun={isLamp ? "лампу" : "оборудование"} />
+            <FillerPicker value={fillerUserIds} onChange={setFillerUserIds} options={fillerOptions} objectNoun={isLamp ? t("fillerNounLamp") : t("fillerNounEquipment")} />
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="eq-tuya">Tuya Device ID (IoT-датчик)</Label>
+            <Label htmlFor="eq-tuya">{t("tuyaLabel")}</Label>
             <Input
               id="eq-tuya"
               value={tuyaDeviceId}
               onChange={(e) => setTuyaDeviceId(e.target.value)}
-              placeholder="например: bf397860f79b0963a0nakc"
+              placeholder={t("tuyaPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
-              Если подключён WiFi-датчик температуры Tuya, укажите его Device ID
+              {t("tuyaHint")}
             </p>
           </div>
           <div className="flex justify-end gap-2">
@@ -602,18 +600,18 @@ export function EquipmentDialog({
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
             >
-              Отмена
+              {tc("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || (!isEdit && placeCount === 0)}
               title={
                 !isEdit && placeCount === 0
-                  ? "Сначала заведите помещение в «Точках и помещениях»"
+                  ? t("needRoomFirst")
                   : undefined
               }
             >
-              {isSubmitting ? "Сохранение..." : isEdit ? "Сохранить" : "Создать"}
+              {isSubmitting ? tc("saving") : isEdit ? tc("save") : t("create")}
             </Button>
           </div>
         </form>

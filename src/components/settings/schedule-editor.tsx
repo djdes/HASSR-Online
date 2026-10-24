@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RotateCcw, Save, Users } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { confirmAsync } from "@/components/ui/confirm-async";
-import { pluralRu } from "@/lib/plural-ru";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
 
 type ShiftStatus = "scheduled" | "off" | "vacation" | "sick" | "none";
@@ -49,22 +50,6 @@ const STATUS_CYCLE: ShiftStatus[] = [
   "sick",
 ];
 
-const STATUS_LABEL: Record<ShiftStatus, string> = {
-  none: "",
-  scheduled: "С",
-  off: "В",
-  vacation: "От",
-  sick: "Б",
-};
-
-const STATUS_TITLE: Record<ShiftStatus, string> = {
-  none: "Не запланирован — авто-назначений не будет",
-  scheduled: "На смене",
-  off: "Выходной",
-  vacation: "Отпуск",
-  sick: "Больничный",
-};
-
 const STATUS_COLOR: Record<ShiftStatus, string> = {
   none: "bg-white border-[#dcdfed] text-[#9b9fb3]",
   scheduled:
@@ -85,7 +70,37 @@ export function ScheduleEditor({
   positions,
   shifts,
 }: Props) {
+  const t = useTranslations("settingsUi.scheduleEditor");
+  const locale = useLocale() as Locale;
   const router = useRouter();
+  const statusLabel = (s: ShiftStatus): string => {
+    switch (s) {
+      case "scheduled":
+        return t("labelScheduled");
+      case "off":
+        return t("labelOff");
+      case "vacation":
+        return t("labelVacation");
+      case "sick":
+        return t("labelSick");
+      default:
+        return "";
+    }
+  };
+  const statusTitle = (s: ShiftStatus): string => {
+    switch (s) {
+      case "scheduled":
+        return t("titleScheduled");
+      case "off":
+        return t("titleOff");
+      case "vacation":
+        return t("titleVacation");
+      case "sick":
+        return t("titleSick");
+      default:
+        return t("titleNone");
+    }
+  };
   const [cells, setCells] = useState<Map<string, ShiftCell>>(() => {
     const map = new Map<string, ShiftCell>();
     for (const s of shifts) {
@@ -111,17 +126,17 @@ export function ScheduleEditor({
 
   async function resetChanges() {
     const ok = await confirmAsync({
-      title: "Отменить изменения графика?",
-      description: `Несохранённых правок: ${dirty.size}. График вернётся к тому, что сейчас записано в системе.`,
+      title: t("resetTitle"),
+      description: t("resetDescription", { count: dirty.size }),
       variant: "warn",
-      confirmLabel: "Отменить правки",
+      confirmLabel: t("resetConfirm"),
     });
     if (!ok) return;
     const map = new Map<string, ShiftCell>();
     for (const s of shifts) map.set(cellKey(s.userId, s.date), s);
     setCells(map);
     setDirty(new Set());
-    toast.success("Правки отменены");
+    toast.success(t("resetDone"));
   }
 
   const dates = useMemo(() => {
@@ -218,7 +233,7 @@ export function ScheduleEditor({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? "Не удалось сохранить");
+          throw new Error(data?.error ?? t("saveFailed"));
         }
       }
       // Раньше ответ DELETE не проверялся: неудавшееся снятие смены
@@ -234,14 +249,14 @@ export function ScheduleEditor({
       }
       if (failedDeletes > 0) {
         throw new Error(
-          `Не удалось снять ${failedDeletes} ${pluralRu(failedDeletes, "смену", "смены", "смен")} — изменения оставлены, попробуйте сохранить ещё раз`
+          t("deleteFailed", { count: failedDeletes })
         );
       }
-      toast.success("График сохранён");
+      toast.success(t("saved"));
       setDirty(new Set());
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("error"));
     } finally {
       setSaving(false);
     }
@@ -252,7 +267,7 @@ export function ScheduleEditor({
       <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] px-5 py-4">
         <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#3c4053]">
           <span className="font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            Статус (нажмите на ячейку, чтобы переключить)
+            {t("legend")}
           </span>
           {(["scheduled", "off", "vacation", "sick"] as ShiftStatus[]).map(
             (s) => (
@@ -264,9 +279,9 @@ export function ScheduleEditor({
                 )}
               >
                 <span className="rounded-full bg-white/60 px-1.5 py-0.5 font-mono text-[11px]">
-                  {STATUS_LABEL[s]}
+                  {statusLabel(s)}
                 </span>
-                {STATUS_TITLE[s]}
+                {statusTitle(s)}
               </span>
             )
           )}
@@ -277,7 +292,7 @@ export function ScheduleEditor({
         <div className="mb-3 flex items-center gap-2">
           <Users className="size-4 text-[#5566f6]" />
           <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            Ближайшие 14 дней
+            {t("next14Days")}
           </h2>
         </div>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -285,11 +300,11 @@ export function ScheduleEditor({
             <thead>
               <tr className="border-b border-[#ececf4]">
                 <th className="sticky left-0 z-[1] bg-white px-3 py-2 text-left font-medium text-[#6f7282]">
-                  Сотрудник
+                  {t("employee")}
                 </th>
                 {dates.map((d) => {
                   const parsed = new Date(`${d}T00:00:00.000Z`);
-                  const weekday = parsed.toLocaleDateString("ru-RU", {
+                  const weekday = parsed.toLocaleDateString(FORMAT_LOCALES[locale], {
                     weekday: "short",
                   });
                   const day = parsed.getUTCDate();
@@ -311,7 +326,7 @@ export function ScheduleEditor({
                   <td className="sticky left-0 z-[1] min-w-[200px] bg-white px-3 py-2">
                     <div className="font-medium text-[#0b1024]">{u.name}</div>
                     <div className="text-[11px] text-[#6f7282]">
-                      {u.jobPositionName ?? "без должности"}
+                      {u.jobPositionName ?? t("noPosition")}
                     </div>
                   </td>
                   {dates.map((d) => {
@@ -325,13 +340,13 @@ export function ScheduleEditor({
                         <button
                           type="button"
                           onClick={() => cycleStatus(u.id, d)}
-                          title={STATUS_TITLE[s]}
+                          title={statusTitle(s)}
                           className={cn(
                             "inline-flex h-9 w-9 items-center justify-center rounded-lg border text-[12px] transition-colors",
                             STATUS_COLOR[s]
                           )}
                         >
-                          {STATUS_LABEL[s] || "—"}
+                          {statusLabel(s) || "—"}
                         </button>
                         {s === "scheduled" ? (
                           <select
@@ -344,7 +359,7 @@ export function ScheduleEditor({
                               )
                             }
                             className="mt-1 w-[92px] rounded border border-[#dcdfed] bg-white px-1 py-0.5 text-[10px] text-[#3c4053]"
-                            title="Должность на этот день (если отличается от базовой)"
+                            title={t("positionForDay")}
                           >
                             <option value="">
                               {u.jobPositionName ?? "—"}
@@ -367,7 +382,7 @@ export function ScheduleEditor({
                     colSpan={dates.length + 1}
                     className="px-4 py-10 text-center text-[13px] text-[#9b9fb3]"
                   >
-                    В организации ещё нет сотрудников
+                    {t("noEmployees")}
                   </td>
                 </tr>
               ) : null}
@@ -379,8 +394,8 @@ export function ScheduleEditor({
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-3xl border border-[#ececf4] bg-white/95 px-5 py-3 shadow-[0_12px_32px_-16px_rgba(11,16,36,0.18)] backdrop-blur">
         <div className="text-[13px] text-[#3c4053]">
           {dirty.size === 0
-            ? "Изменений нет"
-            : `Есть изменений: ${dirty.size}`}
+            ? t("noChanges")
+            : t("changesCount", { count: dirty.size })}
         </div>
         <Button
           type="button"
@@ -390,7 +405,7 @@ export function ScheduleEditor({
           className="ml-auto h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <RotateCcw className="size-4" />
-          Отменить изменения
+          {t("cancelChanges")}
         </Button>
         <Button
           type="button"
@@ -403,7 +418,7 @@ export function ScheduleEditor({
           ) : (
             <Save className="size-4" />
           )}
-          Сохранить график
+          {t("saveSchedule")}
         </Button>
       </div>
     </div>

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Activity, RefreshCw, AlertTriangle } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 type TfAuditEvent = {
   id: number;
@@ -34,6 +36,7 @@ type FetchResult = {
  * системы пришло событие). Группировка по дню как у Wesetup-ленты.
  */
 export function TasksflowAuditFeed() {
+  const t = useTranslations("settingsUi.tasksflowAuditFeed");
   const [events, setEvents] = useState<TfAuditEvent[]>([]);
   const [hasIntegration, setHasIntegration] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +89,7 @@ export function TasksflowAuditFeed() {
           <AlertTriangle className="mt-0.5 size-5 shrink-0" />
           <div className="flex-1">
             <div className="text-[14px] font-semibold">
-              Не удалось получить события TasksFlow
+              {t("loadFailed")}
             </div>
             <div className="mt-1 text-[13px] leading-relaxed">{error}</div>
           </div>
@@ -96,7 +99,7 @@ export function TasksflowAuditFeed() {
             className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <RefreshCw className="size-3.5" />
-            Повторить
+            {t("retry")}
           </button>
         </div>
       </section>
@@ -108,16 +111,16 @@ export function TasksflowAuditFeed() {
       <section className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-6">
         <SectionHeader muted />
         <p className="mt-3 text-[13px] leading-[1.55] text-[#6f7282]">
-          TasksFlow интеграция не настроена для этой организации.
-          События task lifecycle (создание, выполнение, удаление) появятся
-          здесь после подключения в{" "}
-          <a
-            href="/settings/integrations/tasksflow"
-            className="font-medium text-[#5566f6] hover:text-[#4a5bf0]"
-          >
-            настройках интеграции
-          </a>
-          .
+          {t.rich("notConfigured", {
+            link: (chunks) => (
+              <a
+                href="/settings/integrations/tasksflow"
+                className="font-medium text-[#5566f6] hover:text-[#4a5bf0]"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
       </section>
     );
@@ -128,7 +131,7 @@ export function TasksflowAuditFeed() {
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <SectionHeader />
         <p className="mt-4 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-8 text-center text-[13px] text-[#6f7282]">
-          Пока нет событий TasksFlow за последние 30 дней
+          {t("empty")}
         </p>
       </section>
     );
@@ -152,6 +155,7 @@ function SectionHeader(props: {
   loading?: boolean;
   muted?: boolean;
 }) {
+  const t = useTranslations("settingsUi.tasksflowAuditFeed");
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="flex items-start gap-3">
@@ -166,12 +170,11 @@ function SectionHeader(props: {
         </span>
         <div>
           <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            События TasksFlow
+            {t("title")}
           </h2>
           <p className="mt-0.5 text-[12.5px] text-[#6f7282]">
-            Жизненный цикл задач в TF: создание, выполнение, удаление и
-            sibling-claim'ы
-            {typeof props.count === "number" ? ` · ${props.count} событий` : null}
+            {t("subtitle")}
+            {typeof props.count === "number" ? t("eventsCount", { count: props.count }) : null}
           </p>
         </div>
       </div>
@@ -185,25 +188,12 @@ function SectionHeader(props: {
           <RefreshCw
             className={`size-3.5 ${props.loading ? "animate-spin" : ""}`}
           />
-          Обновить
+          {t("refresh")}
         </button>
       ) : null}
     </div>
   );
 }
-
-const ACTION_LABELS: Record<string, string> = {
-  "task.created": "Задача создана",
-  "task.updated": "Задача обновлена",
-  "task.deleted": "Задача удалена",
-  "task.completed": "Задача выполнена",
-  "task.uncompleted": "Выполнение отменено",
-  "task.claimed_by_other": "Сделано другим уборщиком",
-  "task.verified": "Проверка пройдена",
-  "task.rejected": "Возвращено на доработку",
-  "task.photo_uploaded": "Фото загружено",
-  "task.photo_deleted": "Фото удалено",
-};
 
 const ACTION_COLORS: Record<string, string> = {
   "task.created": "bg-[#eef1ff] text-[#3848c7]",
@@ -216,10 +206,37 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 function TfEventRow({ event }: { event: TfAuditEvent }) {
-  const actionLabel = ACTION_LABELS[event.action] ?? event.action;
+  const t = useTranslations("settingsUi.tasksflowAuditFeed");
+  const locale = useLocale() as Locale;
+  const actionLabel = (() => {
+    switch (event.action) {
+      case "task.created":
+        return t("actionCreated");
+      case "task.updated":
+        return t("actionUpdated");
+      case "task.deleted":
+        return t("actionDeleted");
+      case "task.completed":
+        return t("actionCompleted");
+      case "task.uncompleted":
+        return t("actionUncompleted");
+      case "task.claimed_by_other":
+        return t("actionClaimedByOther");
+      case "task.verified":
+        return t("actionVerified");
+      case "task.rejected":
+        return t("actionRejected");
+      case "task.photo_uploaded":
+        return t("actionPhotoUploaded");
+      case "task.photo_deleted":
+        return t("actionPhotoDeleted");
+      default:
+        return event.action;
+    }
+  })();
   const colorCls = ACTION_COLORS[event.action] ?? "bg-[#f5f6ff] text-[#3848c7]";
   const date = new Date(event.createdAt * 1000);
-  const timeStr = date.toLocaleString("ru-RU", {
+  const timeStr = date.toLocaleString(FORMAT_LOCALES[locale], {
     day: "numeric",
     month: "short",
     hour: "2-digit",

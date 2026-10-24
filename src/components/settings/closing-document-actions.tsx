@@ -2,6 +2,7 @@
 
 import { FileText, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ export function ClosingDocumentActions({
   orderId: number;
   canRefresh: boolean;
 }) {
+  const t = useTranslations("settingsUi.closingDocumentActions");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -24,11 +26,11 @@ export function ClosingDocumentActions({
     try {
       const response = await fetch(`/api/closing-documents/${orderId}/refresh-buyer`, { method: "POST" });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось обновить");
-      toast.success("Реквизиты покупателя в документе обновлены");
+      if (!response.ok) throw new Error(data?.error ?? t("refreshFailed"));
+      toast.success(t("refreshed"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setBusy(false);
     }
@@ -39,18 +41,18 @@ export function ClosingDocumentActions({
       <a
         href={`/api/closing-documents/${orderId}/pdf`}
         className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-        title="Универсальный передаточный документ по этому платежу, PDF с факсимиле"
+        title={t("updTitle")}
       >
         <FileText className="size-3.5 text-[#5566f6]" />
-        УПД (PDF)
+        {t("upd")}
       </a>
       {canRefresh ? (
         <button
           type="button"
           onClick={() => void refresh()}
           disabled={busy}
-          title="Перезаписать название, ИНН и адрес покупателя в документе из текущих настроек организации"
-          aria-label="Обновить реквизиты покупателя в документе"
+          title={t("refreshTitle")}
+          aria-label={t("refreshAria")}
           className="inline-flex size-8 items-center justify-center rounded-xl border border-[#dcdfed] bg-white text-[#6f7282] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] disabled:opacity-50"
         >
           <RefreshCw className={busy ? "size-3.5 animate-spin" : "size-3.5"} />

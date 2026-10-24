@@ -10,6 +10,7 @@ import {
   Save,
   Users,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ export function PermissionsEditor({
   managementDefaults,
   staffDefaults,
 }: Props) {
+  const t = useTranslations("settingsUi.permissionsEditor");
   const router = useRouter();
   const [positionState, setPositionState] = useState(positions);
   const [userState, setUserState] = useState(users);
@@ -162,13 +164,13 @@ export function PermissionsEditor({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Не удалось сохранить");
+        toast.error(data?.error ?? t("saveFailed"));
         return;
       }
-      toast.success("Права сохранены");
+      toast.success(t("saved"));
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(err instanceof Error ? err.message : t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -234,21 +236,19 @@ export function PermissionsEditor({
           <Building2 className="size-5 shrink-0 text-[#5566f6]" />
           <div className="flex-1">
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Дефолты групп
+              {t("groupDefaults")}
             </div>
             <p className="mt-1 text-[13px] text-[#3c4053]">
-              Если у должности и у конкретного человека ничего не переопределено,
-              применяются эти базовые наборы. Меняются через редактирование
-              должности.
+              {t("groupDefaultsHint")}
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <SummaryChip
-                label="Руководство"
+                label={t("management")}
                 total={managementDefaults.length}
                 allCount={groups.reduce((n, g) => n + g.items.length, 0)}
               />
               <SummaryChip
-                label="Сотрудники"
+                label={t("staff")}
                 total={staffDefaults.length}
                 allCount={groups.reduce((n, g) => n + g.items.length, 0)}
               />
@@ -262,7 +262,7 @@ export function PermissionsEditor({
         <div className="flex items-center gap-2 border-b border-[#ececf4] pb-3">
           <Users className="size-4 text-[#5566f6]" />
           <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            Должности
+            {t("positions")}
           </h2>
           <span className="ml-2 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
             {positionState.length}
@@ -271,7 +271,7 @@ export function PermissionsEditor({
 
         <div className="mt-3 space-y-6">
           <PositionCategoryBlock
-            title="Руководство"
+            title={t("management")}
             positions={positionsByCategory.management}
             groups={groups}
             expanded={expanded}
@@ -283,7 +283,7 @@ export function PermissionsEditor({
             staffDefaults={staffDefaults}
           />
           <PositionCategoryBlock
-            title="Сотрудники"
+            title={t("staff")}
             positions={positionsByCategory.staff}
             groups={groups}
             expanded={expanded}
@@ -302,15 +302,14 @@ export function PermissionsEditor({
         <div className="flex items-center gap-2 border-b border-[#ececf4] pb-3">
           <Users className="size-4 text-[#5566f6]" />
           <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            Индивидуальные права
+            {t("individualRights")}
           </h2>
           <span className="ml-2 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
             {userState.length}
           </span>
         </div>
         <p className="mt-2 text-[13px] text-[#6f7282]">
-          Особые права только для конкретного человека. По умолчанию сотрудник
-          наследует права своей должности.
+          {t("individualHint")}
         </p>
         <ul className="mt-3 divide-y divide-[#ececf4]">
           {userState.map((u) => {
@@ -339,10 +338,12 @@ export function PermissionsEditor({
                     </span>
                     <span className="ml-auto text-[11px] text-[#9b9fb3]">
                       {source === "user"
-                        ? "личные права"
+                        ? t("sourceUser")
                         : source === "position"
-                          ? `от должности${positionName ? ` «${positionName}»` : ""}`
-                          : "от группы"}
+                          ? positionName
+                            ? t("sourcePositionNamed", { name: positionName })
+                            : t("sourcePosition")
+                          : t("sourceGroup")}
                     </span>
                   </button>
                   {u.permissions !== null ? (
@@ -350,10 +351,10 @@ export function PermissionsEditor({
                       type="button"
                       onClick={() => resetUser(u.id)}
                       className="inline-flex items-center gap-1 rounded-full border border-[#dcdfed] bg-white px-2.5 py-1 text-[11px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                      title="Вернуть к наследованию от должности/группы"
+                      title={t("resetUserTitle")}
                     >
                       <RotateCcw className="size-3" />
-                      Сбросить
+                      {t("reset")}
                     </button>
                   ) : null}
                 </div>
@@ -380,9 +381,7 @@ export function PermissionsEditor({
       {/* Sticky save bar */}
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-3xl border border-[#ececf4] bg-white/95 px-5 py-3 shadow-[0_12px_32px_-16px_rgba(11,16,36,0.18)] backdrop-blur">
         <div className="text-[13px] text-[#3c4053]">
-          {dirty
-            ? "Есть несохранённые изменения"
-            : "Изменений нет"}
+          {dirty ? t("unsaved") : t("noChanges")}
         </div>
         <Button
           type="button"
@@ -395,7 +394,7 @@ export function PermissionsEditor({
           ) : (
             <Save className="size-4" />
           )}
-          Сохранить
+          {t("save")}
         </Button>
       </div>
     </div>
@@ -451,6 +450,7 @@ function PositionCategoryBlock({
   managementDefaults: Permission[];
   staffDefaults: Permission[];
 }) {
+  const t = useTranslations("settingsUi.permissionsEditor");
   if (positions.length === 0) {
     return (
       <div>
@@ -458,7 +458,7 @@ function PositionCategoryBlock({
           {title}
         </div>
         <p className="mt-2 text-[13px] text-[#9b9fb3]">
-          Должностей в этой группе пока нет.
+          {t("noPositions")}
         </p>
       </div>
     );
@@ -491,13 +491,12 @@ function PositionCategoryBlock({
                     {p.name}
                   </span>
                   <span className="text-[12px] text-[#6f7282]">
-                    · {p.memberCount}{" "}
-                    {pluralizePeople(p.memberCount)}
+                    · {t("peopleCount", { count: p.memberCount })}
                   </span>
                   <span className="ml-auto text-[11px] text-[#9b9fb3]">
                     {p.permissions === null
-                      ? "по умолчанию для группы"
-                      : `настроено: ${p.permissions.length}`}
+                      ? t("groupDefault")
+                      : t("configured", { count: p.permissions.length })}
                   </span>
                 </button>
                 {p.permissions !== null ? (
@@ -505,10 +504,10 @@ function PositionCategoryBlock({
                     type="button"
                     onClick={() => onReset(p.id)}
                     className="inline-flex items-center gap-1 rounded-full border border-[#dcdfed] bg-white px-2.5 py-1 text-[11px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                    title="Вернуть к дефолтам группы"
+                    title={t("resetPositionTitle")}
                   >
                     <RotateCcw className="size-3" />
-                    Сбросить
+                    {t("reset")}
                   </button>
                 ) : null}
               </div>
@@ -587,11 +586,3 @@ function defaultsForCategory(
   return category === "staff" ? staff : management;
 }
 
-function pluralizePeople(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "человек";
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100))
-    return "человека";
-  return "человек";
-}

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 /**
@@ -20,6 +21,7 @@ import { toast } from "sonner";
  */
 export function UrgentJournalHotkey() {
   const router = useRouter();
+  const t = useTranslations("layoutUi.urgentJournalHotkey");
 
   useEffect(() => {
     let inflight = false;
@@ -40,14 +42,14 @@ export function UrgentJournalHotkey() {
           | { code: string | null }
           | null;
         if (!response.ok) {
-          toast.error("Не удалось определить срочный журнал");
+          toast.error(t("failed"));
           return;
         }
         if (data?.code) {
-          toast.message(`Срочный журнал: ${data.code}`, { duration: 1500 });
+          toast.message(t("urgent", { code: data.code }), { duration: 1500 });
           router.push(`/journals/${data.code}/new`);
         } else {
-          toast.message("Нет срочных задач — открываю список", {
+          toast.message(t("none"), {
             duration: 1500,
           });
           router.push("/journals");
@@ -58,7 +60,7 @@ export function UrgentJournalHotkey() {
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [router]);
+  }, [router, t]);
 
   return null;
 }

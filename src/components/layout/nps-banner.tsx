@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useId, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -13,7 +14,6 @@ import {
   NPS_PREVIEW_PARAM,
   NPS_RECOMMEND_DEFAULT_MESSAGE,
   NPS_RECOMMEND_MESSAGE_MAX_LENGTH,
-  NPS_REVIEW_DONE_TEXT,
   isNpsPreviewRequested,
   npsInvitesRecommendation,
 } from "@/lib/nps";
@@ -57,6 +57,7 @@ function errorText(data: Record<string, unknown>, fallback: string): string {
  * держится, пока человек не отправит письмо, отзыв или не закроет его.
  */
 export function NpsBanner({ variant = "site", ask = true, canPreview = false }: { variant?: "site" | "mini"; ask?: boolean; canPreview?: boolean }) {
+  const t = useTranslations("layoutUi.npsBanner");
   const [phase, setPhase] = useState<Phase>("ask");
   const [score, setScore] = useState<number | null>(null);
   const [doneText, setDoneText] = useState("");
@@ -85,7 +86,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
       const { ok, data } = id
         ? await requestJson("/api/nps", "PATCH", { id, score: value })
         : await requestJson("/api/nps", "POST", { score: value, scale: NPS_CURRENT_SCALE });
-      if (!ok) throw new Error(errorText(data, "Не удалось сохранить оценку"));
+      if (!ok) throw new Error(errorText(data, t("saveScoreFailed")));
       if (!id && typeof data.id === "string") responseId.current = data.id;
     };
     const next = saving.current.then(run);
@@ -98,7 +99,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
     setPhase("answered");
     setError(null);
     saveScore(value).catch((err: unknown) => {
-      toast.error(err instanceof Error ? err.message : "Не удалось сохранить оценку");
+      toast.error(err instanceof Error ? err.message : t("saveScoreFailed"));
       if (!responseId.current) {
         setScore(null);
         setPhase("ask");
@@ -122,21 +123,21 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
     event.preventDefault();
     if (busy) return;
     const check = checkEmail(email);
-    if (check.status === "empty") return setError({ field: "email", text: "Укажите почту коллеги" });
+    if (check.status === "empty") return setError({ field: "email", text: t("emailRequired") });
     if (check.status === "invalid") return setError({ field: "email", text: check.message });
     setPending("recommend");
     setError(null);
     try {
       const id = await savedResponseId();
-      if (!id) return setError({ field: "form", text: "Оценка не сохранилась — выберите её ещё раз" });
+      if (!id) return setError({ field: "form", text: t("scoreNotSaved") });
       const { ok, data } = await requestJson("/api/nps/recommend", "POST", { responseId: id, email: email.trim(), message });
       if (!ok) {
         const field = data.field === "email" || data.field === "message" ? data.field : "form";
-        return setError({ field, text: errorText(data, "Не удалось отправить письмо") });
+        return setError({ field, text: errorText(data, t("sendEmailFailed")) });
       }
-      finish("Спасибо! Письмо отправлено");
+      finish(t("thanksSent"));
     } catch {
-      setError({ field: "form", text: "Нет связи — попробуйте ещё раз" });
+      setError({ field: "form", text: t("noConnection") });
     } finally {
       setPending(null);
     }
@@ -146,22 +147,22 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
     if (busy) return;
     const text = message.trim();
     if (text.length < REVIEW_TEXT_MIN_LENGTH) {
-      return setError({ field: "message", text: `Для отзыва напишите хотя бы пару предложений — от ${REVIEW_TEXT_MIN_LENGTH} символов` });
+      return setError({ field: "message", text: t("reviewTooShort", { min: REVIEW_TEXT_MIN_LENGTH }) });
     }
-    if (!consent) return setError({ field: "consent", text: "Без согласия на публикацию отзыв опубликовать нельзя" });
+    if (!consent) return setError({ field: "consent", text: t("consentRequired") });
     setPending("review");
     setError(null);
     try {
       const id = await savedResponseId();
-      if (!id) return setError({ field: "form", text: "Оценка не сохранилась — выберите её ещё раз" });
+      if (!id) return setError({ field: "form", text: t("scoreNotSaved") });
       const { ok, data } = await requestJson("/api/nps/review", "POST", { responseId: id, text, consent });
       if (!ok) {
         const field = data.field === "message" || data.field === "consent" ? data.field : "form";
-        return setError({ field, text: errorText(data, "Не удалось отправить отзыв") });
+        return setError({ field, text: errorText(data, t("sendReviewFailed")) });
       }
-      finish(NPS_REVIEW_DONE_TEXT, 5000);
+      finish(t("reviewDone"), 5000);
     } catch {
-      setError({ field: "form", text: "Нет связи — попробуйте ещё раз" });
+      setError({ field: "form", text: t("noConnection") });
     } finally {
       setPending(null);
     }
@@ -175,12 +176,12 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
     setError(null);
     try {
       const id = await savedResponseId();
-      if (!id) return setError({ field: "form", text: "Оценка не сохранилась — выберите её ещё раз" });
+      if (!id) return setError({ field: "form", text: t("scoreNotSaved") });
       const { ok, data } = await requestJson("/api/nps", "PATCH", { id, comment: text });
-      if (!ok) return setError({ field: "comment", text: errorText(data, "Не удалось отправить") });
-      finish("Спасибо! Учтём");
+      if (!ok) return setError({ field: "comment", text: errorText(data, t("sendFailed")) });
+      finish(t("thanksNoted"));
     } catch {
-      setError({ field: "form", text: "Нет связи — попробуйте ещё раз" });
+      setError({ field: "form", text: t("noConnection") });
     } finally {
       setPending(null);
     }
@@ -239,15 +240,15 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
     ) : null;
 
   return (
-    <div className={shell} style={shellStyle} data-testid="nps-banner" role="region" aria-label="Опрос: посоветуете ли WeSetup коллегам">
+    <div className={shell} style={shellStyle} data-testid="nps-banner" role="region" aria-label={t("regionAria")}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1 sm:flex sm:items-start sm:gap-6">
           <div className="pt-1.5 text-[16px] font-semibold leading-tight tracking-[-0.01em] sm:pt-3" data-testid="nps-title">
-            Посоветуете WeSetup коллегам?
+            {t("title")}
           </div>
           {phase === "done" ? null : (
             <div className="mt-3 sm:ml-auto sm:mt-0 sm:w-[272px] sm:shrink-0">
-              <div className="flex gap-2" role="group" aria-label="Оценка от 1 до 5: 1 — нет, 5 — да">
+              <div className="flex gap-2" role="group" aria-label={t("scaleAria")}>
                 {SCORES.map((n) => {
                   const active = score === n;
                   return (
@@ -256,7 +257,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
                       type="button"
                       onClick={() => pick(n)}
                       aria-pressed={active}
-                      aria-label={`${n} из 5`}
+                      aria-label={t("scoreAria", { score: n })}
                       data-testid={`nps-score-${n}`}
                       className={`h-12 min-w-0 flex-1 rounded-2xl text-[16px] font-semibold tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 ${
                         active
@@ -272,8 +273,8 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
                 })}
               </div>
               <div className={`mt-1 flex justify-between px-1 text-[12px] ${faint.className ?? ""}`} style={faint.style} aria-hidden="true">
-                <span>нет</span>
-                <span>да</span>
+                <span>{t("scaleNo")}</span>
+                <span>{t("scaleYes")}</span>
               </div>
             </div>
           )}
@@ -282,8 +283,8 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
         <button
           type="button"
           onClick={close}
-          aria-label={score === null ? "Не сейчас" : "Закрыть"}
-          title={score === null ? "Не сейчас" : "Закрыть — оценка уже сохранена"}
+          aria-label={score === null ? t("notNow") : t("close")}
+          title={score === null ? t("notNow") : t("closeTitle")}
           className={`-mr-3.5 -mt-2.5 flex size-12 shrink-0 items-center justify-center rounded-full transition-colors duration-150 sm:-mr-2 sm:mt-1.5 sm:size-9 ${
             mini ? "opacity-60 hover:opacity-100" : "text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
           }`}
@@ -303,7 +304,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
         <form onSubmit={sendRecommendation} noValidate className="mt-4 space-y-3 sm:max-w-[640px]" data-testid="nps-recommend-form">
           <div>
             <label htmlFor={`${ids}-message`} className={label}>
-              Сообщение
+              {t("messageLabel")}
             </label>
             <textarea
               id={`${ids}-message`}
@@ -328,7 +329,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
           </div>
           <div>
             <label htmlFor={`${ids}-email`} className={label}>
-              Почта коллеги
+              {t("emailLabel")}
             </label>
             <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
               <div className="min-w-0 flex-1">
@@ -359,13 +360,13 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
                       onClick={() => setEmail(replaceDomain(email.trim(), emailSuggestion.suggestion))}
                       className="font-semibold text-[#3848c7] underline underline-offset-2"
                     >
-                      Исправить
+                      {t("fix")}
                     </button>
                   </p>
                 ) : null}
               </div>
               <button type="submit" disabled={busy} className={`${submit} ${ACTION_WIDTH}`} data-testid="nps-recommend-submit">
-                {pending === "recommend" ? "Отправляем…" : "Отправить коллеге"}
+                {pending === "recommend" ? t("sending") : t("sendColleague")}
               </button>
             </div>
           </div>
@@ -383,7 +384,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
                 data-testid="nps-review-consent"
               />
               <span className={`text-[13px] leading-[1.5] ${body.className ?? ""}`} style={body.style}>
-                Согласен на публикацию отзыва, имени и заведения на сайте wesetup.ru и в соцсетях.
+                {t("consentLabel")}
               </span>
             </label>
             <button
@@ -394,13 +395,13 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
               style={secondaryStyle}
               data-testid="nps-review-submit"
             >
-              {pending === "review" ? "Отправляем…" : "Оставить отзыв"}
+              {pending === "review" ? t("sending") : t("leaveReview")}
             </button>
           </div>
           {fieldError("consent")}
           {fieldError("form")}
           <p className={`text-[12px] leading-[1.5] ${faint.className ?? ""}`} style={faint.style}>
-            Письмо придёт от WeSetup с вашим именем. Отзыв с этим текстом опубликуем после проверки и начислим баллы. Не хотите — просто закройте: оценка сохранена.
+            {t("letterNote")}
           </p>
         </form>
       ) : null}
@@ -409,7 +410,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
         <form onSubmit={sendComment} noValidate className="mt-4 space-y-3 sm:max-w-[640px]" data-testid="nps-improve-form">
           <div>
             <label htmlFor={`${ids}-comment`} className={label}>
-              Что улучшить?
+              {t("improveLabel")}
             </label>
             <textarea
               id={`${ids}-comment`}
@@ -420,7 +421,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
                 setComment(event.target.value);
                 if (error?.field === "comment") setError(null);
               }}
-              placeholder="Пара слов — прочитаем каждое сообщение"
+              placeholder={t("improvePlaceholder")}
               aria-invalid={error?.field === "comment"}
               className={`mt-1.5 block resize-y py-3 text-[16px] leading-[1.55] sm:text-[14px] ${field}`}
               data-testid="nps-improve-comment"
@@ -430,10 +431,10 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
           {fieldError("form")}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <button type="submit" disabled={busy || !comment.trim()} className={`${submit} sm:w-auto`} data-testid="nps-improve-submit">
-              {pending === "comment" ? "Отправляем…" : "Отправить"}
+              {pending === "comment" ? t("sending") : t("send")}
             </button>
             <p className={`text-[12px] leading-[1.5] ${faint.className ?? ""}`} style={faint.style}>
-              Оценка уже сохранена.
+              {t("scoreSaved")}
             </p>
           </div>
         </form>

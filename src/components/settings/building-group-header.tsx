@@ -1,4 +1,5 @@
 import { MapPin, Store } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Заголовок группы «точка» на страницах «Цеха и участки» и «Оборудование»
@@ -16,6 +17,7 @@ export function BuildingGroupHeader({
   /** Подсказка под «Без точки»: что сделать, чтобы цех ушёл в точку. */
   looseHint?: string;
 }) {
+  const t = useTranslations("settingsUi.buildingGroupHeader");
   return (
     <div className="flex flex-wrap items-start justify-between gap-2 px-1">
       <div className="flex min-w-0 items-start gap-3">
@@ -28,7 +30,7 @@ export function BuildingGroupHeader({
         </span>
         <div className="min-w-0">
           <h2 className="text-[17px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]">
-            {building ? building.name : "Без точки"}
+            {building ? building.name : t("withoutPoint")}
           </h2>
           {building?.address ? (
             <p className="mt-0.5 text-[13px] text-[#6f7282]">{building.address}</p>

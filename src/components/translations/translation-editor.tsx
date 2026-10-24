@@ -175,11 +175,11 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
   };
 
   const requestAuto = useCallback(
-    async (locale: TargetLocale, keys: string[]): Promise<{ translations: Record<string, string>; rejected: string[] } | null> => {
+    async (locale: TargetLocale, keys: string[], overwriteManual = false): Promise<{ translations: Record<string, string>; rejected: string[]; skipped?: string[] } | null> => {
       const response = await fetch("/api/translations/auto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locale, keys }),
+        body: JSON.stringify({ locale, keys, ...(overwriteManual ? { overwriteManual: true } : {}) }),
       });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
@@ -203,7 +203,8 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
   const autoOne = async (key: string, locale: TargetLocale) => {
     setAutoRow(draftId(key, locale));
     try {
-      const result = await requestAuto(locale, [key]);
+      // Явный запрос по одной строке: человек сам просит перевести заново.
+      const result = await requestAuto(locale, [key], true);
       if (!result) return;
       applyAuto(locale, result.translations);
       if (result.rejected.length) toast.error(t("toasts.autoRejected", { count: String(result.rejected.length) }));
@@ -217,7 +218,8 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     const result = {} as Record<TargetLocale, string[]>;
     for (const locale of ["en", "uz"] as const) {
       result[locale] = entries
-        .filter((entry) => entry.untranslated.includes(locale) && drafts[draftId(entry.key, locale)] === undefined)
+        // Строки, правленные вручную, пачкой не переводим.
+        .filter((entry) => entry.untranslated.includes(locale) && !entry.overridden.includes(locale) && drafts[draftId(entry.key, locale)] === undefined)
         .map((entry) => entry.key);
     }
     return result;
@@ -229,6 +231,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     let done = 0;
     let translated = 0;
     let rejected = 0;
+    let skipped = 0;
     setAutoProgress({ done, total: keys.length });
     try {
       for (let index = 0; index < keys.length; index += AUTO_TRANSLATE_BATCH) {
@@ -238,6 +241,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
         applyAuto(locale, result.translations);
         translated += Object.keys(result.translations).length;
         rejected += result.rejected.length;
+        skipped += result.skipped?.length ?? 0;
         done += chunk.length;
         setAutoProgress({ done, total: keys.length });
       }
@@ -246,6 +250,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     }
     if (translated) toast.success(t("toasts.autoDone", { count: String(translated) }));
     if (rejected) toast.error(t("toasts.autoRejected", { count: String(rejected) }));
+    if (skipped) toast.info(t("toasts.autoSkipped", { count: String(skipped) }));
   };
 
   const groups = useMemo(() => {
@@ -257,7 +262,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
   }, [categories, otherQuery]);
 
   const categoryTitle = (item: CategoryStats) =>
-    item.group === "other" ? item.namespace ?? item.id : t(`categories.${item.id as "journal-hygiene" | "navigation" | "common"}`);
+    item.group === "other" ? item.namespace ?? item.id : item.title ?? t(`categories.${item.id as "journal-hygiene" | "navigation" | "common"}`);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]" data-testid="translation-editor">
@@ -291,6 +296,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                   <>
                     <span>{t("categoryTotal", { total: item.total })}</span>
                     {item.modified ? <span className="text-[#3848c7]">{t("badges.modified", { count: String(item.modified) })}</span> : null}
+                    {item.stale ? <span className="text-[#a13a32]">{t("badges.stale", { count: String(item.stale) })}</span> : null}
                     {item.untranslated ? <span className="text-[#b25f00]">{t("badges.untranslated", { count: String(item.untranslated) })}</span> : null}
                   </>
                 }
@@ -380,6 +386,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                         <span className="font-semibold text-[#0b1024]">{LOCALE_NAMES[locale]}</span>
                         {draft !== undefined ? <StateBadge tone="draft">{t("rowState.draft")}</StateBadge> : null}
                         {overridden ? <StateBadge tone="modified">{t("rowState.modified")}</StateBadge> : null}
+                        {entry.stale.includes(locale) ? <StateBadge tone="stale">{t("rowState.stale")}</StateBadge> : null}
                         {untranslated ? <StateBadge tone="untranslated">{t("rowState.untranslated")}</StateBadge> : null}
                       </div>
                       <Textarea
@@ -393,6 +400,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                         lang={locale}
                         data-testid={`translation-input-${locale}`}
                       />
+                      {entry.stale.includes(locale) ? <p className="text-[12px] text-[#a13a32]">{t("staleHint")}</p> : null}
                       {overridden ? (
                         <p className="line-clamp-2 text-[12px] text-[#9b9fb3]" title={entry.base[locale]}>{t("original", { text: entry.base[locale] })}</p>
                       ) : null}
@@ -470,10 +478,11 @@ function CategoryButton({ active, title, meta, mono, onClick, testId }: { active
   );
 }
 
-function StateBadge({ tone, children }: { tone: "draft" | "modified" | "untranslated"; children: React.ReactNode }) {
+function StateBadge({ tone, children }: { tone: "draft" | "modified" | "stale" | "untranslated"; children: React.ReactNode }) {
   const tones = {
     draft: "bg-[#eef0ff] text-[#3848c7]",
     modified: "bg-[#ecfdf5] text-[#116b2a]",
+    stale: "bg-[#fff4f2] text-[#a13a32]",
     untranslated: "bg-[#fff8eb] text-[#b25f00]",
   };
   return <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", tones[tone])}>{children}</span>;

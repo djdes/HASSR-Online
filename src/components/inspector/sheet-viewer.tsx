@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Лист журнала: картинка страницы печатной формы. Касание — лист на весь
@@ -17,6 +18,7 @@ export function SheetImage({
   alt: string;
   caption: string;
 }) {
+  const t = useTranslations("inspectorUi.sheetViewer");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function SheetImage({
           setOpen(true);
         }}
         className="group block cursor-zoom-in border border-[#d5d8de] bg-white shadow-[0_1px_0_rgba(20,24,33,0.05),0_22px_44px_-30px_rgba(20,24,33,0.55)] transition-shadow duration-200 hover:shadow-[0_1px_0_rgba(20,24,33,0.05),0_26px_50px_-26px_rgba(20,24,33,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f3a8a]/40"
-        aria-label={`${caption} — открыть крупно`}
+        aria-label={t("openLarge", { caption })}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- лист из токен-защищённого API, next/image здесь только мешает */}
         <img
@@ -68,7 +70,7 @@ export function SheetImage({
               type="button"
               onClick={() => setOpen(false)}
               className="inline-flex size-10 items-center justify-center rounded-full bg-white/10 transition-colors duration-150 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-              aria-label="Закрыть"
+              aria-label={t("close")}
             >
               <X className="size-5" />
             </button>

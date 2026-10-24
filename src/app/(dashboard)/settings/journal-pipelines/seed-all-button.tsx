@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export function SeedAllPipelinesButton({
   totalActiveTrees: number;
   totalJournals: number;
 }) {
+  const t = useTranslations("settingsUi.seedAllButton");
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -44,7 +46,7 @@ export function SeedAllPipelinesButton({
         | { summary: SeedSummary }
         | null;
       if (!response.ok || !data) {
-        toast.error("Не удалось создать pipeline для всех журналов");
+        toast.error(t("failed"));
         return;
       }
       const { created, skippedExisting, skippedNoFields } = data.summary;
@@ -58,20 +60,20 @@ export function SeedAllPipelinesButton({
       // Полная сводка в одном toast'е. Exempt — отдельной фразой,
       // т.к. это не «требует настройки», а «не нужен pipeline-tree».
       const parts: string[] = [];
-      if (created.length > 0) parts.push(`создано: ${created.length}`);
+      if (created.length > 0) parts.push(t("partCreated", { count: created.length }));
       if (skippedExisting.length > 0)
-        parts.push(`уже было: ${skippedExisting.length}`);
+        parts.push(t("partExisting", { count: skippedExisting.length }));
       if (exempt.length > 0)
-        parts.push(`со своим адаптером: ${exempt.length}`);
+        parts.push(t("partExempt", { count: exempt.length }));
       if (skippedNoFields.length > 0)
-        parts.push(`нужна ручная настройка: ${skippedNoFields.length}`);
+        parts.push(t("partManual", { count: skippedNoFields.length }));
 
-      const summary = parts.join(" · ") || "изменений нет";
-      const heading = `Журналов: ${total} · ${summary}`;
+      const summary = parts.join(" · ") || t("noChanges");
+      const heading = t("heading", { total, summary });
 
       if (skippedNoFields.length > 0) {
         toast.warning(
-          heading + ". См. уведомления — там список журналов для ручной настройки."
+          `${heading}. ${t("seeNotifications")}`
         );
       } else if (created.length > 0) {
         toast.success(heading);
@@ -93,40 +95,37 @@ export function SeedAllPipelinesButton({
         className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
       >
         <Sparkles className="size-4" />
-        Создать pipeline для всех журналов
+        {t("button")}
       </Button>
 
       <ConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         variant="default"
-        title="Создать pipeline для всех журналов?"
+        title={t("confirmTitle")}
         description={
           <span>
-            Для каждого из <strong>{totalJournals}</strong> журналов
-            (где это возможно) будет создано дерево pinned-узлов по
-            колонкам. Уже настроенные журналы (
-            <strong>{totalActiveTrees}</strong>) не пересоздаются —
-            твоя работа сохранится.
+            {t.rich("confirmDescription", {
+              journals: totalJournals,
+              configured: totalActiveTrees,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </span>
         }
         bullets={[
           {
-            label:
-              "Сотрудники сразу смогут заполнять реальные колонки журнала через TasksFlow — без ручной настройки.",
+            label: t("bullet1"),
           },
           {
-            label:
-              "Где у журнала нет описанных полей — пропускаем и присылаем в уведомления для ручной настройки.",
+            label: t("bullet2"),
             tone: "info",
           },
           {
-            label:
-              "Ничего не удаляется. Только создаётся базовый pipeline там, где его ещё нет.",
+            label: t("bullet3"),
             tone: "info",
           },
         ]}
-        confirmLabel={busy ? "Создаю…" : "Создать"}
+        confirmLabel={busy ? t("creating") : t("create")}
         onConfirm={handleSeed}
       />
     </>

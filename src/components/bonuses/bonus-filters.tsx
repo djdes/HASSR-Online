@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Фильтр периода / сотрудника + кнопка CSV-экспорта
@@ -25,6 +26,7 @@ export function BonusFilters({
   employees: Array<{ id: string; name: string }>;
   exportHref: string;
 }) {
+  const t = useTranslations("bonusesUi.bonusFilters");
   const router = useRouter();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -49,7 +51,7 @@ export function BonusFilters({
       onSubmit={handleSubmit}
       className="flex flex-col gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:flex-row md:items-end"
     >
-      <FilterField label="С">
+      <FilterField label={t("from")}>
         <input
           type="date"
           name="from"
@@ -58,7 +60,7 @@ export function BonusFilters({
           className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
         />
       </FilterField>
-      <FilterField label="По">
+      <FilterField label={t("to")}>
         <input
           type="date"
           name="to"
@@ -67,13 +69,13 @@ export function BonusFilters({
           className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
         />
       </FilterField>
-      <FilterField label="Сотрудник">
+      <FilterField label={t("employee")}>
         <select
           name="user"
           defaultValue={userId}
           className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
         >
-          <option value="all">Все сотрудники</option>
+          <option value="all">{t("allEmployees")}</option>
           {employees.map((employee) => (
             <option key={employee.id} value={employee.id}>
               {employee.name}
@@ -87,14 +89,14 @@ export function BonusFilters({
           type="submit"
           className="inline-flex h-10 items-center rounded-xl bg-[#5566f6] px-4 text-[13.5px] font-semibold text-white shadow-[0_8px_24px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
         >
-          Применить
+          {t("apply")}
         </button>
         <a
           href={exportHref}
           className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <Download className="size-3.5" strokeWidth={2.2} />
-          Скачать CSV
+          {t("downloadCsv")}
         </a>
       </div>
     </form>

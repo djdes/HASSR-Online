@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { roomKindOptions } from "@/lib/room-kinds";
+import type { Locale } from "@/i18n/locales";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, Check, Copy, MapPin, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
@@ -106,11 +107,6 @@ export function roomEditorInitial(room: Room): RoomEditorInitial {
   };
 }
 
-// Виды — общий список (`room-kinds.ts`); экран пока только на русском.
-const KIND_LABELS: Record<string, string> = Object.fromEntries(
-  roomKindOptions("ru").map((option) => [option.value, option.label]),
-);
-
 export function BuildingsClient({
   initial,
   users,
@@ -135,6 +131,7 @@ export function BuildingsClient({
 }) {
   const router = useRouter();
   const tPoint = useTranslations("navigation.shell.point");
+  const t = useTranslations("settingsUi.buildingsClient");
   const [, startTransition] = useTransition();
   const [flagPending, setFlagPending] = useState(false);
   const [editorRoom, setEditorRoom] = useState<RoomEditorInitial | null>(null);
@@ -169,36 +166,33 @@ export function BuildingsClient({
       // Включение меняло режим молча, и управляющая не понимала, куда
       // делись прежние документы (никуда — они общие и видны везде).
       const ok = await confirmAsync({
-        title: "Вести журналы отдельно по точкам?",
-        description: "Что произойдёт с тем, что уже заполнено:",
+        title: t("enableTitle"),
+        description: t("enableDescription"),
         bullets: [
           {
-            label:
-              "Уже созданные документы не привязаны к точке — они останутся общими и будут видны на каждой точке",
+            label: t("enableBullet1"),
             tone: "info",
           },
           {
-            label:
-              "Отдельные документы появятся только у новых: ближайшей ночью автосоздание сделает по документу на каждую точку",
+            label: t("enableBullet2"),
             tone: "info",
           },
           {
-            label: "В шапке появится выбор точки — списки журналов станут точечными",
+            label: t("enableBullet3"),
             tone: "default",
           },
         ],
         variant: "warn",
-        confirmLabel: "Включить",
+        confirmLabel: t("enable"),
       });
       if (!ok) return;
     }
     if (!next) {
       const ok = await confirmAsync({
-        title: "Выключить раздельные журналы?",
-        description:
-          "Документы всех точек будут показываться вместе, а ночное автосоздание вернётся к одному общему документу на журнал. Уже созданные документы точек останутся.",
+        title: t("disableTitle"),
+        description: t("disableDescription"),
         variant: "warn",
-        confirmLabel: "Выключить",
+        confirmLabel: t("disable"),
       });
       if (!ok) return;
     }
@@ -210,15 +204,13 @@ export function BuildingsClient({
         body: JSON.stringify({ perLocationJournals: next }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!res.ok) throw new Error(data?.error ?? t("saveFailed"));
       toast.success(
-        next
-          ? "Журналы ведутся отдельно по точкам — переключатель в шапке"
-          : "Журналы снова общие для всех зданий",
+        next ? t("perPointOn") : t("perPointOff"),
       );
       refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setFlagPending(false);
     }
@@ -226,18 +218,18 @@ export function BuildingsClient({
 
   async function deleteBuilding(id: string, name: string) {
     const ok = await confirmAsync({
-      title: "Удалить точку?",
-      description: `Точка «${name}» и её помещения будут удалены. Документы журналов этой точки останутся в организации и станут общими — видимыми на каждой точке.`,
+      title: t("deletePointTitle"),
+      description: t("deletePointDescription", { name }),
       variant: "danger",
-      confirmLabel: "Удалить точку",
+      confirmLabel: t("deletePointConfirm"),
     });
     if (!ok) return;
     const res = await fetch(`/api/settings/buildings/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      toast.error("Не удалось удалить");
+      toast.error(t("deleteFailed"));
       return;
     }
-    toast.success("Точка удалена");
+    toast.success(t("pointDeleted"));
     refresh();
   }
 
@@ -247,11 +239,10 @@ export function BuildingsClient({
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <Building2 className="mx-auto mb-3 size-8 text-[#9b9fb3]" />
           <div className="text-[15px] font-medium text-[#0b1024]">
-            Пока нет ни одной точки
+            {t("noPoints")}
           </div>
           <p className="mx-auto mt-1.5 max-w-[400px] text-[13px] text-[#6f7282]">
-            Заведите первое — например, основную точку или цех. Внутри
-            добавите помещения, по которым будут раздаваться задачи уборки.
+            {t("noPointsHint")}
           </p>
         </div>
       ) : null}
@@ -261,20 +252,20 @@ export function BuildingsClient({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
               <MapPin className="size-4 text-[#5566f6]" />
-              Вести журналы отдельно по точкам
+              {t("perPointTitle")}
             </div>
             <p className="mt-1 text-[13px] leading-[1.55] text-[#6f7282]">
               {perLocationJournals
-                ? "Включено: в шапке есть выбор точки, документы журналов создаются на каждую точку, сотрудники и настройки общие."
-                : "Сейчас здания — просто группы помещений, документы общие. Включите, если это разные точки: у каждой будут свои документы, а в шапке появится выбор точки."}
+                ? t("perPointOnHint")
+                : t("perPointOffHint")}
             </p>
           </div>
           <Switch
             checked={perLocationJournals}
             disabled={flagPending || readOnly}
-            title={readOnly ? "Изменяет клиент — у консультанта только просмотр" : undefined}
+            title={readOnly ? t("readOnlyHint") : undefined}
             onCheckedChange={(next) => void togglePerLocation(next)}
-            aria-label="Вести журналы отдельно по точкам"
+            aria-label={t("perPointTitle")}
           />
         </div>
       ) : null}
@@ -283,9 +274,7 @@ export function BuildingsClient({
         <div className="flex items-start gap-3 rounded-2xl border border-[#ffe1b5] bg-[#fff8ec] px-4 py-3 text-[13px] leading-snug text-[#8a5a12]">
           <Pencil className="mt-0.5 size-4 shrink-0" />
           <span>
-            {unnamedCount === 1 ? "Одна точка ещё называется" : `${unnamedCount} точки ещё называются`}{" "}
-            «Точка N». Название и адрес печатаются в шапке журналов и PDF —
-            нажмите карандаш у точки и впишите настоящие.
+            {t("unnamedHint", { count: unnamedCount })}
           </span>
         </div>
       ) : null}
@@ -366,6 +355,15 @@ function BuildingCard({
   onDelete: () => void;
   onEditRoom: (room: Room) => void;
 }) {
+  const t = useTranslations("settingsUi.buildingsClient");
+  const locale = useLocale();
+  const kindLabels = useMemo<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        roomKindOptions(locale as Locale).map((option) => [option.value, option.label]),
+      ),
+    [locale],
+  );
   const [addingRoom, setAddingRoom] = useState(false);
   const [roomName, setRoomName] = useState("");
   const [roomKind, setRoomKind] = useState<string>("other");
@@ -393,12 +391,12 @@ function BuildingCard({
         body: JSON.stringify({ userIds: Array.from(staffDraft) }),
       });
       const d = (await res.json().catch(() => ({}))) as { changed?: number; error?: string };
-      if (!res.ok) throw new Error(d?.error ?? "Не удалось сохранить");
-      toast.success(d.changed ? `Обновлено сотрудников: ${d.changed}` : "Без изменений");
+      if (!res.ok) throw new Error(d?.error ?? t("saveFailed"));
+      toast.success(d.changed ? t("staffUpdated", { count: d.changed }) : t("noChanges"));
       setEditingStaff(false);
       onRefresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingStaff(false);
     }
@@ -410,7 +408,7 @@ function BuildingCard({
   async function saveHead() {
     const name = draftName.trim();
     if (!name) {
-      toast.error("Введите название точки");
+      toast.error(t("enterName"));
       return;
     }
     setSavingHead(true);
@@ -427,12 +425,12 @@ function BuildingCard({
         }),
       });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(d?.error ?? "Не удалось сохранить");
-      toast.success("Точка обновлена");
+      if (!res.ok) throw new Error(d?.error ?? t("saveFailed"));
+      toast.success(t("pointUpdated"));
       setEditing(false);
       onRefresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingHead(false);
     }
@@ -448,11 +446,11 @@ function BuildingCard({
         body: JSON.stringify({ fromBuildingId: donorId }),
       });
       const d = (await res.json().catch(() => ({}))) as { copied?: number; error?: string };
-      if (!res.ok) throw new Error(d?.error ?? "Не удалось скопировать");
-      toast.success(`Скопировано помещений: ${d.copied ?? 0}`);
+      if (!res.ok) throw new Error(d?.error ?? t("copyFailed"));
+      toast.success(t("roomsCopied", { count: d.copied ?? 0 }));
       onRefresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setCopying(false);
     }
@@ -471,14 +469,14 @@ function BuildingCard({
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      toast.error(d?.error ?? "Не удалось добавить");
+      toast.error(d?.error ?? t("addFailed"));
       return;
     }
     const created = (await res.json().catch(() => ({}))) as { room?: Room };
     setRoomName("");
     setRoomKind("other");
     setAddingRoom(false);
-    toast.success("Помещение добавлено — назначьте, кто убирает");
+    toast.success(t("roomAdded"));
     onRefresh();
     // «При добавлении»: сразу открываем карточку нового помещения —
     // уборщики, проверяющие и состав уборки настраиваются в одном окне.
@@ -503,19 +501,19 @@ function BuildingCard({
       /* последствия не показали — подтверждение всё равно спросим */
     }
     const ok = await confirmAsync({
-      title: "Удалить помещение?",
-      description: `Помещение «${name}» будет удалено безвозвратно.`,
+      title: t("deleteRoomTitle"),
+      description: t("deleteRoomDescription", { name }),
       bullets,
       variant: "danger",
-      confirmLabel: "Удалить помещение",
+      confirmLabel: t("deleteRoomConfirm"),
     });
     if (!ok) return;
     const res = await fetch(`/api/settings/rooms/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      toast.error("Не удалось удалить");
+      toast.error(t("deleteFailed"));
       return;
     }
-    toast.success("Помещение удалено");
+    toast.success(t("roomDeleted"));
     onRefresh();
   }
 
@@ -528,7 +526,7 @@ function BuildingCard({
               type="text"
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
-              aria-label="Название точки"
+              aria-label={t("pointNameLabel")}
               autoFocus
               className="h-10 w-full rounded-xl border border-[#dcdfed] px-3 text-[15px] font-semibold text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
@@ -536,8 +534,8 @@ function BuildingCard({
               type="text"
               value={draftAddress}
               onChange={(e) => setDraftAddress(e.target.value)}
-              placeholder="Адрес — печатается в шапке журналов"
-              aria-label="Адрес точки"
+              placeholder={t("addressPlaceholder")}
+              aria-label={t("addressLabel")}
               className="h-10 w-full rounded-xl border border-[#dcdfed] px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
             <div className="space-y-1">
@@ -546,13 +544,12 @@ function BuildingCard({
                 value={draftJournalName}
                 maxLength={200}
                 onChange={(e) => setDraftJournalName(e.target.value)}
-                placeholder="Наименование в шапке журналов — точное юридическое"
-                aria-label="Наименование в шапке журналов"
+                placeholder={t("journalNamePlaceholder")}
+                aria-label={t("journalNameLabel")}
                 className="h-10 w-full rounded-xl border border-[#dcdfed] px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
               <p className="px-1 text-[12px] leading-[1.45] text-[#6f7282]">
-                Печатается в шапке журналов и PDF вместо названия и адреса точки. В меню и списках остаётся короткое
-                название. Пусто — «название, адрес».
+                {t("journalNameHint")}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -561,16 +558,16 @@ function BuildingCard({
                 inputMode="numeric"
                 value={draftKpp}
                 onChange={(e) => setDraftKpp(e.target.value)}
-                placeholder="КПП точки"
-                aria-label="КПП точки"
+                placeholder={t("kppLabel")}
+                aria-label={t("kppLabel")}
                 className="h-10 w-full rounded-xl border border-[#dcdfed] px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
               <input
                 type="tel"
                 value={draftPhone}
                 onChange={(e) => setDraftPhone(e.target.value)}
-                placeholder="Телефон точки"
-                aria-label="Телефон точки"
+                placeholder={t("phoneLabel")}
+                aria-label={t("phoneLabel")}
                 className="h-10 w-full rounded-xl border border-[#dcdfed] px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
@@ -582,7 +579,7 @@ function BuildingCard({
                 className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-60"
               >
                 <Check className="size-3.5" />
-                Сохранить
+                {t("save")}
               </button>
               <button
                 type="button"
@@ -596,7 +593,7 @@ function BuildingCard({
                 }}
                 className="inline-flex h-9 items-center rounded-xl px-3 text-[13px] text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
               >
-                Отмена
+                {t("cancel")}
               </button>
             </div>
           </div>
@@ -611,16 +608,19 @@ function BuildingCard({
             {building.address ? (
               <div className="mt-0.5 text-[13px] text-[#6f7282]">{building.address}</div>
             ) : (
-              <div className="mt-0.5 text-[13px] text-[#9b9fb3]">Адрес не указан</div>
+              <div className="mt-0.5 text-[13px] text-[#9b9fb3]">{t("noAddress")}</div>
             )}
             {building.journalName ? (
               <div className="mt-0.5 text-[12px] text-[#6f7282]">
-                В шапке журналов: <span className="text-[#3848c7]">«{building.journalName}»</span>
+                {t.rich("journalHeader", {
+                  name: building.journalName,
+                  span: (chunks) => <span className="text-[#3848c7]">{chunks}</span>,
+                })}
               </div>
             ) : null}
             {building.kpp || building.phone ? (
               <div className="mt-0.5 text-[12px] text-[#9b9fb3]">
-                {[building.kpp ? `КПП ${building.kpp}` : null, building.phone ? `тел. ${building.phone}` : null]
+                {[building.kpp ? t("kppValue", { kpp: building.kpp }) : null, building.phone ? t("phoneValue", { phone: building.phone }) : null]
                   .filter(Boolean)
                   .join(" · ")}
               </div>
@@ -642,8 +642,8 @@ function BuildingCard({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              aria-label="Переименовать точку и адрес"
-              title="Название и адрес"
+              aria-label={t("renameLabel")}
+              title={t("renameTitle")}
               className="rounded-full p-1.5 text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#5566f6]"
             >
               <Pencil className="size-4" />
@@ -651,7 +651,7 @@ function BuildingCard({
             <button
               type="button"
               onClick={onDelete}
-              aria-label="Удалить точку"
+              aria-label={t("deletePointConfirm")}
               className="rounded-full p-1.5 text-[#9b9fb3] hover:bg-[#fff4f2] hover:text-[#d2453d]"
             >
               <Trash2 className="size-4" />
@@ -665,13 +665,20 @@ function BuildingCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
             <span className="inline-flex items-center gap-1.5 font-medium text-[#0b1024]">
               <Users className="size-4 text-[#5566f6]" />
-              Сотрудники точки
+              {t("pointStaff")}
             </span>
             <span className="text-[#6f7282]">
-              здесь: <b className="font-semibold text-[#0b1024] tabular-nums">{staffHere.length}</b>
+              {t.rich("staffHere", {
+                count: staffHere.length,
+                b: (chunks) => <b className="font-semibold text-[#0b1024] tabular-nums">{chunks}</b>,
+              })}
               {staffEverywhere.length > 0 ? (
                 <>
-                  {" "}· везде: <b className="font-semibold text-[#0b1024] tabular-nums">{staffEverywhere.length}</b>
+                  {" "}
+                  {t.rich("staffEverywhere", {
+                    count: staffEverywhere.length,
+                    b: (chunks) => <b className="font-semibold text-[#0b1024] tabular-nums">{chunks}</b>,
+                  })}
                 </>
               ) : null}
             </span>
@@ -684,14 +691,14 @@ function BuildingCard({
                 }}
                 className="ml-auto text-[13px] font-medium text-[#5566f6] hover:text-[#4a5bf0]"
               >
-                {editingStaff ? "Скрыть" : "Изменить"}
+                {editingStaff ? t("hide") : t("change")}
               </button>
             ) : null}
           </div>
           {!editingStaff && staffHere.length > 0 ? (
             <div className="mt-1 truncate text-[12px] text-[#6f7282]">
               {staffHere.slice(0, 6).map((u) => u.name).join(", ")}
-              {staffHere.length > 6 ? ` и ещё ${staffHere.length - 6}` : ""}
+              {staffHere.length > 6 ? ` ${t("andMore", { count: staffHere.length - 6 })}` : ""}
             </div>
           ) : null}
           {editingStaff ? (
@@ -718,7 +725,7 @@ function BuildingCard({
                       />
                       <span className="min-w-0 flex-1 truncate">{u.name}</span>
                       {everywhere && !checked ? (
-                        <span className="shrink-0 text-[11px] text-[#9b9fb3]">везде</span>
+                        <span className="shrink-0 text-[11px] text-[#9b9fb3]">{t("everywhere")}</span>
                       ) : null}
                     </label>
                   );
@@ -732,10 +739,10 @@ function BuildingCard({
                   className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-60"
                 >
                   <Check className="size-3.5" />
-                  Сохранить
+                  {t("save")}
                 </button>
                 <span className="text-[11px] leading-snug text-[#6f7282]">
-                  «Везде» — у сотрудника не выбрано ни одной точки. Снять единственную точку — он снова будет получать задачи со всех.
+                  {t("everywhereHint")}
                 </span>
               </div>
             </div>
@@ -746,15 +753,14 @@ function BuildingCard({
       <div className="space-y-1.5">
         {building.rooms.length === 0 && !addingRoom ? (
           <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-center text-[13px] text-[#6f7282]">
-            Помещений пока нет — добавьте, чтобы они появились в журналах
-            уборки.
+            {t("noRooms")}
             {!readOnly && donors.length > 0 ? (
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-                <span className="text-[#3c4053]">или скопируйте из</span>
+                <span className="text-[#3c4053]">{t("orCopyFrom")}</span>
                 <select
                   value={donorId}
                   onChange={(e) => setDonorId(e.target.value)}
-                  aria-label="Точка, откуда скопировать помещения"
+                  aria-label={t("copyFromLabel")}
                   className="h-9 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
                 >
                   {donors.map((d) => (
@@ -770,7 +776,7 @@ function BuildingCard({
                   className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
                 >
                   <Copy className="size-3.5 text-[#5566f6]" />
-                  {copying ? "Копируем…" : "Скопировать"}
+                  {copying ? t("copying") : t("copy")}
                 </button>
               </div>
             ) : null}
@@ -798,18 +804,18 @@ function BuildingCard({
                 <div className="flex min-w-0 items-center gap-2 flex-wrap">
                   <span className="font-medium text-[#0b1024]">{room.name}</span>
                   <span className="rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] text-[#3848c7]">
-                    {KIND_LABELS[room.kind] ?? room.kind}
+                    {kindLabels[room.kind] ?? room.kind}
                   </span>
                   {hasCleaningCfg ? (
                     <span
                       className="rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] text-[#136b2a]"
-                      title={`Текущая: ${currentLen} шаг(ов), Генеральная: ${generalLen}`}
+                      title={t("cleaningSteps", { current: currentLen, general: generalLen })}
                     >
-                      🧽 Уборка настроена ({currentLen}/{generalLen})
+                      🧽 {t("cleaningConfigured", { current: currentLen, general: generalLen })}
                     </span>
                   ) : (
                     <span className="rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11px] text-[#a16d32]">
-                      Уборка не настроена
+                      {t("cleaningNotConfigured")}
                     </span>
                   )}
                 </div>
@@ -817,16 +823,16 @@ function BuildingCard({
                 <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
                   {cleanerNames.length > 0 ? (
                     <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[#3848c7]">
-                      Убирает: {cleanerNames.join(", ")}
+                      {t("cleaners", { names: cleanerNames.join(", ") })}
                     </span>
                   ) : (
                     <span className="rounded-full bg-white px-2 py-0.5 text-[#9b9fb3] ring-1 ring-inset ring-[#ececf4]">
-                      Уборщики не назначены
+                      {t("noCleaners")}
                     </span>
                   )}
                   {verifierNames.length > 0 ? (
                     <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[#3848c7]">
-                      Проверяет: {verifierNames.join(", ")}
+                      {t("verifiers", { names: verifierNames.join(", ") })}
                     </span>
                   ) : null}
                 </div>
@@ -835,16 +841,16 @@ function BuildingCard({
                 <button
                   type="button"
                   onClick={() => onEditRoom(room)}
-                  aria-label="Настроить уборку"
+                  aria-label={t("configureCleaning")}
                   className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium text-[#3848c7] transition-colors hover:bg-white"
                 >
                   <Pencil className="size-3.5" />
-                  Настроить
+                  {t("configure")}
                 </button>
                 <button
                   type="button"
                   onClick={() => deleteRoom(room.id, room.name)}
-                  aria-label="Удалить помещение"
+                  aria-label={t("deleteRoomConfirm")}
                   className="rounded-full p-1 text-[#9b9fb3] hover:bg-white hover:text-[#d2453d]"
                 >
                   <X className="size-3.5" />
@@ -861,7 +867,7 @@ function BuildingCard({
             <input
               type="text"
               autoFocus
-              placeholder="Название помещения"
+              placeholder={t("roomNamePlaceholder")}
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               className="h-10 flex-1 rounded-xl border border-[#dcdfed] px-3 text-[13.5px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
@@ -871,7 +877,7 @@ function BuildingCard({
               onChange={(e) => setRoomKind(e.target.value)}
               className="h-10 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13.5px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             >
-              {Object.entries(KIND_LABELS).map(([k, v]) => (
+              {Object.entries(kindLabels).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
                 </option>
@@ -884,7 +890,7 @@ function BuildingCard({
               onClick={addRoom}
               className="inline-flex h-9 items-center rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0]"
             >
-              Добавить
+              {t("add")}
             </button>
             <button
               type="button"
@@ -894,7 +900,7 @@ function BuildingCard({
               }}
               className="inline-flex h-9 items-center rounded-xl px-3 text-[13px] text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
             >
-              Отмена
+              {t("cancel")}
             </button>
           </div>
         </div>
@@ -905,7 +911,7 @@ function BuildingCard({
           className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] px-3 text-[13px] text-[#3c4053] hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
         >
           <Plus className="size-3.5" />
-          Добавить помещение
+          {t("addRoom")}
         </button>
       )}
     </div>

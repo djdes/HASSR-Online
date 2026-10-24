@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArrowRight, Building2 } from "lucide-react";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -16,6 +17,7 @@ export default async function JournalPipelineEditorPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
+  const t = await getTranslations("settingsUi.journalPipelinesCodePage");
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
   if (!hasCapability(session.user, "admin.full")) redirect("/journals");
@@ -36,22 +38,16 @@ export default async function JournalPipelineEditorPage({
             </span>
             <div>
               <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-                Pipeline уборки настраивается в «Зданиях и помещениях»
+                {t("cleaningTitle")}
               </h2>
               <p className="mt-2 max-w-[640px] text-[14px] leading-[1.55] text-[#7a5500]">
-                Для журнала уборки pipeline-шаги (что мыть, в каком порядке,
-                чем) хранятся не в общей системе pipeline'ов, а на самом
-                помещении (Room) — отдельно «Текущая» и «Генеральная».
-                Сотрудник в TasksFlow увидит ровно те шаги, которые
-                настроены на конкретном помещении в день текущей или
-                генеральной уборки. Эта страница для cleaning не
-                применяется и оставлена для других журналов.
+                {t("cleaningBody")}
               </p>
               <Link
                 href="/settings/buildings"
                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_8px_24px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
               >
-                Открыть «Здания и помещения»
+                {t("openBuildings")}
                 <ArrowRight className="size-4" />
               </Link>
             </div>

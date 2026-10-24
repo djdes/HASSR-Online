@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Building2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatPriceRub } from "@/lib/billing-period";
@@ -31,6 +32,7 @@ export function CabinetPlanCardView({
   variant: "sheet" | "menu";
   onNavigate?: () => void;
 }) {
+  const t = useTranslations("layoutUi.cabinetPlanCard");
   const inApp = useInsideMobileApp();
   const price = inApp ? null : card.price;
   const link = inApp ? null : card.link;
@@ -49,10 +51,10 @@ export function CabinetPlanCardView({
       <span className="flex items-center gap-2">
         <Building2 className={cn("shrink-0 text-[#5566f6]", sheet ? "size-5" : "size-4")} />
         <span className={cn("min-w-0 flex-1 truncate font-semibold text-[#0b1024]", sheet ? "text-[16px]" : "text-[14px]")}>
-          {ownCabinet ? "Мой кабинет" : "Кабинет организации"}
+          {ownCabinet ? t("myCabinet") : t("orgCabinet")}
         </span>
         {ownCabinet ? (
-          <span className={cn("shrink-0 text-[#3848c7]", sheet ? "text-[12px]" : "text-[11px]")}>сейчас</span>
+          <span className={cn("shrink-0 text-[#3848c7]", sheet ? "text-[12px]" : "text-[11px]")}>{t("current")}</span>
         ) : null}
       </span>
       <span
@@ -72,7 +74,7 @@ export function CabinetPlanCardView({
           className={cn("mt-0.5 block leading-snug text-[#3c4053]", sheet ? "text-[13.5px]" : "text-[12px]")}
         >
           <span className="font-semibold tabular-nums text-[#0b1024]">
-            {formatPriceRub(price.finalRub)}/мес
+            {t("perMonth", { price: formatPriceRub(price.finalRub) })}
           </span>
           {price.fullRub > price.finalRub ? (
             <>

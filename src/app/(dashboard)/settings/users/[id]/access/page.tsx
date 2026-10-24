@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PageCrumbs } from "@/components/layout/page-nav";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { isManagementRole } from "@/lib/user-roles";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function UserJournalAccessPage({ params }: PageProps) {
+  const t = await getTranslations("settingsUi.userAccessPage");
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
     notFound();
@@ -84,15 +86,15 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
     <div className="space-y-5">
       <PageCrumbs
         items={[
-          { label: "Сотрудники", href: "/settings/users" },
-          { label: user.name || contactLabel || "Сотрудник" },
+          { label: t("staff"), href: "/settings/users" },
+          { label: user.name || contactLabel || t("employee") },
         ]}
       />
 
       {accountOrganizations.length > 1 ? (
         <OrganizationAccessCard
           userId={user.id}
-          userName={user.name || contactLabel || "Сотрудник"}
+          userName={user.name || contactLabel || t("employee")}
           organizations={accountOrganizations.map((organization) => ({
             id: organization.id,
             name: organization.name,
@@ -104,7 +106,7 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
 
       <div>
         <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.03em] text-black">
-          Доступ к журналам
+          {t("title")}
         </h1>
         {/* Служебная почта (…@….staff.local, staff-…@….local.haccp)
             сотруднику ничего не говорит и в интерфейс не выносится:
@@ -114,8 +116,7 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
         </p>
         {!user.journalAccessMigrated && (
           <p className="mt-3 text-[14px] text-[#b87a00]">
-            Этому сотруднику пока открыт доступ ко всем журналам. После
-            сохранения он увидит только отмеченные журналы.
+            {t("notMigratedNote")}
           </p>
         )}
       </div>

@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, FlaskConical, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { demoDaysLeft } from "@/lib/demo-organization.shared";
+import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 /**
  * Полоса «вы в демо» над контентом.
@@ -33,6 +35,8 @@ export function DemoOrgBanner({
   documentsCount: number;
 }) {
   const router = useRouter();
+  const t = useTranslations("organizationsUi");
+  const locale = useLocale() as Locale;
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome-demo") === "1";
 
@@ -43,18 +47,17 @@ export function DemoOrgBanner({
   useEffect(() => {
     if (!welcome || welcomed.current) return;
     welcomed.current = true;
-    toast.success("Вы в демо-организации", {
-      description:
-        "Сотрудники и журналы здесь тестовые. Вернуться к себе можно в один клик.",
+    toast.success(t("demoOrgBanner.welcomeTitle"), {
+      description: t("demoOrgBanner.welcomeDescription"),
     });
     // Параметр из адреса убираем: перезагрузка не должна повторять тост.
     router.replace("/dashboard");
-  }, [welcome, router]);
+  }, [welcome, router, t]);
 
   const expires = demoExpiresAt ? new Date(demoExpiresAt) : null;
   const daysLeft = expires ? demoDaysLeft(expires, new Date()) : null;
   const expiresLabel = expires
-    ? expires.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })
+    ? expires.toLocaleDateString(FORMAT_LOCALES[locale], { day: "numeric", month: "long" })
     : null;
 
   async function leave() {
@@ -66,12 +69,12 @@ export function DemoOrgBanner({
         body: JSON.stringify({ organizationId: homeOrganizationId }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Не удалось переключиться");
-      toast.success("Вы вернулись в свою организацию");
+      if (!res.ok) throw new Error(data?.error ?? t("demoOrgBanner.switchFailed"));
+      toast.success(t("demoOrgBanner.returned"));
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(err instanceof Error ? err.message : t("demoOrgBanner.error"));
     } finally {
       setLeaving(false);
     }
@@ -81,11 +84,15 @@ export function DemoOrgBanner({
     const res = await fetch("/api/organizations/demo", { method: "DELETE" });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      toast.error(data?.error ?? "Не удалось удалить демо");
+      toast.error(data?.error ?? t("demoOrgBanner.deleteFailed"));
       return;
     }
     toast.success(
-      `Демо удалено: ${pluralize(data.staff, "сотрудник", "сотрудника", "сотрудников")}, ${pluralize(data.documents, "документ", "документа", "документов")}, ${pluralize(data.entries, "запись", "записи", "записей")}`,
+      t("demoOrgBanner.deleted", {
+        staff: t("demoOrgBanner.staffCount", { count: Number(data.staff) }),
+        documents: t("demoOrgBanner.documentsCount", { count: Number(data.documents) }),
+        entries: t("demoOrgBanner.entriesCount", { count: Number(data.entries) }),
+      }),
     );
     setConfirmOpen(false);
     router.push("/dashboard");
@@ -105,14 +112,14 @@ export function DemoOrgBanner({
             </span>
             <div className="min-w-0">
               <div className="text-[15px] font-semibold text-[#0b1024]">
-                Демо-организация «{organizationName}» — данные тестовые
+                {t("demoOrgBanner.title", { name: organizationName })}
               </div>
               <p className="mt-0.5 text-[13px] leading-[1.5] text-[#6f7282]">
                 {daysLeft !== null && expiresLabel
-                  ? `Удалится автоматически через ${pluralize(daysLeft, "день", "дня", "дней")} (${expiresLabel})`
-                  : "Удалится автоматически через 7 дней"}
+                  ? t("demoOrgBanner.expiresIn", { days: t("demoOrgBanner.daysCount", { count: daysLeft }), date: expiresLabel })
+                  : t("demoOrgBanner.expiresDefault")}
                 {" · "}
-                ваша организация не пострадает.
+                {t("demoOrgBanner.homeSafe")}
               </p>
             </div>
           </div>
@@ -129,7 +136,7 @@ export function DemoOrgBanner({
               ) : (
                 <ArrowLeft className="size-4" />
               )}
-              Вернуться в мою организацию
+              {t("demoOrgBanner.backToMine")}
             </button>
             <button
               type="button"
@@ -137,7 +144,7 @@ export function DemoOrgBanner({
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#a13a32] transition-colors duration-150 hover:border-[#a13a32]/40 hover:bg-[#fff4f2]"
             >
               <Trash2 className="size-4" />
-              Удалить демо
+              {t("demoOrgBanner.deleteDemo")}
             </button>
           </div>
         </div>
@@ -148,27 +155,15 @@ export function DemoOrgBanner({
         onClose={() => setConfirmOpen(false)}
         onConfirm={remove}
         variant="danger"
-        title="Удалить демо-организацию?"
-        description={`«${organizationName}» исчезнет вместе со всем содержимым. Создать демо заново можно из меню профиля.`}
+        title={t("demoOrgBanner.confirmTitle")}
+        description={t("demoOrgBanner.confirmDescription", { name: organizationName })}
         bullets={[
-          { label: `Сотрудников: ${staffCount}`, tone: "warn" },
-          { label: `Документов журналов: ${documentsCount}`, tone: "warn" },
-          { label: "Ваша организация не пострадает", tone: "info" },
+          { label: t("demoOrgBanner.staffTotal", { count: staffCount }), tone: "warn" },
+          { label: t("demoOrgBanner.documentsTotal", { count: documentsCount }), tone: "warn" },
+          { label: t("demoOrgBanner.homeSafeBullet"), tone: "info" },
         ]}
-        confirmLabel="Удалить демо"
+        confirmLabel={t("demoOrgBanner.deleteDemo")}
       />
     </div>
   );
-}
-
-function pluralize(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  const word =
-    mod10 === 1 && mod100 !== 11
-      ? one
-      : mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)
-        ? few
-        : many;
-  return `${n} ${word}`;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import type { TrendPoint } from "@/lib/compliance-trend";
 
 /**
@@ -26,15 +27,16 @@ type Props = {
  * 6 месяцев, теперь падает»).
  */
 export function ComplianceTrend({ points }: Props) {
+  const t = useTranslations("reportsUi.complianceTrend");
   if (points.length === 0) return null;
 
   return (
     <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6">
       <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-        Записи за 12 месяцев
+        {t("title")}
       </h2>
       <p className="mt-0.5 text-[13px] text-[#6f7282]">
-        Тренд активности и количество уникальных шаблонов журналов.
+        {t("description")}
       </p>
 
       <div className="mt-4 h-[240px] w-full">
@@ -44,11 +46,11 @@ export function ComplianceTrend({ points }: Props) {
       <div className="mt-3 flex items-center gap-4 text-[12px] text-[#6f7282]">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-1 w-4 rounded-full bg-[#5566f6]" />
-          Записей в журналах
+          {t("entries")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-1 w-4 rounded-full bg-[#7a5cff] opacity-60" />
-          Уникальных шаблонов
+          {t("uniqueTemplates")}
         </span>
       </div>
     </section>

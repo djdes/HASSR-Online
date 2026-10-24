@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowRight,
   Building2,
@@ -26,11 +27,10 @@ import {
   btnDanger,
   btnOutline,
   btnPrimary,
-  formatDate,
   inputClass,
   readError,
 } from "@/components/partner/ui";
-import { PARTNER_ACCESS_LEVEL_LABELS, type PartnerAccessLevel } from "@/lib/partners/access-guard";
+import { type PartnerAccessLevel } from "@/lib/partners/access-guard";
 import { phoneHref, telegramHref } from "@/lib/partners/consultant-contact-shared";
 import { parseAttachInput } from "@/lib/partners/validation";
 import { cn } from "@/lib/utils";
@@ -56,10 +56,20 @@ type Consultant = {
 
 type Preview = { slug: string; brandName: string; active: boolean; ownOrganization: boolean };
 
-const LEVEL_OPTIONS: { value: PartnerAccessLevel; icon: typeof Eye; hint: string }[] = [
-  { value: "view", icon: Eye, hint: "Видит журналы, отчёты и просрочки. Записи вносите вы." },
-  { value: "edit", icon: PencilLine, hint: "Может заполнять журналы и настраивать их за вас." },
+const LEVEL_OPTIONS: { value: PartnerAccessLevel; icon: typeof Eye }[] = [
+  { value: "view", icon: Eye },
+  { value: "edit", icon: PencilLine },
 ];
+
+type ConsultantT = ReturnType<typeof useTranslations<"settingsUi.consultantClient">>;
+
+function levelLabel(t: ConsultantT, level: PartnerAccessLevel): string {
+  return level === "edit" ? t("levelEdit") : t("levelView");
+}
+
+function levelHint(t: ConsultantT, level: PartnerAccessLevel): string {
+  return level === "edit" ? t("levelEditHint") : t("levelViewHint");
+}
 
 /**
  * Настройки → «Консультант»: подключить по ссылке/коду, сменить уровень
@@ -73,6 +83,13 @@ export function ConsultantSettingsClient({
   initialAttachSlug: string | null;
   initialAttachLevel: PartnerAccessLevel;
 }) {
+  const t = useTranslations("settingsUi.consultantClient");
+  const locale = useLocale();
+  const formatDate = (iso: string): string => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
   const [consultant, setConsultant] = useState<Consultant | null | undefined>(undefined);
   const [busy, setBusy] = useState<string | null>(null);
   const [detachOpen, setDetachOpen] = useState(false);
@@ -80,13 +97,13 @@ export function ConsultantSettingsClient({
   const load = useCallback(async () => {
     const res = await fetch("/api/settings/consultant", { cache: "no-store" });
     if (!res.ok) {
-      toast.error(await readError(res, "Не удалось загрузить настройки консультанта"));
+      toast.error(await readError(res, t("loadFailed")));
       setConsultant(null);
       return;
     }
     const data = (await res.json()) as { consultant: Consultant | null };
     setConsultant(data.consultant);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -100,12 +117,12 @@ export function ConsultantSettingsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(await readError(res, "Не удалось сохранить"));
+      if (!res.ok) throw new Error(await readError(res, t("saveFailed")));
       const data = (await res.json()) as { consultant: Consultant | null };
       setConsultant(data.consultant);
       toast.success(okText);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить");
+      toast.error(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
       setBusy(null);
     }
@@ -114,19 +131,19 @@ export function ConsultantSettingsClient({
   async function detach() {
     const res = await fetch("/api/settings/consultant", { method: "DELETE" });
     if (!res.ok) {
-      toast.error(await readError(res, "Не удалось отключить консультанта"));
+      toast.error(await readError(res, t("detachFailed")));
       return;
     }
     setDetachOpen(false);
     setConsultant(null);
-    toast.success("Сопровождение отключено. Доступ консультанта закрыт.");
+    toast.success(t("detached"));
   }
 
   if (consultant === undefined) {
     return (
       <div className="flex items-center gap-2 rounded-3xl border border-[#ececf4] bg-white px-6 py-10 text-[14px] text-[#6f7282]">
         <Loader2 className="size-4 animate-spin text-[#5566f6]" />
-        Загружаем…
+        {t("loading")}
       </div>
     );
   }
@@ -136,11 +153,11 @@ export function ConsultantSettingsClient({
       <>
         <PageGuide
           storageKey="settings-consultant"
-          title="Как это работает"
+          title={t("guideTitle")}
           bullets={[
-            { title: "Подключение", body: "Консультант присылает ссылку вида wesetup.ru/p/название или 6-значный код. Вставьте сюда — увидите, кто это, и выберете доступ." },
-            { title: "Уровень доступа", body: "«Только просмотр» — консультант видит, но не меняет. «Просмотр и редактирование» — может заполнять журналы за вас. Менять можно в любой момент; если уровень изменит сам консультант, вам придёт уведомление." },
-            { title: "Что консультант не делает никогда", body: "Не платит и не меняет тариф, не удаляет организацию и не отключает сам себя. Все его действия видны в журнале действий с пометкой «партнёр», а отключить сопровождение можно в один клик." },
+            { title: t("guide1Title"), body: t("guide1Body") },
+            { title: t("guide2Title"), body: t("guide2Body") },
+            { title: t("guide3Title"), body: t("guide3Body") },
           ]}
         />
         <AttachCard initialSlug={initialAttachSlug} initialLevel={initialAttachLevel} onAttached={load} />
@@ -159,7 +176,7 @@ export function ConsultantSettingsClient({
 
   return (
     <div className="space-y-5">
-      <Card eyebrow="Ваш консультант">
+      <Card eyebrow={t("yourConsultant")}>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#ececf4] bg-[#fafbff] p-2">
             {consultant.logoUrl ? (
@@ -172,11 +189,11 @@ export function ConsultantSettingsClient({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">{consultant.brandName}</div>
-              <Pill tone={partnerActive ? "ok" : "warn"}>{partnerActive ? "Сопровождает" : "Партнёр приостановлен"}</Pill>
-              <Pill tone="indigo">{PARTNER_ACCESS_LEVEL_LABELS[consultant.accessLevel]}</Pill>
+              <Pill tone={partnerActive ? "ok" : "warn"}>{partnerActive ? t("accompanies") : t("partnerSuspended")}</Pill>
+              <Pill tone="indigo">{levelLabel(t, consultant.accessLevel)}</Pill>
             </div>
             <div className="mt-1 text-[13px] text-[#6f7282]">
-              {consultant.city ? `${consultant.city} · ` : ""}подключён {formatDate(consultant.attachedAt)}
+              {consultant.city ? `${consultant.city} · ` : ""}{t("attachedOn", { date: formatDate(consultant.attachedAt) })}
             </div>
             {contacts.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[14px]">
@@ -188,14 +205,13 @@ export function ConsultantSettingsClient({
                 ))}
               </div>
             ) : consultant.hidden ? (
-              <div className="mt-3 text-[13px] text-[#6f7282]">Связь — через чат поддержки в правом нижнем углу.</div>
+              <div className="mt-3 text-[13px] text-[#6f7282]">{t("contactViaChat")}</div>
             ) : (
-              <div className="mt-3 text-[13px] text-[#9b9fb3]">Консультант ещё не указал контакты.</div>
+              <div className="mt-3 text-[13px] text-[#9b9fb3]">{t("noContacts")}</div>
             )}
             {!partnerActive ? (
               <p className="mt-3 rounded-2xl bg-[#fff4f2] px-3 py-2 text-[13px] leading-[1.5] text-[#a13a32]">
-                Партнёрство приостановлено платформой: консультант временно не видит ваш кабинет, брендинг не показывается.
-                Связка сохранена — как только партнёра восстановят, всё вернётся.
+                {t("suspendedNote")}
               </p>
             ) : null}
           </div>
@@ -203,10 +219,10 @@ export function ConsultantSettingsClient({
       </Card>
 
       <Card
-        eyebrow="Уровень доступа"
-        title="Что консультант может делать в вашем кабинете"
+        eyebrow={t("accessEyebrow")}
+        title={t("accessTitle")}
       >
-        <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Уровень доступа консультанта">
+        <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("accessLabel")}>
           {LEVEL_OPTIONS.map((opt) => {
             const active = consultant.accessLevel === opt.value;
             return (
@@ -222,8 +238,8 @@ export function ConsultantSettingsClient({
                     { accessLevel: opt.value },
                     "level",
                     opt.value === "edit"
-                      ? `${consultant.brandName} теперь может редактировать журналы`
-                      : `${consultant.brandName} теперь только смотрит`,
+                      ? t("nowCanEdit", { name: consultant.brandName })
+                      : t("nowViewOnly", { name: consultant.brandName }),
                   )
                 }
                 className={cn(
@@ -242,8 +258,8 @@ export function ConsultantSettingsClient({
                   <opt.icon className="size-4" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[14px] font-medium text-[#0b1024]">{PARTNER_ACCESS_LEVEL_LABELS[opt.value]}</span>
-                  <span className="mt-0.5 block text-[12px] leading-[1.5] text-[#6f7282]">{opt.hint}</span>
+                  <span className="block text-[14px] font-medium text-[#0b1024]">{levelLabel(t, opt.value)}</span>
+                  <span className="mt-0.5 block text-[12px] leading-[1.5] text-[#6f7282]">{levelHint(t, opt.value)}</span>
                 </span>
               </button>
             );
@@ -251,24 +267,22 @@ export function ConsultantSettingsClient({
         </div>
         <p className="mt-3 flex items-start gap-2 text-[12px] leading-[1.5] text-[#6f7282]">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[#116b2a]" />
-          Смена уровня действует сразу. На любом уровне консультант не видит оплату и тариф и не удаляет
-          организацию. Уровень он может изменить и сам — тогда вы получите уведомление, а событие попадёт в
-          журнал; вернуть «только просмотр» или отключить консультанта можно здесь в один клик. Его действия
-          попадают в{" "}
-          <Link href="/settings/audit" className="text-[#3848c7] underline-offset-2 hover:underline">
-            журнал действий
-          </Link>{" "}
-          с пометкой «{consultant.hidden ? "служба сопровождения" : "партнёр"}».
+          {t.rich("levelNote", {
+            mark: consultant.hidden ? t("markSupport") : t("markPartner"),
+            link: (chunks) => (
+              <Link href="/settings/audit" className="text-[#3848c7] underline-offset-2 hover:underline">
+                {chunks}
+              </Link>
+            ),
+          })}
         </p>
       </Card>
 
       {consultant.hidden ? null : (
-      <Card eyebrow="Оформление" title="Логотип и контакты консультанта в вашем кабинете">
+      <Card eyebrow={t("brandingEyebrow")} title={t("brandingTitle")}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-[560px] text-[14px] leading-[1.55] text-[#3c4053]">
-            Пока сопровождение включено, в шапке кабинета, на странице входа и в PDF показываются логотип и контакты{" "}
-            {consultant.brandName}. Если хотите видеть только оформление WeSetup — выключите. Консультант при этом
-            сохраняет доступ.
+            {t("brandingBody", { name: consultant.brandName })}
           </p>
           <button
             type="button"
@@ -277,27 +291,26 @@ export function ConsultantSettingsClient({
               void patch(
                 { hideBranding: !consultant.clientHidesBranding },
                 "branding",
-                consultant.clientHidesBranding ? "Оформление консультанта снова показывается" : "Оформление консультанта скрыто",
+                consultant.clientHidesBranding ? t("brandingShown") : t("brandingHidden"),
               )
             }
             className={cn(btnOutline, "shrink-0")}
           >
             {consultant.clientHidesBranding ? <Eye className="size-4 text-[#5566f6]" /> : <EyeOff className="size-4 text-[#5566f6]" />}
-            {consultant.clientHidesBranding ? "Показывать оформление" : "Скрыть оформление"}
+            {consultant.clientHidesBranding ? t("showBranding") : t("hideBranding")}
           </button>
         </div>
       </Card>
       )}
 
-      <Card eyebrow="Отключение" title="Прекратить сопровождение">
+      <Card eyebrow={t("detachEyebrow")} title={t("detachTitle")}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-[560px] text-[14px] leading-[1.55] text-[#3c4053]">
-            Доступ консультанта закроется сразу, оформление вернётся к WeSetup. Ваши журналы и записи, которые он
-            вносил, останутся. Подключить консультанта снова можно в любой момент — по ссылке или коду.
+            {t("detachBody")}
           </p>
           <button type="button" onClick={() => setDetachOpen(true)} className={cn(btnDanger, "shrink-0")}>
             <Unplug className="size-4" />
-            Отключить консультанта
+            {t("detachButton")}
           </button>
         </div>
       </Card>
@@ -307,15 +320,15 @@ export function ConsultantSettingsClient({
         onClose={() => setDetachOpen(false)}
         onConfirm={detach}
         variant="danger"
-        title={`Отключить ${consultant.brandName}?`}
-        description="Сопровождение прекратится немедленно."
+        title={t("detachDialogTitle", { name: consultant.brandName })}
+        description={t("detachDialogDescription")}
         bullets={[
-          { label: "Консультант потеряет доступ к кабинету в течение минуты", tone: "warn" },
-          { label: "Логотип и контакты консультанта исчезнут из кабинета, PDF и писем" },
-          { label: "Все журналы, записи и история действий сохраняются" },
-          { label: "Консультант получит уведомление об отключении" },
+          { label: t("detachBullet1"), tone: "warn" },
+          { label: t("detachBullet2") },
+          { label: t("detachBullet3") },
+          { label: t("detachBullet4") },
         ]}
-        confirmLabel="Отключить"
+        confirmLabel={t("detach")}
       />
     </div>
   );
@@ -330,6 +343,7 @@ function AttachCard({
   initialLevel: PartnerAccessLevel;
   onAttached: () => Promise<void>;
 }) {
+  const t = useTranslations("settingsUi.consultantClient");
   const [raw, setRaw] = useState(initialSlug ?? "");
   const [level, setLevel] = useState<PartnerAccessLevel>(initialLevel);
   const [preview, setPreview] = useState<Preview | null | "missing">(null);
@@ -346,16 +360,16 @@ function AttachCard({
     try {
       const qs = "slug" in parsed ? `slug=${encodeURIComponent(parsed.slug)}` : `code=${encodeURIComponent(parsed.code)}`;
       const res = await fetch(`/api/partners/attach?${qs}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(await readError(res, "Не удалось проверить партнёра"));
+      if (!res.ok) throw new Error(await readError(res, t("lookupFailed")));
       const data = (await res.json()) as { partner: Preview | null };
       setPreview(data.partner ?? "missing");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось проверить партнёра");
+      toast.error(error instanceof Error ? error.message : t("lookupFailed"));
       setPreview(null);
     } finally {
       setLooking(false);
     }
-  }, [parsed]);
+  }, [parsed, t]);
 
   // Пришли с /p/<slug> — сразу показываем, кого подключаем.
   useEffect(() => {
@@ -379,17 +393,17 @@ function AttachCard({
       body: JSON.stringify({ ...parsed, accessLevel: level }),
     });
     if (!res.ok) {
-      toast.error(await readError(res, "Не удалось подключить консультанта"));
+      toast.error(await readError(res, t("attachFailed")));
       return;
     }
     const data = (await res.json()) as { brandName: string };
     setConfirmOpen(false);
-    toast.success(`${data.brandName} подключён как консультант`);
+    toast.success(t("attached", { name: data.brandName }));
     await onAttached();
   }
 
   return (
-    <Card eyebrow="Подключить консультанта" title="Ссылка или код партнёра">
+    <Card eyebrow={t("attachEyebrow")} title={t("attachTitle")}>
       <form
         className="flex flex-col gap-2 sm:flex-row"
         onSubmit={(e) => {
@@ -401,24 +415,24 @@ function AttachCard({
           className={inputClass}
           value={raw}
           onChange={(e) => setRaw(e.target.value)}
-          placeholder="wesetup.ru/p/название или код ABC234"
+          placeholder={t("attachPlaceholder")}
           autoComplete="off"
           spellCheck={false}
         />
         <button type="submit" disabled={!parsed || looking} className={cn(btnPrimary, "h-11 shrink-0")}>
           {looking ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-          Найти
+          {t("find")}
         </button>
       </form>
       {raw.trim() && !parsed ? (
-        <p className="mt-2 text-[12px] text-[#a13a32]">Похоже на опечатку: нужна ссылка wesetup.ru/p/… или код из 6 символов.</p>
+        <p className="mt-2 text-[12px] text-[#a13a32]">{t("typo")}</p>
       ) : (
-        <p className="mt-2 text-[12px] text-[#6f7282]">Ссылку или код вам даёт консультант. Без него ничего подключать не нужно.</p>
+        <p className="mt-2 text-[12px] text-[#6f7282]">{t("attachHint")}</p>
       )}
 
       {preview === "missing" ? (
         <div className="mt-4 rounded-2xl border border-[#ececf4] bg-[#fff4f2] px-4 py-3 text-[14px] text-[#a13a32]">
-          Партнёр с такой ссылкой или кодом не найден. Проверьте написание или уточните у консультанта.
+          {t("notFound")}
         </div>
       ) : null}
 
@@ -430,21 +444,21 @@ function AttachCard({
             </span>
             <div className="text-[16px] font-semibold text-[#0b1024]">{found.brandName}</div>
             <span className="text-[13px] text-[#6f7282]">wesetup.ru/p/{found.slug}</span>
-            {!found.active ? <Pill tone="warn">Партнёр не активен</Pill> : null}
+            {!found.active ? <Pill tone="warn">{t("partnerInactive")}</Pill> : null}
           </div>
 
           {found.ownOrganization ? (
             <p className="mt-3 text-[13px] leading-[1.5] text-[#a13a32]">
-              Это ваша собственная партнёрская организация — она не может быть своим же клиентом.
+              {t("ownOrg")}
             </p>
           ) : !found.active ? (
             <p className="mt-3 text-[13px] leading-[1.5] text-[#a13a32]">
-              Партнёрство ещё не подтверждено или приостановлено. Подключить можно будет, когда партнёр станет активным.
+              {t("notActive")}
             </p>
           ) : (
             <>
-              <div className="mt-4 text-[13px] font-medium text-[#3c4053]">Какой доступ дать {found.brandName}?</div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Уровень доступа консультанта">
+              <div className="mt-4 text-[13px] font-medium text-[#3c4053]">{t("whichAccess", { name: found.brandName })}</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("accessLabel")}>
                 {LEVEL_OPTIONS.map((opt) => {
                   const active = level === opt.value;
                   return (
@@ -471,17 +485,17 @@ function AttachCard({
                       </span>
                       <span className="min-w-0">
                         <span className="block text-[14px] font-medium text-[#0b1024]">
-                          {PARTNER_ACCESS_LEVEL_LABELS[opt.value]}
-                          {opt.value === "view" ? <span className="ml-1.5 text-[12px] font-normal text-[#6f7282]">по умолчанию</span> : null}
+                          {levelLabel(t, opt.value)}
+                          {opt.value === "view" ? <span className="ml-1.5 text-[12px] font-normal text-[#6f7282]">{t("byDefault")}</span> : null}
                         </span>
-                        <span className="mt-0.5 block text-[12px] leading-[1.5] text-[#6f7282]">{opt.hint}</span>
+                        <span className="mt-0.5 block text-[12px] leading-[1.5] text-[#6f7282]">{levelHint(t, opt.value)}</span>
                       </span>
                     </button>
                   );
                 })}
               </div>
               <button type="button" onClick={() => setConfirmOpen(true)} disabled={!canAttach} className={cn(btnPrimary, "mt-4")}>
-                Подключить {found.brandName}
+                {t("attachButton", { name: found.brandName })}
                 <ArrowRight className="size-4" />
               </button>
             </>
@@ -494,20 +508,20 @@ function AttachCard({
         onClose={() => setConfirmOpen(false)}
         onConfirm={attach}
         variant="info"
-        title={found ? `Подключить ${found.brandName}?` : "Подключить консультанта?"}
-        description={`Уровень доступа: ${PARTNER_ACCESS_LEVEL_LABELS[level]}. Поменять можно в любой момент.`}
+        title={found ? t("attachDialogTitle", { name: found.brandName }) : t("attachDialogTitleNoName")}
+        description={t("attachDialogDescription", { level: levelLabel(t, level) })}
         bullets={[
           {
             label:
               level === "edit"
-                ? "Консультант сможет заполнять журналы и менять их настройки"
-                : "Консультант увидит журналы, отчёты и просрочки, но ничего не изменит",
+                ? t("attachBulletEdit")
+                : t("attachBulletView"),
           },
-          { label: "В кабинете появятся логотип и контакты консультанта (можно скрыть)" },
-          { label: "Оплата, тариф и удаление организации остаются только у вас" },
-          { label: "Отключить сопровождение можно здесь же, в один клик" },
+          { label: t("attachBullet2") },
+          { label: t("attachBullet3") },
+          { label: t("attachBullet4") },
         ]}
-        confirmLabel="Подключить"
+        confirmLabel={t("attach")}
       />
     </Card>
   );

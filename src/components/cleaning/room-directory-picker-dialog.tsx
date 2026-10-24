@@ -14,6 +14,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Building2, Factory, Plus, Search } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -26,19 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { DirectoryBuilding, DirectoryRoom, OrphanArea } from "@/lib/room-directory";
 import { guessRoomKind, normalizePlaceName } from "@/lib/orphan-areas";
-import { pluralRu } from "@/lib/plural-ru";
 import { roomKindOptions } from "@/lib/room-kinds";
-
-function equipmentLabel(count: number): string {
-  if (count <= 0) return "цех · без оборудования";
-  return `цех · ${count} ${pluralRu(count, "единица", "единицы", "единиц")} оборудования`;
-}
-
-// Виды — общий список (`room-kinds.ts`): `guessRoomKind` уже умеет
-// «Основное производство», и подпись должна быть, а не код `production`.
-const KIND_LABELS: Record<string, string> = Object.fromEntries(
-  roomKindOptions("ru").map((option) => [option.value, option.label]),
-);
+import type { Locale } from "@/i18n/locales";
 
 export type RoomDirectoryPickerDialogProps = {
   open: boolean;
@@ -77,6 +67,15 @@ function createdToDirectoryRoom(raw: Record<string, unknown>, fallbackName: stri
 }
 
 export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps) {
+  const t = useTranslations("cleaningUi.roomDirectoryPickerDialog");
+  const locale = useLocale() as Locale;
+  const equipmentLabel = (count: number): string =>
+    count <= 0 ? t("areaNoEquipment") : t("areaEquipment", { count });
+  // Виды — общий список (`room-kinds.ts`): `guessRoomKind` уже умеет
+  // «Основное производство», и подпись должна быть, а не код `production`.
+  const KIND_LABELS: Record<string, string> = Object.fromEntries(
+    roomKindOptions(locale).map((option) => [option.value, option.label]),
+  );
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -144,7 +143,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
 
   async function createFromArea(area: OrphanArea) {
     if (!selectedBuildingId) {
-      toast.error("Сначала заведите здание в «Настройки → Помещения»");
+      toast.error(t("needBuilding"));
       return;
     }
     setBusy(true);
@@ -154,7 +153,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
       await props.onCreated(room);
       props.onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось создать помещение");
+      toast.error(e instanceof Error ? e.message : t("createFailed"));
     } finally {
       setBusy(false);
     }
@@ -165,16 +164,16 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
       <div>
         <div className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
           <Factory className="size-3.5" />
-          Цеха без помещения
+          {t("orphanTitle")}
         </div>
         <p className="mb-2 text-[12px] leading-[1.5] text-[#6f7282]">
           {props.buildings.length === 0
-            ? "Сначала заведите здание в «Настройки → Помещения» — тогда цех можно будет добавить в журнал."
-            : "Из «Цеха и участки». Нажмите +, и мы создадим помещение с тем же названием и добавим его в журнал."}
+            ? t("orphanNoBuilding")
+            : t("orphanHint")}
         </p>
         {props.buildings.length > 1 ? (
           <label className="mb-2 flex items-center gap-2 text-[12px] text-[#6f7282]">
-            <span className="shrink-0">Создать в здании</span>
+            <span className="shrink-0">{t("createInBuilding")}</span>
             <select
               value={selectedBuildingId}
               onChange={(e) => setNewBuildingId(e.target.value)}
@@ -195,7 +194,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
               type="button"
               disabled={busy || props.buildings.length === 0}
               onClick={() => createFromArea(area)}
-              title="Создать помещение с этим названием и добавить в журнал"
+              title={t("orphanButtonTitle")}
               className="flex w-full items-center justify-between gap-3 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-2.5 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
             >
               <span className="min-w-0">
@@ -219,7 +218,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
       await props.onPick(room);
       props.onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось добавить помещение");
+      toast.error(e instanceof Error ? e.message : t("addFailed"));
     } finally {
       setBusy(false);
     }
@@ -228,12 +227,12 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
   async function create() {
     const name = newName.trim();
     if (!name) {
-      toast.error("Введите название помещения");
+      toast.error(t("enterName"));
       return;
     }
     const buildingId = selectedBuildingId;
     if (!buildingId) {
-      toast.error("Сначала заведите здание в «Настройки → Помещения»");
+      toast.error(t("needBuilding"));
       return;
     }
     setBusy(true);
@@ -244,7 +243,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
       await props.onCreated(room);
       props.onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось создать помещение");
+      toast.error(e instanceof Error ? e.message : t("createFailed"));
     } finally {
       setBusy(false);
     }
@@ -255,11 +254,10 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="border-b px-6 py-5">
           <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            {props.title ?? "Добавить помещение"}
+            {props.title ?? t("defaultTitle")}
           </DialogTitle>
           <p className="mt-1 text-[12.5px] leading-[1.55] text-[#6f7282]">
-            {props.hint ??
-              "Помещения общие для всех журналов — из «Настройки → Помещения». Выберите существующее или создайте новое."}
+            {props.hint ?? t("defaultHint")}
           </p>
         </DialogHeader>
 
@@ -267,9 +265,9 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
           {props.buildings.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
               <Building2 className="mx-auto mb-2 size-7 text-[#9b9fb3]" />
-              <div className="text-[15px] font-medium text-[#0b1024]">Зданий пока нет</div>
+              <div className="text-[15px] font-medium text-[#0b1024]">{t("noBuildings")}</div>
               <p className="mx-auto mt-1 max-w-[360px] text-[13px] text-[#6f7282]">
-                Заведите здание и помещения в «Настройки → Помещения» — они появятся во всех журналах.
+                {t("noBuildingsHint")}
               </p>
             </div>
           ) : null}
@@ -283,7 +281,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={orphans.length > 0 ? "Поиск помещения или цеха" : "Поиск помещения"}
+                    placeholder={orphans.length > 0 ? t("searchRoomOrArea") : t("searchRoom")}
                     className="h-full w-full bg-transparent text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:outline-none"
                   />
                 </label>
@@ -291,10 +289,10 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
 
               {nothingLeft ? (
                 <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-                  Все помещения справочника уже в этом документе. Можно создать новое.
+                  {t("allAdded")}
                 </p>
               ) : groups.length === 0 && visibleOrphans.length === 0 ? (
-                <p className="px-1 text-[13px] text-[#6f7282]">Ничего не нашли.</p>
+                <p className="px-1 text-[13px] text-[#6f7282]">{t("nothingFound")}</p>
               ) : (
                 <>
                 {groups.map((g) => (
@@ -332,20 +330,20 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
 
               {creating ? (
                 <div className="space-y-3 rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4">
-                  <div className="text-[13px] font-semibold text-[#0b1024]">Новое помещение</div>
+                  <div className="text-[13px] font-semibold text-[#0b1024]">{t("newRoom")}</div>
                   <div className="space-y-2">
-                    <Label className="text-[12px] font-medium text-[#3c4053]">Название</Label>
+                    <Label className="text-[12px] font-medium text-[#3c4053]">{t("nameLabel")}</Label>
                     <Input
                       autoFocus
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      placeholder="Например: Сухой склад"
+                      placeholder={t("namePlaceholder")}
                       className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px]"
                     />
                   </div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label className="text-[12px] font-medium text-[#3c4053]">Здание</Label>
+                      <Label className="text-[12px] font-medium text-[#3c4053]">{t("buildingLabel")}</Label>
                       <select
                         value={newBuildingId || props.buildings[0]?.id || ""}
                         onChange={(e) => setNewBuildingId(e.target.value)}
@@ -359,7 +357,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[12px] font-medium text-[#3c4053]">Тип</Label>
+                      <Label className="text-[12px] font-medium text-[#3c4053]">{t("typeLabel")}</Label>
                       <select
                         value={newKind}
                         onChange={(e) => setNewKind(e.target.value)}
@@ -374,7 +372,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                     </div>
                   </div>
                   <p className="text-[12px] leading-[1.5] text-[#6f7282]">
-                    После создания откроется карточка помещения — там нормы, состав уборки, уборщики и проверяющие.
+                    {t("afterCreate")}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -383,7 +381,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                       onClick={create}
                       className="h-10 rounded-2xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0]"
                     >
-                      {busy ? "Создание…" : "Создать и настроить"}
+                      {busy ? t("creating") : t("createAndConfigure")}
                     </Button>
                     <Button
                       type="button"
@@ -392,7 +390,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                       onClick={() => setCreating(false)}
                       className="h-10 rounded-2xl border-[#dcdfed] px-4 text-[13.5px] shadow-none hover:bg-white"
                     >
-                      Отмена
+                      {t("cancel")}
                     </Button>
                   </div>
                 </div>
@@ -404,7 +402,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                   className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6]"
                 >
                   <Plus className="size-4" />
-                  Создать новое помещение
+                  {t("createNew")}
                 </button>
               )}
             </>

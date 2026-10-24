@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Camera,
   Clock,
@@ -20,14 +21,6 @@ import type { ReadingPhotoSettings } from "@/lib/reading-photo-fixation";
 /** Варианты ожидания перед эскалацией — в минутах. */
 const ESCALATION_OPTIONS = [30, 60, 120, 240] as const;
 
-function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes} мин`;
-  const hours = minutes / 60;
-  if (hours === 1) return "1 час";
-  if (hours < 5) return `${hours} часа`;
-  return `${hours} часов`;
-}
-
 type Props = {
   initialRequireAdminForJournalEdit: boolean;
   initialShiftEndHour: number;
@@ -45,33 +38,6 @@ type Props = {
 
 type QrFillModeValue = "public" | "pin" | "auth";
 
-/** Режимы QR-форм: чем правее, тем достовернее подпись и тем больше шагов. */
-const QR_FILL_MODES: Array<{
-  value: QrFillModeValue;
-  label: string;
-  hint: string;
-  icon: typeof Users;
-}> = [
-  {
-    value: "public",
-    label: "Из списка",
-    hint: "Любой, кто отсканировал плакат, выбирает своё имя. Быстрее всего, но при проверке запись можно оспорить: имя мог выбрать кто угодно.",
-    icon: Users,
-  },
-  {
-    value: "pin",
-    label: "Имя + PIN",
-    hint: "Сотрудник выбирает имя и вводит личный 4-значный PIN из своей карточки. Пять ошибок — блокировка на 15 минут. Проще пароля на чужом телефоне.",
-    icon: KeyRound,
-  },
-  {
-    value: "auth",
-    label: "Только после входа",
-    hint: "После сканирования — вход под своим аккаунтом (пароль или Telegram), имя не выбирается. Запись подписана аккаунтом — для проверяющих это достоверно.",
-    icon: UserRound,
-  },
-];
-
 export function ComplianceClient({
   initialRequireAdminForJournalEdit,
   initialShiftEndHour,
@@ -84,6 +50,22 @@ export function ComplianceClient({
   initialReadingPhoto,
   readingPhotoAutofill,
 }: Props) {
+  const t = useTranslations("settingsUi.complianceClient");
+  const formatMinutes = (minutes: number): string =>
+    minutes < 60
+      ? t("durationMinutes", { count: minutes })
+      : t("durationHours", { count: minutes / 60 });
+  /** Режимы QR-форм: чем правее, тем достовернее подпись и тем больше шагов. */
+  const qrFillModes: Array<{
+    value: QrFillModeValue;
+    label: string;
+    hint: string;
+    icon: typeof Users;
+  }> = [
+    { value: "public", label: t("qrModePublicLabel"), hint: t("qrModePublicHint"), icon: Users },
+    { value: "pin", label: t("qrModePinLabel"), hint: t("qrModePinHint"), icon: KeyRound },
+    { value: "auth", label: t("qrModeAuthLabel"), hint: t("qrModeAuthHint"), icon: UserRound },
+  ];
   const [qrFillMode, setQrFillMode] = useState<QrFillModeValue>(initialQrFillMode);
   const [readingPhoto, setReadingPhoto] = useState<ReadingPhotoSettings>(initialReadingPhoto);
   const [savingReadingPhoto, setSavingReadingPhoto] = useState(false);
@@ -104,7 +86,7 @@ export function ComplianceClient({
         body: JSON.stringify(patch),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok) throw new Error(data?.error ?? t("saveFailed"));
       const saved: ReadingPhotoSettings | null =
         data?.readingPhoto && typeof data.readingPhoto.enabled === "boolean"
           ? { enabled: data.readingPhoto.enabled, required: data.readingPhoto.required === true }
@@ -113,14 +95,14 @@ export function ComplianceClient({
       const now = saved ?? { enabled, required };
       toast.success(
         !now.enabled
-          ? "Фотофиксация выключена: показания вводят вручную, кнопки фото в QR-формах нет"
+          ? t("readingPhotoOff")
           : now.required
-            ? "Фото обязательно: без снимка температуру по QR не сохранить"
-            : "Фотофиксация включена: в QR-формах первым идёт «Сфотографируйте показание»"
+            ? t("readingPhotoRequiredOn")
+            : t("readingPhotoOn")
       );
     } catch (error) {
       setReadingPhoto(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(error instanceof Error ? error.message : t("saveError"));
     } finally {
       setSavingReadingPhoto(false);
     }
@@ -139,15 +121,15 @@ export function ComplianceClient({
         body: JSON.stringify({ healthQrRequired: next }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok) throw new Error(data?.error ?? t("saveFailed"));
       toast.success(
         next
-          ? "Допуск по QR включён: сотрудники отмечаются сами, в конце смены придёт список не отметившихся"
-          : "Допуск по QR выключен: гигиену снова заполняет автоматика"
+          ? t("healthQrOn")
+          : t("healthQrOff")
       );
     } catch (error) {
       setHealthQr(!next);
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(error instanceof Error ? error.message : t("saveError"));
     } finally {
       setSavingHealthQr(false);
     }
@@ -166,17 +148,17 @@ export function ComplianceClient({
         body: JSON.stringify({ qrFillMode: next }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      if (!response.ok) throw new Error(data?.error ?? t("saveFailed"));
       toast.success(
         next === "auth"
-          ? "QR-формы теперь требуют вход: запись подписывает аккаунт"
+          ? t("qrAuthSaved")
           : next === "pin"
-            ? "QR-формы: имя + PIN. Задайте PIN сотрудникам в их карточках"
-            : "QR-формы открыты: имя выбирается из списка"
+            ? t("qrPinSaved")
+            : t("qrPublicSaved")
       );
     } catch (error) {
       setQrFillMode(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(error instanceof Error ? error.message : t("saveError"));
     } finally {
       setSavingQrMode(false);
     }
@@ -209,17 +191,17 @@ export function ComplianceClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
       toast.success(
         next
-          ? "Включено: править могут только администраторы"
-          : "Выключено: может править любой сотрудник"
+          ? t("editOnlyOn")
+          : t("editOnlyOff")
       );
     } catch (error) {
       setValue(previous);
       toast.error(
-        error instanceof Error ? error.message : "Ошибка сохранения"
+        error instanceof Error ? error.message : t("saveError")
       );
     } finally {
       setSaving(false);
@@ -238,16 +220,16 @@ export function ComplianceClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
       toast.success(
         next
-          ? "Закрытый день включён: вчерашние записи заперты"
-          : "Закрытый день выключен: записи можно править"
+          ? t("lockOn")
+          : t("lockOff")
       );
     } catch (error) {
       setLockPastDay(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingLock(false);
     }
@@ -265,16 +247,16 @@ export function ComplianceClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
       toast.success(
         next
-          ? "Фото-доказательство включено: каждый шаг pipeline теперь требует фото"
-          : "Фото-доказательство выключено: pipeline-шаги подтверждаются одной кнопкой"
+          ? t("photoOn")
+          : t("photoOff")
       );
     } catch (error) {
       setRequirePhoto(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingPhoto(false);
     }
@@ -292,16 +274,16 @@ export function ComplianceClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
       toast.success(
         next
-          ? "Руководство узнает, если отклонение не исправлено вовремя"
-          : "Сообщать будем только ответственному за журнал"
+          ? t("escalateOn")
+          : t("escalateOff")
       );
     } catch (error) {
       setEscalate(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingEscalation(false);
     }
@@ -319,12 +301,12 @@ export function ComplianceClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
-      toast.success(`Ждём исправления ${formatMinutes(next)}`);
+      toast.success(t("waitSaved", { duration: formatMinutes(next) }));
     } catch (error) {
       setEscalationMinutes(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingEscalation(false);
     }
@@ -342,14 +324,14 @@ export function ComplianceClient({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Не удалось сохранить");
+        throw new Error(data?.error ?? t("saveFailed"));
       }
       toast.success(
-        `Час окончания смены: ${String(next).padStart(2, "0")}:00 UTC`
+        t("shiftEndSaved", { time: `${String(next).padStart(2, "0")}:00 UTC` })
       );
     } catch (error) {
       setShiftEndHour(previous);
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setSavingShift(false);
     }
@@ -366,19 +348,13 @@ export function ComplianceClient({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold text-[#0b1024]">
-                  Только админы могут править выполненные записи
+                  {t("editOnlyTitle")}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  Когда включено — кнопка «Изменить данные» на уже
-                  выполненной задаче появляется только у руководителей
-                  (manager / head_chef / технолог / собственник). Рядовые
-                  сотрудники видят запись как сохранённую, без возможности
-                  её изменить.
+                  {t("editOnlyBody")}
                   <br />
                   <span className="text-[12px] text-[#9b9fb3]">
-                    По умолчанию выключено. Большинству бригад эта строгость
-                    не нужна — сотрудник, который только что заполнил
-                    журнал, должен иметь возможность сам исправить опечатку.
+                    {t("editOnlyNote")}
                   </span>
                 </p>
               </div>
@@ -400,10 +376,9 @@ export function ComplianceClient({
         </div>
 
         <div className="mt-5 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13px] leading-relaxed text-[#6f7282]">
-          <span className="font-medium text-[#0b1024]">История правок</span>{" "}
-          сохраняется в журнале независимо от этого переключателя — каждое
-          изменение фиксируется с указанием автора, времени и предыдущих
-          значений. Это требование ХАССП, его нельзя отключить.
+          {t.rich("historyNote", {
+            b: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+          })}
         </div>
       </div>
 
@@ -416,19 +391,15 @@ export function ComplianceClient({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold text-[#0b1024]">
-                  Час окончания рабочей смены
+                  {t("shiftTitle")}
                 </div>
                 <p className="mt-1 max-w-[520px] text-[13px] leading-relaxed text-[#6f7282]">
-                  Когда наступает этот час по UTC — система автоматически
-                  закрывает все «общие задачи смены» (event-журналы) без
-                  записей с пометкой «закрыто автоматически». Compliance
-                  становится зелёным, но в weekly-digest менеджер увидит
-                  это как флаг халатности.
+                  {t("shiftBody")}
                   <br />
                   <span className="text-[12px] text-[#9b9fb3]">
-                    По умолчанию <strong>0</strong> (полночь UTC = 03:00
-                    МСК). Для ночных смен поставьте, например, 6 — смена
-                    закроется в 06:00 UTC = 09:00 МСК.
+                    {t.rich("shiftNote", {
+                      strong: (chunks) => <strong>{chunks}</strong>,
+                    })}
                   </span>
                 </p>
               </div>
@@ -465,20 +436,15 @@ export function ComplianceClient({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold text-[#0b1024]">
-                  Закрытый день — нельзя править вчерашние записи
+                  {t("lockTitle")}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  Когда включено — после момента «начало сегодняшнего
-                  дня» (с учётом часа окончания смены выше) рядовые
-                  сотрудники не могут изменить или удалить записи за
-                  прошедшие дни. Управление по-прежнему может, но
-                  каждое такое действие пишется в журнал аудита с
-                  отметкой <span className="font-mono text-[12px]">closed_day.override</span>.
+                  {t.rich("lockBody", {
+                    code: (chunks) => <span className="font-mono text-[12px]">{chunks}</span>,
+                  })}
                   <br />
                   <span className="text-[12px] text-[#9b9fb3]">
-                    Используйте если ваш бизнес проходит ХАССП-аудит и
-                    нужно гарантировать, что официант не «допишет»
-                    вчерашний контроль t° задним числом.
+                    {t("lockNote")}
                   </span>
                 </p>
               </div>
@@ -509,22 +475,13 @@ export function ComplianceClient({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold text-[#0b1024]">
-                  Фото-доказательство на каждом шаге pipeline
+                  {t("photoTitle")}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  Когда включено — в задаче TasksFlow для каждого шага
-                  pipeline'а сотрудник обязан загрузить фотографию
-                  (камера телефона). Кнопка «Сделал» заблокирована пока
-                  фото не появилось. Каждое фото попадает в audit-log
-                  с привязкой к конкретному шагу — manager в любой
-                  момент может посмотреть «как именно повар проверил
-                  холодильник в 09:34».
+                  {t("photoBody")}
                   <br />
                   <span className="text-[12px] text-[#9b9fb3]">
-                    Превращает заполнение журнала из «голой галочки» в
-                    реальное evidence trail для проверок РПН. Минус — у
-                    сотрудников каждая задача занимает на 30-60 секунд
-                    дольше.
+                    {t("photoNote")}
                   </span>
                 </p>
               </div>
@@ -555,23 +512,15 @@ export function ComplianceClient({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold text-[#0b1024]">
-                  Сообщать руководству, если отклонение не исправили
+                  {t("escalateTitle")}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  Когда температура выходит за норму, сообщение сразу уходит{" "}
-                  <span className="font-medium text-[#0b1024]">
-                    ответственному за журнал
-                  </span>{" "}
-                  — тому, кто назначен в «Ответственные за журналы». Если он
-                  не вернул температуру в норму и не написал в журнале, что
-                  сделал, — через заданное время об этом узнают руководители.
-                  Одно сообщение на отклонение, а не на каждое показание.
+                  {t.rich("escalateBody", {
+                    b: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+                  })}
                   <br />
                   <span className="text-[12px] text-[#9b9fb3]">
-                    Выключите, если ответственный и есть руководитель — тогда
-                    второе сообщение будет лишним шумом. Если ответственный не
-                    назначен или у него не подключён Telegram, сообщение уходит
-                    руководству сразу.
+                    {t("escalateNote")}
                   </span>
                 </p>
               </div>
@@ -593,7 +542,7 @@ export function ComplianceClient({
             {escalate ? (
               <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
                 <span className="text-[13px] text-[#3c4053]">
-                  Ждём исправления
+                  {t("waitFor")}
                 </span>
                 <select
                   value={escalationMinutes}
@@ -610,7 +559,7 @@ export function ComplianceClient({
                   ))}
                 </select>
                 <span className="text-[13px] text-[#6f7282]">
-                  — потом пишем руководству
+                  {t("waitThen")}
                 </span>
               </div>
             ) : null}
@@ -626,14 +575,12 @@ export function ComplianceClient({
             <QrCode className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-semibold text-[#0b1024]">Запись по QR-плакату</div>
+            <div className="text-[16px] font-semibold text-[#0b1024]">{t("qrTitle")}</div>
             <p className="mt-1 text-[13.5px] leading-relaxed text-[#6f7282]">
-              Сотрудник сканирует плакат журнала, холодильника или помещения и
-              вносит запись с телефона. Выберите, как подтверждается, кто это
-              сделал. Перепечатывать плакаты при смене режима не нужно.
+              {t("qrDescription")}
             </p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Режим QR-форм">
-              {QR_FILL_MODES.map((mode) => {
+            <div className="mt-4 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t("qrModesLabel")}>
+              {qrFillModes.map((mode) => {
                 const Icon = mode.icon;
                 const active = qrFillMode === mode.value;
                 return (
@@ -661,18 +608,16 @@ export function ComplianceClient({
             </div>
             <label className="mt-4 flex cursor-pointer items-start justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 transition-colors duration-150 hover:bg-[#f5f6ff]">
               <span className="min-w-0">
-                <span className="block text-[14px] font-semibold text-[#0b1024]">Допуск к работе по QR гигиенического журнала</span>
+                <span className="block text-[14px] font-semibold text-[#0b1024]">{t("healthQrTitle")}</span>
                 <span className="mt-1 block text-[12.5px] leading-[1.5] text-[#6f7282]">
-                  Сотрудник сам подписывает перед сменой: нет температуры выше 37 °C, признаков инфекций у него и в семье, ОРВИ и гнойничков
-                  на коже. Автоматика больше не ставит «Здоров» за него. В час окончания смены ответственные
-                  за основные журналы получают список тех, кто не отметился.
+                  {t("healthQrBody")}
                 </span>
               </span>
               <Switch
                 checked={healthQr}
                 disabled={savingHealthQr}
                 onCheckedChange={(value) => void handleHealthQr(value)}
-                aria-label="Допуск к работе по QR"
+                aria-label={t("healthQrAria")}
                 data-testid="health-qr-required"
               />
             </label>
@@ -683,39 +628,37 @@ export function ComplianceClient({
                 <span className="min-w-0">
                   <span className="flex items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
                     <Camera className="size-4 shrink-0 text-[#3848c7]" />
-                    Фотофиксация показаний
+                    {t("readingPhotoTitle")}
                   </span>
                   <span className="mt-1 block text-[13px] leading-[1.5] text-[#6f7282]">
-                    На наклейке холодильника и плакате склада первой идёт кнопка «Сфотографируйте показание»: снимок
-                    термометра или дисплея ложится в журнал рядом со значением.{" "}
-                    {readingPhotoAutofill
-                      ? "Цифры с фото вписываются сами — сотруднику остаётся проверить и сохранить."
-                      : "Цифры с фото вписываются сами на платном тарифе; сейчас сотрудник вводит их руками."}{" "}
-                    Не хочет фотографировать — «Ввести вручную». Выключите — кнопки фото пропадут.
+                    {t("readingPhotoBody", {
+                      autofill: readingPhotoAutofill
+                        ? t("readingPhotoAutofillOn")
+                        : t("readingPhotoAutofillOff"),
+                    })}
                   </span>
                 </span>
                 <Switch
                   checked={readingPhoto.enabled}
                   disabled={savingReadingPhoto}
                   onCheckedChange={(value) => void handleReadingPhoto({ readingPhotoEnabled: value })}
-                  aria-label="Фотофиксация показаний"
+                  aria-label={t("readingPhotoTitle")}
                   data-testid="reading-photo-enabled"
                 />
               </label>
               {readingPhoto.enabled ? (
                 <label className="mt-4 flex cursor-pointer items-start justify-between gap-4 border-t border-[#ececf4] pt-4">
                   <span className="min-w-0">
-                    <span className="block text-[14px] font-semibold text-[#0b1024]">Фото обязательно</span>
+                    <span className="block text-[14px] font-semibold text-[#0b1024]">{t("readingPhotoRequiredTitle")}</span>
                     <span className="mt-1 block text-[13px] leading-[1.5] text-[#6f7282]">
-                      Без снимка температуру по QR не сохранить: фото подтверждает, что замер сделали у самого
-                      холодильника. «Обслуживание», «Ремонт» и влажность — без фото.
+                      {t("readingPhotoRequiredBody")}
                     </span>
                   </span>
                   <Switch
                     checked={readingPhoto.required}
                     disabled={savingReadingPhoto}
                     onCheckedChange={(value) => void handleReadingPhoto({ readingPhotoRequired: value })}
-                    aria-label="Фото обязательно"
+                    aria-label={t("readingPhotoRequiredTitle")}
                     data-testid="reading-photo-required"
                   />
                 </label>
@@ -723,7 +666,7 @@ export function ComplianceClient({
             </div>
             {qrFillMode === "pin" ? (
               <p className="mt-3 text-[12.5px] leading-[1.5] text-[#a13a32]">
-                PIN задаётся в карточке сотрудника («Сотрудники → карточка → PIN для быстрой QR-авторизации») или на странице общего планшета — код один и тот же. Сотрудник без PIN записать по QR не сможет. В публичном режиме PIN тоже спрашивается у тех, кому он задан.
+                {t("pinNote")}
               </p>
             ) : null}
           </div>

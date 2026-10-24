@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Copy, Library, Loader2, Mail, Plus, Search, UserMinus, UserPlus, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -13,7 +14,6 @@ import {
   type AccessPerson,
   type CabinetAccess,
 } from "@/lib/master-cabinet-access-view";
-import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 export type AccessData = {
@@ -55,7 +55,8 @@ function initialsOf(name: string): string {
 async function callAccessApi(
   endpoint: string,
   method: "POST" | "DELETE",
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  fallbackError: string
 ): Promise<ApiResponse | null> {
   const response = await fetch(endpoint, {
     method,
@@ -64,7 +65,7 @@ async function callAccessApi(
   }).catch(() => null);
   const json = (await response?.json().catch(() => null)) as ApiResponse | null;
   if (!response?.ok) {
-    toast.error(json?.error ?? "Не получилось. Проверьте интернет и попробуйте ещё раз.");
+    toast.error(json?.error ?? fallbackError);
     return null;
   }
   return json;
@@ -78,6 +79,7 @@ async function callAccessApi(
  * права не меняются.
  */
 export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
+  const t = useTranslations("masterUi.masterCabinetAccessCard");
   const [access, setAccess] = useState<AccessData>(initial);
 
   return (
@@ -88,22 +90,19 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
         </span>
         <div className="min-w-0">
           <h2 id="master-cabinets-title" className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            Мастер-кабинеты
+            {t("title")}
           </h2>
           <p className="mt-1 max-w-[680px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Кто ведёт меню и сырьё. Приглашённый по почте закреплён за кабинетом — у него только этот кабинет. Уже
-            заведённому сотруднику доступ даётся одним выбором. В тарифе кабинет с людьми — +1 сотрудник в каждом
-            подключённом пищеблоке. У владельца аккаунта доступ есть всегда.
+            {t("intro")}
           </p>
         </div>
       </div>
 
       {access.cabinets.length === 0 ? (
         <div className="mt-5 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
-          <div className="text-[15px] font-medium text-[#0b1024]">Мастер-кабинетов пока нет</div>
+          <div className="text-[15px] font-medium text-[#0b1024]">{t("emptyTitle")}</div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Создайте его: меню профиля (кружок с инициалами справа вверху) → раздел «Кабинет» → «Создать
-            мастер-кабинет». Потом здесь можно будет выдать доступ.
+            {t("emptyHint")}
           </p>
         </div>
       ) : (
@@ -135,6 +134,7 @@ export function CabinetAccessBlock({
   candidates: AccessCandidate[];
   onChange: (next: AccessData) => void;
 }) {
+  const t = useTranslations("masterUi.masterCabinetAccessCard");
   const [mode, setMode] = useState<null | "invite" | "grant">(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -154,12 +154,12 @@ export function CabinetAccessBlock({
     event.preventDefault();
     if (!inviteValid || busy) return;
     setBusy(true);
-    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, name, email });
+    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, name, email }, t("apiFallbackError"));
     setBusy(false);
     if (!json?.access || !json.inviteUrl) return;
     onChange(json.access);
     setLastInvite({ email: json.user?.email ?? email.trim(), url: json.inviteUrl, emailSent: json.emailSent !== false });
-    toast.success(`Приглашение готово: ${json.user?.email ?? email.trim()}`);
+    toast.success(t("inviteReady", { email: json.user?.email ?? email.trim() }));
     setName("");
     setEmail("");
     setMode(null);
@@ -168,30 +168,30 @@ export function CabinetAccessBlock({
   async function grant(candidate: AccessCandidate) {
     if (grantingId) return;
     setGrantingId(candidate.id);
-    const json = await callAccessApi(endpoint, "POST", { action: "grant", cabinetId: cabinet.id, userId: candidate.id });
+    const json = await callAccessApi(endpoint, "POST", { action: "grant", cabinetId: cabinet.id, userId: candidate.id }, t("apiFallbackError"));
     setGrantingId(null);
     if (!json?.access) return;
     onChange(json.access);
     // Список остаётся открытым — можно сразу добавить следующего; поиск сброшен.
     setQuery("");
-    toast.success(`Доступ открыт: ${candidate.name}`, {
-      description: `Кабинет «${cabinet.name}» — в его меню профиля, раздел «Кабинет».`,
+    toast.success(t("accessGranted", { name: candidate.name }), {
+      description: t("accessGrantedDescription", { cabinetName: cabinet.name }),
     });
   }
 
   async function revoke() {
     if (!removing) return;
-    const json = await callAccessApi(endpoint, "DELETE", { cabinetId: cabinet.id, userId: removing.userId });
+    const json = await callAccessApi(endpoint, "DELETE", { cabinetId: cabinet.id, userId: removing.userId }, t("apiFallbackError"));
     if (!json?.access) return;
     onChange(json.access);
-    toast.success(`Доступ убран: ${removing.name}`);
+    toast.success(t("accessRevoked", { name: removing.name }));
     setRemoving(null);
   }
 
   function copyInvite(url: string) {
     void navigator.clipboard?.writeText(url).then(
-      () => toast.success("Ссылка приглашения скопирована"),
-      () => toast.error("Не удалось скопировать — выделите и скопируйте вручную")
+      () => toast.success(t("inviteLinkCopied")),
+      () => toast.error(t("copyFailed"))
     );
   }
 
@@ -203,7 +203,7 @@ export function CabinetAccessBlock({
           {cabinet.name}
         </div>
         <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7] ring-1 ring-[#ececf4]">
-          {cabinet.people.length} {pluralRu(cabinet.people.length, "человек", "человека", "человек")}
+          {t("peopleCount", { count: cabinet.people.length })}
         </span>
       </div>
 
@@ -219,21 +219,21 @@ export function CabinetAccessBlock({
                 <span className="block truncate text-[12.5px] text-[#6f7282]">
                   {person.kind === "member"
                     ? [person.organizationName, person.title].filter(Boolean).join(" · ")
-                    : `${person.email} · только этот кабинет`}
+                    : t("onlyThisCabinet", { email: person.email })}
                 </span>
               </span>
               {person.kind === "member" && !person.pending ? (
                 <span className="shrink-0 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]">
-                  Сотрудник
+                  {t("roleEmployee")}
                 </span>
               ) : person.pending ? (
                 <span className="shrink-0 rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#9a4a06]">
-                  Приглашён
+                  {t("roleInvited")}
                 </span>
               ) : (
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]">
                   <Check className="size-3.5" />
-                  Вошёл
+                  {t("roleJoined")}
                 </span>
               )}
               <button
@@ -243,14 +243,14 @@ export function CabinetAccessBlock({
                 data-testid="cabinet-access-remove"
               >
                 <UserMinus className="size-3.5" />
-                Убрать
+                {t("remove")}
               </button>
             </li>
           ))}
         </ul>
       ) : (
         <p className="mt-3 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 py-3 text-[13px] text-[#6f7282]">
-          Пока доступ только у владельца аккаунта.
+          {t("ownerOnly")}
         </p>
       )}
 
@@ -271,8 +271,8 @@ export function CabinetAccessBlock({
             <Mail className="mt-0.5 size-4 shrink-0" />
             <span>
               {lastInvite.emailSent
-                ? `Приглашение отправлено на ${lastInvite.email}. По ссылке человек задаст пароль и сразу попадёт в кабинет.`
-                : `Письмо на ${lastInvite.email} не ушло — отправьте ссылку сами`}
+                ? t("inviteSent", { email: lastInvite.email })
+                : t("inviteNotSent", { email: lastInvite.email })}
             </span>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -280,28 +280,27 @@ export function CabinetAccessBlock({
               readOnly
               value={lastInvite.url}
               onFocus={(event) => event.currentTarget.select()}
-              aria-label="Ссылка приглашения"
+              aria-label={t("inviteLinkLabel")}
               className="h-10 min-w-0 flex-1 rounded-2xl border border-[#dcdfed] bg-white px-3 font-mono text-[12.5px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
             <button type="button" onClick={() => copyInvite(lastInvite.url)} className={OUTLINE}>
               <Copy className="size-4 text-[#5566f6]" />
-              Скопировать
+              {t("copy")}
             </button>
           </div>
-          <p className="text-[12px] text-[#6f7282]">Ссылка действует 7 дней.</p>
+          <p className="text-[12px] text-[#6f7282]">{t("linkValidity")}</p>
         </div>
       ) : null}
 
       {mode === "invite" ? (
         <form onSubmit={invite} className="mt-3 space-y-3 rounded-2xl border border-[#ececf4] bg-white p-4">
           <div className="text-[13px] leading-[1.5] text-[#3c4053]">
-            Человек получит письмо, задаст пароль и сразу попадёт в «{cabinet.name}». Он закреплён за кабинетом: журналов
-            и сотрудников пищеблоков не видит. В тарифе сам кабинет — +1 сотрудник в каждом подключённом пищеблоке.
+            {t("inviteForm.description", { cabinetName: cabinet.name })}
           </div>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="ФИО, например Иванова Мария Петровна"
+            placeholder={t("inviteForm.namePlaceholder")}
             autoComplete="name"
             autoFocus
             disabled={busy}
@@ -327,10 +326,10 @@ export function CabinetAccessBlock({
               data-testid="cabinet-access-invite-submit"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
-              Отправить приглашение
+              {t("inviteForm.submit")}
             </button>
             <button type="button" onClick={() => setMode(null)} disabled={busy} className={cn(OUTLINE, "h-11 w-full sm:w-auto")}>
-              Отмена
+              {t("cancel")}
             </button>
           </div>
         </form>
@@ -344,17 +343,17 @@ export function CabinetAccessBlock({
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Имя, объект или должность"
+                placeholder={t("picker.searchPlaceholder")}
                 autoFocus
                 className={cn(INPUT, "pl-10")}
-                aria-label="Поиск сотрудника"
+                aria-label={t("picker.searchLabel")}
                 data-testid="cabinet-access-search"
               />
             </label>
             <button
               type="button"
               onClick={() => setMode(null)}
-              aria-label="Закрыть список"
+              aria-label={t("picker.close")}
               className="flex size-11 shrink-0 items-center justify-center rounded-2xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
               <X className="size-4" />
@@ -363,17 +362,17 @@ export function CabinetAccessBlock({
           <div className="mt-2 max-h-80 overflow-y-auto">
             {groups.recommended.length + groups.other.length === 0 ? (
               <p className="px-2 py-4 text-center text-[13px] text-[#6f7282]">
-                {query.trim() ? "Никого не нашли" : "У всех сотрудников объектов доступ уже есть"}
+                {query.trim() ? t("picker.nobodyFound") : t("picker.everyoneHasAccess")}
               </p>
             ) : (
               <>
                 <CandidateGroup
-                  title="Рекомендуем — руководство и технологи"
+                  title={t("picker.recommended")}
                   items={groups.recommended}
                   grantingId={grantingId}
                   onPick={grant}
                 />
-                <CandidateGroup title="Остальные сотрудники" items={groups.other} grantingId={grantingId} onPick={grant} />
+                <CandidateGroup title={t("picker.others")} items={groups.other} grantingId={grantingId} onPick={grant} />
               </>
             )}
           </div>
@@ -392,7 +391,7 @@ export function CabinetAccessBlock({
             data-testid="cabinet-access-invite"
           >
             <Mail className="size-4 text-[#5566f6]" />
-            Пригласить по почте
+            {t("inviteByEmail")}
           </button>
           <button
             type="button"
@@ -404,7 +403,7 @@ export function CabinetAccessBlock({
             data-testid="cabinet-access-grant"
           >
             <UserPlus className="size-4 text-[#5566f6]" />
-            Дать доступ сотруднику
+            {t("grantToEmployee")}
           </button>
         </div>
       ) : null}
@@ -415,24 +414,23 @@ export function CabinetAccessBlock({
         onConfirm={revoke}
         variant="warn"
         icon={UserMinus}
-        title={`Убрать доступ к «${cabinet.name}»?`}
-        description={removing ? `${removing.name} больше не сможет открыть этот кабинет.` : undefined}
-        confirmLabel="Убрать доступ"
+        title={t("confirm.title", { cabinetName: cabinet.name })}
+        description={removing ? t("confirm.description", { name: removing.name }) : undefined}
+        confirmLabel={t("confirm.confirmLabel")}
         bullets={
           removing?.kind === "member"
             ? [
-                { label: "Кабинет пропадёт из его меню профиля." },
+                { label: t("confirm.memberBullet1") },
                 {
-                  label:
-                    "Если он в группе «Мастер-кабинет» и других кабинетов у него нет — уйдёт в архив «Сотрудников». Остальные сотрудники работают как раньше. Ушёл последний человек кабинета — кабинет перестаёт занимать места в тарифе.",
+                  label: t("confirm.memberBullet2"),
                   tone: "info",
                 },
-                { label: "На его устройствах нужно будет войти заново." },
+                { label: t("confirm.memberBullet3") },
               ]
             : [
-                { label: "Его аккаунт уйдёт в архив: войти он больше не сможет." },
-                { label: "Ссылка приглашения перестанет работать.", tone: "info" },
-                { label: "Вернуть можно новым приглашением на тот же email." },
+                { label: t("confirm.guestBullet1") },
+                { label: t("confirm.guestBullet2"), tone: "info" },
+                { label: t("confirm.guestBullet3") },
               ]
         }
       />
@@ -451,6 +449,7 @@ function CandidateGroup({
   grantingId: string | null;
   onPick: (candidate: AccessCandidate) => void;
 }) {
+  const t = useTranslations("masterUi.masterCabinetAccessCard");
   if (items.length === 0) return null;
   return (
     <div className="py-1">
@@ -478,7 +477,7 @@ function CandidateGroup({
           </span>
           <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-[#3848c7]">
             {grantingId === candidate.id ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            <span className="hidden sm:inline">Дать доступ</span>
+            <span className="hidden sm:inline">{t("grantAccess")}</span>
           </span>
         </button>
       ))}

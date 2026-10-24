@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Check, ArrowRight } from "lucide-react";
 import { OnboardingApplyButton } from "@/components/settings/onboarding-apply-button";
 import { BulkStaffImport } from "@/components/settings/bulk-staff-import";
@@ -35,6 +36,7 @@ export function OnboardingWizard({
   initialStaffCount,
   tasksflowConnected,
 }: Props) {
+  const t = useTranslations("settingsUi.onboardingWizard");
   const [activeStep, setActiveStep] = useState<1 | 2 | 3>(
     initialPositionsCount > 0
       ? initialStaffCount > 0
@@ -48,35 +50,35 @@ export function OnboardingWizard({
   const steps: Step[] = [
     {
       id: 1,
-      title: "Должности и журналы",
+      title: t("step1Title"),
       done: initialPositionsCount > 0,
       body: (
         <OnboardingApplyButton
           orgType={orgType}
           showSeedStaff={initialStaffCount === 0}
-          label={`Применить шаблон под тип «${orgType}» — создаст должности и привяжет журналы`}
+          label={t("applyTemplateLabel", { orgType })}
         />
       ),
     },
     {
       id: 2,
-      title: "Сотрудники",
+      title: t("step2Title"),
       done: initialStaffCount > 0,
       body: (
         <div className="space-y-3">
           <p className="text-[13px] leading-snug text-[#6f7282]">
-            Сейчас в «{orgName}»:{" "}
-            <strong>{initialStaffCount}</strong>{" "}
-            {initialStaffCount === 1 ? "сотрудник" : "сотрудников"}.
-            Вставьте список из Excel или Айко-экспорта (3 колонки: ФИО /
-            Должность / Телефон).
+            {t.rich("step2Body", {
+              orgName,
+              count: initialStaffCount,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </p>
           <BulkStaffImport />
           <Link
             href="/settings/users"
             className="inline-flex items-center gap-1 text-[12px] text-[#5566f6] hover:underline"
           >
-            …или добавить вручную в /settings/users
+            {t("addManually")}
             <ArrowRight className="size-3" />
           </Link>
         </div>
@@ -84,26 +86,22 @@ export function OnboardingWizard({
     },
     {
       id: 3,
-      title: "TasksFlow (опционально)",
+      title: t("step3Title"),
       done: tasksflowConnected,
       body: tasksflowConnected ? (
         <div className="text-[13px] text-[#136b2a]">
-          ✓ TasksFlow уже подключён. Сотрудники получат журнальные задачи
-          в свой Telegram-кабинет автоматически после нажатия «Отправить
-          всем на заполнение» на дашборде.
+          {t("connectedNote")}
         </div>
       ) : (
         <div className="space-y-2">
           <p className="text-[13px] leading-snug text-[#6f7282]">
-            TasksFlow — отдельное приложение для линейных сотрудников:
-            ежедневные задачи, бонусы, мобильный кабинет в Telegram.
-            Подключение — 30 секунд.
+            {t("aboutTasksflow")}
           </p>
           <Link
             href="/settings/integrations/tasksflow"
             className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white hover:bg-[#4a5bf0]"
           >
-            Подключить TasksFlow
+            {t("connect")}
             <ArrowRight className="size-4" />
           </Link>
         </div>
@@ -145,7 +143,7 @@ export function OnboardingWizard({
                 {s.title}
               </div>
               <div className="text-[12px] text-[#6f7282]">
-                {s.done ? "Готово" : "К выполнению"}
+                {s.done ? t("statusDone") : t("statusTodo")}
               </div>
             </div>
           </button>

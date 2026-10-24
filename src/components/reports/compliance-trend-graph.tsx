@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Line,
   LineChart,
@@ -19,11 +21,21 @@ import type { TrendPoint } from "@/lib/compliance-trend";
  * Родитель подключает модуль через `next/dynamic({ ssr: false })`.
  */
 export function ComplianceTrendGraph({ points }: { points: TrendPoint[] }) {
+  const t = useTranslations("reportsUi.complianceTrendGraph");
+  const locale = useLocale();
+  // Month labels follow the interface language; monthKey is "YYYY-MM".
+  const data = useMemo(() => {
+    const format = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
+    return points.map((p) => {
+      const [y, m] = p.monthKey.split("-").map(Number);
+      return { ...p, monthLabel: format.format(new Date(Date.UTC(y, m - 1, 1))) };
+    });
+  }, [points, locale]);
   const max = Math.max(...points.map((p) => p.entries), 1);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={points} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
         <XAxis
           dataKey="monthLabel"
           stroke="#9b9fb3"
@@ -48,7 +60,7 @@ export function ComplianceTrendGraph({ points }: { points: TrendPoint[] }) {
           labelStyle={{ color: "#0b1024", fontWeight: 600 }}
           formatter={(value: unknown, name: unknown) => [
             String(value ?? ""),
-            name === "entries" ? "Записей" : "Уник. шаблонов",
+            name === "entries" ? t("entries") : t("uniqueTemplates"),
           ]}
         />
         <Line

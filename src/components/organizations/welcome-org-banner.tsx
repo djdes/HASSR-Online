@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Building2, ClipboardList, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const STORAGE_PREFIX = "wesetup.welcome-org.";
 
@@ -44,6 +45,7 @@ export function WelcomeOrgBanner({
   organizationName: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("organizationsUi");
   const searchParams = useSearchParams();
   const requested = searchParams.get("welcome-org") === "1";
   const [dismissed, setDismissed] = useState(false);
@@ -73,7 +75,7 @@ export function WelcomeOrgBanner({
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Скрыть подсказку"
+          aria-label={t("welcomeOrgBanner.hide")}
           className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
         >
           <X className="size-4" />
@@ -85,11 +87,10 @@ export function WelcomeOrgBanner({
           </span>
           <div className="min-w-0">
             <div className="text-[15px] font-semibold text-[#0b1024]">
-              Новая организация «{organizationName}»
+              {t("welcomeOrgBanner.title", { name: organizationName })}
             </div>
             <p className="mt-1 text-[14px] leading-[1.55] text-[#6f7282]">
-              Вы уже работаете в ней. Осталось добавить сотрудников и
-              проверить набор журналов — дальше система сама раздаст задачи.
+              {t("welcomeOrgBanner.description")}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
@@ -97,14 +98,14 @@ export function WelcomeOrgBanner({
                 className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
               >
                 <Users className="size-4" />
-                Добавить сотрудников
+                {t("welcomeOrgBanner.addStaff")}
               </Link>
               <Link
                 href="/settings/journals"
                 className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <ClipboardList className="size-4 text-[#5566f6]" />
-                Проверить журналы
+                {t("welcomeOrgBanner.checkJournals")}
               </Link>
             </div>
           </div>

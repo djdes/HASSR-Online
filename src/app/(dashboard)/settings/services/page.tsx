@@ -1,3 +1,4 @@
+import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -8,9 +9,10 @@ import { ServicesCatalog } from "./services-catalog";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Услуги",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("settingsUi.servicesPage");
+  return { title: t("title") };
+}
 
 /**
  * Каталог платных услуг в кабинете.
@@ -25,6 +27,8 @@ export default async function ServicesPage({
 }: {
   searchParams: Promise<{ order?: string | string[] }>;
 }) {
+  const t = await getTranslations("settingsUi.servicesPage");
+  const locale = await getLocale();
   const session = await requireAuth();
   const { order } = await searchParams;
   const organizationId = getActiveOrgId(session);
@@ -48,12 +52,12 @@ export default async function ServicesPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Услуги"
-        description="Работа специалиста по пищевой безопасности: настройка журналов, аудит перед проверкой, разработка документации."
+        title={t("title")}
+        description={t("description")}
         actions={
           canOrder ? (
             <span className="inline-flex h-10 items-center rounded-2xl bg-[#f5f6ff] px-3.5 text-[13px] font-medium tabular-nums text-[#3848c7]">
-              Баллов на балансе: {balanceRub.toLocaleString("ru-RU")} ₽
+              {t("balancePoints", { amount: balanceRub.toLocaleString(locale) })}
             </span>
           ) : null
         }

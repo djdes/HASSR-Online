@@ -13,6 +13,7 @@ import {
   RefreshCw,
   UserPlus,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { DishPoolSection } from "@/components/journals/dish-pool-section";
@@ -20,7 +21,6 @@ import { renameMasterCabinetDialog } from "@/components/master/rename-master-cab
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageGuide } from "@/components/ui/page-guide";
 import type { MasterCabinetStatus } from "@/lib/master-cabinet";
-import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 type InviteResult = {
@@ -51,10 +51,10 @@ const PRIMARY =
 const OUTLINE =
   "inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50";
 
-function copyText(value: string, okMessage: string) {
+function copyText(value: string, okMessage: string, errorMessage: string) {
   void navigator.clipboard?.writeText(value).then(
     () => toast.success(okMessage),
-    () => toast.error("Не удалось скопировать — выделите и скопируйте вручную")
+    () => toast.error(errorMessage)
   );
 }
 
@@ -73,6 +73,8 @@ export function MasterCabinetClient({
   organizationName: string;
   isDemo: boolean;
 }) {
+  const t = useTranslations("settingsUi.masterCabinetClient");
+  const tRename = useTranslations("masterUi.renameMasterCabinet");
   const [status, setStatus] = useState<MasterCabinetStatus>(initialStatus);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -97,7 +99,7 @@ export function MasterCabinetClient({
     }).catch(() => null);
     const json = (await response?.json().catch(() => null)) as PostResponse | null;
     if (!response?.ok || !json?.inviteUrl) {
-      const message = json?.error ?? "Не получилось. Проверьте интернет и попробуйте ещё раз.";
+      const message = json?.error ?? t("apiFallbackError");
       setError(message);
       toast.error(message);
       return false;
@@ -109,7 +111,7 @@ export function MasterCabinetClient({
       inviteUrl: json.inviteUrl,
       emailSent: json.emailSent !== false,
     });
-    toast.success(json.created ? "Мастер-кабинет создан" : `Приглашение готово: ${json.user?.email ?? person.email}`);
+    toast.success(json.created ? t("cabinetCreated") : t("inviteReady", { email: json.user?.email ?? person.email }));
     return true;
   }
 
@@ -140,7 +142,7 @@ export function MasterCabinetClient({
   /** Переименовать кабинет пула (название в шапке кабинета и в списке организаций). */
   async function rename() {
     if (!master) return;
-    const result = await renameMasterCabinetDialog({ currentName: master.name, endpoint: "/api/settings/master-cabinet" });
+    const result = await renameMasterCabinetDialog({ currentName: master.name, endpoint: "/api/settings/master-cabinet", t: tRename });
     if (!result) return;
     const next = result.body.status as MasterCabinetStatus | undefined;
     if (next) setStatus(next);
@@ -157,10 +159,10 @@ export function MasterCabinetClient({
         body: JSON.stringify({ organizationId: master.organizationId }),
       });
       const json = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(json?.error ?? "Не удалось открыть мастер-кабинет");
+      if (!response.ok) throw new Error(json?.error ?? t("openFailed"));
       window.location.assign("/master");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось открыть мастер-кабинет");
+      toast.error(err instanceof Error ? err.message : t("openFailed"));
       setOpening(false);
     }
   }
@@ -176,11 +178,11 @@ export function MasterCabinetClient({
       }}
     >
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">ФИО сотрудника бэк-офиса</span>
+        <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">{t("form.nameLabel")}</span>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Например, Иванова Мария Петровна"
+          placeholder={t("form.namePlaceholder")}
           autoComplete="name"
           disabled={busy || isDemo}
           className={INPUT}
@@ -201,7 +203,7 @@ export function MasterCabinetClient({
           data-testid="master-invite-email"
         />
         <span className="mt-1.5 block text-[12px] leading-[1.5] text-[#6f7282]">
-          На этот адрес придёт письмо со ссылкой. Адрес не должен быть занят в WeSetup.
+          {t("form.emailHint")}
         </span>
       </label>
       {error ? (
@@ -217,7 +219,7 @@ export function MasterCabinetClient({
           data-testid="master-invite-submit"
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : master ? <UserPlus className="size-4" /> : <Library className="size-4" />}
-          {master ? "Отправить приглашение" : "Создать мастер-кабинет"}
+          {master ? t("form.sendInvite") : t("form.createCabinet")}
         </button>
         {master ? (
           <button
@@ -228,7 +230,7 @@ export function MasterCabinetClient({
             }}
             className={cn(OUTLINE, "h-12 w-full sm:w-auto")}
           >
-            Отмена
+            {t("form.cancel")}
           </button>
         ) : null}
       </div>
@@ -239,37 +241,37 @@ export function MasterCabinetClient({
     <div className="space-y-5">
       <PageGuide
         storageKey="settings-master-cabinet"
-        title="Как работает мастер-кабинет"
+        title={t("guide.title")}
         bullets={[
           {
-            title: "1. Создайте кабинет",
-            body: "Укажите ФИО и email сотрудника бэк-офиса — он получит приглашение в отдельный кабинет без журналов и сотрудников кухни.",
+            title: t("guide.step1Title"),
+            body: t("guide.step1Body"),
           },
           {
-            title: "2. Бэк-офис загружает меню и сырьё",
-            body: "Файлом Excel/CSV или списком: одна позиция — одна строка. Перед сохранением видно, что добавится и что уберётся.",
+            title: t("guide.step2Title"),
+            body: t("guide.step2Body"),
           },
           {
-            title: "3. Объекты получают списки",
-            body: "Справочник блюд сохраняется отдельно. Для выгрузки в бракеражные журналы выберите дату в мастер-кабинете. Сырьё, поставщики и изготовители обновляются в скоропорте при сохранении.",
+            title: t("guide.step3Title"),
+            body: t("guide.step3Body"),
           },
         ]}
         qa={[
           {
-            q: "Пропадут ли блюда, которые объект внёс сам?",
-            a: "Нет. Если бэк-офис уберёт позицию, у объектов исчезнет только она — своё, добавленное руками, остаётся.",
+            q: t("guide.qa1Q"),
+            a: t("guide.qa1A"),
           },
           {
-            q: "Как подключить ещё один объект?",
-            a: "Скопируйте «Код журнала объекта» в настройках БЖГП пищеблока. В мастер-кабинете откройте «Подключённые объекты», введите этот код и подтвердите подключение.",
+            q: t("guide.qa2Q"),
+            a: t("guide.qa2A"),
           },
           {
-            q: "Сотрудник бэк-офиса увидит журналы и людей?",
-            a: "Нет. В мастер-кабинете доступны только списки меню и сырья и перечень подключённых объектов.",
+            q: t("guide.qa3Q"),
+            a: t("guide.qa3A"),
           },
           {
-            q: "Нужен ещё один мастер-кабинет — например, отдельно для школ и садов?",
-            a: "Владелец аккаунта: меню профиля (кружок с инициалами справа вверху) → раздел «Кабинет» → «Создать мастер-кабинет». Дайте название и отметьте объекты — они будут получать меню и сырьё из нового кабинета. Кабинетов может быть сколько угодно.",
+            q: t("guide.qa4Q"),
+            a: t("guide.qa4A"),
           },
         ]}
       />
@@ -278,7 +280,7 @@ export function MasterCabinetClient({
         {/* Код справочника и объекты пула */}
         <section className={CARD} aria-labelledby="master-code-title">
           <div id="master-code-title" className={EYEBROW}>
-            Код справочника
+            {t("code.eyebrow")}
           </div>
           {status.code ? (
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -288,23 +290,23 @@ export function MasterCabinetClient({
               >
                 {status.code}
               </span>
-              <button type="button" onClick={() => copyText(status.code ?? "", "Код скопирован")} className={OUTLINE}>
+              <button type="button" onClick={() => copyText(status.code ?? "", t("code.copied"), t("copyFailed"))} className={OUTLINE}>
                 <Copy className="size-4 text-[#5566f6]" />
-                Скопировать
+                {t("copy")}
               </button>
             </div>
           ) : (
             <p className="mt-3 text-[14px] leading-[1.55] text-[#3c4053]">
-              Кода пока нет — выдадим его автоматически, когда вы создадите мастер-кабинет.
+              {t("code.none")}
             </p>
           )}
           <p className="mt-2 text-[13px] leading-[1.55] text-[#6f7282]">
-            Объекты с этим кодом получают меню и сырьё из мастер-кабинета.
+            {t("code.objectsReceive")}
           </p>
 
           <div className="mt-5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[14px] font-semibold text-[#0b1024]">Объекты с этим кодом</span>
+              <span className="text-[14px] font-semibold text-[#0b1024]">{t("code.objectsWithCode")}</span>
               <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7]">
                 {objectsCount}
               </span>
@@ -320,7 +322,7 @@ export function MasterCabinetClient({
               </ul>
             ) : (
               <p className="mt-2 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-                Пока только «{organizationName}». Другие объекты подключаются в мастер-кабинете по их собственным кодам.
+                {t("code.onlyThisOrg", { organizationName })}
               </p>
             )}
           </div>
@@ -331,7 +333,7 @@ export function MasterCabinetClient({
         {/* Мастер-кабинет */}
         <section className={CARD} aria-labelledby="master-cabinet-title">
           <div id="master-cabinet-title" className={EYEBROW}>
-            Мастер-кабинет
+            {t("cabinet.eyebrow")}
           </div>
 
           {master ? (
@@ -349,21 +351,21 @@ export function MasterCabinetClient({
                       type="button"
                       onClick={() => void rename()}
                       className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-                      aria-label="Переименовать мастер-кабинет"
-                      title="Переименовать"
+                      aria-label={t("cabinet.renameLabel")}
+                      title={t("cabinet.rename")}
                       data-testid="master-cabinet-rename"
                     >
                       <PenLine className="size-4" />
                     </button>
                   </div>
                   <div className="mt-0.5 text-[13px] text-[#6f7282]">
-                    Раздаёт меню и сырьё в {objectsCount} {pluralRu(objectsCount, "объект", "объекта", "объектов")}
+                    {t("cabinet.distributes", { count: objectsCount })}
                   </div>
                 </div>
               </div>
 
               <div>
-                <div className="mb-2 text-[14px] font-semibold text-[#0b1024]">Сотрудники кабинета</div>
+                <div className="mb-2 text-[14px] font-semibold text-[#0b1024]">{t("cabinet.employees")}</div>
                 {master.users.length > 0 ? (
                   <ul className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4]">
                     {master.users.map((user) => (
@@ -378,27 +380,27 @@ export function MasterCabinetClient({
                         {user.invited ? (
                           <span className="flex items-center gap-2">
                             <span className="rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#9a4a06]">
-                              Приглашён
+                              {t("cabinet.invited")}
                             </span>
                             <button
                               type="button"
                               onClick={() => void resend(user)}
                               disabled={resendingId !== null}
                               className="inline-flex h-8 items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] disabled:opacity-50"
-                              title="Выдать новую ссылку приглашения — прежняя перестанет действовать"
+                              title={t("cabinet.resendTitle")}
                             >
                               {resendingId === user.id ? (
                                 <Loader2 className="size-3.5 animate-spin" />
                               ) : (
                                 <RefreshCw className="size-3.5" />
                               )}
-                              Новая ссылка
+                              {t("cabinet.resend")}
                             </button>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]">
                             <Check className="size-3.5" />
-                            Вошёл
+                            {t("cabinet.joined")}
                           </span>
                         )}
                       </li>
@@ -406,7 +408,7 @@ export function MasterCabinetClient({
                   </ul>
                 ) : (
                   <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-                    В кабинете пока никого — пригласите сотрудника бэк-офиса.
+                    {t("cabinet.noEmployees")}
                   </p>
                 )}
               </div>
@@ -425,7 +427,7 @@ export function MasterCabinetClient({
                     data-testid="master-open"
                   >
                     {opening ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-                    Открыть мастер-кабинет
+                    {t("cabinet.open")}
                   </button>
                 ) : null}
                 {!inviteFormOpen ? (
@@ -438,7 +440,7 @@ export function MasterCabinetClient({
                     className={cn(OUTLINE, "h-12 w-full sm:w-auto")}
                   >
                     <UserPlus className="size-4 text-[#5566f6]" />
-                    Пригласить ещё
+                    {t("cabinet.inviteMore")}
                   </button>
                 ) : null}
               </div>
@@ -446,12 +448,11 @@ export function MasterCabinetClient({
           ) : (
             <div className="mt-3 space-y-4">
               <p className="text-[14px] leading-[1.6] text-[#3c4053]">
-                Кабинета ещё нет. Создайте его и пригласите сотрудника бэк-офиса — он будет вести меню и сырьё
-                для всех объектов с вашим кодом.
+                {t("cabinet.noCabinet")}
               </p>
               {isDemo ? (
                 <p className="rounded-2xl bg-[#fff8eb] px-4 py-3 text-[13px] text-[#9a4a06]">
-                  В демо-организации мастер-кабинет не создаётся — переключитесь на рабочую организацию.
+                  {t("cabinet.demoNotice")}
                 </p>
               ) : null}
               {inviteForm}
@@ -475,8 +476,8 @@ export function MasterCabinetClient({
                 <Mail className="mt-0.5 size-4 shrink-0" />
                 <span>
                   {lastInvite.emailSent
-                    ? `Приглашение отправлено на ${lastInvite.email}`
-                    : `Письмо на ${lastInvite.email} не ушло — отправьте ссылку сотруднику сами`}
+                    ? t("result.sent", { email: lastInvite.email })
+                    : t("result.notSent", { email: lastInvite.email })}
                 </span>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -484,21 +485,21 @@ export function MasterCabinetClient({
                   readOnly
                   value={lastInvite.inviteUrl}
                   onFocus={(event) => event.currentTarget.select()}
-                  aria-label="Ссылка приглашения"
+                  aria-label={t("result.linkLabel")}
                   className="h-10 min-w-0 flex-1 rounded-2xl border border-[#dcdfed] bg-white px-3 font-mono text-[12.5px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                   data-testid="master-invite-url"
                 />
                 <button
                   type="button"
-                  onClick={() => copyText(lastInvite.inviteUrl, "Ссылка приглашения скопирована")}
+                  onClick={() => copyText(lastInvite.inviteUrl, t("result.linkCopied"), t("copyFailed"))}
                   className={OUTLINE}
                 >
                   <Copy className="size-4 text-[#5566f6]" />
-                  Скопировать
+                  {t("copy")}
                 </button>
               </div>
               <p className="text-[12px] leading-[1.5] text-[#6f7282]">
-                Ссылка действует 7 дней. По ней сотрудник задаёт пароль и сразу попадает в мастер-кабинет.
+                {t("result.validity")}
               </p>
             </div>
           ) : null}
@@ -509,25 +510,26 @@ export function MasterCabinetClient({
         open={confirmOpen}
         onClose={() => !busy && setConfirmOpen(false)}
         onConfirm={submitNew}
-        title="Создать мастер-кабинет?"
-        description={`Сотрудник бэк-офиса ${name.trim() || ""} (${email.trim()}) получит приглашение.`}
+        title={t("confirm.title")}
+        description={t("confirm.description", { name: name.trim() || "", email: email.trim() })}
         icon={Library}
-        confirmLabel="Создать и пригласить"
+        confirmLabel={t("confirm.confirmLabel")}
         bullets={[
           {
-            label: "Появится отдельный кабинет — без журналов, сотрудников и настроек кухни.",
+            label: t("confirm.bullet1"),
           },
           {
-            label: "Сотрудник бэк-офиса увидит только меню, сырьё и список объектов с вашим кодом.",
+            label: t("confirm.bullet2"),
             tone: "info",
           },
           {
-            label: `Меню и сырьё, которые он сохранит, получат журналы бракеража и скоропорта во всех объектах с кодом${
-              status.code ? ` ${status.code}` : ""
-            } (сейчас: ${Math.max(objectsCount, 1)}).`,
+            label: t("confirm.bullet3", {
+              code: status.code ? ` ${status.code}` : "",
+              count: Math.max(objectsCount, 1),
+            }),
             tone: "info",
           },
-          { label: "Свои позиции объектов не пропадут — меняется только то, что прислал бэк-офис." },
+          { label: t("confirm.bullet4") },
         ]}
       />
     </div>

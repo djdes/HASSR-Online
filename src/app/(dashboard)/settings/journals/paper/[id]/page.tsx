@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
@@ -25,6 +26,7 @@ export default async function PaperJournalPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const t = await getTranslations("settingsUi.journalsSettingsClient");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/dashboard");
   const { id } = await params;
@@ -61,7 +63,7 @@ export default async function PaperJournalPage({
     <div className="space-y-5">
       <PageCrumbs
         items={[
-          { label: "Набор журналов", href: "/settings/journals#paper" },
+          { label: t("title"), href: "/settings/journals#paper" },
           { label: journal.name },
         ]}
       />

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RotateCcw, Save, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import {
   CUSTOM_NAME_MAX_LENGTH,
@@ -13,7 +14,6 @@ import {
   type CustomNames,
 } from "@/lib/custom-names";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
-import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 type SectionItem = { key: string; label: string };
@@ -41,6 +41,8 @@ export function NamesSettingsClient({
   journals: JournalItem[];
   initialNames: CustomNames;
 }) {
+  const t = useTranslations("settingsUi.namesSettingsClient");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [saved, setSaved] = useState<CustomNames>(initialNames);
   const [sectionValues, setSectionValues] = useState<Values>(() =>
@@ -106,7 +108,7 @@ export function NamesSettingsClient({
 
   async function save() {
     if (check.errors.length > 0) {
-      toast.error("Проверьте поля, отмеченные красным");
+      toast.error(t("fixFields"));
       const first = check.errors[0];
       const focusFirst = () => document.getElementById(inputId(first.kind, first.key))?.focus();
       if (document.getElementById(inputId(first.kind, first.key))) {
@@ -130,7 +132,7 @@ export function NamesSettingsClient({
         | { names?: CustomNames; changed?: number; error?: string; errors?: CustomNameFieldError[] }
         | null;
       if (!res.ok || !data?.names) {
-        throw new Error(data?.error || "Не удалось сохранить названия");
+        throw new Error(data?.error || t("saveFailed"));
       }
       setSaved(data.names);
       setSectionValues(valuesFrom(sections.map((s) => s.key), data.names.sections));
@@ -138,13 +140,13 @@ export function NamesSettingsClient({
       const changed = data.changed ?? 0;
       toast.success(
         changed > 0
-          ? `Сохранено: ${changed} ${pluralRu(changed, "название", "названия", "названий")}. Меню и журналы уже с новыми названиями`
-          : "Изменений не было"
+          ? t("savedCount", { count: changed })
+          : t("noChanges")
       );
       // Меню, крошки и карточки берут названия из layout'а — обновляем его.
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить названия");
+      toast.error(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -154,9 +156,9 @@ export function NamesSettingsClient({
     <div className="space-y-5">
       <section className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <header className="border-b border-[#ececf4] px-4 py-4 sm:px-6">
-          <h2 className="text-[16px] font-semibold text-[#0b1024]">Разделы меню</h2>
+          <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("sectionsTitle")}</h2>
           <p className="mt-0.5 text-[13px] text-[#6f7282]">
-            Пункты меню кабинета и мини-приложения. «Настройки» и «Выход» не переименовываются.
+            {t("sectionsHint")}
           </p>
         </header>
         <ul className="divide-y divide-[#ececf4]">
@@ -177,11 +179,14 @@ export function NamesSettingsClient({
       <section className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <header className="space-y-3 border-b border-[#ececf4] px-4 py-4 sm:px-6">
           <div>
-            <h2 className="text-[16px] font-semibold text-[#0b1024]">Журналы</h2>
+            <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("journalsTitle")}</h2>
             <p className="mt-0.5 text-[13px] text-[#6f7282]">
-              Серым — официальное название: оно остаётся в печати, у проверяющего и в отчётах.
+              {t("journalsHint")}
               {customJournalsCount > 0
-                ? ` Своё название у ${customJournalsCount} из ${journals.length}.`
+                ? t("customCount", {
+                    count: customJournalsCount,
+                    total: journals.length,
+                  })
                 : null}
             </p>
           </div>
@@ -191,8 +196,8 @@ export function NamesSettingsClient({
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Найти журнал — по своему или официальному названию"
-              aria-label="Найти журнал"
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchAria")}
               className={cn(
                 INPUT_CLASS,
                 "pl-11 pr-11 text-[14px] border-[#dcdfed] focus:border-[#5566f6] focus:ring-[#5566f6]/15"
@@ -202,7 +207,7 @@ export function NamesSettingsClient({
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                aria-label="Очистить поиск"
+                aria-label={t("searchClear")}
                 className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6]"
               >
                 <X className="size-4" />
@@ -212,9 +217,9 @@ export function NamesSettingsClient({
         </header>
         {visibleJournals.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <div className="text-[15px] font-medium text-[#0b1024]">Ничего не нашли</div>
+            <div className="text-[15px] font-medium text-[#0b1024]">{t("nothingFound")}</div>
             <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
-              Поиск идёт и по своему, и по официальному названию журнала.
+              {t("nothingFoundHint")}
             </p>
           </div>
         ) : (
@@ -242,15 +247,14 @@ export function NamesSettingsClient({
         <div className="min-w-0 flex-1 text-[13px] text-[#3c4053]">
           {check.errors.length > 0 ? (
             <span className="text-[#a13a32]">
-              Исправьте {check.errors.length}{" "}
-              {pluralRu(check.errors.length, "поле", "поля", "полей")}, чтобы сохранить
+              {t("fixErrors", { count: check.errors.length })}
             </span>
           ) : dirty ? (
             <span className="tabular-nums">
-              Изменено: {changes.length} {pluralRu(changes.length, "название", "названия", "названий")}
+              {t("changedCount", { count: changes.length })}
             </span>
           ) : (
-            "Изменений нет"
+            t("noChangesNow")
           )}
         </div>
         {dirty ? (
@@ -260,7 +264,7 @@ export function NamesSettingsClient({
             disabled={saving}
             className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60 sm:flex-none"
           >
-            Отменить
+            {tc("cancel")}
           </button>
         ) : null}
         <button
@@ -270,7 +274,7 @@ export function NamesSettingsClient({
           className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:bg-[#c8cbe0] disabled:shadow-none sm:flex-none"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Сохранить
+          {tc("save")}
         </button>
       </div>
     </div>
@@ -299,6 +303,7 @@ function NameRow({
   muted?: boolean;
   onChange: (next: string) => void;
 }) {
+  const t = useTranslations("settingsUi.namesSettingsClient");
   const hintId = `${id}-hint`;
   // Строка подсказки — только когда есть что сказать: пустые строки
   // списка из сорока пяти журналов должны оставаться короткими.
@@ -317,7 +322,7 @@ function NameRow({
         </label>
         {muted ? (
           <span className="mt-1 inline-flex rounded-full bg-[#eef0f6] px-2 py-0.5 text-[11px] font-medium text-[#6f7282]">
-            выключен в наборе
+            {t("mutedBadge")}
           </span>
         ) : null}
       </div>
@@ -328,7 +333,7 @@ function NameRow({
           value={value}
           maxLength={CUSTOM_NAME_MAX_LENGTH}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Своё название — пусто = стандартное"
+          placeholder={t("placeholder")}
           aria-invalid={error ? true : undefined}
           aria-describedby={showHint ? hintId : undefined}
           className={cn(
@@ -341,7 +346,7 @@ function NameRow({
         {showHint ? (
           <div id={hintId} className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <span className={cn("text-[12px]", error ? "text-[#a13a32]" : "text-[#9b9fb3]")}>
-              {error ?? (value.trim() ? "Так увидят сотрудники" : "")}
+              {error ?? (value.trim() ? t("preview") : "")}
             </span>
             {value ? (
               <button
@@ -350,7 +355,7 @@ function NameRow({
                 className="inline-flex items-center gap-1 rounded-lg px-1 text-[12px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
               >
                 <RotateCcw className="size-3.5" />
-                Вернуть стандартное
+                {t("restore")}
               </button>
             ) : null}
           </div>
