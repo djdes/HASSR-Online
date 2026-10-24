@@ -1,0 +1,9 @@
+PASS | A clean, HEAD == origin/master                       | exit=0 (expected 0) | ==> Deploying e053ee05fe1dd724e41250457b7da0c42368039e (2026-10-24T05:25:01Z) to wesetupru@wesetup.ru:/var/www/wesetupru/data/www/wesetup.ru/app 
+PASS | B again, leftover .build-sha/.build-time             | exit=0 (expected 0) | ==> Deploying e053ee05fe1dd724e41250457b7da0c42368039e (2026-10-24T05:25:04Z) to wesetupru@wesetup.ru:/var/www/wesetupru/data/www/wesetup.ru/app 
+PASS | C modified tracked file                              | exit=1 (expected 1) | ✖ В рабочей копии есть незакоммиченные или неотслеживаемые файлы — они попали бы
+PASS | D untracked file                                     | exit=1 (expected 1) | ✖ В рабочей копии есть незакоммиченные или неотслеживаемые файлы — они попали бы
+PASS | E local commit not pushed                            | exit=1 (expected 1) | ✖ HEAD (e608197) не совпадает с origin/master (e053ee0). 
+PASS | F origin/master moved ahead (local is old)           | exit=1 (expected 1) | ✖ HEAD (e053ee0) не совпадает с origin/master (533416e). 
+PASS | G detached worktree at origin/master                 | exit=0 (expected 0) | ==> Deploying 533416ef7ac3f0c6287318eb02080dc9bedecc89 (2026-10-24T05:25:07Z) to wesetupru@wesetup.ru:/var/www/wesetupru/data/www/wesetup.ru/app 
+PASS | H fetch fails, HEAD == last known origin/master      | exit=0 (expected 0) | ⚠ git fetch не удался — сверяем с последним известным origin/master ==> Deploying 533416ef7ac3f0c6287318eb02080d
+failed: 0

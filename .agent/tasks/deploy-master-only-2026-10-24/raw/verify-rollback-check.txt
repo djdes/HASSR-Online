@@ -1,0 +1,25 @@
+PASS | 1 incoming newer than prod (ahead)                       | exit=0 (expected 0) | gh calls: 1
+    На проде 16443845, выкатываем aaaaaaaa: ahead
+PASS | 2 same commit (identical, re-run of latest)              | exit=0 (expected 0) | gh calls: 1
+    На проде 16443845, выкатываем aaaaaaaa: identical
+PASS | 3 re-run of old run: behind, prod commit in master       | exit=1 (expected 1) | gh calls: 2
+    На проде 16443845, выкатываем aaaaaaaa: behind ::error::Коммит aaaaaaaa старше того, что уже на проде (16443845, есть в master). Похоже на Re
+PASS | 4 behind, prod == master tip                             | exit=1 (expected 1) | gh calls: 2
+    На проде 16443845, выкатываем aaaaaaaa: behind ::error::Коммит aaaaaaaa старше того, что уже на проде (16443845, есть в master). Похоже на Re
+PASS | 5 behind, prod not in master (rewound master/branch)     | exit=0 (expected 0) | gh calls: 2
+    На проде 16443845, выкатываем aaaaaaaa: behind ::warning::На проде 16443845 — коммит не из master. Выкатываем master.
+PASS | 6 behind, prod diverged from master                      | exit=0 (expected 0) | gh calls: 2
+    На проде 16443845, выкатываем aaaaaaaa: behind ::warning::На проде 16443845 — коммит не из master. Выкатываем master.
+PASS | 7 incoming diverged from prod                            | exit=0 (expected 0) | gh calls: 1
+    На проде 16443845, выкатываем aaaaaaaa: diverged
+PASS | 8 GitHub API error (404 body on stdout)                  | exit=0 (expected 0) | gh calls: 1
+    На проде 16443845, выкатываем aaaaaaaa: unknown
+PASS | 9 site unreachable / 429                                 | exit=0 (expected 0) | gh calls: 0
+    curl: (22) The requested URL returned error: 429 ::warning::Не удалось узнать версию на проде — проверку пропускаем
+PASS | 10 site reports dev build                                | exit=0 (expected 0) | gh calls: 0
+    ::warning::Не удалось узнать версию на проде — проверку пропускаем
+PASS | 11 site returns HTML instead of JSON                     | exit=0 (expected 0) | gh calls: 0
+    ::warning::Не удалось узнать версию на проде — проверку пропускаем
+PASS | 12 only short buildId, behind + in master                | exit=1 (expected 1) | gh calls: 2
+    На проде 1644384, выкатываем aaaaaaaa: behind ::error::Коммит aaaaaaaa старше того, что уже на проде (1644384, есть в master). Похоже на Re-r
+failed: 0
