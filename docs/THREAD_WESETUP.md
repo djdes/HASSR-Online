@@ -96,7 +96,7 @@ prisma/schema.prisma                  # ОСТОРОЖНО — миграции 
 1. После каждой самостоятельной фичи: `git add <files>; git commit -m "<рус>"; git push origin master`.
 2. Деплой автоматический через GitHub Actions (`.github/workflows/deploy.yml`). Между push'ами **жди готовности предыдущего deploy** (Monitor `.build-sha == HEAD`), иначе SCP коллизит.
 3. Перед коммитом: `npx tsc --noEmit --skipLibCheck` + `npm run lint`.
-4. Если ломается build на проде — заходи по SSH (`ssh wesetupru@wesetup.ru -p 50222`, пароль в CLAUDE.md), `npx next build` руками, `pm2 restart haccp-online`.
+4. На прод — только код из master (AGENTS.md → «Production deploy rules»). Если деплой сломался, запусти Actions → Deploy to production → Run workflow с веткой master. Старые прогоны не перезапускай: Re-run выкатывает их старый коммит. По SSH на проде — только код текущего origin/master, никаких правок и сборок другого кода.
 
 ## Не делай
 

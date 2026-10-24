@@ -1,0 +1,86 @@
+{
+  "task": "deploy-master-only-2026-10-24",
+  "branch": "claude/friendly-pasteur-n489ly",
+  "commits": {
+    "spec": "5623f0f5",
+    "implementation": "845bdee1"
+  },
+  "verified_at": "2026-10-24",
+  "verdict": "PASS_WITH_CAVEAT",
+  "verdict_reason": "AC1-AC6 PASS; AC7: actionlint not run, the first master run after the merge is the check by GitHub's own parser",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "raw/codex-mobile-first-release-2026-10/README.txt",
+        "raw/branch-delete.txt",
+        "raw/verify-remote-branches-after.txt"
+      ],
+      "note": "4 commits archived as patches (tip 6c9bae94, base ff81de23); session delete got 403, the owner deleted the branch on GitHub"
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "raw/verify-yaml.txt",
+        ".github/workflows/deploy.yml"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "raw/verify-rollback-check.txt",
+        "raw/live-build-info.txt"
+      ],
+      "scenarios": "12/12"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "raw/verify-deploy-sh-guard.txt"
+      ],
+      "scenarios": "8/8"
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "AGENTS.md",
+        ".cursorrules",
+        "docs/THREAD_WESETUP.md",
+        "docs/SESSION_HANDOFF.md"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "raw/verify-unchanged.txt"
+      ]
+    },
+    "AC7": {
+      "status": "PASS_WITH_CAVEAT",
+      "evidence": [
+        "raw/verify-yaml.txt",
+        "raw/verify-rollback-check.txt",
+        "raw/verify-deploy-sh-guard.txt"
+      ],
+      "note": "actionlint not run (download of external binary denied); workflow_dispatch test denied (403)"
+    }
+  },
+  "limitations": [
+    "Guards apply only to runs created after the merge into master; re-runs of older runs (30 days) are not covered",
+    "New branches are covered only when created from a fresh master",
+    "Manual SSH deploys outside scripts/deploy.sh are limited by the rule only"
+  ],
+  "follow_up": {
+    "mobile_branches": {
+      "status": "DONE",
+      "evidence": [
+        "raw/mobile-branches.txt"
+      ],
+      "commits": {
+        "mobile-e2e-android": "b7c07d78",
+        "mobile-e2e-ios": "e870a710"
+      },
+      "note": "only .github/workflows/deploy.yml replaced with the guarded version (blob 3c19912); [skip ci], no e2e runs triggered"
+    }
+  }
+}

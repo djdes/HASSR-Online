@@ -2,6 +2,8 @@
 # Manual deploy from the developer machine. Mirrors .github/workflows/deploy.yml
 # but runs locally via plink/pscp — useful when GitHub Actions is stuck
 # (minutes exhausted, workflow paused, runner outage).
+# Only from a clean checkout of the current origin/master — the script refuses
+# anything else (AGENTS.md → "Production deploy rules").
 #
 # Requirements:
 #   - plink + pscp on PATH (ship with PuTTY / choco install putty)
@@ -42,6 +44,24 @@ fi
 DRY_RUN=""
 if [ "${1:-}" = "--dry-run" ]; then
   DRY_RUN="echo [dry-run]"
+fi
+
+# Прод — только код из origin/master (AGENTS.md → «Production deploy rules»).
+# tar ниже пакует рабочую папку целиком, вместе с незакоммиченным, а в
+# .build-sha пишет HEAD: выкладка грязной копии или старой ветки выглядела бы
+# на проде как обычный деплой master, а следующий деплой из CI её затёр бы.
+git fetch --quiet origin master || echo "⚠ git fetch не удался — сверяем с последним известным origin/master" >&2
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/master)" ]; then
+  echo "✖ HEAD ($(git rev-parse --short HEAD)) не совпадает с origin/master ($(git rev-parse --short origin/master))." >&2
+  echo "  Деплой — только из master: запушьте изменения в master или переключитесь на свежий origin/master." >&2
+  exit 1
+fi
+DIRTY=$(git status --porcelain | grep -vE '^\?\? (\.build-sha|\.build-time|deploy\.tar)$' || true)
+if [ -n "$DIRTY" ]; then
+  echo "✖ В рабочей копии есть незакоммиченные или неотслеживаемые файлы — они попали бы на прод:" >&2
+  printf '%s\n' "$DIRTY" | head -20 >&2
+  echo "  Деплойте из чистой копии: git worktree add ../wesetup-deploy origin/master" >&2
+  exit 1
 fi
 
 SHA=$(git rev-parse HEAD)

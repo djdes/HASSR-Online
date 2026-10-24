@@ -1,0 +1,5 @@
+845bdee16cc24a345465bcdd9b261364307513cb	refs/heads/claude/friendly-pasteur-n489ly
+6c9bae94381f618adf2b065877687ed7f3c7a858	refs/heads/codex/mobile-first-release-2026-10
+16443845556ede621dbb241898b9c5086710fd4e	refs/heads/master
+b9ac06f716c1fa42b5de51d00b792c00d2a82642	refs/heads/mobile-e2e-android
+3fd0b76cd3991afd0213721144d85d5a243b5188	refs/heads/mobile-e2e-ios

@@ -6,7 +6,9 @@ on:
   # Fallback trigger — run the same workflow manually from the Actions
   # UI when the `push` hook silently doesn't fire (e.g. GitHub Actions
   # minutes exhausted, workflow auto-paused after inactivity, or runner
-  # outage). Use "Run workflow" on the Deploy to production page.
+  # outage). Use "Run workflow" on the Deploy to production page — with
+  # the `master` branch selected: a run on any other branch or tag is
+  # rejected (job reject-non-master) and deploys nothing.
   workflow_dispatch: {}
 
 # Serialize prod-deploys. Без этого блока два push'а в master запускали
@@ -17,8 +19,11 @@ on:
 # cancel-in-progress: false — каждый run докатывается до конца. Свежий
 # push становится pending; повторные push'и вытесняют его в очереди
 # (последний выигрывает), но активный run не убивается до pm2 reload.
+#
+# В очередь прода встаёт только master. Запуск на другой ветке всё равно
+# отклоняется — в общей очереди он вытеснил бы ожидающий деплой master.
 concurrency:
-  group: production-deploy
+  group: ${{ github.ref == 'refs/heads/master' && 'production-deploy' || format('production-deploy-rejected-{0}', github.run_id) }}
   cancel-in-progress: false
 
 env:
@@ -34,8 +39,27 @@ env:
 # и деплой занимал 13–15 минут. Тесты делятся на 4 шарда (`--test-shard`):
 # изоляция «процесс на файл» сохраняется — тесты на неё рассчитаны.
 jobs:
+  # Прод — только из master (AGENTS.md → «Production deploy rules»).
+  # «Run workflow» на другой ветке раньше выкатывал её код поверх прода: у
+  # ветки, отставшей на недели, — старый код и старая схема БД. Теперь gate,
+  # выгрузка и деплой на такой ветке не запускаются, а этот job падает с
+  # причиной. Ветки, созданные до этой правки, несут старый deploy.yml без
+  # проверки — поэтому старые ветки удаляем.
+  reject-non-master:
+    name: Reject non-master ref
+    if: github.ref != 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Деплой только из master
+        run: |
+          echo "::error::Деплой на прод — только из master. Этот запуск на ${GITHUB_REF}, ничего не выкатывается. Передеплой — Run workflow с веткой master."
+          exit 1
+
   gate:
     name: ${{ matrix.check == 'typecheck' && 'Type-check' || format('Tests {0}', matrix.check) }}
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -93,6 +117,7 @@ jobs:
   # просто перезапишет следующий прогон.
   upload:
     name: Upload tarball
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -177,6 +202,7 @@ jobs:
 
   deploy:
     needs: [gate, upload]
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     # 45, а не 30: три SSH-шага в сумме просят до 55 минут в худшем
     # случае (чистая установка зависимостей + сборка + миграции), и
@@ -191,6 +217,39 @@ jobs:
       # частично собран без `(dashboard)/dashboard/page.js`, pm2 не
       # рестартится, прод крутит старый код. Каждый шаг получает свежую
       # SSH-сессию + свой timeout-budget.
+
+      # Re-run старого прогона берёт ЕГО коммит и выкатил бы старый код
+      # поверх нового. Сверяемся с тем, что сайт отдаёт сейчас: если там
+      # коммит из master новее нашего — не деплоим. Откат делается через
+      # `git revert` в master — новый коммит эту проверку проходит; master,
+      # перезаписанный назад, и сборка не из master на проде — тоже.
+      # Сайт или GitHub API не ответили — не мешаем: проверка не должна
+      # блокировать аварийный деплой.
+      - name: Не откатывать прод на старый коммит
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROD_URL: https://wesetup.ru
+        run: |
+          serving=$(curl -fsS --max-time 20 "$PROD_URL/api/build-info" | jq -r '.fullBuildId // .buildId // empty' 2>/dev/null) || serving=""
+          case "$serving" in
+            ""|dev|unknown)
+              echo "::warning::Не удалось узнать версию на проде — проверку пропускаем"
+              exit 0 ;;
+          esac
+          compare() {
+            local s
+            s=$(gh api "repos/${GITHUB_REPOSITORY}/compare/$1...$2" --jq .status 2>/dev/null) || s=unknown
+            case "$s" in ahead|behind|identical|diverged) echo "$s" ;; *) echo unknown ;; esac
+          }
+          status=$(compare "$serving" "$GITHUB_SHA")
+          echo "На проде ${serving:0:8}, выкатываем ${GITHUB_SHA:0:8}: $status"
+          [ "$status" = "behind" ] || exit 0
+          case "$(compare "$serving" master)" in
+            ahead|identical)
+              echo "::error::Коммит ${GITHUB_SHA:0:8} старше того, что уже на проде (${serving:0:8}, есть в master). Похоже на Re-run старого прогона. Передеплой — Run workflow с веткой master, откат — git revert."
+              exit 1 ;;
+          esac
+          echo "::warning::На проде ${serving:0:8} — коммит не из master. Выкатываем master."
 
       - name: Deploy step 1/3 — setup (extract + npm ci + prisma)
         uses: appleboy/ssh-action@v1
