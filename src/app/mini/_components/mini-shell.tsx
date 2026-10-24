@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { MaxConnectButton } from "@/components/max/max-connect-button";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
 import { getDynamicRouteTitle, getRouteTitle, type RouteTitleTranslator } from "@/lib/route-titles";
@@ -374,6 +375,7 @@ export function MiniTopBar({
           {/* Сюда док встраивает кнопку подсказок (см. `FabDockProvider`). */}
           <span id="mini-fab-slot" className="contents" />
           {showNotifications ? <NotificationsBell /> : null}
+          <MaxConnectButton dark />
           {/* Кнопки профиля здесь нет: «Профиль» всегда есть в нижнем меню, а в
               шапке она отнимала место у названия экрана. */}
         </div>

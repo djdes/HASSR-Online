@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { PersonalLanguageSelect } from "@/components/i18n/personal-language-select";
+import { MaxConnectButton } from "@/components/max/max-connect-button";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
 import { OfflineIndicator } from "@/components/layout/offline-indicator";
@@ -269,6 +270,7 @@ export function Header({
           )}
           <OfflineIndicator />
           <LiveConnectionIndicator />
+          <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
           {partnerCabinet ? (
