@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
-import { loadMessages } from "@/i18n/messages";
+import { loadBaseMessages, loadMessages } from "@/i18n/messages";
 import { FORMAT_LOCALES, formatNumber } from "@/i18n/locales";
 import { batchUnitCode, isBatchStatus, type BatchStatus } from "@/components/batches/batch-presentation";
 import Link from "next/link";
@@ -36,7 +36,7 @@ export default async function BatchDetailPage({
   const session = await requireAuth();
   const locale = await getSiteLocale();
   const t = await getTranslations({ locale, namespace: "productionBatches" });
-  const [sourceMessages, messages] = await Promise.all([loadMessages("ru"), loadMessages(locale)]);
+  const [sourceMessages, messages] = await Promise.all([loadBaseMessages("ru"), loadMessages(locale)]);
   // Translate only recognized standard names; preserve customer-authored names.
   const displayJournalName = (code: string, name: string) => {
     const key = code as keyof typeof sourceMessages.journals.names;

@@ -11,10 +11,26 @@ const loaders = {
   uz: () => import("./messages/uz.json").then((m) => m.default),
 } satisfies Record<Locale, () => Promise<typeof ru>>;
 
-export async function loadMessages(locale: Locale): Promise<Messages> {
+/** The catalog files as shipped, without editor overrides. */
+export async function loadBaseMessages(locale: Locale): Promise<Messages> {
   // next-intl uses source message literals to type ICU arguments. Translated
   // values have the same checked key/argument contract, not identical wording.
   return await loaders[locale]() as Messages;
+}
+
+/**
+ * Overrides from the translation editor are skipped under `node --test` and
+ * without a database, so unit tests keep reading the files.
+ */
+function overridesEnabled(): boolean {
+  return typeof window === "undefined" && Boolean(process.env.DATABASE_URL) && !process.env.NODE_TEST_CONTEXT;
+}
+
+export async function loadMessages(locale: Locale): Promise<Messages> {
+  const base = await loadBaseMessages(locale);
+  if (!overridesEnabled()) return base;
+  const { withTranslationOverrides } = await import("@/lib/translations/overrides.server");
+  return await withTranslationOverrides(locale, base);
 }
 
 /** Pick on the server, before serializing a client boundary. */

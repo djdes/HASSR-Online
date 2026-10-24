@@ -2689,6 +2689,7 @@ export type MessageContract = {
       "backOfficeTitle": "Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов"
     },
     "profile": {
+      "translations": "Переводы интерфейса",
       "organizationSwitcher": "Организации этого кабинета",
       "otherCabinets": "Другие кабинеты",
       "createMasterCabinet": "Создать мастер-кабинет",
@@ -15040,6 +15041,7 @@ export type MessageContract = {
     }
   },
   "rootNavigation": {
+    "translations": "Переводы",
     "platformBrand": "WeSetup · Платформа",
     "backToApp": "Выйти в приложение",
     "sections": "Разделы",
@@ -18976,6 +18978,8 @@ export type MessageContract = {
       "platform": "Панель платформы",
       "sections": "Все разделы",
       "sectionsHint": "журналы, отчёты, настройки",
+      "translations": "Переводы интерфейса",
+      "translationsHint": "правка текстов ru / en / uz",
       "feedback": "Обратная связь",
       "feedbackHint": "ошибка или идея",
       "fullSite": "Открыть полную версию сайта",
@@ -22049,6 +22053,87 @@ export type MessageContract = {
       "provider_auth": "Директ отклонил доступ к аккаунту. Нужно проверить подключение рекламного аккаунта.",
       "provider_unavailable": "Не удалось получить ответ от Директа. Повторите загрузку немного позже.",
       "rate_limited": "Директ временно ограничил запросы. Подождите немного и повторите загрузку."
+    }
+  },
+  "translationEditor": {
+    "title": "Переводы интерфейса",
+    "description": "Все строки сайта на русском, английском и узбекском, по категориям. Правка начинает действовать без выкладки — в течение 30 секунд.",
+    "sourceNote": "Русский — исходный текст. Если меняете его, проверьте английский и узбекский.",
+    "groups": {
+      "all": "Поиск",
+      "journals": "Журналы",
+      "interface": "Интерфейс",
+      "other": "Прочие разделы"
+    },
+    "categories": {
+      "all": "Все строки",
+      "journal-hygiene": "Гигиенический журнал",
+      "navigation": "Меню и навигация",
+      "common": "Общие кнопки и подписи"
+    },
+    "categoryTotal": "{total, plural, one {# строка} few {# строки} many {# строк} other {# строки}}",
+    "badges": {
+      "modified": "изменено: {count}",
+      "untranslated": "без перевода: {count}"
+    },
+    "otherFilter": "Найти раздел",
+    "searchPlaceholder": "Поиск по ключу или тексту",
+    "filters": {
+      "all": "Все",
+      "modified": "Изменённые",
+      "untranslated": "Без перевода"
+    },
+    "rowState": {
+      "modified": "Изменено",
+      "untranslated": "Нет перевода",
+      "draft": "Не сохранено"
+    },
+    "placeholders": "Подстановки: {list}",
+    "original": "В файле: {text}",
+    "actions": {
+      "save": "Сохранить",
+      "saveAll": "Сохранить всё ({count})",
+      "discard": "Отменить",
+      "reset": "Вернуть исходный",
+      "auto": "Автоперевод",
+      "autoBatch": "Автоперевод: {language} ({count})",
+      "loadMore": "Показать ещё"
+    },
+    "autoBusy": "Перевожу… {done} из {total}",
+    "loading": "Загрузка…",
+    "empty": "Ничего не найдено",
+    "shown": "Показано {shown} из {total}",
+    "toasts": {
+      "saved": "Сохранено",
+      "savedMany": "Сохранено строк: {count}",
+      "reset": "Вернули исходный текст",
+      "autoDone": "Черновик перевода: {count}. Проверьте и сохраните.",
+      "autoRejected": "Не перевелось строк: {count}"
+    },
+    "errors": {
+      "forbidden": "Нет доступа к переводам",
+      "bad_request": "Неверный запрос",
+      "unknown_key": "Такой строки больше нет в каталоге",
+      "unknown_locale": "Неизвестный язык",
+      "too_long": "Слишком длинный текст",
+      "corrupted": "Текст повреждён: в нём есть битые символы",
+      "invalid_icu": "Ошибка в подстановке — проверьте фигурные скобки",
+      "argument_mismatch": "Подстановки должны быть как в русском: {expected}",
+      "rate_limited": "Слишком много запросов автоперевода, подождите минуту",
+      "ai_not_configured": "Автоперевод недоступен: ИИ-помощник не настроен",
+      "ai_failed": "Автоперевод не ответил, попробуйте ещё раз",
+      "user_not_found": "Пользователь с такой почтой не найден",
+      "generic": "Не получилось сохранить"
+    },
+    "translators": {
+      "title": "Переводчики",
+      "description": "Кому можно править переводы. Переводчик открывает редактор из меню профиля в кабинете.",
+      "emailPlaceholder": "Почта пользователя",
+      "grant": "Дать доступ",
+      "revoke": "Снять доступ",
+      "empty": "Пока никого",
+      "granted": "Доступ выдан",
+      "revoked": "Доступ снят"
     }
   }
 };
