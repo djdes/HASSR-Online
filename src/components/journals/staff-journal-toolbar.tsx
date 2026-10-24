@@ -202,7 +202,7 @@ export function AddEmployeeDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка добавления сотрудника"));
+      toast.error(humanizeFetchError(error, t("addEmployeeFailed")));
     } finally {
       setIsSubmitting(false);
     }
@@ -321,10 +321,10 @@ function FillFromStaffDialog({
 
   const roleOptions = useMemo(() => {
     const roles = [...new Set(users.map((user) => user.role))];
-    const items = [{ value: "all", label: "Добавить всех" }];
+    const items = [{ value: "all", label: t("addAll") }];
 
     roles.forEach((role) => {
-      const prefix = role === "owner" ? "Руководство" : "Сотрудники";
+      const prefix = role === "owner" ? t("management") : t("staff");
       items.push({
         value: `role:${role}`,
         label: `${prefix} — ${getHygienePositionLabel(role)}`,
@@ -335,7 +335,7 @@ function FillFromStaffDialog({
       ...item,
       label: `${item.label} (${remainingByCategory.get(item.value) ?? 0})`,
     }));
-  }, [remainingByCategory, users]);
+  }, [remainingByCategory, t, users]);
 
   const remainingCount = useMemo(() => {
     if (category === "all") {
@@ -524,25 +524,25 @@ function JournalSettingsDialog({
     if (shrinks) {
       const outside = countOutsidePeriod?.(from, to) ?? 0;
       const confirmed = await confirmAsync({
-        title: "Сократить период документа?",
-        description: `Новый период: ${from} — ${to}.`,
+        title: t("shrinkPeriodTitle"),
+        description: t("newPeriod", { from, to }),
         variant: "warn",
-        confirmLabel: "Сократить период",
+        confirmLabel: t("shrinkPeriodConfirm"),
         bullets:
           outside > 0
             ? [
                 {
-                  label: `Записей окажется вне периода: ${outside}`,
+                  label: t("recordsOutsideCount", { count: outside }),
                   tone: "warn" as const,
                 },
                 {
-                  label: "Они останутся в базе, но пропадут из журнала и печати",
+                  label: t("outsideRecordsHidden"),
                   tone: "default" as const,
                 },
               ]
             : [
                 {
-                  label: "Записей вне нового периода нет",
+                  label: t("noRecordsOutside"),
                   tone: "info" as const,
                 },
               ],
@@ -622,26 +622,26 @@ function JournalSettingsDialog({
             htmlFor="journal-title-v2"
             className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
           >
-            Название документа
+            {t("documentName")}
           </Label>
           <Input
             id="journal-title-v2"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Введите название документа"
+            placeholder={t("documentNamePlaceholder")}
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Должность ответственного
+            {t("responsiblePosition")}
           </Label>
           <Select
             value={responsible}
             onValueChange={cascade.handlePositionChange}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={t("selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               <PositionSelectItems users={users} />
@@ -650,7 +650,7 @@ function JournalSettingsDialog({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-            Сотрудник
+            {t("employee")}
           </Label>
           <Select
             value={responsibleUser}
@@ -659,7 +659,7 @@ function JournalSettingsDialog({
             onOpenChange={cascade.setEmployeeOpen}
           >
             <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-white text-[13.5px]">
-              <SelectValue placeholder="— Выберите —" />
+              <SelectValue placeholder={t("selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {(responsible ? cascade.candidates : users).map(
@@ -844,11 +844,11 @@ export function StaffJournalToolbar({
           Number(result?.removed ?? 0) + Number(result?.restored ?? 0);
         toast.success(
           touched > 0
-            ? `Автозаполнение выключено · убрано записей: ${touched}`
-            : "Автозаполнение выключено",
+            ? t("autofillOffRemoved", { count: touched })
+            : t("autofillOff"),
         );
       } else {
-        toast.success("Автозаполнение выключено");
+        toast.success(t("autofillOff"));
       }
 
       setAutoFillDialog(null);
@@ -901,16 +901,15 @@ export function StaffJournalToolbar({
                 ? [
                     {
                       key: "copy-yesterday",
-                      label: "Скопировать вчерашнее",
+                      label: t("copyYesterday"),
                       icon: <Copy className="size-4" />,
-                      title:
-                        "Создать сегодняшние строки по вчерашним значениям — удобно, когда ничего не поменялось.",
+                      title: t("copyYesterdayHint"),
                       onSelect: () => void copyYesterday.run(false),
                       disabled: copyYesterday.busy,
                     },
                     {
                       key: "close-journal",
-                      label: "Закончить журнал",
+                      label: t("closeJournal"),
                       icon: <Archive className="size-4" />,
                       onSelect: () => void closeAction.closeDocument(),
                       disabled: closeAction.isClosing,

@@ -3102,6 +3102,32 @@
       "futureDayLocked": "Jurnalni kelajak sanasi bilan to‘ldirib bo‘lmaydi: yozuv ish bajarilgan kuni kiritiladi.",
       "foreignRow": "Faqat o‘z qatoringizni to‘ldirishingiz mumkin.",
       "notToday": "Faqat bugungi qatorni to‘ldirishingiz mumkin. O‘tgan kunlar bo‘yicha o‘zgarishlarni jurnal uchun mas’ul shaxs kiritadi."
+    },
+    "offlineLabel": "Gigiyena · {date}",
+    "list": {
+      "period": "Davr",
+      "responsible": "Mas’ul shaxs",
+      "shrinkOutsideHidden": "Yangi davrdan tashqaridagi yozuvlar jurnaldan va chop etilgan shakldan yo‘qoladi",
+      "shrinkKeptInDb": "Ular ma’lumotlar bazasidan o‘chirilmaydi",
+      "deleteDescription": "«{title}» hujjati butunlay o‘chiriladi.",
+      "deletePeriod": "Hujjat davri: {period}",
+      "deleteMarks": "Shu davrdagi xodimlarning barcha belgilari o‘chiriladi",
+      "deletePrint": "Bu hujjatning chop etiladigan shaklini tiklab bo‘lmaydi",
+      "deleteSuccess": "«{title}» hujjati o‘chirildi",
+      "deleteError": "Hujjatni o‘chirishda xatolik",
+      "automation": {
+        "title": "Jurnal o‘zi qanday yuritiladi",
+        "bullet1": "Har kuni soat 06:00 da sayt joriy davr uchun jurnal yaratadi (agar u bo‘lmasa) va dam olmayotgan barcha xodimlarni qo‘shadi.",
+        "bullet2": "Har bir xodimga «Sog‘lom» va «harorat 37 dan past» belgisini qo‘yadi.",
+        "bullet3": "Dam olish kunlari, ta’tillar va kasallik varaqalari o‘zi belgilanadi («В», «Отп», «Б/л»).",
+        "bullet4": "Agar xodimda harorat, kasallik yoki ishdan chetlatish bo‘lsa, o‘zgarishlar o‘sha kuni kiritiladi. O‘tgan kunlarni tahrirlab bo‘lmaydi.",
+        "qa1q": "Xodimning harorati bo‘lsa-chi?",
+        "qa1a": "Jurnalni o‘sha kuni oching va belgini o‘zgartiring. O‘tgan kunlar yopilgan — jurnalni orqaga sanada tuzatib bo‘lmaydi.",
+        "qa2q": "Hujjatni qo‘lda yaratish kerakmi?",
+        "qa2a": "Yo‘q. Har kuni soat 06:00 da joriy davr uchun hujjat o‘zi yaratiladi. Qo‘lda — faqat boshqa davr uchun hujjat kerak bo‘lsa.",
+        "qa3q": "Qanday o‘chiriladi?",
+        "qa3a": "Avtomatik yaratish — shu sahifadagi tugma, kundalik to‘ldirish — hujjatning o‘zida. Allaqachon to‘ldirilgani joyida qoladi."
+      }
     }
   },
   "email": {
@@ -3386,7 +3412,8 @@
       "autofillDisableDescription": "Endi jurnalni o‘zingiz to‘ldirasiz.",
       "autofillDisableConfirm": "Ha, o‘chirish",
       "autofillUndoLabel": "Avtomatik kiritilgan yozuvlarni olib tashlash",
-      "autofillUndoHint": "Siz kiritgan yozuvlar saqlanadi"
+      "autofillUndoHint": "Siz kiritgan yozuvlar saqlanadi",
+      "autofillOffRemoved": "Avtoto‘ldirish o‘chirildi · olib tashlangan yozuvlar: {count, number}"
     },
     "closed": {
       "defaultHint": "Belgilar va yozuvlarni tahrirlash uchun jurnalni qayta oching.",

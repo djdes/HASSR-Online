@@ -736,7 +736,7 @@ export function HygieneDocumentClient({
         method: "PUT",
         url: `/api/journal-documents/${documentId}/entries`,
         body: { employeeId, date: dateKey, data: nextData },
-        label: `Гигиена · ${dateKey}`,
+        label: t("offlineLabel", { date: dateKey }),
         group: "hygiene",
       });
       if (submit.status === "online") {

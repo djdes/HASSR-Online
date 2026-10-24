@@ -3102,6 +3102,32 @@
       "futureDayLocked": "You cannot fill in the log for a future date. Enter the record on the day the work is done.",
       "foreignRow": "You can fill in only your own row.",
       "notToday": "You can fill in only today's row. For past days, ask the person responsible for the log."
+    },
+    "offlineLabel": "Hygiene · {date}",
+    "list": {
+      "period": "Period",
+      "responsible": "Responsible person",
+      "shrinkOutsideHidden": "Entries outside the new period will disappear from the log and the printout",
+      "shrinkKeptInDb": "They are not deleted from the database",
+      "deleteDescription": "The document “{title}” will be permanently deleted.",
+      "deletePeriod": "Document period: {period}",
+      "deleteMarks": "All employee marks for this period will be deleted",
+      "deletePrint": "The printed form of this document cannot be restored",
+      "deleteSuccess": "The document “{title}” has been deleted",
+      "deleteError": "Could not delete the document",
+      "automation": {
+        "title": "How the log fills itself",
+        "bullet1": "Every day at 06:00 the site creates a log for the current period if there is none, and adds every employee who is not off that day.",
+        "bullet2": "Each employee is marked “Healthy” and “temperature below 37”.",
+        "bullet3": "Days off, holidays and sick leave are marked automatically (“В”, “Отп”, “Б/л”).",
+        "bullet4": "If an employee has a temperature, an illness or is suspended, changes are entered on the same day. Past days cannot be edited.",
+        "qa1q": "What if an employee has a temperature?",
+        "qa1a": "Open the log on the same day and change the mark. Past days are locked — the log cannot be edited retroactively.",
+        "qa2q": "Do I need to create a document manually?",
+        "qa2a": "No. Every day at 06:00 a document for the current period is created automatically. Create one manually only if you need a document for a different period.",
+        "qa3q": "How do I turn it off?",
+        "qa3a": "Automatic creation is the switch on this page; daily filling is in the document itself. Anything already filled in stays in place."
+      }
     }
   },
   "email": {
@@ -3386,7 +3412,8 @@
       "autofillDisableDescription": "You will fill in the journal yourself from now on.",
       "autofillDisableConfirm": "Yes, turn it off",
       "autofillUndoLabel": "Remove entries filled automatically",
-      "autofillUndoHint": "Your entries will remain"
+      "autofillUndoHint": "Your entries will remain",
+      "autofillOffRemoved": "Autofill turned off · entries removed: {count, number}"
     },
     "closed": {
       "defaultHint": "Reopen the journal to edit marks and entries.",
