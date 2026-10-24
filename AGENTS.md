@@ -306,6 +306,7 @@ Critical env vars (see `.env.shared` for template):
 ## Conventions for AI Agents
 
 - **«В прод»** from the owner means: merge the task's PR into `master` (squash) without asking again; the push to `master` deploys it.
+- **Always deliver to `master`, without conflicts.** Finished work goes to production through `master` every time; do not leave it on a side branch. Before merging: `git fetch origin master`, merge `origin/master` into the task branch (never rebase or force-push a branch someone else uses), resolve any conflicts there (regenerate lockfiles, Prisma client and `i18n:types` output with the repo tools, never by hand), rerun `npm run typecheck` and `npm run test:gate`, push, and only then merge the PR into `master` (squash). Merge only a PR that is mergeable and green; never merge with unresolved conflicts, never skip or disable a failing test. The owner's standing permission covers this merge, so do not ask again. Mention in the PR what the deploy changes (for example a new nullable column applied by `prisma db push`).
 - Visible UI follows the project design system (`design-system` skill, `.claude/skills/design-system`): every screen must look like one product.
 - For non-trivial refactors, `karpathy-guidelines` is the coding discipline to follow; for a new feature that touches existing code, lock the scope first (a frozen spec, see the proof loop above).
 - The `.cursorrules` file in repo root repeats the key coding rules for Cursor.
