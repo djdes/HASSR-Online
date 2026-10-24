@@ -1,0 +1,2064 @@
+From 3edf4333c6133b54cef350b32b34d49c4b5a831e Mon Sep 17 00:00:00 2001
+From: Denis Volkov <bugdenes@gmail.com>
+Date: Thu, 8 Oct 2026 00:11:41 +0300
+Subject: [PATCH 2/4] Complete first-publication handoff and preserve iOS
+ simulator artifact permissions
+
+---
+ .github/workflows/mobile-check.yml        | 219 +++++++-------
+ docs/mobile/00-overview.md                |   2 +
+ docs/mobile/02-app-store-connect.md       |   4 +-
+ docs/mobile/06-store-listings.md          |   4 +-
+ docs/mobile/07-privacy-forms.md           | 295 +++++++-----------
+ docs/mobile/08-review.md                  |   2 +-
+ docs/mobile/09-release.md                 |  33 +-
+ docs/mobile/PUBLISHING.md                 | 230 ++++++++++++++
+ docs/mobile/asset-manifest.json           | 117 ++++++++
+ docs/mobile/privacy-policy-draft.md       | 350 +++++++++++-----------
+ docs/mobile/store-listing.md              | 271 ++++++++---------
+ mobile/README.md                          |  18 +-
+ mobile/scripts/release-manifest.mjs       |  61 ++--
+ mobile/scripts/release-preflight.mjs      | 145 +++++----
+ mobile/scripts/release-preflight.test.mjs | 135 +++++----
+ 15 files changed, 1073 insertions(+), 813 deletions(-)
+ create mode 100644 docs/mobile/PUBLISHING.md
+ create mode 100644 docs/mobile/asset-manifest.json
+
+diff --git a/.github/workflows/mobile-check.yml b/.github/workflows/mobile-check.yml
+index 40a94829..4ca16f17 100644
+--- a/.github/workflows/mobile-check.yml
++++ b/.github/workflows/mobile-check.yml
+@@ -1,108 +1,111 @@
+-# Проверка мобильного проекта без секретов: собирается ли Android (отладочный APK —
+-# можно скачать из артефактов и поставить на телефон) и iOS (для симулятора, без
+-# подписи). Запускается сам при изменениях в mobile/ и вручную.
+-# macOS-минуты в приватном репозитории стоят в 10 раз дороже — задание iOS
+-# держим коротким: без архива и подписи, одна сборка под симулятор.
+-name: Проверка приложений
+-
+-on:
+-  push:
+-    branches: [master]
+-    paths:
+-      - "mobile/**"
+-      - ".github/workflows/mobile-*.yml"
+-  workflow_dispatch:
+-
+-concurrency:
+-  group: mobile-check-${{ github.ref }}
+-  cancel-in-progress: true
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  android:
+-    name: Android — отладочный APK
+-    runs-on: ubuntu-24.04
+-    timeout-minutes: 30
+-    defaults:
+-      run:
+-        working-directory: mobile
+-    steps:
+-      - uses: actions/checkout@v7
+-
+-      - uses: actions/setup-node@v7
+-        with:
+-          node-version: 22
+-          cache: npm
+-          cache-dependency-path: mobile/package-lock.json
+-
+-      - uses: actions/setup-java@v6
+-        with:
+-          distribution: temurin
+-          java-version: 21
+-          cache: gradle
+-          cache-dependency-path: |
+-            mobile/android/*.gradle*
+-            mobile/android/**/gradle-wrapper.properties
+-
+-      - run: npm ci
+-      - run: npm run test:release
+-      - run: npx cap sync android
+-
+-      - name: Сборка APK
+-        working-directory: mobile/android
+-        run: |
+-          chmod +x gradlew
+-          ./gradlew assembleDebug --no-daemon
+-
+-      - uses: actions/upload-artifact@v7
+-        with:
+-          name: wesetup-debug-apk-${{ github.run_number }}
+-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+-          if-no-files-found: error
+-          retention-days: 14
+-
+-  ios:
+-    name: iOS — сборка для симулятора
+-    runs-on: macos-26
+-    timeout-minutes: 30
+-    defaults:
+-      run:
+-        working-directory: mobile
+-    steps:
+-      - uses: actions/checkout@v7
+-
+-      - uses: actions/setup-node@v7
+-        with:
+-          node-version: 22
+-          cache: npm
+-          cache-dependency-path: mobile/package-lock.json
+-
+-      - run: npm ci
+-      - run: npm run test:release
+-      - run: npx cap sync ios
+-
+-      - name: Сборка без подписи
+-        working-directory: mobile/ios/App
+-        run: |
+-          xcodebuild build -quiet \
+-            -workspace App.xcworkspace \
+-            -scheme App \
+-            -configuration Debug \
+-            -sdk iphonesimulator \
+-            -destination "generic/platform=iOS Simulator" \
+-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+-            CODE_SIGNING_ALLOWED=NO \
+-            COMPILER_INDEX_STORE_ENABLE=NO
+-
+-      - name: Проверить синтаксис сборщика релиза
+-        working-directory: mobile/ios/App
+-        run: ruby -c fastlane/Fastfile
+-
+-      - uses: actions/upload-artifact@v7
+-        with:
+-          name: wesetup-ios-simulator-${{ github.run_number }}
+-          path: ${{ runner.temp }}/DerivedData/Build/Products/Debug-iphonesimulator/App.app
+-          if-no-files-found: error
+-          retention-days: 14
++# Проверка мобильного проекта без секретов: собирается ли Android (отладочный APK —
++# можно скачать из артефактов и поставить на телефон) и iOS (для симулятора, без
++# подписи). Запускается сам при изменениях в mobile/ и вручную.
++# macOS-минуты в приватном репозитории стоят в 10 раз дороже — задание iOS
++# держим коротким: без архива и подписи, одна сборка под симулятор.
++name: Проверка приложений
++
++on:
++  push:
++    branches: [master]
++    paths:
++      - "mobile/**"
++      - ".github/workflows/mobile-*.yml"
++  workflow_dispatch:
++
++concurrency:
++  group: mobile-check-${{ github.ref }}
++  cancel-in-progress: true
++
++permissions:
++  contents: read
++
++jobs:
++  android:
++    name: Android — отладочный APK
++    runs-on: ubuntu-24.04
++    timeout-minutes: 30
++    defaults:
++      run:
++        working-directory: mobile
++    steps:
++      - uses: actions/checkout@v7
++
++      - uses: actions/setup-node@v7
++        with:
++          node-version: 22
++          cache: npm
++          cache-dependency-path: mobile/package-lock.json
++
++      - uses: actions/setup-java@v6
++        with:
++          distribution: temurin
++          java-version: 21
++          cache: gradle
++          cache-dependency-path: |
++            mobile/android/*.gradle*
++            mobile/android/**/gradle-wrapper.properties
++
++      - run: npm ci
++      - run: npm run test:release
++      - run: npx cap sync android
++
++      - name: Сборка APK
++        working-directory: mobile/android
++        run: |
++          chmod +x gradlew
++          ./gradlew assembleDebug --no-daemon
++
++      - uses: actions/upload-artifact@v7
++        with:
++          name: wesetup-debug-apk-${{ github.run_number }}
++          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
++          if-no-files-found: error
++          retention-days: 14
++
++  ios:
++    name: iOS — сборка для симулятора
++    runs-on: macos-26
++    timeout-minutes: 30
++    defaults:
++      run:
++        working-directory: mobile
++    steps:
++      - uses: actions/checkout@v7
++
++      - uses: actions/setup-node@v7
++        with:
++          node-version: 22
++          cache: npm
++          cache-dependency-path: mobile/package-lock.json
++
++      - run: npm ci
++      - run: npm run test:release
++      - run: npx cap sync ios
++
++      - name: Сборка без подписи
++        working-directory: mobile/ios/App
++        run: |
++          xcodebuild build -quiet \
++            -workspace App.xcworkspace \
++            -scheme App \
++            -configuration Debug \
++            -sdk iphonesimulator \
++            -destination "generic/platform=iOS Simulator" \
++            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
++            CODE_SIGNING_ALLOWED=NO \
++            COMPILER_INDEX_STORE_ENABLE=NO
++
++      - name: Проверить синтаксис сборщика релиза
++        working-directory: mobile/ios/App
++        run: ruby -c fastlane/Fastfile
++
++      - name: Упаковать приложение симулятора с правами файлов
++        run: tar -czf "$RUNNER_TEMP/WeSetup-ios-simulator.tar.gz" -C "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator" App.app
++
++      - uses: actions/upload-artifact@v7
++        with:
++          name: wesetup-ios-simulator-${{ github.run_number }}
++          path: ${{ runner.temp }}/WeSetup-ios-simulator.tar.gz
++          if-no-files-found: error
++          retention-days: 14
+diff --git a/docs/mobile/00-overview.md b/docs/mobile/00-overview.md
+index eac34b6e..0ca05286 100644
+--- a/docs/mobile/00-overview.md
++++ b/docs/mobile/00-overview.md
+@@ -1,5 +1,7 @@
+ # 00. Обзор: как выпустить приложения WeSetup в App Store и Google Play
+ 
++**Актуальная инструкция первого выпуска: [PUBLISHING.md](PUBLISHING.md).** Там исправлены параметры сборки, ответы про здоровье и проверка ключей; сверяйтесь с ней перед отправкой.
++
+ Эта инструкция — для руководителя, который регистрирует аккаунты разработчика, оплачивает взносы,
+ заполняет карточки приложений и отправляет их на проверку. Приложения собирает разработчик
+ (Ярослав). Всё, что нужно передать ему, собрано в [05-handoff.md](05-handoff.md).
+diff --git a/docs/mobile/02-app-store-connect.md b/docs/mobile/02-app-store-connect.md
+index af43d84a..00571546 100644
+--- a/docs/mobile/02-app-store-connect.md
++++ b/docs/mobile/02-app-store-connect.md
+@@ -67,8 +67,8 @@ App Store Connect (https://appstoreconnect.apple.com) — это «кабине
+ | **Subtitle** | `Журналы СанПиН и ХАССП` | Подзаголовок под названием, до 30 знаков |
+ | **Category → Primary** | **Business** (Бизнес) | Основная категория |
+ | **Category → Secondary** | **Productivity** (Производительность) | Вторая категория, по желанию |
+-| **Content Rights** | «Не содержит, не показывает и не использует контент третьих лиц» (No) | Всё содержимое создают сами компании |
+-| **Age Rating** | Анкета — см. [07](07-privacy-forms.md) | Получится 4+ |
++| **Content Rights** | Ответить по фактическим материалам и правам | Пользователи могут загружать сторонние документы; подтвердите права |
++| **Age Rating** | Анкета — см. [07](07-privacy-forms.md) | Рейтинг рассчитывает Apple |
+ 
+ Нажмите **Save** справа сверху.
+ 
+diff --git a/docs/mobile/06-store-listings.md b/docs/mobile/06-store-listings.md
+index 2e8a9194..308a217a 100644
+--- a/docs/mobile/06-store-listings.md
++++ b/docs/mobile/06-store-listings.md
+@@ -1,7 +1,7 @@
+ # 06. Карточки приложений в магазинах
+ 
+ Карточка — то, что человек видит в App Store и Google Play: название, описание, картинки. Все готовые тексты —
+-в [store-listing.md](store-listing.md): копируйте оттуда без изменений (длины уже проверены).
++в [store-listing.md](store-listing.md): копируйте оттуда после проверки соответствия фактическому релизу.
+ 
+ **Что понадобится заранее**
+ 
+@@ -24,7 +24,7 @@ App Store Connect → **Apps** → WeSetup → слева в блоке **iOS Ap
+ | **Keywords** | ключевые слова из [store-listing.md](store-listing.md) | Для поиска; без пробелов после запятых |
+ | **Support URL** | `https://wesetup.ru` | Обязательное поле: там указана почта поддержки |
+ | **Marketing URL** | `https://wesetup.ru` | По желанию |
+-| **Version** | `1.0` | Должно совпадать со сборкой — проверит разработчик |
++| **Version** | `1.0.0` | Должно совпадать со сборкой — проверит разработчик |
+ | **Copyright** | `2026 ООО «БФС»` | Год и владелец прав |
+ | **Build** | выбирается после загрузки сборки ([09](09-release.md)) | |
+ | **App Review Information** | см. [08-review.md](08-review.md) | Вход и заметка для проверяющих |
+diff --git a/docs/mobile/07-privacy-forms.md b/docs/mobile/07-privacy-forms.md
+index 23dfdf9a..c6cce998 100644
+--- a/docs/mobile/07-privacy-forms.md
++++ b/docs/mobile/07-privacy-forms.md
+@@ -1,189 +1,106 @@
+-# 07. Анкеты: данные, шифрование, возраст, права на контент
+-
+-Готовые ответы для анкет App Store Connect и Play Console. Они составлены по тому, что сервис WeSetup
+-действительно хранит (проверено по коду и политике конфиденциальности 26.09.2026). Если сервис начнёт собирать
+-что-то новое — анкеты нужно обновить (обновление анкет не требует новой версии приложения).
+-
+-**Что понадобится заранее**
+-
+-- Созданные приложения в App Store Connect и Play Console.
+-- Политика конфиденциальности: https://wesetup.ru/privacy.
+-
+-**Сколько времени** — около 1 часа на оба магазина.
+-
+-**Сколько стоит** — бесплатно.
+-
+-## Сначала: политика конфиденциальности
+-
+-Готовый черновик правок с конкретными формулировками по пунктам — [privacy-policy-draft.md](privacy-policy-draft.md)
+-(черновик, не опубликовано; финальный текст утверждает юрист).
+-
+-Перед отправкой на проверку в политике на https://wesetup.ru/privacy должно быть сказано (попросите юриста и
+-разработчика):
+-
+-- что сервис работает и через мобильные приложения WeSetup для iOS и Android;
+-- что для push-уведомлений хранится идентификатор устройства (токен), а уведомления доставляются через
+-  Firebase Cloud Messaging (Google) и Apple Push Notification service (Apple). Сейчас в политике написано, что
+-  трансграничной передачи нет, — это место юрист должен проверить;
+-- что Яндекс Метрика в приложениях не используется;
+-- зачем приложению камера (фото к записям, штрихкоды, QR) и микрофон (голосовой ввод — распознаёт системная
+-  служба телефона, запись голоса на наш сервер не отправляется);
+-- как удалить аккаунт: в приложении «Профиль → Удалить аккаунт», на странице https://wesetup.ru/delete-account
+-  или письмом на support@wesetup.ru. У сотрудника удаляются телефон, почта, привязка Telegram, ПИН и ключи
+-  входа; имя остаётся в записях журналов, которые он заполнял, — это требование СанПиН и ХАССП о хранении
+-  учётной документации, и об этом пользователь предупреждён перед удалением. Если удаляется владелец
+-  компании (или последний руководитель) — аккаунт ведёт к удалению всей компании с отсрочкой 30 дней;
+-- что в приложениях нет ни покупок, ни пополнения баланса, ни ссылок на оплату — оплата тарифа происходит
+-  только на сайте по договору с компанией. Приложение лишь показывает статус подписки на экране «Тариф» (только
+-  чтение: тариф, до какого числа действует, прошлые платежи) и никуда не ведёт — кнопок и ссылок на оплату нет.
+-
+-## Что сервис хранит о человеке (основа для ответов)
+-
+-| Данные | Откуда | Зачем |
+-|---|---|---|
+-| Имя, телефон, почта, должность | Руководитель заводит сотрудника; владелец — при регистрации | Вход, подписи в журналах |
+-| Идентификатор аккаунта | Создаётся сервисом | Работа аккаунта |
+-| Записи журналов, заметки, комментарии к задачам | Сотрудник заполняет | Журналы СанПиН и ХАССП |
+-| Отметки о здоровье (допуск к работе) | Журнал гигиены и здоровья | Требование санитарных правил |
+-| Фото к записям; кадр при входе на общем планшете (если компания включила) | Камера / галерея | Подтверждение записи |
+-| Файлы таблиц (списки сотрудников, блюд) | Руководитель загружает | Импорт данных |
+-| Журнал действий: кто и когда что изменил, IP-адрес и браузер | Автоматически | Безопасность и проверка записей |
+-| Токен устройства для push | Приложение, после разрешения уведомлений | Доставка уведомлений |
+-| Обращения в поддержку, отзывы | Человек отправляет сам | Поддержка |
+-
+-**Не собираем в приложении:** местоположение, контакты телефона, историю браузера, рекламный идентификатор,
+-аналитику (Яндекс Метрика в приложении выключена), данные банковских карт. Голос в текст переводит система
+-телефона — запись голоса на наш сервер не отправляется.
+-
+-## App Store: App Privacy
+-
+-App Store Connect → WeSetup → **App Privacy** → **Get Started** / **Edit**.
+-
+-1. **Do you or your third-party partners collect data from this app?** → **Yes, we collect data from this app**.
+-2. Отметьте типы данных:
+-
+-| Раздел | Тип | Отметить |
+-|---|---|---|
+-| Contact Info | **Name**, **Email Address**, **Phone Number** | да |
+-| Health & Fitness | **Health** | да (отметки о допуске к работе) |
+-| User Content | **Photos or Videos**, **Customer Support**, **Other User Content** | да |
+-| Identifiers | **User ID**, **Device ID** | да (Device ID — токен для push) |
+-| Usage Data | **Product Interaction** | да (журнал действий: кто и когда создал или изменил запись) |
+-| Diagnostics | **Other Diagnostic Data** | да (IP-адрес и браузер в журнале безопасности) |
+-| Location, Financial Info, Contacts, Browsing History, Search History, Purchases, Advertising Data, Sensitive Info, Audio Data, Gameplay Content, Emails or Text Messages, Body, Surroundings | — | нет |
+-
+-3. Для **каждого** отмеченного типа Apple задаст три вопроса. Ответы одинаковые:
+-   - **How is this data used?** → только **App Functionality**. Не отмечать Analytics, Product Personalization,
+-     Developer's Advertising or Marketing, Third-Party Advertising, Other Purposes.
+-   - **Is this data linked to the user's identity?** → **Yes**.
+-   - **Is this data used for tracking purposes?** → **No**.
+-4. **Publish**. Проверьте итоговую карточку: в «Data Linked to You» — перечисленные выше типы, блока
+-   «Data Used to Track You» нет.
+-
+-## App Store: шифрование
+-
+-При загрузке сборки или отправке на проверку App Store Connect спрашивает про шифрование.
+-
+-- **What type of encryption algorithms does your app implement?** → **None of the algorithms mentioned above**.
+-  Зачем: приложение шифрует только соединение с сайтом (HTTPS) средствами самой iOS — это освобождено от
+-  документов об экспорте.
+-- В сборке уже стоит отметка `ITSAppUsesNonExemptEncryption = NO`, поэтому обычно вопрос не появляется. Если всё же
+-  спросят — ответ выше.
+-
+-## App Store: права на контент и возраст
+-
+-**App Information** → **Content Rights** → **No, it does not contain, show, or access third-party content**.
+-
+-**App Information** → **Age Ratings** → **Set Up Age Ratings**:
+-
+-| Вопрос | Ответ |
+-|---|---|
+-| In-App Controls: Parental Controls, Age Assurance | нет |
+-| Capabilities: Unrestricted Web Access | **No** — открывается только wesetup.ru, внешние ссылки уходят в Safari |
+-| Capabilities: User-Generated Content | **No** — записи видят только сотрудники той же компании, это не публикации для всех |
+-| Capabilities: Social Media, Messaging and Chat, Advertising | **No** |
+-| Mature Themes (всё) | **None** |
+-| Medical or Wellness: Medical or Treatment Information, Health or Wellness Topics | **None** — отметки о допуске не являются советами о здоровье |
+-| Sexuality or Nudity, Violence (всё) | **None** |
+-| Chance-Based Activities: Gambling, Simulated Gambling, Contests, Loot Boxes | **No / None** |
+-| Age Categories and Override | **Not Applicable** |
+-
+-Ожидаемый результат — **4+**.
+-
+-## Google Play: раздел «Содержание приложения»
+-
+-Play Console → **Правила и программы (Policy and programs)** → **Содержание приложения (App content)**.
+-Заполните каждую карточку:
+-
+-| Карточка | Ответ |
+-|---|---|
+-| **Политика конфиденциальности** | `https://wesetup.ru/privacy` |
+-| **Реклама** | **Нет, в приложении нет рекламы** |
+-| **Данные для входа** (Sign-in details / App access) | «Для доступа ко всем функциям нужен вход» → данные из [08-review.md](08-review.md) |
+-| **Возрастные ограничения** (Content rating) | см. ниже |
+-| **Целевая аудитория и контент** | Возраст: **только 18 лет и старше**. «Может ли карточка привлекать детей» — **Нет** |
+-| **Приложения новостей** | **Нет** |
+-| **Государственные приложения** | **Нет** |
+-| **Финансовые функции** | **Приложение не предоставляет финансовых функций** |
+-| **Приложения для здоровья** | **Нет функций, связанных со здоровьем** — это рабочие журналы предприятия, а не медицинское приложение |
+-| **Идентификатор рекламы** | **Нет** (в сборке нет разрешения AD_ID — проверено по итоговому манифесту) |
+-| **Безопасность данных** | см. ниже |
+-
+-### Возрастные ограничения (анкета IARC)
+-
+-1. **Адрес электронной почты** — `support@wesetup.ru`.
+-2. **Категория** — **Утилиты, продуктивность, связь и прочее** (Utility, Productivity, Communication, or Other).
+-3. Ответы: насилие, сексуальный контент, нецензурная лексика, наркотики/алкоголь/табак, грубый юмор, азартные
+-   игры — везде **Нет**.
+-4. **Могут ли пользователи взаимодействовать или обмениваться контентом** (текст, фото) — **Да**: сотрудники одной
+-   компании видят записи и фото друг друга.
+-5. **Передаёт ли приложение местоположение другим пользователям** — **Нет**.
+-6. **Покупка цифровых товаров** — **Нет**. **Неограниченный доступ в интернет (браузер, поиск)** — **Нет**.
+-7. **Сохранить** → **Рассчитать рейтинг** → **Применить**.
+-
+-Ожидаемый результат — «3+» / PEGI 3 с пометкой «Взаимодействие пользователей».
+-
+-### Безопасность данных (Data safety)
+-
+-**Сбор данных и безопасность:**
+-
+-| Вопрос | Ответ |
+-|---|---|
+-| Собирает ли приложение или передаёт ли третьим лицам пользовательские данные? | **Да** |
+-| Все ли данные шифруются при передаче? | **Да** (только HTTPS) |
+-| Способы создания аккаунта | **Имя пользователя и пароль** (вход по телефону и паролю; аккаунт заводит руководитель компании) |
+-| Ссылка для запроса удаления аккаунта | `https://wesetup.ru/delete-account` |
+-| Можно ли удалить часть данных, не удаляя аккаунт? | **Нет** |
+-
+-**Типы данных** — отметьте только эти. Для всех: **собираются — да**, **передаются третьим лицам — нет**,
+-**обрабатываются временно (ephemeral) — нет**.
+-
+-| Раздел | Тип | Обязательно или по выбору | Цели |
+-|---|---|---|---|
+-| Личная информация | **Имя** | обязательно | Функции приложения; управление аккаунтом |
+-| Личная информация | **Адрес электронной почты** | обязательно | Функции приложения; управление аккаунтом |
+-| Личная информация | **Номер телефона** | обязательно | Функции приложения; управление аккаунтом |
+-| Личная информация | **Идентификаторы пользователя** | обязательно | Функции приложения; управление аккаунтом |
+-| Здоровье и фитнес | **Информация о здоровье** | обязательно | Функции приложения |
+-| Фото и видео | **Фото** | по выбору | Функции приложения |
+-| Файлы и документы | **Файлы и документы** | по выбору | Функции приложения |
+-| Действия в приложении | **Другой пользовательский контент** | обязательно | Функции приложения |
+-| Действия в приложении | **Взаимодействие с приложением** | обязательно | Функции приложения; предотвращение мошенничества, безопасность и соблюдение требований |
+-| Идентификаторы устройства | **Идентификаторы устройства или другие** | по выбору (push можно выключить) | Функции приложения |
+-
+-**Не отмечать:** местоположение, финансовая информация, сообщения, аудио, календарь, контакты, история браузера,
+-информация о приложении и производительности, установленные приложения, поиск.
+-
+-Почему «передаются — нет»: хостинг в России и Firebase (доставка push) обрабатывают данные от нашего имени — по
+-правилам Google это «поставщики услуг», а не передача третьим лицам. Сообщения в Telegram уходят только тем, кто сам
+-привязал бота.
+-
+-Нажмите **Далее** → проверьте предпросмотр → **Отправить**.
+-
+-## Частые ошибки
+-
+-- В анкете Apple отмечена «Analytics» или «Tracking» — в карточке появится «Data Used to Track You». Мы не отслеживаем.
+-- В Google отмечено «передаются третьим лицам» для Firebase — это поставщик услуг, передачей не считается.
+-- Ответы Apple и Google расходятся с политикой конфиденциальности — проверяющие сверяют их; сначала обновите политику.
+-- Удаление аккаунта: ссылка ведёт на главную страницу, а не на https://wesetup.ru/delete-account, — Google отклонит анкету.
+-- Целевая аудитория с детьми (до 18) — Google потребует соблюдать правила для семейных приложений. Отмечайте только «18 и старше».
++# 07. Privacy, Data safety и анкеты содержимого
++Проверено по коду и официальным правилам 8 октября 2026. Это инструкция для заполнения: неизвестные настройки внешних обработчиков нужно подтвердить до отправки анкеты.
++
++## Что установлено по реализации
++| Данные | Использование |
++|---|---|
++| Имя, телефон, почта, должность, ID аккаунта | Вход, управление сотрудниками, авторство записей |
++| Записи, комментарии, загруженные документы | Рабочие журналы организации |
++| Допуск к работе, отметки здоровья, сведения медкнижек | Рабочие проверки; это данные здоровья |
++| Фотографии | Вложения, подтверждение работы, распознавание показаний/этикеток |
++| Действия пользователя, IP и сведения о клиенте | Аудит и безопасность |
++| Идентификатор установки/устройства, push-токен | Firebase/APNs, доставка уведомлений |
++| Обращения и отзывы | Поддержка и обратная связь |
++| Голосовой ввод | Системное распознавание речи; результат сохраняется в поле |
++
++Яндекс Метрика исключается в режиме нативного приложения. Рекламного SDK и рекламного отслеживания в проверенной интеграции не обнаружено. Отсутствие аналитики не отменяет сбор данных для работы приложения.
++
++Фото для распознавания передаются AI-диспетчеру по подписанным ссылкам (`src/lib/ai-vision/run.ts`). Конкретный исполнитель и его условия хранения определяются конфигурацией сервера. Нельзя утверждать, что все снимки обрабатываются только на телефоне.
++
++Распознавание речи не ограничено режимом on-device: плагин создаёт системный запрос без принудительного локального распознавания. Он может использовать серверы Apple или выбранного Android-провайдера. WeSetup не загружает исходную запись голоса на собственный сервер, но это само по себе не доказывает отсутствие передачи аудио третьей стороне. [Поведение Speech framework Apple](https://developer.apple.com/documentation/speech/asking-permission-to-use-speech-recognition).
++
++## Перед заполнением — четыре проверки владельца
++1. Уточнить действующих обработчиков: хостинг, Firebase/APNs, поставщик распознавания речи, исполнитель AI-диспетчера и включённые организацией интеграции.
++2. Подтвердить цели и сроки хранения у каждого, использование только по поручению WeSetup и отсутствие рекламы/обучения на данных, если это заявляется.
++3. Согласовать публичную политику с фактической обработкой. Текущая страница `/privacy` не описывает Firebase, APNs и голос полностью; старый черновик [privacy-policy-draft.md](privacy-policy-draft.md) ещё требует завершения. Его дополнения описывают также AI-фото.
++4. Проверить удаление обычного аккаунта, аккаунта руководителя и сохранение авторства в журналах. Не обещать удаление всех записей, если приложение сохраняет их по правилам организации.
++
++## Google Play: App content
++| Карточка | Ответ для текущего приложения |
++|---|---|
++| Privacy policy | https://wesetup.ru/privacy — после приведения политики к реальным потокам данных |
++| Ads | No |
++| App access | All or some functionality is restricted; рабочие review accounts и инструкция входа |
++| Target audience | 18 and over — рабочая аудитория |
++| News / Government | No |
++| Advertising ID | No, если итоговый манифест сборки не содержит AD_ID |
++| Account deletion URL | https://wesetup.ru/delete-account |
++| Financial features | Не заявлять банковские/инвестиционные услуги; описать реальную корпоративную модель, если консоль задаёт уточнения |
++
++### Health apps declaration — исправление прежней инструкции
++Нельзя выбрать «My app doesn’t provide any health features» только потому, что WeSetup не медицинская программа. Google включает приложения, которые используют данные здоровья для других функций.
++
++Для журналов здоровья и допуска сотрудников **Disease Prevention and Public Health** — предложенное сопоставление с категорией Google «health status monitoring». Это вывод по функции приложения. Если доступна категория **Other**, поясните там ведение рабочих записей здоровья. Отмечайте дополнительные категории только если такие функции действительно доступны. Не выбирайте Medical Device Apps: приложение не заявляет функцию медицинского устройства.
++
++Текст пояснения:
++```text
++WeSetup is a workplace food-safety recordkeeping application. Authorized employees record workplace hygiene and fitness-for-work checks, and managers maintain employee health-clearance records. The app does not diagnose conditions, recommend treatment, access Health Connect, or act as a medical device. Access to these records is restricted to authorized users within the employer's organization.
++```
++[Официальная инструкция Health apps](https://support.google.com/googleplay/android-developer/answer/14738291?hl=en).
++
++### Data safety
++«Собирает или передаёт данные» → **Yes**. «Зашифрованы при передаче» → **Yes** для проверенного HTTPS-трафика; подтвердите, что внешние обработчики тоже используют защищённые каналы.
++
++| Тип | Собирается | Основные цели |
++|---|---|---|
++| Personal info: Name, Email address, Phone number, User IDs | Да, для используемых полей | App functionality; Account management |
++| Health and fitness: Health info | Да | App functionality |
++| Photos and videos: Photos | Да | App functionality |
++| Files and docs | Да, при импорте/загрузке | App functionality |
++| App activity: Other user-generated content | Да | App functionality |
++| App activity: App interactions | Да | App functionality; Fraud prevention, security and compliance |
++| Device or other IDs | Да | App functionality |
++| Audio: Voice or sound recordings | Уточнить системного обработчика и его режим; не отмечать No без проверки | App functionality |
++
++Для полей **Required/Optional** проверяйте возможность пользоваться приложением без конкретного сбора. Почта не обязательна для каждого сотрудника; фото может быть обязательным для назначенной ему задачи. Отключение показа push не всегда означает отключение сбора идентификатора SDK.
++
++Для сохраняемых записей, фото, аудита и ID не выбирайте ephemeral processing. Аудио, которое обрабатывается только в реальном времени без хранения, может подпадать под ephemeral processing, но его передачу всё равно нужно отразить в форме Google.
++
++**Shared:** не ставьте одно blanket-значение для всех типов. Передача обработчику, действующему только по вашему поручению, может подпадать под исключение service provider. Условия конкретных провайдеров должны это подтверждать; включённые интеграции тоже учитываются. Пользовательская передача «Поделиться» рассматривается отдельно от фоновой передачи сервиса.
++
++[Официальные определения Data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en).
++
++## Apple: App Privacy
++App Store Connect → App Privacy → Get Started. «Do you or your third-party partners collect data from this app?» → **Yes**.
++
++Начальный перечень для проверки:
++| Раздел | Типы |
++|---|---|
++| Contact Info | Name, Email Address, Phone Number |
++| Health & Fitness | Health |
++| User Content | Photos or Videos, Customer Support, Other User Content |
++| Identifiers | User ID, Device ID |
++| Usage Data | Product Interaction |
++| Diagnostics | Other Diagnostic Data — по фактическим журналам безопасности |
++| User Content / Audio Data | Проверить правила системного распознавания, хранение и применимость исключений Apple |
++
++Основная цель — **App Functionality**. Записи, привязанные к учётной записи, — **Linked to user: Yes**. **Tracking: No** допустимо при подтверждённом отсутствии рекламного межсервисного отслеживания у приложения и встроенных поставщиков.
++
++Не выбирайте Analytics только из-за наличия audit log; не скрывайте сбор аудита только из-за отсутствия Метрики. Проверять нужно приложение, SDK и серверную обработку вместе.
++
++[Правила Apple о privacy labels](https://developer.apple.com/app-store/app-privacy-details/), [User Privacy and Data Use](https://developer.apple.com/app-store/user-privacy-and-data-use/).
++
++## Возрастной рейтинг и пользовательский контент
++Заполните действующую анкету Apple и IARC; рейтинг вычислит магазин. Целевая рабочая аудитория 18+ не равна автоматически рейтингу 18+.
++
++Внутри организаций доступны записи и фотографии других сотрудников — не отрицайте наличие пользовательского контента или взаимодействия, если вопрос их включает. Отдельно учтите доступного в релизе AI-помощника. Не объявляйте неизменное «4+» до результата анкеты.
++
++## Шифрование
++В Info.plist установлено `ITSAppUsesNonExemptEncryption=false`. Текущая нативная оболочка использует системное HTTPS; собственной криптографии для пользователя она не предоставляет. Если состав криптографических функций изменится, пересмотрите ответ.
++[Apple: export compliance](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/).
++
++## Проверка перед отправкой
++- Ответы в Apple и Google отражают одни и те же реальные данные с учётом разных определений магазинов.
++- Политика доступна без входа и соответствует мобильной обработке.
++- Из текста удалены неподтверждённые обещания «аудио никуда не передаётся» и «данные не передаются третьим лицам».
++- Review accounts работают, удаление проверено, контактное лицо и правовые сведения заполнены владельцем.
+diff --git a/docs/mobile/08-review.md b/docs/mobile/08-review.md
+index dc84c7de..4ed7500b 100644
+--- a/docs/mobile/08-review.md
++++ b/docs/mobile/08-review.md
+@@ -64,7 +64,7 @@ ACCOUNT DELETION
+ Profile screen ("Профиль") → "Удалить аккаунт". Please use the second demo account to test deletion:
+ Phone: [второй аккаунт — телефон]
+ Password: [второй аккаунт — пароль]
+-Deletion erases the employee's contact and sign-in data (e-mail, phone, Telegram link, PIN and sign-in keys); the person's name stays in the food-safety logbook records they made, together with the account holder, because Russian sanitary law (SanPiN/HACCP) requires keeping the author of a record — this is disclosed before deletion. Deletion is also available on the web: https://wesetup.ru/delete-account
++Deletion erases the employee's contact and sign-in data (e-mail, phone, Telegram link, PIN and sign-in keys); the person's name stays in the food-safety logbook records they made, together with the account holder, under the organization's disclosed record-retention policy. The deletion screen explains which records remain; see our privacy policy for the actual retention terms. Deletion is also available on the web: https://wesetup.ru/delete-account
+ 
+ The app is free and has no ads. On either platform it has no purchases, top-ups or payment buttons, and no links to payment of any kind. Companies subscribe to WeSetup directly with us under a business contract, paid on our website, not in the app. The only related screen, "Тариф", is read-only: it shows the company's subscription status (plan name, active until or ended, amounts of past payments) with no purchase, renewal, top-up or payment buttons or links. The app is a companion for that business service and does not sell any digital goods.
+ 
+diff --git a/docs/mobile/09-release.md b/docs/mobile/09-release.md
+index 56f12c38..ec048a8c 100644
+--- a/docs/mobile/09-release.md
++++ b/docs/mobile/09-release.md
+@@ -11,25 +11,20 @@
+ 
+ **Сколько стоит** — бесплатно.
+ 
+-## Шаг 1. Разработчик собирает первые версии
+-
+-Разработчик запускает в GitHub: **Actions** → **«Выпуск приложений»** → **Run workflow**. У workflow три параметра:
+-`platform` (`both` / `android` / `ios`), `track` (куда отправить Android: `internal` — во внутреннее тестирование,
+-`none` — только собрать) и `play_status`. Для самой первой версии нужен **`play_status: draft`** — Google Play
+-отказывается принимать выпуск со статусом «completed», пока приложение хотя бы раз не было опубликовано; после
+-первой публикации разработчик переключает `play_status` на `completed`. Перед первым запуском iOS-сборки в App
+-Store Connect уже должна существовать запись приложения ([02](02-app-store-connect.md), шаг 1) — без неё сборка не
+-подпишется.
+-
+-- **iOS** — сборка сама загружается в App Store Connect (раздел **TestFlight**), через 15–30 минут вам придёт письмо
+-  о готовности;
+-- **Android** — файл `app-release.aab`. Первый раз его нужно загрузить в Play Console вручную (так требует Google):
+-  разработчик присылает файл вам или загружает сам, если вы дали ему доступ ([03](03-google-play-console.md), шаг 8).
+-
+-Отдельно, без вашего участия, при каждой правке в `mobile/` сам запускается второй workflow — **«Проверка
+-приложений»**. Он ничего не публикует и не требует секретов: собирает отладочный APK Android (можно скачать из
+-артефактов запуска и поставить на телефон отдельно от Google Play) и сборку iOS для симулятора без подписи —
+-это только самопроверка разработчика, на ваши действия она не влияет.
++## Шаг 1. Получить сборки и проверить подписи
++
++Актуальный маршрут: [PUBLISHING.md, разделы 5–7](PUBLISHING.md).
++GitHub Actions → «Выпуск приложений»: `platform=both`, `track=none`, `play_status=draft`,
++`upload_ios=false`. Укажите новый `build_number`; версия — 1.0.0.
++
++После успешного запуска скачайте подписанные AAB/APK и IPA вместе с release-manifest.json.
++Без Android keystore, ключа Apple и Firebase-файлов релиз блокируется.
++Для загрузки iOS в TestFlight запустите выпуск с новым номером и `upload_ios=true`
++или загрузите готовый IPA через Transporter на Mac. Автоматическая загрузка Android
++возможна после первоначальной настройки Play Console при `track=internal`.
++
++Проверочный workflow «Проверка приложений» собирает debug APK и iOS simulator App.app.
++Это файлы для проверки разработки, в магазины они не загружаются.
+ 
+ ## Шаг 2. Google Play: внутреннее тестирование
+ 
+diff --git a/docs/mobile/PUBLISHING.md b/docs/mobile/PUBLISHING.md
+new file mode 100644
+index 00000000..bfdb8288
+--- /dev/null
++++ b/docs/mobile/PUBLISHING.md
+@@ -0,0 +1,230 @@
++# Первая публикация WeSetup: от аккаунтов до выпуска
++Обновлено: 8 октября 2026. Версия приложения: **1.0.0**. Идентификатор обеих платформ: **ru.wesetup.app**.
++
++## 1. Что уже сделано и чего ещё не хватает
++Нативные проекты находятся в `mobile/android` и `mobile/ios`. Это Capacitor-приложения с системной печатью, камерой, голосовым вводом, отправкой файлов и push через Firebase. Они загружают актуальный интерфейс с wesetup.ru.
++
++На момент подготовки этого пакета:
++- проекты и 12 скриншотов найдены;
++- старый Android AAB проверен: он **не подписан**, загружать его в Google Play нельзя;
++- GitHub Secrets не содержат ключей мобильного выпуска;
++- прежний ключ Android указан в `C:\Users\Yaroslav\wesetup-android`, но недоступен текущему пользователю Windows;
++- Apple Team ID, ключ App Store Connect и обе конфигурации Firebase ожидаются от владельца;
++- результаты новых проверок и точный состав файлов смотрите в `STATUS.md` внутри пакета. Наличие инструкции не означает, что подписанные сборки уже получены.
++
++## 2. Сначала подготовьте аккаунты владельца
++Если аккаунты уже готовы, переходите к разделу 3.
++
++### Apple
++1. Войдите своим Apple Account в [Apple Developer](https://developer.apple.com/account/), включите двухфакторную аутентификацию.
++2. Для публикации от компании выберите **Organization** и используйте её настоящие реквизиты и D-U-N-S. Имя продавца определяется аккаунтом, а не названием приложения.
++3. Завершите проверку организации и вступление в программу. Условия, доступность в стране и фактическую стоимость проверьте в форме Apple. Не создавайте аккаунт на фиктивную организацию.
++4. Договоры принимает владелец аккаунта. Участнику команды достаточно приглашения с нужными правами — пароль владельца передавать не нужно.
++5. Apple Developer → Membership details: сохраните **Team ID**.
++6. Certificates, Identifiers & Profiles → Identifiers → **+** → App IDs → App → Explicit Bundle ID: `ru.wesetup.app`.
++7. Включите **Push Notifications** и **Associated Domains**.
++8. App Store Connect → Users and Access → Integrations → App Store Connect API: создайте **Team Key**, сохраните Key ID, Issuer ID и скачайте `.p8`. Доступ к Certificates, Identifiers & Profiles и cloud-managed distribution должен быть разрешён. Для первоначальной настройки существующего сценария используется ключ Admin; храните его как секрет.
++9. Подробный маршрут регистрации: [01-apple-developer.md](01-apple-developer.md), [02-app-store-connect.md](02-app-store-connect.md).
++
++### Google
++1. Откройте [Google Play Console](https://play.google.com/console/) под аккаунтом владельца.
++2. Для компании выберите **Organization**, заполните настоящие реквизиты и пройдите проверку личности/организации и контактов.
++3. Завершите регистрацию и проверьте доступ к созданию приложений.
++4. Если используется **личный аккаунт, созданный после 13 ноября 2023**, для доступа к production нужен закрытый тест с минимум 12 непрерывно подключёнными тестировщиками в течение минимум 14 дней и последующая заявка. Внутренний тест его не заменяет. [Официальное правило Google](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en).
++5. Подробные экраны: [03-google-play-console.md](03-google-play-console.md).
++
++## 3. Создайте карточки приложений
++### App Store Connect
++Apps → **+** → New App:
++| Поле | Значение |
++|---|---|
++| Platforms | iOS |
++| Name | WeSetup |
++| Primary language | Russian |
++| Bundle ID | ru.wesetup.app |
++| SKU | wesetup-ios |
++| User Access | По составу вашей команды |
++| Версия первой публикации | **1.0.0**, как в сборке |
++
++Сохраните числовой **Apple ID приложения** из App Information. Он отличается от Team ID и Apple Account.
++
++### Google Play Console
++All apps → **Create app**:
++| Поле | Значение |
++|---|---|
++| App name | WeSetup: журналы ХАССП |
++| Default language | Russian — ru-RU |
++| App or game | App |
++| Free or paid | Free |
++| Category | Business |
++Подтвердите декларации только после прочтения. Имя пакета `ru.wesetup.app` подтянется из первого AAB. Первый AAB загружается через консоль.
++
++## 4. Firebase и доставка уведомлений
++1. Создайте или откройте проект в [Firebase Console](https://console.firebase.google.com/).
++2. Add app → Android: package name **ru.wesetup.app**. Скачайте `google-services.json`.
++3. Add app → iOS: Bundle ID **ru.wesetup.app**. Скачайте `GoogleService-Info.plist`. При добавлении укажите числовой Apple ID, если консоль его спрашивает.
++4. Apple Developer → Keys → создайте APNs authentication key, скачайте `.p8`, сохраните Key ID.
++5. Firebase → Project settings → Cloud Messaging → Apple app configuration: загрузите **APNs key**, укажите его Key ID и Team ID.
++6. Ключ **APNs** и ключ **App Store Connect API** — два разных ключа, несмотря на одинаковое расширение.
++7. Firebase → Service accounts: подготовьте сервисный аккаунт для сервера. Его JSON нужен на сервере как `FIREBASE_SERVICE_ACCOUNT_JSON`, а не внутри приложения.
++8. Подробности: [04-firebase.md](04-firebase.md).
++
++Конфигурация Firebase внутри сборки подтверждает настройку клиента. Доставку push обязательно отдельно проверить на настоящем Android и iPhone после настройки сервера/APNs.
++
++## 5. Восстановите ключ Android и заполните GitHub Secrets
++Сначала найдите **существующий** `upload.jks`, его alias и пароли. Не заменяйте его случайным новым ключом. Если приложение уже загружалось в Play Console, сравните отпечаток с Upload key certificate в App integrity. Если ключ утрачен, порядок действий зависит от того, был ли первый выпуск; используйте процедуру Play Console.
++
++GitHub → репозиторий WeSetup → Settings → Secrets and variables → Actions → **New repository secret**:
++| Название | Содержимое |
++|---|---|
++| ANDROID_KEYSTORE_BASE64 | Старый upload.jks в base64 |
++| ANDROID_KEYSTORE_PASSWORD | Пароль хранилища |
++| ANDROID_KEY_ALIAS | Alias ключа |
++| ANDROID_KEY_PASSWORD | Пароль ключа |
++| GOOGLE_SERVICES_JSON_BASE64 | Android google-services.json в base64 |
++| APPLE_TEAM_ID | Team ID |
++| ASC_KEY_ID | Key ID ключа App Store Connect |
++| ASC_ISSUER_ID | Issuer ID |
++| ASC_KEY_P8_BASE64 | Ключ App Store Connect .p8 в base64 |
++| GOOGLE_SERVICE_INFO_PLIST_BASE64 | iOS GoogleService-Info.plist в base64 |
++
++`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` нужен дополнительно, только когда захотите автоматическую загрузку Android. Для ручной загрузки первого AAB он не нужен.
++
++В PowerShell base64 можно положить сразу в буфер, не выводя секрет в чат или лог:
++```powershell
++[Convert]::ToBase64String([IO.File]::ReadAllBytes('C:\путь\к\файлу')) | Set-Clipboard
++```
++Вставьте в нужный GitHub Secret, затем очистите буфер. Сделайте отдельную защищённую резервную копию ключа Android.
++
++## 6. Получите файлы сборок
++Исправленный сценарий расположен в ветке `codex/mobile-first-release-2026-10`. Пока её изменения не перенесены в master, в форме запуска выберите именно эту ветку.
++
++GitHub → Actions → **Выпуск приложений** → Run workflow:
++| Поле | Для первого получения файлов |
++|---|---|
++| Use workflow from | Ветка с исправленным сценарием |
++| platform | both |
++| track | **none** |
++| play_status | **draft** |
++| upload_ios | **false** |
++| build_number | **1**, если ничего ещё не загружали; иначе больше всех ранее использованных номеров |
++
++После успешного выполнения скачайте артефакты:
++- Android: `app-release.aab` — для Google Play; `app-release.apk` — для установки на телефон; `release-manifest.json` и `upload-certificate.txt`.
++- iOS: `WeSetup.ipa` — для App Store Connect; `release-manifest.json`.
++- SHA-256 каждого файла находится в manifest. Версия должна быть 1.0.0, package/bundle ID — ru.wesetup.app.
++
++Для отправки в TestFlight можно повторить выпуск **с новым build_number** и `upload_ios=true`. Готовый IPA также можно загрузить через Transporter на Mac. IPA нельзя просто установить на обычный iPhone из папки: для тестирования используется TestFlight.
++
++Неподписанный AAB, debug APK и iOS simulator App.app не являются файлами для публикации. Проверочный workflow выпускает именно тестовые артефакты — они отдельно помечены.
++
++## 7. Настройте связь приложения с сайтом
++Разработчику нужны:
++- `APPLE_TEAM_ID`;
++- числовой `APPLE_APP_ID`;
++- SHA-256 **App signing certificate** из Google Play → App integrity;
++- SHA-256 upload key для проверки APK, установленного напрямую;
++- серверный `FIREBASE_SERVICE_ACCOUNT_JSON`.
++
++На сервере должны корректно отвечать:
++- `https://wesetup.ru/.well-known/apple-app-site-association`;
++- `https://wesetup.ru/.well-known/assetlinks.json`;
++- `https://wesetup.ru/privacy`;
++- `https://wesetup.ru/delete-account`.
++
++Fingerprint подписи Google Play отличается от upload key: после включения Play App Signing Google подписывает устанавливаемый пакет своим ключом. Проверьте переходы из QR/ссылок на версии, установленной именно из магазина.
++
++## 8. Заполните описания и картинки
++Все тексты для копирования: [store-listing.md](store-listing.md). В HTML-инструкции у блоков есть кнопка «Копировать».
++
++### Apple — страница версии
++| Поле | Что выбрать |
++|---|---|
++| Name | WeSetup |
++| Subtitle | Журналы СанПиН и ХАССП |
++| Category | Business; при необходимости Productivity как вторичная |
++| Promotional Text, Description, Keywords | Одноимённые блоки из store-listing.md |
++| Support URL | https://wesetup.ru |
++| Marketing URL | https://wesetup.ru |
++| Privacy Policy URL | https://wesetup.ru/privacy |
++| Copyright | 2026 ООО «БФС» — только если это актуальный правообладатель |
++| Price | Free |
++| Version Release | **Manually release this version** |
++| Content Rights | Подтвердите наличие прав на используемый пользовательский и сторонний контент; не отрицайте его наличие автоматически |
++| Availability | Фактические страны обслуживания компании |
++
++Скриншоты: `screenshots/ios/01…06`. Их размеры перечислены в `asset-manifest.json`. Сборка заявляет только iPhone. Сверьте комплект с [требованиями Apple](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/). Иконка Apple уже включена в нативный проект.
++
++### Google — Main store listing
++| Поле | Что выбрать |
++|---|---|
++| App name | WeSetup: журналы ХАССП |
++| Short description, Full description | Блоки Google Play из store-listing.md |
++| App icon | store-graphics/icon-512.png |
++| Feature graphic | store-graphics/feature-graphic.png |
++| Phone screenshots | screenshots/android/01…06 |
++| Support email | support@wesetup.ru |
++| Website | https://wesetup.ru |
++| Privacy policy | https://wesetup.ru/privacy |
++
++Не добавляйте обещаний гарантированного прохождения проверки или полной работы без интернета. В текущем приложении есть экран восстановления связи; доступность конкретных офлайн-действий зависит от загруженных данных.
++
++## 9. Заполните анкеты честно по текущему приложению
++Подробные ответы и места, которые требует подтвердить владелец: [07-privacy-forms.md](07-privacy-forms.md).
++
++- **Ads:** рекламы в приложении нет.
++- **App access:** требуется вход; предоставьте отдельные рабочие тестовые аккаунты.
++- **Target audience Google:** рабочее приложение для взрослых; 18+ как целевая аудитория. Возрастной рейтинг магазина рассчитывается отдельно по анкете.
++- **Health:** отметки здоровья и допуска сотрудников являются данными здоровья. Не выбирайте «не использует данные здоровья». Для текущего сценария предложена категория Disease Prevention and Public Health; это сопоставление нашей функции с описанием Google, а не медицинская сертификация.
++- **Data safety/App Privacy:** имя, контакты, идентификаторы, записи, фото, данные здоровья, действия в приложении; также проверьте голосовое распознавание и действующих AI-провайдеров.
++- **Tracking:** отсутствие рекламного отслеживания не означает отсутствие сбора данных.
++- **Encryption:** текущий код использует стандартное защищённое соединение; `ITSAppUsesNonExemptEncryption=false`. При появлении собственного шифрования ответ нужно пересмотреть.
++- **Account deletion:** укажите веб-страницу и проверьте сценарий удаления внутри приложения.
++- **Возрастная анкета Apple/IARC:** отвечайте по доступному пользователям содержимому. Не задавайте заранее желаемое «4+» вместо заполнения формы.
++- Ссылки на оплату в мобильном интерфейсе скрыты. Это не гарантия решения модератора о бизнес-модели; в review notes нужно описать реальную продажу корпоративной услуги.
++
++## 10. Подготовьте вход для модератора
++1. Создайте отдельную демонстрационную организацию на **рабочем сервере** с вымышленными сотрудниками и образцами документов.
++2. Создайте постоянный аккаунт руководителя: телефон + пароль. Проверьте вход на чистом устройстве без SMS, Telegram, VPN, привязки к вашей сети или одноразового кода.
++3. Второй аккаунт подготовьте для проверки удаления. Не удаляйте основной review account до окончания проверки.
++4. Включите те журналы и функции, которые показаны на скриншотах. Демо не должно показывать реальные данные клиентов.
++5. В App Review Information / App access вставьте реальные учётные данные в специальные закрытые поля консоли.
++6. Заполните имя, фамилию и телефон реального контактного лица для ревью. Support email: support@wesetup.ru.
++7. В Notes вставьте текст из [08-review.md](08-review.md), заменив все квадратные скобки. Описывайте push/universal links только после проверки их работы.
++8. Пока эти поля не заполнены и вход не проверен, пакет нельзя считать готовым к отправке.
++
++## 11. Google Play: первый тест и выпуск
++1. Test and release → Testing → **Internal testing** → создайте список тестировщиков.
++2. Releases → Create new release → настройте **Play App Signing**.
++3. Загрузите подписанный `app-release.aab`. Убедитесь в версии, номере сборки и package name.
++4. Release notes: блок «Что нового» из store-listing.md внутри тегов `<ru-RU>` и `</ru-RU>`.
++5. Завершите обязательные разделы Dashboard / App content, сохраните выпуск и выдайте тестировщикам ссылку подключения. Доступность теста зависит от состояния аккаунта и проверок Google.
++6. Проверьте вход, сохранение, фото, голос, печать/экспорт, push, переход по уведомлению, уход в фон, отсутствие сети и удаление аккаунта.
++7. Для нового личного аккаунта выполните закрытый тест из раздела 2 и получите production access.
++8. Production → Create release или Promote release из теста → проверьте страны и примечания.
++9. Publishing overview: отправьте изменения на review. Если доступно Managed publishing, используйте его для управляемого момента выпуска.
++10. После одобрения владелец подтверждает публикацию. Срок рассмотрения не гарантируется.
++
++Новые приложения должны соответствовать текущему target API. Проект использует target SDK 36. [Правило Google](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en).
++
++## 12. Apple: TestFlight и App Review
++1. Загрузите IPA через сценарий `upload_ios=true` или Transporter. Дождитесь обработки App Store Connect.
++2. TestFlight → Internal Testing → создайте группу и добавьте пользователей команды.
++3. Установите TestFlight на iPhone, примите приглашение и пройдите проверку из раздела 11.
++4. Страница версии **1.0.0** → Build: выберите обработанную сборку.
++5. Заполните описания, скриншоты, App Privacy, Age Rating, App Review Information и страны.
++6. Проверьте предупреждения в App Store Connect. **Manually release this version** оставьте включённым.
++7. Add for Review → Submit for Review. При вопросах модератора отвечайте по существующим функциям, при необходимости приложите видео их работы.
++8. После одобрения и статуса Pending Developer Release владелец нажимает **Release This Version**.
++
++Минимум для подачи с 28 апреля 2026 — iOS 26 SDK; сценарий использует macOS/Xcode 26. [Требование Apple](https://developer.apple.com/news/?id=ueeok6yw). Проверка компиляции на macOS не заменяет подписанный IPA и тест на телефоне.
++
++## 13. Что передать для завершения именно этого выпуска
++- Готовность аккаунтов и выбранное юридическое лицо/контакт для ревью.
++- Доступный путь к прежнему Android keystore и его параметрам либо заполненные GitHub Secrets.
++- Apple Team ID и настроенный ключ App Store Connect API.
++- Два Firebase-файла, настроенный APNs и серверный сервисный аккаунт.
++- Рабочие review accounts, проверенные на production.
++- Подтверждённые сведения о сторонних обработчиках фото/голоса для privacy-анкет.
++
++Передавайте секреты через GitHub Secrets или защищённое хранилище. В переписке достаточно путей и статуса готовности.
+diff --git a/docs/mobile/asset-manifest.json b/docs/mobile/asset-manifest.json
+new file mode 100644
+index 00000000..f6144285
+--- /dev/null
++++ b/docs/mobile/asset-manifest.json
+@@ -0,0 +1,117 @@
++{
++  "checkedAt": "2026-10-08",
++  "assets": [
++    {
++      "file": "screenshots/android/01-control-board.png",
++      "width": 1080,
++      "height": 1920,
++      "pngColorType": 2,
++      "bytes": 219385,
++      "sha256": "b2ec5d76d57c0ae4730329f9a1f261f518c2c04424e4f3ae6060962c0b20b138"
++    },
++    {
++      "file": "screenshots/android/02-today.png",
++      "width": 1080,
++      "height": 1920,
++      "pngColorType": 2,
++      "bytes": 240548,
++      "sha256": "687cd5a557c4d8d0c51b50a2781393bc71ecf0428aa77b1b4de754b34905e736"
++    },
++    {
++      "file": "screenshots/android/03-cleaning-journal.png",
++      "width": 1080,
++      "height": 1920,
++      "pngColorType": 2,
++      "bytes": 207365,
++      "sha256": "17e241b0177cbfb26c9b1ed883b25485e58f9a92a495398b5c8aae24b5479a63"
++    },
++    {
++      "file": "screenshots/android/04-fridges.png",
++      "width": 1080,
++      "height": 1920,
++      "pngColorType": 2,
++      "bytes": 199331,
++      "sha256": "53741616b96c4001bc99f7b47cf06880a6bbb6cd2ed7e25b109f5e71a2c6b58d"
++    },
++    {
++      "file": "screenshots/android/05-all-sections.png",
++      "width": 1080,
++      "height": 1920,
++      "pngColorType": 2,
++      "bytes": 224323,
++      "sha256": "3d5802b2c60ffcffcb0f2273bdcea80cfde2c03ea4210811725914d8c011c205"
++    },
++    {
++      "file": "screenshots/android/06-notifications.png",
++      "width": 1080,
++      "height": 1920,
++      "pngColorType": 2,
++      "bytes": 238520,
++      "sha256": "a17697ff68c60ab6cb97001a8a2da92084985dca53e37a03e9f6648a76fb0792"
++    },
++    {
++      "file": "screenshots/ios/01-control-board.png",
++      "width": 1320,
++      "height": 2868,
++      "pngColorType": 2,
++      "bytes": 332108,
++      "sha256": "d80e3913309acac6a4eb2076a9aecdf8ee825e7e35a473c22d3effc027c9bc12"
++    },
++    {
++      "file": "screenshots/ios/02-today.png",
++      "width": 1320,
++      "height": 2868,
++      "pngColorType": 2,
++      "bytes": 365054,
++      "sha256": "75ec0a9af4a6a270c87347a9b42676d039f4692569448090e160814bdc266813"
++    },
++    {
++      "file": "screenshots/ios/03-cleaning-journal.png",
++      "width": 1320,
++      "height": 2868,
++      "pngColorType": 2,
++      "bytes": 285331,
++      "sha256": "cea06b15b4929b5ab2142608861f25360842cd0ed1cb474eeac6f919e38e1c47"
++    },
++    {
++      "file": "screenshots/ios/04-fridges.png",
++      "width": 1320,
++      "height": 2868,
++      "pngColorType": 2,
++      "bytes": 288670,
++      "sha256": "b9214fe8f373bc32ec12aa17ac96bcab9649396e3dbe31b73ac33c4f155a76f8"
++    },
++    {
++      "file": "screenshots/ios/05-all-sections.png",
++      "width": 1320,
++      "height": 2868,
++      "pngColorType": 2,
++      "bytes": 324169,
++      "sha256": "ce518fc67d65b79938cc605ae6384b314c97e0488c028e96d5fd608693d52b59"
++    },
++    {
++      "file": "screenshots/ios/06-notifications.png",
++      "width": 1320,
++      "height": 2868,
++      "pngColorType": 2,
++      "bytes": 341793,
++      "sha256": "73230cd0497a5e910e93d026a8cdf0478a997e5aaddcf22903ac57a7ccf023e9"
++    },
++    {
++      "file": "store-graphics/feature-graphic.png",
++      "width": 1024,
++      "height": 500,
++      "pngColorType": 2,
++      "bytes": 178055,
++      "sha256": "0359f63793a3dafb877679dc767a15322fe16bf8d051f7d783d71c95b4e485f6"
++    },
++    {
++      "file": "store-graphics/icon-512.png",
++      "width": 512,
++      "height": 512,
++      "pngColorType": 6,
++      "bytes": 55250,
++      "sha256": "5aebe342433939291bf24c79b92b09a97062081159dc5453ddb7f4fc438a66a7"
++    }
++  ]
++}
+diff --git a/docs/mobile/privacy-policy-draft.md b/docs/mobile/privacy-policy-draft.md
+index 8045d8ac..54aff7d8 100644
+--- a/docs/mobile/privacy-policy-draft.md
++++ b/docs/mobile/privacy-policy-draft.md
+@@ -1,170 +1,180 @@
+-# Черновик правок политики конфиденциальности — приложения WeSetup
+-
+-**Это черновик, не опубликовано.** Ничего из этого текста нельзя вставлять на сайт без проверки юристом и
+-владельцем. Формулировки написаны так, чтобы встать в действующую политику (`src/app/privacy/page.tsx`,
+-редакция от 22 сентября 2026) с минимальными правками — нумерация пунктов ниже совпадает с нумерацией на
+-странице `/privacy`. Составлено 26 сентября 2026 в рамках подготовки мобильных приложений WeSetup для App
+-Store и Google Play ([00-overview.md](00-overview.md)).
+-
+-Зачем нужна правка — три новых факта, которых не было, когда писалась текущая редакция:
+-
+-1. Появились мобильные приложения (Capacitor-оболочка вокруг сайта) для iOS и Android.
+-2. Приложения запрашивают push-токен устройства и получают уведомления через **Firebase Cloud Messaging**
+-   (Google) и **Apple Push Notification service** (Apple) — оба сервиса физически находятся за пределами
+-   России. Действующий п. 8.4 сейчас говорит, что трансграничной передачи нет, — это надо согласовать с
+-   юристом (см. раздел «Что решить юристу» ниже), потому что нет ни отдельного согласия, ни уведомления в
+-   Роскомнадзор именно по этому поводу.
+-3. Приложения используют камеру, галерею и микрофон телефона, и в них не работает Яндекс Метрика.
+-
+-## Предлагаемые правки по пунктам
+-
+-### П. 1.4 (Общие положения — на какие сервисы распространяется Политика)
+-
+-Было: «…при использовании сайта wesetup.ru, веб-приложения WeSetup и Telegram Mini App через бота
+-@wesetupbot».
+-
+-Предлагается: добавить перечисление мобильных приложений.
+-
+-> 1.4. Политика распространяется на все персональные данные, которые Оператор получает от пользователей при
+-> использовании сайта wesetup.ru, веб-приложения WeSetup, мобильных приложений WeSetup для iOS и Android
+-> (доступны в App Store и Google Play, идентификатор `ru.wesetup.app`) и Telegram Mini App через бота
+-> @wesetupbot.
+-
+-### П. 2.6 (термин «Сервисы»)
+-
+-Было: «сайт wesetup.ru, веб-приложение WeSetup…, а также Telegram Mini App…».
+-
+-Предлагается:
+-
+-> 2.6. **Сервисы** — сайт wesetup.ru, веб-приложение WeSetup (электронные журналы СанПиН/ХАССП для
+-> предприятий общественного питания и пищевого производства), мобильные приложения WeSetup для iOS и Android
+-> — оболочка вокруг того же веб-приложения с дополнительным доступом к push-уведомлениям, камере, галерее и
+-> микрофону устройства, а также Telegram Mini App, доступный через бота @wesetupbot.
+-
+-### Новый пункт в разделе 5 («Перечень обрабатываемых персональных данных») — после 5.6
+-
+-Предлагается вставить как 5.6.1 (или отдельным подпунктом внутри 5.6 — решит юрист по стилю документа):
+-
+-> 5.6.1. **Данные мобильных приложений.** При установке и использовании мобильных приложений WeSetup
+-> дополнительно обрабатываются: токен push-уведомления (идентификатор конкретной установки приложения на
+-> устройстве, привязывается к учётной записи пользователя, при выходе или удалении аккаунта удаляется);
+-> версия приложения и платформа (iOS/Android) — для показа сообщения об обновлении и диагностики ошибок;
+-> доступ к камере и галерее — для фотографий, прикладываемых к записям журналов, и распознавания штрихкодов и
+-> QR-кодов; доступ к микрофону — для голосового ввода данных в журналы (распознавание речи выполняет системная
+-> служба операционной системы устройства пользователя; аудиозапись голоса на серверы Оператора не передаётся и
+-> не хранится).
+-
+-### П. 7 или новый подраздел — где хранятся данные push-токена
+-
+-Действующий раздел 7 говорит только о базах данных на территории РФ — это верно и для токена (он хранится в
+-той же базе, на сервере в РФ). Уточнить можно словом «в том числе» в 7.1, не меняя смысла:
+-
+-> 7.1. …Оператор обеспечивает запись, систематизацию, накопление, хранение, уточнение и извлечение
+-> персональных данных граждан Российской Федерации, **в том числе данных мобильных приложений**, с
+-> использованием баз данных, расположенных на территории Российской Федерации.
+-
+-### П. 8.2 — новый подпункт о Firebase (Google) и Apple (доставка push)
+-
+-Добавить после 8.2.4 (Telegram) как 8.2.4a/8.2.5 (сдвинув нумерацию существующих 8.2.5–8.2.6, либо оформить как
+-8.2.4.1 — решит юрист):
+-
+-> 8.2.4a. **Firebase Cloud Messaging (Google Ireland Limited / Google LLC)** и **Apple Push Notification
+-> service (Apple Inc. / Apple Distribution International Ltd.)** — для доставки push-уведомлений в мобильные
+-> приложения WeSetup. Передаётся: токен устройства и текст уведомления (заголовок и, если включено, основной
+-> текст сообщения — см. ниже про возможность скрыть текст). Оператор не передаёт этим сервисам пароль,
+-> платёжные данные и содержимое записей журналов сверх текста самого уведомления.
+-
+-### П. 8.4 — трансграничная передача (главное, что решить юристу)
+-
+-Действующий текст:
+-
+-> 8.4. **Трансграничная передача персональных данных** в иностранные государства, не обеспечивающие
+-> адекватной защиты прав субъектов персональных данных, Оператором не осуществляется. В случае возникновения
+-> необходимости трансграничной передачи Оператор обеспечит соблюдение требований ст. 12 152-ФЗ, включая
+-> направление уведомления в Роскомнадзор и получение отдельного согласия субъекта.
+-
+-**Проблема:** технически передача токена устройства и текста push-уведомления в Firebase (Google, серверы вне
+-РФ) и APNs (Apple, серверы вне РФ) — это трансграничная передача персональных данных, и нынешняя формулировка
+-«не осуществляется» перестаёт быть точной с выходом мобильных приложений.
+-
+-**Довод в пользу того, что это не новая проблема:** компания уже отправляет те же самые уведомления (то же
+-содержимое: заголовок задачи, напоминание о журнале) через Telegram Bot API, серверы которого тоже физически
+-находятся за пределами РФ (Telegram Messenger/Telegram FZ-LLC) — и раздел 8.2.4 уже упоминает Telegram как
+-получателя данных, просто без явного слова «трансграничная». То есть по факту компания и сейчас передаёт
+-данные пользователей за границу через Telegram — редакция 8.4 просто не называет это трансграничной передачей.
+-
+-**Варианты для юриста (не выбор разработчика — только для сверки):**
+-
+-1. Признать в 8.4, что трансграничная передача осуществляется (в объёме токена push и текста уведомления, тем
+-   же способом, что уже происходит через Telegram), и выполнить требования ст. 12 152-ФЗ: направить в
+-   Роскомнадзор уведомление об изменении сведений об обработке (форма на pd.rkn.gov.ru — уже подавалась при
+-   регистрации Оператора как оператора ПД, потребуется актуализация), и решить вопрос отдельного согласия —
+-   скорее всего оно уже покрывается общим согласием при регистрации (п. 3.1 действующей Политики), но это
+-   должен подтвердить юрист.
+-2. Смягчить риск для пользователя, не трогая юридическую квалификацию: сделать текст push-уведомлений
+-   нейтральным (например, «Новая задача в WeSetup» без имени сотрудника, названия компании и деталей журнала)
+-   — тогда через Firebase/APNs передаётся минимум данных, а подробности пользователь видит только после входа
+-   в приложение по HTTPS на сервер в РФ. Технически это отдельная настройка на стороне сервера (какой текст
+-   класть в push) — можно сделать независимо от решения по 8.4, и это снижает объём того, что физически
+-   потребуется признавать «трансграничной передачей».
+-3. Комбинация 1+2 — сделать текст push нейтральным **и** актуализировать 8.4/уведомление в Роскомнадзор для
+-   аккуратности.
+-
+-Вариант 2 пока не сделан: сейчас push повторяет текст уведомления в кабинете и в Telegram. Если юрист и владелец
+-выберут его, разработчик сделает это отдельной небольшой доработкой на сервере (какой текст класть в push).
+-
+-### Новый пункт в разделе 10 («Cookies») или отдельная фраза — аналитика в приложениях
+-
+-Действующий раздел 10 целиком про cookies браузера и Яндекс.Метрику на сайте. Для приложений нужна отдельная
+-фраза (можно как 10.8, после 10.7):
+-
+-> 10.8. Мобильные приложения WeSetup не используют файлы cookies и не подключают Яндекс.Метрику или любые
+-> другие системы веб-аналитики: технические ограничения раздела не применяются к работе внутри приложений.
+-
+-### П. 6 (сроки хранения) — уточнение про удаление аккаунта из мобильного приложения
+-
+-Действующий п. 6.4 говорит про уничтожение/обезличивание «по достижении целей обработки» в срок до 30 дней.
+-Для мобильных приложений это стоит расшифровать явно, потому что там есть готовая кнопка удаления — добавить
+-подпункт 6.4.1:
+-
+-> 6.4.1. При удалении учётной записи (кнопка «Удалить аккаунт» в мобильном приложении или на веб-странице
+-> `wesetup.ru/delete-account`) у сотрудника удаляются или обезличиваются контактные и учётные данные:
+-> телефон, адрес электронной почты, привязка Telegram, ПИН-код и ключи входа — повторный вход в эту учётную
+-> запись становится невозможен. Записи электронных журналов, внесённые этим сотрудником, сохраняются вместе с
+-> именем сотрудника как автора записи — это требование санитарного законодательства и принципов ХАССП к
+-> хранению учётной документации (см. п. 6.3), и пользователь предупреждается об этом до подтверждения
+-> удаления. Если удаляемая учётная запись — единственный руководитель организации-клиента, удаление ведёт к
+-> удалению всей организации целиком, которое происходит по истечении 30 (тридцати) дней с момента запроса,
+-> чтобы организация не осталась без ответственного лица по ошибке.
+-
+-### Раздел 12 (права субъекта) — пути удаления аккаунта
+-
+-Добавить к 12.6 конкретные ссылки (сейчас там общая фраза «запросить удаление учётной записи через службу
+-поддержки»):
+-
+-> 12.6. Многие права Пользователь может реализовать самостоятельно: изменить свои учётные данные в личном
+-> кабинете, отключить уведомления, удалить загруженные фотографии-вложения, удалить учётную запись — в
+-> мобильном приложении («Профиль» → «Удалить аккаунт»), на странице `https://wesetup.ru/delete-account` или
+-> письмом на <support@wesetup.ru>.
+-
+-## Что решить юристу (сводка)
+-
+-1. Формулировка п. 8.4 о трансграничной передаче — с выходом приложений (push через Firebase/APNs) она
+-   перестаёт быть точной; решить, признавать передачу прямо или сначала убрать персональные данные из текста
+-   push (вариант 2 выше), или оба шага.
+-2. Нужно ли новое/повторное уведомление в Роскомнадзор при появлении Firebase/APNs как новых получателей
+-   данных.
+-3. Стиль вставки новых пунктов (отдельные номера 5.6.1/6.4.1/8.2.4a/10.8 против пересчёта всей нумерации
+-   документа) — предложено вставками без сдвига номеров, чтобы не переиздавать всю политику, но решение
+-   юриста может быть иным.
+-4. Не противоречит ли п. 9 (данные сотрудников Клиента — Клиент как оператор ПД) новому пункту про хранение
+-   имени в журналах после удаления аккаунта — представляется, что нет (это тот же режим «поручение Клиента»),
+-   но стоит явно сверить.
+-
+-## Смежные документы
+-
+-- Факты о приложениях, из которых собран этот черновик: [00-overview.md](00-overview.md),
+-  [07-privacy-forms.md](07-privacy-forms.md) (готовые ответы для App Store/Google Play — их нужно свести с
+-  итоговым текстом политики после правки юристом), [10-rejections.md](10-rejections.md) (готовый ответ Apple
+-  по правилу 5.1.1(v) про удаление аккаунта).
+-- Действующая политика: `src/app/privacy/page.tsx` (редакция от 22 сентября 2026).
++# Черновик правок политики конфиденциальности — приложения WeSetup
++
++**Это черновик, не опубликовано.** Ничего из этого текста нельзя вставлять на сайт без проверки юристом и
++владельцем. Формулировки написаны так, чтобы встать в действующую политику (`src/app/privacy/page.tsx`,
++редакция от 22 сентября 2026) с минимальными правками — нумерация пунктов ниже совпадает с нумерацией на
++странице `/privacy`. Составлено 26 сентября 2026 в рамках подготовки мобильных приложений WeSetup для App
++Store и Google Play ([00-overview.md](00-overview.md)).
++
++Зачем нужна правка — три новых факта, которых не было, когда писалась текущая редакция:
++
++1. Появились мобильные приложения (Capacitor-оболочка вокруг сайта) для iOS и Android.
++2. Приложения запрашивают push-токен устройства и получают уведомления через **Firebase Cloud Messaging**
++   (Google) и **Apple Push Notification service** (Apple) — оба сервиса физически находятся за пределами
++   России. Действующий п. 8.4 сейчас говорит, что трансграничной передачи нет, — это надо согласовать с
++   юристом (см. раздел «Что решить юристу» ниже), потому что нет ни отдельного согласия, ни уведомления в
++   Роскомнадзор именно по этому поводу.
++3. Приложения используют камеру, галерею и микрофон телефона, и в них не работает Яндекс Метрика.
++
++## Предлагаемые правки по пунктам
++
++### П. 1.4 (Общие положения — на какие сервисы распространяется Политика)
++
++Было: «…при использовании сайта wesetup.ru, веб-приложения WeSetup и Telegram Mini App через бота
++@wesetupbot».
++
++Предлагается: добавить перечисление мобильных приложений.
++
++> 1.4. Политика распространяется на все персональные данные, которые Оператор получает от пользователей при
++> использовании сайта wesetup.ru, веб-приложения WeSetup, мобильных приложений WeSetup для iOS и Android
++> (доступны в App Store и Google Play, идентификатор `ru.wesetup.app`) и Telegram Mini App через бота
++> @wesetupbot.
++
++### П. 2.6 (термин «Сервисы»)
++
++Было: «сайт wesetup.ru, веб-приложение WeSetup…, а также Telegram Mini App…».
++
++Предлагается:
++
++> 2.6. **Сервисы** — сайт wesetup.ru, веб-приложение WeSetup (электронные журналы СанПиН/ХАССП для
++> предприятий общественного питания и пищевого производства), мобильные приложения WeSetup для iOS и Android
++> — оболочка вокруг того же веб-приложения с дополнительным доступом к push-уведомлениям, камере, галерее и
++> микрофону устройства, а также Telegram Mini App, доступный через бота @wesetupbot.
++
++### Новый пункт в разделе 5 («Перечень обрабатываемых персональных данных») — после 5.6
++
++Предлагается вставить как 5.6.1 (или отдельным подпунктом внутри 5.6 — решит юрист по стилю документа):
++
++> 5.6.1. **Данные мобильных приложений.** При установке и использовании мобильных приложений WeSetup
++> дополнительно обрабатываются: токен push-уведомления (идентификатор конкретной установки приложения на
++> устройстве, привязывается к учётной записи пользователя, при выходе или удалении аккаунта удаляется);
++> версия приложения и платформа (iOS/Android) — для показа сообщения об обновлении и диагностики ошибок;
++> доступ к камере и галерее — для фотографий, прикладываемых к записям журналов, и распознавания штрихкодов и
++> QR-кодов; доступ к микрофону — для голосового ввода данных в журналы (распознавание речи выполняет системная
++> служба операционной системы устройства пользователя; аудиозапись голоса на серверы Оператора не передаётся и
++> не хранится).
++
++### П. 7 или новый подраздел — где хранятся данные push-токена
++
++Действующий раздел 7 говорит только о базах данных на территории РФ — это верно и для токена (он хранится в
++той же базе, на сервере в РФ). Уточнить можно словом «в том числе» в 7.1, не меняя смысла:
++
++> 7.1. …Оператор обеспечивает запись, систематизацию, накопление, хранение, уточнение и извлечение
++> персональных данных граждан Российской Федерации, **в том числе данных мобильных приложений**, с
++> использованием баз данных, расположенных на территории Российской Федерации.
++
++### П. 8.2 — новый подпункт о Firebase (Google) и Apple (доставка push)
++
++Добавить после 8.2.4 (Telegram) как 8.2.4a/8.2.5 (сдвинув нумерацию существующих 8.2.5–8.2.6, либо оформить как
++8.2.4.1 — решит юрист):
++
++> 8.2.4a. **Firebase Cloud Messaging (Google Ireland Limited / Google LLC)** и **Apple Push Notification
++> service (Apple Inc. / Apple Distribution International Ltd.)** — для доставки push-уведомлений в мобильные
++> приложения WeSetup. Передаётся: токен устройства и текст уведомления (заголовок и, если включено, основной
++> текст сообщения — см. ниже про возможность скрыть текст). Оператор не передаёт этим сервисам пароль,
++> платёжные данные и содержимое записей журналов сверх текста самого уведомления.
++
++### П. 8.4 — трансграничная передача (главное, что решить юристу)
++
++Действующий текст:
++
++> 8.4. **Трансграничная передача персональных данных** в иностранные государства, не обеспечивающие
++> адекватной защиты прав субъектов персональных данных, Оператором не осуществляется. В случае возникновения
++> необходимости трансграничной передачи Оператор обеспечит соблюдение требований ст. 12 152-ФЗ, включая
++> направление уведомления в Роскомнадзор и получение отдельного согласия субъекта.
++
++**Проблема:** технически передача токена устройства и текста push-уведомления в Firebase (Google, серверы вне
++РФ) и APNs (Apple, серверы вне РФ) — это трансграничная передача персональных данных, и нынешняя формулировка
++«не осуществляется» перестаёт быть точной с выходом мобильных приложений.
++
++**Довод в пользу того, что это не новая проблема:** компания уже отправляет те же самые уведомления (то же
++содержимое: заголовок задачи, напоминание о журнале) через Telegram Bot API, серверы которого тоже физически
++находятся за пределами РФ (Telegram Messenger/Telegram FZ-LLC) — и раздел 8.2.4 уже упоминает Telegram как
++получателя данных, просто без явного слова «трансграничная». То есть по факту компания и сейчас передаёт
++данные пользователей за границу через Telegram — редакция 8.4 просто не называет это трансграничной передачей.
++
++**Варианты для юриста (не выбор разработчика — только для сверки):**
++
++1. Признать в 8.4, что трансграничная передача осуществляется (в объёме токена push и текста уведомления, тем
++   же способом, что уже происходит через Telegram), и выполнить требования ст. 12 152-ФЗ: направить в
++   Роскомнадзор уведомление об изменении сведений об обработке (форма на pd.rkn.gov.ru — уже подавалась при
++   регистрации Оператора как оператора ПД, потребуется актуализация), и решить вопрос отдельного согласия —
++   скорее всего оно уже покрывается общим согласием при регистрации (п. 3.1 действующей Политики), но это
++   должен подтвердить юрист.
++2. Смягчить риск для пользователя, не трогая юридическую квалификацию: сделать текст push-уведомлений
++   нейтральным (например, «Новая задача в WeSetup» без имени сотрудника, названия компании и деталей журнала)
++   — тогда через Firebase/APNs передаётся минимум данных, а подробности пользователь видит только после входа
++   в приложение по HTTPS на сервер в РФ. Технически это отдельная настройка на стороне сервера (какой текст
++   класть в push) — можно сделать независимо от решения по 8.4, и это снижает объём того, что физически
++   потребуется признавать «трансграничной передачей».
++3. Комбинация 1+2 — сделать текст push нейтральным **и** актуализировать 8.4/уведомление в Роскомнадзор для
++   аккуратности.
++
++Вариант 2 пока не сделан: сейчас push повторяет текст уведомления в кабинете и в Telegram. Если юрист и владелец
++выберут его, разработчик сделает это отдельной небольшой доработкой на сервере (какой текст класть в push).
++
++### Новый пункт в разделе 10 («Cookies») или отдельная фраза — аналитика в приложениях
++
++Действующий раздел 10 целиком про cookies браузера и Яндекс.Метрику на сайте. Для приложений нужна отдельная
++фраза (можно как 10.8, после 10.7):
++
++> 10.8. Мобильные приложения WeSetup не используют файлы cookies и не подключают Яндекс.Метрику или любые
++> другие системы веб-аналитики: технические ограничения раздела не применяются к работе внутри приложений.
++
++### П. 6 (сроки хранения) — уточнение про удаление аккаунта из мобильного приложения
++
++Действующий п. 6.4 говорит про уничтожение/обезличивание «по достижении целей обработки» в срок до 30 дней.
++Для мобильных приложений это стоит расшифровать явно, потому что там есть готовая кнопка удаления — добавить
++подпункт 6.4.1:
++
++> 6.4.1. При удалении учётной записи (кнопка «Удалить аккаунт» в мобильном приложении или на веб-странице
++> `wesetup.ru/delete-account`) у сотрудника удаляются или обезличиваются контактные и учётные данные:
++> телефон, адрес электронной почты, привязка Telegram, ПИН-код и ключи входа — повторный вход в эту учётную
++> запись становится невозможен. Записи электронных журналов, внесённые этим сотрудником, сохраняются вместе с
++> именем сотрудника как автора записи — это требование санитарного законодательства и принципов ХАССП к
++> хранению учётной документации (см. п. 6.3), и пользователь предупреждается об этом до подтверждения
++> удаления. Если удаляемая учётная запись — единственный руководитель организации-клиента, удаление ведёт к
++> удалению всей организации целиком, которое происходит по истечении 30 (тридцати) дней с момента запроса,
++> чтобы организация не осталась без ответственного лица по ошибке.
++
++### Раздел 12 (права субъекта) — пути удаления аккаунта
++
++Добавить к 12.6 конкретные ссылки (сейчас там общая фраза «запросить удаление учётной записи через службу
++поддержки»):
++
++> 12.6. Многие права Пользователь может реализовать самостоятельно: изменить свои учётные данные в личном
++> кабинете, отключить уведомления, удалить загруженные фотографии-вложения, удалить учётную запись — в
++> мобильном приложении («Профиль» → «Удалить аккаунт»), на странице `https://wesetup.ru/delete-account` или
++> письмом на <support@wesetup.ru>.
++
++## Что решить юристу (сводка)
++
++1. Формулировка п. 8.4 о трансграничной передаче — с выходом приложений (push через Firebase/APNs) она
++   перестаёт быть точной; решить, признавать передачу прямо или сначала убрать персональные данные из текста
++   push (вариант 2 выше), или оба шага.
++2. Нужно ли новое/повторное уведомление в Роскомнадзор при появлении Firebase/APNs как новых получателей
++   данных.
++3. Стиль вставки новых пунктов (отдельные номера 5.6.1/6.4.1/8.2.4a/10.8 против пересчёта всей нумерации
++   документа) — предложено вставками без сдвига номеров, чтобы не переиздавать всю политику, но решение
++   юриста может быть иным.
++4. Не противоречит ли п. 9 (данные сотрудников Клиента — Клиент как оператор ПД) новому пункту про хранение
++   имени в журналах после удаления аккаунта — представляется, что нет (это тот же режим «поручение Клиента»),
++   но стоит явно сверить.
++
++## Смежные документы
++
++- Факты о приложениях, из которых собран этот черновик: [00-overview.md](00-overview.md),
++  [07-privacy-forms.md](07-privacy-forms.md) (готовые ответы для App Store/Google Play — их нужно свести с
++  итоговым текстом политики после правки юристом), [10-rejections.md](10-rejections.md) (готовый ответ Apple
++  по правилу 5.1.1(v) про удаление аккаунта).
++- Действующая политика: `src/app/privacy/page.tsx` (редакция от 22 сентября 2026).
++
++
++## Дополнение от 8 октября 2026: голос и распознавание фото
++
++Перед утверждением мобильной политики учесть ещё два установленных потока:
++
++- Системное распознавание речи может передавать аудио Apple или поставщику распознавания Android; текущий плагин не принуждает on-device режим. Исходное аудио не загружается самим WeSetup на свой сервер, но это не означает, что передачи нет вообще. Условия обработки, сроки хранения и трансграничные вопросы требуют подтверждения для используемых провайдеров.
++- При OCR снимки сохраняются во временное хранилище и передаются по подписанным ссылкам AI-диспетчеру. Оператор должен назвать фактического исполнителя, цели и сроки хранения, основание передачи и способ удаления; эти сведения нельзя вывести только из клиентского кода.
++
++Актуальные указания для анкет магазинов — [07-privacy-forms.md](07-privacy-forms.md). Публичная политика должна описывать фактические процессы до подачи приложения.
+diff --git a/docs/mobile/store-listing.md b/docs/mobile/store-listing.md
+index 110bca59..dd7d1435 100644
+--- a/docs/mobile/store-listing.md
++++ b/docs/mobile/store-listing.md
+@@ -1,143 +1,128 @@
+-# Готовые тексты для карточек App Store и Google Play
+-
+-Копируйте текст из серых блоков целиком. Длины проверены скриптом (таблица внизу). Где вставлять — в
+-[06-store-listings.md](06-store-listings.md).
+-
+-## Общие данные
+-
+-| Что | Значение |
+-|---|---|
+-| Название приложения на телефоне | WeSetup |
+-| Идентификатор (bundle id / package name) | `ru.wesetup.app` |
+-| Категория App Store | Business (Бизнес); вторая — Productivity (Производительность) |
+-| Категория Google Play | Приложения → Бизнес |
+-| Возрастной рейтинг | App Store — 4+; Google Play — по анкете IARC ожидается «3+» с отметкой «Взаимодействие пользователей» ([07](07-privacy-forms.md)) |
+-| Цена | Бесплатно, без покупок внутри, без рекламы |
+-| Сайт и поддержка | https://wesetup.ru |
+-| Почта поддержки | support@wesetup.ru |
+-| Политика конфиденциальности | https://wesetup.ru/privacy |
+-| Условия использования | https://wesetup.ru/terms |
+-| Удаление аккаунта (веб-страница) | https://wesetup.ru/delete-account |
+-| Удаление аккаунта в приложении | Профиль → Удалить аккаунт |
+-| Авторские права (App Store) | 2026 ООО «БФС» |
+-
+-## App Store
+-
+-### Название App Store (до 30)
+-
+-```text
+-WeSetup
+-```
+-
+-### Подзаголовок App Store (до 30)
+-
+-```text
+-Журналы СанПиН и ХАССП
+-```
+-
+-### Рекламный текст App Store (до 170)
+-
+-```text
+-Журналы СанПиН и ХАССП, задачи на смену и напоминания в телефоне. Всё, что есть в кабинете WeSetup на сайте, теперь и в приложении.
+-```
+-
+-### Ключевые слова App Store (до 100)
+-
+-Слова из названия и подзаголовка (WeSetup, журналы, СанПиН, ХАССП) App Store учитывает сам — повторять их не нужно.
+-
+-```text
+-общепит,кафе,ресторан,столовая,гигиена,бракераж,температура,холодильник,уборка,роспотребнадзор
+-```
+-
+-### Описание App Store (до 4000)
+-
+-```text
+-WeSetup — электронные журналы СанПиН и ХАССП для кафе, ресторанов, столовых и пищевых производств. Приложение для сотрудников и руководителей компаний, которые ведут журналы в WeSetup.
+-
+-Сотруднику
+-- Список дел на смену: какие журналы заполнить и какие задачи сделать сегодня.
+-- Журналы с телефона: гигиена и здоровье, температура холодильников, бракераж, уборка и другие. Понятные шаги вместо пустых таблиц.
+-- Напоминания на телефон, когда пора заполнить журнал или появилась новая задача. Нажмите на уведомление — откроется нужный экран.
+-- Фото к записям с камеры телефона и сканирование штрихкодов.
+-- Голосовой ввод: продиктуйте температуру или заметку вместо набора.
+-- QR-плакаты в цехе: наведите камеру телефона на плакат — нужный журнал откроется прямо в приложении.
+-
+-Руководителю
+-- Сводка за день: что заполнено, что пропущено, кто не отметился.
+-- Сотрудники, должности и доступ к журналам.
+-- Печать журналов и отчётов через системную печать телефона.
+-- Отчёты в PDF и таблицах — отправка через «Поделиться».
+-- Те же данные, что в кабинете на сайте: запись из приложения сразу видна всем, кому она нужна.
+-
+-Как начать
+-Аккаунт сотрудника заводит руководитель компании в WeSetup. Войдите по номеру телефона и паролю, которые он выдал. Компанию подключают на сайте wesetup.ru.
+-
+-Без рекламы. Вопросы и предложения: support@wesetup.ru
+-```
+-
+-### Что нового в версии 1.0 (до 500)
+-
+-Google Play — поле «Примечания к выпуску» (до 500 знаков). App Store — поле «What's New» появится только с версии 1.1 (там до 4000).
+-
+-```text
+-Первая версия приложения WeSetup: все разделы кабинета, напоминания о задачах и журналах, печать журналов, голосовой ввод, камера для фото и штрихкодов, QR-плакаты открываются прямо в приложении.
+-```
+-
+-## Google Play
+-
+-### Название Google Play (до 30)
+-
+-```text
+-WeSetup: журналы ХАССП
+-```
+-
+-### Краткое описание Google Play (до 80)
+-
+-```text
+-Журналы СанПиН и ХАССП, задачи на смену и напоминания для кафе и производств
+-```
+-
+-### Полное описание Google Play (до 4000)
+-
+-То же, что описание App Store.
+-
+-```text
+-WeSetup — электронные журналы СанПиН и ХАССП для кафе, ресторанов, столовых и пищевых производств. Приложение для сотрудников и руководителей компаний, которые ведут журналы в WeSetup.
+-
+-Сотруднику
+-- Список дел на смену: какие журналы заполнить и какие задачи сделать сегодня.
+-- Журналы с телефона: гигиена и здоровье, температура холодильников, бракераж, уборка и другие. Понятные шаги вместо пустых таблиц.
+-- Напоминания на телефон, когда пора заполнить журнал или появилась новая задача. Нажмите на уведомление — откроется нужный экран.
+-- Фото к записям с камеры телефона и сканирование штрихкодов.
+-- Голосовой ввод: продиктуйте температуру или заметку вместо набора.
+-- QR-плакаты в цехе: наведите камеру телефона на плакат — нужный журнал откроется прямо в приложении.
+-
+-Руководителю
+-- Сводка за день: что заполнено, что пропущено, кто не отметился.
+-- Сотрудники, должности и доступ к журналам.
+-- Печать журналов и отчётов через системную печать телефона.
+-- Отчёты в PDF и таблицах — отправка через «Поделиться».
+-- Те же данные, что в кабинете на сайте: запись из приложения сразу видна всем, кому она нужна.
+-
+-Как начать
+-Аккаунт сотрудника заводит руководитель компании в WeSetup. Войдите по номеру телефона и паролю, которые он выдал. Компанию подключают на сайте wesetup.ru.
+-
+-Без рекламы. Вопросы и предложения: support@wesetup.ru
+-```
+-
+-## Проверка длины
+-
+-Посчитано скриптом `node` по блокам этого файла (символы Unicode; перевод строки — 1 символ):
+-
+-<!-- LENGTHS -->
+-| Текст | Символов | Лимит | Укладывается |
+-|---|---|---|---|
+-| Название App Store | 7 | 30 | да |
+-| Подзаголовок App Store | 22 | 30 | да |
+-| Рекламный текст App Store | 131 | 170 | да |
+-| Ключевые слова App Store | 94 | 100 | да |
+-| Описание App Store | 1334 | 4000 | да |
+-| Что нового в версии 1.0 | 195 | 500 | да |
+-| Название Google Play | 22 | 30 | да |
+-| Краткое описание Google Play | 76 | 80 | да |
+-| Полное описание Google Play | 1334 | 4000 | да |
++# Готовые тексты для карточек App Store и Google Play
++
++Копируйте текст из серых блоков целиком. Длины проверяются при упаковке; у Apple Keywords лимит считается в байтах UTF-8. Где вставлять — в
++[06-store-listings.md](06-store-listings.md).
++
++## Общие данные
++
++| Что | Значение |
++|---|---|
++| Название приложения на телефоне | WeSetup |
++| Идентификатор (bundle id / package name) | `ru.wesetup.app` |
++| Категория App Store | Business (Бизнес); вторая — Productivity (Производительность) |
++| Категория Google Play | Приложения → Бизнес |
++| Возрастной рейтинг | Рассчитывается Apple / IARC по заполненной анкете ([07](07-privacy-forms.md)) |
++| Цена | Бесплатно, без покупок внутри, без рекламы |
++| Сайт и поддержка | https://wesetup.ru |
++| Почта поддержки | support@wesetup.ru |
++| Политика конфиденциальности | https://wesetup.ru/privacy |
++| Условия использования | https://wesetup.ru/terms |
++| Удаление аккаунта (веб-страница) | https://wesetup.ru/delete-account |
++| Удаление аккаунта в приложении | Профиль → Удалить аккаунт |
++| Авторские права (App Store) | 2026 ООО «БФС» |
++
++## App Store
++
++### Название App Store (до 30)
++
++```text
++WeSetup
++```
++
++### Подзаголовок App Store (до 30)
++
++```text
++Журналы СанПиН и ХАССП
++```
++
++### Рекламный текст App Store (до 170)
++
++```text
++Журналы СанПиН и ХАССП, задачи на смену и напоминания в телефоне. Всё, что есть в кабинете WeSetup на сайте, теперь и в приложении.
++```
++
++### Ключевые слова App Store (до 100 байт UTF-8)
++
++Слова из названия и подзаголовка (WeSetup, журналы, СанПиН, ХАССП) App Store учитывает сам — повторять их не нужно.
++
++```text
++общепит,ресторан,гигиена,бракераж,температура,уборка
++```
++
++### Описание App Store (до 4000)
++
++```text
++WeSetup — электронные журналы СанПиН и ХАССП для кафе, ресторанов, столовых и пищевых производств. Приложение для сотрудников и руководителей компаний, которые ведут журналы в WeSetup.
++
++Сотруднику
++- Список дел на смену: какие журналы заполнить и какие задачи сделать сегодня.
++- Журналы с телефона: гигиена и здоровье, температура холодильников, бракераж, уборка и другие. Понятные шаги вместо пустых таблиц.
++- Напоминания на телефон, когда пора заполнить журнал или появилась новая задача. Нажмите на уведомление — откроется нужный экран.
++- Фото к записям с камеры телефона и сканирование штрихкодов.
++- Голосовой ввод: продиктуйте температуру или заметку вместо набора.
++- QR-плакаты в цехе: наведите камеру телефона на плакат — нужный журнал откроется прямо в приложении.
++
++Руководителю
++- Сводка за день: что заполнено, что пропущено, кто не отметился.
++- Сотрудники, должности и доступ к журналам.
++- Печать журналов и отчётов через системную печать телефона.
++- Отчёты в PDF и таблицах — отправка через «Поделиться».
++- Те же данные, что в кабинете на сайте: запись из приложения сразу видна всем, кому она нужна.
++
++Как начать
++Аккаунт сотрудника заводит руководитель компании в WeSetup. Войдите по номеру телефона и паролю, которые он выдал. Компанию подключают на сайте wesetup.ru.
++
++Без рекламы. Вопросы и предложения: support@wesetup.ru
++```
++
++### Что нового в версии 1.0.0 (до 500)
++
++Google Play — поле «Примечания к выпуску» (до 500 знаков). App Store — поле «What's New» появится у следующего обновления (там до 4000).
++
++```text
++Первая версия приложения WeSetup: все разделы кабинета, напоминания о задачах и журналах, печать журналов, голосовой ввод, камера для фото и штрихкодов, QR-плакаты открываются прямо в приложении.
++```
++
++## Google Play
++
++### Название Google Play (до 30)
++
++```text
++WeSetup: журналы ХАССП
++```
++
++### Краткое описание Google Play (до 80)
++
++```text
++Журналы СанПиН и ХАССП, задачи на смену и напоминания для кафе и производств
++```
++
++### Полное описание Google Play (до 4000)
++
++То же, что описание App Store.
++
++```text
++WeSetup — электронные журналы СанПиН и ХАССП для кафе, ресторанов, столовых и пищевых производств. Приложение для сотрудников и руководителей компаний, которые ведут журналы в WeSetup.
++
++Сотруднику
++- Список дел на смену: какие журналы заполнить и какие задачи сделать сегодня.
++- Журналы с телефона: гигиена и здоровье, температура холодильников, бракераж, уборка и другие. Понятные шаги вместо пустых таблиц.
++- Напоминания на телефон, когда пора заполнить журнал или появилась новая задача. Нажмите на уведомление — откроется нужный экран.
++- Фото к записям с камеры телефона и сканирование штрихкодов.
++- Голосовой ввод: продиктуйте температуру или заметку вместо набора.
++- QR-плакаты в цехе: наведите камеру телефона на плакат — нужный журнал откроется прямо в приложении.
++
++Руководителю
++- Сводка за день: что заполнено, что пропущено, кто не отметился.
++- Сотрудники, должности и доступ к журналам.
++- Печать журналов и отчётов через системную печать телефона.
++- Отчёты в PDF и таблицах — отправка через «Поделиться».
++- Те же данные, что в кабинете на сайте: запись из приложения сразу видна всем, кому она нужна.
++
++Как начать
++Аккаунт сотрудника заводит руководитель компании в WeSetup. Войдите по номеру телефона и паролю, которые он выдал. Компанию подключают на сайте wesetup.ru.
++
++Без рекламы. Вопросы и предложения: support@wesetup.ru
++```
++
++У Keywords Apple лимит 100 **байт**, а не 100 русских символов. [Официальные ограничения Apple](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information).
+diff --git a/mobile/README.md b/mobile/README.md
+index 4fdab242..67c4fcf3 100644
+--- a/mobile/README.md
++++ b/mobile/README.md
+@@ -26,8 +26,7 @@ Capacitor-оболочка вокруг мини-версии сайта. При
+ - **WebPrint** — локальный плагин печати: `print({ jobName })` открывает системную
+   печать текущей страницы (принтер или PDF), `printFile({ path, jobName })` —
+   печать готового PDF (бланк журнала с сервера; сайт кладёт его во временную
+-  папку через Filesystem; пока только Android — на iOS сайт открывает лист
+-  «Поделиться», где есть «Напечатать»), `openSettings()` — экран приложения в настройках
++  папку через Filesystem; пока Android и iOS), `openSettings()` — экран приложения в настройках
+   телефона. Android: `android/app/src/main/java/ru/wesetup/app/WebPrintPlugin.java`
+   (регистрация в `MainActivity`), iOS: `ios/App/App/WebPrintPlugin.swift`
+   (регистрация в `WeSetupViewController.capacitorDidLoad`).
+@@ -41,8 +40,7 @@ Capacitor-оболочка вокруг мини-версии сайта. При
+   `https://wesetup.ru` (`/mini`, `/journals`, `/join`, `/journal-fill`,
+   `/equipment-fill`, `/room-fill`, `/task-fill`, `/delete-account`); iOS —
+   `ios/App/App/App.entitlements` (`applinks:wesetup.ru`, `webcredentials:wesetup.ru`).
+-- **Push**: `@capacitor-firebase/messaging`. Без файлов Firebase приложение
+-  собирается и работает, только без push.
++- **Push**: `@capacitor-firebase/messaging`. Без файлов Firebase можно собрать debug-версию без push; store release требует корректную конфигурацию.
+ 
+ ## Версии
+ 
+@@ -90,14 +88,20 @@ APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~7 МБ). Постав
+ 
+ Подписанный выпуск локально (если есть ключ): положить `android/app/upload.jks`,
+ задать `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` и
+-выполнить `./gradlew bundleRelease -PversionCode=<номер>`. Без `upload.jks`
+-release-сборка получается неподписанной.
++выполнить `./gradlew bundleRelease -PversionCode=<номер>`. Для release обязательны ключ, пароли и корректный Firebase-конфиг. Проверка `scripts/release-preflight.mjs` блокирует неподписанный выпуск и сборку с тестовым URL.
+ 
+ iOS на Windows не собрать — это делает GitHub Actions (или Mac: `npx cap sync ios`,
+ затем открыть `ios/App/App.xcworkspace` в Xcode).
+ 
+ ## Выпуск: два workflow
+ 
++Актуальный первый выпуск описан в [PUBLISHING.md](../docs/mobile/PUBLISHING.md).
++По умолчанию release только создаёт подписанные AAB, APK и IPA: `track=none`,
++`upload_ios=false`, `play_status=draft`. Загрузка в TestFlight включается отдельно.
++В артефактах сохраняются SHA-256, версия, номер и source commit.
++`npm run test:release` проверяет запрет выпуска без конфигурации и с тестовым URL.
++
++
+ **«Проверка приложений»** (`.github/workflows/mobile-check.yml`) — сама
+ запускается при изменениях в `mobile/**` и в `mobile-*.yml`, можно запустить
+ вручную. Без секретов. Собирает отладочный APK (артефакт
+@@ -114,7 +118,7 @@ Actions → «Выпуск приложений» → Run workflow. Параме
+ - `play_status` — `completed` обычно; `draft`, пока приложение в Google Play ещё
+   ни разу не выпускалось (Google не даёт создавать другие выпуски у черновика).
+ 
+-Номер сборки = номер запуска workflow (`github.run_number`), общий для Android
++Номер сборки = явно заданный `build_number` или номер запуска workflow (`github.run_number`), общий для Android
+ (`versionCode`) и iOS (`CFBundleVersion`), поэтому всегда растёт.
+ 
+ Секреты GitHub (названия точные; где взять — `docs/mobile/secrets.md`):
+diff --git a/mobile/scripts/release-manifest.mjs b/mobile/scripts/release-manifest.mjs
+index daa99338..bded77e4 100644
+--- a/mobile/scripts/release-manifest.mjs
++++ b/mobile/scripts/release-manifest.mjs
+@@ -1,32 +1,31 @@
+-import { createHash } from "node:crypto";
+-import { execFileSync } from "node:child_process";
+-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+-import path from "node:path";
+-import { mobileRoot, checkRelease } from "./release-preflight.mjs";
+-
+-const platform = process.argv[2];
+-const errors = checkRelease({ platform });
+-if (errors.length) throw new Error(errors.join("\n"));
+-const relative = platform === "android"
+-  ? ["android/app/build/outputs/bundle/release/app-release.aab", "android/app/build/outputs/apk/release/app-release.apk"]
+-  : ["ios/App/build/WeSetup.ipa"];
+-const artifacts = relative.map((name) => {
+-  const file = path.join(mobileRoot, name);
+-  if (!existsSync(file)) throw new Error(`Missing release artifact: ${name}`);
+-  const bytes = readFileSync(file);
+-  return { file: path.basename(file), bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+-});
+-const manifest = {
+-  platform, applicationId: "ru.wesetup.app",
+-  version: JSON.parse(readFileSync(path.join(mobileRoot, "package.json"), "utf8")).version,
+-  buildNumber: Number(process.env.BUILD_NUMBER),
+-  sourceCommit: process.env.GITHUB_SHA || execFileSync("git", ["rev-parse", "HEAD"], { cwd: mobileRoot, encoding: "utf8" }).trim(),
+-  workflowRun: process.env.GITHUB_RUN_ID || null,
+-  builtAt: new Date().toISOString(),
+-  verification: "Generated only after signature checks in the release workflow; requires device smoke testing before submission.",
+-  artifacts,
+-};
+-const output = path.join(mobileRoot, platform === "android" ? "android/app/build/outputs/release-manifest.json" : "ios/App/build/release-manifest.json");
+-writeFileSync(output, JSON.stringify(manifest, null, 2) + "\n");
+-console.log(output);
++import { createHash } from "node:crypto";
++import { execFileSync } from "node:child_process";
++import { readFileSync, writeFileSync, existsSync } from "node:fs";
++import path from "node:path";
++import { mobileRoot, checkRelease } from "./release-preflight.mjs";
+ 
++const platform = process.argv[2];
++const errors = checkRelease({ platform });
++if (errors.length) throw new Error(errors.join("\n"));
++const relative = platform === "android"
++  ? ["android/app/build/outputs/bundle/release/app-release.aab", "android/app/build/outputs/apk/release/app-release.apk"]
++  : ["ios/App/build/WeSetup.ipa"];
++const artifacts = relative.map((name) => {
++  const file = path.join(mobileRoot, name);
++  if (!existsSync(file)) throw new Error(`Missing release artifact: ${name}`);
++  const bytes = readFileSync(file);
++  return { file: path.basename(file), bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
++});
++const manifest = {
++  platform, applicationId: "ru.wesetup.app",
++  version: JSON.parse(readFileSync(path.join(mobileRoot, "package.json"), "utf8")).version,
++  buildNumber: Number(process.env.BUILD_NUMBER),
++  sourceCommit: process.env.GITHUB_SHA || execFileSync("git", ["rev-parse", "HEAD"], { cwd: mobileRoot, encoding: "utf8" }).trim(),
++  workflowRun: process.env.GITHUB_RUN_ID || null,
++  builtAt: new Date().toISOString(),
++  verification: "Generated only after signature checks in the release workflow; requires device smoke testing before submission.",
++  artifacts,
++};
++const output = path.join(mobileRoot, platform === "android" ? "android/app/build/outputs/release-manifest.json" : "ios/App/build/release-manifest.json");
++writeFileSync(output, JSON.stringify(manifest, null, 2) + "\n");
++console.log(output);
+diff --git a/mobile/scripts/release-preflight.mjs b/mobile/scripts/release-preflight.mjs
+index bfd3bc5e..c2226596 100644
+--- a/mobile/scripts/release-preflight.mjs
++++ b/mobile/scripts/release-preflight.mjs
+@@ -1,74 +1,73 @@
+-import { readFileSync, existsSync } from "node:fs";
+-import path from "node:path";
+-import { fileURLToPath } from "node:url";
+-
+-export const APP_ID = "ru.wesetup.app";
+-export const APP_URL = "https://wesetup.ru/mini?src=app";
+-export const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+-
+-// Return names/reasons only: signing material must never appear in logs.
+-export function checkRelease({ root = mobileRoot, platform, env = process.env } = {}) {
+-  const errors = [];
+-  const read = (relative) => {
+-    try { return readFileSync(path.join(root, relative), "utf8"); }
+-    catch { errors.push(`Missing file: ${relative}`); return ""; }
+-  };
+-  const json = (relative) => {
+-    const source = read(relative);
+-    if (!source) return {};
+-    try { return JSON.parse(source.replace(/^\uFEFF/, "")); }
+-    catch { errors.push(`Invalid JSON: ${relative}`); return {}; }
+-  };
+-  const requireEnv = (names) => {
+-    for (const name of names) if (!env[name]?.trim()) errors.push(`Missing environment variable: ${name}`);
+-  };
+-  if (!["android", "ios"].includes(platform)) return ["Platform must be android or ios"];
+-  requireEnv(["BUILD_NUMBER"]);
+-  if (!/^[1-9]\d{0,9}$/.test(env.BUILD_NUMBER ?? "") || Number(env.BUILD_NUMBER) > 2100000000)
+-    errors.push("BUILD_NUMBER must be an integer between 1 and 2100000000");
+-  if (env.WESETUP_APP_URL?.trim()) errors.push("WESETUP_APP_URL must be unset for a store release");
+-  const pkg = json("package.json");
+-  if (!/^\d+\.\d+\.\d+$/.test(pkg.version ?? "")) errors.push("App version must be major.minor.patch");
+-
+-  const configPath = platform === "android" ? "android/app/src/main/assets/capacitor.config.json" : "ios/App/App/capacitor.config.json";
+-  const config = json(configPath);
+-  if (config.appId !== APP_ID) errors.push("Generated app ID must be ru.wesetup.app");
+-  if (config.server?.url !== APP_URL || config.server?.cleartext !== false)
+-    errors.push("Generated server configuration must use the HTTPS production URL with cleartext disabled");
+-  const hosts = config.server?.allowNavigation;
+-  if (!Array.isArray(hosts) || !hosts.includes("wesetup.ru") || hosts.some((host) => !["wesetup.ru", "www.wesetup.ru"].includes(host)))
+-    errors.push("Generated navigation allowlist contains unexpected hosts");
+-  if (config[platform]?.appendUserAgent !== `WeSetupApp/${pkg.version} (${platform})`)
+-    errors.push("Generated User-Agent does not match the platform and app version");
+-  if (config.server?.errorPath !== "offline.html" || !existsSync(path.join(root, "www/offline.html")))
+-    errors.push("Offline fallback is missing");
+-
+-  if (platform === "android") {
+-    requireEnv(["ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"]);
+-    if (!existsSync(path.join(root, "android/app/upload.jks"))) errors.push("Missing Android upload keystore");
+-    const firebase = json("android/app/google-services.json");
+-    const client = firebase.client?.find((c) => c.client_info?.android_client_info?.package_name === APP_ID);
+-    if (!client || !firebase.project_info?.project_id || !firebase.project_info?.project_number || !client.client_info?.mobilesdk_app_id || !client.api_key?.some((k) => k.current_key))
+-      errors.push("Firebase Android config must contain this app, project, app ID and API key");
+-  } else {
+-    requireEnv(["APPLE_TEAM_ID", "ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"]);
+-    if (!/^[A-Z0-9]{10}$/.test(env.APPLE_TEAM_ID ?? "")) errors.push("Invalid APPLE_TEAM_ID format");
+-    if (!/^[A-Z0-9]{10}$/.test(env.ASC_KEY_ID ?? "")) errors.push("Invalid ASC_KEY_ID format");
+-    if (!/^[a-f0-9-]{36}$/i.test(env.ASC_ISSUER_ID ?? "")) errors.push("Invalid ASC_ISSUER_ID format");
+-    if (!env.ASC_KEY_PATH || !existsSync(env.ASC_KEY_PATH)) errors.push("App Store Connect API key file is missing");
+-    const plist = read("ios/App/App/GoogleService-Info.plist");
+-    const value = (key) => plist.match(new RegExp(`<key>\\s*${key}\\s*</key>\\s*<string>([^<]+)</string>`))?.[1]?.trim();
+-    if (value("BUNDLE_ID") !== APP_ID || !value("GOOGLE_APP_ID") || !value("PROJECT_ID") || !value("GCM_SENDER_ID") || !value("API_KEY"))
+-      errors.push("Firebase iOS config must match ru.wesetup.app and contain the project, sender, app ID and API key");
+-  }
+-  return errors;
+-}
+-
+-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+-  const platform = process.argv[process.argv.indexOf("--platform") + 1];
+-  const errors = checkRelease({ platform });
+-  for (const error of errors) console.error(`Release blocked: ${error}`);
+-  if (errors.length) process.exitCode = 1;
+-  else console.log(`Release preflight PASS: ${platform}, build ${process.env.BUILD_NUMBER}`);
+-}
++import { readFileSync, existsSync } from "node:fs";
++import path from "node:path";
++import { fileURLToPath } from "node:url";
+ 
++export const APP_ID = "ru.wesetup.app";
++export const APP_URL = "https://wesetup.ru/mini?src=app";
++export const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
++
++// Return names/reasons only: signing material must never appear in logs.
++export function checkRelease({ root = mobileRoot, platform, env = process.env } = {}) {
++  const errors = [];
++  const read = (relative) => {
++    try { return readFileSync(path.join(root, relative), "utf8"); }
++    catch { errors.push(`Missing file: ${relative}`); return ""; }
++  };
++  const json = (relative) => {
++    const source = read(relative);
++    if (!source) return {};
++    try { return JSON.parse(source.replace(/^\uFEFF/, "")); }
++    catch { errors.push(`Invalid JSON: ${relative}`); return {}; }
++  };
++  const requireEnv = (names) => {
++    for (const name of names) if (!env[name]?.trim()) errors.push(`Missing environment variable: ${name}`);
++  };
++  if (!["android", "ios"].includes(platform)) return ["Platform must be android or ios"];
++  requireEnv(["BUILD_NUMBER"]);
++  if (!/^[1-9]\d{0,9}$/.test(env.BUILD_NUMBER ?? "") || Number(env.BUILD_NUMBER) > 2100000000)
++    errors.push("BUILD_NUMBER must be an integer between 1 and 2100000000");
++  if (env.WESETUP_APP_URL?.trim()) errors.push("WESETUP_APP_URL must be unset for a store release");
++  const pkg = json("package.json");
++  if (!/^\d+\.\d+\.\d+$/.test(pkg.version ?? "")) errors.push("App version must be major.minor.patch");
++
++  const configPath = platform === "android" ? "android/app/src/main/assets/capacitor.config.json" : "ios/App/App/capacitor.config.json";
++  const config = json(configPath);
++  if (config.appId !== APP_ID) errors.push("Generated app ID must be ru.wesetup.app");
++  if (config.server?.url !== APP_URL || config.server?.cleartext !== false)
++    errors.push("Generated server configuration must use the HTTPS production URL with cleartext disabled");
++  const hosts = config.server?.allowNavigation;
++  if (!Array.isArray(hosts) || !hosts.includes("wesetup.ru") || hosts.some((host) => !["wesetup.ru", "www.wesetup.ru"].includes(host)))
++    errors.push("Generated navigation allowlist contains unexpected hosts");
++  if (config[platform]?.appendUserAgent !== `WeSetupApp/${pkg.version} (${platform})`)
++    errors.push("Generated User-Agent does not match the platform and app version");
++  if (config.server?.errorPath !== "offline.html" || !existsSync(path.join(root, "www/offline.html")))
++    errors.push("Offline fallback is missing");
++
++  if (platform === "android") {
++    requireEnv(["ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"]);
++    if (!existsSync(path.join(root, "android/app/upload.jks"))) errors.push("Missing Android upload keystore");
++    const firebase = json("android/app/google-services.json");
++    const client = firebase.client?.find((c) => c.client_info?.android_client_info?.package_name === APP_ID);
++    if (!client || !firebase.project_info?.project_id || !firebase.project_info?.project_number || !client.client_info?.mobilesdk_app_id || !client.api_key?.some((k) => k.current_key))
++      errors.push("Firebase Android config must contain this app, project, app ID and API key");
++  } else {
++    requireEnv(["APPLE_TEAM_ID", "ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"]);
++    if (!/^[A-Z0-9]{10}$/.test(env.APPLE_TEAM_ID ?? "")) errors.push("Invalid APPLE_TEAM_ID format");
++    if (!/^[A-Z0-9]{10}$/.test(env.ASC_KEY_ID ?? "")) errors.push("Invalid ASC_KEY_ID format");
++    if (!/^[a-f0-9-]{36}$/i.test(env.ASC_ISSUER_ID ?? "")) errors.push("Invalid ASC_ISSUER_ID format");
++    if (!env.ASC_KEY_PATH || !existsSync(env.ASC_KEY_PATH)) errors.push("App Store Connect API key file is missing");
++    const plist = read("ios/App/App/GoogleService-Info.plist");
++    const value = (key) => plist.match(new RegExp(`<key>\\s*${key}\\s*</key>\\s*<string>([^<]+)</string>`))?.[1]?.trim();
++    if (value("BUNDLE_ID") !== APP_ID || !value("GOOGLE_APP_ID") || !value("PROJECT_ID") || !value("GCM_SENDER_ID") || !value("API_KEY"))
++      errors.push("Firebase iOS config must match ru.wesetup.app and contain the project, sender, app ID and API key");
++  }
++  return errors;
++}
++
++if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  const platform = process.argv[process.argv.indexOf("--platform") + 1];
++  const errors = checkRelease({ platform });
++  for (const error of errors) console.error(`Release blocked: ${error}`);
++  if (errors.length) process.exitCode = 1;
++  else console.log(`Release preflight PASS: ${platform}, build ${process.env.BUILD_NUMBER}`);
++}
+diff --git a/mobile/scripts/release-preflight.test.mjs b/mobile/scripts/release-preflight.test.mjs
+index f1d93c16..829dc6e6 100644
+--- a/mobile/scripts/release-preflight.test.mjs
++++ b/mobile/scripts/release-preflight.test.mjs
+@@ -1,69 +1,68 @@
+-import test from "node:test";
+-import assert from "node:assert/strict";
+-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+-import { tmpdir } from "node:os";
+-import path from "node:path";
+-import { APP_ID, APP_URL, checkRelease } from "./release-preflight.mjs";
+-
+-function fixture(t, platform = "android") {
+-  const root = mkdtempSync(path.join(tmpdir(), "wesetup-release-"));
+-  t.after(() => rmSync(root, { recursive: true, force: true }));
+-  const put = (name, value) => {
+-    const target = path.join(root, name);
+-    mkdirSync(path.dirname(target), { recursive: true });
+-    writeFileSync(target, typeof value === "string" ? value : JSON.stringify(value));
+-  };
+-  const config = { appId: APP_ID, server: { url: APP_URL, cleartext: false, allowNavigation: ["wesetup.ru", "www.wesetup.ru"], errorPath: "offline.html" }, [platform]: { appendUserAgent: `WeSetupApp/1.0.0 (${platform})` } };
+-  const configPath = platform === "android" ? "android/app/src/main/assets/capacitor.config.json" : "ios/App/App/capacitor.config.json";
+-  put("package.json", { version: "1.0.0" });
+-  put(configPath, config);
+-  put("www/offline.html", "<html>Offline</html>");
+-  put("android/app/upload.jks", "test-fixture-only");
+-  put("android/app/google-services.json", { project_info: { project_id: "test", project_number: "123" }, client: [{ client_info: { android_client_info: { package_name: APP_ID }, mobilesdk_app_id: "1:123:android:test" }, api_key: [{ current_key: "fixture" }] }] });
+-  put("ios/App/App/GoogleService-Info.plist", `<plist><dict><key>BUNDLE_ID</key><string>${APP_ID}</string><key>GOOGLE_APP_ID</key><string>1:123:ios:test</string><key>PROJECT_ID</key><string>test</string><key>GCM_SENDER_ID</key><string>123</string><key>API_KEY</key><string>fixture</string></dict></plist>`);
+-  put("test.p8", "fixture");
+-  const env = { BUILD_NUMBER: "7", ANDROID_KEYSTORE_PASSWORD: "secret-do-not-log", ANDROID_KEY_ALIAS: "upload", ANDROID_KEY_PASSWORD: "secret-do-not-log", APPLE_TEAM_ID: "ABCDEFGHIJ", ASC_KEY_ID: "1234567890", ASC_ISSUER_ID: "12345678-1234-1234-1234-123456789012", ASC_KEY_PATH: path.join(root, "test.p8") };
+-  return { root, platform, env, put, config, configPath };
+-}
+-
+-test("complete production configurations pass for both platforms", (t) => {
+-  for (const platform of ["android", "ios"]) assert.deepEqual(checkRelease(fixture(t, platform)), []);
+-});
+-test("a generated emulator URL, cleartext or foreign host blocks release", (t) => {
+-  for (const mutate of [
+-    (f) => { f.config.server.url = "http://10.0.2.2:3000/mini"; },
+-    (f) => { f.config.server.cleartext = true; },
+-    (f) => { f.config.server.allowNavigation.push("*"); },
+-  ]) {
+-    const f = fixture(t); mutate(f); f.put(f.configPath, f.config);
+-    assert.ok(checkRelease(f).length);
+-  }
+-});
+-test("test override and mismatched platform version block release", (t) => {
+-  const f = fixture(t); f.env.WESETUP_APP_URL = APP_URL;
+-  assert.ok(checkRelease(f).some((e) => e.includes("WESETUP_APP_URL")));
+-  delete f.env.WESETUP_APP_URL; f.config.android.appendUserAgent = "WeSetupApp/0.1.0 (android)"; f.put(f.configPath, f.config);
+-  assert.ok(checkRelease(f).some((e) => e.includes("User-Agent")));
+-});
+-test("missing signing credentials fail without leaking their values", (t) => {
+-  const f = fixture(t); delete f.env.ANDROID_KEY_PASSWORD;
+-  const errors = checkRelease(f);
+-  assert.ok(errors.some((e) => e.includes("ANDROID_KEY_PASSWORD")));
+-  assert.ok(!JSON.stringify(errors).includes("secret-do-not-log"));
+-});
+-test("missing or wrong Firebase identity cannot silently disable push", (t) => {
+-  const f = fixture(t); f.put("android/app/google-services.json", { project_info: { project_id: "test" }, client: [] });
+-  assert.ok(checkRelease(f).some((e) => e.includes("Firebase Android")));
+-  const i = fixture(t, "ios"); i.put("ios/App/App/GoogleService-Info.plist", "<plist></plist>");
+-  assert.ok(checkRelease(i).some((e) => e.includes("Firebase iOS")));
+-});
+-test("invalid versions, numbers and malformed configuration are rejected", (t) => {
+-  for (const value of ["0", "-1", "1.2", "2100000001", "x"]) {
+-    const f = fixture(t); f.env.BUILD_NUMBER = value;
+-    assert.ok(checkRelease(f).some((e) => e.includes("BUILD_NUMBER")));
+-  }
+-  const f = fixture(t); f.put("package.json", { version: "1.0.0-beta" }); f.put(f.configPath, "{");
+-  assert.ok(checkRelease(f).some((e) => e.includes("version")));
+-  assert.ok(checkRelease(f).some((e) => e.includes("Invalid JSON")));
+-});
++import test from "node:test";
++import assert from "node:assert/strict";
++import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
++import { tmpdir } from "node:os";
++import path from "node:path";
++import { APP_ID, APP_URL, checkRelease } from "./release-preflight.mjs";
+ 
++function fixture(t, platform = "android") {
++  const root = mkdtempSync(path.join(tmpdir(), "wesetup-release-"));
++  t.after(() => rmSync(root, { recursive: true, force: true }));
++  const put = (name, value) => {
++    const target = path.join(root, name);
++    mkdirSync(path.dirname(target), { recursive: true });
++    writeFileSync(target, typeof value === "string" ? value : JSON.stringify(value));
++  };
++  const config = { appId: APP_ID, server: { url: APP_URL, cleartext: false, allowNavigation: ["wesetup.ru", "www.wesetup.ru"], errorPath: "offline.html" }, [platform]: { appendUserAgent: `WeSetupApp/1.0.0 (${platform})` } };
++  const configPath = platform === "android" ? "android/app/src/main/assets/capacitor.config.json" : "ios/App/App/capacitor.config.json";
++  put("package.json", { version: "1.0.0" });
++  put(configPath, config);
++  put("www/offline.html", "<html>Offline</html>");
++  put("android/app/upload.jks", "test-fixture-only");
++  put("android/app/google-services.json", { project_info: { project_id: "test", project_number: "123" }, client: [{ client_info: { android_client_info: { package_name: APP_ID }, mobilesdk_app_id: "1:123:android:test" }, api_key: [{ current_key: "fixture" }] }] });
++  put("ios/App/App/GoogleService-Info.plist", `<plist><dict><key>BUNDLE_ID</key><string>${APP_ID}</string><key>GOOGLE_APP_ID</key><string>1:123:ios:test</string><key>PROJECT_ID</key><string>test</string><key>GCM_SENDER_ID</key><string>123</string><key>API_KEY</key><string>fixture</string></dict></plist>`);
++  put("test.p8", "fixture");
++  const env = { BUILD_NUMBER: "7", ANDROID_KEYSTORE_PASSWORD: "secret-do-not-log", ANDROID_KEY_ALIAS: "upload", ANDROID_KEY_PASSWORD: "secret-do-not-log", APPLE_TEAM_ID: "ABCDEFGHIJ", ASC_KEY_ID: "1234567890", ASC_ISSUER_ID: "12345678-1234-1234-1234-123456789012", ASC_KEY_PATH: path.join(root, "test.p8") };
++  return { root, platform, env, put, config, configPath };
++}
++
++test("complete production configurations pass for both platforms", (t) => {
++  for (const platform of ["android", "ios"]) assert.deepEqual(checkRelease(fixture(t, platform)), []);
++});
++test("a generated emulator URL, cleartext or foreign host blocks release", (t) => {
++  for (const mutate of [
++    (f) => { f.config.server.url = "http://10.0.2.2:3000/mini"; },
++    (f) => { f.config.server.cleartext = true; },
++    (f) => { f.config.server.allowNavigation.push("*"); },
++  ]) {
++    const f = fixture(t); mutate(f); f.put(f.configPath, f.config);
++    assert.ok(checkRelease(f).length);
++  }
++});
++test("test override and mismatched platform version block release", (t) => {
++  const f = fixture(t); f.env.WESETUP_APP_URL = APP_URL;
++  assert.ok(checkRelease(f).some((e) => e.includes("WESETUP_APP_URL")));
++  delete f.env.WESETUP_APP_URL; f.config.android.appendUserAgent = "WeSetupApp/0.1.0 (android)"; f.put(f.configPath, f.config);
++  assert.ok(checkRelease(f).some((e) => e.includes("User-Agent")));
++});
++test("missing signing credentials fail without leaking their values", (t) => {
++  const f = fixture(t); delete f.env.ANDROID_KEY_PASSWORD;
++  const errors = checkRelease(f);
++  assert.ok(errors.some((e) => e.includes("ANDROID_KEY_PASSWORD")));
++  assert.ok(!JSON.stringify(errors).includes("secret-do-not-log"));
++});
++test("missing or wrong Firebase identity cannot silently disable push", (t) => {
++  const f = fixture(t); f.put("android/app/google-services.json", { project_info: { project_id: "test" }, client: [] });
++  assert.ok(checkRelease(f).some((e) => e.includes("Firebase Android")));
++  const i = fixture(t, "ios"); i.put("ios/App/App/GoogleService-Info.plist", "<plist></plist>");
++  assert.ok(checkRelease(i).some((e) => e.includes("Firebase iOS")));
++});
++test("invalid versions, numbers and malformed configuration are rejected", (t) => {
++  for (const value of ["0", "-1", "1.2", "2100000001", "x"]) {
++    const f = fixture(t); f.env.BUILD_NUMBER = value;
++    assert.ok(checkRelease(f).some((e) => e.includes("BUILD_NUMBER")));
++  }
++  const f = fixture(t); f.put("package.json", { version: "1.0.0-beta" }); f.put(f.configPath, "{");
++  assert.ok(checkRelease(f).some((e) => e.includes("version")));
++  assert.ok(checkRelease(f).some((e) => e.includes("Invalid JSON")));
++});
+-- 
+2.43.0
+

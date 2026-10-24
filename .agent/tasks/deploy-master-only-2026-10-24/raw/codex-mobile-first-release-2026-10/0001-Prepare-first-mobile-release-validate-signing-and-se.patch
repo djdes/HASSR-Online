@@ -1,0 +1,921 @@
+From 18e915c0d528acf6a44fc74c32b7b669543c30c0 Mon Sep 17 00:00:00 2001
+From: Denis Volkov <bugdenes@gmail.com>
+Date: Thu, 8 Oct 2026 00:00:05 +0300
+Subject: [PATCH 1/4] Prepare first mobile release: validate signing and
+ separate builds from uploads
+
+---
+ .github/workflows/mobile-check.yml        |  13 +
+ .github/workflows/mobile-release.yml      | 405 ++++++++++++----------
+ mobile/android/app/build.gradle           |  13 +-
+ mobile/ios/App/fastlane/Fastfile          | 163 +++++----
+ mobile/package.json                       |  61 ++--
+ mobile/scripts/release-manifest.mjs       |  32 ++
+ mobile/scripts/release-preflight.mjs      |  74 ++++
+ mobile/scripts/release-preflight.test.mjs |  69 ++++
+ 8 files changed, 543 insertions(+), 287 deletions(-)
+ create mode 100644 mobile/scripts/release-manifest.mjs
+ create mode 100644 mobile/scripts/release-preflight.mjs
+ create mode 100644 mobile/scripts/release-preflight.test.mjs
+
+diff --git a/.github/workflows/mobile-check.yml b/.github/workflows/mobile-check.yml
+index 193bd207..40a94829 100644
+--- a/.github/workflows/mobile-check.yml
++++ b/.github/workflows/mobile-check.yml
+@@ -47,6 +47,7 @@ jobs:
+             mobile/android/**/gradle-wrapper.properties
+ 
+       - run: npm ci
++      - run: npm run test:release
+       - run: npx cap sync android
+ 
+       - name: Сборка APK
+@@ -79,6 +80,7 @@ jobs:
+           cache-dependency-path: mobile/package-lock.json
+ 
+       - run: npm ci
++      - run: npm run test:release
+       - run: npx cap sync ios
+ 
+       - name: Сборка без подписи
+@@ -93,3 +95,14 @@ jobs:
+             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+             CODE_SIGNING_ALLOWED=NO \
+             COMPILER_INDEX_STORE_ENABLE=NO
++
++      - name: Проверить синтаксис сборщика релиза
++        working-directory: mobile/ios/App
++        run: ruby -c fastlane/Fastfile
++
++      - uses: actions/upload-artifact@v7
++        with:
++          name: wesetup-ios-simulator-${{ github.run_number }}
++          path: ${{ runner.temp }}/DerivedData/Build/Products/Debug-iphonesimulator/App.app
++          if-no-files-found: error
++          retention-days: 14
+diff --git a/.github/workflows/mobile-release.yml b/.github/workflows/mobile-release.yml
+index f25d8a94..ec930ecf 100644
+--- a/.github/workflows/mobile-release.yml
++++ b/.github/workflows/mobile-release.yml
+@@ -1,185 +1,220 @@
+-# Выпуск приложений WeSetup: Android (AAB → Google Play, внутреннее тестирование)
+-# и iOS (→ TestFlight). Запуск вручную: Actions → «Выпуск приложений» → Run workflow.
+-# Номер сборки = номер запуска этого workflow, версия — из mobile/package.json.
+-# Секреты и где их взять — docs/mobile/secrets.md.
+-name: Выпуск приложений
+-
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      platform:
+-        description: "Что собрать"
+-        type: choice
+-        options: [both, android, ios]
+-        default: both
+-      track:
+-        description: "Куда отправить Android"
+-        type: choice
+-        options: [internal, none]
+-        default: internal
+-      play_status:
+-        description: "Статус выпуска в Google Play (draft — пока приложение ни разу не выпускалось)"
+-        type: choice
+-        options: [completed, draft]
+-        default: completed
+-
+-concurrency:
+-  group: mobile-release
+-  cancel-in-progress: false
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  android:
+-    name: Android — подписанный AAB
+-    if: inputs.platform != 'ios'
+-    runs-on: ubuntu-24.04
+-    timeout-minutes: 40
+-    defaults:
+-      run:
+-        working-directory: mobile
+-    steps:
+-      - uses: actions/checkout@v7
+-
+-      - uses: actions/setup-node@v7
+-        with:
+-          node-version: 22
+-          cache: npm
+-          cache-dependency-path: mobile/package-lock.json
+-
+-      - uses: actions/setup-java@v6
+-        with:
+-          distribution: temurin
+-          java-version: 21
+-          cache: gradle
+-          cache-dependency-path: |
+-            mobile/android/*.gradle*
+-            mobile/android/**/gradle-wrapper.properties
+-
+-      - run: npm ci
+-
+-      - name: Секреты сборки
+-        env:
+-          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+-        run: |
+-          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+-            echo "::error::Нет секрета ANDROID_KEYSTORE_BASE64 — без ключа загрузки Google Play не примет сборку (docs/mobile/secrets.md)"
+-            exit 1
+-          fi
+-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
+-          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+-            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+-          else
+-            echo "::warning::Нет секрета GOOGLE_SERVICES_JSON_BASE64 — сборка будет без push-уведомлений"
+-          fi
+-
+-      - run: npx cap sync android
+-
+-      - name: Подписанный AAB
+-        working-directory: mobile/android
+-        env:
+-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+-        run: |
+-          chmod +x gradlew
+-          ./gradlew bundleRelease -PversionCode=${{ github.run_number }} --no-daemon
+-          # Сборка без подписи Google Play не примет — проверяем до загрузки.
+-          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+-
+-      - name: Убрать ключ с раннера
+-        if: always()
+-        run: rm -f android/app/upload.jks android/app/google-services.json
+-
+-      - uses: actions/upload-artifact@v7
+-        with:
+-          name: wesetup-android-${{ github.run_number }}
+-          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+-          if-no-files-found: error
+-
+-      - name: Внутреннее тестирование Google Play
+-        if: inputs.track == 'internal'
+-        uses: r0adkll/upload-google-play@v1
+-        with:
+-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+-          packageName: ru.wesetup.app
+-          releaseFiles: mobile/android/app/build/outputs/bundle/release/app-release.aab
+-          track: internal
+-          status: ${{ inputs.play_status }}
+-
+-  ios:
+-    name: iOS — TestFlight
+-    if: inputs.platform != 'android'
+-    # macOS 26 + Xcode 26: App Store принимает только сборки на SDK iOS 26.
+-    runs-on: macos-26
+-    timeout-minutes: 60
+-    defaults:
+-      run:
+-        working-directory: mobile
+-    steps:
+-      - uses: actions/checkout@v7
+-
+-      - uses: actions/setup-node@v7
+-        with:
+-          node-version: 22
+-          cache: npm
+-          cache-dependency-path: mobile/package-lock.json
+-
+-      - run: npm ci
+-
+-      - name: Секреты сборки
+-        env:
+-          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+-          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+-        run: |
+-          if [ -z "$ASC_KEY_P8_BASE64" ]; then
+-            echo "::error::Нет секрета ASC_KEY_P8_BASE64 — без ключа App Store Connect API сборку не подписать (docs/mobile/secrets.md)"
+-            exit 1
+-          fi
+-          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/asc_key.p8"
+-          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+-            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+-          else
+-            echo "::warning::Нет секрета GOOGLE_SERVICE_INFO_PLIST_BASE64 — сборка будет без push-уведомлений"
+-          fi
+-
+-      # Ставит CocoaPods-зависимости (pod install) — CocoaPods есть на раннере.
+-      - run: npx cap sync ios
+-
+-      - uses: ruby/setup-ruby@v1
+-        with:
+-          ruby-version: "3.4"
+-          # Gemfile.lock не хранится в репозитории, поэтому без кеша Bundler:
+-          # fastlane ставится явно шагом ниже по версии из Gemfile (~> 2.239).
+-          bundler-cache: false
+-          working-directory: mobile/ios/App
+-
+-      - name: fastlane
+-        working-directory: mobile/ios/App
+-        env:
+-          BUNDLE_PATH: vendor/bundle
+-        run: bundle install --jobs 4 --retry 3
+-
+-      - name: Сборка и TestFlight
+-        working-directory: mobile/ios/App
+-        env:
+-          BUILD_NUMBER: ${{ github.run_number }}
+-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+-          ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+-          BUNDLE_PATH: vendor/bundle
+-        run: bundle exec fastlane beta
+-
+-      - uses: actions/upload-artifact@v7
+-        if: success()
+-        with:
+-          name: wesetup-ios-${{ github.run_number }}
+-          path: mobile/ios/App/build/WeSetup.ipa
+-          if-no-files-found: warn
+-
+-      - name: Убрать ключи с раннера
+-        if: always()
+-        run: rm -f "$RUNNER_TEMP/asc_key.p8" ios/App/App/GoogleService-Info.plist
++# Выпуск приложений WeSetup: Android (AAB → Google Play, внутреннее тестирование)
++# и iOS (→ TestFlight). Запуск вручную: Actions → «Выпуск приложений» → Run workflow.
++# Номер сборки = номер запуска этого workflow, версия — из mobile/package.json.
++# Секреты и где их взять — docs/mobile/secrets.md.
++name: Выпуск приложений
++
++on:
++  workflow_dispatch:
++    inputs:
++      platform:
++        description: "Что собрать"
++        type: choice
++        options: [both, android, ios]
++        default: both
++      track:
++        description: "Куда отправить Android"
++        type: choice
++        options: [internal, none]
++        default: none
++      play_status:
++        description: "Статус выпуска в Google Play (draft — пока приложение ни разу не выпускалось)"
++        type: choice
++        options: [completed, draft]
++        default: draft
++      upload_ios:
++        description: "Загрузить iOS в TestFlight после сборки (по умолчанию только IPA)"
++        type: boolean
++        default: false
++      build_number:
++        description: "Новый номер сборки; пусто = номер запуска workflow. Должен быть больше ранее загруженного."
++        type: string
++        default: ""
++
++env:
++  BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
++
++concurrency:
++  group: mobile-release
++  cancel-in-progress: false
++
++permissions:
++  contents: read
++
++jobs:
++  android:
++    name: Android — подписанный AAB
++    if: inputs.platform != 'ios'
++    runs-on: ubuntu-24.04
++    timeout-minutes: 40
++    defaults:
++      run:
++        working-directory: mobile
++    steps:
++      - uses: actions/checkout@v7
++
++      - uses: actions/setup-node@v7
++        with:
++          node-version: 22
++          cache: npm
++          cache-dependency-path: mobile/package-lock.json
++
++      - uses: actions/setup-java@v6
++        with:
++          distribution: temurin
++          java-version: 21
++          cache: gradle
++          cache-dependency-path: |
++            mobile/android/*.gradle*
++            mobile/android/**/gradle-wrapper.properties
++
++      - run: npm ci
++      - run: npm run test:release
++
++      - name: Секреты сборки
++        env:
++          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
++          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
++        run: |
++          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
++            echo "::error::Нет секрета ANDROID_KEYSTORE_BASE64 — без ключа загрузки Google Play не примет сборку (docs/mobile/secrets.md)"
++            exit 1
++          fi
++          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
++          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
++            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
++          else
++            echo "::warning::Нет секрета GOOGLE_SERVICES_JSON_BASE64 — сборка будет без push-уведомлений"
++          fi
++
++      - run: npx cap sync android
++
++      - name: Подписанный AAB
++        working-directory: mobile/android
++        env:
++          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
++          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
++          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
++        run: |
++          chmod +x gradlew
++          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" --no-daemon
++          apksigner_path=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
++          "$apksigner_path" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
++          keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab > app/build/outputs/upload-certificate.txt
++          # Сборка без подписи Google Play не примет — проверяем до загрузки.
++          jarsigner -J-Duser.language=en -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
++          node ../../scripts/release-manifest.mjs android
++
++      - name: Убрать ключ с раннера
++        if: always()
++        run: rm -f android/app/upload.jks android/app/google-services.json
++
++      - uses: actions/upload-artifact@v7
++        with:
++          name: wesetup-android-${{ github.run_number }}
++          path: |
++            mobile/android/app/build/outputs/bundle/release/app-release.aab
++            mobile/android/app/build/outputs/apk/release/app-release.apk
++            mobile/android/app/build/outputs/release-manifest.json
++            mobile/android/app/build/outputs/upload-certificate.txt
++          if-no-files-found: error
++
++      - name: Внутреннее тестирование Google Play
++        if: inputs.track == 'internal'
++        uses: r0adkll/upload-google-play@v1
++        with:
++          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
++          packageName: ru.wesetup.app
++          releaseFiles: mobile/android/app/build/outputs/bundle/release/app-release.aab
++          track: internal
++          status: ${{ inputs.play_status }}
++
++  ios:
++    name: iOS — подписанный IPA
++    if: inputs.platform != 'android'
++    # macOS 26 + Xcode 26: App Store принимает только сборки на SDK iOS 26.
++    runs-on: macos-26
++    timeout-minutes: 60
++    defaults:
++      run:
++        working-directory: mobile
++    steps:
++      - uses: actions/checkout@v7
++
++      - uses: actions/setup-node@v7
++        with:
++          node-version: 22
++          cache: npm
++          cache-dependency-path: mobile/package-lock.json
++
++      - run: npm ci
++      - run: npm run test:release
++
++      - name: Секреты сборки
++        env:
++          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
++          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
++        run: |
++          if [ -z "$ASC_KEY_P8_BASE64" ]; then
++            echo "::error::Нет секрета ASC_KEY_P8_BASE64 — без ключа App Store Connect API сборку не подписать (docs/mobile/secrets.md)"
++            exit 1
++          fi
++          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/asc_key.p8"
++          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
++            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
++          else
++            echo "::warning::Нет секрета GOOGLE_SERVICE_INFO_PLIST_BASE64 — сборка будет без push-уведомлений"
++          fi
++
++      # Ставит CocoaPods-зависимости (pod install) — CocoaPods есть на раннере.
++      - run: npx cap sync ios
++
++      - uses: ruby/setup-ruby@v1
++        with:
++          ruby-version: "3.4"
++          # Gemfile.lock не хранится в репозитории, поэтому без кеша Bundler:
++          # fastlane ставится явно шагом ниже по версии из Gemfile (~> 2.239).
++          bundler-cache: false
++          working-directory: mobile/ios/App
++
++      - name: fastlane
++        working-directory: mobile/ios/App
++        env:
++          BUNDLE_PATH: vendor/bundle
++        run: bundle install --jobs 4 --retry 3
++
++      - name: Сборка IPA и необязательная загрузка в TestFlight
++        working-directory: mobile/ios/App
++        env:
++          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
++          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
++          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
++          ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
++          BUNDLE_PATH: vendor/bundle
++          UPLOAD_IOS: ${{ inputs.upload_ios }}
++        run: |
++          node ../../scripts/release-preflight.mjs --platform ios
++          bundle exec fastlane release
++          verify_dir=$(mktemp -d "$RUNNER_TEMP/verify-ipa.XXXXXX")
++          unzip -q build/WeSetup.ipa -d "$verify_dir"
++          codesign --verify --deep --strict "$verify_dir/Payload/App.app"
++          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$verify_dir/Payload/App.app/Info.plist")" = "ru.wesetup.app"
++          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$verify_dir/Payload/App.app/Info.plist")" = "$BUILD_NUMBER"
++          node ../../scripts/release-manifest.mjs ios
++          if [ "$UPLOAD_IOS" = "true" ]; then
++            bundle exec fastlane upload_beta
++          fi
++
++      - uses: actions/upload-artifact@v7
++        if: always()
++        with:
++          name: wesetup-ios-${{ github.run_number }}
++          path: |
++            mobile/ios/App/build/WeSetup.ipa
++            mobile/ios/App/build/release-manifest.json
++            mobile/ios/App/build/WeSetup.app.dSYM.zip
++          if-no-files-found: warn
++
++      - name: Убрать ключи с раннера
++        if: always()
++        run: rm -f "$RUNNER_TEMP/asc_key.p8" ios/App/App/GoogleService-Info.plist
+diff --git a/mobile/android/app/build.gradle b/mobile/android/app/build.gradle
+index 4de79ad8..6a07eba6 100644
+--- a/mobile/android/app/build.gradle
++++ b/mobile/android/app/build.gradle
+@@ -7,9 +7,20 @@ def appVersionCode = project.hasProperty('versionCode') ? project.property('vers
+ 
+ // Ключ загрузки Google Play: файл app/upload.jks кладёт CI из секрета
+ // ANDROID_KEYSTORE_BASE64, пароли — из переменных окружения. Без файла
+-// release-сборка остаётся неподписанной (для локальной проверки этого хватает).
++// store release is blocked without signing and Firebase configuration.
+ def uploadKeystore = file('upload.jks')
+ 
++// Apply the same guard to local Gradle builds and CI. Debug builds need no secrets.
++gradle.taskGraph.whenReady { graph ->
++    if (['bundleRelease', 'assembleRelease', 'packageRelease', 'signReleaseBundle'].any { graph.hasTask(":app:${it}") }) {
++        project.exec {
++            workingDir rootProject.projectDir.parentFile
++            environment 'BUILD_NUMBER', appVersionCode.toString()
++            commandLine 'node', 'scripts/release-preflight.mjs', '--platform', 'android'
++        }
++    }
++}
++
+ android {
+     namespace = "ru.wesetup.app"
+     compileSdk = rootProject.ext.compileSdkVersion
+diff --git a/mobile/ios/App/fastlane/Fastfile b/mobile/ios/App/fastlane/Fastfile
+index f9f4df47..f80b4121 100644
+--- a/mobile/ios/App/fastlane/Fastfile
++++ b/mobile/ios/App/fastlane/Fastfile
+@@ -1,72 +1,91 @@
+-# Сборка iOS и отправка в TestFlight (запускает .github/workflows/mobile-release.yml).
+-#
+-# Подпись — автоматическая, по ключу App Store Connect API: xcodebuild сам
+-# создаёт профили и сертификаты (-allowProvisioningUpdates), для выгрузки
+-# используется облачный сертификат распространения Apple. Файлы сертификатов
+-# в секретах не нужны. Роль ключа — Admin (см. mobile/README.md).
+-#
+-# Переменные окружения:
+-#   APPLE_TEAM_ID            — Team ID из developer.apple.com → Membership
+-#   ASC_KEY_ID, ASC_ISSUER_ID — ключ App Store Connect API
+-#   ASC_KEY_PATH             — путь к файлу .p8 этого ключа (кладёт CI)
+-#   BUILD_NUMBER             — номер сборки (номер запуска workflow)
+-require "json"
+-require "shellwords"
+-
+-default_platform(:ios)
+-
+-platform :ios do
+-  desc "Подписанная сборка App Store → TestFlight"
+-  lane :beta do
+-    %w[APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH BUILD_NUMBER].each do |name|
+-      UI.user_error!("Не задана переменная окружения #{name}") if ENV[name].to_s.strip.empty?
+-    end
+-
+-    # Временная связка ключей на CI: сюда Xcode положит сертификат разработчика.
+-    setup_ci if ENV["CI"]
+-
+-    key_path = File.expand_path(ENV["ASC_KEY_PATH"])
+-    api_key = app_store_connect_api_key(
+-      key_id: ENV["ASC_KEY_ID"],
+-      issuer_id: ENV["ASC_ISSUER_ID"],
+-      key_filepath: key_path,
+-      in_house: false
+-    )
+-
+-    # Версия одна на Android и iOS — из mobile/package.json.
+-    version = JSON.parse(File.read(File.expand_path("../../../package.json", __dir__)))["version"]
+-    build_number = ENV["BUILD_NUMBER"]
+-    team_id = ENV["APPLE_TEAM_ID"]
+-
+-    auth = [
+-      "-allowProvisioningUpdates",
+-      "-authenticationKeyPath #{key_path.shellescape}",
+-      "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
+-      "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
+-    ].join(" ")
+-
+-    build_app(
+-      workspace: "App.xcworkspace",
+-      scheme: "App",
+-      configuration: "Release",
+-      clean: true,
+-      output_directory: "build",
+-      output_name: "WeSetup.ipa",
+-      export_method: "app-store",
+-      xcargs: "#{auth} DEVELOPMENT_TEAM=#{team_id} CODE_SIGN_STYLE=Automatic " \
+-              "MARKETING_VERSION=#{version} CURRENT_PROJECT_VERSION=#{build_number}",
+-      export_xcargs: auth,
+-      export_options: {
+-        signingStyle: "automatic",
+-        teamID: team_id,
+-        uploadSymbols: true
+-      }
+-    )
+-
+-    upload_to_testflight(
+-      api_key: api_key,
+-      ipa: "build/WeSetup.ipa",
+-      skip_waiting_for_build_processing: true
+-    )
+-  end
+-end
++# Сборка iOS и отправка в TestFlight (запускает .github/workflows/mobile-release.yml).
++#
++# Подпись — автоматическая, по ключу App Store Connect API: xcodebuild сам
++# создаёт профили и сертификаты (-allowProvisioningUpdates), для выгрузки
++# используется облачный сертификат распространения Apple. Файлы сертификатов
++# в секретах не нужны. Роль ключа — Admin (см. mobile/README.md).
++#
++# Переменные окружения:
++#   APPLE_TEAM_ID            — Team ID из developer.apple.com → Membership
++#   ASC_KEY_ID, ASC_ISSUER_ID — ключ App Store Connect API
++#   ASC_KEY_PATH             — путь к файлу .p8 этого ключа (кладёт CI)
++#   BUILD_NUMBER             — номер сборки (номер запуска workflow)
++require "json"
++require "shellwords"
++
++default_platform(:ios)
++
++platform :ios do
++  desc "Подписанный IPA для App Store (без загрузки)"
++  lane :release do
++    %w[APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH BUILD_NUMBER].each do |name|
++      UI.user_error!("Не задана переменная окружения #{name}") if ENV[name].to_s.strip.empty?
++    end
++
++    sh("node", File.expand_path("../../../scripts/release-preflight.mjs", __dir__), "--platform", "ios")
++
++    # Временная связка ключей на CI: сюда Xcode положит сертификат разработчика.
++    setup_ci if ENV["CI"]
++
++    key_path = File.expand_path(ENV["ASC_KEY_PATH"])
++    api_key = app_store_connect_api_key(
++      key_id: ENV["ASC_KEY_ID"],
++      issuer_id: ENV["ASC_ISSUER_ID"],
++      key_filepath: key_path,
++      in_house: false
++    )
++
++    # Версия одна на Android и iOS — из mobile/package.json.
++    version = JSON.parse(File.read(File.expand_path("../../../package.json", __dir__)))["version"]
++    build_number = ENV["BUILD_NUMBER"]
++    team_id = ENV["APPLE_TEAM_ID"]
++
++    auth = [
++      "-allowProvisioningUpdates",
++      "-authenticationKeyPath #{key_path.shellescape}",
++      "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
++      "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
++    ].join(" ")
++
++    build_app(
++      workspace: "App.xcworkspace",
++      scheme: "App",
++      configuration: "Release",
++      clean: true,
++      output_directory: "build",
++      output_name: "WeSetup.ipa",
++      export_method: "app-store",
++      xcargs: "#{auth} DEVELOPMENT_TEAM=#{team_id} CODE_SIGN_STYLE=Automatic " \
++              "MARKETING_VERSION=#{version} CURRENT_PROJECT_VERSION=#{build_number}",
++      export_xcargs: auth,
++      export_options: {
++        signingStyle: "automatic",
++        teamID: team_id,
++        uploadSymbols: true
++      }
++    )
++
++  end
++
++  desc "Загрузить уже собранный IPA в TestFlight"
++  lane :upload_beta do
++    UI.user_error!("Нет build/WeSetup.ipa — сначала выполните release") unless File.file?(File.expand_path("../build/WeSetup.ipa", __dir__))
++    api_key = app_store_connect_api_key(
++      key_id: ENV.fetch("ASC_KEY_ID"),
++      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
++      key_filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH")),
++      in_house: false
++    )
++    upload_to_testflight(
++      api_key: api_key,
++      ipa: File.expand_path("../build/WeSetup.ipa", __dir__),
++      skip_waiting_for_build_processing: true
++    )
++  end
++
++  desc "Собрать IPA и загрузить в TestFlight"
++  lane :beta do
++    release
++    upload_beta
++  end
++end
+diff --git a/mobile/package.json b/mobile/package.json
+index 9301852e..0182b83f 100644
+--- a/mobile/package.json
++++ b/mobile/package.json
+@@ -1,29 +1,32 @@
+-{
+-  "name": "wesetup-mobile",
+-  "version": "1.0.0",
+-  "private": true,
+-  "description": "WeSetup: приложения для Android и iOS (Capacitor-оболочка вокруг https://wesetup.ru/mini)",
+-  "scripts": {
+-    "sync": "cap sync",
+-    "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android --ios --iconBackgroundColor \"#0b1024\" --iconBackgroundColorDark \"#0b1024\" --splashBackgroundColor \"#0b1024\" --splashBackgroundColorDark \"#0b1024\"",
+-    "android:debug": "cap sync android && cd android && gradlew assembleDebug"
+-  },
+-  "dependencies": {
+-    "@capacitor-community/speech-recognition": "7.0.1",
+-    "@capacitor-firebase/messaging": "8.5.2",
+-    "@capacitor/android": "8.5.2",
+-    "@capacitor/app": "8.1.1",
+-    "@capacitor/app-launcher": "8.0.1",
+-    "@capacitor/cli": "8.5.2",
+-    "@capacitor/core": "8.5.2",
+-    "@capacitor/filesystem": "8.1.3",
+-    "@capacitor/ios": "8.5.2",
+-    "@capacitor/share": "8.0.2",
+-    "@capacitor/splash-screen": "8.0.2",
+-    "@capacitor/status-bar": "8.0.3"
+-  },
+-  "devDependencies": {
+-    "@capacitor/assets": "3.0.5",
+-    "typescript": "5.9.3"
+-  }
+-}
++{
++  "name": "wesetup-mobile",
++  "version": "1.0.0",
++  "private": true,
++  "description": "WeSetup: приложения для Android и iOS (Capacitor-оболочка вокруг https://wesetup.ru/mini)",
++  "scripts": {
++    "sync": "cap sync",
++    "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android --ios --iconBackgroundColor \"#0b1024\" --iconBackgroundColorDark \"#0b1024\" --splashBackgroundColor \"#0b1024\" --splashBackgroundColorDark \"#0b1024\"",
++    "android:debug": "cap sync android && cd android && gradlew assembleDebug",
++    "test:release": "node --test scripts/release-preflight.test.mjs",
++    "release:check:android": "node scripts/release-preflight.mjs --platform android",
++    "release:check:ios": "node scripts/release-preflight.mjs --platform ios"
++  },
++  "dependencies": {
++    "@capacitor-community/speech-recognition": "7.0.1",
++    "@capacitor-firebase/messaging": "8.5.2",
++    "@capacitor/android": "8.5.2",
++    "@capacitor/app": "8.1.1",
++    "@capacitor/app-launcher": "8.0.1",
++    "@capacitor/cli": "8.5.2",
++    "@capacitor/core": "8.5.2",
++    "@capacitor/filesystem": "8.1.3",
++    "@capacitor/ios": "8.5.2",
++    "@capacitor/share": "8.0.2",
++    "@capacitor/splash-screen": "8.0.2",
++    "@capacitor/status-bar": "8.0.3"
++  },
++  "devDependencies": {
++    "@capacitor/assets": "3.0.5",
++    "typescript": "5.9.3"
++  }
++}
+diff --git a/mobile/scripts/release-manifest.mjs b/mobile/scripts/release-manifest.mjs
+new file mode 100644
+index 00000000..daa99338
+--- /dev/null
++++ b/mobile/scripts/release-manifest.mjs
+@@ -0,0 +1,32 @@
++import { createHash } from "node:crypto";
++import { execFileSync } from "node:child_process";
++import { readFileSync, writeFileSync, existsSync } from "node:fs";
++import path from "node:path";
++import { mobileRoot, checkRelease } from "./release-preflight.mjs";
++
++const platform = process.argv[2];
++const errors = checkRelease({ platform });
++if (errors.length) throw new Error(errors.join("\n"));
++const relative = platform === "android"
++  ? ["android/app/build/outputs/bundle/release/app-release.aab", "android/app/build/outputs/apk/release/app-release.apk"]
++  : ["ios/App/build/WeSetup.ipa"];
++const artifacts = relative.map((name) => {
++  const file = path.join(mobileRoot, name);
++  if (!existsSync(file)) throw new Error(`Missing release artifact: ${name}`);
++  const bytes = readFileSync(file);
++  return { file: path.basename(file), bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
++});
++const manifest = {
++  platform, applicationId: "ru.wesetup.app",
++  version: JSON.parse(readFileSync(path.join(mobileRoot, "package.json"), "utf8")).version,
++  buildNumber: Number(process.env.BUILD_NUMBER),
++  sourceCommit: process.env.GITHUB_SHA || execFileSync("git", ["rev-parse", "HEAD"], { cwd: mobileRoot, encoding: "utf8" }).trim(),
++  workflowRun: process.env.GITHUB_RUN_ID || null,
++  builtAt: new Date().toISOString(),
++  verification: "Generated only after signature checks in the release workflow; requires device smoke testing before submission.",
++  artifacts,
++};
++const output = path.join(mobileRoot, platform === "android" ? "android/app/build/outputs/release-manifest.json" : "ios/App/build/release-manifest.json");
++writeFileSync(output, JSON.stringify(manifest, null, 2) + "\n");
++console.log(output);
++
+diff --git a/mobile/scripts/release-preflight.mjs b/mobile/scripts/release-preflight.mjs
+new file mode 100644
+index 00000000..bfd3bc5e
+--- /dev/null
++++ b/mobile/scripts/release-preflight.mjs
+@@ -0,0 +1,74 @@
++import { readFileSync, existsSync } from "node:fs";
++import path from "node:path";
++import { fileURLToPath } from "node:url";
++
++export const APP_ID = "ru.wesetup.app";
++export const APP_URL = "https://wesetup.ru/mini?src=app";
++export const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
++
++// Return names/reasons only: signing material must never appear in logs.
++export function checkRelease({ root = mobileRoot, platform, env = process.env } = {}) {
++  const errors = [];
++  const read = (relative) => {
++    try { return readFileSync(path.join(root, relative), "utf8"); }
++    catch { errors.push(`Missing file: ${relative}`); return ""; }
++  };
++  const json = (relative) => {
++    const source = read(relative);
++    if (!source) return {};
++    try { return JSON.parse(source.replace(/^\uFEFF/, "")); }
++    catch { errors.push(`Invalid JSON: ${relative}`); return {}; }
++  };
++  const requireEnv = (names) => {
++    for (const name of names) if (!env[name]?.trim()) errors.push(`Missing environment variable: ${name}`);
++  };
++  if (!["android", "ios"].includes(platform)) return ["Platform must be android or ios"];
++  requireEnv(["BUILD_NUMBER"]);
++  if (!/^[1-9]\d{0,9}$/.test(env.BUILD_NUMBER ?? "") || Number(env.BUILD_NUMBER) > 2100000000)
++    errors.push("BUILD_NUMBER must be an integer between 1 and 2100000000");
++  if (env.WESETUP_APP_URL?.trim()) errors.push("WESETUP_APP_URL must be unset for a store release");
++  const pkg = json("package.json");
++  if (!/^\d+\.\d+\.\d+$/.test(pkg.version ?? "")) errors.push("App version must be major.minor.patch");
++
++  const configPath = platform === "android" ? "android/app/src/main/assets/capacitor.config.json" : "ios/App/App/capacitor.config.json";
++  const config = json(configPath);
++  if (config.appId !== APP_ID) errors.push("Generated app ID must be ru.wesetup.app");
++  if (config.server?.url !== APP_URL || config.server?.cleartext !== false)
++    errors.push("Generated server configuration must use the HTTPS production URL with cleartext disabled");
++  const hosts = config.server?.allowNavigation;
++  if (!Array.isArray(hosts) || !hosts.includes("wesetup.ru") || hosts.some((host) => !["wesetup.ru", "www.wesetup.ru"].includes(host)))
++    errors.push("Generated navigation allowlist contains unexpected hosts");
++  if (config[platform]?.appendUserAgent !== `WeSetupApp/${pkg.version} (${platform})`)
++    errors.push("Generated User-Agent does not match the platform and app version");
++  if (config.server?.errorPath !== "offline.html" || !existsSync(path.join(root, "www/offline.html")))
++    errors.push("Offline fallback is missing");
++
++  if (platform === "android") {
++    requireEnv(["ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"]);
++    if (!existsSync(path.join(root, "android/app/upload.jks"))) errors.push("Missing Android upload keystore");
++    const firebase = json("android/app/google-services.json");
++    const client = firebase.client?.find((c) => c.client_info?.android_client_info?.package_name === APP_ID);
++    if (!client || !firebase.project_info?.project_id || !firebase.project_info?.project_number || !client.client_info?.mobilesdk_app_id || !client.api_key?.some((k) => k.current_key))
++      errors.push("Firebase Android config must contain this app, project, app ID and API key");
++  } else {
++    requireEnv(["APPLE_TEAM_ID", "ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"]);
++    if (!/^[A-Z0-9]{10}$/.test(env.APPLE_TEAM_ID ?? "")) errors.push("Invalid APPLE_TEAM_ID format");
++    if (!/^[A-Z0-9]{10}$/.test(env.ASC_KEY_ID ?? "")) errors.push("Invalid ASC_KEY_ID format");
++    if (!/^[a-f0-9-]{36}$/i.test(env.ASC_ISSUER_ID ?? "")) errors.push("Invalid ASC_ISSUER_ID format");
++    if (!env.ASC_KEY_PATH || !existsSync(env.ASC_KEY_PATH)) errors.push("App Store Connect API key file is missing");
++    const plist = read("ios/App/App/GoogleService-Info.plist");
++    const value = (key) => plist.match(new RegExp(`<key>\\s*${key}\\s*</key>\\s*<string>([^<]+)</string>`))?.[1]?.trim();
++    if (value("BUNDLE_ID") !== APP_ID || !value("GOOGLE_APP_ID") || !value("PROJECT_ID") || !value("GCM_SENDER_ID") || !value("API_KEY"))
++      errors.push("Firebase iOS config must match ru.wesetup.app and contain the project, sender, app ID and API key");
++  }
++  return errors;
++}
++
++if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  const platform = process.argv[process.argv.indexOf("--platform") + 1];
++  const errors = checkRelease({ platform });
++  for (const error of errors) console.error(`Release blocked: ${error}`);
++  if (errors.length) process.exitCode = 1;
++  else console.log(`Release preflight PASS: ${platform}, build ${process.env.BUILD_NUMBER}`);
++}
++
+diff --git a/mobile/scripts/release-preflight.test.mjs b/mobile/scripts/release-preflight.test.mjs
+new file mode 100644
+index 00000000..f1d93c16
+--- /dev/null
++++ b/mobile/scripts/release-preflight.test.mjs
+@@ -0,0 +1,69 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
++import { tmpdir } from "node:os";
++import path from "node:path";
++import { APP_ID, APP_URL, checkRelease } from "./release-preflight.mjs";
++
++function fixture(t, platform = "android") {
++  const root = mkdtempSync(path.join(tmpdir(), "wesetup-release-"));
++  t.after(() => rmSync(root, { recursive: true, force: true }));
++  const put = (name, value) => {
++    const target = path.join(root, name);
++    mkdirSync(path.dirname(target), { recursive: true });
++    writeFileSync(target, typeof value === "string" ? value : JSON.stringify(value));
++  };
++  const config = { appId: APP_ID, server: { url: APP_URL, cleartext: false, allowNavigation: ["wesetup.ru", "www.wesetup.ru"], errorPath: "offline.html" }, [platform]: { appendUserAgent: `WeSetupApp/1.0.0 (${platform})` } };
++  const configPath = platform === "android" ? "android/app/src/main/assets/capacitor.config.json" : "ios/App/App/capacitor.config.json";
++  put("package.json", { version: "1.0.0" });
++  put(configPath, config);
++  put("www/offline.html", "<html>Offline</html>");
++  put("android/app/upload.jks", "test-fixture-only");
++  put("android/app/google-services.json", { project_info: { project_id: "test", project_number: "123" }, client: [{ client_info: { android_client_info: { package_name: APP_ID }, mobilesdk_app_id: "1:123:android:test" }, api_key: [{ current_key: "fixture" }] }] });
++  put("ios/App/App/GoogleService-Info.plist", `<plist><dict><key>BUNDLE_ID</key><string>${APP_ID}</string><key>GOOGLE_APP_ID</key><string>1:123:ios:test</string><key>PROJECT_ID</key><string>test</string><key>GCM_SENDER_ID</key><string>123</string><key>API_KEY</key><string>fixture</string></dict></plist>`);
++  put("test.p8", "fixture");
++  const env = { BUILD_NUMBER: "7", ANDROID_KEYSTORE_PASSWORD: "secret-do-not-log", ANDROID_KEY_ALIAS: "upload", ANDROID_KEY_PASSWORD: "secret-do-not-log", APPLE_TEAM_ID: "ABCDEFGHIJ", ASC_KEY_ID: "1234567890", ASC_ISSUER_ID: "12345678-1234-1234-1234-123456789012", ASC_KEY_PATH: path.join(root, "test.p8") };
++  return { root, platform, env, put, config, configPath };
++}
++
++test("complete production configurations pass for both platforms", (t) => {
++  for (const platform of ["android", "ios"]) assert.deepEqual(checkRelease(fixture(t, platform)), []);
++});
++test("a generated emulator URL, cleartext or foreign host blocks release", (t) => {
++  for (const mutate of [
++    (f) => { f.config.server.url = "http://10.0.2.2:3000/mini"; },
++    (f) => { f.config.server.cleartext = true; },
++    (f) => { f.config.server.allowNavigation.push("*"); },
++  ]) {
++    const f = fixture(t); mutate(f); f.put(f.configPath, f.config);
++    assert.ok(checkRelease(f).length);
++  }
++});
++test("test override and mismatched platform version block release", (t) => {
++  const f = fixture(t); f.env.WESETUP_APP_URL = APP_URL;
++  assert.ok(checkRelease(f).some((e) => e.includes("WESETUP_APP_URL")));
++  delete f.env.WESETUP_APP_URL; f.config.android.appendUserAgent = "WeSetupApp/0.1.0 (android)"; f.put(f.configPath, f.config);
++  assert.ok(checkRelease(f).some((e) => e.includes("User-Agent")));
++});
++test("missing signing credentials fail without leaking their values", (t) => {
++  const f = fixture(t); delete f.env.ANDROID_KEY_PASSWORD;
++  const errors = checkRelease(f);
++  assert.ok(errors.some((e) => e.includes("ANDROID_KEY_PASSWORD")));
++  assert.ok(!JSON.stringify(errors).includes("secret-do-not-log"));
++});
++test("missing or wrong Firebase identity cannot silently disable push", (t) => {
++  const f = fixture(t); f.put("android/app/google-services.json", { project_info: { project_id: "test" }, client: [] });
++  assert.ok(checkRelease(f).some((e) => e.includes("Firebase Android")));
++  const i = fixture(t, "ios"); i.put("ios/App/App/GoogleService-Info.plist", "<plist></plist>");
++  assert.ok(checkRelease(i).some((e) => e.includes("Firebase iOS")));
++});
++test("invalid versions, numbers and malformed configuration are rejected", (t) => {
++  for (const value of ["0", "-1", "1.2", "2100000001", "x"]) {
++    const f = fixture(t); f.env.BUILD_NUMBER = value;
++    assert.ok(checkRelease(f).some((e) => e.includes("BUILD_NUMBER")));
++  }
++  const f = fixture(t); f.put("package.json", { version: "1.0.0-beta" }); f.put(f.configPath, "{");
++  assert.ok(checkRelease(f).some((e) => e.includes("version")));
++  assert.ok(checkRelease(f).some((e) => e.includes("Invalid JSON")));
++});
++
+-- 
+2.43.0
+

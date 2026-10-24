@@ -23,7 +23,7 @@
 ### Деплой
 - WeSetup: GitHub Actions → SSH-скрипт собирает и рестартит PM2 на проде. ~3-5 мин.
 - TasksFlow: GitHub Actions → `appleboy/ssh-action` пуллит main, делает migrations + build + pm2 reload. ~2 мин.
-- Если деплой упал на 30 сек (короче обычного) — обычно SSH race с PM2. Достаточно empty-commit retrigger или ручной rebuild через SSH.
+- Если деплой упал на 30 сек (короче обычного) — обычно SSH race с PM2. Перезапусти Actions → Deploy to production → Run workflow с веткой master (не Re-run старого прогона). На прод — только код из master (AGENTS.md → «Production deploy rules»).
 - Build SHA пишется в `.build-sha` на проде, можно проверить:
   ```bash
   plink -batch -hostkey "..." -P 22 -l wesetupru -pw '...' wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && cat .build-sha"

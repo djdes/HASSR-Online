@@ -1,0 +1,59 @@
+[
+  {
+    "name": "plain user: GET /api/translations is 403",
+    "ok": true
+  },
+  {
+    "name": "plain user: /api/root/translators hidden",
+    "ok": true
+  },
+  {
+    "name": "translator: /api/root/translators hidden",
+    "ok": true
+  },
+  {
+    "name": "plain user: /translations is 404",
+    "ok": true,
+    "detail": 404
+  },
+  {
+    "name": "categories cover whole catalog",
+    "ok": true,
+    "detail": "149 categories, 16020 keys"
+  },
+  {
+    "name": "placeholder loss rejected (422 argument_mismatch)",
+    "ok": true
+  },
+  {
+    "name": "translator: /translations opens",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "override saved",
+    "ok": true
+  },
+  {
+    "name": "translator: profile menu has translations link",
+    "ok": true
+  },
+  {
+    "name": "plain user: no translations link in profile",
+    "ok": true
+  },
+  {
+    "name": "root: /root/translations opens",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "root: alexey listed as translator",
+    "ok": true
+  },
+  {
+    "name": "reset returns original",
+    "ok": true,
+    "detail": "Today, {dayLabel}"
+  }
+]

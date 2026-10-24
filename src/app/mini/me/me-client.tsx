@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Trash2,
   Unlink,
+  Languages,
   LayoutGrid,
   MonitorSmartphone,
   type LucideIcon,
@@ -75,7 +76,10 @@ export function MiniMeClient({
   telegramLinked = false,
   billingAnnouncement = null,
   billingStaffNotice = false,
+  canEditTranslations = false,
 }: {
+  /** ROOT или переводчик (`User.canEditTranslations`) — строка «Переводы интерфейса». */
+  canEditTranslations?: boolean;
   /** Руководитель выбирает тариф после бесплатного периода. */
   billingStaffNotice?: boolean;
   /** Анонс бесплатного периода (тексты — с сервера). */
@@ -409,6 +413,11 @@ export function MiniMeClient({
         {u.isRoot ? (
           <Link href="/root" className="mini-item mini-press">
           <ProfileRow icon={ShieldCheck} label={t("rows.platform")} />
+          </Link>
+        ) : null}
+        {canEditTranslations ? (
+          <Link href={u.isRoot ? "/root/translations" : "/translations"} className="mini-item mini-press" data-testid="profile-translations">
+            <ProfileRow icon={Languages} label={t("rows.translations")} hint={t("rows.translationsHint")} />
           </Link>
         ) : null}
         {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка

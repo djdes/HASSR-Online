@@ -7,6 +7,7 @@ import {
   Coins,
   CreditCard,
   Handshake,
+  Languages,
   Library,
   Loader2,
   LogOut,
@@ -63,6 +64,7 @@ export function ProfileSheet({
   canManagePlan,
   fullAccess,
   canEditBranding,
+  canEditTranslations = false,
   isRoot,
   onLogout,
 }: {
@@ -85,6 +87,8 @@ export function ProfileSheet({
   fullAccess: boolean;
   /** Может открыть настройки организации (логотип и цвет) — `admin.full`. */
   canEditBranding: boolean;
+  /** ROOT или переводчик — пункт «Переводы интерфейса». */
+  canEditTranslations?: boolean;
   isRoot: boolean;
   onLogout: () => void;
 }) {
@@ -193,6 +197,13 @@ export function ProfileSheet({
         <Link href="/settings/subscription" onClick={onClose} className={SHEET_ROW_CLASS}>
           <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
           <span className="min-w-0 flex-1">{t("profile.plan")}</span>
+        </Link>
+      ) : null}
+
+      {canEditTranslations ? (
+        <Link href={isRoot ? "/root/translations" : "/translations"} onClick={onClose} className={SHEET_ROW_CLASS}>
+          <Languages className="size-5 shrink-0 text-[#5566f6]" />
+          <span className="min-w-0 flex-1">{t("profile.translations")}</span>
         </Link>
       ) : null}
 

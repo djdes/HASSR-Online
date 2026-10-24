@@ -987,6 +987,9 @@ model User {
   /// «Разрешение менять настройки»: одна галка вместо ролей — права
   /// руководителя на настройки кабинета (2026-09-22).
   canManageSettings           Boolean                      @default(false)
+  /// «Переводчик интерфейса»: правит строки каталогов ru/en/uz в
+  /// редакторе переводов (/translations). Выдаёт ROOT (2026-10-24).
+  canEditTranslations         Boolean                      @default(false)
   /// Версия принятых юридических документов (оферта, соглашение, политика,
   /// согласие) — сравнивается с LEGAL_VERSION; история — в LegalConsent.
   legalVersion                String?
@@ -1664,6 +1667,9 @@ model FeedbackReport {
   respondedByName   String?
   /// Вложения: [{ url, filename, mimeType, sizeBytes }] — как у SupportMessage.
   attachments       Json?
+  /// Страница, с которой отправлен репорт (ярлык с жуком): абсолютный URL
+  /// нашего сайта, хост клиента отбрасывается (`src/lib/bug-report.ts`).
+  pageUrl           String?
   createdAt         DateTime  @default(now())
 
   @@index([createdAt])
@@ -3163,6 +3169,22 @@ model PlatformSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+/// Правка строки каталога интерфейса (src/i18n/messages/<locale>.json)
+/// поверх файла. Подмешивается в loadMessages(); пустая правка не
+/// хранится — сброс удаляет строку (редактор переводов, 2026-10-24).
+model TranslationOverride {
+  id          String   @id @default(cuid())
+  locale      String
+  /// Путь в каталоге через точку: `hygiene.columns.employee`.
+  key         String
+  value       String
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([locale, key])
 }
 
 /// Диалог с ассистентом. Один на пользователя в организации — человек,

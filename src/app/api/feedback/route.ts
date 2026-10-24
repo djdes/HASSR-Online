@@ -2,10 +2,17 @@ import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { sendFeedbackAdminEmail } from "@/lib/email";
+import { sendFeedbackAdminEmail, sendFeedbackReceivedEmail } from "@/lib/email";
 import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeHtml } from "@/lib/html-escape";
 import { feedbackValidationDescriptor } from "@/lib/feedback-copy";
+import { resolveRequestLocale } from "@/i18n/site-locale";
+import {
+  absoluteReportPageUrl,
+  composeAttachmentCaption,
+  normalizeReportPagePath,
+  ticketCode,
+} from "@/lib/bug-report";
 import {
   emailAttachmentPayload,
   sendAttachmentsToPlatformAdmins,
@@ -28,6 +35,8 @@ const feedbackSchema = z.object({
     .optional()
     .or(z.literal("")),
   attachments: z.unknown().optional(),
+  /** `location.href` из ярлыка «Сообщить о проблеме»; хост отбрасываем. */
+  pageUrl: z.string().max(4000).optional(),
 });
 
 const APP_URL = process.env.NEXTAUTH_URL || "https://wesetup.ru";
@@ -46,10 +55,11 @@ function composeTelegramMessage(params: {
   userEmail?: string | null;
   organizationName?: string | null;
   phone?: string | null;
+  pageUrl?: string | null;
 }): string {
   const typeLabel = TYPE_LABELS[params.type] ?? params.type;
   const lines: string[] = [];
-  lines.push(`<b>${typeLabel}</b>`);
+  lines.push(`<b>${typeLabel}</b> · тикет ${ticketCode(params.reportId)}`);
   lines.push("");
   lines.push(escapeHtml(params.message));
   lines.push("");
@@ -62,6 +72,9 @@ function composeTelegramMessage(params: {
   }
   if (params.phone) {
     lines.push(`📞 ${escapeHtml(params.phone)}`);
+  }
+  if (params.pageUrl) {
+    lines.push(`🔗 ${escapeHtml(params.pageUrl)}`);
   }
   lines.push("");
   // Тот же якорь, что и у обращений из бота: на это сообщение можно
@@ -121,6 +134,9 @@ export async function POST(request: Request) {
   });
 
   const phone = parsed.phone ? parsed.phone : null;
+  const pagePath = normalizeReportPagePath(parsed.pageUrl);
+  const pageUrl = pagePath ? absoluteReportPageUrl(pagePath, APP_URL) : null;
+  const userEmail = session.user.email ?? null;
   const organizationName =
     org?.name ?? session.user.organizationName ?? null;
 
@@ -135,8 +151,15 @@ export async function POST(request: Request) {
       source: "site",
       message: parsed.message,
       phone,
+      pageUrl,
       ...(attachments.length > 0 ? { attachments } : {}),
     },
+  });
+  const ticket = ticketCode(report.id);
+  const locale = resolveRequestLocale(request, {
+    authenticated: true,
+    userLocale: session.user.locale,
+    organizationLocale: session.user.organizationLocale,
   });
 
   after(async () => {
@@ -156,6 +179,7 @@ export async function POST(request: Request) {
           userEmail: session.user.email ?? null,
           organizationName,
           phone,
+          pageUrl,
         }),
         { kind: "feedback" }
       ).catch((error) => {
@@ -171,6 +195,8 @@ export async function POST(request: Request) {
             userEmail: session.user.email ?? null,
             organizationName,
             phone,
+            pageUrl,
+            ticket,
             submittedAt: report.createdAt,
             attachmentLinks: emailAtts.links,
             attachments: emailAtts.files,
@@ -179,14 +205,32 @@ export async function POST(request: Request) {
             return false;
           })
         : Promise.resolve(false),
-      // Третьим элементом — деструктуризация выше берёт только первые два.
+      // Дальше — деструктуризация выше берёт только первые два.
+      // Скриншот уходит фото с подписью: тикет, текст и страница.
       sendAttachmentsToPlatformAdmins(
         attachments,
-        `Вложения к обращению #fb_${report.id}`,
+        composeAttachmentCaption({
+          reportId: report.id,
+          message: parsed.message,
+          pageUrl,
+        }),
         "feedback"
       ).catch((error) => {
         console.error("Feedback attachments failed:", error);
       }),
+      // Автору — подтверждение с номером тикета.
+      userEmail
+        ? sendFeedbackReceivedEmail({
+            to: userEmail,
+            ticket,
+            message: parsed.message,
+            pageUrl,
+            attachmentsCount: attachments.length,
+            locale,
+          }).catch((error) => {
+            console.error("Feedback receipt email failed:", error);
+          })
+        : Promise.resolve(),
     ]);
 
     try {
@@ -202,5 +246,5 @@ export async function POST(request: Request) {
     }
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ticket, emailed: Boolean(userEmail) });
 }

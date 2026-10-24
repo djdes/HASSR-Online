@@ -2688,6 +2688,7 @@
       "backOfficeTitle": "Alohida back-ofis kabineti: tanlangan obyektlar uchun menyu va xomashyo"
     },
     "profile": {
+      "translations": "Interfeys tarjimalari",
       "organizationSwitcher": "Ushbu kabinetdagi tashkilotlar",
       "otherCabinets": "Boshqa kabinetlar",
       "createMasterCabinet": "Ma’lumotnoma kabinetini yaratish",
@@ -3313,7 +3314,21 @@
       "organizationLabel": "Tashkilot",
       "phoneLabel": "Javob uchun telefon",
       "timeLabel": "Vaqt",
-      "openPanel": "Murojaatlar panelini ochish"
+      "openPanel": "Murojaatlar panelini ochish",
+      "pageLabel": "Sahifa",
+      "ticketLabel": "Murojaat raqami"
+    },
+    "feedbackReceived": {
+      "subject": "{ticket}-murojaat qabul qilindi — WeSetup",
+      "layoutTitle": "Murojaat qabul qilindi",
+      "greeting": "Assalomu alaykum!",
+      "intro": "Murojaatingizni oldik va jamoaga topshirdik. Javob shu pochtaga va kabinetdagi bildirishnoma orqali keladi.",
+      "ticketLabel": "Murojaat raqami",
+      "messageLabel": "Murojaat matni",
+      "pageLabel": "Sahifa",
+      "attachmentsLabel": "Ilovalar: {count, number}",
+      "openWorkspace": "WeSetup’ni ochish",
+      "footer": "Murojaatni kabinetdagi qo‘llab-quvvatlash chatida yoki @wesetupbot Telegram-botida to‘ldirishingiz mumkin."
     },
     "feedbackReply": {
       "subject": "Murojaatingizga javob — WeSetup",
@@ -15066,6 +15081,7 @@
     }
   },
   "rootNavigation": {
+    "translations": "Tarjimalar",
     "platformBrand": "WeSetup · Platforma",
     "backToApp": "Ilovani ochish",
     "sections": "Bo‘limlar",
@@ -19002,6 +19018,8 @@
       "platform": "Platforma boshqaruvi",
       "sections": "Barcha bo‘limlar",
       "sectionsHint": "jurnallar, hisobotlar, sozlamalar",
+      "translations": "Interfeys tarjimalari",
+      "translationsHint": "ru / en / uz matnlarini tahrirlash",
       "feedback": "Fikr-mulohaza",
       "feedbackHint": "muammo yoki taklif",
       "fullSite": "Saytning to‘liq versiyasini ochish",
@@ -19240,6 +19258,24 @@
     "todayDescription": "Joriy smena vazifalari",
     "journalsName": "Jurnallar",
     "journalsDescription": "Jurnallar ro‘yxati"
+  },
+  "bugReport": {
+    "trigger": "Muammo haqida xabar berish",
+    "title": "Muammo haqida xabar berish",
+    "description": "Nima noto‘g‘ri ishlaganini yozing. Sahifa skrinshoti allaqachon biriktirilgan.",
+    "capturing": "Sahifa skrinshoti olinmoqda…",
+    "screenshotLabel": "Sahifa skrinshoti",
+    "screenshotFailed": "Skrinshot olinmadi — faylni qo‘lda biriktiring",
+    "removeScreenshot": "Skrinshotni olib tashlash",
+    "messageLabel": "Nima bo‘ldi?",
+    "messagePlaceholder": "Masalan: «Saqlash»ni bosaman, lekin yozuv paydo bo‘lmaydi",
+    "attachHint": "Fayl qo‘shing yoki rasmni Ctrl+V bilan qo‘ying",
+    "uploading": "Fayllar hali yuklanmoqda…",
+    "submit": "Yuborish",
+    "submitting": "Yuborilmoqda…",
+    "messageRequired": "Muammoni bir necha so‘z bilan yozing",
+    "success": "{ticket}-murojaat qabul qilindi. Javobni pochtaga yuboramiz.",
+    "successNoEmail": "{ticket}-murojaat qabul qilindi."
   },
   "feedbackDialog": {
     "trigger": "Fikr-mulohaza",
@@ -22075,6 +22111,87 @@
       "provider_auth": "Direct akkauntga kirishni rad etdi. Reklama akkaunti ulanishini tekshirish kerak.",
       "provider_unavailable": "Direct’dan javob olib bo‘lmadi. Biroz keyin qayta urinib ko‘ring.",
       "rate_limited": "Direct so‘rovlarni vaqtincha chekladi. Biroz kuting va qayta urinib ko‘ring."
+    }
+  },
+  "translationEditor": {
+    "title": "Interfeys tarjimalari",
+    "description": "Saytning barcha matnlari rus, ingliz va o‘zbek tillarida, toifalar bo‘yicha. Tahrir yangi chiqarishsiz, 30 soniya ichida kuchga kiradi.",
+    "sourceNote": "Rus tili — asl matn. Uni o‘zgartirsangiz, ingliz va o‘zbek tilini ham tekshiring.",
+    "groups": {
+      "all": "Qidiruv",
+      "journals": "Jurnallar",
+      "interface": "Interfeys",
+      "other": "Boshqa bo‘limlar"
+    },
+    "categories": {
+      "all": "Barcha matnlar",
+      "journal-hygiene": "Gigiyena jurnali",
+      "navigation": "Menyu va navigatsiya",
+      "common": "Umumiy tugmalar va yozuvlar"
+    },
+    "categoryTotal": "{total, plural, one {# ta matn} other {# ta matn}}",
+    "badges": {
+      "modified": "o‘zgartirilgan: {count}",
+      "untranslated": "tarjimasiz: {count}"
+    },
+    "otherFilter": "Bo‘limni topish",
+    "searchPlaceholder": "Kalit yoki matn bo‘yicha qidirish",
+    "filters": {
+      "all": "Hammasi",
+      "modified": "O‘zgartirilgan",
+      "untranslated": "Tarjimasiz"
+    },
+    "rowState": {
+      "modified": "O‘zgartirilgan",
+      "untranslated": "Tarjima yo‘q",
+      "draft": "Saqlanmagan"
+    },
+    "placeholders": "O‘rinbosarlar: {list}",
+    "original": "Faylda: {text}",
+    "actions": {
+      "save": "Saqlash",
+      "saveAll": "Hammasini saqlash ({count})",
+      "discard": "Bekor qilish",
+      "reset": "Aslini qaytarish",
+      "auto": "Avtotarjima",
+      "autoBatch": "Avtotarjima: {language} ({count})",
+      "loadMore": "Yana ko‘rsatish"
+    },
+    "autoBusy": "Tarjima qilinmoqda… {done} / {total}",
+    "loading": "Yuklanmoqda…",
+    "empty": "Hech narsa topilmadi",
+    "shown": "{total} tadan {shown} tasi ko‘rsatilgan",
+    "toasts": {
+      "saved": "Saqlandi",
+      "savedMany": "Saqlangan matnlar: {count}",
+      "reset": "Asl matn qaytarildi",
+      "autoDone": "Tarjima qoralamasi: {count}. Tekshirib, saqlang.",
+      "autoRejected": "Tarjima qilinmagan matnlar: {count}"
+    },
+    "errors": {
+      "forbidden": "Tarjimalarga ruxsat yo‘q",
+      "bad_request": "Noto‘g‘ri so‘rov",
+      "unknown_key": "Bu matn katalogda endi yo‘q",
+      "unknown_locale": "Noma’lum til",
+      "too_long": "Matn juda uzun",
+      "corrupted": "Matn buzilgan: unda buzuq belgilar bor",
+      "invalid_icu": "O‘rinbosarda xato — jingalak qavslarni tekshiring",
+      "argument_mismatch": "O‘rinbosarlar rus tilidagidek bo‘lishi kerak: {expected}",
+      "rate_limited": "Avtotarjima so‘rovlari juda ko‘p, bir daqiqa kuting",
+      "ai_not_configured": "Avtotarjima mavjud emas: AI yordamchi sozlanmagan",
+      "ai_failed": "Avtotarjima javob bermadi, qayta urinib ko‘ring",
+      "user_not_found": "Bunday pochtali foydalanuvchi topilmadi",
+      "generic": "Saqlab bo‘lmadi"
+    },
+    "translators": {
+      "title": "Tarjimonlar",
+      "description": "Tarjimalarni kim tahrirlashi mumkin. Tarjimon muharrirni kabinetdagi profil menyusidan ochadi.",
+      "emailPlaceholder": "Foydalanuvchi pochtasi",
+      "grant": "Ruxsat berish",
+      "revoke": "Ruxsatni olish",
+      "empty": "Hozircha hech kim yo‘q",
+      "granted": "Ruxsat berildi",
+      "revoked": "Ruxsat olindi"
     }
   }
 }
