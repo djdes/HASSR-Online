@@ -23,3 +23,11 @@
 
 Автоперевод проверен только на уровне текста задания и разбора ответа (unit):
 очередь ProjectsFlow локально не настроена.
+
+## Смоук на проде после деплоя
+
+`scripts/translations-smoke.mjs` и workflow `.github/workflows/translations-smoke.yml`
+(только ручной запуск, только чтение). Логин и пароль — в секретах репозитория
+`SMOKE_ROOT_EMAIL`, `SMOKE_ROOT_PASSWORD`, необязательно `SMOKE_TRANSLATOR_EMAIL`.
+Локально: 5/5 PASS с верным паролем, exit 1 с неверным. Попутно: при остановленной
+PostgreSQL страницы открывались, ошибка чтения правок ушла в лог.
