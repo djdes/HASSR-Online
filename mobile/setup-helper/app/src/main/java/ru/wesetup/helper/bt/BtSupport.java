@@ -52,6 +52,15 @@ public final class BtSupport {
     /** До Android 12 поиск без включённой геолокации молча ничего не находит. */
     public static boolean locationServicesOff(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return false;
+        return locationDisabled(context);
+    }
+
+    /**
+     * Геолокация выключена — на любой версии. С Android 12 поиску она не
+     * нужна, но прошивки некоторых телефонов без неё всё равно ничего не
+     * находят: тогда об этом стоит сказать в подсказке.
+     */
+    public static boolean locationDisabled(Context context) {
         LocationManager manager = context.getSystemService(LocationManager.class);
         if (manager == null) return false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) return !manager.isLocationEnabled();

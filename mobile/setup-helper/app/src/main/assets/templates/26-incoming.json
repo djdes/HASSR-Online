@@ -1,0 +1,26 @@
+{
+  "id": "incoming",
+  "title": "Приёмка сырья",
+  "description": "Сырьё и продукты при поступлении: поставщик, партия, срок годности по документам.",
+  "size": {"width": 58, "height": 40},
+  "fields": [
+    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Молоко 3,2%»"},
+    {"key": "supplier", "label": "Поставщик", "type": "text", "maxLength": 40, "hint": "Например, ООО «Агро»"},
+    {"key": "batch", "label": "Партия или № документа", "type": "text", "maxLength": 30},
+    {"key": "receivedAt", "label": "Поступило", "type": "datetime", "default": "now", "dateOnly": true},
+    {"key": "expiresAt", "label": "Годен до (по документам)", "type": "datetime", "default": "now+3d", "dateOnly": true},
+    {"key": "storage", "label": "Условия хранения", "type": "text", "default": "+2…+6 °C", "maxLength": 30, "options": ["+2…+6 °C", "0…+4 °C", "−18 °C и ниже", "Не выше +25 °C"]},
+    {"key": "employee", "label": "Принял", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+  ],
+  "elements": [
+    {"type": "text", "x": 1.5, "y": 1.2, "w": 55, "h": 5.4, "text": "ПРИЁМКА", "size": 3.4, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true},
+    {"type": "text", "x": 2, "y": 7, "w": 54, "h": 8.8, "text": "{{product}}", "size": 4.2, "bold": true, "align": "center", "valign": "center", "maxLines": 2},
+    {"type": "line", "x": 2, "y": 16.3, "x2": 56, "y2": 16.3, "thickness": 0.3},
+    {"type": "text", "x": 2, "y": 16.9, "w": 54, "h": 4.4, "text": "Поставщик: {{supplier}}", "size": 3, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 21.5, "w": 54, "h": 5, "text": "Годен до: {{expiresAt|date}}", "size": 3.5, "bold": true, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 26.8, "w": 54, "h": 4.2, "text": "Партия: {{batch}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 31.2, "w": 54, "h": 4.2, "text": "Поступило: {{receivedAt|date}} · {{storage}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 35.6, "w": 36, "h": 3.8, "text": "Принял: {{employee}}", "size": 2.6, "maxLines": 1},
+    {"type": "text", "x": 39, "y": 35.6, "w": 17, "h": 3.8, "text": "{{org.name}}", "size": 2.6, "align": "right", "maxLines": 1}
+  ]
+}

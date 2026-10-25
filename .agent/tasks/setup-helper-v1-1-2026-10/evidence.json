@@ -1,0 +1,35 @@
+{
+  "task": "setup-helper-v1-1-2026-10",
+  "verdict": "PASS",
+  "checks": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS"
+  },
+  "commands": {
+    "gradle :core:test :app:testDebugUnitTest --rerun-tasks": "77 tests, 0 failed (raw/android-tests.txt)",
+    "gradle lintRelease / lintDebug": "0 errors",
+    "gradle publishRelease": "BUILD SUCCESSFUL; APK 1976726 bytes, sha256 63eb1c323bdf81c133b6a2441e4474d025f7e411b167426a42c43ed79df11af8, same certificate as 1.0.0 (raw/apk-verify.txt)",
+    "publishRelease guards": "refuses without signing key and with an unchanged versionCode (raw/publish-guards.txt)",
+    "npm run typecheck": "exit 0",
+    "npm run test:gate": "pass=4788 fail=0 (on top of latest master)",
+    "npm run i18n:check": "exit 0",
+    "npx prisma validate": "valid",
+    "eslint changed site files": "exit 0"
+  },
+  "e2e": {
+    "passed": 38,
+    "total": 38,
+    "file": "raw/e2e-api.txt",
+    "setup": "next dev + PostgreSQL 16, fresh database"
+  },
+  "limitations": [
+    "Not exercised on a physical phone or printer: the container has no Bluetooth and no emulator.",
+    "Silent self-update works on Android 12+ after the user allows installing unknown apps once; Android 7-11 always shows the system confirmation.",
+    "Phones on 1.0.0 must install 1.1.0 manually once; it installs over 1.0.0 because the signing certificate is the same."
+  ]
+}

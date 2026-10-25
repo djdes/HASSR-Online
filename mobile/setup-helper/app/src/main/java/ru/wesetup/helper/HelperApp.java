@@ -1,24 +1,34 @@
 package ru.wesetup.helper;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.wesetup.helper.auth.SessionStore;
 import ru.wesetup.helper.bt.PrinterManager;
 import ru.wesetup.helper.bt.PrinterStore;
 import ru.wesetup.helper.net.ApiClient;
+import ru.wesetup.helper.net.NetworkState;
 import ru.wesetup.helper.net.Outbox;
 import ru.wesetup.helper.net.SyncManager;
 import ru.wesetup.helper.template.TemplateRepository;
+import ru.wesetup.helper.update.SessionInstaller;
+import ru.wesetup.helper.update.UpdateJobService;
+import ru.wesetup.helper.update.UpdateSource;
+import ru.wesetup.helper.update.UpdateStore;
+import ru.wesetup.helper.update.Updater;
 
-/** Общие части приложения: вход, принтеры, очередь событий, шаблоны. */
+/** Общие части приложения: вход, принтеры, очередь событий, шаблоны, обновления. */
 public class HelperApp extends Application {
 
     private static final String TAG = "SetupHelper";
@@ -30,7 +40,10 @@ public class HelperApp extends Application {
     private SyncManager sync;
     private ApiClient api;
     private TemplateRepository templates;
+    private Updater updater;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    /** Сколько экранов приложения сейчас видно: 0 — свёрнуто, можно ставить обновление. */
+    private final AtomicInteger startedActivities = new AtomicInteger();
 
     public static HelperApp get(Context context) {
         return (HelperApp) context.getApplicationContext();
@@ -57,8 +70,14 @@ public class HelperApp extends Application {
         });
         sync = new SyncManager(this, sessions, outbox, api, this::wipeLocalData);
         templates = new TemplateRepository(this);
+        updater = new Updater(this, new UpdateStore(this), createUpdateSource(), new SessionInstaller(this),
+                new AppEnv());
+        updater.onAppStarted();
+        trackVisibility();
+        // Проверка обновлений в фоне раз в 6 часов, когда есть сеть.
+        UpdateJobService.schedule(this);
 
-        // Появилась сеть — отправить, что накопилось без неё.
+        // Появилась сеть — отправить, что накопилось без неё, и проверить обновление.
         ConnectivityManager connectivity = getSystemService(ConnectivityManager.class);
         if (connectivity != null) {
             try {
@@ -66,11 +85,96 @@ public class HelperApp extends Application {
                     @Override
                     public void onAvailable(Network network) {
                         sync.requestSync();
+                        updater.checkAsync(false, null);
                     }
                 });
             } catch (RuntimeException e) {
                 Log.w(TAG, "Не следим за сетью", e);
             }
+        }
+    }
+
+    /** Откуда брать обновления: сайт. Тесты на Robolectric подменяют — в сеть они не ходят. */
+    protected UpdateSource createUpdateSource() {
+        return api;
+    }
+
+    private void trackVisibility() {
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityStarted(Activity activity) {
+                if (startedActivities.incrementAndGet() == 1) updater.onAppForegrounded();
+            }
+
+            @Override
+            public void onActivityStopped(Activity activity) {
+                // Свернули — обновление можно ставить, никого не прервав.
+                if (startedActivities.decrementAndGet() == 0) updater.onAppBackgrounded();
+            }
+
+            @Override
+            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+            }
+
+            @Override
+            public void onActivityResumed(Activity activity) {
+            }
+
+            @Override
+            public void onActivityPaused(Activity activity) {
+            }
+
+            @Override
+            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+            }
+
+            @Override
+            public void onActivityDestroyed(Activity activity) {
+            }
+        });
+    }
+
+    /** Что автообновлению нужно знать о телефоне. */
+    private final class AppEnv implements Updater.Env {
+        @Override
+        public boolean online() {
+            return NetworkState.isOnline(HelperApp.this);
+        }
+
+        @Override
+        public boolean appVisible() {
+            return startedActivities.get() > 0;
+        }
+
+        @Override
+        public boolean printerBusy() {
+            return printers.isBusy();
+        }
+
+        @Override
+        public String server() {
+            SessionStore.Session session = sessions.load();
+            return session != null ? session.server : sessions.serverUrl();
+        }
+
+        @Override
+        public long now() {
+            return System.currentTimeMillis();
+        }
+
+        @Override
+        public int installedVersionCode() {
+            return BuildConfig.VERSION_CODE;
+        }
+
+        @Override
+        public int sdk() {
+            return Build.VERSION.SDK_INT;
+        }
+
+        @Override
+        public boolean canInstallPackages() {
+            return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || getPackageManager().canRequestPackageInstalls();
         }
     }
 
@@ -101,6 +205,10 @@ public class HelperApp extends Application {
 
     public TemplateRepository templates() {
         return templates;
+    }
+
+    public Updater updater() {
+        return updater;
     }
 
     /** Фоновый поток для входа и выхода. */

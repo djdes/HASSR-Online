@@ -20,11 +20,21 @@ public final class TemplateField {
     public final int maxLength;
     public final boolean multiline;
     public final String hint;
-    /** Варианты срока: {@code 6h}, {@code 24h}, {@code 3d}… */
+    /**
+     * Варианты: для срока — {@code 6h}, {@code 24h}, {@code 3d}…; для текста —
+     * подсказки в выпадающем списке («+2…+6 °C», «Обед»), вписать своё можно.
+     */
     public final List<String> options;
+    /** Для даты: выбирается только день («Годен до» по документам), время не печатается. */
+    public final boolean dateOnly;
 
     public TemplateField(String key, String label, Type type, String defaultValue, boolean required,
                          int maxLength, boolean multiline, String hint, List<String> options) {
+        this(key, label, type, defaultValue, required, maxLength, multiline, hint, options, false);
+    }
+
+    public TemplateField(String key, String label, Type type, String defaultValue, boolean required,
+                         int maxLength, boolean multiline, String hint, List<String> options, boolean dateOnly) {
         this.key = key;
         this.label = label;
         this.type = type;
@@ -34,5 +44,6 @@ public final class TemplateField {
         this.multiline = multiline;
         this.hint = hint == null ? "" : hint;
         this.options = options == null ? Collections.<String>emptyList() : Collections.unmodifiableList(options);
+        this.dateOnly = dateOnly;
     }
 }

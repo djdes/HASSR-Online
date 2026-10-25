@@ -1,7 +1,11 @@
 package ru.wesetup.helper;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.checkbox.MaterialCheckBox;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -27,6 +31,10 @@ import ru.wesetup.helper.net.HelperEvents;
  * «Добавить оборудование»: поиск Bluetooth-устройств телефона и
  * подключение выбранного принтера. После подключения принтер сохраняется
  * на телефоне, а сайту уходит отметка (сразу или когда появится сеть).
+ *
+ * <p>Если поиск закончился, а похожего на принтер нет, экран говорит, что
+ * проверить, и ведёт в системные настройки Bluetooth: сопряжённый там
+ * принтер появляется здесь при возврате.
  */
 public final class ScanActivity extends BaseActivity implements DeviceScanner.Listener {
 
@@ -34,10 +42,14 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
     private DeviceScanner scanner;
     private TextView statusText;
     private LinearProgressIndicator progress;
-    private MaterialCheckBox showUnnamed;
+    private MaterialButton showAll;
+    private View help;
+    private View helpLocation;
     private TextView empty;
     private LinearLayout list;
     private List<FoundDevice> devices = new ArrayList<>();
+    private boolean showAllDevices;
+    private boolean scanFinished;
     private boolean connecting;
 
     @Override
@@ -49,13 +61,19 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
 
         statusText = findViewById(R.id.scan_status);
         progress = findViewById(R.id.scan_progress);
-        showUnnamed = findViewById(R.id.scan_show_unnamed);
+        showAll = findViewById(R.id.scan_show_all);
+        help = findViewById(R.id.scan_help);
+        helpLocation = findViewById(R.id.scan_help_location);
         empty = findViewById(R.id.scan_empty);
         list = findViewById(R.id.scan_list);
 
         findViewById(R.id.scan_back).setOnClickListener(v -> finish());
         findViewById(R.id.scan_again).setOnClickListener(v -> withBluetooth(true, this::startScan));
-        showUnnamed.setOnCheckedChangeListener((button, checked) -> renderList());
+        findViewById(R.id.scan_help_settings).setOnClickListener(v -> openBluetoothSettings());
+        showAll.setOnClickListener(v -> {
+            showAllDevices = !showAllDevices;
+            renderList();
+        });
     }
 
     @Override
@@ -77,6 +95,8 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
         statusText.setText(R.string.scan_running);
         progress.setVisibility(View.VISIBLE);
         empty.setVisibility(View.GONE);
+        scanFinished = false;
+        help.setVisibility(View.GONE);
         try {
             scanner.start();
         } catch (SecurityException e) {
@@ -95,6 +115,7 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
     public void onScanFinished() {
         progress.setVisibility(View.GONE);
         statusText.setText(R.string.scan_done);
+        scanFinished = true;
         renderList();
     }
 
@@ -102,8 +123,14 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
         list.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
         int shown = 0;
+        int hidden = 0;
+        boolean printerFound = false;
         for (FoundDevice device : devices) {
-            if (!device.hasName() && !showUnnamed.isChecked()) continue;
+            if (device.isLikelyPrinter()) printerFound = true;
+            if (!device.visibleByDefault() && !showAllDevices) {
+                hidden++;
+                continue;
+            }
             View item = inflater.inflate(R.layout.item_device, list, false);
             TextView name = item.findViewById(R.id.device_name);
             name.setText(device.hasName() ? device.name : getString(R.string.scan_unnamed));
@@ -123,6 +150,26 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
         }
         boolean scanning = scanner != null && scanner.isRunning();
         empty.setVisibility(shown == 0 && !scanning ? View.VISIBLE : View.GONE);
+        if (showAllDevices) {
+            showAll.setVisibility(View.VISIBLE);
+            showAll.setText(R.string.scan_hide_unnamed);
+        } else {
+            showAll.setVisibility(hidden > 0 ? View.VISIBLE : View.GONE);
+            showAll.setText(getString(R.string.scan_show_all, hidden));
+        }
+        boolean needHelp = scanFinished && !scanning && !printerFound;
+        help.setVisibility(needHelp ? View.VISIBLE : View.GONE);
+        // С Android 12 геолокация поиску не нужна, но некоторые прошивки без неё не ищут.
+        helpLocation.setVisibility(needHelp && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                && BtSupport.locationDisabled(this) ? View.VISIBLE : View.GONE);
+    }
+
+    private void openBluetoothSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
+        } catch (ActivityNotFoundException e) {
+            Ui.message(this, getString(R.string.scan_bt_settings), getString(R.string.bt_enable_needed));
+        }
     }
 
     private void connect(FoundDevice device) {
@@ -159,6 +206,7 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
                         .setTitle(R.string.scan_failed_title)
                         .setMessage(message)
                         .setPositiveButton(R.string.scan_retry, (d, w) -> withBluetooth(false, () -> connect(device)))
+                        .setNeutralButton(R.string.scan_bt_settings, (d, w) -> openBluetoothSettings())
                         .setNegativeButton(R.string.cancel, null)
                         .show();
             }

@@ -50,6 +50,10 @@ final class Ui {
         return new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.forLanguageTag("ru")).format(new Date(millis));
     }
 
+    static String date(long millis) {
+        return new SimpleDateFormat("dd.MM.yyyy", Locale.forLanguageTag("ru")).format(new Date(millis));
+    }
+
     /** Окно «идёт работа» с меняющимся текстом: подключение, печать. */
     static final class Progress {
         private final AlertDialog dialog;

@@ -13,6 +13,8 @@ public final class FoundDevice {
     public boolean bonded;
     public boolean classic;
     public boolean le;
+    /** Класс устройства Bluetooth (основной + второстепенный) или {@link PrinterNames#NO_CLASS}. */
+    public int deviceClass = PrinterNames.NO_CLASS;
 
     public FoundDevice(String address) {
         this.address = address;
@@ -23,7 +25,19 @@ public final class FoundDevice {
     }
 
     public int printerScore() {
-        return PrinterNames.score(name);
+        return PrinterNames.score(name, deviceClass);
+    }
+
+    public boolean isLikelyPrinter() {
+        return printerScore() >= 50;
+    }
+
+    /**
+     * Показывать ли без «Показать все устройства»: с именем, сопряжённое или
+     * похожее на принтер по классу — даже если имя так и не прочиталось.
+     */
+    public boolean visibleByDefault() {
+        return hasName() || bonded || isLikelyPrinter();
     }
 
     /** Принтеры сверху, затем сопряжённые, затем по силе сигнала. */

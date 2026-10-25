@@ -13276,6 +13276,8 @@
       "resultStep": "Telefonda internet paydo bo‘lishi bilan printer quyida ko‘rinadi. «Sinov yorlig‘i 58×40» tugmasi chop etishni tekshiradi.",
       "download": "«Setup yordamchi»ni yuklab olish",
       "downloadHint": "Android 7 va undan yangi, APK fayl",
+      "version": "Versiya {version}",
+      "autoUpdate": "Ilova o‘zini o‘zi yangilaydi: internet bo‘lganda saytni tekshiradi va yangi versiyani o‘rnatadi. Android 12 va undan yangisida bu sizning ishtirokingizsiz bo‘ladi, eskiroq telefonlarda «O‘rnatish»ni bosish kifoya.",
       "qrHint": "Ilovani yuklab olish uchun telefon kamerasini shu yerga qarating",
       "printers": {
         "heading": "Ulangan printerlar",
@@ -13297,6 +13299,7 @@
         "neverSeen": "{user} · hali ulanmagan",
         "unknownUser": "Xodim",
         "version": "Versiya {version}",
+        "updatePending": "{version} versiyasiga avtomatik yangilanadi",
         "disconnect": "Uzish",
         "disconnectAria": "«{name}»ni uzish",
         "disconnecting": "Uzilmoqda…",
@@ -13316,6 +13319,14 @@
       "templates": {
         "test58x40": "Sinov yorlig‘i 58×40",
         "product": "Mahsulot yorlig‘i",
+        "semiFinished": "Yarim tayyor mahsulot",
+        "dish": "Tayyor taom",
+        "defrost": "Muzdan tushirish",
+        "freeze": "Muzlatish",
+        "dailySample": "Kunlik namuna",
+        "incoming": "Xomashyoni qabul qilish",
+        "allergens": "Allergenlar",
+        "reject": "Yaroqsiz — ishlatmang",
         "opened": "Ochilgan qadoq",
         "freeText": "Erkin matn"
       }

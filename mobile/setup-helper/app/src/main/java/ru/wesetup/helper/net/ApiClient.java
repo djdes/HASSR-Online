@@ -7,6 +7,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,14 +26,17 @@ import java.util.Locale;
 import javax.net.ssl.SSLException;
 
 import ru.wesetup.helper.BuildConfig;
+import ru.wesetup.helper.update.UpdateInfo;
+import ru.wesetup.helper.update.UpdateSource;
 
 /**
- * Запросы к сайту: вход, отправка событий, выход ({@code /api/setup-helper/*}).
+ * Запросы к сайту: вход, отправка событий, выход, обновления
+ * ({@code /api/setup-helper/*}).
  *
  * <p>Без сторонних библиотек: {@code HttpURLConnection} и {@code org.json}
  * есть в самом Android. Вызывать только не из главного потока.
  */
-public final class ApiClient {
+public final class ApiClient implements UpdateSource {
 
     /** Ответ сервера с ошибкой: статус и текст для человека. */
     public static final class ApiException extends IOException {
@@ -116,6 +121,8 @@ public final class ApiClient {
 
     private static final int CONNECT_TIMEOUT_MS = 10_000;
     private static final int READ_TIMEOUT_MS = 20_000;
+    /** APK качается дольше JSON: медленный мобильный интернет на кухне. */
+    private static final int DOWNLOAD_READ_TIMEOUT_MS = 60_000;
 
     public LoginResult login(String server, String email, String password, ClientInfo client) throws IOException {
         JSONObject body = clientJson(client);
@@ -144,6 +151,56 @@ public final class ApiClient {
         post(server + "/api/setup-helper/logout", new JSONObject(), token);
     }
 
+    @Override
+    public UpdateInfo fetchUpdate(String server) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            connection = open(server + "/api/setup-helper/version", "GET", null);
+            JSONObject json = readJson(connection);
+            try {
+                return UpdateInfo.parse(json.toString());
+            } catch (IllegalArgumentException e) {
+                throw new IOException(e.getMessage(), e);
+            }
+        } catch (UnknownHostException | ConnectException | NoRouteToHostException | SocketTimeoutException
+                 | SSLException e) {
+            throw new OfflineException(e);
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    @Override
+    public void downloadUpdate(String server, UpdateInfo info, File target) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            // ?v= — только от кешей по пути: файл всё равно сверяется по SHA-256.
+            connection = open(server + "/api/setup-helper/download?v=" + info.versionCode, "GET", null);
+            connection.setReadTimeout(DOWNLOAD_READ_TIMEOUT_MS);
+            connection.setRequestProperty("Accept", "application/vnd.android.package-archive");
+            int status = connection.getResponseCode();
+            if (status != HttpURLConnection.HTTP_OK) {
+                throw new ApiException(status, "сайт не отдал файл (" + status + ")", null);
+            }
+            long written = 0;
+            try (InputStream in = connection.getInputStream(); OutputStream out = new FileOutputStream(target)) {
+                byte[] buffer = new byte[64 * 1024];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    written += read;
+                    if (written > info.size) throw new IOException("файл больше заявленного");
+                    out.write(buffer, 0, read);
+                }
+            }
+            if (written != info.size) throw new IOException("файл скачался не полностью");
+        } catch (UnknownHostException | ConnectException | NoRouteToHostException | SocketTimeoutException
+                 | SSLException e) {
+            throw new OfflineException(e);
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
     /** «WeSetupHelper/1.0.0 (Android 14; samsung SM-A515F)» — сайт видит это в журнале входов. */
     public static String userAgent() {
         return "WeSetupHelper/" + BuildConfig.VERSION_NAME + " (Android " + Build.VERSION.RELEASE + "; "
@@ -164,42 +221,51 @@ public final class ApiClient {
     private JSONObject post(String url, JSONObject body, String bearer) throws IOException {
         HttpURLConnection connection = null;
         try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-            connection.setReadTimeout(READ_TIMEOUT_MS);
-            connection.setRequestMethod("POST");
+            connection = open(url, "POST", bearer);
             connection.setDoOutput(true);
-            connection.setUseCaches(false);
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("User-Agent", userAgent());
-            if (bearer != null) connection.setRequestProperty("Authorization", "Bearer " + bearer);
             byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
             connection.setFixedLengthStreamingMode(payload.length);
             try (OutputStream out = connection.getOutputStream()) {
                 out.write(payload);
             }
-            int status = connection.getResponseCode();
-            String text = read(status >= 400 ? connection.getErrorStream() : connection.getInputStream());
-            JSONObject json;
-            try {
-                json = text.isEmpty() ? new JSONObject() : new JSONObject(text);
-            } catch (JSONException e) {
-                // Вместо JSON — страница nginx или Wi-Fi с авторизацией.
-                if (status >= 400) throw new ApiException(status, "Сервер ответил ошибкой " + status, null);
-                throw new OfflineException(e);
-            }
-            if (status >= 400) {
-                throw new ApiException(status, json.optString("error", "Сервер ответил ошибкой " + status),
-                        json.isNull("code") ? null : json.optString("code", null));
-            }
-            return json;
+            return readJson(connection);
         } catch (UnknownHostException | ConnectException | NoRouteToHostException | SocketTimeoutException
                  | SSLException e) {
             throw new OfflineException(e);
         } finally {
             if (connection != null) connection.disconnect();
         }
+    }
+
+    private static HttpURLConnection open(String url, String method, String bearer) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        connection.setReadTimeout(READ_TIMEOUT_MS);
+        connection.setRequestMethod(method);
+        connection.setUseCaches(false);
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", userAgent());
+        if (bearer != null) connection.setRequestProperty("Authorization", "Bearer " + bearer);
+        return connection;
+    }
+
+    private static JSONObject readJson(HttpURLConnection connection) throws IOException {
+        int status = connection.getResponseCode();
+        String text = read(status >= 400 ? connection.getErrorStream() : connection.getInputStream());
+        JSONObject json;
+        try {
+            json = text.isEmpty() ? new JSONObject() : new JSONObject(text);
+        } catch (JSONException e) {
+            // Вместо JSON — страница nginx или Wi-Fi с авторизацией.
+            if (status >= 400) throw new ApiException(status, "Сервер ответил ошибкой " + status, null);
+            throw new OfflineException(e);
+        }
+        if (status >= 400) {
+            throw new ApiException(status, json.optString("error", "Сервер ответил ошибкой " + status),
+                    json.isNull("code") ? null : json.optString("code", null));
+        }
+        return json;
     }
 
     private static JSONObject clientJson(ClientInfo client) {

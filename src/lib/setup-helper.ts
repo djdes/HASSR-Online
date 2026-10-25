@@ -24,6 +24,44 @@ export function setupHelperDownloadUrl(): string {
   return `${base}/api/setup-helper/download`;
 }
 
+/**
+ * Выпуск приложения — `resources/setup-helper/version.json`. Его пишет вместе
+ * с APK задача Gradle `publishRelease` (mobile/setup-helper): номер сборки,
+ * имя версии, SHA-256 и размер файла. Приложение сравнивает `versionCode` со
+ * своим и, если на сайте новее, скачивает APK и сверяет хеш перед установкой.
+ */
+const releaseSchema = z.object({
+  versionCode: z.number().int().min(1).max(2_100_000_000),
+  versionName: z.string().trim().min(1).max(40).regex(/^[0-9A-Za-z.+-]+$/),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  size: z.number().int().min(1).max(200 * 1024 * 1024),
+  publishedAt: z.string().max(40).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export type SetupHelperRelease = z.infer<typeof releaseSchema>;
+
+/** Манифест выпуска или null, если файл испорчен: битую версию не раздаём. */
+export function parseReleaseManifest(raw: unknown): SetupHelperRelease | null {
+  const parsed = releaseSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * «1.0.0» < «1.1.0» < «1.10.0»: сравнение по числам через точку, недостающие
+ * части — нули. Нечисловые хвосты («1.1.0-beta») не учитываются.
+ */
+export function compareAppVersions(a: string, b: string): number {
+  const parts = (value: string) => value.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const left = parts(a);
+  const right = parts(b);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return diff < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
 /** Больше за один запрос не принимаем: очередь телефона шлёт порциями. */
 export const MAX_SYNC_EVENTS = 100;
 

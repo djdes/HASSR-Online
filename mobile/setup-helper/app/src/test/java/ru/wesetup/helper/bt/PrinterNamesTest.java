@@ -42,6 +42,39 @@ public class PrinterNamesTest {
     }
 
     @Test
+    public void testBluetoothClassRevealsPrinterWithoutName() {
+        // Imaging + бит Printer (0x0680), просто Imaging (0x0600), наушники (Audio/Video 0x0418), класс неизвестен.
+        assertEquals(75, PrinterNames.score(null, 0x0680));
+        assertEquals(75, PrinterNames.score("", 0x040680 & 0x1FFC));
+        assertEquals(60, PrinterNames.score(null, 0x0600));
+        assertEquals(0, PrinterNames.score(null, 0x0418));
+        assertEquals(0, PrinterNames.score(null, PrinterNames.NO_CLASS));
+        // Имя важнее класса, но класс не понижает оценку.
+        assertEquals(100, PrinterNames.score("IP-802BT", 0x0418));
+        assertEquals(75, PrinterNames.score("JBL Flip 5", 0x0680));
+
+        FoundDevice unnamedPrinter = new FoundDevice("00:00:00:00:00:10");
+        unnamedPrinter.deviceClass = 0x0680;
+        assertTrue(unnamedPrinter.isLikelyPrinter());
+        assertTrue(unnamedPrinter.visibleByDefault());
+        FoundDevice unnamedHeadphones = new FoundDevice("00:00:00:00:00:11");
+        unnamedHeadphones.deviceClass = 0x0418;
+        assertFalse(unnamedHeadphones.visibleByDefault());
+        unnamedHeadphones.bonded = true;
+        assertTrue("сопряжённое показываем всегда", unnamedHeadphones.visibleByDefault());
+    }
+
+    @Test
+    public void testMoreLabelPrinterBrandsAreRecognised() {
+        for (String name : new String[]{"NIIMBOT B21", "Phomemo M110", "MUNBYN P47", "PT-210", "QL-820NWB",
+                "RPP02N", "ZJ-5805", "POS-58"}) {
+            assertTrue(name, PrinterNames.isLikelyPrinter(name));
+        }
+        // «POS» — только с начала слова: «Position tracker» — не принтер.
+        assertFalse(PrinterNames.isLikelyPrinter("Position tracker"));
+    }
+
+    @Test
     public void testSearchOrderPutsPrinterFirst() {
         FoundDevice speaker = new FoundDevice("00:00:00:00:00:01");
         speaker.name = "JBL Flip 5";

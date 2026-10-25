@@ -7,8 +7,11 @@ import static org.robolectric.Shadows.shadowOf;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.os.Looper;
+import android.provider.Settings;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
@@ -33,6 +36,8 @@ import org.robolectric.annotation.GraphicsMode;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.Constructor;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +46,9 @@ import ru.wesetup.helper.bt.BtSupport;
 import ru.wesetup.helper.bt.PrinterInfo;
 import ru.wesetup.helper.print.LabelRenderer;
 import ru.wesetup.helper.print.MonoBitmap;
+import ru.wesetup.helper.template.Durations;
 import ru.wesetup.helper.template.LabelTemplate;
+import ru.wesetup.helper.template.TemplateField;
 import ru.wesetup.helper.template.TemplateValues;
 
 /**
@@ -157,6 +164,7 @@ public class ScreensTest {
                     .time("openedAt", NOW).duration("useWithin", 72 * 60)
                     .text("employee", "Иван Петров")
                     .text("text", "Только для персонала");
+            fillFields(values, template);
             MonoBitmap image = PrintJobs.render(template, printer.label, values);
             assertEquals(464, image.width);
             assertEquals(320, image.height);
@@ -210,5 +218,134 @@ public class ScreensTest {
         assertEquals("IP-802BT", ((TextView) first.findViewById(R.id.device_name)).getText().toString());
         assertEquals("Похоже на принтер · Сопряжён", ((TextView) first.findViewById(R.id.device_badges)).getText().toString());
         assertEquals("JBL Flip 5", ((TextView) list.getChildAt(1).findViewById(R.id.device_name)).getText().toString());
+    }
+
+    /** Поля шаблона, которым не задали пример, — умолчаниями или первым вариантом. */
+    private static void fillFields(TemplateValues values, LabelTemplate template) {
+        for (TemplateField field : template.fields) {
+            switch (field.type) {
+                case DATETIME:
+                    if (values.time(field.key) == null) values.time(field.key, TemplateValues.defaultTime(field.defaultValue, NOW));
+                    break;
+                case DURATION:
+                    if (values.duration(field.key) == null) values.duration(field.key, Durations.parseMinutes(field.defaultValue));
+                    break;
+                default:
+                    if (values.text(field.key).isEmpty()) {
+                        values.text(field.key, field.options.isEmpty() ? "Котлеты куриные рубленые" : field.options.get(0));
+                    }
+            }
+        }
+    }
+
+    /** Класс устройства Bluetooth: конструктор скрыт в SDK, но есть в Android. */
+    private static BluetoothClass bluetoothClass(int value) throws Exception {
+        Constructor<BluetoothClass> constructor = BluetoothClass.class.getDeclaredConstructor(int.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(value);
+    }
+
+    private BluetoothAdapter bluetoothReady() {
+        shadowOf(app).grantPermissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT);
+        BluetoothAdapter adapter = BtSupport.adapter(app);
+        shadowOf(adapter).setEnabled(true);
+        return adapter;
+    }
+
+    private static int visibleRows(LinearLayout list) {
+        return list.getChildCount();
+    }
+
+    @Test
+    public void testUnnamedPrinterFoundByBluetoothClassIsShownOthersBehindButton() throws Exception {
+        signIn();
+        BluetoothAdapter adapter = bluetoothReady();
+        BluetoothDevice speaker = adapter.getRemoteDevice("00:11:22:33:44:55");
+        shadowOf(speaker).setName("JBL Flip 5");
+        Set<BluetoothDevice> bonded = new HashSet<>();
+        bonded.add(speaker);
+        shadowOf(adapter).setBondedDevices(bonded);
+        ScanActivity activity = Robolectric.buildActivity(ScanActivity.class).setup().get();
+
+        // Классический поиск нашёл два устройства без имени: принтер (Imaging/Printer) и наушники.
+        BluetoothDevice printer = adapter.getRemoteDevice("DC:0D:30:12:34:56");
+        BluetoothDevice headphones = adapter.getRemoteDevice("66:77:88:99:AA:BB");
+        app.sendBroadcast(new Intent(BluetoothDevice.ACTION_FOUND)
+                .putExtra(BluetoothDevice.EXTRA_DEVICE, printer)
+                .putExtra(BluetoothDevice.EXTRA_CLASS, bluetoothClass(0x0680)));
+        app.sendBroadcast(new Intent(BluetoothDevice.ACTION_FOUND)
+                .putExtra(BluetoothDevice.EXTRA_DEVICE, headphones)
+                .putExtra(BluetoothDevice.EXTRA_CLASS, bluetoothClass(0x0418)));
+        shadowOf(Looper.getMainLooper()).idle();
+
+        LinearLayout list = activity.findViewById(R.id.scan_list);
+        assertEquals(2, visibleRows(list));
+        View first = list.getChildAt(0);
+        assertEquals("Без имени", ((TextView) first.findViewById(R.id.device_name)).getText().toString());
+        assertEquals("DC:0D:30:12:34:56", ((TextView) first.findViewById(R.id.device_address)).getText().toString());
+        assertEquals("Похоже на принтер", ((TextView) first.findViewById(R.id.device_badges)).getText().toString());
+        assertEquals("JBL Flip 5", ((TextView) list.getChildAt(1).findViewById(R.id.device_name)).getText().toString());
+
+        MaterialButton showAll = activity.findViewById(R.id.scan_show_all);
+        assertEquals(View.VISIBLE, showAll.getVisibility());
+        assertEquals("Показать все устройства (ещё 1)", showAll.getText().toString());
+        showAll.performClick();
+        assertEquals(3, visibleRows(list));
+        assertEquals("Скрыть устройства без имени", showAll.getText().toString());
+        // Принтер нашёлся — подсказка «не нашёлся?» не нужна даже после конца поиска.
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(41));
+        assertEquals(View.GONE, activity.findViewById(R.id.scan_help).getVisibility());
+    }
+
+    @Test
+    public void testHelpWithBluetoothSettingsAppearsWhenScanEndsWithoutPrinter() throws Exception {
+        signIn();
+        BluetoothAdapter adapter = bluetoothReady();
+        BluetoothDevice speaker = adapter.getRemoteDevice("00:11:22:33:44:55");
+        shadowOf(speaker).setName("JBL Flip 5");
+        Set<BluetoothDevice> bonded = new HashSet<>();
+        bonded.add(speaker);
+        shadowOf(adapter).setBondedDevices(bonded);
+        ScanActivity activity = Robolectric.buildActivity(ScanActivity.class).setup().get();
+
+        View help = activity.findViewById(R.id.scan_help);
+        assertEquals("пока ищем — подсказки нет", View.GONE, help.getVisibility());
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(41));
+        assertEquals(View.VISIBLE, help.getVisibility());
+        assertEquals("Поиск закончен", ((TextView) activity.findViewById(R.id.scan_status)).getText().toString());
+
+        activity.findViewById(R.id.scan_help_settings).performClick();
+        Intent next = shadowOf(activity).getNextStartedActivity();
+        assertNotNull(next);
+        assertEquals(Settings.ACTION_BLUETOOTH_SETTINGS, next.getAction());
+
+        // «Искать снова» прячет подсказку до конца нового поиска.
+        activity.findViewById(R.id.scan_again).performClick();
+        assertEquals(View.GONE, help.getVisibility());
+    }
+
+    @Test
+    public void testProductionTemplateOffersOptionsAndDateOnlyFields() throws Exception {
+        signIn();
+        PrinterInfo printer = savePrinter();
+        Intent intent = new Intent(app, PrintActivity.class)
+                .putExtra(PrintActivity.EXTRA_ADDRESS, printer.address)
+                .putExtra(PrintActivity.EXTRA_TEMPLATE, "incoming");
+        PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
+        LinearLayout fields = activity.findViewById(R.id.print_fields);
+        // Продукт, поставщик, партия, поступило, годен до, хранение, принял.
+        assertEquals(7, fields.getChildCount());
+        TextInputLayout expires = (TextInputLayout) fields.getChildAt(4);
+        assertEquals("Годен до (по документам)", expires.getHint().toString());
+        String date = String.valueOf(((TextInputEditText) expires.findViewById(R.id.field_input)).getText());
+        assertTrue("только дата, без времени: " + date, date.matches("\\d{2}\\.\\d{2}\\.\\d{4}"));
+        TextInputLayout storage = (TextInputLayout) fields.getChildAt(5);
+        assertEquals("Условия хранения", storage.getHint().toString());
+        View storageInput = storage.findViewById(R.id.field_input);
+        assertTrue(storageInput instanceof com.google.android.material.textfield.MaterialAutoCompleteTextView);
+        assertEquals("+2…+6 °C", String.valueOf(((android.widget.EditText) storageInput).getText()));
+        // Своё значение вписать можно — это подсказки, а не жёсткий список.
+        ((android.widget.EditText) storageInput).setText("+1…+3 °C");
+        assertEquals("+1…+3 °C", String.valueOf(((android.widget.EditText) storageInput).getText()));
     }
 }
