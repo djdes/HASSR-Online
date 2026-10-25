@@ -507,6 +507,8 @@ model Organization {
   paperJournalDocuments          PaperJournalDocument[]
   printAgents                    PrintAgent[]
   printJobs                      PrintJob[]
+  setupHelperDevices             SetupHelperDevice[]
+  labelPrinters                  LabelPrinter[]
   journalGuideTemplates          JournalGuideTemplate[]
   journalPipelineTemplates       JournalPipelineTemplate[]
   partnerClients                 PartnerClient[]                @relation("PartnerClients")
@@ -2778,6 +2780,73 @@ model PrintJob {
   @@index([agentId, status])
   /// Возврат зависших `printing` обратно в очередь.
   @@index([status, claimedAt])
+}
+
+/// Телефон с приложением «Сетап помощник» (Android: печать этикеток на
+/// Bluetooth-принтер). Одна строка — один вход в приложении.
+///
+/// Как у `PrintAgent`: пароль на телефоне не хранится, приложение получает
+/// долгоживущий ключ и работает по нему без интернета. В БД — только sha256
+/// ключа (`hashHelperToken`).
+model SetupHelperDevice {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Кто вошёл в приложении — от его имени подключаются принтеры.
+  userId         String
+  /// Модель телефона, которую прислало приложение: «Samsung SM-A515F».
+  name           String
+  tokenHash      String         @unique
+  /// Случайный id установки приложения: повторный вход на том же телефоне
+  /// отзывает прежний ключ этого человека, а не оставляет призрака.
+  installationId String?
+  appVersion     String?
+  /// Последняя синхронизация. Приложение работает офлайн и выходит на связь
+  /// только с событиями, поэтому «давно не было» — не ошибка.
+  lastSeenAt     DateTime?
+  /// Отключение с сайта: ключ перестаёт работать, строка остаётся, чтобы
+  /// было видно, через какой телефон подключали принтеры.
+  revokedAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  printers       LabelPrinter[]
+
+  @@index([organizationId])
+}
+
+/// Принтер этикеток, подключённый в «Сетап помощнике» по Bluetooth.
+///
+/// Ключ — Bluetooth-адрес внутри организации: переподключение того же
+/// принтера (в том числе с другого телефона) обновляет строку, а не плодит
+/// копии.
+model LabelPrinter {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Телефон, с которого подключили последним.
+  deviceId       String?
+  device         SetupHelperDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  /// Bluetooth-адрес в верхнем регистре: «DC:0D:30:12:34:56».
+  address        String
+  /// Имя в Bluetooth: «IP-802BT».
+  name           String
+  /// Модель, если приложение её узнало: «AIYIN IP-802BT».
+  model          String?
+  /// Как подключён: "classic" (SPP) или "ble".
+  transport      String
+  connectedById  String?
+  /// Время подключения по часам телефона (событие могло ждать сети).
+  connectedAt    DateTime
+  lastPrintAt    DateTime?
+  /// Код шаблона последней печати: "test-58x40", "product"…
+  lastTemplate   String?
+  /// Принтер удалили в приложении.
+  removedAt      DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([organizationId, address])
+  @@index([deviceId])
 }
 
 enum TasksFlowOutboxStatus {

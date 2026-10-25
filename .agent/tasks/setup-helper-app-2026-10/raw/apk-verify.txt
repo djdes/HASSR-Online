@@ -1,0 +1,36 @@
+# apksigner verify --print-certs
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Number of signers: 1
+Signer #1 certificate DN: CN=WeSetup Setup Helper (test), O=WeSetup, C=RU
+Signer #1 certificate SHA-256 digest: e67c22a2cfef328e62b9f69a79677e0ae513007dc83b77a39639d8c57110ce2a
+
+# sha256
+9debdb0566bde027be776b0e91f213afa649317832cec933859aff156fc53dd1  resources/setup-helper/setup-helper.apk
+size 1945901
+
+# aapt2 dump badging (без переводов названия)
+package: name='ru.wesetup.helper' versionCode='1' versionName='1.0.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+targetSdkVersion:'36'
+uses-permission: name='android.permission.INTERNET'
+uses-permission: name='android.permission.ACCESS_NETWORK_STATE'
+uses-permission: name='android.permission.BLUETOOTH_SCAN' usesPermissionFlags='neverForLocation'
+uses-permission: name='android.permission.BLUETOOTH_CONNECT'
+uses-permission: name='android.permission.BLUETOOTH' maxSdkVersion='30'
+uses-permission: name='android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30'
+uses-permission: name='android.permission.ACCESS_FINE_LOCATION' maxSdkVersion='30'
+uses-permission: name='android.permission.ACCESS_COARSE_LOCATION' maxSdkVersion='30'
+uses-permission: name='ru.wesetup.helper.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'
+application-label:'Сетап помощник'
+launchable-activity: name='ru.wesetup.helper.MainActivity'  label='' icon=''
+  uses-feature: name='android.hardware.bluetooth'
+  uses-feature-not-required: name='android.hardware.bluetooth_le'
+  uses-feature-not-required: name='android.hardware.location'
+  uses-feature: name='android.hardware.faketouch'
+
+# debuggable
+false

@@ -1,0 +1,5 @@
+// «Сетап помощник» — отдельный проект, не связан с Capacitor-приложением
+// в mobile/android. Версии AGP и Gradle те же, что у него.
+plugins {
+    id 'com.android.application' version '8.13.0' apply false
+}

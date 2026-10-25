@@ -1,0 +1,12 @@
+{
+  "id": "free-text",
+  "title": "Произвольный текст",
+  "description": "Любой текст крупно — шрифт подстроится под этикетку.",
+  "size": { "width": 58, "height": 40 },
+  "fields": [
+    { "key": "text", "label": "Текст", "type": "text", "required": true, "maxLength": 160, "multiline": true, "hint": "До 6 строк" }
+  ],
+  "elements": [
+    { "type": "text", "x": 2, "y": 2, "w": 54, "h": 36, "text": "{{text}}", "size": 6, "bold": true, "align": "center", "valign": "center", "maxLines": 6, "minScale": 0.4 }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "opened",
+  "title": "Вскрытая упаковка",
+  "description": "Когда вскрыли и до какого времени использовать.",
+  "size": { "width": 58, "height": 40 },
+  "fields": [
+    { "key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Сливки 33%»" },
+    { "key": "openedAt", "label": "Вскрыто", "type": "datetime", "default": "now" },
+    { "key": "useWithin", "label": "Использовать в течение", "type": "duration", "default": "24h", "options": ["6h", "12h", "24h", "48h", "72h", "5d"] },
+    { "key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40 }
+  ],
+  "elements": [
+    { "type": "text", "x": 1.5, "y": 1.5, "w": 55, "h": 6, "text": "ВСКРЫТАЯ УПАКОВКА", "size": 3.6, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true },
+    { "type": "text", "x": 2, "y": 8.4, "w": 54, "h": 10, "text": "{{product}}", "size": 4.6, "bold": true, "align": "center", "valign": "center", "maxLines": 2 },
+    { "type": "line", "x": 2, "y": 19.2, "x2": 56, "y2": 19.2, "thickness": 0.3 },
+    { "type": "text", "x": 2, "y": 20.3, "w": 54, "h": 4.8, "text": "Вскрыто: {{openedAt|datetime}}", "size": 3.3, "maxLines": 1 },
+    { "type": "text", "x": 2, "y": 25.4, "w": 54, "h": 5.6, "text": "Использовать до: {{openedAt+useWithin|datetime}}", "size": 3.6, "bold": true, "maxLines": 1 },
+    { "type": "text", "x": 2, "y": 31.2, "w": 54, "h": 4.4, "text": "Отв.: {{employee}}", "size": 3, "maxLines": 1 },
+    { "type": "text", "x": 2, "y": 35.4, "w": 54, "h": 4, "text": "{{org.name}}", "size": 2.7, "align": "right", "maxLines": 1 }
+  ]
+}

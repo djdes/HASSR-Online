@@ -1,0 +1,83 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Версия приложения. Номер сборки можно передать: ./gradlew assembleRelease -PversionCode=2
+def appVersionName = '1.0.0'
+def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 1
+
+// Ключ подписи берём из переменных окружения: репозиторий публичный, ключу в
+// git не место. Без ключа release подписывается отладочным ключом машины —
+// для проверки этого хватает, но такую сборку нельзя поставить поверх
+// подписанной другим ключом (см. README).
+def releaseKeystore = System.getenv('SETUP_HELPER_KEYSTORE')
+
+android {
+    namespace = 'ru.wesetup.helper'
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = 'ru.wesetup.helper'
+        minSdk = 24
+        targetSdk = 36
+        versionCode = appVersionCode
+        versionName = appVersionName
+        buildConfigField 'String', 'DEFAULT_SERVER', '"https://wesetup.ru"'
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    signingConfigs {
+        if (releaseKeystore) {
+            release {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv('SETUP_HELPER_KEYSTORE_PASSWORD')
+                keyAlias = System.getenv('SETUP_HELPER_KEY_ALIAS')
+                keyPassword = System.getenv('SETUP_HELPER_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = releaseKeystore ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+        // Robolectric: экраны создаются на JVM с настоящими ресурсами и Canvas.
+        unitTests.includeAndroidResources = true
+        unitTests.all {
+            // Android 16 в Robolectric лезет во внутренности JDK 17+.
+            jvmArgs '--add-exports=java.base/jdk.internal.access=ALL-UNNAMED',
+                    '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.core:core:1.17.0'
+    implementation 'com.google.android.material:material:1.13.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    // org.json из Android в unit-тестах на JVM — заглушка; настоящая реализация.
+    testImplementation 'org.json:json:20250517'
+    testImplementation 'org.robolectric:robolectric:4.17'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:deprecation']
+}

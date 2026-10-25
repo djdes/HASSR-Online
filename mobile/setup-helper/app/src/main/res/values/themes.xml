@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Без системной шапки: заголовки нарисованы в разметке экранов, а отступы
+         под строку состояния ставит Ui.applySystemBarInsets — с targetSdk 35+
+         Android всегда рисует приложение под системными панелями. -->
+    <style name="Theme.SetupHelper" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorPrimaryContainer">@color/brand_soft</item>
+        <item name="colorOnPrimaryContainer">@color/brand_dark</item>
+        <item name="colorSecondary">@color/brand</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorSecondaryContainer">@color/brand_soft</item>
+        <item name="colorOnSecondaryContainer">@color/brand_dark</item>
+        <item name="colorSurface">@color/card</item>
+        <item name="colorOnSurface">@color/ink</item>
+        <item name="colorOnSurfaceVariant">@color/muted</item>
+        <item name="colorOutline">#DCDFED</item>
+        <item name="colorError">@color/danger</item>
+        <item name="android:colorBackground">@color/page</item>
+        <item name="android:windowBackground">@color/page</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="SetupHelper.Card" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardBackgroundColor">@color/card</item>
+    </style>
+
+    <style name="SetupHelper.Title" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SetupHelper.Section" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SetupHelper.Body" parent="">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+
+    <style name="SetupHelper.Muted" parent="">
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="SetupHelper.BigButton" parent="Widget.Material3.Button">
+        <item name="android:minHeight">60dp</item>
+        <item name="android:textSize">17sp</item>
+        <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="SetupHelper.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <style name="SetupHelper.OutlinedButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">14dp</item>
+    </style>
+</resources>
