@@ -810,6 +810,12 @@ jobs:
             echo "[swap] переключено на новую сборку"
 
             echo "=== Restarting PM2 (web + telegram poller) ==="
+            # Ключ прогрева на этот деплой: процесс сайта получает его из
+            # окружения при `pm2 start`, prewarm-routes.sh шлёт его в
+            # заголовке, и ограничитель переходов пропускает прогрев, а не
+            # отвечает ему 429. Ключ в лог не пишем.
+            DEPLOY_WARM_TOKEN=$(node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))")
+            export DEPLOY_WARM_TOKEN
             npx pm2 delete haccp-online 2>/dev/null || true
             # next start по умолчанию слушает :3000, но nginx проксирует
             # на :3002 — явно указываем порт, иначе процесс падает
