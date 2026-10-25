@@ -13,7 +13,7 @@ import {
 } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
 import type { SiteLocale } from "@/i18n/site-locale";
-import { FORMAT_LOCALES } from "@/i18n/locales";
+import { formatNumber } from "@/i18n/locales";
 import { pricingTranslator } from "@/i18n/pricing-messages";
 
 /**
@@ -60,8 +60,13 @@ const OLD_SIZE: Record<Size, string> = {
   xl: "text-[18px]",
 };
 
+/**
+ * Через `formatNumber`, а не голый `Intl`: узбекский разделитель разрядов у
+ * Node и браузеров разный, и на `/uz` сервер и клиент печатали разные цены
+ * (ошибка гидратации).
+ */
 export function formatPriceRub(value: number, locale: SiteLocale = "ru"): string {
-  return `${new Intl.NumberFormat(FORMAT_LOCALES[locale]).format(value)} ₽`;
+  return `${formatNumber(locale, value)} ₽`;
 }
 
 export function PromoBadge({

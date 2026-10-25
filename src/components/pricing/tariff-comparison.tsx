@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Building2, Check, Crown, FileText, Gift, Minus, Plus, Sparkles, Users } from "lucide-react";
 
 import { PromoPrice } from "@/components/pricing/promo-price";
-import { formatNumber, type Locale } from "@/i18n/locales";
+import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/site-locale";
 import { CARD_POINTS, COMPARISON_GROUPS, type ComparisonCell } from "@/lib/plan-catalog";
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
@@ -335,7 +335,7 @@ export function TariffComparison({
                       onClick={() => onSchedule?.({ tier, cycle, points })}
                       className={ctaClass("outline")}
                     >
-                      {t("cta.scheduled", { date: shortDate(quote.periodStart, locale) })}
+                      {t("cta.scheduled", { date: shortDate(quote.periodStart, locale, cabinet?.nowIso) })}
                     </button>
                   )
                 ) : (
@@ -349,7 +349,7 @@ export function TariffComparison({
                       : quote.kind === "upgrade"
                         ? t("cta.upgrade", { amount: rub(payRub) })
                         : quote.kind === "switch"
-                          ? t("cta.switch", { amount: rub(payRub) })
+                          ? t(cycle === "year" ? "cta.switchYear" : "cta.switch", { amount: rub(payRub) })
                           : t("cta.newPlan", { amount: rub(payRub) })}
                   </CtaLink>
                 )
@@ -389,7 +389,7 @@ export function TariffComparison({
         </div>
       </div>
 
-      {showTable ? <ComparisonTable /> : null}
+      {showTable ? <ComparisonTable ppkPrice={rub(ppkFromRub)} /> : null}
     </div>
   );
 }
@@ -412,12 +412,11 @@ function changeNote(
 }
 
 /** «8 нояб.» — короткая дата в кнопке (часовой пояс — Москва). */
-function shortDate(date: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : locale === "uz" ? "uz-Latn-UZ" : "en-GB", {
-    day: "numeric",
-    month: "short",
-    timeZone: "Europe/Moscow",
-  }).format(date);
+/** «13 мая»; с годом, если он не текущий (годовые сроки). */
+function shortDate(date: Date, locale: Locale, nowIso?: string): string {
+  const year = (value: Date) => formatDate("en", value, "Europe/Moscow", { year: "numeric" });
+  const withYear = nowIso ? year(date) !== year(new Date(nowIso)) : false;
+  return formatDate(locale, date, "Europe/Moscow", { day: "numeric", month: "short", ...(withYear ? { year: "numeric" } : {}) });
 }
 
 function TierCard({
@@ -550,7 +549,7 @@ function CtaStatic({ children }: { children: ReactNode }) {
 }
 
 /** Таблица сравнения: строки — из `COMPARISON_GROUPS`, подписи — из каталога i18n. */
-function ComparisonTable() {
+function ComparisonTable({ ppkPrice }: { ppkPrice: string }) {
   const t = useTranslations("landingComponents.tariffs");
   const tiers: TierId[] = ["free", "standard", "premium"];
   const cell = (value: ComparisonCell) => {
@@ -568,7 +567,8 @@ function ComparisonTable() {
         </span>
       );
     }
-    return <span>{t(`cells.${value.key}` as never, (value.values ?? {}) as never)}</span>;
+    const values = value.key === "ppkFrom" ? { price: ppkPrice } : (value.values ?? {});
+    return <span>{t(`cells.${value.key}` as never, values as never)}</span>;
   };
   return (
     <section data-testid="tariff-table" className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">

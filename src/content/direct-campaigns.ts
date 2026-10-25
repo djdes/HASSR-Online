@@ -168,8 +168,8 @@ export const CAMPAIGNS: CampaignSpec[] = [
           },
           {
             title1: "Контроль температуры — в WeSetup",
-            title2: "Датчики подключаются бесплатно",
-            text: "Один раз поставил — журнал ведётся сам. Свои датчики — без абонплаты.",
+            title2: "Датчики — в тарифе «Премиум»",
+            text: "Один раз поставил — журнал ведётся сам. Свои датчики подключаются в «Премиуме».",
             href: u(
               "/journals-info/cold_equipment_control",
               "journals-daily",
@@ -252,7 +252,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "ХАССП для общепита онлайн",
             title2: "План, аудит, прослеживаемость",
-            text: "Разрабатываем, запускаем, ведём. Журналы ХАССП включены в бесплатный тариф.",
+            text: `Разрабатываем, запускаем, ведём. Журналы ХАССП — ${FREE_TIER_SHORT}.`,
             href: u("/journals-info", "haccp", "haccp-main"),
             displayPath: "хассп",
           },
@@ -334,8 +334,8 @@ export const CAMPAIGNS: CampaignSpec[] = [
           },
           {
             title1: "ХАССП онлайн бесплатно",
-            title2: "Платите только за команду",
-            text: "Весь функционал на любом тарифе. Подписка — когда нужно больше мест.",
+            title2: `${FREE_TIER_SHORT}, без карты`,
+            text: "Все журналы, сотрудники и точки. Дальше — «Стандарт» или «Премиум».",
             href: u("/", "free-tier", "free-pricing"),
             displayPath: "цены",
           },

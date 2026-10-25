@@ -22,7 +22,7 @@
       "errors": 0
     },
     "test_gate": {
-      "pass": 4774,
+      "pass": 4816,
       "fail": 0
     },
     "i18n_check": {
@@ -39,7 +39,11 @@
       "pages_status_200": 15,
       "browser_page_errors": 0,
       "api_checks": "raw/api-check.txt",
-      "round1_fixes": "raw/round1-check.txt"
+      "round1_fixes": "raw/round1-check.txt",
+      "round2_fixes": [
+        "raw/round2-stale-orders.txt",
+        "raw/round2-check.txt"
+      ]
     }
   },
   "prices_default_rub_per_month": {
@@ -128,6 +132,34 @@
       }
     },
     "round2": {
+      "commit": "69f72d37",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "partial": [
+        "AC6",
+        "AC11"
+      ],
+      "problems": "problems.md (section 2)",
+      "fixed": [
+        "stale paid plan orders are held for manual review instead of applied (planOrderStillMatches)",
+        "checkout refused while ROOT impersonates",
+        "stale copy: journal SEO pages, photo autofill texts, add-organization hint, /uslugi, Direct drafts",
+        "/uz hydration: prices via formatNumber; PPK table cell preformatted from the service price",
+        "ROOT plan/end edits mirrored to all organizations of the account; free clears the end; points input up to MAX_POINTS; /root shows account plan and points in use",
+        "bulk staff import uses the plan's seat text and limit",
+        "order page: no autopay on upgrades; recalculation message; downgrade wording",
+        "guest refusal does not reveal paid status; pending invoice only for the same plan, older ones cancelled",
+        "cabinet dates with year when not current; 'Перейти на год' label",
+        "held orders get their own receipt email and no closing document until resolved"
+      ],
+      "not_changed": {
+        "headcount_at_checkout": "by spec; for the owner",
+        "mercury_plans": "pre-existing gate (pro/business/demo), outside the three tariffs; for the owner"
+      }
+    },
+    "round3": {
       "verdict": "pending"
     }
   },

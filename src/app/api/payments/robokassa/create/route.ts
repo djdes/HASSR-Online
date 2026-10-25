@@ -7,7 +7,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountLabel, lifetimeTerm } from "@/lib/promo/discounts";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
-import { parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
+import { IMPERSONATION_CHECKOUT_ERROR, parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
 import { changeKindNote } from "@/lib/plan-payment";
 import {
   buildPaymentParams,
@@ -100,6 +100,9 @@ export async function POST(request: NextRequest) {
   }
 
   const session = await getServerSession(authOptions).catch(() => null);
+  if (session && isImpersonating(session)) {
+    return NextResponse.json({ error: IMPERSONATION_CHECKOUT_ERROR, code: "impersonating" }, { status: 403 });
+  }
   // Почта вошедшего берётся из сессии принудительно. Иначе баллы
   // организации ушли бы на заказ с чужим адресом, а вебхук по этому
   // адресу завёл бы ещё одну организацию.
@@ -135,9 +138,15 @@ export async function POST(request: NextRequest) {
       : null;
   // Сумма по тарифу и виду перехода с действующей акцией — та же функция,
   // что у страницы заказа.
-  // Без кабинета организации заказ найдёт аккаунт по почте — с оплаченным
-  // сроком такую оплату ведём в кабинет (см. quoteCheckout).
-  const quote = await quoteCheckout({ organizationId, target, now, payerEmail: organizationId ? null : email });
+  // Без кабинета организации заказ найдёт аккаунт по почте: гостя с почтой
+  // существующего аккаунта и сотрудника оплаченного аккаунта ведём в
+  // кабинет (см. quoteCheckout).
+  const quote = await quoteCheckout({
+    organizationId,
+    target,
+    now,
+    payer: organizationId ? null : { email, guest: !session?.user },
+  });
   if (!quote.ok) {
     console.info("[billing] order refused", { organizationId, target, code: quote.code });
     return NextResponse.json(
@@ -199,7 +208,9 @@ export async function POST(request: NextRequest) {
             ? "Для этой почты действует скидка навсегда — сумма пересчитана. Проверьте её и нажмите ещё раз"
             : offer.promotion
               ? "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз"
-              : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
+              : quote.change.kind === "upgrade" || quote.change.kind === "switch"
+                ? "Сумма пересчитана: доплата и зачёт зависят от оставшихся дней. Проверьте новую сумму и нажмите ещё раз"
+                : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
         code: "price-changed",
         grossRub: amounts.grossRub,
         discount: applied ? { ...applied, label: discountLabel(applied) } : null,

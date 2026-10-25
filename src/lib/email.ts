@@ -583,9 +583,12 @@ export async function sendPaymentReceiptEmail(params: {
   /** УПД по этому платежу — вложением; null, если документ не выпущен. */
   closingDocument?: { number: string; pdf: Buffer } | null;
   locale?: Locale;
+  /** Заказ тарифа ждёт ручного разбора: подписка изменилась после оформления. */
+  held?: boolean;
 }) {
   const { to, amountRub, description, actionUrl, isNewClient, subscriptionEnd, organizationId } =
     params;
+  const held = params.held === true && !isNewClient;
   const closing = params.closingDocument ?? null;
   const locale = params.locale ?? "ru";
   const t = await translatorFor(locale);
@@ -594,7 +597,13 @@ export async function sendPaymentReceiptEmail(params: {
   // факсимиле для признания расходов принимают не все.
   const points = Math.max(0, Number(params.pointsSpent ?? 0));
   const brand = await emailBrandForOrganization(organizationId);
-  const subject = t(isNewClient ? "email.paymentReceipt.subject.newClient" : "email.paymentReceipt.subject.renewal");
+  const subject = t(
+    isNewClient
+      ? "email.paymentReceipt.subject.newClient"
+      : held
+        ? "email.paymentReceipt.subject.held"
+        : "email.paymentReceipt.subject.renewal"
+  );
   const rub = (value: number) =>
     new Intl.NumberFormat("ru-RU").format(value) + " ₽";
   // Чек показывает и деньги, и баллы: строка «Сумма: 1 490 ₽» при цене
@@ -618,7 +627,7 @@ export async function sendPaymentReceiptEmail(params: {
       <p style="margin:0;color:#3f3f46;font-size:14px">${t("email.paymentReceipt.subscriptionUntilLabel")} <strong>${escapeHtml(until)}</strong></p>
     </div>
     ${closingBlock}
-    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t(isNewClient ? "email.paymentReceipt.newClientNextStep" : "email.paymentReceipt.renewalNextStep")}</p>
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t(isNewClient ? "email.paymentReceipt.newClientNextStep" : held ? "email.paymentReceipt.heldNextStep" : "email.paymentReceipt.renewalNextStep")}</p>
     <a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t(isNewClient ? "email.paymentReceipt.newClientAction" : "email.paymentReceipt.renewalAction")}</a>
     <p style="margin:24px 0 0;color:#71717a;font-size:13px">${t("email.paymentReceipt.support")}</p>`;
   const attachments = closing

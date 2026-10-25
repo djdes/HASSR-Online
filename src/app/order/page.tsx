@@ -5,7 +5,7 @@ import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getBalance } from "@/lib/balance/ledger";
 import type { Tariff } from "@/lib/tariffs";
-import { parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
+import { IMPERSONATION_CHECKOUT_ERROR, parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
 import { formatMskDate } from "@/lib/billing-period";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
@@ -65,16 +65,17 @@ export default async function OrderPage({
   // переходе на год) с действующей акцией: та же функция, что посчитает
   // заказ (`quoteCheckout`). Здесь — только для показа и сверки.
   const isCheckoutView = !first("InvId") && !first("complete");
+  const impersonating = Boolean(session?.user) && isImpersonating(session!);
   const target = parseCheckoutTarget({ plan: first("plan") || "standard", cycle: first("cycle") || undefined, points: first("points") || undefined });
   const quote =
-    target && isCheckoutView
+    target && isCheckoutView && !impersonating
       ? await quoteCheckout({
           organizationId: canSpendPoints ? getActiveOrgId(session!) : null,
           target,
           now: new Date(),
           // Сотрудник платит за аккаунт своей организации — откажем сразу,
           // если там идёт оплаченный срок (см. quoteCheckout).
-          payerEmail: canSpendPoints ? null : sessionEmail || null,
+          payer: !canSpendPoints && sessionEmail ? { email: sessionEmail.trim().toLowerCase(), guest: false } : null,
         }).catch((error) => {
           console.error("[billing] order page quote failed", error);
           return null;
@@ -98,7 +99,12 @@ export default async function OrderPage({
         periodEndLabel: formatMskDate(quote.change.periodEnd),
       }
     : null;
-  const refusal = quote && !quote.ok && quote.code !== "unavailable" ? quote.error : null;
+  const refusal =
+    impersonating && isCheckoutView
+      ? IMPERSONATION_CHECKOUT_ERROR
+      : quote && !quote.ok && quote.code !== "unavailable"
+        ? quote.error
+        : null;
   const amountRub = offer ? offer.priceRub : 0;
   const pointsAvailable = canSpendPoints
     ? await getBalance(getActiveOrgId(session!)).catch(() => 0)

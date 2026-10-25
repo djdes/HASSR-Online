@@ -12,6 +12,7 @@ import {
   FEATURE_LOCKED_MESSAGE,
   FREE_LIMIT_INVITEE_MESSAGE,
   FREE_LIMIT_MESSAGE,
+  paidSeatLimitMessage,
   JOURNAL_LIMIT_CODE,
   LEGACY_FREE_PERIOD_SETTING_KEY,
   POINT_LIMIT_CODE,
@@ -422,22 +423,32 @@ export async function checkSeatsForActivation(
  */
 export async function seatAllowance(
   organizationId: string
-): Promise<{ left: number; limit: number | null }> {
+): Promise<{ left: number; limit: number | null; message: string }> {
   const loaded = await loadForGuard(organizationId, "seat-allowance");
   const limit = loaded?.state.seatLimit ?? null;
-  if (!loaded || limit === null) return { left: Number.POSITIVE_INFINITY, limit: null };
-  return { left: Math.max(0, limit - loaded.state.activeUsers), limit };
+  if (!loaded || limit === null) return { left: Number.POSITIVE_INFINITY, limit: null, message: FREE_LIMIT_MESSAGE };
+  const { state } = loaded;
+  // Текст отказа — по тарифу: на оплаченном «25 на точку», а не бесплатный.
+  const message =
+    state.tier === "standard" || state.tier === "premium" ? paidSeatLimitMessage(state.tier, state.planPoints) : FREE_LIMIT_MESSAGE;
+  return { left: Math.max(0, limit - state.activeUsers), limit, message };
 }
 
 /** Итог импорта списком, если часть строк упёрлась в лимит тарифа. */
-export function seatLimitSummary(blocked: number, source: string, organizationId: string) {
+export function seatLimitSummary(
+  blocked: number,
+  source: string,
+  organizationId: string,
+  seats?: { limit: number | null; message: string }
+) {
   if (blocked <= 0) return null;
   console.info("[billing] seat limit: import rows blocked", { organizationId, source, blocked });
   return {
     code: BILLING_LIMIT_CODE,
-    error: FREE_LIMIT_MESSAGE,
+    error: seats?.message ?? FREE_LIMIT_MESSAGE,
     payUrl: BILLING_PAY_HREF,
     blocked,
+    ...(typeof seats?.limit === "number" ? { limit: seats.limit } : {}),
   };
 }
 

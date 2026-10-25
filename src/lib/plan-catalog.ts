@@ -5,7 +5,6 @@ import {
   FREE_MAX_POINTS,
   POINTS_DISCOUNT_FROM,
   POINTS_DISCOUNT_PERCENT,
-  PPK_INDIVIDUAL_FROM_RUB,
   SEATS_PER_POINT,
   STORAGE_BYTES,
   TRIAL_DAYS,
@@ -159,14 +158,9 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
       },
       { key: "ownDocuments", cells: { free: no, standard: yes, premium: yes } },
       { key: "typicalPackage", feature: "typicalPackage", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
-      {
-        key: "ppkIndividual",
-        cells: {
-          free: text("ppkFrom", { price: PPK_INDIVIDUAL_FROM_RUB }),
-          standard: text("ppkFrom", { price: PPK_INDIVIDUAL_FROM_RUB }),
-          premium: text("ppkFrom", { price: PPK_INDIVIDUAL_FROM_RUB }),
-        },
-      },
+      // Цена — услуги «ППК индивидуально» из ROOT; подставляет таблица
+      // (строкой: узбекские разряды у сервера и браузера разные).
+      { key: "ppkIndividual", cells: { free: text("ppkFrom"), standard: text("ppkFrom"), premium: text("ppkFrom") } },
     ],
   },
   {

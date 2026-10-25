@@ -21,7 +21,11 @@ import { defaultJournalAutomationJson } from "@/lib/journal-automation";
 import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
 import { bindLifetimeDiscountForOrder } from "@/lib/promo/lifetime";
-import { planAfterPayment, type PaidPlanUpdate } from "@/lib/plan-payment";
+import { notifyManagement } from "@/lib/notifications";
+import { accountSubscription } from "@/lib/plan-checkout.server";
+import { planAfterPayment, planOrderStillMatches, type PaidPlanUpdate } from "@/lib/plan-payment";
+import { parsePlanTariffKey } from "@/lib/tariff-plans";
+import { readPlanPricing } from "@/lib/tariffs";
 
 /**
  * Что происходит после подтверждённой оплаты.
@@ -47,6 +51,11 @@ export type FulfillmentResult = {
   completeToken: string | null;
   isNewClient: boolean;
   subscriptionEnd: Date;
+  /**
+   * Заказ тарифа не применён: подписка аккаунта изменилась после оформления
+   * (`planOrderStillMatches`) — оплату разбирают вручную, тариф не тронут.
+   */
+  held?: boolean;
 };
 
 const APP_URL = (
@@ -90,6 +99,8 @@ type FulfillableOrder = {
   changeKind?: string | null;
   periodEndsAt?: Date | null;
   createdAt?: Date | null;
+  /** Сумма перехода по тарифу при оформлении (до акции и скидок). */
+  baseRub?: number | null;
 };
 
 export async function fulfillPaidOrder(order: FulfillableOrder): Promise<FulfillmentResult> {
@@ -115,7 +126,7 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
       select: { id: true, subscriptionEnd: true },
     });
     if (org) {
-      const subscriptionEnd = await extendOrganization({
+      const { subscriptionEnd, held } = await extendOrganization({
         organizationId: org.id,
         currentEnd: org.subscriptionEnd,
         periodDays,
@@ -136,6 +147,7 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
         completeToken: null,
         isNewClient: false,
         subscriptionEnd,
+        held,
       };
     }
   }
@@ -150,7 +162,7 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
       where: { id: existing.organizationId },
       select: { subscriptionEnd: true },
     });
-    const subscriptionEnd = await extendOrganization({
+    const { subscriptionEnd, held } = await extendOrganization({
       organizationId: existing.organizationId,
       currentEnd: org?.subscriptionEnd ?? null,
       periodDays,
@@ -169,6 +181,7 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
       completeToken: null,
       isNewClient: false,
       subscriptionEnd,
+      held,
     };
   }
 
@@ -259,8 +272,11 @@ async function extendOrganization(args: {
   organizationId: string;
   currentEnd: Date | null;
   periodDays: number;
-  order: Pick<FulfillableOrder, "id" | "tariffKey" | "recurringConsent" | "recurringChargeOf" | "points" | "changeKind" | "periodEndsAt" | "createdAt">;
-}): Promise<Date> {
+  order: Pick<
+    FulfillableOrder,
+    "id" | "tariffKey" | "description" | "recurringConsent" | "recurringChargeOf" | "points" | "changeKind" | "periodEndsAt" | "createdAt" | "baseRub"
+  >;
+}): Promise<{ subscriptionEnd: Date; held: boolean }> {
   // Тариф живёт на аккаунте (сеть платит один раз): оплаченный срок
   // считаем от самого позднего из концов — организации и аккаунта.
   const owner = await db.organization.findUnique({
@@ -273,6 +289,10 @@ async function extendOrganization(args: {
       ? accountEnd
       : args.currentEnd;
   const { order } = args;
+  if (parsePlanTariffKey(order.tariffKey) && !(await planOrderMatchesAccount(order, args.organizationId))) {
+    await holdStalePlanOrder(order, args.organizationId);
+    return { subscriptionEnd: base ?? new Date(), held: true };
+  }
   const plan: PaidPlanUpdate | null = planAfterPayment({ order, currentEnd: base, now: new Date() });
   const subscriptionEnd = plan?.subscriptionEnd ?? extendFrom(base, args.periodDays);
   const subscriptionPlan = plan?.tier ?? "paid";
@@ -314,7 +334,53 @@ async function extendOrganization(args: {
     changeKind: plan?.kind ?? "legacy",
     subscriptionEnd: subscriptionEnd.toISOString(),
   });
-  return subscriptionEnd;
+  return { subscriptionEnd, held: false };
+}
+
+/** Заказ тарифа 2026-10 всё ещё подходит к подписке аккаунта (см. `planOrderStillMatches`). */
+async function planOrderMatchesAccount(
+  order: Pick<FulfillableOrder, "tariffKey" | "points" | "changeKind" | "createdAt" | "baseRub">,
+  organizationId: string
+): Promise<boolean> {
+  const now = new Date();
+  const [{ current }, pricing] = await Promise.all([accountSubscription(organizationId, now), readPlanPricing()]);
+  return planOrderStillMatches({
+    order: { ...order, baseRub: order.baseRub ?? null },
+    current,
+    rates: pricing.rates,
+    legacyMonthlyRub: pricing.legacyMonthlyRub,
+    now,
+  });
+}
+
+/**
+ * Оплату устаревшего заказа не применяем к тарифу: ROOT разбирает её вручную
+ * (применить переход или вернуть деньги), руководство видит, что произошло.
+ * Оба уведомления best-effort — деньги уже получены.
+ */
+async function holdStalePlanOrder(
+  order: Pick<FulfillableOrder, "id" | "description">,
+  organizationId: string
+): Promise<void> {
+  console.warn("[billing] stale plan order held for manual review", { orderId: order.id, organizationId });
+  await notifyPlatformAdmin(
+    `⚠️ Оплата заказа №${order.id} не применена к тарифу: подписка аккаунта изменилась после оформления заказа («${order.description}»). Разобрать вручную — применить переход или вернуть деньги.`,
+    { kind: "payment", dedupeKey: `stale-plan-order:${order.id}` },
+  ).catch((error) => console.error("[billing] stale order admin notify failed", error));
+  await notifyManagement({
+    organizationId,
+    kind: "billing.order-held",
+    dedupeKey: `billing.order-held:${order.id}`,
+    title: `Оплата заказа №${order.id} получена — применим её вручную`,
+    linkHref: "/settings/subscription",
+    linkLabel: "Тариф и оплата",
+    items: [
+      {
+        id: `order-${order.id}`,
+        label: "Тариф аккаунта изменился после оформления этого заказа, поэтому сумма в нём уже не подходит. Мы применим оплату или вернём деньги в течение рабочего дня — ничего делать не нужно.",
+      },
+    ],
+  }).catch((error) => console.error("[billing] stale order notify failed", error));
 }
 
 async function readPeriodDays(tariffKey: string): Promise<number> {
@@ -352,7 +418,8 @@ export async function notifyAboutPayment(args: {
   // Закрывающий документ (УПД) — вложением в это же письмо. Best-effort:
   // без реквизитов исполнителя или при сбое рендера письмо уходит как
   // раньше, без вложения; документ клиент скачает из кабинета позже.
-  const closingDocument = order.isTest
+  // Устаревший заказ ждёт ручного разбора: документ — после него.
+  const closingDocument = order.isTest || result.held
     ? null
     : await prepareClosingDocumentEmail(order.id, {
         subscriptionEnd: result.subscriptionEnd,
@@ -377,6 +444,7 @@ export async function notifyAboutPayment(args: {
     pointsSpent,
     closingDocument,
     locale,
+    held: result.held === true,
   }).catch((err) => {
     console.error("sendPaymentReceiptEmail failed", err);
     return false;
@@ -404,7 +472,9 @@ export async function notifyAboutPayment(args: {
     `Почта: ${order.email}`,
     result.isNewClient
       ? "Новый клиент — организация создана автоматически"
-      : "Существующий клиент — подписка продлена",
+      : result.held
+        ? "⚠️ Тариф не изменён: подписка поменялась после оформления заказа — разобрать вручную"
+        : "Существующий клиент — подписка продлена",
     `Подписка до: ${result.subscriptionEnd.toLocaleDateString("ru-RU")}`,
     `Заказ №${order.id}`,
   ];
@@ -445,6 +515,7 @@ export async function completePaidOrder(order: {
   changeKind?: string | null;
   periodEndsAt?: Date | null;
   createdAt?: Date | null;
+  baseRub?: number | null;
 }): Promise<{ organizationId: string | null; isNewClient: boolean }> {
   // Пополнение баланса — не подписка: не продлеваем, скидку навсегда не
   // привязываем, реферальную награду не запускаем. Баллы уже зачислены в

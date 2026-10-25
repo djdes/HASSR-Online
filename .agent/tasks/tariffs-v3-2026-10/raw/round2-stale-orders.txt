@@ -1,0 +1,71 @@
+=== Доплата, оформленная до перехода на год, после него
+подписка: standard · month · точек 1 · до 2026-11-09
+заказ №44: upgrade, 1000 ₽; заказ №45: switch, 22380 ₽
+[billing] payment extended subscription {
+  organizationId: 'cmvnycogc0000ci7dmvpriy2x',
+  accountId: 'cmvnycoka0002ci7d5f61v0tw',
+  orderId: 45,
+  plan: 'standard',
+  cycle: 'year',
+  points: 1,
+  changeKind: 'switch',
+  subscriptionEnd: '2027-10-25T14:58:48.369Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на stale@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» за год Сумма: 22 380 ₽ Подписка действует до: 25.10.2027 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты №45 (переход на год): standard · year · точек 1 · до 2027-10-25
+[billing] stale plan order held for manual review { orderId: 44, organizationId: 'cmvnycogc0000ci7dmvpriy2x' }
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[email/dev] SMTP не настроен — письмо не отправлено на stale@example.test.
+[email/dev] Subject: Оплата получена — применим её вручную
+[email/dev] Body:    Оплата получена — применим её вручную Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Премиум» на месяц Сумма: 1 000 ₽ Подписка действует до: 25.10.2027 Тариф аккаунта изменился после оформления этого заказа, поэтому сумма в нём уже не подходит. Мы применим оплату или вернём деньги в течение рабочего дня — ничего делать не нужно. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты №44 (устаревшая доплата): standard · year · точек 1 · до 2027-10-25
+уведомление руководству о ручном разборе №44: есть
+
+=== Новая подписка, оформленная до покупки «Премиума» на год
+подписка: free · — · точек 1 · до —
+заказ №46: new, 3000 ₽; заказ №47: new, 136458 ₽
+[billing] payment extended subscription {
+  organizationId: 'cmvnycp2j0004ci7d45yvo1eq',
+  accountId: 'cmvnycp5m0006ci7dou5jcy6q',
+  orderId: 47,
+  plan: 'premium',
+  cycle: 'year',
+  points: 3,
+  changeKind: 'new',
+  subscriptionEnd: '2027-10-25T14:58:49.189Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на stale-new@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Премиум» за год, 3 точки Сумма: 136 458 ₽ Подписка действует до: 25.10.2027 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты №47 (Премиум за год, 3 точки): premium · year · точек 3 · до 2027-10-25
+[billing] stale plan order held for manual review { orderId: 46, organizationId: 'cmvnycp2j0004ci7d45yvo1eq' }
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[email/dev] SMTP не настроен — письмо не отправлено на stale-new@example.test.
+[email/dev] Subject: Оплата получена — применим её вручную
+[email/dev] Body:    Оплата получена — применим её вручную Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» на месяц Сумма: 3 000 ₽ Подписка действует до: 25.10.2027 Тариф аккаунта изменился после оформления этого заказа, поэтому сумма в нём уже не подходит. Мы применим оплату или вернём деньги в течение рабочего дня — ничего делать не нужно. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты №46 (устаревшая новая подписка): premium · year · точек 3 · до 2027-10-25
+уведомление руководству о ручном разборе №46: есть
+
+=== Обычная оплата (подписка не менялась) применяется
+заказ №48: upgrade, 1000 ₽
+[billing] payment extended subscription {
+  organizationId: 'cmvnycpal0008ci7dj955ebvj',
+  accountId: 'cmvnycpdn000aci7dg0brgwho',
+  orderId: 48,
+  plan: 'premium',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'upgrade',
+  subscriptionEnd: '2026-11-09T14:58:49.282Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на stale-ok@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Премиум» на месяц Сумма: 1 000 ₽ Подписка действует до: 09.11.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты №48 (доплата): premium · month · точек 1 · до 2026-11-09

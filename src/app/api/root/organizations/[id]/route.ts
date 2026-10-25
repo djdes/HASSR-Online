@@ -106,6 +106,10 @@ export async function PATCH(
     }
   }
 
+  // «Бесплатный» — без оплаченного срока: иначе срок, оставшийся в копиях
+  // организаций, держал бы аккаунт оплаченным («Подписка (прежний тариф)»).
+  if (data.subscriptionPlan === "free") data.subscriptionEnd = null;
+
   // Поля тарифа аккаунта: период оплаты, точки и продлённый пробный.
   const accountData: {
     subscriptionPlan?: string;
@@ -168,6 +172,27 @@ export async function PATCH(
           select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, trialEndsAt: true },
         })
       : null;
+  // Тариф и срок живут на аккаунте, а организации хранят их копии, и
+  // состояние берёт самый поздний срок из всех: копии остальных организаций
+  // аккаунта правим вместе с ним, иначе правка ROOT не вступила бы в силу.
+  // Пауза и отмена остаются у своих организаций.
+  let mirroredOrganizations = 0;
+  if (updatedAccount && org.accountId) {
+    if (accountData.subscriptionEnd !== undefined) {
+      const mirrored = await db.organization.updateMany({
+        where: { accountId: org.accountId, id: { not: id } },
+        data: { subscriptionEnd: accountData.subscriptionEnd },
+      });
+      mirroredOrganizations = mirrored.count;
+    }
+    if (accountData.subscriptionPlan !== undefined) {
+      const mirrored = await db.organization.updateMany({
+        where: { accountId: org.accountId, id: { not: id }, subscriptionPlan: { notIn: ["paused", "cancelled"] } },
+        data: { subscriptionPlan: accountData.subscriptionPlan },
+      });
+      mirroredOrganizations = Math.max(mirroredOrganizations, mirrored.count);
+    }
+  }
 
   await recordAuditLog({
     request,
@@ -211,6 +236,7 @@ export async function PATCH(
             }
           : {}),
       },
+      ...(mirroredOrganizations > 0 ? { mirroredOrganizations } : {}),
     },
   });
 

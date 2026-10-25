@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { isBillingCycle, isPaidTier, planMonthlyRub, SEATS_PER_POINT } from "@/lib/tariff-plans";
+import { isInactivePlan } from "@/lib/plan-limits";
 import { readPlanPricing } from "@/lib/tariffs";
 
 /**
@@ -165,7 +166,7 @@ export async function getAllOrgMetrics(
       subscriptionEnd: true,
       createdAt: true,
       balanceRub: true,
-      _count: { select: { journalDocuments: true } },
+      _count: { select: { journalDocuments: true, buildings: true } },
       accountId: true,
       account: { select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true } },
     },
@@ -328,14 +329,18 @@ export async function getAllOrgMetrics(
       ownerLastLoginAt: owner?.lastLoginAt?.toISOString() ?? null,
       type: org.type,
       ownershipKind: org.ownershipKind ?? null,
-      locationsCount: org.locationsCount ?? 0,
+      // Точки в работе (здание = точка, без зданий — одна), как в тарифе;
+      // ответ анкеты «Точек» мог не стать зданиями из-за лимита тарифа.
+      locationsCount: Math.max(1, org._count.buildings),
       inn: org.inn ?? null,
       isDemo: org.isDemo,
       demoExpiresAt: org.demoExpiresAt?.toISOString() ?? null,
       isDirectory: org.kind === "directory",
       documentsCount: org._count.journalDocuments,
-      subscriptionPlan: org.subscriptionPlan,
-      subscriptionEnd: org.subscriptionEnd?.toISOString() ?? null,
+      // Тариф и срок — аккаунта (у второй организации сети своя копия
+      // может остаться «бесплатной»); пауза и отмена — у самой организации.
+      subscriptionPlan: isInactivePlan(org.subscriptionPlan) ? org.subscriptionPlan : plan,
+      subscriptionEnd: paidUntil?.toISOString() ?? null,
       createdAt: org.createdAt.toISOString(),
       activeUsers,
       entries7d: e7,

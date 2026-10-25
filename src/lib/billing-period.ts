@@ -577,6 +577,11 @@ export function formatMskDate(date: Date): string {
   return `${day} ${MONTHS_GENITIVE[month]} ${year}`;
 }
 
+/** «13 мая» в этом году, «13 мая 2027» — в другом (годовые сроки в кабинете). */
+export function formatMskDayAuto(date: Date, now: Date = new Date()): string {
+  return mskParts(date).year === mskParts(now).year ? formatMskDay(date) : formatMskDate(date);
+}
+
 /** Ключ дня по Москве «2026-10-01» — для «скрыть на сегодня». */
 export function mskDayKey(date: Date): string {
   const { day, month, year } = mskParts(date);

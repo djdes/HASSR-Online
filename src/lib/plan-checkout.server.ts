@@ -1,4 +1,4 @@
-import { formatMskDate, lastDayBefore } from "@/lib/billing-period";
+import { formatMskDate } from "@/lib/billing-period";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { db } from "@/lib/db";
 import { pointsLabel } from "@/lib/cabinet-plan";
@@ -79,17 +79,31 @@ export function parseCheckoutTarget(input: {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Без кабинета организации (гость, сотрудник, ROOT в «войти как») заказ
- * считается новой подпиской, а вебхук применяет его к аккаунту, найденному
- * по почте заказа (`payment-fulfillment.ts`). Если у этого аккаунта идёт
- * оплаченный срок, новая подписка заменила бы его тариф и точки и начала
- * бы срок заново, — такую оплату ведём в кабинет руководителя: там сумма
+ * Без кабинета организации (гость или сотрудник) заказ считается новой
+ * подпиской, а вебхук применяет его к аккаунту, найденному по почте заказа
+ * (`payment-fulfillment.ts`). Сотруднику аккаунта с идущим оплаченным сроком
+ * отказываем: новая подписка заменила бы тариф и точки и начала бы срок
+ * заново — продлевает и меняет тариф руководитель в кабинете, где сумма
  * считается от текущей подписки (продление, доплата, зачёт остатка).
  */
 const PAID_ACCOUNT_ERROR =
-  "У этой почты уже есть оплаченный тариф. Продлить или сменить его может руководитель в кабинете — «Настройки → Тариф и оплата»: там сумма посчитается с учётом оплаченных дней.";
+  "У вашей организации уже оплачен тариф. Продлить или сменить его может руководитель в кабинете — «Настройки → Тариф и оплата»: там сумма посчитается с учётом оплаченных дней.";
+/**
+ * Гостю (без входа) по почте существующего аккаунта — вход, без подробностей:
+ * ответ не должен выдавать, платит ли владелец этой почты.
+ */
+const GUEST_ACCOUNT_ERROR =
+  "Для этой почты уже есть аккаунт WeSetup. Войдите в кабинет и оплатите тариф там — сумма посчитается с учётом вашей подписки.";
 
-async function accountSubscription(
+/**
+ * ROOT в «войти как» за клиента не платит: заказ ушёл бы с почтой ROOT без
+ * организации, и вебхук применил бы тариф к платформе, а не к клиенту.
+ */
+export const IMPERSONATION_CHECKOUT_ERROR =
+  "В режиме «войти как» оплатить нельзя — тариф оплачивает руководитель клиента в своём кабинете.";
+
+/** Текущая оплаченная подписка аккаунта организации и точки в работе. */
+export async function accountSubscription(
   organizationId: string,
   now: Date
 ): Promise<{ current: CurrentSubscription | null; pointsInUse: number }> {
@@ -109,8 +123,8 @@ export async function quoteCheckout(args: {
   organizationId: string | null;
   target: CheckoutTarget;
   now: Date;
-  /** Почта плательщика без кабинета организации — проверка выше. */
-  payerEmail?: string | null;
+  /** Плательщик без кабинета организации (гость или сотрудник) — проверка выше. */
+  payer?: { email: string; guest: boolean } | null;
 }): Promise<CheckoutQuote> {
   const { now } = args;
   const target = { ...args.target, points: normalizePoints(args.target.points) };
@@ -123,9 +137,12 @@ export async function quoteCheckout(args: {
   let pointsInUse = 1;
   if (args.organizationId) {
     ({ current, pointsInUse } = await accountSubscription(args.organizationId, now));
-  } else if (args.payerEmail) {
-    const payer = await db.user.findUnique({ where: { email: args.payerEmail }, select: { organizationId: true } });
-    const paidUntil = payer ? (await accountSubscription(payer.organizationId, now)).current?.paidUntil : null;
+  } else if (args.payer?.email) {
+    const user = await db.user.findUnique({ where: { email: args.payer.email }, select: { organizationId: true } });
+    if (user && args.payer.guest) {
+      return { ok: false, status: 409, code: "account", error: GUEST_ACCOUNT_ERROR };
+    }
+    const paidUntil = user ? (await accountSubscription(user.organizationId, now)).current?.paidUntil : null;
     if (paidUntil && paidUntil.getTime() - now.getTime() >= DAY_MS) {
       return { ok: false, status: 409, code: "account", error: PAID_ACCOUNT_ERROR };
     }
@@ -145,7 +162,7 @@ export async function quoteCheckout(args: {
       ok: false,
       status: 409,
       code: "scheduled",
-      error: `Переход на этот тариф — с ${formatMskDate(change.periodStart)}: до ${formatMskDate(lastDayBefore(change.periodStart))} включительно действует оплаченный тариф. Сейчас платить не нужно — переход можно запланировать на странице тарифа.`,
+      error: `Переход на этот тариф — с окончания оплаченного срока, ${formatMskDate(change.periodStart)}. Сейчас платить не нужно — переход можно запланировать на странице тарифа.`,
       effectiveAt: change.periodStart.toISOString(),
     };
   }

@@ -6,6 +6,7 @@ import { organizationError } from "./organization-presentation";
 import { useRouter } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { MAX_POINTS } from "@/lib/tariff-plans";
 
 /**
  * Правка карточки организации из ROOT-панели.
@@ -169,9 +170,9 @@ export function OrgSettingsForm({
             <input
               type="number"
               min={1}
-              max={50}
+              max={MAX_POINTS}
               value={points}
-              onChange={(event) => setPoints(Math.max(1, Math.min(50, Math.floor(Number(event.target.value) || 1))))}
+              onChange={(event) => setPoints(Math.max(1, Math.min(MAX_POINTS, Math.floor(Number(event.target.value) || 1))))}
               className="h-10 w-full rounded-xl border border-[#dcdfed] px-3.5 text-[14px] tabular-nums text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </label>

@@ -91,7 +91,7 @@ test("число для поля и тексты подсказок", () => {
   assert.equal(isReadingMetric("temperature"), true);
   assert.equal(isReadingMetric("humidity"), true);
   assert.equal(isReadingMetric("hours"), false);
-  assert.equal(READING_PHOTO_TEXT.paidOnly, "Автоввод с фото — на платном тарифе");
+  assert.equal(READING_PHOTO_TEXT.paidOnly, "Автоввод с фото — в тарифе «Премиум»");
   assert.equal(READING_PHOTO_TEXT.unreadable, "Не разобрали цифры — введите вручную");
   assert.equal(READING_PHOTO_TEXT.checkMark, "с фото — проверьте");
   assert.equal(TARIFFS_HREF, "/settings/subscription");

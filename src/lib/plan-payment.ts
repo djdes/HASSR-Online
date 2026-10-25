@@ -4,9 +4,12 @@ import {
   isChangeKind,
   normalizePoints,
   parsePlanTariffKey,
+  quotePlanChange,
   type BillingCycle,
   type ChangeKind,
+  type CurrentSubscription,
   type PaidTier,
+  type PlanRates,
 } from "@/lib/tariff-plans";
 
 /**
@@ -15,7 +18,9 @@ import {
  * тесты). Вид перехода и сроки посчитаны при оформлении заказа
  * (`quotePlanChange`) и лежат в заказе: `changeKind`, `points`,
  * `periodEndsAt`. Между оформлением и оплатой проходят минуты (карта) или
- * дни (счёт по безналу), поэтому сроки пересчитываются от момента оплаты:
+ * дни (счёт по безналу). Сначала оплата проверяет, что подписка с тех пор не
+ * изменилась (`planOrderStillMatches`; не подходит — ручной разбор), затем
+ * сроки пересчитываются от момента оплаты:
  *
  *   • new / switch — срок с момента оплаты на ту же длину, что при
  *     оформлении (у switch туда входят дни из зачёта остатка); если к
@@ -78,6 +83,45 @@ export function planAfterPayment(args: {
     subscriptionEnd = new Date(now.getTime() + (quotedMs ?? periodMs));
   }
   return { tier: plan.tier, cycle: plan.cycle, points, kind, subscriptionEnd };
+}
+
+/**
+ * Подходит ли оплаченный заказ к подписке аккаунта сейчас. Сумма заказа
+ * посчитана от подписки на момент оформления; если с тех пор подписка
+ * изменилась (оплачен другой заказ, ROOT поменял тариф, прошёл срок, от
+ * которого считалась доплата), применять заказ как есть нельзя: старая
+ * «доплата за остаток» дала бы годовой Премиум за тысячу рублей, старая
+ * «новая подписка» понизила бы тариф. Проверка: тот же расчёт на момент
+ * оформления, но от ТЕКУЩЕЙ подписки, даёт тот же вид перехода и ту же
+ * сумму (±1 ₽ округления); доплата и переход на год — пока не кончился
+ * срок, от которого они считались. Не подошёл — заказ разбирают вручную
+ * (payment-fulfillment.ts); туда же уйдёт заказ, если ROOT сменил цены
+ * между оформлением и оплатой.
+ */
+export function planOrderStillMatches(args: {
+  order: Pick<PlanPaymentOrder, "tariffKey" | "points" | "changeKind" | "createdAt"> & { baseRub?: number | null };
+  current: CurrentSubscription | null;
+  rates: PlanRates;
+  legacyMonthlyRub: number;
+  now: Date;
+}): boolean {
+  const plan = parsePlanTariffKey(args.order.tariffKey);
+  const kind = args.order.changeKind;
+  if (!plan || !args.order.createdAt || !isChangeKind(kind)) return true;
+  const quote = quotePlanChange({
+    rates: args.rates,
+    legacyMonthlyRub: args.legacyMonthlyRub,
+    current: args.current,
+    target: { tier: plan.tier, cycle: plan.cycle, points: normalizePoints(args.order.points ?? 1) },
+    now: args.order.createdAt,
+  });
+  if (quote.kind !== kind) return false;
+  if (typeof args.order.baseRub === "number" && Math.abs(quote.amountRub - args.order.baseRub) > 1) return false;
+  if (kind === "upgrade" || kind === "switch") {
+    const paidUntil = args.current?.paidUntil;
+    return Boolean(paidUntil && paidUntil.getTime() > args.now.getTime());
+  }
+  return true;
 }
 
 /** «Стандарт — за год, 2 точки» — в описание заказа, чек и УПД. */

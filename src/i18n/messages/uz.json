@@ -3460,7 +3460,8 @@
     "paymentReceipt": {
       "subject": {
         "newClient": "To‘lov qabul qilindi — hisobingizni sozlashni yakunlang",
-        "renewal": "To‘lov qabul qilindi — obuna uzaytirildi"
+        "renewal": "To‘lov qabul qilindi — obuna uzaytirildi",
+        "held": "To‘lov qabul qilindi — uni qo‘lda qo‘llaymiz"
       },
       "greeting": "Assalomu alaykum!",
       "thankYou": "To‘lovingizni oldik. Rahmat!",
@@ -3470,6 +3471,7 @@
       "closingDocumentDisclosure": "Yakunlovchi hujjat: № {documentNumber} universal topshirish hujjati (UPD) faksimile imzosi bilan PDF shaklida ilova qilindi. U kabinetingizdagi “Sozlamalar → Obuna → To‘lovlar tarixi” bo‘limida ham mavjud. Qo‘lda qo‘yilgan imzoli asl nusxa yoki elektron hujjat almashinuvi (EDI) kerak bo‘lsa, ushbu xatga javob bering.",
       "newClientNextStep": "Sozlashni yakunlash uchun parol o‘rnating va tashkilot nomini kiriting — bu taxminan bir daqiqa vaqt oladi.",
       "renewalNextStep": "Tashkilotingiz obunasi uzaytirildi. Boshqa hech narsa qilishingiz shart emas.",
+      "heldNextStep": "Ushbu buyurtma rasmiylashtirilgandan keyin hisob tarifi o‘zgardi, shuning uchun undagi summa endi mos emas. To‘lovni bir ish kuni ichida qo‘llaymiz yoki pulni qaytaramiz — hech narsa qilish shart emas.",
       "newClientAction": "Sozlashni yakunlash",
       "renewalAction": "Kabinetga kirish",
       "support": "To‘lov yoki pulni qaytarish bo‘yicha savollar: support@wesetup.ru.",
@@ -5655,6 +5657,7 @@
         "renew": "Uzaytirish — {amount}",
         "upgrade": "Oshirish — {amount} qo‘shimcha to‘lov",
         "switch": "O‘tish — {amount}",
+        "switchYear": "Yillik to‘lovga o‘tish — {amount}",
         "newPlan": "Ulash — {amount}",
         "scheduled": "{date} dan o‘tish",
         "scheduledDone": "{date} dan o‘tiladi",
@@ -5712,7 +5715,7 @@
         "storageStandard": "{mb, number} MB: jurnal buyruqlari va o‘z hujjatlaringiz",
         "storagePremium": "Barcha hujjatlar uchun {gb, number} GB",
         "trialOnly": "Faqat {trialDays, number} kunlik sinov davrida",
-        "ppkFrom": "Individual, {price, number} ₽ dan"
+        "ppkFrom": "Individual, {price} dan"
       }
     }
   },
@@ -14996,7 +14999,7 @@
       "kept": "Suratdan {value} aniqlandi. Siz kiritgan qiymat saqlandi.",
       "useRecognized": "Shu qiymatni qo‘yish",
       "button": "Surat",
-      "paidOnly": "Suratdan avtomatik kiritish pullik tariflarda mavjud",
+      "paidOnly": "Suratdan avtomatik kiritish «Premium» tarifida mavjud",
       "plans": "Tariflar",
       "unreadable": "Raqamlarni aniqlab bo‘lmadi. Qo‘lda kiriting.",
       "checkMark": "suratdan — tekshiring",
@@ -16286,7 +16289,7 @@
       "benefitsHeading": "WeSetup qanday yordam beradi",
       "codeLabel": "Jurnal kodi",
       "tryFree": "Bepul sinab ko‘rish",
-      "freeDescription": "Barcha jurnallar bepul tarifda mavjud — vaqt cheklovisiz va kartasiz.",
+      "freeDescription": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va kartasiz.",
       "relatedHeading": "O‘xshash jurnallar",
       "faqHeading": "Savollar va javoblar",
       "howToTitle": "Qanday to‘ldiriladi: {title}",
@@ -26497,7 +26500,7 @@
       "readingPhotoTitle": "Ko‘rsatkichlarni fotofiksatsiya qilish",
       "readingPhotoBody": "Muzlatkich stikeri va ombor plakatida birinchi tugma “Ko‘rsatkichni suratga oling”: termometr yoki displey surati jurnalga qiymat yonida tushadi. {autofill} Suratga olishni xohlamasa — “Qo‘lda kiritish”. O‘chirsangiz — foto tugmalari yo‘qoladi.",
       "readingPhotoAutofillOn": "Fotodagi raqamlar o‘zi yoziladi — xodimga faqat tekshirib, saqlash qoladi.",
-      "readingPhotoAutofillOff": "Fotodagi raqamlar pullik tarifda o‘zi yoziladi; hozir xodim ularni qo‘lda kiritadi.",
+      "readingPhotoAutofillOff": "Fotodagi raqamlar «Premium» tarifida o‘zi yoziladi; hozir xodim ularni qo‘lda kiritadi.",
       "readingPhotoRequiredTitle": "Foto majburiy",
       "readingPhotoRequiredBody": "Rasmsiz QR orqali haroratni saqlab bo‘lmaydi: foto o‘lchov muzlatkichning o‘zida olinganini tasdiqlaydi. “Xizmat ko‘rsatish”, “Ta’mirlash” va namlik — fotosiz.",
       "pinNote": "PIN xodim kartasida (“Xodimlar → karta → tezkor QR-avtorizatsiya uchun PIN”) yoki umumiy planshet sahifasida belgilanadi — kod bir xil. PIN-kodsiz xodim QR orqali yozuv kirita olmaydi. Ochiq rejimda ham PIN belgilanganlardan so‘raladi."
@@ -27943,7 +27946,7 @@
     },
     "addOrganizationButton": {
       "add": "Tashkilot qo‘shish",
-      "hint": "O‘z jurnallari va xodimlari bilan ikkinchi nuqta. Bepul tarif limiti barcha tashkilotlar uchun umumiy."
+      "hint": "O‘z jurnallari va xodimlari bilan ikkinchi nuqta — tarifda u alohida nuqta hisoblanadi. Xodimlar va xotira limitlari barcha tashkilotlar uchun umumiy."
     },
     "buildingGroupHeader": {
       "withoutPoint": "Nuqtasiz"

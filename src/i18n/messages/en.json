@@ -3460,7 +3460,8 @@
     "paymentReceipt": {
       "subject": {
         "newClient": "Payment received — finish setting up your account",
-        "renewal": "Payment received — subscription renewed"
+        "renewal": "Payment received — subscription renewed",
+        "held": "Payment received — we will apply it manually"
       },
       "greeting": "Hello!",
       "thankYou": "We’ve received your payment. Thank you!",
@@ -3470,6 +3471,7 @@
       "closingDocumentDisclosure": "Closing document: universal transfer document (UPD) No. {documentNumber} is attached as a PDF with a facsimile signature. It is also available in your account under “Settings → Subscription → Payment history.” If you need an original with a handwritten signature or exchange through electronic document interchange (EDI), simply reply to this email.",
       "newClientNextStep": "Set a password and enter your organization’s name to finish setup. It takes about a minute.",
       "renewalNextStep": "Your organization’s subscription has been renewed. No further action is needed.",
+      "heldNextStep": "Your account's plan changed after this order was placed, so its amount no longer fits. We will apply the payment or refund it within one business day — no action is needed.",
       "newClientAction": "Finish setup",
       "renewalAction": "Go to your account",
       "support": "Questions about payments or refunds? Contact support@wesetup.ru.",
@@ -5655,6 +5657,7 @@
         "renew": "Renew — {amount}",
         "upgrade": "Upgrade — pay {amount}",
         "switch": "Switch — {amount}",
+        "switchYear": "Switch to yearly — {amount}",
         "newPlan": "Subscribe — {amount}",
         "scheduled": "Switch from {date}",
         "scheduledDone": "Switching from {date}",
@@ -5712,7 +5715,7 @@
         "storageStandard": "{mb, number} MB: log orders and your own documents",
         "storagePremium": "{gb, number} GB for all documents",
         "trialOnly": "Only during the {trialDays, number}-day trial",
-        "ppkFrom": "Custom, from {price, number} ₽"
+        "ppkFrom": "Custom, from {price}"
       }
     }
   },
@@ -14996,7 +14999,7 @@
       "kept": "Recognized {value} from the photo. Your entered value was kept.",
       "useRecognized": "Use this value",
       "button": "Photo",
-      "paidOnly": "Automatic entry from photos is available on paid plans",
+      "paidOnly": "Automatic entry from photos is available on the Premium plan",
       "plans": "Plans",
       "unreadable": "Could not read the numbers. Enter them manually.",
       "checkMark": "from photo — please check",
@@ -16286,7 +16289,7 @@
       "benefitsHeading": "How WeSetup helps",
       "codeLabel": "Log code",
       "tryFree": "Try for free",
-      "freeDescription": "All logs are available on the free plan, with no time limit and no card required.",
+      "freeDescription": "{trialDays, number} {trialDays, plural, one {day} other {days}} with every log unlocked and no card required.",
       "relatedHeading": "Related logs",
       "faqHeading": "Questions and answers",
       "howToTitle": "How to fill in: {title}",
@@ -26497,7 +26500,7 @@
       "readingPhotoTitle": "Reading photo capture",
       "readingPhotoBody": "On the fridge sticker and the storeroom poster the first button is “Take a photo of the reading”: the photo of the thermometer or display goes into the journal next to the value. {autofill} If they do not want to take a photo — “Enter manually”. Turn it off and the photo buttons disappear.",
       "readingPhotoAutofillOn": "Digits from the photo are filled in automatically — the employee only has to check and save.",
-      "readingPhotoAutofillOff": "Digits from the photo are filled in automatically on a paid plan; for now the employee types them in.",
+      "readingPhotoAutofillOff": "Digits from the photo are filled in automatically on the Premium plan; for now the employee types them in.",
       "readingPhotoRequiredTitle": "Photo is required",
       "readingPhotoRequiredBody": "A temperature cannot be saved via QR without a photo: the photo confirms the measurement was taken at the fridge itself. “Maintenance”, “Repair” and humidity need no photo.",
       "pinNote": "The PIN is set in the employee card (“Staff → card → PIN for quick QR authorisation”) or on the shared tablet page — it is the same code. An employee without a PIN cannot record via QR. In public mode the PIN is also asked from those who have one."
@@ -27943,7 +27946,7 @@
     },
     "addOrganizationButton": {
       "add": "Add organisation",
-      "hint": "A second location with its own journals and staff. The free plan limit is shared across all organisations."
+      "hint": "A second location with its own journals and staff — your plan counts it as a separate location. Staff and storage limits are shared across all organisations."
     },
     "buildingGroupHeader": {
       "withoutPoint": "No location"

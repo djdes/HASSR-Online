@@ -91,13 +91,17 @@ export async function createInvoiceOrder(args: {
   if (!quote.ok) return { ok: false, status: quote.status, error: quote.error };
   const offer = quote.offer;
 
-  // Счёт на пополнение баланса — не счёт на подписку: его не возвращаем.
+  // Действующий счёт на тот же тариф и точки возвращаем как есть: он
+  // фиксирует свою сумму. Счёт на другой тариф — новый, а прежние счета на
+  // подписку закрываются ниже (оплати бухгалтерия оба — второй применять
+  // было бы не к чему). Счёт на пополнение баланса — не счёт на подписку.
   const existing = await db.paymentOrder.findFirst({
     where: {
       organizationId: args.organizationId,
       paymentMethod: "invoice",
       status: "pending",
-      tariffKey: { not: TOPUP_TARIFF_KEY },
+      tariffKey: offer.tariffKey,
+      points: quote.target.points,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -176,6 +180,17 @@ export async function createInvoiceOrder(args: {
       lifetimeDiscountId: applied?.lifetimeDiscountId ?? null,
     },
   });
+  const closed = await db.paymentOrder.updateMany({
+    where: {
+      organizationId: args.organizationId,
+      paymentMethod: "invoice",
+      status: "pending",
+      tariffKey: { not: TOPUP_TARIFF_KEY },
+      id: { not: order.id },
+    },
+    data: { status: "cancelled" },
+  });
+  if (closed.count > 0) console.info(`[billing] invoice #${order.id}: previous subscription invoices cancelled: ${closed.count}`);
   console.info(
     `[promo] invoice #${order.id}: base ${offer.baseRub} ₽` +
       (offer.promotion ? ` → promotion ${offer.promotion.id} −${offer.promotion.percent}%` : "") +

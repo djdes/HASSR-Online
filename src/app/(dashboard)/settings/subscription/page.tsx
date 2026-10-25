@@ -16,7 +16,7 @@ import { orderStatusLabel } from "@/lib/order-status";
 import { ResumePausedCard } from "@/components/settings/resume-paused-card";
 import { CabinetTariffs, CancelScheduleButton } from "@/components/settings/cabinet-tariffs";
 import { EquipmentDeliveryCard } from "@/components/settings/equipment-delivery-card";
-import { formatBytes, formatMskDay, hasFeature, lastDayBefore, voluntaryDowngradeCheck, type AccountBillingState } from "@/lib/billing-period";
+import { formatBytes, formatMskDayAuto, hasFeature, lastDayBefore, voluntaryDowngradeCheck, type AccountBillingState } from "@/lib/billing-period";
 import { loadStorageSummary, type StorageSummary } from "@/lib/billing.server";
 import { tariffName } from "@/lib/cabinet-plan";
 import { loadBillingView } from "@/lib/billing-view.server";
@@ -127,13 +127,13 @@ export default async function SubscriptionPage({
     kind === "paid"
       ? paidTier && paidTier !== "legacy"
         ? state?.paidUntil
-          ? t("planPaidUntil", { plan: tierName(paidTier), date: formatMskDay(state.paidUntil) })
+          ? t("planPaidUntil", { plan: tierName(paidTier), date: formatMskDayAuto(state.paidUntil) })
           : t("planPaid", { plan: tierName(paidTier) })
         : state?.paidUntil
-          ? t("planPaidUntil", { plan: t("planLegacy"), date: formatMskDay(state.paidUntil) })
+          ? t("planPaidUntil", { plan: t("planLegacy"), date: formatMskDayAuto(state.paidUntil) })
           : t("planLegacy")
       : kind === "free_period" && state?.trialEndsAt
-        ? t("planTrial", { date: formatMskDay(lastDayBefore(state.trialEndsAt)) })
+        ? t("planTrial", { date: formatMskDayAuto(lastDayBefore(state.trialEndsAt)) })
         : kind === "needs_decision"
           ? t("planNeedsDecision")
           : kind === "free"
@@ -157,7 +157,7 @@ export default async function SubscriptionPage({
     !isImpersonating(session) &&
     !session.user.partnerAccess &&
     voluntaryDowngradeCheck(billing.state).ok
-      ? { paidUntilLabel: kind === "paid" && billing.state.paidUntil ? formatMskDay(billing.state.paidUntil) : null }
+      ? { paidUntilLabel: kind === "paid" && billing.state.paidUntil ? formatMskDayAuto(billing.state.paidUntil) : null }
       : null;
   // Условие бесплатного тарифа — одной строкой под названием плана.
   const planNote =
@@ -508,7 +508,7 @@ export default async function SubscriptionPage({
             className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#c7ccea] bg-[#f5f6ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
           >
             <span className="text-[13.5px] leading-[1.5] text-[#3848c7]">
-              {t("scheduledNote", { date: formatMskDay(new Date(scheduled.at)), plan: planLine(scheduled) })}
+              {t("scheduledNote", { date: formatMskDayAuto(new Date(scheduled.at)), plan: planLine(scheduled) })}
             </span>
             {!isImpersonating(session) && !session.user.partnerAccess ? <CancelScheduleButton /> : null}
           </div>
@@ -538,7 +538,7 @@ export default async function SubscriptionPage({
                 current && current.paidUntil
                   ? { paidUntil: current.paidUntil.toISOString(), tier: current.tier, cycle: current.cycle, points: current.points }
                   : null,
-              trialUntilLabel: state?.trialEndsAt ? formatMskDay(lastDayBefore(state.trialEndsAt)) : null,
+              trialUntilLabel: state?.trialEndsAt ? formatMskDayAuto(lastDayBefore(state.trialEndsAt)) : null,
               trialDaysLeft: state?.trialDaysLeft ?? null,
               pointsInUse,
               scheduled: scheduled
@@ -546,7 +546,7 @@ export default async function SubscriptionPage({
                     tier: scheduled.tier,
                     cycle: scheduled.cycle,
                     points: scheduled.points,
-                    atLabel: formatMskDay(new Date(scheduled.at)),
+                    atLabel: formatMskDayAuto(new Date(scheduled.at)),
                   }
                 : null,
               legacyMonthlyRub: pricing.legacyMonthlyRub,

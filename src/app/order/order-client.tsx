@@ -733,39 +733,42 @@ function Checkout({
         {/* Автосписания. Галочка НЕ проставлена по умолчанию: без неё
             платёж разовый, и это нормальный путь. Текст согласия и
             периодичность списаний видны здесь же — скрытых платежей быть
-            не должно. */}
-        <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
-          <input
-            type="checkbox"
-            checked={recurringConsent}
-            onChange={(event) => {
-              setRecurringConsent(event.target.checked);
-              // Автосписания и баллы взаимоисключающи — включаем одно,
-              // гасим другое, чтобы итог в карточке не врал.
-              if (event.target.checked) setUsePoints(false);
-              else setUsePoints(true);
-            }}
-            className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
-          />
-          <span className="text-[13px] leading-[1.5] text-[#3c4053]">
-            {RECURRING_CONSENT_TEXT} (
-            <Link
-              href={RECURRING_OFFER_HREF}
-              target="_blank"
-              className="text-[#3848c7] underline"
-            >
-              раздел 13 оферты
-            </Link>
-            ).
-            <span className="mt-1 block text-[12px] text-[#6f7282]">
-              {recurringPeriodText(plan?.cycle)}
+            не должно. Доплата за остаток срока — всегда разовая (сервер
+            галочку у неё не учитывает), поэтому её не показываем. */}
+        {plan?.kind === "upgrade" ? null : (
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
+            <input
+              type="checkbox"
+              checked={recurringConsent}
+              onChange={(event) => {
+                setRecurringConsent(event.target.checked);
+                // Автосписания и баллы взаимоисключающи — включаем одно,
+                // гасим другое, чтобы итог в карточке не врал.
+                if (event.target.checked) setUsePoints(false);
+                else setUsePoints(true);
+              }}
+              className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+            />
+            <span className="text-[13px] leading-[1.5] text-[#3c4053]">
+              {RECURRING_CONSENT_TEXT} (
+              <Link
+                href={RECURRING_OFFER_HREF}
+                target="_blank"
+                className="text-[#3848c7] underline"
+              >
+                раздел 13 оферты
+              </Link>
+              ).
+              <span className="mt-1 block text-[12px] text-[#6f7282]">
+                {recurringPeriodText(plan?.cycle)}
+              </span>
+              <span className="mt-1 block text-[12px] text-[#9b9fb3]">
+                Без галочки оплата пройдёт разовым платежом — автосписаний не
+                будет.
+              </span>
             </span>
-            <span className="mt-1 block text-[12px] text-[#9b9fb3]">
-              Без галочки оплата пройдёт разовым платежом — автосписаний не
-              будет.
-            </span>
-          </span>
-        </label>
+          </label>
+        )}
 
         <button
           type="submit"
