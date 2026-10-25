@@ -555,7 +555,8 @@ export async function sendInvoiceEmail(params: {
   const topup = params.purpose === "topup";
   const subject = t(topup ? "email.invoice.subject.topup" : "email.invoice.subject.subscription", { invoiceNumber: params.number });
   const rub = new Intl.NumberFormat("ru-RU").format(params.amountRub) + " ₽";
-  const due = params.dueAt.toLocaleDateString("ru-RU");
+  // Срок — по Москве, как в PDF счёта (часовой пояс сервера может быть другим).
+  const due = params.dueAt.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" });
   const body = `
     <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.invoice.greeting")}</p>
     <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t(topup ? "email.invoice.attachment.topup" : "email.invoice.attachment.subscription")}</p>

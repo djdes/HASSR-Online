@@ -122,7 +122,7 @@ export async function createInvoiceOrder(args: {
     return {
       ok: false,
       status: 400,
-      error: "Скидка закрывает всю сумму — счёт не нужен. Оформите подписку на странице оплаты",
+      error: "К оплате 0 ₽ — счёт не нужен. Оформите тариф на странице оплаты: он подключится сразу",
     };
   }
   // Как у оплаты картой: счёт фиксирует сумму, и она должна совпасть с
@@ -138,11 +138,12 @@ export async function createInvoiceOrder(args: {
 
   // Доплата и переход считаются от остатка текущего срока: оплата после его
   // конца ушла бы на ручной разбор, поэтому счёт действует не дольше срока —
-  // до последнего полного дня перед ним (в счёте печатается дата, без часов).
+  // до последнего полного дня перед ним (в счёте печатается дата, без часов);
+  // если до конца этого дня меньше суток — до самого конца срока.
   const validUntil = new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS);
   const termEnd = quote.change.kind === "upgrade" || quote.change.kind === "switch" ? (quote.base?.paidUntil ?? null) : null;
   const termDue = termEnd ? lastFullMskDayBefore(termEnd) : null;
-  const termDeadline = termEnd && termDue ? (termDue.getTime() > now.getTime() ? termDue : termEnd) : null;
+  const termDeadline = termEnd && termDue ? (termDue.getTime() - now.getTime() >= DAY_MS ? termDue : termEnd) : null;
   const invoiceDueAt = termDeadline && termDeadline.getTime() < validUntil.getTime() ? termDeadline : validUntil;
 
   // Действующий счёт возвращаем, только если он всё ещё про то же: тот же

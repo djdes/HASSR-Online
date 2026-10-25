@@ -59,6 +59,10 @@
       "round6_fixes": [
         "raw/round6-scenarios.txt",
         "raw/round6-check.txt"
+      ],
+      "round7_polish": [
+        "raw/round7-setup.txt",
+        "raw/round7-check.txt"
       ]
     }
   },
@@ -258,6 +262,23 @@
       ],
       "not_changed": {
         "held_in_totals": "a held payment is money received; it leaves the total only when refunded"
+      },
+      "fixed_in": "e77bf601"
+    },
+    "round7": {
+      "commit": "e77bf601",
+      "verdict": "PASS",
+      "acceptance": "AC1-AC12 PASS",
+      "problems": "problems.md (section 7)",
+      "polished_after": [
+        "invoice due date in the cabinet card and email formatted in Moscow time (no hydration mismatch east of Moscow)",
+        "switch invoice line states the quoted end date",
+        "upgrade/switch invoice valid at least until the term end when the last full day is less than a day away",
+        "0 ₽ invoice refusal text"
+      ],
+      "not_changed": {
+        "order_page_last_day_label": "under a day in the customer's favour; display only",
+        "mercury_plans": "pre-existing gate, owner decision"
       }
     }
   },

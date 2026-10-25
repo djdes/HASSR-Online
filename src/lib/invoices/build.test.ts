@@ -64,6 +64,15 @@ describe("buildInvoiceLines", () => {
       buyer,
     });
     assert.match(renew[0].title, /30 дн\. \(период — с окончания текущего оплаченного срока\)/);
+    const switched = buildInvoiceLines({
+      order: { id: 30, createdAt, amountRub: 23180, bundleConfig: null, changeKind: "switch", periodEndsAt: new Date("2027-10-19T19:05:00Z") },
+      tariff: { title: "Стандарт — за год", periodDays: 365, priceRub: 23880 },
+      seller,
+      buyer,
+    });
+    // Конец — дата из расчёта при оформлении, а не «365 дн. с даты оплаты».
+    assert.match(switched[0].title, /до 19\.10\.2027 \(переход с зачётом остатка текущего срока\)/);
+    assert.doesNotMatch(switched[0].title, /с даты оплаты/);
   });
 
   it("комплект — оборудование строками, услуге остаток", () => {

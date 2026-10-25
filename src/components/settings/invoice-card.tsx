@@ -130,7 +130,8 @@ export function InvoiceCard({
                   amount: rub(pending.amountRub),
                   due: pending.dueAt
                     ? t("dueSuffix", {
-                        date: new Date(pending.dueAt).toLocaleDateString(locale),
+                        // Срок счёта — по Москве, как в PDF и письме (и без расхождения с сервером).
+                        date: new Date(pending.dueAt).toLocaleDateString(locale, { timeZone: "Europe/Moscow" }),
                       })
                     : "",
                 })}

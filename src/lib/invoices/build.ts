@@ -106,11 +106,16 @@ export function buildInvoiceLines(input: InvoiceBuildInput): ClosingLine[] {
     changeKind === "upgrade" && periodEndsAt
       ? Math.max(1, Math.ceil((periodEndsAt.getTime() - input.order.createdAt.getTime()) / DAY_MS))
       : null;
+  // Переход на год с зачётом остатка кончается датой из расчёта при
+  // оформлении (зачёт посчитан на тот момент), а не через год от оплаты.
+  const switchEnd = changeKind === "switch" && periodEndsAt ? periodEndsAt : null;
   const service: ClosingLine = {
     title:
       upgradeDays !== null
         ? `Доступ к сервису WeSetup, тариф «${title}» — доплата за повышение тарифа на ${upgradeDays} дн. до конца оплаченного срока`
-        : `Доступ к сервису WeSetup, тариф «${title}», ${days} дн. (период — ${changeKind === "renew" ? "с окончания текущего оплаченного срока" : "с даты оплаты"})`,
+        : switchEnd
+          ? `Доступ к сервису WeSetup, тариф «${title}» до ${formatRuDate(switchEnd)} (переход с зачётом остатка текущего срока)`
+          : `Доступ к сервису WeSetup, тариф «${title}», ${days} дн. (период — ${changeKind === "renew" ? "с окончания текущего оплаченного срока" : "с даты оплаты"})`,
     unit: "усл. ед.",
     unitCode: "876",
     qty: 1,
