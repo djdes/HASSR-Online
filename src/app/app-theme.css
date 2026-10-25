@@ -852,6 +852,17 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[
   background-color: #201d36;
 }
 
+/* Белая кнопка на выделенной карточке тарифа («Стандарт») — главный призыв
+   страницы тарифов. Общий оверрайд `.bg-white` красит её в цвет поверхности,
+   и на тёмной карточке она теряется: оставляем белой с тёмным текстом, как днём. */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .tariff-cta-light {
+  background-color: #ffffff !important;
+  color: #0b1024 !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .tariff-cta-light:hover {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
 /* Border strip под headers (sticky top-0 border-b bg-white) — должен
    наследовать dark, иначе белая полоса при скролле */
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) header.sticky,
