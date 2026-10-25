@@ -8,6 +8,10 @@ Capacitor-оболочка вокруг мини-версии сайта. При
 Спецификация: `docs/superpowers/specs/2026-09-26-mobile-apps-design.md`,
 план: `docs/superpowers/plans/2026-09-26-mobile-apps.md`.
 
+Отдельное нативное приложение для печати этикеток на Bluetooth-принтер —
+«Сетап помощник», `mobile/setup-helper/` (свой README, свой workflow
+`setup-helper-check.yml`). С этой оболочкой оно не связано.
+
 ## Что внутри
 
 | Путь | Что это |

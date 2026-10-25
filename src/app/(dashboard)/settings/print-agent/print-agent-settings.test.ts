@@ -138,15 +138,27 @@ test("actual settings page keeps management/tenant guards and renders localized 
     const messages = await loadMessages(locale);
     let allowed = true, queries = 0;
     const page = load<{ default: () => Promise<React.ReactNode> }>(directory + "page.tsx", {
-      "next-intl/server": { getTranslations: async () => createTranslator({ locale, messages, namespace: "printAgent.settings.page" }) },
+      "next-intl/server": {
+        getTranslations: async (namespace: string) => createTranslator({ locale, messages, namespace: namespace as "printAgent.settings.page" }),
+        getLocale: async () => locale,
+      },
       "@/lib/auth-helpers": { requireAuth: async () => ({ user: { id: "manager", organizationId: "original-org" } }), getActiveOrgId: () => "active-org" },
       "@/lib/role-access": { hasFullWorkspaceAccess: () => allowed },
       "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect ${url}`); } },
-      "@/lib/db": { db: { printAgent: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", revokedAt: null })); queries++; return [{ ...agent, lastSeenAt: new Date(agent.lastSeenAt!) }]; } } } },
+      "@/lib/db": { db: {
+        printAgent: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", revokedAt: null })); queries++; return [{ ...agent, lastSeenAt: new Date(agent.lastSeenAt!) }]; } },
+        // Принтеры этикеток и телефоны «Сетап помощника» — тоже только активной организации.
+        labelPrinter: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", removedAt: null })); return []; } },
+        setupHelperDevice: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", revokedAt: null })); return []; } },
+        user: { findMany: async () => { throw new Error("No helper users to look up"); } },
+        organization: { findUnique: async ({ where }: { where: { id: string } }) => { assert.equal(where.id, "active-org"); return { timezone: "Asia/Tashkent" }; } },
+      } },
       "@/components/i18n/domain-messages-boundary": { DomainMessagesBoundary: ({ namespaces, children }: { namespaces: string[]; children: React.ReactNode }) => { assert.deepEqual(Array.from(namespaces), ["printAgent", "journalControls"]); return children; } },
     });
     const html = await render(locale, await page.default());
     for (const expected of [messages.printAgent.settings.page.title, messages.printAgent.settings.page.how, "Установить.bat", "Win+R → netplwiz", agent.name]) assert.ok(html.includes(expected));
+    for (const expected of [messages.printAgent.labelPrinters.heading, messages.printAgent.labelPrinters.download, messages.printAgent.labelPrinters.printers.empty, messages.printAgent.labelPrinters.devices.empty]) assert.ok(html.includes(expected), `${locale}: ${expected}`);
+    assert.ok(html.includes('href="/api/setup-helper/download"'));
     assert.equal(queries, 1);
     allowed = false; await assert.rejects(page.default, /Redirect \/settings/); assert.equal(queries, 1);
   }

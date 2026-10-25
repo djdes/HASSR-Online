@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import { NextResponse } from "next/server";
+import { healthBuildSha } from "@/lib/build-version";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -12,7 +13,9 @@ export const dynamic = "force-dynamic";
  * внешнего monitor'а. Без auth — только проверка живости + БД.
  *
  * Возвращает:
- *   200 { ok: true, db: "ok", version, uptime }  — всё хорошо
+ *   200 { ok: true, db: "ok", buildSha, buildShaOnDisk?, uptimeSec } — всё хорошо;
+ *       `buildShaOnDisk` — только когда `.build-sha` не совпадает с работающей
+ *       сборкой (деплой идёт или упал)
  *   503 { ok: false, db: "fail", ... }            — БД недоступна
  *
  * НЕ заменяет /api/external/healthz который проверяет integrations
@@ -31,15 +34,16 @@ export async function GET() {
     dbOk = false;
   }
 
-  // Читаем `.build-sha` файл (пишется в deploy.yml на проде).
-  // Через env BUILD_SHA — fallback для контейнерных деплоев.
-  let buildSha = process.env.BUILD_SHA ?? "unknown";
+  // Версия — вшитая в сборку (как у /api/build-info). `.build-sha`
+  // деплой пишет в начале, поэтому он лишь запасной вариант и отдельное
+  // поле, если расходится с работающей сборкой (идёт или упал деплой).
+  let fileSha: string | null = null;
   try {
-    const fileSha = (await readFile(".build-sha", "utf-8")).trim().slice(0, 7);
-    if (fileSha) buildSha = fileSha;
+    fileSha = (await readFile(".build-sha", "utf-8")).trim();
   } catch {
-    /* file not present — keep env fallback */
+    /* file not present */
   }
+  const build = healthBuildSha({ baked: process.env.NEXT_PUBLIC_BUILD_ID, env: process.env.BUILD_SHA, file: fileSha });
   const uptimeSec = Math.round((Date.now() - startedAt) / 1000);
 
   const status = dbOk ? 200 : 503;
@@ -48,7 +52,7 @@ export async function GET() {
       ok: dbOk,
       db: dbOk ? "ok" : "fail",
       dbLatencyMs,
-      buildSha,
+      ...build,
       uptimeSec,
       now: new Date().toISOString(),
     },

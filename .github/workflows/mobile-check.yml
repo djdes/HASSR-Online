@@ -10,6 +10,8 @@ on:
     branches: [master]
     paths:
       - "mobile/**"
+      # «Сетап помощник» проверяет свой workflow — setup-helper-check.yml.
+      - "!mobile/setup-helper/**"
       - ".github/workflows/mobile-*.yml"
   workflow_dispatch:
 

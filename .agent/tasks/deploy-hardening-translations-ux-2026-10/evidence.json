@@ -1,0 +1,33 @@
+{
+  "task": "deploy-hardening-translations-ux-2026-10",
+  "verdict": "PASS",
+  "checks": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS"
+  },
+  "commands": {
+    "typecheck": "exit 0",
+    "test:gate": "pass=4760 fail=0",
+    "i18n-types --check": "exit 0",
+    "i18n tests": "95/95",
+    "unit (translations+build-version+deploy-scripts)": "41/41",
+    "eslint changed files": "0",
+    "actionlint": "0",
+    "bash -n workflow blocks": "20/20"
+  },
+  "e2e": {
+    "passed": 26,
+    "total": 26,
+    "file": "raw/e2e-results.json"
+  },
+  "review": "8 findings fixed (problems.md 5-12)"
+}

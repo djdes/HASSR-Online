@@ -13262,6 +13262,60 @@
         "forbidden": "Only a manager can disconnect a computer.",
         "notFound": "The connected computer was not found."
       }
+    },
+    "labelPrinters": {
+      "heading": "Label printers",
+      "description": "Bluetooth printers connected in the Setup Helper Android app. Labels print from the phone even without internet.",
+      "how": "How to connect",
+      "downloadStep": "Download the app to an Android phone with the button or QR code and install it — the browser will ask you to allow the installation.",
+      "loginStep": "Sign in to the app with your WeSetup email and password. You only need to do this once: after that the app works without internet.",
+      "addStep": "Turn on the printer, tap “Add equipment” and pick it from the list. If the phone asks for a PIN, enter 0000 or 1234.",
+      "resultStep": "The printer will appear below as soon as the phone is online. The “Test label 58×40” button checks printing.",
+      "download": "Download Setup Helper",
+      "downloadHint": "Android 7 or later, APK file",
+      "qrHint": "Point your phone camera here to download the app",
+      "printers": {
+        "heading": "Connected printers",
+        "empty": "None yet. Connect a printer in the app and it will appear here.",
+        "connected": "Connected {when}",
+        "connectedVia": "Connected {when} via “{device}”",
+        "lastPrint": "Last printed {when}: {template}",
+        "neverPrinted": "Has not printed yet",
+        "transport": {
+          "classic": "Bluetooth",
+          "ble": "Bluetooth LE"
+        }
+      },
+      "devices": {
+        "heading": "Phones with the app",
+        "description": "Signing in to the app gives the phone a key. Disconnect a phone if it is lost or no longer needed.",
+        "empty": "No one has signed in to the app yet.",
+        "lastSeen": "{user} · last seen {when}",
+        "neverSeen": "{user} · has not connected yet",
+        "unknownUser": "Employee",
+        "version": "Version {version}",
+        "disconnect": "Disconnect",
+        "disconnectAria": "Disconnect “{name}”",
+        "disconnecting": "Disconnecting…",
+        "disconnected": "“{name}” has been disconnected"
+      },
+      "confirm": {
+        "title": "Disconnect “{name}”?",
+        "description": "This phone's key will stop working: the app will sign out the next time it reaches the server.",
+        "offline": "While the phone is offline, the app keeps printing.",
+        "printers": "Connected printers will stay in the list."
+      },
+      "errors": {
+        "failed": "Could not disconnect the phone. Try again.",
+        "forbidden": "Only a manager can disconnect a phone.",
+        "notFound": "The phone was not found or is already disconnected."
+      },
+      "templates": {
+        "test58x40": "Test label 58×40",
+        "product": "Product label",
+        "opened": "Opened package",
+        "freeText": "Free text"
+      }
     }
   },
   "taskFillSchema": {
@@ -22519,7 +22573,8 @@
     "filters": {
       "all": "All",
       "modified": "Edited",
-      "untranslated": "Untranslated"
+      "untranslated": "Untranslated",
+      "stale": "Outdated"
     },
     "rowState": {
       "modified": "Edited",
@@ -22536,7 +22591,11 @@
       "reset": "Restore original",
       "auto": "Auto-translate",
       "autoBatch": "Auto-translate: {language} ({count})",
-      "undo": "Undo edit"
+      "undo": "Undo edit",
+      "saveNext": "Save and next",
+      "next": "Next",
+      "copyLink": "Copy link",
+      "stop": "Stop"
     },
     "autoBusy": "Translating… {done} of {total}",
     "loading": "Loading…",
@@ -22554,7 +22613,7 @@
       "position": "{index} of {count}",
       "previous": "Previous string",
       "next": "Next string",
-      "shortcut": "Ctrl+Enter to save"
+      "shortcut": "Ctrl+Enter — save and next · Alt+↑/↓ — neighbouring string"
     },
     "toasts": {
       "saved": "Saved",
@@ -22562,7 +22621,9 @@
       "reset": "Original text restored",
       "autoDone": "Draft translations: {count}. Review and save.",
       "autoRejected": "Strings not translated: {count}",
-      "autoSkipped": "Skipped rows edited by hand: {count}"
+      "autoSkipped": "Skipped rows edited by hand: {count}",
+      "linkCopied": "Link to the string copied",
+      "autoStopped": "Auto-translate stopped: {done} of {total}"
     },
     "errors": {
       "forbidden": "No access to translations",
@@ -22589,7 +22650,22 @@
       "granted": "Access granted",
       "revoked": "Access revoked"
     },
-    "staleHint": "The Russian text was changed after this edit — please check the translation."
+    "staleHint": "The Russian text was changed after this edit — please check the translation.",
+    "autoWaiting": "Auto-translate limit — continuing in {seconds} s",
+    "autoScope": "Auto-translate takes every untranslated string of the section or search, not just this page; the result is drafts.",
+    "history": {
+      "show": "Edit history",
+      "hide": "Hide history",
+      "empty": "No edits yet",
+      "error": "Could not load the history",
+      "before": "Was",
+      "after": "Became",
+      "reset": "reset to the file text",
+      "restore": "Restore this version",
+      "restoreBefore": "Restore the previous text",
+      "unknownUser": "Unknown author",
+      "restored": "{language}: text filled in — check it and save"
+    }
   },
   "journalUi": {
     "photoCapture": {

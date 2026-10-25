@@ -1,0 +1,63 @@
+# JUnit (gradle :core:test :app:testDebugUnitTest --rerun-tasks), 2026-10-25T08:29:32.142Z
+ru.wesetup.helper.ScreensTest: 8 tests, 0 failed
+  - testEmptyMainScreenInvitesToAddEquipment
+  - testWithoutSessionTheAppAsksToSignIn
+  - testSavedSessionOpensMainScreenWithPrinterWithoutNetwork
+  - testRequiredFieldBlocksPrinting
+  - testScanListsTheAiyinPrinterFirst
+  - testLoginScreenValidatesInputAndShowsServer
+  - testPrintScreenRendersEveryTemplateWithAndroidCanvas
+  - testRevokedSessionMessageIsShownOnLogin
+ru.wesetup.helper.auth.SessionStoreTest: 1 tests, 0 failed
+  - testServerAddressIsNormalisedAndHttpsOnly
+ru.wesetup.helper.bt.PrinterNamesTest: 4 tests, 0 failed
+  - testAiyinIp802IsRecognisedInAllSpellings
+  - testSearchOrderPutsPrinterFirst
+  - testSavedPrinterRoundTripsAndNormalizesLabel
+  - testGenericPrintersAndOtherDevices
+ru.wesetup.helper.net.OutboxTest: 4 tests, 0 failed
+  - testQueueIsCappedAndSurvivesCorruption
+  - testQueueKeepsOrderAndRemovesAccepted
+  - testEventsMatchServerSchema
+  - testOnlyLatestPrintPerPrinterIsKept
+ru.wesetup.helper.print.LabelSettingsTest: 2 tests, 0 failed
+  - testNormalizedKeepsValuesInPrinterLimits
+  - testDefaultsMatchAiyinIp802btDriver
+ru.wesetup.helper.print.MonoBitmapTest: 7 tests, 0 failed
+  - testOutOfRangeIsIgnored
+  - testEmptyImageIsRejected
+  - testRowTailIsPaddedWithWhite
+  - testNewImageIsWhiteWithTsplPolarity
+  - testBlackDotClearsBitMsbFirst
+  - testFromArgbThresholdAndTransparency
+  - testToArgbRoundTrip
+ru.wesetup.helper.print.TsplTest: 7 tests, 0 failed
+  - testLabelJobIsExactTspl2ForIp802bt
+  - testStatusByteExplainsProblems
+  - testNumbersDoNotDependOnPhoneLocale
+  - testServiceCommands
+  - testRotationAndCopiesAreClamped
+  - testMmFormatting
+  - testImageWiderThanPrintableAreaIsRejected
+ru.wesetup.helper.template.LabelPreviewTest: 1 tests, 0 failed
+  - testEveryBundledTemplateFitsTheLabelAndPrints
+ru.wesetup.helper.template.LayoutEngineTest: 8 tests, 0 failed
+  - testShiftMovesEverything
+  - testAlignmentAndVerticalCentering
+  - testWrapsByWordsAndBreaksLongWords
+  - testTicksEveryStepWithLongerEvenTicks
+  - testNoFitTruncatesToMaxLines
+  - testTemplateScalesToLabelAndFrameUsesRealLabelEdges
+  - testFitShrinksTextUntilItFits
+  - testInvertedTextDrawsPlateAndWhiteText
+ru.wesetup.helper.template.TemplateParserTest: 2 tests, 0 failed
+  - testBundledTemplatesParseAndReferenceOnlyKnownValues
+  - testInvalidTemplatesAreRejectedWithReason
+ru.wesetup.helper.template.TemplateValuesTest: 6 tests, 0 failed
+  - testPlaceholdersAndFilters
+  - testDurations
+  - testReplacementTextIsLiteral
+  - testMissingValuesBecomeEmptyNotBraces
+  - testDefaultTimeExpressions
+  - testDatePlusDurationGivesExpiry
+TOTAL: 50 tests, 0 failed

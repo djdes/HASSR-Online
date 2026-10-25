@@ -1,0 +1,29 @@
+// Ядро на чистой Java: команды TSPL, монохромная картинка, шаблоны и
+// разметка этикетки. Без Android — его тесты идут на обычной JVM, где есть
+// AWT для превью этикеток (в unit-тестах Android-модуля AWT нет).
+// Только API, которые есть на Android 7 (minSdk 24): никаких java.time и
+// String.repeat.
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    // На телефоне org.json — часть Android.
+    compileOnly 'org.json:json:20250517'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250517'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    systemProperty 'java.awt.headless', 'true'
+}

@@ -1,0 +1,16 @@
+# Поток TSPL пробной этикетки 58×40 (тест LabelPreviewTest, шрифт AWT), байт: 18679
+# Заголовок:
+SIZE 58 mm,40 mm\r\n
+GAP 2 mm,0 mm\r\n
+DIRECTION 1\r\n
+REFERENCE 0,0\r\n
+DENSITY 8\r\n
+SPEED 3\r\n
+CLS\r\n
+BITMAP 0,0,58,320,0,< 18560 байт картинки: 58 байт × 320 строк, бит 0 — чёрная точка >
+# Хвост:
+'\r\nPRINT 1,1\r\n'
+# Строки 0, 6 и 10 картинки (hex): 0 — белое поле над рамкой, 6 — верхняя линия рамки (отступ 0,75 мм = 6 точек), 10 — левая и правая стороны рамки и деления
+  0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+  6: fc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f
+ 10: fc 7f ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f ff ff ff fe 3f fe 3f

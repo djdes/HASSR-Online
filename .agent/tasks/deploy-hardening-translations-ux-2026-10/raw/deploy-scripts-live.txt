@@ -1,0 +1,17 @@
+## build-info
+{"buildId":"4f29166","buildTime":"2026-10-25T08:51:11.542Z","fullBuildId":"4f29166"}
+## health (no .build-sha)
+{"ok":true,"db":"ok","dbLatencyMs":7,"buildSha":"4f29166","uptimeSec":0,"now":"2026-10-25T08:59:33.197Z"}
+## health (.build-sha = deadbeef — как во время/после упавшего деплоя)
+{"ok":true,"db":"ok","dbLatencyMs":2,"buildSha":"4f29166","buildShaOnDisk":"deadbee","uptimeSec":0,"now":"2026-10-25T08:59:33.219Z"}
+## post-deploy-check: ожидаем 4f29166 (живой dev)
+[verify] сайт отдаёт 4f29166, адреса отвечают: / /login
+exit 0
+## post-deploy-check: ожидаем 1234567 (чужая версия)
+[verify] попытка 1/2: сайт отдаёт «4f29166», ждём 1234567
+[verify] попытка 2/2: сайт отдаёт «4f29166», ждём 1234567
+[verify] сборка 1234567 не поднялась за 2 попыток
+exit 1
+## wait-for-port
+[ssh] порт сервера отвечает (попытка 1/2)
+exit 0
