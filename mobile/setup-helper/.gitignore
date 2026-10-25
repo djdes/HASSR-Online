@@ -1,0 +1,11 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+captures/
+# Ключ подписи — только вне репозитория (репозиторий публичный), см. README.
+*.jks
+*.keystore
+keystore.properties

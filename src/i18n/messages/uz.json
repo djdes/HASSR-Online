@@ -13108,6 +13108,60 @@
         "forbidden": "Kompyuterni faqat rahbar uzishi mumkin.",
         "notFound": "Ulangan kompyuter topilmadi."
       }
+    },
+    "labelPrinters": {
+      "heading": "Yorliq printerlari",
+      "description": "«Setup yordamchi» Android ilovasida ulangan Bluetooth printerlar. Yorliqlar telefondan internetsiz ham chop etiladi.",
+      "how": "Qanday ulash kerak",
+      "downloadStep": "Ilovani tugma yoki QR-kod orqali Android telefonga yuklab oling va o‘rnating — brauzer o‘rnatishga ruxsat so‘raydi.",
+      "loginStep": "Ilovaga WeSetup emailingiz va parolingiz bilan kiring. Buni bir marta qilish kifoya: keyin ilova internetsiz ishlaydi.",
+      "addStep": "Printerni yoqing, «Uskuna qo‘shish» tugmasini bosing va uni ro‘yxatdan tanlang. Telefon PIN-kod so‘rasa, 0000 yoki 1234 kiriting.",
+      "resultStep": "Telefonda internet paydo bo‘lishi bilan printer quyida ko‘rinadi. «Sinov yorlig‘i 58×40» tugmasi chop etishni tekshiradi.",
+      "download": "«Setup yordamchi»ni yuklab olish",
+      "downloadHint": "Android 7 va undan yangi, APK fayl",
+      "qrHint": "Ilovani yuklab olish uchun telefon kamerasini shu yerga qarating",
+      "printers": {
+        "heading": "Ulangan printerlar",
+        "empty": "Hozircha birorta ham yo‘q. Printerni ilovada ulang — u shu yerda paydo bo‘ladi.",
+        "connected": "Ulangan: {when}",
+        "connectedVia": "Ulangan: {when}, «{device}» orqali",
+        "lastPrint": "Oxirgi chop etish {when}: {template}",
+        "neverPrinted": "Hali chop etmagan",
+        "transport": {
+          "classic": "Bluetooth",
+          "ble": "Bluetooth LE"
+        }
+      },
+      "devices": {
+        "heading": "Ilova o‘rnatilgan telefonlar",
+        "description": "Ilovaga kirganda telefon kalit oladi. Telefon yo‘qolsa yoki endi kerak bo‘lmasa, uni uzing.",
+        "empty": "Hozircha hech kim ilovaga kirmagan.",
+        "lastSeen": "{user} · oxirgi ulanish: {when}",
+        "neverSeen": "{user} · hali ulanmagan",
+        "unknownUser": "Xodim",
+        "version": "Versiya {version}",
+        "disconnect": "Uzish",
+        "disconnectAria": "«{name}»ni uzish",
+        "disconnecting": "Uzilmoqda…",
+        "disconnected": "«{name}» uzildi"
+      },
+      "confirm": {
+        "title": "«{name}» uzilsinmi?",
+        "description": "Bu telefonning kaliti ishlamay qoladi: ilova server bilan birinchi bog‘lanishda akkauntdan chiqadi.",
+        "offline": "Telefon internetsiz ekan, ilova chop etishda davom etadi.",
+        "printers": "Ulangan printerlar ro‘yxatda qoladi."
+      },
+      "errors": {
+        "failed": "Telefonni uzib bo‘lmadi. Qayta urinib ko‘ring.",
+        "forbidden": "Telefonni faqat rahbar uzishi mumkin.",
+        "notFound": "Telefon topilmadi yoki allaqachon uzilgan."
+      },
+      "templates": {
+        "test58x40": "Sinov yorlig‘i 58×40",
+        "product": "Mahsulot yorlig‘i",
+        "opened": "Ochilgan qadoq",
+        "freeText": "Erkin matn"
+      }
     }
   },
   "taskFillSchema": {

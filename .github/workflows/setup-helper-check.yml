@@ -1,0 +1,70 @@
+# «Сетап помощник» (mobile/setup-helper): unit-тесты ядра и экранов
+# (Robolectric) и отладочный APK в артефактах. Без секретов, ничего не
+# выкатывает. Отдельно от «Проверки приложений»: там есть дорогое задание
+# macOS, а этому приложению iOS-сборка не нужна.
+name: Сетап помощник — проверка
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "mobile/setup-helper/**"
+      - ".github/workflows/setup-helper-check.yml"
+  pull_request:
+    paths:
+      - "mobile/setup-helper/**"
+      - ".github/workflows/setup-helper-check.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: setup-helper-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Тесты и APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mobile/setup-helper
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            mobile/setup-helper/**/*.gradle
+            mobile/setup-helper/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Тесты
+        run: |
+          chmod +x gradlew
+          ./gradlew :core:test :app:testDebugUnitTest --no-daemon
+
+      - name: Сборка APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: setup-helper-debug-apk-${{ github.run_number }}
+          path: mobile/setup-helper/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      # Превью этикеток из тестов: что напечатает принтер.
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: setup-helper-label-previews-${{ github.run_number }}
+          path: |
+            mobile/setup-helper/core/build/label-previews/
+            mobile/setup-helper/app/build/android-label-previews/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Цвета кабинета WeSetup: тот же синий акцент и тёмно-синий текст, что на сайте. -->
+<resources>
+    <color name="brand">#5566F6</color>
+    <color name="brand_dark">#3A48C9</color>
+    <color name="brand_soft">#EEF1FF</color>
+    <color name="ink">#0B1024</color>
+    <color name="text">#3C4053</color>
+    <color name="muted">#6F7282</color>
+    <color name="border">#ECECF4</color>
+    <color name="page">#F4F5FB</color>
+    <color name="card">#FFFFFF</color>
+    <color name="success">#116B2A</color>
+    <color name="success_soft">#E8F5EC</color>
+    <color name="danger">#A13A32</color>
+    <color name="danger_soft">#FFF4F2</color>
+    <color name="ic_launcher_background">#5566F6</color>
+</resources>

@@ -1,0 +1,40 @@
+{
+  "task": "setup-helper-app-2026-10",
+  "verdict": "PASS",
+  "checks": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS"
+  },
+  "commands": {
+    "gradle :core:test :app:testDebugUnitTest --rerun-tasks": "50 tests, 0 failed (raw/android-tests.txt)",
+    "gradle lintRelease / lintDebug": "0 errors",
+    "gradle assembleRelease assembleDebug": "BUILD SUCCESSFUL; release APK 1945901 bytes, v2-signed, debuggable=false (raw/apk-verify.txt)",
+    "npm run typecheck": "exit 0",
+    "npm run test:gate": "pass=4760 fail=0",
+    "npm run i18n:check": "exit 0",
+    "npx prisma validate": "valid",
+    "setup-helper + print-agent unit tests": "20/20",
+    "eslint changed site files": "exit 0"
+  },
+  "e2e": {
+    "passed": 33,
+    "total": 33,
+    "file": "raw/e2e-api.txt",
+    "setup": "next dev + PostgreSQL 16, fresh database"
+  },
+  "deviations": [
+    "AC9: the CI job that builds the APK is a dedicated workflow (.github/workflows/setup-helper-check.yml, also runs on pull requests) instead of a job inside mobile-check.yml, so that helper changes do not start the paid macOS iOS build; mobile-check.yml ignores mobile/setup-helper/**."
+  ],
+  "limitations": [
+    "Pairing and printing on a physical AIYIN IP-802BT were not exercised: the container has no Bluetooth and no KVM for an emulator. The TSPL byte stream, Android Canvas rendering (Robolectric), screens and the full server path are covered.",
+    "The committed APK is signed with a test key that is not in the repository."
+  ]
+}
