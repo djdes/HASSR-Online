@@ -1,18 +1,32 @@
 import type { useTranslations } from "next-intl";
+import { FREE_MAX_JOURNALS } from "@/lib/tariff-plans";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
-import type { BillingPeriodSettingsJson } from "./billing-period-card";
+import type { TrialSettingsJson } from "./trial-settings-card";
 
 type TariffCopy = ReturnType<typeof useTranslations<"rootTariffs">>;
 
-export function billingPhaseLabel(t: TariffCopy, settings: BillingPeriodSettingsJson, now = Date.now()): string {
-  const starts = new Date(settings.startsAt).getTime();
-  const ends = new Date(settings.endsAt).getTime();
-  if (now < starts) return t("phaseBefore");
-  if (now < ends) return t("phaseDuring", { count: SUBSCRIPTION_MAX_USERS });
-  return settings.transitionEnabled ? t("phaseAfterEnabled") : t("phaseAfterDisabled");
+const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/** «26.10.2026, 00:00» по Москве — без Intl-часовых поясов (сервер = браузер). */
+function mskStamp(iso: string): string {
+  const d = new Date(new Date(iso).getTime() + MSK_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
-export function billingExplanation(t: TariffCopy): string {
-  return t("explanation", { subscriptionCount: SUBSCRIPTION_MAX_USERS, freeCount: FREE_MAX_USERS });
+/** Строка под заголовком карточки: до запуска, после запуска, переход выключен. */
+export function trialPhaseLabel(t: TariffCopy, settings: TrialSettingsJson, now = Date.now()): string {
+  const launched = new Date(settings.launchedAt).getTime();
+  if (now < launched) return t("phaseBeforeLaunch", { date: mskStamp(settings.launchedAt) });
+  return settings.transitionEnabled
+    ? t("phaseActive", { trialDays: settings.trialDays })
+    : t("phaseTransitionOff", { trialDays: settings.trialDays });
+}
+
+export function trialExplanation(t: TariffCopy, settings: TrialSettingsJson): string {
+  return t("trialExplanation", {
+    trialDays: settings.trialDays,
+    freeEmployees: FREE_MAX_USERS,
+    freeJournals: FREE_MAX_JOURNALS,
+  });
 }

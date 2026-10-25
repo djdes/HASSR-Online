@@ -13,7 +13,6 @@ import { normalizeSphere } from "@/lib/org-profile";
 import { ArchivedStaffSection } from "@/components/staff/archived-staff-section";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { BILLING_PAY_HREF } from "@/lib/billing-period";
-import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
@@ -253,8 +252,8 @@ export default async function StaffPage() {
         archivedAt: (u.archivedAt ?? new Date()).toISOString(),
       }))}
       seatsNote={
-        seatsFull
-          ? t("seatsNote", { seats: FREE_SEATS_LABEL })
+        seatsFull && billing?.state.seatLimit != null
+          ? t("seatsNote", { limit: billing.state.seatLimit })
           : null
       }
       payHref={seatsFull && !inMobileApp ? BILLING_PAY_HREF : null}

@@ -60,6 +60,26 @@ function isPaidStatus(status: string): boolean {
 export type OrderDiscountView = AppliedDiscount & { label: string };
 
 /**
+ * Тариф 2026-10 в заказе и вид перехода от текущей подписки — посчитаны
+ * сервером (`quoteCheckout`), здесь только подписи.
+ */
+export type OrderPlanView = {
+  tier: "standard" | "premium";
+  cycle: "month" | "year";
+  points: number;
+  kind: "new" | "renew" | "upgrade" | "switch" | "scheduled";
+  /** Цена полного периода по прайсу. */
+  periodPriceRub: number;
+  /** Зачёт неиспользованного остатка (переход на год). */
+  creditRub: number;
+  /** Разница цен за полный период (повышение). */
+  differenceRub: number;
+  remainingDays: number;
+  periodStartLabel: string;
+  periodEndLabel: string;
+};
+
+/**
  * Скидка при открытии страницы (сервер, `resolveCheckoutDiscount`): код из
  * `?promo=`/cookie ссылки и скидка навсегда вошедшего аккаунта.
  */
@@ -104,6 +124,8 @@ function formatRub(value: number): string {
 export function OrderClient({
   tariff,
   offer = null,
+  plan = null,
+  refusal = null,
   bundleConfig,
   amountRub,
   returnParams,
@@ -116,6 +138,10 @@ export function OrderClient({
   tariff: Tariff | null;
   /// Цена подписки с действующей акцией (сервер). amountRub уже её учитывает.
   offer?: SubscriptionOffer | null;
+  /// Тариф 2026-10 и вид перехода (сервер).
+  plan?: OrderPlanView | null;
+  /// Почему этот тариф сейчас не оформить (понижение — с конца срока, мало точек).
+  refusal?: string | null;
   /// Промокод из ссылки и скидка навсегда — посчитаны сервером.
   initialDiscount?: OrderDiscountState;
   bundleConfig: Record<string, number> | null;
@@ -142,6 +168,8 @@ export function OrderClient({
     <Checkout
       tariff={tariff}
       offer={offer}
+      plan={plan}
+      refusal={refusal}
       bundleConfig={bundleConfig}
       amountRub={amountRub}
       sessionEmail={sessionEmail}
@@ -158,6 +186,8 @@ export function OrderClient({
 function Checkout({
   tariff,
   offer = null,
+  plan = null,
+  refusal = null,
   bundleConfig,
   amountRub,
   sessionEmail,
@@ -168,6 +198,8 @@ function Checkout({
 }: {
   tariff: Tariff | null;
   offer?: SubscriptionOffer | null;
+  plan?: OrderPlanView | null;
+  refusal?: string | null;
   bundleConfig: Record<string, number> | null;
   amountRub: number;
   sessionEmail: string;
@@ -309,6 +341,22 @@ function Checkout({
     );
   }
 
+  if (refusal) {
+    return (
+      <Card>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em]">
+          Этот тариф сейчас не оформить
+        </h1>
+        <p data-testid="order-refusal" className="mt-3 text-[15px] leading-[1.7] text-[#3c4053]">
+          {refusal}
+        </p>
+        <div className="mt-6">
+          <PrimaryLink href="/settings/subscription">К тарифам в кабинете</PrimaryLink>
+        </div>
+      </Card>
+    );
+  }
+
   if (!tariff) {
     return (
       <Card>
@@ -360,7 +408,7 @@ function Checkout({
       const res = await fetch("/api/promo/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, tariffKey: tariff.key }),
+        body: JSON.stringify({ code, tariffKey: tariff.key, plan: plan?.tier, cycle: plan?.cycle, points: plan?.points }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -414,7 +462,9 @@ function Checkout({
         body: JSON.stringify({
           email,
           tariffKey: tariff!.key,
-          bundleConfig: bundleConfig ?? undefined,
+          plan: plan?.tier,
+          cycle: plan?.cycle,
+          points: plan?.points,
           recurringConsent,
           usePoints: pointsSpent > 0,
           promoCode: typedCode ?? undefined,
@@ -468,8 +518,14 @@ function Checkout({
         Оформление подписки
       </h1>
       <p className="mt-3 text-[15px] leading-[1.7] text-[#3c4053]">
-        {tariff.title} — доступ ко всем журналам СанПиН и ХАССП ({JOURNALS_TOTAL}) на{" "}
-        {tariff.periodDays} дней.
+        {tariff.title} — все журналы СанПиН и ХАССП ({JOURNALS_TOTAL}).{" "}
+        {plan?.kind === "upgrade"
+          ? `Доплата за повышение на оставшиеся ${plan.remainingDays} дн. — до ${plan.periodEndLabel}; дата окончания не меняется.`
+          : plan?.kind === "renew"
+            ? `Продление: новый срок — с ${plan.periodStartLabel} до ${plan.periodEndLabel}.`
+            : plan?.kind === "switch"
+              ? `Новый срок — до ${plan.periodEndLabel}${plan.creditRub > 0 ? `; неиспользованный остаток текущего тарифа зачтён` : ""}.`
+              : `Срок — ${tariff.periodDays} дней с оплаты${plan ? `, до ${plan.periodEndLabel}` : ""}.`}
       </p>
 
       <div className="mt-6 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5">
@@ -481,7 +537,7 @@ function Checkout({
             {formatRub(netRub)}
           </span>
         </div>
-        {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion ? (
+        {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion || (plan && plan.kind !== "new" && plan.kind !== "renew") ? (
           <ul className="mt-4 space-y-1.5 border-t border-[#ececf4] pt-4">
             {/* Акция и персональная скидка (промокод или скидка навсегда)
                 — прямо в строке подписки: старая цена зачёркнута, новая и
@@ -491,7 +547,13 @@ function Checkout({
               data-testid="order-subscription-line"
               className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-[#3c4053]"
             >
-              <span>Подписка на {tariff.periodDays} дн.</span>
+              <span>
+                {plan?.kind === "upgrade"
+                  ? `Доплата за ${plan.remainingDays} дн.`
+                  : plan?.kind === "switch" && plan.creditRub > 0
+                    ? "Тариф с зачётом остатка"
+                    : `Тариф на ${tariff.periodDays} дн.`}
+              </span>
               <PromoPrice
                 price={subscriptionPrice}
                 personal={discount}
@@ -500,6 +562,21 @@ function Checkout({
                 className="justify-end"
               />
             </li>
+            {plan?.kind === "switch" && plan.creditRub > 0 ? (
+              <li data-testid="order-credit-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
+                <span>
+                  Цена тарифа {formatRub(plan.periodPriceRub)}, зачтено за неиспользованные дни
+                </span>
+                <span className="tabular-nums">−{formatRub(plan.creditRub)}</span>
+              </li>
+            ) : null}
+            {plan?.kind === "upgrade" ? (
+              <li data-testid="order-upgrade-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
+                <span>
+                  Разница цен за период {formatRub(plan.differenceRub)} × оставшиеся дни
+                </span>
+              </li>
+            ) : null}
             {items.map(({ device, qty }) => (
               <li
                 key={device.id}

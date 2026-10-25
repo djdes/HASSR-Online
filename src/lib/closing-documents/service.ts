@@ -2,7 +2,8 @@ import type { ClosingDocument, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import type { LegalProfile } from "@/lib/org-legal-profile";
-import { readTariff } from "@/lib/tariffs";
+import { readTariffAny } from "@/lib/tariffs";
+import { planTariffTitle } from "@/lib/plan-payment";
 
 import { buildBuyerSnapshot, buildClosingDocument } from "./build";
 import { renderClosingDocumentPdf } from "./pdf";
@@ -43,6 +44,8 @@ type OrderForClosing = {
   createdAt: Date;
   description: string;
   tariffKey: string;
+  points: number | null;
+  changeKind: string | null;
   bundleConfig: unknown;
   organizationId: string | null;
   refundedAt: Date | null;
@@ -86,6 +89,8 @@ async function loadOrder(orderId: number): Promise<OrderForClosing | null> {
       createdAt: true,
       description: true,
       tariffKey: true,
+      points: true,
+      changeKind: true,
       bundleConfig: true,
       organizationId: true,
       refundedAt: true,
@@ -138,8 +143,10 @@ export async function ensureClosingDocument(
 
   const [organization, tariff] = await Promise.all([
     loadOrganization(organizationId),
-    readTariff(order.tariffKey),
+    readTariffAny(order.tariffKey),
   ]);
+  // Тариф 2026-10 — с периодом и точками; прежние — названием из `PlatformTariff`.
+  const tariffTitle = planTariffTitle(order.tariffKey, order.points) ?? tariff?.title ?? null;
   if (!organization) return { document: null, eligibility: { ok: false, reason: "not-paid" } };
 
   const draft = buildClosingDocument({
@@ -150,13 +157,14 @@ export async function ensureClosingDocument(
       paidAt: order.paidAt ?? order.createdAt,
       description: order.description,
       tariffKey: order.tariffKey,
+      changeKind: order.changeKind,
       bundleConfig: order.bundleConfig,
       promoCode: order.promoCode,
       discountRub: order.discountRub,
       promotionPercent: order.promotionPercent,
       promotionDiscountRub: order.promotionDiscountRub,
     },
-    tariff: tariff ? { title: tariff.title, periodDays: tariff.periodDays } : null,
+    tariff: tariff ? { title: tariffTitle ?? tariff.title, periodDays: tariff.periodDays } : null,
     subscriptionEnd: options.subscriptionEnd ?? null,
     organization,
     requisites,

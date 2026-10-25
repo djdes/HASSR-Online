@@ -1,4 +1,4 @@
-import { Coins, FlaskConical, Users } from "lucide-react";
+import { Coins, FlaskConical, HardDrive, Layers, MapPin, Users } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -10,20 +10,14 @@ import { db } from "@/lib/db";
 import { ClosingDocumentActions } from "@/components/settings/closing-document-actions";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { isRequisitesComplete } from "@/lib/closing-documents/types";
-import { InvoiceCard } from "@/components/settings/invoice-card";
+import { InvoiceCard, type InvoiceOption } from "@/components/settings/invoice-card";
 import { invoiceRequisitesReady } from "@/lib/invoices/build";
 import { orderStatusLabel } from "@/lib/order-status";
-import { PlanUpgrade } from "@/components/settings/plan-upgrade";
 import { ResumePausedCard } from "@/components/settings/resume-paused-card";
-import { pricingScaleRows, quoteSubscription } from "@/lib/subscription-pricing";
-import {
-  EXTRA_USER_PRICE_RUB,
-  FREE_PLAN_NOTE,
-  FREE_SEATS_LABEL,
-  SUBSCRIPTION_MAX_USERS,
-  SUBSCRIPTION_SEATS_LABEL,
-} from "@/lib/plan-catalog";
-import { formatMskDay, lastFreeDay, voluntaryDowngradeCheck } from "@/lib/billing-period";
+import { CabinetTariffs, CancelScheduleButton } from "@/components/settings/cabinet-tariffs";
+import { EquipmentDeliveryCard } from "@/components/settings/equipment-delivery-card";
+import { formatBytes, formatMskDay, hasFeature, lastDayBefore, voluntaryDowngradeCheck, type AccountBillingState } from "@/lib/billing-period";
+import { loadStorageSummary, type StorageSummary } from "@/lib/billing.server";
 import { tariffName } from "@/lib/cabinet-plan";
 import { loadBillingView } from "@/lib/billing-view.server";
 import {
@@ -31,27 +25,36 @@ import {
   VoluntaryFreeButton,
   type TransitionGateCopy,
 } from "@/components/billing/billing-transition-gate";
-import { HARDWARE_BUNDLES, bundleTotal } from "@/lib/hardware-pricing";
-import {
-  readTariffs,
-  fallbackTariffs,
-  TARIFF_MONTHLY,
-} from "@/lib/tariffs";
-import {
-  BILLING_TEST_MODE,
-  FREE_MAX_USERS,
-  isFreePlan,
-} from "@/lib/plan-limits";
+import { readPlanPricing } from "@/lib/tariffs";
+import { BILLING_TEST_MODE, FREE_MAX_USERS, isFreePlan } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
-import { PromoBadge, PromoPrice } from "@/components/pricing/promo-price";
+import { PromoBadge } from "@/components/pricing/promo-price";
 import { SubscriptionDiscountCard } from "@/components/settings/subscription-discount-card";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountForPrice, type AppliedDiscount } from "@/lib/promo/discounts";
-import { getDisplayOffer } from "@/lib/promo/offer";
+import { readActivePromotion } from "@/lib/promo/offer";
 import { PROMO_COOKIE } from "@/lib/promo/personal-link";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { isTopupOrder } from "@/lib/balance/topup-core";
+import { readPpkIndividualPrice } from "@/lib/services/catalog";
+import {
+  FREE_MAX_JOURNALS,
+  POINTS_DISCOUNT_FROM,
+  POINTS_DISCOUNT_PERCENT,
+  SEATS_PER_POINT,
+  TRIAL_DAYS,
+  planMonthlyRub,
+  planPeriodPriceRub,
+  quotePlanChange,
+  type BillingCycle,
+  type CurrentSubscription,
+  type PaidTier,
+  type PlanTarget,
+} from "@/lib/tariff-plans";
+
+/** Примеры цены за месяц по числу точек (оплата за год). */
+const EXAMPLE_POINTS = [1, 2, 3, 5] as const;
 
 export default async function SubscriptionPage({
   searchParams,
@@ -63,14 +66,16 @@ export default async function SubscriptionPage({
   // так что список ["owner"] не совпадал ни с кем. Тариф правит тот же,
   // кто имеет полный доступ к кабинету, — как и в POST /upgrade.
   const t = await getTranslations("settingsUi.subscriptionPage");
+  const tt = await getTranslations("landingComponents.tariffs");
   const locale = await getLocale();
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     redirect("/dashboard");
   }
+  const orgId = getActiveOrgId(session);
 
   const org = await db.organization.findUnique({
-    where: { id: getActiveOrgId(session) },
+    where: { id: orgId },
     select: {
       subscriptionPlan: true,
       subscriptionEnd: true,
@@ -79,49 +84,56 @@ export default async function SubscriptionPage({
       balanceRub: true,
       inn: true,
       name: true,
+      phone: true,
+      address: true,
       _count: { select: { users: { where: { isActive: true } } } },
     },
   });
 
-  // В демо-организации сотрудники тестовые и в тариф не входят — иначе
-  // калькулятор показал бы «15 человек» и цену, которой не будет.
+  // В демо-организации сотрудники тестовые и в тариф не входят.
   const isDemo = org?.isDemo === true;
   const plan = org?.subscriptionPlan ?? "free";
 
-  // Бесплатный период и переход на оплату (2026-10): тариф и численность
-  // считаются по аккаунту, как в шапке и в проверке мест.
+  // Тарифы 2026-10: состояние, численность, точки и журналы — по аккаунту,
+  // как в шапке и в проверках лимитов.
   const inMobileApp = await isMobileAppRequest();
+  const now = new Date();
   const billing = await loadBillingView({
-    organizationId: getActiveOrgId(session),
+    organizationId: orgId,
     user: session.user,
     impersonating: isImpersonating(session),
     partnerAccess: Boolean(session.user.partnerAccess),
     inMobileApp,
+    now,
   }).catch((error) => {
     console.error("[billing] subscription page view failed", error);
     return null;
   });
-  const kind = billing?.state.kind ?? "legacy";
+  const state: AccountBillingState | null = billing?.state ?? null;
+  const kind = state?.kind ?? "legacy";
   const employees = isDemo
     ? 1
     : billing && !billing.unit.exempt
       ? Math.max(1, billing.unit.activeUsers)
       : org?._count.users || 1;
-  // Какая карточка витрины «текущая»: реально оплачено и бесплатный
-  // период — подписка; после периода без оплаты — бесплатный.
-  const shownPlan =
-    kind === "paid" || kind === "free_period"
-      ? "paid"
-      : kind === "free" || kind === "needs_decision"
-        ? "free"
-        : plan;
+
+  const tierName = (tier: PaidTier) => (tier === "standard" ? tt("tiers.standard.name") : tt("tiers.premium.name"));
+  const cycleLabel = (cycle: BillingCycle) => (cycle === "year" ? t("cycleYear") : t("cycleMonth"));
+  const planLine = (target: PlanTarget) =>
+    [tierName(target.tier), cycleLabel(target.cycle), t("pointsCount", { count: target.points })].join(" · ");
+
+  const paidTier = state?.kind === "paid" ? state.paidTier : null;
   const shownPlanLabel =
     kind === "paid"
-      ? billing?.state.paidUntil
-        ? t("planPaidUntil", { date: formatMskDay(billing.state.paidUntil) })
-        : t("planPaid")
-      : kind === "free_period" && billing
-        ? t("planFreePeriod", { date: formatMskDay(lastFreeDay(billing.settings)) })
+      ? paidTier && paidTier !== "legacy"
+        ? state?.paidUntil
+          ? t("planPaidUntil", { plan: tierName(paidTier), date: formatMskDay(state.paidUntil) })
+          : t("planPaid", { plan: tierName(paidTier) })
+        : state?.paidUntil
+          ? t("planPaidUntil", { plan: t("planLegacy"), date: formatMskDay(state.paidUntil) })
+          : t("planLegacy")
+      : kind === "free_period" && state?.trialEndsAt
+        ? t("planTrial", { date: formatMskDay(lastDayBefore(state.trialEndsAt)) })
         : kind === "needs_decision"
           ? t("planNeedsDecision")
           : kind === "free"
@@ -130,45 +142,74 @@ export default async function SubscriptionPage({
   // Надписи «тестовый режим — оплата не списывается» — только до
   // перехода на оплату: после него это была бы неправда.
   const testModeActive = billing ? billing.testModeActive : BILLING_TEST_MODE;
-  const paymentRequired =
-    billing?.state.enforcement === true && kind !== "paid" && kind !== "exempt";
   // Развилка «оплатить / бесплатный» — карточкой вверху страницы (окно
   // на этой странице не показываем: оно закрыло бы саму оплату).
   const decisionCopy: TransitionGateCopy | null = billing?.gate?.copy ?? null;
-  const decisionReadOnly =
-    kind === "needs_decision" && !billing?.state.inactive && !decisionCopy;
-  // «Перейти на бесплатный» по своей воле — с подписки (в том числе
-  // оплаченной и в бесплатный период). Решает руководитель в своём
-  // кабинете: не ROOT «под видом» и не консультант (как в API перехода).
+  const decisionReadOnly = kind === "needs_decision" && !state?.inactive && !decisionCopy;
+  // «Перейти на бесплатный» по своей воле — с платного тарифа или из
+  // пробного. Решает руководитель в своём кабинете: не ROOT «под видом» и
+  // не консультант (как в API перехода).
   const voluntaryFree =
     billing &&
     !isDemo &&
     !billing.unit.exempt &&
-    !isFreePlan(shownPlan) &&
+    (kind === "paid" || kind === "free_period") &&
     !isImpersonating(session) &&
     !session.user.partnerAccess &&
     voluntaryDowngradeCheck(billing.state).ok
-      ? {
-          paidUntilLabel:
-            kind === "paid" && billing.state.paidUntil ? formatMskDay(billing.state.paidUntil) : null,
-        }
+      ? { paidUntilLabel: kind === "paid" && billing.state.paidUntil ? formatMskDay(billing.state.paidUntil) : null }
       : null;
   // Условие бесплатного тарифа — одной строкой под названием плана.
-  // null на платном.
-  const planNote = isFreePlan(shownPlan) ? FREE_PLAN_NOTE : null;
-  // Та же цифра, что в карточке железа на лендинге — считаем из одного
-  // источника, чтобы витрины не разъехались.
-  const hardwareFromRub = Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
-  // Цена подписки живёт в БД и правится ROOT'ом — калькулятор берёт её
-  // оттуда же, что и лендинг, иначе итоги на двух витринах разойдутся.
-  const tariffs = await readTariffs().catch(() => fallbackTariffs());
-  const monthly =
-    tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
-  const price = quoteSubscription(employees, monthly.priceRub);
-  // Действующая акция — на всю сумму подписки (база + доплата сверх
-  // лимита); та же цена уйдёт в заказ и счёт (lib/promo/offer.ts).
-  const offer = await getDisplayOffer(monthly);
-  const monthlyWithPromotion = applyPromotion(price.monthlyRub, offer.promotion);
+  const planNote =
+    kind === "free" || kind === "needs_decision" || (kind === "legacy" && isFreePlan(plan))
+      ? t("freeNote", { employees: FREE_MAX_USERS, journals: FREE_MAX_JOURNALS })
+      : null;
+
+  // Цены тарифов (ROOT → «Тарифы») и акция (ROOT → «Акции») — те же, что
+  // на лендинге и в заказе.
+  const [pricing, promotion, ppkFromRub] = await Promise.all([
+    billing ? Promise.resolve(billing.pricing) : readPlanPricing(),
+    readActivePromotion(now).catch(() => null),
+    readPpkIndividualPrice(),
+  ]);
+  const storage: StorageSummary | null =
+    billing && !billing.unit.exempt
+      ? await loadStorageSummary({ unit: billing.unit, settings: billing.settings, state: billing.state }).catch((error) => {
+          console.error("[billing] storage summary failed", error);
+          return null;
+        })
+      : null;
+
+  // Текущая оплаченная подписка — для расчёта доплаты за остаток.
+  const current: CurrentSubscription | null =
+    state?.kind === "paid" && state.paidTier
+      ? { paidUntil: state.paidUntil, tier: state.paidTier, cycle: state.planCycle, points: state.planPoints }
+      : null;
+  const pointsInUse = Math.max(1, state?.pointsInUse ?? 1);
+  const scheduled = billing?.unit.scheduledPlan ?? null;
+  // Варианты оплаты сейчас (карта и счёт): тариф × период при текущих
+  // точках; понижение сейчас не оплачивается — оно с конца срока.
+  const optionPoints = Math.max(pointsInUse, current && current.tier !== "legacy" ? current.points : 1);
+  const options = (["standard", "premium"] as const)
+    .flatMap((tier) => (["year", "month"] as const).map((cycle) => ({ tier, cycle, points: optionPoints })))
+    .filter((target) => pricing.available[target.tier][target.cycle])
+    .map((target) => ({
+      target,
+      change: quotePlanChange({ rates: pricing.rates, legacyMonthlyRub: pricing.legacyMonthlyRub, current, target, now }),
+    }))
+    .filter((option) => option.change.kind !== "scheduled");
+  // По умолчанию — продление текущего тарифа, иначе запланированный, иначе
+  // «Стандарт» за год.
+  const sameTarget = (a: PlanTarget, b: PlanTarget | null) =>
+    Boolean(b) && a.tier === b!.tier && a.cycle === b!.cycle && a.points === b!.points;
+  const defaultOption =
+    options.find((option) => option.change.kind === "renew") ??
+    options.find((option) => sameTarget(option.target, scheduled ? { ...scheduled, points: Math.max(scheduled.points, pointsInUse) } : null)) ??
+    options.find((option) => option.target.tier === "standard" && option.target.cycle === "year") ??
+    options[0] ??
+    null;
+  const defaultOffer = defaultOption ? applyPromotion(defaultOption.change.amountRub, promotion) : null;
+
   // Промокод: `?promo=` (из ссылки /promo/CODE или поля ниже), иначе код
   // из cookie ссылки. Пустой `?promo=` — явно без кода. Скидку (код или
   // скидка навсегда аккаунта — выгоднейшая) считает сервер, как при оплате.
@@ -178,14 +219,14 @@ export default async function SubscriptionPage({
   const promoRaw = (promoParam ?? cookieCode ?? "").trim() || null;
   const codeSource = promoParam ? "query" : cookieCode ? "cookie" : null;
   const discount =
-    inMobileApp || isDemo
+    inMobileApp || isDemo || !defaultOffer
       ? null
       : await resolveCheckoutDiscount({
           promoRaw,
-          organizationId: getActiveOrgId(session),
+          organizationId: orgId,
           email: session.user.email ?? null,
-          offerRub: offer.priceRub,
-          now: new Date(),
+          offerRub: defaultOffer.priceRub,
+          now,
           scope: `page:/settings/subscription${codeSource ? ` (code from ${codeSource})` : ""}`,
         }).catch((error) => {
           console.error("[promo] subscription page discount failed", error);
@@ -195,14 +236,14 @@ export default async function SubscriptionPage({
   const lifetime = discount?.lifetime ?? null;
   const appliedDiscount: AppliedDiscount | null = discount?.ok
     ? discount.applied
-    : lifetime
+    : lifetime && defaultOffer
       ? {
           source: "lifetime",
           code: lifetime.code,
           kind: lifetime.kind,
           value: lifetime.value,
           lifetime: true,
-          discountRub: discountForPrice(lifetime, offer.priceRub),
+          discountRub: discountForPrice(lifetime, defaultOffer.priceRub),
           lifetimeDiscountId: lifetime.id,
           expiresAt: lifetime.expiresAt ?? null,
         }
@@ -214,43 +255,59 @@ export default async function SubscriptionPage({
     codeSource === "cookie" && discount?.ok === true && lifetime?.code === discount.typedCode;
   const acceptedCode = discount?.ok && !cookieAlreadyBound ? discount.typedCode : null;
   const promoError = discount && !discount.ok && codeSource !== "cookie" ? discount.message : null;
-  const payHref = acceptedCode
-    ? `/order?plan=monthly&promo=${encodeURIComponent(acceptedCode)}`
-    : "/order?plan=monthly";
-  // Следующее автосписание — по цене тарифа со скидкой навсегда (акция к
-  // тому дню может закончиться, поэтому от цены без неё). Срочная скидка,
-  // которая к дню списания истечёт, в эту цену не входит.
-  const nextChargeAt = org?.subscriptionEnd ?? null;
-  const lifetimeAtNextCharge =
-    lifetime && !(lifetime.expiresAt && nextChargeAt && new Date(lifetime.expiresAt) <= nextChargeAt)
-      ? lifetime
+  const orderHref = (target: PlanTarget, extra: Record<string, string> = {}) => {
+    const query = new URLSearchParams({ plan: target.tier, cycle: target.cycle, points: String(target.points), ...extra });
+    if (acceptedCode) query.set("promo", acceptedCode);
+    return `/order?${query.toString()}`;
+  };
+  const payHref = defaultOption ? orderHref(defaultOption.target) : "/settings/subscription#tariffs";
+
+  // Автопродление: следующее списание — продление текущего тарифа (или
+  // запланированного) со скидкой навсегда, без акции (к тому дню она может
+  // закончиться). Срочная скидка, которая к дню списания истечёт, не входит.
+  const nextChargeAt = state?.paidUntil ?? null;
+  const renewTarget: PlanTarget | null = scheduled
+    ? { tier: scheduled.tier, cycle: scheduled.cycle, points: scheduled.points }
+    : current && current.tier !== "legacy"
+      ? { tier: current.tier, cycle: current.cycle, points: current.points }
       : null;
-  const recurringMonthlyRub = lifetimeAtNextCharge
-    ? monthly.priceRub - discountForPrice(lifetimeAtNextCharge, monthly.priceRub)
-    : monthly.priceRub;
+  // Прежняя «Подписка» продлевается по своей цене за 30 дней.
+  const renewRub = renewTarget
+    ? planPeriodPriceRub(pricing.rates, renewTarget.tier, renewTarget.cycle, renewTarget.points)
+    : pricing.legacyMonthlyRub;
+  const lifetimeAtNextCharge =
+    lifetime && !(lifetime.expiresAt && nextChargeAt && new Date(lifetime.expiresAt) <= nextChargeAt) ? lifetime : null;
+  const recurringRub = lifetimeAtNextCharge ? renewRub - discountForPrice(lifetimeAtNextCharge, renewRub) : renewRub;
+
   const discountFirst = codeSource === "query" || Boolean(lifetime);
-  const discountCard = isDemo ? null : (
-    <SubscriptionDiscountCard
-      offer={offer}
-      periodDays={monthly.periodDays}
-      lifetime={lifetime}
-      applied={appliedDiscount}
-      typedCode={codeSource === "cookie" && !acceptedCode ? null : promoRaw}
-      error={promoError}
-      notice={discount?.ok && !cookieAlreadyBound ? discount.notice : null}
-      personalPending={discount?.ok ? discount.personalPending : false}
-      payHref={payHref}
-    />
-  );
-  // Пример для справки: команда чуть больше подписки — видно и базу,
-  // и доплату.
-  const exampleEmployees = SUBSCRIPTION_MAX_USERS + 5;
-  const example = quoteSubscription(exampleEmployees, monthly.priceRub);
+  const discountCard =
+    isDemo || !defaultOption || !defaultOffer ? null : (
+      <SubscriptionDiscountCard
+        offer={defaultOffer}
+        planLabel={planLine(defaultOption.target)}
+        lifetime={lifetime}
+        applied={appliedDiscount}
+        typedCode={codeSource === "cookie" && !acceptedCode ? null : promoRaw}
+        error={promoError}
+        notice={discount?.ok && !cookieAlreadyBound ? discount.notice : null}
+        personalPending={discount?.ok ? discount.personalPending : false}
+        payHref={payHref}
+      />
+    );
+  const invoiceOptions: InvoiceOption[] = options.map((option) => ({
+    key: `${option.target.tier}_${option.target.cycle}_${option.target.points}`,
+    label: planLine(option.target),
+    tier: option.target.tier,
+    cycle: option.target.cycle,
+    points: option.target.points,
+    amountRub: option.change.amountRub,
+  }));
+
   // История платежей организации. Только проведённые идут в итог: заказ
   // в статусе pending денег не принёс, и складывать его в «оплачено»
   // значит показывать выручку, которой нет.
   const payments = await db.paymentOrder.findMany({
-    where: { organizationId: getActiveOrgId(session) },
+    where: { organizationId: orgId },
     orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
     take: 50,
     select: {
@@ -278,8 +335,8 @@ export default async function SubscriptionPage({
   const documentsReady = isRequisitesComplete(platformRequisites);
   // Счёт по безналу: нужны реквизиты и банк исполнителя, картинки — нет.
   const invoiceReady = invoiceRequisitesReady(platformRequisites);
-  // Счёт на пополнение баланса — не счёт на подписку: он живёт в «Баланс и
-  // бонусы», здесь карточку подписки не подменяет.
+  // Счёт на пополнение баланса — не счёт на тариф: он живёт в «Баланс и
+  // бонусы», здесь карточку тарифа не подменяет.
   const pendingInvoice = payments.find(
     (payment) =>
       payment.paymentMethod === "invoice" && payment.status === "pending" && !isTopupOrder(payment)
@@ -296,7 +353,7 @@ export default async function SubscriptionPage({
   // ссылок на оплату (App Store 3.1.1 / 3.1.3(b), Google Play).
   if (inMobileApp) {
     const activeUntil =
-      billing?.state.paidUntil ?? (isFreePlan(plan) ? null : (org?.subscriptionEnd ?? null));
+      state?.paidUntil ?? (isFreePlan(plan) ? null : (org?.subscriptionEnd ?? null));
     return (
       <InAppSubscriptionStatus
         decisionCopy={decisionCopy}
@@ -304,7 +361,7 @@ export default async function SubscriptionPage({
         planNote={planNote}
         paused={plan === "paused"}
         activeUntil={activeUntil}
-        expired={activeUntil !== null && activeUntil.getTime() < new Date().getTime()}
+        expired={activeUntil !== null && activeUntil.getTime() < now.getTime()}
         employees={employees}
         balanceRub={org?.balanceRub ?? 0}
         payments={payments.map((payment) => ({
@@ -318,6 +375,58 @@ export default async function SubscriptionPage({
       />
     );
   }
+
+  const exempt = !billing || billing.unit.exempt;
+  const cabinetStatus: "trial" | "free" | "paid" = kind === "paid" ? "paid" : kind === "free_period" ? "trial" : "free";
+  const statusNote =
+    kind === "free_period" && state
+      ? t("trialNote", { days: state.trialDaysLeft ?? TRIAL_DAYS, employees: FREE_MAX_USERS, journals: FREE_MAX_JOURNALS })
+      : kind === "paid" && paidTier && paidTier !== "legacy" && state
+        ? [cycleLabel(state.planCycle), t("pointsCount", { count: state.planPoints })].join(" · ")
+        : kind === "paid"
+          ? t("legacyNote")
+          : planNote;
+  const usage = state
+    ? [
+        {
+          key: "employees",
+          icon: Users,
+          label: t("usageEmployees"),
+          value: state.seatLimit !== null ? t("usageOf", { used: employees, limit: state.seatLimit }) : t("usageNoLimit", { used: employees }),
+        },
+        {
+          key: "points",
+          icon: MapPin,
+          label: t("usagePoints"),
+          value:
+            state.entitlements.pointLimit !== null
+              ? t("usageOf", { used: state.pointsInUse, limit: state.entitlements.pointLimit })
+              : t("usageNoLimit", { used: state.pointsInUse }),
+        },
+        {
+          key: "journals",
+          icon: Layers,
+          label: t("usageJournals"),
+          value:
+            state.entitlements.journalLimit !== null
+              ? t("usageOf", { used: state.enabledJournals, limit: state.entitlements.journalLimit })
+              : t("usageNoLimit", { used: state.enabledJournals }),
+        },
+        {
+          key: "storage",
+          icon: HardDrive,
+          label: t("usageStorage"),
+          value:
+            storage === null
+              ? "—"
+              : storage.limitBytes === null
+                ? t("usageNoLimitText", { used: formatBytes(storage.usedBytes) })
+                : storage.limitBytes === 0
+                  ? t("storageClosed")
+                  : t("usageOfText", { used: formatBytes(storage.usedBytes), limit: formatBytes(storage.limitBytes) }),
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-5">
@@ -355,7 +464,7 @@ export default async function SubscriptionPage({
         <BillingTransitionGate
           display="card"
           copy={decisionCopy}
-          payHref={payHref}
+          payHref="#tariffs"
           blocking={false}
           cardNote={
             invoiceReady && !isDemo
@@ -370,45 +479,114 @@ export default async function SubscriptionPage({
         </p>
       ) : null}
 
-      {/* Витрина тарифов — главное на странице, поэтому первым блоком.
-          Раньше здесь висел SubscriptionManager с мёртвыми
-          starter/standard/pro, которые никогда не писались в БД. */}
       {plan === "paused" ? <ResumePausedCard /> : null}
+
+      {/* Ваш тариф: что действует, до какого числа и сколько занято. */}
+      <section
+        data-testid="subscription-status"
+        className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7"
+      >
+        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("statusTitle")}</div>
+        <div className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">{shownPlanLabel}</div>
+        {statusNote ? <p className="mt-1.5 max-w-[720px] text-[13.5px] leading-[1.55] text-[#6f7282]">{statusNote}</p> : null}
+        {usage.length > 0 && !exempt ? (
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {usage.map((item) => (
+              <div key={item.key} className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
+                <dt className="flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.06em] text-[#6f7282]">
+                  <item.icon className="size-3.5" />
+                  {item.label}
+                </dt>
+                <dd className="mt-1 text-[16px] font-semibold tabular-nums text-[#0b1024]">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+        {scheduled ? (
+          <div
+            data-testid="subscription-scheduled"
+            className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#c7ccea] bg-[#f5f6ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span className="text-[13.5px] leading-[1.5] text-[#3848c7]">
+              {t("scheduledNote", { date: formatMskDay(new Date(scheduled.at)), plan: planLine(scheduled) })}
+            </span>
+            {!isImpersonating(session) && !session.user.partnerAccess ? <CancelScheduleButton /> : null}
+          </div>
+        ) : null}
+        {testModeActive ? <p className="mt-3 text-[12.5px] text-[#6f7282]">{t("testModeNote")}</p> : null}
+      </section>
 
       {/* Пришли по ссылке с промокодом или уже есть скидка навсегда —
           карточка скидки первой: ради неё человек и открыл страницу. */}
       {discountFirst ? discountCard : null}
 
-      <PlanUpgrade
-        currentPlan={shownPlan}
-        currentPlanLabel={shownPlanLabel}
-        planNote={planNote}
-        activeUsers={employees}
-        freeUserLimit={FREE_MAX_USERS}
-        billingTestMode={testModeActive}
-        paymentRequired={paymentRequired}
-        hardwareFromRub={hardwareFromRub}
-        subscriptionMonthly={monthly.priceRub}
-        subscriptionPromotion={offer.promotion}
-        subscriptionDiscount={appliedDiscount}
-        payHref={payHref}
-        freeAction={
-          voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} /> : null
-        }
-      />
+      {exempt ? null : (
+        <section id="tariffs" className="scroll-mt-24 space-y-3">
+          <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">
+            {cabinetStatus === "paid" ? t("tariffsChange") : t("tariffsChoose")}
+          </h2>
+          <CabinetTariffs
+            rates={pricing.rates}
+            available={pricing.available}
+            promotion={promotion}
+            ppkFromRub={ppkFromRub}
+            ppkHref="/settings/services?order=ppk-development"
+            promoCode={acceptedCode}
+            cabinet={{
+              status: cabinetStatus,
+              current:
+                current && current.paidUntil
+                  ? { paidUntil: current.paidUntil.toISOString(), tier: current.tier, cycle: current.cycle, points: current.points }
+                  : null,
+              trialUntilLabel: state?.trialEndsAt ? formatMskDay(lastDayBefore(state.trialEndsAt)) : null,
+              trialDaysLeft: state?.trialDaysLeft ?? null,
+              pointsInUse,
+              scheduled: scheduled
+                ? {
+                    tier: scheduled.tier,
+                    cycle: scheduled.cycle,
+                    points: scheduled.points,
+                    atLabel: formatMskDay(new Date(scheduled.at)),
+                  }
+                : null,
+              legacyMonthlyRub: pricing.legacyMonthlyRub,
+              nowIso: now.toISOString(),
+            }}
+            freeAction={
+              voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} className="w-full" /> : null
+            }
+            showTable
+          />
+        </section>
+      )}
+
+      {/* Доставка подключённого оборудования — «Премиум» и пробный; в
+          «Стандарте» и на бесплатном — замок со ссылкой на тарифы. */}
+      {exempt || isDemo ? null : (
+        <EquipmentDeliveryCard
+          available={hasFeature(state, "equipmentDelivery")}
+          defaultName={session.user.name ?? ""}
+          defaultPhone={org?.phone ?? ""}
+          defaultAddress={org?.address ?? ""}
+        />
+      )}
 
       {discountFirst ? null : discountCard}
 
-      {!isDemo ? (
+      {!isDemo && invoiceOptions.length > 0 ? (
         <InvoiceCard
           ready={invoiceReady}
           orgName={org?.name ?? t("orgNameFallback")}
           orgInn={org?.inn ?? null}
-          amountRub={monthly.priceRub}
-          promotion={offer.promotion}
+          options={invoiceOptions}
+          defaultKey={
+            defaultOption
+              ? `${defaultOption.target.tier}_${defaultOption.target.cycle}_${defaultOption.target.points}`
+              : invoiceOptions[0].key
+          }
+          promotion={promotion}
           discount={appliedDiscount}
           promoCode={acceptedCode}
-          periodDays={monthly.periodDays}
           pending={
             pendingInvoice
               ? {
@@ -421,11 +599,20 @@ export default async function SubscriptionPage({
         />
       ) : null}
 
-      <RecurringCard
-        active={org?.recurringActive === true}
-        nextChargeAt={org?.subscriptionEnd?.toISOString() ?? null}
-        monthlyRub={recurringMonthlyRub}
-      />
+      {/* Отключить автопродление можно всегда (оферта) — карточка есть и у
+          прежней «Подписки», пока автопродление включено. */}
+      {(kind === "paid" && renewTarget) || org?.recurringActive === true ? (
+        <RecurringCard
+          active={org?.recurringActive === true}
+          nextChargeAt={nextChargeAt?.toISOString() ?? null}
+          monthlyRub={recurringRub}
+          enableHref={
+            current && current.tier !== "legacy" && !scheduled
+              ? orderHref({ tier: current.tier, cycle: current.cycle, points: current.points }, { recurring: "1" })
+              : "#tariffs"
+          }
+        />
+      ) : null}
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -534,153 +721,65 @@ export default async function SubscriptionPage({
         )}
       </section>
 
-      {/* Расчёт по числу сотрудников — «как считается платный тариф».
-          Справка второго уровня: нужна тем, кто уже решил улучшать. */}
+      {/* Как считается стоимость: точки и переходы между тарифами. */}
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
         <div className="flex items-start gap-4">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]">
             <Coins className="size-5" />
           </span>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
               {t("howCalculated")}
             </h2>
-            <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-              {t.rich("calcIntro", {
-                free: FREE_SEATS_LABEL,
-                seats: SUBSCRIPTION_SEATS_LABEL,
-                price: () => (
-                  <PromoPrice
-                    price={offer}
-                    size="text"
-                    tone="inherit"
-                    suffix={t("perMonthSuffix")}
-                    showBadge={false}
-                  />
-                ),
-                max: SUBSCRIPTION_MAX_USERS,
-                extra: EXTRA_USER_PRICE_RUB,
-              })}
-            </p>
+            <ul className="mt-2 max-w-[720px] list-disc space-y-1.5 pl-5 text-[13.5px] leading-relaxed text-[#3c4053]">
+              <li>{t("rulePoints", { seats: SEATS_PER_POINT, from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}</li>
+              <li>{t("ruleUpgrade")}</li>
+              <li>{t("ruleSwitch")}</li>
+              <li>{t("ruleDowngrade")}</li>
+              <li>{t("ruleTrial", { trialDays: TRIAL_DAYS })}</li>
+            </ul>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              <PricingStat
-                label={t("statActive")}
-                value={String(employees)}
-                hint={
-                  <span className="inline-flex items-center gap-1 text-[#6f7282]">
-                    <Users className="size-3" /> {price.tierLabel}
-                  </span>
-                }
-              />
-              <PricingStat
-                label={t("statOver", { max: SUBSCRIPTION_MAX_USERS })}
-                value={String(price.extraEmployees)}
-                hint={
-                  <span className="text-[#6f7282]">
-                    {price.extraEmployees > 0
-                      ? t("statOverHint", { extra: EXTRA_USER_PRICE_RUB })
-                      : t("statIncluded")}
-                  </span>
-                }
-              />
-              <PricingStat
-                label={t("statPerMonth")}
-                value={
-                  price.isFree ? (
-                    "0 ₽"
-                  ) : monthlyWithPromotion.promotion || appliedDiscount ? (
-                    <PromoPrice
-                      price={monthlyWithPromotion}
-                      personal={appliedDiscount}
-                      size="lg"
-                      layout="stacked"
-                    />
-                  ) : (
-                    `${price.monthlyRub.toLocaleString(locale)} ₽`
-                  )
-                }
-                hint={
-                  price.isFree ? (
-                    <span className="font-medium text-[#116b2a]">
-                      {t("statFree")}
-                    </span>
-                  ) : (
-                    // Годового тарифа нет — ×12 только для ориентира.
-                    <span className="text-[#6f7282]">
-                      {t("statYearly", { amount: price.yearlyRub.toLocaleString(locale) })}
-                    </span>
-                  )
-                }
-                accent={price.isFree}
-              />
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13px] leading-relaxed text-[#6f7282]">
-              <strong className="text-[#0b1024]">{t("scaleTitle")}</strong>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                {pricingScaleRows(monthly.priceRub).map((row) => (
-                  <li key={row.range}>
-                    {row.range}: {row.price}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2">
-                {t("scaleExample", {
-                  employees: exampleEmployees,
-                  base: example.baseRub.toLocaleString(locale),
-                  extraEmployees: example.extraEmployees,
-                  extraPrice: EXTRA_USER_PRICE_RUB,
-                  total: example.monthlyRub.toLocaleString(locale),
-                })}
-              </p>
-              {offer.promotion ? (
-                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#3c4053]">
-                  <span>{t("promoNow", { title: offer.promotion.title })}</span>
-                  <PromoBadge promotion={offer.promotion} />
-                  <span>{t("promoScope", { max: SUBSCRIPTION_MAX_USERS })}</span>
-                </p>
-              ) : null}
-              {testModeActive ? (
-                <p className="mt-3 text-[#3c4053]">
-                  {t("testModeNote")}
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
+              <div className="text-[13px] font-semibold text-[#0b1024]">{t("examplesTitle")}</div>
+              <table className="mt-2 w-full min-w-[360px] text-[13.5px]">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-[0.12em] text-[#9b9fb3]">
+                    <th className="pb-2 font-medium">{t("colPoints")}</th>
+                    <th className="pb-2 font-medium">{tierName("standard")}</th>
+                    <th className="pb-2 font-medium">{tierName("premium")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {EXAMPLE_POINTS.map((points) => (
+                    <tr key={points} className="border-t border-[#ececf4]">
+                      <td className="py-2 text-[#3c4053]">
+                        {t("pointsCount", { count: points })}
+                        {points >= POINTS_DISCOUNT_FROM ? (
+                          <span className="ml-1.5 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-medium text-[#116b2a]">
+                            −{POINTS_DISCOUNT_PERCENT} %
+                          </span>
+                        ) : null}
+                      </td>
+                      {(["standard", "premium"] as const).map((tier) => (
+                        <td key={tier} className="py-2 tabular-nums text-[#0b1024]">
+                          {planMonthlyRub(pricing.rates, tier, "year", points).toLocaleString(locale)} ₽{t("perMonthSuffix")}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {promotion ? (
+                <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#3c4053]">
+                  <span>{t("promoNow", { title: promotion.title })}</span>
+                  <PromoBadge promotion={promotion} />
+                  <span>{t("promoScope")}</span>
                 </p>
               ) : null}
             </div>
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function PricingStat({
-  label,
-  value,
-  hint,
-  accent = false,
-}: {
-  label: string;
-  value: React.ReactNode;
-  hint: React.ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3"
-      style={
-        accent
-          ? { borderColor: "#7cf5c0", backgroundColor: "#ecfdf5" }
-          : undefined
-      }
-    >
-      <div className="text-[12px] font-medium uppercase tracking-[0.06em] text-[#6f7282]">
-        {label}
-      </div>
-      <div className="mt-1 text-[26px] font-semibold leading-none tabular-nums text-[#0b1024]">
-        {value}
-      </div>
-      <div className="mt-1.5 text-[12px]">{hint}</div>
     </div>
   );
 }

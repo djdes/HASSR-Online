@@ -4,6 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { JOURNAL_ENABLE_AUDIT_ACTION, type JournalEnableSource } from "@/lib/blank-signup";
 import { getDisabledJournalCodes, setDisabledJournalCodes } from "@/lib/disabled-journals";
+import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import {
   JOURNAL_SETS,
@@ -101,6 +102,9 @@ export async function POST(request: Request) {
   const disabled = await getDisabledJournalCodes(organizationId);
   const next = enableJournalSetCodes(disabled, setId);
   if (next.enabled.length > 0) {
+    // Бесплатный тариф после пробного — один включённый журнал.
+    const journals = await checkJournalLimit(organizationId, next.disabledCodes, { source: `settings/journals/sets:${setId}` });
+    if (!journals.ok) return limitResponse(journals);
     await setDisabledJournalCodes(organizationId, next.disabledCodes);
     for (const code of next.enabled) {
       await recordAuditLog({

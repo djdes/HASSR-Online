@@ -2,372 +2,354 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  DEFAULT_FREE_PERIOD,
+  DEFAULT_TRIAL_SETTINGS,
   FREE_LIMIT_MESSAGE,
-  announcementText,
-  billingPhase,
+  checkJournals,
+  checkPoints,
   checkSeats,
+  checkStorage,
   computeAccountBilling,
+  daysLeft,
   decideTransitionAction,
+  formatBytes,
   formatMskDay,
-  freePeriodRangeLabel,
-  isAutoUpgradeAllowed,
-  isBillingEnforced,
+  hasFeature,
   isReallyPaid,
   mskDayKey,
-  normalizeFreePeriodSettings,
+  normalizeTrialSettings,
   pickKeeper,
-  serializeFreePeriodSettings,
-  shouldShowAnnouncement,
+  pickKeeperJournal,
+  serializeTrialSettings,
+  shouldShowTrialBanner,
   transitionCopy,
-  validateFreePeriodInput,
+  trialBannerText,
+  trialEndFor,
+  validateTrialInput,
+  voluntaryDowngradeCheck,
   type AccountBillingInput,
-  type FreePeriodSettings,
+  type TrialSettings,
 } from "@/lib/billing-period";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
 
-const S: FreePeriodSettings = DEFAULT_FREE_PERIOD;
 const DAY = 24 * 60 * 60 * 1000;
 /** МСК-время → Date. */
 const msk = (iso: string) => new Date(`${iso}+03:00`);
 
-const BEFORE = msk("2026-09-28T12:00:00");
-const IN_PERIOD = msk("2026-10-05T12:00:00");
-const LAST_MINUTE = msk("2026-10-10T23:59:59");
-const AFTER = msk("2026-10-11T00:00:00");
-const IN_GRACE = msk("2026-10-17T23:59:00");
-const GRACE_OVER = msk("2026-10-18T00:00:00");
+const LAUNCH = msk("2026-10-26T00:00:00");
+const S: TrialSettings = { ...DEFAULT_TRIAL_SETTINGS, launchedAt: LAUNCH };
+const OLD_ACCOUNT = msk("2026-03-01T10:00:00");
+const TRIAL_END_OLD = new Date(LAUNCH.getTime() + 14 * DAY);
+const PRICES = { standardFromRub: 1990, premiumFromRub: 3990 };
 
 function state(input: Partial<AccountBillingInput>, now: Date, settings = S) {
   return computeAccountBilling(
-    { plan: "free", subscriptionEnd: null, activeUsers: 1, ...input },
+    { plan: "free", subscriptionEnd: null, activeUsers: 1, enabledJournals: 1, createdAt: OLD_ACCOUNT, ...input },
     settings,
     now
   );
 }
 
-describe("настройки бесплатного периода", () => {
-  it("по умолчанию: 1 октября 00:00 МСК — 11 октября 00:00 МСК, грейс 7 дней, переход включён", () => {
-    assert.equal(S.startsAt.toISOString(), msk("2026-10-01T00:00:00").toISOString());
-    assert.equal(S.endsAt.toISOString(), msk("2026-10-11T00:00:00").toISOString());
-    assert.equal(S.graceDays, 7);
-    assert.equal(S.transitionEnabled, true);
+describe("настройки пробного периода", () => {
+  it("по умолчанию: 14 дней, грейс 7, переход включён", () => {
+    assert.equal(DEFAULT_TRIAL_SETTINGS.trialDays, 14);
+    assert.equal(DEFAULT_TRIAL_SETTINGS.graceDays, 7);
+    assert.equal(DEFAULT_TRIAL_SETTINGS.transitionEnabled, true);
   });
 
-  it("пустые и битые значения заменяются дефолтами, JSON — туда и обратно", () => {
-    assert.deepEqual(normalizeFreePeriodSettings(null), S);
-    assert.deepEqual(normalizeFreePeriodSettings({ startsAt: "мусор", graceDays: "x" }), S);
-    const custom: FreePeriodSettings = {
-      startsAt: new Date("2026-11-01T00:00:00.000Z"),
-      endsAt: new Date("2026-11-05T00:00:00.000Z"),
-      graceDays: 3,
-      transitionEnabled: false,
-    };
+  it("битые значения заменяются дефолтами, JSON — туда и обратно", () => {
+    assert.deepEqual(normalizeTrialSettings(null), DEFAULT_TRIAL_SETTINGS);
     assert.deepEqual(
-      normalizeFreePeriodSettings(JSON.parse(serializeFreePeriodSettings(custom))),
-      custom
+      normalizeTrialSettings({ trialDays: "x", launchedAt: "nope", graceDays: 999, transitionEnabled: "yes" }),
+      DEFAULT_TRIAL_SETTINGS
     );
-    // Грейс за пределами — обрезается.
-    assert.equal(normalizeFreePeriodSettings({ graceDays: 500 }).graceDays, 60);
+    const custom: TrialSettings = { trialDays: 21, launchedAt: LAUNCH, graceDays: 3, transitionEnabled: false };
+    assert.deepEqual(normalizeTrialSettings(JSON.parse(serializeTrialSettings(custom))), custom);
   });
 
-  it("проверка формы ROOT: конец позже начала, грейс 0–60, флаг обязателен", () => {
-    const ok = validateFreePeriodInput({
-      startsAt: "2026-10-01T00:00:00+03:00",
-      endsAt: "2026-10-11T00:00:00+03:00",
-      graceDays: 7,
-      transitionEnabled: true,
-    });
+  it("форма ROOT: дни 1–90, дата обязательна, грейс 0–60, флаг обязателен", () => {
+    assert.equal(validateTrialInput({ trialDays: 0, launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: true }).ok, false);
+    assert.equal(validateTrialInput({ trialDays: 14, launchedAt: "", graceDays: 7, transitionEnabled: true }).ok, false);
+    assert.equal(validateTrialInput({ trialDays: 14, launchedAt: LAUNCH.toISOString(), graceDays: 61, transitionEnabled: true }).ok, false);
+    assert.equal(validateTrialInput({ trialDays: 14, launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: "1" }).ok, false);
+    const ok = validateTrialInput({ trialDays: 14, launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: true });
     assert.equal(ok.ok, true);
-    assert.equal(
-      validateFreePeriodInput({
-        startsAt: "2026-10-11T00:00:00+03:00",
-        endsAt: "2026-10-01T00:00:00+03:00",
-        graceDays: 7,
-        transitionEnabled: true,
-      }).ok,
-      false
-    );
-    assert.equal(
-      validateFreePeriodInput({ startsAt: "2026-10-01", endsAt: "2026-10-11", graceDays: -1, transitionEnabled: true }).ok,
-      false
-    );
-    assert.equal(
-      validateFreePeriodInput({ startsAt: "2026-10-01", endsAt: "2026-10-11", graceDays: 7, transitionEnabled: "да" }).ok,
-      false
-    );
-  });
-});
-
-describe("фаза по датам", () => {
-  it("до / в периоде / после; конец — не включительно", () => {
-    assert.equal(billingPhase(S, BEFORE), "before");
-    assert.equal(billingPhase(S, S.startsAt), "free_period");
-    assert.equal(billingPhase(S, IN_PERIOD), "free_period");
-    assert.equal(billingPhase(S, LAST_MINUTE), "free_period");
-    assert.equal(billingPhase(S, AFTER), "after");
   });
 
-  it("переход действует только после конца и с включённым флагом; до него — автоперевод как раньше", () => {
-    assert.equal(isBillingEnforced(S, IN_PERIOD), false);
-    assert.equal(isBillingEnforced(S, AFTER), true);
-    assert.equal(isBillingEnforced({ ...S, transitionEnabled: false }, AFTER), false);
-    assert.equal(isAutoUpgradeAllowed(S, BEFORE), true);
-    assert.equal(isAutoUpgradeAllowed(S, IN_PERIOD), true);
-    assert.equal(isAutoUpgradeAllowed(S, AFTER), false);
-    assert.equal(isAutoUpgradeAllowed({ ...S, transitionEnabled: false }, AFTER), true);
+  it("конец пробного: 14 дней от создания, но не раньше запуска; продление ROOT побеждает", () => {
+    const fresh = msk("2026-11-02T15:00:00");
+    assert.equal(trialEndFor(fresh, S).getTime(), fresh.getTime() + 14 * DAY);
+    assert.equal(trialEndFor(OLD_ACCOUNT, S).getTime(), TRIAL_END_OLD.getTime());
+    const extended = msk("2026-12-31T00:00:00");
+    assert.equal(trialEndFor(OLD_ACCOUNT, S, extended).getTime(), extended.getTime());
   });
 });
 
 describe("«реально оплачено»", () => {
-  it("paid без срока — тестовый автоперевод, не оплата", () => {
-    assert.equal(isReallyPaid("paid", null, AFTER), false);
-  });
-  it("срок в будущем — оплачено; в прошлом — нет; пауза — нет", () => {
-    assert.equal(isReallyPaid("paid", new Date(AFTER.getTime() + DAY), AFTER), true);
-    assert.equal(isReallyPaid("paid", new Date(AFTER.getTime() - DAY), AFTER), false);
-    assert.equal(isReallyPaid("paused", new Date(AFTER.getTime() + DAY), AFTER), false);
+  it("срок в будущем — оплачено; без срока, в прошлом и на паузе — нет", () => {
+    const now = msk("2026-11-01T12:00:00");
+    assert.equal(isReallyPaid("premium", new Date(now.getTime() + DAY), now), true);
+    assert.equal(isReallyPaid("paid", null, now), false);
+    assert.equal(isReallyPaid("standard", new Date(now.getTime() - DAY), now), false);
+    assert.equal(isReallyPaid("paused", new Date(now.getTime() + DAY), now), false);
   });
 });
 
-describe("состояние организации по датам", () => {
-  it("до периода — как раньше (legacy): лимита нет, платные возможности по тарифу", () => {
-    const free = state({ plan: "free", activeUsers: 3 }, BEFORE);
-    assert.equal(free.kind, "legacy");
-    assert.equal(free.seatLimit, null);
-    assert.equal(free.paidFeatures, false);
-    assert.equal(state({ plan: "paid", activeUsers: 5 }, BEFORE).paidFeatures, true);
-  });
-
-  it("в периоде — подписка до 10 у всех: лимита нет, платные возможности включены", () => {
-    const s = state({ plan: "free", activeUsers: 8 }, IN_PERIOD);
+describe("состояние аккаунта по датам", () => {
+  it("пробный: 14 дней без ограничений и со всеми возможностями", () => {
+    const now = msk("2026-10-30T12:00:00");
+    const s = state({ activeUsers: 40, enabledJournals: 35, pointsInUse: 6 }, now);
     assert.equal(s.kind, "free_period");
+    assert.equal(s.tier, "trial");
     assert.equal(s.seatLimit, null);
-    assert.equal(s.paidFeatures, true);
-    assert.equal(state({ plan: "paused", activeUsers: 2 }, IN_PERIOD).paidFeatures, false);
+    assert.equal(s.entitlements.pointLimit, null);
+    assert.equal(s.entitlements.journalLimit, null);
+    assert.equal(hasFeature(s, "photoAutofill"), true);
+    assert.equal(s.trialDaysLeft, daysLeft(TRIAL_END_OLD, now));
+    assert.equal(s.enforcement, false);
   });
 
-  it("после периода, ≤ 1 активного — бесплатный тариф без окна", () => {
-    const s = state({ plan: "paid", activeUsers: 1 }, AFTER);
+  it("новый аккаунт: пробный 14 дней от регистрации", () => {
+    const created = msk("2026-12-01T10:00:00");
+    const inTrial = state({ createdAt: created, activeUsers: 5, enabledJournals: 20 }, msk("2026-12-14T10:00:00"));
+    assert.equal(inTrial.kind, "free_period");
+    const after = state({ createdAt: created, activeUsers: 5, enabledJournals: 20 }, msk("2026-12-15T10:00:01"));
+    assert.equal(after.kind, "needs_decision");
+  });
+
+  it("после пробного: 1 сотрудник и 1 журнал — бесплатный тариф без окна", () => {
+    const s = state({}, new Date(TRIAL_END_OLD.getTime() + DAY));
     assert.equal(s.kind, "free");
-    assert.equal(s.seatLimit, FREE_MAX_USERS);
-    assert.equal(s.paidFeatures, false);
+    assert.equal(s.tier, "free");
+    assert.equal(s.seatLimit, 1);
+    assert.equal(s.entitlements.storageBytes, 0);
+    assert.equal(hasFeature(s, "photoAutofill"), false);
+    assert.equal(s.enforcement, true);
   });
 
-  it("после периода, > 1 активного и не оплачено — нужно решение, грейс 7 дней от конца периода", () => {
-    const s = state({ plan: "paid", activeUsers: 5 }, AFTER);
-    assert.equal(s.kind, "needs_decision");
-    assert.equal(s.reason, "free_period_ended");
-    assert.equal(s.graceEndsAt?.toISOString(), msk("2026-10-18T00:00:00").toISOString());
-    assert.equal(s.graceExpired, false);
-    assert.equal(state({ plan: "paid", activeUsers: 5 }, IN_GRACE).graceExpired, false);
-    assert.equal(state({ plan: "paid", activeUsers: 5 }, GRACE_OVER).graceExpired, true);
-    // Бесплатный тариф со старым лимитом (3 человека) — тоже решение.
-    assert.equal(state({ plan: "free", activeUsers: 3 }, AFTER).kind, "needs_decision");
-  });
-
-  it("реально оплаченная подписка не трогается ни до, ни в, ни после периода", () => {
-    const end = msk("2026-11-20T00:00:00");
-    for (const now of [BEFORE, IN_PERIOD, AFTER, GRACE_OVER]) {
-      const s = state({ plan: "paid", subscriptionEnd: end, activeUsers: 25 }, now);
-      assert.equal(s.kind, "paid", now.toISOString());
-      assert.equal(s.seatLimit, null);
-      assert.equal(s.paidFeatures, true);
-      assert.equal(shouldShowAnnouncement(s), false);
+  it("после пробного: больше 1 сотрудника ИЛИ журнала — нужно решение, грейс 7 дней", () => {
+    const now = new Date(TRIAL_END_OLD.getTime() + 2 * DAY);
+    const users = state({ activeUsers: 3, enabledJournals: 1 }, now);
+    const journals = state({ activeUsers: 1, enabledJournals: 12 }, now);
+    for (const s of [users, journals]) {
+      assert.equal(s.kind, "needs_decision");
+      assert.equal(s.reason, "trial_ended");
+      assert.equal(s.graceEndsAt?.getTime(), TRIAL_END_OLD.getTime() + 7 * DAY);
+      assert.equal(s.graceExpired, false);
+      assert.equal(s.seatLimit, 1);
     }
+    const late = state({ activeUsers: 3 }, new Date(TRIAL_END_OLD.getTime() + 7 * DAY));
+    assert.equal(late.graceExpired, true);
   });
 
-  it("истёкшая оплаченная подписка (после конца периода) — «Подписка закончилась», грейс от её конца", () => {
-    const end = msk("2026-10-20T00:00:00");
-    const now = msk("2026-10-21T10:00:00");
-    const s = state({ plan: "paid", subscriptionEnd: end, activeUsers: 4 }, now);
+  it("оплачено: Стандарт и Премиум с лимитами тарифа, прежняя «Подписка» — как раньше", () => {
+    const now = msk("2026-11-20T12:00:00");
+    const until = new Date(now.getTime() + 10 * DAY);
+    const standard = state({ plan: "standard", subscriptionEnd: until, planPoints: 2, planCycle: "year", activeUsers: 30 }, now);
+    assert.equal(standard.kind, "paid");
+    assert.equal(standard.tier, "standard");
+    assert.equal(standard.paidTier, "standard");
+    assert.equal(standard.planCycle, "year");
+    assert.equal(standard.seatLimit, 50);
+    assert.equal(hasFeature(standard, "photoAutofill"), false);
+    const premium = state({ plan: "premium", subscriptionEnd: until }, now);
+    assert.equal(premium.tier, "premium");
+    assert.equal(hasFeature(premium, "equipmentConnect"), true);
+    const legacy = state({ plan: "paid", subscriptionEnd: until, activeUsers: 60 }, now);
+    assert.equal(legacy.tier, "legacy_paid");
+    assert.equal(legacy.paidTier, "legacy");
+    assert.equal(legacy.seatLimit, null);
+    assert.equal(hasFeature(legacy, "photoAutofill"), true);
+  });
+
+  it("оплата раньше пробного не прерывает расчёт: оплачено — значит paid", () => {
+    const now = msk("2026-10-28T12:00:00");
+    const s = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + 30 * DAY) }, now);
+    assert.equal(s.kind, "paid");
+  });
+
+  it("истёкшая оплаченная подписка (после пробного) — «Подписка закончилась», грейс от её конца", () => {
+    const end = new Date(TRIAL_END_OLD.getTime() + 40 * DAY);
+    const s = state({ plan: "standard", subscriptionEnd: end, activeUsers: 4 }, new Date(end.getTime() + DAY));
     assert.equal(s.kind, "needs_decision");
     assert.equal(s.reason, "subscription_expired");
-    assert.equal(s.graceEndsAt?.toISOString(), msk("2026-10-27T00:00:00").toISOString());
+    assert.equal(s.graceEndsAt?.getTime(), end.getTime() + 7 * DAY);
   });
 
-  it("оплата кончилась ДО конца периода — последним кончился бесплатный период, про него и пишем", () => {
-    const s = state({ plan: "paid", subscriptionEnd: msk("2026-09-15T00:00:00"), activeUsers: 4 }, AFTER);
-    assert.equal(s.reason, "free_period_ended");
-    assert.equal(s.graceEndsAt?.toISOString(), msk("2026-10-18T00:00:00").toISOString());
-  });
-
-  it("переход выключен — после периода всё как раньше", () => {
-    const s = state({ plan: "paid", activeUsers: 9 }, AFTER, { ...S, transitionEnabled: false });
+  it("переход выключен в ROOT — после пробного ничего не блокируем", () => {
+    const s = state({ activeUsers: 9, enabledJournals: 30 }, new Date(TRIAL_END_OLD.getTime() + 30 * DAY), {
+      ...S,
+      transitionEnabled: false,
+    });
     assert.equal(s.kind, "legacy");
     assert.equal(s.seatLimit, null);
+    assert.equal(s.entitlements.journalLimit, null);
   });
 
-  it("платформа, демо и мастер-кабинет — вне тарифа", () => {
-    const s = state({ exempt: true, activeUsers: 30 }, AFTER);
+  it("платформа, демо и мастер-кабинет — вне тарифа, без лимитов", () => {
+    const s = state({ exempt: true, activeUsers: 500 }, new Date(TRIAL_END_OLD.getTime() + 30 * DAY));
     assert.equal(s.kind, "exempt");
     assert.equal(s.seatLimit, null);
+    assert.equal(s.entitlements.storageBytes, null);
   });
 
-  it("оплаченная организация на паузе — без лимита, но без платных возможностей", () => {
-    const s = state(
-      { plan: "paid", subscriptionEnd: msk("2026-12-01T00:00:00"), activeUsers: 3, inactive: true },
-      AFTER
-    );
+  it("оплаченная организация на паузе — лимиты тарифа, но без платных возможностей", () => {
+    const now = msk("2026-11-20T12:00:00");
+    const s = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), inactive: true }, now);
     assert.equal(s.kind, "paid");
-    assert.equal(s.seatLimit, null);
-    assert.equal(s.paidFeatures, false);
+    assert.equal(s.inactive, true);
+    assert.equal(hasFeature(s, "photoAutofill"), false);
   });
 });
 
-describe("лимиты 1 / 10", () => {
-  it("бесплатный — 1: второго активного добавить нельзя, понятная ошибка", () => {
-    const s = state({ plan: "free", activeUsers: 1 }, AFTER);
-    const check = checkSeats(s, 1);
+describe("лимиты", () => {
+  const after = new Date(TRIAL_END_OLD.getTime() + DAY);
+
+  it("бесплатный — 1 сотрудник: второго добавить нельзя, понятная ошибка", () => {
+    const check = checkSeats(state({}, after), 1);
     assert.equal(check.ok, false);
     if (!check.ok) {
-      assert.equal(check.limit, 1);
       assert.equal(check.message, FREE_LIMIT_MESSAGE);
-      assert.match(check.message, /Бесплатный тариф — 1 сотрудник\. Оплатите подписку/);
+      assert.match(check.message, /«Стандарт» или «Премиум»/);
     }
-    // Пустой аккаунт (владелец в архиве) — одного вернуть можно.
-    assert.equal(checkSeats(state({ activeUsers: 0 }, AFTER), 1).ok, true);
   });
 
-  it("нужно решение — добавлять тоже нельзя, пока не оплачено", () => {
-    assert.equal(checkSeats(state({ plan: "paid", activeUsers: 4 }, AFTER), 1).ok, false);
+  it("Стандарт — 25 на точку: 26-го нельзя, текст про точки", () => {
+    const now = msk("2026-11-20T12:00:00");
+    const s = state({ plan: "standard", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 25 }, now);
+    const check = checkSeats(s, 1);
+    assert.equal(check.ok, false);
+    if (!check.ok) assert.match(check.message, /25 сотрудников на точку/);
+    assert.equal(checkSeats(state({ plan: "standard", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 24 }, now), 1).ok, true);
   });
 
-  it("оплачено — 10 не блокирует (сверх 10 — доплата, как было)", () => {
-    const s = state(
-      { plan: "paid", subscriptionEnd: msk("2026-11-20T00:00:00"), activeUsers: SUBSCRIPTION_MAX_USERS },
-      AFTER
-    );
-    assert.equal(checkSeats(s, 5).ok, true);
+  it("пробный и 0 новых — всегда можно", () => {
+    assert.equal(checkSeats(state({ activeUsers: 100 }, msk("2026-10-27T00:00:00")), 10).ok, true);
+    assert.equal(checkSeats(state({}, after), 0).ok, true);
   });
 
-  it("до конца периода и с выключенным переходом — не блокирует", () => {
-    assert.equal(checkSeats(state({ activeUsers: 1 }, BEFORE), 3).ok, true);
-    assert.equal(checkSeats(state({ activeUsers: 1 }, IN_PERIOD), 3).ok, true);
-    assert.equal(
-      checkSeats(state({ activeUsers: 1 }, AFTER, { ...S, transitionEnabled: false }), 3).ok,
-      true
-    );
+  it("точки: бесплатный — 1, оплачено — сколько купили", () => {
+    assert.equal(checkPoints(state({ pointsInUse: 1 }, after), 1).ok, false);
+    const now = msk("2026-11-20T12:00:00");
+    const paid = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), planPoints: 2, pointsInUse: 1 }, now);
+    assert.equal(checkPoints(paid, 1).ok, true);
+    const full = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), planPoints: 2, pointsInUse: 2 }, now);
+    const refused = checkPoints(full, 1);
+    assert.equal(refused.ok, false);
+    if (!refused.ok) assert.match(refused.message, /скидка 5 %/);
   });
 
-  it("0 новых — всегда можно", () => {
-    assert.equal(checkSeats(state({ activeUsers: 5, plan: "paid" }, AFTER), 0).ok, true);
+  it("журналы: на бесплатном включить второй нельзя, выключать можно всегда", () => {
+    const s = state({}, after);
+    assert.equal(checkJournals(s, 2, 1).ok, false);
+    assert.equal(checkJournals(s, 1, 1).ok, true);
+    // Было 12 (до решения) — выключить до 5 можно, хотя это больше лимита.
+    assert.equal(checkJournals(state({ activeUsers: 1, enabledJournals: 12 }, after), 5, 12).ok, true);
+  });
+
+  it("хранилище: Стандарт 10 МБ, бесплатный — загрузка закрыта, замена файла учитывает старый", () => {
+    const now = msk("2026-11-20T12:00:00");
+    const standard = state({ plan: "standard", subscriptionEnd: new Date(now.getTime() + DAY) }, now);
+    const MB = 1024 * 1024;
+    assert.equal(checkStorage(standard.entitlements, 9 * MB, MB / 2).ok, true);
+    const over = checkStorage(standard.entitlements, 9 * MB, 2 * MB);
+    assert.equal(over.ok, false);
+    if (!over.ok) assert.match(over.message, /«Премиум» — 1 ГБ/);
+    assert.equal(checkStorage(standard.entitlements, 9 * MB, 2 * MB, 2 * MB).ok, true);
+    const free = checkStorage(state({}, after).entitlements, 0, 1);
+    assert.equal(free.ok, false);
+    assert.equal(checkStorage(state({ exempt: true }, after).entitlements, 10_000 * MB, MB).ok, true);
+    assert.equal(formatBytes(9.2 * MB), "9,2 МБ");
+    assert.equal(formatBytes(1024 * MB), "1 ГБ");
+    assert.equal(formatBytes(0), "0 КБ");
+    assert.equal(formatBytes(300), "1 КБ");
   });
 });
 
-describe("ежедневная задача: что делать с аккаунтом", () => {
-  it("≤ 1 и тариф ещё «платный» без оплаты — молча бесплатный; уже бесплатный — ничего", () => {
-    assert.equal(decideTransitionAction(state({ plan: "paid", activeUsers: 1 }, AFTER), "paid"), "silent_free");
-    assert.equal(decideTransitionAction(state({ plan: "free", activeUsers: 1 }, AFTER), "free"), "none");
+describe("ежедневная задача", () => {
+  it("за 3 дня до конца пробного — напоминание, раньше — ничего", () => {
+    assert.equal(decideTransitionAction(state({}, new Date(TRIAL_END_OLD.getTime() - 2 * DAY)), "free"), "remind_trial_end");
+    assert.equal(decideTransitionAction(state({}, new Date(TRIAL_END_OLD.getTime() - 6 * DAY)), "free"), "none");
   });
 
-  it("> 1: в грейсе — ждём решения, грейс истёк — автопереход", () => {
-    assert.equal(decideTransitionAction(state({ plan: "paid", activeUsers: 3 }, IN_GRACE), "paid"), "await_decision");
-    assert.equal(decideTransitionAction(state({ plan: "paid", activeUsers: 3 }, GRACE_OVER), "paid"), "auto_free");
+  it("в пределах бесплатного и тариф ещё записан платным — молча бесплатный; уже бесплатный — ничего", () => {
+    const after = new Date(TRIAL_END_OLD.getTime() + DAY);
+    assert.equal(decideTransitionAction(state({ plan: "standard" }, after), "standard"), "silent_free");
+    assert.equal(decideTransitionAction(state({}, after), "free"), "none");
   });
 
-  it("до конца периода, оплачено, пауза, выключенный переход — ничего", () => {
-    assert.equal(decideTransitionAction(state({ plan: "paid", activeUsers: 3 }, IN_PERIOD), "paid"), "none");
+  it("сверх бесплатного: в грейсе — ждём решения, грейс истёк — автопереход", () => {
+    assert.equal(decideTransitionAction(state({ activeUsers: 2 }, new Date(TRIAL_END_OLD.getTime() + DAY)), "free"), "await_decision");
+    assert.equal(decideTransitionAction(state({ activeUsers: 2 }, new Date(TRIAL_END_OLD.getTime() + 8 * DAY)), "free"), "auto_free");
+  });
+
+  it("оплачено, пауза, выключенный переход — ничего", () => {
+    const now = new Date(TRIAL_END_OLD.getTime() + 8 * DAY);
+    assert.equal(decideTransitionAction(state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY) }, now), "premium"), "none");
+    assert.equal(decideTransitionAction(state({ activeUsers: 5, inactive: true }, now), "paused"), "none");
     assert.equal(
-      decideTransitionAction(
-        state({ plan: "paid", subscriptionEnd: msk("2026-12-01T00:00:00"), activeUsers: 3 }, GRACE_OVER),
-        "paid"
-      ),
-      "none"
-    );
-    assert.equal(
-      decideTransitionAction(state({ plan: "paid", activeUsers: 3, inactive: true }, GRACE_OVER), "paid"),
-      "none"
-    );
-    assert.equal(
-      decideTransitionAction(
-        state({ plan: "paid", activeUsers: 3 }, GRACE_OVER, { ...S, transitionEnabled: false }),
-        "paid"
-      ),
+      decideTransitionAction(state({ activeUsers: 5 }, now, { ...S, transitionEnabled: false }), "free"),
       "none"
     );
   });
 
   it("автопереход оставляет владельца; нет владельца — самого давнего руководителя", () => {
-    const t = (d: number) => new Date(Date.UTC(2026, 0, d));
-    const users = [
-      { id: "cook", isManagement: false, createdAt: t(1) },
-      { id: "chef", isManagement: true, createdAt: t(3) },
-      { id: "owner", isManagement: true, createdAt: t(5) },
+    const t = (d: string) => new Date(d);
+    const candidates = [
+      { id: "cook", isManagement: false, createdAt: t("2026-01-01") },
+      { id: "chef", isManagement: true, createdAt: t("2026-02-01") },
+      { id: "owner", isManagement: true, createdAt: t("2026-03-01") },
     ];
-    assert.equal(pickKeeper(users, "owner"), "owner");
-    assert.equal(pickKeeper(users, "gone"), "chef");
-    assert.equal(pickKeeper(users.filter((u) => !u.isManagement), null), "cook");
+    assert.equal(pickKeeper(candidates, "owner"), "owner");
+    assert.equal(pickKeeper(candidates, "gone"), "chef");
+    assert.equal(pickKeeper([candidates[0]], null), "cook");
     assert.equal(pickKeeper([], "owner"), null);
+  });
+
+  it("автопереход оставляет самый заполняемый журнал; без записей — гигиенический или первый", () => {
+    const usage = new Map([["cleaning", 40], ["hygiene", 12]]);
+    assert.equal(pickKeeperJournal(["hygiene", "cleaning", "cold_equipment_control"], usage), "cleaning");
+    assert.equal(pickKeeperJournal(["cleaning", "hygiene"], new Map()), "hygiene");
+    assert.equal(pickKeeperJournal(["cleaning", "acceptance"], new Map()), "cleaning");
+    assert.equal(pickKeeperJournal([], usage), null);
   });
 });
 
 describe("тексты", () => {
-  it("анонс: даты и цена из настроек и тарифа", () => {
-    const a = announcementText(S, 1990);
-    assert.equal(a.lead, "С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех.");
-    assert.equal(a.tail, "С 11 октября — 1 990 ₽/мес или бесплатный тариф на 1 сотрудника.");
-    const other = announcementText(
-      { ...S, startsAt: msk("2026-09-28T00:00:00"), endsAt: msk("2026-10-04T00:00:00") },
-      2490
-    );
-    assert.equal(other.lead, "С 28 сентября по 3 октября подписка «до 10 сотрудников» бесплатна для всех.");
-    assert.match(other.tail ?? "", /С 4 октября — 2 490 ₽\/мес/);
-    assert.equal(announcementText({ ...S, transitionEnabled: false }, 1990).tail, null);
+  it("плашка пробного: дни и последний день по Москве", () => {
+    const now = new Date(TRIAL_END_OLD.getTime() - 5 * DAY + 60_000);
+    const s = state({}, now);
+    assert.equal(shouldShowTrialBanner(s), true);
+    const banner = trialBannerText(s);
+    assert.match(banner?.lead ?? "", /осталось 5 дней — по 8 ноября включительно/);
+    assert.equal(banner?.urgent, false);
+    assert.equal(trialBannerText(state({}, new Date(TRIAL_END_OLD.getTime() - DAY)))?.urgent, true);
+    assert.equal(shouldShowTrialBanner(state({}, new Date(TRIAL_END_OLD.getTime() + DAY))), false);
   });
 
-  it("анонс и окно в акцию: цена со скидкой, база — для зачёркивания", () => {
-    const promo = {
-      baseRub: 1990,
-      priceRub: 1592,
-      promotion: { id: "p1", title: "Осень", percent: 20, startsAt: "2026-10-01T00:00:00.000Z", endsAt: "2026-11-01T00:00:00.000Z" },
-    };
-    const a = announcementText(S, promo);
-    const sp = (x: string | null | undefined) => (x ?? "").replace(/ /g, " ");
-    assert.equal(sp(a.tail), "С 11 октября — 1 592 ₽/мес по акции (без акции 1 990 ₽) или бесплатный тариф на 1 сотрудника.");
-    assert.equal(a.tailParts?.before, "С 11 октября — ");
-    assert.equal(a.tailParts?.price.priceRub, 1592);
-    assert.equal(a.tailParts?.after, " или бесплатный тариф на 1 сотрудника.");
-    const copy = transitionCopy({ state: state({ plan: "paid", activeUsers: 5 }, AFTER), settings: S, priceRub: promo });
-    assert.equal(copy.payPrice.baseRub, 1990);
-    assert.equal(copy.payPrice.priceRub, 1592);
-    assert.match(copy.payTerms, /^до 10 сотрудников, все остаются в работе/);
-    assert.ok(sp(copy.payHint).startsWith("1 592 ₽/мес по акции (без акции 1 990 ₽) · до 10 сотрудников"));
-    // Без акции (или «акция» не уценивает) — просто цена.
-    const flat = transitionCopy({ state: state({ plan: "paid", activeUsers: 5 }, AFTER), settings: S, priceRub: { ...promo, priceRub: 1990 } });
-    assert.ok(sp(flat.payHint).startsWith("1 990 ₽/мес · до 10"));
-  });
-
-  it("анонс — до конца периода и не оплатившим", () => {
-    assert.equal(shouldShowAnnouncement(state({}, BEFORE)), true);
-    assert.equal(shouldShowAnnouncement(state({}, IN_PERIOD)), true);
-    assert.equal(shouldShowAnnouncement(state({ plan: "paid", activeUsers: 4 }, AFTER)), false);
-  });
-
-  it("окно честное: не платившим — «бесплатный период закончился», без слова «оплаченный»", () => {
-    const copy = transitionCopy({ state: state({ plan: "paid", activeUsers: 5 }, AFTER), settings: S, priceRub: 1990 });
-    assert.equal(copy.title, "Бесплатный период подписки закончился");
-    assert.doesNotMatch(`${copy.title} ${copy.lead}`, /оплаченн/i);
-    assert.match(copy.lead, /5 сотрудников/);
-    assert.match(copy.lead, /бесплатный тариф — 1 сотрудник/);
-    assert.match(copy.graceLine ?? "", /до 17 октября включительно/);
-    assert.match(copy.payHint, /1 990 ₽\/мес · до 10 сотрудников/);
+  it("окно честное: не платившим — «Пробный период закончился», цифры сотрудников и журналов", () => {
+    const s = state({ activeUsers: 4, enabledJournals: 18 }, new Date(TRIAL_END_OLD.getTime() + DAY));
+    const copy = transitionCopy({ state: s, prices: PRICES });
+    assert.equal(copy.title, "Пробный период закончился");
+    assert.match(copy.lead, /4 сотрудника и 18 журналов/);
+    assert.match(copy.lead, /1 сотрудник и 1 журнал/);
+    assert.doesNotMatch(copy.lead, /оплаченн/i);
+    assert.match(copy.payHint, /от 1\s990 ₽\/мес/);
+    assert.match(copy.graceLine ?? "", /Выберите до 15 ноября включительно/);
   });
 
   it("истёкшая оплаченная — «Подписка закончилась»", () => {
-    const copy = transitionCopy({
-      state: state({ plan: "paid", subscriptionEnd: msk("2026-10-20T00:00:00"), activeUsers: 2 }, msk("2026-10-21T00:00:00")),
-      settings: S,
-      priceRub: 1990,
-    });
+    const end = new Date(TRIAL_END_OLD.getTime() + 40 * DAY);
+    const copy = transitionCopy({ state: state({ plan: "premium", subscriptionEnd: end, activeUsers: 3 }, new Date(end.getTime() + DAY)), prices: PRICES });
     assert.equal(copy.title, "Подписка закончилась");
   });
 
+  it("добровольный переход: нельзя у вне тарифа и на паузе", () => {
+    assert.equal(voluntaryDowngradeCheck({ kind: "exempt", inactive: false }).ok, false);
+    assert.equal(voluntaryDowngradeCheck({ kind: "paid", inactive: true }).ok, false);
+    assert.equal(voluntaryDowngradeCheck({ kind: "free_period", inactive: false }).ok, true);
+  });
+
   it("даты по Москве", () => {
-    assert.equal(formatMskDay(new Date("2026-09-30T21:00:00.000Z")), "1 октября");
-    assert.equal(formatMskDay(new Date("2026-09-30T20:59:59.000Z")), "30 сентября");
-    assert.equal(mskDayKey(new Date("2026-09-30T21:00:00.000Z")), "2026-10-01");
-    assert.equal(freePeriodRangeLabel(S), "С 1 по 10 октября");
+    assert.equal(formatMskDay(msk("2026-11-08T23:59:59")), "8 ноября");
+    assert.equal(mskDayKey(msk("2026-11-09T00:00:01")), "2026-11-09");
   });
 });

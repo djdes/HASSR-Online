@@ -196,12 +196,18 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "subscription.cancelled": { label: "Подписка отменена", variant: "destructive" },
   "subscription.resumed": { label: "Подписка возобновлена", variant: "default" },
   "plan.auto_upgraded": { label: "Тариф повышен автоматически", variant: "secondary" },
-  // Переход на оплату после бесплатного периода (2026-10).
+  // Переход на оплату после пробного периода (тарифы 2026-10).
   "billing.transition.manual_free": { label: "Переход на бесплатный тариф", variant: "destructive" },
   "billing.transition.auto_free": { label: "Автопереход на бесплатный тариф", variant: "destructive" },
-  "billing.transition.silent_free": { label: "Бесплатный тариф после бесплатного периода", variant: "secondary" },
+  "billing.transition.voluntary_free": { label: "Сам перешёл на бесплатный тариф", variant: "destructive" },
+  "billing.transition.silent_free": { label: "Бесплатный тариф после пробного периода", variant: "secondary" },
   "billing.transition.reminder": { label: "Напоминание выбрать тариф", variant: "outline" },
+  "billing.trial.reminder": { label: "Напоминание: пробный период заканчивается", variant: "outline" },
+  "billing.trial.updated": { label: "Настройки пробного периода", variant: "secondary" },
+  "billing.plan.scheduled": { label: "Запланирован переход на тариф", variant: "secondary" },
+  "billing.plan.schedule_cancelled": { label: "Переход на тариф отменён", variant: "outline" },
   "billing.free_period.updated": { label: "Настройки бесплатного периода", variant: "secondary" },
+  "equipment.delivery-request": { label: "Заявка на доставку оборудования", variant: "default" },
   "promo.lifetime.bind": { label: "Скидка навсегда закреплена", variant: "default" },
   "promo.lifetime.revoke": { label: "Скидка навсегда отменена", variant: "destructive" },
   // Баланс и бонусы: пополнение деньгами и отзывы за баллы (2026-09-30).

@@ -1,0 +1,982 @@
+// Правки каталогов i18n для тарифов 2026-10 (ru/en/uz). Применяет i18n-patch.mjs.
+
+const tariffs = {
+  ru: {
+    toggle: { label: "Период оплаты", month: "Помесячно", year: "За год", save: "−{percent, number} %" },
+    pointsPicker: {
+      label: "Точек",
+      decrease: "Убрать точку",
+      increase: "Добавить точку",
+      hint: "Каждая точка — как ещё один тариф; от {from, number} точек — скидка {percent, number} % на каждую",
+    },
+    tiers: {
+      free: { name: "Бесплатный", tagline: "Попробовать всё без ограничений — {trialDays, number} дней, без карты" },
+      standard: { name: "Стандарт", tagline: "Команда до 25 человек на точку и все журналы" },
+      premium: { name: "Премиум", tagline: "Автоматизация: фото датчиков, оборудование и типовые документы" },
+    },
+    badges: {
+      popular: "Популярный",
+      current: "Текущий",
+      trial: "Пробный: {days, plural, one {# день} few {# дня} many {# дней} other {# дня}}",
+    },
+    price: {
+      perMonth: "/мес",
+      freeNote: "{trialDays, number} дней, потом 1 сотрудник и 1 журнал",
+      yearTotal: "{amount} за год",
+      yearSavings: "экономия {amount}",
+      monthly: "оплата каждый месяц",
+      forPoints: "за {count, plural, one {# точку} few {# точки} many {# точек} other {# точки}}",
+      pointsDiscount: "−{percent, number} % за точки",
+    },
+    includes: {
+      free: "Что входит:",
+      standard: "Всё из «Бесплатного», плюс:",
+      premium: "Всё из «Стандарта», плюс:",
+    },
+    features: {
+      trialAll: "{trialDays, number} дней — все журналы, сотрудники и точки без ограничений",
+      noCard: "Без привязки карты",
+      afterTrial: "Дальше бесплатно: {employees, number} сотрудник и {journals, number} журнал — отметите сами",
+      employees: "До {count, number} сотрудников на точку",
+      allJournals: "Все журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок",
+      storageOrders: "{mb, number} МБ на приказы к журналам и свои документы",
+      ownPackage: "Раздел «Пакет документов» — наполняете сами",
+      storageAll: "{gb, number} ГБ на все документы",
+      photoAutofill: "Фото температурного датчика — показатели заполняются сами",
+      equipmentConnect: "Подключение оборудования: самостоятельно или по подписке",
+      equipmentDelivery: "Доставка уже подключённого оборудования — заказ в кабинете",
+      typicalPackage: "Типовой пакет документов: распечатать и заполнить",
+    },
+    cta: {
+      startFree: "Начать бесплатно",
+      trialNow: "Идёт пробный период",
+      current: "Текущий тариф",
+      unavailable: "Сейчас недоступен",
+      choose: "Выбрать «{name}»",
+      renew: "Продлить — {amount}",
+      upgrade: "Повысить — доплата {amount}",
+      switch: "Перейти — {amount}",
+      newPlan: "Подключить — {amount}",
+      scheduled: "Перейти с {date}",
+      scheduledDone: "Переход с {date}",
+      cancelSchedule: "Отменить переход",
+    },
+    explain: {
+      upgrade: "Сразу, доплата за {days, plural, one {# оставшийся день} few {# оставшихся дня} many {# оставшихся дней} other {# оставшегося дня}}: разница {difference} за период. Дата окончания не меняется",
+      switch: "Сразу: цена {price} минус неиспользованный остаток {credit}",
+      scheduled: "С конца оплаченного срока — сейчас платить не нужно",
+    },
+    note: {
+      trial: "{trialDays, number} дней — все возможности «Премиума» без карты; потом бесплатно 1 сотрудник и 1 журнал или платный тариф.",
+      switch: "Повышение тарифа — сразу, с доплатой за оставшиеся дни; понижение — с конца оплаченного срока.",
+    },
+    ppk: {
+      title: "Программа производственного контроля — индивидуально",
+      text: "Специалист разработает ППК под ваш объект: точки контроля, лабораторные исследования, ответственные. Для любого тарифа.",
+      price: "от {price}",
+      cta: "Заказать индивидуально",
+    },
+    table: { title: "Сравнение тарифов", feature: "Что входит", yes: "Есть", no: "Нет" },
+    groups: {
+      team: "Команда и точки",
+      journals: "Журналы",
+      documents: "Документы",
+      equipment: "Оборудование и автоматизация",
+    },
+    rows: {
+      employees: "Сотрудники",
+      points: "Точки",
+      journals: "Журналы СанПиН и ХАССП",
+      telegram: "Telegram-бот и QR-наклейки",
+      pdf: "PDF для проверок",
+      storage: "Загрузка документов",
+      ownDocuments: "Свои документы в «Пакете документов»",
+      typicalPackage: "Типовой пакет документов",
+      ppkIndividual: "ППК под ваш объект",
+      photoAutofill: "Автозаполнение показателей по фото датчика",
+      equipmentConnect: "Подключение оборудования и IoT-датчиков",
+      equipmentDelivery: "Доставка подключённого оборудования",
+    },
+    cells: {
+      employeesFree: "{trialDays, number} дней — без ограничений, потом {count, number}",
+      employeesPaid: "{count, number} на точку",
+      pointsFree: "{trialDays, number} дней — без ограничений, потом {count, number}",
+      pointsPaid: "1 в тарифе; каждая следующая — как ещё один тариф, от {from, number} — −{percent, number} % на каждую",
+      journalsFree: "{trialDays, number} дней — все, потом {count, number}",
+      journalsAll: "Все",
+      storageFree: "{trialDays, number} дней — 1 ГБ, потом закрыта",
+      storageStandard: "{mb, number} МБ: приказы к журналам и свои документы",
+      storagePremium: "{gb, number} ГБ на все документы",
+      trialOnly: "Только {trialDays, number} дней пробного",
+      ppkFrom: "Индивидуально, от {price, number} ₽",
+    },
+  },
+  en: {
+    toggle: { label: "Billing period", month: "Monthly", year: "Yearly", save: "−{percent, number}%" },
+    pointsPicker: {
+      label: "Locations",
+      decrease: "Remove a location",
+      increase: "Add a location",
+      hint: "Each location costs one more plan; from {from, number} locations — {percent, number}% off each",
+    },
+    tiers: {
+      free: { name: "Free", tagline: "Try everything without limits — {trialDays, number} days, no card" },
+      standard: { name: "Standard", tagline: "A team of up to 25 per location and all logs" },
+      premium: { name: "Premium", tagline: "Automation: sensor photos, equipment and template documents" },
+    },
+    badges: {
+      popular: "Popular",
+      current: "Current",
+      trial: "Trial: {days, plural, one {# day} other {# days}}",
+    },
+    price: {
+      perMonth: "/mo",
+      freeNote: "{trialDays, number} days, then 1 employee and 1 log",
+      yearTotal: "{amount} per year",
+      yearSavings: "you save {amount}",
+      monthly: "billed monthly",
+      forPoints: "for {count, plural, one {# location} other {# locations}}",
+      pointsDiscount: "−{percent, number}% for locations",
+    },
+    includes: {
+      free: "What’s included:",
+      standard: "Everything in Free, plus:",
+      premium: "Everything in Standard, plus:",
+    },
+    features: {
+      trialAll: "{trialDays, number} days — all logs, employees and locations without limits",
+      noCard: "No card required",
+      afterTrial: "Then free: {employees, number} employee and {journals, number} log — you choose which",
+      employees: "Up to {count, number} employees per location",
+      allJournals: "All food safety and HACCP logs, Telegram bot and PDF for inspections",
+      storageOrders: "{mb, number} MB for log orders and your own documents",
+      ownPackage: "“Document pack” section — you fill it yourself",
+      storageAll: "{gb, number} GB for all documents",
+      photoAutofill: "Photo of a temperature sensor — readings fill in automatically",
+      equipmentConnect: "Equipment connection: on your own or as a subscription",
+      equipmentDelivery: "Delivery of pre-connected equipment — order in your account",
+      typicalPackage: "Template document pack: print and fill in",
+    },
+    cta: {
+      startFree: "Start for free",
+      trialNow: "Trial in progress",
+      current: "Current plan",
+      unavailable: "Not available now",
+      choose: "Choose {name}",
+      renew: "Renew — {amount}",
+      upgrade: "Upgrade — pay {amount}",
+      switch: "Switch — {amount}",
+      newPlan: "Subscribe — {amount}",
+      scheduled: "Switch from {date}",
+      scheduledDone: "Switching from {date}",
+      cancelSchedule: "Cancel the switch",
+    },
+    explain: {
+      upgrade: "Right away, you pay for {days, plural, one {# remaining day} other {# remaining days}}: a {difference} difference per period. The end date stays the same",
+      switch: "Right away: {price} minus the unused balance of {credit}",
+      scheduled: "From the end of the paid period — nothing to pay now",
+    },
+    note: {
+      trial: "{trialDays, number} days — all Premium features with no card; then 1 employee and 1 log for free or a paid plan.",
+      switch: "Upgrades apply right away with a charge for the remaining days; downgrades apply from the end of the paid period.",
+    },
+    ppk: {
+      title: "Production control programme — made for you",
+      text: "A specialist will develop a programme for your site: control points, lab testing, responsible staff. Available with any plan.",
+      price: "from {price}",
+      cta: "Order a custom programme",
+    },
+    table: { title: "Compare plans", feature: "What’s included", yes: "Yes", no: "No" },
+    groups: {
+      team: "Team and locations",
+      journals: "Logs",
+      documents: "Documents",
+      equipment: "Equipment and automation",
+    },
+    rows: {
+      employees: "Employees",
+      points: "Locations",
+      journals: "Food safety and HACCP logs",
+      telegram: "Telegram bot and QR stickers",
+      pdf: "PDF for inspections",
+      storage: "Document uploads",
+      ownDocuments: "Your own documents in the “Document pack”",
+      typicalPackage: "Template document pack",
+      ppkIndividual: "Production control programme for your site",
+      photoAutofill: "Readings filled in from a sensor photo",
+      equipmentConnect: "Equipment and IoT sensor connection",
+      equipmentDelivery: "Delivery of connected equipment",
+    },
+    cells: {
+      employeesFree: "{trialDays, number} days — unlimited, then {count, number}",
+      employeesPaid: "{count, number} per location",
+      pointsFree: "{trialDays, number} days — unlimited, then {count, number}",
+      pointsPaid: "1 included; each next one costs one more plan, from {from, number} — −{percent, number}% each",
+      journalsFree: "{trialDays, number} days — all, then {count, number}",
+      journalsAll: "All",
+      storageFree: "{trialDays, number} days — 1 GB, then closed",
+      storageStandard: "{mb, number} MB: log orders and your own documents",
+      storagePremium: "{gb, number} GB for all documents",
+      trialOnly: "Only during the {trialDays, number}-day trial",
+      ppkFrom: "Custom, from {price, number} ₽",
+    },
+  },
+  uz: {
+    toggle: { label: "To‘lov davri", month: "Oyma-oy", year: "Yillik", save: "−{percent, number} %" },
+    pointsPicker: {
+      label: "Nuqtalar",
+      decrease: "Nuqtani olib tashlash",
+      increase: "Nuqta qo‘shish",
+      hint: "Har bir nuqta — yana bitta tarif kabi; {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma",
+    },
+    tiers: {
+      free: { name: "Bepul", tagline: "Hammasini cheklovsiz sinab ko‘ring — {trialDays, number} kun, kartasiz" },
+      standard: { name: "Standart", tagline: "Har bir nuqtaga 25 kishigacha jamoa va barcha jurnallar" },
+      premium: { name: "Premium", tagline: "Avtomatlashtirish: datchik fotosi, uskunalar va namunaviy hujjatlar" },
+    },
+    badges: {
+      popular: "Ommabop",
+      current: "Joriy",
+      trial: "Sinov: {days, plural, other {# kun}}",
+    },
+    price: {
+      perMonth: "/oy",
+      freeNote: "{trialDays, number} kun, keyin 1 xodim va 1 jurnal",
+      yearTotal: "yiliga {amount}",
+      yearSavings: "tejash {amount}",
+      monthly: "har oy to‘lanadi",
+      forPoints: "{count, plural, other {# ta nuqta}} uchun",
+      pointsDiscount: "nuqtalar uchun −{percent, number} %",
+    },
+    includes: {
+      free: "Nimalar kiradi:",
+      standard: "«Bepul»dagi hammasi, qo‘shimcha:",
+      premium: "«Standart»dagi hammasi, qo‘shimcha:",
+    },
+    features: {
+      trialAll: "{trialDays, number} kun — barcha jurnallar, xodimlar va nuqtalar cheklovsiz",
+      noCard: "Karta bog‘lash shart emas",
+      afterTrial: "Keyin bepul: {employees, number} xodim va {journals, number} jurnal — o‘zingiz belgilaysiz",
+      employees: "Har bir nuqtaga {count, number} tagacha xodim",
+      allJournals: "SanPiN va HACCP jurnallari, Telegram-bot va tekshiruv uchun PDF",
+      storageOrders: "Jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB",
+      ownPackage: "«Hujjatlar to‘plami» bo‘limi — o‘zingiz to‘ldirasiz",
+      storageAll: "Barcha hujjatlar uchun {gb, number} GB",
+      photoAutofill: "Harorat datchigi fotosi — ko‘rsatkichlar o‘zi to‘ladi",
+      equipmentConnect: "Uskunani ulash: mustaqil yoki obuna bo‘yicha",
+      equipmentDelivery: "Ulangan uskunani yetkazib berish — kabinetda buyurtma",
+      typicalPackage: "Namunaviy hujjatlar to‘plami: chop etib to‘ldiring",
+    },
+    cta: {
+      startFree: "Bepul boshlash",
+      trialNow: "Sinov davri ketmoqda",
+      current: "Joriy tarif",
+      unavailable: "Hozir mavjud emas",
+      choose: "«{name}»ni tanlash",
+      renew: "Uzaytirish — {amount}",
+      upgrade: "Oshirish — {amount} qo‘shimcha to‘lov",
+      switch: "O‘tish — {amount}",
+      newPlan: "Ulash — {amount}",
+      scheduled: "{date} dan o‘tish",
+      scheduledDone: "{date} dan o‘tiladi",
+      cancelSchedule: "O‘tishni bekor qilish",
+    },
+    explain: {
+      upgrade: "Darhol, {days, plural, other {qolgan # kun}} uchun qo‘shimcha to‘lov: davr uchun farq {difference}. Tugash sanasi o‘zgarmaydi",
+      switch: "Darhol: {price} dan foydalanilmagan qoldiq {credit} ayriladi",
+      scheduled: "To‘langan muddat tugagach — hozir to‘lash shart emas",
+    },
+    note: {
+      trial: "{trialDays, number} kun — «Premium»ning barcha imkoniyatlari kartasiz; keyin bepul 1 xodim va 1 jurnal yoki pullik tarif.",
+      switch: "Tarifni oshirish — darhol, qolgan kunlar uchun qo‘shimcha to‘lov bilan; pasaytirish — to‘langan muddat tugagach.",
+    },
+    ppk: {
+      title: "Ishlab chiqarish nazorati dasturi — individual",
+      text: "Mutaxassis obyektingiz uchun dastur ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
+      price: "{price} dan",
+      cta: "Individual buyurtma berish",
+    },
+    table: { title: "Tariflarni solishtirish", feature: "Nimalar kiradi", yes: "Bor", no: "Yo‘q" },
+    groups: {
+      team: "Jamoa va nuqtalar",
+      journals: "Jurnallar",
+      documents: "Hujjatlar",
+      equipment: "Uskunalar va avtomatlashtirish",
+    },
+    rows: {
+      employees: "Xodimlar",
+      points: "Nuqtalar",
+      journals: "SanPiN va HACCP jurnallari",
+      telegram: "Telegram-bot va QR-stikerlar",
+      pdf: "Tekshiruv uchun PDF",
+      storage: "Hujjat yuklash",
+      ownDocuments: "«Hujjatlar to‘plami»da o‘z hujjatlaringiz",
+      typicalPackage: "Namunaviy hujjatlar to‘plami",
+      ppkIndividual: "Obyektingiz uchun nazorat dasturi",
+      photoAutofill: "Datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish",
+      equipmentConnect: "Uskuna va IoT-datchiklarni ulash",
+      equipmentDelivery: "Ulangan uskunani yetkazib berish",
+    },
+    cells: {
+      employeesFree: "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
+      employeesPaid: "Har bir nuqtaga {count, number}",
+      pointsFree: "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
+      pointsPaid: "Tarifda 1 ta; keyingisi yana bitta tarif kabi, {from, number} tadan — har biriga −{percent, number} %",
+      journalsFree: "{trialDays, number} kun — hammasi, keyin {count, number}",
+      journalsAll: "Hammasi",
+      storageFree: "{trialDays, number} kun — 1 GB, keyin yopiq",
+      storageStandard: "{mb, number} MB: jurnal buyruqlari va o‘z hujjatlaringiz",
+      storagePremium: "Barcha hujjatlar uchun {gb, number} GB",
+      trialOnly: "Faqat {trialDays, number} kunlik sinov davrida",
+      ppkFrom: "Individual, {price, number} ₽ dan",
+    },
+  },
+};
+
+// «14 дней» с числом и склонением — одинаковые аргументы во всех каталогах.
+const DAYS = {
+  ru: "{trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}}",
+  en: "{trialDays, number} {trialDays, plural, one {day} other {days}}",
+  uz: "{trialDays, number} {trialDays, plural, other {kun}}",
+};
+
+const landing = [
+  {
+    path: "landing.metadata.description",
+    ru: `{journalCount, number} электронных журналов пищевой безопасности для общепита и производства. QR-наклейки на оборудовании, PIN-коды сотрудников и PDF для проверок. ${DAYS.ru} бесплатно — без карты.`,
+    en: `{journalCount, number} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. ${DAYS.en} free — no card required.`,
+    uz: `Umumiy ovqatlanish va ishlab chiqarish uchun {journalCount, number} ta oziq-ovqat xavfsizligi elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. ${DAYS.uz} bepul — kartasiz.`,
+  },
+  {
+    path: "landing.pricing.freePlanTitle",
+    ru: `Бесплатно ${DAYS.ru}: все журналы без ограничений, без карты`,
+    en: `Free for ${DAYS.en}: all logs without limits, no card`,
+    uz: `${DAYS.uz} bepul: barcha jurnallar cheklovsiz, kartasiz`,
+  },
+  {
+    path: "landing.pricing.heroPhrase",
+    ru: `${DAYS.ru} бесплатно, далее от <price>{amount}</price> в месяц`,
+    en: `${DAYS.en} free, then from <price>{amount}</price> per month`,
+    uz: `${DAYS.uz} bepul, undan keyin oyiga <price>{amount}</price> dan`,
+  },
+  { path: "landing.pricing.freeSeatsLabel", delete: true },
+  { path: "landing.pricing.freePlanNote", delete: true },
+  { path: "landing.pricing.largeTeamNote", delete: true },
+  {
+    path: "landing.seo.freeOfferDescription",
+    ru: `Все {journalCount, number} {journalCount, plural, one {журнал} few {журнала} many {журналов} other {журнала}} без ограничений по сотрудникам и точкам — ${DAYS.ru} с момента активации, без привязки карты`,
+    en: `All {journalCount, number} {journalCount, plural, one {log} other {logs}} with no limits on employees or locations — ${DAYS.en} from activation, no card required`,
+    uz: `Barcha {journalCount, number} {journalCount, plural, other {ta jurnal}} xodimlar va nuqtalar bo‘yicha cheklovsiz — faollashtirilgandan boshlab ${DAYS.uz}, karta bog‘lash shart emas`,
+  },
+  {
+    path: "landing.seo.standardDescription",
+    ru: "До {employees, number} сотрудников на точку, все журналы, {mb, number} МБ на приказы к журналам и свои документы. Цена за месяц при оплате за год.",
+    en: "Up to {employees, number} employees per location, all logs, {mb, number} MB for log orders and your own documents. Price per month when paid yearly.",
+    uz: "Har bir nuqtaga {employees, number} nafargacha xodim, barcha jurnallar, jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB. Narx — yillik to‘lovda oyiga.",
+  },
+  {
+    path: "landing.seo.premiumDescription",
+    ru: "Всё из «Стандарта», {gb, number} ГБ на все документы, автозаполнение показателей по фото датчика, подключение и доставка оборудования, типовой пакет документов. Цена за месяц при оплате за год.",
+    en: "Everything in Standard, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, a template document pack. Price per month when paid yearly.",
+    uz: "«Standart»dagi hammasi, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga.",
+  },
+  { path: "landing.seo.subscriptionDefaultName", delete: true },
+  { path: "landing.seo.subscriptionDescription", delete: true },
+  { path: "landing.freeLogsPayAutomation", delete: true },
+  {
+    path: "landing.pricingTitle",
+    ru: `Три тарифа. Начните бесплатно — ${DAYS.ru} без карты`,
+    en: `Three plans. Start free — ${DAYS.en}, no card`,
+    uz: `Uchta tarif. Bepul boshlang — ${DAYS.uz}, kartasiz`,
+  },
+  {
+    path: "landingComponents.equipment.title",
+    ru: "Оборудование для «Премиума»",
+    en: "Equipment for Premium",
+    uz: "«Premium» uchun uskunalar",
+  },
+  // Калькулятор оборудования считает к «Премиуму»; комплект «Стандарт»
+  // переименован, чтобы не путать с тарифом.
+  {
+    path: "publicUi.pricing.intro",
+    ru: "Тариф «Премиум» и готовый набор оборудования",
+    en: "The Premium plan and a ready-made equipment set",
+    uz: "«Premium» tarifi va tayyor uskunalar to‘plami",
+  },
+  {
+    path: "publicUi.pricing.subscription",
+    ru: "Тариф «Премиум»",
+    en: "Premium plan",
+    uz: "«Premium» tarifi",
+  },
+  {
+    path: "publicUi.pricing.bundles.standard.name",
+    ru: "Кухня",
+    en: "Kitchen",
+    uz: "Oshxona",
+  },
+  {
+    path: "landingComponents.equipment.premiumNote",
+    ru: "Датчики температуры и планшет приедут уже привязанными к вашему аккаунту: показатели пишутся в журналы сами. Доставка и подключение — в тарифе «Премиум».",
+    en: "Temperature sensors and a tablet arrive already linked to your account: readings go into the logs on their own. Delivery and connection come with the Premium plan.",
+    uz: "Harorat datchiklari va planshet hisobingizga ulangan holda keladi: ko‘rsatkichlar jurnallarga o‘zi yoziladi. Yetkazib berish va ulash — «Premium» tarifida.",
+  },
+];
+
+/** Пачка правок одного раздела: { key: { ru, en, uz } | { delete: true } }. */
+function group(prefix, entries) {
+  return Object.entries(entries).map(([key, value]) => ({ path: `${prefix}.${key}`, ...value }));
+}
+
+// Окно после пробного: шаг «какой журнал остаётся» и «тариф» вместо «подписки».
+const gate = group("billingUi.billingTransitionGate", {
+  paySubscription: { ru: "Выбрать тариф", en: "Choose a plan", uz: "Tarifni tanlash" },
+  payByCard: { delete: true },
+  restoreHint: {
+    ru: "Вернуть их можно после оплаты тарифа «Стандарт» или «Премиум»: «Сотрудники» → «Архив».",
+    en: "You can restore them after paying for the Standard or Premium plan: “Staff” → “Archive”.",
+    uz: "«Standart» yoki «Premium» tarifi to‘langach ularni qaytarish mumkin: «Xodimlar» → «Arxiv».",
+  },
+  chooserLead: {
+    ru: "Бесплатный тариф — {employees}. Отметьте, кто остаётся; остальные перейдут в архив, вернуть их можно после оплаты тарифа.",
+    en: "The free plan covers {employees}. Tick who stays; the others will be archived, and you can restore them after paying for a plan.",
+    uz: "Bepul tarif — {employees}. Kim qolishini belgilang; qolganlar arxivga o‘tadi, ularni tarif to‘langach qaytarish mumkin.",
+  },
+  paidTerm: {
+    ru: "Тариф оплачен до {date}. При переходе на бесплатный оплаченный срок не сохранится, автопродление выключится. Вернуть деньги за неиспользованные дни можно по заявлению на <mail>support@wesetup.ru</mail> — <offer>п. 6.2 оферты</offer>.",
+    en: "The plan is paid until {date}. If you switch to the free plan, the paid term will not be kept and auto-renewal will be turned off. You can request a refund for unused days by writing to <mail>support@wesetup.ru</mail> — <offer>clause 6.2 of the offer</offer>.",
+    uz: "Tarif {date} gacha to‘langan. Bepul tarifga o‘tilsa, to‘langan muddat saqlanmaydi, avtoyangilash o‘chiriladi. Foydalanilmagan kunlar uchun pulni <mail>support@wesetup.ru</mail> manziliga ariza orqali qaytarib olish mumkin — <offer>oferta 6.2-band</offer>.",
+  },
+  journalTitle: { ru: "Какой журнал остаётся", en: "Which log stays", uz: "Qaysi jurnal qoladi" },
+  journalLead: {
+    ru: "На бесплатном тарифе — {journals}. Отметьте журнал, который продолжите вести; остальные выключатся, записи в них сохранятся.",
+    en: "The free plan includes {journals}. Tick the log you will keep filling in; the others will be turned off and their entries kept.",
+    uz: "Bepul tarifda — {journals}. Yuritishda davom etadigan jurnalni belgilang; qolganlari o‘chiriladi, ulardagi yozuvlar saqlanadi.",
+  },
+  journalsCount: {
+    ru: "{count, plural, one {# журнал} few {# журнала} many {# журналов} other {# журнала}}",
+    en: "{count, plural, one {# log} other {# logs}}",
+    uz: "{count, plural, other {# ta jurnal}}",
+  },
+  journalEntries: {
+    ru: "{count, plural, =0 {нет записей за 30 дней} one {# запись за 30 дней} few {# записи за 30 дней} many {# записей за 30 дней} other {# записи за 30 дней}}",
+    en: "{count, plural, =0 {no entries in 30 days} one {# entry in 30 days} other {# entries in 30 days}}",
+    uz: "{count, plural, =0 {30 kunda yozuv yo‘q} other {30 kunda # ta yozuv}}",
+  },
+  searchJournal: { ru: "Найти журнал", en: "Find a log", uz: "Jurnalni topish" },
+  noJournalFound: { ru: "Журнал не найден", en: "No log found", uz: "Jurnal topilmadi" },
+  keepJournalRemains: {
+    ru: "Журнал в работе: <b>{name}</b>",
+    en: "Log in use: <b>{name}</b>",
+    uz: "Ishdagi jurnal: <b>{name}</b>",
+  },
+  journalsOff: {
+    ru: "Выключатся {journals} — записи в них сохранятся. Включить снова можно после оплаты тарифа.",
+    en: "{journals} will be turned off — their entries are kept. You can turn them back on after paying for a plan.",
+    uz: "{journals} o‘chiriladi — ulardagi yozuvlar saqlanadi. Tarif to‘langach qayta yoqish mumkin.",
+  },
+});
+
+const POINTS = {
+  ru: "{count, plural, one {# точка} few {# точки} many {# точек} other {# точки}}",
+  en: "{count, plural, one {# location} other {# locations}}",
+  uz: "{count, plural, other {# ta nuqta}}",
+};
+
+const POINTS_FOR_ROOT = POINTS;
+
+// Страница «Тариф и оплата» в кабинете.
+const subscriptionPage = group("settingsUi.subscriptionPage", {
+  title: { ru: "Тариф и оплата", en: "Plan and billing", uz: "Tarif va to‘lov" },
+  planPaidUntil: { ru: "{plan} до {date}", en: "{plan} until {date}", uz: "{plan} — {date} gacha" },
+  planPaid: { ru: "{plan}", en: "{plan}", uz: "{plan}" },
+  planLegacy: { ru: "Подписка (прежний тариф)", en: "Subscription (previous plan)", uz: "Obuna (avvalgi tarif)" },
+  planTrial: { ru: "Пробный период — по {date}", en: "Trial — until {date}", uz: "Sinov davri — {date} gacha" },
+  planFreePeriod: { delete: true },
+  planNeedsDecision: { ru: "Пробный период закончился", en: "The trial has ended", uz: "Sinov davri tugadi" },
+  balanceNote: {
+    ru: "На балансе <b>{amount} ₽</b> — спишутся при оплате тарифа. Как заработать ещё — в разделе «Баланс и бонусы».",
+    en: "Your balance is <b>{amount} ₽</b> — it will be applied when you pay for a plan. How to earn more is in the “Balance and bonuses” section.",
+    uz: "Balansda <b>{amount} ₽</b> bor — tarif to‘langanda yechiladi. Yana qanday ishlab topish mumkinligi «Balans va bonuslar» bo‘limida.",
+  },
+  decisionReadOnly: {
+    ru: "Пробный период закончился. Подключить тариф или перейти на бесплатный может руководитель организации в своём кабинете.",
+    en: "The trial has ended. The head of the organisation can choose a plan or switch to the free plan in their account.",
+    uz: "Sinov davri tugadi. Tarifni ulash yoki bepul tarifga o‘tishni tashkilot rahbari o‘z kabinetida amalga oshirishi mumkin.",
+  },
+  statusTitle: { ru: "Ваш тариф", en: "Your plan", uz: "Sizning tarifingiz" },
+  trialNote: {
+    ru: "Открыто всё, что есть в «Премиуме», — осталось {days, plural, one {# день} few {# дня} many {# дней} other {# дня}}. Потом бесплатно остаются {employees, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}} и {journals, plural, one {# журнал} few {# журнала} many {# журналов} other {# журнала}}, или выберите тариф ниже.",
+    en: "Everything in Premium is open — {days, plural, one {# day} other {# days}} left. After that, {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}} stay free, or choose a plan below.",
+    uz: "«Premium»dagi hamma narsa ochiq — {days, plural, other {# kun}} qoldi. Keyin bepul {employees, plural, other {# nafar xodim}} va {journals, plural, other {# ta jurnal}} qoladi yoki quyida tarif tanlang.",
+  },
+  freeNote: {
+    ru: "Бесплатно: {employees, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}} и {journals, plural, one {# журнал} few {# журнала} many {# журналов} other {# журнала}}. Чтобы вернуть всех сотрудников и журналы, подключите «Стандарт» или «Премиум».",
+    en: "Free: {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}}. To bring back all employees and logs, choose Standard or Premium.",
+    uz: "Bepul: {employees, plural, other {# nafar xodim}} va {journals, plural, other {# ta jurnal}}. Barcha xodimlar va jurnallarni qaytarish uchun «Standart» yoki «Premium»ni ulang.",
+  },
+  legacyNote: {
+    ru: "Прежний тариф действует до конца оплаченного срока без новых ограничений. Перейти на «Стандарт» или «Премиум» можно уже сейчас — неиспользованный остаток засчитаем.",
+    en: "The previous plan stays in force until the end of the paid term with no new limits. You can switch to Standard or Premium now — the unused balance will be credited.",
+    uz: "Avvalgi tarif to‘langan muddat oxirigacha yangi cheklovlarsiz amal qiladi. «Standart» yoki «Premium»ga hozir o‘tish mumkin — foydalanilmagan qoldiq hisobga olinadi.",
+  },
+  cycleYear: { ru: "оплата за год", en: "billed yearly", uz: "yillik to‘lov" },
+  cycleMonth: { ru: "помесячная оплата", en: "billed monthly", uz: "oylik to‘lov" },
+  pointsCount: POINTS,
+  usageEmployees: { ru: "Сотрудники", en: "Employees", uz: "Xodimlar" },
+  usagePoints: { ru: "Точки", en: "Locations", uz: "Nuqtalar" },
+  usageJournals: { ru: "Журналы", en: "Logs", uz: "Jurnallar" },
+  usageStorage: { ru: "Документы", en: "Documents", uz: "Hujjatlar" },
+  usageOf: { ru: "{used, number} из {limit, number}", en: "{used, number} of {limit, number}", uz: "{limit, number} dan {used, number}" },
+  usageNoLimit: { ru: "{used, number} · без ограничений", en: "{used, number} · unlimited", uz: "{used, number} · cheklovsiz" },
+  usageOfText: { ru: "{used} из {limit}", en: "{used} of {limit}", uz: "{limit} dan {used}" },
+  usageNoLimitText: { ru: "{used} · без ограничений", en: "{used} · unlimited", uz: "{used} · cheklovsiz" },
+  storageClosed: { ru: "загрузка закрыта", en: "uploads closed", uz: "yuklash yopiq" },
+  scheduledNote: {
+    ru: "С {date} — {plan}. Сейчас платить не нужно: с этого дня оплачивается уже новый тариф.",
+    en: "From {date} — {plan}. Nothing to pay now: the new plan is paid from that day.",
+    uz: "{date} dan — {plan}. Hozir to‘lash shart emas: shu kundan yangi tarif to‘lanadi.",
+  },
+  scheduleCancel: { ru: "Отменить переход", en: "Cancel the switch", uz: "O‘tishni bekor qilish" },
+  scheduleFailed: { ru: "Не удалось сохранить переход", en: "Could not save the switch", uz: "O‘tishni saqlab bo‘lmadi" },
+  scheduleDone: { ru: "Переход запланирован с {date}", en: "Switch scheduled from {date}", uz: "O‘tish {date} dan rejalashtirildi" },
+  scheduleCancelled: { ru: "Переход отменён", en: "Switch cancelled", uz: "O‘tish bekor qilindi" },
+  tariffsChoose: { ru: "Выберите тариф", en: "Choose a plan", uz: "Tarifni tanlang" },
+  tariffsChange: { ru: "Сменить тариф", en: "Change plan", uz: "Tarifni o‘zgartirish" },
+  rulePoints: {
+    ru: "Цена — за точку: каждая точка — как ещё один тариф, в ней до {seats, number} сотрудников. От {from, number} точек — скидка {percent, number} % на каждую.",
+    en: "The price is per location: each location costs one more plan and includes up to {seats, number} employees. From {from, number} locations — {percent, number}% off each.",
+    uz: "Narx — nuqta uchun: har bir nuqta yana bitta tarif kabi, unda {seats, number} nafargacha xodim. {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma.",
+  },
+  ruleUpgrade: {
+    ru: "Повышение тарифа или числа точек — сразу: доплачиваете разницу только за оставшиеся дни, дата окончания не меняется.",
+    en: "Upgrading the plan or adding locations applies right away: you pay the difference for the remaining days only, the end date stays the same.",
+    uz: "Tarif yoki nuqtalar sonini oshirish — darhol: farqni faqat qolgan kunlar uchun to‘laysiz, tugash sanasi o‘zgarmaydi.",
+  },
+  ruleSwitch: {
+    ru: "Переход с помесячной оплаты на годовую — сразу: цена года минус неиспользованный остаток месяца.",
+    en: "Switching from monthly to yearly billing applies right away: the yearly price minus the unused balance of the month.",
+    uz: "Oylik to‘lovdan yillikka o‘tish — darhol: yil narxidan oyning foydalanilmagan qoldig‘i ayriladi.",
+  },
+  ruleDowngrade: {
+    ru: "Понижение тарифа, меньше точек или переход на помесячную оплату — с конца оплаченного срока, сейчас платить не нужно.",
+    en: "Downgrading, fewer locations or switching to monthly billing apply from the end of the paid term — nothing to pay now.",
+    uz: "Tarifni pasaytirish, kamroq nuqta yoki oylik to‘lovga o‘tish — to‘langan muddat tugagach, hozir to‘lash shart emas.",
+  },
+  ruleTrial: {
+    ru: "Пробный период — {trialDays, number} дней без карты. Тариф, оплаченный во время пробного, действует со дня оплаты.",
+    en: "The trial lasts {trialDays, number} days with no card. A plan paid during the trial starts on the payment day.",
+    uz: "Sinov davri — kartasiz {trialDays, number} kun. Sinov davrida to‘langan tarif to‘lov kunidan amal qiladi.",
+  },
+  examplesTitle: {
+    ru: "Цена за месяц при оплате за год",
+    en: "Monthly price when billed yearly",
+    uz: "Yillik to‘lovda oylik narx",
+  },
+  colPoints: { ru: "Точек", en: "Locations", uz: "Nuqtalar" },
+  promoScope: {
+    ru: "скидка на всю сумму тарифа, включая точки.",
+    en: "the discount applies to the whole plan amount, locations included.",
+    uz: "chegirma tarifning butun summasiga, nuqtalar bilan birga.",
+  },
+  calcIntro: { delete: true },
+  statActive: { delete: true },
+  statOver: { delete: true },
+  statOverHint: { delete: true },
+  statIncluded: { delete: true },
+  statPerMonth: { delete: true },
+  statFree: { delete: true },
+  statYearly: { delete: true },
+  scaleTitle: { delete: true },
+  scaleExample: { delete: true },
+  expiredNotice: {
+    ru: "Оплаченный тариф компании закончился. Обратитесь к владельцу компании.",
+    en: "The company’s paid plan has ended. Contact the company owner.",
+    uz: "Kompaniyaning to‘langan tarifi tugadi. Kompaniya egasiga murojaat qiling.",
+  },
+});
+
+const invoiceCard = group("settingsUi.invoiceCard", {
+  pendingText: {
+    ru: "Счёт № {id, number} на {amount} выставлен{due}. Как только деньги поступят, тариф подключится автоматически, а закрывающие документы появятся в истории оплат ниже.",
+    en: "Invoice No. {id, number} for {amount} has been issued{due}. As soon as the money arrives, the plan will be activated automatically and the closing documents will appear in the payment history below.",
+    uz: "№ {id, number} hisob-faktura {amount} miqdorida chiqarildi{due}. Pul kelib tushishi bilan tarif avtomatik ulanadi, yopuvchi hujjatlar esa quyidagi to‘lovlar tarixida paydo bo‘ladi.",
+  },
+  offerText: {
+    ru: "Не платите картой? Выставим счёт на <price></price> за тариф {plan} на <org>{orgName}</org>{inn}. Бухгалтерия оплачивает по реквизитам, тариф подключается с даты поступления денег, закрывающие документы — автоматически.",
+    en: "Not paying by card? We will issue an invoice for <price></price> for the {plan} plan to <org>{orgName}</org>{inn}. Your accounts department pays by bank details, the plan starts on the date the money arrives, and the closing documents are produced automatically.",
+    uz: "Karta bilan to‘lamaysizmi? <org>{orgName}</org>{inn} nomiga {plan} tarifi uchun <price></price> miqdorida hisob-faktura chiqaramiz. Buxgalteriya rekvizitlar bo‘yicha to‘laydi, tarif pul kelib tushgan sanadan ulanadi, yopuvchi hujjatlar esa avtomatik shakllanadi.",
+  },
+  planLabel: { ru: "Тариф в счёте", en: "Plan on the invoice", uz: "Hisob-fakturadagi tarif" },
+  bulletExtend: {
+    ru: "Тариф подключится с даты поступления денег, баллы к счёту не применяются",
+    en: "The plan starts on the date the money arrives; points do not apply to an invoice",
+    uz: "Tarif pul kelib tushgan sanadan ulanadi, hisob-fakturaga ballar qo‘llanmaydi",
+  },
+});
+
+const discountCard = group("settingsUi.subscriptionDiscountCard", {
+  lifetimeUntil: {
+    ru: "Применяется сама к каждой оплате тарифа до {date} — картой и по счёту, потом снимется сама. Вводить ничего не нужно",
+    en: "Applied automatically to every plan payment until {date} — by card and by invoice, then it is removed automatically. Nothing to enter",
+    uz: "Tarifning har bir to‘loviga {date} gacha o‘zi qo‘llanadi — karta orqali ham, hisob-faktura bo‘yicha ham, keyin o‘zi olib tashlanadi. Hech narsa kiritish shart emas",
+  },
+  lifetimeForever: {
+    ru: "Применяется сама к каждой оплате тарифа — картой и по счёту. Вводить ничего не нужно",
+    en: "Applied automatically to every plan payment — by card and by invoice. Nothing to enter",
+    uz: "Tarifning har bir to‘loviga o‘zi qo‘llanadi — karta orqali ham, hisob-faktura bo‘yicha ham. Hech narsa kiritish shart emas",
+  },
+  codeApplied: {
+    ru: "Промокод {code} применён: −{amount} ₽ от тарифа",
+    en: "Promo code {code} applied: −{amount} ₽ off the plan",
+    uz: "{code} promokodi qo‘llandi: tarifdan −{amount} ₽",
+  },
+  payFor: { ru: "К оплате: {plan}", en: "To pay: {plan}", uz: "To‘lov: {plan}" },
+});
+
+const recurringCard = group("settingsUi.recurringCard", {
+  activeIntro: { ru: "Тариф продлевается сам.", en: "The plan renews itself.", uz: "Tarif o‘zi uzayadi." },
+  inactiveBody: {
+    ru: "Оплата разовая — когда срок закончится, тариф перейдёт на бесплатный. Чтобы включить автопродление, оплатите следующий период с галочкой согласия: оплаченное время не сгорает, новый период прибавится к текущему сроку.",
+    en: "Payment is one-off — when the term ends, the account moves to the free plan. To enable auto-renewal, pay for the next period with the consent box ticked: paid time is not lost, the new period is added to the current term.",
+    uz: "To‘lov bir martalik — muddat tugagach, hisob bepul tarifga o‘tadi. Avto uzaytirishni yoqish uchun roziligingizni belgilab, keyingi davrni to‘lang: to‘langan vaqt yo‘qolmaydi, yangi davr joriy muddatga qo‘shiladi.",
+  },
+});
+
+// ROOT → «Тарифы»: цены за месяц, архив прежних, пробный период.
+const rootTariffs = group("rootTariffs", {
+  pageDescription: {
+    ru: "Цены применяются мгновенно: лендинг, страница тарифов, кабинет и оплата читают эти значения при каждом запросе. Цена — за месяц; годовой тариф списывается за 12 месяцев сразу. Ключ тарифа менять нельзя — на него ссылаются кнопки оплаты и уже созданные заказы.",
+    en: "Prices apply instantly: the landing page, the pricing page, the account and payments read these values on every request. The price is per month; a yearly plan is charged for 12 months at once. The plan key cannot be changed — payment buttons and existing orders refer to it.",
+    uz: "Narxlar darhol qo‘llanadi: lending, tariflar sahifasi, kabinet va to‘lov bu qiymatlarni har bir so‘rovda o‘qiydi. Narx — oyiga; yillik tarif 12 oy uchun birdaniga yechiladi. Tarif kalitini o‘zgartirib bo‘lmaydi — unga to‘lov tugmalari va yaratilgan buyurtmalar tayanadi.",
+  },
+  priceMonthly: { ru: "Цена, ₽/мес", en: "Price, ₽/mo", uz: "Narx, ₽/oy" },
+  yearTotal: { ru: "За год списывается {amount}", en: "{amount} is charged for the year", uz: "Yil uchun {amount} yechiladi" },
+  legacyTitle: {
+    ru: "Архив: прежние тарифы ({count, number})",
+    en: "Archive: previous plans ({count, number})",
+    uz: "Arxiv: avvalgi tariflar ({count, number})",
+  },
+  legacyNote: {
+    ru: "По ним больше не продают — ссылки со старыми ключами ведут на «Стандарт» и «Премиум». Цена «Подписки» (monthly) нужна для зачёта неиспользованного остатка при переходе на новый тариф.",
+    en: "They are no longer sold — links with the old keys lead to Standard and Premium. The Subscription price (monthly) is used to credit the unused balance when switching to a new plan.",
+    uz: "Ular endi sotilmaydi — eski kalitli havolalar «Standart» va «Premium»ga olib boradi. «Obuna» (monthly) narxi yangi tarifga o‘tishda foydalanilmagan qoldiqni hisobga olish uchun kerak.",
+  },
+  legacyBadge: { ru: "Не продаётся", en: "Not for sale", uz: "Sotilmaydi" },
+  trialTitle: { ru: "Пробный период и переход на оплату", en: "Trial and transition to paid plans", uz: "Sinov davri va to‘lovga o‘tish" },
+  trialDays: { ru: "Пробный период, дней", en: "Trial, days", uz: "Sinov davri, kun" },
+  launchedAt: { ru: "Запуск тарифов (МСК)", en: "Plans launch (Moscow time)", uz: "Tariflar ishga tushishi (Moskva vaqti)" },
+  grace: { ru: "Грейс после пробного, дней", en: "Grace after the trial, days", uz: "Sinovdan keyingi imtiyoz, kun" },
+  trialSaved: { ru: "Настройки пробного периода сохранены", en: "Trial settings saved", uz: "Sinov davri sozlamalari saqlandi" },
+  phaseBeforeLaunch: {
+    ru: "Тарифы запустятся {date} (МСК) — до этого всё как раньше",
+    en: "The plans launch on {date} (Moscow time) — until then everything stays as before",
+    uz: "Tariflar {date} (Moskva vaqti) ishga tushadi — ungacha hammasi avvalgidek",
+  },
+  phaseActive: {
+    ru: "Тарифы действуют: {trialDays, number} дней пробного, потом переход на оплату",
+    en: "The plans are live: a {trialDays, number}-day trial, then the transition to paid plans",
+    uz: "Tariflar amalda: {trialDays, number} kunlik sinov, keyin to‘lovga o‘tish",
+  },
+  phaseTransitionOff: {
+    ru: "Пробный — {trialDays, number} дней, но переход выключен: после пробного ничего не блокируем",
+    en: "The trial is {trialDays, number} days, but the transition is off: nothing is blocked after the trial",
+    uz: "Sinov — {trialDays, number} kun, lekin o‘tish o‘chirilgan: sinovdan keyin hech narsa bloklanmaydi",
+  },
+  trialExplanation: {
+    ru: "Новые аккаунты получают {trialDays, number} дней всех возможностей «Премиума» без карты; аккаунтам, созданным до запуска, пробный считается от даты запуска. После пробного без оплаты — бесплатный тариф: {freeEmployees, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}} и {freeJournals, plural, one {# журнал} few {# журнала} many {# журналов} other {# журнала}}; у кого больше, руководитель выбирает в окне, а по истечении грейса остаются владелец и самый заполняемый журнал (ежедневная задача /api/cron/billing-transition). Выключенный переход — после пробного ничего не блокируем.",
+    en: "New accounts get {trialDays, number} days of every Premium feature with no card; for accounts created before the launch the trial runs from the launch date. After the trial without payment — the free plan: {freeEmployees, plural, one {# employee} other {# employees}} and {freeJournals, plural, one {# log} other {# logs}}; if an account has more, the manager chooses in a dialog, and after the grace period the owner and the most-filled log stay (daily job /api/cron/billing-transition). With the transition off, nothing is blocked after the trial.",
+    uz: "Yangi hisoblar kartasiz {trialDays, number} kun «Premium»ning barcha imkoniyatlarini oladi; ishga tushishdan oldin yaratilgan hisoblar uchun sinov ishga tushish sanasidan hisoblanadi. Sinovdan keyin to‘lovsiz — bepul tarif: {freeEmployees, plural, other {# nafar xodim}} va {freeJournals, plural, other {# ta jurnal}}; ko‘prog‘i bo‘lsa, rahbar oynada tanlaydi, imtiyoz muddati o‘tgach esa egasi va eng ko‘p to‘ldiriladigan jurnal qoladi (kunlik vazifa /api/cron/billing-transition). O‘tish o‘chirilgan bo‘lsa, sinovdan keyin hech narsa bloklanmaydi.",
+  },
+  paidHint: {
+    ru: "Стандарт {standard, number} · Премиум {premium, number} · прежний {legacy, number}",
+    en: "Standard {standard, number} · Premium {premium, number} · previous {legacy, number}",
+    uz: "Standart {standard, number} · Premium {premium, number} · avvalgi {legacy, number}",
+  },
+  trial: { ru: "Пробный", en: "Trial", uz: "Sinov" },
+  trialHint: {
+    ru: "кончается в 3 дня: {count, number}",
+    en: "ending within 3 days: {count, number}",
+    uz: "3 kun ichida tugaydi: {count, number}",
+  },
+  legacyCount: {
+    ru: "Ещё {count, number, ::group-off} — переход выключен, всё как раньше.",
+    en: "{count, number, ::group-off} more — the transition is off, everything stays as before.",
+    uz: "Yana {count, number, ::group-off} — o‘tish o‘chirilgan, hammasi avvalgidek.",
+  },
+  equipmentNote: { delete: true },
+  billingTitle: { delete: true },
+  phaseBefore: { delete: true },
+  phaseDuring: { delete: true },
+  phaseAfterEnabled: { delete: true },
+  phaseAfterDisabled: { delete: true },
+  billingSaved: { delete: true },
+  start: { delete: true },
+  end: { delete: true },
+  explanation: { delete: true },
+  secondary: { delete: true },
+  forecast: { delete: true },
+});
+
+// ROOT → организация: тарифы 2026-10 на аккаунте.
+const rootOrganization = group("rootOrganizationManagement", {
+  "plans.standard": { ru: "Стандарт", en: "Standard", uz: "Standart" },
+  "plans.premium": { ru: "Премиум", en: "Premium", uz: "Premium" },
+  "plans.paid": { ru: "Подписка (прежний тариф)", en: "Subscription (previous plan)", uz: "Obuna (avvalgi tarif)" },
+  "subscription.title": { ru: "Тариф", en: "Plan", uz: "Tarif" },
+  "subscription.cycle": { ru: "Период оплаты", en: "Billing period", uz: "To‘lov davri" },
+  "subscription.cycleMonth": { ru: "помесячно", en: "monthly", uz: "oyma-oy" },
+  "subscription.cycleYear": { ru: "за год", en: "yearly", uz: "yillik" },
+  "subscription.points": { ru: "Точек оплачено", en: "Paid locations", uz: "To‘langan nuqtalar" },
+  "subscription.pointsValue": POINTS_FOR_ROOT,
+  "subscription.trialEnds": { ru: "Пробный до", en: "Trial until", uz: "Sinov muddati" },
+  "settings.trialHint": {
+    ru: "Последний день пробного (МСК). Пусто — 14 дней от создания аккаунта",
+    en: "Last trial day (Moscow time). Empty — 14 days from account creation",
+    uz: "Sinovning oxirgi kuni (Moskva vaqti). Bo‘sh — hisob yaratilganidan 14 kun",
+  },
+  "errors.pointsInvalid": { ru: "Число точек — от 1 до 50", en: "Locations must be from 1 to 50", uz: "Nuqtalar soni — 1 dan 50 gacha" },
+  "errors.noAccount": {
+    ru: "У организации нет аккаунта — период, точки и пробный не сохранить",
+    en: "The organisation has no account — period, locations and trial cannot be saved",
+    uz: "Tashkilotning hisobi yo‘q — davr, nuqtalar va sinovni saqlab bo‘lmaydi",
+  },
+});
+
+// Тексты по всему сайту: «бесплатно навсегда / для N сотрудников» → 14 дней.
+const sitewide = [
+  {
+    path: "common.billing.limit",
+    ru: "Все места тарифа заняты — {count, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}}.",
+    en: "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}.",
+    uz: "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}.",
+  },
+  {
+    path: "common.billing.limitAction",
+    ru: "Все места тарифа заняты — {count, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}}. Смените тариф или добавьте точку, чтобы добавить сотрудников.",
+    en: "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}. Change the plan or add a location to add employees.",
+    uz: "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. Xodim qo‘shish uchun tarifni o‘zgartiring yoki nuqta qo‘shing.",
+  },
+  { path: "common.billing.pay", ru: "Выбрать тариф", en: "Choose a plan", uz: "Tarifni tanlash" },
+  {
+    path: "auth.register.marketing.foreverFree",
+    ru: `${DAYS.ru} бесплатно · без карты`,
+    en: `${DAYS.en} free · no card required`,
+    uz: `${DAYS.uz} bepul · kartasiz`,
+  },
+  {
+    path: "auth.metadata.registerDescription",
+    ru: `Создайте аккаунт WeSetup. Электронные журналы СанПиН и ХАССП для предприятий общепита и пищевого производства; ${DAYS.ru} бесплатно без ограничений, без карты.`,
+    en: `Create a WeSetup account. Digital SanPiN and HACCP logs for food service and food production; ${DAYS.en} free without limits, no card required.`,
+    uz: `WeSetup hisobini yarating. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish korxonalari uchun SanPiN va HACCP elektron jurnallari; ${DAYS.uz} cheklovsiz bepul, kartasiz.`,
+  },
+  {
+    path: "email.welcome.organizationReady",
+    ru: `Организация {organization} успешно зарегистрирована. ${DAYS.ru} — все журналы и возможности без ограничений, карта не нужна.`,
+    en: `The organisation {organization} has been registered. ${DAYS.en} — every log and feature without limits, no card needed.`,
+    uz: `{organization} tashkiloti ro‘yxatdan o‘tdi. ${DAYS.uz} — barcha jurnallar va imkoniyatlar cheklovsiz, karta kerak emas.`,
+  },
+  {
+    path: "email.blankDownload.freeTier",
+    ru: "{count, number} {count, plural, one {день} few {дня} many {дней} other {дня}} бесплатно, без карты",
+    en: "{count, number} {count, plural, one {day} other {days}} free, no card required",
+    uz: "{count, number} {count, plural, other {kun}} bepul, kartasiz",
+  },
+  { path: "landing.forever", delete: true },
+  { path: "landing.pricing.subscriptionEmployeeLimit", delete: true },
+  {
+    path: "landingComponents.equipment.calculatorDescription",
+    ru: "Выберите, что нужно — цена пересчитается. Уже есть планшет или датчики: снимите галочку, и останется только тариф «Премиум».",
+    en: "Choose what you need — the price is recalculated. Already have a tablet or sensors? Untick them and only the Premium plan remains.",
+    uz: "Keraklisini tanlang — narx qayta hisoblanadi. Planshet yoki datchiklar bormi? Belgini olib tashlang, faqat «Premium» tarifi qoladi.",
+  },
+  {
+    path: "blogChrome.article.ctaDescription",
+    ru: `{journalCount, plural, one {Все # журнал} few {Все # журнала} many {Все # журналов} other {Все # журнала}} СанПиН и ХАССП в одном кабинете. ${DAYS.ru} бесплатно без ограничений, без привязки карты.`,
+    en: `{journalCount, plural, one {All # SanPiN and HACCP journal is} other {All # SanPiN and HACCP journals are}} in one workspace. ${DAYS.en} free without limits, no card required.`,
+    uz: `{journalCount, plural, other {Barcha # ta SanPiN va HACCP jurnali}} bitta kabinetda. ${DAYS.uz} cheklovsiz bepul, karta bog‘lash shart emas.`,
+  },
+  { path: "staffManagement.archive.paySubscription", ru: "Сменить тариф", en: "Change plan", uz: "Tarifni o‘zgartirish" },
+  {
+    path: "settingsManagement.organizationProfile.partnerConversion.consequences.seatLimit",
+    ru: "Оплаченного срока у организации нет, а бесплатный тариф — {limit, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}}. Чтобы в работе остались все сотрудники, клиенту нужно подключить «Стандарт» или «Премиум».",
+    en: "The organisation has no paid term, and the free plan covers {limit, plural, one {# employee} other {# employees}}. To keep all employees active, the client needs to choose Standard or Premium.",
+    uz: "Tashkilotning to‘langan muddati yo‘q, bepul tarif esa — {limit, plural, other {# nafar xodim}}. Barcha xodimlar ishda qolishi uchun mijoz «Standart» yoki «Premium»ni ulashi kerak.",
+  },
+  {
+    path: "telegram.bot.errors.inviteSeatLimit",
+    ru: "Все места тарифа организации заняты ({limit, plural, one {# сотрудник} few {# сотрудника} many {# сотрудников} other {# сотрудника}}). Попросите руководителя сменить тариф или добавить точку и повторите.",
+    en: "All seats on the organisation’s plan are taken ({limit, plural, one {# employee} other {# employees}}). Ask your manager to change the plan or add a location and try again.",
+    uz: "Tashkilot tarifining barcha o‘rinlari band ({limit, plural, other {# nafar xodim}}). Rahbardan tarifni o‘zgartirish yoki nuqta qo‘shishni so‘rang va qayta urinib ko‘ring.",
+  },
+  { path: "rootMetrics.plans.paid", ru: "Подписка (прежний тариф)", en: "Subscription (previous plan)", uz: "Obuna (avvalgi tarif)" },
+  { path: "rootMetrics.plans.standard", ru: "Стандарт", en: "Standard", uz: "Standart" },
+  { path: "rootMetrics.plans.premium", ru: "Премиум", en: "Premium", uz: "Premium" },
+  {
+    path: "publicFeatures.detail.trialDescription",
+    ru: `${DAYS.ru} бесплатно — все функции и интеграции, без привязки карты.`,
+    en: `${DAYS.en} free — every feature and integration, no card required.`,
+    uz: `${DAYS.uz} bepul — barcha imkoniyatlar va integratsiyalar, karta bog‘lash shart emas.`,
+  },
+  { path: "publicOg.freeForever", ru: "14 дней бесплатно", en: "14 days free", uz: "14 kun bepul" },
+  {
+    path: "publicJournalIndex.cta.description",
+    ru: "14 дней все журналы без ограничений и без привязки карты. Дальше — бесплатно 1 сотрудник и 1 журнал или тариф «Стандарт» и «Премиум».",
+    en: "Every log without limits for 14 days, no card required. After that — 1 employee and 1 log for free, or the Standard or Premium plan.",
+    uz: "14 kun barcha jurnallar cheklovsiz va kartasiz. Keyin — bepul 1 xodim va 1 jurnal yoki «Standart» va «Premium» tariflari.",
+  },
+  {
+    path: "publicJournalDetailSeo.hygiene.description",
+    ru: "Гигиенический журнал по СанПиН 2.3/2.4.4282-26: автозаполнение, отметки допуска, температурная проверка, PDF для Роспотребнадзора. 14 дней бесплатно.",
+    en: "Hygiene log under SanPiN 2.3/2.4.4282-26: automatic filling, work clearance, temperature checks and PDF for Rospotrebnadzor. 14 days free.",
+    uz: "SanPiN 2.3/2.4.4282-26 bo‘yicha gigiyena jurnali: avtomatik to‘ldirish, ishga ruxsat, harorat tekshiruvi, Rospotrebnadzor uchun PDF. 14 kun bepul.",
+  },
+];
+
+// Доставка подключённого оборудования (страница тарифа).
+const equipmentDelivery = group("settingsUi.equipmentDelivery", {
+  title: { ru: "Доставка оборудования", en: "Equipment delivery", uz: "Uskunani yetkazib berish" },
+  lead: {
+    ru: "Датчики температуры, термогигрометры и планшет приедут уже привязанными к вашему аккаунту — показатели сразу пишутся в журналы. Состав и сумма — по прайсу; доставку и монтаж согласует менеджер, оплата после согласования.",
+    en: "Temperature sensors, thermo-hygrometers and a tablet arrive already linked to your account — readings go into the logs right away. The set and amount follow the price list; a manager agrees delivery and installation, payment after agreement.",
+    uz: "Harorat datchiklari, termogigrometrlar va planshet hisobingizga ulangan holda keladi — ko‘rsatkichlar darhol jurnallarga yoziladi. Tarkib va summa — narxlar ro‘yxati bo‘yicha; yetkazib berish va o‘rnatishni menejer kelishadi, to‘lov kelishuvdan keyin.",
+  },
+  lockedText: {
+    ru: "Доставка уже подключённого оборудования и подключение IoT-датчиков — в тарифе «Премиум».",
+    en: "Delivery of pre-connected equipment and IoT sensor connection come with the Premium plan.",
+    uz: "Ulangan uskunani yetkazib berish va IoT-datchiklarni ulash — «Premium» tarifida.",
+  },
+  upgrade: { ru: "Перейти на «Премиум»", en: "Switch to Premium", uz: "«Premium»ga o‘tish" },
+  bundles: { ru: "Готовые наборы", en: "Ready-made sets", uz: "Tayyor to‘plamlar" },
+  custom: { ru: "Свой состав", en: "Custom set", uz: "O‘z tarkibingiz" },
+  total: { ru: "Итого по прайсу: {amount}", en: "Total by price list: {amount}", uz: "Narxlar ro‘yxati bo‘yicha jami: {amount}" },
+  oneTime: { ru: "разово", en: "one-off", uz: "bir martalik" },
+  contactName: { ru: "Имя", en: "Name", uz: "Ism" },
+  contactPhone: { ru: "Телефон", en: "Phone", uz: "Telefon" },
+  address: { ru: "Адрес доставки", en: "Delivery address", uz: "Yetkazib berish manzili" },
+  comment: { ru: "Комментарий", en: "Comment", uz: "Izoh" },
+  submit: { ru: "Заказать доставку", en: "Order delivery", uz: "Yetkazib berishga buyurtma berish" },
+  sending: { ru: "Отправляем…", en: "Sending…", uz: "Yuborilmoqda…" },
+  done: { ru: "Заявка отправлена — менеджер свяжется с вами", en: "Request sent — a manager will contact you", uz: "Ariza yuborildi — menejer siz bilan bog‘lanadi" },
+  failed: { ru: "Не удалось отправить заявку", en: "Could not send the request", uz: "Arizani yuborib bo‘lmadi" },
+  empty: { ru: "Выберите хотя бы одну позицию", en: "Choose at least one item", uz: "Kamida bitta pozitsiyani tanlang" },
+});
+
+// ППК: блок «Пакет документов» и «Заказать индивидуально».
+const ppkPackage = [
+  {
+    path: "navigation.shell.menus.productionControl.items.package",
+    ru: "Пакет документов",
+    en: "Document pack",
+    uz: "Hujjatlar to‘plami",
+  },
+  ...group("productionControl.blocks.package", {
+    hint: { ru: "Типовые приказы для печати и свои документы", en: "Template orders to print and your own documents", uz: "Chop etish uchun namunaviy buyruqlar va o‘z hujjatlaringiz" },
+    lead: {
+      ru: "Типовой пакет — приказы с реквизитами вашей организации: распечатайте и заполните. Ниже — свои документы: загрузите те, что уже есть.",
+      en: "The template pack contains orders with your organisation’s details: print them and fill them in. Below are your own documents: upload the ones you already have.",
+      uz: "Namunaviy to‘plam — tashkilotingiz rekvizitlari bilan buyruqlar: chop eting va to‘ldiring. Pastda — o‘z hujjatlaringiz: borlarini yuklang.",
+    },
+  }),
+  ...group("productionControl.package", {
+    typicalTitle: { ru: "Типовой пакет документов", en: "Template document pack", uz: "Namunaviy hujjatlar to‘plami" },
+    typicalLead: {
+      ru: "{count, plural, one {# приказ} few {# приказа} many {# приказов} other {# приказа}} с реквизитами организации; поля для заполнения — прочерками.",
+      en: "{count, plural, one {# order} other {# orders}} with your organisation’s details; fields to fill in are left as dashes.",
+      uz: "Tashkilot rekvizitlari bilan {count, plural, other {# ta buyruq}}; to‘ldiriladigan maydonlar — chiziqcha bilan.",
+    },
+    downloadAll: { ru: "Скачать весь пакет (ZIP)", en: "Download the whole pack (ZIP)", uz: "Butun to‘plamni yuklab olish (ZIP)" },
+    download: { ru: "PDF", en: "PDF", uz: "PDF" },
+    lockedTitle: { ru: "Типовой пакет — в тарифе «Премиум»", en: "The template pack comes with Premium", uz: "Namunaviy to‘plam — «Premium» tarifida" },
+    lockedText: {
+      ru: "Приказы с реквизитами вашей организации, готовые к печати. Подключите «Премиум» или закажите документы под ваш объект.",
+      en: "Orders with your organisation’s details, ready to print. Switch to Premium or order documents made for your site.",
+      uz: "Tashkilotingiz rekvizitlari bilan chop etishga tayyor buyruqlar. «Premium»ni ulang yoki obyektingiz uchun hujjatlarga buyurtma bering.",
+    },
+    upgrade: { ru: "Перейти на «Премиум»", en: "Switch to Premium", uz: "«Premium»ga o‘tish" },
+    ownTitle: { ru: "Свои документы", en: "Your own documents", uz: "O‘z hujjatlaringiz" },
+    ownLead: {
+      ru: "Загрузите свои приказы, инструкции и регламенты — они хранятся здесь и входят в объём хранилища тарифа.",
+      en: "Upload your own orders, instructions and regulations — they are stored here and count towards your plan’s storage.",
+      uz: "O‘z buyruqlaringiz, yo‘riqnomalar va reglamentlarni yuklang — ular shu yerda saqlanadi va tarif hajmiga kiradi.",
+    },
+    storageClosed: {
+      ru: "Загрузка документов — на тарифах «Стандарт» (10 МБ) и «Премиум» (1 ГБ). Уже загруженные файлы можно открыть и удалить.",
+      en: "Document uploads come with Standard (10 MB) and Premium (1 GB). Files uploaded earlier can still be opened and deleted.",
+      uz: "Hujjat yuklash — «Standart» (10 MB) va «Premium» (1 GB) tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin.",
+    },
+  }),
+  ...group("productionControl.individual", {
+    title: { ru: "ППК под ваш объект — индивидуально", en: "A production control programme for your site", uz: "Obyektingiz uchun nazorat dasturi — individual" },
+    text: {
+      ru: "Специалист разработает программу производственного контроля и пакет документов под ваше производство: точки контроля, лабораторные исследования, ответственные. Для любого тарифа.",
+      en: "A specialist will develop the production control programme and document pack for your site: control points, lab testing, responsible staff. Available with any plan.",
+      uz: "Mutaxassis ishlab chiqarishingiz uchun nazorat dasturi va hujjatlar to‘plamini ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
+    },
+    price: { ru: "от {price}", en: "from {price}", uz: "{price} dan" },
+    cta: { ru: "Заказать индивидуально", en: "Order a custom programme", uz: "Individual buyurtma berish" },
+  }),
+];
+
+// Отказы по лимитам тарифа в интерфейсе (toast с кнопкой «Выбрать тариф»).
+const limitToasts = group("common.billing", {
+  pointLimit: {
+    ru: "Все точки тарифа заняты — {count, plural, one {# точка} few {# точки} many {# точек} other {# точки}}. Каждая новая точка — как ещё один тариф: добавьте её на странице тарифа.",
+    en: "All locations on the plan are in use — {count, plural, one {# location} other {# locations}}. Each new location costs one more plan: add it on the plan page.",
+    uz: "Tarifning barcha nuqtalari band — {count, plural, other {# ta nuqta}}. Har bir yangi nuqta — yana bitta tarif kabi: uni tarif sahifasida qo‘shing.",
+  },
+  journalLimit: {
+    ru: "На бесплатном тарифе — {count, plural, one {# журнал} few {# журнала} many {# журналов} other {# журнала}}. Подключите «Стандарт» или «Премиум», чтобы вести все журналы.",
+    en: "The free plan includes {count, plural, one {# log} other {# logs}}. Choose Standard or Premium to keep every log.",
+    uz: "Bepul tarifda — {count, plural, other {# ta jurnal}}. Barcha jurnallarni yuritish uchun «Standart» yoki «Premium»ni ulang.",
+  },
+  storageFull: {
+    ru: "Место для документов в тарифе закончилось. Удалите лишние файлы или перейдите на «Премиум» — 1 ГБ на все документы.",
+    en: "Your plan’s document storage is full. Delete files you no longer need or switch to Premium — 1 GB for all documents.",
+    uz: "Tarifdagi hujjatlar uchun joy tugadi. Keraksiz fayllarni o‘chiring yoki «Premium»ga o‘ting — barcha hujjatlar uchun 1 GB.",
+  },
+  storageClosed: {
+    ru: "Загрузка документов — на тарифах «Стандарт» и «Премиум». Уже загруженные файлы можно открыть и удалить.",
+    en: "Document uploads come with Standard and Premium. Files uploaded earlier can still be opened and deleted.",
+    uz: "Hujjat yuklash — «Standart» va «Premium» tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin.",
+  },
+  featureLocked: {
+    ru: "Эта возможность — в тарифе «Премиум».",
+    en: "This feature comes with the Premium plan.",
+    uz: "Bu imkoniyat — «Premium» tarifida.",
+  },
+  unavailable: {
+    ru: "Недоступно на текущем тарифе.",
+    en: "Not available on the current plan.",
+    uz: "Joriy tarifda mavjud emas.",
+  },
+});
+
+export const PATCHES = [
+  ...limitToasts,
+  ...ppkPackage,
+  ...equipmentDelivery,
+  ...sitewide,
+  ...rootOrganization,
+  {
+    path: "rootMetrics.page.pricing",
+    ru: "Расчётный MRR — «Стандарт» за год в пересчёте на месяц на столько точек, сколько нужно по численности (до {seatsPerPoint, number} сотрудников на точку); реальный — оплаченный тариф аккаунта в пересчёте на месяц, 0 для неоплативших. Trend — % изменения активности за 7 дней к предыдущей неделе.",
+    en: "Potential MRR is Standard billed yearly, per month, for as many locations as the headcount needs (up to {seatsPerPoint, number} employees per location); actual MRR is the account’s paid plan per month, 0 for those who have not paid. Trend is the percentage change in 7-day activity compared with the previous week.",
+    uz: "Hisoblangan MRR — xodimlar soniga kerak bo‘lgan nuqtalar uchun yillik «Standart»ning oylik narxi (har bir nuqtaga {seatsPerPoint, number} nafargacha xodim); haqiqiysi — hisobning to‘langan tarifi oyiga, to‘lamaganlar uchun 0. Trend — 7 kunlik faollikning oldingi haftaga nisbatan o‘zgarishi, %.",
+  },
+  ...rootTariffs,
+  ...subscriptionPage,
+  ...invoiceCard,
+  ...discountCard,
+  ...recurringCard,
+  { path: "settingsUi.planUpgrade", delete: true },
+  { path: "landingComponents.tariffs", ...tariffs },
+  ...landing,
+  ...gate,
+  {
+    path: "settingsUi.usersPage.seatsNote",
+    ru: "Места тарифа заняты ({limit, number}): вернуть сотрудников из архива можно после смены тарифа или добавления точки.",
+    en: "All seats on your plan are taken ({limit, number}): employees can be restored from the archive after changing the plan or adding a location.",
+    uz: "Tarif o‘rinlari band ({limit, number}): xodimlarni arxivdan tarifni o‘zgartirgach yoki nuqta qo‘shgach qaytarish mumkin.",
+  },
+];

@@ -88,6 +88,14 @@ export type CreateOrderWithPointsInput = {
   promotionId?: string | null;
   promotionPercent?: number | null;
   promotionDiscountRub?: number;
+  /**
+   * Тарифы 2026-10: точки, вид перехода, зачёт остатка и конец срока,
+   * посчитанные `quoteCheckout` — их применит оплата (`planAfterPayment`).
+   */
+  points?: number | null;
+  changeKind?: string | null;
+  creditRub?: number;
+  periodEndsAt?: Date | null;
 };
 
 export type CreatedOrder = {
@@ -164,6 +172,10 @@ export async function createOrderWithPoints(
         promotionId: input.promotionId ?? undefined,
         promotionPercent: input.promotionPercent ?? undefined,
         promotionDiscountRub: input.promotionDiscountRub ?? 0,
+        points: input.points ?? undefined,
+        changeKind: input.changeKind ?? undefined,
+        creditRub: input.creditRub ?? 0,
+        periodEndsAt: input.periodEndsAt ?? undefined,
       },
       select: { id: true, isTest: true },
     });

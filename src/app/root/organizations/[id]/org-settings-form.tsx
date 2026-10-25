@@ -12,14 +12,20 @@ import { toast } from "sonner";
  *
  * Название, тариф и срок подписки раньше менялись только руками в базе:
  * на просьбу клиента «продлите нам месяц» уходил заход на сервер.
+ * Тарифы 2026-10: «Стандарт»/«Премиум», период оплаты и точки пишутся в
+ * аккаунт; там же — продление пробного периода.
  */
 
 const PLANS = [
   { value: "free", label: "plans.free" },
+  { value: "standard", label: "plans.standard" },
+  { value: "premium", label: "plans.premium" },
   { value: "paid", label: "plans.paid" },
   { value: "paused", label: "plans.paused" },
   { value: "cancelled", label: "plans.cancelled" },
 ] as const;
+
+type AccountPlan = { planCycle: "month" | "year"; planPoints: number; trialEndsAt: string | null };
 
 /** `Date` → `YYYY-MM-DD` для `<input type="date">`. */
 function toDateInput(value: string | null): string {
@@ -32,12 +38,15 @@ export function OrgSettingsForm({
   initialName,
   initialPlan,
   initialSubscriptionEnd,
+  account = null,
 }: {
   organizationId: string;
   initialName: string;
   initialPlan: string;
   /** ISO-строка или null. */
   initialSubscriptionEnd: string | null;
+  /** Тариф аккаунта; null — организация без аккаунта (только тариф и срок). */
+  account?: AccountPlan | null;
 }) {
   const t = useTranslations("rootOrganizationManagement");
   const currentCopy = useRef(t);
@@ -46,12 +55,19 @@ export function OrgSettingsForm({
   const [name, setName] = useState(initialName);
   const [plan, setPlan] = useState(initialPlan);
   const [endsAt, setEndsAt] = useState(toDateInput(initialSubscriptionEnd));
+  const [cycle, setCycle] = useState(account?.planCycle ?? "month");
+  const [points, setPoints] = useState(account?.planPoints ?? 1);
+  const [trialEndsAt, setTrialEndsAt] = useState(toDateInput(account?.trialEndsAt ?? null));
   const [busy, setBusy] = useState(false);
 
+  const accountDirty =
+    Boolean(account) &&
+    (cycle !== account!.planCycle || points !== account!.planPoints || trialEndsAt !== toDateInput(account!.trialEndsAt));
   const dirty =
     name !== initialName ||
     plan !== initialPlan ||
-    endsAt !== toDateInput(initialSubscriptionEnd);
+    endsAt !== toDateInput(initialSubscriptionEnd) ||
+    accountDirty;
 
   async function save() {
     setBusy(true);
@@ -66,6 +82,14 @@ export function OrgSettingsForm({
             subscriptionPlan: plan,
             // Пустая дата — бессрочная подписка, а не «сегодня».
             subscriptionEnd: endsAt ? `${endsAt}T00:00:00.000Z` : null,
+            ...(account
+              ? {
+                  planCycle: cycle,
+                  planPoints: points,
+                  // Пробный до конца выбранного дня по Москве; пусто — 14 дней от создания.
+                  trialEndsAt: trialEndsAt ? `${trialEndsAt}T21:00:00.000Z` : null,
+                }
+              : {}),
           }),
         }
       );
@@ -124,6 +148,47 @@ export function OrgSettingsForm({
         <span className="block text-[11px] text-[#9b9fb3]">
           {t("settings.noExpiry")}</span>
       </label>
+
+      {account ? (
+        <>
+          <label className="space-y-1.5">
+            <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              {t("subscription.cycle")}</span>
+            <select
+              value={cycle}
+              onChange={(event) => setCycle(event.target.value === "year" ? "year" : "month")}
+              className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            >
+              <option value="month">{t("subscription.cycleMonth")}</option>
+              <option value="year">{t("subscription.cycleYear")}</option>
+            </select>
+          </label>
+          <label className="space-y-1.5">
+            <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              {t("subscription.points")}</span>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={points}
+              onChange={(event) => setPoints(Math.max(1, Math.min(50, Math.floor(Number(event.target.value) || 1))))}
+              className="h-10 w-full rounded-xl border border-[#dcdfed] px-3.5 text-[14px] tabular-nums text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              {t("subscription.trialEnds")}</span>
+            <input
+              type="date"
+              value={trialEndsAt}
+              onChange={(event) => setTrialEndsAt(event.target.value)}
+              className="h-10 w-full rounded-xl border border-[#dcdfed] px-3.5 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            />
+            <span className="block text-[11px] text-[#9b9fb3]">
+              {t("settings.trialHint")}</span>
+          </label>
+        </>
+      ) : null}
 
       <div className="sm:col-span-3">
         <button

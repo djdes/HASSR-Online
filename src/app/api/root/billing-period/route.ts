@@ -2,28 +2,29 @@ import { NextResponse } from "next/server";
 
 import { requireRoot } from "@/lib/auth-helpers";
 import { clientIp } from "@/lib/client-ip";
-import { validateFreePeriodInput } from "@/lib/billing-period";
+import { validateTrialInput, type TrialSettings } from "@/lib/billing-period";
 import {
   collectBillingOverview,
-  readFreePeriodSettings,
-  writeFreePeriodSettings,
+  readTrialSettings,
+  writeTrialSettings,
 } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * /api/root/billing-period — бесплатный период «подписка для всех» и
- * переход на оплату. ROOT-only (прокси отдаёт 404 остальным).
+ * /api/root/billing-period — пробный период тарифов 2026-10 и переход на
+ * оплату. ROOT-only (прокси отдаёт 404 остальным). Адрес прежний: им
+ * пользуется карточка на /root/tariffs.
  *
  * GET — настройки + счётчики аккаунтов по состояниям.
- * PUT — `{ startsAt, endsAt, graceDays, transitionEnabled }` целиком.
+ * PUT — `{ trialDays, launchedAt, graceDays, transitionEnabled }` целиком.
  */
 
-function toJson(settings: Awaited<ReturnType<typeof readFreePeriodSettings>>) {
+function toJson(settings: TrialSettings) {
   return {
-    startsAt: settings.startsAt.toISOString(),
-    endsAt: settings.endsAt.toISOString(),
+    trialDays: settings.trialDays,
+    launchedAt: settings.launchedAt.toISOString(),
     graceDays: settings.graceDays,
     transitionEnabled: settings.transitionEnabled,
   };
@@ -31,26 +32,23 @@ function toJson(settings: Awaited<ReturnType<typeof readFreePeriodSettings>>) {
 
 export async function GET() {
   await requireRoot();
-  const [settings, overview] = await Promise.all([
-    readFreePeriodSettings(),
-    collectBillingOverview(),
-  ]);
+  const [settings, overview] = await Promise.all([readTrialSettings(), collectBillingOverview()]);
   return NextResponse.json({ settings: toJson(settings), overview });
 }
 
 export async function PUT(request: Request) {
   const session = await requireRoot();
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  const checked = validateFreePeriodInput({
-    startsAt: body?.startsAt,
-    endsAt: body?.endsAt,
+  const checked = validateTrialInput({
+    trialDays: body?.trialDays,
+    launchedAt: body?.launchedAt,
     graceDays: body?.graceDays,
     transitionEnabled: body?.transitionEnabled,
   });
   if (!checked.ok) {
     return NextResponse.json({ error: checked.error }, { status: 400 });
   }
-  const saved = await writeFreePeriodSettings(checked.value, {
+  const saved = await writeTrialSettings(checked.value, {
     userId: session.user.id,
     userName: session.user.name ?? session.user.email ?? null,
     organizationId: session.user.organizationId,

@@ -1,0 +1,53 @@
+== who am i (session org)
+trial: {"user":{"name":"Руководитель Кафе Пробное","email":"trial@example.test","id":"cmvnkq1zv0001i07dz66jjv26","role":"owner","organizationId"
+standard: {"user":{"name":"Руководитель Кафе Стандарт","email":"standard@example.test","id":"cmvnkq2580004i07d4o0t2m07","role":"owner","organizati
+premium: {"user":{"name":"Руководитель Кафе Премиум","email":"premium@example.test","id":"cmvnkq2890007i07d2fv7unlr","role":"owner","organizationI
+free: {"user":{"name":"Руководитель Кафе Бесплатное","email":"free@example.test","id":"cmvnkuvcq0001f87dht6nupjp","role":"owner","organizati
+== typical package ZIP
+standard: 402 application/json 192B
+premium: 200 application/zip 1320574B
+trial: 200 application/zip 1319425B
+free: 402 application/json 192B
+Archive:  /tmp/tmp.rVYYoQgfH8/pkg.zip
+== equipment delivery request
+standard: 402 {"error":"Доставка подключённого оборудования — в тарифе «Премиум».","code":"billing_feature_locked","payUrl":"/settings/subscription","limit":null,"current":null}
+premium: 200 {"ok":true,"id":"cmvnkwbnr000a627dywevljx2"}
+== schedule downgrade
+standard renew->: 409 {"error":"Этот тариф подключается сразу — оформите оплату.","payUrl":"/settings/subscription"}
+premium -> standard/year/3: 200 {"ok":true,"scheduled":{"tier":"standard","cycle":"year","points":3,"at":"2027-05-13T08:36:32.750Z"},"atLabel":"13 мая"}
+premium cancel: 200 {"ok":true}
+trial schedule: 409 {"error":"Запланировать переход можно, пока действует оплаченный тариф. Сейчас тариф подключается оплатой."}
+== points: buildings (standard: 1 point paid)
+standard building #1: 200 {"building":{"id":"cmvnkwcq5000e627d6ae2x8vm","organizationId":"cmvnkq2170003i07dm3abaa8k","name":"Зал 1","address":null,"kpp":null,"phone":null,"journalName":null,"sortOrder":0,"createdAt":"2026-10-25T08:41:26.380Z","updatedAt":"2026-10-25T08:41:26.380Z","
+standard building #2: 402 {"error":"Оплачено точек: 1. Каждая новая точка — как ещё один тариф; от трёх точек — скидка 5 % на каждую. Добавьте точку на странице тарифа.","code":"billin
+trial building #2: 200 {"building":{"id":"cmvnkwcv2000f627d0818ihaf","organizationId":"cmvnkq1sz0000i07dgwzgwgwg","name":"Зал 1","address":null,"kpp":null,"phone":null,"journalName":null,"sortOrder":0,"createdAt":"2026-10-25T08:41:26.557Z","updatedAt":"2026-10-25T08:41:26.557Z","
+trial #2 again: 200 {"building":{"id":"cmvnkwcz0000h627dgaso1ovb","organizationId":"cmvnkq1sz0000i07dgwzgwgwg","name":"Зал 3","address":null,"kpp":null,"phone":null,"journalName":null,"sortOrder":0,"createdAt":"2026-10-25T08:41:26.700Z","updatedAt":"2026-10-25T08:41:26.700Z","
+== points: organizations
+standard new org: 402 {"error":"Оплачено точек: 1. Каждая новая точка — как ещё один тариф; от трёх точек — скидка 5 % на каждую. Добавьте точку на странице тарифа.","code":"billin
+== journals (free after trial: 1 journal)
+free enable 2nd journal: 404 {"error":"Журнал не найден"}
+free set enable: 402 {"error":"На бесплатном тарифе — 1 журнал. Подключите «Стандарт» или «Премиум», чтобы вести все журналы.","code":"billing_journal_limit","payUrl":"/settings/subscription","limit":1,"
+== storage (free: closed; standard: 10 MB)
+free knowledge upload: 402 {"error":"Загрузка документов — на тарифах «Стандарт» (10 МБ) и «Премиум» (1 ГБ). Загруженные раньше файлы остаются �
+standard 11MB knowledge upload: 402 {"error":"Хранилище «Стандарт» — 10 МБ, занято 1 КБ. Удалите лишние файлы или перейдите на «Премиум» — 1 ГБ на все до
+standard PPK folder 11MB: 402 {"error":"Хранилище «Стандарт» — 10 МБ, занято 1 КБ. Удалите лишние файлы или перейдите на «Премиум» — 1 ГБ на все до
+== IoT (standard: locked)
+standard equipment with tuya: 500 {"error":"Внутренняя ошибка сервера"}
+== upgrade route (legacy manual)
+standard upgrade: 402 {"error":"Тариф «Стандарт» или «Премиум» подключается после оплаты","code":"billing_free_limit","payUrl":"/settings/subscription","plan":"standard"}
+== order page quotes
+standard /order?plan=premium&cycle=month&points=1: Доплата за повышение на оставшиеся 15 дн. — до 9 нояб�|К оплате|Доплата за 15 дн.|
+standard /order?plan=premium&cycle=year&points=1: К оплате|зачётом остатка|к оплате|
+standard /order?plan=standard&cycle=year&points=1: К оплате|зачётом остатка|к оплате|
+== journals: free (1 enabled: hygiene) enables a 2nd one
+free enable cleaning: 402 {"error":"На бесплатном тарифе — 1 журнал. Подключите «Стандарт» или «Премиум», чтобы вести все журналы.","code":"billing_journal_limit","payUrl":"/settings/subsc
+free PATCH enable all: 402 {"error":"На бесплатном тарифе — 1 журнал. Подключите «Стандарт» или «Премиум», чтобы вести все журналы.","code":"billing_journal_limit","payUrl":"/settings/subsc
+free PATCH keep 1 (no-op): 200 {"disabledCodes":["incoming_control","incoming_raw_materials_control","finished_product","ccp_monitoring","cleaning","fryer_oil","med_books","pest_control","equipment_calibration","product_writeoff","health_check","climate_control","cold_eq
+== IoT
+standard area= equipment+tuya: 400 {"error":"Выберите помещение","details":[{"code":"custom","path":["areaId"],"message":"Выберите помещение"}]}
+premium area= equipment+tuya: 400 {"error":"Выберите помещение","details":[{"code":"custom","path":["areaId"],"message":"Выберите помещение"}]}
+== IoT: Tuya device binding (Standard locked, Premium allowed)
+standard equipment+tuya: 402 {"error":"Подключение оборудования и IoT-датчиков — в тарифе «Премиум».","code":"billing_feature_locked","payUrl":"/settings/subscription","limit":nul
+standard equipment без датчика: 201 {"equipment":{"id":"cmvnl0m21000p627dbcv21m8q","name":"Холодильник","type":"refrigerator","serialNumber":null,"tempMin":null,"tempMax":null,"tuyaDeviceId":null,"areaId":"008ace45-fddc-4a3c-
+premium equipment+tuya: 201 {"equipment":{"id":"cmvnl0mc9000r627dv0dwfhc9","name":"Холодильник IoT","type":"refrigerator","serialNumber":null,"tempMin":null,"tempMax":null,"tuyaDeviceId":"bf00test","areaId":"01682e9f-
+premium equipment без датчика: 201 {"equipment":{"id":"cmvnl0mdu000s627dozu0h0xi","name":"Холодильник","type":"refrigerator","serialNumber":null,"tempMin":null,"tempMax":null,"tuyaDeviceId":null,"areaId":"01682e9f-ae76-4612-

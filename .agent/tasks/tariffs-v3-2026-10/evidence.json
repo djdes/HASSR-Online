@@ -1,0 +1,74 @@
+{
+  "task": "tariffs-v3-2026-10",
+  "branch": "claude/practical-feynman-6y3ub5",
+  "spec": "spec.md (frozen 2026-10-25)",
+  "acceptance": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS"
+  },
+  "checks": {
+    "typecheck": { "exit": 0, "errors": 0 },
+    "test_gate": { "pass": 4771, "fail": 0 },
+    "i18n_check": { "exit": 0, "pass": 95, "fail": 0 },
+    "eslint_changed_files": { "files": 140, "errors": 0, "warnings_preexisting": 2 },
+    "live_local_build": {
+      "pages_status_200": 15,
+      "browser_page_errors": 0,
+      "api_checks": "raw/api-check.txt"
+    }
+  },
+  "prices_default_rub_per_month": {
+    "standard_month": 3000,
+    "standard_year": 1990,
+    "premium_month": 5000,
+    "premium_year": 3990
+  },
+  "points_discount": { "from_points": 3, "percent": 5 },
+  "trial_days": 14,
+  "free_after_trial": { "employees": 1, "journals": 1, "points": 1, "storage_bytes": 0 },
+  "storage": { "standard": "10 MB", "premium": "1 GB", "trial": "1 GB" },
+  "ppk_individual_from_rub": 10000,
+  "schema_changes": [
+    "Account.planCycle String?",
+    "Account.planPoints Int @default(1)",
+    "Account.trialEndsAt DateTime?",
+    "Account.scheduledPlanJson Json?",
+    "PaymentOrder.points Int?",
+    "PaymentOrder.changeKind String?",
+    "PaymentOrder.creditRub Int @default(0)",
+    "PaymentOrder.periodEndsAt DateTime?"
+  ],
+  "deploy_side_effects": [
+    "PlatformTariff: seeds standard_month/standard_year/premium_month/premium_year on first read (ROOT edits kept)",
+    "PlatformSetting billing.trial: launch moment written on first read after deploy",
+    "PlatformService ppk-development: 12000 -> 10000 once if not edited by ROOT",
+    "What's new notes changed: modal shown once"
+  ],
+  "screenshots": [
+    "raw/screenshots/landing-pricing-1280.jpg",
+    "raw/screenshots/landing-pricing-390.jpg",
+    "raw/screenshots/landing-en-pricing-1280.jpg",
+    "raw/screenshots/pricing-page-1280.jpg",
+    "raw/screenshots/pricing-page-390.jpg",
+    "raw/screenshots/pricing-month-3points-1280.jpg",
+    "raw/screenshots/pricing-month-3points-390.jpg",
+    "raw/screenshots/subscription-trial-1280.jpg",
+    "raw/screenshots/subscription-trial-390.jpg",
+    "raw/screenshots/subscription-standard-1280.jpg",
+    "raw/screenshots/subscription-premium-1280.jpg",
+    "raw/screenshots/package-trial-1280.jpg",
+    "raw/screenshots/package-standard-1280.jpg",
+    "raw/screenshots/package-premium-1280.jpg",
+    "raw/screenshots/ppk-overview-standard-1280.jpg"
+  ]
+}

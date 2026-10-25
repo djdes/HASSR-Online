@@ -3,13 +3,15 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { checkPointsForCreation, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * GET — список зданий + помещений для активной org.
- * POST — { name, address?, sortOrder? } создать здание.
+ * POST — { name, address?, sortOrder? } создать здание. Второе и
+ *   следующие здания — новые точки тарифа: сверх оплаченных — 402.
  * PATCH — { perLocationJournals } вести журналы отдельно по точкам.
  *
  * Auth: management (owner/manager/head_chef/technologist) или ROOT.
@@ -71,6 +73,12 @@ export async function POST(request: Request) {
       { status: 409 }
     );
   }
+
+  // Точки тарифа: первое здание места не добавляет — организация и так
+  // считалась одной точкой; каждое следующее — ещё одна точка.
+  const buildingsNow = await db.building.count({ where: { organizationId: orgId } });
+  const points = await checkPointsForCreation(orgId, buildingsNow > 0 ? 1 : 0, { source: "settings/buildings" });
+  if (!points.ok) return limitResponse(points);
 
   const created = await db.building.create({
     data: {

@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /** Синонимы старых кодов: «fridge» — тот же холодильник. */
 const TYPE_ALIASES: Record<string, string> = { fridge: "refrigerator" };
@@ -134,6 +135,7 @@ export function EquipmentDialog({
     { value: "other", label: t("typeOther") },
   ];
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const isEdit = !!equipment;
   const [open, setOpen] = useState(false);
   // Двойной тап по кнопке успевал отправить два одинаковых запроса:
@@ -271,6 +273,8 @@ export function EquipmentDialog({
 
       if (!response.ok) {
         const result = await response.json();
+        // IoT-датчик — в тарифе «Премиум»: toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(result)) return;
         throw new Error(result.error || t("createError"));
       }
 

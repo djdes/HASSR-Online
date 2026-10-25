@@ -13,10 +13,11 @@ import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { lifetimeTerm } from "@/lib/promo/discounts";
-import { getSubscriptionOffer } from "@/lib/promo/offer";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
+import { quoteCheckout, type CheckoutTarget } from "@/lib/plan-checkout.server";
+import { changeKindNote, planTariffTitle } from "@/lib/plan-payment";
 import { isTestMode } from "@/lib/robokassa";
-import { readTariff } from "@/lib/tariffs";
+import { readTariffAny } from "@/lib/tariffs";
 
 import { INVOICE_VALID_DAYS, buildInvoiceDraft, invoiceRequisitesReady } from "./build";
 import { renderInvoicePdf } from "./pdf";
@@ -65,7 +66,8 @@ export async function createInvoiceOrder(args: {
   organizationId: string;
   userId: string;
   email: string;
-  tariffKey: string;
+  /** Тариф, период и точки — сумму по виду перехода посчитает `quoteCheckout`. */
+  target: CheckoutTarget;
   /** Введённый промокод (или код из ссылки); проверит и посчитает сервер. */
   promoCode?: string | null;
 }): Promise<CreateInvoiceResult> {
@@ -79,12 +81,13 @@ export async function createInvoiceOrder(args: {
   if (!buyer.inn) {
     return { ok: false, status: 400, error: "Укажите ИНН организации в настройках — без него счёт не оформить" };
   }
-  // Цена с действующей акцией — та же, что в кабинете рядом с кнопкой.
-  // Счёт фиксирует её на свой срок: оплатят после конца акции — всё
-  // равно по сумме счёта.
+  // Сумма по тарифу и виду перехода с действующей акцией — та же, что в
+  // кабинете рядом с кнопкой. Счёт фиксирует её на свой срок: оплатят после
+  // конца акции — всё равно по сумме счёта.
   const now = new Date();
-  const offer = await getSubscriptionOffer(now, args.tariffKey);
-  if (!offer) return { ok: false, status: 400, error: "Тариф недоступен" };
+  const quote = await quoteCheckout({ organizationId: args.organizationId, target: args.target, now });
+  if (!quote.ok) return { ok: false, status: quote.status, error: quote.error };
+  const offer = quote.offer;
 
   // Счёт на пополнение баланса — не счёт на подписку: его не возвращаем.
   const existing = await db.paymentOrder.findFirst({
@@ -132,12 +135,20 @@ export async function createInvoiceOrder(args: {
     lifetime: applied ? (applied.source === "lifetime" ? "auto" : applied.lifetime ? "code" : null) : null,
     lifetimeTerm: applied?.lifetime ? lifetimeTerm(applied) : null,
   });
+  const changeNote = changeKindNote(quote.change.kind, {
+    remainingDays: quote.change.remainingDays,
+    creditRub: quote.change.creditRub,
+  });
   const order = await db.paymentOrder.create({
     data: {
       email: args.email,
       tariffKey: offer.tariffKey,
       amountRub: amounts.grossRub,
-      description: `${offer.tariffTitle} на ${offer.periodDays} дн. (счёт${note ? `; ${note}` : ""})`,
+      description: `${quote.title} (счёт${changeNote ? `; ${changeNote}` : ""}${note ? `; ${note}` : ""})`,
+      points: quote.target.points,
+      changeKind: quote.change.kind,
+      creditRub: quote.change.creditRub,
+      periodEndsAt: quote.change.periodEnd,
       status: "pending",
       isTest: isTestMode(),
       organizationId: args.organizationId,
@@ -171,12 +182,18 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
   const [requisites, organization, tariff] = await Promise.all([
     readPlatformRequisites(),
     loadOrganizationParty(order.organizationId),
-    topup ? Promise.resolve(null) : readTariff(order.tariffKey),
+    topup ? Promise.resolve(null) : readTariffAny(order.tariffKey),
   ]);
   if (!organization) return null;
   const draft = buildInvoiceDraft({
     order: { id: order.id, createdAt: order.createdAt, amountRub: Number(order.amountRub), bundleConfig: order.bundleConfig },
-    tariff: tariff ? { title: tariff.title, periodDays: tariff.periodDays, priceRub: tariff.priceRub } : null,
+    tariff: tariff
+      ? {
+          title: planTariffTitle(order.tariffKey, order.points) ?? tariff.title,
+          periodDays: tariff.periodDays,
+          priceRub: tariff.priceRub,
+        }
+      : null,
     seller: buildSellerSnapshot(requisites),
     buyer: buildBuyerSnapshot(organization),
     purpose: topup ? "topup" : "subscription",

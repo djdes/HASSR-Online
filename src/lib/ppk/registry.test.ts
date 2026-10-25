@@ -47,6 +47,7 @@ test("блоки идут в порядке схемы владельца", () =
       "haccp:hazards",
       "haccp:control-points",
       "haccp:audit",
+      "documents:package",
       "documents:orders",
       "documents:posters",
       "documents:norm-documents",
@@ -55,9 +56,9 @@ test("блоки идут в порядке схемы владельца", () =
   );
 });
 
-test("17 блоков, ключи уникальны, у каждого есть своя группа меню", () => {
-  assert.equal(PPK_BLOCKS.length, 17);
-  assert.equal(new Set(PPK_BLOCKS.map((block) => block.key)).size, 17);
+test("18 блоков, ключи уникальны, у каждого есть своя группа меню", () => {
+  assert.equal(PPK_BLOCKS.length, 18);
+  assert.equal(new Set(PPK_BLOCKS.map((block) => block.key)).size, 18);
   const groupKeys = new Set(PPK_MENU_GROUPS.map((group) => group.key));
   for (const block of PPK_BLOCKS) assert.ok(groupKeys.has(block.menuGroup), block.key);
 });

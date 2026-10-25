@@ -20,6 +20,8 @@ import { PpkNextStep } from "@/components/production-control/ppk-next-step";
 import { PpkProgressBar } from "@/components/production-control/ppk-progress-bar";
 import { PpkStatusDot } from "@/components/production-control/ppk-status-dot";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
+import { PpkIndividualOrder } from "@/components/production-control/ppk-individual-order";
+import { readPpkIndividualPrice } from "@/lib/services/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +36,7 @@ export default async function ProductionControlPage() {
   const organizationId = getActiveOrgId(session);
   const canManage = hasCapability(session.user, "admin.full");
 
-  const [rows, statuses, t, nav, blockCounts] = await Promise.all([
+  const [rows, statuses, t, nav, blockCounts, ppkFromRub] = await Promise.all([
     db.knowledgeDocument.findMany({
       where: { organizationId, kind: { in: [...PRODUCTION_DOC_KINDS] } },
       select: { kind: true, fileName: true, mimeType: true, sizeBytes: true, updatedAt: true },
@@ -47,6 +49,7 @@ export default async function ProductionControlPage() {
       where: { organizationId, block: { in: [...STARTER_BLOCKS] } },
       _count: { _all: true },
     }),
+    readPpkIndividualPrice(),
   ]);
   // Блоки, где уже есть данные: мастер «типовыми за 10 минут» их не тронет.
   const filledBlocks = STARTER_BLOCKS.filter((block) => blockCounts.some((row) => row.block === block));
@@ -144,6 +147,9 @@ export default async function ProductionControlPage() {
           })}
         </div>
       </section>
+
+      {/* «Заказать индивидуально — от 10 000 ₽» внизу раздела — у любого тарифа. */}
+      <PpkIndividualOrder priceRub={ppkFromRub} />
     </div>
   );
 }

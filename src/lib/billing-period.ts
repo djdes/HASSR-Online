@@ -1,42 +1,56 @@
-import { FREE_MAX_USERS, isFreePlan, isInactivePlan, isPaidPlan } from "@/lib/plan-limits";
+import { FREE_MAX_USERS, isFreePlan, isInactivePlan } from "@/lib/plan-limits";
+import { employeesLabel } from "@/lib/plan-catalog";
 import {
-  EXTRA_USER_PRICE_RUB,
-  SUBSCRIPTION_MAX_USERS,
-  employeesGenitiveLabel,
-  employeesLabel,
-} from "@/lib/plan-catalog";
+  FREE_MAX_JOURNALS,
+  SEATS_PER_POINT,
+  TRIAL_DAYS,
+  entitlementsFor,
+  isBillingCycle,
+  normalizePoints,
+  paidTierFromPlan,
+  withoutFeatures,
+  type BillingCycle,
+  type EntitlementTier,
+  type Entitlements,
+  type PaidTier,
+  type PlanFeature,
+} from "@/lib/tariff-plans";
 import type { PriceWithPromotion } from "@/lib/promo/promotions";
 
 /**
- * Бесплатный период «подписка для всех» и честный переход на оплату
- * (2026-10). Чистые функции без `db`: их читают и серверные guard'ы, и
- * клиентские окна, и тесты.
+ * Состояние тарифа аккаунта и честный переход на оплату (тарифы 2026-10,
+ * spec `.agent/tasks/tariffs-v3-2026-10/spec.md`). Чистые функции без `db`:
+ * их читают серверные guard'ы, клиентские окна и тесты.
  *
- * Модель (spec `.agent/tasks/billing-cutover-2026-09/spec.md`):
- *   • до начала периода — как раньше: тестовый автоперевод на «платный»;
- *   • в периоде — у всех подписка до `SUBSCRIPTION_MAX_USERS` без оплаты;
- *   • после конца (если «Переход на оплату включён») — у аккаунта без
- *     реально оплаченной подписки бесплатный тариф на `FREE_MAX_USERS`.
- *     Больше одного активного — «нужно решение» до конца грейса, потом
- *     автопереход (остаётся владелец, остальные в архив).
+ * Модель:
+ *   • 14 дней с создания аккаунта — пробный период (`free_period`): всё
+ *     открыто, лимитов нет, карта не нужна. Аккаунтам, созданным до запуска
+ *     новых тарифов, пробный считается от даты запуска (`launchedAt`);
+ *     ROOT может продлить пробный конкретному аккаунту (`trialEndsAt`);
+ *   • оплачено (`subscriptionEnd` в будущем) — `paid`: Стандарт, Премиум или
+ *     прежняя «Подписка» (до конца срока как раньше);
+ *   • после пробного без оплаты — бесплатный тариф: 1 сотрудник и 1 журнал.
+ *     Больше — «нужно решение» до конца грейса, потом автопереход (остаётся
+ *     владелец и самый заполняемый журнал, остальное — в архив/выключено).
  *
  * Маркера «решение принято» нет намеренно: после перехода на бесплатный
- * активных ≤ 1 — состояние `free`, после оплаты `subscriptionEnd` в
- * будущем — `paid`. Состояние всегда выводится из данных и не может
- * «застрять».
+ * активных ≤ 1 и журналов ≤ 1 — состояние `free`, после оплаты — `paid`.
+ * Состояние всегда выводится из данных и не может «застрять».
  */
 
-/** Ключ `PlatformSetting` с настройками периода (JSON). */
-export const FREE_PERIOD_SETTING_KEY = "billing.free-period";
+/** Ключ `PlatformSetting` с настройками пробного периода (JSON). */
+export const TRIAL_SETTING_KEY = "billing.trial";
+/** Прежние настройки «бесплатного периода для всех» — источник грейса и флага при первом чтении. */
+export const LEGACY_FREE_PERIOD_SETTING_KEY = "billing.free-period";
 
-export type FreePeriodSettings = {
-  /** Начало «подписка бесплатно для всех» (включительно). */
-  startsAt: Date;
-  /** Конец (не включительно): с этого момента — переход на оплату. */
-  endsAt: Date;
-  /** Сколько дней после конца даётся на решение до автоперехода. */
+export type TrialSettings = {
+  /** Сколько дней длится пробный период. */
+  trialDays: number;
+  /** Запуск тарифов 2026-10: аккаунтам старше пробный считается от этой даты. */
+  launchedAt: Date;
+  /** Сколько дней после конца пробного даётся на решение до автоперехода. */
   graceDays: number;
-  /** «Переход на оплату включён»: выключен — после периода всё как раньше. */
+  /** «Переход на оплату включён»: выключен — после пробного ничего не блокируем. */
   transitionEnabled: boolean;
 };
 
@@ -44,14 +58,18 @@ export type FreePeriodSettings = {
 const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export const TRIAL_DAYS_MIN = 1;
+export const TRIAL_DAYS_MAX = 90;
 export const GRACE_DAYS_MIN = 0;
 export const GRACE_DAYS_MAX = 60;
+/** За сколько дней до конца пробного напоминаем владельцу. */
+export const TRIAL_REMINDER_DAYS = 3;
 
-export const DEFAULT_FREE_PERIOD: FreePeriodSettings = {
-  // 2026-10-01 00:00 МСК
-  startsAt: new Date("2026-09-30T21:00:00.000Z"),
-  // 2026-10-11 00:00 МСК: 10 октября — последний бесплатный день
-  endsAt: new Date("2026-10-10T21:00:00.000Z"),
+export const DEFAULT_TRIAL_SETTINGS: TrialSettings = {
+  trialDays: TRIAL_DAYS,
+  // 2026-10-26 00:00 МСК — запасная дата; при первом чтении после деплоя
+  // сервер записывает фактический момент запуска.
+  launchedAt: new Date("2026-10-25T21:00:00.000Z"),
   graceDays: 7,
   transitionEnabled: true,
 };
@@ -63,99 +81,81 @@ function parseDate(value: unknown): Date | null {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
-/**
- * Настройки из `PlatformSetting` → значения с дефолтами. Битое поле
- * заменяется дефолтом, а не ломает весь кабинет: окно перехода читается
- * на каждой странице.
- */
-export function normalizeFreePeriodSettings(raw: unknown): FreePeriodSettings {
-  const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-  const startsAt = parseDate(r.startsAt) ?? DEFAULT_FREE_PERIOD.startsAt;
-  let endsAt = parseDate(r.endsAt) ?? DEFAULT_FREE_PERIOD.endsAt;
-  if (endsAt.getTime() <= startsAt.getTime()) {
-    // Конец раньше начала — период пустой: переход сразу с «начала».
-    endsAt = startsAt;
-  }
-  const graceRaw = Number(r.graceDays);
-  const graceDays = Number.isInteger(graceRaw)
-    ? Math.min(GRACE_DAYS_MAX, Math.max(GRACE_DAYS_MIN, graceRaw))
-    : DEFAULT_FREE_PERIOD.graceDays;
-  const transitionEnabled =
-    typeof r.transitionEnabled === "boolean"
-      ? r.transitionEnabled
-      : DEFAULT_FREE_PERIOD.transitionEnabled;
-  return { startsAt, endsAt, graceDays, transitionEnabled };
+function intInRange(value: unknown, min: number, max: number): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= min && n <= max ? n : null;
 }
 
-export function serializeFreePeriodSettings(settings: FreePeriodSettings): string {
+/**
+ * Настройки из `PlatformSetting` → значения с дефолтами. Битое поле
+ * заменяется дефолтом, а не ломает весь кабинет: состояние тарифа читается
+ * на каждой странице.
+ */
+export function normalizeTrialSettings(raw: unknown): TrialSettings {
+  const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return {
+    trialDays: intInRange(r.trialDays, TRIAL_DAYS_MIN, TRIAL_DAYS_MAX) ?? DEFAULT_TRIAL_SETTINGS.trialDays,
+    launchedAt: parseDate(r.launchedAt) ?? DEFAULT_TRIAL_SETTINGS.launchedAt,
+    graceDays: intInRange(r.graceDays, GRACE_DAYS_MIN, GRACE_DAYS_MAX) ?? DEFAULT_TRIAL_SETTINGS.graceDays,
+    transitionEnabled:
+      typeof r.transitionEnabled === "boolean" ? r.transitionEnabled : DEFAULT_TRIAL_SETTINGS.transitionEnabled,
+  };
+}
+
+export function serializeTrialSettings(settings: TrialSettings): string {
   return JSON.stringify({
-    startsAt: settings.startsAt.toISOString(),
-    endsAt: settings.endsAt.toISOString(),
+    trialDays: settings.trialDays,
+    launchedAt: settings.launchedAt.toISOString(),
     graceDays: settings.graceDays,
     transitionEnabled: settings.transitionEnabled,
   });
 }
 
-export type FreePeriodInput = {
-  startsAt: unknown;
-  endsAt: unknown;
+export type TrialSettingsInput = {
+  trialDays: unknown;
+  launchedAt: unknown;
   graceDays: unknown;
   transitionEnabled: unknown;
 };
 
 /** Проверка формы ROOT: в отличие от normalize, ошибки не прячем. */
-export function validateFreePeriodInput(
-  input: FreePeriodInput
-): { ok: true; value: FreePeriodSettings } | { ok: false; error: string } {
-  const startsAt = parseDate(input.startsAt);
-  const endsAt = parseDate(input.endsAt);
-  if (!startsAt) return { ok: false, error: "Укажите начало периода" };
-  if (!endsAt) return { ok: false, error: "Укажите конец периода" };
-  if (endsAt.getTime() <= startsAt.getTime()) {
-    return { ok: false, error: "Конец периода должен быть позже начала" };
+export function validateTrialInput(
+  input: TrialSettingsInput
+): { ok: true; value: TrialSettings } | { ok: false; error: string } {
+  const trialDays = intInRange(input.trialDays, TRIAL_DAYS_MIN, TRIAL_DAYS_MAX);
+  if (trialDays === null) {
+    return { ok: false, error: `Пробный период — целое число дней от ${TRIAL_DAYS_MIN} до ${TRIAL_DAYS_MAX}` };
   }
-  const graceDays = Number(input.graceDays);
-  if (!Number.isInteger(graceDays) || graceDays < GRACE_DAYS_MIN || graceDays > GRACE_DAYS_MAX) {
-    return {
-      ok: false,
-      error: `Грейс — целое число дней от ${GRACE_DAYS_MIN} до ${GRACE_DAYS_MAX}`,
-    };
+  const launchedAt = parseDate(input.launchedAt);
+  if (!launchedAt) return { ok: false, error: "Укажите дату запуска тарифов" };
+  const graceDays = intInRange(input.graceDays, GRACE_DAYS_MIN, GRACE_DAYS_MAX);
+  if (graceDays === null) {
+    return { ok: false, error: `Грейс — целое число дней от ${GRACE_DAYS_MIN} до ${GRACE_DAYS_MAX}` };
   }
   if (typeof input.transitionEnabled !== "boolean") {
     return { ok: false, error: "Не указано, включён ли переход на оплату" };
   }
-  return {
-    ok: true,
-    value: { startsAt, endsAt, graceDays, transitionEnabled: input.transitionEnabled },
-  };
-}
-
-export type BillingPhase = "before" | "free_period" | "after";
-
-export function billingPhase(settings: FreePeriodSettings, now: Date): BillingPhase {
-  const t = now.getTime();
-  if (t < settings.startsAt.getTime()) return "before";
-  if (t < settings.endsAt.getTime()) return "free_period";
-  return "after";
-}
-
-/** Действует ли бесплатный тариф на 1 сотрудника для неоплативших. */
-export function isBillingEnforced(settings: FreePeriodSettings, now: Date): boolean {
-  return settings.transitionEnabled && now.getTime() >= settings.endsAt.getTime();
+  return { ok: true, value: { trialDays, launchedAt, graceDays, transitionEnabled: input.transitionEnabled } };
 }
 
 /**
- * Тихий автоперевод на «платный» (`ensurePlanForHeadcount`) разрешён,
- * пока переход на оплату не начался.
+ * Конец пробного периода: ROOT продлил — его дата; иначе 14 дней от
+ * создания аккаунта, но не раньше запуска новых тарифов.
  */
-export function isAutoUpgradeAllowed(settings: FreePeriodSettings, now: Date): boolean {
-  return !isBillingEnforced(settings, now);
+export function trialEndFor(
+  createdAt: Date,
+  settings: TrialSettings,
+  override?: Date | null
+): Date {
+  if (override && Number.isFinite(override.getTime())) return override;
+  const start = Math.max(createdAt.getTime(), settings.launchedAt.getTime());
+  return new Date(start + settings.trialDays * DAY_MS);
 }
 
 /**
  * Реально оплачено: срок подписки в будущем (оплата картой, счёт или
- * ROOT). `paid` с пустым сроком — тестовый автоперевод, не оплата.
- * Приостановленная организация не считается оплаченной.
+ * ROOT). Тариф с пустым сроком — тестовый автоперевод прошлых лет, не
+ * оплата. Приостановленная организация не считается оплаченной.
  */
 export function isReallyPaid(
   plan: string | null | undefined,
@@ -169,26 +169,38 @@ export function isReallyPaid(
 export type AccountBillingKind =
   /** Платформа, демо, мастер-кабинет — тарифа нет. */
   | "exempt"
-  /** Реально оплачено. */
+  /** Реально оплачено (Стандарт, Премиум или прежняя «Подписка»). */
   | "paid"
-  /** До периода или переход выключен — как раньше (тестовый режим). */
+  /** Переход на оплату выключен в ROOT — после пробного ничего не блокируем. */
   | "legacy"
-  /** Идёт бесплатный период: подписка до 10 без оплаты. */
+  /** Пробный период: 14 дней без ограничений. */
   | "free_period"
-  /** После периода: бесплатный тариф, активных ≤ 1. */
+  /** После пробного: бесплатный тариф, в пределах 1 сотрудника и 1 журнала. */
   | "free"
-  /** После периода: не оплачено и активных > 1 — нужно решение. */
+  /** После пробного: не оплачено и больше 1 сотрудника или журнала — нужно решение. */
   | "needs_decision";
 
-export type TransitionReason = "free_period_ended" | "subscription_expired";
+export type TransitionReason = "trial_ended" | "subscription_expired";
 
 export type AccountBillingInput = {
   /** Тариф аккаунта (или legacy-зеркало организации). */
   plan: string | null | undefined;
   /** Самый поздний срок подписки по аккаунту и его организациям. */
   subscriptionEnd: Date | null;
+  /** Период оплаченного тарифа: month | year (нет — month). */
+  planCycle?: string | null;
+  /** Оплачено точек (нет — 1). */
+  planPoints?: number | null;
+  /** Создание аккаунта (организации без аккаунта) — начало пробного. */
+  createdAt?: Date | null;
+  /** Пробный до — ROOT продлил. */
+  trialEndsAt?: Date | null;
   /** Активные сотрудники аккаунта (без архива, комиссии, ROOT). */
   activeUsers: number;
+  /** Включённых журналов — наибольшее по организациям аккаунта. */
+  enabledJournals?: number;
+  /** Точек в работе (`countPointsInUse`). */
+  pointsInUse?: number;
   /** Платформа / демо / мастер-кабинет. */
   exempt?: boolean;
   /** Организация на паузе или отменена. */
@@ -197,13 +209,25 @@ export type AccountBillingInput = {
 
 export type AccountBillingState = {
   kind: AccountBillingKind;
-  phase: BillingPhase;
-  /** Действует ли переход (после конца периода и флаг включён). */
+  /** Что действует: пробный, бесплатный, стандарт, премиум, прежняя подписка… */
+  tier: EntitlementTier;
+  entitlements: Entitlements;
+  /** Пробный закончился, переход включён — лимиты бесплатного действуют. */
   enforcement: boolean;
   inactive: boolean;
   activeUsers: number;
+  enabledJournals: number;
+  pointsInUse: number;
   /** До какого числа реально оплачено; null — не оплачено. */
   paidUntil: Date | null;
+  /** Оплаченный тариф; null — не оплачено. */
+  paidTier: PaidTier | "legacy" | null;
+  planCycle: BillingCycle;
+  planPoints: number;
+  /** Конец пробного периода (null — у тех, у кого тарифа нет). */
+  trialEndsAt: Date | null;
+  /** Сколько дней пробного осталось (только в пробном). */
+  trialDaysLeft: number | null;
   /** Почему нужно решение (для заголовка окна и уведомлений). */
   reason: TransitionReason | null;
   /** До какого момента руководитель решает сам. */
@@ -211,105 +235,137 @@ export type AccountBillingState = {
   graceExpired: boolean;
   /** Сколько активных можно держать; null — без блокировки. */
   seatLimit: number | null;
-  /** Платные возможности (автоввод с фото и т. п.). */
+  /** Автоввод показаний с фото (прежнее «платные возможности»). */
   paidFeatures: boolean;
 };
 
+/** Оставшиеся дни (округление вверх): «осталось 3 дня» до конца суток последнего дня. */
+export function daysLeft(until: Date, now: Date): number {
+  return Math.max(0, Math.ceil((until.getTime() - now.getTime()) / DAY_MS));
+}
+
 export function computeAccountBilling(
   input: AccountBillingInput,
-  settings: FreePeriodSettings,
+  settings: TrialSettings,
   now: Date
 ): AccountBillingState {
-  const phase = billingPhase(settings, now);
-  const enforcement = isBillingEnforced(settings, now);
   const inactive = input.inactive === true || isInactivePlan(input.plan);
-  const activeUsers = Number.isFinite(input.activeUsers)
-    ? Math.max(0, Math.floor(input.activeUsers))
-    : 0;
-  const base = {
-    phase,
-    enforcement,
-    inactive,
-    activeUsers,
-    paidUntil: null,
-    reason: null,
-    graceEndsAt: null,
-    graceExpired: false,
-  } satisfies Partial<AccountBillingState>;
+  const activeUsers = Number.isFinite(input.activeUsers) ? Math.max(0, Math.floor(input.activeUsers)) : 0;
+  const enabledJournals = Math.max(0, Math.floor(Number(input.enabledJournals) || 0));
+  const pointsInUse = Math.max(1, Math.floor(Number(input.pointsInUse) || 1));
+  const planCycle: BillingCycle = isBillingCycle(input.planCycle) ? input.planCycle : "month";
+  const planPoints = normalizePoints(input.planPoints ?? 1);
+  const trialEndsAt = input.createdAt
+    ? trialEndFor(input.createdAt, settings, input.trialEndsAt)
+    : (input.trialEndsAt ?? null);
 
-  if (input.exempt) {
+  const make = (
+    kind: AccountBillingKind,
+    tier: EntitlementTier,
+    extra: Partial<AccountBillingState> = {}
+  ): AccountBillingState => {
+    const base = entitlementsFor(tier, planPoints);
+    const entitlements = inactive ? withoutFeatures(base) : base;
     return {
-      ...base,
-      kind: "exempt",
-      seatLimit: null,
-      paidFeatures: !inactive && isPaidPlan(input.plan),
+      kind,
+      tier,
+      entitlements,
+      enforcement: false,
+      inactive,
+      activeUsers,
+      enabledJournals,
+      pointsInUse,
+      paidUntil: null,
+      paidTier: null,
+      planCycle,
+      planPoints,
+      trialEndsAt: kind === "exempt" ? null : trialEndsAt,
+      trialDaysLeft: null,
+      reason: null,
+      graceEndsAt: null,
+      graceExpired: false,
+      seatLimit: entitlements.seatLimit,
+      paidFeatures: entitlements.features.photoAutofill,
+      ...extra,
     };
-  }
+  };
+
+  if (input.exempt) return make("exempt", "exempt");
 
   if (isReallyPaid(input.plan, input.subscriptionEnd, now)) {
-    // Оплаченная, но приостановленная за неактивность организация
-    // остаётся оплаченной (лимита нет, отказ «оплатите» был бы неправдой),
-    // а платные возможности на паузе выключены — как и раньше.
-    return {
-      ...base,
-      kind: "paid",
+    // Оплаченная, но приостановленная за неактивность организация остаётся
+    // оплаченной (лимиты тарифа, отказ «оплатите» был бы неправдой), а
+    // платные возможности на паузе выключены — как и раньше.
+    const paidTier = paidTierFromPlan(input.plan);
+    return make("paid", paidTier === "legacy" ? "legacy_paid" : paidTier, {
       paidUntil: input.subscriptionEnd,
-      seatLimit: null,
-      paidFeatures: !inactive,
-    };
+      paidTier,
+    });
   }
 
-  if (phase === "free_period") {
-    return { ...base, kind: "free_period", seatLimit: null, paidFeatures: !inactive };
+  if (trialEndsAt && now.getTime() < trialEndsAt.getTime()) {
+    return make("free_period", "trial", { trialDaysLeft: daysLeft(trialEndsAt, now) });
   }
 
-  if (!enforcement) {
-    return {
-      ...base,
-      kind: "legacy",
-      seatLimit: null,
-      paidFeatures: !inactive && isPaidPlan(input.plan),
-    };
-  }
+  if (!settings.transitionEnabled) return make("legacy", "unrestricted");
 
-  // Оплаченный срок кончился ПОСЛЕ бесплатного периода — честно пишем
-  // «подписка закончилась». Кончился раньше — последним закончился
-  // бесплатный период, про него и говорим.
+  // Оплаченный срок кончился ПОСЛЕ пробного — честно пишем «подписка
+  // закончилась». Кончился раньше (или оплаты не было) — последним
+  // закончился пробный период, про него и говорим.
   const end = input.subscriptionEnd;
-  const expiredPaid = end !== null && end.getTime() > settings.endsAt.getTime();
-  const reason: TransitionReason = expiredPaid ? "subscription_expired" : "free_period_ended";
-  const graceBase = expiredPaid && end ? end : settings.endsAt;
+  const trialEnd = trialEndsAt ?? now;
+  const expiredPaid = end !== null && end.getTime() > trialEnd.getTime();
+  const reason: TransitionReason = expiredPaid ? "subscription_expired" : "trial_ended";
+  const graceBase = expiredPaid && end ? end : trialEnd;
   const graceEndsAt = new Date(graceBase.getTime() + settings.graceDays * DAY_MS);
 
-  if (activeUsers <= FREE_MAX_USERS) {
-    return { ...base, kind: "free", reason, seatLimit: FREE_MAX_USERS, paidFeatures: false };
+  if (activeUsers <= FREE_MAX_USERS && enabledJournals <= FREE_MAX_JOURNALS) {
+    return make("free", "free", { enforcement: true, reason });
   }
-  return {
-    ...base,
-    kind: "needs_decision",
+  return make("needs_decision", "free", {
+    enforcement: true,
     reason,
     graceEndsAt,
     graceExpired: now.getTime() >= graceEndsAt.getTime(),
-    seatLimit: FREE_MAX_USERS,
-    paidFeatures: false,
-  };
+  });
 }
 
-/** Код ошибки лимита: клиент по нему показывает кнопку «Оплатить». */
+/** Есть ли у аккаунта возможность тарифа (Премиум, пробный…). */
+export function hasFeature(state: Pick<AccountBillingState, "entitlements"> | null | undefined, feature: PlanFeature): boolean {
+  return state?.entitlements.features[feature] === true;
+}
+
+/** Код ошибки лимита сотрудников: клиент по нему показывает кнопку «Оплатить». */
 export const BILLING_LIMIT_CODE = "billing_free_limit";
+/** Лимит точек, журналов, хранилища и закрытая возможность тарифа. */
+export const POINT_LIMIT_CODE = "billing_point_limit";
+export const JOURNAL_LIMIT_CODE = "billing_journal_limit";
+export const STORAGE_LIMIT_CODE = "billing_storage_limit";
+export const FEATURE_LOCKED_CODE = "billing_feature_locked";
 
 /** Куда вести оплату из кабинета: там и карта, и счёт по безналу. */
 export const BILLING_PAY_HREF = "/settings/subscription";
 
-/** Текст отказа руководителю. */
+/** Текст отказа руководителю на бесплатном тарифе. */
 export const FREE_LIMIT_MESSAGE =
   `Бесплатный тариф — ${employeesLabel(FREE_MAX_USERS)}. ` +
-  "Оплатите подписку, чтобы добавить сотрудников или вернуть их из архива.";
+  "Подключите «Стандарт» или «Премиум», чтобы добавить сотрудников или вернуть их из архива.";
 
 /** Текст отказа тому, кто принимает приглашение: платить не ему. */
 export const FREE_LIMIT_INVITEE_MESSAGE =
   `На бесплатном тарифе организации — ${employeesLabel(FREE_MAX_USERS)}. ` +
-  "Попросите руководителя оплатить подписку и повторите.";
+  "Попросите руководителя подключить тариф и повторите.";
+
+const TIER_TITLE: Record<PaidTier, string> = { standard: "«Стандарт»", premium: "«Премиум»" };
+
+/** Отказ по лимиту сотрудников оплаченного тарифа: 25 на точку. */
+export function paidSeatLimitMessage(tier: PaidTier, points: number): string {
+  return (
+    `На тарифе ${TIER_TITLE[tier]} — до ${SEATS_PER_POINT} сотрудников на точку ` +
+    `(оплачено точек: ${normalizePoints(points)}, всего мест: ${SEATS_PER_POINT * normalizePoints(points)}). ` +
+    "Добавьте точку на странице тарифа или переведите лишних в архив."
+  );
+}
 
 export type SeatCheck =
   | { ok: true }
@@ -323,22 +379,105 @@ export function checkSeats(state: AccountBillingState, adding: number): SeatChec
   if (!(adding > 0)) return { ok: true };
   if (state.seatLimit === null) return { ok: true };
   if (state.activeUsers + adding <= state.seatLimit) return { ok: true };
+  const message =
+    state.tier === "standard" || state.tier === "premium"
+      ? paidSeatLimitMessage(state.tier, state.planPoints)
+      : FREE_LIMIT_MESSAGE;
+  return { ok: false, limit: state.seatLimit, activeUsers: state.activeUsers, message };
+}
+
+export type LimitCheck = { ok: true } | { ok: false; limit: number; current: number; message: string };
+
+/** Можно ли завести ещё `adding` точек (здание или организацию). */
+export function checkPoints(state: AccountBillingState, adding: number): LimitCheck {
+  const limit = state.entitlements.pointLimit;
+  if (!(adding > 0) || limit === null) return { ok: true };
+  if (state.pointsInUse + adding <= limit) return { ok: true };
+  const message =
+    state.tier === "standard" || state.tier === "premium"
+      ? `Оплачено точек: ${limit}. Каждая новая точка — как ещё один тариф; от трёх точек — скидка 5 % на каждую. ` +
+        "Добавьте точку на странице тарифа."
+      : "На бесплатном тарифе — 1 точка. Подключите «Стандарт» или «Премиум», чтобы добавить точки.";
+  return { ok: false, limit, current: state.pointsInUse, message };
+}
+
+/** Можно ли включить журналы так, чтобы их стало `nextEnabled`. Выключать можно всегда. */
+export function checkJournals(state: AccountBillingState, nextEnabled: number, currentEnabled: number): LimitCheck {
+  const limit = state.entitlements.journalLimit;
+  if (limit === null || nextEnabled <= limit || nextEnabled <= currentEnabled) return { ok: true };
   return {
     ok: false,
-    limit: state.seatLimit,
-    activeUsers: state.activeUsers,
-    message: FREE_LIMIT_MESSAGE,
+    limit,
+    current: currentEnabled,
+    message:
+      `На бесплатном тарифе — ${limit} журнал. Подключите «Стандарт» или «Премиум», чтобы вести все журналы.`,
   };
 }
+
+/** «9,2 МБ», «1 ГБ», «512 КБ». */
+export function formatBytes(bytes: number): string {
+  const n = Math.max(0, bytes);
+  const fmt = (v: number) => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: v < 10 ? 1 : 0 }).format(v);
+  if (n >= 1024 * 1024 * 1024) return `${fmt(n / (1024 * 1024 * 1024))} ГБ`;
+  if (n >= 1024 * 1024) return `${fmt(n / (1024 * 1024))} МБ`;
+  // Пусто — «0 КБ», а не «1 КБ»: иначе пустое хранилище выглядит занятым.
+  if (n === 0) return "0 КБ";
+  return `${fmt(Math.max(1, Math.round(n / 1024)))} КБ`;
+}
+
+/**
+ * Хватит ли места тарифа на файл. `replacingBytes` — размер файла, который
+ * заменяется (документ ППК на своём месте).
+ */
+export function checkStorage(
+  entitlements: Pick<Entitlements, "storageBytes" | "tier">,
+  usedBytes: number,
+  addingBytes: number,
+  replacingBytes = 0
+): LimitCheck {
+  const limit = entitlements.storageBytes;
+  if (limit === null) return { ok: true };
+  const next = Math.max(0, usedBytes - Math.max(0, replacingBytes)) + Math.max(0, addingBytes);
+  if (next <= limit) return { ok: true };
+  if (limit === 0) {
+    return {
+      ok: false,
+      limit,
+      current: usedBytes,
+      message: "Загрузка документов — на тарифах «Стандарт» (10 МБ) и «Премиум» (1 ГБ). Загруженные раньше файлы остаются доступны.",
+    };
+  }
+  const tier = entitlements.tier === "standard" ? "«Стандарт»" : "тарифа";
+  return {
+    ok: false,
+    limit,
+    current: usedBytes,
+    message:
+      `Хранилище ${tier} — ${formatBytes(limit)}, занято ${formatBytes(usedBytes)}. ` +
+      (entitlements.tier === "standard"
+        ? "Удалите лишние файлы или перейдите на «Премиум» — 1 ГБ на все документы."
+        : "Удалите лишние файлы."),
+  };
+}
+
+/** Отказ закрытой возможности тарифа (для API и подсказок). */
+export const FEATURE_LOCKED_MESSAGE: Record<PlanFeature, string> = {
+  photoAutofill: "Автоввод показаний с фото датчика — в тарифе «Премиум».",
+  equipmentConnect: "Подключение оборудования и IoT-датчиков — в тарифе «Премиум».",
+  equipmentDelivery: "Доставка подключённого оборудования — в тарифе «Премиум».",
+  typicalPackage: "Типовой пакет документов — в тарифе «Премиум».",
+};
 
 export type TransitionAction =
   /** Ничего не делать. */
   | "none"
-  /** ≤ 1 активного, тариф ещё «платный» без оплаты — молча `free` + одно уведомление. */
+  /** Пробный кончается через ≤ 3 дня — одно напоминание. */
+  | "remind_trial_end"
+  /** В пределах бесплатного, но тариф ещё записан платным — молча `free` + одно уведомление. */
   | "silent_free"
-  /** > 1 и грейс идёт — ждём решения руководителя (одно предупреждение). */
+  /** Сверх бесплатного и грейс идёт — ждём решения руководителя (одно предупреждение). */
   | "await_decision"
-  /** > 1 и грейс истёк — автопереход: владелец остаётся, остальные в архив. */
+  /** Сверх бесплатного и грейс истёк — автопереход: владелец и один журнал остаются. */
   | "auto_free";
 
 /** Что ежедневная задача делает с аккаунтом. */
@@ -346,7 +485,11 @@ export function decideTransitionAction(
   state: AccountBillingState,
   plan: string | null | undefined
 ): TransitionAction {
-  if (!state.enforcement || state.inactive) return "none";
+  if (state.inactive) return "none";
+  if (state.kind === "free_period") {
+    return state.trialDaysLeft !== null && state.trialDaysLeft <= TRIAL_REMINDER_DAYS ? "remind_trial_end" : "none";
+  }
+  if (!state.enforcement) return "none";
   if (state.kind === "free") return isFreePlan(plan) ? "none" : "silent_free";
   if (state.kind === "needs_decision") return state.graceExpired ? "auto_free" : "await_decision";
   return "none";
@@ -374,6 +517,32 @@ export function pickKeeper(
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id)
   );
   return (byAge.find((c) => c.isManagement) ?? byAge[0]).id;
+}
+
+/** Журнал по умолчанию, если записей нет ни в одном: гигиенический. */
+export const DEFAULT_KEPT_JOURNAL = "hygiene";
+
+/**
+ * Какой журнал остаётся при автопереходе: с наибольшим числом записей за
+ * 30 дней; без записей — гигиенический, если включён; иначе первый
+ * включённый по порядку.
+ */
+export function pickKeeperJournal(
+  enabledCodes: readonly string[],
+  usage: ReadonlyMap<string, number>
+): string | null {
+  if (enabledCodes.length === 0) return null;
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const code of enabledCodes) {
+    const count = usage.get(code) ?? 0;
+    if (count > bestCount) {
+      best = code;
+      bestCount = count;
+    }
+  }
+  if (best) return best;
+  return enabledCodes.includes(DEFAULT_KEPT_JOURNAL) ? DEFAULT_KEPT_JOURNAL : enabledCodes[0];
 }
 
 const MONTHS_GENITIVE = [
@@ -412,19 +581,9 @@ export function mskDayKey(date: Date): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-/** Последний бесплатный день: конец периода не включительно. */
-export function lastFreeDay(settings: FreePeriodSettings): Date {
-  return new Date(settings.endsAt.getTime() - 1);
-}
-
-/** «С 1 по 10 октября» / «С 28 сентября по 3 октября». */
-export function freePeriodRangeLabel(settings: FreePeriodSettings): string {
-  const from = mskParts(settings.startsAt);
-  const to = mskParts(lastFreeDay(settings));
-  if (from.month === to.month && from.year === to.year) {
-    return `С ${from.day} по ${to.day} ${MONTHS_GENITIVE[to.month]}`;
-  }
-  return `С ${formatMskDay(settings.startsAt)} по ${formatMskDay(lastFreeDay(settings))}`;
+/** Последний день действия: конец не включительно. */
+export function lastDayBefore(end: Date): Date {
+  return new Date(end.getTime() - 1);
 }
 
 /** «1 990 ₽» — неразрывный пробел, как в `formatRub`. */
@@ -432,12 +591,8 @@ export function formatPriceRub(value: number): string {
   return `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;
 }
 
-/** Цена подписки для анонса и окна: база, цена с акцией и сама акция. */
+/** Цена подписки для окна: база, цена с акцией и сама акция. */
 export type BillingPrice = Pick<PriceWithPromotion, "baseRub" | "priceRub" | "promotion">;
-
-function asBillingPrice(price: number | BillingPrice): BillingPrice {
-  return typeof price === "number" ? { baseRub: price, priceRub: price, promotion: null } : price;
-}
 
 /** «1 990 ₽/мес» или «1 592 ₽/мес по акции (без акции 1 990 ₽)» — текстом, без зачёркивания. */
 export function billingPriceText(price: BillingPrice): string {
@@ -447,41 +602,41 @@ export function billingPriceText(price: BillingPrice): string {
     : `${formatPriceRub(price.priceRub)}/мес`;
 }
 
-/** Подписка «до 10 сотрудников» — как её называем в анонсе и окне. */
-export const SUBSCRIPTION_QUOTED_NAME = `«до ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}»`;
-
-export type BillingAnnouncement = {
-  /** «С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех.» */
-  lead: string;
-  /** «С 11 октября — 1 990 ₽/мес или бесплатный тариф на 1 сотрудника.» Нет — если переход выключен. */
-  tail: string | null;
-  /**
-   * То же, что `tail`, по частям: окно рисует цену компонентом
-   * `PromoPrice` (в акцию старая цена зачёркнута).
-   */
-  tailParts: { before: string; price: BillingPrice; after: string } | null;
-};
-
-/**
- * Анонс периода. Показывается от выкладки до конца периода, кроме
- * организаций с оплаченной подпиской. Даты и цена — из настроек и тарифа.
- */
-export function announcementText(
-  settings: FreePeriodSettings,
-  priceArg: number | BillingPrice
-): BillingAnnouncement {
-  const lead = `${freePeriodRangeLabel(settings)} подписка ${SUBSCRIPTION_QUOTED_NAME} бесплатна для всех.`;
-  if (!settings.transitionEnabled) return { lead, tail: null, tailParts: null };
-  const price = asBillingPrice(priceArg);
-  const before = `С ${formatMskDay(settings.endsAt)} — `;
-  const after = ` или бесплатный тариф на ${employeesGenitiveLabel(FREE_MAX_USERS)}.`;
-  return { lead, tail: `${before}${billingPriceText(price)}${after}`, tailParts: { before, price, after } };
+function daysWord(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "день";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "дня";
+  return "дней";
 }
 
-/** Показывать ли анонс аккаунту в этом состоянии. */
-export function shouldShowAnnouncement(state: AccountBillingState): boolean {
-  if (state.kind === "paid" || state.kind === "exempt") return false;
-  return state.phase === "before" || state.phase === "free_period";
+/** «3 дня», «14 дней». */
+export function daysLabel(n: number): string {
+  return `${n} ${daysWord(n)}`;
+}
+
+export type TrialBanner = {
+  /** «Пробный период: осталось 5 дней — по 8 ноября включительно.» */
+  lead: string;
+  /** «Все возможности Премиума открыты. Выберите тариф, чтобы…» */
+  tail: string;
+  urgent: boolean;
+};
+
+/** Плашка пробного периода в кабинете. */
+export function trialBannerText(state: Pick<AccountBillingState, "trialEndsAt" | "trialDaysLeft">): TrialBanner | null {
+  if (!state.trialEndsAt || state.trialDaysLeft === null) return null;
+  const left = state.trialDaysLeft;
+  const lead = `Пробный период: осталось ${daysLabel(left)} — по ${formatMskDay(lastDayBefore(state.trialEndsAt))} включительно.`;
+  const tail =
+    "Все журналы и возможности «Премиума» открыты без ограничений. Выберите тариф, чтобы после пробного ничего не выключилось: " +
+    "на бесплатном останутся 1 сотрудник и 1 журнал.";
+  return { lead, tail, urgent: left <= TRIAL_REMINDER_DAYS };
+}
+
+/** Показывать ли плашку пробного периода. */
+export function shouldShowTrialBanner(state: AccountBillingState): boolean {
+  return state.kind === "free_period" && state.trialDaysLeft !== null;
 }
 
 export type TransitionCopy = {
@@ -490,58 +645,70 @@ export type TransitionCopy = {
   graceLine: string | null;
   payTitle: string;
   payHint: string;
-  /** Цена для окна (`PromoPrice`) и условия после неё — `payHint` по частям. */
-  payPrice: BillingPrice;
-  payTerms: string;
   freeTitle: string;
   freeHint: string;
 };
 
+/** «Стандарт — от 1 990 ₽/мес, Премиум — от 3 990 ₽/мес (при оплате за год)». */
+export function paidPlansHint(prices: { standardFromRub: number; premiumFromRub: number }): string {
+  return (
+    `«Стандарт» — от ${formatPriceRub(prices.standardFromRub)}/мес, «Премиум» — от ${formatPriceRub(prices.premiumFromRub)}/мес ` +
+    "при оплате за год. Все сотрудники и журналы остаются в работе."
+  );
+}
+
+function journalsWord(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "журнал";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "журнала";
+  return "журналов";
+}
+
+/** «1 журнал», «35 журналов». */
+export function journalsLabel(n: number): string {
+  return `${n} ${journalsWord(n)}`;
+}
+
 /**
- * Тексты окна перехода. Правило честности: тем, кто не платил, НЕ пишем
- * «оплаченный тариф закончился» — пишем, что закончился бесплатный период
- * подписки (он и был бесплатным). «Подписка закончилась» — только если
- * последним закончился реально оплаченный срок.
+ * Тексты окна после пробного. Правило честности: тем, кто не платил, НЕ
+ * пишем «оплаченный тариф закончился» — пишем, что закончился пробный
+ * период. «Подписка закончилась» — только если последним закончился
+ * реально оплаченный срок.
  */
 export function transitionCopy(args: {
   state: AccountBillingState;
-  settings: FreePeriodSettings;
-  /** Число — цена без акции; объект — цена с действующей акцией. */
-  priceRub: number | BillingPrice;
+  prices: { standardFromRub: number; premiumFromRub: number };
 }): TransitionCopy {
-  const { state, settings } = args;
-  const payPrice = asBillingPrice(args.priceRub);
-  const who = employeesLabel(state.activeUsers);
-  const free = employeesLabel(FREE_MAX_USERS);
+  const { state } = args;
   const expired = state.reason === "subscription_expired";
-  const title = expired ? "Подписка закончилась" : "Бесплатный период подписки закончился";
+  const title = expired ? "Подписка закончилась" : "Пробный период закончился";
+  const now = `Сейчас в кабинете ${employeesLabel(state.activeUsers)} и ${journalsLabel(state.enabledJournals)}`;
+  const freeLimits = `${employeesLabel(FREE_MAX_USERS)} и ${journalsLabel(FREE_MAX_JOURNALS)}`;
   const lead = expired
-    ? `Оплаченный срок подписки ${SUBSCRIPTION_QUOTED_NAME} закончился. Сейчас в кабинете ${who}, а бесплатный тариф — ${free}.`
-    : `${freePeriodRangeLabel(settings)} подписка ${SUBSCRIPTION_QUOTED_NAME} была бесплатной для всех. Сейчас в кабинете ${who}, а бесплатный тариф — ${free}.`;
+    ? `Оплаченный срок подписки закончился. ${now}, а на бесплатном тарифе — ${freeLimits}.`
+    : `14 дней всё было открыто бесплатно. ${now}, а на бесплатном тарифе — ${freeLimits}.`;
   const graceLine = state.graceEndsAt
     ? state.graceExpired
-      ? "Срок выбора прошёл: скоро в работе останется только владелец аккаунта, остальные перейдут в архив. Вернуть их можно после оплаты."
-      : `Выберите до ${formatMskDay(new Date(state.graceEndsAt.getTime() - 1))} включительно. Если ничего не выбрать, в работе останется только владелец аккаунта, остальные перейдут в архив — вернуть их можно после оплаты.`
+      ? "Срок выбора прошёл: скоро в работе останутся только владелец аккаунта и самый заполняемый журнал. Вернуть остальных можно после оплаты."
+      : `Выберите до ${formatMskDay(lastDayBefore(state.graceEndsAt))} включительно. Если ничего не выбрать, в работе останутся владелец аккаунта и самый заполняемый журнал — остальное можно вернуть после оплаты.`
     : null;
-  const payTerms = `до ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}, все остаются в работе. Каждый сверх ${SUBSCRIPTION_MAX_USERS} — +${EXTRA_USER_PRICE_RUB} ₽/мес.`;
   return {
     title,
     lead,
     graceLine,
-    payTitle: "Оплатить подписку",
-    payHint: `${billingPriceText(payPrice)} · ${payTerms}`,
-    payPrice,
-    payTerms,
-    freeTitle: "Перейти на бесплатный",
-    freeHint: `0 ₽ · ${free}. Остальные перейдут в архив, их записи в журналах сохранятся.`,
+    payTitle: "Подключить тариф",
+    payHint: paidPlansHint(args.prices),
+    freeTitle: "Остаться на бесплатном",
+    freeHint: `0 ₽ · ${freeLimits}. Вы отметите, кто и что остаётся; остальные сотрудники перейдут в архив, остальные журналы выключатся — записи сохранятся.`,
   };
 }
 
 /**
- * Добровольный переход на бесплатный тариф (кнопка на странице тарифа), в
- * отличие от решения после бесплатного периода — в любом состоянии, где
- * тариф вообще есть. Нельзя: у платформы, демо и мастер-кабинета тарифа нет;
- * приостановленную организацию сначала возобновляют.
+ * Добровольный переход на бесплатный тариф (кнопка на странице тарифа) — в
+ * любом состоянии, где тариф вообще есть. Нельзя: у платформы, демо и
+ * мастер-кабинета тарифа нет; приостановленную организацию сначала
+ * возобновляют.
  */
 export function voluntaryDowngradeCheck(
   state: Pick<AccountBillingState, "kind" | "inactive">

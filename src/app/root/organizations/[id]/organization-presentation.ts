@@ -25,7 +25,7 @@ export function organizationSphere(type: string, t: ProfileCopy) {
 }
 
 export function organizationPlan(plan: string, t: OrganizationCopy, legacy: LegacyPlanCopy) {
-  if (plan === "free" || plan === "paid" || plan === "paused" || plan === "cancelled") return t(`plans.${plan}`);
+  if (plan === "free" || plan === "standard" || plan === "premium" || plan === "paid" || plan === "paused" || plan === "cancelled") return t(`plans.${plan}`);
   return plan === "trial" || plan === "pro" ? legacy(plan) : plan;
 }
 
@@ -43,7 +43,7 @@ export function organizationKind(kind: string, t: OrganizationCopy) {
 }
 
 const errors = {
-  ORG_NOT_FOUND: "errors.organizationMissing", ORG_NAME_SHORT: "errors.nameShort", ORG_PLAN_UNKNOWN: "errors.planUnknown", ORG_DATE_INVALID: "errors.dateInvalid", ORG_PLATFORM_PROTECTED: "errors.platformProtected", ORG_BALANCE_INVALID: "errors.invalidRequest", ORG_BALANCE_READ_FAILED: "errors.readRequest", ROOT_ORDER_NOT_FOUND: "errors.orderMissing", ROOT_ORDER_CANCEL_UNPAID_ONLY: "errors.cancelUnpaidOnly",
+  ORG_NOT_FOUND: "errors.organizationMissing", ORG_NAME_SHORT: "errors.nameShort", ORG_PLAN_UNKNOWN: "errors.planUnknown", ORG_DATE_INVALID: "errors.dateInvalid", ORG_POINTS_INVALID: "errors.pointsInvalid", ORG_NO_ACCOUNT: "errors.noAccount", ORG_PLATFORM_PROTECTED: "errors.platformProtected", ORG_BALANCE_INVALID: "errors.invalidRequest", ORG_BALANCE_READ_FAILED: "errors.readRequest", ROOT_ORDER_NOT_FOUND: "errors.orderMissing", ROOT_ORDER_CANCEL_UNPAID_ONLY: "errors.cancelUnpaidOnly",
 } as const;
 
 /** Structured descriptors only; arbitrary backend prose is never reflected. */

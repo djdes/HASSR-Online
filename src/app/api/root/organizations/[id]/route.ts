@@ -3,6 +3,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { tasksflowClientFor } from "@/lib/tasksflow-client";
+import { isBillingCycle, MAX_POINTS } from "@/lib/tariff-plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,11 @@ export const dynamic = "force-dynamic";
  * Раньше всё это менялось только руками в базе — на поддержку клиента
  * («продлите нам месяц») уходил заход на сервер.
  *
+ * Тарифы 2026-10 живут на аккаунте (сеть платит один раз): тариф, срок,
+ * период оплаты, точки и конец пробного пишутся в аккаунт и зеркалом в
+ * организацию. «Приостановлен» и «Отменён» — состояние самой организации,
+ * тариф аккаунта они не трогают.
+ *
  * Меняем только переданные поля: пустой PATCH — не сброс, а no-op.
  */
 export async function PATCH(
@@ -42,6 +48,10 @@ export async function PATCH(
       name: true,
       subscriptionPlan: true,
       subscriptionEnd: true,
+      accountId: true,
+      account: {
+        select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, trialEndsAt: true },
+      },
     },
   });
   if (!org) {
@@ -52,6 +62,9 @@ export async function PATCH(
     name?: unknown;
     subscriptionPlan?: unknown;
     subscriptionEnd?: unknown;
+    planCycle?: unknown;
+    planPoints?: unknown;
+    trialEndsAt?: unknown;
   } | null;
 
   const data: {
@@ -73,8 +86,9 @@ export async function PATCH(
     // Список закрыт намеренно: опечатка в тарифе тихо ломает и витрину,
     // и лимиты — значение сравнивается строкой в десятке мест.
     // `trial` намеренно отсутствует: это legacy-значение бесплатного
-    // тарифа, читается как `free`, но новым его не назначаем.
-    if (!["free", "paid", "paused", "cancelled"].includes(plan)) {
+    // тарифа, читается как `free`, но новым его не назначаем. `paid` —
+    // «Подписка» прежнего тарифа (без новых лимитов).
+    if (!["free", "standard", "premium", "paid", "paused", "cancelled"].includes(plan)) {
       return NextResponse.json({ error: "Неизвестный тариф", errorCode: "ORG_PLAN_UNKNOWN" }, { status: 400 });
     }
     data.subscriptionPlan = plan;
@@ -92,7 +106,47 @@ export async function PATCH(
     }
   }
 
-  if (Object.keys(data).length === 0) {
+  // Поля тарифа аккаунта: период оплаты, точки и продлённый пробный.
+  const accountData: {
+    subscriptionPlan?: string;
+    subscriptionEnd?: Date | null;
+    planCycle?: string;
+    planPoints?: number;
+    trialEndsAt?: Date | null;
+  } = {};
+  if (body?.planCycle !== undefined) {
+    if (!isBillingCycle(body.planCycle)) {
+      return NextResponse.json({ error: "Неизвестный период оплаты", errorCode: "ORG_PLAN_UNKNOWN" }, { status: 400 });
+    }
+    accountData.planCycle = body.planCycle;
+  }
+  if (body?.planPoints !== undefined) {
+    const points = Number(body.planPoints);
+    if (!Number.isInteger(points) || points < 1 || points > MAX_POINTS) {
+      return NextResponse.json({ error: "Некорректное число точек", errorCode: "ORG_POINTS_INVALID" }, { status: 400 });
+    }
+    accountData.planPoints = points;
+  }
+  if (body?.trialEndsAt !== undefined) {
+    if (body.trialEndsAt === null || body.trialEndsAt === "") {
+      accountData.trialEndsAt = null;
+    } else if (typeof body.trialEndsAt === "string" && Number.isFinite(new Date(body.trialEndsAt).getTime())) {
+      accountData.trialEndsAt = new Date(body.trialEndsAt);
+    } else {
+      return NextResponse.json({ error: "Некорректная дата", errorCode: "ORG_DATE_INVALID" }, { status: 400 });
+    }
+  }
+  // Тариф и срок — на аккаунт; пауза и отмена — только организации.
+  if (data.subscriptionPlan && data.subscriptionPlan !== "paused" && data.subscriptionPlan !== "cancelled") {
+    accountData.subscriptionPlan = data.subscriptionPlan;
+  }
+  if (data.subscriptionEnd !== undefined) accountData.subscriptionEnd = data.subscriptionEnd;
+  const accountTouched = Boolean(org.accountId) && Object.keys(accountData).length > 0;
+  if (!org.accountId && (accountData.planCycle || accountData.planPoints || accountData.trialEndsAt !== undefined)) {
+    return NextResponse.json({ error: "У организации нет аккаунта", errorCode: "ORG_NO_ACCOUNT" }, { status: 409 });
+  }
+
+  if (Object.keys(data).length === 0 && !accountTouched) {
     return NextResponse.json({ ok: true, organization: org });
   }
 
@@ -106,6 +160,14 @@ export async function PATCH(
       subscriptionEnd: true,
     },
   });
+  const updatedAccount =
+    accountTouched && org.accountId
+      ? await db.account.update({
+          where: { id: org.accountId },
+          data: accountData,
+          select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, trialEndsAt: true },
+        })
+      : null;
 
   await recordAuditLog({
     request,
@@ -121,11 +183,33 @@ export async function PATCH(
         name: org.name,
         subscriptionPlan: org.subscriptionPlan,
         subscriptionEnd: org.subscriptionEnd?.toISOString() ?? null,
+        ...(updatedAccount && org.account
+          ? {
+              account: {
+                subscriptionPlan: org.account.subscriptionPlan,
+                subscriptionEnd: org.account.subscriptionEnd?.toISOString() ?? null,
+                planCycle: org.account.planCycle,
+                planPoints: org.account.planPoints,
+                trialEndsAt: org.account.trialEndsAt?.toISOString() ?? null,
+              },
+            }
+          : {}),
       },
       after: {
         name: updated.name,
         subscriptionPlan: updated.subscriptionPlan,
         subscriptionEnd: updated.subscriptionEnd?.toISOString() ?? null,
+        ...(updatedAccount
+          ? {
+              account: {
+                subscriptionPlan: updatedAccount.subscriptionPlan,
+                subscriptionEnd: updatedAccount.subscriptionEnd?.toISOString() ?? null,
+                planCycle: updatedAccount.planCycle,
+                planPoints: updatedAccount.planPoints,
+                trialEndsAt: updatedAccount.trialEndsAt?.toISOString() ?? null,
+              },
+            }
+          : {}),
       },
     },
   });

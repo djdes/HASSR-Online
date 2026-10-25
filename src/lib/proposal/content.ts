@@ -1,20 +1,9 @@
 import type { PlatformRequisites } from "@/lib/closing-documents/types";
-import {
-  SUBSCRIPTION_QUOTED_NAME,
-  billingPhase,
-  freePeriodRangeLabel,
-  type FreePeriodSettings,
-} from "@/lib/billing-period";
 import { ACTIVE_JOURNAL_CATALOG, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import type { OrgSphere } from "@/lib/org-profile";
-import {
-  EXTRA_USER_PRICE_RUB,
-  SUBSCRIPTION_MAX_USERS,
-  SUBSCRIPTION_SEATS_LABEL,
-  employeesGenitiveLabel,
-} from "@/lib/plan-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { FREE_AFTER_TRIAL_LABEL, PAID_SEATS_LABEL } from "@/lib/plan-catalog";
 import { pluralRu } from "@/lib/plural-ru";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { promotionEndLabel, type AppliedPromotion } from "@/lib/promo/promotions";
 import { rulesFor, type RuleBasis } from "@/lib/sphere-journal-rules";
 
@@ -33,25 +22,25 @@ import { normalizeProposalVars } from "./vars";
  *
  * Правила честности (спека proposal-kp, п. 2):
  *   • числа — только из констант и тарифа (`JOURNALS_TOTAL`,
- *     `FREE_MAX_USERS`, `SUBSCRIPTION_MAX_USERS`, `PlatformTariff`);
+ *     `TRIAL_DAYS`, `SEATS_PER_POINT`, `PlatformTariff`);
  *   • «обязательные» — только `electronicRequired` сферы, с условием
  *     («при наличии фритюра»); остальное — «рекомендуем»;
  *   • «по счёту для юрлиц» — только если счёт реально выставляется
  *     (реквизиты заполнены, `invoiceRequisitesReady`);
- *   • фото термометра — «на подписке» (автоввод только на платном тарифе);
+ *   • фото термометра — «в Премиуме» (автоввод только в «Премиуме»);
  *   • про магазины приложений — ни слова.
  */
 
 export type ProposalContext = {
   now: Date;
-  /** Цена тарифа «Подписка» (`PlatformTariff` monthly), ₽ за период. */
+  /** «Стандарт» при оплате за год в пересчёте на месяц (`PlatformTariff` standard_year), ₽. */
   tariffPriceRub: number;
+  /** «Премиум» при оплате за год в пересчёте на месяц, ₽. */
+  premiumPriceRub: number;
   /** Тариф в продаже (иначе ROOT-генератор предупреждает). */
   tariffActive: boolean;
   /** Действующая акция на подписку или null. */
   promotion: AppliedPromotion | null;
-  /** Настройки бесплатного периода (1–10 октября и т. п.). */
-  freePeriod: FreePeriodSettings | null;
   /** Реквизиты нашей организации (`/root/requisites`). */
   requisites: PlatformRequisites | null;
   /** Счёт по безналу выставляется (реквизиты для счёта заполнены). */
@@ -306,12 +295,12 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   // ---- предложение
   const free: ProposalOfferRow = {
     key: "free",
-    title: `Бесплатно — все ${JOURNALS_TOTAL_LABEL} для ${employeesGenitiveLabel(FREE_MAX_USERS)}`,
+    title: `Бесплатно ${TRIAL_DAYS} дней — все ${JOURNALS_TOTAL_LABEL} без ограничений`,
     price: formatProposalRub(0),
     unit: "",
     oldPrice: null,
     badge: null,
-    text: "Без оплаты и без срока. Один сотрудник ведёт все журналы, записей — сколько угодно.",
+    text: `Без карты: все журналы, сотрудники и точки. Дальше бесплатно — ${FREE_AFTER_TRIAL_LABEL}, или тариф «Стандарт» / «Премиум».`,
   };
 
   let badge: string | null = null;
@@ -322,16 +311,18 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   }
   const team: ProposalOfferRow = {
     key: "team",
-    title: `Команда ${SUBSCRIPTION_SEATS_LABEL}`,
+    title: `«Стандарт» — ${PAID_SEATS_LABEL}`,
     price: formatProposalRub(price.priceRub),
     unit: "/мес",
     oldPrice: price.oldRub !== null ? formatProposalRub(price.oldRub) : null,
     badge,
-    // Автоввод с фото — только на платном тарифе (`hasPaidPlan` в /api/ocr/reading):
+    // Автоввод с фото — только в «Премиуме» (`photoAutofill` в /api/ocr/reading):
     // термометр, гигрометр, счётчик УФ-лампы.
-    text: `Журналы заполняют ${copy.team} — каждый со своего телефона. На подписке показание можно снять фото ${
+    text: `Журналы заполняют ${copy.team} — каждый со своего телефона; цена — при оплате за год. В «Премиуме» (${formatProposalRub(
+      ctx.premiumPriceRub,
+    )}/мес) показание можно снять фото ${
       copy.food ? "термометра" : "дисплея прибора"
-    } — число подставится само. Каждый сотрудник сверх ${SUBSCRIPTION_MAX_USERS} — ${formatProposalRub(EXTRA_USER_PRICE_RUB)}/мес.`,
+    } — число подставится само, плюс подключение оборудования и 1 ГБ на документы.`,
   };
 
   const notes: string[] = [];
@@ -348,12 +339,6 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
         ? `Цена с акцией ${promotionEndLabel(price.promotion.endsAt)}, дальше — ${formatProposalRub(price.afterPromotionRub)}/мес: скидка по промокоду остаётся навсегда.`
         : `Цена с учётом акции ${promotionEndLabel(price.promotion.endsAt)}.`,
     );
-  }
-  if (ctx.freePeriod && ctx.freePeriod.transitionEnabled) {
-    const phase = billingPhase(ctx.freePeriod, ctx.now);
-    if (phase === "before" || phase === "free_period") {
-      notes.push(`${freePeriodRangeLabel(ctx.freePeriod)} подписка ${SUBSCRIPTION_QUOTED_NAME} бесплатна для всех.`);
-    }
   }
   if (price.promoExpired && vars.promo) {
     notes.push(`Срок промокода ${vars.promo.code} истёк — цены указаны без скидки.`);
@@ -402,7 +387,7 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   const teamPrice = price.oldRub !== null
     ? `${formatProposalRub(price.priceRub)}/мес вместо ${formatProposalRub(price.oldRub)}`
     : `${formatProposalRub(price.priceRub)}/мес`;
-  const preheader = `Бесплатно для ${employeesGenitiveLabel(FREE_MAX_USERS)}. Команда ${SUBSCRIPTION_SEATS_LABEL} — ${teamPrice}${
+  const preheader = `${TRIAL_DAYS} дней бесплатно. «Стандарт» — ${teamPrice} при оплате за год${
     price.promo && price.promoTerm ? `, скидка ${price.discountLabel?.replace("−", "")} ${price.promoTerm}` : ""
   }.`;
 

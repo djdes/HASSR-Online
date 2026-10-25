@@ -247,11 +247,11 @@ describe("«КП»: письмо и каналы", () => {
     const kp = createKpTemplate(deps);
     const { ctx, links } = ctxFor({ personal });
     const r = await kp.render(payload(), ctx);
-    const body = `Команда до 10 сотрудников — 1${NBSP}791${NBSP}₽/мес со скидкой 10${NBSP}% навсегда по промокоду ROMASHKA10 (код действует до 13${NBSP}октября).`;
+    const body = `«Стандарт» — до 25 сотрудников на точку — 1${NBSP}791${NBSP}₽/мес со скидкой 10${NBSP}% навсегда по промокоду ROMASHKA10 (код действует до 13${NBSP}октября).`;
     assert.equal(r.inApp?.title, KP_CHANNEL_TITLE);
     assert.equal(r.inApp?.title, "Предложение WeSetup для вашей команды");
     assert.ok(r.inApp?.body.startsWith(body), r.inApp?.body);
-    assert.match(r.inApp?.body ?? "", /Бесплатно — все .+ для 1 сотрудника\.$/);
+    assert.match(r.inApp?.body ?? "", /Бесплатно 14 дней — все .+ без ограничений\.$/);
     const webIndex = links().findIndex((u) => /\/kp\/[^/]+$/.test(u));
     const tracked = `https://wesetup.ru/r/mr1.sig/${webIndex}`;
     assert.equal(r.inApp?.url, tracked);
@@ -323,7 +323,7 @@ describe("«КП»: письмо и каналы", () => {
     const kp = createKpTemplate(deps);
     const { ctx, links } = ctxFor();
     const r = await kp.render(payload({ promo: { mode: "none" } }), ctx);
-    assert.equal(r.inApp?.body.startsWith(`Команда до 10 сотрудников — 1${NBSP}990${NBSP}₽/мес. Бесплатно — все`), true, r.inApp?.body);
+    assert.equal(r.inApp?.body.startsWith(`«Стандарт» — до 25 сотрудников на точку — 1${NBSP}990${NBSP}₽/мес. Бесплатно 14 дней — все`), true, r.inApp?.body);
     assert.equal(links()[0], `https://wesetup.ru${sphereLandingPath("cafe")}`);
   });
 

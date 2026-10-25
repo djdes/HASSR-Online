@@ -9,6 +9,7 @@ import { ExternalLink, FileCheck2, FilePlus2, Layers, Loader2, Sparkles, Trash2,
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { PRODUCTION_DOC_ACCEPT, type ProductionDocKind } from "@/lib/production-control-docs";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 const PRIMARY =
   "inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60";
@@ -37,6 +38,7 @@ export function DocumentSlot({
   const t = useTranslations("productionControl");
   const locale = useLocale();
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -50,6 +52,8 @@ export function DocumentSlot({
       const response = await fetch("/api/production-control/documents", { method: "POST", body: form });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
+        // Хранилище тарифа заполнено — toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(data)) return;
         throw new Error(data?.error ?? t("uploadFailed"));
       }
       toast.success(t("uploadedToast"));

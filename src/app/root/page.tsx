@@ -3,8 +3,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { getAllOrgMetrics } from "@/lib/org-metrics";
 import { MetricsTable } from "./metrics-table";
 import { SeedDemoButton } from "./seed-demo-button";
-import { EXTRA_USER_PRICE_RUB, SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { formatNumber } from "@/i18n/locales";
@@ -56,7 +55,7 @@ export default async function RootMetricsPage() {
               <SeedDemoButton />
             </div>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              {t("page.summary")} {t("page.pricing", { freeSeats: FREE_MAX_USERS, subscriptionSeats: SUBSCRIPTION_MAX_USERS, extraSeatPrice: EXTRA_USER_PRICE_RUB })} {t("page.tableHelp")} {t("page.ipHistory", { since: "26.08.2026" })}
+              {t("page.summary")} {t("page.pricing", { seatsPerPoint: SEATS_PER_POINT })} {t("page.tableHelp")} {t("page.ipHistory", { since: "26.08.2026" })}
             </p>
           </div>
         </div>

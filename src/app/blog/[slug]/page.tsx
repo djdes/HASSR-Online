@@ -25,7 +25,7 @@ import {
   } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -272,7 +272,7 @@ export default async function BlogArticlePage({
             {t("blogChrome.article.ctaTitle")}
           </div>
           <p className="mx-auto mt-2 max-w-[480px] text-[14px] text-white/70">
-            {t("blogChrome.article.ctaDescription", { journalCount: JOURNALS_TOTAL, employeeCount: FREE_MAX_USERS })}
+            {t("blogChrome.article.ctaDescription", { journalCount: JOURNALS_TOTAL, trialDays: TRIAL_DAYS })}
           </p>
           <Link
             href={localizedHref("/register", locale)}

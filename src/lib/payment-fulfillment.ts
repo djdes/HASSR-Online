@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { emitWebhook } from "@/lib/webhooks/dispatch";
 import {
@@ -20,6 +21,7 @@ import { defaultJournalAutomationJson } from "@/lib/journal-automation";
 import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
 import { bindLifetimeDiscountForOrder } from "@/lib/promo/lifetime";
+import { planAfterPayment, type PaidPlanUpdate } from "@/lib/plan-payment";
 
 /**
  * Что происходит после подтверждённой оплаты.
@@ -83,6 +85,11 @@ type FulfillableOrder = {
   userId?: string | null;
   /** Сколько баллов ушло в счёт этого заказа (для писем и уведомлений). */
   pointsSpent?: number | null;
+  /** Тарифы 2026-10: точки, вид перехода и срок, посчитанные при оформлении. */
+  points?: number | null;
+  changeKind?: string | null;
+  periodEndsAt?: Date | null;
+  createdAt?: Date | null;
 };
 
 export async function fulfillPaidOrder(order: FulfillableOrder): Promise<FulfillmentResult> {
@@ -172,7 +179,9 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
     crypto.randomBytes(24).toString("base64url"),
     12,
   );
-  const subscriptionEnd = extendFrom(null, periodDays);
+  const plan = planAfterPayment({ order, currentEnd: null, now: new Date() });
+  const subscriptionEnd = plan?.subscriptionEnd ?? extendFrom(null, periodDays);
+  const subscriptionPlan = plan?.tier ?? "paid";
   const rawToken = generateInviteToken();
 
   const created = await db.$transaction(async (tx) => {
@@ -180,7 +189,7 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
       data: {
         name: `Организация ${order.email}`,
         type: "other",
-        subscriptionPlan: "paid",
+        subscriptionPlan,
         subscriptionEnd,
         // Автоматика гигиенического журнала — сразу после оплаты.
         journalAutomationJson: defaultJournalAutomationJson(),
@@ -201,12 +210,18 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
     // Аккаунт — владелец тарифа и общего лимита мест (см.
     // lib/create-organization.ts). Оплаченная организация тем более
     // должна уметь расти во вторую точку.
-    await attachAccountForNewOrganization(tx, {
+    const { accountId } = await attachAccountForNewOrganization(tx, {
       ownerUserId: user.id,
       organizationId: organization.id,
-      subscriptionPlan: "paid",
+      subscriptionPlan,
       subscriptionEnd,
     });
+    if (plan) {
+      await tx.account.update({
+        where: { id: accountId },
+        data: { planCycle: plan.cycle, planPoints: plan.points },
+      });
+    }
     await tx.paymentOrder.update({
       where: { id: order.id },
       data: {
@@ -233,12 +248,18 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
  * только платёж-РОДИТЕЛЬ серии: у него касса и запоминает карту. Списание
  * внутри серии (`recurringChargeOf`) ничего не переключает — иначе оно бы
  * каждый месяц заново «включало» то, что человек мог отключить.
+ *
+ * Заказ тарифа 2026-10 (`standard_year` и т. п.) записывает в аккаунт
+ * тариф, период и точки, а срок — по виду перехода (`planAfterPayment`):
+ * доплата за повышение конец не двигает, продление идёт от текущего
+ * конца, новая подписка и переход на год — с момента оплаты. Оплата
+ * отменяет запланированное понижение.
  */
 async function extendOrganization(args: {
   organizationId: string;
   currentEnd: Date | null;
   periodDays: number;
-  order: { id: number; recurringConsent?: boolean; recurringChargeOf?: number | null };
+  order: Pick<FulfillableOrder, "id" | "tariffKey" | "recurringConsent" | "recurringChargeOf" | "points" | "changeKind" | "periodEndsAt" | "createdAt">;
 }): Promise<Date> {
   // Тариф живёт на аккаунте (сеть платит один раз): оплаченный срок
   // считаем от самого позднего из концов — организации и аккаунта.
@@ -251,12 +272,14 @@ async function extendOrganization(args: {
     accountEnd && (!args.currentEnd || accountEnd.getTime() > args.currentEnd.getTime())
       ? accountEnd
       : args.currentEnd;
-  const subscriptionEnd = extendFrom(base, args.periodDays);
   const { order } = args;
+  const plan: PaidPlanUpdate | null = planAfterPayment({ order, currentEnd: base, now: new Date() });
+  const subscriptionEnd = plan?.subscriptionEnd ?? extendFrom(base, args.periodDays);
+  const subscriptionPlan = plan?.tier ?? "paid";
   await db.organization.update({
     where: { id: args.organizationId },
     data: {
-      subscriptionPlan: "paid",
+      subscriptionPlan,
       subscriptionEnd,
       ...(order.recurringConsent && !order.recurringChargeOf
         ? {
@@ -274,13 +297,21 @@ async function extendOrganization(args: {
   if (owner?.accountId) {
     await db.account.update({
       where: { id: owner.accountId },
-      data: { subscriptionPlan: "paid", subscriptionEnd },
+      data: {
+        subscriptionPlan,
+        subscriptionEnd,
+        ...(plan ? { planCycle: plan.cycle, planPoints: plan.points, scheduledPlanJson: Prisma.DbNull } : {}),
+      },
     });
   }
   console.info("[billing] payment extended subscription", {
     organizationId: args.organizationId,
     accountId: owner?.accountId ?? null,
     orderId: order.id,
+    plan: subscriptionPlan,
+    cycle: plan?.cycle ?? null,
+    points: plan?.points ?? null,
+    changeKind: plan?.kind ?? "legacy",
     subscriptionEnd: subscriptionEnd.toISOString(),
   });
   return subscriptionEnd;
@@ -410,6 +441,10 @@ export async function completePaidOrder(order: {
   pointsSpent?: number | null;
   partnerSlug?: string | null;
   referrerOrganizationId?: string | null;
+  points?: number | null;
+  changeKind?: string | null;
+  periodEndsAt?: Date | null;
+  createdAt?: Date | null;
 }): Promise<{ organizationId: string | null; isNewClient: boolean }> {
   // Пополнение баланса — не подписка: не продлеваем, скидку навсегда не
   // привязываем, реферальную награду не запускаем. Баллы уже зачислены в

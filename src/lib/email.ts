@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { closingDocumentFilename } from "@/lib/closing-documents/types";
 import { escapeHtml } from "@/lib/html-escape";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { translatorFor } from "@/i18n/translator";
 import type { Locale } from "@/i18n/locales";
 import type { LoginMethod } from "@/lib/login-device";
@@ -474,7 +474,7 @@ export async function sendWelcomeEmail(params: {
 
   const body = [
     `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.greeting", { name: escapeHtml(name) })}</p>`,
-    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.organizationReady", { organization: escapeHtml(organizationName), employeeCount: FREE_MAX_USERS })}</p>`,
+    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.organizationReady", { organization: escapeHtml(organizationName), trialDays: TRIAL_DAYS })}</p>`,
     `<div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px"><p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#18181b">${t("email.welcome.gettingStarted")}</p>`,
     `<p style="margin:0 0 8px;color:#3f3f46;font-size:14px">1. ${t("email.welcome.stepAreas")}</p>`,
     `<p style="margin:0 0 8px;color:#3f3f46;font-size:14px">2. ${t("email.welcome.stepEquipment")}</p>`,
@@ -939,7 +939,7 @@ export async function buildBlankDownloadEmail(params: {
     ${main ? `<a href="${escapeHtml(main.url)}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${escapeHtml(main.label)}</a><p style="margin:12px 0 0;color:#a1a1aa;font-size:12px;line-height:1.5;word-break:break-all">${t("email.blankDownload.fallbackLinkNotice")} ${escapeHtml(main.url)}</p>` : ""}${moreHtml}${pageHtml}
     <div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:24px 0 0">
       <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#18181b">${t("email.blankDownload.paperlessTitle")}</p>
-      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">${t("email.blankDownload.paperlessBody", { freeTier: t("email.blankDownload.freeTier", { count: FREE_MAX_USERS }) })}</p>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">${t("email.blankDownload.paperlessBody", { freeTier: t("email.blankDownload.freeTier", { count: TRIAL_DAYS }) })}</p>
       <a href="${escapeHtml(registerUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">${t("email.blankDownload.startUsingAction")}</a>
     </div>
     <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">${t("email.blankDownload.disclaimer")}</p>`;

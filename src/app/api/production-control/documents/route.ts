@@ -8,6 +8,7 @@ import {
   productionDocFileType,
 } from "@/lib/production-control-docs";
 import { requireProductionDocsAccess } from "@/lib/production-control-docs.server";
+import { checkStorageForUpload, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,16 @@ export async function POST(request: Request) {
   if (file.size > KNOWLEDGE_MAX_BYTES) {
     return NextResponse.json({ error: "Максимальный размер файла — 25 МБ" }, { status: 413 });
   }
+  // Хранилище тарифа: новый файл встаёт на место прежнего того же вида.
+  const previous = await db.knowledgeDocument.findUnique({
+    where: { organizationId_kind: { organizationId: auth.organizationId, kind } },
+    select: { sizeBytes: true },
+  });
+  const storage = await checkStorageForUpload(auth.organizationId, file.size, {
+    source: `production-control/documents:${kind}`,
+    replacingBytes: previous?.sizeBytes ?? 0,
+  });
+  if (!storage.ok) return limitResponse(storage);
   const content = new Uint8Array(await file.arrayBuffer());
   const mimeType = productionDocFileType(file.name, content);
   if (!mimeType) {

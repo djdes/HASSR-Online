@@ -1,5 +1,5 @@
 import { JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
-import { FREE_PLAN_TITLE, FREE_SEATS_LABEL } from "@/lib/plan-catalog";
+import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 
 /**
  * Draft campaign spec for Yandex.Direct. Loaded by scripts/yandex-direct-setup.ts
@@ -92,7 +92,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "WeSetup — электронные журналы",
             title2: "СанПиН и ХАССП. Бесплатно",
-            text: `${JOURNALS_TOTAL_LABEL}, Telegram-бот, PDF для проверок. ${FREE_PLAN_TITLE}.`,
+            text: `${JOURNALS_TOTAL_LABEL}, Telegram-бот, PDF для проверок. ${FREE_TIER_SHORT}.`,
             href: u("/", "brand", "exact"),
             displayPath: "журналы/бесплатно",
           },
@@ -132,7 +132,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "Гигиенический журнал онлайн",
             title2: "По СанПиН 2.3/2.4.4282-26",
-            text: "Автозаполнение, отметка допуска в один тап, PDF для Роспотребнадзора. Бесплатно навсегда.",
+            text: "Автозаполнение, допуск в один тап, PDF для Роспотребнадзора. 14 дней бесплатно.",
             href: u("/journals-info/hygiene", "journals-daily", "hygiene"),
             displayPath: "гигиена/онлайн",
           },
@@ -327,8 +327,8 @@ export const CAMPAIGNS: CampaignSpec[] = [
         ads: [
           {
             title1: "Журналы СанПиН бесплатно",
-            title2: "Без срока, без карты",
-            text: `${JOURNALS_TOTAL_ELECTRONIC_LABEL} для общепита. ${FREE_SEATS_LABEL} — навсегда бесплатно.`,
+            title2: "14 дней, без карты",
+            text: `${JOURNALS_TOTAL_ELECTRONIC_LABEL} для общепита. ${FREE_TIER_SHORT}, без карты.`,
             href: u("/", "free-tier", "free-main"),
             displayPath: "бесплатно",
           },

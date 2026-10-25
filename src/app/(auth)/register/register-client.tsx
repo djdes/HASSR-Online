@@ -13,6 +13,7 @@ import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox"
 import { BrandLogo } from "@/components/brand/logo";
 import { ArrowRight, CheckCircle2, Gift, Loader2, Sparkles, Ticket } from "lucide-react";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
 import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
@@ -204,7 +205,7 @@ function RegisterScreen({
         <div className="relative z-10 mt-auto max-w-[520px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] uppercase tracking-[0.18em] text-white/70 backdrop-blur">
             <Sparkles className="size-3.5 text-[#7cf5c0]" />
-            {t("register.marketing.foreverFree")}</div>
+            {t("register.marketing.foreverFree", { trialDays: TRIAL_DAYS })}</div>
           <h1 className="text-[46px] font-semibold leading-[1.05] tracking-[-0.03em]">
             {t("register.marketing.instantAccount")}</h1>
           <p className="mt-5 max-w-[440px] text-[16px] leading-[1.6] text-white/70">

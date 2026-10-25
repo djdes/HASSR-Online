@@ -50,6 +50,10 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           auditLogs: true,
         },
       },
+      // Тариф 2026-10 живёт на аккаунте: тариф, период, точки, пробный.
+      account: {
+        select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, trialEndsAt: true },
+      },
     },
   });
 
@@ -156,16 +160,32 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         <dl className="grid grid-cols-1 gap-4 text-[14px] sm:grid-cols-3 sm:gap-6">
           <div>
             <dt className="text-[#8a8ea4]">{t("subscription.plan")}</dt>
-            <dd className="mt-1 font-semibold text-black">{organizationPlan(org.subscriptionPlan, t, legacyPlans)}</dd>
+            <dd className="mt-1 font-semibold text-black">
+              {organizationPlan(
+                org.subscriptionPlan === "paused" || org.subscriptionPlan === "cancelled"
+                  ? org.subscriptionPlan
+                  : (org.account?.subscriptionPlan ?? org.subscriptionPlan),
+                t,
+                legacyPlans
+              )}
+              {org.account?.planCycle ? ` · ${t(org.account.planCycle === "year" ? "subscription.cycleYear" : "subscription.cycleMonth")}` : ""}
+              {org.account ? ` · ${t("subscription.pointsValue", { count: org.account.planPoints })}` : ""}
+            </dd>
           </div>
           <div>
             <dt className="text-[#8a8ea4]">{t("subscription.until")}</dt>
             <dd className="mt-1 font-semibold text-black">
-              {org.subscriptionEnd
-                ? organizationDate(org.subscriptionEnd, locale, true)
+              {(org.account?.subscriptionEnd ?? org.subscriptionEnd)
+                ? organizationDate((org.account?.subscriptionEnd ?? org.subscriptionEnd)!, locale, true)
                 : "—"}
             </dd>
           </div>
+          {org.account?.trialEndsAt ? (
+            <div>
+              <dt className="text-[#8a8ea4]">{t("subscription.trialEnds")}</dt>
+              <dd className="mt-1 font-semibold text-black">{organizationDate(org.account.trialEndsAt, locale, true)}</dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-[#8a8ea4]">{t("subscription.token")}</dt>
             <dd className="mt-1 font-semibold text-black">
@@ -184,8 +204,21 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           <OrgSettingsForm
             organizationId={org.id}
             initialName={org.name}
-            initialPlan={org.subscriptionPlan}
-            initialSubscriptionEnd={org.subscriptionEnd?.toISOString() ?? null}
+            initialPlan={
+              org.subscriptionPlan === "paused" || org.subscriptionPlan === "cancelled"
+                ? org.subscriptionPlan
+                : (org.account?.subscriptionPlan ?? org.subscriptionPlan)
+            }
+            initialSubscriptionEnd={(org.account?.subscriptionEnd ?? org.subscriptionEnd)?.toISOString() ?? null}
+            account={
+              org.account
+                ? {
+                    planCycle: org.account.planCycle === "year" ? "year" : "month",
+                    planPoints: org.account.planPoints,
+                    trialEndsAt: org.account.trialEndsAt?.toISOString() ?? null,
+                  }
+                : null
+            }
           />
         </div>
       </div>

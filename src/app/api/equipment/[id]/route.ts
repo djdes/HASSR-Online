@@ -9,6 +9,7 @@ import { resolveEquipmentArea } from "@/lib/area-building-sync";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { recordAuditLog } from "@/lib/audit-log";
+import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
   applyEquipmentNormToColdConfig,
@@ -137,6 +138,12 @@ export async function PUT(
         : null;
     const extras = await parseEquipmentExtras(body as Record<string, unknown>, getActiveOrgId(session));
     if (!extras.ok) return NextResponse.json({ error: extras.error }, { status: 400 });
+
+    // Новый IoT-датчик — возможность «Премиума»; отвязать можно всегда.
+    if (nextTuyaDeviceId && nextTuyaDeviceId !== equipment.tuyaDeviceId) {
+      const feature = await checkPlanFeature(getActiveOrgId(session), "equipmentConnect", "equipment:update");
+      if (!feature.ok) return limitResponse(feature);
+    }
 
     const updated = await db.equipment.update({
       where: { id },

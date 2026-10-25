@@ -14,6 +14,7 @@ import {
 import { canManageOrderScans, canViewOrderScans, listOrderScans, writeOrderScanAudit } from "@/lib/journal-order-scans-db";
 import { validateOrderScanFile } from "@/lib/journal-order-scans-pdf";
 import { getServerSession } from "@/lib/server-session";
+import { checkStorageForUpload, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +59,9 @@ export async function POST(request: Request) {
 
   const existing = await db.journalOrderScan.count({ where: { organizationId, journalCode: code } });
   if (existing >= ORDER_SCAN_MAX_FILES) return NextResponse.json({ error: ORDER_SCAN_ERRORS.tooMany }, { status: 409 });
+  // Хранилище тарифа (Стандарт 10 МБ на приказы и свои документы) — до чтения файла.
+  const storage = await checkStorageForUpload(organizationId, file.size, { source: `journal-order-scans:${code}` });
+  if (!storage.ok) return limitResponse(storage);
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const checked = await validateOrderScanFile({ bytes, fileName: file.name, declaredMime: file.type });

@@ -24,7 +24,7 @@ export function formatMetricsRelative(date: Date, now: number, t: RootMetricsCop
 }
 
 export function metricsPlanLabel(plan: string, t: RootMetricsCopy) {
-  const known = { free: "plans.free", trial: "plans.trial", paid: "plans.paid", pro: "plans.pro" } as const;
+  const known = { free: "plans.free", trial: "plans.trial", standard: "plans.standard", premium: "plans.premium", paid: "plans.paid", pro: "plans.pro" } as const;
   return Object.hasOwn(known, plan) ? t(known[plan as keyof typeof known]) : plan;
 }
 

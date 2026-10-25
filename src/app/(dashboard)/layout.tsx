@@ -48,6 +48,8 @@ import { listAccessibleOrganizations } from "@/lib/organization-access";
 import { BILLING_TEST_MODE } from "@/lib/plan-limits";
 import { loadBillingView } from "@/lib/billing-view.server";
 import { buildCabinetPlanCard } from "@/lib/cabinet-plan";
+import { readActivePromotion } from "@/lib/promo/offer";
+import { DEFAULT_PLAN_RATES } from "@/lib/tariff-plans";
 import { readActiveLifetimeDiscount } from "@/lib/promo/checkout";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { BillingAnnouncement } from "@/components/billing/billing-announcement";
@@ -280,16 +282,16 @@ export default async function DashboardLayout({
           return null;
         })
       : null;
+  // Действующая акция (ROOT → «Акции») — та же, что на странице тарифа.
+  const promotion = showPlanDetails && billing ? await readActivePromotion().catch(() => null) : null;
   const cabinetPlan = buildCabinetPlanCard({
     state: billing?.state ?? null,
-    settings: billing?.settings ?? null,
     plan: billing?.header.plan ?? accountPlan,
     // Без расчёта тарифа — только название и ссылка.
     exempt: billing ? billing.unit.exempt : true,
-    organizationsCount: billing?.unit.scopeOrgIds.length ?? 0,
     employees: billing?.unit.activeUsers ?? 0,
-    tariffRub: billing?.nowPrice.baseRub ?? 0,
-    promotion: billing?.nowPrice.promotion ?? null,
+    rates: billing?.pricing.rates ?? DEFAULT_PLAN_RATES,
+    promotion,
     personal: lifetimeDiscount,
     canManagePlan,
     inMobileApp,

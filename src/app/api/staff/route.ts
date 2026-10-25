@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   );
   if (!result.ok) {
     return NextResponse.json(
-      { error: result.error, code: result.code, payUrl: result.payUrl },
+      { error: result.error, code: result.code, payUrl: result.payUrl, limit: result.limit },
       { status: result.status }
     );
   }

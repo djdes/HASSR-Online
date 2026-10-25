@@ -2,21 +2,21 @@ import RegisterClient from "./register-client";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { siteLanguageAlternates, localizedHref } from "@/i18n/site-locale";
 import { translatorFor } from "@/i18n/translator";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import {
   DEFAULT_OG_IMAGES,
   DEFAULT_TWITTER_CARD,
   DEFAULT_TWITTER_IMAGES,
 } from "@/lib/meta-defaults";
 import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
-import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
+import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 import { discountLabel } from "@/lib/promo/discounts";
 import { promoLinkStatus } from "@/lib/promo/personal-codes";
 import { linkSphere } from "@/lib/promo/personal-link";
 
 const TITLE = "Регистрация организации";
 const DESC =
-  `Создайте бесплатный аккаунт WeSetup за 5 минут. ${FREE_SEATS_LABEL} — бесплатно навсегда. Все ${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП включены.`;
+  `Создайте аккаунт WeSetup за 5 минут: ${FREE_TIER_SHORT}, без карты. Все ${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП включены.`;
 const URL = "https://wesetup.ru/register";
 
 const russianMetadata = {
@@ -44,7 +44,7 @@ export async function generateMetadata() {
   const locale = await getSiteLocale();
   const t = await translatorFor(locale);
   const title = t("auth.metadata.registerTitle");
-  const description = t("auth.metadata.registerDescription", { users: FREE_MAX_USERS });
+  const description = t("auth.metadata.registerDescription", { trialDays: TRIAL_DAYS });
   const url = `https://wesetup.ru${localizedHref("/register", locale)}`;
   return {
     ...russianMetadata, title, description,

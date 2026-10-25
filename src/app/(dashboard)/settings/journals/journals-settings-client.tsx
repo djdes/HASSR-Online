@@ -48,6 +48,7 @@ import {
   type ElectronicRule,
   type PaperJournal,
 } from "@/lib/sphere-journal-rules";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 type Position = { id: string; name: string; categoryKey: string };
 type StaffUser = { id: string; name: string; jobPositionId: string | null };
@@ -118,6 +119,7 @@ export function JournalsSettingsClient({
   const FILL_MODE_LABELS = useFillModeLabels();
   const basisNote = useBasisNote();
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [state, setState] = useState<Record<string, boolean>>(
     Object.fromEntries(items.map((item) => [item.code, item.enabled]))
   );
@@ -376,6 +378,8 @@ export function JournalsSettingsClient({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
+        // Бесплатный тариф — один журнал: toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(data)) return;
         throw new Error(data?.error || t("settingsSaveFailed"));
       }
       toast.success(

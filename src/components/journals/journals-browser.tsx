@@ -68,6 +68,7 @@ import {
   Biohazard,
 } from "lucide-react";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 type JournalTemplateListItem = {
   id: string;
@@ -447,6 +448,7 @@ function TemplateCard({
 }) {
   const ui = useTranslations("journals.ui.browser");
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [hideConfirmOpen, setHideConfirmOpen] = useState(false);
   const [toggling, setToggling] = useState(false);
   const Icon = JOURNAL_ICONS[template.code] ?? NotebookPen;
@@ -465,6 +467,8 @@ function TemplateCard({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        // Бесплатный тариф — один журнал: toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(body)) return;
         throw new Error(body?.error || ui("settingSaveFailed"));
       }
       toast.success(successText);
