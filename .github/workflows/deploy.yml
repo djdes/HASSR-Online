@@ -177,26 +177,82 @@ jobs:
       - name: Report tarball size
         run: echo "deploy.tar — $(du -h deploy.tar | cut -f1)"
 
+      # Деплой #2029 (2026-10-24) упал на разовом `dial tcp …: i/o timeout`
+      # ещё до выгрузки: сайт работал, а SSH из Actions на полминуты пропал.
+      # Сначала ждём, пока порт ответит (до ~3 мин), а `mkdir -p` и SCP при
+      # неудаче повторяем один раз: их можно повторять без вреда. Шаги
+      # деплоя на сервере не повторяем — шаг 1 удаляет архив после
+      # распаковки, шаг 3 меняет БД и перезапускает сайт.
+      - name: Wait for SSH
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: bash scripts/wait-for-port.sh "$SSH_HOST" "${SSH_PORT:-22}"
+
       - name: Prepare app directory
+        id: prepare
+        continue-on-error: true
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_SSH_HOST }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           password: ${{ secrets.DEPLOY_SSH_PASS }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
+          timeout: 60s
           # Копия .env — в шаге 1/3, прямо перед распаковкой: выгрузка идёт
           # параллельно с гейтом, и ранняя копия затёрла бы правку .env,
           # сделанную на сервере за эти минуты.
           script: |
             mkdir -p ${{ env.APP_DIR }}
 
+      - name: Wait for SSH before retry (prepare)
+        if: steps.prepare.outcome == 'failure'
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: sleep 20 && bash scripts/wait-for-port.sh "$SSH_HOST" "${SSH_PORT:-22}"
+
+      - name: Prepare app directory (retry)
+        if: steps.prepare.outcome == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          password: ${{ secrets.DEPLOY_SSH_PASS }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          script: |
+            mkdir -p ${{ env.APP_DIR }}
+
       - name: Upload tarball via SCP
+        id: scp
+        continue-on-error: true
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_SSH_HOST }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           password: ${{ secrets.DEPLOY_SSH_PASS }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          source: deploy.tar
+          target: ${{ env.APP_DIR }}
+
+      - name: Wait for SSH before retry (upload)
+        if: steps.scp.outcome == 'failure'
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: sleep 20 && bash scripts/wait-for-port.sh "$SSH_HOST" "${SSH_PORT:-22}"
+
+      - name: Upload tarball via SCP (retry)
+        if: steps.scp.outcome == 'failure'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          password: ${{ secrets.DEPLOY_SSH_PASS }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          timeout: 60s
           source: deploy.tar
           target: ${{ env.APP_DIR }}
 
@@ -250,6 +306,18 @@ jobs:
               exit 1 ;;
           esac
           echo "::warning::На проде ${serving:0:8} — коммит не из master. Выкатываем master."
+
+      # Скрипт ожидания порта — из репозитория, остальное этому job'у не нужно.
+      - name: Checkout deploy scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+
+      - name: Wait for SSH
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: bash scripts/wait-for-port.sh "$SSH_HOST" "${SSH_PORT:-22}"
 
       - name: Deploy step 1/3 — setup (extract + npm ci + prisma)
         uses: appleboy/ssh-action@v1
@@ -723,6 +791,10 @@ jobs:
               echo "[swap] .next-build отсутствует — шаг 2 не подготовил сборку"
               exit 1
             fi
+            # Версия, которую сайт обслуживает сейчас: к ней откатимся,
+            # если новая сборка не пройдёт проверку после рестарта.
+            PREVIOUS_BUILD=$(curl -fsS --max-time 10 http://127.0.0.1:3002/api/build-info 2>/dev/null | sed -nE 's/.*"fullBuildId":"([^"]*)".*/\1/p' || true)
+            echo "[swap] сейчас на сайте: ${PREVIOUS_BUILD:-версия неизвестна}"
             rm -rf .next-previous
             # Не `[ -d .next ] && mv …`: при `set -e` ложное условие
             # уронило бы весь шаг на первом деплое, когда каталога ещё
@@ -783,10 +855,21 @@ jobs:
               echo "[prewarm] script failed — non-fatal, продолжаем"
             fi
 
+            echo "=== Проверка новой сборки ==="
+            # Сайт должен отдавать выкатанный коммит, а `/` и `/login` —
+            # отвечать без 5xx. Нет — возвращаем предыдущую сборку сами,
+            # без ручного разбора, и деплой падает (уведомление — ниже).
+            if ! bash scripts/post-deploy-check.sh http://127.0.0.1:3002 "$GITHUB_SHA"; then
+              echo "=== Откат на предыдущую сборку ==="
+              bash scripts/deploy-rollback.sh http://127.0.0.1:3002 "$PREVIOUS_BUILD" || echo "[rollback] не удался — нужен ручной разбор"
+              echo "[FATAL] новая сборка не прошла проверку после рестарта — прод возвращён на ${PREVIOUS_BUILD:-предыдущую сборку}"
+              exit 1
+            fi
+
             echo "=== Уборка предыдущей сборки ==="
-            # Держали её до этого момента на случай, если рестарт или
-            # прогрев упадут и придётся возвращаться руками.
-            rm -rf .next-previous 2>/dev/null || true
+            # Держали её до этого момента для отката, если проверка выше
+            # не пройдёт.
+            rm -rf .next-previous .next-failed 2>/dev/null || true
 
             echo "=== Deploy complete ==="
 

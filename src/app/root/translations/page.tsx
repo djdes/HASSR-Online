@@ -6,11 +6,12 @@ import { TranslatorsPanel } from "@/components/translations/translators-panel";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { listCategoryStats } from "@/lib/translations/editor.server";
+import { parseTranslationView } from "@/lib/translations/view";
 
 export const dynamic = "force-dynamic";
 
 /** Переводы интерфейса: редактор каталогов ru/en/uz и список переводчиков. */
-export default async function RootTranslationsPage() {
+export default async function RootTranslationsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireRoot();
   const [t, categories, translators] = await Promise.all([
     getTranslations("translationEditor"),
@@ -21,6 +22,7 @@ export default async function RootTranslationsPage() {
       orderBy: { email: "asc" },
     }),
   ]);
+  const initialView = parseTranslationView(await searchParams, { known: new Set(categories.map((item) => item.id)), fallback: categories[0]?.id ?? "all" });
   return (
     <DomainMessagesBoundary namespaces={["translationEditor"]}>
       <div className="space-y-5">
@@ -30,7 +32,7 @@ export default async function RootTranslationsPage() {
           <p className="mt-1 hidden max-w-[760px] text-[14px] leading-relaxed text-[#6f7282] sm:block">{t("description")}</p>
         </div>
         <TranslatorsPanel initial={translators} />
-        <TranslationEditor initialCategories={categories} />
+        <TranslationEditor initialCategories={categories} initialView={initialView} />
       </div>
     </DomainMessagesBoundary>
   );

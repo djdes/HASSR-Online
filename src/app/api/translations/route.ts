@@ -1,24 +1,30 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getTranslationActor, listEntries, saveOverride } from "@/lib/translations/editor.server";
+import { getEntries, getTranslationActor, listCandidateKeys, listEntries, saveOverride } from "@/lib/translations/editor.server";
 import { MAX_SEARCH_LENGTH } from "@/lib/translations/search";
+import { TRANSLATION_FILTERS } from "@/lib/translations/view";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * Редактор переводов интерфейса (ROOT и переводчики).
- *   GET  ?category=&q=&filter=all|modified|untranslated&offset=&limit= — страница строк
- *        каталога (по умолчанию 100); без `category` — по всему каталогу (глобальный поиск);
+ *   GET  ?category=&q=&filter=all|modified|untranslated|stale&offset=&limit= — страница строк
+ *        каталога (по умолчанию 100) и число кандидатов на автоперевод во всём разделе;
+ *        без `category` — по всему каталогу (глобальный поиск);
+ *        + `candidates=en|uz` — вместо страницы все ключи раздела, ждущие автоперевода;
+ *   GET  ?key= — одна строка (открытие строки по ссылке);
  *   PUT  { key, locale, value } — правка; пустое или равное файлу значение — сброс.
  */
 
 const ListQuery = z.object({
   category: z.string().max(120).optional(),
   q: z.string().max(MAX_SEARCH_LENGTH).optional(),
-  filter: z.enum(["all", "modified", "untranslated"]).optional(),
+  filter: z.enum(TRANSLATION_FILTERS).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
+  candidates: z.enum(["en", "uz"]).optional(),
+  key: z.string().min(1).max(300).optional(),
 });
 
 const SaveBody = z.object({
@@ -33,7 +39,17 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const parsed = ListQuery.safeParse(Object.fromEntries(url.searchParams));
   if (!parsed.success) return NextResponse.json({ error: "bad_request" }, { status: 400 });
-  const result = await listEntries({ ...parsed.data, category: parsed.data.category || undefined });
+  const { candidates, key, ...query } = parsed.data;
+  if (key) {
+    const [entry] = await getEntries([key]);
+    return entry ? NextResponse.json({ entry }) : NextResponse.json({ error: "unknown_key" }, { status: 404 });
+  }
+  const scope = { ...query, category: query.category || undefined };
+  if (candidates) {
+    const keys = await listCandidateKeys(scope, candidates);
+    return keys ? NextResponse.json({ keys }) : NextResponse.json({ error: "unknown_category" }, { status: 404 });
+  }
+  const result = await listEntries(scope);
   if (!result) return NextResponse.json({ error: "unknown_category" }, { status: 404 });
   return NextResponse.json(result);
 }

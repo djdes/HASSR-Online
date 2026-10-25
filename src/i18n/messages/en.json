@@ -22347,7 +22347,8 @@
     "filters": {
       "all": "All",
       "modified": "Edited",
-      "untranslated": "Untranslated"
+      "untranslated": "Untranslated",
+      "stale": "Outdated"
     },
     "rowState": {
       "modified": "Edited",
@@ -22364,7 +22365,11 @@
       "reset": "Restore original",
       "auto": "Auto-translate",
       "autoBatch": "Auto-translate: {language} ({count})",
-      "undo": "Undo edit"
+      "undo": "Undo edit",
+      "saveNext": "Save and next",
+      "next": "Next",
+      "copyLink": "Copy link",
+      "stop": "Stop"
     },
     "autoBusy": "Translating… {done} of {total}",
     "loading": "Loading…",
@@ -22382,7 +22387,7 @@
       "position": "{index} of {count}",
       "previous": "Previous string",
       "next": "Next string",
-      "shortcut": "Ctrl+Enter to save"
+      "shortcut": "Ctrl+Enter — save and next · Alt+↑/↓ — neighbouring string"
     },
     "toasts": {
       "saved": "Saved",
@@ -22390,7 +22395,9 @@
       "reset": "Original text restored",
       "autoDone": "Draft translations: {count}. Review and save.",
       "autoRejected": "Strings not translated: {count}",
-      "autoSkipped": "Skipped rows edited by hand: {count}"
+      "autoSkipped": "Skipped rows edited by hand: {count}",
+      "linkCopied": "Link to the string copied",
+      "autoStopped": "Auto-translate stopped: {done} of {total}"
     },
     "errors": {
       "forbidden": "No access to translations",
@@ -22417,7 +22424,22 @@
       "granted": "Access granted",
       "revoked": "Access revoked"
     },
-    "staleHint": "The Russian text was changed after this edit — please check the translation."
+    "staleHint": "The Russian text was changed after this edit — please check the translation.",
+    "autoWaiting": "Auto-translate limit — continuing in {seconds} s",
+    "autoScope": "Auto-translate takes every untranslated string of the section or search, not just this page; the result is drafts.",
+    "history": {
+      "show": "Edit history",
+      "hide": "Hide history",
+      "empty": "No edits yet",
+      "error": "Could not load the history",
+      "before": "Was",
+      "after": "Became",
+      "reset": "reset to the file text",
+      "restore": "Restore this version",
+      "restoreBefore": "Restore the previous text",
+      "unknownUser": "Unknown author",
+      "restored": "{language}: text filled in — check it and save"
+    }
   },
   "journalUi": {
     "photoCapture": {

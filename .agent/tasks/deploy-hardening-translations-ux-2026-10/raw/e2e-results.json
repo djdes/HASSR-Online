@@ -1,0 +1,131 @@
+{
+  "when": "2026-10-25T08:54:27.233Z",
+  "base": "http://localhost:3000",
+  "checks": [
+    {
+      "name": "phone: four filters, labels not cut",
+      "ok": true,
+      "detail": "[true,true,true,true]"
+    },
+    {
+      "name": "phone: no horizontal scroll",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: first row on the first screen",
+      "ok": true,
+      "detail": "y=558 of 664"
+    },
+    {
+      "name": "phone: section in the address",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?section=navigation"
+    },
+    {
+      "name": "phone: page in the address",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?section=navigation&page=2"
+    },
+    {
+      "name": "phone: open row in the address",
+      "ok": true,
+      "detail": "navigation.shell.menus.journals.items.verify"
+    },
+    {
+      "name": "phone: position counts the whole section",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone: «Назад» closes the row editor and keeps page 2",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?section=navigation&page=2"
+    },
+    {
+      "name": "phone: «Назад» again — page 1 of the section",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?section=navigation"
+    },
+    {
+      "name": "phone: link opens section, page and the string",
+      "ok": true,
+      "detail": "navigation.shell.menus.journals.items.today"
+    },
+    {
+      "name": "phone: closing a linked row removes it from the address",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?section=navigation&page=3"
+    },
+    {
+      "name": "desktop: «Устарели» shows only the stale string",
+      "ok": true,
+      "detail": "hygiene.table.qrPosters"
+    },
+    {
+      "name": "desktop: history shows the latest edit first (ru)",
+      "ok": true,
+      "detail": "RU | Администратор"
+    },
+    {
+      "name": "desktop: «Вернуть прежний текст» puts the old text into a draft",
+      "ok": true,
+      "detail": "QR posters"
+    },
+    {
+      "name": "desktop: «Скопировать ссылку» copies the address with the string",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?filter=stale&key=hygiene.table.qrPosters"
+    },
+    {
+      "name": "desktop: Ctrl+Enter saves and opens the next string",
+      "ok": true,
+      "detail": "navigation.shell.sections.staff"
+    },
+    {
+      "name": "desktop: Alt+↓ — next string",
+      "ok": true,
+      "detail": "navigation.shell.sections.points"
+    },
+    {
+      "name": "desktop: last row of the page is 100 of 446",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: «Далее» on the last row opens the first string of the next page",
+      "ok": true,
+      "detail": "navigation.shell.menus.journals.items.today"
+    },
+    {
+      "name": "desktop: auto-translate counts the whole scope, not the page",
+      "ok": true,
+      "detail": "Автоперевод: English (237), rows 256"
+    },
+    {
+      "name": "desktop: 429 — waits and shows the countdown",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "desktop: every candidate of the scope got a draft",
+      "ok": true,
+      "detail": "237 keys, 9 calls, «Сохранить всё (237)»"
+    },
+    {
+      "name": "desktop: drafts are on the other pages too",
+      "ok": true,
+      "detail": "93 rows with drafts on page 2"
+    },
+    {
+      "name": "desktop: «Остановить» stops after the current batch",
+      "ok": true,
+      "detail": "60 of 237"
+    },
+    {
+      "name": "desktop: no horizontal scroll",
+      "ok": true,
+      "detail": null
+    }
+  ]
+}

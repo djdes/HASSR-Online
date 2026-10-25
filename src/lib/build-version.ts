@@ -67,3 +67,19 @@ export function buildCheckAction(params: {
   if ((reason === "start" || reason === "navigation") && mayReload) return "reload";
   return params.notified ? "none" : "notify";
 }
+
+/**
+ * Версия для `/api/health`: вшитая в сборку, как у `/api/build-info`.
+ * `.build-sha` деплой пишет в самом начале — при упавшем деплое файл
+ * называл версию, которой на сайте нет (2026-10-24: health показывал
+ * `f81bbea`, а работала другая сборка). Файл — запасной вариант и
+ * отдельное поле `buildShaOnDisk`, когда расходится с работающей сборкой.
+ */
+export function healthBuildSha(sources: { baked?: string | null; env?: string | null; file?: string | null }): {
+  buildSha: string;
+  buildShaOnDisk?: string;
+} {
+  const serving = normalizeBuildId(sources.baked) ?? normalizeBuildId(sources.env) ?? normalizeBuildId(sources.file) ?? "unknown";
+  const onDisk = normalizeBuildId(sources.file);
+  return onDisk && onDisk !== serving ? { buildSha: serving, buildShaOnDisk: onDisk } : { buildSha: serving };
+}
