@@ -33,8 +33,11 @@ export const FREE_MAX_JOURNALS = 1;
 export const FREE_MAX_POINTS = 1;
 /** Сотрудников на одну оплаченную точку. */
 export const SEATS_PER_POINT = 25;
-/** Верхняя граница выбора точек на витрине и в заказе — от опечаток. */
-export const MAX_POINTS = 50;
+/**
+ * Верхняя граница выбора точек на витрине и в заказе — от опечаток, с
+ * запасом на крупные сети: заказ не может быть меньше точек в работе.
+ */
+export const MAX_POINTS = 500;
 /** С какого числа точек действует скидка и какая. */
 export const POINTS_DISCOUNT_FROM = 3;
 export const POINTS_DISCOUNT_PERCENT = 5;

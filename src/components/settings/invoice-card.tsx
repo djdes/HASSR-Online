@@ -68,12 +68,18 @@ export function InvoiceCard({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [selectedKey, setSelectedKey] = useState(defaultKey);
+  // Сумма, которую сервер назвал при отказе «сумма изменилась»: её и
+  // показываем, и сверяем при следующем нажатии.
+  const [serverTotal, setServerTotal] = useState<{ key: string; rub: number } | null>(null);
   const option = options.find((item) => item.key === selectedKey) ?? options[0];
   if (!ready || !option) return null;
 
   const rub = (value: number) => `${value.toLocaleString(locale)} ₽`;
   const price = applyPromotion(option.amountRub, promotion);
-  const totalRub = Math.max(0, price.priceRub - (discount ? discountForPrice(discount, price.priceRub) : 0));
+  const totalRub =
+    serverTotal?.key === option.key
+      ? serverTotal.rub
+      : Math.max(0, price.priceRub - (discount ? discountForPrice(discount, price.priceRub) : 0));
 
   async function issue() {
     setBusy(true);
@@ -86,9 +92,14 @@ export function InvoiceCard({
           cycle: option.cycle,
           points: option.points,
           ...(promoCode ? { promoCode } : {}),
+          // Сверка с суммой на экране: сервер считает сам и откажет, если она изменилась.
+          expectedGrossRub: totalRub,
         }),
       });
-      const data = (await response.json().catch(() => null)) as { error?: string; orderId?: number; pdfUrl?: string } | null;
+      const data = (await response.json().catch(() => null)) as
+        | { error?: string; orderId?: number; pdfUrl?: string; grossRub?: number }
+        | null;
+      if (typeof data?.grossRub === "number") setServerTotal({ key: option.key, rub: data.grossRub });
       if (!response.ok || !data?.orderId) throw new Error(data?.error ?? t("issueFailed"));
       toast.success(t("issued", { id: data.orderId }));
       if (data.pdfUrl) window.open(data.pdfUrl, "_blank", "noopener");

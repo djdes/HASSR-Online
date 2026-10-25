@@ -166,9 +166,16 @@ export async function getAllOrgMetrics(
       createdAt: true,
       balanceRub: true,
       _count: { select: { journalDocuments: true } },
+      accountId: true,
       account: { select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true } },
     },
   });
+  // Тариф живёт на аккаунте (сеть платит один раз): его MRR — у самой
+  // старой организации аккаунта, у остальных 0, иначе сумма на дашборде
+  // задваивалась бы. Список отсортирован от новых к старым — последняя
+  // запись по аккаунту и есть самая старая.
+  const mrrOrgByAccount = new Map<string, string>();
+  for (const org of orgs) if (org.accountId) mrrOrgByAccount.set(org.accountId, org.id);
 
   const since30 = new Date(refDate.getTime() - 30 * DAY_MS);
   const since7 = new Date(refDate.getTime() - 7 * DAY_MS);
@@ -305,7 +312,8 @@ export async function getAllOrgMetrics(
       .reduce<Date | null>((latest, d) => (latest && latest > d ? latest : d), null);
     const isPaid = Boolean(paidUntil && paidUntil > refDate) && plan !== "paused" && plan !== "cancelled" && plan !== "free";
     const cycle = isBillingCycle(org.account?.planCycle) ? org.account.planCycle : "month";
-    const actualMrrRub = !isPaid
+    const countsAccountMrr = !org.accountId || mrrOrgByAccount.get(org.accountId) === org.id;
+    const actualMrrRub = !isPaid || !countsAccountMrr
       ? 0
       : isPaidTier(plan)
         ? planMonthlyRub(pricing.rates, plan, cycle, org.account?.planPoints ?? 1)

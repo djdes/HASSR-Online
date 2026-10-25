@@ -58,8 +58,6 @@ export type TrialSettings = {
 const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const TRIAL_DAYS_MIN = 1;
-export const TRIAL_DAYS_MAX = 90;
 export const GRACE_DAYS_MIN = 0;
 export const GRACE_DAYS_MAX = 60;
 /** За сколько дней до конца пробного напоминаем владельцу. */
@@ -94,7 +92,10 @@ function intInRange(value: unknown, min: number, max: number): number | null {
 export function normalizeTrialSettings(raw: unknown): TrialSettings {
   const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   return {
-    trialDays: intInRange(r.trialDays, TRIAL_DAYS_MIN, TRIAL_DAYS_MAX) ?? DEFAULT_TRIAL_SETTINGS.trialDays,
+    // Длина пробного — та, что обещают витрина, письма и SEO-страницы
+    // (`TRIAL_DAYS`); сохранённое число не читаем, чтобы срок и тексты не
+    // разошлись. Отдельному аккаунту ROOT продлевает его `Account.trialEndsAt`.
+    trialDays: TRIAL_DAYS,
     launchedAt: parseDate(r.launchedAt) ?? DEFAULT_TRIAL_SETTINGS.launchedAt,
     graceDays: intInRange(r.graceDays, GRACE_DAYS_MIN, GRACE_DAYS_MAX) ?? DEFAULT_TRIAL_SETTINGS.graceDays,
     transitionEnabled:
@@ -112,7 +113,6 @@ export function serializeTrialSettings(settings: TrialSettings): string {
 }
 
 export type TrialSettingsInput = {
-  trialDays: unknown;
   launchedAt: unknown;
   graceDays: unknown;
   transitionEnabled: unknown;
@@ -122,10 +122,6 @@ export type TrialSettingsInput = {
 export function validateTrialInput(
   input: TrialSettingsInput
 ): { ok: true; value: TrialSettings } | { ok: false; error: string } {
-  const trialDays = intInRange(input.trialDays, TRIAL_DAYS_MIN, TRIAL_DAYS_MAX);
-  if (trialDays === null) {
-    return { ok: false, error: `Пробный период — целое число дней от ${TRIAL_DAYS_MIN} до ${TRIAL_DAYS_MAX}` };
-  }
   const launchedAt = parseDate(input.launchedAt);
   if (!launchedAt) return { ok: false, error: "Укажите дату запуска тарифов" };
   const graceDays = intInRange(input.graceDays, GRACE_DAYS_MIN, GRACE_DAYS_MAX);
@@ -135,7 +131,7 @@ export function validateTrialInput(
   if (typeof input.transitionEnabled !== "boolean") {
     return { ok: false, error: "Не указано, включён ли переход на оплату" };
   }
-  return { ok: true, value: { trialDays, launchedAt, graceDays, transitionEnabled: input.transitionEnabled } };
+  return { ok: true, value: { trialDays: TRIAL_DAYS, launchedAt, graceDays, transitionEnabled: input.transitionEnabled } };
 }
 
 /**
@@ -575,6 +571,12 @@ export function formatMskDay(date: Date): string {
   return `${day} ${MONTHS_GENITIVE[month]}`;
 }
 
+/** «13 мая 2027» — сроки оплаты, где год не очевиден (год вперёд, продление). */
+export function formatMskDate(date: Date): string {
+  const { day, month, year } = mskParts(date);
+  return `${day} ${MONTHS_GENITIVE[month]} ${year}`;
+}
+
 /** Ключ дня по Москве «2026-10-01» — для «скрыть на сегодня». */
 export function mskDayKey(date: Date): string {
   const { day, month, year } = mskParts(date);
@@ -687,7 +689,7 @@ export function transitionCopy(args: {
   const freeLimits = `${employeesLabel(FREE_MAX_USERS)} и ${journalsLabel(FREE_MAX_JOURNALS)}`;
   const lead = expired
     ? `Оплаченный срок подписки закончился. ${now}, а на бесплатном тарифе — ${freeLimits}.`
-    : `14 дней всё было открыто бесплатно. ${now}, а на бесплатном тарифе — ${freeLimits}.`;
+    : `${daysLabel(TRIAL_DAYS)} всё было открыто бесплатно. ${now}, а на бесплатном тарифе — ${freeLimits}.`;
   const graceLine = state.graceEndsAt
     ? state.graceExpired
       ? "Срок выбора прошёл: скоро в работе останутся только владелец аккаунта и самый заполняемый журнал. Вернуть остальных можно после оплаты."

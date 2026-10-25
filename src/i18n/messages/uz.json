@@ -5387,7 +5387,7 @@
     "refundTerms": "Shartlar oferta shartnomasida keltirilgan",
     "faqHeading": "Ko‘p beriladigan savollar",
     "finalCtaHeading": "QR-stikerni joylashtiring — jurnallar uskuna yonida yuritiladi",
-    "finalCtaDetails": "Bepul tarif muddatsiz va bank kartasisiz ishlaydi. Stikerlarni kabinetdan chop eting; xodimlarga hech narsa o‘rnatish kerak emas.",
+    "finalCtaDetails": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va bank kartasisiz. Stikerlarni kabinetdan chop eting; xodimlarga hech narsa o‘rnatish kerak emas.",
     "qrCameraInstruction": "Xodim jurnalni qanday ochishini ko‘rish uchun telefon kamerangizni shu yerga qarating.",
     "faq": {
       "refund": {
@@ -20651,7 +20651,7 @@
         "label": "bir martalik bonus",
         "body": "mijozning obuna uchun {bonusAfterPayments}-to‘lovidan keyin"
       },
-      "note1": "Misol: 1 990 ₽ lik obuna → har bir to‘lov uchun hamkorga {subscriptionRewardRub}.",
+      "note1": "Misol: «Standart» oyma-oy {subscriptionRub} → har bir to‘lov uchun hamkorga {subscriptionRewardRub}.",
       "note2": "17 750 ₽ lik uskuna → {hardwareRewardRub}.",
       "note3": "Mijozga pul qaytarilsa, aynan shu summa bekor qilinadi. Oy davomida hisoblangan mukofotlar keyingi oyning 1-kunida “to‘lanishi kerak” holatiga o‘tadi.",
       "note4": "Eng kam to‘lov — {minPayoutRub}; bundan kichik summa keyingi oyga o‘tkaziladi."

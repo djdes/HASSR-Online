@@ -41,7 +41,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type CreateInvoiceResult =
   | { ok: true; order: PaymentOrder; created: boolean }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; grossRub?: number };
 
 function legalProfileOf(raw: unknown): LegalProfile | null {
   if (!raw || typeof raw !== "object") return null;
@@ -68,6 +68,8 @@ export async function createInvoiceOrder(args: {
   email: string;
   /** Тариф, период и точки — сумму по виду перехода посчитает `quoteCheckout`. */
   target: CheckoutTarget;
+  /** Сумма, которую человек видел в кабинете, — сверка, не сумма счёта. */
+  expectedGrossRub?: number | null;
   /** Введённый промокод (или код из ссылки); проверит и посчитает сервер. */
   promoCode?: string | null;
 }): Promise<CreateInvoiceResult> {
@@ -124,6 +126,16 @@ export async function createInvoiceOrder(args: {
       ok: false,
       status: 400,
       error: "Скидка закрывает всю сумму — счёт не нужен. Оформите подписку на странице оплаты",
+    };
+  }
+  // Как у оплаты картой: счёт фиксирует сумму, и она должна совпасть с
+  // показанной (закончилась акция, сменился тариф за время на странице).
+  if (typeof args.expectedGrossRub === "number" && Math.round(args.expectedGrossRub) !== amounts.grossRub) {
+    return {
+      ok: false,
+      status: 409,
+      error: `Сумма изменилась: теперь ${amounts.grossRub.toLocaleString("ru-RU")} ₽. Проверьте её и выставьте счёт ещё раз`,
+      grossRub: amounts.grossRub,
     };
   }
 
@@ -186,7 +198,14 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
   ]);
   if (!organization) return null;
   const draft = buildInvoiceDraft({
-    order: { id: order.id, createdAt: order.createdAt, amountRub: Number(order.amountRub), bundleConfig: order.bundleConfig },
+    order: {
+      id: order.id,
+      createdAt: order.createdAt,
+      amountRub: Number(order.amountRub),
+      bundleConfig: order.bundleConfig,
+      changeKind: order.changeKind,
+      periodEndsAt: order.periodEndsAt,
+    },
     tariff: tariff
       ? {
           title: planTariffTitle(order.tariffKey, order.points) ?? tariff.title,

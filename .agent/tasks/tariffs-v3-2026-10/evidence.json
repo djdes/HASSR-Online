@@ -17,14 +17,29 @@
     "AC12": "PASS"
   },
   "checks": {
-    "typecheck": { "exit": 0, "errors": 0 },
-    "test_gate": { "pass": 4771, "fail": 0 },
-    "i18n_check": { "exit": 0, "pass": 95, "fail": 0 },
-    "eslint_changed_files": { "files": 140, "errors": 0, "warnings_preexisting": 2 },
+    "typecheck": {
+      "exit": 0,
+      "errors": 0
+    },
+    "test_gate": {
+      "pass": 4774,
+      "fail": 0
+    },
+    "i18n_check": {
+      "exit": 0,
+      "pass": 95,
+      "fail": 0
+    },
+    "eslint_changed_files": {
+      "files": "diff of round-1 fixes + original 140",
+      "errors": 0,
+      "warnings_preexisting": 2
+    },
     "live_local_build": {
       "pages_status_200": 15,
       "browser_page_errors": 0,
-      "api_checks": "raw/api-check.txt"
+      "api_checks": "raw/api-check.txt",
+      "round1_fixes": "raw/round1-check.txt"
     }
   },
   "prices_default_rub_per_month": {
@@ -33,10 +48,22 @@
     "premium_month": 5000,
     "premium_year": 3990
   },
-  "points_discount": { "from_points": 3, "percent": 5 },
+  "points_discount": {
+    "from_points": 3,
+    "percent": 5
+  },
   "trial_days": 14,
-  "free_after_trial": { "employees": 1, "journals": 1, "points": 1, "storage_bytes": 0 },
-  "storage": { "standard": "10 MB", "premium": "1 GB", "trial": "1 GB" },
+  "free_after_trial": {
+    "employees": 1,
+    "journals": 1,
+    "points": 1,
+    "storage_bytes": 0
+  },
+  "storage": {
+    "standard": "10 MB",
+    "premium": "1 GB",
+    "trial": "1 GB"
+  },
   "ppk_individual_from_rub": 10000,
   "schema_changes": [
     "Account.planCycle String?",
@@ -70,5 +97,46 @@
     "raw/screenshots/package-standard-1280.jpg",
     "raw/screenshots/package-premium-1280.jpg",
     "raw/screenshots/ppk-overview-standard-1280.jpg"
+  ],
+  "verification": {
+    "round1": {
+      "commit": "9d0e931",
+      "verdict": "FAIL",
+      "partial": [
+        "AC3",
+        "AC4",
+        "AC5",
+        "AC6",
+        "AC12"
+      ],
+      "problems": "problems.md",
+      "fixed": [
+        "anonymous/employee payment no longer overwrites a paid term (409 + fulfillment safety net)",
+        "profile completion respects the points limit",
+        "order PDF with requisites only with typicalPackage",
+        "old-model texts in presets, promo mail, /partners, ROOT promotions, landing final CTA",
+        "order page dates with year; autopay period by cycle",
+        "MAX_POINTS 500",
+        "ROOT MRR counted once per account",
+        "cabinet CTA amounts with active promotion",
+        "invoice line wording for upgrade/renew; invoice checks the shown amount",
+        "public PPK button -> /uslugi#ppk-development",
+        "trial length fixed to TRIAL_DAYS (ROOT read-only)"
+      ],
+      "not_changed": {
+        "headcount_at_checkout": "by spec: excess is not removed, only new activations are blocked (402); raised with the owner in the PR"
+      }
+    },
+    "round2": {
+      "verdict": "pending"
+    }
+  },
+  "test_accounts_local": [
+    "trial@",
+    "standard@",
+    "premium@",
+    "free@",
+    "decision@ (needs decision after trial)",
+    "root@ (ROOT)"
   ]
 }

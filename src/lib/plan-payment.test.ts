@@ -23,6 +23,17 @@ describe("оплата заказа тарифа 2026-10 → подписка а
     assert.deepEqual(update, { tier: "premium", cycle: "year", points: 2, kind: "new", subscriptionEnd: days(365) });
   });
 
+  it("новая подписка, а срок уже идёт (начался до оплаты): период добавляется к текущему концу", () => {
+    const created = days(-1);
+    const update = planAfterPayment({
+      order: { tariffKey: "standard_month", changeKind: "new", createdAt: created, periodEndsAt: days(30, created) },
+      currentEnd: days(200),
+      now: NOW,
+    });
+    assert.equal(update?.kind, "new");
+    assert.equal(update?.subscriptionEnd.getTime(), days(230).getTime());
+  });
+
   it("продление: от текущего конца, а если он прошёл — с сегодня", () => {
     const active = planAfterPayment({ order: { tariffKey: "standard_month", changeKind: "renew" }, currentEnd: days(5), now: NOW });
     assert.equal(active?.subscriptionEnd.getTime(), days(35).getTime());

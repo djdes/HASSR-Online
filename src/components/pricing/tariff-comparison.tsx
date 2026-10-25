@@ -242,6 +242,8 @@ export function TariffComparison({
           const price = applyPromotion(monthlyList, promotion);
           const isAvailable = available[tier][cycle];
           const quote = quotes?.[tier] ?? null;
+          // К оплате — с действующей акцией, как посчитает страница заказа.
+          const payRub = quote ? applyPromotion(quote.amountRub, promotion).priceRub : 0;
           const isCurrent =
             cabinet?.status === "paid" &&
             currentPaid?.tier === tier &&
@@ -343,12 +345,12 @@ export function TariffComparison({
                     testId={`tariff-cta-${tier}`}
                   >
                     {quote.kind === "renew"
-                      ? t("cta.renew", { amount: rub(quote.amountRub) })
+                      ? t("cta.renew", { amount: rub(payRub) })
                       : quote.kind === "upgrade"
-                        ? t("cta.upgrade", { amount: rub(quote.amountRub) })
+                        ? t("cta.upgrade", { amount: rub(payRub) })
                         : quote.kind === "switch"
-                          ? t("cta.switch", { amount: rub(quote.amountRub) })
-                          : t("cta.newPlan", { amount: rub(quote.amountRub) })}
+                          ? t("cta.switch", { amount: rub(payRub) })
+                          : t("cta.newPlan", { amount: rub(payRub) })}
                   </CtaLink>
                 )
               }

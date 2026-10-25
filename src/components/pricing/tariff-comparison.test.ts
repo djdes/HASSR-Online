@@ -106,6 +106,40 @@ test("cabinet pricing shows the change kind and the server-equal surcharge for a
   }
 });
 
+test("cabinet buttons show the amount after an active promotion, as the order page charges", async () => {
+  const now = new Date("2026-10-26T09:00:00.000Z");
+  const cabinet: TariffCabinetState = {
+    status: "paid",
+    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "month", points: 1 },
+    trialUntilLabel: null,
+    trialDaysLeft: null,
+    pointsInUse: 1,
+    scheduled: null,
+    legacyMonthlyRub: 1990,
+    nowIso: now.toISOString(),
+  };
+  const promotion = { id: "autumn", title: "Осень", percent: 20, startsAt: "2026-10-01T00:00:00.000Z", endsAt: "2026-11-01T00:00:00.000Z" };
+  const messages = await loadMessages("ru");
+  const t = createTranslator({ locale: "ru", messages, namespace: "landingComponents.tariffs" });
+  const rub = (value: number) => `${formatNumber("ru", value)}\u00a0₽`;
+  const html = await render(
+    "ru",
+    createElement(TariffComparison, {
+      mode: "cabinet",
+      rates: DEFAULT_PLAN_RATES,
+      available,
+      promotion,
+      ppkFromRub: 10_000,
+      ppkHref: "/settings/services?order=ppk-development",
+      cabinet,
+      showTable: false,
+    })
+  );
+  // −20 %: продление 3 000 → 2 400 ₽, доплата за повышение 1 000 → 800 ₽.
+  assert.ok(html.includes(t("cta.renew", { amount: rub(2400) })));
+  assert.ok(html.includes(t("cta.upgrade", { amount: rub(800) })));
+});
+
 test("trial cabinet offers new subscriptions at full price and marks the trial", async () => {
   const now = new Date("2026-10-26T09:00:00.000Z");
   const cabinet: TariffCabinetState = {

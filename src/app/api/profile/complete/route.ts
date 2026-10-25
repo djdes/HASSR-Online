@@ -7,7 +7,8 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sendPasswordChangedEmail } from "@/lib/email";
 import { innDigits, isValidInn } from "@/lib/inn";
-import { ensureLocationBuildings } from "@/lib/location-buildings";
+import { checkPointsForCreation } from "@/lib/billing.server";
+import { ensureLocationBuildings, MAX_AUTO_LOCATIONS } from "@/lib/location-buildings";
 import { refreshOrganizationLegalProfile } from "@/lib/org-legal-profile";
 import { normalizePhone } from "@/lib/phone";
 import { registrationConfirmRateLimiter } from "@/lib/rate-limit";
@@ -166,13 +167,20 @@ export async function POST(request: Request) {
   });
 
   // Точки: «Точек» ≥ 2 → заводим здания-точки и включаем раздельные
-  // журналы. Одна точка — обычная организация, ничего не создаём.
+  // журналы. Одна точка — обычная организация, ничего не создаём. Точек
+  // больше, чем оплачено, анкета не заводит (лимит тарифа — как у
+  // POST /api/settings/buildings): добавить их можно после смены тарифа.
   if (data.locationsCount >= 2) {
-    await ensureLocationBuildings(organizationId, data.locationsCount, {
-      firstAddress: data.address?.trim() || null,
-    }).catch((error) => {
-      console.error("[profile/complete] ensureLocationBuildings failed", error);
-    });
+    const buildingsNow = await db.building.count({ where: { organizationId } });
+    const adding = Math.min(data.locationsCount, MAX_AUTO_LOCATIONS) - Math.max(1, buildingsNow);
+    const points = await checkPointsForCreation(organizationId, adding, { source: "profile/complete" });
+    if (points.ok) {
+      await ensureLocationBuildings(organizationId, data.locationsCount, {
+        firstAddress: data.address?.trim() || null,
+      }).catch((error) => {
+        console.error("[profile/complete] ensureLocationBuildings failed", error);
+      });
+    }
   }
 
   // Снимок ЕГРЮЛ по ИНН — реквизиты, руководитель, ОКВЭД, численность —

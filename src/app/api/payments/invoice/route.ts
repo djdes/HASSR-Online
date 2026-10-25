@@ -39,8 +39,14 @@ export async function POST(request: Request) {
     email: session.user.email ?? "",
     target,
     promoCode,
+    expectedGrossRub: typeof body.expectedGrossRub === "number" ? body.expectedGrossRub : null,
   });
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error, ...(result.grossRub !== undefined ? { grossRub: result.grossRub } : {}) },
+      { status: result.status }
+    );
+  }
 
   if (result.created) {
     const org = await db.organization.findUnique({ where: { id: organizationId }, select: { name: true } });

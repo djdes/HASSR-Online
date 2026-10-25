@@ -18,7 +18,10 @@ import {
  * дни (счёт по безналу), поэтому сроки пересчитываются от момента оплаты:
  *
  *   • new / switch — срок с момента оплаты на ту же длину, что при
- *     оформлении (у switch туда входят дни из зачёта остатка);
+ *     оформлении (у switch туда входят дни из зачёта остатка); если к
+ *     оплате «новой» подписки у аккаунта уже идёт оплаченный срок (он
+ *     начался между оформлением и оплатой), новый период добавляется к
+ *     его концу — оплаченные дни не сгорают;
  *   • renew — от текущего конца (или с сегодня, если он прошёл);
  *   • upgrade — конец не меняется; если он успел пройти, — с сегодня на
  *     оставшиеся при оформлении дни, за которые и была доплата.
@@ -69,6 +72,8 @@ export function planAfterPayment(args: {
     subscriptionEnd = new Date((currentEnd ?? now).getTime() + periodMs);
   } else if (kind === "upgrade") {
     subscriptionEnd = currentEnd ?? new Date(now.getTime() + (quotedMs ?? periodMs));
+  } else if (kind === "new" && currentEnd) {
+    subscriptionEnd = new Date(currentEnd.getTime() + (quotedMs ?? periodMs));
   } else {
     subscriptionEnd = new Date(now.getTime() + (quotedMs ?? periodMs));
   }

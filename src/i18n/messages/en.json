@@ -5387,7 +5387,7 @@
     "refundTerms": "See the service agreement",
     "faqHeading": "Frequently asked questions",
     "finalCtaHeading": "Put up a QR sticker. Keep records where the work happens.",
-    "finalCtaDetails": "The free plan has no time limit and needs no payment card. Print stickers from your workspace; employees do not need to install anything.",
+    "finalCtaDetails": "{trialDays, number} {trialDays, plural, one {day} other {days}} with every log unlocked and no payment card. Print stickers from your workspace; employees do not need to install anything.",
     "qrCameraInstruction": "Point your phone camera here to see how an employee opens a log.",
     "faq": {
       "refund": {
@@ -20651,7 +20651,7 @@
         "label": "one-off bonus",
         "body": "after subscription payment number {bonusAfterPayments} by the client"
       },
-      "note1": "Example: a 1 990 ₽ subscription → {subscriptionRewardRub} to the partner for every payment.",
+      "note1": "Example: Standard billed monthly at {subscriptionRub} → {subscriptionRewardRub} to the partner for every payment.",
       "note2": "Equipment worth 17 750 ₽ → {hardwareRewardRub}.",
       "note3": "A client refund reverses the same amount. Monthly accruals become “payable” on the 1st of the following month.",
       "note4": "The minimum payout is {minPayoutRub}; a smaller amount carries over to the following month."

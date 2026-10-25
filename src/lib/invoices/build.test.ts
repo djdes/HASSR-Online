@@ -47,6 +47,25 @@ describe("buildInvoiceLines", () => {
     assert.doesNotMatch(lines[0].title, /\d{2}\.\d{2}\.\d{4}/);
   });
 
+  it("тариф 2026-10: доплата за повышение — на оставшиеся дни, продление — с конца текущего срока", () => {
+    const tariff = { title: "Премиум — помесячно", periodDays: 30, priceRub: 5000 };
+    const upgrade = buildInvoiceLines({
+      order: { id: 28, createdAt, amountRub: 999, bundleConfig: null, changeKind: "upgrade", periodEndsAt: new Date(createdAt.getTime() + 15 * 24 * 60 * 60 * 1000) },
+      tariff,
+      seller,
+      buyer,
+    });
+    assert.match(upgrade[0].title, /доплата за повышение тарифа на 15 дн\. до конца оплаченного срока/);
+    assert.doesNotMatch(upgrade[0].title, /30 дн\./);
+    const renew = buildInvoiceLines({
+      order: { id: 29, createdAt, amountRub: 5000, bundleConfig: null, changeKind: "renew", periodEndsAt: null },
+      tariff,
+      seller,
+      buyer,
+    });
+    assert.match(renew[0].title, /30 дн\. \(период — с окончания текущего оплаченного срока\)/);
+  });
+
   it("комплект — оборудование строками, услуге остаток", () => {
     const lines = buildInvoiceLines({
       order: { id: 27, createdAt, amountRub: 1990 + 12900, bundleConfig: { tablet: 1 } },

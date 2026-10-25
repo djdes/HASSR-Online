@@ -1,5 +1,6 @@
-import { formatMskDay, lastDayBefore } from "@/lib/billing-period";
+import { formatMskDate, lastDayBefore } from "@/lib/billing-period";
 import { loadAccountBilling } from "@/lib/billing.server";
+import { db } from "@/lib/db";
 import { pointsLabel } from "@/lib/cabinet-plan";
 import { planOrderTitle } from "@/lib/plan-payment";
 import { readActivePromotion } from "@/lib/promo/offer";
@@ -51,7 +52,7 @@ export type CheckoutQuote =
       ok: false;
       status: number;
       error: string;
-      code: "unavailable" | "scheduled" | "points";
+      code: "unavailable" | "scheduled" | "points" | "account";
       /** Для scheduled — с какого дня можно перейти. */
       effectiveAt?: string;
     };
@@ -75,10 +76,41 @@ export function parseCheckoutTarget(input: {
   return { tier, cycle, points: normalizePoints(input.points ?? 1) };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Без кабинета организации (гость, сотрудник, ROOT в «войти как») заказ
+ * считается новой подпиской, а вебхук применяет его к аккаунту, найденному
+ * по почте заказа (`payment-fulfillment.ts`). Если у этого аккаунта идёт
+ * оплаченный срок, новая подписка заменила бы его тариф и точки и начала
+ * бы срок заново, — такую оплату ведём в кабинет руководителя: там сумма
+ * считается от текущей подписки (продление, доплата, зачёт остатка).
+ */
+const PAID_ACCOUNT_ERROR =
+  "У этой почты уже есть оплаченный тариф. Продлить или сменить его может руководитель в кабинете — «Настройки → Тариф и оплата»: там сумма посчитается с учётом оплаченных дней.";
+
+async function accountSubscription(
+  organizationId: string,
+  now: Date
+): Promise<{ current: CurrentSubscription | null; pointsInUse: number }> {
+  const loaded = await loadAccountBilling(organizationId, now);
+  if (!loaded) return { current: null, pointsInUse: 1 };
+  const { state } = loaded;
+  return {
+    pointsInUse: state.pointsInUse,
+    current:
+      state.kind === "paid" && state.paidTier
+        ? { paidUntil: state.paidUntil, tier: state.paidTier, cycle: state.planCycle, points: state.planPoints }
+        : null,
+  };
+}
+
 export async function quoteCheckout(args: {
   organizationId: string | null;
   target: CheckoutTarget;
   now: Date;
+  /** Почта плательщика без кабинета организации — проверка выше. */
+  payerEmail?: string | null;
 }): Promise<CheckoutQuote> {
   const { now } = args;
   const target = { ...args.target, points: normalizePoints(args.target.points) };
@@ -90,17 +122,12 @@ export async function quoteCheckout(args: {
   let current: CurrentSubscription | null = null;
   let pointsInUse = 1;
   if (args.organizationId) {
-    const loaded = await loadAccountBilling(args.organizationId, now);
-    if (loaded) {
-      pointsInUse = loaded.state.pointsInUse;
-      if (loaded.state.kind === "paid" && loaded.state.paidTier) {
-        current = {
-          paidUntil: loaded.state.paidUntil,
-          tier: loaded.state.paidTier,
-          cycle: loaded.state.planCycle,
-          points: loaded.state.planPoints,
-        };
-      }
+    ({ current, pointsInUse } = await accountSubscription(args.organizationId, now));
+  } else if (args.payerEmail) {
+    const payer = await db.user.findUnique({ where: { email: args.payerEmail }, select: { organizationId: true } });
+    const paidUntil = payer ? (await accountSubscription(payer.organizationId, now)).current?.paidUntil : null;
+    if (paidUntil && paidUntil.getTime() - now.getTime() >= DAY_MS) {
+      return { ok: false, status: 409, code: "account", error: PAID_ACCOUNT_ERROR };
     }
   }
   if (target.points < pointsInUse) {
@@ -118,7 +145,7 @@ export async function quoteCheckout(args: {
       ok: false,
       status: 409,
       code: "scheduled",
-      error: `Переход на этот тариф — с ${formatMskDay(change.periodStart)}: до ${formatMskDay(lastDayBefore(change.periodStart))} включительно действует оплаченный тариф. Сейчас платить не нужно — переход можно запланировать на странице тарифа.`,
+      error: `Переход на этот тариф — с ${formatMskDate(change.periodStart)}: до ${formatMskDate(lastDayBefore(change.periodStart))} включительно действует оплаченный тариф. Сейчас платить не нужно — переход можно запланировать на странице тарифа.`,
       effectiveAt: change.periodStart.toISOString(),
     };
   }

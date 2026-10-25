@@ -1,5 +1,4 @@
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { pluralRu } from "@/lib/plural-ru";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 import type { MailingChannels } from "./labels";
 import type { MessagePayload } from "./kinds/message-shared";
@@ -48,14 +47,12 @@ const FALLBACKS = { name: "коллеги", company: "ваше заведени�
 const EMAIL_ONLY: MailingChannels = { email: true, inApp: false, push: false, telegram: false };
 const EMAIL_AND_BELL: MailingChannels = { email: true, inApp: true, push: false, telegram: false };
 
-const FREE_PLAN_FOR = `${FREE_MAX_USERS} ${pluralRu(FREE_MAX_USERS, "сотрудника", "сотрудников", "сотрудников")}`;
-
 export const MAILING_PRESETS: MailingPreset[] = [
   {
     id: "year50-2026-11",
     title: "Скидка 50 % на год (YEAR50)",
     description:
-      "Акция до 30 ноября: 995 ₽ в месяц вместо 1 990 ₽ на 12 месяцев, только первые 50 организаций. " +
+      "Акция до 30 ноября: «Стандарт» на год за 995 ₽ в месяц вместо 1 990 ₽, только первые 50 организаций. " +
       "Кнопка ведёт на wesetup.ru/promo/YEAR50 — скидка применится сама.",
     audience: "any",
     kind: "message",
@@ -64,7 +61,7 @@ export const MAILING_PRESETS: MailingPreset[] = [
       subject: "Год электронных журналов за полцены — до 30 ноября",
       body: [
         "Здравствуйте, {имя}!",
-        "Дарим скидку 50 % на 12 месяцев подписки WeSetup: **995 ₽ в месяц вместо 1 990 ₽** за всю команду до 10 сотрудников.",
+        "Дарим скидку 50 % на год тарифа «Стандарт»: **995 ₽ в месяц вместо 1 990 ₽** — до 25 сотрудников на точку, все журналы.",
         [
           "Что внутри:",
           "— журналы СанПиН и ХАССП в телефоне: QR на холодильнике, PIN из 4 цифр — и запись уже в журнале;",
@@ -98,7 +95,7 @@ export const MAILING_PRESETS: MailingPreset[] = [
           "— руководитель видит, что заполнено, а что нет, и получает напоминания в Telegram;",
           "— на проверке достаточно показать QR: проверяющий откроет журналы сам.",
         ].join("\n"),
-        `Начать можно бесплатно: бесплатный тариф на ${FREE_PLAN_FOR}, без ограничений по записям. Регистрация займёт пару минут.`,
+        `Начать можно бесплатно: ${TRIAL_DAYS} дней — все журналы, сотрудники и точки без ограничений, без карты. Регистрация займёт пару минут.`,
       ].join("\n\n"),
       buttonText: "Попробовать бесплатно",
       buttonUrl: "https://wesetup.ru/register",

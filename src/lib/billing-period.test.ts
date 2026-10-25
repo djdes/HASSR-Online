@@ -61,17 +61,19 @@ describe("настройки пробного периода", () => {
       normalizeTrialSettings({ trialDays: "x", launchedAt: "nope", graceDays: 999, transitionEnabled: "yes" }),
       DEFAULT_TRIAL_SETTINGS
     );
-    const custom: TrialSettings = { trialDays: 21, launchedAt: LAUNCH, graceDays: 3, transitionEnabled: false };
+    const custom: TrialSettings = { trialDays: 14, launchedAt: LAUNCH, graceDays: 3, transitionEnabled: false };
     assert.deepEqual(normalizeTrialSettings(JSON.parse(serializeTrialSettings(custom))), custom);
+    // Длина пробного — как в текстах витрины: сохранённое число не читается.
+    assert.equal(normalizeTrialSettings({ ...JSON.parse(serializeTrialSettings(custom)), trialDays: 30 }).trialDays, 14);
   });
 
-  it("форма ROOT: дни 1–90, дата обязательна, грейс 0–60, флаг обязателен", () => {
-    assert.equal(validateTrialInput({ trialDays: 0, launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: true }).ok, false);
-    assert.equal(validateTrialInput({ trialDays: 14, launchedAt: "", graceDays: 7, transitionEnabled: true }).ok, false);
-    assert.equal(validateTrialInput({ trialDays: 14, launchedAt: LAUNCH.toISOString(), graceDays: 61, transitionEnabled: true }).ok, false);
-    assert.equal(validateTrialInput({ trialDays: 14, launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: "1" }).ok, false);
-    const ok = validateTrialInput({ trialDays: 14, launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: true });
+  it("форма ROOT: дата обязательна, грейс 0–60, флаг обязателен; длина пробного — тарифная, не из формы", () => {
+    assert.equal(validateTrialInput({ launchedAt: "", graceDays: 7, transitionEnabled: true }).ok, false);
+    assert.equal(validateTrialInput({ launchedAt: LAUNCH.toISOString(), graceDays: 61, transitionEnabled: true }).ok, false);
+    assert.equal(validateTrialInput({ launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: "1" }).ok, false);
+    const ok = validateTrialInput({ launchedAt: LAUNCH.toISOString(), graceDays: 7, transitionEnabled: true });
     assert.equal(ok.ok, true);
+    assert.equal(ok.ok && ok.value.trialDays, 14);
   });
 
   it("конец пробного: 14 дней от создания, но не раньше запуска; продление ROOT побеждает", () => {

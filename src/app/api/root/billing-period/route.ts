@@ -18,7 +18,8 @@ export const dynamic = "force-dynamic";
  * пользуется карточка на /root/tariffs.
  *
  * GET — настройки + счётчики аккаунтов по состояниям.
- * PUT — `{ trialDays, launchedAt, graceDays, transitionEnabled }` целиком.
+ * PUT — `{ launchedAt, graceDays, transitionEnabled }` целиком; длина
+ * пробного — `TRIAL_DAYS` (её обещают витрина и письма), не из формы.
  */
 
 function toJson(settings: TrialSettings) {
@@ -40,7 +41,6 @@ export async function PUT(request: Request) {
   const session = await requireRoot();
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const checked = validateTrialInput({
-    trialDays: body?.trialDays,
     launchedAt: body?.launchedAt,
     graceDays: body?.graceDays,
     transitionEnabled: body?.transitionEnabled,

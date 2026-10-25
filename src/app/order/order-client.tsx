@@ -26,7 +26,7 @@ import { PromoPrice } from "@/components/pricing/promo-price";
 import {
   RECURRING_CONSENT_TEXT,
   RECURRING_OFFER_HREF,
-  RECURRING_PERIOD_TEXT,
+  recurringPeriodText,
 } from "@/lib/recurring-consent";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
@@ -758,7 +758,7 @@ function Checkout({
             </Link>
             ).
             <span className="mt-1 block text-[12px] text-[#6f7282]">
-              {RECURRING_PERIOD_TEXT}
+              {recurringPeriodText(plan?.cycle)}
             </span>
             <span className="mt-1 block text-[12px] text-[#9b9fb3]">
               Без галочки оплата пройдёт разовым платежом — автосписаний не

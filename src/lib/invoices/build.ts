@@ -64,6 +64,9 @@ export type InvoiceBuildInput = {
     createdAt: Date;
     amountRub: number;
     bundleConfig: unknown;
+    /** Вид перехода тарифа 2026-10 и конец срока по расчёту при оформлении. */
+    changeKind?: string | null;
+    periodEndsAt?: Date | null;
   };
   tariff: { title: string; periodDays: number; priceRub: number } | null;
   seller: PartySnapshot;
@@ -94,8 +97,18 @@ export function buildInvoiceLines(input: InvoiceBuildInput): ClosingLine[] {
   const serviceSum = round2(Math.max(0, total - hardwareSum));
   const title = input.tariff?.title?.trim() || "Подписка";
   const days = input.tariff?.periodDays ?? 30;
+  const { changeKind, periodEndsAt } = input.order;
+  // Доплата за повышение — за оставшиеся дни, конец срока прежний;
+  // продление — с конца текущего срока, а не с оплаты.
+  const upgradeDays =
+    changeKind === "upgrade" && periodEndsAt
+      ? Math.max(1, Math.ceil((periodEndsAt.getTime() - input.order.createdAt.getTime()) / DAY_MS))
+      : null;
   const service: ClosingLine = {
-    title: `Доступ к сервису WeSetup, тариф «${title}», ${days} дн. (период — с даты оплаты)`,
+    title:
+      upgradeDays !== null
+        ? `Доступ к сервису WeSetup, тариф «${title}» — доплата за повышение тарифа на ${upgradeDays} дн. до конца оплаченного срока`
+        : `Доступ к сервису WeSetup, тариф «${title}», ${days} дн. (период — ${changeKind === "renew" ? "с окончания текущего оплаченного срока" : "с даты оплаты"})`,
     unit: "усл. ед.",
     unitCode: "876",
     qty: 1,

@@ -6,7 +6,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getBalance } from "@/lib/balance/ledger";
 import type { Tariff } from "@/lib/tariffs";
 import { parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
-import { formatMskDay } from "@/lib/billing-period";
+import { formatMskDate } from "@/lib/billing-period";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
 import { PROMO_COOKIE } from "@/lib/promo/personal-link";
@@ -72,6 +72,9 @@ export default async function OrderPage({
           organizationId: canSpendPoints ? getActiveOrgId(session!) : null,
           target,
           now: new Date(),
+          // Сотрудник платит за аккаунт своей организации — откажем сразу,
+          // если там идёт оплаченный срок (см. quoteCheckout).
+          payerEmail: canSpendPoints ? null : sessionEmail || null,
         }).catch((error) => {
           console.error("[billing] order page quote failed", error);
           return null;
@@ -91,8 +94,8 @@ export default async function OrderPage({
         creditRub: quote.change.creditRub,
         differenceRub: quote.change.differenceRub,
         remainingDays: quote.change.remainingDays,
-        periodStartLabel: formatMskDay(quote.change.periodStart),
-        periodEndLabel: formatMskDay(quote.change.periodEnd),
+        periodStartLabel: formatMskDate(quote.change.periodStart),
+        periodEndLabel: formatMskDate(quote.change.periodEnd),
       }
     : null;
   const refusal = quote && !quote.ok && quote.code !== "unavailable" ? quote.error : null;

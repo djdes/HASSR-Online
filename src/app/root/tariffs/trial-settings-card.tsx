@@ -57,7 +57,6 @@ export function TrialSettingsCard({
   useEffect(() => { currentT.current = t; }, [t]);
   const [settings, setSettings] = useState(initialSettings);
   const [overview, setOverview] = useState(initialOverview);
-  const [trialDays, setTrialDays] = useState(initialSettings.trialDays);
   const [launchedAt, setLaunchedAt] = useState(toMskInput(initialSettings.launchedAt));
   const [graceDays, setGraceDays] = useState(initialSettings.graceDays);
   const [enabled, setEnabled] = useState(initialSettings.transitionEnabled);
@@ -72,7 +71,6 @@ export function TrialSettingsCard({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          trialDays,
           launchedAt: fromMskInput(launchedAt),
           graceDays,
           transitionEnabled: enabled,
@@ -141,13 +139,14 @@ export function TrialSettingsCard({
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <Field label={t("trialDays")}>
+          {/* Длина пробного задана тарифом (её обещают витрина и письма) —
+              продлить можно отдельному аккаунту на странице организации. */}
           <input
             type="number"
-            min={1}
-            max={90}
-            value={trialDays}
-            onChange={(e) => setTrialDays(Number(e.target.value))}
-            className={inputClass + " tabular-nums"}
+            value={settings.trialDays}
+            disabled
+            readOnly
+            className={inputClass + " tabular-nums disabled:cursor-not-allowed disabled:bg-[#fafbff] disabled:text-[#6f7282]"}
             data-testid="billing-trial-days"
           />
         </Field>

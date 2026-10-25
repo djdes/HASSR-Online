@@ -823,7 +823,7 @@ export default async function LandingPage() {
           available={pricing.available}
           promotion={promotion}
           ppkFromRub={ppkFromRub}
-          ppkHref="/uslugi"
+          ppkHref="/uslugi#ppk-development"
           startHref="#start"
           showTable
           className="mt-2"
@@ -912,7 +912,7 @@ export default async function LandingPage() {
               <h2 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
                 {copy("landing.finalCtaHeading")}</h2>
               <p className="mt-3 max-w-[560px] text-[16px] leading-[1.6] text-[#3c4053]">
-                {copy("landing.finalCtaDetails")}</p>
+                {copy("landing.finalCtaDetails", { trialDays: TRIAL_DAYS })}</p>
               <ol className="mt-6 grid gap-3 sm:grid-cols-3">
                 {QR_START_STEPS.map((step, index) => (
                   <li key={step.title} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4">

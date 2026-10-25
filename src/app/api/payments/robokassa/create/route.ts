@@ -135,7 +135,9 @@ export async function POST(request: NextRequest) {
       : null;
   // Сумма по тарифу и виду перехода с действующей акцией — та же функция,
   // что у страницы заказа.
-  const quote = await quoteCheckout({ organizationId, target, now });
+  // Без кабинета организации заказ найдёт аккаунт по почте — с оплаченным
+  // сроком такую оплату ведём в кабинет (см. quoteCheckout).
+  const quote = await quoteCheckout({ organizationId, target, now, payerEmail: organizationId ? null : email });
   if (!quote.ok) {
     console.info("[billing] order refused", { organizationId, target, code: quote.code });
     return NextResponse.json(

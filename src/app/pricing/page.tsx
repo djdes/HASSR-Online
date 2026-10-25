@@ -92,7 +92,7 @@ export default async function PricingPage() {
           available={pricing.available}
           promotion={promotion}
           ppkFromRub={ppkFromRub}
-          ppkHref="/uslugi"
+          ppkHref="/uslugi#ppk-development"
           startHref="/register"
           showTable
         />
