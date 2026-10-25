@@ -23,6 +23,10 @@ let appDir = "";
 let server: http.Server;
 let base = "";
 let loginStatus = 200;
+// Ограничитель переходов на заглушке: без ключа прогрева — 429.
+const WARM_KEY = "c0ffee".repeat(11);
+let warmRequired = false;
+let warmSeen: string[] = [];
 
 // Асинхронно: заглушка сервера живёт в этом же процессе, и синхронный
 // запуск заблокировал бы её ответы. Прокси окружения к 127.0.0.1 не нужны.
@@ -59,6 +63,13 @@ before(async () => {
       const served = fs.readFileSync(path.join(appDir, "served-build"), "utf8").trim();
       response.setHeader("Content-Type", "application/json");
       response.end(JSON.stringify({ buildId: served.slice(0, 7), buildTime: "t", fullBuildId: served }));
+      return;
+    }
+    const warm = request.headers["x-deploy-warm"];
+    warmSeen.push(typeof warm === "string" ? warm : "");
+    if (warmRequired && warm !== WARM_KEY) {
+      response.statusCode = 429;
+      response.end("wait");
       return;
     }
     response.statusCode = request.url === "/login" ? loginStatus : 200;
@@ -174,6 +185,40 @@ describe("deploy-rollback.sh", () => {
     assert.equal(result.status, 1);
     assert.equal(readMarker(".next"), "current");
     assert.match(result.stdout, /откатывать не на что/);
+  });
+});
+
+describe("prewarm-routes.sh", () => {
+  const port = () => String((server.address() as net.AddressInfo).port);
+
+  it("с ключом деплоя каждый адрес идёт с заголовком прогрева и не упирается в лимит", async () => {
+    warmRequired = true;
+    warmSeen = [];
+    try {
+      const result = await run("prewarm-routes.sh", [], { PORT: port(), DEPLOY_WARM_TOKEN: WARM_KEY });
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.ok(warmSeen.length > 60, `${warmSeen.length} запросов`);
+      assert.ok(warmSeen.every((key) => key === WARM_KEY));
+      assert.doesNotMatch(result.stdout, /→ 429|ответили 429/);
+      assert.match(result.stdout, /\/login → 200/);
+      assert.ok(!(result.stdout + result.stderr).includes(WARM_KEY), "ключ не попадает в лог");
+    } finally {
+      warmRequired = false;
+    }
+  });
+
+  it("без ключа запросы под общим лимитом — в логе видно, сколько адресов не прогрето", async () => {
+    warmRequired = true;
+    warmSeen = [];
+    try {
+      const result = await run("prewarm-routes.sh", [], { PORT: port(), DEPLOY_WARM_TOKEN: "" });
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.ok(warmSeen.every((key) => key === ""));
+      assert.match(result.stdout, /DEPLOY_WARM_TOKEN не задан/);
+      assert.match(result.stdout, new RegExp(`\\[prewarm\\] ${warmSeen.length} адресов ответили 429`));
+    } finally {
+      warmRequired = false;
+    }
   });
 });
 

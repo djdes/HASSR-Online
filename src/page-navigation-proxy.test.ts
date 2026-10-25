@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import { proxy } from "./proxy";
-import { pageNavigationSubject } from "./lib/page-navigation-guard";
+import { isDeployWarmRequest, pageNavigationSubject } from "./lib/page-navigation-guard";
 
 let address = 0;
 function client(extra: Record<string, string> = {}) {
@@ -161,4 +161,35 @@ test("marked and markerless RSC fetches share a bounded budget; its overflow nev
   assert.equal((await request("/blog", { "sec-fetch-dest": "empty" })).status, 429);
   // Background fetches over budget wait on their own; the page itself still opens.
   assert.equal((await request()).status, 200);
+});
+
+test("deploy prewarm key: only an exact match of a long key from the process env", () => {
+  const key = "k".repeat(32);
+  const headers = (value?: string) => new Headers(value === undefined ? {} : { "x-deploy-warm": value });
+  assert.equal(isDeployWarmRequest(headers(key), key), true);
+  assert.equal(isDeployWarmRequest(headers(key), undefined), false, "no key in the env exempts nothing");
+  assert.equal(isDeployWarmRequest(headers(""), ""), false);
+  assert.equal(isDeployWarmRequest(headers("s".repeat(31)), "s".repeat(31)), false, "a short key is never accepted");
+  assert.equal(isDeployWarmRequest(headers(), key), false);
+  for (const wrong of [key.toUpperCase(), key.slice(1), `${key}k`]) assert.equal(isDeployWarmRequest(headers(wrong), key), false, wrong);
+});
+
+test("deploy prewarm with the per-deploy key skips the page budget; other requests stay limited", async () => {
+  const saved = process.env.DEPLOY_WARM_TOKEN;
+  const key = "0123456789abcdef".repeat(4);
+  process.env.DEPLOY_WARM_TOKEN = key;
+  try {
+    const request = client();
+    for (let i = 0; i < 40; i++) assert.equal((await request(`/journals?warm=${i}`, { "x-deploy-warm": key })).status, 200);
+    // The prewarm spent none of the address's budget: curl still gets its 6 pages.
+    await exhaust(request);
+    for (const wrong of ["", key.slice(1), `${key}0`, "f".repeat(64)]) {
+      assert.equal((await request("/blog", { "x-deploy-warm": wrong })).status, 429, wrong);
+    }
+    assert.equal((await request("/blog", { "x-deploy-warm": key })).status, 200);
+    assert.equal((await request("/root", { "x-deploy-warm": key })).status, 404, "the key bypasses only the page budget");
+  } finally {
+    if (saved === undefined) delete process.env.DEPLOY_WARM_TOKEN;
+    else process.env.DEPLOY_WARM_TOKEN = saved;
+  }
 });
