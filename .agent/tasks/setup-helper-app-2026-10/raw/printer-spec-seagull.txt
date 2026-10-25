@@ -1,0 +1,91 @@
+Источник: AiYin_12.3.0.exe (Seagull Driver 12.3, aiyin.com → «Драйверы» → «AlYlN Seagull driver for all lP models», IPRT.zip)
+
+== AiYin.inf (строки с IP-802):
+"AiYin IP-802BT"=TSC,USBPRINT\AiYin_IP802-BT0C54
+
+
+== ay#tsc_12.3.0.0.ddz/Model.d → [AiYin IP-802BT]
+BarCode=BarCode:AiYin_No_Barcode
+Color=false
+Drawing=Drawing:IPRT
+Features=Features:AiYin_A70
+Font=Font:Fujitsu_LPrin1
+Method=Method:AiYin
+Ports.Bidirectional=USB
+Ports.PNP=USB
+Ports.PNP.ID+=AiYin_IP802-BT0C54
+Resolution=203
+Stock.Default.X=72 mm
+Stock.Default.Y=129 mm
+Stock.Maximum.X=78 mm
+Stock.Maximum.Y=250 mm
+Stock.Minimum.X=25.4 mm
+Stock.Minimum.Y=5 mm
+Stock.Printable.X=72 mm
+Stock.Printable.Y=250 mm
+Stock.Tracking=Center
+Stock.UnprintableWidth=0.00 in
+~AiYin=true
+~CommandClass=TSPL2
+~Darkness.Default=8
+~Graphic.Dithering.Default=None
+~MediaType.Default=Gap
+~PrintMethod=DT
+~PrintMethod.Default=DT
+~Speeds.Print=2 in/sec, 3 in/sec, 4 in/sec
+~Speeds.Print.Default=4 in/sec
+
+== ay#tsc_12.3.0.0.ddz/Features.d → [AiYin_A70]
+Action.Feed=Immediate
+Stock.Continuous.VariableLength=true
+~Command.Calibration=true
+~Command.CutImmediately=true
+~Command.Diagnostic=false
+~Command.DottedLines.Auto=true
+~Command.DumpMode=false
+~Command.FeedOffset=true
+~Command.FileResident=false
+~Command.ResetToDefault=true
+~Command.RestartPrinter=false
+~Command.SelfTestPrint=true
+~Command.SetRibbon=false
+~Command.SetTear=false
+~Command.Shift=false
+~Cutter=false
+~Download.Drives=
+~Peeler=false
+~Sensor.Gap=true
+~Sensor.Mark=true
+
+== ay#tsc_12.3.0.0.ddz/Drawing.d → [IPRT]
+BarCode.Anchor=Top/Left
+BarCode.Anchor.Relative=true
+BarCode.DrawUnsupported.1D=Bitmap
+BarCode.DrawUnsupported.2D=Bitmap
+Box=false
+Box.Anchor=Top/Left
+Box.Fill=false
+Box.Pen=Black
+Box.Shape=Rectangle
+Box.Thickness.Anchor=Outer
+Box.Thickness.Maximum=9999
+Line=false
+Line.Anchor=Top/Left
+Line.Diagonal=false
+Line.Pen=Black,Inverse
+Line.Thickness.Anchor=Edge
+Line.Thickness.Maximum=9999
+Text=false
+Text.Anchor=Top/Left
+Text.Anchor.Relative=true
+Text.Rotation=90
+Text.Scaling=Anisotropic
+Text.WhiteOnBlack.Background=false
+Transform.Flip180=false
+Transform.Inverse=true
+Transform.Mirror=true
+Transform.Orientation=180
+Transform.Origin=Adjustable
+Transform.System=WN
+
+== BarCode.d → [AiYin_No_Barcode]: все штрихкоды false — True

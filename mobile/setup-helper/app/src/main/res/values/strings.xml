@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Сетап помощник</string>
+
+    <!-- Вход -->
+    <string name="login_subtitle">Печать этикеток на Bluetooth-принтер. Войдите с почтой и паролем от WeSetup.</string>
+    <string name="login_email">Почта</string>
+    <string name="login_password">Пароль</string>
+    <string name="login_submit">Войти</string>
+    <string name="login_offline_note">Интернет нужен только для входа: потом приложение печатает без сети, а сайту сообщает, когда связь появится.</string>
+    <string name="login_code_hint">Мы отправили код в ваш Telegram. Введите его, чтобы закончить вход.</string>
+    <string name="login_code">Код из Telegram</string>
+    <string name="login_code_submit">Подтвердить</string>
+    <string name="login_back">Назад</string>
+    <string name="login_server">Сервер: %1$s</string>
+    <string name="login_fill">Введите почту и пароль</string>
+    <string name="login_fill_code">Введите код</string>
+    <string name="login_revoked">Приложение отключено от аккаунта на сайте. Войдите заново.</string>
+
+    <!-- Сервер -->
+    <string name="server_title">Адрес сервера</string>
+    <string name="server_hint">https://wesetup.ru</string>
+    <string name="server_note">Менять не нужно — только для проверки на тестовом сервере.</string>
+    <string name="server_invalid">Адрес должен начинаться с https://</string>
+    <string name="server_reset">По умолчанию</string>
+
+    <!-- Главный экран -->
+    <string name="main_add_equipment">Добавить оборудование</string>
+    <string name="main_equipment">Оборудование</string>
+    <string name="main_empty">Пока нет оборудования. Включите принтер AIYIN IP-802BT и нажмите «Добавить оборудование».</string>
+    <string name="main_online">В сети</string>
+    <string name="main_offline">Без интернета — печать работает</string>
+    <string name="main_pending">Ждут отправки на сайт: %1$d</string>
+    <string name="main_synced">Сайт знает о подключённом оборудовании</string>
+    <string name="main_menu_sync">Отправить на сайт</string>
+    <string name="main_menu_logout">Выйти</string>
+    <string name="main_logout_title">Выйти из аккаунта?</string>
+    <string name="main_logout_text">Подключённые принтеры и неотправленные отметки на этом телефоне удалятся. Чтобы печатать снова, понадобится вход с интернетом.</string>
+    <string name="main_no_bluetooth">На этом телефоне нет Bluetooth — принтер подключить не получится.</string>
+
+    <!-- Принтер -->
+    <string name="printer_test">Пробная этикетка 58×40</string>
+    <string name="printer_test_size">Пробная этикетка %1$s</string>
+    <string name="printer_templates">Печать по шаблону</string>
+    <string name="printer_settings">Настройки этикетки</string>
+    <string name="printer_calibrate">Калибровка зазора</string>
+    <string name="printer_selftest">Самотест принтера</string>
+    <string name="printer_remove">Удалить</string>
+    <string name="printer_details">%1$s · %2$s</string>
+    <string name="printer_label">Этикетка %1$s мм, зазор %2$s мм</string>
+    <string name="printer_last_print">Последняя печать: %1$s</string>
+    <string name="printer_remove_title">Удалить «%1$s»?</string>
+    <string name="printer_remove_text">Принтер пропадёт из приложения и из списка на сайте. Подключить его можно снова через «Добавить оборудование».</string>
+    <string name="printer_calibrate_text">Принтер прогонит несколько этикеток, чтобы измерить их длину и зазор. Делайте это после смены рулона, если печать съезжает.</string>
+    <string name="printer_selftest_text">Принтер напечатает страницу со своими настройками — она займёт несколько этикеток.</string>
+    <string name="transport_classic">Bluetooth</string>
+    <string name="transport_ble">Bluetooth LE</string>
+
+    <!-- Печать -->
+    <string name="print_sending">Печатаем…</string>
+    <string name="print_done">Отправлено на печать</string>
+    <string name="print_done_copies">Отправлено на печать: %1$d шт.</string>
+    <string name="print_command_done">Команда отправлена принтеру</string>
+    <string name="print_title">Печать этикетки</string>
+    <string name="print_preview">Так будет выглядеть этикетка</string>
+    <string name="print_copies">Копий</string>
+    <string name="print_submit">Печать</string>
+    <string name="print_required">Заполните «%1$s»</string>
+
+    <!-- Настройки этикетки -->
+    <string name="settings_title">Настройки этикетки</string>
+    <string name="settings_width">Ширина, мм</string>
+    <string name="settings_height">Высота, мм</string>
+    <string name="settings_gap">Зазор, мм</string>
+    <string name="settings_density">Плотность (0–15)</string>
+    <string name="settings_speed">Скорость (2–4)</string>
+    <string name="settings_shift_x">Сдвиг вправо, мм</string>
+    <string name="settings_shift_y">Сдвиг вниз, мм</string>
+    <string name="settings_rotate">Перевернуть на 180°</string>
+    <string name="settings_note">Ширина — до 72 мм (печатная ширина IP-802BT). Если печать бледная — поднимите плотность; если съезжает — сделайте калибровку или сдвиг.</string>
+
+    <!-- Поиск -->
+    <string name="scan_title">Добавить оборудование</string>
+    <string name="scan_hint">Включите принтер и держите его рядом с телефоном. Если принтер уже подключён к другому телефону, сначала отключите его там.</string>
+    <string name="scan_running">Ищем устройства Bluetooth…</string>
+    <string name="scan_done">Поиск закончен</string>
+    <string name="scan_again">Искать снова</string>
+    <string name="scan_show_unnamed">Показывать устройства без имени</string>
+    <string name="scan_empty">Ничего не нашли. Включите принтер, держите его рядом и нажмите «Искать снова».</string>
+    <string name="scan_printer_badge">Похоже на принтер</string>
+    <string name="scan_bonded_badge">Сопряжён</string>
+    <string name="scan_ble_badge">BLE</string>
+    <string name="scan_unnamed">Без имени</string>
+    <string name="scan_connecting_title">Подключаем %1$s</string>
+    <string name="scan_pin_note">Если телефон спросит PIN-код, введите 0000 или 1234.</string>
+    <string name="scan_connected">Принтер подключён</string>
+    <string name="scan_failed_title">Не удалось подключиться</string>
+    <string name="scan_retry">Повторить</string>
+
+    <!-- Разрешения и Bluetooth -->
+    <string name="bt_permission_needed">Без доступа к Bluetooth принтер не найти. Разрешите доступ в настройках приложения.</string>
+    <string name="bt_open_settings">Открыть настройки</string>
+    <string name="bt_enable_needed">Включите Bluetooth, чтобы найти принтер.</string>
+    <string name="bt_location_needed">На этой версии Android поиск Bluetooth работает только с включённым определением местоположения.</string>
+    <string name="bt_location_settings">Включить</string>
+
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="ok">Понятно</string>
+    <string name="continue_action">Продолжить</string>
+    <string name="more">Ещё</string>
+    <string name="back">Назад</string>
+</resources>
