@@ -22402,7 +22402,8 @@ export type MessageContract = {
     "filters": {
       "all": "Все",
       "modified": "Изменённые",
-      "untranslated": "Без перевода"
+      "untranslated": "Без перевода",
+      "stale": "Устарели"
     },
     "rowState": {
       "modified": "Изменено",
@@ -22419,7 +22420,11 @@ export type MessageContract = {
       "reset": "Вернуть исходный",
       "auto": "Автоперевод",
       "autoBatch": "Автоперевод: {language} ({count})",
-      "undo": "Отменить правку"
+      "undo": "Отменить правку",
+      "saveNext": "Сохранить и далее",
+      "next": "Далее",
+      "copyLink": "Скопировать ссылку",
+      "stop": "Остановить"
     },
     "autoBusy": "Перевожу… {done} из {total}",
     "loading": "Загрузка…",
@@ -22437,7 +22442,7 @@ export type MessageContract = {
       "position": "{index} из {count}",
       "previous": "Предыдущая строка",
       "next": "Следующая строка",
-      "shortcut": "Ctrl+Enter — сохранить"
+      "shortcut": "Ctrl+Enter — сохранить и далее · Alt+↑/↓ — соседняя строка"
     },
     "toasts": {
       "saved": "Сохранено",
@@ -22445,7 +22450,9 @@ export type MessageContract = {
       "reset": "Вернули исходный текст",
       "autoDone": "Черновик перевода: {count}. Проверьте и сохраните.",
       "autoRejected": "Не перевелось строк: {count}",
-      "autoSkipped": "Пропущено строк с ручной правкой: {count}"
+      "autoSkipped": "Пропущено строк с ручной правкой: {count}",
+      "linkCopied": "Ссылка на строку скопирована",
+      "autoStopped": "Автоперевод остановлен: {done} из {total}"
     },
     "errors": {
       "forbidden": "Нет доступа к переводам",
@@ -22472,7 +22479,22 @@ export type MessageContract = {
       "granted": "Доступ выдан",
       "revoked": "Доступ снят"
     },
-    "staleHint": "Русский текст изменили после этой правки — проверьте перевод."
+    "staleHint": "Русский текст изменили после этой правки — проверьте перевод.",
+    "autoWaiting": "Лимит автоперевода — продолжу через {seconds} с",
+    "autoScope": "Автоперевод берёт все строки раздела или поиска без перевода, а не только эту страницу; результат — черновики.",
+    "history": {
+      "show": "История правок",
+      "hide": "Скрыть историю",
+      "empty": "Правок ещё не было",
+      "error": "Не удалось загрузить историю",
+      "before": "Было",
+      "after": "Стало",
+      "reset": "сброс к тексту из файла",
+      "restore": "Вернуть эту версию",
+      "restoreBefore": "Вернуть прежний текст",
+      "unknownUser": "Кто — неизвестно",
+      "restored": "{language}: текст подставлен — проверьте и сохраните"
+    }
   },
   "journalUi": {
     "photoCapture": {

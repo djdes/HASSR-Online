@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import {
   BUILD_CHECK_THROTTLE_MS,
   buildCheckAction,
+  healthBuildSha,
   normalizeBuildId,
   shouldCheckBuild,
 } from "@/lib/build-version";
@@ -58,12 +59,30 @@ describe("buildCheckAction", () => {
   });
 });
 
+describe("healthBuildSha", () => {
+  it("работающая сборка — вшитая версия; файл — запасной вариант", () => {
+    assert.deepEqual(healthBuildSha({ baked: NEW, file: NEW }), { buildSha: NEW });
+    assert.deepEqual(healthBuildSha({ baked: null, env: undefined, file: `${OLD}e4a1d\n` }), { buildSha: OLD });
+    assert.deepEqual(healthBuildSha({ baked: "dev", env: NEW }), { buildSha: NEW });
+    assert.deepEqual(healthBuildSha({}), { buildSha: "unknown" });
+  });
+
+  it("файл расходится с работающей сборкой (деплой идёт или упал) — отдельным полем", () => {
+    assert.deepEqual(healthBuildSha({ baked: OLD, file: `${NEW}0000` }), { buildSha: OLD, buildShaOnDisk: NEW });
+  });
+});
+
 describe("проводка", () => {
   const read = (relative: string) => fs.readFileSync(path.join(process.cwd(), relative), "utf8");
 
   it("/api/build-info отдаёт запечённую версию сборки, а не только .build-sha", () => {
     const source = read("src/app/api/build-info/route.ts");
     assert.match(source, /normalizeBuildId\(process\.env\.NEXT_PUBLIC_BUILD_ID\)/);
+  });
+
+  it("/api/health отдаёт вшитую версию, а не файл, записанный в начале деплоя", () => {
+    const source = read("src/app/api/health/route.ts");
+    assert.match(source, /healthBuildSha\(\{ baked: process\.env\.NEXT_PUBLIC_BUILD_ID/);
   });
 
   it("вотчер проверяет сборку при возврате во вкладку и при переходах", () => {

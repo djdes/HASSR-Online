@@ -1,9 +1,9 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ChevronDown, ChevronLeft, ChevronRight, Languages, Layers, Loader2, RotateCcw, Save, Sparkles, Undo2, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, History, Languages, Layers, Link2, Loader2, RotateCcw, Save, Sparkles, Undo2, X } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,15 @@ import { LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 import type { CategoryStats, TranslationEntry } from "@/lib/translations/editor.server";
 import { AUTO_TRANSLATE_BATCH } from "@/lib/translations/auto-translate";
 import { highlightSegments, MAX_SEARCH_LENGTH, normalizeSearchText, pageWindow, searchTokens, TRANSLATION_PAGE_SIZE } from "@/lib/translations/search";
+import {
+  ALL_SECTIONS,
+  parseTranslationView,
+  TRANSLATION_FILTERS,
+  translationViewSearch,
+  type TranslationFilter,
+  type TranslationHistoryItem,
+  type TranslationView,
+} from "@/lib/translations/view";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,12 +37,20 @@ import { cn } from "@/lib/utils";
  * Разделы: на компьютере — колонка слева, на телефоне — лист по кнопке
  * «Раздел»: колонка над строками уводила их на десятки экранов вниз, и
  * нажатие на раздел выглядело так, будто ничего не произошло.
+ *
+ * Вид живёт в адресе (`?q=&section=&filter=&page=&key=`): ссылкой можно
+ * поделиться, «Назад» возвращает прежний раздел и страницу и закрывает
+ * окно строки (на телефоне — жестом «назад»).
  */
 
-type Filter = "all" | "modified" | "untranslated";
+type Filter = TranslationFilter;
 type TargetLocale = Exclude<Locale, "ru">;
+type AutoResult = { translations: Record<string, string>; rejected: string[]; skipped?: string[] };
 
-const ALL = "all";
+const ALL = ALL_SECTIONS;
+/** Лимит автоперевода на сервере — 6 запросов в минуту: токен возвращается за 10 с. */
+const AUTO_RETRY_SECONDS = 12;
+const AUTO_MAX_WAITS = 6;
 const KNOWN_ERRORS = [
   "forbidden", "bad_request", "unknown_key", "unknown_locale", "too_long", "corrupted",
   "invalid_icu", "argument_mismatch", "rate_limited", "ai_not_configured", "ai_failed",
@@ -53,15 +70,17 @@ function textareaRows(value: string): number {
   return Math.min(10, Math.max(2, lines));
 }
 
-export function TranslationEditor({ initialCategories }: { initialCategories: CategoryStats[] }) {
+export function TranslationEditor({ initialCategories, initialView }: { initialCategories: CategoryStats[]; initialView: TranslationView }) {
   const t = useTranslations("translationEditor");
+  const defaultSection = initialCategories[0]?.id ?? ALL;
+  const knownSections = useMemo(() => new Set(initialCategories.map((item) => item.id)), [initialCategories]);
   const [categories, setCategories] = useState(initialCategories);
-  const [category, setCategory] = useState<string>(initialCategories[0]?.id ?? ALL);
-  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<string>(initialView.section);
+  const [query, setQuery] = useState(initialView.q);
   // Запрос, по которому ищем: поле ввода с паузой 300 мс.
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
-  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState(initialView.q);
+  const [filter, setFilter] = useState<Filter>(initialView.filter);
+  const [page, setPage] = useState(initialView.page);
   const [entries, setEntries] = useState<TranslationEntry[]>([]);
   const [total, setTotal] = useState(0);
   // Смещение загруженной страницы: пока грузится новая, счётчик не врёт.
@@ -69,11 +88,25 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
-  const [autoProgress, setAutoProgress] = useState<{ done: number; total: number } | null>(null);
+  // Сколько строк всего раздела (поиска) ждут автоперевода — с сервера.
+  const [candidates, setCandidates] = useState<Record<TargetLocale, number>>({ en: 0, uz: 0 });
+  const [autoProgress, setAutoProgress] = useState<{ done: number; total: number; waitSeconds: number | null } | null>(null);
+  const autoStop = useRef(false);
   const [autoRow, setAutoRow] = useState<string | null>(null);
   // Открытая строка — снимок, а не ключ: окно не закрывается само, если
   // пока оно открыто, пришла другая страница или другие результаты поиска.
   const [opened, setOpened] = useState<TranslationEntry | null>(null);
+  // Строка, которую откроем, когда она найдётся: ссылка с `?key=` или «Назад».
+  const [pendingKey, setPendingKey] = useState<string | null>(initialView.key);
+  // Переход из окна строки на соседнюю страницу: какую строку открыть после загрузки.
+  const openAfterLoad = useRef<"first" | "last" | null>(null);
+  // Раздел, страница и открытая строка — новая запись истории; поиск и фильтр — замена текущей.
+  const historyMode = useRef<"push" | "replace">("replace");
+  // Окно открыто кликом (своя запись истории) — закрываем его через «Назад».
+  const openedByPush = useRef(false);
+  const [historyVersion, setHistoryVersion] = useState(0);
+  // Ключ открытой строки «сейчас»: после await в обработчиках замыкание уже устарело.
+  const openKeyRef = useRef<string | null>(null);
   const [sectionsOpen, setSectionsOpen] = useState(false);
   const request = useRef(0);
   const listTop = useRef<HTMLDivElement>(null);
@@ -111,14 +144,22 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     return () => clearTimeout(timer);
   }, [query, search]);
 
+  /** Раздел или поиск с фильтром — для страницы строк и для ключей автоперевода. */
+  const scopeParams = useCallback(() => {
+    const params = new URLSearchParams({ filter });
+    // Поиск — по всему каталогу, раздел не учитывается.
+    if (search) params.set("q", search);
+    else if (category !== ALL) params.set("category", category);
+    return params;
+  }, [category, filter, search]);
+
   // Страница целиком заменяет предыдущую: на экране не больше 100 строк.
   useEffect(() => {
     const id = ++request.current;
     setLoading(true);
-    const params = new URLSearchParams({ filter, offset: String(page * TRANSLATION_PAGE_SIZE), limit: String(TRANSLATION_PAGE_SIZE) });
-    // Поиск — по всему каталогу, раздел не учитывается.
-    if (search) params.set("q", search);
-    else if (category !== ALL) params.set("category", category);
+    const params = scopeParams();
+    params.set("offset", String(page * TRANSLATION_PAGE_SIZE));
+    params.set("limit", String(TRANSLATION_PAGE_SIZE));
     void (async () => {
       try {
         const response = await fetch(`/api/translations?${params}`, { cache: "no-store" });
@@ -140,13 +181,75 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
         setTotal(body.total);
         setShownOffset(body.offset);
         setEntries(body.entries);
+        setCandidates(body.candidates ?? { en: 0, uz: 0 });
+        const next = openAfterLoad.current;
+        if (next && body.entries.length) {
+          openAfterLoad.current = null;
+          setOpened(next === "first" ? body.entries[0] : body.entries[body.entries.length - 1]);
+        }
       } catch {
         if (id === request.current) toast.error(t("errors.generic"));
       } finally {
         if (id === request.current) setLoading(false);
       }
     })();
-  }, [category, filter, search, page, errorText, t]);
+  }, [scopeParams, page, errorText, t]);
+
+  // Строка по ссылке: ищем на загруженной странице, иначе спрашиваем сервер.
+  useEffect(() => {
+    if (!pendingKey || loading) return;
+    const found = entries.find((entry) => entry.key === pendingKey);
+    if (found) {
+      setOpened(found);
+      setPendingKey(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const response = await fetch(`/api/translations?key=${encodeURIComponent(pendingKey)}`, { cache: "no-store" }).catch(() => null);
+      const body = await response?.json().catch(() => null);
+      if (cancelled) return;
+      if (response?.ok && body?.entry) setOpened(body.entry);
+      else toast.error(errorText(body));
+      setPendingKey(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingKey, loading, entries, errorText]);
+
+  // Вид → адрес. Совпадает — ничего не пишем (так же после «Назад»).
+  const viewKey = opened?.key ?? pendingKey;
+  useEffect(() => {
+    const next = translationViewSearch({ q: search, section: category, filter, page, key: viewKey }, defaultSection);
+    const mode = historyMode.current;
+    historyMode.current = "replace";
+    if (next === window.location.search) return;
+    // Next.js подхватывает pushState/replaceState без запроса к серверу.
+    const url = `${window.location.pathname}${next}${window.location.hash}`;
+    if (mode === "push") window.history.pushState(null, "", url);
+    else window.history.replaceState(null, "", url);
+  }, [search, category, filter, page, viewKey, defaultSection]);
+
+  // Адрес → вид: «Назад» и «Вперёд» в браузере.
+  useEffect(() => {
+    const onPopState = () => {
+      const view = parseTranslationView(new URLSearchParams(window.location.search), { known: knownSections, fallback: defaultSection });
+      historyMode.current = "replace";
+      openedByPush.current = false;
+      openAfterLoad.current = null;
+      setCategory(view.section);
+      setFilter(view.filter);
+      setPage(view.page);
+      setQuery(view.q);
+      setSearch(view.q);
+      setSectionsOpen(false);
+      setPendingKey(view.key);
+      if (!view.key) setOpened(null);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [knownSections, defaultSection]);
 
   /**
    * К началу списка, если он ушёл за экран (после пагинации внизу или
@@ -163,12 +266,17 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
   }, []);
 
   const goToPage = (next: number) => {
-    setPage(Math.min(Math.max(0, next), pages - 1));
+    const target = Math.min(Math.max(0, next), pages - 1);
+    // Новая запись истории — только если вид меняется: иначе «push» достался бы
+    // следующему вводу в поиске.
+    if (target !== page) historyMode.current = "push";
+    setPage(target);
     setOpened(null);
     scrollToList();
   };
 
   const selectCategory = (id: string) => {
+    if (id !== category || search || page !== 0) historyMode.current = "push";
     setCategory(id);
     setQuery("");
     setSearch("");
@@ -182,6 +290,34 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     setFilter(next);
     setPage(0);
     setOpened(null);
+  };
+
+  const openRow = (entry: TranslationEntry) => {
+    historyMode.current = "push";
+    openedByPush.current = true;
+    setOpened(entry);
+  };
+
+  // Открыто кликом — «Назад» снимает свою запись истории (и закрывает окно
+  // через popstate); открыто по ссылке — просто убираем строку из адреса.
+  const closeRow = () => {
+    openAfterLoad.current = null;
+    if (openedByPush.current) {
+      openedByPush.current = false;
+      window.history.back();
+      return;
+    }
+    setPendingKey(null);
+    setOpened(null);
+  };
+
+  const copyRowLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success(t("toasts.linkCopied"));
+    } catch {
+      toast.error(t("errors.generic"));
+    }
   };
 
   const refreshCategories = useCallback(async () => {
@@ -242,19 +378,22 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     [applyEntry, errorText, t],
   );
 
-  /** Все черновики одной строки (ru/en/uz) — кнопка «Сохранить» в окне строки. */
-  const saveRow = async (key: string) => {
+  /** Все черновики одной строки (ru/en/uz) — «Сохранить» в окне строки. Нечего сохранять — тоже успех. */
+  const saveRow = async (key: string): Promise<boolean> => {
     const locales = LOCALES.filter((locale) => drafts[draftId(key, locale)] !== undefined);
-    if (!locales.length) return;
+    if (!locales.length) return true;
     let saved = 0;
     for (const locale of locales) if (await persist(key, locale, drafts[draftId(key, locale)])) saved++;
     if (saved === locales.length) toast.success(t("toasts.saved"));
+    setHistoryVersion((version) => version + 1);
     void refreshCategories();
+    return saved === locales.length;
   };
 
   const resetOne = async (key: string, locale: Locale) => {
     if (await persist(key, locale, null)) {
       toast.success(t("toasts.reset"));
+      setHistoryVersion((version) => version + 1);
       void refreshCategories();
     }
   };
@@ -270,8 +409,9 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     void refreshCategories();
   };
 
+  /** `"rate_limited"` — сервер просит подождать (пачка ждёт и продолжает сама). */
   const requestAuto = useCallback(
-    async (locale: TargetLocale, keys: string[], overwriteManual = false): Promise<{ translations: Record<string, string>; rejected: string[]; skipped?: string[] } | null> => {
+    async (locale: TargetLocale, keys: string[], overwriteManual = false): Promise<AutoResult | "rate_limited" | null> => {
       try {
         const response = await fetch("/api/translations/auto", {
           method: "POST",
@@ -279,6 +419,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
           body: JSON.stringify({ locale, keys, ...(overwriteManual ? { overwriteManual: true } : {}) }),
         });
         const body = await response.json().catch(() => null);
+        if (response.status === 429) return "rate_limited";
         if (!response.ok) {
           toast.error(errorText(body));
           return null;
@@ -306,6 +447,10 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     try {
       // Явный запрос по одной строке: человек сам просит перевести заново.
       const result = await requestAuto(locale, [key], true);
+      if (result === "rate_limited") {
+        toast.error(t("errors.rate_limited"));
+        return;
+      }
       if (!result) return;
       applyAuto(locale, result.translations);
       if (result.rejected.length) toast.error(t("toasts.autoRejected", { count: String(result.rejected.length) }));
@@ -314,37 +459,63 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     }
   };
 
-  // Пачкой — только строки этой страницы без перевода и без черновика.
-  const autoCandidates = useMemo(() => {
-    const result = {} as Record<TargetLocale, string[]>;
-    for (const locale of ["en", "uz"] as const) {
-      result[locale] = entries
-        // Строки, правленные вручную, пачкой не переводим.
-        .filter((entry) => entry.untranslated.includes(locale) && !entry.overridden.includes(locale) && drafts[draftId(entry.key, locale)] === undefined)
-        .map((entry) => entry.key);
-    }
-    return result;
-  }, [entries, drafts]);
-
+  /**
+   * Автоперевод всего раздела (или результатов поиска), а не только этой
+   * страницы: ключи берём у сервера, переводим пачками по 30. На лимит
+   * сервера ждём и продолжаем; «Остановить» — после текущей пачки.
+   * Результат — черновики, строки с ручной правкой не трогаем.
+   */
   const autoBatch = async (locale: TargetLocale) => {
-    const keys = autoCandidates[locale];
-    if (!keys.length) return;
+    autoStop.current = false;
+    setAutoProgress({ done: 0, total: 0, waitSeconds: null });
+    let keys: string[];
+    try {
+      const params = scopeParams();
+      params.set("candidates", locale);
+      const response = await fetch(`/api/translations?${params}`, { cache: "no-store" });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        toast.error(errorText(body));
+        setAutoProgress(null);
+        return;
+      }
+      keys = (body.keys as string[]).filter((key) => drafts[draftId(key, locale)] === undefined);
+    } catch {
+      toast.error(t("errors.generic"));
+      setAutoProgress(null);
+      return;
+    }
     let done = 0;
     let translated = 0;
     let rejected = 0;
     let skipped = 0;
-    setAutoProgress({ done, total: keys.length });
+    const progress = (waitSeconds: number | null = null) => setAutoProgress({ done, total: keys.length, waitSeconds });
+    progress();
     try {
-      for (let index = 0; index < keys.length; index += AUTO_TRANSLATE_BATCH) {
+      for (let index = 0; index < keys.length && !autoStop.current; index += AUTO_TRANSLATE_BATCH) {
         const chunk = keys.slice(index, index + AUTO_TRANSLATE_BATCH);
-        const result = await requestAuto(locale, chunk);
+        let result = await requestAuto(locale, chunk);
+        for (let wait = 0; result === "rate_limited" && wait < AUTO_MAX_WAITS && !autoStop.current; wait++) {
+          for (let left = AUTO_RETRY_SECONDS; left > 0 && !autoStop.current; left--) {
+            progress(left);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          progress();
+          if (!autoStop.current) result = await requestAuto(locale, chunk);
+        }
+        // Остановили во время ожидания лимита — пачка не переведена; остановили во
+        // время запроса — пачку, за которую уже заплатили ожиданием, оставляем.
+        if (result === "rate_limited") {
+          if (!autoStop.current) toast.error(t("errors.rate_limited"));
+          break;
+        }
         if (!result) break;
         applyAuto(locale, result.translations);
         translated += Object.keys(result.translations).length;
         rejected += result.rejected.length;
         skipped += result.skipped?.length ?? 0;
         done += chunk.length;
-        setAutoProgress({ done, total: keys.length });
+        progress();
       }
     } finally {
       setAutoProgress(null);
@@ -352,10 +523,34 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
     if (translated) toast.success(t("toasts.autoDone", { count: String(translated) }));
     if (rejected) toast.error(t("toasts.autoRejected", { count: String(rejected) }));
     if (skipped) toast.info(t("toasts.autoSkipped", { count: String(skipped) }));
+    if (autoStop.current) toast.info(t("toasts.autoStopped", { done: String(done), total: String(keys.length) }));
   };
 
   const openIndex = opened ? entries.findIndex((entry) => entry.key === opened.key) : -1;
   const openEntry = openIndex >= 0 ? entries[openIndex] : opened;
+  useEffect(() => {
+    openKeyRef.current = opened?.key ?? null;
+  }, [opened]);
+
+  /** Соседняя строка; на краю страницы — первая (последняя) строка соседней страницы. */
+  const moveRow = (step: 1 | -1) => {
+    const target = openIndex >= 0 ? entries[openIndex + step] : undefined;
+    if (target) {
+      setOpened(target);
+      return;
+    }
+    const nextPage = page + step;
+    if (openIndex < 0 || nextPage < 0 || nextPage >= pages) return;
+    // Окно остаётся открытым; «Назад» после этого — к списку, а не к прежней странице.
+    openedByPush.current = false;
+    openAfterLoad.current = step > 0 ? "first" : "last";
+    setPage(nextPage);
+  };
+
+  // Пока сохранялось, окно могли закрыть или перейти к другой строке — тогда не двигаемся.
+  const saveAndNext = async (key: string) => {
+    if ((await saveRow(key)) && openKeyRef.current === key) moveRow(1);
+  };
   const activeCategory = categoryById.get(category);
   const currentTitle = category === ALL || !activeCategory ? t("categories.all") : categoryTitle(activeCategory);
   const from = shownOffset + 1;
@@ -405,9 +600,9 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
           ) : null}
 
           <div className="space-y-3 sm:rounded-3xl sm:border sm:border-[#ececf4] sm:bg-white sm:p-4">
-            {/* Ширина кнопок — по подписи: на телефоне «Без перевода» иначе обрезалось. */}
-            <div className="flex gap-1 rounded-xl bg-[#eef0f7] p-1 sm:inline-flex sm:bg-[#f4f5fb]" role="radiogroup" aria-label={t("filters.all")}>
-              {(["all", "modified", "untranslated"] as const).map((item) => (
+            {/* Телефон: четыре фильтра — сеткой 2×2, чтобы подписи не обрезались. */}
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#eef0f7] p-1 sm:inline-flex sm:bg-[#f4f5fb]" role="radiogroup" aria-label={t("filters.all")}>
+              {TRANSLATION_FILTERS.map((item) => (
                 <button
                   key={item}
                   type="button"
@@ -416,7 +611,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                   onClick={() => selectFilter(item)}
                   data-testid={`translation-filter-${item}`}
                   className={cn(
-                    "min-w-0 flex-auto truncate rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors sm:flex-none sm:px-3",
+                    "min-w-0 truncate rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors sm:px-3",
                     filter === item ? "bg-white text-[#0b1024] shadow-sm" : "text-[#6f7282] hover:text-[#0b1024]",
                   )}
                 >
@@ -431,31 +626,43 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                 {t("actions.auto")}
               </span>
               {(["en", "uz"] as const).map((locale) => {
-                const label = t("actions.autoBatch", { language: LOCALE_NAMES[locale], count: String(autoCandidates[locale].length) });
+                const label = t("actions.autoBatch", { language: LOCALE_NAMES[locale], count: String(candidates[locale]) });
                 return (
                   <Button
                     key={locale}
                     variant="outline"
                     size="sm"
-                    disabled={!autoCandidates[locale].length || autoProgress !== null}
+                    disabled={!candidates[locale] || autoProgress !== null}
                     onClick={() => void autoBatch(locale)}
                     aria-label={label}
+                    title={t("autoScope")}
                     data-testid={`translation-auto-batch-${locale}`}
                   >
                     <Sparkles className="size-4 max-sm:hidden" />
-                    <span className="sm:hidden">{`${locale.toUpperCase()} · ${autoCandidates[locale].length}`}</span>
+                    <span className="sm:hidden">{`${locale.toUpperCase()} · ${candidates[locale]}`}</span>
                     <span className="max-sm:hidden">{label}</span>
                   </Button>
                 );
               })}
-              {autoProgress ? (
-                <span className="inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]">
-                  <Loader2 className="size-4 animate-spin" />
-                  {t("autoBusy", { done: String(autoProgress.done), total: String(autoProgress.total) })}
-                </span>
-              ) : null}
             </div>
-            <p className="hidden text-[12px] text-[#6f7282] sm:block">{t("sourceNote")}</p>
+            {autoProgress ? (
+              <div className="flex flex-wrap items-center gap-2 text-[13px] text-[#6f7282]" data-testid="translation-auto-progress">
+                <Loader2 className="size-4 shrink-0 animate-spin" />
+                <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-[#eef0f7]" aria-hidden>
+                  <span className="block h-full rounded-full bg-[#5566f6] transition-[width]" style={{ width: `${autoProgress.total ? Math.round((autoProgress.done / autoProgress.total) * 100) : 0}%` }} />
+                </span>
+                <span role="status">
+                  {autoProgress.waitSeconds !== null
+                    ? t("autoWaiting", { seconds: String(autoProgress.waitSeconds) })
+                    : t("autoBusy", { done: String(autoProgress.done), total: String(autoProgress.total) })}
+                </span>
+                <Button size="sm" variant="ghost" onClick={() => (autoStop.current = true)} data-testid="translation-auto-stop">
+                  <X className="size-4" />
+                  {t("actions.stop")}
+                </Button>
+              </div>
+            ) : null}
+            <p className="hidden text-[12px] text-[#6f7282] sm:block">{t("sourceNote")} {t("autoScope")}</p>
           </div>
 
           <div ref={listTop} className="scroll-mt-28 space-y-1">
@@ -480,7 +687,7 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                 drafts={drafts}
                 tokens={tokens}
                 categoryLabel={searching || category === ALL ? (categoryById.get(entry.category) ? categoryTitle(categoryById.get(entry.category)!) : null) : null}
-                onOpen={() => setOpened(entry)}
+                onOpen={() => openRow(entry)}
               />
             ))}
           </div>
@@ -507,9 +714,23 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
         <div className="px-1 pb-3">{categoryList("translation-sheet-category-")}</div>
       </BottomSheet>
 
-      <Dialog open={openEntry !== null} onOpenChange={(open) => { if (!open) setOpened(null); }}>
+      <Dialog open={openEntry !== null} onOpenChange={(open) => { if (!open) closeRow(); }}>
         {openEntry ? (
-          <DialogContent className="flex flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[720px]" data-testid="translation-row-editor">
+          <DialogContent
+            className="flex flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[720px]"
+            data-testid="translation-row-editor"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                // Как у кнопки: пока строка сохраняется, второй раз не отправляем.
+                if (LOCALES.some((locale) => saving.has(draftId(openEntry.key, locale)))) return;
+                void saveAndNext(openEntry.key);
+              } else if (event.altKey && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+                event.preventDefault();
+                moveRow(event.key === "ArrowDown" ? 1 : -1);
+              }
+            }}
+          >
             <DialogHeader className="shrink-0 gap-1 border-b border-[#ececf4] px-5 pb-3 pt-5 pr-16 text-left sm:px-6">
               <DialogTitle className="text-[17px] font-semibold leading-snug text-[#0b1024]">
                 {categoryById.get(openEntry.category) ? categoryTitle(categoryById.get(openEntry.category)!) : t("categories.all")}
@@ -520,6 +741,10 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                   <span className="block">{t("placeholders", { list: openEntry.placeholders.map((name) => `{${name}}`).join(", ") })}</span>
                 ) : null}
               </DialogDescription>
+              <Button size="sm" variant="ghost" className="-ml-2 w-fit text-[#5566f6]" onClick={() => void copyRowLink()} data-testid="translation-copy-link">
+                <Link2 />
+                {t("actions.copyLink")}
+              </Button>
             </DialogHeader>
 
             <div key={openEntry.key} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6">
@@ -543,12 +768,6 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                       value={value}
                       rows={textareaRows(value)}
                       onChange={(event) => setDraft(openEntry.key, locale, event.target.value === openEntry.values[locale] ? null : event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-                          event.preventDefault();
-                          void saveRow(openEntry.key);
-                        }
-                      }}
                       className={cn(
                         "min-h-0 rounded-xl border-[#dcdfed] text-[14px] leading-snug md:text-[14px]",
                         draft !== undefined && "border-[#5566f6]/50 bg-[#f5f6ff]",
@@ -585,15 +804,26 @@ export function TranslationEditor({ initialCategories }: { initialCategories: Ca
                   </div>
                 );
               })}
+              <HistoryPanel
+                entryKey={openEntry.key}
+                version={historyVersion}
+                onRestore={(locale, text) => {
+                  setDraft(openEntry.key, locale, text === openEntry.values[locale] ? null : text);
+                  toast.info(t("history.restored", { language: LOCALE_NAMES[locale] }));
+                }}
+              />
             </div>
 
             <RowEditorFooter
-              index={openIndex}
-              count={entries.length}
-              onMove={(step) => setOpened(entries[openIndex + step] ?? opened)}
+              position={openIndex >= 0 ? shownOffset + openIndex + 1 : null}
+              total={total}
+              canPrev={openIndex >= 0 && (openIndex > 0 || page > 0)}
+              canNext={openIndex >= 0 && (openIndex < entries.length - 1 || page < pages - 1)}
+              onMove={moveRow}
               canSave={LOCALES.some((locale) => drafts[draftId(openEntry.key, locale)] !== undefined)}
               saving={LOCALES.some((locale) => saving.has(draftId(openEntry.key, locale)))}
               onSave={() => void saveRow(openEntry.key)}
+              onSaveNext={() => void saveAndNext(openEntry.key)}
             />
           </DialogContent>
         ) : null}
@@ -696,40 +926,137 @@ function EntryRow({
 }
 
 function RowEditorFooter({
-  index,
-  count,
+  position,
+  total,
+  canPrev,
+  canNext,
   onMove,
   canSave,
   saving,
   onSave,
+  onSaveNext,
 }: {
-  index: number;
-  count: number;
+  /** Номер строки среди всех строк раздела; `null` — строки уже нет на странице (сменился поиск). */
+  position: number | null;
+  total: number;
+  canPrev: boolean;
+  canNext: boolean;
   onMove: (step: -1 | 1) => void;
   canSave: boolean;
   saving: boolean;
   onSave: () => void;
+  onSaveNext: () => void;
 }) {
   const t = useTranslations("translationEditor");
   return (
-    <div className="flex shrink-0 items-center gap-2 border-t border-[#ececf4] bg-[#fafbff] px-4 pb-[var(--safe-b)] pt-3 sm:px-6 sm:pb-3">
-      {/* Строки уже нет на странице (сменился поиск) — листать не от чего. */}
-      {index >= 0 ? (
-        <>
-          <Button variant="outline" size="icon-sm" disabled={index <= 0} onClick={() => onMove(-1)} aria-label={t("rowEditor.previous")} data-testid="translation-row-prev">
+    <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[#ececf4] bg-[#fafbff] px-4 pb-[var(--safe-b)] pt-3 sm:px-6 sm:pb-3">
+      {position !== null ? (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon-sm" disabled={!canPrev} onClick={() => onMove(-1)} aria-label={t("rowEditor.previous")} data-testid="translation-row-prev">
             <ChevronLeft />
           </Button>
-          <span className="min-w-0 text-[13px] tabular-nums text-[#6f7282]">{t("rowEditor.position", { index: String(index + 1), count: String(count) })}</span>
-          <Button variant="outline" size="icon-sm" disabled={index >= count - 1} onClick={() => onMove(1)} aria-label={t("rowEditor.next")} data-testid="translation-row-next">
+          <span className="min-w-0 text-[13px] tabular-nums text-[#6f7282]" data-testid="translation-row-position">
+            {t("rowEditor.position", { index: String(position), count: String(total) })}
+          </span>
+          <Button variant="outline" size="icon-sm" disabled={!canNext} onClick={() => onMove(1)} aria-label={t("rowEditor.next")} data-testid="translation-row-next">
             <ChevronRight />
           </Button>
-        </>
+        </div>
       ) : null}
-      <span className="ml-auto hidden text-[12px] text-[#9b9fb3] md:inline">{t("rowEditor.shortcut")}</span>
-      <Button disabled={!canSave || saving} onClick={onSave} className="ml-auto md:ml-0" data-testid="translation-save">
-        {saving ? <Loader2 className="animate-spin" /> : <Save />}
-        {t("actions.save")}
+      {/* Телефон: кнопки — отдельной строкой во всю ширину. */}
+      <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
+        <Button variant="outline" disabled={!canSave || saving} onClick={onSave} className="flex-1 sm:flex-none" data-testid="translation-save">
+          {saving ? <Loader2 className="animate-spin" /> : <Save />}
+          {t("actions.save")}
+        </Button>
+        <Button disabled={saving || (!canSave && !canNext)} onClick={onSaveNext} className="flex-1 sm:flex-none" data-testid="translation-save-next">
+          {canSave ? t("actions.saveNext") : t("actions.next")}
+          <ChevronRight />
+        </Button>
+      </div>
+      <span className="hidden w-full text-right text-[12px] text-[#9b9fb3] lg:block">{t("rowEditor.shortcut")}</span>
+    </div>
+  );
+}
+
+/**
+ * История правок строки по всем языкам (AuditLog): кто, когда, было → стало.
+ * «Вернуть» ставит выбранный текст черновиком — сохраняет человек.
+ */
+function HistoryPanel({ entryKey, version, onRestore }: { entryKey: string; version: number; onRestore: (locale: Locale, text: string) => void }) {
+  const t = useTranslations("translationEditor");
+  const format = useFormatter();
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<TranslationHistoryItem[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  // История рисуется только в браузере (после запроса) — время в поясе того, кто смотрит.
+  const timeZone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      const response = await fetch(`/api/translations/history?key=${encodeURIComponent(entryKey)}`, { cache: "no-store" }).catch(() => null);
+      const body = await response?.json().catch(() => null);
+      if (cancelled) return;
+      setFailed(!response?.ok);
+      setItems(response?.ok ? body.items : []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, entryKey, version]);
+
+  return (
+    <div className="border-t border-[#ececf4] pt-3" data-testid="translation-history">
+      <Button size="sm" variant="ghost" className="-ml-2" onClick={() => setOpen((value) => !value)} aria-expanded={open} data-testid="translation-history-toggle">
+        <History />
+        {open ? t("history.hide") : t("history.show")}
+        <ChevronDown className={cn("transition-transform", open && "rotate-180")} />
       </Button>
+      {open ? (
+        items === null ? (
+          <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]">
+            <Loader2 className="size-4 animate-spin" />
+            {t("loading")}
+          </p>
+        ) : failed ? (
+          <p className="mt-2 text-[13px] text-[#a13a32]">{t("history.error")}</p>
+        ) : items.length === 0 ? (
+          <p className="mt-2 text-[13px] text-[#9b9fb3]">{t("history.empty")}</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {items.map((item) => (
+              <li key={item.id} className="min-w-0 rounded-2xl border border-[#ececf4] bg-white p-3" data-testid="translation-history-item">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-[#6f7282]">
+                  <span className="font-semibold uppercase text-[#3c4053]">{item.locale}</span>
+                  <span>{item.userName ?? t("history.unknownUser")}</span>
+                  <span>{format.dateTime(new Date(item.createdAt), { dateStyle: "short", timeStyle: "short", timeZone })}</span>
+                  {item.action === "reset" ? <span className="text-[#b25f00]">{t("history.reset")}</span> : null}
+                </div>
+                <p className="mt-1 text-[13.5px] text-[#0b1024] [overflow-wrap:anywhere]">
+                  <span className="text-[#9b9fb3]">{t("history.after")}: </span>
+                  {item.after}
+                </p>
+                <p className="mt-0.5 text-[12px] text-[#6f7282] [overflow-wrap:anywhere]">
+                  <span className="text-[#9b9fb3]">{t("history.before")}: </span>
+                  {item.before}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => onRestore(item.locale, item.after)} data-testid="translation-history-restore">
+                    <RotateCcw />
+                    {t("history.restore")}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => onRestore(item.locale, item.before)} data-testid="translation-history-restore-before">
+                    <Undo2 />
+                    {t("history.restoreBefore")}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : null}
     </div>
   );
 }

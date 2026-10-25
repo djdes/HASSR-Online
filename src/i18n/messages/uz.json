@@ -22401,7 +22401,8 @@
     "filters": {
       "all": "Hammasi",
       "modified": "O‘zgartirilgan",
-      "untranslated": "Tarjimasiz"
+      "untranslated": "Tarjimasiz",
+      "stale": "Eskirgan"
     },
     "rowState": {
       "modified": "O‘zgartirilgan",
@@ -22418,7 +22419,11 @@
       "reset": "Aslini qaytarish",
       "auto": "Avtotarjima",
       "autoBatch": "Avtotarjima: {language} ({count})",
-      "undo": "Tahrirni bekor qilish"
+      "undo": "Tahrirni bekor qilish",
+      "saveNext": "Saqlash va keyingisi",
+      "next": "Keyingisi",
+      "copyLink": "Havolani nusxalash",
+      "stop": "To‘xtatish"
     },
     "autoBusy": "Tarjima qilinmoqda… {done} / {total}",
     "loading": "Yuklanmoqda…",
@@ -22436,7 +22441,7 @@
       "position": "{index} / {count}",
       "previous": "Oldingi qator",
       "next": "Keyingi qator",
-      "shortcut": "Ctrl+Enter — saqlash"
+      "shortcut": "Ctrl+Enter — saqlash va keyingisi · Alt+↑/↓ — qo‘shni qator"
     },
     "toasts": {
       "saved": "Saqlandi",
@@ -22444,7 +22449,9 @@
       "reset": "Asl matn qaytarildi",
       "autoDone": "Tarjima qoralamasi: {count}. Tekshirib, saqlang.",
       "autoRejected": "Tarjima qilinmagan matnlar: {count}",
-      "autoSkipped": "Qo‘lda tahrirlangan qatorlar o‘tkazib yuborildi: {count}"
+      "autoSkipped": "Qo‘lda tahrirlangan qatorlar o‘tkazib yuborildi: {count}",
+      "linkCopied": "Qator havolasi nusxalandi",
+      "autoStopped": "Avtotarjima to‘xtatildi: {done} / {total}"
     },
     "errors": {
       "forbidden": "Tarjimalarga ruxsat yo‘q",
@@ -22471,7 +22478,22 @@
       "granted": "Ruxsat berildi",
       "revoked": "Ruxsat olindi"
     },
-    "staleHint": "Bu tahrirdan keyin rus matni o‘zgartirilgan — tarjimani tekshiring."
+    "staleHint": "Bu tahrirdan keyin rus matni o‘zgartirilgan — tarjimani tekshiring.",
+    "autoWaiting": "Avtotarjima limiti — {seconds} soniyadan keyin davom etadi",
+    "autoScope": "Avtotarjima faqat shu sahifani emas, bo‘lim yoki qidiruvdagi barcha tarjimasiz qatorlarni oladi; natija — qoralamalar.",
+    "history": {
+      "show": "Tahrirlar tarixi",
+      "hide": "Tarixni yashirish",
+      "empty": "Hali tahrir bo‘lmagan",
+      "error": "Tarixni yuklab bo‘lmadi",
+      "before": "Avval",
+      "after": "Keyin",
+      "reset": "fayldagi matnga qaytarildi",
+      "restore": "Shu versiyani qaytarish",
+      "restoreBefore": "Avvalgi matnni qaytarish",
+      "unknownUser": "Muallif noma’lum",
+      "restored": "{language}: matn qo‘yildi — tekshirib, saqlang"
+    }
   },
   "journalUi": {
     "photoCapture": {

@@ -8,6 +8,7 @@ import { isStaleOverride, looksUntranslated, placeholderNames, validateOverride,
 import { buildCategories, type TranslationCategorySummary } from "./categories";
 import { invalidateTranslationOverrides } from "./overrides.server";
 import { normalizeSearchText, searchRank, TRANSLATION_PAGE_SIZE } from "./search";
+import { historyItemsFromAudit, isAutoCandidate, matchesFilter, type TranslationFilter, type TranslationHistoryItem } from "./view";
 
 export type TranslationActor = { id: string; name: string; organizationId: string; isRoot: boolean };
 
@@ -154,15 +155,17 @@ export async function listCategoryStats(): Promise<CategoryStats[]> {
   });
 }
 
-export type EntryQuery = { category?: string; q?: string; filter?: "all" | "modified" | "untranslated"; offset?: number; limit?: number };
+export type EntryQuery = { category?: string; q?: string; filter?: TranslationFilter; offset?: number; limit?: number };
+
+type AutoLocale = Exclude<Locale, "ru">;
 
 /**
- * Страница строк. Без категории — весь каталог: так работает глобальный
- * поиск. С запросом строки упорядочены по `searchRank` (точные совпадения
- * выше), без запроса — в порядке категории.
+ * Строки раздела (или всего каталога — так работает глобальный поиск)
+ * после фильтра и поиска. С запросом упорядочены по `searchRank`
+ * (точные совпадения выше), без запроса — в порядке категории.
  */
-export async function listEntries(query: EntryQuery): Promise<{ total: number; offset: number; entries: TranslationEntry[] } | null> {
-  const { flat, keys, categories, categoryOf } = await getBaseCatalogs();
+async function scanEntries(query: EntryQuery): Promise<BareEntry[] | null> {
+  const { flat, keys, categories } = await getBaseCatalogs();
   let scope = keys;
   if (query.category) {
     const category = categories.find((item) => item.id === query.category);
@@ -176,8 +179,7 @@ export async function listEntries(query: EntryQuery): Promise<{ total: number; o
   const matched: { entry: BareEntry; rank: number }[] = [];
   for (const key of scope) {
     const entry = toEntry(key, flat, overrides.get(key));
-    if (filter === "modified" && !entry.overridden.length) continue;
-    if (filter === "untranslated" && !entry.untranslated.length) continue;
+    if (!matchesFilter(entry, filter)) continue;
     let rank = 0;
     if (needle) {
       const found = searchRank(needle, searchText(key), LOCALES.map((locale) => searchText(entry.values[locale])));
@@ -188,13 +190,55 @@ export async function listEntries(query: EntryQuery): Promise<{ total: number; o
   }
   // Сортировка устойчивая: при равном месте — порядок каталога.
   if (needle) matched.sort((a, b) => a.rank - b.rank);
+  return matched.map(({ entry }) => entry);
+}
+
+export type EntryPage = {
+  total: number;
+  offset: number;
+  entries: TranslationEntry[];
+  /** Сколько строк всего раздела (поиска) ждут автоперевода — не только этой страницы. */
+  candidates: Record<AutoLocale, number>;
+};
+
+/** Страница строк по `offset`/`limit` (по умолчанию 100). */
+export async function listEntries(query: EntryQuery): Promise<EntryPage | null> {
+  const matched = await scanEntries(query);
+  if (!matched) return null;
+  const { categoryOf } = await getBaseCatalogs();
   const limit = Math.min(200, Math.max(1, query.limit ?? TRANSLATION_PAGE_SIZE));
   const offset = Math.max(0, query.offset ?? 0);
   return {
     total: matched.length,
     offset,
-    entries: matched.slice(offset, offset + limit).map(({ entry }) => finishEntry(entry, categoryOf)),
+    entries: matched.slice(offset, offset + limit).map((entry) => finishEntry(entry, categoryOf)),
+    candidates: {
+      en: matched.filter((entry) => isAutoCandidate(entry, "en")).length,
+      uz: matched.filter((entry) => isAutoCandidate(entry, "uz")).length,
+    },
   };
+}
+
+/** Все ключи раздела (поиска), которые ждут автоперевода на `locale`, — для перевода пачками. */
+export async function listCandidateKeys(query: EntryQuery, locale: AutoLocale): Promise<string[] | null> {
+  const matched = await scanEntries(query);
+  return matched ? matched.filter((entry) => isAutoCandidate(entry, locale)).map((entry) => entry.key) : null;
+}
+
+/**
+ * История правок строки по всем языкам — из AuditLog (`translation.update`,
+ * `translation.reset`), новые сверху. Правки переводов общие для всей
+ * платформы, поэтому история не режется по организации; читать её могут
+ * только ROOT и переводчики (проверка — в API).
+ */
+export async function listTranslationHistory(key: string, limit = 50): Promise<TranslationHistoryItem[]> {
+  const rows = await db.auditLog.findMany({
+    where: { entity: "translation", entityId: { in: LOCALES.map((locale) => `${locale}:${key}`) } },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: { id: true, action: true, details: true, userName: true, createdAt: true },
+  });
+  return historyItemsFromAudit(rows);
 }
 
 export async function getEntries(keys: string[]): Promise<TranslationEntry[]> {
