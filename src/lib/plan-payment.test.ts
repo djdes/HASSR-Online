@@ -70,14 +70,15 @@ describe("оплата заказа тарифа 2026-10 → подписка а
     assert.equal(update?.subscriptionEnd.getTime(), days(12).getTime());
   });
 
-  it("переход на год с зачётом остатка: новый срок с момента оплаты, включая дни из зачёта", () => {
-    const created = days(-1);
+  it("переход на год с зачётом остатка: конец, как при оформлении — дни до оплаты уже засчитаны", () => {
+    // Счёт выставлен 6 дней назад (остаток 7 дней в зачёте), оплачен сегодня.
+    const created = days(-6);
     const update = planAfterPayment({
       order: { tariffKey: "standard_year", changeKind: "switch", createdAt: created, periodEndsAt: days(370, created) },
-      currentEnd: days(9),
+      currentEnd: days(1),
       now: NOW,
     });
-    assert.equal(update?.subscriptionEnd.getTime(), days(370).getTime());
+    assert.equal(update?.subscriptionEnd.getTime(), days(370, created).getTime());
   });
 
   it("вид перехода не указан — продление; запланированный в заказе не бывает — тоже продление", () => {

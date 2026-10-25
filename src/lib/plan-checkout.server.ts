@@ -104,6 +104,9 @@ const GUEST_ACCOUNT_ERROR =
  */
 const EXEMPT_CHECKOUT_ERROR =
   "Из этой организации тариф не оплачивается (демо или мастер-кабинет). Переключитесь на свою организацию и оформите оплату там — сумма посчитается с учётом вашей подписки.";
+/** То же для сотрудника, чья организация — демо или мастер-кабинет аккаунта. */
+const EXEMPT_PAYER_ERROR =
+  "Тариф этой организации оплачивает руководитель в кабинете основной организации — «Настройки → Тариф и оплата».";
 
 /**
  * ROOT в «войти как» за клиента не платит: заказ ушёл бы с почтой ROOT без
@@ -155,6 +158,7 @@ export async function quoteCheckout(args: {
       return { ok: false, status: 409, code: "account", error: GUEST_ACCOUNT_ERROR };
     }
     const payerAccount = user ? await accountSubscription(user.organizationId, now) : null;
+    if (payerAccount?.exempt) return { ok: false, status: 409, code: "exempt", error: EXEMPT_PAYER_ERROR };
     const paidUntil = payerAccount?.current?.paidUntil;
     if (paidUntil && paidUntil.getTime() - now.getTime() >= DAY_MS) {
       return { ok: false, status: 409, code: "account", error: PAID_ACCOUNT_ERROR };

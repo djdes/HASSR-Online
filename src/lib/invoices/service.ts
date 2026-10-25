@@ -39,6 +39,15 @@ import { renderInvoicePdf } from "./pdf";
  */
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/** Конец последнего полного дня по Москве перед `end` (23:59:59.999 МСК). */
+function lastFullMskDayBefore(end: Date): Date {
+  const shifted = new Date(end.getTime() + MSK_OFFSET_MS);
+  const dayStart = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()) - MSK_OFFSET_MS;
+  return new Date(dayStart - 1);
+}
+
 export type CreateInvoiceResult =
   | { ok: true; order: PaymentOrder; created: boolean }
   | { ok: false; status: number; error: string; grossRub?: number };
@@ -128,10 +137,13 @@ export async function createInvoiceOrder(args: {
   }
 
   // Доплата и переход считаются от остатка текущего срока: оплата после его
-  // конца ушла бы на ручной разбор, поэтому счёт действует не дольше срока.
+  // конца ушла бы на ручной разбор, поэтому счёт действует не дольше срока —
+  // до последнего полного дня перед ним (в счёте печатается дата, без часов).
   const validUntil = new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS);
   const termEnd = quote.change.kind === "upgrade" || quote.change.kind === "switch" ? (quote.base?.paidUntil ?? null) : null;
-  const invoiceDueAt = termEnd && termEnd.getTime() < validUntil.getTime() ? termEnd : validUntil;
+  const termDue = termEnd ? lastFullMskDayBefore(termEnd) : null;
+  const termDeadline = termEnd && termDue ? (termDue.getTime() > now.getTime() ? termDue : termEnd) : null;
+  const invoiceDueAt = termDeadline && termDeadline.getTime() < validUntil.getTime() ? termDeadline : validUntil;
 
   // Действующий счёт возвращаем, только если он всё ещё про то же: тот же
   // тариф, точки, вид перехода и сумма, срок оплаты не прошёл. Иначе — новый

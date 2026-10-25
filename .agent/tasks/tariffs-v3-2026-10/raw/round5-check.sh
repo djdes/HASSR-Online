@@ -38,10 +38,10 @@ req r5-demo POST /api/payments/invoice '{"plan":"standard","cycle":"month","poin
 echo "-- подписка аккаунта после: $(acct r5-demo@example.test)"
 req r5-demo DELETE /api/organizations/demo
 
-say "D3. Счёт на доплату: срок в PDF = срок в заказе (конец оплаченного срока)"
+say "D3. Счёт на доплату: срок в PDF = срок в заказе (не позже конца оплаченного срока)"
 req r5-due POST /api/payments/invoice '{"plan":"premium","cycle":"month","points":1}'
 INV=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["orderId"])' "$OUT/body")
-echo "-- заказ №$INV: срок оплаты $(sql "select to_char(\"invoiceDueAt\" at time zone 'Europe/Moscow','DD.MM.YYYY') from \"PaymentOrder\" where id=$INV"), конец подписки $(sql "select to_char(a.\"subscriptionEnd\" at time zone 'Europe/Moscow','DD.MM.YYYY') from \"User\" u join \"Organization\" o on o.id=u.\"organizationId\" join \"Account\" a on a.id=o.\"accountId\" where u.email='r5-due@example.test'")"
+echo "-- заказ №$INV: срок оплаты $(sql "select to_char((\"invoiceDueAt\" at time zone 'UTC') at time zone 'Europe/Moscow','DD.MM.YYYY') from \"PaymentOrder\" where id=$INV"), конец подписки $(sql "select to_char((a.\"subscriptionEnd\" at time zone 'UTC') at time zone 'Europe/Moscow','DD.MM.YYYY') from \"User\" u join \"Organization\" o on o.id=u.\"organizationId\" join \"Account\" a on a.id=o.\"accountId\" where u.email='r5-due@example.test'")"
 curl -s -b "$J/r5-due.jar" "$B/api/payments/invoice/$INV/pdf" -o "$OUT/invoice.pdf"
 echo "-- PDF: $(pdftotext "$OUT/invoice.pdf" - 2>/dev/null | tr '\n' ' ' | grep -o "Счёт действителен до [0-9.]*" | head -1)"
 

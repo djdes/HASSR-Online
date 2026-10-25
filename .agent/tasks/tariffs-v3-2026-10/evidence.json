@@ -55,6 +55,10 @@
       "round5_fixes": [
         "raw/round5-scenarios.txt",
         "raw/round5-check.txt"
+      ],
+      "round6_fixes": [
+        "raw/round6-scenarios.txt",
+        "raw/round6-check.txt"
       ]
     }
   },
@@ -236,7 +240,25 @@
         "'plan applied' binds a lifetime discount",
         "cabinet card shows the year for next-year ends",
         "staff notice also on the mini app Today screen"
-      ]
+      ],
+      "fixed_in": "e4362ca1"
+    },
+    "round6": {
+      "commit": "e4362ca1",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "problems": "problems.md (section 6)",
+      "fixed": [
+        "employee/guest payer branch refuses organizations outside the plan (409 exempt); fulfillment holds a plan order for such an organization instead of touching the account",
+        "paid totals exclude refunded orders; refunded rows hide the points badge; in-app list greys refunded amounts",
+        "switch paid by invoice ends at the quoted end (credit computed at issue)",
+        "upgrade/switch invoices due at the end of the last full Moscow day before the term end; KP comment updated"
+      ],
+      "not_changed": {
+        "held_in_totals": "a held payment is money received; it leaves the total only when refunded"
+      }
     }
   },
   "test_accounts_local": [

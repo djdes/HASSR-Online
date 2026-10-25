@@ -326,8 +326,9 @@ export default async function SubscriptionPage({
       heldAt: true,
     },
   });
+  // Возвращённая оплата — не «оплачено».
   const paidTotalRub = payments
-    .filter((payment) => payment.status === "paid" && !payment.isTest)
+    .filter((payment) => payment.status === "paid" && !payment.isTest && !payment.refundedAt)
     .reduce((sum, payment) => sum + Number(payment.amountRub), 0);
   // Закрывающие документы выпускаются, только когда WeSetup заполнил свои
   // реквизиты и факсимиле; до этого колонка молчит. Документ — по
@@ -375,7 +376,7 @@ export default async function SubscriptionPage({
           at: payment.paidAt ?? payment.createdAt,
           description: payment.description,
           status: orderStatusLabel(payment, now),
-          paid: payment.status === "paid",
+          paid: payment.status === "paid" && !payment.refundedAt,
           amountRub: Number(payment.amountRub),
         }))}
       />
@@ -694,7 +695,8 @@ export default async function SubscriptionPage({
                     </td>
                     <td className="py-2.5 text-right tabular-nums text-[#0b1024]">
                       {Number(payment.amountRub).toLocaleString(locale)} ₽
-                      {payment.pointsSpent > 0 ? (
+                      {/* Баллы возвращённой оплаты уже вернулись на баланс. */}
+                      {payment.pointsSpent > 0 && !payment.refundedAt ? (
                         <div className="text-[12px] text-[#3848c7]">
                           {t("pointsSpent", { points: payment.pointsSpent.toLocaleString(locale) })}
                         </div>

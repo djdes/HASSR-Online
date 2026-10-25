@@ -170,7 +170,9 @@ async function main() {
     const { orgId, userId } = await account("r4-due@example.test", "R4 Срок счёта", { plan: "standard", end });
     const upgrade = await createInvoiceOrder({ organizationId: orgId, userId, email: "r4-due@example.test", target: { tier: "premium", cycle: "month", points: 1 } });
     if (!upgrade.ok) throw new Error(upgrade.error);
-    console.log(`подписка до ${day(end)}; счёт №${upgrade.order.id} (${upgrade.order.changeKind}) действует до ${day(upgrade.order.invoiceDueAt)} — ${upgrade.order.invoiceDueAt?.getTime() === end.getTime() ? "до конца срока" : "ОШИБКА"}`);
+    // С проверки 6 — до конца последнего полного дня по Москве перед концом срока.
+    const due = upgrade.order.invoiceDueAt?.getTime() ?? Infinity;
+    console.log(`подписка до ${day(end)}; счёт №${upgrade.order.id} (${upgrade.order.changeKind}) действует до ${day(upgrade.order.invoiceDueAt)} — ${due <= end.getTime() && due > end.getTime() - 2 * DAY ? "не позже конца срока" : "ОШИБКА"}`);
     const renew = await createInvoiceOrder({ organizationId: orgId, userId, email: "r4-due@example.test", target: { tier: "standard", cycle: "month", points: 1 } });
     if (!renew.ok) throw new Error(renew.error);
     const days = Math.round(((renew.order.invoiceDueAt?.getTime() ?? 0) - now) / DAY);

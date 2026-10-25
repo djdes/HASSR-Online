@@ -23,11 +23,12 @@ import {
  * изменилась (`planOrderStillMatches`; не подходит — ручной разбор), затем
  * сроки пересчитываются от момента оплаты:
  *
- *   • new / switch — срок с момента оплаты на ту же длину, что при
- *     оформлении (у switch туда входят дни из зачёта остатка); если к
- *     оплате «новой» подписки у аккаунта уже идёт оплаченный срок (он
- *     начался между оформлением и оплатой), новый период добавляется к
- *     его концу — оплаченные дни не сгорают;
+ *   • new — срок с момента оплаты на ту же длину, что при оформлении; если
+ *     к оплате у аккаунта уже идёт оплаченный срок (он начался между
+ *     оформлением и оплатой), новый период добавляется к его концу —
+ *     оплаченные дни не сгорают;
+ *   • switch — конец, как при оформлении: зачёт остатка посчитан на тот
+ *     момент, и дни между оформлением (счётом) и оплатой уже засчитаны;
  *   • renew — от текущего конца (или с сегодня, если он прошёл);
  *   • upgrade — конец не меняется; если он успел пройти, — с сегодня на
  *     оставшиеся при оформлении дни, за которые и была доплата.
@@ -80,6 +81,8 @@ export function planAfterPayment(args: {
     subscriptionEnd = currentEnd ?? new Date(now.getTime() + (quotedMs ?? periodMs));
   } else if (kind === "new" && currentEnd) {
     subscriptionEnd = new Date(currentEnd.getTime() + (quotedMs ?? periodMs));
+  } else if (kind === "switch" && args.order.periodEndsAt && args.order.periodEndsAt.getTime() > now.getTime()) {
+    subscriptionEnd = args.order.periodEndsAt;
   } else {
     subscriptionEnd = new Date(now.getTime() + (quotedMs ?? periodMs));
   }

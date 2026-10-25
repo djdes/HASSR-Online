@@ -101,8 +101,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   // Оплата устаревшего заказа: ROOT применяет тариф вручную или возвращает деньги.
   const heldForReview = (payment: (typeof payments)[number]) =>
     payment.status === "paid" && Boolean(payment.heldAt) && !payment.refundedAt;
+  // Возвращённая оплата — не выручка.
   const paidTotalRub = payments
-    .filter((payment) => payment.status === "paid")
+    .filter((payment) => payment.status === "paid" && !payment.refundedAt)
     .reduce((sum, payment) => sum + Number(payment.amountRub), 0);
 
   // Баллы: движения, кто привёл организацию и скольких привела она.
@@ -290,7 +291,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   </td>
                   <td className="py-2.5 text-right tabular-nums text-[#0b1024]">
                     {t("format.rubles", { amount: Number(payment.amountRub) })}
-                    {payment.pointsSpent > 0 ? (
+                    {/* Баллы возвращённой оплаты уже вернулись на баланс. */}
+                    {payment.pointsSpent > 0 && !payment.refundedAt ? (
                       <span className="ml-1 text-[12px] text-[#3848c7]">
                         {t("payments.pointsSpent", { amount: payment.pointsSpent })}
                       </span>

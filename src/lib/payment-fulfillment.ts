@@ -291,7 +291,10 @@ async function extendOrganization(args: {
   const unitEnd = loaded?.unit.subscriptionEnd ?? null;
   const base = unitEnd && (!args.currentEnd || unitEnd.getTime() > args.currentEnd.getTime()) ? unitEnd : args.currentEnd;
   const { order } = args;
-  if (parsePlanTariffKey(order.tariffKey) && !planOrderMatchesAccount(order, loaded)) {
+  // Организация вне тарифа (демо, мастер-кабинет) подписки не имеет:
+  // оформление такую оплату не пропускает (`quoteCheckout`), а пришедший
+  // заказ не затирает тариф аккаунта — разбор вручную.
+  if (parsePlanTariffKey(order.tariffKey) && (loaded?.unit.exempt || !planOrderMatchesAccount(order, loaded))) {
     await holdStalePlanOrder(order, args.organizationId);
     return { subscriptionEnd: base ?? new Date(), held: true };
   }
