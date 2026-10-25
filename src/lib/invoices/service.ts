@@ -15,7 +15,7 @@ import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { lifetimeTerm } from "@/lib/promo/discounts";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
 import { quoteCheckout, type CheckoutTarget } from "@/lib/plan-checkout.server";
-import { changeKindNote, planTariffTitle } from "@/lib/plan-payment";
+import { basePlanSnapshot, changeKindNote, planTariffTitle } from "@/lib/plan-payment";
 import { isTestMode } from "@/lib/robokassa";
 import { readTariffAny } from "@/lib/tariffs";
 
@@ -91,22 +91,6 @@ export async function createInvoiceOrder(args: {
   if (!quote.ok) return { ok: false, status: quote.status, error: quote.error };
   const offer = quote.offer;
 
-  // Действующий счёт на тот же тариф и точки возвращаем как есть: он
-  // фиксирует свою сумму. Счёт на другой тариф — новый, а прежние счета на
-  // подписку закрываются ниже (оплати бухгалтерия оба — второй применять
-  // было бы не к чему). Счёт на пополнение баланса — не счёт на подписку.
-  const existing = await db.paymentOrder.findFirst({
-    where: {
-      organizationId: args.organizationId,
-      paymentMethod: "invoice",
-      status: "pending",
-      tariffKey: offer.tariffKey,
-      points: quote.target.points,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  if (existing) return { ok: true, order: existing, created: false };
-
   // Скидка поверх акции — как у оплаты картой: введённый код или скидка
   // навсегда аккаунта, выгоднейшая из двух. Чужой или неподходящий код —
   // отказ, а не счёт без скидки.
@@ -143,6 +127,26 @@ export async function createInvoiceOrder(args: {
     };
   }
 
+  // Действующий счёт возвращаем, только если он всё ещё про то же: тот же
+  // тариф, точки, вид перехода и сумма, срок оплаты не прошёл. Иначе — новый
+  // счёт, а прежние счета на подписку закрываются ниже (оплати бухгалтерия
+  // оба — второй применять было бы не к чему). Счёт на пополнение баланса —
+  // не счёт на подписку.
+  const existing = await db.paymentOrder.findFirst({
+    where: {
+      organizationId: args.organizationId,
+      paymentMethod: "invoice",
+      status: "pending",
+      tariffKey: offer.tariffKey,
+      points: quote.target.points,
+      changeKind: quote.change.kind,
+      amountRub: amounts.grossRub,
+      invoiceDueAt: { gt: now },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (existing) return { ok: true, order: existing, created: false };
+
   const note = orderDiscountNote({
     promotion: offer.promotion,
     promotionDiscountRub: amounts.promotionDiscountRub,
@@ -165,6 +169,7 @@ export async function createInvoiceOrder(args: {
       changeKind: quote.change.kind,
       creditRub: quote.change.creditRub,
       periodEndsAt: quote.change.periodEnd,
+      basePlanJson: basePlanSnapshot(quote.base),
       status: "pending",
       isTest: isTestMode(),
       organizationId: args.organizationId,

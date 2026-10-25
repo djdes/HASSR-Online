@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { changeKindNote, planAfterPayment, planOrderStillMatches, planOrderTitle } from "@/lib/plan-payment";
-import { DEFAULT_PLAN_RATES, quotePlanChange, type CurrentSubscription, type PlanTarget } from "@/lib/tariff-plans";
+import {
+  basePlanSnapshot,
+  changeKindNote,
+  parseBasePlan,
+  planAfterPayment,
+  planOrderStillMatches,
+  planOrderTitle,
+} from "@/lib/plan-payment";
+import type { ChangeKind, CurrentSubscription } from "@/lib/tariff-plans";
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date("2026-11-20T10:00:00.000Z");
@@ -88,60 +95,63 @@ describe("оплата заказа тарифа 2026-10 → подписка а
   });
 });
 
-describe("оплата устаревшего заказа: подписка изменилась после оформления", () => {
+describe("оплата устаревшего заказа: снимок подписки при оформлении против подписки сейчас", () => {
   const created = new Date(NOW.getTime() - 60 * 60 * 1000);
   const standardMonth: CurrentSubscription = { paidUntil: days(15, created), tier: "standard", cycle: "month", points: 1 };
-  /** Заказ, оформленный при подписке `current` (как его сохраняет оформление). */
-  const orderFor = (current: CurrentSubscription | null, target: PlanTarget) => {
-    const quote = quotePlanChange({ rates: DEFAULT_PLAN_RATES, legacyMonthlyRub: 1990, current, target, now: created });
-    return {
-      tariffKey: `${target.tier}_${target.cycle}`,
-      points: target.points,
-      changeKind: quote.kind,
-      baseRub: quote.amountRub,
-      createdAt: created,
-    };
-  };
-  const matches = (order: ReturnType<typeof orderFor>, current: CurrentSubscription | null) =>
-    planOrderStillMatches({ order, current, rates: DEFAULT_PLAN_RATES, legacyMonthlyRub: 1990, now: NOW });
+  /** Заказ, как его сохраняет оформление: вид перехода и снимок подписки. */
+  const order = (changeKind: ChangeKind, base: CurrentSubscription | null, tariffKey = "premium_month") => ({
+    tariffKey,
+    changeKind,
+    // Через JSON — как снимок лежит в базе.
+    basePlan: JSON.parse(JSON.stringify(basePlanSnapshot(base))) as unknown,
+  });
+  const matches = (o: ReturnType<typeof order>, subscriptionThen: CurrentSubscription | null, now = NOW) =>
+    planOrderStillMatches({ order: o, subscriptionThen, now });
+
+  it("снимок переживает базу без потерь", () => {
+    assert.deepEqual(parseBasePlan(order("upgrade", standardMonth).basePlan), standardMonth);
+    assert.equal(parseBasePlan(order("new", null).basePlan), null);
+    assert.equal(parseBasePlan(null), undefined);
+  });
 
   it("подписка не менялась — заказ применяется", () => {
-    const upgrade = orderFor(standardMonth, { tier: "premium", cycle: "month", points: 1 });
-    assert.equal(upgrade.changeKind, "upgrade");
-    assert.equal(matches(upgrade, standardMonth), true);
-    assert.equal(matches(orderFor(null, { tier: "standard", cycle: "year", points: 1 }), null), true);
+    assert.equal(matches(order("upgrade", standardMonth), standardMonth), true);
+    assert.equal(matches(order("new", null, "standard_year"), null), true);
   });
 
-  it("доплата, оформленная до перехода на год, после него не применяется (Премиум за тысячу)", () => {
-    const upgrade = orderFor(standardMonth, { tier: "premium", cycle: "month", points: 1 });
-    const afterSwitch: CurrentSubscription = { paidUntil: days(365), tier: "standard", cycle: "year", points: 1 };
-    assert.equal(matches(upgrade, afterSwitch), false);
+  it("доплата, оформленная до перехода на год, после него — на разбор (Премиум за тысячу)", () => {
+    assert.equal(matches(order("upgrade", standardMonth), { paidUntil: days(365), tier: "standard", cycle: "year", points: 1 }), false);
   });
 
-  it("старая новая подписка после покупки Премиума на год не понижает тариф", () => {
-    const fresh = orderFor(null, { tier: "standard", cycle: "month", points: 1 });
-    const premiumYear: CurrentSubscription = { paidUntil: days(365), tier: "premium", cycle: "year", points: 3 };
-    assert.equal(matches(fresh, premiumYear), false);
+  it("старая новая подписка после покупки Премиума на год — на разбор, тариф не понижается", () => {
+    assert.equal(matches(order("new", null, "standard_month"), { paidUntil: days(365), tier: "premium", cycle: "year", points: 3 }), false);
   });
 
-  it("повышение точек от уже повышенной подписки — другая сумма, не применяется", () => {
-    const toThree = orderFor(standardMonth, { tier: "standard", cycle: "month", points: 3 });
-    assert.equal(matches(toThree, { ...standardMonth, points: 2 }), false);
+  it("повышение точек от уже повышенной подписки — на разбор", () => {
+    assert.equal(matches(order("upgrade", standardMonth, "standard_month"), { ...standardMonth, points: 2 }), false);
   });
 
-  it("два продления подряд — оба применяются, срок идёт от текущего конца", () => {
-    const renew = orderFor(standardMonth, { tier: "standard", cycle: "month", points: 1 });
-    assert.equal(renew.changeKind, "renew");
-    assert.equal(matches(renew, { ...standardMonth, paidUntil: days(45, created) }), true);
+  it("продление по счёту, оплаченному после конца срока, применяется", () => {
+    assert.equal(matches(order("renew", standardMonth, "standard_month"), standardMonth, days(20, created)), true);
   });
 
-  it("доплата за остаток после конца срока не применяется — остатка уже нет", () => {
-    const upgrade = orderFor(standardMonth, { tier: "premium", cycle: "month", points: 1 });
-    assert.equal(planOrderStillMatches({ order: upgrade, current: standardMonth, rates: DEFAULT_PLAN_RATES, legacyMonthlyRub: 1990, now: days(16, created) }), false);
-    assert.equal(matches(upgrade, null), false);
+  it("два продления подряд — оба применяются: срок ушёл вперёд другим продлением", () => {
+    assert.equal(matches(order("renew", standardMonth, "standard_month"), { ...standardMonth, paidUntil: days(45, created) }), true);
   });
 
-  it("заказ без вида перехода (прежние тарифы) — по-старому, без проверки", () => {
-    assert.equal(matches({ tariffKey: "monthly", points: 1, changeKind: null as unknown as "new", baseRub: 1990, createdAt: created }, standardMonth), true);
+  it("доплата и переход на год после конца срока — на разбор: остатка уже нет", () => {
+    assert.equal(matches(order("upgrade", standardMonth), standardMonth, days(16, created)), false);
+    assert.equal(matches(order("switch", standardMonth, "standard_year"), standardMonth, days(16, created)), false);
+  });
+
+  it("ROOT сократил срок — доплата на разбор; округление дат в пределах минуты — не изменение", () => {
+    assert.equal(matches(order("upgrade", standardMonth), { ...standardMonth, paidUntil: days(10, created) }), false);
+    const rounded = new Date(standardMonth.paidUntil!.getTime() - 30 * 1000);
+    assert.equal(matches(order("upgrade", standardMonth), { ...standardMonth, paidUntil: rounded }), true);
+  });
+
+  it("заказ без снимка и прежние тарифы — по-старому, без сверки", () => {
+    assert.equal(planOrderStillMatches({ order: { tariffKey: "premium_month", changeKind: "upgrade" }, subscriptionThen: null, now: NOW }), true);
+    assert.equal(matches({ ...order("renew", standardMonth), tariffKey: "monthly" }, null), true);
   });
 });

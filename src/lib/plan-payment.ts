@@ -1,15 +1,15 @@
 import { pluralRu } from "@/lib/plural-ru";
 import {
   CYCLE_DAYS,
+  isBillingCycle,
   isChangeKind,
+  isPaidTier,
   normalizePoints,
   parsePlanTariffKey,
-  quotePlanChange,
   type BillingCycle,
   type ChangeKind,
   type CurrentSubscription,
   type PaidTier,
-  type PlanRates,
 } from "@/lib/tariff-plans";
 
 /**
@@ -85,42 +85,72 @@ export function planAfterPayment(args: {
   return { tier: plan.tier, cycle: plan.cycle, points, kind, subscriptionEnd };
 }
 
+/** Снимок подписки, от которой посчитан заказ (`PaymentOrder.basePlanJson`). */
+export type BasePlanSnapshot = {
+  current: { tier: CurrentSubscription["tier"]; cycle: BillingCycle; points: number; paidUntil: string | null } | null;
+};
+
+export function basePlanSnapshot(current: CurrentSubscription | null): BasePlanSnapshot {
+  return {
+    current: current
+      ? { tier: current.tier, cycle: current.cycle, points: normalizePoints(current.points), paidUntil: current.paidUntil?.toISOString() ?? null }
+      : null,
+  };
+}
+
+/** Снимок из заказа; undefined — снимка нет (заказ оформлен до сверки). */
+export function parseBasePlan(raw: unknown): CurrentSubscription | null | undefined {
+  if (!raw || typeof raw !== "object" || !("current" in raw)) return undefined;
+  const current = (raw as { current: unknown }).current;
+  if (current === null) return null;
+  if (!current || typeof current !== "object") return undefined;
+  const c = current as Record<string, unknown>;
+  const tier = c.tier === "legacy" || isPaidTier(c.tier) ? c.tier : null;
+  if (!tier || !isBillingCycle(c.cycle)) return undefined;
+  const paidUntil = typeof c.paidUntil === "string" ? new Date(c.paidUntil) : null;
+  return {
+    tier,
+    cycle: c.cycle,
+    points: normalizePoints(c.points),
+    paidUntil: paidUntil && Number.isFinite(paidUntil.getTime()) ? paidUntil : null,
+  };
+}
+
+/** Сдвиг срока, который ещё считается «тем же» (округление дат в ROOT). */
+const END_TOLERANCE_MS = 60 * 1000;
+
 /**
- * Подходит ли оплаченный заказ к подписке аккаунта сейчас. Сумма заказа
- * посчитана от подписки на момент оформления; если с тех пор подписка
- * изменилась (оплачен другой заказ, ROOT поменял тариф, прошёл срок, от
- * которого считалась доплата), применять заказ как есть нельзя: старая
- * «доплата за остаток» дала бы годовой Премиум за тысячу рублей, старая
- * «новая подписка» понизила бы тариф. Проверка: тот же расчёт на момент
- * оформления, но от ТЕКУЩЕЙ подписки, даёт тот же вид перехода и ту же
- * сумму (±1 ₽ округления); доплата и переход на год — пока не кончился
- * срок, от которого они считались. Не подошёл — заказ разбирают вручную
- * (payment-fulfillment.ts); туда же уйдёт заказ, если ROOT сменил цены
- * между оформлением и оплатой.
+ * Подходит ли оплаченный заказ к подписке аккаунта. Сумма заказа посчитана
+ * от подписки на момент оформления (снимок в заказе); если с тех пор она
+ * изменилась — оплачен другой заказ, ROOT поменял тариф или срок, — применять
+ * заказ как есть нельзя: старая «доплата за остаток» дала бы годовой Премиум
+ * за тысячу рублей, старая «новая подписка» понизила бы тариф.
+ *
+ * Сравнивается снимок с подпиской аккаунта, какой она выглядит сейчас, но на
+ * момент оформления (`subscriptionThen`): срок, истёкший после оформления,
+ * подписку не меняет — продление по счёту, оплаченному после конца срока,
+ * применяется. Цены не участвуют: смена цен ROOT заказы не задерживает.
+ * Продления складываются (срок мог уйти вперёд другим продлением); доплата
+ * и переход на год — только пока идёт срок, от остатка которого считались.
+ * Не подошёл — заказ разбирают вручную (payment-fulfillment.ts).
  */
 export function planOrderStillMatches(args: {
-  order: Pick<PlanPaymentOrder, "tariffKey" | "points" | "changeKind" | "createdAt"> & { baseRub?: number | null };
-  current: CurrentSubscription | null;
-  rates: PlanRates;
-  legacyMonthlyRub: number;
+  order: { tariffKey: string; changeKind?: string | null; basePlan?: unknown };
+  subscriptionThen: CurrentSubscription | null;
   now: Date;
 }): boolean {
-  const plan = parsePlanTariffKey(args.order.tariffKey);
   const kind = args.order.changeKind;
-  if (!plan || !args.order.createdAt || !isChangeKind(kind)) return true;
-  const quote = quotePlanChange({
-    rates: args.rates,
-    legacyMonthlyRub: args.legacyMonthlyRub,
-    current: args.current,
-    target: { tier: plan.tier, cycle: plan.cycle, points: normalizePoints(args.order.points ?? 1) },
-    now: args.order.createdAt,
-  });
-  if (quote.kind !== kind) return false;
-  if (typeof args.order.baseRub === "number" && Math.abs(quote.amountRub - args.order.baseRub) > 1) return false;
-  if (kind === "upgrade" || kind === "switch") {
-    const paidUntil = args.current?.paidUntil;
-    return Boolean(paidUntil && paidUntil.getTime() > args.now.getTime());
-  }
+  const base = parseBasePlan(args.order.basePlan);
+  if (!parsePlanTariffKey(args.order.tariffKey) || !isChangeKind(kind) || base === undefined) return true;
+  const then = args.subscriptionThen;
+  if (!base || !then) return !base && !then;
+  const samePlan =
+    base.tier === then.tier && base.cycle === then.cycle && normalizePoints(base.points) === normalizePoints(then.points);
+  if (!samePlan || !base.paidUntil || !then.paidUntil) return false;
+  const endShift = then.paidUntil.getTime() - base.paidUntil.getTime();
+  if (kind === "renew") return endShift > -END_TOLERANCE_MS;
+  if (Math.abs(endShift) > END_TOLERANCE_MS) return false;
+  if (kind === "upgrade" || kind === "switch") return then.paidUntil.getTime() > args.now.getTime();
   return true;
 }
 

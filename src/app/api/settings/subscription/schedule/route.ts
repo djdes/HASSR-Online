@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getActiveOrgId, isImpersonating, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { clientIp } from "@/lib/client-ip";
-import { formatMskDay } from "@/lib/billing-period";
+import { formatMskDayAuto } from "@/lib/billing-period";
 import { cancelScheduledPlan, loadAccountBilling, scheduleDowngrade } from "@/lib/billing.server";
 import { pointsLabel } from "@/lib/cabinet-plan";
 import { parseCheckoutTarget } from "@/lib/plan-checkout.server";
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     scheduled: { ...change.target, at: change.periodStart.toISOString() },
-    atLabel: formatMskDay(change.periodStart),
+    atLabel: formatMskDayAuto(change.periodStart),
   });
 }
 

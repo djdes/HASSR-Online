@@ -323,6 +323,7 @@ export default async function SubscriptionPage({
       paymentMethod: true,
       invoiceDueAt: true,
       tariffKey: true,
+      heldAt: true,
     },
   });
   const paidTotalRub = payments
@@ -337,9 +338,13 @@ export default async function SubscriptionPage({
   const invoiceReady = invoiceRequisitesReady(platformRequisites);
   // Счёт на пополнение баланса — не счёт на тариф: он живёт в «Баланс и
   // бонусы», здесь карточку тарифа не подменяет.
+  // Просроченный счёт карточку не держит: по нему уже не оплатить.
   const pendingInvoice = payments.find(
     (payment) =>
-      payment.paymentMethod === "invoice" && payment.status === "pending" && !isTopupOrder(payment)
+      payment.paymentMethod === "invoice" &&
+      payment.status === "pending" &&
+      !isTopupOrder(payment) &&
+      (!payment.invoiceDueAt || payment.invoiceDueAt.getTime() > now.getTime())
   );
   // УПД — на любую оплату деньгами, в том числе на пополнение баланса.
   const closingEligible = (payment: (typeof payments)[number]) =>
@@ -347,6 +352,7 @@ export default async function SubscriptionPage({
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
+    !payment.heldAt &&
     Number(payment.amountRub) > 0;
 
   // Приложение WeSetup: только состояние тарифа, без оплаты, счетов и

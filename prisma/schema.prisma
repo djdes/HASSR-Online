@@ -3240,6 +3240,13 @@ model PaymentOrder {
   /// Конец срока, до которого считалась доплата (upgrade): оплата не
   /// продлевает срок, а меняет тариф до этой даты.
   periodEndsAt           DateTime?
+  /// Подписка аккаунта, от которой посчитан заказ: `{ current: { tier,
+  /// cycle, points, paidUntil } | null }`. Оплата сверяет её с подпиской
+  /// на момент оформления (src/lib/plan-payment.ts); null — заказы до сверки.
+  basePlanJson           Json?
+  /// Оплата не применена к тарифу — подписка изменилась после оформления;
+  /// ждёт ручного разбора, УПД до разбора не выпускается.
+  heldAt                 DateTime?
   partnerAccruals        PartnerAccrual[]
 
   @@index([email])

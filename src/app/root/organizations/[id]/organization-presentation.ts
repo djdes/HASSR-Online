@@ -29,7 +29,9 @@ export function organizationPlan(plan: string, t: OrganizationCopy, legacy: Lega
   return plan === "trial" || plan === "pro" ? legacy(plan) : plan;
 }
 
-export function organizationOrderStatus(order: { status: string; paymentMethod?: string | null }, t: OrganizationCopy) {
+export function organizationOrderStatus(order: { status: string; paymentMethod?: string | null; heldAt?: Date | null }, t: OrganizationCopy) {
+  // Оплачен, но к тарифу не применён: подписка изменилась после оформления.
+  if (order.status === "paid" && order.heldAt) return t("orders.held");
   if (order.status === "paid" || order.status === "completed") return t("orders.paid");
   if (order.status === "expired") return t("orders.expired");
   if (order.status === "cancelled") return t("orders.cancelled");

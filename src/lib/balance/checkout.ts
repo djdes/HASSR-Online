@@ -96,6 +96,8 @@ export type CreateOrderWithPointsInput = {
   changeKind?: string | null;
   creditRub?: number;
   periodEndsAt?: Date | null;
+  /** Снимок подписки, от которой посчитан заказ (`basePlanSnapshot`). */
+  basePlanJson?: Prisma.InputJsonValue | null;
 };
 
 export type CreatedOrder = {
@@ -176,6 +178,7 @@ export async function createOrderWithPoints(
         changeKind: input.changeKind ?? undefined,
         creditRub: input.creditRub ?? 0,
         periodEndsAt: input.periodEndsAt ?? undefined,
+        basePlanJson: input.basePlanJson ?? undefined,
       },
       select: { id: true, isTest: true },
     });

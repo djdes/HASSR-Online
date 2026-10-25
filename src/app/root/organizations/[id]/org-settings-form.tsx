@@ -78,17 +78,24 @@ export function OrgSettingsForm({
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
+          // Шлём только изменённое: поля дат хранят день, и пересохранение
+          // обрезало бы срок аккаунта до полуночи, а тариф — переписывал копии
+          // всех организаций аккаунта.
           body: JSON.stringify({
-            name,
-            subscriptionPlan: plan,
+            ...(name !== initialName ? { name } : {}),
+            ...(plan !== initialPlan ? { subscriptionPlan: plan } : {}),
             // Пустая дата — бессрочная подписка, а не «сегодня».
-            subscriptionEnd: endsAt ? `${endsAt}T00:00:00.000Z` : null,
+            ...(endsAt !== toDateInput(initialSubscriptionEnd)
+              ? { subscriptionEnd: endsAt ? `${endsAt}T00:00:00.000Z` : null }
+              : {}),
             ...(account
               ? {
-                  planCycle: cycle,
-                  planPoints: points,
+                  ...(cycle !== account.planCycle ? { planCycle: cycle } : {}),
+                  ...(points !== account.planPoints ? { planPoints: points } : {}),
                   // Пробный до конца выбранного дня по Москве; пусто — 14 дней от создания.
-                  trialEndsAt: trialEndsAt ? `${trialEndsAt}T21:00:00.000Z` : null,
+                  ...(trialEndsAt !== toDateInput(account.trialEndsAt)
+                    ? { trialEndsAt: trialEndsAt ? `${trialEndsAt}T21:00:00.000Z` : null }
+                    : {}),
                 }
               : {}),
           }),

@@ -25,7 +25,7 @@
 | Команда | Результат |
 |---|---|
 | `npm run typecheck` | exit 0, ошибок 0 |
-| `npm run test:gate` | pass 4816, fail 0 (ветка с влитым `master`; новых падений нет; baseline — `tests/.legacy-failures.txt`) |
+| `npm run test:gate` | pass 4820, fail 0 (ветка с влитым `master`; новых падений нет; baseline — `tests/.legacy-failures.txt`) |
 | `npm run i18n:check` | exit 0, 95/95 (каталоги RU/EN/UZ: ключи и аргументы ICU совпадают, типы сообщений актуальны) |
 | `npx eslint` по 140 изменённым `.ts/.tsx` и правкам после проверки 1 | 0 ошибок; 2 предупреждения `react-hooks/set-state-in-effect` в строках, которые эта задача не меняла (`billing-announcement.tsx:61`, `billing-transition-gate.tsx:202`) |
 
@@ -78,6 +78,26 @@
 | Кабинет | «Премиум до 13 мая 2027»; Стандарт помесячно → «За год»: «Перейти на год — 22 407 ₽» |
 | `/uz`, `/en`, `/` (Playwright) | 0 ошибок гидратации |
 
+## Исправления после независимой проверки 3
+
+Проверка 3 (`d28e7f5c`) — не PASS: сверка проверки 2 задерживала законные оплаты (продление после конца срока,
+смена цен ROOT). Сверка переделана на снимок подписки в заказе (`PaymentOrder.basePlanJson`), сравниваемый с
+подпиской аккаунта на момент оформления. Таблица — `problems.md`, раздел 3. Живьём: `raw/round3-scenarios.ts` →
+`raw/round3-scenarios.txt`, `raw/round3-check.sh` → `raw/round3-check.txt`:
+
+| Проверка | Результат |
+|---|---|
+| Продление картой, оплаченное через 2 дня после конца срока | применено: +30 дней от сегодня |
+| Продление по счёту, ROOT отмечает оплату после конца срока | применено: +30 дней от сегодня |
+| Цена тарифа +300 ₽ между оформлением и оплатой | оплата применена по уплаченной сумме |
+| Доплата, оформленная до перехода на год | на разборе: `heldAt`, аудит, УПД нет (`held`) |
+| Обычная доплата | применена |
+| Счёт «новой», затем оплата картой | счёт закрыт; повторный запрос — новый счёт «продления» |
+| ROOT: переименование организации (Playwright) | запрос `{"name":…}`, срок аккаунта до секунды прежний |
+| Сотрудник заказывает 1 точку при 3 в работе | 409 |
+| Запланированный переход | «13 мая 2027» |
+| Просроченный счёт | карточка его не показывает |
+
 ## Живая проверка (локальная сборка, своя PostgreSQL)
 
 `next dev` + PostgreSQL 16 (localhost:5433), схема — `prisma db push`, сиды — `prisma/seed.ts`, тестовые аккаунты —
@@ -102,7 +122,8 @@
 
 - `prisma db push` добавит поля: `Account.planCycle String?`, `Account.planPoints Int @default(1)`, `Account.trialEndsAt DateTime?`,
   `Account.scheduledPlanJson Json?`, `PaymentOrder.points Int?`, `PaymentOrder.changeKind String?`,
-  `PaymentOrder.creditRub Int @default(0)`, `PaymentOrder.periodEndsAt DateTime?`. Данные не удаляются.
+  `PaymentOrder.creditRub Int @default(0)`, `PaymentOrder.periodEndsAt DateTime?`, `PaymentOrder.basePlanJson Json?`,
+  `PaymentOrder.heldAt DateTime?`. Данные не удаляются.
 - `PlatformTariff`: при первом чтении досеются `standard_month` 3000, `standard_year` 1990, `premium_month` 5000,
   `premium_year` 3990 (правки ROOT не затираются); `monthly`/`bundle` остаются для истории, по ним не продаём.
 - `PlatformSetting billing.trial`: при первом чтении после деплоя записывается момент запуска — с него старые аккаунты

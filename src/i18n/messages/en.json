@@ -3471,7 +3471,7 @@
       "closingDocumentDisclosure": "Closing document: universal transfer document (UPD) No. {documentNumber} is attached as a PDF with a facsimile signature. It is also available in your account under “Settings → Subscription → Payment history.” If you need an original with a handwritten signature or exchange through electronic document interchange (EDI), simply reply to this email.",
       "newClientNextStep": "Set a password and enter your organization’s name to finish setup. It takes about a minute.",
       "renewalNextStep": "Your organization’s subscription has been renewed. No further action is needed.",
-      "heldNextStep": "Your account's plan changed after this order was placed, so its amount no longer fits. We will apply the payment or refund it within one business day — no action is needed.",
+      "heldNextStep": "We could not apply this payment automatically: after the order was placed, the subscription changed or the paid period it was priced from ended. We will apply the payment or refund it within one business day — no action is needed.",
       "newClientAction": "Finish setup",
       "renewalAction": "Go to your account",
       "support": "Questions about payments or refunds? Contact support@wesetup.ru.",
@@ -16174,6 +16174,7 @@
     },
     "orders": {
       "paid": "paid",
+      "held": "paid — needs review",
       "expired": "expired",
       "cancelled": "cancelled",
       "pendingInvoice": "awaiting invoice payment",

@@ -3471,7 +3471,7 @@
       "closingDocumentDisclosure": "Yakunlovchi hujjat: № {documentNumber} universal topshirish hujjati (UPD) faksimile imzosi bilan PDF shaklida ilova qilindi. U kabinetingizdagi “Sozlamalar → Obuna → To‘lovlar tarixi” bo‘limida ham mavjud. Qo‘lda qo‘yilgan imzoli asl nusxa yoki elektron hujjat almashinuvi (EDI) kerak bo‘lsa, ushbu xatga javob bering.",
       "newClientNextStep": "Sozlashni yakunlash uchun parol o‘rnating va tashkilot nomini kiriting — bu taxminan bir daqiqa vaqt oladi.",
       "renewalNextStep": "Tashkilotingiz obunasi uzaytirildi. Boshqa hech narsa qilishingiz shart emas.",
-      "heldNextStep": "Ushbu buyurtma rasmiylashtirilgandan keyin hisob tarifi o‘zgardi, shuning uchun undagi summa endi mos emas. To‘lovni bir ish kuni ichida qo‘llaymiz yoki pulni qaytaramiz — hech narsa qilish shart emas.",
+      "heldNextStep": "Bu to‘lovni avtomatik qo‘llab bo‘lmadi: buyurtma rasmiylashtirilgandan keyin obuna o‘zgardi yoki summa hisoblangan to‘langan muddat tugadi. To‘lovni bir ish kuni ichida qo‘llaymiz yoki pulni qaytaramiz — hech narsa qilish shart emas.",
       "newClientAction": "Sozlashni yakunlash",
       "renewalAction": "Kabinetga kirish",
       "support": "To‘lov yoki pulni qaytarish bo‘yicha savollar: support@wesetup.ru.",
@@ -16174,6 +16174,7 @@
     },
     "orders": {
       "paid": "to‘langan",
+      "held": "to‘langan — ko‘rib chiqish kerak",
       "expired": "muddati tugagan",
       "cancelled": "bekor qilingan",
       "pendingInvoice": "hisob bo‘yicha to‘lov kutilmoqda",

@@ -1,0 +1,123 @@
+=== S1. Продление картой, оплаченное после конца срока (заказ оформлен за 3 дня до конца)
+подписка: standard · month · точек 1 · до 2026-10-23 16:05
+[billing] payment extended subscription {
+  organizationId: 'cmvo0rt8i00009f7dijhezwsw',
+  accountId: 'cmvo0rtdd00029f7de8l7n552',
+  orderId: 71,
+  plan: 'standard',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'renew',
+  subscriptionEnd: '2026-11-24T16:05:48.711Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на r3-renew@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» на месяц (продление) Сумма: 3 000 ₽ Подписка действует до: 24.11.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты: standard · month · точек 1 · до 2026-11-24 16:05 (ожидание: +30 дней от сегодня)
+заказ №71: paid
+
+=== S2. Продление по счёту: ROOT отмечает оплату после конца срока
+[billing] payment extended subscription {
+  organizationId: 'cmvo0ru0e00039f7dov12n19b',
+  accountId: 'cmvo0ru4e00059f7doqpbugdu',
+  orderId: 72,
+  plan: 'standard',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'renew',
+  subscriptionEnd: '2026-11-24T16:05:49.546Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на r3-invoice@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» на месяц (счёт; продление) Сумма: 3 000 ₽ Подписка действует до: 24.11.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+ROOT «Оплата поступила»: ok
+после оплаты: standard · month · точек 1 · до 2026-11-24 16:05 (ожидание: +30 дней от сегодня)
+заказ №72: paid
+
+=== S3. ROOT поднял цену между оформлением и оплатой
+[billing] payment extended subscription {
+  organizationId: 'cmvo0ru6z00069f7d2ncunf0v',
+  accountId: 'cmvo0ru9q00089f7d4hosmj60',
+  orderId: 73,
+  plan: 'standard',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'new',
+  subscriptionEnd: '2026-11-24T16:05:49.746Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на r3-price@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» на месяц Сумма: 3 000 ₽ Подписка действует до: 24.11.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+заказ №73 (new, 3000 ₽), цена тарифа на время оплаты +300 ₽ (после — возвращена)
+после оплаты: standard · month · точек 1 · до 2026-11-24 16:05
+заказ №73: paid
+
+=== S4. Доплата, оформленная до перехода на год, после него — на разбор
+[billing] payment extended subscription {
+  organizationId: 'cmvo0rucu00099f7dp78iusqw',
+  accountId: 'cmvo0rug8000b9f7dneva0wpj',
+  orderId: 75,
+  plan: 'standard',
+  cycle: 'year',
+  points: 1,
+  changeKind: 'switch',
+  subscriptionEnd: '2027-10-25T16:05:49.987Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на r3-stale@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» за год Сумма: 22 380 ₽ Подписка действует до: 25.10.2027 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после перехода на год (№75): standard · year · точек 1 · до 2027-10-25 16:05
+[billing] stale plan order held for manual review { orderId: 74, organizationId: 'cmvo0rucu00099f7dp78iusqw' }
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[email/dev] SMTP не настроен — письмо не отправлено на r3-stale@example.test.
+[email/dev] Subject: Оплата получена — применим её вручную
+[email/dev] Body:    Оплата получена — применим её вручную Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Премиум» на месяц Сумма: 1 000 ₽ Оплату этого заказа не удалось применить автоматически: после оформления изменилась подписка или закончился оплаченный срок, от которого считалась сумма. Мы применим оплату или вернём деньги в течение рабочего дня — ничего делать не нужно. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после устаревшей доплаты (№74): standard · year · точек 1 · до 2027-10-25 16:05
+заказ №74: paid · на разборе (heldAt) · аудит есть
+УПД по нему: {"ok":false,"reason":"held"}
+
+=== S5. Обычная доплата применяется
+[billing] payment extended subscription {
+  organizationId: 'cmvo0runx000e9f7dpv9yfkes',
+  accountId: 'cmvo0rurr000g9f7d6lnxz9gx',
+  orderId: 76,
+  plan: 'premium',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'upgrade',
+  subscriptionEnd: '2026-11-09T16:05:48.058Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на r3-ok@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Премиум» на месяц Сумма: 1 000 ₽ Подписка действует до: 09.11.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты №76: premium · month · точек 1 · до 2026-11-09 16:05
+заказ №76: paid
+
+=== S6. Счёт «новая подписка», затем оплата картой: прежний счёт закрывается, повторный — новый
+[promo] invoice #77: base 3000 ₽ = 3000 ₽
+счёт №77: new, 3000 ₽
+повтор сразу: №77, created=false
+[billing] order #78: pending subscription invoices cancelled: 1
+[billing] payment extended subscription {
+  organizationId: 'cmvo0ruu9000h9f7dflpsekea',
+  accountId: 'cmvo0rux0000j9f7d6fezl1eb',
+  orderId: 78,
+  plan: 'standard',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'new',
+  subscriptionEnd: '2026-11-24T16:05:50.644Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на r3-reuse@example.test.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» на месяц Сумма: 3 000 ₽ Подписка действует до: 24.11.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+после оплаты картой №78: standard · month · точек 1 · до 2026-11-24 16:05; счёт №77 — cancelled
+[promo] invoice #79: base 3000 ₽ = 3000 ₽
+новый запрос счёта: №79, renew, created=true

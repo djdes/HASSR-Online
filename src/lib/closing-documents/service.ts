@@ -32,7 +32,7 @@ import {
  */
 export type ClosingEligibility =
   | { ok: true }
-  | { ok: false; reason: "not-paid" | "test" | "zero" | "refunded" | "requisites" | "advance" };
+  | { ok: false; reason: "not-paid" | "test" | "zero" | "refunded" | "requisites" | "advance" | "held" };
 
 type OrderForClosing = {
   id: number;
@@ -49,6 +49,8 @@ type OrderForClosing = {
   bundleConfig: unknown;
   organizationId: string | null;
   refundedAt: Date | null;
+  /** Оплата ждёт ручного разбора (подписка изменилась после оформления). */
+  heldAt: Date | null;
   promoCode: string | null;
   discountRub: number;
   promotionPercent: number | null;
@@ -56,10 +58,12 @@ type OrderForClosing = {
 };
 
 export function closingEligibility(
-  order: Pick<OrderForClosing, "status" | "isTest" | "amountRub" | "refundedAt"> & { tariffKey?: string | null },
+  order: Pick<OrderForClosing, "status" | "isTest" | "amountRub" | "refundedAt"> & { tariffKey?: string | null; heldAt?: Date | null },
   requisites: PlatformRequisites
 ): ClosingEligibility {
   if (order.status !== "paid") return { ok: false, reason: "not-paid" };
+  // Оплата на ручном разборе: что она оплатила, решит ROOT — документ после.
+  if (order.heldAt) return { ok: false, reason: "held" };
   // Пополнение баланса — тоже УПД сразу после оплаты: решение бухгалтера
   // 2026-09-30 («продажа 100 %, УПД сразу после любой оплаты»). Строка
   // документа — «пополнение баланса» (buildClosingLines).
@@ -94,6 +98,7 @@ async function loadOrder(orderId: number): Promise<OrderForClosing | null> {
       bundleConfig: true,
       organizationId: true,
       refundedAt: true,
+      heldAt: true,
       promoCode: true,
       discountRub: true,
       promotionPercent: true,

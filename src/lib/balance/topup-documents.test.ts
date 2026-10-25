@@ -47,6 +47,13 @@ describe("закрывающий документ и пополнение", () =
     assert.doesNotMatch(lines[0].title, /период/);
   });
 
+  it("оплата на ручном разборе (подписка изменилась после оформления) — УПД после разбора", () => {
+    assert.deepEqual(closingEligibility({ ...paid, tariffKey: "standard_month", heldAt: new Date("2026-10-25T10:00:00Z") }, requisites), {
+      ok: false,
+      reason: "held",
+    });
+  });
+
   it("оплаченная подписка — как раньше: УПД выпускается", () => {
     assert.deepEqual(closingEligibility({ ...paid, tariffKey: "monthly" }, requisites), { ok: true });
     // Без tariffKey (старые вызовы) — тоже как раньше.

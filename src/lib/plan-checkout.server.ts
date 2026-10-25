@@ -1,4 +1,4 @@
-import { formatMskDate } from "@/lib/billing-period";
+import { formatMskDate, type AccountBillingState } from "@/lib/billing-period";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { db } from "@/lib/db";
 import { pointsLabel } from "@/lib/cabinet-plan";
@@ -47,6 +47,8 @@ export type CheckoutQuote =
       offer: SubscriptionOffer;
       /** Точек сейчас в работе (у аккаунта). */
       pointsInUse: number;
+      /** Подписка, от которой посчитан переход, — снимок в заказ (`basePlanJson`). */
+      base: CurrentSubscription | null;
     }
   | {
       ok: false;
@@ -102,6 +104,13 @@ const GUEST_ACCOUNT_ERROR =
 export const IMPERSONATION_CHECKOUT_ERROR =
   "В режиме «войти как» оплатить нельзя — тариф оплачивает руководитель клиента в своём кабинете.";
 
+/** Оплаченная подписка из состояния тарифа — так её видит расчёт перехода. */
+export function subscriptionFromState(state: AccountBillingState): CurrentSubscription | null {
+  return state.kind === "paid" && state.paidTier
+    ? { paidUntil: state.paidUntil, tier: state.paidTier, cycle: state.planCycle, points: state.planPoints }
+    : null;
+}
+
 /** Текущая оплаченная подписка аккаунта организации и точки в работе. */
 export async function accountSubscription(
   organizationId: string,
@@ -109,14 +118,7 @@ export async function accountSubscription(
 ): Promise<{ current: CurrentSubscription | null; pointsInUse: number }> {
   const loaded = await loadAccountBilling(organizationId, now);
   if (!loaded) return { current: null, pointsInUse: 1 };
-  const { state } = loaded;
-  return {
-    pointsInUse: state.pointsInUse,
-    current:
-      state.kind === "paid" && state.paidTier
-        ? { paidUntil: state.paidUntil, tier: state.paidTier, cycle: state.planCycle, points: state.planPoints }
-        : null,
-  };
+  return { pointsInUse: loaded.state.pointsInUse, current: subscriptionFromState(loaded.state) };
 }
 
 export async function quoteCheckout(args: {
@@ -142,10 +144,13 @@ export async function quoteCheckout(args: {
     if (user && args.payer.guest) {
       return { ok: false, status: 409, code: "account", error: GUEST_ACCOUNT_ERROR };
     }
-    const paidUntil = user ? (await accountSubscription(user.organizationId, now)).current?.paidUntil : null;
+    const payerAccount = user ? await accountSubscription(user.organizationId, now) : null;
+    const paidUntil = payerAccount?.current?.paidUntil;
     if (paidUntil && paidUntil.getTime() - now.getTime() >= DAY_MS) {
       return { ok: false, status: 409, code: "account", error: PAID_ACCOUNT_ERROR };
     }
+    // Точки в работе — как у руководителя: меньше, чем работает, не оплатить.
+    if (payerAccount) pointsInUse = payerAccount.pointsInUse;
   }
   if (target.points < pointsInUse) {
     return {
@@ -189,5 +194,6 @@ export async function quoteCheckout(args: {
       promotionEndsAt: price.promotion?.endsAt ?? null,
     },
     pointsInUse,
+    base: current,
   };
 }

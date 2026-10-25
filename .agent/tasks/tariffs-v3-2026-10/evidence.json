@@ -22,7 +22,7 @@
       "errors": 0
     },
     "test_gate": {
-      "pass": 4816,
+      "pass": 4820,
       "fail": 0
     },
     "i18n_check": {
@@ -43,6 +43,10 @@
       "round2_fixes": [
         "raw/round2-stale-orders.txt",
         "raw/round2-check.txt"
+      ],
+      "round3_fixes": [
+        "raw/round3-scenarios.txt",
+        "raw/round3-check.txt"
       ]
     }
   },
@@ -77,7 +81,9 @@
     "PaymentOrder.points Int?",
     "PaymentOrder.changeKind String?",
     "PaymentOrder.creditRub Int @default(0)",
-    "PaymentOrder.periodEndsAt DateTime?"
+    "PaymentOrder.periodEndsAt DateTime?",
+    "PaymentOrder.basePlanJson Json?",
+    "PaymentOrder.heldAt DateTime?"
   ],
   "deploy_side_effects": [
     "PlatformTariff: seeds standard_month/standard_year/premium_month/premium_year on first read (ROOT edits kept)",
@@ -160,6 +166,28 @@
       }
     },
     "round3": {
+      "commit": "d28e7f5c",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "partial": [
+        "AC11"
+      ],
+      "problems": "problems.md (section 3)",
+      "fixed": [
+        "stale-order check by stored base snapshot vs subscription as of order creation (renewals after expiry apply; price changes ignored)",
+        "invoice reuse only when kind/amount/due date fit; applied payment cancels pending subscription invoices; cabinet ignores past-due invoices",
+        "ROOT form sends only changed fields (no end truncation)",
+        "held orders: heldAt + audit, no closing document, generic email, no lifetime binding; ROOT shows 'paid — needs review'",
+        "employee checkout respects points in use",
+        "schedule toast with year"
+      ],
+      "not_changed": {
+        "account_lock": "race window between two simultaneous confirmations for one account is milliseconds; a lock over the whole payment path is disproportionate"
+      }
+    },
+    "round4": {
       "verdict": "pending"
     }
   },

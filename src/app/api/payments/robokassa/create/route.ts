@@ -8,7 +8,7 @@ import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountLabel, lifetimeTerm } from "@/lib/promo/discounts";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
 import { IMPERSONATION_CHECKOUT_ERROR, parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
-import { changeKindNote } from "@/lib/plan-payment";
+import { basePlanSnapshot, changeKindNote } from "@/lib/plan-payment";
 import {
   buildPaymentParams,
   buildPaymentUrl,
@@ -263,6 +263,7 @@ export async function POST(request: NextRequest) {
     changeKind: quote.change.kind,
     creditRub: quote.change.creditRub,
     periodEndsAt: quote.change.periodEnd,
+    basePlanJson: basePlanSnapshot(quote.base),
     isTest: isTestMode(),
     recurringConsent,
     partnerSlug: partnerRef ? encodePartnerRef(partnerRef) : null,

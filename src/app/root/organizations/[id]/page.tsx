@@ -85,6 +85,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       discountRub: true,
       promotionPercent: true,
       promotionDiscountRub: true,
+      heldAt: true,
     },
   });
   const documentsReady = isRequisitesComplete(await readPlatformRequisites());
@@ -94,6 +95,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
+    !payment.heldAt &&
     Number(payment.amountRub) > 0;
   const paidTotalRub = payments
     .filter((payment) => payment.status === "paid")

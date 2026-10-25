@@ -14,6 +14,7 @@ import { settlePaidOrder } from "@/lib/balance/topup";
 import { db } from "@/lib/db";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { quoteCheckout } from "@/lib/plan-checkout.server";
+import { basePlanSnapshot } from "@/lib/plan-payment";
 import type { PlanTarget } from "@/lib/tariff-plans";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -62,6 +63,7 @@ async function makeOrder(organizationId: string, email: string, target: PlanTarg
       changeKind: quote.change.kind,
       creditRub: quote.change.creditRub,
       periodEndsAt: quote.change.periodEnd,
+      basePlanJson: basePlanSnapshot(quote.base),
     },
   });
 }

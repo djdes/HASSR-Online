@@ -624,7 +624,7 @@ export async function sendPaymentReceiptEmail(params: {
     <div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px">
       <p style="margin:0 0 8px;color:#3f3f46;font-size:14px">${t("email.paymentReceipt.planLabel")} <strong>${escapeHtml(description)}</strong></p>
       <p style="margin:0 0 8px;color:#3f3f46;font-size:14px">${t("email.paymentReceipt.amountLabel")} <strong>${escapeHtml(amount)}</strong></p>
-      <p style="margin:0;color:#3f3f46;font-size:14px">${t("email.paymentReceipt.subscriptionUntilLabel")} <strong>${escapeHtml(until)}</strong></p>
+      ${held ? "" : `<p style="margin:0;color:#3f3f46;font-size:14px">${t("email.paymentReceipt.subscriptionUntilLabel")} <strong>${escapeHtml(until)}</strong></p>`}
     </div>
     ${closingBlock}
     <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t(isNewClient ? "email.paymentReceipt.newClientNextStep" : held ? "email.paymentReceipt.heldNextStep" : "email.paymentReceipt.renewalNextStep")}</p>
