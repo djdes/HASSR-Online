@@ -1,0 +1,21 @@
+{
+  "task": "deploy-prewarm-rate-limit-2026-10",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS"
+  },
+  "checks": {
+    "typecheck": "exit 0",
+    "test_gate": "pass=4783 fail=0",
+    "unit": "23/23 (deploy-scripts + page-navigation-proxy)",
+    "actionlint": "0 findings",
+    "bash_n": "20/20 blocks",
+    "live_prewarm_with_key": "68/68 reached pages, 0 x 429",
+    "live_prewarm_without_key": "60/68 x 429"
+  }
+}

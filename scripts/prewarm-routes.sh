@@ -19,6 +19,22 @@ set +e  # non-fatal: prewarm-сбой не должен валить депло�
 PORT="${PORT:-3002}"
 BASE="http://127.0.0.1:$PORT"
 
+# Ключ прогрева (deploy.yml создаёт его на каждый деплой до `pm2 start`):
+# без него curl делит с проверкой после рестарта общий бюджет
+# ограничителя переходов, и после шестого адреса страницы отвечают 429,
+# не загружаясь. Ключ — из файла, а не в аргументах curl: аргументы
+# видны другим пользователям сервера в `ps`.
+CURL_HEADERS=()
+if [ -n "${DEPLOY_WARM_TOKEN:-}" ]; then
+  WARM_HEADER_FILE=$(mktemp)  # mktemp создаёт файл с правами 600
+  trap 'rm -f "$WARM_HEADER_FILE"' EXIT
+  printf 'x-deploy-warm: %s\n' "$DEPLOY_WARM_TOKEN" > "$WARM_HEADER_FILE"
+  CURL_HEADERS=(-H "@$WARM_HEADER_FILE")
+else
+  echo "[prewarm] DEPLOY_WARM_TOKEN не задан — запросы под общим лимитом переходов"
+fi
+LIMITED=0
+
 PUBLIC_ROUTES=(
   /
   /blog
@@ -114,8 +130,9 @@ hit_with_retry() {
   local path="$1"
   local code
   for attempt in 1 2 3; do
-    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${BASE}${path}" || echo "ERR")
+    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${CURL_HEADERS[@]}" "${BASE}${path}" || echo "ERR")
     if [ "$code" != "500" ] && [ "$code" != "ERR" ]; then
+      [ "$code" = "429" ] && LIMITED=$((LIMITED + 1))
       if [ "$attempt" -gt "1" ]; then
         echo "  $path → $code (attempt $attempt)"
       else
@@ -139,7 +156,11 @@ for path in "${PRIVATE_ROUTES[@]}"; do
 done
 
 echo "[prewarm] not-found trigger"
-code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${BASE}${NOT_FOUND_TRIGGER}" || echo "ERR")
+code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${CURL_HEADERS[@]}" "${BASE}${NOT_FOUND_TRIGGER}" || echo "ERR")
 echo "  $NOT_FOUND_TRIGGER → $code"
+[ "$code" = "429" ] && LIMITED=$((LIMITED + 1))
 
+if [ "$LIMITED" -gt 0 ]; then
+  echo "[prewarm] $LIMITED адресов ответили 429 (лимит переходов) — эти страницы не прогреты"
+fi
 echo "[prewarm] done"

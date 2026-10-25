@@ -1,0 +1,17 @@
+ok 1 - post-deploy-check.sh
+ok 2 - deploy-rollback.sh
+ok 3 - prewarm-routes.sh
+ok 4 - wait-for-port.sh
+ok 5 - real proxy denies documents and RSC before content, with a private Russian wait page
+ok 6 - assets, API, callbacks and operational links survive a page cooldown
+ok 7 - document prefetch spoofing and forged sessions cannot reset a blocked IP
+ok 8 - marked and markerless RSC fetches stay bounded without blocking browser documents
+ok 9 - ordinary employee navigation survives excess Next.js background requests
+ok 10 - subject uses verified accounts or a canonical trusted peer, never client identity hints
+ok 11 - JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+ok 12 - marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages
+ok 13 - deploy prewarm key: only an exact match of a long key from the process env
+ok 14 - deploy prewarm with the per-deploy key skips the page budget; other requests stay limited
+# tests 23
+# pass 23
+# fail 0

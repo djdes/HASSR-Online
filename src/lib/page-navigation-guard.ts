@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 import { NextResponse, type NextRequest } from "next/server";
 import { createPageNavigationLimiter, hasAutomationUserAgent } from "./page-navigation-limit";
@@ -50,9 +51,22 @@ function waitHtml(seconds: number, en = false): string {
 <script>(()=>{const end=Date.now()+${seconds}*1000;const count=document.getElementById('seconds');const button=document.getElementById('retry');const tick=()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000));count.textContent=String(left);if(!left){button.disabled=false;document.getElementById('hint').textContent=${JSON.stringify(en ? "The pause has ended. You can continue." : "Пауза закончилась. Можно продолжить.")};clearInterval(timer)}};const timer=setInterval(tick,250);button.addEventListener('click',()=>window.location.reload());tick();document.getElementById('reload-help').hidden=true})()</script></body></html>`;
 }
 
+/**
+ * Deploy prewarm: curl on the server itself, keyed by a random per-deploy
+ * token that deploy.yml puts into the process env before `pm2 start`.
+ * Without a token in the env (dev, tests) nothing is exempt.
+ */
+export function isDeployWarmRequest(headers: { get(name: string): string | null }, token = process.env.DEPLOY_WARM_TOKEN): boolean {
+  const presented = headers.get("x-deploy-warm");
+  if (!token || token.length < 32 || !presented) return false;
+  const expected = Buffer.from(token);
+  const actual = Buffer.from(presented);
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+
 /** Called only after the proxy's existing authorization decisions. */
 export function pageNavigationGuard(req: NextRequest, verifiedUserId?: unknown): NextResponse | null {
-  if (!isLimitedPageRequest(req)) return null;
+  if (!isLimitedPageRequest(req) || isDeployWarmRequest(req.headers)) return null;
   // Next 16 strips Flight headers before proxy and full prefetch has no marker.
   // Browser fetch metadata survives. Both real and forged fetches stay bounded;
   // clients without fetch metadata receive the stricter document budget.
