@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
-import { listBillingUnits, readFreePeriodSettings, stateForUnit } from "@/lib/billing.server";
+import { listBillingUnits, readTrialSettings, stateForUnit } from "@/lib/billing.server";
 import type { AccountBillingKind } from "@/lib/billing-period";
 import { normalizeSphere } from "@/lib/org-profile";
 import { isManagementRole } from "@/lib/user-roles";
@@ -47,7 +47,7 @@ const audienceUserWhere = (): Prisma.UserWhereInput => ({
 
 /** Тариф по организациям: аккаунт → состояние перехода на оплату. */
 async function billingKindByOrg(now: Date): Promise<Map<string, AccountBillingKind>> {
-  const [settings, units] = await Promise.all([readFreePeriodSettings(), listBillingUnits()]);
+  const [settings, units] = await Promise.all([readTrialSettings(), listBillingUnits()]);
   const map = new Map<string, AccountBillingKind>();
   for (const unit of units) {
     const kind = stateForUnit(unit, settings, now).kind;

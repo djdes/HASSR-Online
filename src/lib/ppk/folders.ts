@@ -13,6 +13,8 @@ export const PPK_FOLDERS = [
   "pest-contract",
   "pest-acts",
   "norm-files",
+  // «Пакет документов»: свои документы организации (тарифы 2026-10).
+  "package",
 ] as const;
 
 export type PpkFolderKey = (typeof PPK_FOLDERS)[number];

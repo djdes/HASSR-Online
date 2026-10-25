@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
-import { getSubscriptionOffer } from "@/lib/promo/offer";
+import { parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
@@ -20,10 +20,11 @@ function clientIp(request: NextRequest): string {
 }
 
 /**
- * POST { code, tariffKey } — проверить промокод до оформления. Ответ —
- * ровно то, что потом посчитает сервер при создании заказа
- * (`resolveCheckoutDiscount`): скидка от цены подписки С АКЦИЕЙ,
- * выгоднейшая из кода и скидки навсегда аккаунта, с пояснением.
+ * POST { code, plan, cycle, points } (или старый `tariffKey`) — проверить
+ * промокод до оформления. Ответ — ровно то, что потом посчитает сервер при
+ * создании заказа (`quoteCheckout` + `resolveCheckoutDiscount`): скидка от
+ * суммы к оплате С АКЦИЕЙ, выгоднейшая из кода и скидки навсегда аккаунта,
+ * с пояснением.
  *
  * Плательщик — из сессии. Без входа почту здесь не спрашиваем: «только
  * новым» и персональный код проверит создание заказа (иначе этот открытый
@@ -34,18 +35,20 @@ export async function POST(request: NextRequest) {
   if (!limiter.consume(clientIp(request))) {
     return NextResponse.json({ ok: false, message: "Слишком много попыток — подождите несколько минут" }, { status: 429 });
   }
-  const body = (await request.json().catch(() => ({}))) as { code?: unknown; tariffKey?: unknown };
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const code = typeof body.code === "string" ? body.code : "";
-  const tariffKey = typeof body.tariffKey === "string" ? body.tariffKey : "";
+  const target = parseCheckoutTarget({ plan: body.plan, cycle: body.cycle, points: body.points, tariffKey: body.tariffKey });
+  if (!target) return NextResponse.json({ ok: false, message: "Тариф недоступен" }, { status: 400 });
   const now = new Date();
-  const offer = await getSubscriptionOffer(now, tariffKey);
-  if (!offer) return NextResponse.json({ ok: false, message: "Тариф недоступен" }, { status: 400 });
 
   const session = await getServerSession(authOptions).catch(() => null);
   const organizationId =
     session?.user && hasFullWorkspaceAccess(session.user) && !isImpersonating(session)
       ? getActiveOrgId(session)
       : null;
+  const quote = await quoteCheckout({ organizationId, target, now });
+  if (!quote.ok) return NextResponse.json({ ok: false, message: quote.error }, { status: quote.status });
+  const offer = quote.offer;
   const result = await resolveCheckoutDiscount({
     promoRaw: code,
     organizationId,

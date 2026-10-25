@@ -1,11 +1,10 @@
 /**
- * Образец данных КП для тестов и скриптов проверки (без базы): тариф
- * 1 990 ₽ (как дефолт `PlatformTariff`), бесплатный период по умолчанию
- * (`DEFAULT_FREE_PERIOD`), условные реквизиты («ООО «Пример»») и условный
+ * Образец данных КП для тестов и скриптов проверки (без базы): «Стандарт»
+ * 1 990 ₽/мес и «Премиум» 3 990 ₽/мес за год (как дефолт `PlatformTariff`),
+ * условные реквизиты («ООО «Пример»») и условный
  * отправитель. В приложении не используется — реальные реквизиты и
  * отправитель берутся из ROOT (`/root/requisites`, `/root/proposals`).
  */
-import { DEFAULT_FREE_PERIOD } from "@/lib/billing-period";
 import { EMPTY_REQUISITES } from "@/lib/closing-documents/types";
 import type { ProposalContext } from "@/lib/proposal/content";
 import type { ProposalPromo } from "@/lib/proposal/types";
@@ -41,9 +40,9 @@ export function sampleProposalContext(overrides: Partial<ProposalContext> = {}):
   return {
     now: SAMPLE_NOW,
     tariffPriceRub: 1990,
+    premiumPriceRub: 3990,
     tariffActive: true,
     promotion: null,
-    freePeriod: DEFAULT_FREE_PERIOD,
     requisites: {
       ...EMPTY_REQUISITES,
       nameFull: "Общество с ограниченной ответственностью «Пример»",

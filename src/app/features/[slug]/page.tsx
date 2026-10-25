@@ -24,6 +24,7 @@ import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { ArticleRenderer } from "@/components/public/article-renderer";
 import { FEATURES_ORDER } from "@/content/features";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -109,7 +110,7 @@ export default async function FeatureDetailPage({
                 {t("trialHeading")}
               </div>
               <p className="mt-2 text-[13px] leading-[1.5] text-[#6f7282]">
-                {t("trialDescription")}
+                {t("trialDescription", { trialDays: TRIAL_DAYS })}
               </p>
               <Link
                 href="/register"

@@ -6,13 +6,9 @@ import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountLabel, lifetimeTerm } from "@/lib/promo/discounts";
-import { getSubscriptionOffer } from "@/lib/promo/offer";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
-import { TARIFF_BUNDLE } from "@/lib/tariffs";
-import {
-  hardwareTotal,
-  normalizeHardwareConfig,
-} from "@/lib/hardware-pricing";
+import { IMPERSONATION_CHECKOUT_ERROR, parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
+import { basePlanSnapshot, changeKindNote } from "@/lib/plan-payment";
 import {
   buildPaymentParams,
   buildPaymentUrl,
@@ -40,10 +36,13 @@ export const dynamic = "force-dynamic";
  * /order и до какой-либо авторизации (клиента ещё нет, он появится после
  * оплаты), но у вошедшего пользователя работает и списание баллов.
  *
- * Сумма считается ТОЛЬКО на сервере: с клиента приходит состав корзины
- * (`{ deviceId: qty }`) и тумблер «списать баллы», а рубли берутся из
- * БД-тарифа, действующей акции, промокода, прайса железа и баланса
- * организации. Иначе можно было бы прислать «оплачу за 1 ₽».
+ * Сумма считается ТОЛЬКО на сервере: с клиента приходят тариф, период,
+ * число точек (`plan`, `cycle`, `points`; старые `tariffKey=monthly` —
+ * на «Стандарт») и тумблер «списать баллы», а рубли берутся из БД-тарифа,
+ * текущей подписки аккаунта (доплата за остаток, зачёт при переходе на
+ * год — `quoteCheckout`), действующей акции, промокода и баланса
+ * организации. Иначе можно было бы прислать «оплачу за 1 ₽». Понижение
+ * тарифа сейчас не оплачивается — оно действует с конца срока (409).
  *
  * `expectedGrossRub` от клиента — не сумма к оплате, а сверка: если за
  * время на странице акция закончилась (или началась), заказ не создаём и
@@ -101,6 +100,9 @@ export async function POST(request: NextRequest) {
   }
 
   const session = await getServerSession(authOptions).catch(() => null);
+  if (session && isImpersonating(session)) {
+    return NextResponse.json({ error: IMPERSONATION_CHECKOUT_ERROR, code: "impersonating" }, { status: 403 });
+  }
   // Почта вошедшего берётся из сессии принудительно. Иначе баллы
   // организации ушли бы на заказ с чужим адресом, а вебхук по этому
   // адресу завёл бы ещё одну организацию.
@@ -109,7 +111,12 @@ export async function POST(request: NextRequest) {
     : typeof body.email === "string"
       ? body.email.trim().toLowerCase()
       : "";
-  const tariffKey = typeof body.tariffKey === "string" ? body.tariffKey : "";
+  const target = parseCheckoutTarget({
+    plan: body.plan,
+    cycle: body.cycle,
+    points: body.points,
+    tariffKey: body.tariffKey,
+  });
 
   if (!EMAIL_RE.test(email) || email.length > 200) {
     return NextResponse.json(
@@ -118,45 +125,50 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Один момент на акцию и сроки промокода: граница акции не должна
-  // пройти между двумя проверками одного заказа.
-  const now = new Date();
-  // Цена тарифа с действующей акцией — та же функция, что у витрин.
-  const offer = await getSubscriptionOffer(now, tariffKey);
-  if (!offer) {
+  if (!target) {
     return NextResponse.json({ error: "Тариф недоступен" }, { status: 400 });
   }
 
-  const bundleConfig =
-    offer.tariffKey === TARIFF_BUNDLE
-      ? normalizeHardwareConfig(body.bundleConfig)
-      : null;
-  const hardwareRub = bundleConfig ? hardwareTotal(bundleConfig) : 0;
-
-  // Проверка по ПОЛНОЙ сумме: заказ, полностью закрытый баллами, —
-  // нормальный сценарий, а вот пустая корзина без подписки — нет.
-  if (offer.priceRub + hardwareRub <= 0) {
-    return NextResponse.json(
-      { error: "Сумма заказа получилась нулевой — выберите оборудование" },
-      { status: 400 },
-    );
-  }
-
-  const description = bundleConfig
-    ? `${offer.tariffTitle} (подписка на ${offer.periodDays} дн. + оборудование)`
-    : `${offer.tariffTitle} на ${offer.periodDays} дн.`;
-
-  // Галочка автосписаний. Не проставлена — платёж разовый: нажатие
-  // «Оплатить» без галочки обязано просто провести оплату, а не требовать
-  // согласия. Значение приводим строго к boolean.
-  const recurringConsent = body.recurringConsent === true;
-
-  // Баллы и автосписания несовместимы: касса запомнила бы карту с
-  // уменьшенным OutSum, и будущие списания шли бы не по цене тарифа.
+  // Один момент на акцию и сроки промокода: граница акции не должна
+  // пройти между двумя проверками одного заказа.
+  const now = new Date();
   const organizationId =
     session?.user && hasFullWorkspaceAccess(session.user) && !isImpersonating(session)
       ? getActiveOrgId(session)
       : null;
+  // Сумма по тарифу и виду перехода с действующей акцией — та же функция,
+  // что у страницы заказа.
+  // Без кабинета организации заказ найдёт аккаунт по почте: гостя с почтой
+  // существующего аккаунта и сотрудника оплаченного аккаунта ведём в
+  // кабинет (см. quoteCheckout).
+  const quote = await quoteCheckout({
+    organizationId,
+    target,
+    now,
+    payer: organizationId ? null : { email, guest: !session?.user },
+  });
+  if (!quote.ok) {
+    console.info("[billing] order refused", { organizationId, target, code: quote.code });
+    return NextResponse.json(
+      { error: quote.error, code: quote.code, effectiveAt: quote.effectiveAt ?? null },
+      { status: quote.status },
+    );
+  }
+  const offer = quote.offer;
+  const changeNote = changeKindNote(quote.change.kind, {
+    remainingDays: quote.change.remainingDays,
+    creditRub: quote.change.creditRub,
+  });
+  const description = changeNote ? `${quote.title} (${changeNote})` : quote.title;
+
+  // Галочка автосписаний. Не проставлена — платёж разовый: нажатие
+  // «Оплатить» без галочки обязано просто провести оплату, а не требовать
+  // согласия. Доплата за остаток срока — разовая всегда: автосписания по
+  // ней шли бы не по цене тарифа.
+  const recurringConsent = body.recurringConsent === true && quote.change.kind !== "upgrade" && offer.priceRub > 0;
+
+  // Баллы и автосписания несовместимы: касса запомнила бы карту с
+  // уменьшенным OutSum, и будущие списания шли бы не по цене тарифа.
   const usePoints =
     body.usePoints !== false && !recurringConsent && Boolean(organizationId);
   // Скидка поверх акции: введённый промокод или скидка навсегда аккаунта,
@@ -179,7 +191,6 @@ export async function POST(request: NextRequest) {
     baseRub: offer.baseRub,
     promotion: offer.promotion,
     promo: applied ? { kind: applied.kind, value: applied.value } : null,
-    hardwareRub,
   });
 
   // Сверка с тем, что человек видел на странице (см. комментарий вверху).
@@ -197,7 +208,9 @@ export async function POST(request: NextRequest) {
             ? "Для этой почты действует скидка навсегда — сумма пересчитана. Проверьте её и нажмите ещё раз"
             : offer.promotion
               ? "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз"
-              : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
+              : quote.change.kind === "upgrade" || quote.change.kind === "switch"
+                ? "Сумма пересчитана: доплата и зачёт зависят от оставшихся дней. Проверьте новую сумму и нажмите ещё раз"
+                : "Цена изменилась: закончилась акция или обновился тариф. Проверьте новую сумму и нажмите ещё раз",
         code: "price-changed",
         grossRub: amounts.grossRub,
         discount: applied ? { ...applied, label: discountLabel(applied) } : null,
@@ -245,7 +258,12 @@ export async function POST(request: NextRequest) {
     promotionId: offer.promotion?.id ?? null,
     promotionPercent: offer.promotion?.percent ?? null,
     promotionDiscountRub: amounts.promotionDiscountRub,
-    bundleConfig,
+    bundleConfig: null,
+    points: quote.target.points,
+    changeKind: quote.change.kind,
+    creditRub: quote.change.creditRub,
+    periodEndsAt: quote.change.periodEnd,
+    basePlanJson: basePlanSnapshot(quote.base),
     isTest: isTestMode(),
     recurringConsent,
     partnerSlug: partnerRef ? encodePartnerRef(partnerRef) : null,
@@ -260,8 +278,7 @@ export async function POST(request: NextRequest) {
       (promoCode
         ? ` → ${applied?.source === "lifetime" ? "lifetime (auto)" : applied?.lifetime ? "promo (lifetime)" : "promo"} ${promoCode} −${amounts.promoDiscountRub} ₽`
         : "") +
-      (amounts.hardwareRub ? ` + hardware ${amounts.hardwareRub} ₽` : "") +
-      ` = ${amounts.grossRub} ₽, points ${order.pointsSpent}, to pay ${order.amountRub} ₽`,
+      ` = ${amounts.grossRub} ₽ (${quote.change.kind}, points ${quote.target.points}, credit ${quote.change.creditRub} ₽), balance ${order.pointsSpent}, to pay ${order.amountRub} ₽`,
   );
 
   if (recurringConsent) {

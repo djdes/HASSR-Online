@@ -6,6 +6,7 @@ import { createOrganization } from "@/lib/create-organization";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_SPHERE_VALUES } from "@/lib/validators";
 import { rewriteSessionClaims } from "@/lib/session-token";
+import { checkPointsForCreation, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,9 @@ const schema = z.object({
  * приглашённому руководителю значит разрешить ему тратить чужие деньги.
  * Сразу после создания переключаем человека в новую организацию — иначе
  * он остаётся в старой и не понимает, сработало ли.
+ *
+ * Новая организация — новая точка тарифа: сверх оплаченных точек — 402
+ * со ссылкой на тариф (в пробном периоде точек без ограничений).
  */
 export async function POST(request: Request) {
   const auth = await requireApiAuth();
@@ -52,6 +56,17 @@ export async function POST(request: Request) {
       { error: parsed.error.issues[0]?.message ?? "Проверьте поля" },
       { status: 400 },
     );
+  }
+
+  // Тариф считает аккаунт: проверяем по любой его рабочей организации.
+  const anchor = await db.organization.findFirst({
+    where: { accountId: account.id, isDemo: false, kind: { not: "directory" } },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  if (anchor) {
+    const points = await checkPointsForCreation(anchor.id, 1, { source: "organizations" });
+    if (!points.ok) return limitResponse(points);
   }
 
   const { organizationId } = await createOrganization({

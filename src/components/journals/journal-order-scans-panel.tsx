@@ -14,6 +14,7 @@ import {
   ORDER_SCAN_TITLE_MAX,
 } from "@/lib/journal-order-scans";
 import { ORDER_SCAN_CAMERA_ACCEPT, orderScanPhotoTitle, orderScanPhotoToJpeg } from "@/lib/order-scan-camera";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /**
  * «Приказы к журналу» (пожелание РПН, 2026-09-24): сканы приказа о
@@ -74,6 +75,7 @@ async function readError(response: Response, fallback: string): Promise<string> 
 export function JournalOrderScansPanel({ journalCode, initialScans, canManage }: Props) {
   const t = useTranslations("journalUi.orderScans");
   const common = useTranslations("common");
+  const tariffLimit = useTariffLimitToast();
   const locale = useLocale();
   const [scans, setScans] = useState<OrderScanItem[]>(initialScans);
   const [uploading, setUploading] = useState(false);
@@ -114,7 +116,10 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
       if (title) form.set("title", title);
       const response = await fetch("/api/journal-order-scans", { method: "POST", body: form });
       if (!response.ok) {
-        toast.error(await readError(response, t("uploadFailed")));
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        // Хранилище тарифа заполнено — toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(body)) return;
+        toast.error(body?.error || t("uploadFailed"));
         return;
       }
       const { scan } = (await response.json()) as { scan: OrderScanItem };

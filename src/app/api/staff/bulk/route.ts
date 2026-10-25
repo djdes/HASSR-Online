@@ -11,7 +11,6 @@ import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { recordAuditLog } from "@/lib/audit-log";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { seatAllowance, seatLimitSummary } from "@/lib/billing.server";
-import { FREE_LIMIT_MESSAGE } from "@/lib/billing-period";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -147,7 +146,8 @@ export async function POST(request: Request) {
   // Лимит тарифа — по строкам ДО создания каждой: после бесплатного
   // периода на бесплатном тарифе второго активного добавить нельзя.
   // Сторонняя бракеражная комиссия в тариф не входит.
-  let seatsLeft = (await seatAllowance(orgId)).left;
+  const seats = await seatAllowance(orgId);
+  let seatsLeft = seats.left;
   let seatBlocked = 0;
   const createdUsers: Array<{
     id: string;
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
 
     if (pos.categoryKey !== "commission") {
       if (seatsLeft <= 0) {
-        errors.push({ line: i + 1, message: `«${row.fullName}»: ${FREE_LIMIT_MESSAGE}`, raw: row });
+        errors.push({ line: i + 1, message: `«${row.fullName}»: ${seats.message}`, raw: row });
         seatBlocked += 1;
         continue;
       }
@@ -288,7 +288,7 @@ export async function POST(request: Request) {
   // До конца бесплатного периода импорт может разом перевалить за
   // бесплатные места — тихий перевод проверяем один раз после пачки.
   const planCheck = await ensurePlanForHeadcount(orgId);
-  const billingLimit = seatLimitSummary(seatBlocked, "staff.bulk", orgId);
+  const billingLimit = seatLimitSummary(seatBlocked, "staff.bulk", orgId, seats);
 
   await recordAuditLog({
     request,

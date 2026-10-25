@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   CalendarClock,
   Check,
   CreditCard,
@@ -26,9 +27,10 @@ import type { BillingPrice } from "@/lib/billing-period";
 import { cn } from "@/lib/utils";
 
 /**
- * Окно «Бесплатный период подписки закончился» — руководителю с правом на
- * тариф, на любой странице кабинета, пока он не решит: оплатить подписку
- * или перейти на бесплатный (1 сотрудник, остальные — в архив).
+ * Окно «Пробный период закончился» — руководителю с правом на тариф, на
+ * любой странице кабинета, пока он не решит: подключить «Стандарт» или
+ * «Премиум» или остаться на бесплатном — отметить 1 сотрудника и 1 журнал
+ * (остальные сотрудники — в архив, остальные журналы выключаются).
  *
  * Тексты честные и считаются на сервере (`transitionCopy`): не платившим —
  * «бесплатный период закончился», а не «оплаченный тариф закончился».
@@ -61,7 +63,14 @@ type Candidate = {
   canSignIn: boolean;
 };
 
-type Step = "overview" | "choose" | "confirm";
+type JournalOption = {
+  code: string;
+  name: string;
+  /** Записей за 30 дней — самые заполняемые первыми. */
+  entries30d: number;
+};
+
+type Step = "overview" | "choose" | "journal" | "confirm";
 
 export function BillingTransitionGate({
   copy,
@@ -98,7 +107,7 @@ export function BillingTransitionGate({
           <OverviewBody
             copy={copy}
             payHref={payHref}
-            payLabel={t("payByCard")}
+            payLabel={t("paySubscription")}
             onFree={() => setChooserOpen(true)}
           />
           {cardNote ? (
@@ -355,7 +364,11 @@ function initials(name: string): string {
   return (parts[0]?.[0] ?? "?").toUpperCase() + (parts[1]?.[0] ?? "").toUpperCase();
 }
 
-/** Шаги «кто остаётся» → «подтвердите». Список грузится с сервера. */
+/**
+ * Шаги «кто остаётся» → «какой журнал остаётся» → «подтвердите». Списки
+ * грузятся с сервера; отмечается по одному (бесплатный — 1 сотрудник и
+ * 1 журнал).
+ */
 function Chooser({
   onBack,
   onDone,
@@ -380,6 +393,9 @@ function Chooser({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [journals, setJournals] = useState<JournalOption[] | null>(null);
+  const [keepJournal, setKeepJournal] = useState<string | null>(null);
+  const [journalQuery, setJournalQuery] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -394,8 +410,12 @@ function Chooser({
       // По умолчанию остаётся сам руководитель, потом владелец.
       const preferred = list.find((c) => c.isSelf) ?? list.find((c) => c.isOwner) ?? list[0];
       setSelected((current) => current ?? preferred?.id ?? null);
-      // Выбирать не из кого — сразу подтверждение.
-      if (list.length === 1) setStep("confirm");
+      // Журнал по умолчанию — самый заполняемый (сервер отдаёт их первыми).
+      const journalList = (data.journals ?? []) as JournalOption[];
+      setJournals(journalList);
+      setKeepJournal((current) => current ?? journalList[0]?.code ?? null);
+      // Выбирать сотрудника не из кого — сразу к журналу или подтверждению.
+      if (list.length === 1) setStep(journalList.length > 1 ? "journal" : "confirm");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : t("loadFailed"));
     }
@@ -414,8 +434,17 @@ function Chooser({
     );
   }, [candidates, query]);
 
+  const visibleJournals = useMemo(() => {
+    if (!journals) return [];
+    const q = journalQuery.trim().toLowerCase();
+    return q ? journals.filter((j) => j.name.toLowerCase().includes(q)) : journals;
+  }, [journals, journalQuery]);
+
   const chosen = candidates?.find((c) => c.id === selected) ?? null;
   const others = candidates?.filter((c) => c.id !== selected) ?? [];
+  const keptJournal = journals?.find((j) => j.code === keepJournal) ?? null;
+  const journalsOff = journals && keptJournal ? journals.length - 1 : 0;
+  const hasJournalStep = (journals?.length ?? 0) > 1;
 
   async function submit() {
     if (!chosen) return;
@@ -424,7 +453,11 @@ function Chooser({
       const res = await fetch("/api/settings/subscription/transition", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(voluntary ? { keepUserId: chosen.id, voluntary: true } : { keepUserId: chosen.id }),
+        body: JSON.stringify({
+          keepUserId: chosen.id,
+          ...(keptJournal ? { keepJournalCode: keptJournal.code } : {}),
+          ...(voluntary ? { voluntary: true } : {}),
+        }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) throw new Error(data?.error ?? t("transitionFailed"));
@@ -488,6 +521,25 @@ function Chooser({
               <span>{t("restoreHint")}</span>
             </li>
             ) : null}
+            {keptJournal ? (
+              <li className="flex gap-2.5">
+                <Check className="mt-0.5 size-4 shrink-0 text-[#116b2a]" />
+                <span data-testid="billing-keep-journal">
+                  {t.rich("keepJournalRemains", {
+                    name: keptJournal.name,
+                    b: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
+                  })}
+                </span>
+              </li>
+            ) : null}
+            {journalsOff > 0 ? (
+              <li className="flex gap-2.5">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0 text-[#b25f00]" />
+                <span data-testid="billing-journals-off">
+                  {t("journalsOff", { journals: t("journalsCount", { count: journalsOff }) })}
+                </span>
+              </li>
+            ) : null}
           </ul>
           {paidUntilLabel ? (
             <p
@@ -523,7 +575,7 @@ function Chooser({
         <div className="flex shrink-0 gap-2 border-t border-[#ececf4] px-5 py-4 sm:px-6">
           <button
             type="button"
-            onClick={() => setStep("choose")}
+            onClick={() => setStep(hasJournalStep ? "journal" : "choose")}
             disabled={busy}
             className="inline-flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
           >
@@ -539,6 +591,104 @@ function Chooser({
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
             {t("goFree")}
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  if (step === "journal" && journals) {
+    return (
+      <>
+        <div className="flex-1 overflow-y-auto px-5 pb-5 pt-6 sm:px-6">
+          <h2
+            id="billing-transition-title"
+            className="pr-8 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]"
+          >
+            {t("journalTitle")}
+          </h2>
+          <p className="mt-2 text-[13.5px] leading-[1.55] text-[#6f7282]">
+            {t("journalLead", { journals: t("journalsCount", { count: 1 }) })}
+          </p>
+          {journals.length > 7 ? (
+            <label className="relative mt-4 block">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
+              <input
+                value={journalQuery}
+                onChange={(e) => setJournalQuery(e.target.value)}
+                placeholder={t("searchJournal")}
+                className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white pl-10 pr-4 text-[14.5px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+              />
+            </label>
+          ) : null}
+          {/* Чекбоксы, но отмечается один: бесплатный — 1 журнал. */}
+          <div role="radiogroup" aria-label={t("journalTitle")} className="mt-4 space-y-2">
+            {visibleJournals.map((journal) => {
+              const active = journal.code === keepJournal;
+              return (
+                <button
+                  key={journal.code}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setKeepJournal(journal.code)}
+                  data-testid={`billing-keep-journal-${journal.code}`}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors duration-150",
+                    active
+                      ? "border-[#5566f6] bg-[#f5f6ff] ring-4 ring-[#5566f6]/15"
+                      : "border-[#ececf4] bg-white hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center rounded-md border",
+                      active ? "border-[#5566f6] bg-[#5566f6] text-white" : "border-[#dcdfed] bg-white"
+                    )}
+                  >
+                    {active ? <Check className="size-3.5" /> : null}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-2xl",
+                      active ? "bg-[#5566f6] text-white" : "bg-[#eef1ff] text-[#3848c7]"
+                    )}
+                  >
+                    <BookOpen className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-medium leading-snug text-[#0b1024]">{journal.name}</span>
+                    <span className="mt-0.5 block text-[12.5px] text-[#6f7282]">
+                      {t("journalEntries", { count: journal.entries30d })}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+            {visibleJournals.length === 0 ? (
+              <p className="py-4 text-center text-[13px] text-[#9b9fb3]">{t("noJournalFound")}</p>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2 border-t border-[#ececf4] px-5 py-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => ((candidates?.length ?? 0) > 1 ? setStep("choose") : onBack())}
+            className="inline-flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+          >
+            <ArrowLeft className="size-4" />
+            {(candidates?.length ?? 0) > 1 ? t("back") : backLabel}
+          </button>
+          <button
+            type="button"
+            disabled={!keptJournal}
+            onClick={() => setStep("confirm")}
+            data-testid="billing-journal-next"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {t("next")}
+            <ArrowRight className="size-4" />
           </button>
         </div>
       </>
@@ -631,11 +781,11 @@ function Chooser({
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "flex size-5 shrink-0 items-center justify-center rounded-full border",
-                        active ? "border-[#5566f6] bg-[#5566f6] text-white" : "border-[#dcdfed]"
+                        "flex size-5 shrink-0 items-center justify-center rounded-md border",
+                        active ? "border-[#5566f6] bg-[#5566f6] text-white" : "border-[#dcdfed] bg-white"
                       )}
                     >
-                      {active ? <Check className="size-3" /> : null}
+                      {active ? <Check className="size-3.5" /> : null}
                     </span>
                   </button>
                 );
@@ -659,7 +809,7 @@ function Chooser({
         <button
           type="button"
           disabled={!chosen}
-          onClick={() => setStep("confirm")}
+          onClick={() => setStep(hasJournalStep ? "journal" : "confirm")}
           data-testid="billing-next"
           className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
         >

@@ -15,7 +15,7 @@
 import { Prisma } from "@prisma/client";
 
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
-import { SEAT_USER_WHERE, readFreePeriodSettings } from "@/lib/billing.server";
+import { SEAT_USER_WHERE, readTrialSettings } from "@/lib/billing.server";
 import { db } from "@/lib/db";
 import { notifyManagement, upsertNotification } from "@/lib/notifications";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
@@ -117,6 +117,7 @@ async function loadConversionSnapshot(
       subscriptionEnd: true,
       recurringActive: true,
       balanceRub: true,
+      createdAt: true,
       members: { where: { userId }, select: { role: true } },
       account: {
         select: {
@@ -232,6 +233,7 @@ async function loadConversionSnapshot(
       balanceRub: org.balanceRub,
       activeUsers: orgActive,
       actorMemberRole: org.members[0]?.role ?? null,
+      createdAt: org.createdAt,
     },
     account: org.account
       ? {
@@ -292,7 +294,7 @@ export async function loadConversionPreview(input: {
   // Дешёвый отсев: без партнёрского членства снимок не нужен вовсе.
   const membership = await db.partnerUser.findUnique({ where: { userId: input.userId }, select: { id: true } });
   if (!membership) return null;
-  const [rule, settings] = await Promise.all([getCurrentRewardRule(), readFreePeriodSettings()]);
+  const [rule, settings] = await Promise.all([getCurrentRewardRule(), readTrialSettings()]);
   const snapshot = await loadConversionSnapshot(db, { ...input, now: new Date(), rule, settings });
   if (!snapshot || !isConversionOffered(snapshot) || !snapshot.partner) return null;
   return {
@@ -331,7 +333,7 @@ export async function convertOrganizationToPartnerClient(input: {
 }): Promise<ConversionResult> {
   const { userId, organizationId } = input;
   await ensurePartnerSchemaExtras();
-  const [rule, settings] = await Promise.all([getCurrentRewardRule(), readFreePeriodSettings()]);
+  const [rule, settings] = await Promise.all([getCurrentRewardRule(), readTrialSettings()]);
   const now = new Date();
 
   let outcome:
@@ -692,6 +694,8 @@ async function loadReturnSnapshot(
       id: true,
       subscriptionPlan: true,
       subscriptionEnd: true,
+      createdAt: true,
+      trialEndsAt: true,
       organizations: {
         where: { isDemo: false, kind: { not: "directory" }, id: { not: organizationId } },
         select: { id: true, subscriptionEnd: true },
@@ -765,6 +769,8 @@ async function loadReturnSnapshot(
           subscriptionEnd: account.subscriptionEnd,
           organizationEnds: account.organizations.map((o) => o.subscriptionEnd),
           activeUsers: accountActive,
+          createdAt: account.createdAt,
+          trialEndsAt: account.trialEndsAt,
         }
       : null,
     settings: input.settings,
@@ -779,7 +785,7 @@ export async function loadReturnPreview(input: {
   userId: string;
   organizationId: string;
 }): Promise<ReturnPreview | null> {
-  const settings = await readFreePeriodSettings();
+  const settings = await readTrialSettings();
   const snapshot = await loadReturnSnapshot(db, { ...input, now: new Date(), settings });
   if (!snapshot) return null;
   return { offered: isReturnOffered(snapshot), plan: planReturn(snapshot) };
@@ -797,7 +803,7 @@ export async function returnClientToOwnAccount(input: {
   organizationId: string;
 }): Promise<ReturnResult> {
   const { partnerId, userId, organizationId } = input;
-  const settings = await readFreePeriodSettings();
+  const settings = await readTrialSettings();
   const now = new Date();
 
   let outcome:

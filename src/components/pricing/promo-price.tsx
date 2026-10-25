@@ -13,7 +13,7 @@ import {
 } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
 import type { SiteLocale } from "@/i18n/site-locale";
-import { FORMAT_LOCALES } from "@/i18n/locales";
+import { formatNumber } from "@/i18n/locales";
 import { pricingTranslator } from "@/i18n/pricing-messages";
 
 /**
@@ -26,7 +26,7 @@ import { pricingTranslator } from "@/i18n/pricing-messages";
  * аккаунта) — так же: считается от цены с акцией, старая цена зачёркнута,
  * плашка «Ваша скидка −10 % навсегда» / «Промокод X: −10 %».
  *
- * Намеренно без "use client" и без хуков (как `PlanCard`): остаётся
+ * Намеренно без "use client" и без хуков: остаётся
  * серверным на лендинге и попадает в клиентский бандл, когда его
  * импортирует клиентский компонент. Даты форматируются без Intl-часовых
  * поясов (lib/promo/promotions.ts) — сервер и браузер рисуют одно и то же.
@@ -60,8 +60,13 @@ const OLD_SIZE: Record<Size, string> = {
   xl: "text-[18px]",
 };
 
+/**
+ * Через `formatNumber`, а не голый `Intl`: узбекский разделитель разрядов у
+ * Node и браузеров разный, и на `/uz` сервер и клиент печатали разные цены
+ * (ошибка гидратации).
+ */
 export function formatPriceRub(value: number, locale: SiteLocale = "ru"): string {
-  return `${new Intl.NumberFormat(FORMAT_LOCALES[locale]).format(value)} ₽`;
+  return `${formatNumber(locale, value)} ₽`;
 }
 
 export function PromoBadge({

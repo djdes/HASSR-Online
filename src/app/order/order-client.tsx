@@ -26,7 +26,7 @@ import { PromoPrice } from "@/components/pricing/promo-price";
 import {
   RECURRING_CONSENT_TEXT,
   RECURRING_OFFER_HREF,
-  RECURRING_PERIOD_TEXT,
+  recurringPeriodText,
 } from "@/lib/recurring-consent";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
@@ -49,7 +49,16 @@ type OrderStatus = {
   needsCompletion: boolean;
   /** Пополнение баланса — не подписка: «Баланс пополнен», ссылка на баланс. */
   purpose?: "topup" | "subscription";
+  /** Оплата ждёт ручного разбора: подписка изменилась после оформления. */
+  held?: boolean;
 };
+
+/** Текст после оплаты существующему клиенту: продлено или ждёт разбора. */
+function renewalText(order: Pick<OrderStatus, "held">): string {
+  return order.held
+    ? "Оплату получили, но после оформления заказа изменилась подписка или закончился оплаченный срок — применим её вручную в течение рабочего дня или вернём деньги. Ничего делать не нужно."
+    : "Подписка вашей организации продлена. Входите под своей обычной учётной записью.";
+}
 
 /** Оплачен ли заказ. `expired` — истёкший холд баллов, это не оплата. */
 function isPaidStatus(status: string): boolean {
@@ -58,6 +67,28 @@ function isPaidStatus(status: string): boolean {
 
 /** Скидка поверх акции, как её посчитал сервер, с подписью плашки. */
 export type OrderDiscountView = AppliedDiscount & { label: string };
+
+/**
+ * Тариф 2026-10 в заказе и вид перехода от текущей подписки — посчитаны
+ * сервером (`quoteCheckout`), здесь только подписи.
+ */
+export type OrderPlanView = {
+  tier: "standard" | "premium";
+  cycle: "month" | "year";
+  points: number;
+  kind: "new" | "renew" | "upgrade" | "switch" | "scheduled";
+  /** Цена полного периода по прайсу. */
+  periodPriceRub: number;
+  /** Зачёт неиспользованного остатка (переход на год). */
+  creditRub: number;
+  /** Разница цен за полный период (повышение). */
+  differenceRub: number;
+  remainingDays: number;
+  periodStartLabel: string;
+  periodEndLabel: string;
+  /** «Новая» в последние сутки срока: период — после окончания текущего. */
+  appendsToCurrent?: boolean;
+};
 
 /**
  * Скидка при открытии страницы (сервер, `resolveCheckoutDiscount`): код из
@@ -104,6 +135,8 @@ function formatRub(value: number): string {
 export function OrderClient({
   tariff,
   offer = null,
+  plan = null,
+  refusal = null,
   bundleConfig,
   amountRub,
   returnParams,
@@ -116,6 +149,10 @@ export function OrderClient({
   tariff: Tariff | null;
   /// Цена подписки с действующей акцией (сервер). amountRub уже её учитывает.
   offer?: SubscriptionOffer | null;
+  /// Тариф 2026-10 и вид перехода (сервер).
+  plan?: OrderPlanView | null;
+  /// Почему этот тариф сейчас не оформить (понижение — с конца срока, мало точек).
+  refusal?: string | null;
   /// Промокод из ссылки и скидка навсегда — посчитаны сервером.
   initialDiscount?: OrderDiscountState;
   bundleConfig: Record<string, number> | null;
@@ -142,6 +179,8 @@ export function OrderClient({
     <Checkout
       tariff={tariff}
       offer={offer}
+      plan={plan}
+      refusal={refusal}
       bundleConfig={bundleConfig}
       amountRub={amountRub}
       sessionEmail={sessionEmail}
@@ -158,6 +197,8 @@ export function OrderClient({
 function Checkout({
   tariff,
   offer = null,
+  plan = null,
+  refusal = null,
   bundleConfig,
   amountRub,
   sessionEmail,
@@ -168,6 +209,8 @@ function Checkout({
 }: {
   tariff: Tariff | null;
   offer?: SubscriptionOffer | null;
+  plan?: OrderPlanView | null;
+  refusal?: string | null;
   bundleConfig: Record<string, number> | null;
   amountRub: number;
   sessionEmail: string;
@@ -297,14 +340,29 @@ function Checkout({
         ) : (
           <>
             <p className="mt-4 text-[15px] leading-[1.7] text-[#3c4053]">
-              Подписка вашей организации продлена. Входите под своей обычной
-              учётной записью.
+              {renewalText(paid)}
             </p>
             <div className="mt-6">
               <PrimaryLink href="/login">Войти в кабинет</PrimaryLink>
             </div>
           </>
         )}
+      </Card>
+    );
+  }
+
+  if (refusal) {
+    return (
+      <Card>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em]">
+          Этот тариф сейчас не оформить
+        </h1>
+        <p data-testid="order-refusal" className="mt-3 text-[15px] leading-[1.7] text-[#3c4053]">
+          {refusal}
+        </p>
+        <div className="mt-6">
+          <PrimaryLink href="/settings/subscription">К тарифам в кабинете</PrimaryLink>
+        </div>
       </Card>
     );
   }
@@ -338,8 +396,11 @@ function Checkout({
   const discountRub = discount?.discountRub ?? 0;
   const amountAfterPromo = Math.max(0, amountRub - discountRub);
   const capAfterPromo = Math.max(0, pointsCap - discountRub);
+  // К оплате 0 ₽ (зачёт или скидка) — автосписаний нет: галочка скрыта, и
+  // согласие не действует, даже если пришло из ссылки (`?recurring=1`).
+  const autopay = recurringConsent && amountAfterPromo > 0;
   const pointsSpent =
-    usePoints && !recurringConsent
+    usePoints && !autopay
       ? Math.min(pointsAvailable, Math.min(capAfterPromo, amountAfterPromo))
       : 0;
   const netRub = Math.max(0, amountAfterPromo - pointsSpent);
@@ -360,7 +421,7 @@ function Checkout({
       const res = await fetch("/api/promo/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, tariffKey: tariff.key }),
+        body: JSON.stringify({ code, tariffKey: tariff.key, plan: plan?.tier, cycle: plan?.cycle, points: plan?.points }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -414,8 +475,10 @@ function Checkout({
         body: JSON.stringify({
           email,
           tariffKey: tariff!.key,
-          bundleConfig: bundleConfig ?? undefined,
-          recurringConsent,
+          plan: plan?.tier,
+          cycle: plan?.cycle,
+          points: plan?.points,
+          recurringConsent: autopay,
           usePoints: pointsSpent > 0,
           promoCode: typedCode ?? undefined,
           // Сверка, не сумма: сервер считает сам и откажет, если за время
@@ -468,8 +531,16 @@ function Checkout({
         Оформление подписки
       </h1>
       <p className="mt-3 text-[15px] leading-[1.7] text-[#3c4053]">
-        {tariff.title} — доступ ко всем журналам СанПиН и ХАССП ({JOURNALS_TOTAL}) на{" "}
-        {tariff.periodDays} дней.
+        {tariff.title} — все журналы СанПиН и ХАССП ({JOURNALS_TOTAL}).{" "}
+        {plan?.kind === "upgrade"
+          ? `Доплата за повышение на оставшиеся ${plan.remainingDays} дн. — до ${plan.periodEndLabel}; дата окончания не меняется.`
+          : plan?.kind === "renew"
+            ? `Продление: новый срок — с ${plan.periodStartLabel} до ${plan.periodEndLabel}.`
+            : plan?.kind === "switch"
+              ? `Новый срок — до ${plan.periodEndLabel}${plan.creditRub > 0 ? `; неиспользованный остаток текущего тарифа зачтён` : ""}.`
+              : plan?.appendsToCurrent
+                ? `Срок — ${tariff.periodDays} дней после окончания текущего (${plan.periodStartLabel}), до ${plan.periodEndLabel}.`
+                : `Срок — ${tariff.periodDays} дней с оплаты${plan ? `, до ${plan.periodEndLabel}` : ""}.`}
       </p>
 
       <div className="mt-6 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5">
@@ -481,7 +552,7 @@ function Checkout({
             {formatRub(netRub)}
           </span>
         </div>
-        {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion ? (
+        {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion || (plan && plan.kind !== "new" && plan.kind !== "renew") ? (
           <ul className="mt-4 space-y-1.5 border-t border-[#ececf4] pt-4">
             {/* Акция и персональная скидка (промокод или скидка навсегда)
                 — прямо в строке подписки: старая цена зачёркнута, новая и
@@ -491,7 +562,13 @@ function Checkout({
               data-testid="order-subscription-line"
               className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-[#3c4053]"
             >
-              <span>Подписка на {tariff.periodDays} дн.</span>
+              <span>
+                {plan?.kind === "upgrade"
+                  ? `Доплата за ${plan.remainingDays} дн.`
+                  : plan?.kind === "switch" && plan.creditRub > 0
+                    ? "Тариф с зачётом остатка"
+                    : `Тариф на ${tariff.periodDays} дн.`}
+              </span>
               <PromoPrice
                 price={subscriptionPrice}
                 personal={discount}
@@ -500,6 +577,21 @@ function Checkout({
                 className="justify-end"
               />
             </li>
+            {plan?.kind === "switch" && plan.creditRub > 0 ? (
+              <li data-testid="order-credit-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
+                <span>
+                  Цена тарифа {formatRub(plan.periodPriceRub)}, зачтено за неиспользованные дни
+                </span>
+                <span className="tabular-nums">−{formatRub(plan.creditRub)}</span>
+              </li>
+            ) : null}
+            {plan?.kind === "upgrade" ? (
+              <li data-testid="order-upgrade-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
+                <span>
+                  Разница цен за период {formatRub(plan.differenceRub)} × оставшиеся дни
+                </span>
+              </li>
+            ) : null}
             {items.map(({ device, qty }) => (
               <li
                 key={device.id}
@@ -594,13 +686,13 @@ function Checkout({
               </p>
             </div>
             <Switch
-              checked={usePoints && !recurringConsent}
-              disabled={recurringConsent}
+              checked={usePoints && !autopay}
+              disabled={autopay}
               onCheckedChange={(next) => setUsePoints(next)}
               aria-label="Списать баллы"
             />
           </div>
-          {recurringConsent ? (
+          {autopay ? (
             <p className="mt-3 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12px] leading-[1.5] text-[#a16d32]">
               При автопродлении баллы не списываются: касса запомнит карту с
               уменьшенной суммой, и следующие списания пошли бы не по цене
@@ -656,39 +748,43 @@ function Checkout({
         {/* Автосписания. Галочка НЕ проставлена по умолчанию: без неё
             платёж разовый, и это нормальный путь. Текст согласия и
             периодичность списаний видны здесь же — скрытых платежей быть
-            не должно. */}
-        <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
-          <input
-            type="checkbox"
-            checked={recurringConsent}
-            onChange={(event) => {
-              setRecurringConsent(event.target.checked);
-              // Автосписания и баллы взаимоисключающи — включаем одно,
-              // гасим другое, чтобы итог в карточке не врал.
-              if (event.target.checked) setUsePoints(false);
-              else setUsePoints(true);
-            }}
-            className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
-          />
-          <span className="text-[13px] leading-[1.5] text-[#3c4053]">
-            {RECURRING_CONSENT_TEXT} (
-            <Link
-              href={RECURRING_OFFER_HREF}
-              target="_blank"
-              className="text-[#3848c7] underline"
-            >
-              раздел 13 оферты
-            </Link>
-            ).
-            <span className="mt-1 block text-[12px] text-[#6f7282]">
-              {RECURRING_PERIOD_TEXT}
+            не должно. Доплата за остаток срока — всегда разовая (сервер
+            галочку у неё не учитывает), поэтому её не показываем; как и
+            при сумме 0 ₽ (зачёт остатка или скидка). */}
+        {plan?.kind === "upgrade" || amountAfterPromo === 0 ? null : (
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
+            <input
+              type="checkbox"
+              checked={recurringConsent}
+              onChange={(event) => {
+                setRecurringConsent(event.target.checked);
+                // Автосписания и баллы взаимоисключающи — включаем одно,
+                // гасим другое, чтобы итог в карточке не врал.
+                if (event.target.checked) setUsePoints(false);
+                else setUsePoints(true);
+              }}
+              className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+            />
+            <span className="text-[13px] leading-[1.5] text-[#3c4053]">
+              {RECURRING_CONSENT_TEXT} (
+              <Link
+                href={RECURRING_OFFER_HREF}
+                target="_blank"
+                className="text-[#3848c7] underline"
+              >
+                раздел 13 оферты
+              </Link>
+              ).
+              <span className="mt-1 block text-[12px] text-[#6f7282]">
+                {recurringPeriodText(plan?.cycle)}
+              </span>
+              <span className="mt-1 block text-[12px] text-[#9b9fb3]">
+                Без галочки оплата пройдёт разовым платежом — автосписаний не
+                будет.
+              </span>
             </span>
-            <span className="mt-1 block text-[12px] text-[#9b9fb3]">
-              Без галочки оплата пройдёт разовым платежом — автосписаний не
-              будет.
-            </span>
-          </span>
-        </label>
+          </label>
+        )}
 
         <button
           type="submit"
@@ -918,8 +1014,7 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
     <Card>
       <Paid order={order} />
       <p className="mt-4 text-[15px] leading-[1.7] text-[#3c4053]">
-        Подписка вашей организации продлена. Входите под своей обычной учётной
-        записью.
+        {renewalText(order)}
       </p>
       <div className="mt-6">
         <PrimaryLink href="/login">Войти в кабинет</PrimaryLink>

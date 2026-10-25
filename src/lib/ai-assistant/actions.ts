@@ -419,7 +419,7 @@ async function executeAddStaff(
   }
   const result = await createStaffMember(ctx.orgId, input);
   if (!result.ok) return { ok: false, error: result.code === "billing_free_limit"
-    ? t("common.billing.limit", { count: FREE_MAX_USERS })
+    ? t("common.billing.limit", { count: result.limit ?? FREE_MAX_USERS })
     : result.status === 404 ? t("assistantActions.positionMissing")
     : result.status === 400 ? t("assistantActions.invalidPhone")
     : t("common.assistant.actionFailed") };

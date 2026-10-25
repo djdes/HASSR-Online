@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { readTariffs } from "@/lib/tariffs";
+import { parsePlanTariffKey } from "@/lib/tariff-plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,8 +12,9 @@ export const dynamic = "force-dynamic";
  * middleware отдаёт 404 всем остальным.
  *
  * Правим только цену, название и признак активности: ключ тарифа —
- * это контракт с кнопками оплаты (`/order?plan=monthly`) и с уже
- * созданными заказами, поэтому переименовывать его через API нельзя.
+ * это контракт с кнопками оплаты (`/order?plan=standard&cycle=year`) и с
+ * уже созданными заказами, поэтому переименовывать его через API нельзя.
+ * Срок тарифов 2026-10 задаёт период (30 или 365 дней) — его не правят.
  */
 
 const MIN_PRICE = 1;
@@ -73,6 +75,13 @@ export async function PATCH(request: Request) {
     data.priceRub = price;
   }
 
+  // Срок тарифа 2026-10 задаёт период (`CYCLE_DAYS`), его считает и оплата.
+  if (periodDays !== undefined && parsePlanTariffKey(key) && Number(periodDays) !== existing.periodDays) {
+    return NextResponse.json(
+      { error: "Срок тарифа «Стандарт»/«Премиум» задаёт период — месяц или год" },
+      { status: 400 },
+    );
+  }
   if (periodDays !== undefined) {
     const days = Number(periodDays);
     if (!Number.isInteger(days) || days < 1 || days > 366) {

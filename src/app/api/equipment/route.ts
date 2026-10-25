@@ -10,6 +10,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolveEquipmentArea } from "@/lib/area-building-sync";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
+import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 
 export async function GET() {
   try {
@@ -96,6 +97,12 @@ export async function POST(request: Request) {
 
     const extras = await parseEquipmentExtras(body as Record<string, unknown>, getActiveOrgId(session));
     if (!extras.ok) return NextResponse.json({ error: extras.error }, { status: 400 });
+
+    // IoT-датчик — возможность «Премиума» (и пробного периода).
+    if (validatedData.tuyaDeviceId) {
+      const feature = await checkPlanFeature(getActiveOrgId(session), "equipmentConnect", "equipment:create");
+      if (!feature.ok) return limitResponse(feature);
+    }
 
     const equipment = await db.equipment.create({
       data: {

@@ -28,6 +28,8 @@ import { PLATFORM_BADGE_TEXT } from "@/lib/partners/branding";
 import { formatRubFixed } from "@/lib/partners/rewards";
 import { getCurrentRewardRule } from "@/lib/partners/schema-extras";
 import { getServerSession } from "@/lib/server-session";
+import { planPeriodPriceRub } from "@/lib/tariff-plans";
+import { readPlanPricing } from "@/lib/tariffs";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +59,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * сразу связался с его аккаунтом.
  */
 export default async function PartnersPage() {
-  const [rule, session] = await Promise.all([getCurrentRewardRule(), getServerSession(authOptions)]);
+  const [rule, session, pricing] = await Promise.all([getCurrentRewardRule(), getServerSession(authOptions), readPlanPricing()]);
+  // Пример вознаграждения — с цены «Стандарта» помесячно (правит ROOT).
+  const subscriptionRub = planPeriodPriceRub(pricing.rates, "standard", "month", 1);
   const locale = await getSiteLocale();
   const messages = await loadMessages(locale);
   const t = createTranslator({ locale, messages, namespace: "publicPartners" });
@@ -119,7 +123,7 @@ export default async function PartnersPage() {
             <Reward value={formatRubFixed(rule.bonusAmountRub)} label={t("rewards.bonus.label")}>{t("rewards.bonus.body", { bonusAfterPayments: String(rule.bonusAfterPayments) })}</Reward>
           </div>
           <ul className="mt-5 grid gap-2 text-[14px] leading-[1.6] text-[#3c4053] sm:grid-cols-2">
-            <li className="flex gap-2"><BadgePercent className="mt-1 size-4 shrink-0 text-[#5566f6]" />{t("rewards.note1", { subscriptionRewardRub: String(formatRubFixed((1990 * rule.subscriptionPercent) / 100)) })}</li>
+            <li className="flex gap-2"><BadgePercent className="mt-1 size-4 shrink-0 text-[#5566f6]" />{t("rewards.note1", { subscriptionRub: formatRubFixed(subscriptionRub), subscriptionRewardRub: String(formatRubFixed((subscriptionRub * rule.subscriptionPercent) / 100)) })}</li>
             <li className="flex gap-2"><BadgePercent className="mt-1 size-4 shrink-0 text-[#5566f6]" />{t("rewards.note2", { hardwareRewardRub: String(formatRubFixed((17750 * rule.hardwarePercent) / 100)) })}</li>
             <li className="flex gap-2"><FileText className="mt-1 size-4 shrink-0 text-[#5566f6]" />{t("rewards.note3")}</li>
             <li className="flex gap-2"><FileText className="mt-1 size-4 shrink-0 text-[#5566f6]" />{t("rewards.note4", { minPayoutRub: String(formatRubFixed(rule.minPayoutRub)) })}</li>

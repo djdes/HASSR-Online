@@ -7,6 +7,7 @@ import { Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /**
  * «Включить журнал» на экране «Этот журнал отключён» — одним нажатием, без
@@ -26,6 +27,7 @@ export function JournalEnableButton({
 }) {
   const t = useTranslations("journalUi.journalEnabled");
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [busy, setBusy] = useState(false);
 
   async function enable() {
@@ -38,6 +40,10 @@ export function JournalEnableButton({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (tariffLimit(body)) {
+          setBusy(false);
+          return;
+        }
         throw new Error(body?.error || t("enableFailed"));
       }
       toast.success(t("enabledToast", { name }));

@@ -28,7 +28,7 @@ import {
   DEFAULT_TWITTER_CARD,
   } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
-import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
+import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 
 /**
  * E19 — лендинги под ниши. У каждой ниши свой заголовок и выгоды, а
@@ -509,8 +509,8 @@ export function NicheLanding({ slug }: { slug: string }) {
             Начните вести журналы прямо сегодня
           </h2>
           <p className="mx-auto mt-3 max-w-[520px] text-[14px] text-white/80">
-            Бесплатный тариф навсегда: {FREE_SEATS_LABEL}, все {JOURNALS_TOTAL_LABEL}
-            включены, без привязки карты.
+            {FREE_TIER_SHORT}: все {JOURNALS_TOTAL_LABEL}, сотрудники и точки без
+            ограничений, без привязки карты.
           </p>
           <Link
             href="/register"

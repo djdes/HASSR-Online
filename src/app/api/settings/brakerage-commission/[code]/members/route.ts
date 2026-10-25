@@ -61,7 +61,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
   });
   if (!created.ok) {
     return NextResponse.json(
-      { error: created.error, code: created.code, payUrl: created.payUrl },
+      { error: created.error, code: created.code, payUrl: created.payUrl, limit: created.limit },
       { status: created.status }
     );
   }

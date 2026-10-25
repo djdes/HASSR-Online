@@ -4,6 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { KNOWLEDGE_MAX_BYTES, knowledgeFileType } from "@/lib/knowledge-documents";
 import { isPpkFolder } from "@/lib/ppk/folders";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { checkStorageForUpload, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
   if (inFolder >= MAX_FILES_PER_FOLDER) {
     return NextResponse.json({ error: "В папке уже 100 файлов" }, { status: 409 });
   }
+  // Хранилище тарифа (Стандарт 10 МБ, Премиум 1 ГБ) — до чтения файла.
+  const storage = await checkStorageForUpload(auth.organizationId, file.size, { source: `production-control/files:${folder}` });
+  if (!storage.ok) return limitResponse(storage);
   const content = new Uint8Array(await file.arrayBuffer());
   const mimeType = knowledgeFileType(file.name, content);
   if (!mimeType) {

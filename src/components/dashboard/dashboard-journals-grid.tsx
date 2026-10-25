@@ -23,6 +23,7 @@ import {
   JOURNAL_LIST_CLASS,
   JOURNAL_TOOLBAR_CLASS,
 } from "@/components/dashboard/dashboard-journals-layout";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /**
  * Своё название организации вместо официального; официальное остаётся
@@ -110,6 +111,7 @@ export function DashboardJournalsGrid({
 }) {
   const t = useTranslations("dashboardUi.dashboardJournalsGrid");
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const normalizedQuery = normalizeJournalSearch(deferredQuery);
@@ -186,6 +188,8 @@ export function DashboardJournalsGrid({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        // Отказ по лимиту тарифа — toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(body)) return;
         throw new Error(body?.error || t("enableFailed"));
       }
       toast.success(t("enabledToast", { name }));

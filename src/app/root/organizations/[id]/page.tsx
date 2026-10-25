@@ -14,6 +14,7 @@ import { ImpersonateButton } from "./impersonate-button";
 import { DeleteOrgButton } from "./delete-org-button";
 import { OrgSettingsForm } from "./org-settings-form";
 import { BalanceCard } from "./balance-card";
+import { HeldOrderActions } from "./held-order-actions";
 import { InvoiceActions } from "./invoice-actions";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 
@@ -50,6 +51,10 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           auditLogs: true,
         },
       },
+      // Тариф 2026-10 живёт на аккаунте: тариф, период, точки, пробный.
+      account: {
+        select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, trialEndsAt: true },
+      },
     },
   });
 
@@ -81,6 +86,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       discountRub: true,
       promotionPercent: true,
       promotionDiscountRub: true,
+      heldAt: true,
     },
   });
   const documentsReady = isRequisitesComplete(await readPlatformRequisites());
@@ -90,9 +96,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
+    !payment.heldAt &&
     Number(payment.amountRub) > 0;
+  // Оплата устаревшего заказа: ROOT применяет тариф вручную или возвращает деньги.
+  const heldForReview = (payment: (typeof payments)[number]) =>
+    payment.status === "paid" && Boolean(payment.heldAt) && !payment.refundedAt;
+  // Возвращённая оплата — не выручка.
   const paidTotalRub = payments
-    .filter((payment) => payment.status === "paid")
+    .filter((payment) => payment.status === "paid" && !payment.refundedAt)
     .reduce((sum, payment) => sum + Number(payment.amountRub), 0);
 
   // Баллы: движения, кто привёл организацию и скольких привела она.
@@ -156,16 +167,32 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         <dl className="grid grid-cols-1 gap-4 text-[14px] sm:grid-cols-3 sm:gap-6">
           <div>
             <dt className="text-[#8a8ea4]">{t("subscription.plan")}</dt>
-            <dd className="mt-1 font-semibold text-black">{organizationPlan(org.subscriptionPlan, t, legacyPlans)}</dd>
+            <dd className="mt-1 font-semibold text-black">
+              {organizationPlan(
+                org.subscriptionPlan === "paused" || org.subscriptionPlan === "cancelled"
+                  ? org.subscriptionPlan
+                  : (org.account?.subscriptionPlan ?? org.subscriptionPlan),
+                t,
+                legacyPlans
+              )}
+              {org.account?.planCycle ? ` · ${t(org.account.planCycle === "year" ? "subscription.cycleYear" : "subscription.cycleMonth")}` : ""}
+              {org.account ? ` · ${t("subscription.pointsValue", { count: org.account.planPoints })}` : ""}
+            </dd>
           </div>
           <div>
             <dt className="text-[#8a8ea4]">{t("subscription.until")}</dt>
             <dd className="mt-1 font-semibold text-black">
-              {org.subscriptionEnd
-                ? organizationDate(org.subscriptionEnd, locale, true)
+              {(org.account?.subscriptionEnd ?? org.subscriptionEnd)
+                ? organizationDate((org.account?.subscriptionEnd ?? org.subscriptionEnd)!, locale, true)
                 : "—"}
             </dd>
           </div>
+          {org.account?.trialEndsAt ? (
+            <div>
+              <dt className="text-[#8a8ea4]">{t("subscription.trialEnds")}</dt>
+              <dd className="mt-1 font-semibold text-black">{organizationDate(org.account.trialEndsAt, locale, true)}</dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-[#8a8ea4]">{t("subscription.token")}</dt>
             <dd className="mt-1 font-semibold text-black">
@@ -184,8 +211,21 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           <OrgSettingsForm
             organizationId={org.id}
             initialName={org.name}
-            initialPlan={org.subscriptionPlan}
-            initialSubscriptionEnd={org.subscriptionEnd?.toISOString() ?? null}
+            initialPlan={
+              org.subscriptionPlan === "paused" || org.subscriptionPlan === "cancelled"
+                ? org.subscriptionPlan
+                : (org.account?.subscriptionPlan ?? org.subscriptionPlan)
+            }
+            initialSubscriptionEnd={(org.account?.subscriptionEnd ?? org.subscriptionEnd)?.toISOString() ?? null}
+            account={
+              org.account
+                ? {
+                    planCycle: org.account.planCycle === "year" ? "year" : "month",
+                    planPoints: org.account.planPoints,
+                    trialEndsAt: org.account.trialEndsAt?.toISOString() ?? null,
+                  }
+                : null
+            }
           />
         </div>
       </div>
@@ -241,7 +281,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   <td className="py-2.5">
                     <span
                       className={
-                        payment.status === "paid"
+                        payment.status === "paid" && !payment.refundedAt
                           ? "rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]"
                           : "rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#6f7282]"
                       }
@@ -251,7 +291,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   </td>
                   <td className="py-2.5 text-right tabular-nums text-[#0b1024]">
                     {t("format.rubles", { amount: Number(payment.amountRub) })}
-                    {payment.pointsSpent > 0 ? (
+                    {/* Баллы возвращённой оплаты уже вернулись на баланс. */}
+                    {payment.pointsSpent > 0 && !payment.refundedAt ? (
                       <span className="ml-1 text-[12px] text-[#3848c7]">
                         {t("payments.pointsSpent", { amount: payment.pointsSpent })}
                       </span>
@@ -283,9 +324,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                         className="inline-flex h-8 items-center rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                       >
                         {t("payments.closingPdf")}</a>
-                    ) : (
+                    ) : heldForReview(payment) ? null : (
                       <span className="text-[#c9ccdb]">—</span>
                     )}
+                    {heldForReview(payment) ? (
+                      <div className={payment.paymentMethod === "invoice" ? "mt-1.5" : undefined}>
+                        <HeldOrderActions orderId={payment.id} />
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))}
