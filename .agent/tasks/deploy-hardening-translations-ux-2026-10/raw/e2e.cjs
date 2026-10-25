@@ -141,6 +141,14 @@ async function put(context, key, locale, value) {
   await dp.keyboard.press("Escape");
   await dd.waitFor({ state: "detached" });
 
+  // Ревью: окно закрыли, пока грузилась соседняя страница, — само не открывается.
+  await dp.getByTestId("translation-row").last().click();
+  await dd.getByTestId("translation-save-next").click();
+  await dp.keyboard.press("Escape");
+  await waitRange(dp, /201–300/);
+  await dp.waitForTimeout(1500);
+  check("desktop: closing during the page switch keeps the editor closed", (await dd.count()) === 0 && !params(dp).get("key"), dp.url());
+
   // Автоперевод всего раздела: «Без перевода» по всем строкам — несколько страниц и пачек.
   let autoCalls = 0;
   let autoDelay = 150;
@@ -179,7 +187,8 @@ async function put(context, key, locale, value) {
   await dp.getByText(/Перевожу… 30 из/).waitFor({ timeout: 20000 });
   await dp.getByTestId("translation-auto-stop").click();
   await dp.getByTestId("translation-auto-progress").waitFor({ state: "detached", timeout: 30000 });
-  check("desktop: «Остановить» stops after the current batch", requested.size > 0 && requested.size < scope.candidates.en, `${requested.size} of ${scope.candidates.en}`);
+  const keptDrafts = await dp.getByTestId("translation-save-all").innerText();
+  check("desktop: «Остановить» stops after the current batch and keeps it", requested.size > 0 && requested.size < scope.candidates.en && keptDrafts.includes(`(${requested.size})`), `${requested.size} of ${scope.candidates.en}, «${keptDrafts}»`);
   await dp.screenshot({ path: `${OUT}/desktop-5-auto-stopped.png` });
   await dp.getByRole("button", { name: "Отменить", exact: true }).click().catch(() => {});
 

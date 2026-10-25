@@ -7,7 +7,9 @@
 #   post-deploy-check.sh <base_url> <ожидаемый sha>
 #
 # POST_DEPLOY_ATTEMPTS (18) × POST_DEPLOY_PAUSE (5 с) — ждём до ~1,5 минуты:
-# Next.js после рестарта поднимается не сразу.
+# Next.js после рестарта поднимается не сразу. Всё вместе — не дольше
+# POST_DEPLOY_MAX_SECONDS (180): даже если адреса висят до таймаута curl,
+# откат должен успеть до таймаута SSH-шага.
 
 set -u
 
@@ -16,6 +18,7 @@ EXPECTED="${2:?expected sha}"
 EXPECTED="${EXPECTED:0:7}"
 ATTEMPTS="${POST_DEPLOY_ATTEMPTS:-18}"
 PAUSE="${POST_DEPLOY_PAUSE:-5}"
+DEADLINE=$((SECONDS + ${POST_DEPLOY_MAX_SECONDS:-180}))
 read -r -a ROUTES <<< "${POST_DEPLOY_ROUTES:-/ /login}"
 
 for attempt in $(seq 1 "$ATTEMPTS"); do
@@ -23,7 +26,7 @@ for attempt in $(seq 1 "$ATTEMPTS"); do
   if [ "$served" = "$EXPECTED" ]; then
     failing=""
     for route in "${ROUTES[@]}"; do
-      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$BASE$route")
+      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$BASE$route")
       case "$code" in
         2??|3??) ;;
         *) failing="$failing $route=$code" ;;
@@ -37,8 +40,12 @@ for attempt in $(seq 1 "$ATTEMPTS"); do
   else
     echo "[verify] попытка $attempt/$ATTEMPTS: сайт отдаёт «${served:-нет ответа}», ждём $EXPECTED"
   fi
+  if [ "$SECONDS" -ge "$DEADLINE" ]; then
+    echo "[verify] вышло время проверки"
+    break
+  fi
   if [ "$attempt" -lt "$ATTEMPTS" ]; then sleep "$PAUSE"; fi
 done
 
-echo "[verify] сборка $EXPECTED не поднялась за $ATTEMPTS попыток"
+echo "[verify] сборка $EXPECTED не поднялась"
 exit 1

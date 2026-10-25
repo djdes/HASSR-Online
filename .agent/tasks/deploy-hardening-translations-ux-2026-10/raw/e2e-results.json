@@ -1,5 +1,5 @@
 {
-  "when": "2026-10-25T08:54:27.233Z",
+  "when": "2026-10-25T09:10:47.379Z",
   "base": "http://localhost:3000",
   "checks": [
     {
@@ -98,6 +98,11 @@
       "detail": "navigation.shell.menus.journals.items.today"
     },
     {
+      "name": "desktop: closing during the page switch keeps the editor closed",
+      "ok": true,
+      "detail": "http://localhost:3000/translations?section=navigation&page=3"
+    },
+    {
       "name": "desktop: auto-translate counts the whole scope, not the page",
       "ok": true,
       "detail": "Автоперевод: English (237), rows 256"
@@ -118,9 +123,9 @@
       "detail": "93 rows with drafts on page 2"
     },
     {
-      "name": "desktop: «Остановить» stops after the current batch",
+      "name": "desktop: «Остановить» stops after the current batch and keeps it",
       "ok": true,
-      "detail": "60 of 237"
+      "detail": "60 of 237, «Сохранить всё (60)»"
     },
     {
       "name": "desktop: no horizontal scroll",

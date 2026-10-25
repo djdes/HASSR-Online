@@ -102,6 +102,15 @@ describe("post-deploy-check.sh", () => {
     }
   });
 
+  it("общее время проверки ограничено, даже если попыток много", async () => {
+    fs.writeFileSync(path.join(appDir, "served-build"), OLD_SHA);
+    const started = Date.now();
+    const result = await run("post-deploy-check.sh", [base, NEW_SHA], { POST_DEPLOY_ATTEMPTS: "100", POST_DEPLOY_PAUSE: "1", POST_DEPLOY_MAX_SECONDS: "2" });
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /вышло время проверки/);
+    assert.ok(Date.now() - started < 10_000, `${Date.now() - started} ms`);
+  });
+
   it("сайт не отвечает — провал, а не зависание", async () => {
     const result = await run("post-deploy-check.sh", ["http://127.0.0.1:9", NEW_SHA]);
     assert.equal(result.status, 1);
@@ -117,13 +126,15 @@ describe("deploy-rollback.sh", () => {
     fs.writeFileSync(path.join(appDir, "served-build"), "dead0000");
     fs.rmSync(path.join(appDir, "pm2-calls.log"), { force: true });
 
-    const result = await run("deploy-rollback.sh", [base, OLD_SHA], { PM2: `bash ${path.join(appDir, "pm2-stub.sh")}` });
+    // Как на проде: до переключения .build-sha уже новый, и /api/build-info отдаёт
+    // прежнюю версию короткой (7 символов).
+    const result = await run("deploy-rollback.sh", [base, OLD_SHA.slice(0, 7)], { PM2: `bash ${path.join(appDir, "pm2-stub.sh")}` });
 
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(readMarker(".next"), "old");
     assert.equal(readMarker(".next-failed"), "new");
     assert.equal(fs.existsSync(path.join(appDir, ".next-previous")), false);
-    assert.equal(fs.readFileSync(path.join(appDir, ".build-sha"), "utf8").trim(), OLD_SHA);
+    assert.equal(fs.readFileSync(path.join(appDir, ".build-sha"), "utf8").trim(), OLD_SHA.slice(0, 7));
     assert.equal(fs.readFileSync(path.join(appDir, "pm2-calls.log"), "utf8").trim(), "restart haccp-online --update-env");
     assert.match(result.stdout, /прод снова на aaaaaaa/);
   });

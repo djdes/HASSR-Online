@@ -105,6 +105,8 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
   // Окно открыто кликом (своя запись истории) — закрываем его через «Назад».
   const openedByPush = useRef(false);
   const [historyVersion, setHistoryVersion] = useState(0);
+  // Ключ открытой строки «сейчас»: после await в обработчиках замыкание уже устарело.
+  const openKeyRef = useRef<string | null>(null);
   const [sectionsOpen, setSectionsOpen] = useState(false);
   const request = useRef(0);
   const listTop = useRef<HTMLDivElement>(null);
@@ -264,14 +266,17 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
   }, []);
 
   const goToPage = (next: number) => {
-    historyMode.current = "push";
-    setPage(Math.min(Math.max(0, next), pages - 1));
+    const target = Math.min(Math.max(0, next), pages - 1);
+    // Новая запись истории — только если вид меняется: иначе «push» достался бы
+    // следующему вводу в поиске.
+    if (target !== page) historyMode.current = "push";
+    setPage(target);
     setOpened(null);
     scrollToList();
   };
 
   const selectCategory = (id: string) => {
-    historyMode.current = "push";
+    if (id !== category || search || page !== 0) historyMode.current = "push";
     setCategory(id);
     setQuery("");
     setSearch("");
@@ -296,6 +301,7 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
   // Открыто кликом — «Назад» снимает свою запись истории (и закрывает окно
   // через popstate); открыто по ссылке — просто убираем строку из адреса.
   const closeRow = () => {
+    openAfterLoad.current = null;
     if (openedByPush.current) {
       openedByPush.current = false;
       window.history.back();
@@ -497,9 +503,10 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
           progress();
           if (!autoStop.current) result = await requestAuto(locale, chunk);
         }
-        if (autoStop.current) break;
+        // Остановили во время ожидания лимита — пачка не переведена; остановили во
+        // время запроса — пачку, за которую уже заплатили ожиданием, оставляем.
         if (result === "rate_limited") {
-          toast.error(t("errors.rate_limited"));
+          if (!autoStop.current) toast.error(t("errors.rate_limited"));
           break;
         }
         if (!result) break;
@@ -521,6 +528,9 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
 
   const openIndex = opened ? entries.findIndex((entry) => entry.key === opened.key) : -1;
   const openEntry = openIndex >= 0 ? entries[openIndex] : opened;
+  useEffect(() => {
+    openKeyRef.current = opened?.key ?? null;
+  }, [opened]);
 
   /** Соседняя строка; на краю страницы — первая (последняя) строка соседней страницы. */
   const moveRow = (step: 1 | -1) => {
@@ -537,8 +547,9 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
     setPage(nextPage);
   };
 
+  // Пока сохранялось, окно могли закрыть или перейти к другой строке — тогда не двигаемся.
   const saveAndNext = async (key: string) => {
-    if (await saveRow(key)) moveRow(1);
+    if ((await saveRow(key)) && openKeyRef.current === key) moveRow(1);
   };
   const activeCategory = categoryById.get(category);
   const currentTitle = category === ALL || !activeCategory ? t("categories.all") : categoryTitle(activeCategory);
@@ -711,6 +722,8 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
             onKeyDown={(event) => {
               if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
                 event.preventDefault();
+                // Как у кнопки: пока строка сохраняется, второй раз не отправляем.
+                if (LOCALES.some((locale) => saving.has(draftId(openEntry.key, locale)))) return;
                 void saveAndNext(openEntry.key);
               } else if (event.altKey && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
                 event.preventDefault();
@@ -804,8 +817,8 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
             <RowEditorFooter
               position={openIndex >= 0 ? shownOffset + openIndex + 1 : null}
               total={total}
-              canPrev={openIndex > 0 || page > 0}
-              canNext={(openIndex >= 0 && openIndex < entries.length - 1) || page < pages - 1}
+              canPrev={openIndex >= 0 && (openIndex > 0 || page > 0)}
+              canNext={openIndex >= 0 && (openIndex < entries.length - 1 || page < pages - 1)}
               onMove={moveRow}
               canSave={LOCALES.some((locale) => drafts[draftId(openEntry.key, locale)] !== undefined)}
               saving={LOCALES.some((locale) => saving.has(draftId(openEntry.key, locale)))}
