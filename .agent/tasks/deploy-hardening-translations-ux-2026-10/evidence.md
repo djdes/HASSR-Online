@@ -33,3 +33,15 @@ e2e 26/26, `actionlint` и `bash -n` — чисто.
 Первый деплой после мерджа: в логе — «[ssh] порт сервера отвечает» и
 «[verify] сайт отдаёт <sha>», `/api/build-info` — SHA мерджа,
 `/api/health` — та же версия без `buildShaOnDisk`.
+
+## Выкатка на прод — деплой #2035 (`728086c`)
+
+- «Wait for SSH» — порт ответил сразу (оба job'а); «Prepare app directory» и
+  SCP — с первой попытки, повторы пропущены; sparse checkout скриптов — ok.
+- Шаг 3: «[verify] попытка 1–6/18: версия 728086c, но адреса не отвечают:
+  /=429 /login=429» → «[verify] сайт отдаёт 728086c, адреса отвечают: /
+  /login» через ~30 с, `.next-previous` убран, «Deploy complete».
+- Прод: `/api/build-info` — `728086c`; `/api/health` — `buildSha: 728086c`,
+  без `buildShaOnDisk`; `/` и `/login` — 200, `/translations` — 307 на вход.
+- Найдено: 429 от лимита переходов после прогрева — см. `problems.md`, п. 13;
+  исправлено следующим PR.

@@ -102,6 +102,34 @@ describe("post-deploy-check.sh", () => {
     }
   });
 
+  it("страница под лимитом запросов (429) — ждём, а если до конца только 429, сборка работает", async () => {
+    fs.writeFileSync(path.join(appDir, "served-build"), NEW_SHA);
+    loginStatus = 429;
+    try {
+      const result = await run("post-deploy-check.sh", [base, NEW_SHA]);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.match(result.stdout, /под лимитом запросов \(429\): \/login — ждём/);
+      assert.match(result.stdout, /отвечали 429 \(лимит запросов\) — сборка работает/);
+    } finally {
+      loginStatus = 200;
+    }
+  });
+
+  it("лимит прошёл, а страница отдаёт 500 — провал", async () => {
+    fs.writeFileSync(path.join(appDir, "served-build"), NEW_SHA);
+    const statuses = [429, 500];
+    loginStatus = 429;
+    const timer = setInterval(() => (loginStatus = statuses[1]), 50);
+    try {
+      const result = await run("post-deploy-check.sh", [base, NEW_SHA], { POST_DEPLOY_ATTEMPTS: "3", POST_DEPLOY_PAUSE: "1" });
+      assert.equal(result.status, 1, result.stdout);
+      assert.match(result.stdout, /\/login=500/);
+    } finally {
+      clearInterval(timer);
+      loginStatus = 200;
+    }
+  });
+
   it("общее время проверки ограничено, даже если попыток много", async () => {
     fs.writeFileSync(path.join(appDir, "served-build"), OLD_SHA);
     const started = Date.now();
