@@ -54,7 +54,7 @@ export type CheckoutQuote =
       ok: false;
       status: number;
       error: string;
-      code: "unavailable" | "scheduled" | "points" | "account";
+      code: "unavailable" | "scheduled" | "points" | "account" | "exempt";
       /** Для scheduled — с какого дня можно перейти. */
       effectiveAt?: string;
     };
@@ -98,6 +98,14 @@ const GUEST_ACCOUNT_ERROR =
   "Для этой почты уже есть аккаунт WeSetup. Войдите в кабинет и оплатите тариф там — сумма посчитается с учётом вашей подписки.";
 
 /**
+ * Демо-организация, мастер-кабинет и платформа вне тарифа: подписки у них
+ * нет, и оплата отсюда посчиталась бы новой подпиской и затёрла бы тариф
+ * аккаунта (оплаченные дни, точки). Платят из своей организации.
+ */
+const EXEMPT_CHECKOUT_ERROR =
+  "Из этой организации тариф не оплачивается (демо или мастер-кабинет). Переключитесь на свою организацию и оформите оплату там — сумма посчитается с учётом вашей подписки.";
+
+/**
  * ROOT в «войти как» за клиента не платит: заказ ушёл бы с почтой ROOT без
  * организации, и вебхук применил бы тариф к платформе, а не к клиенту.
  */
@@ -115,10 +123,10 @@ export function subscriptionFromState(state: AccountBillingState): CurrentSubscr
 export async function accountSubscription(
   organizationId: string,
   now: Date
-): Promise<{ current: CurrentSubscription | null; pointsInUse: number }> {
+): Promise<{ current: CurrentSubscription | null; pointsInUse: number; exempt: boolean }> {
   const loaded = await loadAccountBilling(organizationId, now);
-  if (!loaded) return { current: null, pointsInUse: 1 };
-  return { pointsInUse: loaded.state.pointsInUse, current: subscriptionFromState(loaded.state) };
+  if (!loaded) return { current: null, pointsInUse: 1, exempt: false };
+  return { pointsInUse: loaded.state.pointsInUse, current: subscriptionFromState(loaded.state), exempt: loaded.unit.exempt };
 }
 
 export async function quoteCheckout(args: {
@@ -138,7 +146,9 @@ export async function quoteCheckout(args: {
   let current: CurrentSubscription | null = null;
   let pointsInUse = 1;
   if (args.organizationId) {
-    ({ current, pointsInUse } = await accountSubscription(args.organizationId, now));
+    const account = await accountSubscription(args.organizationId, now);
+    if (account.exempt) return { ok: false, status: 409, code: "exempt", error: EXEMPT_CHECKOUT_ERROR };
+    ({ current, pointsInUse } = account);
   } else if (args.payer?.email) {
     const user = await db.user.findUnique({ where: { email: args.payer.email }, select: { organizationId: true } });
     if (user && args.payer.guest) {

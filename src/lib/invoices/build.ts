@@ -67,6 +67,8 @@ export type InvoiceBuildInput = {
     /** Вид перехода тарифа 2026-10 и конец срока по расчёту при оформлении. */
     changeKind?: string | null;
     periodEndsAt?: Date | null;
+    /** Срок оплаты из заказа (у доплаты — не дольше оплаченного срока). */
+    dueAt?: Date | null;
   };
   tariff: { title: string; periodDays: number; priceRub: number } | null;
   seller: PartySnapshot;
@@ -123,7 +125,7 @@ export function buildInvoiceDraft(input: InvoiceBuildInput): InvoiceDraft {
   return {
     number: String(input.order.id),
     issuedAt: input.order.createdAt,
-    dueAt: new Date(input.order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+    dueAt: input.order.dueAt ?? new Date(input.order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
     seller: input.seller,
     buyer: input.buyer,
     lines,

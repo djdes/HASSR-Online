@@ -125,6 +125,17 @@ describe("buildInvoiceDraft", () => {
     assert.equal(draft.seller.bank?.bik, "044525225");
     assert.match(draft.basis, /оферта/);
   });
+
+  it("срок из заказа (доплата — не дольше оплаченного срока) печатается в счёте", () => {
+    const dueAt = new Date(createdAt.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const draft = buildInvoiceDraft({
+      order: { id: 27, createdAt, amountRub: 267, bundleConfig: null, changeKind: "upgrade", periodEndsAt: dueAt, dueAt },
+      tariff: { title: "Премиум", periodDays: 30, priceRub: 5000 },
+      seller,
+      buyer,
+    });
+    assert.equal(draft.dueAt.getTime(), dueAt.getTime());
+  });
 });
 
 describe("invoiceFilename", () => {

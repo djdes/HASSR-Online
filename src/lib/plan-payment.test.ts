@@ -148,6 +148,14 @@ describe("оплата устаревшего заказа: снимок под�
     assert.equal(matches(order("renew", standardMonth, "standard_month"), { paidUntil: days(365), tier: "premium", cycle: "year", points: 1 }, afterEnd, "premium"), false);
   });
 
+  it("«новая» из последних суток срока после перехода на бесплатный применяется", () => {
+    // Меньше суток до конца — расчёт «новая подписка», но снимок хранит подписку.
+    const lastDay: CurrentSubscription = { ...standardMonth, paidUntil: new Date(created.getTime() + 10 * 60 * 60 * 1000) };
+    assert.equal(matches(order("new", lastDay, "standard_month"), null, days(2, created), "free"), true);
+    // Без перехода на бесплатный — обычная сверка: подписка та же, применяется.
+    assert.equal(matches(order("new", lastDay, "standard_month"), lastDay, days(2, created), "standard"), true);
+  });
+
   it("два продления подряд — оба применяются: срок ушёл вперёд другим продлением", () => {
     assert.equal(matches(order("renew", standardMonth, "standard_month"), { ...standardMonth, paidUntil: days(45, created) }), true);
   });

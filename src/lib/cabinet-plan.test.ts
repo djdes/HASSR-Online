@@ -19,6 +19,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const S: TrialSettings = { ...DEFAULT_TRIAL_SETTINGS, launchedAt: new Date("2026-10-25T21:00:00.000Z") };
 const CREATED = new Date("2026-05-01T10:00:00.000Z");
 const AFTER_TRIAL = new Date("2026-11-20T09:00:00.000Z");
+/** «Сегодня» для названий со сроком: год в названии — только у чужого года. */
+const TITLE_NOW = new Date("2026-10-25T09:00:00.000Z");
 
 const PROMO: AppliedPromotion = {
   id: "p1",
@@ -76,8 +78,9 @@ describe("buildCabinetPlanCard — карточка «Мой кабинет»", 
       pointsInUse: 2,
       activeUsers: 38,
     });
-    const card = buildCabinetPlanCard({ ...base, state: s });
-    assert.equal(card.title, "Премиум до 3 марта");
+    const card = buildCabinetPlanCard({ ...base, state: s, now: TITLE_NOW });
+    // Срок в следующем году — с годом.
+    assert.equal(card.title, "Премиум до 3 марта 2027");
     assert.equal(plain(card.counts), "2 точки · 38 сотрудников из 50");
     assert.equal(card.price?.finalRub, 7980);
     assert.equal(card.price?.breakdown, "оплата за год");
@@ -103,14 +106,14 @@ describe("buildCabinetPlanCard — карточка «Мой кабинет»", 
   it("сотрудник без права на тариф и приложение WeSetup — только название", () => {
     const s = state({ plan: "standard", subscriptionEnd: new Date("2026-12-03T09:00:00Z") });
     for (const who of [{ canManagePlan: false, inMobileApp: false }, { canManagePlan: true, inMobileApp: true }]) {
-      const card = buildCabinetPlanCard({ ...base, ...who, state: s });
+      const card = buildCabinetPlanCard({ ...base, ...who, state: s, now: TITLE_NOW });
       assert.deepEqual(card, { title: "Стандарт до 3 декабря", counts: null, price: null, link: null });
     }
   });
 
   it("прежняя «Подписка» — название и срок, без суммы по новым тарифам", () => {
     const s = state({ plan: "paid", subscriptionEnd: new Date("2026-12-03T09:00:00Z") });
-    assert.equal(cabinetPlanTitle(s, "paid"), "Подписка (прежний тариф) до 3 декабря");
+    assert.equal(cabinetPlanTitle(s, "paid", TITLE_NOW), "Подписка (прежний тариф) до 3 декабря");
     assert.equal(buildCabinetPlanCard({ ...base, plan: "paid", state: s }).price, null);
   });
 });

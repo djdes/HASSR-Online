@@ -684,7 +684,7 @@ export default async function SubscriptionPage({
                     <td className="py-2.5">
                       <span
                         className={
-                          payment.status === "paid"
+                          payment.status === "paid" && !payment.refundedAt
                             ? "rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]"
                             : "rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#6f7282]"
                         }

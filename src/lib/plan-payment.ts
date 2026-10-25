@@ -145,10 +145,10 @@ export function planOrderStillMatches(args: {
   const kind = args.order.changeKind;
   const base = parseBasePlan(args.order.basePlan);
   if (!parsePlanTariffKey(args.order.tariffKey) || !isChangeKind(kind) || base === undefined) return true;
-  // Продление после конца срока, когда аккаунт уже перевели на бесплатный:
-  // переход — следствие истечения, а не другой покупки, — продление
-  // применяется (с сегодня, по той же цене, что и новая подписка).
-  if (kind === "renew" && base?.paidUntil && base.paidUntil.getTime() <= args.now.getTime() && isFreePlan(args.planNow)) {
+  // Продление (и «новая» из последних суток срока) после его конца, когда
+  // аккаунт уже перевели на бесплатный: переход — следствие истечения, а не
+  // другой покупки, — оплата применяется с сегодня по цене новой подписки.
+  if ((kind === "renew" || kind === "new") && base?.paidUntil && base.paidUntil.getTime() <= args.now.getTime() && isFreePlan(args.planNow)) {
     return true;
   }
   const then = args.subscriptionThen;

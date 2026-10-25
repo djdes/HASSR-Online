@@ -1,5 +1,6 @@
 import {
   formatMskDay,
+  formatMskDayAuto,
   lastDayBefore,
   type AccountBillingState,
 } from "@/lib/billing-period";
@@ -80,8 +81,8 @@ const PAID_TITLES: Record<PaidTier | "legacy", string> = {
   legacy: "Подписка (прежний тариф)",
 };
 
-/** Название тарифа для карточки «Мой кабинет». */
-export function cabinetPlanTitle(state: AccountBillingState | null, plan: string): string {
+/** Название тарифа для карточки «Мой кабинет»; год у срока — если он не текущий. */
+export function cabinetPlanTitle(state: AccountBillingState | null, plan: string, now: Date = new Date()): string {
   switch (state?.kind) {
     case "free_period":
       return state.trialEndsAt
@@ -93,7 +94,7 @@ export function cabinetPlanTitle(state: AccountBillingState | null, plan: string
       return "Бесплатный";
     case "paid": {
       const name = PAID_TITLES[state.paidTier ?? "legacy"];
-      return state.paidUntil ? `${name} до ${formatMskDay(state.paidUntil)}` : name;
+      return state.paidUntil ? `${name} до ${formatMskDayAuto(state.paidUntil, now)}` : name;
     }
     default:
       return tariffName(plan);
@@ -156,8 +157,9 @@ export function buildCabinetPlanCard(args: {
   canManagePlan: boolean;
   inMobileApp: boolean;
   testMode: boolean;
+  now?: Date;
 }): CabinetPlanCard {
-  const title = cabinetPlanTitle(args.state, args.plan);
+  const title = cabinetPlanTitle(args.state, args.plan, args.now);
   if (!cabinetPlanAccess(args).details) {
     return { title, counts: null, price: null, link: null };
   }

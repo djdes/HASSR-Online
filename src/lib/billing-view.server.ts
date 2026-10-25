@@ -1,6 +1,7 @@
 import {
   BILLING_PAY_HREF,
   formatMskDay,
+  formatMskDayAuto,
   lastDayBefore,
   mskDayKey,
   shouldShowTrialBanner,
@@ -137,7 +138,8 @@ export async function loadBillingView(args: {
             ? {
                 plan: state.paidTier ?? "paid",
                 label: paidLabel(state),
-                note: state.paidUntil ? `до ${formatMskDay(state.paidUntil)}` : null,
+                // Год — когда срок кончается не в этом году («до 25 октября 2027 г.»).
+                note: state.paidUntil ? `до ${formatMskDayAuto(state.paidUntil, now)}` : null,
               }
             : { plan: unit.plan, label: null, note: null };
 

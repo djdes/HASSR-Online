@@ -3,9 +3,10 @@
  * ROOT-карточку, чтобы «pending» не показывался сырым словом.
  */
 export function orderStatusLabel(
-  order: { status: string; paymentMethod?: string | null; heldAt?: Date | null; invoiceDueAt?: Date | null },
+  order: { status: string; paymentMethod?: string | null; heldAt?: Date | null; invoiceDueAt?: Date | null; refundedAt?: Date | null },
   now: Date = new Date()
 ): string {
+  if ((order.status === "paid" || order.status === "completed") && order.refundedAt) return "возвращён";
   // Оплачен, но к тарифу не применён: подписка изменилась после оформления,
   // оплату разбирают вручную.
   if (order.status === "paid" && order.heldAt) return "оплачен — применим вручную";

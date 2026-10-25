@@ -57,6 +57,30 @@ async function releaseOrder(tx: TxClient, order: PendingPointOrder): Promise<boo
   return true;
 }
 
+/**
+ * Баллы, списанные в оплату заказа, — обратно на баланс, когда оплату этого
+ * заказа вернули (ROOT, разбор оплаты). Идемпотентно: тот же `dedupeKey`,
+ * что у возврата по неоплаченному заказу. `true` — баллы вернул этот вызов.
+ */
+export async function returnRefundedOrderPoints(order: PendingPointOrder): Promise<boolean> {
+  if (order.pointsSpent <= 0 || !order.organizationId) return false;
+  const organizationId = order.organizationId;
+  return db.$transaction(async (tx) => {
+    const dedupeKey = `order_release:${order.id}`;
+    const already = await tx.balanceTransaction.findUnique({ where: { dedupeKey }, select: { id: true } });
+    if (already) return false;
+    await applyBalanceChange(tx, {
+      organizationId,
+      amount: order.pointsSpent,
+      kind: "order_release",
+      description: `Возврат баллов по заказу №${order.id}: оплата возвращена`,
+      dedupeKey,
+      paymentOrderId: order.id,
+    });
+    return true;
+  });
+}
+
 export type CreateOrderWithPointsInput = {
   organizationId: string | null;
   userId: string | null;

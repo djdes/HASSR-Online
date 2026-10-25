@@ -231,6 +231,7 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
       bundleConfig: order.bundleConfig,
       changeKind: order.changeKind,
       periodEndsAt: order.periodEndsAt,
+      dueAt: order.invoiceDueAt,
     },
     tariff: tariff
       ? {

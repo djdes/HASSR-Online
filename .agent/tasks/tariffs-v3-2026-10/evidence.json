@@ -22,7 +22,7 @@
       "errors": 0
     },
     "test_gate": {
-      "pass": 4820,
+      "pass": 4823,
       "fail": 0
     },
     "i18n_check": {
@@ -51,6 +51,10 @@
       "round4_fixes": [
         "raw/round4-scenarios.txt",
         "raw/round4-check.txt"
+      ],
+      "round5_fixes": [
+        "raw/round5-scenarios.txt",
+        "raw/round5-check.txt"
       ]
     }
   },
@@ -209,6 +213,29 @@
         "auto-transition email says the paid subscription ended when it did",
         "voluntary switch to free during the trial ends the trial",
         "generic price-changed 409 text; history labels for held payments and past-due invoices"
+      ],
+      "fixed_in": "626b1ffd"
+    },
+    "round5": {
+      "commit": "626b1ffd",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "nits": [
+        "AC7",
+        "AC8"
+      ],
+      "problems": "problems.md (section 5)",
+      "fixed": [
+        "checkout refused from organizations outside the plan (demo, master cabinet, platform): 409 exempt on /order, Robokassa and invoices",
+        "a last-day 'new' order with a base snapshot applies after the account was moved to free",
+        "invoice PDF 'valid until' uses the order's invoiceDueAt",
+        "held payments: referral reward deferred to 'plan applied'; refund returns the order's points; dialog texts fixed",
+        "refunded orders labelled 'возвращён' in cabinet and ROOT",
+        "'plan applied' binds a lifetime discount",
+        "cabinet card shows the year for next-year ends",
+        "staff notice also on the mini app Today screen"
       ]
     }
   },
