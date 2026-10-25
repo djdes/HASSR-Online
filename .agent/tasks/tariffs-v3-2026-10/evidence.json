@@ -328,7 +328,14 @@
         "raw/postdeploy-cta-pricing-night.png",
         "raw/postdeploy-cta-cabinet-dark.png"
       ],
-      "out_of_scope": "dark-theme primary indigo #7081f8 with white text is 3.4:1 app-wide (pre-existing palette)"
+      "out_of_scope": "dark-theme primary indigo #7081f8 with white text is 3.4:1 app-wide (pre-existing palette)",
+      "checks": {
+        "base": "master 2e22324c",
+        "typecheck": "0 errors",
+        "test_gate": "pass 4840, fail 0",
+        "tariff_comparison_tests": "4/4",
+        "eslint_changed": "0 errors"
+      }
     }
   },
   "test_accounts_local": [
