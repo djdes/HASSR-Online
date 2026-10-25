@@ -85,6 +85,13 @@ export default async function OrderPage({
   const tariff: Tariff | null = quote?.ok
     ? { key: quote.tariffKey, title: quote.title, priceRub: quote.change.periodPriceRub, periodDays: quote.periodDays, active: true, sort: 0 }
     : null;
+  // «Новая» в последние сутки срока добавляется к его концу (`planAfterPayment`):
+  // показываем срок от конца текущего, а не от оплаты.
+  const appendFrom =
+    // У «новой» начало периода — момент расчёта.
+    quote?.ok && quote.change.kind === "new" && quote.base?.paidUntil && quote.base.paidUntil.getTime() > quote.change.periodStart.getTime()
+      ? quote.base.paidUntil
+      : null;
   const plan: OrderPlanView | null = quote?.ok
     ? {
         tier: quote.target.tier,
@@ -95,8 +102,13 @@ export default async function OrderPage({
         creditRub: quote.change.creditRub,
         differenceRub: quote.change.differenceRub,
         remainingDays: quote.change.remainingDays,
-        periodStartLabel: formatMskDate(quote.change.periodStart),
-        periodEndLabel: formatMskDate(quote.change.periodEnd),
+        periodStartLabel: formatMskDate(appendFrom ?? quote.change.periodStart),
+        periodEndLabel: formatMskDate(
+          appendFrom
+            ? new Date(appendFrom.getTime() + (quote.change.periodEnd.getTime() - quote.change.periodStart.getTime()))
+            : quote.change.periodEnd,
+        ),
+        appendsToCurrent: appendFrom !== null,
       }
     : null;
   const refusal =

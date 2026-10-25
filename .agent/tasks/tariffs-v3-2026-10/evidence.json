@@ -22,7 +22,7 @@
       "errors": 0
     },
     "test_gate": {
-      "pass": 4823,
+      "pass": 4829,
       "fail": 0
     },
     "i18n_check": {
@@ -63,6 +63,10 @@
       "round7_polish": [
         "raw/round7-setup.txt",
         "raw/round7-check.txt"
+      ],
+      "final_polish": [
+        "raw/round8-setup.txt",
+        "raw/round8-check.txt"
       ]
     }
   },
@@ -279,7 +283,20 @@
       "not_changed": {
         "order_page_last_day_label": "under a day in the customer's favour; display only",
         "mercury_plans": "pre-existing gate, owner decision"
-      }
+      },
+      "polished_in": "657a9f98"
+    },
+    "final": {
+      "commit": "657a9f98",
+      "verdict": "PASS",
+      "acceptance": "AC1-AC12 PASS",
+      "problems": "problems.md (section «Финальная проверка»)",
+      "polished_after": [
+        "invoice deadline rule extracted to invoiceDeadline (src/lib/invoices/due.ts) with unit tests; term end used only for evening term ends",
+        "invoice card amounts and due date via shared formatNumber/formatDate (no uz hydration mismatch)",
+        "/order last-day label shows the end after the current term; no autopay consent at 0 ₽",
+        "invoice build header comment"
+      ]
     }
   },
   "test_accounts_local": [

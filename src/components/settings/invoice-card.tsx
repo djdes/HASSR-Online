@@ -3,6 +3,7 @@
 import { Building2, FileText } from "lucide-react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,7 +64,7 @@ export function InvoiceCard({
   promoCode?: string | null;
 }) {
   const t = useTranslations("settingsUi.invoiceCard");
-  const locale = useLocale();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -74,7 +75,8 @@ export function InvoiceCard({
   const option = options.find((item) => item.key === selectedKey) ?? options[0];
   if (!ready || !option) return null;
 
-  const rub = (value: number) => `${value.toLocaleString(locale)} ₽`;
+  // Через общие форматтеры: у сервера и браузера разные разделители (uz).
+  const rub = (value: number) => `${formatNumber(locale, value)} ₽`;
   const price = applyPromotion(option.amountRub, promotion);
   const totalRub =
     serverTotal?.key === option.key
@@ -130,8 +132,8 @@ export function InvoiceCard({
                   amount: rub(pending.amountRub),
                   due: pending.dueAt
                     ? t("dueSuffix", {
-                        // Срок счёта — по Москве, как в PDF и письме (и без расхождения с сервером).
-                        date: new Date(pending.dueAt).toLocaleDateString(locale, { timeZone: "Europe/Moscow" }),
+                        // Срок счёта — по Москве, как в PDF и письме.
+                        date: formatDate(locale, new Date(pending.dueAt), "Europe/Moscow", { day: "2-digit", month: "2-digit", year: "numeric" }),
                       })
                     : "",
                 })}

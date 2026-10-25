@@ -86,6 +86,8 @@ export type OrderPlanView = {
   remainingDays: number;
   periodStartLabel: string;
   periodEndLabel: string;
+  /** «Новая» в последние сутки срока: период — после окончания текущего. */
+  appendsToCurrent?: boolean;
 };
 
 /**
@@ -473,7 +475,8 @@ function Checkout({
           plan: plan?.tier,
           cycle: plan?.cycle,
           points: plan?.points,
-          recurringConsent,
+          // К оплате 0 ₽ (зачёт или скидка) — автосписаний не будет, галочки нет.
+          recurringConsent: recurringConsent && amountAfterPromo > 0,
           usePoints: pointsSpent > 0,
           promoCode: typedCode ?? undefined,
           // Сверка, не сумма: сервер считает сам и откажет, если за время
@@ -533,7 +536,9 @@ function Checkout({
             ? `Продление: новый срок — с ${plan.periodStartLabel} до ${plan.periodEndLabel}.`
             : plan?.kind === "switch"
               ? `Новый срок — до ${plan.periodEndLabel}${plan.creditRub > 0 ? `; неиспользованный остаток текущего тарифа зачтён` : ""}.`
-              : `Срок — ${tariff.periodDays} дней с оплаты${plan ? `, до ${plan.periodEndLabel}` : ""}.`}
+              : plan?.appendsToCurrent
+                ? `Срок — ${tariff.periodDays} дней после окончания текущего (${plan.periodStartLabel}), до ${plan.periodEndLabel}.`
+                : `Срок — ${tariff.periodDays} дней с оплаты${plan ? `, до ${plan.periodEndLabel}` : ""}.`}
       </p>
 
       <div className="mt-6 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5">
@@ -742,8 +747,9 @@ function Checkout({
             платёж разовый, и это нормальный путь. Текст согласия и
             периодичность списаний видны здесь же — скрытых платежей быть
             не должно. Доплата за остаток срока — всегда разовая (сервер
-            галочку у неё не учитывает), поэтому её не показываем. */}
-        {plan?.kind === "upgrade" ? null : (
+            галочку у неё не учитывает), поэтому её не показываем; как и
+            при сумме 0 ₽ (зачёт остатка или скидка). */}
+        {plan?.kind === "upgrade" || amountAfterPromo === 0 ? null : (
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
             <input
               type="checkbox"
