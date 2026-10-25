@@ -154,11 +154,16 @@ test("actual settings page keeps management/tenant guards and renders localized 
         organization: { findUnique: async ({ where }: { where: { id: string } }) => { assert.equal(where.id, "active-org"); return { timezone: "Asia/Tashkent" }; } },
       } },
       "@/components/i18n/domain-messages-boundary": { DomainMessagesBoundary: ({ namespaces, children }: { namespaces: string[]; children: React.ReactNode }) => { assert.deepEqual(Array.from(namespaces), ["printAgent", "journalControls"]); return children; } },
+      // Версия APK на сайте: страница показывает её у кнопки скачивания.
+      "@/lib/setup-helper-release": { readSetupHelperRelease: async () => ({ versionCode: 2, versionName: "1.1.0", sha256: "a".repeat(64), size: 2_000_000 }) },
     });
     const html = await render(locale, await page.default());
     for (const expected of [messages.printAgent.settings.page.title, messages.printAgent.settings.page.how, "Установить.bat", "Win+R → netplwiz", agent.name]) assert.ok(html.includes(expected));
     for (const expected of [messages.printAgent.labelPrinters.heading, messages.printAgent.labelPrinters.download, messages.printAgent.labelPrinters.printers.empty, messages.printAgent.labelPrinters.devices.empty]) assert.ok(html.includes(expected), `${locale}: ${expected}`);
     assert.ok(html.includes('href="/api/setup-helper/download"'));
+    const labelsT = createTranslator({ locale, messages, namespace: "printAgent.labelPrinters" });
+    assert.ok(html.includes(labelsT("version", { version: "1.1.0" })), `${locale}: версия приложения`);
+    assert.ok(html.includes(messages.printAgent.labelPrinters.autoUpdate.slice(0, 40)), `${locale}: про автообновление`);
     assert.equal(queries, 1);
     allowed = false; await assert.rejects(page.default, /Redirect \/settings/); assert.equal(queries, 1);
   }

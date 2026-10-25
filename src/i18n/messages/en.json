@@ -13119,6 +13119,8 @@
       "resultStep": "The printer will appear below as soon as the phone is online. The “Test label 58×40” button checks printing.",
       "download": "Download Setup Helper",
       "downloadHint": "Android 7 or later, APK file",
+      "version": "Version {version}",
+      "autoUpdate": "The app updates itself: whenever it is online it checks the site and installs the new version. On Android 12 and later this happens without any action from you; on older phones you just tap “Install”.",
       "qrHint": "Point your phone camera here to download the app",
       "printers": {
         "heading": "Connected printers",
@@ -13140,6 +13142,7 @@
         "neverSeen": "{user} · has not connected yet",
         "unknownUser": "Employee",
         "version": "Version {version}",
+        "updatePending": "Will update to {version} automatically",
         "disconnect": "Disconnect",
         "disconnectAria": "Disconnect “{name}”",
         "disconnecting": "Disconnecting…",
@@ -13159,6 +13162,14 @@
       "templates": {
         "test58x40": "Test label 58×40",
         "product": "Product label",
+        "semiFinished": "Semi-finished product",
+        "dish": "Ready dish",
+        "defrost": "Defrosting",
+        "freeze": "Freezing",
+        "dailySample": "Daily sample",
+        "incoming": "Goods receipt",
+        "allergens": "Allergens",
+        "reject": "Rejected — do not use",
         "opened": "Opened package",
         "freeText": "Free text"
       }

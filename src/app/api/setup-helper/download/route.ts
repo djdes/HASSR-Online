@@ -1,6 +1,6 @@
 import fs from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
+import { SETUP_HELPER_APK } from "@/lib/setup-helper-release";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,10 +14,9 @@ export const dynamic = "force-dynamic";
  *
  * Файл собирается из `mobile/setup-helper` и кладётся в
  * `resources/setup-helper/` (см. README приложения): у сервера нет
- * Android SDK, чтобы собирать его при деплое.
+ * Android SDK, чтобы собирать его при деплое. Отсюда же приложение
+ * скачивает обновления (`?v=` в ссылке — только от кешей по пути).
  */
-const SETUP_HELPER_APK = path.join(process.cwd(), "resources", "setup-helper", "setup-helper.apk");
-
 export async function GET() {
   let file: Buffer;
   try {

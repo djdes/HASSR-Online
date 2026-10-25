@@ -1,0 +1,95 @@
+# JUnit (gradle :core:test :app:testDebugUnitTest --rerun-tasks), 2026-10-25T21:23:41.771Z
+ru.wesetup.helper.ScreensTest: 11 tests, 0 failed
+  - testEmptyMainScreenInvitesToAddEquipment
+  - testWithoutSessionTheAppAsksToSignIn
+  - testUnnamedPrinterFoundByBluetoothClassIsShownOthersBehindButton
+  - testSavedSessionOpensMainScreenWithPrinterWithoutNetwork
+  - testProductionTemplateOffersOptionsAndDateOnlyFields
+  - testRequiredFieldBlocksPrinting
+  - testHelpWithBluetoothSettingsAppearsWhenScanEndsWithoutPrinter
+  - testScanListsTheAiyinPrinterFirst
+  - testLoginScreenValidatesInputAndShowsServer
+  - testPrintScreenRendersEveryTemplateWithAndroidCanvas
+  - testRevokedSessionMessageIsShownOnLogin
+ru.wesetup.helper.auth.SessionStoreTest: 1 tests, 0 failed
+  - testServerAddressIsNormalisedAndHttpsOnly
+ru.wesetup.helper.bt.PrinterNamesTest: 6 tests, 0 failed
+  - testAiyinIp802IsRecognisedInAllSpellings
+  - testSearchOrderPutsPrinterFirst
+  - testBluetoothClassRevealsPrinterWithoutName
+  - testSavedPrinterRoundTripsAndNormalizesLabel
+  - testMoreLabelPrinterBrandsAreRecognised
+  - testGenericPrintersAndOtherDevices
+ru.wesetup.helper.bt.ScanThrottleTest: 2 tests, 0 failed
+  - testRefusedAttemptsDoNotCount
+  - testBleScanStartsStayBelowAndroidLimit
+ru.wesetup.helper.net.OutboxTest: 4 tests, 0 failed
+  - testQueueIsCappedAndSurvivesCorruption
+  - testQueueKeepsOrderAndRemovesAccepted
+  - testEventsMatchServerSchema
+  - testOnlyLatestPrintPerPrinterIsKept
+ru.wesetup.helper.print.LabelSettingsTest: 2 tests, 0 failed
+  - testNormalizedKeepsValuesInPrinterLimits
+  - testDefaultsMatchAiyinIp802btDriver
+ru.wesetup.helper.print.MonoBitmapTest: 7 tests, 0 failed
+  - testOutOfRangeIsIgnored
+  - testEmptyImageIsRejected
+  - testRowTailIsPaddedWithWhite
+  - testNewImageIsWhiteWithTsplPolarity
+  - testBlackDotClearsBitMsbFirst
+  - testFromArgbThresholdAndTransparency
+  - testToArgbRoundTrip
+ru.wesetup.helper.print.TsplTest: 7 tests, 0 failed
+  - testLabelJobIsExactTspl2ForIp802bt
+  - testStatusByteExplainsProblems
+  - testNumbersDoNotDependOnPhoneLocale
+  - testServiceCommands
+  - testRotationAndCopiesAreClamped
+  - testMmFormatting
+  - testImageWiderThanPrintableAreaIsRejected
+ru.wesetup.helper.template.LabelPreviewTest: 1 tests, 0 failed
+  - testEveryBundledTemplateFitsTheLabelAndPrints
+ru.wesetup.helper.template.LayoutEngineTest: 8 tests, 0 failed
+  - testShiftMovesEverything
+  - testAlignmentAndVerticalCentering
+  - testWrapsByWordsAndBreaksLongWords
+  - testTicksEveryStepWithLongerEvenTicks
+  - testNoFitTruncatesToMaxLines
+  - testTemplateScalesToLabelAndFrameUsesRealLabelEdges
+  - testFitShrinksTextUntilItFits
+  - testInvertedTextDrawsPlateAndWhiteText
+ru.wesetup.helper.template.TemplateParserTest: 2 tests, 0 failed
+  - testBundledTemplatesParseAndReferenceOnlyKnownValues
+  - testInvalidTemplatesAreRejectedWithReason
+ru.wesetup.helper.template.TemplateValuesTest: 6 tests, 0 failed
+  - testPlaceholdersAndFilters
+  - testDurations
+  - testReplacementTextIsLiteral
+  - testMissingValuesBecomeEmptyNotBraces
+  - testDefaultTimeExpressions
+  - testDatePlusDurationGivesExpiry
+ru.wesetup.helper.update.UpdateBannerTest: 2 tests, 0 failed
+  - testBannerAsksForInstallPermissionOnceThenUpdatesItself
+  - testNoBannerWithoutUpdate
+ru.wesetup.helper.update.UpdateInfoTest: 2 tests, 0 failed
+  - testSiteAnswerIsParsedAndRoundTrips
+  - testNonsenseIsRejectedWithReason
+ru.wesetup.helper.update.UpdatePolicyTest: 4 tests, 0 failed
+  - testCheckIsThrottledButForceAndClockChangesWin
+  - testFileIsVerifiedBySizeAndSha256
+  - testFailuresBackOffWithoutEndlessLoop
+  - testOnlyANewerBuildIsAnUpdate
+ru.wesetup.helper.update.UpdaterTest: 12 tests, 0 failed
+  - testSilentInstallOnlyWhenAppIsAwayAndIdle
+  - testOfflineMakesNoRequestAndWaits
+  - testSameOrOlderBuildIsNotAnUpdate
+  - testCorruptDownloadIsDroppedAndRetriedLater
+  - testOlderAndroidAsksAndPermissionIsRequested
+  - testConfirmationWaitsForTheUserWhenAppIsHidden
+  - testRejectedBuildIsNotDownloadedAgain
+  - testSessionAllowsSilentSelfUpdateFromAndroid12
+  - testFailedInstallIsRetriedAfterPauseOrByButton
+  - testNewerBuildIsDownloadedVerifiedAndThrottled
+  - testBackgroundCheckIsScheduledWithNetworkAndSurvivesReboot
+  - testUpdatedMessageIsShownOnceAfterUpdate
+TOTAL: 77 tests, 0 failed

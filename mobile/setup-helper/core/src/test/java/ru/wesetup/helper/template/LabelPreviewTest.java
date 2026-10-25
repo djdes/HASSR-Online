@@ -108,8 +108,32 @@ public class LabelPreviewTest {
         return image;
     }
 
-    private static TemplateValues sampleValues(LabelSettings settings) {
+    /**
+     * Значения для превью: общие + каждое поле шаблона. Длинные тексты —
+     * нарочно: проверяем перенос и уменьшение шрифта, а не удачный пример.
+     */
+    private static TemplateValues sampleValues(LabelSettings settings, LabelTemplate template) {
         long now = 1792927800000L; // 25.10.2026 14:30 МСК
+        TemplateValues values = baseValues(settings, now);
+        for (TemplateField field : template.fields) {
+            switch (field.type) {
+                case DATETIME:
+                    if (values.time(field.key) == null) values.time(field.key, TemplateValues.defaultTime(field.defaultValue, now));
+                    break;
+                case DURATION:
+                    if (values.duration(field.key) == null) values.duration(field.key, Durations.parseMinutes(field.defaultValue));
+                    break;
+                default:
+                    if (!values.text(field.key).isEmpty()) break;
+                    String longest = "";
+                    for (String option : field.options) if (option.length() > longest.length()) longest = option;
+                    values.text(field.key, longest.isEmpty() ? values.resolve(field.defaultValue) : longest);
+            }
+        }
+        return values;
+    }
+
+    private static TemplateValues baseValues(LabelSettings settings, long now) {
         return new TemplateValues(TimeZone.getTimeZone("Europe/Moscow"))
                 .text("user.name", "Иван Петров")
                 .text("org.name", "Кафе «Ромашка»")
@@ -123,8 +147,14 @@ public class LabelPreviewTest {
                 .duration("shelfLife", 24 * 60)
                 .time("openedAt", now)
                 .duration("useWithin", 72 * 60)
-                .text("employee", "Иван Петров")
-                .text("text", "Только для персонала\nНе трогать");
+                .text("employee", "Константинопольский Иван")
+                .text("text", "Только для персонала\nНе трогать")
+                .text("dish", "Суп-лапша куриная по-домашнему с зеленью")
+                .text("amount", "20 шт.")
+                .text("supplier", "ООО «Агрокомплекс Кубань»")
+                .text("batch", "№ 12345/67 от 24.10.2026")
+                .text("allergens", "Глютен, молоко, яйца, орехи, кунжут, сельдерей, горчица")
+                .text("reason", "Нарушены условия хранения");
     }
 
     @Test
@@ -136,7 +166,7 @@ public class LabelPreviewTest {
                 LabelSettings settings = new LabelSettings();
                 settings.widthMm = size[0];
                 settings.heightMm = size[1];
-                TemplateValues values = sampleValues(settings);
+                TemplateValues values = sampleValues(settings, template);
                 LabelLayout layout = LayoutEngine.layout(template, settings, values, measurer);
                 assertEquals(size[0] * 8, layout.widthDots);
                 assertEquals(size[1] * 8, layout.heightDots);

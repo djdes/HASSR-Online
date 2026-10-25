@@ -3,12 +3,14 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import {
   clampEventTime,
+  compareAppVersions,
   EVENT_FUTURE_SLACK_MS,
   generateHelperToken,
   hashHelperToken,
   helperAccessError,
   MAX_SYNC_EVENTS,
   normalizeBluetoothAddress,
+  parseReleaseManifest,
   parseSyncRequest,
   planPrinterEvent,
   readHelperClientInfo,
@@ -186,4 +188,45 @@ test("only venue management may use the app; root and staff are refused with a r
     assert.match(helperAccessError({ role, isRoot: false }) ?? "", /управляющий или заведующий/, String(role));
   }
   assert.equal(helperAccessError({ role: "manager", isRoot: true }), "Войдите под учётной записью заведения");
+});
+
+test("release manifest is accepted only when every field is sane", () => {
+  const good = {
+    versionCode: 2,
+    versionName: "1.1.0",
+    sha256: "a".repeat(64),
+    size: 2_000_000,
+    publishedAt: "2026-10-25",
+    notes: "Шаблоны для производства",
+  };
+  assert.deepEqual(parseReleaseManifest(good), good);
+  const minimal = { versionCode: 2, versionName: "1.1.0", sha256: "a".repeat(64), size: 2_000_000 };
+  assert.deepEqual(parseReleaseManifest(minimal), {
+    versionCode: 2,
+    versionName: "1.1.0",
+    sha256: "a".repeat(64),
+    size: 2_000_000,
+  });
+  for (const broken of [
+    null,
+    "1.1.0",
+    { ...good, versionCode: 0 },
+    { ...good, versionCode: 2.5 },
+    { ...good, versionName: "" },
+    { ...good, versionName: "1.1.0 <script>" },
+    { ...good, sha256: "A".repeat(64) },
+    { ...good, sha256: "abc" },
+    { ...good, size: 0 },
+    { ...good, size: 500 * 1024 * 1024 },
+  ]) {
+    assert.equal(parseReleaseManifest(broken), null, JSON.stringify(broken));
+  }
+});
+
+test("app versions compare numerically, part by part", () => {
+  assert.equal(compareAppVersions("1.0.0", "1.1.0"), -1);
+  assert.equal(compareAppVersions("1.10.0", "1.9.3"), 1);
+  assert.equal(compareAppVersions("1.1", "1.1.0"), 0);
+  assert.equal(compareAppVersions("2.0.0", "1.99.99"), 1);
+  assert.equal(compareAppVersions("1.1.0-beta", "1.1.0"), 0);
 });

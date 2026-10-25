@@ -26,4 +26,7 @@ tasks.withType(JavaCompile).configureEach {
 
 test {
     systemProperty 'java.awt.headless', 'true'
+    // Тесты разбирают и рисуют шаблоны из assets приложения: правка одного
+    // только шаблона тоже должна перезапускать проверку.
+    inputs.dir('../app/src/main/assets/templates')
 }

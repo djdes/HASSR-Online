@@ -1,0 +1,25 @@
+{
+  "id": "semi-finished",
+  "title": "Полуфабрикат",
+  "description": "Заготовка: когда сделана, до какого времени годна, как хранить и кто готовил.",
+  "size": {"width": 58, "height": 40},
+  "fields": [
+    {"key": "product", "label": "Наименование", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Котлеты куриные»"},
+    {"key": "madeAt", "label": "Изготовлено", "type": "datetime", "default": "now"},
+    {"key": "shelfLife", "label": "Срок годности", "type": "duration", "default": "24h", "options": ["6h", "12h", "18h", "24h", "36h", "48h", "72h"]},
+    {"key": "storage", "label": "Условия хранения", "type": "text", "default": "+2…+6 °C", "maxLength": 30, "options": ["+2…+6 °C", "0…+4 °C", "+4…+8 °C", "−18 °C и ниже"]},
+    {"key": "amount", "label": "Количество или масса", "type": "text", "maxLength": 16, "hint": "Например, 2 кг или 20 шт."},
+    {"key": "employee", "label": "Изготовил", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+  ],
+  "elements": [
+    {"type": "text", "x": 1.5, "y": 1.2, "w": 55, "h": 5.4, "text": "ПОЛУФАБРИКАТ", "size": 3.4, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true},
+    {"type": "text", "x": 2, "y": 7, "w": 54, "h": 8.8, "text": "{{product}}", "size": 4.2, "bold": true, "align": "center", "valign": "center", "maxLines": 2},
+    {"type": "line", "x": 2, "y": 16.3, "x2": 56, "y2": 16.3, "thickness": 0.3},
+    {"type": "text", "x": 2, "y": 16.9, "w": 54, "h": 4.4, "text": "Изготовлено: {{madeAt|datetime}}", "size": 3, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 21.5, "w": 54, "h": 5, "text": "Годен до: {{madeAt+shelfLife|datetime}}", "size": 3.5, "bold": true, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 26.8, "w": 38, "h": 4.2, "text": "Хранить: {{storage}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 41, "y": 26.8, "w": 15, "h": 4.2, "text": "{{amount}}", "size": 2.9, "bold": true, "align": "right", "maxLines": 1},
+    {"type": "text", "x": 2, "y": 31.2, "w": 54, "h": 4.2, "text": "Изготовил: {{employee}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 2, "y": 35.6, "w": 54, "h": 3.8, "text": "{{org.name}}", "size": 2.6, "align": "right", "maxLines": 1}
+  ]
+}

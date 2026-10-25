@@ -77,9 +77,9 @@ function fixture(fetcher: typeof fetch = async () => { throw new Error("Unexpect
   }, { fetch: fetcher });
   return {
     states, successes, errors, get refreshes() { return refreshes; },
-    async render(locale: Locale, printers = [printer], devices = [device], timeZone = "Asia/Tashkent") {
+    async render(locale: Locale, printers = [printer], devices = [device], timeZone = "Asia/Tashkent", latestVersion: string | null = null) {
       cursor = 0; refCursor = 0; nodes.length = 0; effects.length = 0;
-      const html = await render(locale, React.createElement(component.LabelPrintersClient, { printers, devices, timeZone }), () => { refreshes++; });
+      const html = await render(locale, React.createElement(component.LabelPrintersClient, { printers, devices, timeZone, latestVersion }), () => { refreshes++; });
       for (const effect of effects) effect();
       return html;
     },
@@ -138,6 +138,24 @@ test("connected printers and phones render in all locales with the data the phon
     const empty = await view.render(locale, [], []);
     assert.ok(empty.includes(copy.printers.empty));
     assert.ok(empty.includes(copy.devices.empty));
+  }
+});
+
+test("phones behind the published version are marked and production templates are named", async () => {
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    const copy = messages.printAgent.labelPrinters;
+    const t = createTranslator({ locale, messages, namespace: "printAgent.labelPrinters" });
+    const view = fixture();
+    const outdated = { ...device, outdated: true };
+    const current = { ...device, id: "device-2", name: "Pixel 8", appVersion: "1.1.0", outdated: false };
+    const sampled = { ...printer, lastTemplate: "daily-sample" };
+    const html = await view.render(locale, [sampled], [outdated, current], "Asia/Tashkent", "1.1.0");
+    const pending = t("devices.updatePending", { version: "1.1.0" });
+    assert.equal(html.split(pending).length - 1, 1, `${locale}: помечен только телефон со старой версией`);
+    assert.ok(html.includes(copy.templates.dailySample), `${locale}: шаблон производства назван по-человечески`);
+    // Версии на сайте нет — и пометки нет.
+    assert.ok(!(await view.render(locale, [sampled], [outdated], "Asia/Tashkent", null)).includes(pending));
   }
 });
 
