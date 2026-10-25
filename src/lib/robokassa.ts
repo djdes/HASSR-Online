@@ -174,11 +174,15 @@ export function verifyResultSignature(args: {
   isTest: boolean;
   receipt?: string | null;
 }): boolean {
+  const secret = password2(args.isTest);
+  // Без Пароля #2 проверять нечем: подпись с пустым паролем подделает любой,
+  // кто знает формат, — такое уведомление не принимаем.
+  if (!secret) return false;
   const base = [
     args.outSum,
     args.invId,
     ...(args.receipt ? [encodeURIComponent(args.receipt)] : []),
-    password2(args.isTest),
+    secret,
   ].join(":");
   return signaturesMatch(md5(base), args.signature);
 }

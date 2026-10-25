@@ -396,8 +396,11 @@ function Checkout({
   const discountRub = discount?.discountRub ?? 0;
   const amountAfterPromo = Math.max(0, amountRub - discountRub);
   const capAfterPromo = Math.max(0, pointsCap - discountRub);
+  // К оплате 0 ₽ (зачёт или скидка) — автосписаний нет: галочка скрыта, и
+  // согласие не действует, даже если пришло из ссылки (`?recurring=1`).
+  const autopay = recurringConsent && amountAfterPromo > 0;
   const pointsSpent =
-    usePoints && !recurringConsent
+    usePoints && !autopay
       ? Math.min(pointsAvailable, Math.min(capAfterPromo, amountAfterPromo))
       : 0;
   const netRub = Math.max(0, amountAfterPromo - pointsSpent);
@@ -475,8 +478,7 @@ function Checkout({
           plan: plan?.tier,
           cycle: plan?.cycle,
           points: plan?.points,
-          // К оплате 0 ₽ (зачёт или скидка) — автосписаний не будет, галочки нет.
-          recurringConsent: recurringConsent && amountAfterPromo > 0,
+          recurringConsent: autopay,
           usePoints: pointsSpent > 0,
           promoCode: typedCode ?? undefined,
           // Сверка, не сумма: сервер считает сам и откажет, если за время
@@ -684,13 +686,13 @@ function Checkout({
               </p>
             </div>
             <Switch
-              checked={usePoints && !recurringConsent}
-              disabled={recurringConsent}
+              checked={usePoints && !autopay}
+              disabled={autopay}
               onCheckedChange={(next) => setUsePoints(next)}
               aria-label="Списать баллы"
             />
           </div>
-          {recurringConsent ? (
+          {autopay ? (
             <p className="mt-3 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12px] leading-[1.5] text-[#a16d32]">
               При автопродлении баллы не списываются: касса запомнит карту с
               уменьшенной суммой, и следующие списания пошли бы не по цене

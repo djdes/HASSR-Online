@@ -22,7 +22,7 @@
       "errors": 0
     },
     "test_gate": {
-      "pass": 4829,
+      "pass": 4835,
       "fail": 0
     },
     "i18n_check": {
@@ -296,7 +296,20 @@
         "invoice card amounts and due date via shared formatNumber/formatDate (no uz hydration mismatch)",
         "/order last-day label shows the end after the current term; no autopay consent at 0 ₽",
         "invoice build header comment"
-      ]
+      ],
+      "polished_in": "e68032ae"
+    },
+    "pre_merge": {
+      "commit": "27ea2661",
+      "verdict": "PASS",
+      "acceptance": "AC1-AC12 PASS",
+      "merge_with_master": "b2795561, clean",
+      "polished_after": [
+        "0 ₽ order: autopay consent inactive in the points block and the request even with ?recurring=1",
+        "invoices/due.ts comment",
+        "Robokassa ResultURL refuses notifications when Password #2 is not configured (empty-password signatures)"
+      ],
+      "deploy_schema_simulation": "apply-safe-schema on master schema: 2 additive ALTER TABLE ADD COLUMN statements committed; rerun 0"
     }
   },
   "test_accounts_local": [
