@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
               ? "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз"
               : quote.change.kind === "upgrade" || quote.change.kind === "switch"
                 ? "Сумма пересчитана: доплата и зачёт зависят от оставшихся дней. Проверьте новую сумму и нажмите ещё раз"
-                : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
+                : "Цена изменилась: закончилась акция или обновился тариф. Проверьте новую сумму и нажмите ещё раз",
         code: "price-changed",
         grossRub: amounts.grossRub,
         discount: applied ? { ...applied, label: discountLabel(applied) } : null,

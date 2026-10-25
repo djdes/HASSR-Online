@@ -45,11 +45,11 @@ export function organizationKind(kind: string, t: OrganizationCopy) {
 }
 
 const errors = {
-  ORG_NOT_FOUND: "errors.organizationMissing", ORG_NAME_SHORT: "errors.nameShort", ORG_PLAN_UNKNOWN: "errors.planUnknown", ORG_DATE_INVALID: "errors.dateInvalid", ORG_POINTS_INVALID: "errors.pointsInvalid", ORG_NO_ACCOUNT: "errors.noAccount", ORG_PLATFORM_PROTECTED: "errors.platformProtected", ORG_BALANCE_INVALID: "errors.invalidRequest", ORG_BALANCE_READ_FAILED: "errors.readRequest", ROOT_ORDER_NOT_FOUND: "errors.orderMissing", ROOT_ORDER_CANCEL_UNPAID_ONLY: "errors.cancelUnpaidOnly",
+  ORG_NOT_FOUND: "errors.organizationMissing", ORG_NAME_SHORT: "errors.nameShort", ORG_PLAN_UNKNOWN: "errors.planUnknown", ORG_DATE_INVALID: "errors.dateInvalid", ORG_POINTS_INVALID: "errors.pointsInvalid", ORG_NO_ACCOUNT: "errors.noAccount", ORG_PLATFORM_PROTECTED: "errors.platformProtected", ORG_BALANCE_INVALID: "errors.invalidRequest", ORG_BALANCE_READ_FAILED: "errors.readRequest", ROOT_ORDER_NOT_FOUND: "errors.orderMissing", ROOT_ORDER_CANCEL_UNPAID_ONLY: "errors.cancelUnpaidOnly", ROOT_ORDER_NOT_HELD: "errors.notHeld", ORG_FREE_WITH_END: "errors.freeWithEnd",
 } as const;
 
 /** Structured descriptors only; arbitrary backend prose is never reflected. */
-export function organizationError(data: unknown, t: OrganizationCopy, fallback: "settings.failed" | "impersonate.failed" | "delete.failed" | "balance.failed" | "invoice.failed") {
+export function organizationError(data: unknown, t: OrganizationCopy, fallback: "settings.failed" | "impersonate.failed" | "delete.failed" | "balance.failed" | "invoice.failed" | "held.failed") {
   if (!data || typeof data !== "object") return t(fallback);
   const body = data as { errorCode?: unknown; errorParams?: unknown };
   if (body.errorCode === "ORG_BALANCE_INSUFFICIENT" && body.errorParams && typeof body.errorParams === "object") {

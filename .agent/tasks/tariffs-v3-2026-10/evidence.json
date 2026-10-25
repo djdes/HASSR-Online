@@ -47,6 +47,10 @@
       "round3_fixes": [
         "raw/round3-scenarios.txt",
         "raw/round3-check.txt"
+      ],
+      "round4_fixes": [
+        "raw/round4-scenarios.txt",
+        "raw/round4-check.txt"
       ]
     }
   },
@@ -188,7 +192,24 @@
       }
     },
     "round4": {
-      "verdict": "pending"
+      "commit": "d5a54413",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "problems": "problems.md (section 4)",
+      "fixed": [
+        "upgrade/switch invoices valid only until the base term ends; a held paid order counts as a pending payment (no blocking gate, auto-transition waits)",
+        "a renewal paid after the account was moved to free applies from the payment date",
+        "employee checkout in the last day quotes and snapshots from the account subscription (appended to the end of the term)",
+        "payment term starts from the latest end across the account and all its organizations; the new end and plan are copied to every organization (paused/cancelled keep their plan)",
+        "ROOT resolves held payments: 'plan applied' clears heldAt, 'money refunded' marks refundedAt (document voided, accruals reversed); audit billing.order-resolved",
+        "ROOT refuses a paid-term date on the free plan (ORG_FREE_WITH_END); end-date hint fixed",
+        "/order return page and status API know held payments",
+        "auto-transition email says the paid subscription ended when it did",
+        "voluntary switch to free during the trial ends the trial",
+        "generic price-changed 409 text; history labels for held payments and past-due invoices"
+      ]
     }
   },
   "test_accounts_local": [

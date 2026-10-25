@@ -16100,7 +16100,7 @@
     },
     "settings": {
       "name": "Name",
-      "noExpiry": "Leave empty for no expiry date",
+      "noExpiry": "Leave empty for no paid term. The Free plan has no end date",
       "save": "Save",
       "saved": "Saved",
       "failed": "Could not save",
@@ -16201,6 +16201,19 @@
       "cancelled": "Invoice No. {orderId} cancelled",
       "failed": "Could not complete the invoice action"
     },
+    "held": {
+      "applied": "Plan applied",
+      "refunded": "Money refunded",
+      "appliedTitle": "Has the payment for order No. {orderId} been applied?",
+      "appliedDescription": "Mark this once the plan has been set manually with the subscription form above. The order becomes a regular payment: a closing document is issued for it, and the automatic switch to the free plan no longer waits for this payment.",
+      "confirmApplied": "Yes, the plan is applied",
+      "refundedTitle": "Has the money for order No. {orderId} been refunded?",
+      "refundedDescription": "Mark this after the refund through the payment provider or bank. The order will be marked as refunded: no closing document is issued, partner and referral accruals are reversed. This cannot be undone.",
+      "confirmRefunded": "Yes, the money is refunded",
+      "appliedDone": "Order No. {orderId}: payment reviewed — plan applied",
+      "refundedDone": "Order No. {orderId}: refund marked",
+      "failed": "Could not mark the payment as reviewed"
+    },
     "errors": {
       "organizationMissing": "Organization not found",
       "nameShort": "The name is too short",
@@ -16217,7 +16230,9 @@
       "orderMissing": "Not found",
       "cancelUnpaidOnly": "Only an unpaid invoice can be cancelled",
       "pointsInvalid": "Locations must be from 1 to 50",
-      "noAccount": "The organisation has no account — period, locations and trial cannot be saved"
+      "noAccount": "The organisation has no account — period, locations and trial cannot be saved",
+      "notHeld": "Only a payment awaiting review can be marked as reviewed",
+      "freeWithEnd": "The Free plan has no paid term — to set a date, choose Standard, Premium or Subscription (previous plan)"
     }
   },
   "miniHome": {

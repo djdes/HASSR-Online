@@ -14,6 +14,7 @@ import { ImpersonateButton } from "./impersonate-button";
 import { DeleteOrgButton } from "./delete-org-button";
 import { OrgSettingsForm } from "./org-settings-form";
 import { BalanceCard } from "./balance-card";
+import { HeldOrderActions } from "./held-order-actions";
 import { InvoiceActions } from "./invoice-actions";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 
@@ -97,6 +98,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     !payment.refundedAt &&
     !payment.heldAt &&
     Number(payment.amountRub) > 0;
+  // Оплата устаревшего заказа: ROOT применяет тариф вручную или возвращает деньги.
+  const heldForReview = (payment: (typeof payments)[number]) =>
+    payment.status === "paid" && Boolean(payment.heldAt) && !payment.refundedAt;
   const paidTotalRub = payments
     .filter((payment) => payment.status === "paid")
     .reduce((sum, payment) => sum + Number(payment.amountRub), 0);
@@ -318,9 +322,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                         className="inline-flex h-8 items-center rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                       >
                         {t("payments.closingPdf")}</a>
-                    ) : (
+                    ) : heldForReview(payment) ? null : (
                       <span className="text-[#c9ccdb]">—</span>
                     )}
+                    {heldForReview(payment) ? (
+                      <div className={payment.paymentMethod === "invoice" ? "mt-1.5" : undefined}>
+                        <HeldOrderActions orderId={payment.id} />
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))}

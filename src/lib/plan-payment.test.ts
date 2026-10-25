@@ -105,8 +105,8 @@ describe("оплата устаревшего заказа: снимок под�
     // Через JSON — как снимок лежит в базе.
     basePlan: JSON.parse(JSON.stringify(basePlanSnapshot(base))) as unknown,
   });
-  const matches = (o: ReturnType<typeof order>, subscriptionThen: CurrentSubscription | null, now = NOW) =>
-    planOrderStillMatches({ order: o, subscriptionThen, now });
+  const matches = (o: ReturnType<typeof order>, subscriptionThen: CurrentSubscription | null, now = NOW, planNow?: string) =>
+    planOrderStillMatches({ order: o, subscriptionThen, now, planNow });
 
   it("снимок переживает базу без потерь", () => {
     assert.deepEqual(parseBasePlan(order("upgrade", standardMonth).basePlan), standardMonth);
@@ -133,6 +133,19 @@ describe("оплата устаревшего заказа: снимок под�
 
   it("продление по счёту, оплаченному после конца срока, применяется", () => {
     assert.equal(matches(order("renew", standardMonth, "standard_month"), standardMonth, days(20, created)), true);
+  });
+
+  it("продление после конца срока, когда аккаунт уже перевели на бесплатный, применяется", () => {
+    // Подписка аккаунта на момент оформления после перехода выглядит иначе
+    // (бесплатный тариф) — это следствие истечения, а не другой покупки.
+    const afterEnd = days(20, created);
+    assert.equal(matches(order("renew", standardMonth, "standard_month"), null, afterEnd, "free"), true);
+    // До конца срока бесплатный тариф ставит только ROOT — разбор вручную.
+    assert.equal(matches(order("renew", standardMonth, "standard_month"), null, NOW, "free"), false);
+    // Доплата после перехода на бесплатный — по-прежнему на разбор.
+    assert.equal(matches(order("upgrade", standardMonth), null, afterEnd, "free"), false);
+    // После перехода купили другой тариф — старое продление на разбор.
+    assert.equal(matches(order("renew", standardMonth, "standard_month"), { paidUntil: days(365), tier: "premium", cycle: "year", points: 1 }, afterEnd, "premium"), false);
   });
 
   it("два продления подряд — оба применяются: срок ушёл вперёд другим продлением", () => {

@@ -84,7 +84,7 @@ export function OrgSettingsForm({
           body: JSON.stringify({
             ...(name !== initialName ? { name } : {}),
             ...(plan !== initialPlan ? { subscriptionPlan: plan } : {}),
-            // Пустая дата — бессрочная подписка, а не «сегодня».
+            // Пустая дата — без оплаченного срока, а не «сегодня».
             ...(endsAt !== toDateInput(initialSubscriptionEnd)
               ? { subscriptionEnd: endsAt ? `${endsAt}T00:00:00.000Z` : null }
               : {}),

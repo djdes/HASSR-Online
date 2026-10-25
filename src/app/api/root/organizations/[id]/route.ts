@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
+import { isFreePlan } from "@/lib/plan-limits";
 import { tasksflowClientFor } from "@/lib/tasksflow-client";
 import { isBillingCycle, MAX_POINTS } from "@/lib/tariff-plans";
 
@@ -108,6 +109,20 @@ export async function PATCH(
 
   // «Бесплатный» — без оплаченного срока: иначе срок, оставшийся в копиях
   // организаций, держал бы аккаунт оплаченным («Подписка (прежний тариф)»).
+  // Дата при бесплатном тарифе — та же ошибка: отказ, а не тихая «Подписка».
+  const planAfter =
+    data.subscriptionPlan && data.subscriptionPlan !== "paused" && data.subscriptionPlan !== "cancelled"
+      ? data.subscriptionPlan
+      : (org.account?.subscriptionPlan ?? org.subscriptionPlan);
+  if (data.subscriptionEnd && isFreePlan(planAfter)) {
+    return NextResponse.json(
+      {
+        error: "У «Бесплатного» нет оплаченного срока — чтобы задать дату, выберите «Стандарт», «Премиум» или «Подписку (прежний тариф)»",
+        errorCode: "ORG_FREE_WITH_END",
+      },
+      { status: 400 }
+    );
+  }
   if (data.subscriptionPlan === "free") data.subscriptionEnd = null;
 
   // Поля тарифа аккаунта: период оплаты, точки и продлённый пробный.

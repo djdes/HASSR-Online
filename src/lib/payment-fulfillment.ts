@@ -22,7 +22,7 @@ import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
 import { bindLifetimeDiscountForOrder } from "@/lib/promo/lifetime";
 import { recordAuditLog } from "@/lib/audit-log";
-import { loadAccountBilling, stateForUnit } from "@/lib/billing.server";
+import { loadAccountBilling, stateForUnit, type LoadedBilling } from "@/lib/billing.server";
 import { TOPUP_TARIFF_KEY } from "@/lib/balance/topup-core";
 import { notifyManagement } from "@/lib/notifications";
 import { subscriptionFromState } from "@/lib/plan-checkout.server";
@@ -280,19 +280,18 @@ async function extendOrganization(args: {
     "id" | "tariffKey" | "description" | "recurringConsent" | "recurringChargeOf" | "points" | "changeKind" | "periodEndsAt" | "createdAt" | "basePlanJson"
   >;
 }): Promise<{ subscriptionEnd: Date; held: boolean }> {
-  // Тариф живёт на аккаунте (сеть платит один раз): оплаченный срок
-  // считаем от самого позднего из концов — организации и аккаунта.
+  // Тариф живёт на аккаунте (сеть платит один раз), организации хранят
+  // копии срока, и состояние берёт самый поздний из концов — аккаунта и всех
+  // его организаций (`loadBillingUnit`). От него же считаем оплаченный срок.
   const owner = await db.organization.findUnique({
     where: { id: args.organizationId },
-    select: { accountId: true, account: { select: { subscriptionEnd: true } } },
+    select: { accountId: true },
   });
-  const accountEnd = owner?.account?.subscriptionEnd ?? null;
-  const base =
-    accountEnd && (!args.currentEnd || accountEnd.getTime() > args.currentEnd.getTime())
-      ? accountEnd
-      : args.currentEnd;
+  const loaded = await loadAccountBilling(args.organizationId);
+  const unitEnd = loaded?.unit.subscriptionEnd ?? null;
+  const base = unitEnd && (!args.currentEnd || unitEnd.getTime() > args.currentEnd.getTime()) ? unitEnd : args.currentEnd;
   const { order } = args;
-  if (parsePlanTariffKey(order.tariffKey) && !(await planOrderMatchesAccount(order, args.organizationId))) {
+  if (parsePlanTariffKey(order.tariffKey) && !planOrderMatchesAccount(order, loaded)) {
     await holdStalePlanOrder(order, args.organizationId);
     return { subscriptionEnd: base ?? new Date(), held: true };
   }
@@ -325,6 +324,17 @@ async function extendOrganization(args: {
         subscriptionEnd,
         ...(plan ? { planCycle: plan.cycle, planPoints: plan.points, scheduledPlanJson: Prisma.DbNull } : {}),
       },
+    });
+  }
+  // Копии у остальных организаций аккаунта — тоже: иначе более поздний срок
+  // одной из них перекрыл бы оплату. Пауза и отмена остаются у своих
+  // организаций (как и при правке ROOT).
+  const siblingIds = (loaded?.unit.scopeOrgIds ?? []).filter((id) => id !== args.organizationId);
+  if (siblingIds.length > 0) {
+    await db.organization.updateMany({ where: { id: { in: siblingIds } }, data: { subscriptionEnd } });
+    await db.organization.updateMany({
+      where: { id: { in: siblingIds }, subscriptionPlan: { notIn: ["paused", "cancelled"] } },
+      data: { subscriptionPlan },
     });
   }
   // Подписка изменилась — открытые счета на подписку, посчитанные от прежней,
@@ -363,16 +373,16 @@ async function extendOrganization(args: {
  * `planOrderStillMatches`): снимок из заказа сравниваем с подпиской аккаунта,
  * какой она выглядит сейчас, на момент оформления заказа.
  */
-async function planOrderMatchesAccount(
+function planOrderMatchesAccount(
   order: Pick<FulfillableOrder, "tariffKey" | "changeKind" | "createdAt" | "basePlanJson">,
-  organizationId: string
-): Promise<boolean> {
+  loaded: LoadedBilling | null
+): boolean {
   if (!order.createdAt) return true;
-  const loaded = await loadAccountBilling(organizationId);
   const subscriptionThen = loaded ? subscriptionFromState(stateForUnit(loaded.unit, loaded.settings, order.createdAt)) : null;
   return planOrderStillMatches({
     order: { tariffKey: order.tariffKey, changeKind: order.changeKind, basePlan: order.basePlanJson },
     subscriptionThen,
+    planNow: loaded?.unit.plan ?? null,
     now: new Date(),
   });
 }

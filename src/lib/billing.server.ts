@@ -39,6 +39,7 @@ import {
   type AccountBillingState,
   type LimitCheck,
   type TransitionAction,
+  type TransitionReason,
   type TrialSettings,
 } from "@/lib/billing-period";
 import { COMMISSION_CATEGORY_KEY, NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
@@ -638,17 +639,24 @@ export async function checkPlanFeature(organizationId: string, feature: PlanFeat
 /**
  * Выставлен счёт по безналу, срок оплаты не прошёл: решение «платим»
  * уже принято, деньги идут днями — окно не давит, автопереход ждёт.
+ * Так же — оплата, которая ждёт ручного разбора (`heldAt`): деньги уже
+ * получены, переводить аккаунт на бесплатный до разбора нельзя.
  */
 export async function hasPendingInvoice(orgIds: string[], now: Date = new Date()): Promise<boolean> {
   if (orgIds.length === 0) return false;
   const count = await db.paymentOrder.count({
     where: {
       organizationId: { in: orgIds },
-      paymentMethod: "invoice",
-      status: "pending",
       // Счёт на пополнение баланса — не решение «платим за подписку».
       tariffKey: { not: TOPUP_TARIFF_KEY },
-      OR: [{ invoiceDueAt: null }, { invoiceDueAt: { gt: now } }],
+      OR: [
+        {
+          paymentMethod: "invoice",
+          status: "pending",
+          OR: [{ invoiceDueAt: null }, { invoiceDueAt: { gt: now } }],
+        },
+        { status: "paid", heldAt: { not: null }, refundedAt: null },
+      ],
     },
   });
   return count > 0;
@@ -803,6 +811,8 @@ export type TransitionResult =
       archivedNames: string[];
       archivedUserIds: string[];
       disabledJournalsCount: number;
+      /** Что закончилось перед переходом: пробный или оплаченная подписка. */
+      reason?: TransitionReason | null;
     }
   | { ok: false; status: number; error: string };
 
@@ -862,6 +872,9 @@ export async function transitionToFree(args: {
       // предупреждает; неиспользованную часть возвращают по заявлению, п. 6.2
       // оферты), автопродление выключается — списаний на бесплатном нет.
       const paidUntilBefore = state.kind === "paid" ? state.paidUntil : null;
+      // Добровольный переход из пробного заканчивает пробный период: иначе
+      // аккаунт оставался бы «пробным» — без ограничений бесплатного.
+      const endsTrial = voluntary && state.kind === "free_period" && Boolean(unit.accountId);
 
       const [candidates, journals, codes, orgRows] = await Promise.all([
         listTransitionCandidates(unit),
@@ -905,7 +918,7 @@ export async function transitionToFree(args: {
         return { ok: false, status: 409, error: "Сверх бесплатного — нужно решение руководителя" };
       }
       const planBefore = unit.plan;
-      if (toArchive.length === 0 && journalsToDisable === 0 && isFreePlan(planBefore) && !paidUntilBefore) {
+      if (toArchive.length === 0 && journalsToDisable === 0 && isFreePlan(planBefore) && !paidUntilBefore && !endsTrial) {
         return {
           ok: true,
           noop: true,
@@ -949,6 +962,7 @@ export async function transitionToFree(args: {
               subscriptionPlan: "free",
               scheduledPlanJson: Prisma.DbNull,
               ...(paidUntilBefore ? { subscriptionEnd: now } : {}),
+              ...(endsTrial ? { trialEndsAt: now } : {}),
             },
           });
         }
@@ -1000,6 +1014,7 @@ export async function transitionToFree(args: {
                 planBefore,
                 stateBefore: state.kind,
                 paidUntilBefore: paidUntilBefore?.toISOString() ?? null,
+                ...(endsTrial ? { trialEndsAtBefore: state.trialEndsAt?.toISOString() ?? null } : {}),
                 graceEndsAt: state.graceEndsAt?.toISOString() ?? null,
               },
               ipAddress: args.actor.ipAddress ?? null,
@@ -1035,6 +1050,7 @@ export async function transitionToFree(args: {
         archivedNames: toArchive.map((c) => c.name),
         archivedUserIds: archiveIds,
         disabledJournalsCount: journalsToDisable,
+        reason: state.reason,
       };
     }
   );
@@ -1255,7 +1271,7 @@ async function notifyTransition(args: {
       title: "Организация на бесплатном тарифе",
       html:
         `<p ${P}>Здравствуйте!</p>` +
-        `<p ${P}>Пробный период закончился, а тариф выбран не был. Организация <strong>${escapeHtml(orgName)}</strong> переведена на бесплатный тариф — ${FREE_LIMITS}.</p>` +
+        `<p ${P}>${args.result.reason === "subscription_expired" ? "Оплаченная подписка закончилась" : "Пробный период закончился"}, а тариф выбран не был. Организация <strong>${escapeHtml(orgName)}</strong> переведена на бесплатный тариф — ${FREE_LIMITS}.</p>` +
         `<div ${BOX}>В работе: <strong>${escapeHtml(kept)}</strong> и журнал <strong>${escapeHtml(keptJournal)}</strong>.<br>В архив перешли: ${archivedLabel}${journalsOff}. Записи в журналах сохранены.</div>` +
         `<p ${P}>Вернуть сотрудников и журналы можно после подключения тарифа «Стандарт» или «Премиум».</p>` +
         `<a href="${payUrl}" ${BUTTON}>Выбрать тариф</a>`,

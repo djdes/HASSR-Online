@@ -374,7 +374,7 @@ export default async function SubscriptionPage({
           id: payment.id,
           at: payment.paidAt ?? payment.createdAt,
           description: payment.description,
-          status: orderStatusLabel(payment),
+          status: orderStatusLabel(payment, now),
           paid: payment.status === "paid",
           amountRub: Number(payment.amountRub),
         }))}
@@ -689,7 +689,7 @@ export default async function SubscriptionPage({
                             : "rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#6f7282]"
                         }
                       >
-                        {orderStatusLabel(payment)}
+                        {orderStatusLabel(payment, now)}
                       </span>
                     </td>
                     <td className="py-2.5 text-right tabular-nums text-[#0b1024]">

@@ -16100,7 +16100,7 @@
     },
     "settings": {
       "name": "Nomi",
-      "noExpiry": "Muddatsiz bo‘lsa, bo‘sh qoldiring",
+      "noExpiry": "Bo‘sh — to‘langan muddat yo‘q. «Bepul» tarifda muddat belgilanmaydi",
       "save": "Saqlash",
       "saved": "Saqlandi",
       "failed": "Saqlab bo‘lmadi",
@@ -16201,6 +16201,19 @@
       "cancelled": "{orderId}-sonli hisob bekor qilindi",
       "failed": "Hisob bo‘yicha amalni bajarib bo‘lmadi"
     },
+    "held": {
+      "applied": "Tarif qo‘llandi",
+      "refunded": "Pul qaytarildi",
+      "appliedTitle": "№ {orderId} buyurtma to‘lovi qo‘llandimi?",
+      "appliedDescription": "Tarif yuqoridagi obuna shakli orqali qo‘lda o‘rnatilgach belgilang. Buyurtma oddiy to‘lovga aylanadi: u bo‘yicha UPD chiqariladi, bepul tarifga avtomatik o‘tish endi bu to‘lovni kutmaydi.",
+      "confirmApplied": "Ha, tarif qo‘llandi",
+      "refundedTitle": "№ {orderId} buyurtma bo‘yicha pul qaytarildimi?",
+      "refundedDescription": "Kassa yoki bank orqali qaytarilgandan keyin belgilang. Buyurtma qaytarilgan deb belgilanadi: UPD chiqarilmaydi, hamkorlik va referal hisoblari bekor qilinadi. Belgini bekor qilib bo‘lmaydi.",
+      "confirmRefunded": "Ha, pul qaytarildi",
+      "appliedDone": "№ {orderId} buyurtma: to‘lov ko‘rib chiqildi — tarif qo‘llandi",
+      "refundedDone": "№ {orderId} buyurtma: qaytarish belgilandi",
+      "failed": "To‘lov ko‘rib chiqilganini belgilab bo‘lmadi"
+    },
     "errors": {
       "organizationMissing": "Tashkilot topilmadi",
       "nameShort": "Nom juda qisqa",
@@ -16217,7 +16230,9 @@
       "orderMissing": "Topilmadi",
       "cancelUnpaidOnly": "Faqat to‘lanmagan hisobni bekor qilish mumkin",
       "pointsInvalid": "Nuqtalar soni — 1 dan 50 gacha",
-      "noAccount": "Tashkilotning hisobi yo‘q — davr, nuqtalar va sinovni saqlab bo‘lmaydi"
+      "noAccount": "Tashkilotning hisobi yo‘q — davr, nuqtalar va sinovni saqlab bo‘lmaydi",
+      "notHeld": "Faqat ko‘rib chiqishni kutayotgan to‘lovni belgilash mumkin",
+      "freeWithEnd": "«Bepul» tarifda to‘langan muddat yo‘q — sanani belgilash uchun «Standart», «Premium» yoki «Obuna (avvalgi tarif)»ni tanlang"
     }
   },
   "miniHome": {

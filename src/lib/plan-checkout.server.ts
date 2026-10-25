@@ -150,7 +150,12 @@ export async function quoteCheckout(args: {
       return { ok: false, status: 409, code: "account", error: PAID_ACCOUNT_ERROR };
     }
     // Точки в работе — как у руководителя: меньше, чем работает, не оплатить.
-    if (payerAccount) pointsInUse = payerAccount.pointsInUse;
+    // Срок на исходе (меньше суток) — расчёт и снимок в заказе от настоящей
+    // подписки, иначе оплата сочла бы заказ устаревшим.
+    if (payerAccount) {
+      pointsInUse = payerAccount.pointsInUse;
+      current = payerAccount.current;
+    }
   }
   if (target.points < pointsInUse) {
     return {

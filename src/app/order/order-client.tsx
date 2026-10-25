@@ -49,7 +49,16 @@ type OrderStatus = {
   needsCompletion: boolean;
   /** Пополнение баланса — не подписка: «Баланс пополнен», ссылка на баланс. */
   purpose?: "topup" | "subscription";
+  /** Оплата ждёт ручного разбора: подписка изменилась после оформления. */
+  held?: boolean;
 };
+
+/** Текст после оплаты существующему клиенту: продлено или ждёт разбора. */
+function renewalText(order: Pick<OrderStatus, "held">): string {
+  return order.held
+    ? "Оплату получили, но после оформления заказа изменилась подписка или закончился оплаченный срок — применим её вручную в течение рабочего дня или вернём деньги. Ничего делать не нужно."
+    : "Подписка вашей организации продлена. Входите под своей обычной учётной записью.";
+}
 
 /** Оплачен ли заказ. `expired` — истёкший холд баллов, это не оплата. */
 function isPaidStatus(status: string): boolean {
@@ -329,8 +338,7 @@ function Checkout({
         ) : (
           <>
             <p className="mt-4 text-[15px] leading-[1.7] text-[#3c4053]">
-              Подписка вашей организации продлена. Входите под своей обычной
-              учётной записью.
+              {renewalText(paid)}
             </p>
             <div className="mt-6">
               <PrimaryLink href="/login">Войти в кабинет</PrimaryLink>
@@ -998,8 +1006,7 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
     <Card>
       <Paid order={order} />
       <p className="mt-4 text-[15px] leading-[1.7] text-[#3c4053]">
-        Подписка вашей организации продлена. Входите под своей обычной учётной
-        записью.
+        {renewalText(order)}
       </p>
       <div className="mt-6">
         <PrimaryLink href="/login">Войти в кабинет</PrimaryLink>

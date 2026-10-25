@@ -127,6 +127,12 @@ export async function createInvoiceOrder(args: {
     };
   }
 
+  // Доплата и переход считаются от остатка текущего срока: оплата после его
+  // конца ушла бы на ручной разбор, поэтому счёт действует не дольше срока.
+  const validUntil = new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS);
+  const termEnd = quote.change.kind === "upgrade" || quote.change.kind === "switch" ? (quote.base?.paidUntil ?? null) : null;
+  const invoiceDueAt = termEnd && termEnd.getTime() < validUntil.getTime() ? termEnd : validUntil;
+
   // Действующий счёт возвращаем, только если он всё ещё про то же: тот же
   // тариф, точки, вид перехода и сумма, срок оплаты не прошёл. Иначе — новый
   // счёт, а прежние счета на подписку закрываются ниже (оплати бухгалтерия
@@ -175,7 +181,7 @@ export async function createInvoiceOrder(args: {
       organizationId: args.organizationId,
       userId: args.userId,
       paymentMethod: "invoice",
-      invoiceDueAt: new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+      invoiceDueAt,
       baseRub: amounts.baseRub,
       promotionId: offer.promotion?.id ?? null,
       promotionPercent: offer.promotion?.percent ?? null,
