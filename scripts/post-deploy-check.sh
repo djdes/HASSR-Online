@@ -10,6 +10,11 @@
 # Next.js после рестарта поднимается не сразу. Всё вместе — не дольше
 # POST_DEPLOY_MAX_SECONDS (180): даже если адреса висят до таймаута curl,
 # откат должен успеть до таймаута SSH-шага.
+#
+# 429 — не поломка: это лимит переходов по страницам (page-navigation-guard),
+# а прогрев сразу перед проверкой шлёт с сервера сотню запросов. Деплой #2035
+# ждал его ~30 с. Ждём дальше, а если до конца отвечают только 429 — сборка
+# работает (версия совпала, сайт отвечает), отката нет.
 
 set -u
 
@@ -19,25 +24,35 @@ EXPECTED="${EXPECTED:0:7}"
 ATTEMPTS="${POST_DEPLOY_ATTEMPTS:-18}"
 PAUSE="${POST_DEPLOY_PAUSE:-5}"
 DEADLINE=$((SECONDS + ${POST_DEPLOY_MAX_SECONDS:-180}))
+only_limited=0
 read -r -a ROUTES <<< "${POST_DEPLOY_ROUTES:-/ /login}"
 
 for attempt in $(seq 1 "$ATTEMPTS"); do
   served=$(curl -fsS --max-time 10 "$BASE/api/build-info" 2>/dev/null | sed -nE 's/.*"buildId":"([^"]*)".*/\1/p')
   if [ "$served" = "$EXPECTED" ]; then
     failing=""
+    limited=""
     for route in "${ROUTES[@]}"; do
       code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$BASE$route")
       case "$code" in
         2??|3??) ;;
+        429) limited="$limited $route" ;;
         *) failing="$failing $route=$code" ;;
       esac
     done
-    if [ -z "$failing" ]; then
+    if [ -z "$failing" ] && [ -z "$limited" ]; then
       echo "[verify] сайт отдаёт $EXPECTED, адреса отвечают: ${ROUTES[*]}"
       exit 0
     fi
-    echo "[verify] попытка $attempt/$ATTEMPTS: версия $EXPECTED, но адреса не отвечают:$failing"
+    if [ -z "$failing" ]; then
+      only_limited=1
+      echo "[verify] попытка $attempt/$ATTEMPTS: версия $EXPECTED, адреса под лимитом запросов (429):$limited — ждём"
+    else
+      only_limited=0
+      echo "[verify] попытка $attempt/$ATTEMPTS: версия $EXPECTED, но адреса не отвечают:$failing${limited:+, под лимитом:$limited}"
+    fi
   else
+    only_limited=0
     echo "[verify] попытка $attempt/$ATTEMPTS: сайт отдаёт «${served:-нет ответа}», ждём $EXPECTED"
   fi
   if [ "$SECONDS" -ge "$DEADLINE" ]; then
@@ -47,5 +62,9 @@ for attempt in $(seq 1 "$ATTEMPTS"); do
   if [ "$attempt" -lt "$ATTEMPTS" ]; then sleep "$PAUSE"; fi
 done
 
+if [ "$only_limited" = 1 ]; then
+  echo "[verify] сайт отдаёт $EXPECTED; страницы до конца отвечали 429 (лимит запросов) — сборка работает, отката нет"
+  exit 0
+fi
 echo "[verify] сборка $EXPECTED не поднялась"
 exit 1
