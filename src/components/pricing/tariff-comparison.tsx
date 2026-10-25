@@ -512,7 +512,8 @@ function ctaClass(variant: "primary" | "light" | "outline"): string {
     "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-2 text-center text-[15px] font-medium leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-11",
     variant === "primary" &&
       "bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]",
-    variant === "light" && "bg-white text-[#0b1024] hover:bg-white/90",
+    // `tariff-cta-light` — белой кнопка остаётся и в тёмной теме (app-theme.css).
+    variant === "light" && "tariff-cta-light bg-white text-[#0b1024] hover:bg-white/90",
     variant === "outline" && "border border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
   );
 }
