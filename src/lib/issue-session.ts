@@ -37,6 +37,7 @@ export async function issueSession(
   response: NextResponse,
   user: SessionUser,
   organizationName: string,
+  context?: { activeOrganizationId?: string; actingAsOrganizationId?: string | null },
 ): Promise<NextResponse> {
   const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
   if (!secret) {
@@ -76,7 +77,8 @@ export async function issueSession(
       organizationId: user.organizationId,
       organizationName,
       isRoot: user.isRoot === true,
-      actingAsOrganizationId: null,
+      actingAsOrganizationId: context?.actingAsOrganizationId ?? null,
+      ...(context?.activeOrganizationId ? { activeOrganizationId: context.activeOrganizationId } : {}),
       permissionPreset: user.permissionPreset ?? null,
       sv: await getSessionVersion(user.id),
     },

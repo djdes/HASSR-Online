@@ -38,7 +38,7 @@ export function YandexMetrika() {
                см. src/lib/mobile-app.ts): в анкетах магазинов сказано, что
                приложение не собирает аналитику, — счётчик не грузим вовсе. */
             if (!/(?:^|[\\s;(])WeSetupApp\\//i.test(navigator.userAgent) &&
-                !/^\\/(journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) {
+                !/^\\/(max|settings\\/integrations\\/max|journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) {
             (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
             m[i].l=1*new Date();
             for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}

@@ -1,4 +1,5 @@
 import { normFromLabel, quickValues } from "@/lib/quick-values";
+import { renderMaxQrAction, MAX_QR_ACTION_SCRIPT } from "@/lib/max/qr";
 import {
   COLD_EQUIPMENT_STATUSES,
   COLD_EQUIPMENT_STATUS_SHORT,
@@ -405,12 +406,12 @@ export function renderPage(params: {
 <div class="eyebrow" title="${esc(params.orgName)}">${esc(params.orgName)}</div>
 <h1>${esc(params.title)}</h1>
 ${params.subtitle ? `<p class="sub">${esc(params.subtitle)}</p>` : ""}
-</div></div></div></header>
+</div>${renderMaxQrAction()}</div></div></header>
 <main><div class="wrap">
 ${params.body}
 </div></main>
 ${params.script ? `<script>${params.script}</script>` : ""}
-${params.withJs === false ? "" : `<script>${QR_FILL_JS}</script>`}
+${params.withJs === false ? "" : `<script>${QR_FILL_JS}\n${MAX_QR_ACTION_SCRIPT}</script>`}
 </body>
 </html>`;
 }

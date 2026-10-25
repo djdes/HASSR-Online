@@ -35,6 +35,67 @@ model Account {
 /// Линейный сотрудник живёт в одной организации и строк здесь не имеет.
 /// Владелец получает строку с role="owner" на каждую свою организацию,
 /// приглашённый руководитель — role="manager" там, куда его пустили.
+/// MAX identities are independent of organization chats and Telegram identities.
+model MaxIdentity {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  maxUserId            String   @unique
+  privateChatId        String
+  displayName          String
+  activeOrganizationId String?
+  createdAt            DateTime @default(now())
+  handoffs             MaxSessionHandoff[]
+}
+
+model MaxLinkRequest {
+  id                   String        @id @default(cuid())
+  tokenHash            String        @unique
+  userId               String
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId       String?
+  organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  expiresAt            DateTime
+  usedAt               DateTime?
+  claimedMaxUserId     String?
+  claimedChatId        String?
+  claimedDisplayName   String?
+  createdAt            DateTime      @default(now())
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+model MaxOrganizationIntegration {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enabled        Boolean      @default(true)
+  chatId         String?      @unique
+  chatTitle      String?
+  linkedByUserId String?
+  linkedAt       DateTime?
+  updatedAt      DateTime     @updatedAt
+}
+
+model MaxSessionHandoff {
+  id             String      @id @default(cuid())
+  tokenHash      String      @unique
+  identityId     String
+  identity       MaxIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  organizationId String
+  returnPath     String
+  expiresAt      DateTime
+  usedAt         DateTime?
+  @@index([expiresAt])
+}
+
+model MaxWebhookReceipt {
+  id              String    @id
+  leaseUntil      DateTime
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  @@index([createdAt])
+}
+
 model OrganizationMember {
   id             String       @id @default(cuid())
   userId         String
@@ -422,6 +483,8 @@ model Organization {
   jobPositions                   JobPosition[]
   notifications                  Notification[]
   botInviteTokens                BotInviteToken[]
+  maxIntegration                 MaxOrganizationIntegration?
+  maxLinkRequests                MaxLinkRequest[]
   journalObligations             JournalObligation[]
   workShifts                     WorkShift[]
   jobPositionJournalAccess       JobPositionJournalAccess[]
@@ -1014,6 +1077,8 @@ model User {
   organizationMemberships     OrganizationMember[]     @relation("OrganizationMemberships")
   ownedAccount                Account?                 @relation("AccountOwner")
   telegramChatId              String?
+  maxIdentity                 MaxIdentity?
+  maxLinkRequests             MaxLinkRequest[]
   notificationPrefs           Json?
   isActive                    Boolean                  @default(true)
   // Platform-level superadmin flag. Orthogonal to `role` (which is the in-org
